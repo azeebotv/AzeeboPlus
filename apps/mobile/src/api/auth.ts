@@ -1,0 +1,70 @@
+import { apiClient } from './client';
+
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+  displayName?: string;
+  phone?: string;
+  avatar?: string;
+  role: string;
+  isVerified?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface AuthResponse {
+  access_token: string;
+  refresh_token: string;
+  user: User;
+}
+
+export interface ApiResponse<T> {
+  success: boolean;
+  data?: T;
+  message?: string;
+  error?: string;
+}
+
+export const authApi = {
+  login: async (email: string, password: string): Promise<ApiResponse<AuthResponse>> => {
+    return apiClient.post<ApiResponse<AuthResponse>>('/auth/login', { email, password });
+  },
+
+  register: async (data: {
+    email: string;
+    password: string;
+    name: string;
+    phone?: string;
+  }): Promise<ApiResponse<AuthResponse>> => {
+    return apiClient.post<ApiResponse<AuthResponse>>('/auth/register', data);
+  },
+
+  logout: async (): Promise<ApiResponse<{ message: string }>> => {
+    return apiClient.post<ApiResponse<{ message: string }>>('/auth/logout');
+  },
+
+  refreshToken: async (refreshToken: string): Promise<ApiResponse<{ access_token: string }>> => {
+    return apiClient.post<ApiResponse<{ access_token: string }>>('/auth/refresh', { refreshToken });
+  },
+
+  forgotPassword: async (email: string): Promise<ApiResponse<{ message: string }>> => {
+    return apiClient.post<ApiResponse<{ message: string }>>('/auth/forgot-password', { email });
+  },
+
+  verifyOTP: async (code: string): Promise<ApiResponse<AuthResponse>> => {
+    return apiClient.post<ApiResponse<AuthResponse>>('/auth/verify-otp', { code });
+  },
+
+  resendOTP: async (): Promise<ApiResponse<{ message: string }>> => {
+    return apiClient.post<ApiResponse<{ message: string }>>('/auth/resend-otp');
+  },
+
+  getProfile: async (): Promise<ApiResponse<User>> => {
+    return apiClient.get<ApiResponse<User>>('/auth/profile');
+  },
+
+  updateProfile: async (data: Partial<User>): Promise<ApiResponse<User>> => {
+    return apiClient.patch<ApiResponse<User>>('/auth/profile', data);
+  },
+};

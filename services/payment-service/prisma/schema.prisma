@@ -1,0 +1,120 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Payment {
+  id            String    @id @default(cuid())
+  userId        String
+  amount        Decimal   @db.Decimal(10, 2)
+  currency      String    @default("NGN")
+  status        String    @default("pending")
+  type          String    @default("payment")
+  provider      String?
+  providerRef   String?
+  failureReason String?
+  refundAmount  Decimal?  @db.Decimal(10, 2)
+  metadata      Json?
+  completedAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@map("payments")
+  @@index([userId])
+  @@index([status])
+  @@index([providerRef])
+}
+
+model WebhookEvent {
+  id          String    @id @default(cuid())
+  eventId     String    @unique
+  provider    String?
+  type        String
+  processedAt DateTime  @default(now())
+  payload     Json?
+  createdAt   DateTime  @default(now())
+
+  @@map("webhook_events")
+  @@index([eventId])
+  @@index([type])
+}
+
+model PaymentIntent {
+  id               String    @id @default(cuid())
+  userId           String
+  amount           Decimal   @db.Decimal(10, 2)
+  currency         String    @default("NGN")
+  status           String    @default("pending")
+  description      String?
+  providerReference String?
+  metadata         Json?
+  completedAt      DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  idempotencyKey   String?   @unique
+
+  refunds Refund[]
+
+  @@map("payment_intents")
+  @@index([userId])
+  @@index([providerReference])
+  @@index([status])
+  @@index([idempotencyKey])
+}
+
+model Refund {
+  id               String    @id @default(cuid())
+  paymentIntentId  String
+  amount           Decimal   @db.Decimal(10, 2)
+  reason           String
+  status           String    @default("pending")
+  providerReference String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  idempotencyKey   String?   @unique
+
+  paymentIntent PaymentIntent @relation(fields: [paymentIntentId], references: [id], onDelete: Cascade)
+
+  @@map("refunds")
+  @@index([paymentIntentId])
+  @@index([status])
+  @@index([idempotencyKey])
+}
+
+model Wallet {
+  id        String    @id @default(cuid())
+  userId    String    @unique
+  balance   Decimal   @db.Decimal(10, 2) @default(0)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  transactions WalletTransaction[]
+
+  @@map("wallets")
+  @@index([userId])
+}
+
+model WalletTransaction {
+  id          String    @id @default(cuid())
+  walletId    String
+  type        String    // credit, debit
+  amount      Decimal   @db.Decimal(10, 2)
+  status      String    @default("completed")
+  description String?
+  reference   String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  wallet Wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  @@map("wallet_transactions")
+  @@index([walletId])
+  @@index([type])
+  @@index([status])
+  @@index([reference])
+}

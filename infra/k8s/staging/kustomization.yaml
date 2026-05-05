@@ -1,0 +1,70 @@
+# Staging Kustomization
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: azeebo-staging
+
+resources:
+  - namespace.yaml
+  - postgres.yaml
+  - redis.yaml
+  - auth-service.yaml
+  - user-service.yaml
+  - wallet-service.yaml
+  - payment-service.yaml
+  - notification-service.yaml
+  - content-service.yaml
+  - search-service.yaml
+  - analytics-service.yaml
+  - moderation-service.yaml
+  - recommendation-service.yaml
+  - api-gateway.yaml
+  - ingress.yaml
+  - hpa.yaml
+
+commonLabels:
+  app.kubernetes.io/name: azeebo
+  app.kubernetes.io/environment: staging
+  app.kubernetes.io/managed-by: kustomize
+
+configMapGenerator:
+  - name: azeebo-config
+    literals:
+      - ENVIRONMENT=staging
+      - LOG_LEVEL=debug
+      - API_GATEWAY_URL=http://api-gateway.azeebo-staging.svc.cluster.local:3000
+
+images:
+  - name: azeebo/auth-service
+    newName: azeebo/auth-service
+    newTag: latest
+  - name: azeebo/user-service
+    newName: azeebo/user-service
+    newTag: latest
+  - name: azeebo/wallet-service
+    newName: azeebo/wallet-service
+    newTag: latest
+  - name: azeebo/payment-service
+    newName: azeebo/payment-service
+    newTag: latest
+  - name: azeebo/notification-service
+    newName: azeebo/notification-service
+    newTag: latest
+  - name: azeebo/content-service
+    newName: azeebo/content-service
+    newTag: latest
+  - name: azeebo/search-service
+    newName: azeebo/search-service
+    newTag: latest
+  - name: azeebo/analytics-service
+    newName: azeebo/analytics-service
+    newTag: latest
+  - name: azeebo/moderation-service
+    newName: azeebo/moderation-service
+    newTag: latest
+  - name: azeebo/recommendation-service
+    newName: azeebo/recommendation-service
+    newTag: latest
+  - name: azeebo/api-gateway
+    newName: azeebo/api-gateway
+    newTag: latest

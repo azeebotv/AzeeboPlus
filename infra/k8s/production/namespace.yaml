@@ -1,0 +1,9 @@
+# Production Kubernetes Namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: azeebo
+  labels:
+    name: azeebo
+    environment: production
+

@@ -1,0 +1,82 @@
+# Production Kustomization
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: azeebo
+
+resources:
+  - namespace.yaml
+  - ../base/auth-service.yaml
+  - ../base/user-service.yaml
+  - ../base/wallet-service.yaml
+  - ../base/payment-service.yaml
+  - ../base/notification-service.yaml
+  - ../base/content-service.yaml
+  - ../base/search-service.yaml
+  - ../base/analytics-service.yaml
+  - ../base/moderation-service.yaml
+  - ../base/recommendation-service.yaml
+  - ../base/api-gateway.yaml
+  - ../base/web-app.yaml
+  - ../base/ingress.yaml
+  - ../base/hpa.yaml
+
+commonLabels:
+  app.kubernetes.io/name: azeebo
+  app.kubernetes.io/environment: production
+  app.kubernetes.io/managed-by: kustomize
+
+configMapGenerator:
+  - name: azeebo-config
+    literals:
+      - ENVIRONMENT=production
+      - LOG_LEVEL=info
+      - API_GATEWAY_URL=http://api-gateway.azeebo.svc.cluster.local:3000
+
+images:
+  - name: azeebo/auth-service
+    newName: azeebo/auth-service
+    newTag: v1.0.0
+  - name: azeebo/user-service
+    newName: azeebo/user-service
+    newTag: v1.0.0
+  - name: azeebo/wallet-service
+    newName: azeebo/wallet-service
+    newTag: v1.0.0
+  - name: azeebo/payment-service
+    newName: azeebo/payment-service
+    newTag: v1.0.0
+  - name: azeebo/notification-service
+    newName: azeebo/notification-service
+    newTag: v1.0.0
+  - name: azeebo/content-service
+    newName: azeebo/content-service
+    newTag: v1.0.0
+  - name: azeebo/search-service
+    newName: azeebo/search-service
+    newTag: v1.0.0
+  - name: azeebo/analytics-service
+    newName: azeebo/analytics-service
+    newTag: v1.0.0
+  - name: azeebo/moderation-service
+    newName: azeebo/moderation-service
+    newTag: v1.0.0
+  - name: azeebo/recommendation-service
+    newName: azeebo/recommendation-service
+    newTag: v1.0.0
+  - name: azeebo/api-gateway
+    newName: azeebo/api-gateway
+    newTag: v1.0.0
+  - name: azeebo/web-app
+    newName: azeebo/web-app
+    newTag: v1.0.0
+
+patchesStrategicMerge:
+  - |-
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: auth-service
+    spec:
+      replicas: 3
+

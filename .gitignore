@@ -1,0 +1,53 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+.next/
+out/
+
+# Environment files - NEVER COMMIT THESE
+.env
+.env.local
+.env.development
+.env.production
+.env.*.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Testing
+coverage/
+.nyc_output/
+
+# Docker
+docker-compose.override.yml
+
+# Prisma
+**/prisma/client/
+**/src/generated/prisma/
+
+# TypeScript
+*.tsbuildinfo
+
+# Misc
+*.bak
+*.tmp
+
+# pnpm
+.pnpm/
+.npm/
+.pnpm-store/

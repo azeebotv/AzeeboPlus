@@ -1,0 +1,515 @@
+version: '3.8'
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  azeebo_network:
+    driver: bridge
+
+services:
+  # Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: azeebo_postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-azeebo_plus_dev}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - azeebo_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+  # API Gateway
+  api-gateway:
+    build:
+      context: ./services/api-gateway
+      dockerfile: Dockerfile
+    container_name: azeebo_api_gateway
+    ports:
+      - "3013:3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      AUTH_SERVICE_URL: http://auth-service:3000
+      USER_SERVICE_URL: http://user-service:3000
+      WALLET_SERVICE_URL: http://wallet-service:3000
+      PAYMENT_SERVICE_URL: http://payment-service:3000
+      CONTENT_SERVICE_URL: http://content-service:3000
+      NOTIFICATION_SERVICE_URL: http://notification-service:3000
+      REWARD_SERVICE_URL: http://reward-service:3000
+      SEARCH_SERVICE_URL: http://search-service:3000
+      ANALYTICS_SERVICE_URL: http://analytics-service:3000
+      MODERATION_SERVICE_URL: http://moderation-service:3000
+      RECOMMENDATION_SERVICE_URL: http://recommendation-service:3000
+      CREATOR_SERVICE_URL: http://creator-portal:3000
+    depends_on:
+      - auth-service
+      - user-service
+      - wallet-service
+      - payment-service
+      - content-service
+      - notification-service
+      - reward-service
+      - search-service
+      - analytics-service
+      - moderation-service
+      - recommendation-service
+    networks:
+      - azeebo_network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+  # Creator Portal
+  creator-portal:
+    build:
+      context: ./apps/creator-portal
+      dockerfile: Dockerfile
+    container_name: azeebo_creator_portal
+    ports:
+      - "3014:3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: ${DATABASE_URL}
+    depends_on:
+      - postgres
+    networks:
+      - azeebo_network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+  # Admin Panel
+  admin-panel:
+    build:
+      context: ./apps/admin
+      dockerfile: Dockerfile
+    container_name: azeebo_admin_panel
+    ports:
+      - "3018:3016"
+    environment:
+      NODE_ENV: production
+      PORT: 3016
+      DATABASE_URL: ${DATABASE_URL}
+    depends_on:
+      - postgres
+    networks:
+      - azeebo_network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3016/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+  # Redis
+  redis:
+    image: redis:7-alpine
+    container_name: azeebo_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - azeebo_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+  # Auth Service
+  auth-service:
+    build:
+      context: ./services/auth-service
+      dockerfile: Dockerfile
+    container_name: azeebo_auth_service
+    ports:
+      - "3001:3000"
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-30m}
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - azeebo_network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+  # User Service
+  user-service:
+    build:
+      context: ./services/user-service
+      dockerfile: Dockerfile
+    container_name: azeebo_user_service
+    ports:
+      - "3002:3000"
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      JWT_SECRET: ${JWT_SECRET}
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - azeebo_network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+  # Content Service
+  content-service:
+    build:
+      context: ./services/content-service
+      dockerfile: Dockerfile
+    container_name: azeebo_content_service
+    ports:
+      - "3003:3000"
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - azeebo_network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+  # Payment Service
+  payment-service:
+    build:
+      context: ./services/payment-service
+      dockerfile: Dockerfile
+    container_name: azeebo_payment_service
+    ports:
+      - "3004:3000"
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      PAYSTACK_SECRET_KEY: ${PAYSTACK_SECRET_KEY}
+      FLUTTERWAVE_SECRET_KEY: ${FLUTTERWAVE_SECRET_KEY}
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - azeebo_network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+  # Wallet Service
+  wallet-service:
+    build:
+      context: ./services/wallet-service
+      dockerfile: Dockerfile
+    container_name: azeebo_wallet_service
+    ports:
+      - "3005:3000"
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - azeebo_network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+  # Analytics Service
+  analytics-service:
+    build:
+      context: ./services/analytics-service
+      dockerfile: Dockerfile
+    container_name: azeebo_analytics_service
+    ports:
+      - "3006:3000"
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - azeebo_network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+  # Notification Service
+  notification-service:
+    build:
+      context: ./services/notification-service
+      dockerfile: Dockerfile
+    container_name: azeebo_notification_service
+    ports:
+      - "3007:3000"
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      SENDGRID_API_KEY: ${SENDGRID_API_KEY}
+      TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID}
+      TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN}
+      TWILIO_PHONE_NUMBER: ${TWILIO_PHONE_NUMBER}
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - azeebo_network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+  # Moderation Service
+  moderation-service:
+    build:
+      context: ./services/moderation-service
+      dockerfile: Dockerfile
+    container_name: azeebo_moderation_service
+    ports:
+      - "3008:3000"
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - azeebo_network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+  # Search Service
+  search-service:
+    build:
+      context: ./services/search-service
+      dockerfile: Dockerfile
+    container_name: azeebo_search_service
+    ports:
+      - "3009:3000"
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - azeebo_network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+  # Recommendation Service
+  recommendation-service:
+    build:
+      context: ./services/recommendation-service
+      dockerfile: Dockerfile
+    container_name: azeebo_recommendation_service
+    ports:
+      - "3010:3000"
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - azeebo_network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+  # Reward Service
+  reward-service:
+    build:
+      context: ./services/reward-service
+      dockerfile: Dockerfile
+    container_name: azeebo_reward_service
+    ports:
+      - "3011:3000"
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - azeebo_network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+  # Queue Service (BullMQ)
+  queue-service:
+    build:
+      context: ./services/queue-service
+      dockerfile: Dockerfile
+    container_name: azeebo_queue_service
+    ports:
+      - "3015:3015"
+    environment:
+      NODE_ENV: production
+      PORT: 3015
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      SENDGRID_API_KEY: ${SENDGRID_API_KEY:?err}
+      TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID:?err}
+      TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN:?err}
+      TWILIO_PHONE_NUMBER: ${TWILIO_PHONE_NUMBER:?err}
+    depends_on:
+      - redis
+    networks:
+      - azeebo_network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3015"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+  # Media Service (S3 Upload & CDN)
+  media-service:
+    build:
+      context: ./services/media-service
+      dockerfile: Dockerfile
+    container_name: azeebo_media_service
+    ports:
+      - "3019:3019"
+    environment:
+      NODE_ENV: production
+      PORT: 3019
+      AWS_REGION: us-east-1
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AWS_S3_BUCKET: azeebo-media
+      CDN_URL: ${CDN_URL}
+    depends_on:
+      - redis
+    networks:
+      - azeebo_network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3019/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+  # Lifestyle Service (Culture Stories & Events)
+  lifestyle-service:
+    build:
+      context: ./services/lifestyle-service
+      dockerfile: Dockerfile
+    container_name: azeebo_lifestyle_service
+    ports:
+      - "3016:3016"
+    environment:
+      NODE_ENV: production
+      PORT: 3016
+      DATABASE_URL: ${DATABASE_URL}
+    depends_on:
+      - postgres
+    networks:
+      - azeebo_network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3016/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+  # Vertical Service (Universe Map & Character Management)
+  vertical-service:
+    build:
+      context: ./services/vertical-service
+      dockerfile: Dockerfile
+    container_name: azeebo_vertical_service
+    ports:
+      - "3017:3017"
+    environment:
+      NODE_ENV: production
+      PORT: 3017
+      DATABASE_URL: ${DATABASE_URL}
+    depends_on:
+      - postgres
+    networks:
+      - azeebo_network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3017/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+  # Web App
+  web-app:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile
+    container_name: azeebo_web_app
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:3001
+    depends_on:
+      - auth-service
+      - user-service
+      - content-service
+    networks:
+      - azeebo_network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000"]
+      interval: 30s
+      timeout: 5s
+      retries: 5

@@ -1,0 +1,53 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "noImplicitThis": true,
+    "alwaysStrict": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "target": "ES2020",
+    "module": "commonjs",
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "esModuleInterop": true,
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "jsx": "react",
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "paths": {
+      "@azeebo/ui": ["./packages/ui/src"],
+      "@azeebo/ui/*": ["./packages/ui/src/*"],
+      "@azeebo/design-tokens": ["./packages/design-tokens/src"],
+      "@azeebo/design-tokens/*": ["./packages/design-tokens/src/*"],
+      "@azeebo/analytics-sdk": ["./packages/analytics-sdk/src"],
+      "@azeebo/analytics-sdk/*": ["./packages/analytics-sdk/src/*"],
+      "@azeebo/api-client": ["./packages/api-client/src"],
+      "@azeebo/api-client/*": ["./packages/api-client/src/*"],
+      "@azeebo/shared-types": ["./packages/shared-types/src"],
+      "@azeebo/shared-types/*": ["./packages/shared-types/src/*"],
+      "@azeebo/utils": ["./packages/utils/src"],
+      "@azeebo/utils/*": ["./packages/utils/src/*"]
+    }
+  },
+  "include": ["**/*.ts", "**/*.tsx"],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/*.e2e.ts",
+    "**/*.e2e.tsx",
+    "**/*.spec.ts",
+    "**/*.spec.tsx",
+    "**/detox.setup.ts",
+    "**/detox.setup.js",
+    "**/e2e/**",
+    "apps/web/e2e/**",
+    "apps/mobile/e2e/**",
+    "services/api-gateway/src/app.e2e-spec.ts"
+  ]
+}

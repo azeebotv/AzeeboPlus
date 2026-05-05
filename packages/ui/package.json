@@ -1,0 +1,21 @@
+{
+  "name": "@azeebo/ui",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Azeebo+ UI components",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "watch": "tsc -p tsconfig.json --watch"
+  },
+  "dependencies": {
+    "@azeebo/design-tokens": "workspace:*",
+    "react": "^18.3.1",
+    "react-native": "^0.76.5"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.12",
+    "typescript": "^5.3.3"
+  }
+}

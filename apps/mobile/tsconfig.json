@@ -1,0 +1,29 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "baseUrl": "./",
+    "paths": {
+      "@azeebo/*": [
+        "../../packages/*/src"
+      ],
+      "@auth/*": [
+        "./*"
+      ]
+    }
+  },
+  "include": [
+    "src/**/*",
+    ".expo/types/**/*.ts",
+    "expo-env.d.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/*.test.ts",
+    "**/*.spec.ts",
+    "detox.setup.ts",
+    "e2e"
+  ]
+}

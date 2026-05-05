@@ -1,0 +1,375 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                    String   @id @default(uuid())
+  email                 String   @unique
+  password              String
+  displayName           String
+  avatar                String?
+  role                  String   @default("user")
+  preferences           Json?
+  notificationPreferences Json?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  watchHistory WatchHistory[]
+  savedItems   SavedItem[]
+  wallet       Wallet?
+  notifications Notification[]
+  contentItems ContentItem[]
+  creatorProfile CreatorProfile?
+  rewardAccount RewardAccount?
+  paymentIntents PaymentIntent[]
+  missionCompletions MissionCompletion[]
+  rewardRedemptions RewardRedemption[]
+  pointsLedger PointsLedger[]
+
+  @@map("users")
+}
+
+model WatchHistory {
+  id          String   @id @default(uuid())
+  userId      String
+  contentId   String
+  contentType String
+  watchedAt   DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("watch_history")
+  @@unique([userId, contentId])
+}
+
+model SavedItem {
+  id        String   @id @default(uuid())
+  userId    String
+  contentId String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("saved_items")
+  @@unique([userId, contentId])
+}
+
+model Wallet {
+  id           String   @id @default(uuid())
+  userId       String   @unique
+  balance      Decimal  @db.Numeric(19, 4) @default(0)
+  bonusBalance Decimal  @db.Numeric(19, 4) @default(0)
+  promoBalance Decimal  @db.Numeric(19, 4) @default(0)
+  currency     String   @default("NGN")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions WalletTransaction[]
+
+  @@map("wallets")
+}
+
+model WalletTransaction {
+  id           String   @id @default(uuid())
+  walletId     String
+  type         String   // credit, debit, bonus, promo, refund
+  amount       Decimal  @db.Numeric(19, 4)
+  status       String   // pending, completed, failed, reversed
+  description  String?
+  reference    String?
+  metadata     Json?
+  createdAt    DateTime @default(now())
+
+  wallet Wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  @@map("wallet_transactions")
+}
+
+model Notification {
+  id          String   @id @default(uuid())
+  userId      String
+  type        String   // system, payment, reward, content, social
+  title       String
+  message     String
+  metadata    Json?
+  readAt      DateTime?
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+model PaymentIntent {
+  id                String   @id @default(uuid())
+  userId            String
+  amount            Decimal  @db.Numeric(19, 4)
+  currency          String   @default("NGN")
+  status            String   // pending, processing, completed, failed, refunded
+  description       String?
+  providerReference String?
+  metadata          Json?
+  completedAt       DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  refunds  Refund[]
+
+  @@map("payment_intents")
+}
+
+model Refund {
+  id                String   @id @default(uuid())
+  paymentIntentId   String
+  amount            Decimal  @db.Numeric(19, 4)
+  reason            String
+  status            String   // pending, processing, completed, failed
+  providerReference String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  paymentIntent PaymentIntent @relation(fields: [paymentIntentId], references: [id], onDelete: Cascade)
+
+  @@map("refunds")
+}
+
+model Universe {
+  id          String   @id @default(uuid())
+  name        String   @unique // reality, creator, lifestyle, vertical, movie, games, comedy, sports
+  displayName String
+  description String?
+  icon        String?
+  color       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  contentItems ContentItem[]
+
+  @@map("universes")
+}
+
+model Category {
+  id          String   @id @default(uuid())
+  name        String
+  slug        String   @unique
+  description String?
+  icon        String?
+  color       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  contentItems ContentItem[]
+
+  @@map("categories")
+}
+
+model Tag {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  contentItems ContentItem[]
+
+  @@map("tags")
+}
+
+model ContentItem {
+  id            String   @id @default(uuid())
+  title         String
+  description   String?
+  thumbnail     String
+  mediaUrl      String?
+  universeId    String
+  creatorId     String
+  status        String   // draft, pending, published, archived
+  viewCount     Int      @default(0)
+  metadata      Json?
+  publishedAt   DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  universe    Universe    @relation(fields: [universeId], references: [id], onDelete: Cascade)
+  creator     User        @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  mediaAsset  MediaAsset?
+  categories  Category[]
+  tags        Tag[]
+
+  @@map("content_items")
+}
+
+model MediaAsset {
+  id            String   @id @default(uuid())
+  contentItemId String   @unique
+  originalUrl   String
+  thumbnailUrl  String?
+  format        String
+  size          Int
+  duration      Int?
+  metadata      Json?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  contentItem ContentItem @relation(fields: [contentItemId], references: [id], onDelete: Cascade)
+
+  @@map("media_assets")
+}
+
+model CreatorProfile {
+  id              String   @id @default(uuid())
+  userId          String   @unique
+  bio             String?
+  banner          String?
+  socialLinks     Json?
+  verified        Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("creator_profiles")
+}
+
+model RewardAccount {
+  id            String   @id @default(uuid())
+  userId        String   @unique
+  points        Int      @default(0)
+  levelId       String
+  streak        Int      @default(0)
+  lastLoginAt   DateTime @default(now())
+  lastCheckInAt DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  level  Level  @relation(fields: [levelId], references: [id])
+  badges Badge[]
+
+  @@map("reward_accounts")
+}
+
+model Level {
+  id        String   @id @default(uuid())
+  name      String
+  rank      Int      @unique
+  minPoints Int
+  icon      String?
+  color     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  rewardAccounts RewardAccount[]
+
+  @@map("levels")
+}
+
+model Badge {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  icon        String
+  points      Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  rewardAccounts RewardAccount[]
+
+  @@map("badges")
+}
+
+model Mission {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  points      Int
+  type        String   // daily, weekly, monthly, one-time
+  isActive    Boolean  @default(true)
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  rewards MissionReward[]
+  completions MissionCompletion[]
+
+  @@map("missions")
+}
+
+model MissionReward {
+  id          String   @id @default(uuid())
+  missionId   String
+  rewardId    String
+  quantity    Int      @default(1)
+  createdAt   DateTime @default(now())
+
+  mission Mission @relation(fields: [missionId], references: [id], onDelete: Cascade)
+  reward  Reward  @relation(fields: [rewardId], references: [id])
+
+  @@map("mission_rewards")
+}
+
+model MissionCompletion {
+  id          String   @id @default(uuid())
+  userId      String
+  missionId   String
+  completedAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mission Mission @relation(fields: [missionId], references: [id], onDelete: Cascade)
+
+  @@map("mission_completions")
+  @@unique([userId, missionId])
+}
+
+model Reward {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  cost        Int
+  type        String   // points, bonus, promo
+  metadata    Json?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  redemptions RewardRedemption[]
+  missionRewards MissionReward[]
+
+  @@map("rewards")
+}
+
+model RewardRedemption {
+  id          String   @id @default(uuid())
+  userId      String
+  rewardId    String
+  pointsCost  Int
+  redeemedAt  DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reward Reward @relation(fields: [rewardId], references: [id])
+
+  @@map("reward_redemptions")
+}
+
+model PointsLedger {
+  id          String   @id @default(uuid())
+  userId      String
+  points      Int
+  type        String   // credit, debit
+  reason      String
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("points_ledger")
+}

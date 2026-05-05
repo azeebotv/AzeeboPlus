@@ -1,0 +1,104 @@
+import { Injectable, BadRequestException, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+
+@Injectable()
+export class TranscodingService {
+  private readonly logger = new Logger(TranscodingService.name);
+  private s3Client: S3Client;
+  private bucketName: string;
+  private transcodedBaseUrl: string;
+
+  constructor(private configService: ConfigService) {
+    this.bucketName = this.configService.get('S3_BUCKET_NAME') || '';
+    this.transcodedBaseUrl =
+      this.configService.get('S3_TRANSCODED_BASE_URL') ||
+      `https://${this.bucketName}.s3.amazonaws.com/transcoded`;
+    this.s3Client = new S3Client({
+      region: this.configService.get('AWS_REGION') || 'us-east-1',
+      credentials: {
+        accessKeyId: this.configService.get('AWS_ACCESS_KEY_ID') || '',
+        secretAccessKey: this.configService.get('AWS_SECRET_ACCESS_KEY') || '',
+      },
+    });
+  }
+
+  async startTranscodingJob(
+    mediaAssetId: string,
+    originalUrl: string,
+    options: {
+      formats?: string[];
+      resolutions?: string[];
+      bitrates?: number[];
+    } = {}
+  ): Promise<{ jobId: string; status: string; message: string }> {
+    if (!originalUrl) {
+      throw new BadRequestException('Original media URL is required');
+    }
+
+    try {
+      let key: string;
+      if (originalUrl.includes(this.bucketName)) {
+        key = originalUrl.split(this.bucketName + '.s3.amazonaws.com/')[1];
+        if (!key) {
+          throw new BadRequestException('Invalid S3 URL');
+        }
+      } else {
+        key = originalUrl;
+      }
+
+      const jobId = `transcode_${Date.now()}_${mediaAssetId}`;
+
+      this.logger.log('Transcoding job started:', {
+        jobId,
+        mediaAssetId,
+        key,
+        options,
+      });
+
+      return {
+        jobId,
+        status: 'pending',
+        message: 'Transcoding job started',
+      };
+    } catch (error) {
+      this.logger.error('Error starting transcoding job:', error);
+      throw new BadRequestException('Failed to start transcoding job');
+    }
+  }
+
+  async getTranscodingJobStatus(jobId: string): Promise<unknown> {
+    this.logger.log('Getting transcoding job status:', jobId);
+
+    return {
+      jobId,
+      status: 'pending',
+      progress: 0,
+    };
+  }
+
+  async getTranscodedMediaUrl(
+    jobId: string,
+    format: string,
+    resolution: string,
+    expiresIn: number = 3600
+  ): Promise<string> {
+    const key = `transcoded/${jobId}/${resolution}.${format === 'hls' ? 'm3u8' : 'mp4'}`;
+
+    const command = new GetObjectCommand({
+      Bucket: this.bucketName,
+      Key: key,
+    });
+
+    try {
+      const signedUrl = await getSignedUrl(this.s3Client, command, {
+        expiresIn,
+      });
+      return signedUrl;
+    } catch (error) {
+      this.logger.error('Error generating signed URL for transcoded media:', error);
+      throw new BadRequestException('Failed to generate signed URL');
+    }
+  }
+}

@@ -1,0 +1,138 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model UniverseMap {
+  id          String   @id @default(uuid())
+  name        String
+  slug        String   @unique
+  description String?
+  imageUrl    String?
+  data        Json?
+  status      String   @default("active")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  characters  Character[]
+  locations   Location[]
+  timeline    TimelineEvent[]
+
+  @@index([slug])
+  @@index([status])
+}
+
+model Location {
+  id          String   @id @default(uuid())
+  name        String
+  slug        String   @unique
+  description String?
+  imageUrl    String?
+  latitude    Float?
+  longitude   Float?
+  universeId  String
+  parentId    String?
+  data        Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  universe    UniverseMap @relation(fields: [universeId], references: [id], onDelete: Cascade)
+  parent      Location?   @relation("LocationHierarchy", fields: [parentId], references: [id])
+  children    Location[]  @relation("LocationHierarchy")
+  characters  CharacterLocation[]
+  timeline    TimelineEvent[]
+
+  @@index([universeId])
+  @@index([parentId])
+}
+
+model Character {
+  id          String   @id @default(uuid())
+  name        String
+  slug        String   @unique
+  description String?
+  avatarUrl   String?
+  role        String?
+  status      String   @default("active")
+  universeId  String
+  birthDate   DateTime?
+  data        Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  universe    UniverseMap @relation(fields: [universeId], references: [id], onDelete: Cascade)
+  locations   CharacterLocation[]
+  relationshipsFrom CharacterRelationship[] @relation("CharacterFrom")
+  relationshipsTo   CharacterRelationship[] @relation("CharacterTo")
+  timeline    TimelineEvent[]
+
+  @@index([universeId])
+  @@index([slug])
+}
+
+model CharacterLocation {
+  id          String   @id @default(uuid())
+  characterId String
+  locationId  String
+  role        String?
+  description String?
+  firstSeenAt DateTime?
+  lastSeenAt  DateTime?
+  createdAt   DateTime @default(now())
+
+  character   Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  location    Location  @relation(fields: [locationId], references: [id], onDelete: Cascade)
+
+  @@unique([characterId, locationId])
+  @@index([characterId])
+  @@index([locationId])
+}
+
+model CharacterRelationship {
+  id          String   @id @default(uuid())
+  fromId      String
+  toId        String
+  type        String
+  description String?
+  startDate   DateTime?
+  endDate     DateTime?
+  isOfficial  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  from   Character @relation("CharacterFrom", fields: [fromId], references: [id], onDelete: Cascade)
+  to     Character @relation("CharacterTo", fields: [toId], references: [id], onDelete: Cascade)
+
+  @@index([fromId])
+  @@index([toId])
+  @@index([type])
+}
+
+model TimelineEvent {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  date        DateTime
+  endDate     DateTime?
+  type        String
+  importance  String   @default("normal")
+  universeId  String
+  characterId String?
+  locationId  String?
+  data        Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  universe    UniverseMap @relation(fields: [universeId], references: [id], onDelete: Cascade)
+  character   Character?  @relation(fields: [characterId], references: [id])
+  location    Location?   @relation(fields: [locationId], references: [id])
+
+  @@index([universeId])
+  @@index([characterId])
+  @@index([date])
+}
