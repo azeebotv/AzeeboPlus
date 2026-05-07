@@ -30,8 +30,8 @@ export default function Home(): JSX.Element {
         if (trendingRes.success && trendingRes.data) {
           setTrendingContent(trendingRes.data);
         }
-      } catch (err) {
-        console.error('Failed to fetch content:', err);
+      } catch {
+        // Error handling is intentionally minimal - content will show as empty
       } finally {
         setIsLoading(false);
       }

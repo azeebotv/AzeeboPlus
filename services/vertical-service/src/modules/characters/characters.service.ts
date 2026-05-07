@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 
-interface Character {
+export interface Character {
   id: string;
   name: string;
   slug: string;
@@ -15,7 +15,7 @@ interface Character {
   createdAt: string;
 }
 
-interface Relationship {
+export interface Relationship {
   id: string;
   fromId: string;
   fromName: string;
@@ -26,20 +26,45 @@ interface Relationship {
   isOfficial: boolean;
 }
 
+interface PaginatedResponse<T> {
+  success: boolean;
+  data: {
+    items: T[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+}
+
+interface SingleResponse<T> {
+  success: boolean;
+  data: T;
+}
+
+interface ListResponse<T> {
+  success: boolean;
+  data: T[];
+}
+
 @Injectable()
 export class CharactersService {
   constructor(private prisma: PrismaService) {}
 
-  async getCharacters(page = 1, limit = 20, universeSlug?: string) {
+  async getCharacters(
+    page = 1,
+    limit = 20,
+    universeSlug?: string
+  ): Promise<PaginatedResponse<Character>> {
     const skip = (page - 1) * limit;
-    let where = {};
+    const where: { universeId?: string } = {};
 
     if (universeSlug) {
       const universe = await this.prisma.universeMap.findUnique({
         where: { slug: universeSlug },
       });
       if (universe) {
-        where = { universeId: universe.id };
+        where.universeId = universe.id;
       }
     }
 
@@ -79,7 +104,9 @@ export class CharactersService {
     };
   }
 
-  async getCharacterBySlug(slug: string) {
+  async getCharacterBySlug(
+    slug: string
+  ): Promise<SingleResponse<Character & { relationships: Relationship[] }>> {
     const character = await this.prisma.character.findUnique({
       where: { slug },
       include: { universe: true, _count: { select: { locations: true } } },
@@ -128,7 +155,7 @@ export class CharactersService {
     };
   }
 
-  async getCharacterRelationships(slug: string) {
+  async getCharacterRelationships(slug: string): Promise<ListResponse<Relationship>> {
     const character = await this.prisma.character.findUnique({
       where: { slug },
     });
@@ -165,8 +192,11 @@ export class CharactersService {
     universeId: string;
     role?: string;
     avatarUrl?: string;
-  }) {
-    const slug = data.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+  }): Promise<SingleResponse<Character>> {
+    const slug = data.name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '');
 
     const character = await this.prisma.character.create({
       data: {
@@ -200,10 +230,7 @@ export class CharactersService {
     };
   }
 
-  async updateCharacter(
-    id: string,
-    data: Partial<Character>,
-  ) {
+  async updateCharacter(id: string, data: Partial<Character>): Promise<SingleResponse<Character>> {
     const characterIndex = await this.prisma.character.findUnique({ where: { id } });
     if (!characterIndex) {
       throw new NotFoundException(`Character not found: ${id}`);
@@ -243,8 +270,8 @@ export class CharactersService {
 
   async addRelationship(
     fromId: string,
-    data: { toId: string; type: string; description?: string },
-  ) {
+    data: { toId: string; type: string; description?: string }
+  ): Promise<SingleResponse<Relationship>> {
     const fromCharacter = await this.prisma.character.findUnique({ where: { id: fromId } });
     const toCharacter = await this.prisma.character.findUnique({ where: { id: data.toId } });
     if (!fromCharacter || !toCharacter) {

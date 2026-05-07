@@ -5,6 +5,7 @@ import { UserManagementModule } from './modules/user-management/user-management.
 import { ContentManagementModule } from './modules/content-management/content-management.module';
 import { ModerationModule } from './modules/moderation/moderation.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
+import { AuditModule } from './modules/audit/audit.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
     ContentManagementModule,
     ModerationModule,
     DashboardModule,
+    AuditModule,
   ],
 })
 export class AppModule {}

@@ -1,4 +1,14 @@
-import { Controller, Post, Body, Get, UseGuards, Request, HttpCode, HttpStatus, Headers } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Get,
+  UseGuards,
+  Request,
+  HttpCode,
+  HttpStatus,
+  Headers,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 
@@ -6,7 +16,12 @@ import { PaymentsService } from './payments.service';
 import { InitializePaymentDto } from './dto/initialize-payment.dto';
 import { VerifyPaymentDto } from './dto/verify-payment.dto';
 import { RequestRefundDto } from './dto/request-refund.dto';
-import { PaymentResponse } from './interfaces/payment-response.interface';
+import {
+  PaymentResponse,
+  InitializePaymentResponse,
+  VerifyPaymentResponse,
+  TransactionHistoryResponse,
+} from './interfaces/payment-response.interface';
 
 @ApiTags('Payments')
 @Controller('payments')
@@ -21,8 +36,8 @@ export class PaymentsController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async initializePayment(
     @Request() req: { user: { sub: string } },
-    @Body() initializePaymentDto: InitializePaymentDto,
-  ): Promise<PaymentResponse> {
+    @Body() initializePaymentDto: InitializePaymentDto
+  ): Promise<InitializePaymentResponse> {
     return this.paymentsService.initializePayment(req.user.sub, initializePaymentDto);
   }
 
@@ -35,8 +50,8 @@ export class PaymentsController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async verifyPayment(
     @Request() req: { user: { sub: string } },
-    @Body() verifyPaymentDto: VerifyPaymentDto,
-  ): Promise<PaymentResponse> {
+    @Body() verifyPaymentDto: VerifyPaymentDto
+  ): Promise<VerifyPaymentResponse> {
     return this.paymentsService.verifyPayment(req.user.sub, verifyPaymentDto.transactionId);
   }
 
@@ -45,7 +60,9 @@ export class PaymentsController {
   @ApiOperation({ summary: 'Get payment history' })
   @ApiResponse({ status: 200, description: 'Payment history' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getPaymentHistory(@Request() req: { user: { sub: string } }) {
+  async getPaymentHistory(
+    @Request() req: { user: { sub: string } }
+  ): Promise<TransactionHistoryResponse> {
     return this.paymentsService.getPaymentHistory(req.user.sub);
   }
 
@@ -53,7 +70,10 @@ export class PaymentsController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Payment provider webhook' })
   @ApiResponse({ status: 200, description: 'Webhook processed' })
-  async handleWebhook(@Body() body: any, @Headers('x-paystack-signature') signature: string) {
+  async handleWebhook(
+    @Body() body: Record<string, unknown>,
+    @Headers('x-paystack-signature') signature?: string
+  ): Promise<PaymentResponse> {
     return this.paymentsService.handleWebhook(body, signature);
   }
 
@@ -65,8 +85,12 @@ export class PaymentsController {
   @ApiResponse({ status: 400, description: 'Invalid request' })
   async requestRefund(
     @Request() req: { user: { sub: string } },
-    @Body() requestRefundDto: RequestRefundDto,
+    @Body() requestRefundDto: RequestRefundDto
   ): Promise<PaymentResponse> {
-    return this.paymentsService.requestRefund(req.user.sub, requestRefundDto.transactionId, requestRefundDto.reason);
+    return this.paymentsService.requestRefund(
+      req.user.sub,
+      requestRefundDto.transactionId,
+      requestRefundDto.reason
+    );
   }
 }

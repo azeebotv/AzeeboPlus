@@ -49,10 +49,24 @@ export const paymentApi = {
   getTransactions: async (
     page = 1,
     limit = 20
-  ): Promise<ApiResponse<{ items: Transaction[]; total: number; page: number; limit: number; totalPages: number }>> => {
-    return apiClient.get<ApiResponse<{ items: Transaction[]; total: number; page: number; limit: number; totalPages: number }>>(
-      `/payments/transactions?page=${page}&limit=${limit}`
-    );
+  ): Promise<
+    ApiResponse<{
+      items: Transaction[];
+      total: number;
+      page: number;
+      limit: number;
+      totalPages: number;
+    }>
+  > => {
+    return apiClient.get<
+      ApiResponse<{
+        items: Transaction[];
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
+      }>
+    >(`/payments/transactions?page=${page}&limit=${limit}`);
   },
 
   getProviders: async (): Promise<ApiResponse<{ provider: string; name: string }[]>> => {

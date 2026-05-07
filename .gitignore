@@ -6,6 +6,10 @@ dist/
 build/
 .next/
 out/
+.expo/
+
+# Per-package node_modules
+**/node_modules/
 
 # Environment files - NEVER COMMIT THESE
 .env

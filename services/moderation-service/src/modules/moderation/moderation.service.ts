@@ -1,6 +1,7 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { ModerationResponse } from './interfaces/moderation-response.interface';
+import { SafetyScanningService, ScanRequest, ScanResult } from './safety-scanning.service';
 
 interface ReportData {
   type: string;
@@ -26,7 +27,35 @@ interface SafetyFilters {
 
 @Injectable()
 export class ModerationService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly logger = new Logger(ModerationService.name);
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly safetyScanningService: SafetyScanningService
+  ) {}
+
+  async scanContentMedia(request: ScanRequest): Promise<{ scanId: string; result: ScanResult }> {
+    return this.safetyScanningService.scanAndPersist(request);
+  }
+
+  async checkContentSafety(contentId: string): Promise<ModerationResponse> {
+    const result = await this.safetyScanningService.checkContentSafety(contentId);
+    return {
+      success: true,
+      data: result,
+    };
+  }
+
+  async getScanById(scanId: string): Promise<ModerationResponse> {
+    const scan = await this.safetyScanningService.getScanById(scanId);
+    if (!scan) {
+      throw new NotFoundException('Scan not found');
+    }
+    return {
+      success: true,
+      data: scan,
+    };
+  }
 
   async reportContent(
     reportingUserId: string,
@@ -190,7 +219,7 @@ export class ModerationService {
     }
 
     if (successfulAppeals > 0) {
-      trustScore -= successfulAppeals * 10;
+      trustScore += successfulAppeals * 10;
     }
 
     trustScore = Math.max(0, Math.min(100, Math.round(trustScore)));
@@ -294,7 +323,7 @@ export class ModerationService {
     moderatorId: string,
     actionData: SafetyActionData
   ): Promise<ModerationResponse> {
-    const { type, targetId, targetType } = actionData;
+    const { type, targetId, targetType, reason, duration } = actionData;
 
     const validActions = ['remove', 'hide', 'warn', 'suspend', 'ban', 'shadow_ban'];
     if (!validActions.includes(type)) {
@@ -352,6 +381,17 @@ export class ModerationService {
       await this.updateTrustScore(targetId, type);
     }
 
+    await this.prisma.safetyAction.create({
+      data: {
+        type,
+        targetId,
+        targetType,
+        reason,
+        moderatorId,
+        duration,
+      },
+    });
+
     return {
       success: true,
       data: {
@@ -363,8 +403,10 @@ export class ModerationService {
     };
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async getSafetyActions(moderatorId: string, _?: SafetyFilters): Promise<ModerationResponse> {
+  async getSafetyActions(
+    moderatorId: string,
+    filters?: SafetyFilters
+  ): Promise<ModerationResponse> {
     const moderator = await this.prisma.user.findUnique({
       where: { id: moderatorId },
     });
@@ -373,30 +415,35 @@ export class ModerationService {
       throw new BadRequestException('Not authorized to view safety actions');
     }
 
-    const mockActions = [
-      {
-        id: '1',
-        type: 'remove',
-        targetId: 'content-123',
-        targetType: 'content',
-        reason: 'Violates community guidelines',
-        moderatorId,
-        createdAt: new Date().toISOString(),
-      },
-      {
-        id: '2',
-        type: 'warn',
-        targetId: 'user-456',
-        targetType: 'user',
-        reason: 'Spamming',
-        moderatorId,
-        createdAt: new Date().toISOString(),
-      },
-    ];
+    const where: Record<string, unknown> = {};
+
+    if (filters?.targetType) {
+      where.targetType = filters.targetType;
+    }
+
+    if (filters?.actionType) {
+      where.type = filters.actionType;
+    }
+
+    if (filters?.startDate) {
+      where.createdAt = where.createdAt || {};
+      (where.createdAt as Record<string, unknown>).gte = new Date(filters.startDate);
+    }
+
+    if (filters?.endDate) {
+      where.createdAt = where.createdAt || {};
+      (where.createdAt as Record<string, unknown>).lte = new Date(filters.endDate);
+    }
+
+    const actions = await this.prisma.safetyAction.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      take: 100,
+    });
 
     return {
       success: true,
-      data: mockActions,
+      data: actions,
     };
   }
 

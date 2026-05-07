@@ -26,10 +26,24 @@ export const walletApi = {
   getTransactions: async (
     page = 1,
     limit = 20
-  ): Promise<ApiResponse<{ items: Transaction[]; total: number; page: number; limit: number; totalPages: number }>> => {
-    return apiClient.get<ApiResponse<{ items: Transaction[]; total: number; page: number; limit: number; totalPages: number }>>(
-      `/wallet/transactions?page=${page}&limit=${limit}`
-    );
+  ): Promise<
+    ApiResponse<{
+      items: Transaction[];
+      total: number;
+      page: number;
+      limit: number;
+      totalPages: number;
+    }>
+  > => {
+    return apiClient.get<
+      ApiResponse<{
+        items: Transaction[];
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
+      }>
+    >(`/wallet/transactions?page=${page}&limit=${limit}`);
   },
 
   fundWallet: async (data: {
@@ -37,7 +51,10 @@ export const walletApi = {
     provider: 'paystack' | 'flutterwave';
     email: string;
   }): Promise<ApiResponse<{ authorizationUrl: string; reference: string }>> => {
-    return apiClient.post<ApiResponse<{ authorizationUrl: string; reference: string }>>('/wallet/fund', data);
+    return apiClient.post<ApiResponse<{ authorizationUrl: string; reference: string }>>(
+      '/wallet/fund',
+      data
+    );
   },
 
   withdraw: async (data: {

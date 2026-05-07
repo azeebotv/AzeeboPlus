@@ -27,11 +27,16 @@ export interface ApiResponse<T> {
 }
 
 export const universeApi = {
-  getUniverses: async (page = 1, limit = 100): Promise<ApiResponse<PaginatedResponse<Universe>>> => {
-    const response = await apiClient.get<PaginatedResponse<Universe>>(`/universe?page=${page}&limit=${limit}`);
+  getUniverses: async (
+    page = 1,
+    limit = 100
+  ): Promise<ApiResponse<PaginatedResponse<Universe>>> => {
+    const response = await apiClient.get<PaginatedResponse<Universe>>(
+      `/universe?page=${page}&limit=${limit}`
+    );
     return {
       success: true,
-      data: response
+      data: response,
     };
   },
 };

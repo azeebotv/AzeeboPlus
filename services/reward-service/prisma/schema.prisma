@@ -64,9 +64,9 @@ model SavedItem {
 model Wallet {
   id           String   @id @default(uuid())
   userId       String   @unique
-  balance      Decimal  @db.Numeric(19, 4) @default(0)
-  bonusBalance Decimal  @db.Numeric(19, 4) @default(0)
-  promoBalance Decimal  @db.Numeric(19, 4) @default(0)
+  balance      Decimal   @default(0)
+  bonusBalance Decimal   @default(0)
+  promoBalance Decimal   @default(0)
   currency     String   @default("NGN")
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -81,7 +81,7 @@ model WalletTransaction {
   id           String   @id @default(uuid())
   walletId     String
   type         String   // credit, debit, bonus, promo, refund
-  amount       Decimal  @db.Numeric(19, 4)
+  amount       Decimal  
   status       String   // pending, completed, failed, reversed
   description  String?
   reference    String?
@@ -111,7 +111,7 @@ model Notification {
 model PaymentIntent {
   id                String   @id @default(uuid())
   userId            String
-  amount            Decimal  @db.Numeric(19, 4)
+  amount            Decimal  
   currency          String   @default("NGN")
   status            String   // pending, processing, completed, failed, refunded
   description       String?
@@ -130,7 +130,7 @@ model PaymentIntent {
 model Refund {
   id                String   @id @default(uuid())
   paymentIntentId   String
-  amount            Decimal  @db.Numeric(19, 4)
+  amount            Decimal  
   reason            String
   status            String   // pending, processing, completed, failed
   providerReference String?

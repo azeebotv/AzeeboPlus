@@ -3,11 +3,50 @@ import { PrismaService } from '../database/prisma.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UpdateUniverseAffinityDto } from './dto/update-universe-affinity.dto';
 
+interface UserResponse {
+  id: string;
+  email: string;
+  displayName: string | null;
+  avatar: string | null;
+  role: string;
+  preferences: Record<string, unknown> | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+interface WatchHistoryItem {
+  id: string;
+  userId: string;
+  contentId: string;
+  contentType: string;
+  universe: string;
+  progress: number;
+  createdAt: Date;
+}
+
+interface SavedItem {
+  id: string;
+  userId: string;
+  contentId: string;
+  createdAt: Date;
+}
+
+interface UniverseAffinityResponse {
+  userId: string;
+  interests: string[];
+  universeAffinity: Record<string, number>;
+  topUniverses: string[];
+}
+
+interface MessageResponse {
+  message: string;
+}
+
 @Injectable()
 export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findById(id: string) {
+  async findById(id: string): Promise<UserResponse> {
     const user = await this.prisma.user.findUnique({
       where: { id },
       select: {
@@ -26,10 +65,10 @@ export class UsersService {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
 
-    return user;
+    return user as UserResponse;
   }
 
-  async update(id: string, updateUserDto: UpdateUserDto) {
+  async update(id: string, updateUserDto: UpdateUserDto): Promise<UserResponse> {
     const user = await this.prisma.user.update({
       where: { id },
       data: {
@@ -48,10 +87,10 @@ export class UsersService {
       },
     });
 
-    return user;
+    return user as UserResponse;
   }
 
-  async getPreferences(userId: string) {
+  async getPreferences(userId: string): Promise<Record<string, unknown>> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       select: { preferences: true },
@@ -61,10 +100,13 @@ export class UsersService {
       throw new NotFoundException(`User with ID ${userId} not found`);
     }
 
-    return (user.preferences || {}) as any;
+    return (user.preferences || {}) as Record<string, unknown>;
   }
 
-  async updatePreferences(userId: string, preferences: Record<string, any>) {
+  async updatePreferences(
+    userId: string,
+    preferences: Record<string, unknown>
+  ): Promise<Record<string, unknown>> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
     });
@@ -73,7 +115,7 @@ export class UsersService {
       throw new NotFoundException(`User with ID ${userId} not found`);
     }
 
-    const existingPrefs = (user.preferences || {}) as any;
+    const existingPrefs = (user.preferences || {}) as Record<string, unknown>;
 
     const updatedUser = await this.prisma.user.update({
       where: { id: userId },
@@ -86,25 +128,25 @@ export class UsersService {
       },
     });
 
-    return updatedUser.preferences;
+    return (updatedUser.preferences || {}) as Record<string, unknown>;
   }
 
-  async getWatchHistory(userId: string) {
+  async getWatchHistory(userId: string): Promise<WatchHistoryItem[]> {
     return this.prisma.watchHistory.findMany({
       where: { userId },
       orderBy: { createdAt: 'desc' },
       take: 50,
-    });
+    }) as Promise<WatchHistoryItem[]>;
   }
 
-  async getSavedItems(userId: string) {
+  async getSavedItems(userId: string): Promise<SavedItem[]> {
     return this.prisma.savedItem.findMany({
       where: { userId },
       orderBy: { createdAt: 'desc' },
-    });
+    }) as Promise<SavedItem[]>;
   }
 
-  async saveItem(userId: string, contentId: string) {
+  async saveItem(userId: string, contentId: string): Promise<MessageResponse> {
     const existing = await this.prisma.savedItem.findUnique({
       where: { userId_contentId: { userId, contentId } },
     });
@@ -120,7 +162,7 @@ export class UsersService {
     return { message: 'Item saved successfully' };
   }
 
-  async unsaveItem(userId: string, contentId: string) {
+  async unsaveItem(userId: string, contentId: string): Promise<MessageResponse> {
     const existing = await this.prisma.savedItem.findUnique({
       where: { userId_contentId: { userId, contentId } },
     });
@@ -136,7 +178,7 @@ export class UsersService {
     return { message: 'Item unsaved' };
   }
 
-  async getUniverseAffinity(userId: string) {
+  async getUniverseAffinity(userId: string): Promise<UniverseAffinityResponse> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       select: {
@@ -154,14 +196,13 @@ export class UsersService {
       throw new NotFoundException(`User with ID ${userId} not found`);
     }
 
-    // Calculate universe affinity based on watch history
     const universeCounts: Record<string, number> = {};
-    (user.watchHistory as unknown[]).forEach((history) => {
+    (user.watchHistory as Array<{ universe?: string }>).forEach((history) => {
       const universe = history.universe || 'unknown';
       universeCounts[universe] = (universeCounts[universe] || 0) + 1;
     });
 
-    const prefs = (user.preferences || {}) as any;
+    const prefs = (user.preferences || {}) as { interests?: string[] };
     return {
       userId,
       interests: prefs.interests || [],
@@ -173,7 +214,10 @@ export class UsersService {
     };
   }
 
-  async updateUniverseAffinity(userId: string, dto: UpdateUniverseAffinityDto) {
+  async updateUniverseAffinity(
+    userId: string,
+    dto: UpdateUniverseAffinityDto
+  ): Promise<{ message: string; interests: string[] }> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
     });
@@ -182,7 +226,7 @@ export class UsersService {
       throw new NotFoundException(`User with ID ${userId} not found`);
     }
 
-    const existingPrefs = (user.preferences || {}) as any;
+    const existingPrefs = (user.preferences || {}) as { interests?: string[] };
 
     const updatedUser = await this.prisma.user.update({
       where: { id: userId },
@@ -195,7 +239,7 @@ export class UsersService {
       },
     });
 
-    const newPrefs = (updatedUser.preferences || {}) as any;
+    const newPrefs = (updatedUser.preferences || {}) as { interests?: string[] };
     return {
       message: 'Universe affinity updated',
       interests: newPrefs.interests || [],

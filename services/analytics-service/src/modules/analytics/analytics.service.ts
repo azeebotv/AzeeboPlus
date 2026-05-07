@@ -1,5 +1,6 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
+import { AnalyticsResponse } from './interfaces/analytics-response.interface';
 
 interface Event {
   type: string;
@@ -7,15 +8,6 @@ interface Event {
   sessionId?: string;
   metadata?: Record<string, unknown>;
   timestamp?: string;
-}
-
-interface AnalyticsResponse {
-  success: boolean;
-  data?: unknown;
-  error?: {
-    code: string;
-    message: string;
-  };
 }
 
 @Injectable()
@@ -40,7 +32,7 @@ export class AnalyticsService {
             type: event.type,
             userId: event.userId,
             sessionId: event.sessionId,
-            metadata: event.metadata || {},
+            metadata: (event.metadata || {}) as Record<string, string | number | boolean | null>,
             timestamp: event.timestamp ? new Date(event.timestamp) : new Date(),
           },
         })
@@ -159,7 +151,7 @@ export class AnalyticsService {
 
     return {
       success: true,
-      data: cohorts,
+      data: { cohorts: cohorts as unknown[] },
     };
   }
 
@@ -172,7 +164,7 @@ export class AnalyticsService {
       data: {
         type,
         userId,
-        metadata: metadata || {},
+        metadata: (metadata || {}) as Record<string, string | number | boolean | null>,
         timestamp: new Date(),
       },
     });

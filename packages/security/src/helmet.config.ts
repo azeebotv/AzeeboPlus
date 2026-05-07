@@ -36,37 +36,46 @@ export const defaultSecurityHeadersConfig: SecurityHeadersConfig = {
 
 import helmet from 'helmet';
 
-export function createHelmetConfig(config: SecurityHeadersConfig = defaultSecurityHeadersConfig) {
-  return helmet({
-    contentSecurityPolicy: config.contentSecurityPolicy ? {
-      directives: {
-        defaultSrc: ["'self'"],
-        scriptSrc: ["'self'"],
-        styleSrc: ["'self'", "'unsafe-inline'"],
-        imgSrc: ["'self'", 'data:', 'https:'],
-        fontSrc: ["'self'", 'https:'],
-        objectSrc: ["'none'"],
-        upgradeInsecureRequests: [],
-      },
-    } : false,
-    hsts: config.hstsMaxAge ? {
-      maxAge: config.hstsMaxAge,
-      includeSubDomains: true,
-      preload: true,
-    } : false,
+export function createHelmetConfig(
+  config: SecurityHeadersConfig = defaultSecurityHeadersConfig
+): ReturnType<typeof helmet> {
+  const helmetConfig: Record<string, unknown> = {
+    contentSecurityPolicy: config.contentSecurityPolicy
+      ? {
+          directives: {
+            defaultSrc: ["'self'"],
+            scriptSrc: ["'self'"],
+            styleSrc: ["'self'", "'unsafe-inline'"],
+            imgSrc: ["'self'", 'data:', 'https:'],
+            fontSrc: ["'self'", 'https:'],
+            objectSrc: ["'none'"],
+            upgradeInsecureRequests: [],
+          },
+        }
+      : false,
+    hsts: config.hstsMaxAge
+      ? {
+          maxAge: config.hstsMaxAge,
+          includeSubDomains: true,
+          preload: true,
+        }
+      : false,
     crossOriginEmbedderPolicy: config.crossOriginEmbedderPolicy,
     crossOriginOpenerPolicy: config.crossOriginOpenerPolicy ? 'same-origin' : false,
     crossOriginResourcePolicy: config.crossOriginResourcePolicy ? { policy: 'same-origin' } : false,
-    originAgentCluster: config.originAgentCluster ? true : false,
+    originAgentCluster: String(config.originAgentCluster),
     referrerPolicy: { policy: config.referrerPolicy || 'strict-origin-when-cross-origin' },
-    xssFilter: config.xssProtection ? true : false,
-    noSniff: config.xContentTypeOptions ? true : false,
-    xDnsPrefetchControl: { allow: config.xDnsPrefetchControl ? true : false },
-    xDownloadOptions: config.xDownloadOptions ? { allow: true } : false,
-    frameguard: config.xFrameOptions ? { action: 'deny' } : false,
-    xPermittedCrossDomainPolicies: config.xPermittedCrossDomainPolicies ? { policy: 'none' } : false,
-    hidePoweredBy: config.xPoweredBy ? false : true,
-  });
+    xssFilter: config.xssProtection,
+    noSniff: config.xContentTypeOptions,
+    xDnsPrefetchControl: { allow: !!config.xDnsPrefetchControl },
+    xDownloadOptions: { action: config.xDownloadOptions ? 'allow' : 'deny' },
+    frameguard: config.xFrameOptions ? { action: 'deny' } : { action: 'allow' },
+    xPermittedCrossDomainPolicies: {
+      permittedPolicies: config.xPermittedCrossDomainPolicies ? 'none' : 'none',
+    },
+    hidePoweredBy: !config.xPoweredBy,
+  };
+  return helmet(helmetConfig as Parameters<typeof helmet>[0]);
 }
 
 export { helmet };

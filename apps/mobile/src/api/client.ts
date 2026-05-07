@@ -7,23 +7,23 @@ interface ApiClientConfig {
 
 interface ApiError extends Error {
   status?: number;
-  data?: any;
+  data?: unknown;
 }
 
 class ApiClientClass {
   private config: ApiClientConfig = {
-    baseURL: Constants.expoConfig?.extra?.apiBaseURL || 'http://localhost:3000',
+    baseURL: Constants.expoConfig?.extra?.apiBaseURL || 'http://localhost:3013',
     token: null,
   };
 
-  setToken(token: string | null) {
+  setToken(token: string | null): void {
     this.config.token = token;
   }
 
   private async request<T>(
     method: string,
     endpoint: string,
-    body?: any,
+    body?: unknown,
     options: RequestInit = {}
   ): Promise<T> {
     const url = `${this.config.baseURL}${endpoint}`;
@@ -54,23 +54,25 @@ class ApiClientClass {
       const data = await response.json().catch(() => null);
 
       if (!response.ok) {
-        const error: ApiError = new Error(data?.message || 'An error occurred');
+        const error: ApiError = new Error(
+          (data as { message?: string })?.message || 'An error occurred'
+        );
         error.status = response.status;
         error.data = data;
         throw error;
       }
 
-      return data;
-    } catch (error: any) {
+      return data as T;
+    } catch (error: unknown) {
       clearTimeout(timeoutId);
-      
-      if (error.name === 'AbortError') {
+
+      if (error instanceof Error && error.name === 'AbortError') {
         const timeoutError: ApiError = new Error('Request timeout. Please try again.');
         timeoutError.status = 408;
         throw timeoutError;
       }
-      
-      if (error.status) {
+
+      if (error instanceof ApiError) {
         throw error;
       }
       const networkError: ApiError = new Error('Network error. Please check your connection.');
@@ -83,15 +85,15 @@ class ApiClientClass {
     return this.request<T>('GET', endpoint, undefined, options);
   }
 
-  async post<T>(endpoint: string, body?: any, options?: RequestInit): Promise<T> {
+  async post<T>(endpoint: string, body?: unknown, options?: RequestInit): Promise<T> {
     return this.request<T>('POST', endpoint, body, options);
   }
 
-  async put<T>(endpoint: string, body?: any, options?: RequestInit): Promise<T> {
+  async put<T>(endpoint: string, body?: unknown, options?: RequestInit): Promise<T> {
     return this.request<T>('PUT', endpoint, body, options);
   }
 
-  async patch<T>(endpoint: string, body?: any, options?: RequestInit): Promise<T> {
+  async patch<T>(endpoint: string, body?: unknown, options?: RequestInit): Promise<T> {
     return this.request<T>('PATCH', endpoint, body, options);
   }
 

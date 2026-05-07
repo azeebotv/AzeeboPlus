@@ -25,7 +25,9 @@ describe('CircuitBreaker', () => {
         // ignore first error to open circuit
       }
 
-      await expect(breaker.execute(() => Promise.resolve('success'))).rejects.toThrow('Circuit is open');
+      await expect(breaker.execute(() => Promise.resolve('success'))).rejects.toThrow(
+        'Circuit breaker is OPEN'
+      );
     });
 
     it('should close circuit after reset timeout', async () => {
@@ -40,7 +42,7 @@ describe('CircuitBreaker', () => {
         // ignore first error to open circuit
       }
 
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
 
       const result = await breaker.execute(() => Promise.resolve('success'));
 

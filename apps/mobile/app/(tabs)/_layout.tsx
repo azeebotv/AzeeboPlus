@@ -1,6 +1,6 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useColorScheme } from 'react-native';
 
 interface TabIconProps {
@@ -11,10 +11,9 @@ interface TabIconProps {
 function TabIcon({ name, focused }: TabIconProps) {
   const icons: Record<string, string> = {
     home: '🏠',
-    search: '🔍',
-    library: '📚',
-    wallet: '💰',
-    settings: '⚙️',
+    watch: '📺',
+    create: '🎬',
+    rewards: '🎁',
     profile: '👤',
   };
 
@@ -27,6 +26,20 @@ function TabIcon({ name, focused }: TabIconProps) {
   );
 }
 
+function CreateButton({ onPress }: { onPress: () => void }) {
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      style={styles.createButton}
+      activeOpacity={0.7}
+    >
+      <View style={styles.createButtonInner}>
+        <Text style={styles.createIcon}>+</Text>
+      </View>
+    </TouchableOpacity>
+  );
+}
+
 export default function TabsLayout() {
   const colorScheme = useColorScheme();
 
@@ -35,18 +48,19 @@ export default function TabsLayout() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: colorScheme === 'dark' ? '#000' : '#fff',
-          borderTopColor: colorScheme === 'dark' ? '#333' : '#eee',
+          backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff',
+          borderTopColor: colorScheme === 'dark' ? '#1a1a1a' : '#e5e5e5',
           borderTopWidth: 1,
           height: 84,
           paddingBottom: 24,
           paddingTop: 8,
         },
         tabBarActiveTintColor: '#8B5CF6',
-        tabBarInactiveTintColor: '#666',
+        tabBarInactiveTintColor: '#888888',
         tabBarLabelStyle: {
-          fontSize: 12,
-          fontWeight: '500',
+          fontSize: 11,
+          fontWeight: '600',
+          marginTop: 4,
         },
       }}
     >
@@ -58,31 +72,26 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="search"
+        name="watch"
         options={{
-          title: 'Search',
-          tabBarIcon: ({ focused }) => <TabIcon name="search" focused={focused} />,
+          title: 'Watch',
+          tabBarIcon: ({ focused }) => <TabIcon name="watch" focused={focused} />,
         }}
       />
       <Tabs.Screen
-        name="library"
+        name="create"
         options={{
-          title: 'Library',
-          tabBarIcon: ({ focused }) => <TabIcon name="library" focused={focused} />,
+          title: '',
+          tabBarButton: () => (
+            <CreateButton onPress={() => {}} />
+          ),
         }}
       />
       <Tabs.Screen
-        name="wallet"
+        name="rewards"
         options={{
-          title: 'Wallet',
-          tabBarIcon: ({ focused }) => <TabIcon name="wallet" focused={focused} />,
-        }}
-      />
-      <Tabs.Screen
-        name="settings"
-        options={{
-          title: 'Settings',
-          tabBarIcon: ({ focused }) => <TabIcon name="settings" focused={focused} />,
+          title: 'Rewards',
+          tabBarIcon: ({ focused }) => <TabIcon name="rewards" focused={focused} />,
         }}
       />
       <Tabs.Screen
@@ -107,5 +116,28 @@ const styles = StyleSheet.create({
   },
   iconFocused: {
     opacity: 1,
+  },
+  createButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: -20,
+  },
+  createButtonInner: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#8B5CF6',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#8B5CF6',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  createIcon: {
+    fontSize: 32,
+    color: '#ffffff',
+    fontWeight: '300',
   },
 });

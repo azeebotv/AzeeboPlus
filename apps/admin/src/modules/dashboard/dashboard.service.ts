@@ -43,7 +43,7 @@ export class DashboardService {
     return {
       totalUsers,
       totalContent,
-      totalRevenue: totalRevenue._sum.amount || 0,
+      totalRevenue: Number(totalRevenue._sum.amount) || 0,
       pendingReports,
       activeCreators,
     };
@@ -65,7 +65,7 @@ export class DashboardService {
     const revenueByDate = transactions.reduce(
       (acc, tx) => {
         const date = tx.createdAt.toISOString().split('T')[0];
-        acc[date] = (acc[date] || 0) + tx.amount;
+        acc[date] = (acc[date] || 0) + Number(tx.amount);
         return acc;
       },
       {} as Record<string, number>

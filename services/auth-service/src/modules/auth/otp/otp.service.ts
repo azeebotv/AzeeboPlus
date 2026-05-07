@@ -37,13 +37,12 @@ export class OtpService {
     return true;
   }
 
-  async sendOtpToUser(userId: string, phoneNumber: string): Promise<{ message: string }> {
-    const { otp } = await this.generateOtp(userId);
-
-    // In production, integrate with SMS provider (Twilio, Nexmo, etc.)
-    // For now, just return success message
-    // eslint-disable-next-line no-console
-    console.log(`[OTP] Sending OTP ${otp} to ${phoneNumber}`);
+  async sendOtpToUser(
+    userId: string,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    phoneNumber: string
+  ): Promise<{ message: string }> {
+    await this.generateOtp(userId);
 
     return { message: 'OTP sent successfully' };
   }

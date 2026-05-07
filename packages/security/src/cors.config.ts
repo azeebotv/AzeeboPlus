@@ -13,7 +13,12 @@ const DEFAULT_CORS_CONFIG: Required<CorsConfig> = {
   allowedOrigins: [],
   allowedMethods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID'],
-  exposedHeaders: ['X-Request-ID', 'X-RateLimit-Limit', 'X-RateLimit-Remaining', 'X-RateLimit-Reset'],
+  exposedHeaders: [
+    'X-Request-ID',
+    'X-RateLimit-Limit',
+    'X-RateLimit-Remaining',
+    'X-RateLimit-Reset',
+  ],
   credentials: true,
   maxAge: 86400,
 };
@@ -21,7 +26,10 @@ const DEFAULT_CORS_CONFIG: Required<CorsConfig> = {
 export function createCorsConfig(config: CorsConfig): CorsOptions {
   const finalConfig = { ...DEFAULT_CORS_CONFIG, ...config };
 
-  const originValidator = (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void): void => {
+  const originValidator = (
+    origin: string | undefined,
+    callback: (err: Error | null, allow?: boolean) => void
+  ): void => {
     if (!origin) {
       if (process.env.NODE_ENV === 'production') {
         callback(new Error('CORS origin is required'));
@@ -57,7 +65,7 @@ export function createCorsConfig(config: CorsConfig): CorsOptions {
 }
 
 export function requireAllowedOrigins(): string[] {
-  const origins = process.env.ALLOWED_ORIGINS?.split(',').map(o => o.trim()) || [];
+  const origins = process.env.ALLOWED_ORIGINS?.split(',').map((o) => o.trim()) || [];
 
   if (origins.length === 0 && process.env.NODE_ENV === 'production') {
     throw new Error('ALLOWED_ORIGINS environment variable is required in production');

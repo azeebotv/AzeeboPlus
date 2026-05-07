@@ -9,7 +9,11 @@ export class ApiResponseWrapper {
     };
   }
 
-  static error(code: string, message: string, details?: Record<string, unknown>): ApiResponse<never> {
+  static error(
+    code: string,
+    message: string,
+    details?: Record<string, unknown>
+  ): ApiResponse<never> {
     const error: ApiError = {
       code,
       message,
@@ -30,12 +34,7 @@ export class ApiResponseWrapper {
     };
   }
 
-  static paginated<T>(
-    data: T[],
-    page: number,
-    limit: number,
-    total: number
-  ): ApiResponse<T[]> {
+  static paginated<T>(data: T[], page: number, limit: number, total: number): ApiResponse<T[]> {
     const meta: PaginationMeta = {
       page,
       limit,

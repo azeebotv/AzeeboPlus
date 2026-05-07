@@ -36,20 +36,13 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       }
     } else if (exception instanceof Error) {
       status = HttpStatus.INTERNAL_SERVER_ERROR;
-      message = this.isProduction
-        ? 'Internal server error'
-        : exception.message;
+      message = this.isProduction ? 'Internal server error' : exception.message;
       error = 'Internal Server Error';
 
-      this.logger.error(
-        `Unhandled exception: ${exception.message}`,
-        exception.stack
-      );
+      this.logger.error(`Unhandled exception: ${exception.message}`, exception.stack);
     } else {
       status = HttpStatus.INTERNAL_SERVER_ERROR;
-      message = this.isProduction
-        ? 'Internal server error'
-        : 'An unknown error occurred';
+      message = this.isProduction ? 'Internal server error' : 'An unknown error occurred';
       error = 'Internal Server Error';
 
       this.logger.error(`Unknown exception type: ${exception}`);
@@ -68,7 +61,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     };
 
     if (!this.isProduction && exception instanceof Error) {
-      (errorResponse.error as any).stack = exception.stack;
+      (errorResponse.error as Record<string, unknown>).stack = exception.stack;
     }
 
     response.status(status).json(errorResponse);

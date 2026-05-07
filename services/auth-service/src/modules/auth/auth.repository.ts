@@ -58,11 +58,11 @@ export class AuthRepository {
     return result.count;
   }
 
-  async setOtp(userId: string, _code: string, expiresAt: Date): Promise<void> {
+  async setOtp(userId: string, code: string, expiresAt: Date): Promise<void> {
     await this.prisma.otp.upsert({
       where: { userId },
-      update: { expiresAt },
-      create: { userId, expiresAt },
+      update: { code, expiresAt },
+      create: { userId, code, expiresAt },
     });
   }
 
@@ -88,10 +88,7 @@ export class AuthRepository {
     }) as Promise<(SocialAccountEntity & { user: UserEntity }) | null>;
   }
 
-  async findSocialAccount(
-    userId: string,
-    provider: string
-  ): Promise<SocialAccountEntity | null> {
+  async findSocialAccount(userId: string, provider: string): Promise<SocialAccountEntity | null> {
     return this.prisma.socialAccount.findUnique({
       where: { userId_provider: { userId, provider } },
     }) as Promise<SocialAccountEntity | null>;
@@ -111,9 +108,16 @@ export class AuthRepository {
         userId,
         provider: socialUser.provider,
         socialId: socialUser.socialId,
-        displayName: '',
-        email: '',
+        accessToken: socialUser.accessToken,
+        refreshToken: socialUser.refreshToken,
       },
     }) as Promise<SocialAccountEntity>;
+  }
+
+  async unlinkSocialAccount(userId: string, provider: string): Promise<number> {
+    const result = await this.prisma.socialAccount.deleteMany({
+      where: { userId, provider },
+    });
+    return result.count;
   }
 }

@@ -28,7 +28,7 @@ export function createVersionedResponse<T>(
     deprecated?: boolean;
     deprecationDate?: Date;
     deprecationMessage?: string;
-  },
+  }
 ): VersionedResponse<T> {
   const response: VersionedResponse<T> = {
     version,

@@ -5,6 +5,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 
 import { ModerationController } from './moderation.controller';
 import { ModerationService } from './moderation.service';
+import { SafetyScanningService } from './safety-scanning.service';
 import { DatabaseModule } from '../database/database.module';
 
 @Module({
@@ -23,7 +24,7 @@ import { DatabaseModule } from '../database/database.module';
     }),
   ],
   controllers: [ModerationController],
-  providers: [ModerationService],
-  exports: [ModerationService, DatabaseModule],
+  providers: [ModerationService, SafetyScanningService],
+  exports: [ModerationService, SafetyScanningService, DatabaseModule],
 })
 export class ModerationModule {}

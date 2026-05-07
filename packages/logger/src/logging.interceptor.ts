@@ -1,10 +1,4 @@
-import {
-  Injectable,
-  NestInterceptor,
-  ExecutionContext,
-  CallHandler,
-  Logger,
-} from '@nestjs/common';
+import { Injectable, NestInterceptor, ExecutionContext, CallHandler, Logger } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { v4 as uuidv4 } from 'uuid';
@@ -19,7 +13,7 @@ export class LoggingInterceptor implements NestInterceptor {
 
     const traceId = (request.headers['x-request-id'] as string) || uuidv4();
     const spanId = uuidv4().substring(0, 8);
-    const { method, url, body } = request;
+    const { method, url, _body } = request;
     const startTime = Date.now();
 
     request.traceId = traceId;
@@ -44,7 +38,7 @@ export class LoggingInterceptor implements NestInterceptor {
               path: url,
               statusCode,
               duration,
-            }),
+            })
           );
         },
         error: (error: Error) => {
@@ -67,10 +61,10 @@ export class LoggingInterceptor implements NestInterceptor {
                 message: error.message,
                 stack: error.stack,
               },
-            }),
+            })
           );
         },
-      }),
+      })
     );
   }
 }

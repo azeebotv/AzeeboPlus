@@ -1,4 +1,13 @@
-import { Controller, Get, Post, UseGuards, Request, Body, Query, NotFoundException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  UseGuards,
+  Request,
+  Body,
+  Query,
+  NotFoundException,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { PrismaService } from '../database/prisma.service';
@@ -10,12 +19,25 @@ import { AddBonusCreditDto } from './dto/add-bonus-credit.dto';
 import { AddPromoCreditDto } from './dto/add-promo-credit.dto';
 import { WalletResponse } from './interfaces/wallet-response.interface';
 
+interface WalletOperationDto {
+  walletId: string;
+  amount: number;
+  description: string;
+  idempotencyKey?: string;
+}
+
+interface AuthenticatedRequest {
+  user: {
+    sub: string;
+  };
+}
+
 @ApiTags('Wallet')
 @Controller('wallet')
 export class WalletController {
   constructor(
     private readonly walletService: WalletService,
-    private readonly prisma: PrismaService,
+    private readonly prisma: PrismaService
   ) {}
 
   @Get()
@@ -23,7 +45,7 @@ export class WalletController {
   @ApiOperation({ summary: 'Get wallet balance' })
   @ApiResponse({ status: 200, description: 'Wallet balance' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getBalance(@Request() req: any): Promise<WalletResponse> {
+  async getBalance(@Request() req: AuthenticatedRequest): Promise<WalletResponse> {
     return this.walletService.getBalance(req.user.sub);
   }
 
@@ -32,7 +54,7 @@ export class WalletController {
   @ApiOperation({ summary: 'Get wallet transaction history' })
   @ApiResponse({ status: 200, description: 'Transaction history' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getTransactions(@Request() req: any) {
+  async getTransactions(@Request() req: AuthenticatedRequest): Promise<WalletResponse> {
     return this.walletService.getTransactions(req.user.sub);
   }
 
@@ -41,7 +63,7 @@ export class WalletController {
   @ApiOperation({ summary: 'Get wallet summary widget' })
   @ApiResponse({ status: 200, description: 'Wallet summary' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getSummary(@Request() req: any) {
+  async getSummary(@Request() req: AuthenticatedRequest): Promise<WalletResponse> {
     return this.walletService.getSummary(req.user.sub);
   }
 
@@ -52,9 +74,9 @@ export class WalletController {
   @ApiResponse({ status: 400, description: 'Invalid input' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async fundWallet(
-    @Request() req: any,
-    @Body() fundWalletDto: FundWalletDto,
-  ) {
+    @Request() req: AuthenticatedRequest,
+    @Body() fundWalletDto: FundWalletDto
+  ): Promise<WalletResponse> {
     return this.walletService.initializeFunding(req.user.sub, fundWalletDto);
   }
 
@@ -64,7 +86,10 @@ export class WalletController {
   @ApiResponse({ status: 200, description: 'Reward redeemed' })
   @ApiResponse({ status: 400, description: 'Invalid input' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async redeemReward(@Request() req: any, @Body() redeemRewardDto: RedeemRewardDto) {
+  async redeemReward(
+    @Request() req: AuthenticatedRequest,
+    @Body() redeemRewardDto: RedeemRewardDto
+  ): Promise<WalletResponse> {
     return this.walletService.redeemReward(req.user.sub, redeemRewardDto.points);
   }
 
@@ -74,7 +99,10 @@ export class WalletController {
   @ApiResponse({ status: 200, description: 'Bonus credit added' })
   @ApiResponse({ status: 400, description: 'Invalid input' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async addBonusCredit(@Request() req: any, @Body() addBonusCreditDto: AddBonusCreditDto) {
+  async addBonusCredit(
+    @Request() req: AuthenticatedRequest,
+    @Body() addBonusCreditDto: AddBonusCreditDto
+  ): Promise<WalletResponse> {
     const wallet = await this.prisma.wallet.findUnique({
       where: { userId: req.user.sub },
     });
@@ -83,7 +111,11 @@ export class WalletController {
       throw new NotFoundException(`Wallet not found for user ${req.user.sub}`);
     }
 
-    return this.walletService.addBonusCredit(wallet.id, addBonusCreditDto.amount, addBonusCreditDto.reason);
+    return this.walletService.addBonusCredit(
+      wallet.id,
+      addBonusCreditDto.amount,
+      addBonusCreditDto.reason
+    );
   }
 
   @Post('promo-credit')
@@ -93,9 +125,9 @@ export class WalletController {
   @ApiResponse({ status: 400, description: 'Invalid input' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async addPromoCredit(
-    @Request() req: any,
-    @Body() addPromoCreditDto: AddPromoCreditDto,
-  ) {
+    @Request() req: AuthenticatedRequest,
+    @Body() addPromoCreditDto: AddPromoCreditDto
+  ): Promise<WalletResponse> {
     const wallet = await this.prisma.wallet.findUnique({
       where: { userId: req.user.sub },
     });
@@ -108,7 +140,7 @@ export class WalletController {
       wallet.id,
       addPromoCreditDto.amount,
       addPromoCreditDto.promoCode,
-      new Date(addPromoCreditDto.expiresAt),
+      new Date(addPromoCreditDto.expiresAt)
     );
   }
 
@@ -118,10 +150,10 @@ export class WalletController {
   @ApiResponse({ status: 200, description: 'Audit trail' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getAuditTrail(
-    @Request() req: any,
+    @Request() req: AuthenticatedRequest,
     @Query('startDate') startDate?: string,
-    @Query('endDate') endDate?: string,
-  ) {
+    @Query('endDate') endDate?: string
+  ): Promise<WalletResponse> {
     const wallet = await this.prisma.wallet.findUnique({
       where: { userId: req.user.sub },
     });
@@ -134,5 +166,32 @@ export class WalletController {
     const end = endDate ? new Date(endDate) : new Date();
 
     return this.walletService.getTransactionAuditTrail(wallet.id, start, end);
+  }
+
+  @Post('debit')
+  @ApiOperation({ summary: 'Debit wallet (service-to-service)' })
+  @ApiResponse({ status: 200, description: 'Wallet debited' })
+  @ApiResponse({ status: 400, description: 'Invalid input or insufficient balance' })
+  async debitWallet(@Body() body: WalletOperationDto): Promise<WalletResponse> {
+    return this.walletService.debitBalance(
+      body.walletId,
+      body.amount,
+      body.description,
+      undefined,
+      body.idempotencyKey
+    );
+  }
+
+  @Post('credit')
+  @ApiOperation({ summary: 'Credit wallet (service-to-service)' })
+  @ApiResponse({ status: 200, description: 'Wallet credited' })
+  @ApiResponse({ status: 400, description: 'Invalid input' })
+  async creditWallet(@Body() body: WalletOperationDto): Promise<WalletResponse> {
+    return this.walletService.creditBalance(
+      body.walletId,
+      body.amount,
+      body.description,
+      body.idempotencyKey
+    );
   }
 }

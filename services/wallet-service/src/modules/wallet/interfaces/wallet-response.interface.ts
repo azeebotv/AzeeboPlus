@@ -1,12 +1,77 @@
+export interface WalletBalanceData {
+  balance: number;
+  bonusBalance: number;
+  promoBalance: number;
+  totalBalance: number;
+  currency: string;
+}
+
+export interface TransactionData {
+  id: string;
+  walletId: string;
+  type: string;
+  amount: number;
+  status: string;
+  description: string | null;
+  reference: string | null;
+  metadata: Record<string, unknown> | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface WalletSummaryData extends WalletBalanceData {
+  recentTransactions: TransactionData[];
+}
+
+export interface FundingData {
+  transactionId: string;
+  amount: number;
+  status: string;
+  message: string;
+}
+
+export interface RedeemRewardData {
+  message: string;
+  pointsRedeemed: number;
+  amountAdded: number;
+  newBonusBalance: number;
+}
+
+export interface BonusCreditData {
+  transactionId: string;
+  amount: number;
+  reason: string;
+  newBonusBalance: number;
+}
+
+export interface PromoCreditData {
+  transactionId: string;
+  amount: number;
+  promoCode: string;
+  expiresAt: string;
+  newPromoBalance: number;
+}
+
+export interface AuditTrailData {
+  walletId: string;
+  startDate: string;
+  endDate: string;
+  totalTransactions: number;
+  transactions: TransactionData[];
+}
+
 export interface WalletResponse {
   success: boolean;
-  data?: {
-    balance: number;
-    bonusBalance: number;
-    promoBalance: number;
-    totalBalance: number;
-    currency: string;
-  };
+  data?:
+    | WalletBalanceData
+    | TransactionData[]
+    | WalletSummaryData
+    | FundingData
+    | RedeemRewardData
+    | BonusCreditData
+    | PromoCreditData
+    | AuditTrailData
+    | { message: string };
   error?: {
     code: string;
     message: string;

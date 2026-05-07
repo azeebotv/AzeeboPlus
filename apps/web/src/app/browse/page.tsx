@@ -234,13 +234,13 @@ export default function BrowsePage(): JSX.Element {
                     <div className="p-4">
                       <h4 className="font-semibold text-lg mb-2">{item.title}</h4>
                       <p className="text-muted-foreground text-sm mb-3">
-                        {item.description.length > 80
+                        {item.description && item.description.length > 80
                           ? `${item.description.substring(0, 80)}...`
                           : item.description}
                       </p>
                       <div className="flex items-center justify-between">
                         <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">
-                          {item.universe.name}
+                          {item.universe?.name || 'Unknown'}
                         </span>
                         <button className="text-primary hover:text-primary/80 text-sm font-medium">
                           Watch Now

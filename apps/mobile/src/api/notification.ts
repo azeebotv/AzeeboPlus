@@ -5,7 +5,7 @@ export interface Notification {
   id: string;
   title: string;
   body: string;
-  data?: Record<string, any>;
+  data?: Record<string, unknown>;
   read: boolean;
   createdAt: string;
 }
@@ -28,14 +28,30 @@ export const notificationApi = {
   getNotifications: async (
     page = 1,
     limit = 20
-  ): Promise<ApiResponse<{ items: Notification[]; total: number; page: number; limit: number; totalPages: number }>> => {
-    return apiClient.get<ApiResponse<{ items: Notification[]; total: number; page: number; limit: number; totalPages: number }>>(
-      `/notifications?page=${page}&limit=${limit}`
-    );
+  ): Promise<
+    ApiResponse<{
+      items: Notification[];
+      total: number;
+      page: number;
+      limit: number;
+      totalPages: number;
+    }>
+  > => {
+    return apiClient.get<
+      ApiResponse<{
+        items: Notification[];
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
+      }>
+    >(`/notifications?page=${page}&limit=${limit}`);
   },
 
   markAsRead: async (notificationId: string): Promise<ApiResponse<{ message: string }>> => {
-    return apiClient.post<ApiResponse<{ message: string }>>(`/notifications/${notificationId}/read`);
+    return apiClient.post<ApiResponse<{ message: string }>>(
+      `/notifications/${notificationId}/read`
+    );
   },
 
   markAllAsRead: async (): Promise<ApiResponse<{ message: string }>> => {
@@ -47,14 +63,21 @@ export const notificationApi = {
   },
 
   registerPushToken: async (token: string): Promise<ApiResponse<{ message: string }>> => {
-    return apiClient.post<ApiResponse<{ message: string }>>('/notifications/register-token', { token });
+    return apiClient.post<ApiResponse<{ message: string }>>('/notifications/register-token', {
+      token,
+    });
   },
 
   getPreferences: async (): Promise<ApiResponse<NotificationPreferences>> => {
     return apiClient.get<ApiResponse<NotificationPreferences>>('/notifications/preferences');
   },
 
-  updatePreferences: async (preferences: Partial<NotificationPreferences>): Promise<ApiResponse<NotificationPreferences>> => {
-    return apiClient.patch<ApiResponse<NotificationPreferences>>('/notifications/preferences', preferences);
+  updatePreferences: async (
+    preferences: Partial<NotificationPreferences>
+  ): Promise<ApiResponse<NotificationPreferences>> => {
+    return apiClient.patch<ApiResponse<NotificationPreferences>>(
+      '/notifications/preferences',
+      preferences
+    );
   },
 };

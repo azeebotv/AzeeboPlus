@@ -1,5 +1,16 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
+import { RewardResponse } from './interfaces/reward-response.interface';
+
+interface MissionWithCompletion {
+  id: string;
+  title: string;
+  description: string | null;
+  points: number;
+  type: string;
+  isActive: boolean;
+  isCompleted: boolean;
+}
 
 @Injectable()
 export class RewardsService {
@@ -7,7 +18,7 @@ export class RewardsService {
 
   constructor(private readonly prisma: PrismaService) {}
 
-  async getRewardAccount(userId: string) {
+  async getRewardAccount(userId: string): Promise<RewardResponse> {
     const rewardAccount = await this.prisma.rewardAccount.findUnique({
       where: { userId },
       include: {
@@ -17,7 +28,6 @@ export class RewardsService {
     });
 
     if (!rewardAccount) {
-      // Create new reward account for user
       const newAccount = await this.prisma.rewardAccount.create({
         data: {
           userId,
@@ -34,17 +44,43 @@ export class RewardsService {
 
       return {
         success: true,
-        data: newAccount,
+        data: {
+          rewardAccount: {
+            id: newAccount.id,
+            userId: newAccount.userId,
+            points: newAccount.points,
+            levelId: newAccount.levelId,
+            streak: newAccount.streak,
+            lastLoginAt: newAccount.lastLoginAt,
+            lastCheckInAt: newAccount.lastCheckInAt,
+            createdAt: newAccount.createdAt,
+            updatedAt: newAccount.updatedAt,
+          },
+          level: newAccount.level,
+        },
       };
     }
 
     return {
       success: true,
-      data: rewardAccount,
+      data: {
+        rewardAccount: {
+          id: rewardAccount.id,
+          userId: rewardAccount.userId,
+          points: rewardAccount.points,
+          levelId: rewardAccount.levelId,
+          streak: rewardAccount.streak,
+          lastLoginAt: rewardAccount.lastLoginAt,
+          lastCheckInAt: rewardAccount.lastCheckInAt,
+          createdAt: rewardAccount.createdAt,
+          updatedAt: rewardAccount.updatedAt,
+        },
+        level: rewardAccount.level,
+      },
     };
   }
 
-  async getMissions(userId: string, limit = this.defaultPaginationLimit) {
+  async getMissions(userId: string, limit = this.defaultPaginationLimit): Promise<RewardResponse> {
     const missions = await this.prisma.mission.findMany({
       where: { isActive: true },
       include: {
@@ -53,7 +89,6 @@ export class RewardsService {
       take: limit,
     });
 
-    // Get user's completed missions
     const completedMissions = await this.prisma.missionCompletion.findMany({
       where: { userId },
       select: { missionId: true },
@@ -61,18 +96,25 @@ export class RewardsService {
 
     const completedMissionIds = completedMissions.map((m) => m.missionId);
 
+    const missionsWithCompletion: MissionWithCompletion[] = missions.map((mission) => ({
+      id: mission.id,
+      title: mission.title,
+      description: mission.description,
+      points: mission.points,
+      type: mission.type,
+      isActive: mission.isActive,
+      isCompleted: completedMissionIds.includes(mission.id),
+    }));
+
     return {
       success: true,
       data: {
-        missions: missions.map((mission) => ({
-          ...mission,
-          isCompleted: completedMissionIds.includes(mission.id),
-        })),
+        missions: missionsWithCompletion,
       },
     };
   }
 
-  async getBadges(userId: string) {
+  async getBadges(userId: string): Promise<RewardResponse> {
     const rewardAccount = await this.prisma.rewardAccount.findUnique({
       where: { userId },
       select: { badges: true },
@@ -87,11 +129,19 @@ export class RewardsService {
 
     return {
       success: true,
-      data: badges,
+      data: {
+        badges: badges.map((badge) => ({
+          id: badge.id,
+          name: badge.name,
+          description: badge.description,
+          icon: badge.icon,
+          points: badge.points,
+        })),
+      },
     };
   }
 
-  async getStreak(userId: string) {
+  async getStreak(userId: string): Promise<RewardResponse> {
     const rewardAccount = await this.prisma.rewardAccount.findUnique({
       where: { userId },
     });
@@ -103,33 +153,31 @@ export class RewardsService {
     const today = new Date();
     const lastLogin = rewardAccount.lastLoginAt;
     const daysSinceLastLogin = Math.floor(
-      (today.getTime() - lastLogin.getTime()) / (1000 * 60 * 60 * 24),
+      (today.getTime() - lastLogin.getTime()) / (1000 * 60 * 60 * 24)
     );
 
     let currentStreak = rewardAccount.streak;
 
     if (daysSinceLastLogin === 1) {
-      // User logged in after a day's break
       currentStreak = 1;
     } else if (daysSinceLastLogin === 0) {
-      // User logged in today
       currentStreak = rewardAccount.streak;
     } else if (daysSinceLastLogin > 1) {
-      // User missed a day, streak is broken
       currentStreak = 0;
     }
 
     return {
       success: true,
       data: {
-        streak: currentStreak,
-        lastLoginAt: rewardAccount.lastLoginAt,
-        streakBreakDate: daysSinceLastLogin > 1 ? lastLogin : null,
+        streak: {
+          current: currentStreak,
+          lastCheckInAt: rewardAccount.lastCheckInAt,
+        },
       },
     };
   }
 
-  async redeemReward(userId: string, rewardId: string) {
+  async redeemReward(userId: string, rewardId: string): Promise<RewardResponse> {
     const rewardAccount = await this.prisma.rewardAccount.findUnique({
       where: { userId },
     });
@@ -150,7 +198,6 @@ export class RewardsService {
       throw new BadRequestException('Insufficient points');
     }
 
-    // Deduct points
     await this.prisma.rewardAccount.update({
       where: { userId },
       data: {
@@ -158,7 +205,6 @@ export class RewardsService {
       },
     });
 
-    // Record redemption
     await this.prisma.rewardRedemption.create({
       data: {
         userId,
@@ -171,13 +217,22 @@ export class RewardsService {
       success: true,
       data: {
         message: 'Reward redeemed successfully',
-        reward,
-        remainingPoints: rewardAccount.points - reward.cost,
+        rewardAccount: {
+          id: rewardAccount.id,
+          userId: rewardAccount.userId,
+          points: rewardAccount.points - reward.cost,
+          levelId: rewardAccount.levelId,
+          streak: rewardAccount.streak,
+          lastLoginAt: rewardAccount.lastLoginAt,
+          lastCheckInAt: rewardAccount.lastCheckInAt,
+          createdAt: rewardAccount.createdAt,
+          updatedAt: rewardAccount.updatedAt,
+        },
       },
     };
   }
 
-  async getLevel(userId: string) {
+  async getLevel(userId: string): Promise<RewardResponse> {
     const rewardAccount = await this.prisma.rewardAccount.findUnique({
       where: { userId },
       include: { level: true },
@@ -194,14 +249,33 @@ export class RewardsService {
     return {
       success: true,
       data: {
-        currentLevel: rewardAccount.level,
-        nextLevel,
-        pointsToNextLevel: nextLevel ? nextLevel.minPoints - rewardAccount.points : 0,
+        level: {
+          id: rewardAccount.level.id,
+          name: rewardAccount.level.name,
+          rank: rewardAccount.level.rank,
+          minPoints: rewardAccount.level.minPoints,
+          icon: rewardAccount.level.icon,
+          color: rewardAccount.level.color,
+        },
+        rewardAccount: {
+          id: rewardAccount.id,
+          userId: rewardAccount.userId,
+          points: rewardAccount.points,
+          levelId: rewardAccount.levelId,
+          streak: rewardAccount.streak,
+          lastLoginAt: rewardAccount.lastLoginAt,
+          lastCheckInAt: rewardAccount.lastCheckInAt,
+          createdAt: rewardAccount.createdAt,
+          updatedAt: rewardAccount.updatedAt,
+        },
+        message: nextLevel
+          ? `${nextLevel.minPoints - rewardAccount.points} points to next level`
+          : 'Max level reached',
       },
     };
   }
 
-  async addPoints(userId: string, points: number, reason: string) {
+  async addPoints(userId: string, points: number, reason: string): Promise<RewardResponse> {
     const rewardAccount = await this.prisma.rewardAccount.findUnique({
       where: { userId },
     });
@@ -210,7 +284,6 @@ export class RewardsService {
       throw new NotFoundException(`Reward account not found for user ${userId}`);
     }
 
-    // Add points
     await this.prisma.rewardAccount.update({
       where: { userId },
       data: {
@@ -218,7 +291,6 @@ export class RewardsService {
       },
     });
 
-    // Record points ledger
     await this.prisma.pointsLedger.create({
       data: {
         userId,
@@ -232,12 +304,22 @@ export class RewardsService {
       success: true,
       data: {
         message: 'Points added successfully',
-        newPoints: rewardAccount.points + points,
+        rewardAccount: {
+          id: rewardAccount.id,
+          userId: rewardAccount.userId,
+          points: rewardAccount.points + points,
+          levelId: rewardAccount.levelId,
+          streak: rewardAccount.streak,
+          lastLoginAt: rewardAccount.lastLoginAt,
+          lastCheckInAt: rewardAccount.lastCheckInAt,
+          createdAt: rewardAccount.createdAt,
+          updatedAt: rewardAccount.updatedAt,
+        },
       },
     };
   }
 
-  async checkIn(userId: string) {
+  async checkIn(userId: string): Promise<RewardResponse> {
     const rewardAccount = await this.prisma.rewardAccount.findUnique({
       where: { userId },
     });
@@ -253,7 +335,6 @@ export class RewardsService {
       throw new BadRequestException('Already checked in today');
     }
 
-    // Update last check-in
     await this.prisma.rewardAccount.update({
       where: { userId },
       data: {
@@ -262,16 +343,13 @@ export class RewardsService {
       },
     });
 
-    // Add check-in points
     await this.addPoints(userId, 10, 'Daily check-in');
 
-    // Update streak
     const daysSinceLastCheckIn = lastCheckIn
       ? Math.floor((today.getTime() - lastCheckIn.getTime()) / (1000 * 60 * 60 * 24))
       : 1;
 
     if (daysSinceLastCheckIn === 1) {
-      // Continue streak
       await this.prisma.rewardAccount.update({
         where: { userId },
         data: {
@@ -279,7 +357,6 @@ export class RewardsService {
         },
       });
     } else if (daysSinceLastCheckIn > 1) {
-      // Reset streak
       await this.prisma.rewardAccount.update({
         where: { userId },
         data: {
@@ -292,8 +369,17 @@ export class RewardsService {
       success: true,
       data: {
         message: 'Check-in successful',
-        pointsEarned: 10,
-        streak: daysSinceLastCheckIn === 1 ? rewardAccount.streak + 1 : 1,
+        rewardAccount: {
+          id: rewardAccount.id,
+          userId: rewardAccount.userId,
+          points: rewardAccount.points + 10,
+          levelId: rewardAccount.levelId,
+          streak: daysSinceLastCheckIn === 1 ? rewardAccount.streak + 1 : 1,
+          lastLoginAt: today,
+          lastCheckInAt: today,
+          createdAt: rewardAccount.createdAt,
+          updatedAt: rewardAccount.updatedAt,
+        },
       },
     };
   }

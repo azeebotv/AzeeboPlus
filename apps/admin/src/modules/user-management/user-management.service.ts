@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '../../generated/prisma';
 import { PrismaService } from '../../database/prisma.service';
+import { AuditLogService } from '../audit/audit.service';
 
 export interface UserStats {
   totalUsers: number;
@@ -21,7 +22,10 @@ export interface UserWithStats {
 
 @Injectable()
 export class UserManagementService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly auditService: AuditLogService
+  ) {}
 
   async getUsers(page = 1, limit = 20, role?: string, search?: string): Promise<unknown> {
     const where: Prisma.UserWhereInput = {};
@@ -98,7 +102,7 @@ export class UserManagementService {
     };
   }
 
-  async updateUserRole(userId: string, newRole: string): Promise<unknown> {
+  async updateUserRole(userId: string, newRole: string, actorId?: string): Promise<unknown> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
     });
@@ -107,9 +111,18 @@ export class UserManagementService {
       throw new NotFoundException('User not found');
     }
 
+    const oldRole = user.role;
     const updated = await this.prisma.user.update({
       where: { id: userId },
       data: { role: newRole },
+    });
+
+    await this.auditService.log({
+      actorId,
+      action: 'update_role',
+      targetType: 'user',
+      targetId: userId,
+      details: { oldRole, newRole },
     });
 
     return {
@@ -123,7 +136,12 @@ export class UserManagementService {
     };
   }
 
-  async suspendUser(userId: string, reason: string): Promise<unknown> {
+  async suspendUser(
+    userId: string,
+    reason: string,
+    suspendedBy: string,
+    durationDays?: number
+  ): Promise<unknown> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
     });
@@ -132,15 +150,125 @@ export class UserManagementService {
       throw new NotFoundException('User not found');
     }
 
+    const expiresAt = durationDays
+      ? new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000)
+      : undefined;
+
+    const [updatedUser, suspension] = await Promise.all([
+      this.prisma.user.update({
+        where: { id: userId },
+        data: {
+          isSuspended: true,
+          suspendedAt: new Date(),
+          suspendedUntil: expiresAt,
+          suspensionReason: reason,
+          suspendedBy,
+          updatedAt: new Date(),
+        },
+      }),
+      this.prisma.userSuspension.create({
+        data: {
+          userId,
+          reason,
+          suspendedBy,
+          expiresAt,
+        },
+      }),
+    ]);
+
+    await this.auditService.log({
+      actorId: suspendedBy,
+      action: 'suspend',
+      targetType: 'user',
+      targetId: userId,
+      details: { reason, durationDays },
+    });
+
     return {
       success: true,
       message: `User suspended: ${reason}`,
       data: {
+        id: updatedUser.id,
+        email: updatedUser.email,
+        displayName: updatedUser.displayName,
+        status: 'suspended',
+        suspendedAt: updatedUser.suspendedAt,
+        suspendedUntil: updatedUser.suspendedUntil,
+        suspensionReason: updatedUser.suspensionReason,
+        suspendedBy: updatedUser.suspendedBy,
+        suspensionId: suspension.id,
+      },
+    };
+  }
+
+  async revokeSuspension(userId: string, revokedBy: string, reason: string): Promise<unknown> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (!user.isSuspended) {
+      throw new Error('User is not currently suspended');
+    }
+
+    await Promise.all([
+      this.prisma.user.update({
+        where: { id: userId },
+        data: {
+          isSuspended: false,
+          suspendedAt: null,
+          suspendedUntil: null,
+          suspensionReason: null,
+          suspendedBy: null,
+          updatedAt: new Date(),
+        },
+      }),
+      this.prisma.userSuspension.updateMany({
+        where: {
+          userId,
+          status: 'active',
+        },
+        data: {
+          status: 'revoked',
+          revokedAt: new Date(),
+          revokedBy,
+          revokedReason: reason,
+        },
+      }),
+    ]);
+
+    await this.auditService.log({
+      actorId: revokedBy,
+      action: 'revoke_suspension',
+      targetType: 'user',
+      targetId: userId,
+      details: { reason },
+    });
+
+    return {
+      success: true,
+      message: `Suspension revoked: ${reason}`,
+      data: {
         id: user.id,
         email: user.email,
         displayName: user.displayName,
-        status: 'suspended',
+        status: 'active',
       },
+    };
+  }
+
+  async getUserSuspensions(userId: string): Promise<unknown> {
+    const suspensions = await this.prisma.userSuspension.findMany({
+      where: { userId },
+      orderBy: { suspendedAt: 'desc' },
+    });
+
+    return {
+      success: true,
+      data: suspensions,
     };
   }
 
@@ -169,7 +297,7 @@ export class UserManagementService {
     };
   }
 
-  async deleteUser(userId: string): Promise<unknown> {
+  async deleteUser(userId: string, actorId?: string): Promise<unknown> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
     });
@@ -181,6 +309,14 @@ export class UserManagementService {
     await this.prisma.user.update({
       where: { id: userId },
       data: { role: 'deleted' },
+    });
+
+    await this.auditService.log({
+      actorId,
+      action: 'delete',
+      targetType: 'user',
+      targetId: userId,
+      details: { email: user.email, displayName: user.displayName },
     });
 
     return {

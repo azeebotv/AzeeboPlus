@@ -1,4 +1,4 @@
-import { Controller, Get, Post, UseGuards, Request, Delete, SetMetadata } from '@nestjs/common';
+import { Controller, Get, Post, UseGuards, Request, Delete, Body } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
@@ -8,7 +8,7 @@ import { RegisterDto } from './dto/register.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { AuthResponse } from './interfaces/auth-response.interface';
 import { RefreshTokenResponse } from './interfaces/refresh-token-response.interface';
-import { RateLimitGuard, RateLimit } from '../../common/guards/rate-limit.guard';
+import { RateLimitGuard, RateLimit } from '@azeebo/security';
 
 interface RequestUser {
   id: string;
@@ -29,32 +29,35 @@ export class AuthController {
 
   @Post('signup')
   @UseGuards(RateLimitGuard)
+  @RateLimit(3, 3600000) // 3 requests per hour
   @ApiOperation({ summary: 'Create a new account' })
   @ApiResponse({ status: 201, description: 'Account created successfully' })
   @ApiResponse({ status: 400, description: 'Invalid input' })
   @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
-  async signup(@Request() req: AuthRequest): Promise<AuthResponse> {
-    return this.authService.register(req.body as RegisterDto);
+  async signup(@Body() registerDto: RegisterDto): Promise<AuthResponse> {
+    return this.authService.register(registerDto);
   }
 
   @Post('login')
   @UseGuards(RateLimitGuard)
+  @RateLimit(5, 900000) // 5 requests per 15 minutes
   @ApiOperation({ summary: 'User login' })
   @ApiResponse({ status: 200, description: 'Login successful' })
   @ApiResponse({ status: 401, description: 'Invalid credentials' })
   @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
-  async login(@Request() req: AuthRequest): Promise<AuthResponse> {
-    return this.authService.login(req.body as LoginDto);
+  async login(@Body() loginDto: LoginDto): Promise<AuthResponse> {
+    return this.authService.login(loginDto);
   }
 
-  @Post('refresh-token')
+  @Post('refresh')
   @UseGuards(RateLimitGuard)
+  @RateLimit(10, 60000) // 10 requests per minute
   @ApiOperation({ summary: 'Refresh access token' })
   @ApiResponse({ status: 200, description: 'Token refreshed successfully' })
   @ApiResponse({ status: 401, description: 'Invalid refresh token' })
   @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
-  async refreshToken(@Request() req: AuthRequest): Promise<RefreshTokenResponse> {
-    return this.authService.refreshToken(req.body as RefreshTokenDto);
+  async refreshToken(@Body() refreshTokenDto: RefreshTokenDto): Promise<RefreshTokenResponse> {
+    return this.authService.refreshToken(refreshTokenDto);
   }
 
   @Delete('logout')
@@ -75,13 +78,7 @@ export class AuthController {
   @ApiResponse({ status: 200, description: 'User profile' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
-  getProfile(@Request() req: AuthRequest): {
-    id: string;
-    email: string;
-    displayName: string;
-    avatar: string | null;
-    role: string;
-  } {
-    return this.authService.getProfile(req.user);
+  getProfile(@Request() req: AuthRequest): RequestUser {
+    return req.user;
   }
 }

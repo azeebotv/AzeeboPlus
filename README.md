@@ -32,14 +32,8 @@ cp .env.example .env
 ## Database Setup
 
 ```bash
-# Generate Prisma client
-pnpm prisma generate
-
-# Run database migrations
-pnpm prisma migrate dev
-
-# (Optional) Seed the database with initial data
-pnpm prisma db seed
+pnpm -r prisma generate
+pnpm -r exec prisma migrate deploy
 ```
 
 ## Build
@@ -55,171 +49,59 @@ pnpm build
 Start all services in development mode:
 
 ```bash
-# Start all services
 pnpm dev
-
-# Start a specific app
-pnpm --filter @azeebo/web dev
-pnpm --filter @azeebo/admin dev
 ```
 
 ## Testing
 
 ```bash
-# Run all tests
-pnpm test
-
-# Run tests for a specific package
-pnpm --filter @azeebo/auth-service test
-
-# Run linting
-pnpm lint
-
-# Run format checking
-pnpm format
+pnpm test                 # Run all tests
+pnpm run test:unit        # Unit tests only
+pnpm run test:integration # Integration tests with DB
+pnpm lint                 # Linting
+pnpm typecheck            # Type checking
 ```
 
-## Services
+## Service Ports
 
-### Deployable Services (`services/`)
+| Service | Port | Route Prefix |
+|---------|------|--------------|
+| auth-service | 3000 | /auth |
+| user-service | 3001 | /users |
+| wallet-service | 3002 | /wallet |
+| payment-service | 3003 | /payment |
+| content-service | 3004 | /content |
+| media-service | 3019 | /media |
+| search-service | 3005 | /search |
+| notification-service | 3006 | /notifications |
+| reward-service | 3007 | /rewards |
+| analytics-service | 3008 | /analytics |
+| recommendation-service | 3009 | /recommendation |
+| lifestyle-service | 3016 | /lifestyle |
+| vertical-service | 3017 | /vertical |
+| movie-service | 3011 | /movies |
+| games-service | 3012 | /games |
+| comedy-service | 3013 | /comedy |
+| sports-service | 3014 | /sports |
+| reality-service | 3010 | /reality |
+| creator-service | 3018 | /creators |
 
-| Service | Port | Description |
-|---------|------|-------------|
-| api-gateway | 3013 | Main API gateway/proxy |
-| auth-service | 3000 | Authentication & authorization |
-| user-service | 3001 | User management |
-| wallet-service | 3002 | Wallet & payments |
-| payment-service | 3003 | Payment processing |
-| content-service | 3004 | Content management |
-| notification-service | 3005 | Notifications |
-| reward-service | 3006 | Rewards & loyalty |
-| search-service | 3007 | Search functionality |
-| analytics-service | 3008 | Analytics |
-| moderation-service | 3009 | Content moderation |
-| recommendation-service | 3010 | Recommendations |
-| lifestyle-service | 3016 | Lifestyle content |
-| vertical-service | 3017 | Universe & characters |
-| media-service | 3019 | Media upload & processing |
-| queue-service | 3015 | Background job processing |
+## Documentation
 
-### Applications (`apps/`)
+- [API Route Map](docs/API_ROUTE_MAP.md) - Complete API documentation
+- [CLAUDE.md](CLAUDE.md) - Build standards and coding conventions
+- [Review Checklist](docs/REVIEW_CHECKLIST.md) - PR review guidelines
+- [Workflow Commands](docs/WORKFLOW_COMMANDS.md) - Development workflow prompts
 
-| App | Description |
-|-----|-------------|
-| web | Main web application (Next.js) |
-| admin | Admin dashboard (NestJS) |
-| mobile | Mobile application (Expo/React Native) |
-| creator-portal | Creator dashboard (NestJS) |
+## Known Issues
 
-### Shared Packages (`packages/`)
+- Do NOT use `prisma db push --accept-data-loss` as a normal workflow
+- For migrations, use `pnpm prisma migrate dev` or `prisma migrate deploy`
+- Do NOT commit generated artifacts (dist/, node_modules/.prisma/)
 
-- `analytics-sdk` - Analytics tracking SDK
-- `api-client` - Shared API client
-- `design-tokens` - Design tokens
-- `error-handling` - Error handling utilities
-- `logger` - Structured logging
-- `security` - Security utilities
+## CI/CD
 
-## API Documentation
-
-### Gateway Routes
-
-All API requests should be routed through the gateway at `/api/v1/:service/:resource`.
-
-Examples:
-- `POST /api/v1/auth/register`
-- `POST /api/v1/auth/login`
-- `GET /api/v1/content/items`
-
-### Base URL
-
-- **Local Development**: `http://localhost:3013`
-- **Production**: Configure via `API_GATEWAY_URL` environment variable
-
-## Docker
-
-### Start All Services
-
-```bash
-docker-compose up -d
-```
-
-### View Service Status
-
-```bash
-docker-compose ps
-```
-
-### View Logs
-
-```bash
-docker-compose logs -f [service-name]
-```
-
-## Project Structure
-
-```
-azeebo+/
-├── apps/                 # Frontend applications
-│   ├── admin/            # Admin dashboard
-│   ├── creator-portal/   # Creator portal
-│   ├── mobile/           # Mobile app
-│   └── web/              # Main web app
-├── packages/             # Shared packages
-│   ├── analytics-sdk/
-│   ├── api-client/
-│   ├── design-tokens/
-│   ├── error-handling/
-│   ├── logger/
-│   └── security/
-├── services/             # Backend microservices
-│   ├── analytics-service/
-│   ├── api-gateway/
-│   ├── auth-service/
-│   ├── content-service/
-│   ├── lifestyle-service/
-│   ├── media-service/
-│   ├── moderation-service/
-│   ├── notification-service/
-│   ├── payment-service/
-│   ├── queue-service/
-│   ├── recommendation-service/
-│   ├── reward-service/
-│   ├── search-service/
-│   ├── user-service/
-│   ├── vertical-service/
-│   └── wallet-service/
-├── modules/              # Content modules (verticals)
-│   ├── comedy-service/
-│   ├── creator-service/
-│   ├── games-service/
-│   ├── lifestyle-service/
-│   ├── movie-service/
-│   ├── reality-service/
-│   ├── sports-service/
-│   └── vertical-service/
-├── infra/                # Infrastructure
-│   ├── docker/
-│   ├── k8s/
-│   └── load-testing/
-└── prisma/               # Database schema
-```
-
-## Troubleshooting
-
-### Database Connection Issues
-
-Ensure PostgreSQL is running and `DATABASE_URL` is correctly set in `.env`.
-
-### Build Failures
-
-```bash
-# Clean and rebuild
-pnpm clean
-pnpm install
-pnpm build
-```
-
-### Port Conflicts
-
-If a port is already in use, check `docker-compose.yml` for service port mappings.
+The project uses GitHub Actions for CI/CD. See:
+- `.github/workflows/ci.yml` - CI pipeline
+- `.github/workflows/cd.yml` - CD deployment
+- `.github/workflows/pr-checks.yml` - PR validation

@@ -17,6 +17,7 @@
     "prisma:studio": "prisma studio"
   },
   "dependencies": {
+    "@azeebo/logger": "workspace:*",
     "@nestjs/common": "^10.4.0",
     "@nestjs/config": "^3.0.0",
     "@nestjs/core": "^10.4.0",
@@ -29,6 +30,7 @@
     "bcrypt": "^5.1.1",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",
+    "helmet": "^8.1.0",
     "ioredis": "^5.10.1",
     "otplib": "^13.4.0",
     "passport": "^0.6.0",

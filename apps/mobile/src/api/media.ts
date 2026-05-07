@@ -59,7 +59,7 @@ export const mediaApi = {
     fileId: string,
     extension: string,
     contentType: string,
-    expiresIn = 3600,
+    expiresIn = 3600
   ): Promise<ApiResponse<PresignedUploadResponse>> => {
     return apiClient.get<ApiResponse<PresignedUploadResponse>>(
       `/api/media/presigned/upload?type=${type}&fileId=${fileId}&extension=${extension}&contentType=${encodeURIComponent(contentType)}&expiresIn=${expiresIn}`
@@ -68,7 +68,7 @@ export const mediaApi = {
 
   getPresignedDownloadUrl: async (
     key: string,
-    expiresIn = 3600,
+    expiresIn = 3600
   ): Promise<ApiResponse<{ url: string; expiresIn: number }>> => {
     return apiClient.get<ApiResponse<{ url: string; expiresIn: number }>>(
       `/api/media/presigned/download?key=${encodeURIComponent(key)}&expiresIn=${expiresIn}`

@@ -39,12 +39,16 @@ export class SocialAuthController {
   @ApiOperation({ summary: 'Google social login' })
   @ApiResponse({ status: 200, description: 'Login successful' })
   @ApiResponse({ status: 401, description: 'Invalid credentials' })
-  async googleLogin(@Body() dto: { idToken: string }): Promise<SocialLoginResponse> {
+  async googleLogin(
+    @Body() dto: { idToken: string; accessToken?: string; refreshToken?: string }
+  ): Promise<SocialLoginResponse> {
     const socialUser = {
       email: 'user@gmail.com',
       displayName: 'Google User',
       socialId: dto.idToken,
       provider: 'google' as const,
+      accessToken: dto.accessToken ?? '',
+      refreshToken: dto.refreshToken ?? '',
     };
 
     return this.socialAuthService.socialLogin(socialUser);
@@ -55,12 +59,16 @@ export class SocialAuthController {
   @ApiOperation({ summary: 'Apple social login' })
   @ApiResponse({ status: 200, description: 'Login successful' })
   @ApiResponse({ status: 401, description: 'Invalid credentials' })
-  async appleLogin(@Body() dto: { identityToken: string }): Promise<SocialLoginResponse> {
+  async appleLogin(
+    @Body() dto: { identityToken: string; accessToken?: string; refreshToken?: string }
+  ): Promise<SocialLoginResponse> {
     const socialUser = {
       email: 'user@apple.com',
       displayName: 'Apple User',
       socialId: dto.identityToken,
       provider: 'apple' as const,
+      accessToken: dto.accessToken ?? '',
+      refreshToken: dto.refreshToken ?? '',
     };
 
     return this.socialAuthService.socialLogin(socialUser);

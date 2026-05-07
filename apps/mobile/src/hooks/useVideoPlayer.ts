@@ -23,17 +23,18 @@ interface UseVideoPlayerReturn {
   seekBackward: (seconds?: number) => void;
   toggleFullscreen: () => void;
   setShowControls: (show: boolean) => void;
+  setDuration: (duration: number) => void;
   formatTime: (seconds: number) => string;
 }
 
 export function useVideoPlayer({
-  contentId,
+  contentId: _contentId,
   initialProgress = 0,
   onProgressUpdate,
   onComplete,
 }: UseVideoPlayerOptions): UseVideoPlayerReturn {
-  const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const hideControlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const progressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const hideControlsTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [isBuffering, setIsBuffering] = useState(false);
@@ -48,7 +49,7 @@ export function useVideoPlayer({
   }, [initialProgress]);
 
   useEffect(() => {
-    return () => {
+    const cleanup = (): void => {
       if (progressIntervalRef.current) {
         clearInterval(progressIntervalRef.current);
       }
@@ -56,6 +57,7 @@ export function useVideoPlayer({
         clearTimeout(hideControlsTimeoutRef.current);
       }
     };
+    return cleanup;
   }, []);
 
   const startProgressTracking = useCallback(() => {
@@ -63,7 +65,7 @@ export function useVideoPlayer({
       clearInterval(progressIntervalRef.current);
     }
     progressIntervalRef.current = setInterval(() => {
-      setCurrentTime(prev => {
+      setCurrentTime((prev) => {
         const newTime = prev + 1;
         if (newTime >= duration && duration > 0) {
           onComplete?.();
@@ -123,24 +125,33 @@ export function useVideoPlayer({
     }
   }, [isPlaying, play, pause]);
 
-  const seek = useCallback((time: number) => {
-    const clampedTime = Math.max(0, Math.min(time, duration));
-    setCurrentTime(clampedTime);
-    if (onProgressUpdate) {
-      onProgressUpdate(clampedTime);
-    }
-  }, [duration, onProgressUpdate]);
+  const seek = useCallback(
+    (time: number) => {
+      const clampedTime = Math.max(0, Math.min(time, duration));
+      setCurrentTime(clampedTime);
+      if (onProgressUpdate) {
+        onProgressUpdate(clampedTime);
+      }
+    },
+    [duration, onProgressUpdate]
+  );
 
-  const seekForward = useCallback((seconds = 10) => {
-    seek(currentTime + seconds);
-  }, [currentTime, seek]);
+  const seekForward = useCallback(
+    (seconds = 10) => {
+      seek(currentTime + seconds);
+    },
+    [currentTime, seek]
+  );
 
-  const seekBackward = useCallback((seconds = 10) => {
-    seek(currentTime - seconds);
-  }, [currentTime, seek]);
+  const seekBackward = useCallback(
+    (seconds = 10) => {
+      seek(currentTime - seconds);
+    },
+    [currentTime, seek]
+  );
 
   const toggleFullscreen = useCallback(() => {
-    setIsFullscreen(prev => !prev);
+    setIsFullscreen((prev) => !prev);
   }, []);
 
   const formatTime = useCallback((seconds: number): string => {
@@ -169,6 +180,7 @@ export function useVideoPlayer({
     seekBackward,
     toggleFullscreen,
     setShowControls,
+    setDuration,
     formatTime,
   };
 }

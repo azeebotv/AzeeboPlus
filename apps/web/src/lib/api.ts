@@ -1,6 +1,6 @@
 // API client for backend services
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3013';
 
 const RETRY_CONFIG = {
   maxRetries: 3,
@@ -231,8 +231,10 @@ class ApiClient {
     if (statusCode && RETRY_CONFIG.retryableStatusCodes.includes(statusCode)) {
       return true;
     }
-    if (error === 'Network error. Please check your connection.' ||
-        error === 'Request timeout. Please try again.') {
+    if (
+      error === 'Network error. Please check your connection.' ||
+      error === 'Request timeout. Please try again.'
+    ) {
       return true;
     }
     return false;
@@ -270,7 +272,7 @@ class ApiClient {
       if (!response.ok) {
         if (this.isRetryableError(response.status) && attempt < RETRY_CONFIG.maxRetries) {
           const delay = this.calculateDelay(attempt);
-          await new Promise(resolve => setTimeout(resolve, delay));
+          await new Promise((resolve) => setTimeout(resolve, delay));
           return this.request<T>(endpoint, options, attempt + 1);
         }
 
@@ -293,7 +295,7 @@ class ApiClient {
       if (error instanceof Error && error.name === 'AbortError') {
         if (attempt < RETRY_CONFIG.maxRetries) {
           const delay = this.calculateDelay(attempt);
-          await new Promise(resolve => setTimeout(resolve, delay));
+          await new Promise((resolve) => setTimeout(resolve, delay));
           return this.request<T>(endpoint, options, attempt + 1);
         }
         return {
@@ -304,10 +306,12 @@ class ApiClient {
         };
       }
 
-      if (this.isRetryableError(undefined, error instanceof Error ? error.message : undefined) &&
-          attempt < RETRY_CONFIG.maxRetries) {
+      if (
+        this.isRetryableError(undefined, error instanceof Error ? error.message : undefined) &&
+        attempt < RETRY_CONFIG.maxRetries
+      ) {
         const delay = this.calculateDelay(attempt);
-        await new Promise(resolve => setTimeout(resolve, delay));
+        await new Promise((resolve) => setTimeout(resolve, delay));
         return this.request<T>(endpoint, options, attempt + 1);
       }
 
@@ -342,8 +346,10 @@ class ApiClient {
       });
     },
 
-    refreshToken: async (refreshToken: string): Promise<ApiResponse<{ access_token: string }>> => {
-      return this.request<{ access_token: string }>('/auth/refresh', {
+    refreshToken: async (
+      refreshToken: string
+    ): Promise<ApiResponse<{ access_token: string; refresh_token: string }>> => {
+      return this.request<{ access_token: string; refresh_token: string }>('/auth/refresh', {
         method: 'POST',
         body: JSON.stringify({ refreshToken }),
       });

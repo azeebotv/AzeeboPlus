@@ -20,7 +20,7 @@ import { ConfigService } from '@nestjs/config';
       { name: 'payments' },
       { name: 'emails' },
       { name: 'analytics' },
-      { name: 'content-processing' },
+      { name: 'content-processing' }
     ),
   ],
   exports: [BullModule],

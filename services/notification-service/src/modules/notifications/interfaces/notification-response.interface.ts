@@ -4,7 +4,24 @@ export interface NotificationResponse {
     notifications?: Record<string, unknown>[];
     unreadCount?: number;
     message?: string;
-    [key: string]: unknown;
+    pushTokens?: {
+      id: string;
+      userId: string;
+      createdAt: Date;
+      updatedAt: Date;
+      token: string;
+      deviceType: string;
+    }[];
+    [key: string]:
+      | {
+          id: string;
+          userId: string;
+          createdAt: Date;
+          updatedAt: Date;
+          token: string;
+          deviceType: string;
+        }[]
+      | unknown;
   };
   error?: {
     code: string;

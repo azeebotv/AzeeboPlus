@@ -33,6 +33,44 @@ interface PaystackVerifyResponse {
   };
 }
 
+interface PaystackRefundResponse {
+  status: boolean;
+  message: string;
+  data: {
+    reference: string;
+    amount: number;
+    status: string;
+  };
+}
+
+interface InitializeResult {
+  reference: string;
+  authorizationUrl: string;
+  accessCode: string;
+}
+
+interface VerifyResult {
+  status: string;
+  amount: number;
+  currency: string;
+  paidAt: Date;
+  customerEmail: string;
+  reference: string;
+}
+
+interface RefundResult {
+  reference: string;
+  amount: number;
+  status: string;
+}
+
+interface CircuitBreakerStats {
+  state: string;
+  failureCount: number;
+  successCount: number;
+  lastFailureTime: number | null;
+}
+
 @Injectable()
 export class PaystackProvider {
   private readonly logger = new Logger(PaystackProvider.name);
@@ -53,7 +91,11 @@ export class PaystackProvider {
     this.logger.log('PaystackProvider initialized with circuit breaker');
   }
 
-  async initializePayment(amount: number, currency: string, userId: string) {
+  async initializePayment(
+    amount: number,
+    currency: string,
+    userId: string
+  ): Promise<InitializeResult> {
     try {
       const result = await this.circuitBreaker.execute(async () => {
         const response = await axios.post<PaystackInitializeResponse>(
@@ -66,7 +108,8 @@ export class PaystackProvider {
               user_id: userId,
               app: 'azeebo-plus',
             },
-            callback_url: process.env.PAYSTACK_CALLBACK_URL || 'https://api.azeebo.plus/payments/webhook',
+            callback_url:
+              process.env.PAYSTACK_CALLBACK_URL || 'https://api.azeebo.plus/payments/webhook',
           },
           {
             headers: {
@@ -98,7 +141,7 @@ export class PaystackProvider {
     }
   }
 
-  async verifyPayment(reference: string) {
+  async verifyPayment(reference: string): Promise<VerifyResult> {
     try {
       const result = await this.circuitBreaker.execute(async () => {
         const response = await axios.get<PaystackVerifyResponse>(
@@ -136,14 +179,15 @@ export class PaystackProvider {
     }
   }
 
-  async processRefund(transactionReference: string, reason: string) {
+  async processRefund(transactionReference: string, reason: string): Promise<RefundResult> {
     try {
       const result = await this.circuitBreaker.execute(async () => {
-        const response = await axios.post(
+        const response = await axios.post<PaystackRefundResponse>(
           `${this.baseUrl}/transaction/refund`,
           {
             transaction: transactionReference,
             amount: null,
+            reason,
           },
           {
             headers: {
@@ -175,7 +219,10 @@ export class PaystackProvider {
     }
   }
 
-  async verifyWebhookSignature(payload: any, signature: string): Promise<boolean> {
+  async verifyWebhookSignature(
+    payload: Record<string, unknown>,
+    signature: string
+  ): Promise<boolean> {
     const hash: string = createHmac('sha512', this.apiKey)
       .update(JSON.stringify(payload))
       .digest('hex');
@@ -183,7 +230,7 @@ export class PaystackProvider {
     return hash === signature;
   }
 
-  getCircuitBreakerStats() {
+  getCircuitBreakerStats(): CircuitBreakerStats {
     return this.circuitBreaker.getStats();
   }
 }

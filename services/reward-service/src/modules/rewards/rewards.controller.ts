@@ -1,4 +1,13 @@
-import { Controller, Get, Post, UseGuards, Request, Body, HttpCode, HttpStatus } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  UseGuards,
+  Request,
+  Body,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 
@@ -25,7 +34,7 @@ export class RewardsController {
   @ApiOperation({ summary: 'List active missions' })
   @ApiResponse({ status: 200, description: 'Active missions' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getMissions(@Request() req: { user: { sub: string } }) {
+  async getMissions(@Request() req: { user: { sub: string } }): Promise<RewardResponse> {
     return this.rewardsService.getMissions(req.user.sub);
   }
 
@@ -34,7 +43,7 @@ export class RewardsController {
   @ApiOperation({ summary: 'List badges' })
   @ApiResponse({ status: 200, description: 'User badges' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getBadges(@Request() req: { user: { sub: string } }) {
+  async getBadges(@Request() req: { user: { sub: string } }): Promise<RewardResponse> {
     return this.rewardsService.getBadges(req.user.sub);
   }
 
@@ -43,7 +52,7 @@ export class RewardsController {
   @ApiOperation({ summary: 'Get current streak' })
   @ApiResponse({ status: 200, description: 'Streak info' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getStreak(@Request() req: { user: { sub: string } }) {
+  async getStreak(@Request() req: { user: { sub: string } }): Promise<RewardResponse> {
     return this.rewardsService.getStreak(req.user.sub);
   }
 
@@ -54,7 +63,10 @@ export class RewardsController {
   @ApiResponse({ status: 200, description: 'Reward redeemed' })
   @ApiResponse({ status: 400, description: 'Invalid request' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async redeemReward(@Request() req: { user: { sub: string } }, @Body() redeemRewardDto: RedeemRewardDto) {
+  async redeemReward(
+    @Request() req: { user: { sub: string } },
+    @Body() redeemRewardDto: RedeemRewardDto
+  ): Promise<RewardResponse> {
     return this.rewardsService.redeemReward(req.user.sub, redeemRewardDto.rewardId);
   }
 
@@ -63,7 +75,7 @@ export class RewardsController {
   @ApiOperation({ summary: 'Get user level' })
   @ApiResponse({ status: 200, description: 'User level' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getLevel(@Request() req: { user: { sub: string } }) {
+  async getLevel(@Request() req: { user: { sub: string } }): Promise<RewardResponse> {
     return this.rewardsService.getLevel(req.user.sub);
   }
 }

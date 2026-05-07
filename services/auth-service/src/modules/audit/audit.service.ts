@@ -14,8 +14,8 @@ export interface AuditLogEntry {
 }
 
 @Injectable()
-export class AuditService {
-  private readonly logger = new Logger(AuditService.name);
+export class AuditLogService {
+  private readonly logger = new Logger(AuditLogService.name);
 
   constructor(private prisma: PrismaService) {}
 

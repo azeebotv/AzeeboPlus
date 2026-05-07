@@ -30,12 +30,12 @@ export class MfaService {
 
   async verifyMfaCode(userId: string, code: string): Promise<boolean> {
     const user = await this.authRepository.findById(userId);
-    if (!user || !(user as Record<string, unknown>).mfaSecret) {
+    if (!user || !user.mfaSecret) {
       return false;
     }
 
     return speakeasy.totp.verify({
-      secret: (user as Record<string, unknown>).mfaSecret as string,
+      secret: user.mfaSecret,
       encoding: 'base32',
       token: code,
     });

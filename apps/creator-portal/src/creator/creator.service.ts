@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '../generated/prisma';
 import { PrismaService } from '../database/prisma.service';
 
 export interface ContentItem {
@@ -235,10 +235,11 @@ export class CreatorService {
       _sum: { amount: true },
     });
 
+    const pendingAmount = pendingPayouts._sum.amount;
     return {
       total: 1247.5,
       count: 47,
-      pendingPayout: pendingPayouts._sum.amount || 0,
+      pendingPayout: pendingAmount ? Number(pendingAmount) : 0,
       lifetimeEarnings: 48293.45,
     };
   }
@@ -255,9 +256,9 @@ export class CreatorService {
       throw new BadRequestException('Wallet not found');
     }
 
-    const payoutAmount = amount || wallet.balance;
+    const payoutAmount = amount || Number(wallet.balance);
 
-    if (payoutAmount > wallet.balance) {
+    if (payoutAmount > Number(wallet.balance)) {
       throw new BadRequestException('Insufficient balance');
     }
 

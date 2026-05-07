@@ -191,12 +191,13 @@ export class ContentController {
   @ApiResponse({ status: 200, description: 'Signed URL generated' })
   @ApiResponse({ status: 404, description: 'Content or media asset not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Premium content requires subscription' })
   async getSignedMediaUrl(
     @Request() req: { user: { sub: string } },
     @Param('id') id: string,
     @Query('expiresIn') expiresIn: number = 3600
   ): Promise<ContentResponse> {
-    return this.contentService.getSignedMediaUrl(id, expiresIn);
+    return this.contentService.getSignedMediaUrl(req.user.sub, id, expiresIn);
   }
 
   @Post(':id/media/thumbnail')

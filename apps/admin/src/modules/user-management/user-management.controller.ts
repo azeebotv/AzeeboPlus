@@ -31,8 +31,24 @@ export class UserManagementController {
   }
 
   @Put(':id/suspend')
-  async suspendUser(@Param('id') id: string, @Body() body: { reason: string }): Promise<unknown> {
-    return this.userService.suspendUser(id, body.reason);
+  async suspendUser(
+    @Param('id') id: string,
+    @Body() body: { reason: string; suspendedBy: string; durationDays?: number }
+  ): Promise<unknown> {
+    return this.userService.suspendUser(id, body.reason, body.suspendedBy, body.durationDays);
+  }
+
+  @Put(':id/suspension/revoke')
+  async revokeSuspension(
+    @Param('id') id: string,
+    @Body() body: { revokedBy: string; reason: string }
+  ): Promise<unknown> {
+    return this.userService.revokeSuspension(id, body.revokedBy, body.reason);
+  }
+
+  @Get(':id/suspensions')
+  async getUserSuspensions(@Param('id') id: string): Promise<unknown> {
+    return this.userService.getUserSuspensions(id);
   }
 
   @Delete(':id')

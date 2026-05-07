@@ -55,6 +55,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setUser(userData);
     api.setToken(access_token);
     localStorage.setItem('user', JSON.stringify(userData));
+    localStorage.setItem('refreshToken', refresh_token);
   }, []);
 
   const refreshAccessToken = useCallback(async () => {
@@ -82,9 +83,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const loadUser = async (): Promise<void> => {
       try {
         const storedUser = localStorage.getItem('user');
-        
+        const storedRefreshToken = localStorage.getItem('refreshToken');
+
         if (storedUser) {
           setUser(JSON.parse(storedUser));
+        }
+        if (storedRefreshToken) {
+          setRefreshToken(storedRefreshToken);
         }
       } catch (error) {
         // Error handling is intentionally minimal
@@ -156,6 +161,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setUser(null);
       api.setToken(null);
       localStorage.removeItem('user');
+      localStorage.removeItem('refreshToken');
     }
   };
 

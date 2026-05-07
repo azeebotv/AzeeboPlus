@@ -2,10 +2,25 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { UsersService } from './users.service';
 import { PrismaService } from '../database/prisma.service';
 import { NotFoundException } from '@nestjs/common';
+import { User, WatchHistory, SavedItem } from '@prisma/client';
+
+jest.mock('../database/prisma.service');
 
 describe('UsersService Integration', () => {
   let service: UsersService;
   let prisma: PrismaService;
+
+  const mockUser: User = {
+    id: 'user-123',
+    email: 'test@example.com',
+    displayName: 'Test User',
+    avatar: null,
+    role: 'user',
+    password: 'hashed',
+    preferences: { interests: ['reality', 'sports'] },
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -26,6 +41,7 @@ describe('UsersService Integration', () => {
               create: jest.fn(),
               delete: jest.fn(),
             },
+            $transaction: jest.fn(),
           },
         },
       ],
@@ -43,8 +59,8 @@ describe('UsersService Integration', () => {
     it('should return universe affinity for user', async () => {
       const userId = 'user-123';
 
-      jest.spyOn(prisma.user, 'findUnique').mockResolvedValue({
-        id: userId,
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue({
+        ...mockUser,
         preferences: {
           interests: ['reality', 'sports'],
         },
@@ -74,7 +90,7 @@ describe('UsersService Integration', () => {
     it('should throw NotFoundException if user not found', async () => {
       const userId = 'nonexistent-user';
 
-      jest.spyOn(prisma.user, 'findUnique').mockResolvedValue(null);
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue(null);
 
       await expect(service.getUniverseAffinity(userId)).rejects.toThrow(NotFoundException);
     });
@@ -85,16 +101,15 @@ describe('UsersService Integration', () => {
       const userId = 'user-123';
       const dto = {
         interests: ['reality', 'movies'],
-        preferences: ['dark-mode'],
       };
 
-      jest.spyOn(prisma.user, 'findUnique').mockResolvedValue({
-        id: userId,
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue({
+        ...mockUser,
         preferences: { interests: ['sports'] },
       });
 
-      jest.spyOn(prisma.user, 'update').mockResolvedValue({
-        id: userId,
+      (prisma.user.update as jest.Mock).mockResolvedValue({
+        ...mockUser,
         preferences: { interests: dto.interests },
       });
 
@@ -109,21 +124,26 @@ describe('UsersService Integration', () => {
     it('should return watch history for user', async () => {
       const userId = 'user-123';
 
-      jest.spyOn(prisma.watchHistory, 'findMany').mockResolvedValue([
+      const mockWatchHistory: WatchHistory[] = [
         {
           id: 'history-1',
           userId,
           contentId: 'content-1',
           contentType: 'video',
-          watchedAt: new Date(),
+          universe: 'reality',
+          progress: 100,
           createdAt: new Date(),
         },
-      ]);
+      ];
+
+      (prisma.watchHistory.findMany as jest.Mock).mockResolvedValue(mockWatchHistory);
 
       const result = await service.getWatchHistory(userId);
 
       expect(result).toHaveLength(1);
-      expect(result[0].contentId).toBe('content-1');
+      if ('contentId' in result[0]) {
+        expect(result[0].contentId).toBe('content-1');
+      }
     });
   });
 
@@ -132,8 +152,8 @@ describe('UsersService Integration', () => {
       const userId = 'user-123';
       const contentId = 'content-1';
 
-      jest.spyOn(prisma.savedItem, 'findUnique').mockResolvedValue(null);
-      jest.spyOn(prisma.savedItem, 'create').mockResolvedValue({
+      (prisma.savedItem.findUnique as jest.Mock).mockResolvedValue(null);
+      (prisma.savedItem.create as jest.Mock).mockResolvedValue({
         id: 'saved-1',
         userId,
         contentId,
@@ -149,7 +169,7 @@ describe('UsersService Integration', () => {
       const userId = 'user-123';
       const contentId = 'content-1';
 
-      jest.spyOn(prisma.savedItem, 'findUnique').mockResolvedValue({
+      (prisma.savedItem.findUnique as jest.Mock).mockResolvedValue({
         id: 'saved-1',
         userId,
         contentId,
@@ -167,14 +187,14 @@ describe('UsersService Integration', () => {
       const userId = 'user-123';
       const contentId = 'content-1';
 
-      jest.spyOn(prisma.savedItem, 'findUnique').mockResolvedValue({
+      (prisma.savedItem.findUnique as jest.Mock).mockResolvedValue({
         id: 'saved-1',
         userId,
         contentId,
         createdAt: new Date(),
       });
 
-      jest.spyOn(prisma.savedItem, 'delete').mockResolvedValue({
+      (prisma.savedItem.delete as jest.Mock).mockResolvedValue({
         id: 'saved-1',
         userId,
         contentId,
@@ -190,7 +210,7 @@ describe('UsersService Integration', () => {
       const userId = 'user-123';
       const contentId = 'content-1';
 
-      jest.spyOn(prisma.savedItem, 'findUnique').mockResolvedValue(null);
+      (prisma.savedItem.findUnique as jest.Mock).mockResolvedValue(null);
 
       await expect(service.unsaveItem(userId, contentId)).rejects.toThrow(NotFoundException);
     });

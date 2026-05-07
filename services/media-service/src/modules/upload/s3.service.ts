@@ -11,6 +11,20 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { v4 as uuidv4 } from 'uuid';
 import { CircuitBreaker, CircuitBreakerOpenError } from '@azeebo/shared-types';
 
+interface FileMetadata {
+  contentType: string | undefined;
+  contentLength: number | undefined;
+  lastModified: Date | undefined;
+  metadata: Record<string, string> | undefined;
+}
+
+interface CircuitBreakerStats {
+  state: string;
+  failureCount: number;
+  successCount: number;
+  lastFailureTime: number | null;
+}
+
 @Injectable()
 export class S3Service {
   private readonly logger = new Logger(S3Service.name);
@@ -44,7 +58,7 @@ export class S3Service {
 
   async uploadFile(
     file: Express.Multer.File,
-    folder: string = 'uploads',
+    folder = 'uploads'
   ): Promise<{ key: string; url: string; cdnUrl: string }> {
     if (!file) {
       throw new BadRequestException('No file provided');
@@ -69,7 +83,9 @@ export class S3Service {
 
     const maxFileSize = this.getMaxFileSize(file.mimetype);
     if (file.size > maxFileSize) {
-      throw new BadRequestException(`File size exceeds maximum allowed size of ${maxFileSize / 1024 / 1024}MB`);
+      throw new BadRequestException(
+        `File size exceeds maximum allowed size of ${maxFileSize / 1024 / 1024}MB`
+      );
     }
 
     const fileExtension = file.originalname.split('.').pop() || '';
@@ -86,13 +102,15 @@ export class S3Service {
             Metadata: {
               'original-name': file.originalname,
             },
-          }),
+          })
         );
       });
     } catch (error) {
       if (error instanceof CircuitBreakerOpenError) {
         this.logger.warn(`S3 circuit breaker open: ${error.message}`);
-        throw new BadRequestException('File upload service temporarily unavailable. Please try again later.');
+        throw new BadRequestException(
+          'File upload service temporarily unavailable. Please try again later.'
+        );
       }
       this.logger.error(`Error uploading file to S3: ${(error as Error).message}`);
       throw error;
@@ -119,7 +137,9 @@ export class S3Service {
     } catch (error) {
       if (error instanceof CircuitBreakerOpenError) {
         this.logger.warn(`S3 circuit breaker open: ${error.message}`);
-        throw new BadRequestException('File download service temporarily unavailable. Please try again later.');
+        throw new BadRequestException(
+          'File download service temporarily unavailable. Please try again later.'
+        );
       }
       this.logger.error(`Error getting signed download URL: ${(error as Error).message}`);
       throw error;
@@ -129,7 +149,7 @@ export class S3Service {
   async getSignedUploadUrl(
     key: string,
     contentType: string,
-    expiresIn = 3600,
+    expiresIn = 3600
   ): Promise<{ uploadUrl: string; key: string }> {
     try {
       const command = new PutObjectCommand({
@@ -146,7 +166,9 @@ export class S3Service {
     } catch (error) {
       if (error instanceof CircuitBreakerOpenError) {
         this.logger.warn(`S3 circuit breaker open: ${error.message}`);
-        throw new BadRequestException('File upload service temporarily unavailable. Please try again later.');
+        throw new BadRequestException(
+          'File upload service temporarily unavailable. Please try again later.'
+        );
       }
       this.logger.error(`Error getting signed upload URL: ${(error as Error).message}`);
       throw error;
@@ -160,27 +182,29 @@ export class S3Service {
           new DeleteObjectCommand({
             Bucket: this.bucketName,
             Key: key,
-          }),
+          })
         );
       });
     } catch (error) {
       if (error instanceof CircuitBreakerOpenError) {
         this.logger.warn(`S3 circuit breaker open: ${error.message}`);
-        throw new BadRequestException('File deletion service temporarily unavailable. Please try again later.');
+        throw new BadRequestException(
+          'File deletion service temporarily unavailable. Please try again later.'
+        );
       }
       this.logger.error(`Error deleting file from S3: ${(error as Error).message}`);
       throw error;
     }
   }
 
-  async getFileMetadata(key: string): Promise<any> {
+  async getFileMetadata(key: string): Promise<FileMetadata> {
     try {
       const response = await this.circuitBreaker.execute(async () => {
         return this.s3Client.send(
           new HeadObjectCommand({
             Bucket: this.bucketName,
             Key: key,
-          }),
+          })
         );
       });
 
@@ -193,7 +217,9 @@ export class S3Service {
     } catch (error) {
       if (error instanceof CircuitBreakerOpenError) {
         this.logger.warn(`S3 circuit breaker open: ${error.message}`);
-        throw new BadRequestException('File metadata service temporarily unavailable. Please try again later.');
+        throw new BadRequestException(
+          'File metadata service temporarily unavailable. Please try again later.'
+        );
       }
       this.logger.error(`Error getting file metadata from S3: ${(error as Error).message}`);
       throw error;
@@ -212,7 +238,7 @@ export class S3Service {
     return `${folder}/${fileId}.${extension}`;
   }
 
-  getCircuitBreakerStats() {
+  getCircuitBreakerStats(): CircuitBreakerStats {
     return this.circuitBreaker.getStats();
   }
 }

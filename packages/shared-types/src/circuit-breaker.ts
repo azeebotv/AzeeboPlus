@@ -43,7 +43,9 @@ export class CircuitBreaker {
         this.state = CircuitState.HALF_OPEN;
         this.halfOpenRequestCount = 0;
       } else {
-        throw new CircuitBreakerOpenError(`Circuit breaker is OPEN. Next attempt at: ${this.nextAttempt?.toISOString()}`);
+        throw new CircuitBreakerOpenError(
+          `Circuit breaker is OPEN. Next attempt at: ${this.nextAttempt?.toISOString()}`
+        );
       }
     }
 

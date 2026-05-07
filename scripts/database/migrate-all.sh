@@ -19,19 +19,19 @@ for service in services/*/; do
   fi
 done
 
-for module in modules/*/; do
-  if [ -f "$module/prisma/schema.prisma" ]; then
-    module_name=$(basename "$module")
-    echo "Migrating $module_name..."
+for app in apps/*/; do
+  if [ -f "$app/prisma/schema.prisma" ]; then
+    app_name=$(basename "$app")
+    echo "Migrating $app_name..."
 
-    cd "$module"
+    cd "$app"
 
     if [ -f "package.json" ]; then
       npx prisma migrate deploy
     fi
 
     cd ../..
-    echo "Completed migration for $module_name"
+    echo "Completed migration for $app_name"
   fi
 done
 

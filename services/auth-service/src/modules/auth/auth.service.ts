@@ -44,7 +44,7 @@ export class AuthService {
       password: hashedPassword,
     });
 
-    const tokens = this.generateTokens(user);
+    const tokens = await this.generateTokens(user);
 
     return createSuccessResponse({
       user: this.mapToUser(user),
@@ -64,10 +64,7 @@ export class AuthService {
       throw new UnauthorizedException('Account locked. Please try again later.');
     }
 
-    const isPasswordValid = await bcrypt.compare(
-      loginDto.password,
-      user.password
-    );
+    const isPasswordValid = await bcrypt.compare(loginDto.password, user.password);
     if (!isPasswordValid) {
       await this.incrementFailedLoginAttempts(loginDto.email);
       throw new UnauthorizedException('Invalid email or password');
@@ -75,7 +72,7 @@ export class AuthService {
 
     await this.resetFailedLoginAttempts(loginDto.email);
 
-    const tokens = this.generateTokens(user);
+    const tokens = await this.generateTokens(user);
 
     return createSuccessResponse({
       user: this.mapToUser(user),
@@ -128,13 +125,18 @@ export class AuthService {
       }
 
       const session = await this.authRepository.findSessionByUserId(user.id);
-      if (!session || session.refreshToken !== refreshToken) {
+      if (!session) {
+        throw new UnauthorizedException('Invalid refresh token');
+      }
+
+      const isRefreshTokenValid = await bcrypt.compare(refreshToken, session.refreshToken);
+      if (!isRefreshTokenValid) {
         throw new UnauthorizedException('Invalid refresh token');
       }
 
       // Invalidate old session and create new one (refresh token rotation)
       await this.authRepository.deleteSessionByUserId(user.id);
-      const tokens = this.generateTokens(user);
+      const tokens = await this.generateTokens(user);
 
       return {
         success: true,
@@ -168,8 +170,11 @@ export class AuthService {
       const jwtSecret = process.env.JWT_SECRET;
       if (!jwtSecret) return null;
 
-      const decoded = this.jwtService.verify(token, { secret: jwtSecret }) as { jti: string; sub: string };
-      
+      const decoded = this.jwtService.verify(token, { secret: jwtSecret }) as {
+        jti: string;
+        sub: string;
+      };
+
       const isRevoked = await this.redisService.get(`${this.revokedTokensPrefix}${decoded.jti}`);
       if (isRevoked) {
         return null;
@@ -187,11 +192,11 @@ export class AuthService {
     return user;
   }
 
-  private generateTokens(user: UserEntity): {
+  private async generateTokens(user: UserEntity): Promise<{
     accessToken: string;
     refreshToken: string;
     expiresAt: string;
-  } {
+  }> {
     const jwtSecret = process.env.JWT_SECRET;
     if (!jwtSecret) {
       throw new Error('JWT_SECRET environment variable is not configured');
@@ -219,13 +224,29 @@ export class AuthService {
       throw new Error('REFRESH_TOKEN_SECRET environment variable is not configured');
     }
 
-    const refreshToken = randomUUID();
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + this.refreshTokenExpiryDays);
 
-    this.authRepository.createSession({
+    const refreshToken = this.jwtService.sign(
+      {
+        iss: 'azeebo-auth-service',
+        aud: 'azeebo-api',
+        jti: randomUUID(),
+        sub: user.id,
+        type: 'refresh',
+        iat: now,
+      },
+      {
+        expiresIn: this.refreshTokenExpiry,
+        secret: refreshTokenSecret,
+      }
+    );
+
+    const hashedRefreshToken = await bcrypt.hash(refreshToken, this.saltRounds);
+
+    await this.authRepository.createSession({
       userId: user.id,
-      refreshToken,
+      refreshToken: hashedRefreshToken,
       expiresAt,
     });
 

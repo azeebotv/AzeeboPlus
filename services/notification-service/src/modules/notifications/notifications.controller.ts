@@ -65,7 +65,10 @@ export class NotificationsController {
     @Request() req: { user: { sub: string } },
     @Body() updatePreferencesDto: UpdatePreferencesDto
   ): Promise<NotificationResponse> {
-    return this.notificationsService.updatePreferences(req.user.sub, updatePreferencesDto);
+    return this.notificationsService.updatePreferences(
+      req.user.sub,
+      updatePreferencesDto as Record<string, boolean>
+    );
   }
 
   @Get('unread-count')
@@ -88,7 +91,11 @@ export class NotificationsController {
     @Request() req: { user: { sub: string } },
     @Body() savePushTokenDto: SavePushTokenDto
   ): Promise<NotificationResponse> {
-    return this.notificationsService.savePushToken(req.user.sub, savePushTokenDto.token, savePushTokenDto.deviceType);
+    return this.notificationsService.savePushToken(
+      req.user.sub,
+      savePushTokenDto.token,
+      savePushTokenDto.deviceType
+    );
   }
 
   @Get('push-tokens')

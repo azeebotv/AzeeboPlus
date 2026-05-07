@@ -1,0 +1,27 @@
+import { Controller, Get, Query } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { LifestyleFeedService } from './feed.service';
+
+@ApiTags('Feed')
+@Controller('feed')
+export class FeedController {
+  constructor(private readonly feedService: LifestyleFeedService) {}
+
+  @Get()
+  @ApiOperation({ summary: 'Get lifestyle feed' })
+  @ApiResponse({ status: 200, description: 'Feed items' })
+  async getFeed(
+    @Query('page') page = 1,
+    @Query('limit') limit = 20,
+    @Query('category') category?: string
+  ): Promise<unknown> {
+    return this.feedService.getFeed(Number(page), Number(limit), category);
+  }
+
+  @Get('trending')
+  @ApiOperation({ summary: 'Get trending content' })
+  @ApiResponse({ status: 200, description: 'Trending items' })
+  async getTrending(@Query('limit') limit = 10): Promise<unknown> {
+    return this.feedService.getTrending(Number(limit));
+  }
+}

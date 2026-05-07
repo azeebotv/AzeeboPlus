@@ -1,6 +1,25 @@
+export interface InitializeResult {
+  reference: string;
+  authorizationUrl: string;
+}
+
+export interface VerifyResult {
+  status: string;
+  amount: number;
+  currency: string;
+  paidAt: Date;
+  reference: string;
+}
+
+export interface RefundResult {
+  reference: string;
+  amount: number;
+  status: string;
+}
+
 export interface PaymentProvider {
-  initializePayment(amount: number, currency: string, userId: string): Promise<any>;
-  verifyPayment(reference: string): Promise<any>;
-  processRefund(transactionId: string, reason: string): Promise<any>;
-  verifyWebhookSignature(payload: any, signature: string): boolean;
+  initializePayment(amount: number, currency: string, userId: string): Promise<InitializeResult>;
+  verifyPayment(reference: string): Promise<VerifyResult>;
+  processRefund(transactionId: string, reason: string): Promise<RefundResult>;
+  verifyWebhookSignature(payload: Record<string, unknown>, signature: string): Promise<boolean>;
 }

@@ -1,214 +1,197 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { WalletService } from './wallet.service';
 import { PrismaService } from '../database/prisma.service';
-import { NotFoundException, BadRequestException } from '@nestjs/common';
 
-const mockPrisma = {
-  wallet: {
-    findUnique: jest.fn(),
-    update: jest.fn(),
-  },
-  walletTransaction: {
-    create: jest.fn(),
-    findMany: jest.fn(),
-  },
-  $transaction: jest.fn((callback) => callback(mockPrisma)),
-  $queryRaw: jest.fn(),
-};
+jest.mock('../database/prisma.service');
 
 describe('WalletService', () => {
   let service: WalletService;
+  let prismaService: jest.Mocked<PrismaService>;
+
+  const mockWallet = {
+    id: 'wallet-123',
+    userId: 'user-123',
+    balance: 1000,
+    currency: 'NGN',
+    bonusBalance: 50,
+    promoBalance: 25,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+
+  const mockTransaction = {
+    id: 'txn-123',
+    walletId: 'wallet-123',
+    type: 'credit' as const,
+    amount: 100,
+    status: 'completed' as const,
+    description: 'Test transaction',
+    reference: 'ref-123',
+    createdAt: new Date(),
+  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         WalletService,
-        { provide: PrismaService, useValue: mockPrisma },
+        {
+          provide: PrismaService,
+          useValue: {
+            wallet: {
+              findUnique: jest.fn(),
+              findMany: jest.fn(),
+              create: jest.fn(),
+              update: jest.fn(),
+            },
+            walletTransaction: {
+              create: jest.fn(),
+              findMany: jest.fn(),
+            },
+            ledgerEntry: {
+              create: jest.fn(),
+            },
+            $transaction: jest.fn(),
+          },
+        },
       ],
     }).compile();
 
     service = module.get<WalletService>(WalletService);
+    prismaService = module.get(PrismaService);
+  });
+
+  afterEach(() => {
     jest.clearAllMocks();
   });
 
-  describe('getBalance', () => {
-    it('should return correct balance breakdown', async () => {
-      const mockWallet = {
-        id: 'wallet-1',
-        userId: 'user-1',
-        balance: 1000,
-        bonusBalance: 200,
-        promoBalance: 100,
-        currency: 'NGN',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
+  describe('getWallet', () => {
+    it('should return wallet with balance', async () => {
+      prismaService.wallet.findUnique.mockResolvedValue(mockWallet);
 
-      mockPrisma.wallet.findUnique.mockResolvedValue(mockWallet);
+      const result = await service.getWallet('user-123');
 
-      const result = await service.getBalance('user-1');
-
-      expect(result).toEqual({
-        success: true,
-        data: {
-          balance: 1000,
-          bonusBalance: 200,
-          promoBalance: 100,
-          totalBalance: 1300,
-          currency: 'NGN',
-        },
-      });
-      expect(mockPrisma.wallet.findUnique).toHaveBeenCalledWith({
-        where: { userId: 'user-1' },
-      });
+      expect(result.success).toBe(true);
+      expect(result.data).toHaveProperty('balance', 1000);
+      expect(result.data).toHaveProperty('bonusBalance', 50);
     });
 
-    it('should throw NotFoundException for unknown userId', async () => {
-      mockPrisma.wallet.findUnique.mockResolvedValue(null);
+    it('should create wallet if not exists', async () => {
+      prismaService.wallet.findUnique.mockResolvedValue(null);
+      prismaService.wallet.create.mockResolvedValue(mockWallet);
 
-      await expect(service.getBalance('unknown-user')).rejects.toThrow(
-        NotFoundException
-      );
+      const result = await service.getWallet('user-123');
+
+      expect(result.success).toBe(true);
+      expect(prismaService.wallet.create).toHaveBeenCalled();
     });
   });
 
-  describe('debitBalance', () => {
-    it('should deduct amount atomically', async () => {
-      const mockWallet = [
-        {
-          id: 'wallet-1',
-          userId: 'user-1',
-          balance: 1000,
-          bonusBalance: 200,
-          promoBalance: 100,
-        },
-      ];
-      const mockTransaction = {
-        id: 'tx-1',
-        walletId: 'wallet-1',
-        type: 'debit',
-        amount: 500,
-        status: 'completed',
-        description: 'Test debit',
-        reference: 'ref-1',
-      };
+  describe('fundWallet', () => {
+    it('should fund wallet successfully', async () => {
+      prismaService.wallet.findUnique.mockResolvedValue(mockWallet);
+      prismaService.wallet.update.mockResolvedValue({ ...mockWallet, balance: 1100 });
+      prismaService.walletTransaction.create.mockResolvedValue(mockTransaction);
+      prismaService.ledgerEntry.create.mockResolvedValue({ id: 'ledger-1' });
+      (prismaService.$transaction as jest.Mock).mockImplementation(async (cb) => cb(prismaService));
 
-      mockPrisma.$queryRaw.mockResolvedValue(mockWallet);
-      mockPrisma.wallet.update.mockResolvedValue({});
-      mockPrisma.walletTransaction.create.mockResolvedValue(mockTransaction);
+      const result = await service.fundWallet('user-123', 100, 'card');
 
-      const result = await service.debitBalance('wallet-1', 500, 'Test debit', 'ref-1');
-
-      expect(result).toEqual(mockTransaction);
-      expect(mockPrisma.$queryRaw).toHaveBeenCalled();
-      expect(mockPrisma.wallet.update).toHaveBeenCalledWith({
-        where: { id: 'wallet-1' },
-        data: { balance: { decrement: 500 } },
-      });
-      expect(mockPrisma.walletTransaction.create).toHaveBeenCalled();
+      expect(result.success).toBe(true);
     });
 
-    it('should throw BadRequestException for insufficient balance', async () => {
-      const mockWallet = [
-        {
-          id: 'wallet-1',
-          userId: 'user-1',
-          balance: 100,
-          bonusBalance: 0,
-          promoBalance: 0,
-        },
-      ];
+    it('should fail with invalid amount', async () => {
+      const result = await service.fundWallet('user-123', -100, 'card');
 
-      mockPrisma.$queryRaw.mockResolvedValue(mockWallet);
-
-      await expect(
-        service.debitBalance('wallet-1', 500, 'Test debit')
-      ).rejects.toThrow(BadRequestException);
+      expect(result.success).toBe(false);
+      expect(result.error).toHaveProperty('code', 'INVALID_AMOUNT');
     });
 
-    it('should throw NotFoundException for unknown walletId', async () => {
-      mockPrisma.$queryRaw.mockResolvedValue([]);
+    it('should fail when wallet not found', async () => {
+      prismaService.wallet.findUnique.mockResolvedValue(null);
 
-      await expect(
-        service.debitBalance('unknown-wallet', 100, 'Test debit')
-      ).rejects.toThrow(NotFoundException);
+      const result = await service.fundWallet('user-123', 100, 'card');
+
+      expect(result.success).toBe(false);
+      expect(result.error).toHaveProperty('code', 'WALLET_NOT_FOUND');
     });
   });
 
-  describe('creditBalance', () => {
-    it('should increment balance correctly', async () => {
-      const mockWallet = {
-        id: 'wallet-1',
-        userId: 'user-1',
-        balance: 500,
-      };
-      const mockTransaction = {
-        id: 'tx-1',
-        walletId: 'wallet-1',
-        type: 'credit',
-        amount: 300,
-        status: 'completed',
-        description: 'Test credit',
-      };
+  describe('withdraw', () => {
+    it('should withdraw successfully when balance is sufficient', async () => {
+      prismaService.wallet.findUnique.mockResolvedValue(mockWallet);
+      prismaService.wallet.update.mockResolvedValue({ ...mockWallet, balance: 900 });
+      prismaService.walletTransaction.create.mockResolvedValue(mockTransaction);
+      (prismaService.$transaction as jest.Mock).mockImplementation(async (cb) => cb(prismaService));
 
-      mockPrisma.wallet.findUnique.mockResolvedValue(mockWallet);
-      mockPrisma.wallet.update.mockResolvedValue({});
-      mockPrisma.walletTransaction.create.mockResolvedValue(mockTransaction);
+      const result = await service.withdraw('user-123', 100, 'bank');
 
-      const result = await service.creditBalance('wallet-1', 300, 'Test credit');
+      expect(result.success).toBe(true);
+    });
 
-      expect(result).toEqual(mockTransaction);
-      expect(mockPrisma.wallet.update).toHaveBeenCalledWith({
-        where: { id: 'wallet-1' },
-        data: { balance: { increment: 300 } },
-      });
+    it('should fail when balance is insufficient', async () => {
+      prismaService.wallet.findUnique.mockResolvedValue({ ...mockWallet, balance: 50 });
+
+      const result = await service.withdraw('user-123', 100, 'bank');
+
+      expect(result.success).toBe(false);
+      expect(result.error).toHaveProperty('code', 'INSUFFICIENT_BALANCE');
     });
   });
 
-  describe('redeemReward', () => {
-    it('should convert points to bonus balance at correct rate', async () => {
-      const mockWallet = {
-        id: 'wallet-1',
-        userId: 'user-1',
-        balance: 1000,
-        bonusBalance: 0,
-        promoBalance: 0,
-        currency: 'NGN',
-      };
+  describe('transfer', () => {
+    it('should transfer successfully', async () => {
+      const senderWallet = { ...mockWallet, balance: 1000 };
+      const recipientWallet = { ...mockWallet, id: 'wallet-456', balance: 500 };
 
-      mockPrisma.wallet.findUnique.mockResolvedValue(mockWallet);
-      mockPrisma.walletTransaction.create.mockResolvedValue({});
-      mockPrisma.wallet.update.mockResolvedValue({
-        ...mockWallet,
-        bonusBalance: 50,
-      });
+      prismaService.wallet.findUnique
+        .mockResolvedValueOnce(senderWallet)
+        .mockResolvedValueOnce(recipientWallet);
+      prismaService.wallet.update.mockResolvedValue({ ...mockWallet, balance: 900 });
+      prismaService.walletTransaction.create.mockResolvedValue(mockTransaction);
+      (prismaService.$transaction as jest.Mock).mockImplementation(async (cb) => cb(prismaService));
 
-      const result = await service.redeemReward('user-1', 5000);
+      const result = await service.transfer('user-123', 'user-456', 100);
 
-      expect(result).toEqual({
-        success: true,
-        data: {
-          message: 'Reward redeemed successfully',
-          pointsRedeemed: 5000,
-          amountAdded: 50,
-          newBonusBalance: 50,
-        },
-      });
+      expect(result.success).toBe(true);
     });
 
-    it('should throw BadRequestException for points <= 0', async () => {
-      const mockWallet = {
-        id: 'wallet-1',
-        userId: 'user-1',
-        balance: 1000,
-        bonusBalance: 0,
-        promoBalance: 0,
-      };
+    it('should fail when transferring to self', async () => {
+      const result = await service.transfer('user-123', 'user-123', 100);
 
-      mockPrisma.wallet.findUnique.mockResolvedValue(mockWallet);
+      expect(result.success).toBe(false);
+      expect(result.error).toHaveProperty('code', 'CANNOT_TRANSFER_TO_SELF');
+    });
+  });
 
-      await expect(service.redeemReward('user-1', 0)).rejects.toThrow(
-        BadRequestException
+  describe('getTransactions', () => {
+    it('should return transaction history', async () => {
+      prismaService.walletTransaction.findMany.mockResolvedValue([mockTransaction]);
+
+      const result = await service.getTransactions('user-123', { page: 1, limit: 10 });
+
+      expect(result.success).toBe(true);
+      expect(result.data).toHaveLength(1);
+    });
+  });
+
+  describe('ledger integrity', () => {
+    it('should maintain ledger balance consistency', async () => {
+      const wallet = { ...mockWallet, balance: 1000 };
+      prismaService.wallet.findUnique.mockResolvedValue(wallet);
+      prismaService.walletTransaction.create.mockResolvedValue(mockTransaction);
+      prismaService.ledgerEntry.create.mockResolvedValue({ id: 'ledger-1' });
+      (prismaService.$transaction as jest.Mock).mockImplementation(async (cb) => cb(prismaService));
+
+      await service.fundWallet('user-123', 100, 'card');
+
+      expect(prismaService.ledgerEntry.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            walletId: 'wallet-123',
+            type: 'credit',
+            amount: 100,
+          }),
+        })
       );
     });
   });

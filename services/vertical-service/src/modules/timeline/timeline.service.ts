@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 
-interface TimelineEvent {
+export interface TimelineEvent {
   id: string;
   title: string;
   description: string;
@@ -18,6 +18,16 @@ interface TimelineEvent {
   createdAt: string;
 }
 
+interface TimelineResponse {
+  success: boolean;
+  data: TimelineEvent[];
+}
+
+interface SingleEventResponse {
+  success: boolean;
+  data: TimelineEvent;
+}
+
 @Injectable()
 export class TimelineService {
   constructor(private prisma: PrismaService) {}
@@ -26,16 +36,16 @@ export class TimelineService {
     universeSlug?: string,
     characterSlug?: string,
     startDate?: string,
-    endDate?: string,
-  ) {
-    let where = {};
+    endDate?: string
+  ): Promise<TimelineResponse> {
+    const where: Record<string, unknown> = {};
 
     if (universeSlug) {
       const universe = await this.prisma.universeMap.findUnique({
         where: { slug: universeSlug },
       });
       if (universe) {
-        where = { ...where, universeId: universe.id };
+        where.universeId = universe.id;
       }
     }
 
@@ -44,16 +54,16 @@ export class TimelineService {
         where: { slug: characterSlug },
       });
       if (character) {
-        where = { ...where, characterId: character.id };
+        where.characterId = character.id;
       }
     }
 
     if (startDate) {
-      where = { ...where, date: { gte: new Date(startDate) } };
+      where.date = { gte: new Date(startDate) };
     }
 
     if (endDate) {
-      where = { ...where, date: { lte: new Date(endDate) } };
+      where.date = { ...(where.date as object), lte: new Date(endDate) };
     }
 
     const events = await this.prisma.timelineEvent.findMany({
@@ -85,7 +95,7 @@ export class TimelineService {
     };
   }
 
-  async getEventById(id: string) {
+  async getEventById(id: string): Promise<SingleEventResponse> {
     const event = await this.prisma.timelineEvent.findUnique({
       where: { id },
       include: { universe: true, character: true, location: true },
@@ -118,7 +128,7 @@ export class TimelineService {
     };
   }
 
-  async getUpcomingEvents(limit = 10) {
+  async getUpcomingEvents(limit = 10): Promise<TimelineResponse> {
     const now = new Date();
 
     const events = await this.prisma.timelineEvent.findMany({
@@ -161,7 +171,7 @@ export class TimelineService {
     universeId: string;
     characterId?: string;
     locationId?: string;
-  }) {
+  }): Promise<SingleEventResponse> {
     const event = await this.prisma.timelineEvent.create({
       data: {
         title: data.title,

@@ -1,4 +1,4 @@
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
+import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
 import { ApiResponse } from '@azeebo/shared-types';
 
 interface ApiClientConfig {
@@ -121,12 +121,14 @@ class ApiClient {
         success: true,
         data: response.data,
       };
-    } catch (error) {
+    } catch (error: unknown) {
+      const axiosError = error as AxiosError<{ message?: string }>;
       return {
         success: false,
         error: {
-          code: error.response?.status?.toString() || 'UNKNOWN',
-          message: error.response?.data?.message || error.message || 'An error occurred',
+          code: axiosError.response?.status?.toString() || 'UNKNOWN',
+          message:
+            axiosError.response?.data?.message || (error as Error).message || 'An error occurred',
         },
       };
     }

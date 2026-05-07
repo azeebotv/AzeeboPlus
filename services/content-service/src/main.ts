@@ -2,25 +2,29 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, Logger } from '@nestjs/common';
 import { AppModule } from './app.module';
 import helmet from 'helmet';
+import { validateEnvironment } from '@azeebo/shared-types';
 
-async function bootstrap() {
+async function bootstrap(): Promise<void> {
+  validateEnvironment(process.env);
+
   const app = await NestFactory.create(AppModule);
 
-  // Security headers
-  app.use(helmet({
-    contentSecurityPolicy: {
-      directives: {
-        defaultSrc: ["'self'"],
-        styleSrc: ["'self'", "'unsafe-inline'"],
-        imgSrc: ["'self'", 'data:', 'https:'],
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          styleSrc: ["'self'", "'unsafe-inline'"],
+          imgSrc: ["'self'", 'data:', 'https:'],
+        },
       },
-    },
-    hsts: {
-      maxAge: 31536000,
-      includeSubDomains: true,
-    },
-  }));
-  
+      hsts: {
+        maxAge: 31536000,
+        includeSubDomains: true,
+      },
+    })
+  );
+
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -35,9 +39,9 @@ async function bootstrap() {
     credentials: true,
   });
 
-  const port = process.env.PORT || 3008;
+  const port = process.env.PORT || 3003;
   await app.listen(port);
-  const logger = new Logger('Content Service');
-  logger.log(`Content Service running on port ${port}`);
+  Logger.log(`Content Service running on port ${port}`);
 }
+
 bootstrap();

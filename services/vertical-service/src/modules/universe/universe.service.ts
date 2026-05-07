@@ -1,13 +1,66 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 
+interface LocationData {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  imageUrl: string;
+  latitude: number;
+  longitude: number;
+  universeId: string;
+  universeName: string;
+  parentId: string;
+  parentName: string;
+  childCount: number;
+  characterCount: number;
+  createdAt: string;
+  updatedAt?: string;
+  children?: LocationData[];
+}
+
+interface UniverseData {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  imageUrl: string;
+  status: string;
+  characterCount: number;
+  locationCount: number;
+  createdAt: string;
+  locations?: LocationData[];
+}
+
+interface PaginatedResponse<T> {
+  success: boolean;
+  data: {
+    items: T[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+}
+
+interface SingleResponse<T> {
+  success: boolean;
+  data: T;
+}
+
+interface ListResponse<T> {
+  success: boolean;
+  data: T[];
+}
+
 @Injectable()
 export class UniverseService {
   constructor(private prisma: PrismaService) {}
 
-  async getUniverses(page = 1, limit = 20) {
+  async getUniverses(page = 1, limit = 20): Promise<PaginatedResponse<UniverseData>> {
     const skip = (page - 1) * limit;
-    
+
     const [items, total] = await Promise.all([
       this.prisma.universeMap.findMany({
         skip,
@@ -24,7 +77,7 @@ export class UniverseService {
       this.prisma.universeMap.count(),
     ]);
 
-    const formattedItems = items.map((universe) => ({
+    const formattedItems: UniverseData[] = items.map((universe) => ({
       id: universe.id,
       name: universe.name,
       slug: universe.slug,
@@ -48,7 +101,7 @@ export class UniverseService {
     };
   }
 
-  async getUniverseMap(slug: string) {
+  async getUniverseMap(slug: string): Promise<SingleResponse<UniverseData>> {
     const universe = await this.prisma.universeMap.findUnique({
       where: { slug },
       include: {
@@ -60,7 +113,7 @@ export class UniverseService {
       throw new NotFoundException(`Universe not found: ${slug}`);
     }
 
-    const formattedLocations = universe.locations.map((loc) => ({
+    const formattedLocations: LocationData[] = universe.locations.map((loc) => ({
       id: loc.id,
       name: loc.name,
       slug: loc.slug,
@@ -94,15 +147,15 @@ export class UniverseService {
     };
   }
 
-  async getLocations(universeSlug?: string) {
-    let where = {};
+  async getLocations(universeSlug?: string): Promise<ListResponse<LocationData>> {
+    const where: { universeId?: string } = {};
 
     if (universeSlug) {
       const universe = await this.prisma.universeMap.findUnique({
         where: { slug: universeSlug },
       });
       if (universe) {
-        where = { universeId: universe.id };
+        where.universeId = universe.id;
       }
     }
 
@@ -111,7 +164,7 @@ export class UniverseService {
       include: { universe: true },
     });
 
-    const formattedLocations = locations.map((loc) => ({
+    const formattedLocations: LocationData[] = locations.map((loc) => ({
       id: loc.id,
       name: loc.name,
       slug: loc.slug,
@@ -134,7 +187,7 @@ export class UniverseService {
     };
   }
 
-  async getLocationBySlug(slug: string) {
+  async getLocationBySlug(slug: string): Promise<SingleResponse<LocationData>> {
     const location = await this.prisma.location.findUnique({
       where: { slug },
       include: { universe: true, parent: true, children: true },
@@ -144,7 +197,7 @@ export class UniverseService {
       throw new NotFoundException(`Location not found: ${slug}`);
     }
 
-    const formattedChildren = location.children.map((child) => ({
+    const formattedChildren: LocationData[] = location.children.map((child) => ({
       id: child.id,
       name: child.name,
       slug: child.slug,
@@ -190,7 +243,7 @@ export class UniverseService {
     latitude?: number;
     longitude?: number;
     parentId?: string;
-  }) {
+  }): Promise<SingleResponse<LocationData>> {
     const universe = await this.prisma.universeMap.findUnique({
       where: { id: data.universeId },
     });
@@ -199,7 +252,10 @@ export class UniverseService {
       throw new NotFoundException(`Universe not found: ${data.universeId}`);
     }
 
-    const slug = data.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    const slug = data.name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '');
 
     const newLocation = await this.prisma.location.create({
       data: {
@@ -236,12 +292,15 @@ export class UniverseService {
     };
   }
 
-  async updateLocation(id: string, data: Partial<{
-    name: string;
-    description: string;
-    latitude: number;
-    longitude: number;
-  }>) {
+  async updateLocation(
+    id: string,
+    data: Partial<{
+      name: string;
+      description: string;
+      latitude: number;
+      longitude: number;
+    }>
+  ): Promise<SingleResponse<LocationData>> {
     const locationIndex = await this.prisma.location.findUnique({ where: { id } });
 
     if (!locationIndex) {

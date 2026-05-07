@@ -11,9 +11,9 @@ datasource db {
 model Wallet {
   id           String   @id @default(uuid())
   userId       String   @unique
-  balance      Decimal  @db.Numeric(19, 4) @default(0)
-  bonusBalance Decimal  @db.Numeric(19, 4) @default(0)
-  promoBalance Decimal  @db.Numeric(19, 4) @default(0)
+  balance      Decimal  @default(0)
+  bonusBalance Decimal  @default(0)
+  promoBalance Decimal  @default(0)
   currency     String   @default("NGN")
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -24,15 +24,17 @@ model Wallet {
 }
 
 model WalletTransaction {
-  id           String   @id @default(uuid())
-  walletId     String
-  type         String   // credit, debit, bonus, promo, refund
-  amount       Decimal  @db.Numeric(19, 4)
-  status       String   // pending, completed, failed, reversed
-  description  String?
-  reference    String?
-  metadata     Json?
-  createdAt    DateTime @default(now())
+  id             String   @id @default(uuid())
+  walletId       String
+  type           String   // credit, debit, bonus, promo, refund
+  amount         Decimal
+  status         String   // pending, completed, failed, reversed
+  description    String?
+  reference      String?
+  metadata       Json?
+  idempotencyKey String?  @unique
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   wallet Wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
 
@@ -41,4 +43,5 @@ model WalletTransaction {
   @@index([type])
   @@index([status])
   @@index([createdAt])
+  @@index([idempotencyKey])
 }

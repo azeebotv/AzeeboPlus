@@ -73,9 +73,9 @@ model SavedItem {
 model Wallet {
   id           String   @id @default(uuid())
   userId       String   @unique
-  balance      Float    @default(0)
-  bonusBalance Float    @default(0)
-  promoBalance Float    @default(0)
+  balance Decimal    @default(0)
+  bonusBalance Decimal    @default(0)
+  promoBalance Decimal    @default(0)
   currency     String   @default("NGN")
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -90,7 +90,7 @@ model WalletTransaction {
   id           String   @id @default(uuid())
   walletId     String
   type         String   // credit, debit, bonus, promo, refund
-  amount       Float
+  amount Decimal
   status       String   // pending, completed, failed, reversed
   description  String?
   reference    String?
@@ -120,7 +120,7 @@ model Notification {
 model PaymentIntent {
   id                String   @id @default(uuid())
   userId            String
-  amount            Float
+  amount Decimal
   currency          String   @default("NGN")
   status            String   // pending, processing, completed, failed, refunded
   description       String?
@@ -139,7 +139,7 @@ model PaymentIntent {
 model Refund {
   id                String   @id @default(uuid())
   paymentIntentId   String
-  amount            Float
+  amount Decimal
   reason            String
   status            String   // pending, processing, completed, failed
   providerReference String?
@@ -490,7 +490,7 @@ model RecommendationLog {
   userId      String
   type        String   // content, creator, cross-universe
   itemId      String
-  score       Float
+  score Decimal
   timestamp   DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)

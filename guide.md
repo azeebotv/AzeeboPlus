@@ -417,12 +417,12 @@ cd apps/creator-portal && pnpm prisma migrate dev --name init && cd ../..
 
 #### 2.3 Create Test Database Schema
 
-For services without migrations, use Prisma DB Push:
+All services should use versioned migrations. For new services, initialize migrations with:
 
 ```bash
-# Example for a service
-cd services/content-service
-pnpm prisma db push --accept-data-loss
+# Example for a new service
+cd services/my-new-service
+pnpm prisma migrate dev --name init
 cd ../..
 ```
 
@@ -469,7 +469,7 @@ cd apps/mobile && pnpm test
 
 ```bash
 # Run tests once (no watch mode)
-pnpm test --run
+pnpm test
 
 # Run tests in watch mode (development)
 pnpm test --watch
@@ -881,7 +881,7 @@ cat docker-compose.yml
 CI=true pnpm test:ci
 
 # Check for race conditions
-pnpm test --run --parallel false
+pnpm test -- --runInBand
 
 # Increase timeout
 pnpm test -- --testTimeout=30000

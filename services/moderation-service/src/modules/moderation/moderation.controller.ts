@@ -111,4 +111,39 @@ export class ModerationController {
   async getSafetyActionTypes(): Promise<ModerationResponse> {
     return this.moderationService.getSafetyActionTypes();
   }
+
+  @Post('scan')
+  @UseGuards(AuthGuard('jwt'))
+  @ApiOperation({ summary: 'Scan content media for safety issues' })
+  @ApiResponse({ status: 200, description: 'Scan result' })
+  @ApiResponse({ status: 400, description: 'Invalid input' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async scanContentMedia(
+    @Body() body: { contentId?: string; mediaUrl: string; scanTypes?: string[] }
+  ): Promise<unknown> {
+    return this.moderationService.scanContentMedia({
+      contentId: body.contentId,
+      mediaUrl: body.mediaUrl,
+      scanTypes: body.scanTypes as ('malware' | 'content_safety' | 'copyright')[] | undefined,
+    });
+  }
+
+  @Get('scan/:scanId')
+  @UseGuards(AuthGuard('jwt'))
+  @ApiOperation({ summary: 'Get scan result by ID' })
+  @ApiResponse({ status: 200, description: 'Scan result' })
+  @ApiResponse({ status: 404, description: 'Scan not found' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async getScanById(@Param('scanId') scanId: string): Promise<ModerationResponse> {
+    return this.moderationService.getScanById(scanId);
+  }
+
+  @Get('content/:contentId/safety')
+  @UseGuards(AuthGuard('jwt'))
+  @ApiOperation({ summary: 'Check content safety status' })
+  @ApiResponse({ status: 200, description: 'Safety status' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async checkContentSafety(@Param('contentId') contentId: string): Promise<ModerationResponse> {
+    return this.moderationService.checkContentSafety(contentId);
+  }
 }

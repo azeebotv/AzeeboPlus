@@ -71,7 +71,7 @@ export function isValidPassword(password: string): boolean {
 
 export function sanitizeHtml(dirty: string): string {
   if (!dirty) return '';
-  
+
   return dirty
     .replace(/javascript:/gi, '')
     .replace(/on\w+\s*=/gi, '')
@@ -85,7 +85,7 @@ export function sanitizeHtml(dirty: string): string {
 
 export function sanitizeText(dirty: string): string {
   if (!dirty) return '';
-  
+
   return dirty
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
@@ -97,7 +97,7 @@ export function sanitizeText(dirty: string): string {
 
 export function stripAllHtml(dirty: string): string {
   if (!dirty) return '';
-  
+
   return dirty
     .replace(/<[^>]*>/g, '')
     .replace(/&lt;/g, '<')

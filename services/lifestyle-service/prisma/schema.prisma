@@ -133,8 +133,230 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  stories       CultureStory[]
-  storyComments StoryComment[]
-  events        Event[]
-  eventRsvps    EventRsvp[]
+  stories           CultureStory[]
+  storyComments     StoryComment[]
+  events            Event[]
+  eventRsvps        EventRsvp[]
+  savedItems        SavedItem[]
+  shareRecords      ShareRecord[]
+  cityGuideEntries  CityGuideEntry[]
+  musicEntries      MusicEntry[]
+  celebrityEntries  CelebrityEntry[]
+  nightlifeEntries  NightlifeEntry[]
+  influencerEntries InfluencerEntry[]
+}
+
+model SavedItem {
+  id        String   @id @default(uuid())
+  userId    String
+  itemType  String
+  itemId    String
+  note      String?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, itemType, itemId])
+  @@index([userId])
+  @@index([itemType, itemId])
+}
+
+model ShareRecord {
+  id        String   @id @default(uuid())
+  userId    String
+  itemType  String
+  itemId    String
+  platform  String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([itemType, itemId])
+}
+
+model CityGuideEntry {
+  id          String   @id @default(uuid())
+  name        String
+  slug        String   @unique
+  type        String
+  description String
+  coverImage  String?
+  address     String?
+  city        String
+  country     String
+  latitude    Float?
+  longitude   Float?
+  rating      Float?
+  priceLevel  Int?
+  hours       String?
+  phone       String?
+  website     String?
+  amenities   String[]
+  status      String   @default("draft")
+  viewCount   Int      @default(0)
+  createdById String
+  publishedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  createdBy User   @relation(fields: [createdById], references: [id])
+  tags      CityGuideTag[]
+
+  @@index([type])
+  @@index([city])
+  @@index([status])
+}
+
+model CityGuideTag {
+  id      String @id @default(uuid())
+  name    String @unique
+  slug    String @unique
+  entries CityGuideEntry[]
+}
+
+model MusicEntry {
+  id          String   @id @default(uuid())
+  title       String
+  slug        String   @unique
+  type        String
+  description String?
+  coverImage  String?
+  artistName  String?
+  albumName   String?
+  duration    Int?
+  genre       String?
+  trackUrl    String?
+  isPremium   Boolean  @default(false)
+  playCount   Int      @default(0)
+  status      String   @default("draft")
+  createdById String
+  publishedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  createdBy User @relation(fields: [createdById], references: [id])
+
+  @@index([type])
+  @@index([genre])
+  @@index([status])
+}
+
+model CelebrityEntry {
+  id          String   @id @default(uuid())
+  name        String
+  slug        String   @unique
+  bio         String?
+  coverImage  String?
+  profession  String?
+  nationality String?
+  birthDate   DateTime?
+  socialLinks String?
+  isFeatured  Boolean  @default(false)
+  viewCount   Int      @default(0)
+  status      String   @default("draft")
+  createdById String
+  publishedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  createdBy User    @relation(fields: [createdById], references: [id])
+  news      CelebrityNews[]
+
+  @@index([profession])
+  @@index([status])
+  @@index([isFeatured])
+}
+
+model CelebrityNews {
+  id          String   @id @default(uuid())
+  title       String
+  slug        String   @unique
+  content     String
+  excerpt     String?
+  coverImage  String?
+  celebrityId String
+  status      String   @default("draft")
+  publishedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  celebrity CelebrityEntry @relation(fields: [celebrityId], references: [id], onDelete: Cascade)
+
+  @@index([celebrityId])
+  @@index([status])
+}
+
+model NightlifeEntry {
+  id          String   @id @default(uuid())
+  name        String
+  slug        String   @unique
+  type        String
+  description String
+  coverImage  String?
+  address     String?
+  city        String
+  country     String
+  latitude    Float?
+  longitude   Float?
+  hours       String?
+  dressCode   String?
+  coverCharge Float?
+  rating      Float?
+  status      String   @default("draft")
+  viewCount   Int      @default(0)
+  createdById String
+  publishedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  createdBy User @relation(fields: [createdById], references: [id])
+
+  @@index([type])
+  @@index([city])
+  @@index([status])
+}
+
+model InfluencerEntry {
+  id            String   @id @default(uuid())
+  userId        String
+  slug          String   @unique
+  displayName   String
+  bio           String?
+  avatarUrl     String?
+  coverImage    String?
+  category      String?
+  followerCount Int      @default(0)
+  followingCount Int     @default(0)
+  postCount     Int      @default(0)
+  isVerified    Boolean  @default(false)
+  socialLinks   String?
+  collaborationCount Int @default(0)
+  status        String   @default("draft")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  collaborations InfluencerCollaboration[]
+
+  @@index([category])
+  @@index([status])
+  @@index([isVerified])
+}
+
+model InfluencerCollaboration {
+  id            String   @id @default(uuid())
+  influencerId  String
+  brandName     String
+  campaignName  String
+  description   String?
+  coverImage    String?
+  startDate     DateTime?
+  endDate       DateTime?
+  status        String   @default("active")
+  createdAt     DateTime @default(now())
+
+  influencer InfluencerEntry @relation(fields: [influencerId], references: [id], onDelete: Cascade)
+
+  @@index([influencerId])
+  @@index([status])
 }

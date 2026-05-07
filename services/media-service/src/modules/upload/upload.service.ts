@@ -65,7 +65,7 @@ export class UploadService {
     fileId: string,
     extension: string,
     contentType: string,
-    expiresIn = 3600,
+    expiresIn = 3600
   ): Promise<PresignedUploadResponse> {
     const folder = this.getFolderForType(type);
     const key = this.s3Service.generateKey(folder, fileId, extension);
@@ -83,13 +83,18 @@ export class UploadService {
     await this.s3Service.deleteFile(key);
   }
 
-  async getFileMetadata(key: string) {
+  async getFileMetadata(key: string): Promise<{
+    contentType: string | undefined;
+    contentLength: number | undefined;
+    lastModified: Date | undefined;
+    metadata: Record<string, string> | undefined;
+  }> {
     return this.s3Service.getFileMetadata(key);
   }
 
   private formatUploadResponse(
     result: { key: string; url: string; cdnUrl: string },
-    file: Express.Multer.File,
+    file: Express.Multer.File
   ): UploadResponse {
     return {
       key: result.key,

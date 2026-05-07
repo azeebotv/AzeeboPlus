@@ -1,4 +1,14 @@
-import { Controller, Get, Post, Body, UseGuards, Request, Query, HttpCode, HttpStatus } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  UseGuards,
+  Request,
+  Query,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 
@@ -86,7 +96,10 @@ export class SearchController {
   @ApiOperation({ summary: 'Log search query' })
   @ApiResponse({ status: 200, description: 'Search logged' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async logSearch(@Request() req: { user: { id: string; sub: string } }, @Body() body: { query: string; resultsCount?: number }): Promise<{ success: boolean }> {
+  async logSearch(
+    @Request() req: { user: { id: string; sub: string } },
+    @Body() body: { query: string; resultsCount?: number }
+  ): Promise<{ success: boolean }> {
     return this.searchService.logSearch(req.user.id, body.query, body.resultsCount ?? 0);
   }
 }

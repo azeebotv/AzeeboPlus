@@ -171,7 +171,9 @@ export class NotificationsService {
 
     return {
       success: true,
-      data: tokens,
+      data: {
+        pushTokens: tokens,
+      },
     };
   }
 

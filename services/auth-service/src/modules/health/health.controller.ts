@@ -15,7 +15,7 @@ export class HealthController {
   constructor(
     private health: HealthCheckService,
     private prismaHealth: PrismaHealthIndicator,
-    private db: TypeOrmHealthIndicator,
+    private db: TypeOrmHealthIndicator
   ) {}
 
   @Get()

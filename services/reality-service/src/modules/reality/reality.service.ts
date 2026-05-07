@@ -1,0 +1,876 @@
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+  BadRequestException,
+} from '@nestjs/common';
+import { PrismaService } from '../database/prisma.service';
+import { Prisma } from '../../prisma/client';
+import { RealityResponse } from './interfaces/reality-response.interface';
+import axios from 'axios';
+import { randomUUID } from 'crypto';
+
+interface VoteWithQuantity {
+  contestantId: string;
+  showId: string;
+  quantity: number;
+}
+
+interface PremiumExtra {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  type: string;
+  duration?: number;
+}
+
+@Injectable()
+export class RealityService {
+  private readonly walletServiceBaseUrl = process.env.WALLET_SERVICE_URL || 'http://localhost:3006';
+  private readonly supervoteCost = 10;
+  private readonly voteCost = 1;
+
+  private premiumExtras: PremiumExtra[] = [
+    {
+      id: '1',
+      name: 'Early Voting',
+      description: 'Vote before regular voting opens',
+      price: 5,
+      type: 'feature',
+      duration: 7,
+    },
+    {
+      id: '2',
+      name: 'Vote Multiplier',
+      description: 'Your votes count double',
+      price: 20,
+      type: 'feature',
+      duration: 3,
+    },
+    {
+      id: '3',
+      name: 'Exclusive Content',
+      description: 'Access behind-the-scenes footage',
+      price: 15,
+      type: 'content',
+      duration: 30,
+    },
+    {
+      id: '4',
+      name: 'Live Chat',
+      description: 'Join exclusive live chats with contestants',
+      price: 10,
+      type: 'feature',
+      duration: 7,
+    },
+  ];
+
+  constructor(private readonly prisma: PrismaService) {}
+
+  async listShows(): Promise<RealityResponse> {
+    const shows = await this.prisma.realityShow.findMany({
+      include: {
+        seasons: true,
+        contestants: true,
+        _count: {
+          select: {
+            episodes: true,
+            votes: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return {
+      success: true,
+      data: { shows: shows as unknown },
+    };
+  }
+
+  async getShow(showId: string): Promise<RealityResponse> {
+    const show = await this.prisma.realityShow.findUnique({
+      where: { id: showId },
+      include: {
+        seasons: true,
+        contestants: true,
+        episodes: true,
+        _count: {
+          select: {
+            episodes: true,
+            votes: true,
+            predictions: true,
+          },
+        },
+      },
+    });
+
+    if (!show) {
+      throw new NotFoundException(`Show not found`);
+    }
+
+    return {
+      success: true,
+      data: { show: show as unknown },
+    };
+  }
+
+  async listEpisodes(showId: string): Promise<RealityResponse> {
+    const episodes = await this.prisma.episode.findMany({
+      where: { showId },
+      include: {
+        show: true,
+        _count: {
+          select: {
+            votes: true,
+            predictions: true,
+          },
+        },
+      },
+      orderBy: { airedAt: 'desc' },
+    });
+
+    return {
+      success: true,
+      data: { episodes: episodes as unknown },
+    };
+  }
+
+  async listContestants(showId: string): Promise<RealityResponse> {
+    const contestants = await this.prisma.contestant.findMany({
+      where: { showId },
+      include: {
+        show: true,
+        _count: {
+          select: {
+            votes: true,
+            predictions: true,
+          },
+        },
+      },
+      orderBy: { name: 'asc' },
+    });
+
+    return {
+      success: true,
+      data: { contestants: contestants as unknown },
+    };
+  }
+
+  async getLeaderboard(showId: string): Promise<RealityResponse> {
+    const contestants = await this.prisma.contestant.findMany({
+      where: { showId },
+      include: {
+        votes: {
+          select: {
+            id: true,
+            createdAt: true,
+          },
+        },
+        supervotes: {
+          select: {
+            id: true,
+            createdAt: true,
+          },
+        },
+      },
+      orderBy: [{ supervotes: { _count: 'desc' } }, { votes: { _count: 'desc' } }],
+    });
+
+    const leaderboard = contestants.map((c, index: number) => ({
+      rank: index + 1,
+      contestantId: c.id,
+      name: c.name,
+      votes: c.votes.length,
+      supervotes: c.supervotes.length,
+      totalScore: c.votes.length + c.supervotes.length * 10,
+    }));
+
+    return {
+      success: true,
+      data: { leaderboard },
+    };
+  }
+
+  async submitVote(
+    userId: string,
+    body: { contestantId: string; showId: string }
+  ): Promise<RealityResponse> {
+    const { contestantId, showId } = body;
+
+    const existingVote = await this.prisma.vote.findUnique({
+      where: {
+        userId_contestantId: { userId, contestantId },
+      },
+    });
+
+    if (existingVote) {
+      throw new ConflictException('User has already voted for this contestant');
+    }
+
+    const vote = await this.prisma.vote.create({
+      data: {
+        userId,
+        contestantId,
+        showId,
+      },
+    });
+
+    return {
+      success: true,
+      data: {
+        voteId: vote.id,
+        message: 'Vote submitted successfully',
+      },
+    };
+  }
+
+  async submitSupervote(
+    userId: string,
+    body: { contestantId: string; showId: string }
+  ): Promise<RealityResponse> {
+    const { contestantId, showId } = body;
+
+    const existingSupervote = await this.prisma.supervote.findUnique({
+      where: {
+        userId_contestantId: { userId, contestantId },
+      },
+    });
+
+    if (existingSupervote) {
+      throw new ConflictException('User has already supervoted for this contestant');
+    }
+
+    const wallet = await this.prisma.wallet.findUnique({ where: { userId } });
+    if (!wallet) {
+      throw new NotFoundException(`Wallet not found for user`);
+    }
+
+    const idempotencyKey = randomUUID();
+
+    try {
+      await axios.post(`${this.walletServiceBaseUrl}/wallet/debit`, {
+        walletId: wallet.id,
+        amount: this.supervoteCost,
+        description: `Supervote for contestant ${contestantId} on show ${showId}`,
+        idempotencyKey,
+      });
+
+      const supervote = await this.prisma.supervote.create({
+        data: {
+          userId,
+          contestantId,
+          showId,
+          amount: this.supervoteCost,
+        },
+      });
+
+      return {
+        success: true,
+        data: {
+          supervoteId: supervote.id,
+          message: `Supervote submitted successfully. ${this.supervoteCost} NGN has been deducted from your wallet.`,
+        },
+      };
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to submit supervote';
+      throw new ConflictException(errorMessage);
+    }
+  }
+
+  async submitPrediction(
+    userId: string,
+    body: { showId: string; prediction: Record<string, unknown> }
+  ): Promise<RealityResponse> {
+    const { showId, prediction } = body;
+
+    const predictionRecord = await this.prisma.prediction.create({
+      data: {
+        userId,
+        showId,
+        prediction: prediction as unknown as Prisma.InputJsonValue,
+      },
+    });
+
+    return {
+      success: true,
+      data: {
+        predictionId: predictionRecord.id,
+        message: 'Prediction submitted successfully',
+      },
+    };
+  }
+
+  async getPredictionDashboard(userId: string, showId: string): Promise<RealityResponse> {
+    const predictions = await this.prisma.prediction.findMany({
+      where: { showId },
+      include: {
+        user: {
+          select: {
+            id: true,
+            displayName: true,
+            avatar: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+    });
+
+    const userPrediction = await this.prisma.prediction.findFirst({
+      where: { userId, showId },
+    });
+
+    return {
+      success: true,
+      data: {
+        predictions,
+        userPrediction,
+      },
+    };
+  }
+
+  async getClips(showId?: string): Promise<RealityResponse> {
+    const clips = await this.prisma.realityClip.findMany({
+      where: showId ? { showId } : {},
+      include: {
+        show: true,
+        creator: true,
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+    });
+
+    return {
+      success: true,
+      data: { clips: clips as unknown },
+    };
+  }
+
+  async submitVotesWithQuantity(userId: string, body: VoteWithQuantity): Promise<RealityResponse> {
+    const { contestantId, showId, quantity } = body;
+
+    if (quantity <= 0 || quantity > 10) {
+      throw new BadRequestException('Vote quantity must be between 1 and 10');
+    }
+
+    const contestant = await this.prisma.contestant.findUnique({
+      where: { id: contestantId },
+    });
+
+    if (!contestant) {
+      throw new NotFoundException('Contestant not found');
+    }
+
+    const wallet = await this.prisma.wallet.findUnique({ where: { userId } });
+    if (!wallet) {
+      throw new NotFoundException('Wallet not found');
+    }
+
+    const totalCost = quantity * this.voteCost;
+    if (Number(wallet.balance) < totalCost) {
+      throw new BadRequestException('Insufficient balance');
+    }
+
+    const idempotencyKey = randomUUID();
+
+    try {
+      await axios.post(`${this.walletServiceBaseUrl}/wallet/debit`, {
+        walletId: wallet.id,
+        amount: totalCost,
+        description: `${quantity} votes for contestant ${contestantId}`,
+        idempotencyKey,
+      });
+
+      const votes = await Promise.all(
+        Array.from({ length: quantity }, () =>
+          this.prisma.vote.create({
+            data: {
+              userId,
+              contestantId,
+              showId,
+            },
+          })
+        )
+      );
+
+      return {
+        success: true,
+        data: {
+          voteIds: votes.map((v) => v.id),
+          quantity,
+          totalCost,
+          message: `${quantity} votes submitted successfully`,
+        },
+      };
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to submit votes';
+      throw new ConflictException(errorMessage);
+    }
+  }
+
+  async getWalletBalance(userId: string): Promise<RealityResponse> {
+    const wallet = await this.prisma.wallet.findUnique({
+      where: { userId },
+      include: {
+        transactions: {
+          orderBy: { createdAt: 'desc' },
+          take: 10,
+        },
+      },
+    });
+
+    if (!wallet) {
+      throw new NotFoundException('Wallet not found');
+    }
+
+    return {
+      success: true,
+      data: {
+        balance: wallet.balance,
+        bonusBalance: wallet.bonusBalance,
+        promoBalance: wallet.promoBalance,
+        currency: wallet.currency,
+        recentTransactions: wallet.transactions,
+      },
+    };
+  }
+
+  async getPricing(): Promise<RealityResponse> {
+    return {
+      success: true,
+      data: {
+        voteCost: this.voteCost,
+        supervoteCost: this.supervoteCost,
+        premiumExtras: this.premiumExtras,
+      },
+    };
+  }
+
+  async getPremiumExtras(): Promise<RealityResponse> {
+    return {
+      success: true,
+      data: { premiumExtras: this.premiumExtras },
+    };
+  }
+
+  async purchasePremiumExtra(userId: string, extraId: string): Promise<RealityResponse> {
+    const extra = this.premiumExtras.find((e) => e.id === extraId);
+    if (!extra) {
+      throw new NotFoundException('Premium extra not found');
+    }
+
+    const wallet = await this.prisma.wallet.findUnique({ where: { userId } });
+    if (!wallet) {
+      throw new NotFoundException('Wallet not found');
+    }
+
+    if (Number(wallet.balance) < extra.price) {
+      throw new BadRequestException('Insufficient balance');
+    }
+
+    const idempotencyKey = randomUUID();
+
+    try {
+      await axios.post(`${this.walletServiceBaseUrl}/wallet/debit`, {
+        walletId: wallet.id,
+        amount: extra.price,
+        description: `Purchase premium extra: ${extra.name}`,
+        idempotencyKey,
+      });
+
+      return {
+        success: true,
+        data: {
+          purchaseId: idempotencyKey,
+          premiumExtra: extra,
+          message: `Successfully purchased ${extra.name}`,
+        },
+      };
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Failed to purchase premium extra';
+      throw new ConflictException(errorMessage);
+    }
+  }
+
+  async getShowAnalytics(showId: string): Promise<RealityResponse> {
+    const show = await this.prisma.realityShow.findUnique({ where: { id: showId } });
+    if (!show) {
+      throw new NotFoundException('Show not found');
+    }
+
+    const voteCount = await this.prisma.vote.count({ where: { showId } });
+    const supervoteCount = await this.prisma.supervote.count({ where: { showId } });
+    const predictionCount = await this.prisma.prediction.count({ where: { showId } });
+    const clipCount = await this.prisma.realityClip.count({ where: { showId } });
+
+    const votesByContestant = await this.prisma.vote.groupBy({
+      by: ['contestantId'],
+      _count: { id: true },
+      orderBy: { _count: { id: 'desc' } },
+      take: 10,
+    });
+
+    const contestants = await Promise.all(
+      votesByContestant.map(async (v) => {
+        const contestant = await this.prisma.contestant.findUnique({
+          where: { id: v.contestantId },
+        });
+        return {
+          contestantId: v.contestantId,
+          name: contestant?.name || 'Unknown',
+          voteCount: v._count.id,
+        };
+      })
+    );
+
+    const recentActivity = await this.prisma.productEvent.findMany({
+      where: { metadata: { path: ['showId'], equals: showId } },
+      orderBy: { timestamp: 'desc' },
+      take: 50,
+    });
+
+    return {
+      success: true,
+      data: {
+        showId,
+        showTitle: show.title,
+        totalVotes: voteCount,
+        totalSupervotes: supervoteCount,
+        totalPredictions: predictionCount,
+        totalClips: clipCount,
+        contestants,
+        recentActivity,
+      },
+    };
+  }
+
+  async getAdminDashboard(): Promise<RealityResponse> {
+    const shows = await this.prisma.realityShow.findMany({
+      include: {
+        _count: {
+          select: { votes: true, contestants: true, episodes: true },
+        },
+      },
+    });
+
+    const totalVotes = await this.prisma.vote.count();
+    const totalSupervotes = await this.prisma.supervote.count();
+    const totalPredictions = await this.prisma.prediction.count();
+    const totalShows = await this.prisma.realityShow.count();
+    const totalContestants = await this.prisma.contestant.count();
+
+    return {
+      success: true,
+      data: {
+        overview: {
+          totalVotes,
+          totalSupervotes,
+          totalPredictions,
+          totalShows,
+          totalContestants,
+        },
+        shows,
+      },
+    };
+  }
+
+  async createShow(data: {
+    title: string;
+    description?: string;
+    thumbnail: string;
+    banner?: string;
+    universeId: string;
+  }): Promise<RealityResponse> {
+    const show = await this.prisma.realityShow.create({
+      data: {
+        title: data.title,
+        description: data.description,
+        thumbnail: data.thumbnail,
+        banner: data.banner,
+        universeId: data.universeId,
+        status: 'draft',
+      },
+    });
+
+    return {
+      success: true,
+      data: {
+        show,
+        message: 'Show created successfully',
+      },
+    };
+  }
+
+  async updateShow(
+    showId: string,
+    data: {
+      title?: string;
+      description?: string;
+      thumbnail?: string;
+      banner?: string;
+      status?: string;
+    }
+  ): Promise<RealityResponse> {
+    const existing = await this.prisma.realityShow.findUnique({ where: { id: showId } });
+    if (!existing) {
+      throw new NotFoundException('Show not found');
+    }
+
+    const updated = await this.prisma.realityShow.update({
+      where: { id: showId },
+      data,
+    });
+
+    return {
+      success: true,
+      data: {
+        show: updated,
+        message: 'Show updated successfully',
+      },
+    };
+  }
+
+  async deleteShow(showId: string): Promise<RealityResponse> {
+    const show = await this.prisma.realityShow.findUnique({ where: { id: showId } });
+    if (!show) {
+      throw new NotFoundException('Show not found');
+    }
+
+    await this.prisma.realityShow.delete({ where: { id: showId } });
+
+    return {
+      success: true,
+      data: { message: 'Show deleted successfully' },
+    };
+  }
+
+  async createContestant(
+    showId: string,
+    data: {
+      name: string;
+      description?: string;
+      thumbnail?: string;
+      socialLinks?: Record<string, string>;
+    }
+  ): Promise<RealityResponse> {
+    const show = await this.prisma.realityShow.findUnique({ where: { id: showId } });
+    if (!show) {
+      throw new NotFoundException('Show not found');
+    }
+
+    const contestant = await this.prisma.contestant.create({
+      data: {
+        showId,
+        name: data.name,
+        description: data.description,
+        thumbnail: data.thumbnail,
+        socialLinks: data.socialLinks as unknown as Prisma.InputJsonValue,
+      },
+    });
+
+    return {
+      success: true,
+      data: {
+        contestant,
+        message: 'Contestant created successfully',
+      },
+    };
+  }
+
+  async updateContestant(
+    contestantId: string,
+    data: {
+      name?: string;
+      description?: string;
+      thumbnail?: string;
+      socialLinks?: Record<string, string>;
+    }
+  ): Promise<RealityResponse> {
+    const existing = await this.prisma.contestant.findUnique({ where: { id: contestantId } });
+    if (!existing) {
+      throw new NotFoundException('Contestant not found');
+    }
+
+    const updated = await this.prisma.contestant.update({
+      where: { id: contestantId },
+      data: {
+        ...data,
+        socialLinks: data.socialLinks
+          ? (data.socialLinks as unknown as Prisma.InputJsonValue)
+          : undefined,
+      },
+    });
+
+    return {
+      success: true,
+      data: {
+        contestant: updated,
+        message: 'Contestant updated successfully',
+      },
+    };
+  }
+
+  async deleteContestant(contestantId: string): Promise<RealityResponse> {
+    const contestant = await this.prisma.contestant.findUnique({ where: { id: contestantId } });
+    if (!contestant) {
+      throw new NotFoundException('Contestant not found');
+    }
+
+    await this.prisma.contestant.delete({ where: { id: contestantId } });
+
+    return {
+      success: true,
+      data: { message: 'Contestant deleted successfully' },
+    };
+  }
+
+  async createEpisode(
+    showId: string,
+    data: {
+      title: string;
+      number: number;
+      description?: string;
+      thumbnail?: string;
+      mediaUrl?: string;
+      airedAt?: Date;
+      seasonId?: string;
+    }
+  ): Promise<RealityResponse> {
+    const show = await this.prisma.realityShow.findUnique({ where: { id: showId } });
+    if (!show) {
+      throw new NotFoundException('Show not found');
+    }
+
+    const episode = await this.prisma.episode.create({
+      data: {
+        showId,
+        title: data.title,
+        number: data.number,
+        description: data.description,
+        thumbnail: data.thumbnail,
+        mediaUrl: data.mediaUrl,
+        airedAt: data.airedAt,
+        seasonId: data.seasonId,
+      },
+    });
+
+    return {
+      success: true,
+      data: {
+        episode,
+        message: 'Episode created successfully',
+      },
+    };
+  }
+
+  async updateEpisode(
+    episodeId: string,
+    data: {
+      title?: string;
+      description?: string;
+      thumbnail?: string;
+      mediaUrl?: string;
+      airedAt?: Date;
+    }
+  ): Promise<RealityResponse> {
+    const existing = await this.prisma.episode.findUnique({ where: { id: episodeId } });
+    if (!existing) {
+      throw new NotFoundException('Episode not found');
+    }
+
+    const updated = await this.prisma.episode.update({
+      where: { id: episodeId },
+      data,
+    });
+
+    return {
+      success: true,
+      data: {
+        episode: updated,
+        message: 'Episode updated successfully',
+      },
+    };
+  }
+
+  async deleteEpisode(episodeId: string): Promise<RealityResponse> {
+    const episode = await this.prisma.episode.findUnique({ where: { id: episodeId } });
+    if (!episode) {
+      throw new NotFoundException('Episode not found');
+    }
+
+    await this.prisma.episode.delete({ where: { id: episodeId } });
+
+    return {
+      success: true,
+      data: { message: 'Episode deleted successfully' },
+    };
+  }
+
+  async createSeason(
+    showId: string,
+    data: { title: string; number: number; description?: string; startDate?: Date; endDate?: Date }
+  ): Promise<RealityResponse> {
+    const show = await this.prisma.realityShow.findUnique({ where: { id: showId } });
+    if (!show) {
+      throw new NotFoundException('Show not found');
+    }
+
+    const season = await this.prisma.season.create({
+      data: {
+        showId,
+        title: data.title,
+        number: data.number,
+        description: data.description,
+        startDate: data.startDate,
+        endDate: data.endDate,
+      },
+    });
+
+    return {
+      success: true,
+      data: {
+        season,
+        message: 'Season created successfully',
+      },
+    };
+  }
+
+  async confirmReward(userId: string, showId: string): Promise<RealityResponse> {
+    const rewardAccount = await this.prisma.rewardAccount.findUnique({ where: { userId } });
+    if (!rewardAccount) {
+      throw new NotFoundException('Reward account not found');
+    }
+
+    const votes = await this.prisma.vote.count({ where: { userId, showId } });
+    const supervotes = await this.prisma.supervote.count({ where: { userId, showId } });
+
+    const pointsEarned = votes + supervotes * 10;
+
+    if (pointsEarned > 0) {
+      await this.prisma.rewardAccount.update({
+        where: { userId },
+        data: { points: { increment: pointsEarned } },
+      });
+
+      await this.prisma.pointsLedger.create({
+        data: {
+          userId,
+          points: pointsEarned,
+          type: 'credit',
+          reason: `Reward for participation in show ${showId}`,
+        },
+      });
+    }
+
+    return {
+      success: true,
+      data: {
+        pointsEarned,
+        message: `Reward confirmed! You earned ${pointsEarned} points`,
+      },
+    };
+  }
+}

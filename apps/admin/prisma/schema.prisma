@@ -1,5 +1,6 @@
 generator client {
   provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
@@ -16,6 +17,11 @@ model User {
   role                  String   @default("user")
   preferences           Json?
   notificationPreferences Json?
+  isSuspended           Boolean  @default(false)
+  suspendedAt           DateTime?
+  suspendedUntil        DateTime?
+  suspensionReason      String?
+  suspendedBy           String?
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
 
@@ -29,8 +35,28 @@ model User {
   payoutRequests PayoutRequest[]
   reportedReports Report[]
   reportsAgainstMe Report[] @relation("ReportedUser")
+  suspensions    UserSuspension[]
 
   @@map("users")
+}
+
+model UserSuspension {
+  id          String   @id @default(uuid())
+  userId      String
+  reason      String
+  suspendedBy String
+  suspendedAt DateTime @default(now())
+  expiresAt   DateTime?
+  status      String   @default("active") // active, expired, revoked
+  revokedAt   DateTime?
+  revokedBy   String?
+  revokedReason String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_suspensions")
+  @@index([userId])
+  @@index([status])
 }
 
 model WatchHistory {
@@ -62,9 +88,9 @@ model SavedItem {
 model Wallet {
   id           String   @id @default(uuid())
   userId       String   @unique
-  balance      Float    @default(0)
-  bonusBalance Float    @default(0)
-  promoBalance Float    @default(0)
+  balance      Decimal  @default(0)
+  bonusBalance Decimal  @default(0)
+  promoBalance Decimal  @default(0)
   currency     String   @default("NGN")
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -79,7 +105,7 @@ model WalletTransaction {
   id           String   @id @default(uuid())
   walletId     String
   type         String
-  amount       Float
+  amount       Decimal
   status       String
   description  String?
   reference    String?
@@ -109,7 +135,7 @@ model Notification {
 model PaymentIntent {
   id                String   @id @default(uuid())
   userId            String
-  amount            Float
+  amount            Decimal
   currency          String   @default("NGN")
   status            String
   description       String?
@@ -128,7 +154,7 @@ model PaymentIntent {
 model Refund {
   id                String   @id @default(uuid())
   paymentIntentId   String
-  amount            Float
+  amount            Decimal
   reason            String
   status            String
   providerReference String?
@@ -265,7 +291,7 @@ model ContentRelationship {
 model PayoutRequest {
   id              String   @id @default(uuid())
   userId          String
-  amount          Float
+  amount          Decimal
   currency        String   @default("NGN")
   status          String
   method          String
@@ -328,4 +354,23 @@ model SafetyAction {
   createdAt    DateTime @default(now())
 
   @@map("safety_actions")
+}
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  actorId     String?
+  actorType   String   @default("user") // user, system, api
+  action      String   // create, update, delete, suspend, revoke, publish, approve, reject
+  targetType  String   // user, content, report, payout, etc.
+  targetId    String?
+  details     Json?
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+
+  @@map("audit_logs")
+  @@index([actorId])
+  @@index([targetType, targetId])
+  @@index([action])
+  @@index([createdAt])
 }

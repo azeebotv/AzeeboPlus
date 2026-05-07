@@ -26,9 +26,8 @@ export interface SessionEntity {
 export interface OtpEntity {
   id: string;
   userId: string;
-  code: string | null;
-  expiresAt: Date | null;
-  verified: boolean;
+  code: string;
+  expiresAt: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -38,9 +37,8 @@ export interface SocialAccountEntity {
   userId: string;
   provider: string;
   socialId: string;
-  displayName: string;
-  email: string;
-  avatar: string | null;
+  accessToken: string | null;
+  refreshToken: string | null;
   createdAt: Date;
   updatedAt: Date;
 }

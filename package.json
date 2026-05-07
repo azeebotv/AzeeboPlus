@@ -5,14 +5,13 @@
   "description": "Azeebo+ Monorepo",
   "workspaces": [
     "services/*",
-    "modules/*",
     "apps/*",
     "packages/*"
   ],
   "scripts": {
     "build": "pnpm -r build",
     "test": "pnpm -r test",
-    "test:ci": "pnpm -r test -- --run --reporter=verbose",
+    "test:ci": "pnpm -r test -- --verbose",
     "lint": "pnpm -r lint",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "clean": "pnpm -r clean && rm -rf node_modules"
@@ -28,6 +27,12 @@
   "engines": {
     "node": ">=20.0.0",
     "pnpm": ">=7.0.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "react": "18.3.1",
+      "react-dom": "18.3.1"
+    }
   },
   "lint-staged": {
     "*.{ts,tsx}": [

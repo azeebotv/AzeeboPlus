@@ -11,6 +11,8 @@ resources:
   - payment-service.yaml
   - ingress.yaml
   - hpa.yaml
+  - pod-disruption-budgets.yaml
+  - network-policies.yaml
 
 commonLabels:
   app.kubernetes.io/name: azeebo
@@ -23,3 +25,22 @@ configMapGenerator:
       - ENVIRONMENT=production
       - LOG_LEVEL=info
       - API_GATEWAY_URL=http://api-gateway.azeebo.svc.cluster.local:3000
+
+configMapGenerator:
+  - name: service-config
+    literals:
+      - LOG_FORMAT=json
+      - REQUEST_TIMEOUT=30000
+      - KEEP_ALIVE_TIMEOUT=65000
+
+images:
+  - name: azeebo/auth-service
+    newTag: latest
+  - name: azeebo/api-gateway
+    newTag: latest
+  - name: azeebo/user-service
+    newTag: latest
+  - name: azeebo/wallet-service
+    newTag: latest
+  - name: azeebo/payment-service
+    newTag: latest

@@ -23,6 +23,35 @@ interface FlutterwaveVerifyResponse {
   };
 }
 
+interface FlutterwaveRefundResponse {
+  status: string;
+  message: string;
+  data: {
+    reference: string;
+    amount: number;
+    status: string;
+  };
+}
+
+interface InitializeResult {
+  reference: string;
+  authorizationUrl: string;
+}
+
+interface VerifyResult {
+  status: string;
+  amount: number;
+  currency: string;
+  paidAt: Date;
+  reference: string;
+}
+
+interface RefundResult {
+  reference: string;
+  amount: number;
+  status: string;
+}
+
 @Injectable()
 export class FlutterwaveProvider {
   private readonly apiKey: string;
@@ -35,7 +64,11 @@ export class FlutterwaveProvider {
     }
   }
 
-  async initializePayment(amount: number, currency: string, userId: string) {
+  async initializePayment(
+    amount: number,
+    currency: string,
+    userId: string
+  ): Promise<InitializeResult> {
     try {
       const response = await axios.post<FlutterwaveInitializeResponse>(
         `${this.baseUrl}/payments`,
@@ -43,7 +76,8 @@ export class FlutterwaveProvider {
           tx_ref: `tx_${Date.now()}_${userId}`,
           amount,
           currency: currency || 'NGN',
-          redirect_url: process.env.FLUTTERWAVE_CALLBACK_URL || 'https://api.azeebo.plus/payments/webhook',
+          redirect_url:
+            process.env.FLUTTERWAVE_CALLBACK_URL || 'https://api.azeebo.plus/payments/webhook',
           customer: {
             email: `user-${userId}@azeebo.plus`,
             name: `User ${userId}`,
@@ -58,7 +92,7 @@ export class FlutterwaveProvider {
             Authorization: `Bearer ${this.apiKey}`,
             'Content-Type': 'application/json',
           },
-        },
+        }
       );
 
       if (response.data.status !== 'success') {
@@ -69,12 +103,13 @@ export class FlutterwaveProvider {
         reference: response.data.data.reference,
         authorizationUrl: response.data.data.link,
       };
-    } catch (error: any) {
-      throw new BadRequestException(`Flutterwave initialization failed: ${error.message}`);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      throw new BadRequestException(`Flutterwave initialization failed: ${errorMessage}`);
     }
   }
 
-  async verifyPayment(reference: string) {
+  async verifyPayment(reference: string): Promise<VerifyResult> {
     try {
       const response = await axios.get<FlutterwaveVerifyResponse>(
         `${this.baseUrl}/transactions/${reference}/verify`,
@@ -83,7 +118,7 @@ export class FlutterwaveProvider {
             Authorization: `Bearer ${this.apiKey}`,
             'Content-Type': 'application/json',
           },
-        },
+        }
       );
 
       if (response.data.status !== 'success') {
@@ -97,17 +132,18 @@ export class FlutterwaveProvider {
         paidAt: new Date(response.data.data.created_at),
         reference: response.data.data.tx_ref,
       };
-    } catch (error: any) {
-      throw new BadRequestException(`Flutterwave verification failed: ${error.message}`);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      throw new BadRequestException(`Flutterwave verification failed: ${errorMessage}`);
     }
   }
 
-  async processRefund(transactionReference: string, reason: string) {
+  async processRefund(transactionReference: string, reason: string): Promise<RefundResult> {
     try {
-      const response = await axios.post(
+      const response = await axios.post<FlutterwaveRefundResponse>(
         `${this.baseUrl}/transactions/${transactionReference}/refund`,
         {
-          amount: null, // Refund full amount
+          amount: null,
           reason,
         },
         {
@@ -115,7 +151,7 @@ export class FlutterwaveProvider {
             Authorization: `Bearer ${this.apiKey}`,
             'Content-Type': 'application/json',
           },
-        },
+        }
       );
 
       if (response.data.status !== 'success') {
@@ -127,13 +163,18 @@ export class FlutterwaveProvider {
         amount: response.data.data.amount,
         status: response.data.data.status,
       };
-    } catch (error: any) {
-      throw new BadRequestException(`Flutterwave refund failed: ${error.message}`);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      throw new BadRequestException(`Flutterwave refund failed: ${errorMessage}`);
     }
   }
 
-  async verifyWebhookSignature(payload: any, signature: string): Promise<boolean> {
-    const hash = require('crypto')
+  async verifyWebhookSignature(
+    payload: Record<string, unknown>,
+    signature: string
+  ): Promise<boolean> {
+    const crypto = await import('crypto');
+    const hash = crypto
       .createHmac('sha256', this.apiKey)
       .update(JSON.stringify(payload))
       .digest('hex');

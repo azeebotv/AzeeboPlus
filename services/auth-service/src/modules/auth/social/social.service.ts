@@ -11,6 +11,8 @@ interface SocialUser {
   avatar?: string | null;
   socialId: string;
   provider: 'google' | 'apple';
+  accessToken: string;
+  refreshToken: string;
 }
 
 interface SocialLoginResponse {
@@ -33,6 +35,8 @@ interface SocialLoginResponse {
 
 @Injectable()
 export class SocialAuthService {
+  private readonly saltRounds = 10;
+
   constructor(
     private readonly authRepository: AuthRepository,
     private readonly jwtService: JwtService
@@ -51,22 +55,30 @@ export class SocialAuthService {
       }
 
       const password = bcrypt.hashSync(randomUUID(), 10);
-      user = (await this.authRepository.create({
+      user = await this.authRepository.create({
         email: socialUser.email,
         password,
         displayName: socialUser.displayName,
-        avatar: socialUser.avatar,
+        avatar: socialUser.avatar ?? null,
         role: 'user',
-      })) as Record<string, unknown>;
+      });
 
-      await this.authRepository.linkSocialAccount(user.id as string, socialUser);
+      const hashedRefreshToken = await bcrypt.hash(socialUser.refreshToken, this.saltRounds);
+      await this.authRepository.linkSocialAccount(user.id, {
+        ...socialUser,
+        refreshToken: hashedRefreshToken,
+      });
     } else {
       const existingSocial = await this.authRepository.findSocialAccount(
-        user.id as string,
+        user.id,
         socialUser.provider
       );
       if (!existingSocial) {
-        await this.authRepository.linkSocialAccount(user.id as string, socialUser);
+        const hashedRefreshToken = await bcrypt.hash(socialUser.refreshToken, this.saltRounds);
+        await this.authRepository.linkSocialAccount(user.id, {
+          ...socialUser,
+          refreshToken: hashedRefreshToken,
+        });
       }
     }
 
@@ -80,11 +92,11 @@ export class SocialAuthService {
       success: true,
       data: {
         user: {
-          id: user.id as string,
-          email: user.email as string,
-          displayName: user.displayName as string,
-          avatar: user.avatar as string | null,
-          role: user.role as string,
+          id: user.id,
+          email: user.email,
+          displayName: user.displayName,
+          avatar: user.avatar,
+          role: user.role,
         },
         token,
       },

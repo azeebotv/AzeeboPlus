@@ -87,3 +87,23 @@ model Role {
 
   @@map("roles")
 }
+
+model AuditLog {
+  id           String   @id @default(uuid())
+  actor        String?
+  action       String
+  resourceType String?
+  resourceId   String?
+  result       String
+  error        String?
+  ipAddress    String?
+  userAgent    String?
+  timestamp    DateTime @default(now())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([actor])
+  @@index([action])
+  @@index([timestamp])
+  @@map("audit_logs")
+}

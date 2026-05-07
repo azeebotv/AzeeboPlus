@@ -15,10 +15,12 @@ import { ProxyModule } from './modules/proxy/proxy.module';
       ttl: 300000, // 5 minutes
       max: 100, // maximum number of items in cache
     }),
-    ThrottlerModule.forRoot([{
-      ttl: 60000,
-      limit: 100,
-    }]),
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000,
+        limit: 100,
+      },
+    ]),
     HealthModule,
     ProxyModule,
   ],

@@ -9,17 +9,24 @@ import { api } from '../../../lib/api';
 interface ContentItem {
   id: string;
   title: string;
-  description: string;
+  description?: string;
   thumbnail: string;
-  duration: number;
-  category: string;
-  creatorId: string;
-  creatorName: string;
-  isPremium: boolean;
-  status: 'draft' | 'published' | 'rejected';
-  views: number;
+  duration?: number;
+  category?: string;
+  creatorId?: string;
+  creatorName?: string;
+  isPremium?: boolean;
+  status: 'draft' | 'published' | 'rejected' | 'processing' | 'archived';
+  views?: number;
   createdAt: string;
   updatedAt: string;
+  type?: string;
+  mediaUrl?: string;
+  universe?: string | { id: string; name: string; icon?: string };
+  universeId?: string;
+  metadata?: Record<string, unknown>;
+  creator?: { name: string };
+  tags?: { id: string; name: string }[];
 }
 
 interface PaginatedContent {

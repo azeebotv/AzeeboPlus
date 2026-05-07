@@ -5,12 +5,14 @@ import {
   HttpException,
   HttpStatus,
   Logger,
+  SetMetadata,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Request } from 'express';
-import { RedisService } from '../redis/redis.service';
+import { RedisService } from '../services/redis.service';
 
-export const RateLimit = (limit: number, windowMs: number) => SetMetadata('rateLimit', { limit, windowMs });
+export const RateLimit = (limit: number, windowMs: number): ReturnType<typeof SetMetadata> =>
+  SetMetadata('rateLimit', { limit, windowMs });
 
 export interface RateLimitOptions {
   limit: number;
@@ -23,13 +25,13 @@ export class RateLimitGuard implements CanActivate {
 
   constructor(
     private reflector: Reflector,
-    private redisService: RedisService,
+    private redisService: RedisService
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const rateLimitOptions = this.reflector.get<RateLimitOptions>(
       'rateLimit',
-      context.getHandler(),
+      context.getHandler()
     );
 
     if (!rateLimitOptions) {
@@ -65,7 +67,7 @@ export class RateLimitGuard implements CanActivate {
             message: 'Too many requests, please try again later.',
             error: 'Too Many Requests',
           },
-          HttpStatus.TOO_MANY_REQUESTS,
+          HttpStatus.TOO_MANY_REQUESTS
         );
       }
 

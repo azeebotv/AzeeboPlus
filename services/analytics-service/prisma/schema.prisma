@@ -66,9 +66,9 @@ model SavedItem {
 model Wallet {
   id           String   @id @default(uuid())
   userId       String   @unique
-  balance      Float    @default(0)
-  bonusBalance Float    @default(0)
-  promoBalance Float    @default(0)
+  balance Decimal    @default(0)
+  bonusBalance Decimal    @default(0)
+  promoBalance Decimal    @default(0)
   currency     String   @default("NGN")
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -83,7 +83,7 @@ model WalletTransaction {
   id           String   @id @default(uuid())
   walletId     String
   type         String   // credit, debit, bonus, promo, refund
-  amount       Float
+  amount Decimal
   status       String   // pending, completed, failed, reversed
   description  String?
   reference    String?
@@ -113,7 +113,7 @@ model Notification {
 model PaymentIntent {
   id                String   @id @default(uuid())
   userId            String
-  amount            Float
+  amount Decimal
   currency          String   @default("NGN")
   status            String   // pending, processing, completed, failed, refunded
   description       String?
@@ -132,7 +132,7 @@ model PaymentIntent {
 model Refund {
   id                String   @id @default(uuid())
   paymentIntentId   String
-  amount            Float
+  amount Decimal
   reason            String
   status            String   // pending, processing, completed, failed
   providerReference String?
@@ -404,14 +404,168 @@ model UserSearch {
 
 model ProductEvent {
   id          String   @id @default(uuid())
-  type        String   // content_view, play_start, play_complete, etc.
+  eventName   String   // screen_view, content_impression, payment_success, etc.
   userId      String?
   sessionId   String?
-  metadata    Json?
+  platform    String?  // web, mobile, tablet
+  universe    String?  // reality, creator, lifestyle, vertical, movie, games, comedy, sports
   timestamp   DateTime @default(now())
   createdAt   DateTime @default(now())
 
+  deviceInfo    DeviceInfo?
+  appVersion   String?
+  experimentFlags Json?
+  metadata     Json?
+
   user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([eventName])
+  @@index([userId])
+  @@index([sessionId])
+  @@index([universe])
+  @@index([timestamp])
   @@map("product_events")
+}
+
+model DeviceInfo {
+  id            String   @id @default(uuid())
+  productEventId String @unique
+  deviceType    String?  // mobile, desktop, tablet, tv
+  os            String?  // iOS, Android, Windows, macOS, Linux
+  osVersion     String?
+  browser       String?
+  browserVersion String?
+  appVersion    String?
+  screenWidth   Int?
+  screenHeight  Int?
+  language      String?
+  timezone      String?
+  userAgent     String?
+
+  event ProductEvent @relation(fields: [productEventId], references: [id], onDelete: Cascade)
+
+  @@map("device_info")
+}
+
+model Funnel {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  steps       Json    // Array of event names in order
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  funnelSteps FunnelStep[]
+
+  @@map("funnels")
+}
+
+model FunnelStep {
+  id        String   @id @default(uuid())
+  funnelId  String
+  stepOrder Int
+  eventName String
+  createdAt DateTime @default(now())
+
+  funnel Funnel @relation(fields: [funnelId], references: [id], onDelete: Cascade)
+
+  @@unique([funnelId, stepOrder])
+  @@map("funnel_steps")
+}
+
+model FunnelCompletion {
+  id            String   @id @default(uuid())
+  funnelId      String
+  userId        String
+  completedSteps Int      @default(0)
+  completedAt   DateTime?
+  metadata      Json?
+  createdAt     DateTime @default(now())
+
+  funnel Funnel @relation(fields: [funnelId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([funnelId, userId])
+  @@map("funnel_completions")
+}
+
+model Cohort {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  criteria    Json     // JSON criteria for cohort membership
+  size        Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  members CohortMember[]
+
+  @@map("cohorts")
+}
+
+model CohortMember {
+  id        String   @id @default(uuid())
+  cohortId  String
+  userId    String
+  joinedAt  DateTime @default(now())
+
+  cohort Cohort @relation(fields: [cohortId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([cohortId, userId])
+  @@map("cohort_members")
+}
+
+model AudienceSegment {
+  id            String   @id @default(uuid())
+  name          String
+  description   String?
+  segmentType   String   // behavioral, demographic, firmographic
+  criteria      Json
+  size          Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("audience_segments")
+}
+
+model CreatorScore {
+  id            String   @id @default(uuid())
+  creatorId     String   @unique
+  engagementScore Float   @default(0)
+  growthScore   Float    @default(0)
+  monetizationScore Float @default(0)
+  overallScore  Float    @default(0)
+  lastUpdated   DateTime @default(now())
+
+  @@map("creator_scores")
+}
+
+model ChurnRisk {
+  id              String   @id @default(uuid())
+  userId          String   @unique
+  riskLevel       String   // low, medium, high, critical
+  churnProbability Float   @default(0)
+  factors         Json     // Contributing factors
+  lastActivityAt  DateTime?
+  predictedChurnAt DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("churn_risks")
+}
+
+model FraudDetection {
+  id            String   @id @default(uuid())
+  userId        String?
+  eventType     String
+  severity      String   // low, medium, high, critical
+  details       Json
+  status        String   @default("pending") // pending, reviewed, confirmed, cleared
+  reviewedBy    String?
+  reviewedAt    DateTime?
+  createdAt     DateTime @default(now())
+
+  @@map("fraud_detections")
 }

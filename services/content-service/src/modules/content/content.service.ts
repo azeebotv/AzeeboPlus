@@ -448,7 +448,7 @@ export class ContentService {
     };
   }
 
-  async getSignedMediaUrl(contentId: string, expiresIn: number = 3600) {
+  async getSignedMediaUrl(userId: string, contentId: string, expiresIn: number = 3600) {
     const mediaAsset = await this.prisma.mediaAsset.findUnique({
       where: { contentItemId: contentId },
     });
@@ -1302,6 +1302,234 @@ export class ContentService {
     return {
       success: true,
       data: updatedContent,
+    };
+  }
+  async ingestShortFormContent(
+    userId: string,
+    createContentDto: CreateContentDto,
+    options?: { isExclusive?: boolean; windowType?: 'basic' | 'standard' | 'premium' }
+  ) {
+    const content = await this.prisma.contentItem.create({
+      data: {
+        ...createContentDto,
+        creatorId: userId,
+        status: 'draft',
+        isExclusive: options?.isExclusive || false,
+        windowType: options?.windowType || 'basic',
+        metadata: {
+          ...createContentDto.metadata,
+          contentCategory: 'short-form',
+        },
+      },
+      include: { creator: true, universe: true },
+    });
+
+    return {
+      success: true,
+      data: content,
+    };
+  }
+
+  async ingestLongFormContent(
+    userId: string,
+    createContentDto: CreateContentDto,
+    options?: { isPremiere?: boolean; windowType?: 'standard' | 'premium' }
+  ) {
+    const content = await this.prisma.contentItem.create({
+      data: {
+        ...createContentDto,
+        creatorId: userId,
+        status: 'draft',
+        isPremiere: options?.isPremiere || false,
+        windowType: options?.windowType || 'standard',
+        metadata: {
+          ...createContentDto.metadata,
+          contentCategory: 'long-form',
+        },
+      },
+      include: { creator: true, universe: true },
+    });
+
+    return {
+      success: true,
+      data: content,
+    };
+  }
+
+  async ingestClipContent(
+    userId: string,
+    createContentDto: CreateContentDto,
+    parentContentId: string,
+    clipStartTime: number,
+    clipEndTime: number
+  ) {
+    const parentContent = await this.prisma.contentItem.findUnique({
+      where: { id: parentContentId },
+    });
+
+    if (!parentContent) {
+      throw new NotFoundException('Parent content not found');
+    }
+
+    const content = await this.prisma.contentItem.create({
+      data: {
+        ...createContentDto,
+        creatorId: userId,
+        status: 'draft',
+        windowType: parentContent.windowType,
+        metadata: {
+          ...createContentDto.metadata,
+          contentCategory: 'clip',
+          parentContentId,
+          clipStartTime,
+          clipEndTime,
+        },
+      },
+      include: { creator: true, universe: true },
+    });
+
+    return {
+      success: true,
+      data: content,
+    };
+  }
+
+  async ingestEpisodeContent(
+    userId: string,
+    createContentDto: CreateContentDto,
+    seasonNumber: number,
+    episodeNumber: number,
+    seriesId?: string
+  ) {
+    const content = await this.prisma.contentItem.create({
+      data: {
+        ...createContentDto,
+        creatorId: userId,
+        status: 'draft',
+        metadata: {
+          ...createContentDto.metadata,
+          contentCategory: 'episode',
+          seasonNumber,
+          episodeNumber,
+          seriesId,
+        },
+      },
+      include: { creator: true, universe: true },
+    });
+
+    return {
+      success: true,
+      data: content,
+    };
+  }
+
+  async ingestMovieContent(
+    userId: string,
+    createContentDto: CreateContentDto,
+    options?: { isPremiere?: boolean; isExclusive?: boolean; windowType?: 'standard' | 'premium' }
+  ) {
+    const content = await this.prisma.contentItem.create({
+      data: {
+        ...createContentDto,
+        creatorId: userId,
+        status: 'draft',
+        isPremiere: options?.isPremiere || false,
+        isExclusive: options?.isExclusive || false,
+        windowType: options?.windowType || 'premium',
+        metadata: {
+          ...createContentDto.metadata,
+          contentCategory: 'movie',
+        },
+      },
+      include: { creator: true, universe: true },
+    });
+
+    return {
+      success: true,
+      data: content,
+    };
+  }
+
+  async ingestGameContent(
+    userId: string,
+    createContentDto: CreateContentDto,
+    options?: { difficulty?: 'easy' | 'medium' | 'hard'; gameType?: string }
+  ) {
+    const content = await this.prisma.contentItem.create({
+      data: {
+        ...createContentDto,
+        creatorId: userId,
+        status: 'draft',
+        metadata: {
+          ...createContentDto.metadata,
+          contentCategory: 'game',
+          difficulty: options?.difficulty || 'medium',
+          gameType: options?.gameType,
+        },
+      },
+      include: { creator: true, universe: true },
+    });
+
+    return {
+      success: true,
+      data: content,
+    };
+  }
+
+  async ingestSportsHighlightContent(
+    userId: string,
+    createContentDto: CreateContentDto,
+    gameDate: Date,
+    teams: string[],
+    highlightType: string
+  ) {
+    const content = await this.prisma.contentItem.create({
+      data: {
+        ...createContentDto,
+        creatorId: userId,
+        status: 'draft',
+        windowType: 'basic',
+        metadata: {
+          ...createContentDto.metadata,
+          contentCategory: 'sports-highlight',
+          gameDate: gameDate.toISOString(),
+          teams,
+          highlightType,
+        },
+      },
+      include: { creator: true, universe: true },
+    });
+
+    return {
+      success: true,
+      data: content,
+    };
+  }
+
+  async ingestCreatorUpload(
+    userId: string,
+    createContentDto: CreateContentDto,
+    options?: { contentSubtype?: 'video' | 'audio' | 'image' | 'article' }
+  ) {
+    const content = await this.prisma.contentItem.create({
+      data: {
+        ...createContentDto,
+        creatorId: userId,
+        status: 'draft',
+        windowType: 'basic',
+        metadata: {
+          ...createContentDto.metadata,
+          contentCategory: 'creator-upload',
+          contentSubtype: options?.contentSubtype || 'video',
+          uploadedByCreator: true,
+        },
+      },
+      include: { creator: true, universe: true },
+    });
+
+    return {
+      success: true,
+      data: content,
     };
   }
 }

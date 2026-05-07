@@ -4,26 +4,51 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import helmet from 'helmet';
 import { GlobalExceptionFilter } from '@azeebo/error-handling';
+import * as bodyParser from 'body-parser';
+import { validateEnvironment } from '@azeebo/shared-types';
 
-async function bootstrap() {
+async function bootstrap(): Promise<void> {
+  try {
+    validateEnvironment(process.env);
+    Logger.log('Environment variables validated successfully');
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    Logger.error('Environment validation failed:', errorMessage);
+    process.exit(1);
+  }
+
   const app = await NestFactory.create(AppModule);
 
-  // Security headers
-  app.use(helmet({
-    contentSecurityPolicy: {
-      directives: {
-        defaultSrc: ["'self'"],
-        styleSrc: ["'self'", "'unsafe-inline'"],
-        imgSrc: ["'self'", 'data:', 'https:'],
-      },
-    },
-    hsts: {
-      maxAge: 31536000,
-      includeSubDomains: true,
-    },
-  }));
+  app.use('/webhooks/*', bodyParser.raw({ type: 'application/json' }));
 
-  // Global exception filter
+  app.use('/webhooks/*', (req: { body: Buffer | object }, res: unknown, next: () => void) => {
+    if (req.body && Buffer.isBuffer(req.body)) {
+      try {
+        (req as { rawBody: string }).rawBody = req.body.toString('utf8');
+        req.body = JSON.parse((req as { rawBody: string }).rawBody);
+      } catch {
+        req.body = {};
+      }
+    }
+    next();
+  });
+
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          styleSrc: ["'self'", "'unsafe-inline'"],
+          imgSrc: ["'self'", 'data:', 'https:'],
+        },
+      },
+      hsts: {
+        maxAge: 31536000,
+        includeSubDomains: true,
+      },
+    })
+  );
+
   app.useGlobalFilters(new GlobalExceptionFilter());
 
   app.useGlobalPipes(
@@ -34,29 +59,45 @@ async function bootstrap() {
     })
   );
 
+  const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'];
+
   app.enableCors({
-    origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'],
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    origin: (
+      origin: string | undefined,
+      callback: (err: Error | null, allow?: boolean) => void
+    ) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
+    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE'],
     credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    exposedHeaders: ['Content-Disposition'],
+    maxAge: 86400,
   });
 
-  // Swagger documentation
-  const swaggerConfig = new DocumentBuilder()
-    .setTitle('Azeebo+ Payment Service')
-    .setDescription('Payment processing API for Azeebo+ platform')
-    .setVersion('1.0')
-    .addTag('payments', 'Payment operations')
-    .addTag('webhooks', 'Payment provider webhooks')
-    .addBearerAuth()
-    .build();
+  if (process.env.NODE_ENV !== 'production') {
+    const swaggerConfig = new DocumentBuilder()
+      .setTitle('Azeebo+ Payment Service')
+      .setDescription('Payment processing API for Azeebo+ platform')
+      .setVersion('1.0')
+      .addTag('payments', 'Payment operations')
+      .addTag('webhooks', 'Payment provider webhooks')
+      .addBearerAuth()
+      .build();
 
-  const document = SwaggerModule.createDocument(app, swaggerConfig);
-  SwaggerModule.setup('api/docs', app, document);
+    const document = SwaggerModule.createDocument(app, swaggerConfig);
+    SwaggerModule.setup('api/docs', app, document);
+    Logger.log('Swagger documentation enabled at /api/docs');
+  }
 
   const port = process.env.PORT || 3000;
   await app.listen(port);
   const logger = new Logger('Payment Service');
   logger.log(`Payment Service running on port ${port}`);
-  logger.log(`Swagger documentation available at /api/docs`);
 }
+
 bootstrap();

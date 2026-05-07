@@ -1,4 +1,15 @@
-import { Controller, Get, Patch, Body, UseGuards, Request, Put, Post, Delete, Param } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Patch,
+  Body,
+  UseGuards,
+  Request,
+  Put,
+  Post,
+  Delete,
+  Param,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 
@@ -6,6 +17,12 @@ import { UsersService } from './users.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UpdateUniverseAffinityDto } from './dto/update-universe-affinity.dto';
 import { User } from './interfaces/user.interface';
+
+interface AuthenticatedRequest {
+  user: {
+    sub: string;
+  };
+}
 
 @ApiTags('Users')
 @Controller('users')
@@ -17,8 +34,8 @@ export class UsersController {
   @ApiOperation({ summary: 'Get current user profile' })
   @ApiResponse({ status: 200, description: 'User profile' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getProfile(@Request() req: any): Promise<User> {
-    return this.usersService.findById(req.user.sub);
+  async getProfile(@Request() req: AuthenticatedRequest): Promise<User> {
+    return this.usersService.findById(req.user.sub) as Promise<User>;
   }
 
   @Patch('me')
@@ -28,10 +45,10 @@ export class UsersController {
   @ApiResponse({ status: 400, description: 'Invalid input' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async updateProfile(
-    @Request() req: any,
-    @Body() updateUserDto: UpdateUserDto,
-  ): Promise<any> {
-    return this.usersService.update(req.user.sub, updateUserDto);
+    @Request() req: AuthenticatedRequest,
+    @Body() updateUserDto: UpdateUserDto
+  ): Promise<User> {
+    return this.usersService.update(req.user.sub, updateUserDto) as Promise<User>;
   }
 
   @Get('me/preferences')
@@ -39,7 +56,7 @@ export class UsersController {
   @ApiOperation({ summary: 'Get user preferences' })
   @ApiResponse({ status: 200, description: 'User preferences' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getPreferences(@Request() req: any) {
+  async getPreferences(@Request() req: AuthenticatedRequest): Promise<Record<string, unknown>> {
     return this.usersService.getPreferences(req.user.sub);
   }
 
@@ -50,9 +67,9 @@ export class UsersController {
   @ApiResponse({ status: 400, description: 'Invalid input' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async updatePreferences(
-    @Request() req: any,
-    @Body() preferences: Record<string, any>,
-  ) {
+    @Request() req: AuthenticatedRequest,
+    @Body() preferences: Record<string, unknown>
+  ): Promise<Record<string, unknown>> {
     return this.usersService.updatePreferences(req.user.sub, preferences);
   }
 
@@ -61,7 +78,7 @@ export class UsersController {
   @ApiOperation({ summary: 'Get user watch history' })
   @ApiResponse({ status: 200, description: 'Watch history' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getHistory(@Request() req: any) {
+  async getHistory(@Request() req: AuthenticatedRequest): Promise<unknown> {
     return this.usersService.getWatchHistory(req.user.sub);
   }
 
@@ -70,7 +87,7 @@ export class UsersController {
   @ApiOperation({ summary: 'Get user saved items' })
   @ApiResponse({ status: 200, description: 'Saved items' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getSavedItems(@Request() req: any) {
+  async getSavedItems(@Request() req: AuthenticatedRequest): Promise<unknown> {
     return this.usersService.getSavedItems(req.user.sub);
   }
 
@@ -79,7 +96,10 @@ export class UsersController {
   @ApiOperation({ summary: 'Save an item' })
   @ApiResponse({ status: 201, description: 'Item saved' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async saveItem(@Request() req: any, @Body() body: { contentId: string }) {
+  async saveItem(
+    @Request() req: AuthenticatedRequest,
+    @Body() body: { contentId: string }
+  ): Promise<{ message: string }> {
     return this.usersService.saveItem(req.user.sub, body.contentId);
   }
 
@@ -88,7 +108,10 @@ export class UsersController {
   @ApiOperation({ summary: 'Unsave an item' })
   @ApiResponse({ status: 200, description: 'Item unsaved' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async unsaveItem(@Request() req: any, @Param('contentId') contentId: string) {
+  async unsaveItem(
+    @Request() req: AuthenticatedRequest,
+    @Param('contentId') contentId: string
+  ): Promise<{ message: string }> {
     return this.usersService.unsaveItem(req.user.sub, contentId);
   }
 
@@ -97,7 +120,7 @@ export class UsersController {
   @ApiOperation({ summary: 'Get user universe affinity' })
   @ApiResponse({ status: 200, description: 'Universe affinity' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getUniverseAffinity(@Request() req: any) {
+  async getUniverseAffinity(@Request() req: AuthenticatedRequest): Promise<unknown> {
     return this.usersService.getUniverseAffinity(req.user.sub);
   }
 
@@ -108,9 +131,9 @@ export class UsersController {
   @ApiResponse({ status: 400, description: 'Invalid input' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async updateUniverseAffinity(
-    @Request() req: any,
-    @Body() dto: UpdateUniverseAffinityDto,
-  ) {
+    @Request() req: AuthenticatedRequest,
+    @Body() dto: UpdateUniverseAffinityDto
+  ): Promise<{ message: string; interests: string[] }> {
     return this.usersService.updateUniverseAffinity(req.user.sub, dto);
   }
 }

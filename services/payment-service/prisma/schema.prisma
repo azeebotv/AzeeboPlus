@@ -11,14 +11,14 @@ datasource db {
 model Payment {
   id            String    @id @default(cuid())
   userId        String
-  amount        Decimal   @db.Decimal(10, 2)
+  amount        Decimal
   currency      String    @default("NGN")
   status        String    @default("pending")
   type          String    @default("payment")
   provider      String?
   providerRef   String?
   failureReason String?
-  refundAmount  Decimal?  @db.Decimal(10, 2)
+  refundAmount  Decimal?
   metadata      Json?
   completedAt   DateTime?
   createdAt     DateTime  @default(now())
@@ -31,23 +31,27 @@ model Payment {
 }
 
 model WebhookEvent {
-  id          String    @id @default(cuid())
-  eventId     String    @unique
-  provider    String?
-  type        String
-  processedAt DateTime  @default(now())
-  payload     Json?
-  createdAt   DateTime  @default(now())
+  id            String    @id @default(cuid())
+  eventId       String    @unique
+  provider      String
+  type          String
+  payload       Json
+  result        String    @default("success")
+  failureReason String?
+  processedAt   DateTime  @default(now())
+  createdAt     DateTime  @default(now())
 
   @@map("webhook_events")
   @@index([eventId])
   @@index([type])
+  @@index([provider])
+  @@index([result])
 }
 
 model PaymentIntent {
   id               String    @id @default(cuid())
   userId           String
-  amount           Decimal   @db.Decimal(10, 2)
+  amount           Decimal
   currency         String    @default("NGN")
   status           String    @default("pending")
   description      String?
@@ -70,7 +74,7 @@ model PaymentIntent {
 model Refund {
   id               String    @id @default(cuid())
   paymentIntentId  String
-  amount           Decimal   @db.Decimal(10, 2)
+  amount           Decimal
   reason           String
   status           String    @default("pending")
   providerReference String?
@@ -89,7 +93,7 @@ model Refund {
 model Wallet {
   id        String    @id @default(cuid())
   userId    String    @unique
-  balance   Decimal   @db.Decimal(10, 2) @default(0)
+  balance   Decimal   @default(0)
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
@@ -103,7 +107,7 @@ model WalletTransaction {
   id          String    @id @default(cuid())
   walletId    String
   type        String    // credit, debit
-  amount      Decimal   @db.Decimal(10, 2)
+  amount      Decimal
   status      String    @default("completed")
   description String?
   reference   String?

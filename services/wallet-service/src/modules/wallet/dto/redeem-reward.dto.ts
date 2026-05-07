@@ -1,4 +1,4 @@
-import { IsNumber, IsPositive, IsOptional } from 'class-validator';
+import { IsNumber, IsPositive } from 'class-validator';
 import { Transform } from 'class-transformer';
 
 export class RedeemRewardDto {

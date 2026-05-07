@@ -31,6 +31,7 @@ interface StoryResponse {
   data?:
     | Story
     | Story[]
+    | Category[]
     | { items: Story[]; total: number; page: number; limit: number; totalPages: number }
     | { message: string };
   error?: { code: string; message: string };

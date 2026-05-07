@@ -7,20 +7,22 @@ async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule);
   const logger = new Logger('CreatorPortal');
 
-  app.use(helmet({
-    contentSecurityPolicy: {
-      directives: {
-        defaultSrc: ["'self'"],
-        styleSrc: ["'self'", "'unsafe-inline'"],
-        imgSrc: ["'self'", 'data:', 'https:'],
-        scriptSrc: ["'self'"],
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          styleSrc: ["'self'", "'unsafe-inline'"],
+          imgSrc: ["'self'", 'data:', 'https:'],
+          scriptSrc: ["'self'"],
+        },
       },
-    },
-    hsts: {
-      maxAge: 31536000,
-      includeSubDomains: true,
-    },
-  }));
+      hsts: {
+        maxAge: 31536000,
+        includeSubDomains: true,
+      },
+    })
+  );
 
   app.useGlobalPipes(
     new ValidationPipe({
@@ -33,7 +35,9 @@ async function bootstrap(): Promise<void> {
     })
   );
 
-  const allowedOrigins = process.env.CREATOR_ALLOWED_ORIGINS?.split(',') || ['http://localhost:3014'];
+  const allowedOrigins = process.env.CREATOR_ALLOWED_ORIGINS?.split(',') || [
+    'http://localhost:3014',
+  ];
 
   app.enableCors({
     origin: allowedOrigins,

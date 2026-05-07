@@ -48,6 +48,7 @@ interface EventResponse {
   data?:
     | Event
     | Event[]
+    | EventCategory[]
     | { items: Event[]; total: number; page: number; limit: number; totalPages: number }
     | { message: string }
     | { rsvp: Rsvp; message: string };

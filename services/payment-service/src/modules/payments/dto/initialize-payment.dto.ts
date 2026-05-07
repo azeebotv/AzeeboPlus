@@ -1,4 +1,4 @@
-import { IsNumber, IsString, IsOptional, IsObject, Min, IsUUID } from 'class-validator';
+import { IsString, IsOptional, IsObject, Min, IsUUID } from 'class-validator';
 
 export class InitializePaymentDto {
   @Min(0.01)
@@ -14,7 +14,7 @@ export class InitializePaymentDto {
 
   @IsObject()
   @IsOptional()
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 
   @IsUUID('4')
   @IsOptional()
