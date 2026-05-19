@@ -12,11 +12,12 @@
 4. [Option 1: Docker Desktop (Recommended)](#option-1-docker-desktop)
 5. [Option 2: Full Docker Compose](#option-2-full-docker-compose)
 6. [Option 3: VPS/Cloud Server](#option-3-vpscloud-server)
-7. [Option 4: Kubernetes](#option-4-kubernetes-enterprise)
-8. [Service Discovery](#service-discovery)
-9. [Testing the Application](#testing-the-application)
-10. [Troubleshooting](#troubleshooting)
-11. [FAQ](#faq)
+7. [Option 4: Kubernetes (Enterprise)](#option-4-kubernetes-enterprise)
+8. [Option 5: Coolify (Self-Hosted PaaS)](#option-5-coolify-self-hosted-paas)
+9. [Service Discovery](#service-discovery)
+10. [Testing the Application](#testing-the-application)
+11. [Troubleshooting](#troubleshooting)
+12. [FAQ](#faq)
 
 ---
 
@@ -806,6 +807,58 @@ kubectl port-forward -n monitoring svc/grafana 3001:3000
 
 ---
 
+## Option 5: Coolify (Self-Hosted PaaS)
+
+For a Heroku/Vercel-like experience on your own server with full control.
+
+**See detailed guide:** [docs/coolify.md](docs/coolify.md)
+
+### Quick Overview
+
+Coolify is an open-source, self-hosted platform that provides:
+
+- **One-Click Deployments** from Git repositories
+- **Automatic SSL** via Let's Encrypt
+- **Built-in Databases** (PostgreSQL, Redis, etc.)
+- **Reverse Proxy** with automatic domain configuration
+- **CI/CD** - Automatic builds on git push
+
+### When to Use Coolify
+
+| Scenario | Recommended |
+|----------|-------------|
+| Want Heroku-like experience | ✅ Use Coolify |
+| Single server deployment | ✅ Use Coolify |
+| Want full control + ease of use | ✅ Use Coolify |
+| Multi-server/multi-region | ❌ Use Kubernetes |
+| Enterprise-grade orchestration | ❌ Use Kubernetes |
+
+### Basic Coolify Setup
+
+**Step 5.1: Install Coolify on Server**
+```bash
+ssh root@your-server-ip
+curl -fsSL https://cdn.coollabs.io/coolify/install.sh | bash
+```
+
+**Step 5.2: Access Dashboard**
+- Open `http://your-server-ip:8080`
+- Create admin account
+- Add your server
+
+**Step 5.3: Deploy Azeebo+**
+1. Create new **Docker Compose** resource
+2. Connect GitHub repository
+3. Add environment variables
+4. Click **Deploy**
+
+**Step 5.4: Configure Domain**
+1. Add domain in Coolify settings
+2. Point DNS to your server
+3. SSL is automatic
+
+---
+
 ## Service Discovery
 
 ### All Services and Their Ports
@@ -1144,7 +1197,13 @@ docker-compose exec -T postgres psql -U postgres azeebo_plus_dev < backup.sql
 | Docker Desktop | ✅ Yes | Easy | Local development |
 | Full Docker Compose | ✅ Yes | Medium | Testing production-like |
 | VPS/Cloud | ✅ Yes | Medium | Small deployments |
+| **Coolify** | ✅ Yes | **Easy-Medium** | **Self-hosted PaaS** |
 | Kubernetes | ✅ Yes | Hard | Enterprise/production |
+
+**Recommendation:**
+- **Local Development**: Docker Desktop (Option 1)
+- **Self-Hosted PaaS**: Coolify (Option 5)
+- **Production**: Kubernetes (Option 4)
 
 **Recommended for most users:** Docker Desktop (Option 1)
 

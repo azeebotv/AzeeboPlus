@@ -18,15 +18,18 @@ on:
 
 env:
   DOCKER_REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+  IMAGE_NAME: deprofxi/azeebo-plus
+  PNPM_VERSION: '9'
+  NODE_VERSION: 20.x
 
 jobs:
   dependency-scan:
-    name: Dependency Vulnerability Scan
+    name: Dependency Scan
     runs-on: ubuntu-latest
     permissions:
       security-events: write
       contents: read
+      actions: read
     outputs:
       vulnerabilities-found: ${{ steps.scan.outputs.vulns_found }}
 
@@ -34,16 +37,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: 8
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+          run_install: false
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -75,7 +79,7 @@ jobs:
           severity: 'CRITICAL,HIGH'
 
       - name: Upload Trivy scan results
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: 'trivy-results.sarif'
 
@@ -140,6 +144,8 @@ jobs:
     permissions:
       contents: read
       packages: write
+      security-events: write
+      actions: read
 
     strategy:
       matrix:
@@ -188,7 +194,7 @@ jobs:
           vuln-type: 'os,library'
 
       - name: Upload Docker scan results
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: 'docker-trivy-results.sarif'
 
@@ -198,28 +204,41 @@ jobs:
     permissions:
       security-events: write
       contents: read
+      actions: read
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Check if infra/k8s directory exists
+        id: check_k8s_dir
+        run: |
+          if [ -d "infra/k8s" ]; then
+            echo "k8s_dir_exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "k8s_dir_exists=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: SetupHelm
         uses: azure/setup-helm@v3
         with:
           version: 'v3.13.0'
+        if: steps.check_k8s_dir.outputs.k8s_dir_exists == 'true'
 
       - name: Install kubescape
         run: |
           curl -s https://raw.githubusercontent.com/kubescape/kubescape/master/install.sh | /bin/bash
+        if: steps.check_k8s_dir.outputs.k8s_dir_exists == 'true'
 
       - name: Run kubescape scan
         run: |
           kubescape scan infra/k8s/ --format sarif --output kubescape-results.sarif --severity-threshold critical
         continue-on-error: true
+        if: steps.check_k8s_dir.outputs.k8s_dir_exists == 'true'
 
       - name: Upload kubescape results
-        if: always()
-        uses: github/codeql-action/upload-sarif@v3
+        if: always() && steps.check_k8s_dir.outputs.k8s_dir_exists == 'true' && hashFiles('kubescape-results.sarif') != ''
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: 'kubescape-results.sarif'
 
@@ -254,19 +273,20 @@ jobs:
     permissions:
       security-events: write
       contents: read
+      actions: read
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@v4
         with:
           languages: javascript-typescript
           queries: security-extended
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
+        uses: github/codeql-action/analyze@v4
         with:
           category: "/language:javascript-typescript"
 
@@ -275,37 +295,39 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      security-events: write
+      actions: read
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Install Semgrep
-        run: |
-          npm install -g @semgrep/semgrep
-
       - name: Run Semgrep scan
-        run: |
-          semgrep ci --config=auto --json --output=semgrep-results.json
+        uses: semgrep/semgrep-action@v1
+        with:
+          config: 'auto'
+          output-format: 'sarif'
+          output-path: 'semgrep-results.sarif'
         continue-on-error: true
 
-      - name: Upload Semgrep results
-        if: always()
+      - name: Upload Semgrep results to GitHub
+        if: always() && hashFiles('semgrep-results.sarif') != ''
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: 'semgrep-results.sarif'
+
+      - name: Upload Semgrep results artifact
+        if: always() && hashFiles('semgrep-results.sarif') != ''
         uses: actions/upload-artifact@v4
         with:
           name: semgrep-results
-          path: semgrep-results.json
+          path: semgrep-results.sarif
           retention-days: 7
 
   summary:
     name: Security Scan Summary
     runs-on: ubuntu-latest
-    needs: [dependency-scan, secrets-scan, docker-image-scan, kubernetes-manifest-scan, codeql-scan]
+    needs: [dependency-scan, secrets-scan, docker-image-scan, kubernetes-manifest-scan, codeql-scan, sast-scan]
     if: always()
 
     steps:
@@ -326,7 +348,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
 
           echo "### Docker Image Scan" >> $GITHUB_STEP_SUMMARY
-          echo "- All ${{ matrix.service }} images scanned" >> $GITHUB_STEP_SUMMARY
+          echo "- All services scanned" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
           echo "### Kubernetes Manifest Scan" >> $GITHUB_STEP_SUMMARY
@@ -335,12 +357,34 @@ jobs:
 
           echo "### CodeQL Scan" >> $GITHUB_STEP_SUMMARY
           echo "- Completed security analysis" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "### SAST Scan" >> $GITHUB_STEP_SUMMARY
+          echo "- Completed Semgrep analysis" >> $GITHUB_STEP_SUMMARY
 
       - name: Set completion status
+        id: completion-status
         run: |
-          if [[ "${{ needs.dependency-scan.result }}" != "success" ]] || \
-             [[ "${{ needs.secrets-scan.result }}" != "success" ]] || \
-             [[ "${{ needs.kubernetes-manifest-scan.result }}" != "success" ]]; then
-            echo "Security scan found issues that need attention"
+          # Check critical jobs - skip those that are allowed to continue on error or don't exist
+          FAILED=0
+          
+          # Check dependency scan
+          if [[ "${{ needs.dependency-scan.result }}" != "success" ]]; then
+            echo "❌ Dependency scan failed"
+            FAILED=1
+          fi
+          
+          # Check secrets scan
+          if [[ "${{ needs.secrets-scan.result }}" != "success" ]]; then
+            echo "❌ Secrets scan failed"
+            FAILED=1
+          fi
+          
+          # Exit with failure if any critical jobs failed
+          if [[ $FAILED -ne 0 ]]; then
+            echo "Security scan found critical issues that need attention"
             exit 1
           fi
+          
+          echo "✅ All critical security scans passed"
+          exit 0

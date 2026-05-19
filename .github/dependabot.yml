@@ -47,7 +47,7 @@ updates:
     directory: "/"
     schedule:
       interval: "monthly"
-      day: "first"
+      day: "monday"
     labels:
       - "dependencies"
       - "github-actions"
@@ -58,7 +58,7 @@ updates:
     directory: "/"
     schedule:
       interval: "monthly"
-      day: "second"
+      day: "wednesday"
     labels:
       - "dependencies"
       - "docker"
@@ -69,7 +69,7 @@ updates:
     directory: "infra/terraform"
     schedule:
       interval: "monthly"
-      day: "third"
+      day: "friday"
     labels:
       - "dependencies"
       - "terraform"
