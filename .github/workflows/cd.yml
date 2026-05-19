@@ -48,7 +48,7 @@ jobs:
           echo "$CHANGED_FILES"
           
           SERVICES=""
-          for service in auth-service api-gateway queue-service user-service wallet-service payment-service content-service media-service analytics-service recommendation-service support-service reality-service creator-service movie-service games-service comedy-service sports-service; do
+          for service in analytics-service api-gateway auth-service comedy-service content-service creator-service games-service lifestyle-service media-service moderation-service movie-service notification-service payment-service queue-service reality-service recommendation-service reward-service search-service sports-service support-service user-service vertical-service wallet-service; do
             if echo "$CHANGED_FILES" | grep -q "services/$service"; then
               SERVICES="$SERVICES $service"
             fi
@@ -56,7 +56,7 @@ jobs:
           
           # If no services changed, build all
           if [ -z "$SERVICES" ]; then
-            SERVICES="auth-service api-gateway queue-service user-service wallet-service payment-service content-service media-service analytics-service recommendation-service support-service reality-service creator-service movie-service games-service comedy-service sports-service"
+            SERVICES="analytics-service api-gateway auth-service comedy-service content-service creator-service games-service lifestyle-service media-service moderation-service movie-service notification-service payment-service queue-service reality-service recommendation-service reward-service search-service sports-service support-service user-service vertical-service wallet-service"
           fi
           
           echo "changed_services=$SERVICES" >> $GITHUB_OUTPUT
@@ -110,23 +110,29 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: |
-            ${{ env.REGISTRY }}/${{ env.OWNER }}/auth-service
-            ${{ env.REGISTRY }}/${{ env.OWNER }}/api-gateway
-            ${{ env.REGISTRY }}/${{ env.OWNER }}/queue-service
-            ${{ env.REGISTRY }}/${{ env.OWNER }}/user-service
-            ${{ env.REGISTRY }}/${{ env.OWNER }}/wallet-service
-            ${{ env.REGISTRY }}/${{ env.OWNER }}/payment-service
-            ${{ env.REGISTRY }}/${{ env.OWNER }}/content-service
-            ${{ env.REGISTRY }}/${{ env.OWNER }}/media-service
             ${{ env.REGISTRY }}/${{ env.OWNER }}/analytics-service
-            ${{ env.REGISTRY }}/${{ env.OWNER }}/recommendation-service
-            ${{ env.REGISTRY }}/${{ env.OWNER }}/support-service
-            ${{ env.REGISTRY }}/${{ env.OWNER }}/reality-service
-            ${{ env.REGISTRY }}/${{ env.OWNER }}/creator-service
-            ${{ env.REGISTRY }}/${{ env.OWNER }}/movie-service
-            ${{ env.REGISTRY }}/${{ env.OWNER }}/games-service
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/api-gateway
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/auth-service
             ${{ env.REGISTRY }}/${{ env.OWNER }}/comedy-service
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/content-service
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/creator-service
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/games-service
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/lifestyle-service
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/media-service
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/moderation-service
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/movie-service
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/notification-service
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/payment-service
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/queue-service
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/reality-service
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/recommendation-service
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/reward-service
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/search-service
             ${{ env.REGISTRY }}/${{ env.OWNER }}/sports-service
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/support-service
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/user-service
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/vertical-service
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/wallet-service
           tags: |
             type=ref,event=branch
             type=ref,event=pr
@@ -335,6 +341,39 @@ jobs:
           echo "Testing creator service..."
           curl -sf "${STAGING_URL}/api/v1/creators/health" || { echo "Creator health failed"; exit 1; }
 
+          echo "Testing movie service..."
+          curl -sf "${STAGING_URL}/api/v1/movies/health" || { echo "Movie health failed"; exit 1; }
+
+          echo "Testing games service..."
+          curl -sf "${STAGING_URL}/api/v1/games/health" || { echo "Games health failed"; exit 1; }
+
+          echo "Testing comedy service..."
+          curl -sf "${STAGING_URL}/api/v1/comedy/health" || { echo "Comedy health failed"; exit 1; }
+
+          echo "Testing sports service..."
+          curl -sf "${STAGING_URL}/api/v1/sports/health" || { echo "Sports health failed"; exit 1; }
+
+          echo "Testing lifestyle service..."
+          curl -sf "${STAGING_URL}/api/v1/lifestyle/health" || { echo "Lifestyle health failed"; exit 1; }
+
+          echo "Testing moderation service..."
+          curl -sf "${STAGING_URL}/api/v1/moderation/health" || { echo "Moderation health failed"; exit 1; }
+
+          echo "Testing notification service..."
+          curl -sf "${STAGING_URL}/api/v1/notifications/health" || { echo "Notification health failed"; exit 1; }
+
+          echo "Testing queue service..."
+          curl -sf "${STAGING_URL}/api/v1/queue/health" || { echo "Queue health failed"; exit 1; }
+
+          echo "Testing reward service..."
+          curl -sf "${STAGING_URL}/api/v1/rewards/health" || { echo "Reward health failed"; exit 1; }
+
+          echo "Testing search service..."
+          curl -sf "${STAGING_URL}/api/v1/search/health" || { echo "Search health failed"; exit 1; }
+
+          echo "Testing vertical service..."
+          curl -sf "${STAGING_URL}/api/v1/verticals/health" || { echo "Vertical health failed"; exit 1; }
+
           echo "All smoke tests passed!"
 
       - name: Run integration tests
@@ -438,18 +477,29 @@ jobs:
       - name: Rollback to previous version
         run: |
           echo "Rolling back to previous deployment..."
-          kubectl rollout undo deployment/auth-service -n azeebo
-          kubectl rollout undo deployment/api-gateway -n azeebo
-          kubectl rollout undo deployment/user-service -n azeebo
-          kubectl rollout undo deployment/wallet-service -n azeebo
-          kubectl rollout undo deployment/payment-service -n azeebo
-          kubectl rollout undo deployment/content-service -n azeebo
-          kubectl rollout undo deployment/media-service -n azeebo
           kubectl rollout undo deployment/analytics-service -n azeebo
-          kubectl rollout undo deployment/recommendation-service -n azeebo
-          kubectl rollout undo deployment/support-service -n azeebo
-          kubectl rollout undo deployment/reality-service -n azeebo
+          kubectl rollout undo deployment/api-gateway -n azeebo
+          kubectl rollout undo deployment/auth-service -n azeebo
+          kubectl rollout undo deployment/comedy-service -n azeebo
+          kubectl rollout undo deployment/content-service -n azeebo
           kubectl rollout undo deployment/creator-service -n azeebo
+          kubectl rollout undo deployment/games-service -n azeebo
+          kubectl rollout undo deployment/lifestyle-service -n azeebo
+          kubectl rollout undo deployment/media-service -n azeebo
+          kubectl rollout undo deployment/moderation-service -n azeebo
+          kubectl rollout undo deployment/movie-service -n azeebo
+          kubectl rollout undo deployment/notification-service -n azeebo
+          kubectl rollout undo deployment/payment-service -n azeebo
+          kubectl rollout undo deployment/queue-service -n azeebo
+          kubectl rollout undo deployment/reality-service -n azeebo
+          kubectl rollout undo deployment/recommendation-service -n azeebo
+          kubectl rollout undo deployment/reward-service -n azeebo
+          kubectl rollout undo deployment/search-service -n azeebo
+          kubectl rollout undo deployment/sports-service -n azeebo
+          kubectl rollout undo deployment/support-service -n azeebo
+          kubectl rollout undo deployment/user-service -n azeebo
+          kubectl rollout undo deployment/vertical-service -n azeebo
+          kubectl rollout undo deployment/wallet-service -n azeebo
 
       - name: Wait for rollback completion
         run: |
