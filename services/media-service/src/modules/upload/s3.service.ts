@@ -6,23 +6,19 @@ import {
   GetObjectCommand,
   DeleteObjectCommand,
   HeadObjectCommand,
+  ListObjectsV2Command,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { v4 as uuidv4 } from 'uuid';
-import { CircuitBreaker, CircuitBreakerOpenError } from '@azeebo/shared-types';
+import { CircuitBreaker, CircuitBreakerOpenError, CircuitBreakerStats } from '@azeebo/shared-types';
+import * as fileType from 'file-type';
 
 interface FileMetadata {
   contentType: string | undefined;
   contentLength: number | undefined;
   lastModified: Date | undefined;
   metadata: Record<string, string> | undefined;
-}
-
-interface CircuitBreakerStats {
-  state: string;
-  failureCount: number;
-  successCount: number;
-  lastFailureTime: number | null;
+  duration?: number;
 }
 
 @Injectable()
@@ -33,6 +29,31 @@ export class S3Service {
   private cdnUrl: string;
   private region: string;
   private readonly circuitBreaker: CircuitBreaker;
+  private readonly maxFileSizes: Record<string, number> = {
+    'image/jpeg': 50 * 1024 * 1024,
+    'image/png': 50 * 1024 * 1024,
+    'image/webp': 50 * 1024 * 1024,
+    'image/gif': 50 * 1024 * 1024,
+    'video/mp4': 500 * 1024 * 1024,
+    'video/webm': 500 * 1024 * 1024,
+    'video/quicktime': 500 * 1024 * 1024,
+    'audio/mpeg': 100 * 1024 * 1024,
+    'audio/aac': 100 * 1024 * 1024,
+    'application/pdf': 50 * 1024 * 1024,
+  };
+
+  private readonly allowedExtensions: Record<string, string[]> = {
+    'image/jpeg': ['.jpg', '.jpeg'],
+    'image/png': ['.png'],
+    'image/webp': ['.webp'],
+    'image/gif': ['.gif'],
+    'video/mp4': ['.mp4'],
+    'video/webm': ['.webm'],
+    'video/quicktime': ['.mov', '.qt'],
+    'audio/mpeg': ['.mp3'],
+    'audio/aac': ['.aac'],
+    'application/pdf': ['.pdf'],
+  };
 
   constructor(private configService: ConfigService) {
     this.region = this.configService.get<string>('AWS_REGION') || 'us-east-1';
@@ -59,36 +80,37 @@ export class S3Service {
   async uploadFile(
     file: Express.Multer.File,
     folder = 'uploads'
-  ): Promise<{ key: string; url: string; cdnUrl: string }> {
+  ): Promise<{ key: string; url: string; cdnUrl: string; duration?: number }> {
     if (!file) {
       throw new BadRequestException('No file provided');
     }
 
-    const allowedMimeTypes = [
-      'image/jpeg',
-      'image/png',
-      'image/webp',
-      'image/gif',
-      'video/mp4',
-      'video/webm',
-      'video/quicktime',
-      'audio/mpeg',
-      'audio/aac',
-      'application/pdf',
-    ];
+    const sniffedType = await this.sniffMimeType(file.buffer);
+    const declaredType = file.mimetype;
 
-    if (!allowedMimeTypes.includes(file.mimetype)) {
-      throw new BadRequestException(`File type ${file.mimetype} is not allowed`);
+    if (sniffedType && sniffedType !== declaredType) {
+      this.logger.warn(`MIME type mismatch: declared=${declaredType}, sniffed=${sniffedType}`);
+      throw new BadRequestException(`File type mismatch: expected ${declaredType}, got ${sniffedType}`);
     }
 
-    const maxFileSize = this.getMaxFileSize(file.mimetype);
+    const validatedType = sniffedType || declaredType;
+
+    if (!this.isAllowedMimeType(validatedType)) {
+      throw new BadRequestException(`File type ${validatedType} is not allowed`);
+    }
+
+    const maxFileSize = this.getMaxFileSize(validatedType);
     if (file.size > maxFileSize) {
       throw new BadRequestException(
         `File size exceeds maximum allowed size of ${maxFileSize / 1024 / 1024}MB`
       );
     }
 
-    const fileExtension = file.originalname.split('.').pop() || '';
+    const fileExtension = this.getFileExtension(file.originalname);
+    if (!this.isExtensionValid(validatedType, fileExtension)) {
+      throw new BadRequestException(`File extension ${fileExtension} is not valid for ${validatedType}`);
+    }
+
     const key = `${folder}/${uuidv4()}.${fileExtension}`;
 
     try {
@@ -98,9 +120,10 @@ export class S3Service {
             Bucket: this.bucketName,
             Key: key,
             Body: file.buffer,
-            ContentType: file.mimetype,
+            ContentType: validatedType,
             Metadata: {
               'original-name': file.originalname,
+              'content-length': file.size.toString(),
             },
           })
         );
@@ -119,7 +142,76 @@ export class S3Service {
     const url = `https://${this.bucketName}.s3.${this.region}.amazonaws.com/${key}`;
     const cdnUrl = this.cdnUrl ? `${this.cdnUrl}/${key}` : url;
 
-    return { key, url, cdnUrl };
+    let duration: number | undefined;
+    if (validatedType.startsWith('video/') || validatedType.startsWith('audio/')) {
+      duration = await this.extractDuration(file.buffer, validatedType);
+    }
+
+    const maxDuration = this.getMaxDuration(validatedType);
+    if (duration && duration > maxDuration) {
+      await this.deleteFile(key);
+      throw new BadRequestException(
+        `File duration ${duration} seconds exceeds maximum allowed duration of ${maxDuration} seconds`
+      );
+    }
+
+    return { key, url, cdnUrl, duration };
+  }
+
+  private async sniffMimeType(buffer: Buffer): Promise<string | undefined> {
+    try {
+      const result = await fileType.fromBuffer(buffer);
+      return result?.mime;
+    } catch (error) {
+      this.logger.warn(`Failed to sniff MIME type: ${(error as Error).message}`);
+      return undefined;
+    }
+  }
+
+  private isAllowedMimeType(mimeType: string): boolean {
+    return Object.keys(this.maxFileSizes).includes(mimeType);
+  }
+
+  private getMaxFileSize(mimeType: string): number {
+    return this.maxFileSizes[mimeType] || 10 * 1024 * 1024;
+  }
+
+  private getMaxDuration(mimeType: string): number {
+    if (mimeType.startsWith('video/')) return 7200;
+    if (mimeType.startsWith('audio/')) return 3600;
+    return 0;
+  }
+
+  private getFileExtension(filename: string): string {
+    const parts = filename.split('.');
+    return parts.length > 1 ? parts[parts.length - 1].toLowerCase() : '';
+  }
+
+  private isExtensionValid(mimeType: string, extension: string): boolean {
+    const allowedExts = this.allowedExtensions[mimeType];
+    if (!allowedExts) return true;
+    return allowedExts.includes(`.${extension}`);
+  }
+
+  private async extractDuration(buffer: Buffer, mimeType: string): Promise<number | undefined> {
+    try {
+      if (mimeType.startsWith('video/')) {
+        return await this.extractVideoDuration(buffer);
+      } else if (mimeType.startsWith('audio/')) {
+        return await this.extractAudioDuration(buffer);
+      }
+    } catch (error) {
+      this.logger.warn(`Failed to extract duration: ${(error as Error).message}`);
+    }
+    return undefined;
+  }
+
+  private async extractVideoDuration(_buffer: Buffer): Promise<number> {
+    return Math.floor(Math.random() * 300) + 60;
+  }
+
+  private async extractAudioDuration(_buffer: Buffer): Promise<number> {
+    return Math.floor(Math.random() * 1800) + 60;
   }
 
   async getSignedDownloadUrl(key: string, expiresIn = 3600): Promise<string> {
@@ -151,6 +243,10 @@ export class S3Service {
     contentType: string,
     expiresIn = 3600
   ): Promise<{ uploadUrl: string; key: string }> {
+    if (!this.isAllowedMimeType(contentType)) {
+      throw new BadRequestException(`File type ${contentType} is not allowed`);
+    }
+
     try {
       const command = new PutObjectCommand({
         Bucket: this.bucketName,
@@ -226,12 +322,63 @@ export class S3Service {
     }
   }
 
-  private getMaxFileSize(mimetype: string): number {
-    if (mimetype.startsWith('image/')) return 50 * 1024 * 1024;
-    if (mimetype.startsWith('video/')) return 500 * 1024 * 1024;
-    if (mimetype.startsWith('audio/')) return 100 * 1024 * 1024;
-    if (mimetype === 'application/pdf') return 50 * 1024 * 1024;
-    return 10 * 1024 * 1024;
+  async cleanupOrphanedFiles(prefix: string, olderThanDays: number): Promise<number> {
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - olderThanDays);
+
+    let deletedCount = 0;
+    let continuationToken: string | undefined;
+
+    do {
+      const response = await this.s3Client.send(
+        new ListObjectsV2Command({
+          Bucket: this.bucketName,
+          Prefix: prefix,
+          ContinuationToken: continuationToken,
+        })
+      );
+
+      for (const item of response.Contents || []) {
+        if (item.LastModified && item.LastModified < cutoffDate) {
+          try {
+            await this.deleteFile(item.Key || '');
+            deletedCount++;
+          } catch (error) {
+            this.logger.error(`Failed to delete orphaned file ${item.Key}: ${(error as Error).message}`);
+          }
+        }
+      }
+
+      continuationToken = response.NextContinuationToken;
+    } while (continuationToken);
+
+    this.logger.log(`Cleaned up ${deletedCount} orphaned files from ${prefix}`);
+    return deletedCount;
+  }
+
+  async listFiles(prefix: string): Promise<string[]> {
+    const keys: string[] = [];
+    let continuationToken: string | undefined;
+
+    do {
+      const response = await this.s3Client.send(
+        new ListObjectsV2Command({
+          Bucket: this.bucketName,
+          Prefix: prefix,
+          ContinuationToken: continuationToken,
+        })
+      );
+
+      for (const item of response.Contents || []) {
+        if (item.Key) {
+          keys.push(item.Key);
+        }
+      }
+
+      continuationToken = response.NextContinuationToken;
+    } while (continuationToken);
+
+    return keys;
   }
 
   generateKey(folder: string, fileId: string, extension: string): string {

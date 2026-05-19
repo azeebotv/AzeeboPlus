@@ -39,6 +39,9 @@ model User {
   MissionCompletion         MissionCompletion[]
   RewardRedemption          RewardRedemption[]
   PointsLedger              PointsLedger[]
+  trustScoreHistory         TrustScoreHistory[]
+  reviewerAssignments       ReviewerAssignment[] @relation("ReviewerUser")
+  assignedReviewers         ReviewerAssignment[] @relation("AssignerUser")
 
   @@map("users")
 }
@@ -465,6 +468,7 @@ model ModerationCase {
   user           User     @relation("ModerationCaseSubject", fields: [userId], references: [id], onDelete: Cascade)
   resolvedByUser User?    @relation("ModerationCaseResolver", fields: [resolvedBy], references: [id])
   Appeal         Appeal[]
+  reviewerAssignments ReviewerAssignment[]
 
   @@map("moderation_cases")
 }
@@ -523,4 +527,61 @@ model SafetyAction {
   @@index([moderatorId])
   @@index([type])
   @@index([createdAt])
+}
+
+model TrustScoreHistory {
+  id        String   @id @default(uuid())
+  userId    String
+  oldScore  Int
+  newScore  Int
+  reason    String
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("trust_score_history")
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model AuditEvent {
+  id             String    @id @default(uuid())
+  action         String // create, update, delete, review, resolve, appeal, scan
+  resourceType   String // content, user, report, case, appeal, scan
+  resourceId     String?
+  actorId        String?
+  actorType      String // user, moderator, system, api
+  details        Json?
+  previousState  Json?
+  newState       Json?
+  ipAddress      String?
+  userAgent      String?
+  createdAt      DateTime @default(now())
+
+  @@map("audit_events")
+  @@index([action])
+  @@index([resourceType, resourceId])
+  @@index([actorId])
+  @@index([createdAt])
+}
+
+model ReviewerAssignment {
+  id           String    @id @default(uuid())
+  caseId       String
+  reviewerId   String
+  assignedBy   String?
+  status       String // active, completed, reassigned
+  assignedAt   DateTime @default(now())
+  completedAt  DateTime?
+  createdAt    DateTime @default(now())
+
+  case        ModerationCase @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  reviewer    User           @relation("ReviewerUser", fields: [reviewerId], references: [id])
+  assignedByUser User?       @relation("AssignerUser", fields: [assignedBy], references: [id])
+
+  @@map("reviewer_assignments")
+  @@index([caseId])
+  @@index([reviewerId])
+  @@index([status])
 }

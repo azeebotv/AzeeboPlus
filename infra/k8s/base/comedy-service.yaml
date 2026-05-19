@@ -1,0 +1,125 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: comedy-service
+  namespace: azeebo
+  labels:
+    app: comedy-service
+    tier: backend
+spec:
+  replicas: 2
+  revisionHistoryLimit: 5
+  selector:
+    matchLabels:
+      app: comedy-service
+  template:
+    metadata:
+      labels:
+        app: comedy-service
+        tier: backend
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "3019"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: azeebo-sa
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        runAsNonRoot: true
+      terminationGracePeriodSeconds: 30
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - comedy-service
+                topologyKey: kubernetes.io/hostname
+      containers:
+        - name: comedy-service
+          image: azeebo/comedy-service:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3019
+              protocol: TCP
+              name: http
+          env:
+            - name: NODE_ENV
+              value: production
+            - name: PORT
+              value: "3019"
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: azeebo-secrets
+                  key: database-url
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: azeebo-secrets
+                  key: redis-url
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+              ephemeral-storage: "100Mi"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+              ephemeral-storage: "200Mi"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3019
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 3019
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir:
+            medium: Memory
+            sizeLimit: 50Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: comedy-service
+  namespace: azeebo
+  labels:
+    app: comedy-service
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "3019"
+spec:
+  type: ClusterIP
+  ports:
+    - port: 3019
+      targetPort: 3019
+      protocol: TCP
+      name: http
+  selector:
+    app: comedy-service

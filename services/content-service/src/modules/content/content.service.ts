@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
-import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger, ForbiddenException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
 import { Prisma } from '../../prisma/client';
@@ -9,13 +9,17 @@ import { CreateMediaAssetDto } from './dto/create-media-asset.dto';
 import { UpdateMediaAssetDto } from './dto/update-media-asset.dto';
 import { MediaService } from '../media/media.service';
 import { TranscodingService } from '../media/transcoding.service';
+import { ContentRepository } from './content.repository';
+import axios from 'axios';
 
 @Injectable()
 export class ContentService {
   private readonly logger = new Logger(ContentService.name);
   private readonly moderationServiceUrl: string;
+  private readonly safetyScanEnabled: boolean;
   constructor(
     private readonly prisma: PrismaService,
+    private readonly contentRepository: ContentRepository,
     private readonly mediaService: MediaService,
     private readonly transcodingService: TranscodingService,
     private readonly configService: ConfigService
@@ -24,6 +28,107 @@ export class ContentService {
       'MODERATION_SERVICE_URL',
       'http://localhost:3004'
     );
+    this.safetyScanEnabled = this.configService.get<boolean>(
+      'SAFETY_SCAN_ENABLED',
+      true
+    );
+  }
+
+  private async checkContentSafety(contentId: string): Promise<{ isSafe: boolean; issues: string[]; scanId?: string }> {
+    if (!this.safetyScanEnabled) {
+      this.logger.warn('Safety scanning is disabled, skipping safety check');
+      return { isSafe: true, issues: [] };
+    }
+
+    try {
+      const content = await this.prisma.contentItem.findUnique({
+        where: { id: contentId },
+        include: { mediaAsset: true },
+      });
+
+      if (!content?.mediaAsset?.originalUrl) {
+        this.logger.warn(`No media asset found for content ${contentId}, skipping scan`);
+        return { isSafe: true, issues: [] };
+      }
+
+      const response = await axios.post(`${this.moderationServiceUrl}/api/moderation/scan`, {
+        contentId,
+        mediaUrl: content.mediaAsset.originalUrl,
+        scanTypes: ['malware', 'content_safety'],
+      });
+
+      const result = response.data;
+      
+      if (!result.success) {
+        return { isSafe: false, issues: ['Safety scan failed'], scanId: result.data?.scanId };
+      }
+
+      const scanResult = result.data;
+      
+      if (scanResult.result === 'blocked') {
+        return {
+          isSafe: false,
+          issues: [`Content blocked due to: ${scanResult.threatLevel || 'safety concerns'}`],
+          scanId: scanResult.scanId,
+        };
+      }
+
+      if (scanResult.result === 'flagged') {
+        return {
+          isSafe: false,
+          issues: [`Content flagged: ${scanResult.threatLevel || 'potential issue'}`],
+          scanId: scanResult.scanId,
+        };
+      }
+
+      return { isSafe: true, issues: [], scanId: scanResult.scanId };
+    } catch (error) {
+      this.logger.error(`Safety scan failed for content ${contentId}: ${(error as Error).message}`);
+      throw new BadRequestException('Safety scan failed, please try again later');
+    }
+  }
+
+  async scanContentForSafety(contentId: string): Promise<{ success: boolean; data: { scanId: string; result: string; threatLevel?: string; categories?: string[] } }> {
+    const content = await this.prisma.contentItem.findUnique({
+      where: { id: contentId },
+      include: { mediaAsset: true },
+    });
+
+    if (!content) {
+      throw new NotFoundException('Content not found');
+    }
+
+    if (!content.mediaAsset?.originalUrl) {
+      throw new BadRequestException('Content has no media asset to scan');
+    }
+
+    try {
+      const response = await axios.post(`${this.moderationServiceUrl}/api/moderation/scan`, {
+        contentId,
+        mediaUrl: content.mediaAsset.originalUrl,
+        scanTypes: ['malware', 'content_safety'],
+      });
+
+      return response.data;
+    } catch (error) {
+      this.logger.error(`Safety scan failed for content ${contentId}: ${(error as Error).message}`);
+      throw new BadRequestException('Safety scan failed, please try again later');
+    }
+  }
+
+  async listContent(filters?: { universe?: string }, page?: number, limit?: number) {
+    const result = await this.contentRepository.findAll(filters, page || 1, limit || 20);
+
+    return {
+      success: true,
+      data: result.data,
+      pagination: {
+        page: result.page,
+        limit: result.limit,
+        total: result.total,
+        totalPages: result.totalPages,
+      },
+    };
   }
 
   async getHomeFeed(userId?: string) {
@@ -31,7 +136,7 @@ export class ContentService {
       this.prisma.contentItem.findMany({
         orderBy: { viewCount: 'desc' },
         take: 10,
-        include: { creator: true, universe: true },
+        include: { universe: true },
       }),
       userId
         ? await this.prisma.contentItem.findMany({
@@ -47,13 +152,13 @@ export class ContentService {
             },
             orderBy: { viewCount: 'desc' },
             take: 10,
-            include: { creator: true, universe: true },
+            include: { universe: true },
           })
         : [],
       this.prisma.contentItem.findMany({
         orderBy: { createdAt: 'desc' },
         take: 10,
-        include: { creator: true, universe: true },
+        include: { universe: true },
       }),
     ]);
 
@@ -73,7 +178,7 @@ export class ContentService {
       where: { status: 'published' },
       orderBy: { viewCount: 'desc' },
       take: 50,
-      include: { creator: true, universe: true },
+      include: { universe: true },
     });
 
     return {
@@ -83,16 +188,7 @@ export class ContentService {
   }
 
   async getContent(id: string) {
-    const content = await this.prisma.contentItem.findUnique({
-      where: { id },
-      include: {
-        creator: true,
-        universe: true,
-        mediaAsset: true,
-        categories: true,
-        tags: true,
-      },
-    });
+    const content = await this.contentRepository.findById(id);
 
     if (!content) {
       throw new NotFoundException(`Content not found`);
@@ -111,22 +207,44 @@ export class ContentService {
   }
 
   async searchContent(query: string) {
-    const content = await this.prisma.contentItem.findMany({
-      where: {
-        OR: [
-          { title: { contains: query, mode: 'insensitive' } },
-          { description: { contains: query, mode: 'insensitive' } },
-        ],
-        status: 'published',
-      },
-      orderBy: { viewCount: 'desc' },
-      take: 50,
-      include: { creator: true, universe: true },
-    });
+    const result = await this.contentRepository.search(query);
 
     return {
       success: true,
-      data: content,
+      data: result.data,
+    };
+  }
+
+  async getContentComments(contentId: string, page?: number, limit?: number) {
+    const result = await this.contentRepository.getComments(contentId, page || 1, limit || 20);
+
+    return {
+      success: true,
+      data: result.data,
+      pagination: {
+        page: result.page,
+        limit: result.limit,
+        total: result.total,
+        totalPages: result.totalPages,
+      },
+    };
+  }
+
+  async addCommentToContent(userId: string, contentId: string, text: string) {
+    const comment = await this.contentRepository.addComment(contentId, userId, text);
+
+    return {
+      success: true,
+      data: comment,
+    };
+  }
+
+  async getContentAnalytics(contentId: string) {
+    const analytics = await this.contentRepository.getAnalytics(contentId);
+
+    return {
+      success: true,
+      data: analytics,
     };
   }
 
@@ -135,7 +253,7 @@ export class ContentService {
       where: { status: 'published' },
       orderBy: { viewCount: 'desc' },
       take: 20,
-      include: { creator: true, universe: true },
+      include: { universe: true },
     });
 
     return {
@@ -170,7 +288,7 @@ export class ContentService {
       },
       orderBy: { viewCount: 'desc' },
       take: 20,
-      include: { creator: true, universe: true },
+      include: { universe: true },
     });
 
     return {
@@ -180,13 +298,9 @@ export class ContentService {
   }
 
   async createContent(userId: string, createContentDto: CreateContentDto) {
-    const content = await this.prisma.contentItem.create({
-      data: {
-        ...createContentDto,
-        creatorId: userId,
-        status: 'draft',
-      },
-      include: { creator: true, universe: true },
+    const content = await this.contentRepository.create({
+      ...createContentDto,
+      creatorId: userId,
     });
 
     return {
@@ -196,9 +310,7 @@ export class ContentService {
   }
 
   async updateContent(userId: string, id: string, updateContentDto: UpdateContentDto) {
-    const content = await this.prisma.contentItem.findUnique({
-      where: { id },
-    });
+    const content = await this.contentRepository.findById(id);
 
     if (!content) {
       throw new NotFoundException(`Content not found`);
@@ -208,14 +320,7 @@ export class ContentService {
       throw new BadRequestException('Not authorized to update this content');
     }
 
-    const updatedContent = await this.prisma.contentItem.update({
-      where: { id },
-      data: {
-        ...updateContentDto,
-        updatedAt: new Date(),
-      },
-      include: { creator: true, universe: true },
-    });
+    const updatedContent = await this.contentRepository.update(id, updateContentDto);
 
     return {
       success: true,
@@ -224,9 +329,7 @@ export class ContentService {
   }
 
   async deleteContent(userId: string, id: string) {
-    const content = await this.prisma.contentItem.findUnique({
-      where: { id },
-    });
+    const content = await this.contentRepository.findById(id);
 
     if (!content) {
       throw new NotFoundException(`Content not found`);
@@ -236,10 +339,7 @@ export class ContentService {
       throw new BadRequestException('Not authorized to delete this content');
     }
 
-    await this.prisma.contentItem.update({
-      where: { id },
-      data: { status: 'deleted', updatedAt: new Date() },
-    });
+    await this.contentRepository.delete(id);
     return {
       success: true,
       data: { message: 'Content soft deleted successfully' },
@@ -263,6 +363,16 @@ export class ContentService {
       throw new BadRequestException('Content is already published or pending');
     }
 
+    const safetyResult = await this.checkContentSafety(id);
+    
+    if (!safetyResult.isSafe) {
+      throw new ForbiddenException({
+        message: 'Content failed safety scan',
+        issues: safetyResult.issues,
+        scanId: safetyResult.scanId,
+      });
+    }
+
     const publishedContent = await this.prisma.contentItem.update({
       where: { id },
       data: {
@@ -270,7 +380,7 @@ export class ContentService {
         publishedAt: new Date(),
         updatedAt: new Date(),
       },
-      include: { creator: true, universe: true },
+      include: { universe: true },
     });
 
     return {
@@ -303,7 +413,7 @@ export class ContentService {
         publishedAt: null,
         updatedAt: new Date(),
       },
-      include: { creator: true, universe: true },
+      include: { universe: true },
     });
 
     return {
@@ -894,7 +1004,7 @@ export class ContentService {
           },
         },
       },
-      include: { creator: true, universe: true, categories: true },
+      include: { universe: true, categories: true },
     });
 
     return {
@@ -913,7 +1023,7 @@ export class ContentService {
           },
         },
       },
-      include: { creator: true, universe: true, tags: true },
+      include: { universe: true, tags: true },
     });
 
     return {
@@ -1014,7 +1124,6 @@ export class ContentService {
       include: {
         relatedContent: {
           include: {
-            creator: true,
             universe: true,
           },
         },
@@ -1041,7 +1150,6 @@ export class ContentService {
       include: {
         relatedContent: {
           include: {
-            creator: true,
             universe: true,
             mediaAsset: true,
           },
@@ -1210,7 +1318,7 @@ export class ContentService {
 
     const content = await this.prisma.contentItem.findMany({
       where,
-      include: { creator: true, universe: true },
+      include: { universe: true },
       orderBy: { streamingReleaseDate: 'desc' },
     });
 
@@ -1236,7 +1344,7 @@ export class ContentService {
         isPremiere: true,
         OR: [{ windowEndDate: null }, { windowEndDate: { gt: now } }],
       },
-      include: { creator: true, universe: true },
+      include: { universe: true },
       orderBy: { streamingReleaseDate: 'desc' },
     });
 
@@ -1255,7 +1363,7 @@ export class ContentService {
         isExclusive: true,
         OR: [{ windowEndDate: null }, { windowEndDate: { gt: now } }],
       },
-      include: { creator: true, universe: true },
+      include: { universe: true },
       orderBy: { streamingReleaseDate: 'desc' },
     });
 
@@ -1296,7 +1404,7 @@ export class ContentService {
         ...windowData,
         updatedAt: new Date(),
       },
-      include: { creator: true, universe: true },
+      include: { universe: true },
     });
 
     return {
@@ -1321,7 +1429,7 @@ export class ContentService {
           contentCategory: 'short-form',
         },
       },
-      include: { creator: true, universe: true },
+      include: { universe: true },
     });
 
     return {
@@ -1347,7 +1455,7 @@ export class ContentService {
           contentCategory: 'long-form',
         },
       },
-      include: { creator: true, universe: true },
+      include: { universe: true },
     });
 
     return {
@@ -1385,7 +1493,7 @@ export class ContentService {
           clipEndTime,
         },
       },
-      include: { creator: true, universe: true },
+      include: { universe: true },
     });
 
     return {
@@ -1414,7 +1522,7 @@ export class ContentService {
           seriesId,
         },
       },
-      include: { creator: true, universe: true },
+      include: { universe: true },
     });
 
     return {
@@ -1441,7 +1549,7 @@ export class ContentService {
           contentCategory: 'movie',
         },
       },
-      include: { creator: true, universe: true },
+      include: { universe: true },
     });
 
     return {
@@ -1467,7 +1575,7 @@ export class ContentService {
           gameType: options?.gameType,
         },
       },
-      include: { creator: true, universe: true },
+      include: { universe: true },
     });
 
     return {
@@ -1497,7 +1605,7 @@ export class ContentService {
           highlightType,
         },
       },
-      include: { creator: true, universe: true },
+      include: { universe: true },
     });
 
     return {
@@ -1524,7 +1632,7 @@ export class ContentService {
           uploadedByCreator: true,
         },
       },
-      include: { creator: true, universe: true },
+      include: { universe: true },
     });
 
     return {

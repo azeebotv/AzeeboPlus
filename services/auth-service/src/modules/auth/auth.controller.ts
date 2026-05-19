@@ -6,20 +6,14 @@ import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
+import { ForgotPasswordDto, ResetPasswordDto, VerifyEmailDto, ResendVerificationDto } from './dto/password-reset.dto';
 import { AuthResponse } from './interfaces/auth-response.interface';
 import { RefreshTokenResponse } from './interfaces/refresh-token-response.interface';
 import { RateLimitGuard, RateLimit } from '@azeebo/security';
-
-interface RequestUser {
-  id: string;
-  email: string;
-  displayName: string;
-  avatar: string | null;
-  role: string;
-}
+import { User } from '@azeebo/shared-types';
 
 interface AuthRequest extends Request {
-  user: RequestUser;
+  user: User;
 }
 
 @ApiTags('Auth')
@@ -78,7 +72,51 @@ export class AuthController {
   @ApiResponse({ status: 200, description: 'User profile' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
-  getProfile(@Request() req: AuthRequest): RequestUser {
-    return req.user;
+  async getProfile(@Request() req: AuthRequest) {
+    return this.authService.getProfile(req.user);
+  }
+
+  @Post('forgot-password')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(3, 3600000)
+  @ApiOperation({ summary: 'Request password reset' })
+  @ApiResponse({ status: 200, description: 'Password reset email sent' })
+  @ApiResponse({ status: 400, description: 'Invalid input' })
+  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
+  async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
+    return this.authService.forgotPassword(forgotPasswordDto);
+  }
+
+  @Post('reset-password')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(3, 3600000)
+  @ApiOperation({ summary: 'Reset password with token' })
+  @ApiResponse({ status: 200, description: 'Password reset successful' })
+  @ApiResponse({ status: 400, description: 'Invalid token or password' })
+  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
+  async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
+    return this.authService.resetPassword(resetPasswordDto);
+  }
+
+  @Post('verify-email')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(3, 3600000)
+  @ApiOperation({ summary: 'Verify email address' })
+  @ApiResponse({ status: 200, description: 'Email verified successfully' })
+  @ApiResponse({ status: 400, description: 'Invalid token' })
+  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
+  async verifyEmail(@Body() verifyEmailDto: VerifyEmailDto) {
+    return this.authService.verifyEmail(verifyEmailDto);
+  }
+
+  @Post('resend-verification')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(3, 3600000)
+  @ApiOperation({ summary: 'Resend verification email' })
+  @ApiResponse({ status: 200, description: 'Verification email sent' })
+  @ApiResponse({ status: 400, description: 'Invalid input' })
+  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
+  async resendVerification(@Body() resendVerificationDto: ResendVerificationDto) {
+    return this.authService.resendVerification(resendVerificationDto);
   }
 }

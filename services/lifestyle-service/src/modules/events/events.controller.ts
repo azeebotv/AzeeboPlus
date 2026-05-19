@@ -1,6 +1,9 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, Query } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { AuthGuard } from '@nestjs/passport';
 import { EventsService } from './events.service';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { Roles } from '../../common/decorators/roles.decorator';
 
 interface CreateEventDto {
   title: string;
@@ -38,7 +41,7 @@ interface RsvpDto {
 }
 
 @ApiTags('Events')
-@Controller('events')
+@Controller('v1/lifestyle/events')
 export class EventsController {
   constructor(private readonly eventsService: EventsService) {}
 
@@ -76,6 +79,8 @@ export class EventsController {
   }
 
   @Post()
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('ADMIN', 'MODERATOR')
   @ApiOperation({ summary: 'Create new event' })
   @ApiResponse({ status: 201, description: 'Event created' })
   async createEvent(@Body() data: CreateEventDto): Promise<unknown> {
@@ -83,6 +88,8 @@ export class EventsController {
   }
 
   @Patch(':id')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('ADMIN', 'MODERATOR')
   @ApiOperation({ summary: 'Update event' })
   @ApiResponse({ status: 200, description: 'Event updated' })
   async updateEvent(@Param('id') id: string, @Body() data: UpdateEventDto): Promise<unknown> {
@@ -90,6 +97,8 @@ export class EventsController {
   }
 
   @Delete(':id')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('ADMIN', 'MODERATOR')
   @ApiOperation({ summary: 'Delete event' })
   @ApiResponse({ status: 200, description: 'Event deleted' })
   async deleteEvent(@Param('id') id: string): Promise<unknown> {

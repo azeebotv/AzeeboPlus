@@ -2,8 +2,40 @@ import { Controller, Get, Post, Patch, Delete, Body, Param, Query } from '@nestj
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CelebrityService } from './celebrity.service';
 
+interface CreateCelebrityData {
+  name: string;
+  bio?: string;
+  coverImage?: string;
+  profession?: string;
+  nationality?: string;
+  birthDate?: string;
+  socialLinks?: string;
+  isFeatured?: boolean;
+  createdById: string;
+}
+
+interface CreateNewsData {
+  title: string;
+  content: string;
+  excerpt?: string;
+  coverImage?: string;
+  celebrityId: string;
+}
+
+interface UpdateCelebrityData {
+  name?: string;
+  bio?: string;
+  coverImage?: string;
+  profession?: string;
+  nationality?: string;
+  birthDate?: string;
+  socialLinks?: string;
+  isFeatured?: boolean;
+  status?: string;
+}
+
 @ApiTags('Celebrity')
-@Controller('celebrity')
+@Controller('v1/lifestyle/celebrities')
 export class CelebrityController {
   constructor(private readonly celebrityService: CelebrityService) {}
 
@@ -14,14 +46,15 @@ export class CelebrityController {
     @Query('page') page = 1,
     @Query('limit') limit = 20,
     @Query('profession') profession?: string,
-    @Query('featured') featured?: boolean,
+    @Query('featured') featured?: string,
     @Query('status') status?: string
   ): Promise<unknown> {
+    const featuredBool = featured !== undefined ? featured === 'true' : undefined;
     return this.celebrityService.getEntries(
       Number(page),
       Number(limit),
       profession,
-      featured !== undefined ? featured === 'true' : undefined,
+      featuredBool,
       status
     );
   }
@@ -54,15 +87,15 @@ export class CelebrityController {
   @Post()
   @ApiOperation({ summary: 'Create celebrity entry' })
   @ApiResponse({ status: 201, description: 'Entry created' })
-  async createEntry(@Body() body: Record<string, unknown>): Promise<unknown> {
-    return this.celebrityService.createEntry(body as Record<string, string>);
+  async createEntry(@Body() body: CreateCelebrityData): Promise<unknown> {
+    return this.celebrityService.createEntry(body);
   }
 
   @Post('news')
   @ApiOperation({ summary: 'Create celebrity news' })
   @ApiResponse({ status: 201, description: 'News created' })
-  async createNews(@Body() body: Record<string, unknown>): Promise<unknown> {
-    return this.celebrityService.createNews(body as Record<string, string>);
+  async createNews(@Body() body: CreateNewsData): Promise<unknown> {
+    return this.celebrityService.createNews(body);
   }
 
   @Patch(':id')

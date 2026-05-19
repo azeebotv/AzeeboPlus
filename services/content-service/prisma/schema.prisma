@@ -8,156 +8,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id                    String   @id @default(uuid())
-  email                 String   @unique
-  password              String
-  displayName           String
-  avatar                String?
-  role                  String   @default("user")
-  preferences           Json?
-  notificationPreferences Json?
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
-
-  watchHistory WatchHistory[]
-  savedItems   SavedItem[]
-  wallet       Wallet?
-  notifications Notification[]
-  contentItems ContentItem[]
-  creatorProfile CreatorProfile?
-  paymentIntents PaymentIntent[]
-
-  @@map("users")
-}
-
-model WatchHistory {
-  id          String   @id @default(uuid())
-  userId      String
-  contentId   String
-  contentType String
-  watchedAt   DateTime @default(now())
-  createdAt   DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("watch_history")
-  @@unique([userId, contentId])
-  @@index([userId])
-  @@index([contentId])
-  @@index([contentType])
-  @@index([watchedAt])
-}
-
-model SavedItem {
-  id        String   @id @default(uuid())
-  userId    String
-  contentId String
-  createdAt DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("saved_items")
-  @@unique([userId, contentId])
-  @@index([userId])
-  @@index([contentId])
-  @@index([createdAt])
-}
-
-model Wallet {
-  id           String   @id @default(uuid())
-  userId       String   @unique
-  balance      Decimal   @default(0)
-  bonusBalance Decimal   @default(0)
-  promoBalance Decimal   @default(0)
-  currency     String   @default("NGN")
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  transactions WalletTransaction[]
-
-  @@map("wallets")
-}
-
-model WalletTransaction {
-  id           String   @id @default(uuid())
-  walletId     String
-  type         String   // credit, debit, bonus, promo, refund
-  amount       Decimal  
-  status       String   // pending, completed, failed, reversed
-  description  String?
-  reference    String?
-  metadata     Json?
-  createdAt    DateTime @default(now())
-
-  wallet Wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
-
-  @@map("wallet_transactions")
-  @@index([walletId])
-  @@index([type])
-  @@index([status])
-  @@index([createdAt])
-}
-
-model Notification {
-  id          String   @id @default(uuid())
-  userId      String
-  type        String   // system, payment, reward, content, social
-  title       String
-  message     String
-  metadata    Json?
-  readAt      DateTime?
-  createdAt   DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("notifications")
-  @@index([userId])
-  @@index([type])
-  @@index([readAt])
-  @@index([createdAt])
-}
-
-model PaymentIntent {
-  id                String   @id @default(uuid())
-  userId            String
-  amount            Decimal  
-  currency          String   @default("NGN")
-  status            String   // pending, processing, completed, failed, refunded
-  description       String?
-  providerReference String?
-  metadata          Json?
-  completedAt       DateTime?
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-
-  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  refunds  Refund[]
-
-  @@map("payment_intents")
-  @@index([userId])
-  @@index([providerReference])
-  @@index([status])
-}
-
-model Refund {
-  id                String   @id @default(uuid())
-  paymentIntentId   String
-  amount            Decimal  
-  reason            String
-  status            String   // pending, processing, completed, failed
-  providerReference String?
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-
-  paymentIntent PaymentIntent @relation(fields: [paymentIntentId], references: [id], onDelete: Cascade)
-
-  @@map("refunds")
-  @@index([paymentIntentId])
-  @@index([status])
-}
-
 model Universe {
   id          String   @id @default(uuid())
   name        String   @unique // reality, creator, lifestyle, vertical, movie, games, comedy, sports
@@ -169,6 +19,7 @@ model Universe {
   updatedAt   DateTime @updatedAt
 
   contentItems ContentItem[]
+  passes       Pass[]
 
   @@map("universes")
 }
@@ -223,10 +74,14 @@ model ContentItem {
   isPremiere    Boolean  @default(false)
 
   universe    Universe    @relation(fields: [universeId], references: [id], onDelete: Cascade)
-  creator     User        @relation(fields: [creatorId], references: [id], onDelete: Cascade)
   mediaAsset  MediaAsset?
   categories  Category[]
   tags        Tag[]
+  comments    Comment[]
+  rentals     Rental[]
+  screenings  Screening[]
+  lockedExtras LockedExtra[]
+  watchHistory WatchHistory[]
   relationshipsAsContent ContentRelationship[] @relation("ContentRelationshipContent")
   relationshipsAsRelatedContent ContentRelationship[] @relation("ContentRelationshipRelatedContent")
 
@@ -258,21 +113,6 @@ model MediaAsset {
   @@map("media_assets")
 }
 
-model CreatorProfile {
-  id              String   @id @default(uuid())
-  userId          String   @unique
-  bio             String?
-  banner          String?
-  socialLinks     Json?
-  verified        Boolean  @default(false)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("creator_profiles")
-}
-
 model ContentRelationship {
   id            String   @id @default(uuid())
   contentId     String
@@ -289,4 +129,151 @@ model ContentRelationship {
   @@index([contentId])
   @@index([relatedContentId])
   @@index([type])
+}
+
+model Comment {
+  id           String   @id @default(uuid())
+  contentId    String
+  userId       String
+  text         String
+  parentId     String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  content      ContentItem @relation(fields: [contentId], references: [id], onDelete: Cascade)
+
+  @@map("comments")
+  @@index([contentId])
+  @@index([userId])
+  @@index([parentId])
+}
+
+model Rental {
+  id          String   @id @default(uuid())
+  userId      String
+  contentId   String
+  startTime   DateTime @default(now())
+  endTime     DateTime
+  status      String   @default("active") // active, expired, cancelled
+  price       Decimal
+  currency    String   @default("NGN")
+  transactionId String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  content     ContentItem @relation(fields: [contentId], references: [id], onDelete: Cascade)
+
+  @@map("rentals")
+  @@unique([userId, contentId])
+  @@index([userId])
+  @@index([contentId])
+  @@index([status])
+  @@index([endTime])
+}
+
+model Pass {
+  id          String   @id @default(uuid())
+  userId      String
+  passType    String   // daily, weekly, monthly, yearly
+  universeId  String?
+  status      String   @default("active") // active, expired, cancelled, suspended
+  startTime   DateTime @default(now())
+  endTime     DateTime
+  price       Decimal
+  currency    String   @default("NGN")
+  transactionId String?
+  autoRenew   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  universe    Universe? @relation(fields: [universeId], references: [id], onDelete: SetNull)
+
+  @@map("passes")
+  @@index([userId])
+  @@index([universeId])
+  @@index([status])
+  @@index([endTime])
+}
+
+model Screening {
+  id            String   @id @default(uuid())
+  contentId     String
+  screeningTime DateTime
+  endTime       DateTime
+  location      String?
+  streamUrl     String?
+  status        String   @default("scheduled") // scheduled, live, ended, cancelled
+  maxViewers    Int?
+  currentViewers Int     @default(0)
+  price         Decimal?
+  currency      String   @default("NGN")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  content       ContentItem @relation(fields: [contentId], references: [id], onDelete: Cascade)
+
+  @@map("screenings")
+  @@index([contentId])
+  @@index([screeningTime])
+  @@index([status])
+}
+
+model LockedExtra {
+  id          String   @id @default(uuid())
+  contentId   String
+  extraType   String   // behind_paywall, bonus_content, director_commentary, deleted_scene, extended_version
+  title       String
+  description String?
+  thumbnail   String?
+  mediaUrl    String?
+  price       Decimal?
+  currency    String   @default("NGN")
+  unlockType  String   @default("purchase") // purchase, rental, pass, subscription
+  isUnlocked  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  content     ContentItem @relation(fields: [contentId], references: [id], onDelete: Cascade)
+
+  @@map("locked_extras")
+  @@index([contentId])
+  @@index([extraType])
+}
+
+model UserUnlock {
+  id          String   @id @default(uuid())
+  userId      String
+  unlockType  String   // rental, pass, screening, locked_extra
+  resourceId  String
+  transactionId String?
+  price       Decimal?
+  currency    String   @default("NGN")
+  unlockedAt  DateTime @default(now())
+  expiresAt   DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("user_unlocks")
+  @@unique([userId, unlockType, resourceId])
+  @@index([userId])
+  @@index([unlockType])
+  @@index([resourceId])
+}
+
+model WatchHistory {
+  id          String   @id @default(uuid())
+  userId      String
+  contentId   String
+  progress    Int      @default(0)
+  watchedAt   DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  content     ContentItem @relation(fields: [contentId], references: [id], onDelete: Cascade)
+
+  @@map("watch_history")
+  @@unique([userId, contentId])
+  @@index([userId])
+  @@index([contentId])
+  @@index([watchedAt])
 }

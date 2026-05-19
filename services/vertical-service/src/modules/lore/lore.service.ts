@@ -28,7 +28,7 @@ interface LoreResponse {
   error?: { code: string; message: string };
 }
 
-interface CreateLoreData {
+export interface CreateLoreData {
   title: string;
   category: string;
   content: string;

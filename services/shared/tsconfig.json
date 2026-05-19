@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "baseUrl": "./",
+    "types": ["jest", "node"],
+    "paths": {
+      "@azeebo/*": ["../../packages/*/src"],
+      "@shared/*": ["./*"]
+    }
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
+}

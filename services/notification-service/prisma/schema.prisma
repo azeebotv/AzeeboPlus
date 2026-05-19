@@ -102,6 +102,10 @@ model Notification {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("notifications")
+  @@index([userId])
+  @@index([type])
+  @@index([readAt])
+  @@index([createdAt])
 }
 
 model PaymentIntent {

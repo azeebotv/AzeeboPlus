@@ -41,6 +41,7 @@ model User {
   subscriptionsAsCreator    Subscription[]      @relation("Creator")
   creatorEarnings           CreatorEarning[]
   gameSessions              GameSession[]
+  gamePlaySessions          GamePlaySession[]
   scoreEntries              ScoreEntry[]
   tournamentEntries         TournamentEntry[]
   PaymentIntent             PaymentIntent[]
@@ -628,6 +629,7 @@ model Tournament {
 
   prizes  TournamentPrize[]
   entries TournamentEntry[]
+  matches TournamentMatch[]
 
   @@map("tournaments")
 }
@@ -673,6 +675,7 @@ model Game {
   updatedAt   DateTime @updatedAt
 
   questions GameQuestion[]
+  sessions  GamePlaySession[]
 
   @@index([category])
   @@index([isActive])

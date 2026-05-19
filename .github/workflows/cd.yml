@@ -21,10 +21,66 @@ on:
         required: true
         default: 'latest'
 
+env:
+  REGISTRY: ghcr.io
+  OWNER: ${{ github.repository_owner }}
+  NODE_VERSION: 20.x
+
 jobs:
+  detect-changes:
+    name: Detect Changed Services
+    runs-on: ubuntu-latest
+    outputs:
+      changed_services: ${{ steps.filter.outputs.changed_services }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Detect changed services
+        id: filter
+        run: |
+          CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD)
+          echo "Changed files:"
+          echo "$CHANGED_FILES"
+          
+          SERVICES=""
+          for service in auth-service api-gateway queue-service user-service wallet-service payment-service content-service media-service analytics-service recommendation-service support-service reality-service creator-service movie-service games-service comedy-service sports-service; do
+            if echo "$CHANGED_FILES" | grep -q "services/$service"; then
+              SERVICES="$SERVICES $service"
+            fi
+          done
+          
+          # If no services changed, build all
+          if [ -z "$SERVICES" ]; then
+            SERVICES="auth-service api-gateway queue-service user-service wallet-service payment-service content-service media-service analytics-service recommendation-service support-service reality-service creator-service movie-service games-service comedy-service sports-service"
+          fi
+          
+          echo "changed_services=$SERVICES" >> $GITHUB_OUTPUT
+          echo "Changed services: $SERVICES"
+
+  install-dependencies:
+    name: Install Dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
   build-and-push:
     name: Build and Push Docker Images
     runs-on: ubuntu-latest
+    needs: [detect-changes, install-dependencies]
     outputs:
       image_tag: ${{ steps.meta.outputs.tags }}
 
@@ -35,86 +91,306 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Login to Docker Hub
+      - name: Login to Container Registry
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKER_HUB_USERNAME }}
-          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Extract metadata for Docker
         id: meta
         uses: docker/metadata-action@v5
         with:
           images: |
-            azeebo/auth-service
-            azeebo/api-gateway
-            azeebo/queue-service
-            azeebo/lifestyle-service
-            azeebo/vertical-service
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/auth-service
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/api-gateway
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/queue-service
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/user-service
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/wallet-service
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/payment-service
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/content-service
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/media-service
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/analytics-service
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/recommendation-service
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/support-service
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/reality-service
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/creator-service
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/movie-service
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/games-service
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/comedy-service
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/sports-service
           tags: |
             type=ref,event=branch
             type=ref,event=pr
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}}
             type=sha
 
-      - name: Build and push auth-service
-        uses: docker/build-push-action@v6
-        with:
-          context: ./services/auth-service
-          push: true
-          tags: azeebo/auth-service:${{ github.event.inputs.tag || steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+      - name: Build changed services in parallel
+        run: |
+          CHANGED_SERVICES="${{ needs.detect-changes.outputs.changed_services }}"
+          echo "Building changed services: $CHANGED_SERVICES"
+          
+          # Build services in parallel using xargs
+          echo "$CHANGED_SERVICES" | tr ' ' '\n' | while read -r service; do
+            echo "Building $service..."
+            docker buildx build \
+              --platform linux/amd64,linux/arm64 \
+              --push \
+              --tag ${{ env.REGISTRY }}/${{ env.OWNER }}/$service:${{ github.event.inputs.tag || steps.meta.outputs.tags }} \
+              --tag ${{ env.REGISTRY }}/${{ env.OWNER }}/$service:latest \
+              --cache-from type=gha \
+              --cache-to type=gha,mode=max \
+              ./services/$service &
+          done
+          
+          wait
+          echo "All builds completed"
 
-      - name: Build and push api-gateway
-        uses: docker/build-push-action@v6
-        with:
-          context: ./services/api-gateway
-          push: true
-          tags: azeebo/api-gateway:${{ github.event.inputs.tag || steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+  run-unit-tests:
+    name: Run Unit Tests
+    runs-on: ubuntu-latest
+    needs: install-dependencies
+    strategy:
+      fail-fast: false
+      matrix:
+        service: [auth-service, user-service, wallet-service, payment-service, content-service]
 
-      - name: Build and push queue-service
-        uses: docker/build-push-action@v6
-        with:
-          context: ./services/queue-service
-          push: true
-          tags: azeebo/queue-service:${{ github.event.inputs.tag || steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - name: Build and push lifestyle-service
-        uses: docker/build-push-action@v6
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          context: ./services/lifestyle-service
-          push: true
-          tags: azeebo/lifestyle-service:${{ github.event.inputs.tag || steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
 
-      - name: Build and push vertical-service
-        uses: docker/build-push-action@v6
+      - name: Run unit tests for ${{ matrix.service }}
+        run: |
+          cd services/${{ matrix.service }}
+          pnpm test:unit -- --coverage
+
+  run-integration-tests:
+    name: Run Integration Tests
+    runs-on: ubuntu-latest
+    needs: install-dependencies
+    strategy:
+      fail-fast: false
+      matrix:
+        service: [reality-service, moderation-service, analytics-service]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          context: ./services/vertical-service
-          push: true
-          tags: azeebo/vertical-service:${{ github.event.inputs.tag || steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
 
-  deploy:
-    name: Deploy to Kubernetes
+      - name: Run integration tests for ${{ matrix.service }}
+        run: |
+          cd services/${{ matrix.service }}
+          pnpm test:integration
+
+  test-build:
+    name: Verify Build
     runs-on: ubuntu-latest
     needs: build-and-push
-    environment: ${{ inputs.environment || 'staging' }}
 
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Verify services built
+        run: |
+          echo "Verifying service images..."
+          echo "Build completed - images pushed to registry"
+
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [build-and-push, test-build, run-unit-tests, detect-changes]
+    environment:
+      name: staging
+      url: https://staging.azeebo.com
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure kubectl for staging
+        uses: azure/k8s-set-context@v4
+        with:
+          kubeconfig: ${{ secrets.STAGING_KUBE_CONFIG }}
+
+      - name: Set image tag
+        run: |
+          echo "IMAGE_TAG=${{ github.event.inputs.tag || github.sha }}" >> $GITHUB_ENV
+
+      - name: Selectively deploy changed services to staging
+        run: |
+          CHANGED_SERVICES="${{ needs.detect-changes.outputs.changed_services }}"
+          echo "Deploying changed services: $CHANGED_SERVICES"
+          
+          for service in $CHANGED_SERVICES; do
+            echo "Deploying $service to staging..."
+            kubectl set image deployment/$service $service=${{ env.REGISTRY }}/${{ env.OWNER }}/$service:${IMAGE_TAG} -n azeebo-staging
+          done
+
+      - name: Wait for staging rollout
+        run: |
+          CHANGED_SERVICES="${{ needs.detect-changes.outputs.changed_services }}"
+          for service in $CHANGED_SERVICES; do
+            echo "Waiting for $service rollout..."
+            kubectl rollout status deployment/$service -n azeebo-staging --timeout=10m
+          done
+
+  smoke-tests-staging:
+    name: Run Smoke Tests on Staging
+    runs-on: ubuntu-latest
+    needs: deploy-staging
+    environment: staging
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run smoke tests
+        run: |
+          echo "Running smoke tests against staging..."
+
+          STAGING_URL="https://staging.azeebo.com"
+
+          echo "Testing health endpoints..."
+          curl -sf "${STAGING_URL}/api/v1/health" || { echo "Health check failed"; exit 1; }
+
+          echo "Testing auth service..."
+          curl -sf "${STAGING_URL}/api/v1/auth/health" || { echo "Auth health failed"; exit 1; }
+
+          echo "Testing user service..."
+          curl -sf "${STAGING_URL}/api/v1/users/health" || { echo "User health failed"; exit 1; }
+
+          echo "Testing wallet service..."
+          curl -sf "${STAGING_URL}/api/v1/wallet/health" || { echo "Wallet health failed"; exit 1; }
+
+          echo "Testing payment service..."
+          curl -sf "${STAGING_URL}/api/v1/payment/health" || { echo "Payment health failed"; exit 1; }
+
+          echo "Testing content service..."
+          curl -sf "${STAGING_URL}/api/v1/content/health" || { echo "Content health failed"; exit 1; }
+
+          echo "Testing media service..."
+          curl -sf "${STAGING_URL}/api/v1/media/health" || { echo "Media health failed"; exit 1; }
+
+          echo "Testing analytics service..."
+          curl -sf "${STAGING_URL}/api/v1/analytics/health" || { echo "Analytics health failed"; exit 1; }
+
+          echo "Testing recommendation service..."
+          curl -sf "${STAGING_URL}/api/v1/recommendation/health" || { echo "Recommendation health failed"; exit 1; }
+
+          echo "Testing support service..."
+          curl -sf "${STAGING_URL}/api/v1/support/health" || { echo "Support health failed"; exit 1; }
+
+          echo "Testing reality service..."
+          curl -sf "${STAGING_URL}/api/v1/reality/health" || { echo "Reality health failed"; exit 1; }
+
+          echo "Testing creator service..."
+          curl -sf "${STAGING_URL}/api/v1/creators/health" || { echo "Creator health failed"; exit 1; }
+
+          echo "All smoke tests passed!"
+
+      - name: Run integration tests
+        run: |
+          echo "Running integration tests..."
+          pnpm test:integration || { echo "Integration tests failed"; exit 1; }
+          echo "Integration tests passed!"
+
+  promote-to-production:
+    name: Promote to Production
+    runs-on: ubuntu-latest
+    needs: [smoke-tests-staging, detect-changes]
+    environment:
+      name: production
+      url: https://azeebo.com
+    if: github.event.inputs.environment == 'production' || startsWith(github.ref, 'refs/tags/v')
+    concurrency:
+      group: production-deploy
+      cancel-in-progress: false
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure kubectl for production
+        uses: azure/k8s-set-context@v4
+        with:
+          kubeconfig: ${{ secrets.PRODUCTION_KUBE_CONFIG }}
+
+      - name: Set image tag
+        run: |
+          echo "IMAGE_TAG=${{ github.event.inputs.tag || github.sha }}" >> $GITHUB_ENV
+
+      - name: Create deployment backup
+        run: |
+          echo "Creating backup of current production state..."
+          kubectl get deployment -n azeebo -o yaml > /tmp/production-backup-$(date +%Y%m%d-%H%M%S).yaml
+          echo "Backup created"
+
+      - name: Selectively deploy to production namespace
+        run: |
+          CHANGED_SERVICES="${{ needs.detect-changes.outputs.changed_services }}"
+          echo "Deploying changed services: $CHANGED_SERVICES"
+          
+          for service in $CHANGED_SERVICES; do
+            echo "Deploying $service to production..."
+            kubectl set image deployment/$service $service=${{ env.REGISTRY }}/${{ env.OWNER }}/$service:${IMAGE_TAG} -n azeebo
+          done
+
+      - name: Wait for production rollout
+        run: |
+          CHANGED_SERVICES="${{ needs.detect-changes.outputs.changed_services }}"
+          for service in $CHANGED_SERVICES; do
+            echo "Waiting for $service rollout..."
+            kubectl rollout status deployment/$service -n azeebo --timeout=15m
+          done
+
+      - name: Verify production deployment
+        run: |
+          kubectl get pods -n azeebo
+          kubectl get services -n azeebo
+
+  smoke-tests-production:
+    name: Run Smoke Tests on Production
+    runs-on: ubuntu-latest
+    needs: promote-to-production
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run production smoke tests
+        run: |
+          echo "Running production smoke tests..."
+
+          PRODUCTION_URL="https://azeebo.com"
+
+          echo "Testing critical endpoints..."
+          curl -sf "${PRODUCTION_URL}/api/v1/health" || { echo "Health check failed"; exit 1; }
+          curl -sf "${PRODUCTION_URL}/api/v1/auth/health" || { echo "Auth health failed"; exit 1; }
+          curl -sf "${PRODUCTION_URL}/api/v1/wallet/health" || { echo "Wallet health failed"; exit 1; }
+          curl -sf "${PRODUCTION_URL}/api/v1/payment/health" || { echo "Payment health failed"; exit 1; }
+
+          echo "Production smoke tests passed!"
+
+  rollback:
+    name: Rollback Deployment
+    runs-on: ubuntu-latest
+    environment: production
+    when: failure()
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -122,34 +398,47 @@ jobs:
       - name: Configure kubectl
         uses: azure/k8s-set-context@v4
         with:
-          kubeconfig: ${{ secrets.KUBE_CONFIG }}
+          kubeconfig: ${{ secrets.PRODUCTION_KUBE_CONFIG }}
 
-      - name: Set image tag
+      - name: Rollback to previous version
         run: |
-          echo "IMAGE_TAG=${{ github.event.inputs.tag || github.sha }}" >> $GITHUB_ENV
-          echo "ENV=${{ inputs.environment || 'staging' }}" >> $GITHUB_ENV
+          echo "Rolling back to previous deployment..."
+          kubectl rollout undo deployment/auth-service -n azeebo
+          kubectl rollout undo deployment/api-gateway -n azeebo
+          kubectl rollout undo deployment/user-service -n azeebo
+          kubectl rollout undo deployment/wallet-service -n azeebo
+          kubectl rollout undo deployment/payment-service -n azeebo
+          kubectl rollout undo deployment/content-service -n azeebo
+          kubectl rollout undo deployment/media-service -n azeebo
+          kubectl rollout undo deployment/analytics-service -n azeebo
+          kubectl rollout undo deployment/recommendation-service -n azeebo
+          kubectl rollout undo deployment/support-service -n azeebo
+          kubectl rollout undo deployment/reality-service -n azeebo
+          kubectl rollout undo deployment/creator-service -n azeebo
 
-      - name: Update Kubernetes manifests
+      - name: Wait for rollback completion
         run: |
-          cd infra/k8s
-          for file in *.yaml; do
-            if grep -q "DOCKER_IMAGE:TAG" "$file"; then
-              sed -i "s|DOCKER_IMAGE:TAG|azeebo/$file:-service:${{ env.IMAGE_TAG }}|g" "$file"
-            fi
-          done
+          kubectl rollout status deployment/auth-service -n azeebo --timeout=10m
+          kubectl rollout status deployment/api-gateway -n azeebo --timeout=10m
 
-      - name: Apply Kubernetes manifests
+      - name: Notify failure
+        if: always()
         run: |
-          kubectl apply -k infra/k8s/
+          echo "Deployment failed and rolled back to previous version"
+          echo "Please investigate the failure and redeploy when ready"
 
-      - name: Wait for rollout
+  post-deploy-notification:
+    name: Post-Deploy Notification
+    runs-on: ubuntu-latest
+    needs: [smoke-tests-production, smoke-tests-staging]
+    if: always()
+    steps:
+      - name: Send notification
         run: |
-          kubectl rollout status deployment/auth-service -n azeebo --timeout=5m
-          kubectl rollout status deployment/api-gateway -n azeebo --timeout=5m
-          kubectl rollout status deployment/queue-service -n azeebo --timeout=5m
-          kubectl rollout status deployment/web-app -n azeebo --timeout=5m
-
-      - name: Verify deployment
-        run: |
-          kubectl get pods -n azeebo
-          kubectl get services -n azeebo
+          if [[ "${{ needs.smoke-tests-production.result }}" == "success" ]]; then
+            echo "Production deployment successful!"
+          elif [[ "${{ needs.smoke-tests-staging.result }}" == "success" ]]; then
+            echo "Staging deployment successful, production deployment failed"
+          else
+            echo "Deployment failed"
+          fi

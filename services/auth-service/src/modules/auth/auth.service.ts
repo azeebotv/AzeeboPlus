@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ConflictException, BadRequestException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { randomUUID } from 'crypto';
@@ -7,6 +7,7 @@ import { AuthRepository } from './auth.repository';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
+import { ForgotPasswordDto, ResetPasswordDto, VerifyEmailDto, ResendVerificationDto } from './dto/password-reset.dto';
 import { AuthResponse } from './interfaces/auth-response.interface';
 import { RefreshTokenResponse } from './interfaces/refresh-token-response.interface';
 import { UserEntity } from './interfaces/auth-entity.interface';
@@ -188,8 +189,79 @@ export class AuthService {
     }
   }
 
-  getProfile(user: User): User {
-    return user;
+  getProfile(user: User) {
+    return createSuccessResponse(this.mapToUser(user as UserEntity));
+  }
+
+  async forgotPassword(forgotPasswordDto: ForgotPasswordDto): Promise<{ success: boolean; message: string }> {
+    const user = await this.authRepository.findByEmail(forgotPasswordDto.email);
+    if (!user) {
+      return { success: true, message: 'If the email exists, a reset link has been sent' };
+    }
+
+    const resetToken = randomUUID();
+    const resetTokenKey = `password_reset:${resetToken}`;
+    await this.redisService.set(resetTokenKey, user.id, 3600);
+
+    return { success: true, message: 'If the email exists, a reset link has been sent' };
+  }
+
+  async resetPassword(resetPasswordDto: ResetPasswordDto): Promise<{ success: boolean; message: string }> {
+    const resetTokenKey = `password_reset:${resetPasswordDto.token}`;
+    const userId = await this.redisService.get(resetTokenKey);
+
+    if (!userId) {
+      throw new BadRequestException('Invalid or expired reset token');
+    }
+
+    const user = await this.authRepository.findById(userId);
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
+
+    const hashedPassword = await bcrypt.hash(resetPasswordDto.newPassword, this.saltRounds);
+    await this.authRepository.updatePassword(userId, hashedPassword);
+
+    await this.redisService.del(resetTokenKey);
+    await this.authRepository.deleteSessionByUserId(userId);
+
+    return { success: true, message: 'Password reset successfully' };
+  }
+
+  async verifyEmail(verifyEmailDto: VerifyEmailDto): Promise<{ success: boolean; message: string }> {
+    const verificationTokenKey = `email_verification:${verifyEmailDto.token}`;
+    const userId = await this.redisService.get(verificationTokenKey);
+
+    if (!userId) {
+      throw new BadRequestException('Invalid or expired verification token');
+    }
+
+    const user = await this.authRepository.findById(userId);
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
+
+    await this.authRepository.verifyEmail(userId);
+    await this.redisService.del(verificationTokenKey);
+
+    return { success: true, message: 'Email verified successfully' };
+  }
+
+  async resendVerification(resendVerificationDto: ResendVerificationDto): Promise<{ success: boolean; message: string }> {
+    const user = await this.authRepository.findByEmail(resendVerificationDto.email);
+    if (!user) {
+      return { success: true, message: 'If the email exists, a verification link has been sent' };
+    }
+
+    if (user.isVerified) {
+      return { success: true, message: 'Email is already verified' };
+    }
+
+    const verificationToken = randomUUID();
+    const verificationTokenKey = `email_verification:${verificationToken}`;
+    await this.redisService.set(verificationTokenKey, user.id, 86400);
+
+    return { success: true, message: 'If the email exists, a verification link has been sent' };
   }
 
   private async generateTokens(user: UserEntity): Promise<{

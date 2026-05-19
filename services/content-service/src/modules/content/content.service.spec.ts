@@ -3,7 +3,9 @@ import { ContentService } from './content.service';
 import { PrismaService } from '../database/prisma.service';
 import { MediaService } from '../media/media.service';
 import { TranscodingService } from '../media/transcoding.service';
+import { ContentRepository } from './content.repository';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 
 describe('ContentService', () => {
   let service: ContentService;
@@ -55,8 +57,32 @@ describe('ContentService', () => {
     transcode: jest.fn(),
   };
 
+  const mockContentRepository = {
+    findTrending: jest.fn(),
+    findRecommended: jest.fn(),
+    findLatest: jest.fn(),
+    findByCategory: jest.fn(),
+    getAnalytics: jest.fn(),
+  };
+
+  const mockConfigService = {
+    get: jest.fn((key: string, defaultValue?: any) => {
+      switch (key) {
+        case 'MODERATION_SERVICE_URL':
+          return 'http://localhost:3004';
+        case 'SAFETY_SCAN_ENABLED':
+          return false;
+        case 'CONTENT_CACHE_TTL':
+          return 300;
+        default:
+          return defaultValue;
+      }
+    }),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
+      imports: [ConfigModule.forRoot()],
       providers: [
         ContentService,
         {
@@ -71,6 +97,14 @@ describe('ContentService', () => {
           provide: TranscodingService,
           useValue: mockTranscodingService,
         },
+        {
+          provide: ContentRepository,
+          useValue: mockContentRepository,
+        },
+        {
+          provide: ConfigService,
+          useValue: mockConfigService,
+        },
       ],
     }).compile();
 
@@ -79,6 +113,10 @@ describe('ContentService', () => {
     mediaService = module.get<MediaService>(MediaService);
 
     jest.clearAllMocks();
+  });
+
+  afterAll(async () => {
+    jest.clearAllTimers();
   });
 
   it('should be defined', () => {
@@ -426,12 +464,12 @@ describe('ContentService', () => {
       const categoryId = 'cat-1';
 
       mockPrismaService.category.findUnique.mockResolvedValue({ id: categoryId });
-      mockPrismaService.category.update.mockResolvedValue({ id: categoryId, status: 'deleted' });
+      mockPrismaService.category.delete.mockResolvedValue({ id: categoryId, status: 'deleted' });
 
       const result = await service.deleteCategory(categoryId);
 
       expect(result.success).toBe(true);
-      expect(result.data.message).toBe('Category soft deleted successfully');
+      expect(result.data.message).toBe('Category deleted successfully');
     });
   });
 
@@ -485,6 +523,35 @@ describe('ContentService', () => {
 
       expect(result.success).toBe(true);
       expect(result.data.message).toBe('Tag soft deleted successfully');
+    });
+  });
+
+  describe('getContentAnalytics', () => {
+    it('should return content analytics', async () => {
+      const contentId = 'content-1';
+      const mockAnalytics = {
+        contentId,
+        viewCount: 1000,
+        likeCount: 50,
+        commentCount: 10,
+        shareCount: 5,
+        watchTime: 3600,
+        averageWatchDuration: 180,
+      };
+
+      mockPrismaService.contentItem.findUnique.mockResolvedValue({ id: contentId });
+      mockContentRepository.getAnalytics.mockResolvedValue(mockAnalytics);
+
+      const result = await service.getContentAnalytics(contentId);
+
+      expect(result.success).toBe(true);
+      expect(result.data).toEqual(mockAnalytics);
+    });
+
+    it('should throw NotFoundException if content not found', async () => {
+      mockPrismaService.contentItem.findUnique.mockResolvedValue(null);
+
+      await expect(service.getContentAnalytics('nonexistent')).rejects.toThrow(NotFoundException);
     });
   });
 });

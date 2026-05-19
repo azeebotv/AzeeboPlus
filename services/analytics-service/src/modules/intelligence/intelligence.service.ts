@@ -71,7 +71,7 @@ export class IntelligenceService {
       data: {
         name,
         segmentType,
-        criteria: criteria as Record<string, string | number | boolean | null>,
+        criteria: JSON.stringify(criteria),
         size: users.length,
       },
     });
@@ -80,52 +80,24 @@ export class IntelligenceService {
   }
 
   async getCreatorScores(universe?: string): Promise<{ success: boolean; data?: unknown }> {
-    const where = universe
-      ? { creator: { contentItems: { some: { universe: { name: universe } } } } }
-      : {};
-
     const scores = await this.prisma.creatorScore.findMany({
-      where,
       orderBy: { overallScore: 'desc' },
       take: 100,
     });
 
-    const enrichedScores = await Promise.all(
-      scores.map(async (score) => {
-        const creator = await this.prisma.creatorProfile.findUnique({
-          where: { id: score.creatorId },
-          include: { user: { select: { displayName: true, avatar: true } } },
-        });
-        return {
-          ...score,
-          creatorName: creator?.user.displayName,
-          creatorAvatar: creator?.user.avatar,
-        };
-      })
-    );
-
-    return { success: true, data: enrichedScores };
+    return { success: true, data: scores };
   }
 
   async calculateCreatorScore(creatorId: string): Promise<{ success: boolean; data?: unknown }> {
-    const [contentItems, subscribers, earnings] = await Promise.all([
-      this.prisma.contentItem.findMany({
-        where: { creatorId },
-      }),
-      this.prisma.subscription.count({
-        where: { creatorId },
-      }),
-      this.prisma.creatorEarning.aggregate({
-        where: { creatorId },
-        _sum: { amount: true },
-      }),
-    ]);
+    const contentItems = await this.prisma.contentItem.findMany({
+      where: { creatorId },
+    });
 
-    const totalViews = contentItems.reduce((sum, c) => sum + c.viewCount, 0);
-    const engagementScore = Math.min(100, (totalViews / 1000) * 10 + subscribers * 2);
-    const growthScore = Math.min(100, contentItems.length * 5 + subscribers * 3);
-    const monetizationScore = Math.min(100, Number(earnings._sum.amount || 0) / 1000);
-    const overallScore = engagementScore * 0.4 + growthScore * 0.3 + monetizationScore * 0.3;
+    const totalViews = contentItems.reduce((sum: number, c: { viewCount: number }) => sum + c.viewCount, 0);
+    const engagementScore = Math.min(100, totalViews / 10);
+    const growthScore = Math.min(100, contentItems.length * 5);
+    const monetizationScore = 0;
+    const overallScore = engagementScore * 0.5 + growthScore * 0.3 + monetizationScore * 0.2;
 
     const score = await this.prisma.creatorScore.upsert({
       where: { creatorId },
@@ -223,14 +195,14 @@ export class IntelligenceService {
         userId,
         riskLevel,
         churnProbability: riskScore,
-        factors: factors as Record<string, string | number | boolean | null>,
+        factors: JSON.stringify(factors),
         lastActivityAt: lastActivity || null,
         predictedChurnAt,
       },
       update: {
         riskLevel,
         churnProbability: riskScore,
-        factors: factors as Record<string, string | number | boolean | null>,
+        factors: JSON.stringify(factors),
         lastActivityAt: lastActivity || null,
         predictedChurnAt,
       },
@@ -261,7 +233,7 @@ export class IntelligenceService {
         userId,
         eventType,
         severity,
-        details: details as Record<string, string | number | boolean | null>,
+        details: JSON.stringify(details),
       },
     });
 
@@ -312,6 +284,217 @@ export class IntelligenceService {
         activeUsers: activeUsers.length,
         retentionRate: totalUsers > 0 ? (activeUsers.length / totalUsers) * 100 : 0,
         retentionByWeek,
+      },
+    };
+  }
+
+  async getCrossUniverseRecommendations(userId: string): Promise<{ success: boolean; data?: unknown }> {
+    const [watchHistory, rewardAccount] = await Promise.all([
+      this.prisma.watchHistory.findMany({
+        where: { userId },
+        orderBy: { watchedAt: 'desc' },
+        take: 50,
+      }),
+      this.prisma.rewardAccount.findUnique({ where: { userId } }),
+    ]);
+
+    const contentIds = watchHistory.map(w => w.contentId);
+
+    const watchedContent = await this.prisma.contentItem.findMany({
+      where: { id: { in: contentIds } },
+      include: { universe: true },
+    });
+
+    const contentById = new Map(watchedContent.map(c => [c.id, c]));
+
+    const universePreferences: Record<string, number> = {};
+    for (const history of watchHistory) {
+      const content = contentById.get(history.contentId);
+      if (content?.universe?.name) {
+        universePreferences[content.universe.name] = (universePreferences[content.universe.name] || 0) + 1;
+      }
+    }
+
+    const topUniverses = Object.entries(universePreferences)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(([name]) => name);
+
+    const allUniverses = ['reality', 'creator', 'lifestyle', 'games', 'comedy', 'sports', 'movie', 'vertical'];
+    const unexploredUniverses = allUniverses.filter(u => !topUniverses.includes(u));
+
+    const recommendedContent: Record<string, unknown[]> = {};
+
+    for (const universe of unexploredUniverses.slice(0, 3)) {
+      const content = await this.prisma.contentItem.findMany({
+        where: { universe: { name: universe } },
+        orderBy: { viewCount: 'desc' },
+        take: 5,
+        include: { universe: true },
+      });
+      if (content.length > 0) {
+        recommendedContent[universe] = content.map(c => ({
+          id: c.id,
+          title: c.title,
+          universe: c.universe?.displayName,
+          viewCount: c.viewCount,
+        }));
+      }
+    }
+
+    return {
+      success: true,
+      data: {
+        userId,
+        primaryUniverses: topUniverses,
+        recommendedContent,
+        engagementLevel: rewardAccount ? 'active' : 'new',
+        recommendationReason: 'Based on your viewing patterns, you might enjoy these universes',
+      },
+    };
+  }
+
+  async analyzeFraudPatterns(): Promise<{ success: boolean; data?: unknown }> {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const rapidVoteEvents = await this.prisma.productEvent.findMany({
+      where: {
+        eventName: { in: ['vote_submitted', 'supervote_submitted'] },
+        timestamp: { gte: thirtyDaysAgo },
+      },
+      select: { userId: true, sessionId: true },
+    });
+
+    const voteByUserSession = new Map<string, number>();
+    for (const event of rapidVoteEvents) {
+      if (event.userId && event.sessionId) {
+        const key = `${event.userId}-${event.sessionId}`;
+        voteByUserSession.set(key, (voteByUserSession.get(key) || 0) + 1);
+      }
+    }
+    const rapidVotes = Array.from(voteByUserSession.values()).filter(count => count > 20).length;
+
+    const rapidPredictionEvents = await this.prisma.productEvent.count({
+      where: {
+        eventName: 'prediction_placed',
+        timestamp: { gte: thirtyDaysAgo },
+      },
+    });
+
+    const failedPaymentCount = await this.prisma.paymentIntent.count({
+      where: {
+        status: 'failed',
+        createdAt: { gte: thirtyDaysAgo },
+      },
+    });
+
+    const suspiciousSessionCount = await this.prisma.productEvent.groupBy({
+      by: ['sessionId'],
+      where: { timestamp: { gte: thirtyDaysAgo } },
+      _count: true,
+    }).then(results => results.filter(r => r._count > 500).length);
+
+    const patterns = [];
+
+    if (rapidVotes > 0) {
+      patterns.push({
+        type: 'rapid_voting',
+        severity: 'high',
+        description: 'Users submitting unusually high number of votes in short sessions',
+        affectedCount: rapidVotes,
+      });
+    }
+
+    if (rapidPredictionEvents > 50) {
+      patterns.push({
+        type: 'rapid_predictions',
+        severity: 'high',
+        description: 'Users placing unusually high number of predictions',
+        affectedCount: rapidPredictionEvents,
+      });
+    }
+
+    if (failedPaymentCount > 3) {
+      patterns.push({
+        type: 'payment_abuse',
+        severity: 'critical',
+        description: 'Users with multiple failed payment attempts',
+        affectedCount: failedPaymentCount,
+      });
+    }
+
+    if (suspiciousSessionCount > 0) {
+      patterns.push({
+        type: 'session_manipulation',
+        severity: 'medium',
+        description: 'Sessions with unusually high event counts',
+        affectedCount: suspiciousSessionCount,
+      });
+    }
+
+    return {
+      success: true,
+      data: {
+        analyzedPeriod: '30 days',
+        patternsDetected: patterns.length,
+        patterns,
+        requiresReview: patterns.filter(p => p.severity === 'critical' || p.severity === 'high').length,
+      },
+    };
+  }
+
+  async getSegmentationInsights(): Promise<{ success: boolean; data?: unknown }> {
+    const [userCount, activeUsers, contentInteractions] = await Promise.all([
+      this.prisma.user.count(),
+      this.prisma.productEvent.groupBy({
+        by: ['userId'],
+        where: { timestamp: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } },
+      }),
+      this.prisma.productEvent.groupBy({
+        by: ['eventName'],
+        where: { timestamp: { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } },
+        _count: true,
+      }),
+    ]);
+
+    const userEngagementScores = await this.prisma.productEvent.groupBy({
+      by: ['userId'],
+      where: { timestamp: { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } },
+      _count: true,
+    });
+
+    const totalInteractions = userEngagementScores.reduce((sum, u) => sum + u._count, 0);
+    const avgInteractionsPerUser = userCount > 0 ? totalInteractions / userCount : 0;
+
+    const highlyEngaged = userEngagementScores.filter(u => u._count > avgInteractionsPerUser * 1.5).length;
+    const moderatelyEngaged = userEngagementScores.filter(u => u._count > avgInteractionsPerUser * 0.5 && u._count <= avgInteractionsPerUser * 1.5).length;
+    const lowEngagement = userCount - highlyEngaged - moderatelyEngaged;
+
+    const engagementDistribution = {
+      highlyEngaged,
+      moderatelyEngaged,
+      lowEngagement: Math.max(0, lowEngagement),
+    };
+
+    const topEvents = contentInteractions
+      .sort((a, b) => b._count - a._count)
+      .slice(0, 5)
+      .map(e => ({ event: e.eventName, count: e._count }));
+
+    return {
+      success: true,
+      data: {
+        totalUsers: userCount,
+        activeUsers: activeUsers.length,
+        engagementRate: userCount > 0 ? (activeUsers.length / userCount) * 100 : 0,
+        engagementDistribution,
+        topEvents,
+        insights: [
+          `Active users represent ${userCount > 0 ? ((activeUsers.length / userCount) * 100).toFixed(1) : 0}% of total users`,
+          `Most popular interaction: ${topEvents[0]?.event || 'N/A'}`,
+          `${engagementDistribution.highlyEngaged} users are highly engaged`,
+        ],
       },
     };
   }

@@ -1,3 +1,14 @@
+export const universeColors = {
+  reality: { primary: '#FF6B6B', secondary: '#FF8E8E' },
+  creators: { primary: '#4ECDC4', secondary: '#7DD9D3' },
+  lifestyle: { primary: '#45B7D1', secondary: '#6EC6D8' },
+  vertical: { primary: '#96CEB4', secondary: '#B5DCC7' },
+  movies: { primary: '#FFEAA7', secondary: '#FFF3C2' },
+  games: { primary: '#DDA0DD', secondary: '#E6BCE6' },
+  comedy: { primary: '#F39C12', secondary: '#F5B041' },
+  sports: { primary: '#E74C3C', secondary: '#EC7063' },
+};
+
 export const colors = {
   primary: {
     50: '#f5f3ff',
@@ -87,9 +98,37 @@ export const colors = {
     800: '#525252',
     900: '#262626',
   },
+  text: {
+    primary: '#F3F4F6',
+    secondary: '#9CA3AF',
+    tertiary: '#6B7280',
+    inverse: '#111827',
+  },
+  bg: {
+    primary: '#111827',
+    secondary: '#1F2937',
+    tertiary: '#374151',
+    hover: '#4B5563',
+  },
+  border: {
+    default: '#4B5563',
+    light: '#374151',
+    focus: '#6366F1',
+  },
 };
 
 export const spacing = {
+  xs: 4,
+  sm: 8,
+  md: 12,
+  lg: 16,
+  xl: 24,
+  '2xl': 32,
+  '3xl': 48,
+  '4xl': 64,
+};
+
+export const spacingNative = {
   xs: 4,
   sm: 8,
   md: 12,
@@ -127,6 +166,26 @@ export const typography = {
     normal: 1.5,
     relaxed: 1.75,
   },
+};
+
+export const fontSizeNative = {
+  xs: 10,
+  sm: 12,
+  base: 14,
+  md: 16,
+  lg: 18,
+  xl: 20,
+  '2xl': 24,
+  '3xl': 28,
+  '4xl': 32,
+};
+
+export const fontWeightNative = {
+  thin: '300' as const,
+  normal: '400' as const,
+  medium: '500' as const,
+  semibold: '600' as const,
+  bold: '700' as const,
 };
 
 export const borderRadius = {
@@ -194,6 +253,7 @@ export const themes = {
 
 export const gradients = {
   primary: 'linear-gradient(135deg, #8B5CF6 0%, #6366F1 100%)',
+  brand: 'linear-gradient(135deg, #6366F1 0%, #EC4899 100%)',
   gold: 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)',
   success: 'linear-gradient(135deg, #22C55E 0%, #16A34A 100%)',
   dark: 'linear-gradient(180deg, #1a1a1a 0%, #0a0a0a 100%)',

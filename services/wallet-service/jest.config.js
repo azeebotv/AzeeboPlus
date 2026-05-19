@@ -9,4 +9,6 @@ module.exports = {
   coverageDirectory: "../coverage",
   testEnvironment: "node",
   passWithNoTests: true,
+  forceExit: true,
+  detectOpenHandles: true,
 };

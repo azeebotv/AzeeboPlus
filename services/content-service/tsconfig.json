@@ -8,11 +8,12 @@
     "noUnusedLocals": false,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
+    "types": ["jest", "node", "supertest"],
     "paths": {
       "@azeebo/*": ["../../packages/*/src"],
       "@content/*": ["./*"]
     }
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.spec.ts"]
+  "exclude": ["node_modules", "dist"]
 }

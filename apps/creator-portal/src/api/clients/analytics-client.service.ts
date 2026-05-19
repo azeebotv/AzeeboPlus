@@ -55,8 +55,7 @@ export class AnalyticsClientService {
   private readonly analyticsServiceUrl: string;
 
   constructor(private readonly configService: ConfigService) {
-    this.analyticsServiceUrl =
-      this.configService.get<string>('ANALYTICS_SERVICE_URL') || 'http://localhost:3007';
+    this.analyticsServiceUrl = this.configService.getOrThrow<string>('ANALYTICS_SERVICE_URL');
   }
 
   private async request<T>(

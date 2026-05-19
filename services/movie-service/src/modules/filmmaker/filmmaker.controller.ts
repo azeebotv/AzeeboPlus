@@ -3,7 +3,7 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { FilmmakerService } from './filmmaker.service';
 
 @ApiTags('Filmmaker')
-@Controller('filmmaker')
+@Controller('v1/movies/filmmakers')
 export class FilmmakerController {
   constructor(private readonly filmmakerService: FilmmakerService) {}
 

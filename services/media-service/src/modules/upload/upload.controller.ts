@@ -5,16 +5,24 @@ import {
   Delete,
   Param,
   Query,
+  Body,
   UseInterceptors,
   UploadedFile,
   BadRequestException,
+  UseGuards,
+  Request,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { AuthGuard } from '@nestjs/passport';
 import { UploadService } from './upload.service';
+import { PremiumContentService } from './premium-content.service';
 
 @Controller('api/media')
 export class UploadController {
-  constructor(private readonly uploadService: UploadService) {}
+  constructor(
+    private readonly uploadService: UploadService,
+    private readonly premiumContentService: PremiumContentService
+  ) {}
 
   @Post('upload/image')
   @UseInterceptors(FileInterceptor('file'))
@@ -125,5 +133,120 @@ export class UploadController {
   async deleteFile(@Param('key') key: string): Promise<{ success: boolean; message: string }> {
     await this.uploadService.deleteFile(decodeURIComponent(key));
     return { success: true, message: 'File deleted successfully' };
+  }
+
+  @Get('transcoding/:jobId/status')
+  async getTranscodingJobStatus(@Param('jobId') jobId: string): Promise<{ success: boolean; data: unknown }> {
+    const job = await this.uploadService.getTranscodingJobStatus(jobId);
+    if (!job) {
+      return { success: false, data: { message: 'Transcoding job not found' } };
+    }
+    return { success: true, data: job };
+  }
+
+  @Get('transcoding/jobs')
+  async listTranscodingJobs(@Query('status') status?: string): Promise<{ success: boolean; data: unknown[] }> {
+    const jobs = await this.uploadService.listTranscodingJobs(status as any);
+    return { success: true, data: jobs };
+  }
+
+  @Post('transcoding/retry-failed')
+  async retryFailedTranscodingJobs(): Promise<{ success: boolean; data: { retriedCount: number } }> {
+    const retriedCount = await this.uploadService.retryFailedTranscodingJobs();
+    return { success: true, data: { retriedCount } };
+  }
+
+  @Post('cleanup/orphaned')
+  async cleanupOrphanedFiles(
+    @Query('prefix') prefix?: string,
+    @Query('olderThanDays') olderThanDays = 30
+  ): Promise<{ success: boolean; data: { deletedCount: number } | { [prefix: string]: number } }> {
+    if (prefix) {
+      const deletedCount = await this.uploadService.cleanupOrphanedFiles(prefix, Number(olderThanDays));
+      return { success: true, data: { deletedCount } };
+    } else {
+      const results = await this.uploadService.cleanupAllOrphanedFiles();
+      return { success: true, data: results };
+    }
+  }
+
+  @Post('premium/url')
+  @UseGuards(AuthGuard('jwt'))
+  async generatePremiumUrl(
+    @Request() req: { user: { sub: string } },
+    @Body() body: { contentId: string; expiresInSeconds?: number }
+  ): Promise<{ success: boolean; data: unknown }> {
+    const { contentId, expiresInSeconds } = body;
+    if (!contentId) {
+      throw new BadRequestException('contentId is required');
+    }
+
+    const result = await this.premiumContentService.generatePremiumUrl(
+      contentId,
+      req.user.sub,
+      expiresInSeconds
+    );
+
+    return { success: true, data: result };
+  }
+
+  @Post('premium/url/cdn')
+  @UseGuards(AuthGuard('jwt'))
+  async generateCdnPremiumUrl(
+    @Request() req: { user: { sub: string } },
+    @Body() body: { contentId: string; expiresInSeconds?: number }
+  ): Promise<{ success: boolean; data: unknown }> {
+    const { contentId, expiresInSeconds } = body;
+    if (!contentId) {
+      throw new BadRequestException('contentId is required');
+    }
+
+    const result = await this.premiumContentService.generateCdnPremiumUrl(
+      contentId,
+      req.user.sub,
+      expiresInSeconds
+    );
+
+    return { success: true, data: result };
+  }
+
+  @Post('premium/url/validate')
+  async validatePremiumUrl(
+    @Body() body: { token: string }
+  ): Promise<{ success: boolean; data: unknown }> {
+    const { token } = body;
+    if (!token) {
+      throw new BadRequestException('token is required');
+    }
+
+    const result = await this.premiumContentService.validatePremiumUrl(token);
+    return { success: result.valid, data: result };
+  }
+
+  @Delete('premium/url/:token')
+  @UseGuards(AuthGuard('jwt'))
+  async invalidatePremiumUrl(
+    @Param('token') token: string
+  ): Promise<{ success: boolean; message: string }> {
+    await this.premiumContentService.invalidatePremiumUrl(token);
+    return { success: true, message: 'URL invalidated successfully' };
+  }
+
+  @Delete('premium/urls/user')
+  @UseGuards(AuthGuard('jwt'))
+  async invalidateAllUserUrls(
+    @Request() req: { user: { sub: string } }
+  ): Promise<{ success: boolean; data: { invalidatedCount: number } }> {
+    const count = await this.premiumContentService.invalidateAllUserUrls(req.user.sub);
+    return { success: true, data: { invalidatedCount: count } };
+  }
+
+  @Get('premium/url/:token/analytics')
+  @UseGuards(AuthGuard('jwt'))
+  async getUrlAnalytics(
+    @Param('token') token: string
+  ): Promise<{ success: boolean; data: unknown }> {
+    const result = await this.premiumContentService.getUrlAnalytics(token);
+    return { success: true, data: result };
   }
 }

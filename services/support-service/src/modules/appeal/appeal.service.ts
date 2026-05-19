@@ -1,10 +1,38 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { Prisma } from '../../prisma/client';
+import { createApiClient } from '@azeebo/api-client';
 
 @Injectable()
 export class AppealService {
+  private readonly logger = new Logger(AppealService.name);
+  private readonly contentServiceClient = createApiClient({
+    baseUrl: process.env.CONTENT_SERVICE_URL || 'http://localhost:3004',
+    timeout: 30000,
+  });
+  private readonly moderationServiceClient = createApiClient({
+    baseUrl: process.env.MODERATION_SERVICE_URL || 'http://localhost:3006',
+    timeout: 30000,
+  });
+  private readonly userServiceClient = createApiClient({
+    baseUrl: process.env.USER_SERVICE_URL || 'http://localhost:3001',
+    timeout: 30000,
+  });
+
   constructor(private prisma: PrismaService) {}
+
+  async submitAppeal(data: {
+    ticketId: string;
+    userId: string;
+    appealType: string;
+    resourceId: string;
+    resourceType: string;
+    originalDecision: string;
+    reason: string;
+    evidence?: Record<string, unknown>;
+  }) {
+    return this.createAppeal(data);
+  }
 
   async createAppeal(data: {
     ticketId: string;
@@ -61,7 +89,54 @@ export class AppealService {
     decidedBy: string,
     notes?: string
   ) {
-    const appeal = await this.prisma.appeal.update({
+    const appeal = await this.prisma.appeal.findUnique({
+      where: { id },
+    });
+
+    if (!appeal) {
+      throw new NotFoundException('Appeal not found');
+    }
+
+    if (decision === 'APPROVED') {
+      if (appeal.resourceType === 'CONTENT') {
+        try {
+          await this.contentServiceClient.post(`/api/content/${appeal.resourceId}/restore`, {
+            restoredBy: decidedBy,
+          });
+          this.logger.log(`Content ${appeal.resourceId} restored via content-service`);
+        } catch (error) {
+          this.logger.error(
+            `Failed to restore content ${appeal.resourceId}: ${(error as Error).message}`
+          );
+        }
+      } else if (appeal.resourceType === 'USER') {
+        try {
+          await this.userServiceClient.post(`/api/users/${appeal.resourceId}/unsuspend`, {
+            unsuspendedBy: decidedBy,
+          });
+          this.logger.log(`User ${appeal.resourceId} unsuspended via user-service`);
+        } catch (error) {
+          this.logger.error(
+            `Failed to unsuspend user ${appeal.resourceId}: ${(error as Error).message}`
+          );
+        }
+      }
+
+      try {
+        await this.moderationServiceClient.post(
+          `/api/moderation/trust-score/${appeal.userId}/adjust`,
+          {
+            adjustment: 10,
+            reason: 'Appeal approved',
+          }
+        );
+        this.logger.log(`Trust score adjusted for user ${appeal.userId}`);
+      } catch (error) {
+        this.logger.error(`Failed to adjust trust score: ${(error as Error).message}`);
+      }
+    }
+
+    const updatedAppeal = await this.prisma.appeal.update({
       where: { id },
       data: {
         status: decision,
@@ -71,16 +146,39 @@ export class AppealService {
       },
     });
 
-    if (decision === 'APPROVED' && appeal.resourceType === 'CONTENT') {
-      await this.prisma.contentItem
-        .update({
-          where: { id: appeal.resourceId },
-          data: { status: 'PUBLISHED' },
-        })
-        .catch(() => {});
-    }
+    await this.createAuditEvent({
+      action: 'appeal_decision',
+      resourceType: 'appeal',
+      resourceId: id,
+      actorType: 'admin',
+      actorId: decidedBy,
+      previousState: { status: 'PENDING' },
+      newState: { status: decision, decision: notes },
+      metadata: {
+        resourceId: appeal.resourceId,
+        resourceType: appeal.resourceType,
+        userId: appeal.userId,
+      },
+    });
 
-    return appeal;
+    return updatedAppeal;
+  }
+
+  private async createAuditEvent(event: {
+    action: string;
+    resourceType: string;
+    resourceId: string;
+    actorType: string;
+    actorId?: string;
+    previousState?: Record<string, unknown>;
+    newState?: Record<string, unknown>;
+    metadata?: Record<string, unknown>;
+  }) {
+    try {
+      await this.moderationServiceClient.post('/api/moderation/audit', event);
+    } catch (error) {
+      this.logger.error(`Failed to create audit event: ${(error as Error).message}`);
+    }
   }
 
   async getPendingAppeals(options?: { page?: number; limit?: number }) {

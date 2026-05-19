@@ -177,14 +177,7 @@ export class PaystackProvider {
 
   async processPayout(amount: number, recipient: string, reference: string) {
     this.logger.log(`Processing Paystack payout of ${amount} to ${recipient}, reference: ${reference}`);
-    // Paystack payout implementation would go here
-    // For now, we'll just log it as a placeholder
-    return {
-      success: true,
-      reference,
-      amount,
-      recipient,
-    };
+    throw new Error('Paystack payout is not implemented. Please use wallet-service direct transfer for payouts.');
   }
 
   async verifyWebhookSignature(payload: any, signature: string): Promise<boolean> {

@@ -1,9 +1,20 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { Prisma } from '../../prisma/client';
+import { createApiClient } from '@azeebo/api-client';
 
 @Injectable()
 export class TakedownService {
+  private readonly logger = new Logger(TakedownService.name);
+  private readonly contentServiceClient = createApiClient({
+    baseUrl: process.env.CONTENT_SERVICE_URL || 'http://localhost:3004',
+    timeout: 30000,
+  });
+  private readonly auditServiceClient = createApiClient({
+    baseUrl: process.env.MODERATION_SERVICE_URL || 'http://localhost:3006',
+    timeout: 30000,
+  });
+
   constructor(private prisma: PrismaService) {}
 
   async createTakedown(data: {
@@ -52,22 +63,57 @@ export class TakedownService {
     });
 
     if (decision === 'REMOVED') {
-      await this.prisma.contentItem
-        .update({
-          where: { id: takedown.contentId },
-          data: { status: 'REMOVED' },
-        })
-        .catch(() => {});
+      try {
+        await this.contentServiceClient.delete(`/api/content/${takedown.contentId}`, {
+          headers: { 'x-admin-user-id': decidedBy },
+        });
+        this.logger.log(`Content ${takedown.contentId} removed via content-service`);
+      } catch (error) {
+        this.logger.error(
+          `Failed to remove content ${takedown.contentId}: ${(error as Error).message}`
+        );
+      }
     } else if (decision === 'RESTORED') {
-      await this.prisma.contentItem
-        .update({
-          where: { id: takedown.contentId },
-          data: { status: 'PUBLISHED' },
-        })
-        .catch(() => {});
+      try {
+        await this.contentServiceClient.post(`/api/content/${takedown.contentId}/restore`, {
+          restoredBy: decidedBy,
+        });
+        this.logger.log(`Content ${takedown.contentId} restored via content-service`);
+      } catch (error) {
+        this.logger.error(
+          `Failed to restore content ${takedown.contentId}: ${(error as Error).message}`
+        );
+      }
     }
 
+    await this.createAuditEvent({
+      action: 'takedown_decision',
+      resourceType: 'content_takedown',
+      resourceId: id,
+      actorType: 'admin',
+      actorId: decidedBy,
+      previousState: { status: 'PENDING' },
+      newState: { status: decision, decision: notes },
+    });
+
     return takedown;
+  }
+
+  private async createAuditEvent(event: {
+    action: string;
+    resourceType: string;
+    resourceId: string;
+    actorType: string;
+    actorId?: string;
+    previousState?: Record<string, unknown>;
+    newState?: Record<string, unknown>;
+    metadata?: Record<string, unknown>;
+  }) {
+    try {
+      await this.auditServiceClient.post('/api/moderation/audit', event);
+    } catch (error) {
+      this.logger.error(`Failed to create audit event: ${(error as Error).message}`);
+    }
   }
 
   async getPendingTakedowns(options?: { page?: number; limit?: number }) {

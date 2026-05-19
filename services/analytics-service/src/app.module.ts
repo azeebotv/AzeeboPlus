@@ -4,6 +4,7 @@ import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { AnalyticsInstrumentationModule } from './modules/analytics-instrumentation/analytics-instrumentation.module';
 import { IntelligenceModule } from './modules/intelligence/intelligence.module';
 import { HealthModule } from './modules/health/health.module';
+import { MetricsModule } from './modules/metrics/metrics.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { HealthModule } from './modules/health/health.module';
     AnalyticsInstrumentationModule,
     IntelligenceModule,
     HealthModule,
+    MetricsModule,
   ],
 })
 export class AppModule {}

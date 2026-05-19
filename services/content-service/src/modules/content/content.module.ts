@@ -5,18 +5,21 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 
 import { ContentController } from './content.controller';
 import { ContentService } from './content.service';
+import { ContentRepository } from './content.repository';
+import { AccessControlService } from './access-control.service';
 import { DatabaseModule } from '../database/database.module';
 import { MediaModule } from '../media/media.module';
 
 @Module({
   imports: [
+    ConfigModule,
     DatabaseModule,
     MediaModule,
     PassportModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_SECRET'),
+        secret: configService.getOrThrow<string>('JWT_SECRET'),
         signOptions: {
           expiresIn: configService.get<string>('JWT_EXPIRES_IN', '30m'),
         },
@@ -25,7 +28,7 @@ import { MediaModule } from '../media/media.module';
     }),
   ],
   controllers: [ContentController],
-  providers: [ContentService],
-  exports: [ContentService, DatabaseModule],
+  providers: [ContentService, ContentRepository, AccessControlService],
+  exports: [ContentService, ContentRepository, AccessControlService, DatabaseModule],
 })
 export class ContentModule {}

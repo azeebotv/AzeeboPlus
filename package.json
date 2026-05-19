@@ -11,17 +11,26 @@
   "scripts": {
     "build": "pnpm -r build",
     "test": "pnpm -r test",
+    "test:unit": "pnpm -r test -- --testPathPattern=unit",
+    "test:integration": "pnpm -r test -- --testPathPattern=integration",
     "test:ci": "pnpm -r test -- --verbose",
     "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r exec tsc --noEmit",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
-    "clean": "pnpm -r clean && rm -rf node_modules"
+    "clean": "pnpm -r clean && rm -rf node_modules",
+    "dev": "concurrently \"pnpm --filter api-gateway dev\" \"pnpm --filter auth-service dev\" \"pnpm --filter user-service dev\" \"pnpm --filter wallet-service dev\" \"pnpm --filter content-service dev\""
   },
   "devDependencies": {
     "@playwright/test": "^1.59.1",
+    "@types/jest": "^29.5.14",
     "@types/multer": "^1.4.13",
+    "@types/node": "^25.6.2",
+    "@types/supertest": "^7.2.0",
+    "concurrently": "^8.2.2",
     "husky": "^8.0.0",
     "lint-staged": "^15.0.0",
     "prettier": "^3.2.0",
+    "supertest": "^7.2.2",
     "typescript": "^5.6.0"
   },
   "engines": {

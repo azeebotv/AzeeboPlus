@@ -22,6 +22,7 @@ import { RedisService } from '../../common/services/redis.service';
   imports: [
     DatabaseModule,
     PassportModule,
+    ConfigModule.forRoot(),
     RateLimiterModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],

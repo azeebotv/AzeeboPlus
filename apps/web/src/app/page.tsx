@@ -72,7 +72,7 @@ export default function Home(): JSX.Element {
             {isAuthenticated ? (
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
-                  <Avatar size="medium" fallback={user?.name?.charAt(0)} />
+                  <Avatar size="medium" fallback={user?.name?.charAt(0) || 'U'} />
                   <span className="text-sm font-medium" style={{ color: colors.text.primary }}>
                     {user?.name}
                   </span>

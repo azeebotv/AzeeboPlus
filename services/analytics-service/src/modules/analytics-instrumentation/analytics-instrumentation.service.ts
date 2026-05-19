@@ -79,8 +79,8 @@ export class AnalyticsInstrumentationService {
         universe: event.universe,
         timestamp: event.timestamp || new Date(),
         appVersion: event.appVersion,
-        experimentFlags: event.experimentFlags as Record<string, string> | null,
-        metadata: event.metadata as Record<string, string | number | boolean | null> | null,
+        experimentFlags: event.experimentFlags ? JSON.stringify(event.experimentFlags) : undefined,
+        metadata: event.metadata ? JSON.stringify(event.metadata) : undefined,
       },
     });
 
@@ -118,8 +118,8 @@ export class AnalyticsInstrumentationService {
             universe: event.universe,
             timestamp: event.timestamp || new Date(),
             appVersion: event.appVersion,
-            experimentFlags: event.experimentFlags as Record<string, string> | null,
-            metadata: event.metadata as Record<string, string | number | boolean | null> | null,
+            experimentFlags: event.experimentFlags ? JSON.stringify(event.experimentFlags) : undefined,
+            metadata: event.metadata ? JSON.stringify(event.metadata) : undefined,
           },
         })
       )

@@ -57,11 +57,22 @@ describe('AuthService', () => {
             deleteSessionByUserId: jest.fn().mockResolvedValue(0),
             setOtp: jest.fn().mockResolvedValue(undefined),
             getOtp: jest.fn().mockResolvedValue(null),
-            deleteOtp: jest.fn().mockResolvedValue({ id: 'otp-123', userId: 'user-123', code: '1234', expiresAt: new Date() }),
+            deleteOtp: jest.fn().mockResolvedValue({
+              id: 'otp-123',
+              userId: 'user-123',
+              code: '1234',
+              expiresAt: new Date(),
+            }),
             findBySocialId: jest.fn().mockResolvedValue(null),
             findSocialAccount: jest.fn().mockResolvedValue(null),
-            linkSocialAccount: jest.fn().mockResolvedValue({ id: 'social-123', userId: 'user-123', provider: 'google', socialId: '12345' }),
+            linkSocialAccount: jest.fn().mockResolvedValue({
+              id: 'social-123',
+              userId: 'user-123',
+              provider: 'google',
+              socialId: '12345',
+            }),
             unlinkSocialAccount: jest.fn().mockResolvedValue(0),
+            verifyEmail: jest.fn().mockResolvedValue(mockUser),
           },
         },
         {
@@ -79,7 +90,9 @@ describe('AuthService', () => {
           useValue: {
             sign: jest.fn().mockReturnValue('access-token'),
             verify: jest.fn().mockReturnValue({ sub: 'user-123', type: 'refresh' }),
-            decode: jest.fn().mockReturnValue({ jti: 'token-123', exp: Math.floor(Date.now() / 1000) + 3600 }),
+            decode: jest
+              .fn()
+              .mockReturnValue({ jti: 'token-123', exp: Math.floor(Date.now() / 1000) + 3600 }),
           },
         },
       ],
@@ -194,7 +207,9 @@ describe('AuthService', () => {
         throw new Error('Invalid token');
       });
 
-      await expect(service.refreshToken({ refreshToken: 'invalid-token' })).rejects.toThrow(UnauthorizedException);
+      await expect(service.refreshToken({ refreshToken: 'invalid-token' })).rejects.toThrow(
+        UnauthorizedException
+      );
     });
 
     it('should fail with non-existent user', async () => {
@@ -280,6 +295,102 @@ describe('AuthService', () => {
       const result = await service.validateToken('invalid-token');
 
       expect(result).toBeNull();
+    });
+  });
+
+  describe('forgotPassword', () => {
+    it('should send reset email for existing user', async () => {
+      (authRepository.findByEmail as jest.Mock).mockResolvedValue(mockUser);
+      (redisService.set as jest.Mock).mockResolvedValue(undefined);
+
+      const result = await service.forgotPassword({ email: 'test@example.com' });
+
+      expect(result.success).toBe(true);
+      expect(result.message).toContain('reset link');
+      expect(redisService.set).toHaveBeenCalled();
+    });
+
+    it('should return success even for non-existent user (security)', async () => {
+      (authRepository.findByEmail as jest.Mock).mockResolvedValue(null);
+
+      const result = await service.forgotPassword({ email: 'nonexistent@example.com' });
+
+      expect(result.success).toBe(true);
+      expect(redisService.set).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('resetPassword', () => {
+    it('should reset password with valid token', async () => {
+      const userId = 'user-123';
+      (redisService.get as jest.Mock).mockResolvedValue(userId);
+      (redisService.del as jest.Mock).mockResolvedValue(1);
+      (bcrypt.hash as jest.Mock).mockResolvedValue('newHashedPassword');
+      (authRepository.update as jest.Mock).mockResolvedValue(mockUser);
+
+      const result = await service.resetPassword({
+        token: 'valid-reset-token',
+        newPassword: 'NewPassword123!',
+      });
+
+      expect(result.success).toBe(true);
+      expect(redisService.get).toHaveBeenCalledWith('password_reset:valid-reset-token');
+      expect(redisService.del).toHaveBeenCalled();
+      expect(authRepository.update).toHaveBeenCalledWith(userId, { password: 'newHashedPassword' });
+    });
+
+    it('should fail with invalid or expired token', async () => {
+      (redisService.get as jest.Mock).mockResolvedValue(null);
+
+      await expect(
+        service.resetPassword({ token: 'invalid-token', newPassword: 'NewPassword123!' })
+      ).rejects.toThrow(UnauthorizedException);
+    });
+  });
+
+  describe('verifyEmail', () => {
+    it('should verify email with valid token', async () => {
+      const userId = 'user-123';
+      (redisService.get as jest.Mock).mockResolvedValue(userId);
+      (redisService.del as jest.Mock).mockResolvedValue(1);
+      (authRepository.verifyEmail as jest.Mock).mockResolvedValue(mockUser);
+
+      const result = await service.verifyEmail({ token: 'valid-verification-token' });
+
+      expect(result.success).toBe(true);
+      expect(result.message).toContain('verified');
+      expect(redisService.get).toHaveBeenCalledWith('email_verification:valid-verification-token');
+      expect(authRepository.verifyEmail).toHaveBeenCalledWith(userId);
+    });
+
+    it('should fail with invalid verification token', async () => {
+      (redisService.get as jest.Mock).mockResolvedValue(null);
+
+      await expect(service.verifyEmail({ token: 'invalid-token' })).rejects.toThrow(
+        UnauthorizedException
+      );
+    });
+  });
+
+  describe('resendVerification', () => {
+    it('should resend verification email for existing user', async () => {
+      (authRepository.findByEmail as jest.Mock).mockResolvedValue(mockUser);
+      (redisService.set as jest.Mock).mockResolvedValue(undefined);
+
+      const result = await service.resendVerification({ email: 'test@example.com' });
+
+      expect(result.success).toBe(true);
+      expect(result.message).toContain('verification email');
+      expect(redisService.set).toHaveBeenCalled();
+    });
+
+    it('should return success even for non-existent user (security)', async () => {
+      (authRepository.findByEmail as jest.Mock).mockResolvedValue(null);
+
+      const result = await service.resendVerification({ email: 'nonexistent@example.com' });
+
+      expect(result.success).toBe(true);
+      expect(redisService.set).not.toHaveBeenCalled();
     });
   });
 });

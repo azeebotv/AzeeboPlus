@@ -50,6 +50,7 @@ export class ComedyFeedService {
     });
 
     const _recentClips = await this.prisma.comedyClip.findMany({
+      where,
       include: {
         creator: { select: { id: true, displayName: true, avatar: true } },
       },
@@ -68,7 +69,10 @@ export class ComedyFeedService {
         viewCount: clip.viewCount,
         likeCount: clip.likeCount,
         shareCount: clip.shareCount,
-        creator: clip.creator,
+        creator: {
+          ...clip.creator,
+          avatar: clip.creator.avatar ?? undefined,
+        },
         createdAt: clip.createdAt.toISOString(),
       })),
     ];

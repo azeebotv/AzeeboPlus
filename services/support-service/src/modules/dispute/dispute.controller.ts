@@ -15,6 +15,7 @@ import { CreateDisputeDto, ResolveDisputeDto, DisputeQueryDto } from './dto/disp
 import { ApiResponseWrapper } from '@azeebo/shared-types';
 import { Prisma } from '../../prisma/client';
 import { AuthGuard } from '../../common/guards/auth.guard';
+import { AdminGuard } from '../../common/guards/admin.guard';
 
 interface AuthenticatedRequest {
   user: {
@@ -39,13 +40,14 @@ export class DisputeController {
       payoutId: dto.payoutId,
       amount: new Prisma.Decimal(dto.amount),
       reason: dto.reason,
-      evidence: dto.evidence,
+      evidence: dto.evidence as Prisma.InputJsonValue,
     });
     return ApiResponseWrapper.success({ dispute });
   }
 
   @Get('pending')
   @ApiOperation({ summary: 'Get pending disputes (admin)' })
+  @UseGuards(AdminGuard)
   async getPendingDisputes(@Query() query: DisputeQueryDto) {
     const result = await this.disputeService.getPendingDisputes(query);
     return ApiResponseWrapper.paginated(
@@ -69,7 +71,8 @@ export class DisputeController {
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Get dispute by ID' })
+  @ApiOperation({ summary: 'Get dispute by ID (admin)' })
+  @UseGuards(AdminGuard)
   async getDispute(@Param('id') id: string) {
     const dispute = await this.disputeService.getDisputeById(id);
     return ApiResponseWrapper.success({ dispute });
@@ -77,6 +80,7 @@ export class DisputeController {
 
   @Patch(':id/resolve')
   @ApiOperation({ summary: 'Resolve dispute (admin)' })
+  @UseGuards(AdminGuard)
   async resolveDispute(
     @Param('id') id: string,
     @Request() req: AuthenticatedRequest,

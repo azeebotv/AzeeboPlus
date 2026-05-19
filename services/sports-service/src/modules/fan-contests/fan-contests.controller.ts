@@ -1,9 +1,15 @@
-import { Controller, Get, Post, Body, Param, Query } from '@nestjs/common';
-import { ApiTags, ApiOperation } from '@nestjs/swagger';
+import { Controller, Get, Post, Body, Param, Query, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import { AuthGuard } from '@nestjs/passport';
+import { RateLimitGuard, RateLimit } from '@azeebo/security';
 import { FanContestsService } from './fan-contests.service';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { JoinContestDto, SubmitContestScoreDto } from './dto/contest.dto';
 
 @ApiTags('Fan Contests')
-@Controller('contests')
+@ApiBearerAuth()
+@Controller('v1/sports/fan-contests')
 export class FanContestsController {
   constructor(private readonly fanContestsService: FanContestsService) {}
 
@@ -28,7 +34,7 @@ export class FanContestsController {
   @ApiOperation({ summary: 'Enter contest' })
   async enterContest(
     @Param('id') contestId: string,
-    @Body() body: { userId: string; entryData: Record<string, unknown> }
+    @Body() body: JoinContestDto
   ): Promise<unknown> {
     return this.fanContestsService.enterContest(body.userId, contestId, body.entryData);
   }
@@ -37,12 +43,14 @@ export class FanContestsController {
   @ApiOperation({ summary: 'Update entry score' })
   async updateScore(
     @Param('id') contestId: string,
-    @Body() body: { userId: string; score: number }
+    @Body() body: SubmitContestScoreDto
   ): Promise<unknown> {
     return this.fanContestsService.updateEntryScore(body.userId, contestId, body.score);
   }
 
   @Get(':id/leaderboard')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(100, 60000)
   @ApiOperation({ summary: 'Get contest leaderboard' })
   async getLeaderboard(
     @Param('id') contestId: string,
@@ -62,6 +70,8 @@ export class FanContestsController {
   }
 
   @Post(':id/end')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('ADMIN', 'MODERATOR')
   @ApiOperation({ summary: 'End contest (admin)' })
   async endContest(@Param('id') contestId: string): Promise<unknown> {
     return this.fanContestsService.endContest(contestId);

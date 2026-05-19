@@ -24,6 +24,45 @@ interface RecommendationOutput {
   freshnessScore: number;
 }
 
+interface UserSegment {
+  segmentId: string;
+  name: string;
+  description: string;
+  characteristics: Record<string, unknown>;
+}
+
+interface CreatorScore {
+  creatorId: string;
+  score: number;
+  factors: { name: string; weight: number; value: number }[];
+  tier: 'elite' | 'growth' | 'emerging' | 'new';
+}
+
+interface ChurnRisk {
+  userId: string;
+  riskScore: number;
+  riskLevel: 'low' | 'medium' | 'high' | 'critical';
+  contributingFactors: string[];
+  recommendations: string[];
+}
+
+interface MonetizationInsight {
+  userId: string;
+  predictedLTV: number;
+  optimalPricePoint: number;
+  recommendedActions: string[];
+  segment: string;
+}
+
+interface FraudRisk {
+  userId?: string;
+  contentId?: string;
+  transactionId?: string;
+  riskScore: number;
+  riskLevel: 'low' | 'medium' | 'high' | 'critical';
+  indicators: { name: string; score: number; description: string }[];
+}
+
 @Injectable()
 export class RecommendationService {
   constructor(private prisma: PrismaService) {}
@@ -31,7 +70,7 @@ export class RecommendationService {
   async getContentRecommendations(
     input: RecommendationInput
   ): Promise<{ success: boolean; data?: RecommendationOutput[] }> {
-    const { userId, limit = 20, universe, _contentType, freshnessDays = 7 } = input;
+    const { userId, limit = 20, universe, freshnessDays = 7 } = input;
 
     if (!userId) {
       return this.getFallbackRecommendations(limit, universe, freshnessDays);
@@ -256,20 +295,12 @@ export class RecommendationService {
     userId: string,
     limit = 10
   ): Promise<{ success: boolean; data?: unknown[] }> {
-    const followedCreators = await this.prisma.creatorProfile.findMany({
-      where: { subscribers: { some: { subscriberId: userId } } },
-      select: { id: true },
-    });
-
-    const followedIds = followedCreators.map((c) => c.id);
-
     const recommendedCreators = await this.prisma.creatorProfile.findMany({
       where: {
-        id: { notIn: followedIds },
+        userId: { not: userId },
       },
       include: {
         user: { select: { id: true, displayName: true, avatar: true } },
-        _count: { select: { subscribers: true, contentItems: true } },
       },
       take: limit,
     });
@@ -281,8 +312,8 @@ export class RecommendationService {
         displayName: creator.user.displayName || '',
         bio: creator.bio || '',
         avatar: creator.user.avatar || '',
-        followerCount: creator._count.subscribers,
-        contentCount: creator._count.contentItems,
+        followerCount: 0,
+        contentCount: 0,
         explainability: {
           factors: [{ name: 'not_followed', weight: 1 }],
           reason: 'Creators you might like',
@@ -358,5 +389,341 @@ export class RecommendationService {
           : 0,
       })),
     };
+  }
+
+  async getUserSegment(userId: string): Promise<{ success: boolean; data?: UserSegment }> {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const [user, watchHistory, payments, rewards, subscriptions] = await Promise.all([
+      this.prisma.user.findUnique({ where: { id: userId } }),
+      this.prisma.watchHistory.count({ where: { userId, watchedAt: { gte: thirtyDaysAgo } } }),
+      this.prisma.payment.count({ where: { userId, status: 'completed', createdAt: { gte: thirtyDaysAgo } } }),
+      this.prisma.pointsLedger.aggregate({
+        _sum: { points: true },
+        where: { userId, type: 'credit', createdAt: { gte: thirtyDaysAgo } },
+      }),
+      this.prisma.subscription.count({ where: { userId, status: 'active' } }),
+    ]);
+
+    const totalPoints = rewards._sum.points || 0;
+    const daysSinceSignup = Math.floor((Date.now() - user.createdAt.getTime()) / (1000 * 60 * 60 * 24));
+
+    let segment: UserSegment;
+
+    if (payments >= 5 && subscriptions >= 1 && watchHistory >= 20) {
+      segment = {
+        segmentId: 'power_user',
+        name: 'Power User',
+        description: 'Highly engaged and monetized user',
+        characteristics: { watchCount: watchHistory, paymentCount: payments, hasSubscription: subscriptions > 0, pointsEarned: totalPoints },
+      };
+    } else if (watchHistory >= 10 && totalPoints >= 100) {
+      segment = {
+        segmentId: 'engaged',
+        name: 'Engaged User',
+        description: 'Regular active user with moderate engagement',
+        characteristics: { watchCount: watchHistory, paymentCount: payments, hasSubscription: subscriptions > 0, pointsEarned: totalPoints },
+      };
+    } else if (watchHistory >= 3 || payments >= 1) {
+      segment = {
+        segmentId: 'casual',
+        name: 'Casual User',
+        description: 'Occasional user with light engagement',
+        characteristics: { watchCount: watchHistory, paymentCount: payments, hasSubscription: subscriptions > 0, pointsEarned: totalPoints },
+      };
+    } else if (daysSinceSignup < 7) {
+      segment = {
+        segmentId: 'new',
+        name: 'New User',
+        description: 'Recently registered user',
+        characteristics: { watchCount: watchHistory, paymentCount: payments, daysSinceSignup, pointsEarned: totalPoints },
+      };
+    } else {
+      segment = {
+        segmentId: 'dormant',
+        name: 'Dormant User',
+        description: 'User with little to no recent activity',
+        characteristics: { watchCount: watchHistory, paymentCount: payments, daysSinceSignup, pointsEarned: totalPoints },
+      };
+    }
+
+    return { success: true, data: segment };
+  }
+
+  async getCreatorScore(creatorId: string): Promise<{ success: boolean; data?: CreatorScore }> {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const [creator, contentCount, views, followers, subscriptions, tips] = await Promise.all([
+      this.prisma.creatorProfile.findUnique({ where: { userId: creatorId } }),
+      this.prisma.contentItem.count({ where: { creatorId } }),
+      this.prisma.productEvent.count({
+        where: { eventName: 'content_view', metadata: { path: ['creatorId'], equals: creatorId }, timestamp: { gte: thirtyDaysAgo } },
+      }),
+      this.prisma.follower.count({ where: { followingId: creatorId } }),
+      this.prisma.subscription.count({ where: { creatorId, status: 'active' } }),
+      this.prisma.transaction.count({
+        where: { type: 'tip', metadata: { path: ['creatorId'], equals: creatorId }, createdAt: { gte: thirtyDaysAgo } },
+      }),
+    ]);
+
+    const factors = [
+      { name: 'content_count', weight: 15, value: Math.min(contentCount, 50) },
+      { name: 'views', weight: 30, value: Math.min(views, 10000) / 100 },
+      { name: 'followers', weight: 25, value: Math.min(followers, 10000) / 100 },
+      { name: 'subscriptions', weight: 20, value: subscriptions * 5 },
+      { name: 'tips', weight: 10, value: tips * 2 },
+    ];
+
+    const score = factors.reduce((acc, f) => acc + (f.weight * f.value) / 100, 0);
+
+    let tier: 'elite' | 'growth' | 'emerging' | 'new';
+    if (score >= 80) tier = 'elite';
+    else if (score >= 50) tier = 'growth';
+    else if (score >= 25) tier = 'emerging';
+    else tier = 'new';
+
+    return {
+      success: true,
+      data: {
+        creatorId,
+        score: Math.round(score * 100) / 100,
+        factors,
+        tier,
+      },
+    };
+  }
+
+  async getChurnRisk(userId: string): Promise<{ success: boolean; data?: ChurnRisk }> {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    const [user, recentActivity, lastActivity, payments, subscriptions, rewards] = await Promise.all([
+      this.prisma.user.findUnique({ where: { id: userId } }),
+      this.prisma.productEvent.count({ where: { userId, timestamp: { gte: sevenDaysAgo } } }),
+      this.prisma.productEvent.findFirst({ where: { userId }, orderBy: { timestamp: 'desc' } }),
+      this.prisma.payment.count({ where: { userId, status: 'completed' } }),
+      this.prisma.subscription.count({ where: { userId, status: 'active' } }),
+      this.prisma.pointsLedger.count({ where: { userId, type: 'credit', createdAt: { gte: thirtyDaysAgo } } }),
+    ]);
+
+    const daysSinceLastActivity = lastActivity
+      ? Math.floor((Date.now() - lastActivity.timestamp.getTime()) / (1000 * 60 * 60 * 24))
+      : 999;
+
+    const factors: string[] = [];
+    let riskScore = 0;
+
+    if (daysSinceLastActivity > 14) {
+      riskScore += 30;
+      factors.push('No activity in over 2 weeks');
+    } else if (daysSinceLastActivity > 7) {
+      riskScore += 15;
+      factors.push('Reduced activity in the past week');
+    }
+
+    if (recentActivity < 3) {
+      riskScore += 20;
+      factors.push('Low recent engagement');
+    }
+
+    if (payments === 0) {
+      riskScore += 15;
+      factors.push('No purchase history');
+    }
+
+    if (subscriptions === 0) {
+      riskScore += 15;
+      factors.push('No active subscriptions');
+    }
+
+    if (rewards === 0) {
+      riskScore += 10;
+      factors.push('No rewards earned recently');
+    }
+
+    const daysSinceSignup = Math.floor((Date.now() - user.createdAt.getTime()) / (1000 * 60 * 60 * 24));
+    if (daysSinceSignup < 7) {
+      riskScore -= 10;
+    }
+
+    let riskLevel: 'low' | 'medium' | 'high' | 'critical';
+    if (riskScore >= 70) riskLevel = 'critical';
+    else if (riskScore >= 50) riskLevel = 'high';
+    else if (riskScore >= 30) riskLevel = 'medium';
+    else riskLevel = 'low';
+
+    const recommendations: string[] = [];
+    if (daysSinceLastActivity > 7) recommendations.push('Send personalized content recommendation');
+    if (payments === 0) recommendations.push('Offer a welcome discount');
+    if (subscriptions === 0) recommendations.push('Promote subscription benefits');
+    if (rewards === 0) recommendations.push('Highlight rewards program');
+
+    return {
+      success: true,
+      data: {
+        userId,
+        riskScore: Math.min(100, Math.max(0, riskScore)),
+        riskLevel,
+        contributingFactors: factors,
+        recommendations,
+      },
+    };
+  }
+
+  async getMonetizationInsights(userId: string): Promise<{ success: boolean; data?: MonetizationInsight }> {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const [payments, subscriptions, watchHistory, rewards, user] = await Promise.all([
+      this.prisma.payment.aggregate({ _sum: { amount: true }, where: { userId, status: 'completed' } }),
+      this.prisma.subscription.count({ where: { userId, status: 'active' } }),
+      this.prisma.watchHistory.count({ where: { userId, watchedAt: { gte: thirtyDaysAgo } } }),
+      this.prisma.pointsLedger.aggregate({ _sum: { points: true }, where: { userId, type: 'credit' } }),
+      this.prisma.user.findUnique({ where: { id: userId } }),
+    ]);
+
+    const totalSpent = payments._sum.amount || 0;
+    const totalPoints = rewards._sum.points || 0;
+    const daysSinceSignup = Math.floor((Date.now() - user.createdAt.getTime()) / (1000 * 60 * 60 * 24));
+
+    const avgMonthlySpend = totalSpent / Math.max(1, Math.ceil(daysSinceSignup / 30));
+    const engagementRate = watchHistory / Math.max(1, daysSinceSignup);
+
+    let predictedLTV: number;
+    let optimalPricePoint: number;
+    let recommendedActions: string[];
+    let segment: string;
+
+    if (avgMonthlySpend >= 5000 && engagementRate >= 2) {
+      predictedLTV = avgMonthlySpend * 24;
+      optimalPricePoint = 5000;
+      recommendedActions = ['Offer premium subscriptions', 'Promote exclusive content', 'Suggest creator tips'];
+      segment = 'high_value';
+    } else if (avgMonthlySpend >= 1000 || subscriptions >= 1) {
+      predictedLTV = avgMonthlySpend * 18;
+      optimalPricePoint = 2000;
+      recommendedActions = ['Promote annual subscriptions', 'Offer bundled passes', 'Highlight loyalty rewards'];
+      segment = 'medium_value';
+    } else if (watchHistory >= 10 || totalPoints >= 50) {
+      predictedLTV = avgMonthlySpend * 12 + 5000;
+      optimalPricePoint = 1000;
+      recommendedActions = ['Offer introductory discounts', 'Promote freemium features', 'Suggest first purchase bonuses'];
+      segment = 'potential_value';
+    } else {
+      predictedLTV = avgMonthlySpend * 6;
+      optimalPricePoint = 500;
+      recommendedActions = ['Onboard with free content', 'Highlight value proposition', 'Send welcome offers'];
+      segment = 'new_user';
+    }
+
+    return {
+      success: true,
+      data: {
+        userId,
+        predictedLTV: Math.round(predictedLTV),
+        optimalPricePoint,
+        recommendedActions,
+        segment,
+      },
+    };
+  }
+
+  async assessFraudRisk(
+    data: { userId?: string; contentId?: string; transactionId?: string; voteActivity?: unknown }
+  ): Promise<{ success: boolean; data?: FraudRisk }> {
+    const { userId, contentId, transactionId } = data;
+
+    const indicators: { name: string; score: number; description: string }[] = [];
+    let riskScore = 0;
+
+    if (userId) {
+      const user = await this.prisma.user.findUnique({ where: { id: userId } });
+      const daysSinceSignup = Math.floor((Date.now() - user.createdAt.getTime()) / (1000 * 60 * 60 * 24));
+
+      if (daysSinceSignup < 1) {
+        riskScore += 25;
+        indicators.push({ name: 'new_account', score: 25, description: 'Account created within last 24 hours' });
+      }
+
+      const voteCount = await this.prisma.vote.count({ where: { userId, createdAt: { gte: new Date(Date.now() - 60 * 60 * 1000) } } });
+      if (voteCount > 10) {
+        riskScore += 20;
+        indicators.push({ name: 'rapid_voting', score: 20, description: 'Unusually high voting frequency' });
+      }
+
+      const paymentCount = await this.prisma.payment.count({ where: { userId, createdAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) } } });
+      if (paymentCount > 5) {
+        riskScore += 15;
+        indicators.push({ name: 'rapid_payments', score: 15, description: 'Multiple payments in short period' });
+      }
+    }
+
+    if (contentId) {
+      const content = await this.prisma.contentItem.findUnique({ where: { id: contentId }, include: { creator: true } });
+      if (content && content.createdAt && content.creator) {
+        const hoursSinceUpload = Math.floor((Date.now() - content.createdAt.getTime()) / (1000 * 60 * 60));
+        if (hoursSinceUpload < 1) {
+          const viewCount = await this.prisma.productEvent.count({
+            where: { eventName: 'content_view', metadata: { path: ['contentId'], equals: contentId } },
+          });
+          if (viewCount > 100) {
+            riskScore += 30;
+            indicators.push({ name: 'rapid_views', score: 30, description: 'Abnormally high views for new content' });
+          }
+        }
+      }
+    }
+
+    if (transactionId) {
+      const transaction = await this.prisma.transaction.findUnique({ where: { id: transactionId } });
+      if (transaction && transaction.amount > 100000) {
+        riskScore += 20;
+        indicators.push({ name: 'large_transaction', score: 20, description: 'Transaction amount exceeds normal limits' });
+      }
+    }
+
+    let riskLevel: 'low' | 'medium' | 'high' | 'critical';
+    if (riskScore >= 70) riskLevel = 'critical';
+    else if (riskScore >= 50) riskLevel = 'high';
+    else if (riskScore >= 30) riskLevel = 'medium';
+    else riskLevel = 'low';
+
+    return {
+      success: true,
+      data: {
+        userId,
+        contentId,
+        transactionId,
+        riskScore: Math.min(100, riskScore),
+        riskLevel,
+        indicators,
+      },
+    };
+  }
+
+  async getPersonalizedFeed(userId: string, limit = 20): Promise<{ success: boolean; data?: RecommendationOutput[] }> {
+    const segmentResult = await this.getUserSegment(userId);
+    const churnResult = await this.getChurnRisk(userId);
+
+    const baseInput: RecommendationInput = { userId, limit };
+
+    if (churnResult.data?.riskLevel === 'high' || churnResult.data?.riskLevel === 'critical') {
+      baseInput.freshnessDays = 3;
+    }
+
+    const recommendations = await this.getContentRecommendations(baseInput);
+
+    if (segmentResult.data?.segmentId === 'power_user') {
+      const crossUniverse = await this.getCrossUniverseRecommendations(userId, Math.floor(limit * 0.3));
+      if (crossUniverse.data) {
+        recommendations.data = [...(recommendations.data || []).slice(0, Math.floor(limit * 0.7)), ...crossUniverse.data];
+      }
+    }
+
+    return recommendations;
   }
 }

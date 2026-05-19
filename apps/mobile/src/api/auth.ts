@@ -37,7 +37,7 @@ export const authApi = {
     name: string;
     phone?: string;
   }): Promise<ApiResponse<AuthResponse>> => {
-    return apiClient.post<ApiResponse<AuthResponse>>('/auth/register', data);
+    return apiClient.post<ApiResponse<AuthResponse>>('/auth/signup', data);
   },
 
   logout: async (): Promise<ApiResponse<{ message: string }>> => {
@@ -53,18 +53,30 @@ export const authApi = {
   },
 
   verifyOTP: async (code: string): Promise<ApiResponse<AuthResponse>> => {
-    return apiClient.post<ApiResponse<AuthResponse>>('/auth/verify-otp', { code });
+    return apiClient.post<ApiResponse<AuthResponse>>('/auth/otp/verify', { code });
   },
 
   resendOTP: async (): Promise<ApiResponse<{ message: string }>> => {
-    return apiClient.post<ApiResponse<{ message: string }>>('/auth/resend-otp');
+    return apiClient.post<ApiResponse<{ message: string }>>('/auth/otp/send');
   },
 
   getProfile: async (): Promise<ApiResponse<User>> => {
-    return apiClient.get<ApiResponse<User>>('/auth/profile');
+    return apiClient.get<ApiResponse<User>>('/auth/me');
   },
 
   updateProfile: async (data: Partial<User>): Promise<ApiResponse<User>> => {
-    return apiClient.patch<ApiResponse<User>>('/auth/profile', data);
+    return apiClient.patch<ApiResponse<User>>('/auth/me', data);
+  },
+
+  resetPassword: async (token: string, newPassword: string): Promise<ApiResponse<{ message: string }>> => {
+    return apiClient.post<ApiResponse<{ message: string }>>('/auth/reset-password', { token, newPassword });
+  },
+
+  verifyEmail: async (token: string): Promise<ApiResponse<{ message: string }>> => {
+    return apiClient.post<ApiResponse<{ message: string }>>('/auth/verify-email', { token });
+  },
+
+  resendVerification: async (email: string): Promise<ApiResponse<{ message: string }>> => {
+    return apiClient.post<ApiResponse<{ message: string }>>('/auth/resend-verification', { email });
   },
 };

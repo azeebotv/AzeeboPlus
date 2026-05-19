@@ -9,11 +9,15 @@ import {
   Request,
   Param,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
+import { RateLimitGuard, RateLimit } from '@azeebo/security';
 
 import { CreatorsService } from './creators.service';
 import { CreatorResponse } from './interfaces/creator-response.interface';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { SubmitDocumentsDto, UploadRequestDto, LinkUploadDto, FundCreatorDto, UpdateTierDto, PublishContentDto } from './dto/creator.dto';
 
 interface UpdateProfileBody {
   displayName?: string;
@@ -51,7 +55,8 @@ interface PayoutBody {
 }
 
 @ApiTags('Creators')
-@Controller('creators')
+@ApiBearerAuth()
+@Controller('v1/creators')
 export class CreatorsController {
   constructor(private readonly creatorsService: CreatorsService) {}
 
@@ -70,7 +75,7 @@ export class CreatorsController {
   @ApiResponse({ status: 201, description: 'Verification submitted' })
   async submitVerification(
     @Request() req: { user: { sub: string } },
-    @Body() body: { documents: { type: string; url: string }[] }
+    @Body() body: SubmitDocumentsDto
   ): Promise<CreatorResponse> {
     return this.creatorsService.submitVerification(req.user.sub, body.documents);
   }
@@ -89,7 +94,7 @@ export class CreatorsController {
   @ApiResponse({ status: 201, description: 'Upload initiated' })
   async uploadMedia(
     @Request() req: { user: { sub: string } },
-    @Body() body: { fileName: string; mimeType: string; size: number }
+    @Body() body: UploadRequestDto
   ): Promise<CreatorResponse> {
     return this.creatorsService.uploadMedia(req.user.sub, body);
   }
@@ -100,7 +105,7 @@ export class CreatorsController {
   @ApiResponse({ status: 201, description: 'Upload completed' })
   async completeUpload(
     @Request() req: { user: { sub: string } },
-    @Body() body: { uploadId: string; assetId: string }
+    @Body() body: LinkUploadDto
   ): Promise<CreatorResponse> {
     return this.creatorsService.completeUpload(req.user.sub, body.uploadId, body.assetId);
   }
@@ -115,6 +120,8 @@ export class CreatorsController {
   }
 
   @Get(':creatorId')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(200, 60000)
   @ApiOperation({ summary: 'Get creator public profile' })
   @ApiResponse({ status: 200, description: 'Creator profile' })
   async getProfile(@Param('creatorId') creatorId: string): Promise<CreatorResponse> {
@@ -193,6 +200,8 @@ export class CreatorsController {
   }
 
   @Get('discover')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(100, 60000)
   @ApiOperation({ summary: 'Creator discovery' })
   @ApiResponse({ status: 200, description: 'Discover creators' })
   async discover(): Promise<CreatorResponse> {
@@ -206,7 +215,7 @@ export class CreatorsController {
   async sendTip(
     @Request() req: { user: { sub: string } },
     @Param('creatorId') creatorId: string,
-    @Body() body: { amount: number }
+    @Body() body: FundCreatorDto
   ): Promise<CreatorResponse> {
     return this.creatorsService.sendTip(req.user.sub, creatorId, body.amount);
   }
@@ -218,7 +227,7 @@ export class CreatorsController {
   async subscribe(
     @Request() req: { user: { sub: string } },
     @Param('creatorId') creatorId: string,
-    @Body() body: { tier?: string }
+    @Body() body: UpdateTierDto
   ): Promise<CreatorResponse> {
     return this.creatorsService.subscribe(req.user.sub, creatorId, body.tier || 'free');
   }
@@ -286,7 +295,8 @@ export class CreatorsController {
   }
 
   @Post('challenges')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('ADMIN', 'MODERATOR')
   @ApiOperation({ summary: 'Create creator challenge' })
   @ApiResponse({ status: 201, description: 'Challenge created' })
   async createChallenge(
@@ -297,6 +307,8 @@ export class CreatorsController {
   }
 
   @Get('challenges')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(100, 60000)
   @ApiOperation({ summary: 'Get creator challenges' })
   @ApiResponse({ status: 200, description: 'Challenges list' })
   async getChallenges(@Param('creatorId') creatorId?: string): Promise<CreatorResponse> {
@@ -310,7 +322,7 @@ export class CreatorsController {
   async participateInChallenge(
     @Request() req: { user: { sub: string } },
     @Param('challengeId') challengeId: string,
-    @Body() body: { contentUrl: string }
+    @Body() body: PublishContentDto
   ): Promise<CreatorResponse> {
     return this.creatorsService.participateInChallenge(req.user.sub, challengeId, body.contentUrl);
   }

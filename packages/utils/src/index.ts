@@ -148,3 +148,12 @@ export function daysSince(date: Date | string): number {
   const dateObj = typeof date === 'string' ? parseISO(date) : date;
   return differenceInDays(new Date(), dateObj);
 }
+
+export function toNumber(value: string | number | undefined): number {
+  if (value === undefined || value === null) return 0;
+  return typeof value === 'number' ? value : parseFloat(value) || 0;
+}
+
+export function addDecimals(value: number, decimals: number = 2): string {
+  return value.toFixed(decimals);
+}

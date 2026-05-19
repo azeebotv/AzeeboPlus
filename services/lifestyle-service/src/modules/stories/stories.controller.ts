@@ -1,6 +1,9 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, Query } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { AuthGuard } from '@nestjs/passport';
 import { StoriesService } from './stories.service';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { Roles } from '../../common/decorators/roles.decorator';
 
 interface CreateStoryDto {
   title: string;
@@ -19,7 +22,7 @@ interface UpdateStoryDto {
 }
 
 @ApiTags('Stories')
-@Controller('stories')
+@Controller('v1/lifestyle/stories')
 export class StoriesController {
   constructor(private readonly storiesService: StoriesService) {}
 
@@ -49,6 +52,8 @@ export class StoriesController {
   }
 
   @Post()
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('ADMIN', 'MODERATOR')
   @ApiOperation({ summary: 'Create new story' })
   @ApiResponse({ status: 201, description: 'Story created' })
   async createStory(@Body() data: CreateStoryDto): Promise<unknown> {
@@ -56,6 +61,8 @@ export class StoriesController {
   }
 
   @Patch(':id')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('ADMIN', 'MODERATOR')
   @ApiOperation({ summary: 'Update story' })
   @ApiResponse({ status: 200, description: 'Story updated' })
   async updateStory(@Param('id') id: string, @Body() data: UpdateStoryDto): Promise<unknown> {
@@ -63,6 +70,8 @@ export class StoriesController {
   }
 
   @Delete(':id')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('ADMIN', 'MODERATOR')
   @ApiOperation({ summary: 'Delete story' })
   @ApiResponse({ status: 200, description: 'Story deleted' })
   async deleteStory(@Param('id') id: string): Promise<unknown> {

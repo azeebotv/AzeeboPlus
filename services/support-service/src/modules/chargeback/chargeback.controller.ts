@@ -20,10 +20,12 @@ import {
 import { ApiResponseWrapper } from '@azeebo/shared-types';
 import { Prisma } from '../../prisma/client';
 import { AuthGuard } from '../../common/guards/auth.guard';
+import { AdminGuard } from '../../common/guards/admin.guard';
 
 interface AuthenticatedRequest {
   user: {
     id: string;
+    role?: string;
   };
 }
 
@@ -49,6 +51,7 @@ export class ChargebackController {
 
   @Get('pending')
   @ApiOperation({ summary: 'Get pending chargebacks (admin)' })
+  @UseGuards(AdminGuard)
   async getPendingChargebacks(@Query() query: ChargebackQueryDto) {
     const result = await this.chargebackService.getPendingChargebacks(query);
     return ApiResponseWrapper.paginated(
@@ -72,7 +75,8 @@ export class ChargebackController {
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Get chargeback by ID' })
+  @ApiOperation({ summary: 'Get chargeback by ID (admin)' })
+  @UseGuards(AdminGuard)
   async getChargeback(@Param('id') id: string) {
     const chargeback = await this.chargebackService.getChargebackById(id);
     return ApiResponseWrapper.success({ chargeback });
@@ -87,6 +91,7 @@ export class ChargebackController {
 
   @Patch(':id/resolve')
   @ApiOperation({ summary: 'Resolve chargeback (admin)' })
+  @UseGuards(AdminGuard)
   async resolveChargeback(
     @Param('id') id: string,
     @Request() req: AuthenticatedRequest,

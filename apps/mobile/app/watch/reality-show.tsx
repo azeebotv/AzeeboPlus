@@ -1,47 +1,87 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Modal } from 'react-native';
 import { useColorScheme } from 'react-native';
+import { useRouter } from 'expo-router';
+
+const PLACEHOLDER_IMAGE = '';
 
 const contestants = [
-  { id: '1', name: 'Maria', status: 'active', votes: 125000, avatar: '👩' },
-  { id: '2', name: 'John', status: 'active', votes: 98000, avatar: '👨' },
-  { id: '3', name: 'Sarah', status: 'evicted', votes: 0, avatar: '👩' },
-  { id: '4', name: 'Mike', status: 'active', votes: 87000, avatar: '👨' },
-  { id: '5', name: 'Lisa', status: 'active', votes: 112000, avatar: '👩' },
-  { id: '6', name: 'David', status: 'active', votes: 76000, avatar: '👨' },
+  { id: '1', name: 'Maria', status: 'active', votes: 125000, avatar: '👩', percentage: 28 },
+  { id: '2', name: 'Lisa', status: 'active', votes: 112000, avatar: '👩', percentage: 25 },
+  { id: '3', name: 'John', status: 'active', votes: 98000, avatar: '👨', percentage: 22 },
+  { id: '4', name: 'Mike', status: 'active', votes: 87000, avatar: '👨', percentage: 19 },
+  { id: '5', name: 'David', status: 'active', votes: 76000, avatar: '👨', percentage: 17 },
+  { id: '6', name: 'Sarah', status: 'evicted', votes: 0, avatar: '👩', percentage: 0 },
 ];
 
 export default function RealityShowScreen() {
   const colorScheme = useColorScheme();
+  const router = useRouter();
   const [selectedContestant, setSelectedContestant] = useState<string | null>(null);
   const [voteAmount, setVoteAmount] = useState(1);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [voteSuccess, setVoteSuccess] = useState(false);
+  const [walletBalance, setWalletBalance] = useState(2500);
+  const [totalVotes, setTotalVotes] = useState(500000);
+
+  const voteCost = voteAmount * 100;
 
   const handleVote = () => {
-    if (!selectedContestant) return;
-    alert(`Voted ${voteAmount} times for ${contestants.find(c => c.id === selectedContestant)?.name}`);
+    if (!selectedContestant || walletBalance < voteCost) return;
+    setShowConfirmation(true);
+  };
+
+  const confirmVote = () => {
+    setWalletBalance(prev => prev - voteCost);
+    const contestant = contestants.find(c => c.id === selectedContestant);
+    if (contestant) {
+      contestant.votes += voteAmount;
+      setTotalVotes(prev => prev + voteAmount);
+    }
+    setVoteSuccess(true);
+    setTimeout(() => {
+      setShowConfirmation(false);
+      setVoteSuccess(false);
+      setSelectedContestant(null);
+      setVoteAmount(1);
+    }, 2000);
   };
 
   return (
     <ScrollView style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' }]}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton}>
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
           Big Brother Naija
         </Text>
         <View style={styles.liveBadge}>
-          <Text style={styles.liveIcon}>🔴</Text>
+          <View style={styles.liveDot} />
           <Text style={styles.liveText}>LIVE</Text>
         </View>
       </View>
 
       <View style={styles.heroSection}>
-        <Image source={{ uri: 'https://via.placeholder.com/400x225' }} style={styles.heroImage} />
+        <Image source={{ uri: PLACEHOLDER_IMAGE }} style={styles.heroImage} />
         <View style={styles.heroOverlay}>
           <Text style={styles.heroTitle}>Live Eviction Night</Text>
           <Text style={styles.heroSubtitle}>Season 9 | Day 42</Text>
         </View>
+        <View style={styles.viewerCount}>
+          <Text style={styles.viewerIcon}>👥</Text>
+          <Text style={styles.viewerText}>2.5M watching</Text>
+        </View>
+      </View>
+
+      <View style={styles.walletBar}>
+        <View style={styles.walletInfo}>
+          <Text style={styles.walletLabel}>Wallet Balance</Text>
+          <Text style={styles.walletAmount}>₦{walletBalance.toLocaleString()}</Text>
+        </View>
+        <TouchableOpacity style={styles.fundButton}>
+          <Text style={styles.fundText}>Fund Wallet</Text>
+        </TouchableOpacity>
       </View>
 
       <View style={styles.voteSection}>
@@ -67,6 +107,13 @@ export default function RealityShowScreen() {
           </TouchableOpacity>
         </View>
 
+        <View style={styles.priceInfo}>
+          <Text style={styles.priceText}>Total: <Text style={styles.priceAmount}>₦{voteCost}</Text></Text>
+          {walletBalance < voteCost && (
+            <Text style={styles.insufficientFunds}>Insufficient funds</Text>
+          )}
+        </View>
+
         <View style={styles.contestantsGrid}>
           {contestants.map((contestant) => (
             <TouchableOpacity
@@ -87,7 +134,7 @@ export default function RealityShowScreen() {
               {contestant.status === 'evicted' ? (
                 <Text style={styles.evictedBadge}>Evicted</Text>
               ) : (
-                <Text style={styles.voteCount}>{(contestant.votes / 1000).toFixed(0)}K votes</Text>
+                <Text style={styles.voteCount}>{(contestant.votes / 1000).toFixed(0)}K</Text>
               )}
             </TouchableOpacity>
           ))}
@@ -95,32 +142,11 @@ export default function RealityShowScreen() {
 
         <TouchableOpacity
           onPress={handleVote}
-          disabled={!selectedContestant}
-          style={[styles.submitVoteButton, !selectedContestant && { backgroundColor: '#ccc' }]}
+          disabled={!selectedContestant || walletBalance < voteCost}
+          style={[styles.submitVoteButton, !selectedContestant && { backgroundColor: '#333' }]}
         >
           <Text style={styles.submitVoteText}>Confirm Vote</Text>
         </TouchableOpacity>
-      </View>
-
-      <View style={styles.predictionSection}>
-        <Text style={[styles.sectionTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
-          Predictions
-        </Text>
-        <View style={styles.predictionCard}>
-          <Text style={[styles.predictionTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
-            Who will be evicted tonight?
-          </Text>
-          <View style={styles.predictionOptions}>
-            {contestants.filter(c => c.status === 'active').map((contestant) => (
-              <TouchableOpacity key={contestant.id} style={styles.predictionOption}>
-                <Text style={styles.predictionAvatar}>{contestant.avatar}</Text>
-                <Text style={[styles.predictionName, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
-                  {contestant.name}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
       </View>
 
       <View style={styles.leaderboardSection}>
@@ -130,16 +156,86 @@ export default function RealityShowScreen() {
         <View style={styles.leaderboard}>
           {contestants.filter(c => c.status === 'active').sort((a, b) => b.votes - a.votes).map((contestant, index) => (
             <View key={contestant.id} style={styles.leaderboardItem}>
-              <Text style={[styles.rank, index < 3 && styles.topRank]}>{index + 1}</Text>
+              <View style={[styles.rank, index < 3 && styles.topRank]}>
+                {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : index + 1}
+              </View>
               <Text style={styles.leaderboardAvatar}>{contestant.avatar}</Text>
-              <Text style={[styles.leaderboardName, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
-                {contestant.name}
-              </Text>
+              <View style={styles.leaderboardInfo}>
+                <Text style={[styles.leaderboardName, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
+                  {contestant.name}
+                </Text>
+                <View style={styles.progressBar}>
+                  <View style={[styles.progressFill, { width: `${(contestant.votes / totalVotes) * 100}%` }]} />
+                </View>
+              </View>
               <Text style={styles.leaderboardVotes}>{(contestant.votes / 1000).toFixed(0)}K</Text>
             </View>
           ))}
         </View>
       </View>
+
+      <View style={styles.predictionSection}>
+        <Text style={[styles.sectionTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
+          Predictions
+        </Text>
+        <TouchableOpacity 
+          style={styles.predictionCard}
+          onPress={() => router.push('/prediction')}
+        >
+          <Text style={[styles.predictionTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
+            Who will be evicted tonight?
+          </Text>
+          <View style={styles.predictionOptions}>
+            {contestants.filter(c => c.status === 'active').slice(0, 4).map((contestant) => (
+              <TouchableOpacity key={contestant.id} style={styles.predictionOption}>
+                <Text style={styles.predictionAvatar}>{contestant.avatar}</Text>
+                <Text style={[styles.predictionName, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
+                  {contestant.name}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+          <Text style={styles.predictionHint}>Tap to predict →</Text>
+        </TouchableOpacity>
+      </View>
+
+      <Modal visible={showConfirmation} transparent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            {voteSuccess ? (
+              <View style={styles.successContent}>
+                <Text style={styles.successIcon}>✅</Text>
+                <Text style={styles.successTitle}>Vote Successful!</Text>
+                <Text style={styles.successMessage}>Your {voteAmount} vote{voteAmount > 1 ? 's' : ''} for {contestants.find(c => c.id === selectedContestant)?.name} have been counted.</Text>
+              </View>
+            ) : (
+              <>
+                <Text style={styles.modalTitle}>Confirm Vote</Text>
+                <View style={styles.modalDetails}>
+                  <Text style={styles.modalDetailText}>
+                    You are voting <Text style={styles.modalHighlight}>{voteAmount} time{voteAmount > 1 ? 's' : ''}</Text> for{' '}
+                    <Text style={styles.modalHighlight}>{contestants.find(c => c.id === selectedContestant)?.name}</Text>
+                  </Text>
+                  <Text style={styles.modalDetailText}>
+                    Total cost: <Text style={styles.modalHighlight}>₦{voteCost}</Text>
+                  </Text>
+                  <Text style={styles.modalDetailText}>
+                    Wallet balance after: <Text style={styles.modalHighlight}>₦{(walletBalance - voteCost).toLocaleString()}</Text>
+                  </Text>
+                </View>
+                <View style={styles.modalButtons}>
+                  <TouchableOpacity style={styles.modalCancel} onPress={() => setShowConfirmation(false)}>
+                    <Text style={styles.modalCancelText}>Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.modalConfirm} onPress={confirmVote}>
+                    <Text style={styles.modalConfirmText}>Confirm</Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            )}
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 }
@@ -147,12 +243,14 @@ export default function RealityShowScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    paddingBottom: 32,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 16,
+    paddingTop: 40,
     backgroundColor: '#1a1a1a',
   },
   backButton: {
@@ -180,8 +278,11 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 20,
   },
-  liveIcon: {
-    fontSize: 12,
+  liveDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#ffffff',
   },
   liveText: {
     color: '#fff',
@@ -214,6 +315,59 @@ const styles = StyleSheet.create({
     fontSize: 14,
     opacity: 0.8,
   },
+  viewerCount: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  viewerIcon: {
+    fontSize: 14,
+  },
+  viewerText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  walletBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    backgroundColor: '#1a1a1a',
+    borderBottomWidth: 1,
+    borderBottomColor: '#2a2a2a',
+  },
+  walletInfo: {
+    flex: 1,
+  },
+  walletLabel: {
+    color: '#888',
+    fontSize: 12,
+    marginBottom: 4,
+  },
+  walletAmount: {
+    color: '#8B5CF6',
+    fontSize: 20,
+    fontWeight: '700',
+  },
+  fundButton: {
+    backgroundColor: '#8B5CF6',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  fundText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
   voteSection: {
     padding: 16,
   },
@@ -227,7 +381,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 16,
-    marginBottom: 20,
+    marginBottom: 12,
   },
   voteButton: {
     width: 48,
@@ -245,8 +399,25 @@ const styles = StyleSheet.create({
   voteAmountText: {
     fontSize: 20,
     fontWeight: '700',
-    minWidth: 80,
+    minWidth: 100,
     textAlign: 'center',
+  },
+  priceInfo: {
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  priceText: {
+    color: '#888',
+    fontSize: 14,
+  },
+  priceAmount: {
+    color: '#8B5CF6',
+    fontWeight: '700',
+  },
+  insufficientFunds: {
+    color: '#EF4444',
+    fontSize: 12,
+    marginTop: 4,
   },
   contestantsGrid: {
     flexDirection: 'row',
@@ -259,7 +430,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 12,
     borderRadius: 12,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: '#1a1a1a',
     borderWidth: 1,
     borderColor: 'transparent',
   },
@@ -301,49 +472,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-  predictionSection: {
-    padding: 16,
-    paddingTop: 0,
-  },
-  predictionCard: {
-    backgroundColor: '#f8f9fa',
-    borderRadius: 12,
-    padding: 16,
-  },
-  predictionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 12,
-  },
-  predictionOptions: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  predictionOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    padding: 8,
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-  },
-  predictionAvatar: {
-    fontSize: 20,
-  },
-  predictionName: {
-    fontSize: 13,
-    fontWeight: '500',
-  },
   leaderboardSection: {
     padding: 16,
     paddingTop: 0,
-    paddingBottom: 32,
   },
   leaderboard: {
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#1a1a1a',
     borderRadius: 12,
     overflow: 'hidden',
   },
@@ -352,13 +486,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    borderBottomColor: '#2a2a2a',
   },
   rank: {
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: '#e0e0e0',
+    backgroundColor: '#333',
     alignItems: 'center',
     justifyContent: 'center',
     fontSize: 14,
@@ -373,14 +507,151 @@ const styles = StyleSheet.create({
     fontSize: 24,
     marginRight: 12,
   },
-  leaderboardName: {
+  leaderboardInfo: {
     flex: 1,
+  },
+  leaderboardName: {
     fontSize: 14,
     fontWeight: '500',
+    marginBottom: 4,
+  },
+  progressBar: {
+    height: 4,
+    backgroundColor: '#333',
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: '#8B5CF6',
+    borderRadius: 2,
   },
   leaderboardVotes: {
     fontSize: 14,
     fontWeight: '600',
     color: '#8B5CF6',
+  },
+  predictionSection: {
+    padding: 16,
+    paddingTop: 0,
+  },
+  predictionCard: {
+    backgroundColor: '#1a1a1a',
+    borderRadius: 12,
+    padding: 16,
+  },
+  predictionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 12,
+  },
+  predictionOptions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 12,
+  },
+  predictionOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    padding: 8,
+    backgroundColor: '#2a2a2a',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#3a3a3a',
+  },
+  predictionAvatar: {
+    fontSize: 20,
+  },
+  predictionName: {
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  predictionHint: {
+    color: '#8B5CF6',
+    fontSize: 13,
+    fontWeight: '500',
+    textAlign: 'right',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
+  },
+  modalContent: {
+    backgroundColor: '#1a1a1a',
+    borderRadius: 16,
+    padding: 24,
+    width: '100%',
+    maxWidth: 350,
+  },
+  modalTitle: {
+    color: '#fff',
+    fontSize: 20,
+    fontWeight: '700',
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  modalDetails: {
+    marginBottom: 20,
+  },
+  modalDetailText: {
+    color: '#aaa',
+    fontSize: 14,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  modalHighlight: {
+    color: '#8B5CF6',
+    fontWeight: '600',
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  modalCancel: {
+    flex: 1,
+    backgroundColor: '#333',
+    padding: 12,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  modalCancelText: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  modalConfirm: {
+    flex: 2,
+    backgroundColor: '#8B5CF6',
+    padding: 12,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  modalConfirmText: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  successContent: {
+    alignItems: 'center',
+  },
+  successIcon: {
+    fontSize: 48,
+    marginBottom: 12,
+  },
+  successTitle: {
+    color: '#fff',
+    fontSize: 20,
+    fontWeight: '700',
+    marginBottom: 8,
+  },
+  successMessage: {
+    color: '#aaa',
+    fontSize: 14,
+    textAlign: 'center',
   },
 });

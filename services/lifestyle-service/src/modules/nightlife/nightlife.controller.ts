@@ -2,8 +2,40 @@ import { Controller, Get, Post, Patch, Delete, Body, Param, Query } from '@nestj
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { NightlifeService } from './nightlife.service';
 
+interface CreateNightlifeData {
+  name: string;
+  type: string;
+  description: string;
+  coverImage?: string;
+  address?: string;
+  city: string;
+  country: string;
+  latitude?: number;
+  longitude?: number;
+  hours?: string;
+  dressCode?: string;
+  coverCharge?: number;
+  rating?: number;
+  createdById: string;
+}
+
+interface UpdateNightlifeData {
+  name?: string;
+  type?: string;
+  description?: string;
+  coverImage?: string;
+  address?: string;
+  latitude?: number;
+  longitude?: number;
+  hours?: string;
+  dressCode?: string;
+  coverCharge?: number;
+  rating?: number;
+  status?: string;
+}
+
 @ApiTags('Nightlife')
-@Controller('nightlife')
+@Controller('v1/lifestyle/nightlife')
 export class NightlifeController {
   constructor(private readonly nightlifeService: NightlifeService) {}
 
@@ -37,8 +69,8 @@ export class NightlifeController {
   @Post()
   @ApiOperation({ summary: 'Create nightlife entry' })
   @ApiResponse({ status: 201, description: 'Entry created' })
-  async createEntry(@Body() body: Record<string, unknown>): Promise<unknown> {
-    return this.nightlifeService.createEntry(body as Record<string, string>);
+  async createEntry(@Body() body: CreateNightlifeData): Promise<unknown> {
+    return this.nightlifeService.createEntry(body);
   }
 
   @Patch(':id')

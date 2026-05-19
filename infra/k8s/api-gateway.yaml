@@ -8,6 +8,7 @@ metadata:
     tier: backend
 spec:
   replicas: 3
+  revisionHistoryLimit: 5
   selector:
     matchLabels:
       app: api-gateway
@@ -16,29 +17,77 @@ spec:
       labels:
         app: api-gateway
         tier: backend
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "3013"
+        prometheus.io/path: "/metrics"
     spec:
+      serviceAccountName: azeebo-sa
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        runAsNonRoot: true
+      terminationGracePeriodSeconds: 30
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - api-gateway
+                topologyKey: kubernetes.io/hostname
       containers:
         - name: api-gateway
           image: azeebo/api-gateway:latest
+          imagePullPolicy: Always
           ports:
-            - containerPort: 3000
+            - containerPort: 3013
+              protocol: TCP
+              name: http
           env:
             - name: NODE_ENV
               value: production
             - name: PORT
-              value: "3000"
+              value: "3013"
             - name: AUTH_SERVICE_URL
               value: http://auth-service.azeebo.svc.cluster.local:3000
             - name: USER_SERVICE_URL
               value: http://user-service.azeebo.svc.cluster.local:3001
-            - name: CONTENT_SERVICE_URL
-              value: http://content-service.azeebo.svc.cluster.local:3002
+            - name: WALLET_SERVICE_URL
+              value: http://wallet-service.azeebo.svc.cluster.local:3002
             - name: PAYMENT_SERVICE_URL
               value: http://payment-service.azeebo.svc.cluster.local:3003
+            - name: CONTENT_SERVICE_URL
+              value: http://content-service.azeebo.svc.cluster.local:3004
+            - name: SEARCH_SERVICE_URL
+              value: http://search-service.azeebo.svc.cluster.local:3005
             - name: NOTIFICATION_SERVICE_URL
-              value: http://notification-service.azeebo.svc.cluster.local:3004
+              value: http://notification-service.azeebo.svc.cluster.local:3006
+            - name: REWARD_SERVICE_URL
+              value: http://reward-service.azeebo.svc.cluster.local:3007
+            - name: ANALYTICS_SERVICE_URL
+              value: http://analytics-service.azeebo.svc.cluster.local:3008
+            - name: RECOMMENDATION_SERVICE_URL
+              value: http://recommendation-service.azeebo.svc.cluster.local:3009
+            - name: REALITY_SERVICE_URL
+              value: http://reality-service.azeebo.svc.cluster.local:3010
             - name: QUEUE_SERVICE_URL
-              value: http://queue-service.azeebo.svc.cluster.local:3005
+              value: http://queue-service.azeebo.svc.cluster.local:3015
+            - name: CREATOR_SERVICE_URL
+              value: http://creator-service.azeebo.svc.cluster.local:3018
+            - name: MEDIA_SERVICE_URL
+              value: http://media-service.azeebo.svc.cluster.local:3019
+            - name: LIFESTYLE_SERVICE_URL
+              value: http://lifestyle-service.azeebo.svc.cluster.local:3016
+            - name: VERTICAL_SERVICE_URL
+              value: http://vertical-service.azeebo.svc.cluster.local:3017
+            - name: SUPPORT_SERVICE_URL
+              value: http://support-service.azeebo.svc.cluster.local:3020
           resources:
             requests:
               memory: "128Mi"
@@ -49,15 +98,25 @@ spec:
           livenessProbe:
             httpGet:
               path: /health
-              port: 3000
+              port: 3013
             initialDelaySeconds: 30
             periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
           readinessProbe:
             httpGet:
               path: /ready
-              port: 3000
+              port: 3013
             initialDelaySeconds: 5
             periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
 ---
 apiVersion: v1
 kind: Service
@@ -66,10 +125,15 @@ metadata:
   namespace: azeebo
   labels:
     app: api-gateway
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "3013"
 spec:
   type: ClusterIP
   ports:
-    - port: 3000
-      targetPort: 3000
+    - port: 3013
+      targetPort: 3013
+      protocol: TCP
+      name: http
   selector:
     app: api-gateway

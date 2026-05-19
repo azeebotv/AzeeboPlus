@@ -5,10 +5,12 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 
 import { WalletController } from './wallet.controller';
 import { WalletService } from './wallet.service';
+import { WalletRepository } from './wallet.repository';
 import { DatabaseModule } from '../database/database.module';
 
 @Module({
   imports: [
+    ConfigModule,
     DatabaseModule,
     PassportModule,
     JwtModule.registerAsync({
@@ -23,7 +25,7 @@ import { DatabaseModule } from '../database/database.module';
     }),
   ],
   controllers: [WalletController],
-  providers: [WalletService],
-  exports: [WalletService, DatabaseModule],
+  providers: [WalletService, WalletRepository],
+  exports: [WalletService, WalletRepository, DatabaseModule],
 })
 export class WalletModule {}

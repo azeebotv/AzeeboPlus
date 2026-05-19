@@ -12,11 +12,12 @@
     "outDir": "./dist",
     "baseUrl": "./",
     "incremental": true,
+    "types": ["jest", "node", "supertest", "multer"],
     "paths": {
       "@azeebo/*": ["../../packages/*/src"],
       "@media/*": ["./*"]
     }
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.spec.ts"]
+  "exclude": ["node_modules", "dist"]
 }

@@ -64,6 +64,8 @@ model WatchHistory {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, contentId])
+  @@index([userId])
+  @@index([contentId])
   @@map("watch_history")
 }
 
@@ -76,6 +78,8 @@ model SavedItem {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, contentId])
+  @@index([userId])
+  @@index([contentId])
   @@map("saved_items")
 }
 
@@ -109,6 +113,10 @@ model WalletTransaction {
   wallet Wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
 
   @@map("wallet_transactions")
+  @@index([walletId])
+  @@index([type])
+  @@index([status])
+  @@index([createdAt])
 }
 
 model Notification {
@@ -124,6 +132,10 @@ model Notification {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("notifications")
+  @@index([userId])
+  @@index([type])
+  @@index([readAt])
+  @@index([createdAt])
 }
 
 model PaymentIntent {
@@ -568,8 +580,13 @@ model SportsEvent {
   PredictionMarket PredictionMarket?
   Highlight        Highlight[]
   Contest          Contest[]
+  fixtureMetadata  FixtureMetadata?
+  predictionReward PredictionReward?
 
   @@map("sports_events")
+  @@index([sport])
+  @@index([status])
+  @@index([startsAt])
 }
 
 model EventTeam {
@@ -599,21 +616,10 @@ model PredictionEntry {
   predictionMarketId String?
 
   @@map("prediction_entries")
-}
-
-model PredictionMarket {
-  id        String   @id @default(uuid())
-  eventId   String   @unique
-  question  String
-  options   Json
-  status    String   @default("active")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  event   SportsEvent       @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  entries PredictionEntry[]
-
-  @@map("prediction_markets")
+  @@index([userId])
+  @@index([eventId])
+  @@index([predictionMarketId])
+  @@index([createdAt])
 }
 
 model Highlight {
@@ -632,6 +638,10 @@ model Highlight {
   creator User        @relation(fields: [creatorId], references: [id], onDelete: Cascade)
 
   @@map("highlights")
+  @@index([eventId])
+  @@index([creatorId])
+  @@index([createdAt])
+  @@index([viewCount])
 }
 
 model FanBoard {
@@ -648,6 +658,10 @@ model FanBoard {
   comments FanBoardComment[]
 
   @@map("fan_boards")
+  @@index([eventId])
+  @@index([userId])
+  @@index([createdAt])
+  @@index([likes])
 }
 
 model FanBoardComment {
@@ -661,6 +675,9 @@ model FanBoardComment {
   user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("fan_board_comments")
+  @@index([fanBoardId])
+  @@index([userId])
+  @@index([createdAt])
 }
 
 model Contest {
@@ -681,6 +698,10 @@ model Contest {
   entries ContestEntry[]
 
   @@map("contests")
+  @@index([eventId])
+  @@index([status])
+  @@index([startsAt])
+  @@index([endsAt])
 }
 
 model ContestPrize {
@@ -709,6 +730,9 @@ model ContestEntry {
   sportsEventId String?
 
   @@unique([contestId, userId])
+  @@index([contestId])
+  @@index([userId])
+  @@index([score])
   @@map("contest_entries")
 }
 
@@ -750,7 +774,7 @@ model FixtureMetadata {
 
 model PredictionReward {
   id          String   @id @default(uuid())
-  eventId     String
+  eventId     String   @unique
   correctPredictions Int @default(0)
   rewardPoints Int     @default(0)
   bonusPool Decimal @default(0)

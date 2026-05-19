@@ -1,27 +1,44 @@
 import { Controller, Get, Post, Body, UseGuards, Request, Param } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
+import { RateLimitGuard, RateLimit } from '@azeebo/security';
 
 import { GamesService } from './games.service';
 import { GameResponse } from './interfaces/game-response.interface';
 
 @ApiTags('Games')
-@Controller('games')
+@Controller('v1/games')
 export class GamesController {
   constructor(private readonly gamesService: GamesService) {}
 
   @Get('home')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(100, 60000)
   @ApiOperation({ summary: 'Games home' })
   @ApiResponse({ status: 200, description: 'Games home' })
   async getHome(): Promise<GameResponse> {
     return this.gamesService.getHome();
   }
 
+  @Post('daily-challenge/submit')
+  @UseGuards(AuthGuard('jwt'))
+  @ApiOperation({ summary: 'Submit daily challenge answer' })
+  @ApiResponse({ status: 200, description: 'Answer submitted' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async submitDailyChallenge(
+    @Request() req: { user: { sub: string } },
+    @Body() body: { answer: string }
+  ): Promise<GameResponse> {
+    return this.gamesService.submitDailyChallenge(req.user.sub, body.answer);
+  }
+
   @Get('daily-challenge')
+  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Daily challenge' })
   @ApiResponse({ status: 200, description: 'Daily challenge' })
-  async getDailyChallenge(): Promise<GameResponse> {
-    return this.gamesService.getDailyChallenge();
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async getDailyChallenge(@Request() req: { user: { sub: string } }): Promise<GameResponse> {
+    return this.gamesService.getDailyChallenge(req.user.sub);
   }
 
   @Post('sessions')
@@ -50,6 +67,8 @@ export class GamesController {
   }
 
   @Get('leaderboard')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(100, 60000)
   @ApiOperation({ summary: 'Games leaderboard' })
   @ApiResponse({ status: 200, description: 'Leaderboard' })
   async getLeaderboard(): Promise<GameResponse> {

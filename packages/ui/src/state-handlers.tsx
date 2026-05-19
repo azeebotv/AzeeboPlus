@@ -227,6 +227,9 @@ export function StateHandler<T>({
   return <>{children(data)}</>;
 }
 
+export { WebErrorState as ErrorState };
+export { WebEmptyState as EmptyState };
+
 export default {
   Loading,
   WebEmptyState,

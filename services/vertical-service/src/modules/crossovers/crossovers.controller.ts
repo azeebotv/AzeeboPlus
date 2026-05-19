@@ -1,6 +1,7 @@
 import { Controller, Get, Post, Body, Param, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CrossoversService } from './crossovers.service';
+import { CreateCrossoverData, CreateRecapData } from './crossovers.service';
 
 @ApiTags('Crossovers')
 @Controller('crossovers')
@@ -28,8 +29,8 @@ export class CrossoversController {
   @Post()
   @ApiOperation({ summary: 'Create crossover' })
   @ApiResponse({ status: 201, description: 'Crossover created' })
-  async createCrossover(@Body() body: Record<string, unknown>): Promise<unknown> {
-    return this.crossoversService.createCrossover(body as Record<string, string>);
+  async createCrossover(@Body() body: CreateCrossoverData): Promise<unknown> {
+    return this.crossoversService.createCrossover(body);
   }
 
   @Get('recaps')
@@ -53,7 +54,7 @@ export class CrossoversController {
   @Post('recaps')
   @ApiOperation({ summary: 'Create recap' })
   @ApiResponse({ status: 201, description: 'Recap created' })
-  async createRecap(@Body() body: Record<string, unknown>): Promise<unknown> {
-    return this.crossoversService.createRecap(body as Record<string, string>);
+  async createRecap(@Body() body: CreateRecapData): Promise<unknown> {
+    return this.crossoversService.createRecap(body);
   }
 }

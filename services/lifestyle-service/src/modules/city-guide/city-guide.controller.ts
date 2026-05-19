@@ -2,8 +2,44 @@ import { Controller, Get, Post, Patch, Delete, Body, Param, Query } from '@nestj
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CityGuideService } from './city-guide.service';
 
+interface CreateCityGuideData {
+  name: string;
+  type: string;
+  description: string;
+  coverImage?: string;
+  address?: string;
+  city: string;
+  country: string;
+  latitude?: number;
+  longitude?: number;
+  rating?: number;
+  priceLevel?: number;
+  hours?: string;
+  phone?: string;
+  website?: string;
+  amenities?: string[];
+  createdById: string;
+}
+
+interface UpdateCityGuideData {
+  name?: string;
+  type?: string;
+  description?: string;
+  coverImage?: string;
+  address?: string;
+  latitude?: number;
+  longitude?: number;
+  rating?: number;
+  priceLevel?: number;
+  hours?: string;
+  phone?: string;
+  website?: string;
+  amenities?: string[];
+  status?: string;
+}
+
 @ApiTags('City Guide')
-@Controller('city-guide')
+@Controller('v1/lifestyle/city-guide')
 export class CityGuideController {
   constructor(private readonly cityGuideService: CityGuideService) {}
 
@@ -55,8 +91,8 @@ export class CityGuideController {
   @Post()
   @ApiOperation({ summary: 'Create entry' })
   @ApiResponse({ status: 201, description: 'Entry created' })
-  async createEntry(@Body() body: Record<string, unknown>): Promise<unknown> {
-    return this.cityGuideService.createEntry(body as Record<string, string>);
+  async createEntry(@Body() body: CreateCityGuideData): Promise<unknown> {
+    return this.cityGuideService.createEntry(body);
   }
 
   @Patch(':id')

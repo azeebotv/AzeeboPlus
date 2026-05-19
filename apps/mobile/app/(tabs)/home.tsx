@@ -13,6 +13,7 @@ import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, universeColors } from '@azeebo/design-tokens';
 import { contentApi, universeApi, type ContentItem, type Universe } from '../../src/api';
+import { LoadingState, ErrorState, EmptyState } from '../../src/components/StateContainers';
 
 // Define a local type for the combined "All" universe
 type HomeUniverse = Universe | { id: 'all'; name: string; icon: string };
@@ -26,8 +27,10 @@ export default function HomeScreen() {
   const [forYouContent, setForYouContent] = useState<ContentItem[]>([]);
   const [universes, setUniverses] = useState<HomeUniverse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
 
   const fetchData = async () => {
+    setHasError(false);
     try {
       const [trendingRes, featuredRes, universesRes] = await Promise.all([
         contentApi.getTrendingContent(5),
@@ -37,10 +40,14 @@ export default function HomeScreen() {
 
       if (trendingRes.success && trendingRes.data) {
         setTrendingContent(trendingRes.data);
+      } else {
+        setTrendingContent([]);
       }
       
       if (featuredRes.success && featuredRes.data) {
         setForYouContent(featuredRes.data);
+      } else {
+        setForYouContent([]);
       }
 
       if (universesRes.success && universesRes.data) {
@@ -48,9 +55,12 @@ export default function HomeScreen() {
           { id: 'all', name: 'All', icon: '🎬' },
           ...universesRes.data.items
         ]);
+      } else {
+        setUniverses([{ id: 'all', name: 'All', icon: '🎬' }]);
       }
     } catch (e) {
       console.error('Error fetching home data:', e);
+      setHasError(true);
     } finally {
       setIsLoading(false);
     }
@@ -72,119 +82,190 @@ export default function HomeScreen() {
   };
 
   const renderUniverseSelector = () => (
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      contentContainerStyle={styles.universeContainer}
-    >
-      {universes.map((universe) => {
-        const isActive = selectedUniverse === universe.id;
-        // Check if it's our local "All" universe
-        const isAllUniverse = universe.id === 'all';
-        return (
-          <TouchableOpacity
-            key={universe.id}
-            style={[
-              styles.universeButton,
-              isActive && {
-                backgroundColor: getUniverseColor(universe.id),
-              },
-            ]}
-            onPress={() => setSelectedUniverse(universe.id)}
-          >
-            <Text style={styles.universeEmoji}>
-              {isAllUniverse ? (universe as any).icon : '🎬'}
-            </Text>
-            <Text
+    <View accessibilityRole="tablist" accessibilityLabel="Content categories">
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.universeContainer}
+      >
+        {universes.map((universe) => {
+          const isActive = selectedUniverse === universe.id;
+          const isAllUniverse = universe.id === 'all';
+          return (
+            <TouchableOpacity
+              key={universe.id}
               style={[
-                styles.universeName,
-                isActive && styles.universeNameActive,
+                styles.universeButton,
+                isActive && {
+                  backgroundColor: getUniverseColor(universe.id),
+                },
               ]}
+              onPress={() => setSelectedUniverse(universe.id)}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: isActive }}
+              accessibilityLabel={`${universe.name} content category`}
+              accessibilityHint={`Filter content by ${universe.name}`}
             >
-              {universe.name}
-            </Text>
-          </TouchableOpacity>
-        );
-      })}
-    </ScrollView>
-  );
-
-  const renderContinueWatching = () => (
-    <View style={styles.section}>
-      <Text style={styles.sectionTitle}>Continue Watching</Text>
-      <FlatList
-        horizontal
-        data={continueWatching}
-        keyExtractor={(item) => item.id}
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.horizontalList}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={styles.continueCard}
-            onPress={() => router.push(`/watch/${item.id}`)}
-          >
-            {item.thumbnail ? (
-              <Image source={{ uri: item.thumbnail }} style={styles.thumbnail} />
-            ) : (
-              <View style={styles.thumbnail} />
-            )}
-            <Text style={styles.cardTitle} numberOfLines={1}>{item.title}</Text>
-            <Text style={styles.cardSubtitle}>{item.universe?.name}</Text>
-          </TouchableOpacity>
-        )}
-      />
+              <Text style={styles.universeEmoji}>
+                {isAllUniverse ? (universe as any).icon : '🎬'}
+              </Text>
+              <Text
+                style={[
+                  styles.universeName,
+                  isActive && styles.universeNameActive,
+                ]}
+              >
+                {universe.name}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </ScrollView>
     </View>
   );
 
-  const renderTrending = () => (
-    <View style={styles.section}>
-      <Text style={styles.sectionTitle}>Trending Now</Text>
-      <FlatList
-        horizontal
-        data={trendingContent}
-        keyExtractor={(item) => item.id}
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.horizontalList}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={styles.trendingCard}
-            onPress={() => router.push(`/watch/${item.id}`)}
-          >
-            {item.thumbnail ? (
-              <Image source={{ uri: item.thumbnail }} style={styles.trendingThumbnail} />
-            ) : (
-              <View style={styles.trendingThumbnail} />
-            )}
-            <Text style={styles.trendingTitle} numberOfLines={2}>{item.title}</Text>
-            <Text style={styles.trendingViews}>{item.universe?.name}</Text>
-          </TouchableOpacity>
-        )}
-      />
-    </View>
-  );
-
-  const renderForYou = () => (
-    <View style={styles.section}>
-      <Text style={styles.sectionTitle}>For You</Text>
-      <View style={styles.foryouGrid}>
-        {forYouContent.map((item) => (
-          <TouchableOpacity
-            key={item.id}
-            style={styles.foryouCard}
-            onPress={() => router.push(`/watch/${item.id}`)}
-          >
-            {item.thumbnail ? (
-              <Image source={{ uri: item.thumbnail }} style={styles.foryouThumbnail} />
-            ) : (
-              <View style={styles.foryouThumbnail} />
-            )}
-            <Text style={styles.foryouTitle} numberOfLines={2}>{item.title}</Text>
-            <Text style={styles.foryouMeta}>{item.universe?.name}</Text>
-          </TouchableOpacity>
-        ))}
+  const renderContinueWatching = () => {
+    if (continueWatching.length === 0) {
+      return (
+        <View style={styles.section} accessibilityRole="region" accessibilityLabel="Continue Watching section">
+          <Text style={styles.sectionTitle}>Continue Watching</Text>
+          <View style={styles.emptySection}>
+            <Text style={styles.emptyText}>No content to continue watching</Text>
+          </View>
+        </View>
+      );
+    }
+    return (
+      <View style={styles.section} accessibilityRole="region" accessibilityLabel="Continue Watching section">
+        <Text style={styles.sectionTitle}>Continue Watching</Text>
+        <FlatList
+          horizontal
+          data={continueWatching}
+          keyExtractor={(item) => item.id}
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.horizontalList}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              style={styles.continueCard}
+              onPress={() => router.push(`/watch/${item.id}`)}
+              accessibilityRole="button"
+              accessibilityLabel={`Continue watching: ${item.title} from ${item.universe?.name || 'unknown universe'}`}
+              accessibilityHint="Tap to resume watching this content"
+            >
+              {item.thumbnail ? (
+                <Image source={{ uri: item.thumbnail }} style={styles.thumbnail} />
+              ) : (
+                <View style={styles.thumbnail} />
+              )}
+              <Text style={styles.cardTitle} numberOfLines={1}>{item.title}</Text>
+              <Text style={styles.cardSubtitle}>{item.universe?.name}</Text>
+            </TouchableOpacity>
+          )}
+        />
       </View>
-    </View>
-  );
+    );
+  };
+
+  const renderTrending = () => {
+    if (trendingContent.length === 0) {
+      return (
+        <View style={styles.section} accessibilityRole="region" accessibilityLabel="Trending Now section">
+          <Text style={styles.sectionTitle}>Trending Now</Text>
+          <View style={styles.emptySection}>
+            <Text style={styles.emptyText}>No trending content available</Text>
+          </View>
+        </View>
+      );
+    }
+    return (
+      <View style={styles.section} accessibilityRole="region" accessibilityLabel="Trending Now section">
+        <Text style={styles.sectionTitle}>Trending Now</Text>
+        <FlatList
+          horizontal
+          data={trendingContent}
+          keyExtractor={(item) => item.id}
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.horizontalList}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              style={styles.trendingCard}
+              onPress={() => router.push(`/watch/${item.id}`)}
+              accessibilityRole="button"
+              accessibilityLabel={`Trending: ${item.title} from ${item.universe?.name || 'unknown universe'}`}
+              accessibilityHint="Tap to watch this trending content"
+            >
+              {item.thumbnail ? (
+                <Image source={{ uri: item.thumbnail }} style={styles.trendingThumbnail} />
+              ) : (
+                <View style={styles.trendingThumbnail} />
+              )}
+              <Text style={styles.trendingTitle} numberOfLines={2}>{item.title}</Text>
+              <Text style={styles.trendingViews}>{item.universe?.name}</Text>
+            </TouchableOpacity>
+          )}
+        />
+      </View>
+    );
+  };
+
+  const renderForYou = () => {
+    if (forYouContent.length === 0) {
+      return (
+        <View style={styles.section} accessibilityRole="region" accessibilityLabel="For You section">
+          <Text style={styles.sectionTitle}>For You</Text>
+          <View style={styles.emptySection}>
+            <Text style={styles.emptyText}>No recommendations yet</Text>
+            <Text style={styles.emptyHint}>Try watching some content to get personalized recommendations</Text>
+          </View>
+        </View>
+      );
+    }
+    return (
+      <View style={styles.section} accessibilityRole="region" accessibilityLabel="For You section">
+        <Text style={styles.sectionTitle}>For You</Text>
+        <View style={styles.foryouGrid}>
+          {forYouContent.map((item) => (
+            <TouchableOpacity
+              key={item.id}
+              style={styles.foryouCard}
+              onPress={() => router.push(`/watch/${item.id}`)}
+              accessibilityRole="button"
+              accessibilityLabel={`Recommended: ${item.title} from ${item.universe?.name || 'unknown universe'}`}
+              accessibilityHint="Tap to watch this recommended content"
+            >
+              {item.thumbnail ? (
+                <Image source={{ uri: item.thumbnail }} style={styles.foryouThumbnail} />
+              ) : (
+                <View style={styles.foryouThumbnail} />
+              )}
+              <Text style={styles.foryouTitle} numberOfLines={2}>{item.title}</Text>
+              <Text style={styles.foryouMeta}>{item.universe?.name}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+    );
+  };
+
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <LoadingState text="Loading home content..." />
+      </SafeAreaView>
+    );
+  }
+
+  if (hasError) {
+    return (
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <ErrorState
+          title="Failed to load home content"
+          description="Please check your internet connection and try again"
+          onRetry={fetchData}
+        />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -199,11 +280,22 @@ export default function HomeScreen() {
             <View style={styles.logoIcon} />
             <Text style={styles.logo}>AZEEBO+</Text>
           </View>
-          <TouchableOpacity onPress={() => router.push('/(tabs)/profile')}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>U</Text>
-            </View>
-          </TouchableOpacity>
+          <View style={styles.headerActions}>
+            <TouchableOpacity onPress={() => router.push('/(tabs)/search')} style={styles.headerButton}>
+              <Text style={styles.headerButtonText}>🔍</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => router.push('/notifications')} style={styles.headerButton}>
+              <Text style={styles.headerButtonText}>🔔</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => router.push('/(tabs)/wallet')} style={styles.headerButton}>
+              <Text style={styles.headerButtonText}>💰</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => router.push('/(tabs)/profile')}>
+              <View style={styles.avatar}>
+                <Text style={styles.avatarText}>U</Text>
+              </View>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {renderUniverseSelector()}
@@ -244,6 +336,22 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: colors.text.primary,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  headerButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.bg.secondary,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  headerButtonText: {
+    fontSize: 18,
   },
   avatar: {
     width: 40,
@@ -383,5 +491,22 @@ const styles = StyleSheet.create({
   },
   bottomPadding: {
     height: 40,
+  },
+  emptySection: {
+    paddingVertical: 32,
+    alignItems: 'center',
+    backgroundColor: colors.bg.secondary,
+    marginHorizontal: 16,
+    borderRadius: 14,
+  },
+  emptyText: {
+    color: colors.text.secondary,
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  emptyHint: {
+    color: colors.text.tertiary,
+    fontSize: 12,
+    marginTop: 8,
   },
 });

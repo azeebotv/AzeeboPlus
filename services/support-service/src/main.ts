@@ -1,13 +1,62 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
+import helmet from 'helmet';
+import { GlobalExceptionFilter } from '@azeebo/error-handling';
+import { LoggingInterceptor } from '@azeebo/logger';
+import { validateEnvironment } from '@azeebo/shared-types';
 
 async function bootstrap() {
+  validateEnvironment(process.env);
+
   const app = await NestFactory.create(AppModule);
+  const configService = app.get(ConfigService);
+
+  app.useGlobalFilters(new GlobalExceptionFilter());
+  
+  app.useGlobalInterceptors(new LoggingInterceptor());
+
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          styleSrc: ["'self'", "'unsafe-inline'"],
+          imgSrc: ["'self'", 'data:', 'https:'],
+          scriptSrc: ["'self'"],
+          connectSrc: ["'self'"],
+          fontSrc: ["'self'"],
+          objectSrc: ["'none'"],
+          mediaSrc: ["'self'"],
+          frameSrc: ["'none'"],
+        },
+      },
+      crossOriginEmbedderPolicy: true,
+      crossOriginOpenerPolicy: true,
+      crossOriginResourcePolicy: { policy: 'same-origin' },
+      dnsPrefetchControl: { allow: false },
+      frameguard: { action: 'deny' },
+      hsts: {
+        maxAge: 31536000,
+        includeSubDomains: true,
+        preload: true,
+      },
+      ieNoOpen: true,
+      noSniff: true,
+      referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+      xssFilter: true,
+    })
+  );
+
+  const allowedOrigins = configService.get<string>('ALLOWED_ORIGINS')?.split(',');
+  if (!allowedOrigins && process.env.NODE_ENV === 'production') {
+    throw new Error('ALLOWED_ORIGINS environment variable is required in production');
+  }
 
   app.enableCors({
-    origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'],
+    origin: allowedOrigins || ['http://localhost:3000'],
     credentials: true,
   });
 
@@ -21,19 +70,21 @@ async function bootstrap() {
 
   app.enableShutdownHooks();
 
-  const config = new DocumentBuilder()
-    .setTitle('Azeebo+ Support Service')
-    .setDescription('Support workflows API for refunds, chargebacks, appeals, and more')
-    .setVersion('1.0')
-    .addBearerAuth()
-    .build();
+  if (process.env.NODE_ENV !== 'production') {
+    const config = new DocumentBuilder()
+      .setTitle('Azeebo+ Support Service')
+      .setDescription('Support workflows API for refunds, chargebacks, appeals, and more')
+      .setVersion('1.0')
+      .addBearerAuth()
+      .build();
 
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api/docs', app, document);
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('api/docs', app, document);
+  }
 
   const port = process.env.PORT || 3020;
   await app.listen(port);
-  console.log(`Support service running on port ${port}`);
+  Logger.log(`Support service running on port ${port}`);
 }
 
 bootstrap();

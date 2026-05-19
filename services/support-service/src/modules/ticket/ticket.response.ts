@@ -13,7 +13,7 @@ interface TicketError {
 }
 
 export class TicketResponse {
-  success: boolean;
+  success: boolean = false;
   data?: Record<string, unknown>;
   error?: TicketError;
   meta?: TicketMeta;

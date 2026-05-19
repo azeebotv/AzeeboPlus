@@ -2,7 +2,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { WalletService } from './wallet.service';
 import { PrismaService } from '../database/prisma.service';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
-import { Wallet, WalletTransaction } from '@prisma/client';
+import { Wallet, WalletTransaction, Prisma } from '../../prisma/client';
+import { ConfigModule } from '@nestjs/config';
 
 jest.mock('../database/prisma.service');
 
@@ -13,9 +14,9 @@ describe('WalletService Integration', () => {
   const mockWallet: Wallet = {
     id: 'wallet-123',
     userId: 'user-123',
-    balance: 500,
-    bonusBalance: 100,
-    promoBalance: 50,
+    balance: new Prisma.Decimal(500),
+    bonusBalance: new Prisma.Decimal(100),
+    promoBalance: new Prisma.Decimal(50),
     currency: 'NGN',
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -25,17 +26,23 @@ describe('WalletService Integration', () => {
     id: 'transaction-123',
     walletId: 'wallet-123',
     type: 'bonus',
-    amount: 100,
+    amount: new Prisma.Decimal(100),
     status: 'completed',
     description: 'Bonus credit: Referral bonus',
     reference: null,
     metadata: null,
+    idempotencyKey: null,
+    provider: null,
+    providerRef: null,
     createdAt: new Date(),
     updatedAt: new Date(),
   };
 
   beforeEach(async () => {
+    process.env.POINTS_TO_NAIRA_RATE = '100';
+
     const module: TestingModule = await Test.createTestingModule({
+      imports: [ConfigModule.forRoot()],
       providers: [
         WalletService,
         {
@@ -49,7 +56,13 @@ describe('WalletService Integration', () => {
               create: jest.fn(),
               findMany: jest.fn(),
             },
-            $transaction: jest.fn(),
+            $transaction: jest.fn((callback) => {
+              const mockTx = {
+                walletTransaction: { create: jest.fn().mockResolvedValue(mockTransaction) },
+                wallet: { update: jest.fn().mockResolvedValue({ ...mockWallet, bonusBalance: new Prisma.Decimal(200) }) },
+              };
+              return callback(mockTx);
+            }),
           },
         },
       ],
@@ -69,21 +82,19 @@ describe('WalletService Integration', () => {
       const amount = 100;
       const reason = 'Referral bonus';
 
+      (prisma.wallet.findUnique as jest.Mock).mockResolvedValue(mockWallet);
       (prisma.walletTransaction.create as jest.Mock).mockResolvedValue(mockTransaction);
       (prisma.wallet.update as jest.Mock).mockResolvedValue({
         ...mockWallet,
-        bonusBalance: 200,
+        bonusBalance: new Prisma.Decimal(200),
       });
 
       const result = await service.addBonusCredit(walletId, amount, reason);
 
       expect(result.success).toBe(true);
-      if ('amount' in (result.data ?? {})) {
-        expect(result.data.amount).toBe(amount);
-      }
-      if ('reason' in (result.data ?? {})) {
-        expect(result.data.reason).toBe(reason);
-      }
+      const bonusData = result.data as { amount?: number; reason?: string };
+      expect(bonusData?.amount).toBe(amount);
+      expect(bonusData?.reason).toBe(reason);
     });
   });
 
@@ -98,26 +109,24 @@ describe('WalletService Integration', () => {
         ...mockTransaction,
         id: 'transaction-456',
         type: 'promo',
-        amount,
+        amount: new Prisma.Decimal(amount),
         description: `Promo credit: ${promoCode}`,
         metadata: { promoCode, expiresAt: expiresAt.toISOString() },
       };
 
+      (prisma.wallet.findUnique as jest.Mock).mockResolvedValue(mockWallet);
       (prisma.walletTransaction.create as jest.Mock).mockResolvedValue(promoTransaction);
       (prisma.wallet.update as jest.Mock).mockResolvedValue({
         ...mockWallet,
-        promoBalance: 100,
+        promoBalance: new Prisma.Decimal(100),
       });
 
       const result = await service.addPromoCredit(walletId, amount, promoCode, expiresAt);
 
       expect(result.success).toBe(true);
-      if ('amount' in (result.data ?? {})) {
-        expect(result.data.amount).toBe(amount);
-      }
-      if ('promoCode' in (result.data ?? {})) {
-        expect(result.data.promoCode).toBe(promoCode);
-      }
+      const data = result.data as { amount?: number; promoCode?: string };
+      expect(data?.amount).toBe(amount);
+      expect(data?.promoCode).toBe(promoCode);
     });
   });
 
@@ -132,11 +141,14 @@ describe('WalletService Integration', () => {
           id: 'transaction-123',
           walletId,
           type: 'credit',
-          amount: 1000,
+          amount: new Prisma.Decimal(1000),
           status: 'completed',
           description: 'Wallet funding',
           reference: null,
           metadata: null,
+          idempotencyKey: null,
+          provider: null,
+          providerRef: null,
           createdAt: new Date('2024-06-01'),
           updatedAt: new Date('2024-06-01'),
         },
@@ -147,9 +159,8 @@ describe('WalletService Integration', () => {
       const result = await service.getTransactionAuditTrail(walletId, startDate, endDate);
 
       expect(result.success).toBe(true);
-      if ('totalTransactions' in (result.data ?? {})) {
-        expect(result.data.totalTransactions).toBe(1);
-      }
+      const auditData = result.data as { totalTransactions?: number };
+      expect(auditData?.totalTransactions).toBe(1);
     });
   });
 
@@ -157,6 +168,8 @@ describe('WalletService Integration', () => {
     it('should throw BadRequestException if points are invalid', async () => {
       const userId = 'user-123';
       const points = 0;
+
+      (prisma.wallet.findUnique as jest.Mock).mockResolvedValue(mockWallet);
 
       await expect(service.redeemReward(userId, points)).rejects.toThrow(BadRequestException);
     });

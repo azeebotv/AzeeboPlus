@@ -5,20 +5,20 @@ import {
   SupportTicketCategory,
   SupportTicketPriority,
   SupportTicketStatus,
-} from '../../prisma/client';
+} from '../../../prisma/client';
 
 export class CreateTicketDto {
   @ApiProperty({ enum: SupportTicketCategory })
   @IsEnum(SupportTicketCategory)
-  category: SupportTicketCategory;
+  category: SupportTicketCategory = 'REFUND' as SupportTicketCategory;
 
   @ApiProperty()
   @IsString()
-  subject: string;
+  subject: string = '';
 
   @ApiProperty()
   @IsString()
-  description: string;
+  description: string = '';
 
   @ApiPropertyOptional({ enum: SupportTicketPriority })
   @IsOptional()
@@ -34,7 +34,7 @@ export class CreateTicketDto {
 export class AddMessageDto {
   @ApiProperty()
   @IsString()
-  message: string;
+  message: string = '';
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -44,7 +44,7 @@ export class AddMessageDto {
 export class AssignTicketDto {
   @ApiProperty()
   @IsString()
-  assignedTo: string;
+  assignedTo: string = '';
 }
 
 export class TicketQueryDto {
@@ -81,7 +81,7 @@ export class TicketQueryDto {
 export class UpdateStatusDto {
   @ApiProperty({ enum: SupportTicketStatus })
   @IsEnum(SupportTicketStatus)
-  status: SupportTicketStatus;
+  status: SupportTicketStatus = 'OPEN' as SupportTicketStatus;
 
   @ApiPropertyOptional()
   @IsOptional()

@@ -5,15 +5,15 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 export class CreateSuspensionDto {
   @ApiProperty()
   @IsString()
-  ticketId: string;
+  ticketId: string = '';
 
   @ApiProperty()
   @IsString()
-  userId: string;
+  userId: string = '';
 
   @ApiProperty()
   @IsString()
-  reason: string;
+  reason: string = '';
 
   @ApiPropertyOptional()
   @IsOptional()

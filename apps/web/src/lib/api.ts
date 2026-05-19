@@ -333,7 +333,7 @@ class ApiClient {
     },
 
     register: async (data: RegisterRequest): Promise<ApiResponse<AuthResponse>> => {
-      const response = await this.request<AuthResponse>('/auth/register', {
+      const response = await this.request<AuthResponse>('/auth/signup', {
         method: 'POST',
         body: JSON.stringify(data),
       });
@@ -363,7 +363,7 @@ class ApiClient {
     },
 
     requestPasswordReset: async (email: string): Promise<ApiResponse<{ message: string }>> => {
-      return this.request<{ message: string }>('/auth/password/reset-request', {
+      return this.request<{ message: string }>('/auth/forgot-password', {
         method: 'POST',
         body: JSON.stringify({ email }),
       });
@@ -373,21 +373,35 @@ class ApiClient {
       token: string,
       newPassword: string
     ): Promise<ApiResponse<{ message: string }>> => {
-      return this.request<{ message: string }>('/auth/password/reset', {
+      return this.request<{ message: string }>('/auth/reset-password', {
         method: 'POST',
         body: JSON.stringify({ token, newPassword }),
+      });
+    },
+
+    verifyEmail: async (token: string): Promise<ApiResponse<{ message: string }>> => {
+      return this.request<{ message: string }>('/auth/verify-email', {
+        method: 'POST',
+        body: JSON.stringify({ token }),
+      });
+    },
+
+    resendVerification: async (email: string): Promise<ApiResponse<{ message: string }>> => {
+      return this.request<{ message: string }>('/auth/resend-verification', {
+        method: 'POST',
+        body: JSON.stringify({ email }),
       });
     },
   };
 
   user = {
     getProfile: async (): Promise<ApiResponse<User>> => {
-      return this.request<User>('/user/profile');
+      return this.request<User>('/users/me');
     },
 
     updateProfile: async (data: Partial<User>): Promise<ApiResponse<User>> => {
-      return this.request<User>('/user/profile', {
-        method: 'PUT',
+      return this.request<User>('/users/me', {
+        method: 'PATCH',
         body: JSON.stringify(data),
       });
     },
@@ -397,7 +411,7 @@ class ApiClient {
       limit = 20
     ): Promise<ApiResponse<PaginatedResponse<ContentItem>>> => {
       return this.request<PaginatedResponse<ContentItem>>(
-        `/user/history?page=${page}&limit=${limit}`
+        `/users/me/history?page=${page}&limit=${limit}`
       );
     },
 
@@ -405,21 +419,21 @@ class ApiClient {
       contentId: string,
       progress = 0
     ): Promise<ApiResponse<{ message: string }>> => {
-      return this.request<{ message: string }>('/user/history', {
+      return this.request<{ message: string }>('/users/me/history', {
         method: 'POST',
         body: JSON.stringify({ contentId, progress }),
       });
     },
 
     getPreferences: async (): Promise<ApiResponse<Record<string, unknown>>> => {
-      return this.request<Record<string, unknown>>('/user/preferences');
+      return this.request<Record<string, unknown>>('/users/me/preferences');
     },
 
     updatePreferences: async (
       preferences: Record<string, unknown>
     ): Promise<ApiResponse<Record<string, unknown>>> => {
-      return this.request<Record<string, unknown>>('/user/preferences', {
-        method: 'PUT',
+      return this.request<Record<string, unknown>>('/users/me/preferences', {
+        method: 'PATCH',
         body: JSON.stringify(preferences),
       });
     },
@@ -508,7 +522,7 @@ class ApiClient {
 
   wallet = {
     getBalance: async (): Promise<ApiResponse<WalletBalance>> => {
-      return this.request<WalletBalance>('/wallet/balance');
+      return this.request<WalletBalance>('/wallet');
     },
 
     getTransactions: async (
@@ -539,6 +553,20 @@ class ApiClient {
         body: JSON.stringify({ amount, bankDetails }),
       });
     },
+
+    transfer: async (
+      amount: number,
+      recipientId: string
+    ): Promise<ApiResponse<{ message: string }>> => {
+      return this.request<{ message: string }>('/wallet/transfer', {
+        method: 'POST',
+        body: JSON.stringify({ amount, recipientId }),
+      });
+    },
+
+    getTransaction: async (transactionId: string): Promise<ApiResponse<Transaction>> => {
+      return this.request<Transaction>(`/wallet/transactions/${transactionId}`);
+    },
   };
 
   payment = {
@@ -550,7 +578,7 @@ class ApiClient {
     },
 
     verify: async (reference: string): Promise<ApiResponse<PaymentVerifyResponse>> => {
-      return this.request<PaymentVerifyResponse>(`/payments/verify/${reference}`);
+      return this.request<PaymentVerifyResponse>(`/payments/verify?reference=${reference}`);
     },
 
     getTransactions: async (
@@ -558,51 +586,40 @@ class ApiClient {
       limit = 20
     ): Promise<ApiResponse<PaginatedResponse<Transaction>>> => {
       return this.request<PaginatedResponse<Transaction>>(
-        `/payments/transactions?page=${page}&limit=${limit}`
+        `/payments/history?page=${page}&limit=${limit}`
       );
     },
 
-    getProviders: async (): Promise<ApiResponse<{ provider: string; name: string }[]>> => {
-      return this.request<{ provider: string; name: string }[]>('/payments/providers');
+    getPayment: async (paymentId: string): Promise<ApiResponse<Transaction>> => {
+      return this.request<Transaction>(`/payments/${paymentId}`);
     },
   };
 
   recommendation = {
     getForYou: async (limit = 10): Promise<ApiResponse<RecommendationItem[]>> => {
-      return this.request<RecommendationItem[]>(`/recommendations/for-you?limit=${limit}`);
-    },
-
-    getBecauseYouWatched: async (
-      contentId: string,
-      limit = 10
-    ): Promise<ApiResponse<RecommendationItem[]>> => {
-      return this.request<RecommendationItem[]>(
-        `/recommendations/because-you-watched/${contentId}?limit=${limit}`
-      );
+      return this.request<RecommendationItem[]>(`/v1/recommendation/content?limit=${limit}`);
     },
 
     getTrending: async (limit = 10): Promise<ApiResponse<RecommendationItem[]>> => {
-      return this.request<RecommendationItem[]>(`/recommendations/trending?limit=${limit}`);
+      return this.request<RecommendationItem[]>(`/v1/recommendation/trending?limit=${limit}`);
     },
 
-    getPopular: async (
-      universeId?: string,
-      limit = 10
-    ): Promise<ApiResponse<RecommendationItem[]>> => {
-      const url = universeId
-        ? `/recommendations/popular?universe=${universeId}&limit=${limit}`
-        : `/recommendations/popular?limit=${limit}`;
-      return this.request<RecommendationItem[]>(url);
+    getCreators: async (limit = 10): Promise<ApiResponse<RecommendationItem[]>> => {
+      return this.request<RecommendationItem[]>(`/v1/recommendation/creators?limit=${limit}`);
+    },
+
+    getCrossUniverse: async (limit = 10): Promise<ApiResponse<RecommendationItem[]>> => {
+      return this.request<RecommendationItem[]>(`/v1/recommendation/cross-universe?limit=${limit}`);
     },
   };
 
   universe = {
     getUniverses: async (): Promise<ApiResponse<Universe[]>> => {
-      return this.request<Universe[]>('/universe');
+      return this.request<Universe[]>('/v1/universes');
     },
 
     getUniverse: async (universeId: string): Promise<ApiResponse<Universe>> => {
-      return this.request<Universe>(`/universe/${universeId}`);
+      return this.request<Universe>(`/v1/universes/${universeId}`);
     },
   };
 
@@ -615,14 +632,14 @@ class ApiClient {
     > => {
       return this.request<
         PaginatedResponse<User & { contentCount: number; subscriberCount: number }>
-      >(`/creators?page=${page}&limit=${limit}`);
+      >(`/v1/creators?page=${page}&limit=${limit}`);
     },
 
     getCreator: async (
       creatorId: string
     ): Promise<ApiResponse<User & { contentCount: number; subscriberCount: number }>> => {
       return this.request<User & { contentCount: number; subscriberCount: number }>(
-        `/creators/${creatorId}`
+        `/v1/creators/${creatorId}`
       );
     },
 
@@ -632,7 +649,7 @@ class ApiClient {
       limit = 20
     ): Promise<ApiResponse<PaginatedResponse<ContentItem>>> => {
       return this.request<PaginatedResponse<ContentItem>>(
-        `/creators/${creatorId}/content?page=${page}&limit=${limit}`
+        `/v1/creators/${creatorId}/content?page=${page}&limit=${limit}`
       );
     },
   };
@@ -643,14 +660,10 @@ class ApiClient {
       reason: string,
       description?: string
     ): Promise<ApiResponse<{ message: string }>> => {
-      return this.request<{ message: string }>('/moderation/report', {
+      return this.request<{ message: string }>(`/content/${contentId}/comments`, {
         method: 'POST',
-        body: JSON.stringify({ contentId, reason, description }),
+        body: JSON.stringify({ contentId, reason, description, type: 'report' }),
       });
-    },
-
-    getReportReasons: async (): Promise<ApiResponse<{ id: string; label: string }[]>> => {
-      return this.request<{ id: string; label: string }[]>('/moderation/report-reasons');
     },
   };
 
@@ -680,11 +693,11 @@ class ApiClient {
         newContent: number;
         topCreators: { id: string; name: string; contentCount: number; views: number }[];
         recentActivity: { id: string; action: string; user: string; time: string }[];
-      }>('/analytics/dashboard');
+      }>('/v1/admin/analytics');
     },
 
     getUsers: async (page = 1, limit = 20): Promise<ApiResponse<PaginatedResponse<User>>> => {
-      return this.request<PaginatedResponse<User>>(`/admin/users?page=${page}&limit=${limit}`);
+      return this.request<PaginatedResponse<User>>(`/v1/admin/users?page=${page}&limit=${limit}`);
     },
 
     getContent: async (
@@ -692,16 +705,7 @@ class ApiClient {
       limit = 20
     ): Promise<ApiResponse<PaginatedResponse<ContentItem>>> => {
       return this.request<PaginatedResponse<ContentItem>>(
-        `/admin/content?page=${page}&limit=${limit}`
-      );
-    },
-
-    getReportedContent: async (
-      page = 1,
-      limit = 20
-    ): Promise<ApiResponse<PaginatedResponse<ContentItem & { reportCount: number }>>> => {
-      return this.request<PaginatedResponse<ContentItem & { reportCount: number }>>(
-        `/admin/reported?page=${page}&limit=${limit}`
+        `/v1/admin/content?page=${page}&limit=${limit}`
       );
     },
 
@@ -712,7 +716,7 @@ class ApiClient {
       const params = new URLSearchParams();
       if (startDate) params.append('startDate', startDate);
       if (endDate) params.append('endDate', endDate);
-      return this.request<AnalyticsOverview>(`/analytics/overview?${params.toString()}`);
+      return this.request<AnalyticsOverview>(`/v1/analytics/kpis?${params.toString()}`);
     },
   };
 }

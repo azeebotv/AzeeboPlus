@@ -2,57 +2,67 @@
 
 A comprehensive streaming and content platform built with a microservices architecture.
 
-## Prerequisites
+## 📦 Packages Overview
+
+| Type | Package | Description |
+|------|---------|-------------|
+| Shared | `@azeebo/shared-types` | TypeScript types shared across services |
+| Service | auth-service | Authentication & authorization |
+| Service | user-service | User profile management |
+| Service | wallet-service | Wallet transactions & balances |
+| Service | payment-service | Payment processing |
+| Service | content-service | Video content management |
+| Service | media-service | Media upload & CDN |
+| Service | search-service | Content search |
+| Service | notification-service | Email/SMS notifications |
+| Service | reward-service | Loyalty rewards |
+| Service | analytics-service | Analytics & reporting |
+| Service | recommendation-service | Personalized recommendations |
+| Service | support-service | Support tickets & workflows |
+| Universe | reality-service | Reality TV content |
+| Universe | creator-service | Creator platform |
+| Universe | lifestyle-service | Culture & events |
+| Universe | games-service | Interactive games |
+| Universe | comedy-service | Comedy content |
+| Universe | sports-service | Sports content |
+| Universe | vertical-service | Universe management |
+| Universe | movie-service | Movie content |
+
+## 🚀 Quick Start
+
+### Prerequisites
 
 - **Node.js**: 20.x or higher
 - **pnpm**: 8.x or higher
 - **Docker**: Latest stable version
-- **PostgreSQL**: 15.x (via Docker)
-- **Redis**: 7.x (via Docker)
 
-## Installation
+### Installation
 
 ```bash
 pnpm install
 ```
 
-## Environment Setup
+### Environment Setup
 
-1. Copy the example environment file:
 ```bash
 cp .env.example .env
 ```
 
-2. Update the `.env` file with your actual configuration values:
-   - Set `DATABASE_PASSWORD` to a secure password
-   - Set `JWT_SECRET` to a strong random string (at least 32 characters)
-   - Configure payment provider keys (Paystack/Flutterwave) for production
-   - Configure notification provider keys (SendGrid/Twilio) for production
-
-## Database Setup
+### Database Setup
 
 ```bash
 pnpm -r prisma generate
 pnpm -r exec prisma migrate deploy
 ```
 
-## Build
-
-Build all packages in the workspace:
+### Build & Run
 
 ```bash
 pnpm build
-```
-
-## Development
-
-Start all services in development mode:
-
-```bash
 pnpm dev
 ```
 
-## Testing
+## 🔧 Development Commands
 
 ```bash
 pnpm test                 # Run all tests
@@ -60,9 +70,12 @@ pnpm run test:unit        # Unit tests only
 pnpm run test:integration # Integration tests with DB
 pnpm lint                 # Linting
 pnpm typecheck            # Type checking
+pnpm build                # Build all packages
 ```
 
-## Service Ports
+## 🌐 Service Ports & API Gateway
+
+**Gateway Base URL**: `http://localhost:3000`
 
 | Service | Port | Route Prefix |
 |---------|------|--------------|
@@ -77,27 +90,68 @@ pnpm typecheck            # Type checking
 | reward-service | 3007 | /rewards |
 | analytics-service | 3008 | /analytics |
 | recommendation-service | 3009 | /recommendation |
-| lifestyle-service | 3016 | /lifestyle |
-| vertical-service | 3017 | /vertical |
+| reality-service | 3010 | /reality |
 | movie-service | 3011 | /movies |
 | games-service | 3012 | /games |
 | comedy-service | 3013 | /comedy |
 | sports-service | 3014 | /sports |
-| reality-service | 3010 | /reality |
+| lifestyle-service | 3016 | /lifestyle |
+| vertical-service | 3017 | /vertical |
 | creator-service | 3018 | /creators |
+| support-service | 3020 | /support |
 
-## Documentation
+## 📱 Mobile Setup
 
+```bash
+cd apps/mobile
+pnpm install
+pnpm start
+```
+
+## 📚 Documentation
+
+- **[Active Backlog](todo.md)** - Current tasks and priorities
 - [API Route Map](docs/API_ROUTE_MAP.md) - Complete API documentation
+- [Payment Webhooks](docs/PAYMENT_WEBHOOKS.md) - Payment provider webhook integration
 - [CLAUDE.md](CLAUDE.md) - Build standards and coding conventions
 - [Review Checklist](docs/REVIEW_CHECKLIST.md) - PR review guidelines
 - [Workflow Commands](docs/WORKFLOW_COMMANDS.md) - Development workflow prompts
+- [Support Workflows](docs/SUPPORT_WORKFLOWS.md) - Support ticket workflows
+- [Analytics Governance](docs/ANALYTICS_GOVERNANCE.md) - Analytics tracking standards
 
-## Known Issues
+## 🔄 Rollout Order & MVP Scope
 
-- Do NOT use `prisma db push --accept-data-loss` as a normal workflow
-- For migrations, use `pnpm prisma migrate dev` or `prisma migrate deploy`
-- Do NOT commit generated artifacts (dist/, node_modules/.prisma/)
+**Phase 1 - Foundation**: auth, user, wallet, payment, content, media  
+**Phase 2 - Universe 1**: Reality, Creator  
+**Phase 3 - Universe 2**: Lifestyle, Games  
+**Phase 4 - Universe 3**: Comedy, Sports  
+**Phase 5 - Universe 4**: Vertical, Movie  
+
+## ⚠️ Known Blockers
+
+- Support service integration tests pending
+- Typed API client package needs to be created
+- Backup/restore verification in CI is new (monitor for failures)
+
+## 🏗️ CI/CD Status
+
+| Gate | Status | Notes |
+|------|--------|-------|
+| Install | ✅ Passing | |
+| Prisma Generate | ✅ Passing | |
+| Build | ⚠️ Partial | All services pass; mobile app has config issue |
+| Lint | ⚠️ Partial | Services pass; web app has prettier formatting issues |
+| Typecheck | ✅ Passing | |
+| Unit Tests | ⚠️ Partial | analytics-service fails due to test DB connection |
+| Integration Tests | ⚠️ Partial | Dependent on test database availability |
+| Docker Smoke | ⏳ Pending | |
+| Backup/Restore | ⏳ Pending | |
+
+## 📁 Generated Artifact Policy
+
+- **Never commit**: `dist/`, `node_modules/.prisma/`, `.next/`, `.expo/`
+- **Commit**: Prisma schema files (`prisma/schema.prisma`)
+- **Generated on CI**: All build artifacts are generated during CI pipeline
 
 ## CI/CD
 

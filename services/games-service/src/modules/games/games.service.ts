@@ -1,10 +1,32 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { GameResponse } from './interfaces/game-response.interface';
+import axios from 'axios';
 
 @Injectable()
 export class GamesService {
+  private readonly logger = new Logger(GamesService.name);
+  private readonly analyticsServiceBaseUrl = process.env.ANALYTICS_SERVICE_URL || 'http://localhost:3008';
+
   constructor(private readonly prisma: PrismaService) {}
+
+  private async trackAnalyticsEvent(
+    eventName: string,
+    userId: string,
+    metadata: Record<string, unknown>
+  ): Promise<void> {
+    try {
+      await axios.post(`${this.analyticsServiceBaseUrl}/analytics/track`, {
+        eventName,
+        userId,
+        universe: 'games',
+        metadata,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      this.logger.warn('Failed to track analytics event:', error);
+    }
+  }
 
   async getHome(): Promise<GameResponse> {
     const dailyChallenge = await this.prisma.challenge.findFirst({
@@ -36,7 +58,7 @@ export class GamesService {
     };
   }
 
-  async getDailyChallenge(): Promise<GameResponse> {
+  async getDailyChallenge(userId?: string): Promise<GameResponse> {
     const challenge = await this.prisma.challenge.findFirst({
       where: { type: 'daily' },
       include: {
@@ -48,9 +70,63 @@ export class GamesService {
       throw new NotFoundException('No daily challenge available');
     }
 
+    if (userId) {
+      const userProgress = await this.prisma.gameSession.findFirst({
+        where: { userId, challengeId: challenge.id, status: 'completed' },
+        orderBy: { startedAt: 'desc' },
+      });
+
+      return {
+        success: true,
+        data: { ...challenge, userProgress },
+      };
+    }
+
     return {
       success: true,
       data: challenge,
+    };
+  }
+
+  async submitDailyChallenge(userId: string, answer: string): Promise<GameResponse> {
+    const challenge = await this.prisma.challenge.findFirst({
+      where: { type: 'daily' },
+      include: { questions: true },
+    });
+
+    if (!challenge) {
+      throw new NotFoundException('No daily challenge available');
+    }
+
+    const existingSession = await this.prisma.gameSession.findFirst({
+      where: { userId, challengeId: challenge.id, status: 'completed' },
+      orderBy: { startedAt: 'desc' },
+    });
+
+    if (existingSession) {
+      throw new BadRequestException('Daily challenge already completed');
+    }
+
+    const correctAnswer = challenge.questions?.[0]?.correctAnswer;
+    const isCorrect = answer === correctAnswer;
+
+    await this.prisma.gameSession.create({
+      data: {
+        userId,
+        challengeId: challenge.id,
+        status: 'completed',
+        score: isCorrect ? 100 : 0,
+      },
+    });
+
+    await this.trackAnalyticsEvent('daily_challenge_submitted', userId, {
+      challengeId: challenge.id,
+      isCorrect,
+    });
+
+    return {
+      success: true,
+      data: { isCorrect, score: isCorrect ? 100 : 0 },
     };
   }
 
@@ -73,6 +149,11 @@ export class GamesService {
         challengeId,
         status: 'active',
       },
+    });
+
+    await this.trackAnalyticsEvent('game_started', userId, {
+      sessionId: session.id,
+      challengeId,
     });
 
     return {
@@ -131,6 +212,13 @@ export class GamesService {
         update: {
           score: { increment: question.points },
         },
+      });
+
+      await this.trackAnalyticsEvent('game_completed', userId, {
+        sessionId,
+        challengeId: session.challengeId,
+        score: question.points,
+        isCorrect: true,
       });
     }
 

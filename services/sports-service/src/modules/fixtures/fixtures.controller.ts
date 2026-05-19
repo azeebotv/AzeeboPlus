@@ -1,9 +1,15 @@
-import { Controller, Get, Post, Body, Param, Query } from '@nestjs/common';
-import { ApiTags, ApiOperation } from '@nestjs/swagger';
+import { Controller, Get, Post, Body, Param, Query, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import { AuthGuard } from '@nestjs/passport';
+import { RateLimitGuard, RateLimit } from '@azeebo/security';
 import { FixturesService } from './fixtures.service';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { UpdateFixtureResultDto } from './dto/update-fixture-result.dto';
 
 @ApiTags('Fixtures')
-@Controller('fixtures')
+@ApiBearerAuth()
+@Controller('v1/sports/fixtures')
 export class FixturesController {
   constructor(private readonly fixturesService: FixturesService) {}
 
@@ -34,12 +40,16 @@ export class FixturesController {
   }
 
   @Get(':id')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(200, 60000)
   @ApiOperation({ summary: 'Get fixture details' })
   async getFixture(@Param('id') id: string): Promise<unknown> {
     return this.fixturesService.getFixtureById(id);
   }
 
   @Post(':id/metadata')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('ADMIN', 'MODERATOR')
   @ApiOperation({ summary: 'Create/update fixture metadata (admin)' })
   async createMetadata(
     @Param('id') eventId: string,
@@ -58,10 +68,12 @@ export class FixturesController {
   }
 
   @Post(':id/result')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('ADMIN', 'MODERATOR')
   @ApiOperation({ summary: 'Update event result (admin)' })
   async updateResult(
     @Param('id') eventId: string,
-    @Body() body: { teams: { teamId: string; score: number }[] }
+    @Body() body: UpdateFixtureResultDto
   ): Promise<unknown> {
     return this.fixturesService.updateEventResult(eventId, body.teams);
   }

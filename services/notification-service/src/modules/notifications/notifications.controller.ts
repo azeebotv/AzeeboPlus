@@ -10,9 +10,11 @@ import {
   Request,
   Body,
   Param,
+  Query,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
+import { RateLimitGuard, RateLimit } from '@azeebo/security';
 
 import { NotificationsService } from './notifications.service';
 import { UpdatePreferencesDto } from './dto/update-preferences.dto';
@@ -25,16 +27,24 @@ export class NotificationsController {
   constructor(private readonly notificationsService: NotificationsService) {}
 
   @Get()
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), RateLimitGuard)
+  @RateLimit(30, 60000)
   @ApiOperation({ summary: 'List user notifications' })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiResponse({ status: 200, description: 'Notifications list' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getNotifications(@Request() req: { user: { sub: string } }): Promise<NotificationResponse> {
-    return this.notificationsService.getNotifications(req.user.sub);
+  async getNotifications(
+    @Request() req: { user: { sub: string } },
+    @Query('page') page = 1,
+    @Query('limit') limit = 20
+  ): Promise<NotificationResponse> {
+    return this.notificationsService.getNotifications(req.user.sub, Number(page), Number(limit));
   }
 
   @Patch(':id/read')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), RateLimitGuard)
+  @RateLimit(60, 60000)
   @ApiOperation({ summary: 'Mark notification as read' })
   @ApiResponse({ status: 200, description: 'Notification marked as read' })
   @ApiResponse({ status: 404, description: 'Notification not found' })
@@ -47,7 +57,8 @@ export class NotificationsController {
   }
 
   @Patch('read-all')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), RateLimitGuard)
+  @RateLimit(10, 60000)
   @ApiOperation({ summary: 'Mark all notifications as read' })
   @ApiResponse({ status: 200, description: 'All notifications marked as read' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -56,7 +67,8 @@ export class NotificationsController {
   }
 
   @Put('preferences')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), RateLimitGuard)
+  @RateLimit(10, 60000)
   @ApiOperation({ summary: 'Update notification preferences' })
   @ApiResponse({ status: 200, description: 'Preferences updated' })
   @ApiResponse({ status: 400, description: 'Invalid input' })
@@ -71,8 +83,19 @@ export class NotificationsController {
     );
   }
 
+  @Get('settings')
+  @UseGuards(AuthGuard('jwt'), RateLimitGuard)
+  @RateLimit(30, 60000)
+  @ApiOperation({ summary: 'Get notification settings' })
+  @ApiResponse({ status: 200, description: 'Notification settings' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async getSettings(@Request() req: { user: { sub: string } }): Promise<NotificationResponse> {
+    return this.notificationsService.getPreferences(req.user.sub);
+  }
+
   @Get('unread-count')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), RateLimitGuard)
+  @RateLimit(30, 60000)
   @ApiOperation({ summary: 'Get unread notification count' })
   @ApiResponse({ status: 200, description: 'Unread count' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -82,7 +105,8 @@ export class NotificationsController {
 
   // Push token endpoints
   @Post('push-tokens')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), RateLimitGuard)
+  @RateLimit(5, 60000)
   @ApiOperation({ summary: 'Save push notification token' })
   @ApiResponse({ status: 200, description: 'Push token saved' })
   @ApiResponse({ status: 400, description: 'Invalid input' })
@@ -99,7 +123,8 @@ export class NotificationsController {
   }
 
   @Get('push-tokens')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), RateLimitGuard)
+  @RateLimit(30, 60000)
   @ApiOperation({ summary: 'Get user push tokens' })
   @ApiResponse({ status: 200, description: 'Push tokens list' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -108,7 +133,8 @@ export class NotificationsController {
   }
 
   @Delete('push-tokens/:token')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), RateLimitGuard)
+  @RateLimit(10, 60000)
   @ApiOperation({ summary: 'Delete push notification token' })
   @ApiResponse({ status: 200, description: 'Push token deleted' })
   @ApiResponse({ status: 404, description: 'Push token not found' })

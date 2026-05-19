@@ -1,9 +1,10 @@
 import { Controller, Get, Post, Patch, Delete, Body, Param, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { TitlesService } from './titles.service';
+import { CreateTitleData, CreateChapterData } from './titles.service';
 
 @ApiTags('Titles')
-@Controller('titles')
+@Controller('v1/vertical/titles')
 export class TitlesController {
   constructor(private readonly titlesService: TitlesService) {}
 
@@ -37,8 +38,8 @@ export class TitlesController {
   @Post()
   @ApiOperation({ summary: 'Create title' })
   @ApiResponse({ status: 201, description: 'Title created' })
-  async createTitle(@Body() body: Record<string, unknown>): Promise<unknown> {
-    return this.titlesService.createTitle(body as Record<string, string>);
+  async createTitle(@Body() body: CreateTitleData): Promise<unknown> {
+    return this.titlesService.createTitle(body);
   }
 
   @Patch(':id')
@@ -63,9 +64,9 @@ export class TitlesController {
   @ApiResponse({ status: 201, description: 'Chapter created' })
   async createChapter(
     @Param('titleId') titleId: string,
-    @Body() body: Record<string, unknown>
+    @Body() body: CreateChapterData
   ): Promise<unknown> {
-    return this.titlesService.createChapter({ ...body, titleId } as Record<string, string>);
+    return this.titlesService.createChapter({ ...body, titleId });
   }
 
   @Get(':titleId/chapters/:number')

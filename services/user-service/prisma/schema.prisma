@@ -11,21 +11,29 @@ datasource db {
 model User {
   id           String   @id @default(uuid())
   email        String   @unique
-  password     String
   displayName  String
   avatar       String?
   role         String   @default("user")
-  preferences  Json?
+  preferences  Json?    @default("{}")
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  watchHistory WatchHistory[]
-  savedItems   SavedItem[]
-  wallet       Wallet?
-
+  @@map("users")
   @@index([role])
   @@index([createdAt])
-  @@map("users")
+}
+
+model UserPreferences {
+  id              String   @id @default(uuid())
+  userId          String   @unique
+  darkMode        Boolean  @default(false)
+  notifications   Json?    @default("{}")
+  contentPreferences Json?  @default("[]")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("user_preferences")
+  @@index([userId])
 }
 
 model WatchHistory {
@@ -33,11 +41,9 @@ model WatchHistory {
   userId     String
   contentId  String
   contentType String
-  universe   String   @default("unknown")  // Universe affinity tracking
+  universe   String   @default("unknown")
   watchedAt  DateTime @default(now())
   createdAt  DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("watch_history")
   @@unique([userId, contentId])
@@ -53,8 +59,6 @@ model SavedItem {
   contentId String
   createdAt DateTime @default(now())
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
   @@map("saved_items")
   @@unique([userId, contentId])
   @@index([userId])
@@ -62,41 +66,16 @@ model SavedItem {
   @@index([createdAt])
 }
 
-model Wallet {
+model Following {
   id           String   @id @default(uuid())
-  userId       String   @unique
-  balance      Decimal   @default(0)
-  bonusBalance Decimal   @default(0)
-  promoBalance Decimal   @default(0)
-  currency     String   @default("NGN")
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  transactions WalletTransaction[]
-
-  @@map("wallets")
-  @@index([userId])
-}
-
-model WalletTransaction {
-  id           String   @id @default(uuid())
-  walletId     String
-  type         String   // credit, debit, bonus, promo, refund
-  amount       Decimal  
-  status       String   // pending, completed, failed, reversed
-  description  String?
-  reference    String?
-  metadata     Json?
+  followerId   String
+  followingId  String
   createdAt    DateTime @default(now())
 
-  wallet Wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
-
-  @@map("wallet_transactions")
-  @@index([walletId])
-  @@index([type])
-  @@index([status])
-  @@index([createdAt])
+  @@map("following")
+  @@unique([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
 }
 
 model Subscription {
@@ -112,11 +91,44 @@ model Subscription {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
   @@map("subscriptions")
   @@index([userId])
   @@index([status])
   @@index([planType])
   @@index([endDate])
+}
+
+model UserUniverseAffinity {
+  id            String   @id @default(uuid())
+  userId        String
+  universeId    String
+  affinityScore Float    @default(0)
+  lastEngaged   DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("user_universe_affinity")
+  @@unique([userId, universeId])
+  @@index([userId])
+  @@index([universeId])
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  actorId    String
+  actorRole  String
+  action     String
+  targetType String
+  targetId   String?
+  details    Json?    @default("{}")
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  @@map("audit_logs")
+  @@index([actorId])
+  @@index([actorRole])
+  @@index([action])
+  @@index([targetType])
+  @@index([createdAt])
 }

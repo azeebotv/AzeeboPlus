@@ -4,6 +4,7 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import helmet from 'helmet';
 import { GlobalExceptionFilter } from '@azeebo/error-handling';
+import { LoggingInterceptor } from '@azeebo/logger';
 import * as bodyParser from 'body-parser';
 import { validateEnvironment } from '@azeebo/shared-types';
 
@@ -24,8 +25,8 @@ async function bootstrap(): Promise<void> {
   app.use('/webhooks/*', (req: { body: Buffer | object }, res: unknown, next: () => void) => {
     if (req.body && Buffer.isBuffer(req.body)) {
       try {
-        (req as { rawBody: string }).rawBody = req.body.toString('utf8');
-        req.body = JSON.parse((req as { rawBody: string }).rawBody);
+        (req as unknown as { rawBody: string }).rawBody = req.body.toString('utf8');
+        req.body = JSON.parse((req as unknown as { rawBody: string }).rawBody);
       } catch {
         req.body = {};
       }
@@ -50,6 +51,8 @@ async function bootstrap(): Promise<void> {
   );
 
   app.useGlobalFilters(new GlobalExceptionFilter());
+
+  app.useGlobalInterceptors(new LoggingInterceptor());
 
   app.useGlobalPipes(
     new ValidationPipe({

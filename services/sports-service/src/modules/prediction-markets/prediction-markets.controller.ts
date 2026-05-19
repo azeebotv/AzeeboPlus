@@ -1,9 +1,15 @@
-import { Controller, Get, Post, Body, Param, Query } from '@nestjs/common';
-import { ApiTags, ApiOperation } from '@nestjs/swagger';
+import { Controller, Get, Post, Body, Param, Query, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import { AuthGuard } from '@nestjs/passport';
+import { RateLimitGuard, RateLimit } from '@azeebo/security';
 import { PredictionMarketsService } from './prediction-markets.service';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { CreatePredictionDto, SubmitPredictionDto, ResolvePredictionDto } from './dto/prediction.dto';
 
 @ApiTags('Prediction Markets')
-@Controller('predictions')
+@ApiBearerAuth()
+@Controller('v1/sports/predictions')
 export class PredictionMarketsController {
   constructor(private readonly predictionMarketsService: PredictionMarketsService) {}
 
@@ -24,6 +30,8 @@ export class PredictionMarketsController {
   }
 
   @Get('leaderboard')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(100, 60000)
   @ApiOperation({ summary: 'Get prediction leaderboard' })
   async getLeaderboard(@Query('limit') limit = 100): Promise<unknown> {
     return this.predictionMarketsService.getLeaderboard(Number(limit));
@@ -44,27 +52,25 @@ export class PredictionMarketsController {
   }
 
   @Get(':id')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(200, 60000)
   @ApiOperation({ summary: 'Get market by id' })
   async getMarket(@Param('id') id: string): Promise<unknown> {
     return this.predictionMarketsService.getMarketById(id);
   }
 
   @Post('create')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('ADMIN', 'MODERATOR')
   @ApiOperation({ summary: 'Create prediction market (admin)' })
   async createMarket(
-    @Body()
-    body: {
-      eventId: string;
-      question: string;
-      options: unknown[];
-      odds?: unknown;
-    }
+    @Body() body: CreatePredictionDto
   ): Promise<unknown> {
     return this.predictionMarketsService.createPredictionMarket(
-      body.eventId,
-      body.question,
-      body.options,
-      body.odds
+      body.fixtureId,
+      body.selectedOption,
+      [],
+      undefined
     );
   }
 
@@ -72,7 +78,7 @@ export class PredictionMarketsController {
   @ApiOperation({ summary: 'Place prediction' })
   async placePrediction(
     @Param('id') marketId: string,
-    @Body() body: { userId: string; selectedOption: string; stake?: number }
+    @Body() body: SubmitPredictionDto
   ): Promise<unknown> {
     return this.predictionMarketsService.placePrediction(
       body.userId,
@@ -83,10 +89,12 @@ export class PredictionMarketsController {
   }
 
   @Post(':id/settle')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('ADMIN', 'MODERATOR')
   @ApiOperation({ summary: 'Settle market (admin)' })
   async settleMarket(
     @Param('id') marketId: string,
-    @Body() body: { winningOption: string }
+    @Body() body: ResolvePredictionDto
   ): Promise<unknown> {
     return this.predictionMarketsService.settleMarket(marketId, body.winningOption);
   }

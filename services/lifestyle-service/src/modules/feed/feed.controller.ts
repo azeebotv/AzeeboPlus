@@ -1,13 +1,16 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { RateLimitGuard, RateLimit } from '@azeebo/security';
 import { LifestyleFeedService } from './feed.service';
 
 @ApiTags('Feed')
-@Controller('feed')
+@Controller('v1/lifestyle/feed')
 export class FeedController {
   constructor(private readonly feedService: LifestyleFeedService) {}
 
   @Get()
+  @UseGuards(RateLimitGuard)
+  @RateLimit(100, 60000)
   @ApiOperation({ summary: 'Get lifestyle feed' })
   @ApiResponse({ status: 200, description: 'Feed items' })
   async getFeed(

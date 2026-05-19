@@ -24,17 +24,19 @@ model Wallet {
 }
 
 model WalletTransaction {
-  id             String   @id @default(uuid())
-  walletId       String
-  type           String   // credit, debit, bonus, promo, refund
-  amount         Decimal
-  status         String   // pending, completed, failed, reversed
-  description    String?
-  reference      String?
-  metadata       Json?
-  idempotencyKey String?  @unique
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id              String   @id @default(uuid())
+  walletId        String
+  type            String   // credit, debit, bonus, promo, refund
+  amount          Decimal
+  status          String   // pending, completed, failed, reversed
+  description     String?
+  reference       String?
+  provider        String?  // paystack, flutterwave, internal
+  providerRef     String?  // Unique provider reference (e.g., Paystack transaction ID)
+  metadata        Json?
+  idempotencyKey  String?  @unique
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   wallet Wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
 
@@ -44,4 +46,6 @@ model WalletTransaction {
   @@index([status])
   @@index([createdAt])
   @@index([idempotencyKey])
+  @@index([provider])
+  @@unique([provider, providerRef])
 }

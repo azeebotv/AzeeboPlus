@@ -14,10 +14,12 @@ import { TakedownService } from './takedown.service';
 import { CreateTakedownDto, DecideTakedownDto, TakedownQueryDto } from './dto/takedown.dto';
 import { ApiResponseWrapper } from '@azeebo/shared-types';
 import { AuthGuard } from '../../common/guards/auth.guard';
+import { AdminGuard } from '../../common/guards/admin.guard';
 
 interface AuthenticatedRequest {
   user: {
     id: string;
+    role?: string;
   };
 }
 
@@ -43,6 +45,7 @@ export class TakedownController {
 
   @Get('pending')
   @ApiOperation({ summary: 'Get pending takedowns (admin)' })
+  @UseGuards(AdminGuard)
   async getPendingTakedowns(@Query() query: TakedownQueryDto) {
     const result = await this.takedownService.getPendingTakedowns(query);
     return ApiResponseWrapper.paginated(
@@ -54,14 +57,16 @@ export class TakedownController {
   }
 
   @Get('content/:contentId')
-  @ApiOperation({ summary: 'Get takedowns for content' })
+  @ApiOperation({ summary: 'Get takedowns for content (admin)' })
+  @UseGuards(AdminGuard)
   async getTakedownsByContent(@Param('contentId') contentId: string) {
     const takedowns = await this.takedownService.getTakedownsByContent(contentId);
     return ApiResponseWrapper.success({ takedowns });
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Get takedown by ID' })
+  @ApiOperation({ summary: 'Get takedown by ID (admin)' })
+  @UseGuards(AdminGuard)
   async getTakedown(@Param('id') id: string) {
     const takedown = await this.takedownService.getTakedownById(id);
     return ApiResponseWrapper.success({ takedown });
@@ -69,6 +74,7 @@ export class TakedownController {
 
   @Patch(':id/decide')
   @ApiOperation({ summary: 'Decide takedown (admin)' })
+  @UseGuards(AdminGuard)
   async decideTakedown(
     @Param('id') id: string,
     @Request() req: AuthenticatedRequest,

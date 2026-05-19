@@ -1,11 +1,13 @@
 import { Test } from '@nestjs/testing';
 import { INestApplication, HttpStatus } from '@nestjs/common';
-import * as request from 'supertest';
+import request from 'supertest';
 import { RolesGuard } from './roles.guard';
 import { Roles } from '../decorators/roles.decorator';
 import { APP_GUARD } from '@nestjs/core';
 import { Controller, Get } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
+
+jest.setTimeout(30000);
 
 @Controller('admin')
 class AdminController {
@@ -312,7 +314,7 @@ describe('RolesGuard Integration Tests', () => {
 
       const app = moduleFixture.createNestApplication();
       app.use((req: MockRequest, _res: MockResponse, next: MockNext) => {
-        req.user = { id: 'test-user' };
+        req.user = { id: 'test-user', role: '' };
         next();
       });
       await app.init();

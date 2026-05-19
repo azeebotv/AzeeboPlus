@@ -11,6 +11,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
+import { RateLimitGuard, RateLimit } from '@azeebo/security';
 
 import { SearchService } from './search.service';
 import { SearchResponse } from './interfaces/search-response.interface';
@@ -21,6 +22,8 @@ export class SearchController {
   constructor(private readonly searchService: SearchService) {}
 
   @Get()
+  @UseGuards(RateLimitGuard)
+  @RateLimit(30, 60000)
   @ApiOperation({ summary: 'Universal search' })
   @ApiResponse({ status: 200, description: 'Search results' })
   async search(
@@ -31,7 +34,9 @@ export class SearchController {
     @Query('contentType') contentType?: string,
     @Query('dateStart') dateStart?: string,
     @Query('dateEnd') dateEnd?: string,
-    @Query('sort') sort?: string
+    @Query('sort') sort?: string,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number
   ): Promise<SearchResponse> {
     return this.searchService.search(query, {
       universe,
@@ -40,6 +45,8 @@ export class SearchController {
       contentType: contentType ? contentType.split(',') : undefined,
       dateRange: dateStart || dateEnd ? { start: dateStart, end: dateEnd } : undefined,
       sort,
+      page: page ? Number(page) : 1,
+      limit: limit ? Number(limit) : 20,
     });
   }
 
@@ -67,6 +74,8 @@ export class SearchController {
   }
 
   @Get('suggestions')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(60, 60000)
   @ApiOperation({ summary: 'Get search suggestions' })
   @ApiResponse({ status: 200, description: 'Search suggestions' })
   async getSuggestions(@Query('q') query: string): Promise<SearchResponse> {
@@ -74,6 +83,8 @@ export class SearchController {
   }
 
   @Get('trending')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(30, 60000)
   @ApiOperation({ summary: 'Get trending searches' })
   @ApiResponse({ status: 200, description: 'Trending searches' })
   async getTrending(): Promise<SearchResponse> {

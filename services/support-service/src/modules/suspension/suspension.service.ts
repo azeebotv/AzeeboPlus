@@ -1,9 +1,30 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
+import { createApiClient } from '@azeebo/api-client';
 
 @Injectable()
 export class SuspensionService {
+  private readonly logger = new Logger(SuspensionService.name);
+  private readonly notificationServiceClient = createApiClient({
+    baseUrl: process.env.NOTIFICATION_SERVICE_URL || 'http://localhost:3006',
+    timeout: 30000,
+  });
+  private readonly auditServiceClient = createApiClient({
+    baseUrl: process.env.MODERATION_SERVICE_URL || 'http://localhost:3006',
+    timeout: 30000,
+  });
+
   constructor(private prisma: PrismaService) {}
+
+  async suspendUser(data: {
+    ticketId: string;
+    userId: string;
+    reason: string;
+    suspendedBy: string;
+    durationDays?: number;
+  }) {
+    return this.createSuspension(data);
+  }
 
   async createSuspension(data: {
     ticketId: string;
@@ -24,7 +45,7 @@ export class SuspensionService {
       ? new Date(Date.now() + data.durationDays * 24 * 60 * 60 * 1000)
       : null;
 
-    return this.prisma.userSuspension.create({
+    const suspension = await this.prisma.userSuspension.create({
       data: {
         ticketId: data.ticketId,
         userId: data.userId,
@@ -33,6 +54,22 @@ export class SuspensionService {
         expiresAt,
       },
     });
+
+    await Promise.all([
+      this.sendSuspensionNotification(data.userId, suspension),
+      this.createAuditEvent({
+        action: 'user_suspended',
+        resourceType: 'user_suspension',
+        resourceId: suspension.id,
+        actorType: 'admin',
+        actorId: data.suspendedBy,
+        previousState: { status: 'ACTIVE' },
+        newState: { status: 'SUSPENDED', reason: data.reason, expiresAt },
+        metadata: { userId: data.userId, ticketId: data.ticketId, durationDays: data.durationDays },
+      }),
+    ]);
+
+    return suspension;
   }
 
   async getSuspensionById(id: string) {
@@ -53,7 +90,12 @@ export class SuspensionService {
   }
 
   async reinstateUser(id: string, reinstatedBy: string) {
-    return this.prisma.userSuspension.update({
+    const suspension = await this.prisma.userSuspension.findUnique({ where: { id } });
+    if (!suspension) {
+      throw new NotFoundException('Suspension not found');
+    }
+
+    const updatedSuspension = await this.prisma.userSuspension.update({
       where: { id },
       data: {
         status: 'REINSTATED',
@@ -61,10 +103,31 @@ export class SuspensionService {
         reinstatedBy,
       },
     });
+
+    await Promise.all([
+      this.sendReinstatementNotification(suspension.userId, updatedSuspension),
+      this.createAuditEvent({
+        action: 'user_reinstated',
+        resourceType: 'user_suspension',
+        resourceId: id,
+        actorType: 'admin',
+        actorId: reinstatedBy,
+        previousState: { status: suspension.status },
+        newState: { status: 'REINSTATED' },
+        metadata: { userId: suspension.userId },
+      }),
+    ]);
+
+    return updatedSuspension;
   }
 
   async liftSuspension(id: string, reinstatedBy: string) {
-    return this.prisma.userSuspension.update({
+    const suspension = await this.prisma.userSuspension.findUnique({ where: { id } });
+    if (!suspension) {
+      throw new NotFoundException('Suspension not found');
+    }
+
+    const updatedSuspension = await this.prisma.userSuspension.update({
       where: { id },
       data: {
         status: 'LIFTED',
@@ -72,6 +135,22 @@ export class SuspensionService {
         reinstatedBy,
       },
     });
+
+    await Promise.all([
+      this.sendReinstatementNotification(suspension.userId, updatedSuspension),
+      this.createAuditEvent({
+        action: 'suspension_lifted',
+        resourceType: 'user_suspension',
+        resourceId: id,
+        actorType: 'admin',
+        actorId: reinstatedBy,
+        previousState: { status: suspension.status },
+        newState: { status: 'LIFTED' },
+        metadata: { userId: suspension.userId },
+      }),
+    ]);
+
+    return updatedSuspension;
   }
 
   async getActiveSuspensions(options?: { page?: number; limit?: number }) {
@@ -117,8 +196,82 @@ export class SuspensionService {
         where: { id: suspension.id },
         data: { status: 'EXPIRED' },
       });
+
+      await Promise.all([
+        this.sendReinstatementNotification(suspension.userId, { ...suspension, status: 'EXPIRED' }),
+        this.createAuditEvent({
+          action: 'suspension_expired',
+          resourceType: 'user_suspension',
+          resourceId: suspension.id,
+          actorType: 'system',
+          previousState: { status: 'ACTIVE' },
+          newState: { status: 'EXPIRED' },
+          metadata: { userId: suspension.userId },
+        }),
+      ]);
     }
 
     return expired.length;
+  }
+
+  private async sendSuspensionNotification(
+    userId: string,
+    suspension: { id: string; reason: string; expiresAt?: Date | null }
+  ) {
+    try {
+      await this.notificationServiceClient.post('/api/notifications', {
+        userId,
+        type: 'SUSPENSION',
+        title: 'Account Suspended',
+        message: `Your account has been suspended. Reason: ${suspension.reason}. ${suspension.expiresAt ? `This suspension expires on ${suspension.expiresAt.toLocaleDateString()}.` : 'This is a permanent suspension.'}`,
+        metadata: { suspensionId: suspension.id },
+        priority: 'high',
+      });
+    } catch (error) {
+      this.logger.error(`Failed to send suspension notification: ${(error as Error).message}`);
+    }
+  }
+
+  private async sendReinstatementNotification(
+    userId: string,
+    suspension: { id: string; status: string }
+  ) {
+    try {
+      const message =
+        suspension.status === 'EXPIRED'
+          ? 'Your account suspension has expired. Your account has been reinstated.'
+          : 'Your account suspension has been lifted by an administrator.';
+
+      await this.notificationServiceClient.post('/api/notifications', {
+        userId,
+        type: 'SUSPENSION_REINSTATED',
+        title: 'Account Reinstated',
+        message,
+        metadata: { suspensionId: suspension.id, status: suspension.status },
+        priority: 'high',
+      });
+    } catch (error) {
+      this.logger.error(`Failed to send reinstatement notification: ${(error as Error).message}`);
+    }
+  }
+
+  private async createAuditEvent(event: {
+    action: string;
+    resourceType: string;
+    resourceId: string;
+    actorType: string;
+    actorId?: string;
+    previousState?: Record<string, unknown>;
+    newState?: Record<string, unknown>;
+    metadata?: Record<string, unknown>;
+  }) {
+    try {
+      await this.auditServiceClient.post('/api/moderation/audit', {
+        ...event,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      this.logger.error(`Failed to create audit event: ${(error as Error).message}`);
+    }
   }
 }

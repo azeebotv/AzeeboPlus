@@ -5,15 +5,15 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 export class CreateTakedownDto {
   @ApiProperty()
   @IsString()
-  ticketId: string;
+  ticketId: string = '';
 
   @ApiProperty()
   @IsString()
-  contentId: string;
+  contentId: string = '';
 
   @ApiProperty()
   @IsString()
-  reason: string;
+  reason: string = '';
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -24,7 +24,7 @@ export class CreateTakedownDto {
 export class DecideTakedownDto {
   @ApiProperty({ enum: ['REMOVED', 'RESTORED', 'DISMISSED'] })
   @IsString()
-  decision: 'REMOVED' | 'RESTORED' | 'DISMISSED';
+  decision: 'REMOVED' | 'RESTORED' | 'DISMISSED' = 'REMOVED';
 
   @ApiPropertyOptional()
   @IsOptional()

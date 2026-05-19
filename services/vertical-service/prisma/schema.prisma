@@ -22,6 +22,8 @@ model UniverseMap {
   characters  Character[]
   locations   Location[]
   timeline    TimelineEvent[]
+  titles      Title[]
+  loreEntries LoreEntry[]
 
   @@index([slug])
   @@index([status])

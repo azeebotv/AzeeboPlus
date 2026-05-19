@@ -1,7 +1,7 @@
 import { apiClient } from './client';
 import type { ApiResponse } from './auth';
 
-const MEDIA_SERVICE_URL = process.env.EXPO_PUBLIC_MEDIA_SERVICE_URL || 'http://localhost:3019';
+const MEDIA_SERVICE_URL = process.env.EXPO_PUBLIC_MEDIA_SERVICE_URL;
 
 export interface MediaUploadResponse {
   key: string;

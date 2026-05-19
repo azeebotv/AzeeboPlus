@@ -7,6 +7,7 @@ export interface UserEntity {
   displayName: string;
   avatar: string | null;
   role: string;
+  isVerified: boolean;
   mfaEnabled: boolean;
   mfaSecret: string | null;
   mfaBackupCodes: string | null;

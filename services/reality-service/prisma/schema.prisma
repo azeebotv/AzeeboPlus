@@ -58,6 +58,8 @@ model WatchHistory {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, contentId])
+  @@index([userId])
+  @@index([contentId])
   @@map("watch_history")
 }
 
@@ -70,6 +72,8 @@ model SavedItem {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, contentId])
+  @@index([userId])
+  @@index([contentId])
   @@map("saved_items")
 }
 
@@ -103,6 +107,10 @@ model WalletTransaction {
   wallet Wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
 
   @@map("wallet_transactions")
+  @@index([walletId])
+  @@index([type])
+  @@index([status])
+  @@index([createdAt])
 }
 
 model Notification {
@@ -118,6 +126,10 @@ model Notification {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("notifications")
+  @@index([userId])
+  @@index([type])
+  @@index([readAt])
+  @@index([createdAt])
 }
 
 model PaymentIntent {
@@ -137,6 +149,10 @@ model PaymentIntent {
   refunds Refund[]
 
   @@map("payment_intents")
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([providerReference])
 }
 
 model Refund {
@@ -152,6 +168,8 @@ model Refund {
   paymentIntent PaymentIntent @relation(fields: [paymentIntentId], references: [id], onDelete: Cascade)
 
   @@map("refunds")
+  @@index([paymentIntentId])
+  @@index([status])
 }
 
 model Universe {
@@ -222,6 +240,11 @@ model ContentItem {
   Report           Report[]
 
   @@map("content_items")
+  @@index([universeId])
+  @@index([creatorId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([viewCount])
 }
 
 model MediaAsset {
@@ -255,6 +278,8 @@ model CreatorProfile {
   contentItems ContentItem[]
 
   @@map("creator_profiles")
+  @@index([userId])
+  @@index([verified])
 }
 
 model RewardAccount {
@@ -273,6 +298,8 @@ model RewardAccount {
   badges Badge[]
 
   @@map("reward_accounts")
+  @@index([userId])
+  @@index([levelId])
 }
 
 model Level {
@@ -319,6 +346,8 @@ model Mission {
   completions MissionCompletion[]
 
   @@map("missions")
+  @@index([type])
+  @@index([isActive])
 }
 
 model MissionReward {
@@ -344,6 +373,8 @@ model MissionCompletion {
   mission Mission @relation(fields: [missionId], references: [id], onDelete: Cascade)
 
   @@unique([userId, missionId])
+  @@index([userId])
+  @@index([missionId])
   @@map("mission_completions")
 }
 
@@ -375,6 +406,9 @@ model RewardRedemption {
   reward Reward @relation(fields: [rewardId], references: [id])
 
   @@map("reward_redemptions")
+  @@index([userId])
+  @@index([rewardId])
+  @@index([redeemedAt])
 }
 
 model PointsLedger {
@@ -389,6 +423,9 @@ model PointsLedger {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("points_ledger")
+  @@index([userId])
+  @@index([type])
+  @@index([createdAt])
 }
 
 model SearchQueryLog {
@@ -402,6 +439,8 @@ model SearchQueryLog {
   userSearches UserSearch[]
 
   @@map("search_query_logs")
+  @@index([query])
+  @@index([lastSearchAt])
 }
 
 model UserSearch {
@@ -415,6 +454,8 @@ model UserSearch {
   query SearchQueryLog @relation(fields: [queryId], references: [id])
 
   @@map("user_searches")
+  @@index([userId])
+  @@index([queryId])
 }
 
 model ProductEvent {
@@ -429,6 +470,9 @@ model ProductEvent {
   user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("product_events")
+  @@index([type])
+  @@index([userId])
+  @@index([timestamp])
 }
 
 model Report {
@@ -452,6 +496,12 @@ model Report {
   ModerationCase ModerationCase?
 
   @@map("reports")
+  @@index([reportingUserId])
+  @@index([userId])
+  @@index([contentId])
+  @@index([status])
+  @@index([type])
+  @@index([createdAt])
 }
 
 model ModerationCase {
@@ -472,6 +522,10 @@ model ModerationCase {
   Appeal         Appeal[]
 
   @@map("moderation_cases")
+  @@index([userId])
+  @@index([status])
+  @@index([resolvedBy])
+  @@index([createdAt])
 }
 
 model Appeal {
@@ -490,6 +544,10 @@ model Appeal {
   user User           @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("appeals")
+  @@index([caseId])
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
 }
 
 model RealityShow {
@@ -514,6 +572,8 @@ model RealityShow {
   clips       RealityClip[]
 
   @@map("reality_shows")
+  @@index([universeId])
+  @@index([status])
 }
 
 model Season {
@@ -531,6 +591,7 @@ model Season {
   episodes Episode[]
 
   @@map("reality_seasons")
+  @@index([showId])
 }
 
 model Episode {
@@ -553,6 +614,9 @@ model Episode {
   predictions Prediction[]
 
   @@map("reality_episodes")
+  @@index([showId])
+  @@index([seasonId])
+  @@index([airedAt])
 }
 
 model Contestant {
@@ -587,6 +651,10 @@ model Vote {
   episodeId  String?
 
   @@unique([userId, contestantId])
+  @@index([userId])
+  @@index([contestantId])
+  @@index([showId])
+  @@index([episodeId])
   @@map("reality_votes")
 }
 
@@ -603,6 +671,9 @@ model Supervote {
   show       RealityShow @relation(fields: [showId], references: [id], onDelete: Cascade)
 
   @@unique([userId, contestantId])
+  @@index([userId])
+  @@index([contestantId])
+  @@index([showId])
   @@map("reality_supervotes")
 }
 
@@ -621,6 +692,10 @@ model Prediction {
   contestantId String?
 
   @@map("reality_predictions")
+  @@index([userId])
+  @@index([showId])
+  @@index([episodeId])
+  @@index([contestantId])
 }
 
 model RealityClip {

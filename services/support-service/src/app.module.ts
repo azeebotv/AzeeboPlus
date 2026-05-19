@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { HealthModule } from './modules/health/health.module';
@@ -13,18 +13,23 @@ import { TicketModule } from './modules/ticket/ticket.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { DatabaseModule } from './modules/database/database.module';
+import { SupportModule } from './modules/support/support.module';
 import { AuthGuard } from './common/guards/auth.guard';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     PassportModule.register({ defaultStrategy: 'jwt' }),
-    JwtModule.register({
-      secret: process.env.JWT_SECRET || 'development-secret',
-      signOptions: { expiresIn: '1h' },
+    JwtModule.registerAsync({
+      useFactory: (configService: ConfigService) => ({
+        secret: configService.getOrThrow<string>('JWT_SECRET'),
+        signOptions: { expiresIn: '1h' },
+      }),
+      inject: [ConfigService],
     }),
     DatabaseModule,
     HealthModule,
+    SupportModule,
     TicketModule,
     RefundModule,
     ChargebackModule,

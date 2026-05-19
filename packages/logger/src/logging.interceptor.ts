@@ -2,18 +2,25 @@ import { Injectable, NestInterceptor, ExecutionContext, CallHandler, Logger } fr
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { v4 as uuidv4 } from 'uuid';
+import { Request } from 'express';
+
+interface LoggingRequest extends Request {
+  user?: { id?: string };
+  traceId?: string;
+  spanId?: string;
+}
 
 @Injectable()
 export class LoggingInterceptor implements NestInterceptor {
   private readonly logger = new Logger('HTTP');
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
-    const request = context.switchToHttp().getRequest();
+    const request = context.switchToHttp().getRequest<LoggingRequest>();
     const response = context.switchToHttp().getResponse();
 
     const traceId = (request.headers['x-request-id'] as string) || uuidv4();
     const spanId = uuidv4().substring(0, 8);
-    const { method, url, _body } = request;
+    const { method, url } = request;
     const startTime = Date.now();
 
     request.traceId = traceId;

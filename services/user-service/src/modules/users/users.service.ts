@@ -1,35 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
-import { UpdateUserDto } from './dto/update-user.dto';
 import { UpdateUniverseAffinityDto } from './dto/update-universe-affinity.dto';
-
-interface UserResponse {
-  id: string;
-  email: string;
-  displayName: string | null;
-  avatar: string | null;
-  role: string;
-  preferences: Record<string, unknown> | null;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-interface WatchHistoryItem {
-  id: string;
-  userId: string;
-  contentId: string;
-  contentType: string;
-  universe: string;
-  progress: number;
-  createdAt: Date;
-}
-
-interface SavedItem {
-  id: string;
-  userId: string;
-  contentId: string;
-  createdAt: Date;
-}
+import { UpdateUserProfileDto } from './dto/update-user-profile.dto';
+import { Prisma } from '../../prisma/client';
 
 interface UniverseAffinityResponse {
   userId: string;
@@ -46,104 +19,130 @@ interface MessageResponse {
 export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findById(id: string): Promise<UserResponse> {
-    const user = await this.prisma.user.findUnique({
-      where: { id },
-      select: {
-        id: true,
-        email: true,
-        displayName: true,
-        avatar: true,
-        role: true,
-        preferences: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    });
-
-    if (!user) {
-      throw new NotFoundException(`User with ID ${id} not found`);
-    }
-
-    return user as UserResponse;
-  }
-
-  async update(id: string, updateUserDto: UpdateUserDto): Promise<UserResponse> {
-    const user = await this.prisma.user.update({
-      where: { id },
-      data: {
-        ...updateUserDto,
-        updatedAt: new Date(),
-      },
-      select: {
-        id: true,
-        email: true,
-        displayName: true,
-        avatar: true,
-        role: true,
-        preferences: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    });
-
-    return user as UserResponse;
-  }
-
   async getPreferences(userId: string): Promise<Record<string, unknown>> {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: { preferences: true },
+    const prefs = await this.prisma.userPreferences.findUnique({
+      where: { userId },
     });
 
-    if (!user) {
-      throw new NotFoundException(`User with ID ${userId} not found`);
+    if (!prefs) {
+      return {
+        darkMode: false,
+        notifications: {},
+        contentPreferences: [],
+      };
     }
 
-    return (user.preferences || {}) as Record<string, unknown>;
+    return {
+      darkMode: prefs.darkMode,
+      notifications: (prefs.notifications as Record<string, unknown>) || {},
+      contentPreferences: (prefs.contentPreferences as string[]) || [],
+    };
   }
 
   async updatePreferences(
     userId: string,
     preferences: Record<string, unknown>
   ): Promise<Record<string, unknown>> {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
+    const existing = await this.prisma.userPreferences.findUnique({
+      where: { userId },
     });
 
-    if (!user) {
-      throw new NotFoundException(`User with ID ${userId} not found`);
+    const darkMode = preferences.darkMode as boolean | undefined;
+    const notifications = preferences.notifications as Prisma.InputJsonValue | undefined;
+    const contentPreferences = preferences.contentPreferences as Prisma.InputJsonValue | undefined;
+
+    let result;
+
+    if (existing) {
+      const updateData: Prisma.UserPreferencesUpdateInput = {};
+      if (darkMode !== undefined) updateData.darkMode = darkMode;
+      if (notifications !== undefined) updateData.notifications = notifications;
+      if (contentPreferences !== undefined) updateData.contentPreferences = contentPreferences;
+
+      result = await this.prisma.userPreferences.update({
+        where: { userId },
+        data: updateData,
+      });
+    } else {
+      result = await this.prisma.userPreferences.create({
+        data: {
+          userId,
+          darkMode: darkMode || false,
+          notifications: notifications || {},
+          contentPreferences: contentPreferences || [],
+        },
+      });
     }
 
-    const existingPrefs = (user.preferences || {}) as Record<string, unknown>;
+    return {
+      darkMode: result.darkMode,
+      notifications: (result.notifications as Record<string, unknown>) || {},
+      contentPreferences: (result.contentPreferences as string[]) || [],
+    };
+  }
 
-    const updatedUser = await this.prisma.user.update({
-      where: { id: userId },
-      data: {
-        preferences: {
-          ...existingPrefs,
-          ...preferences,
-        },
-        updatedAt: new Date(),
+  async getWatchHistory(userId: string, page = 1, limit = 20): Promise<Record<string, unknown>> {
+    const skip = (page - 1) * limit;
+    const take = Math.min(limit, 100);
+
+    const [history, total] = await Promise.all([
+      this.prisma.watchHistory.findMany({
+        where: { userId },
+        orderBy: { watchedAt: 'desc' },
+        skip,
+        take,
+      }),
+      this.prisma.watchHistory.count({
+        where: { userId },
+      }),
+    ]);
+
+    const totalPages = Math.ceil(total / take);
+
+    return {
+      success: true,
+      data: history,
+      pagination: {
+        total,
+        page,
+        limit: take,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPreviousPage: page > 1,
       },
-    });
-
-    return (updatedUser.preferences || {}) as Record<string, unknown>;
+    };
   }
 
-  async getWatchHistory(userId: string): Promise<WatchHistoryItem[]> {
-    return this.prisma.watchHistory.findMany({
-      where: { userId },
-      orderBy: { createdAt: 'desc' },
-      take: 50,
-    }) as Promise<WatchHistoryItem[]>;
-  }
+  async getSavedItems(userId: string, page = 1, limit = 20): Promise<Record<string, unknown>> {
+    const skip = (page - 1) * limit;
+    const take = Math.min(limit, 100);
 
-  async getSavedItems(userId: string): Promise<SavedItem[]> {
-    return this.prisma.savedItem.findMany({
-      where: { userId },
-      orderBy: { createdAt: 'desc' },
-    }) as Promise<SavedItem[]>;
+    const [savedItems, total] = await Promise.all([
+      this.prisma.savedItem.findMany({
+        where: { userId },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take,
+      }),
+      this.prisma.savedItem.count({
+        where: { userId },
+      }),
+    ]);
+
+    const totalPages = Math.ceil(total / take);
+
+    return {
+      success: true,
+      data: savedItems,
+      pagination: {
+        total,
+        page,
+        limit: take,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPreviousPage: page > 1,
+      },
+    };
   }
 
   async saveItem(userId: string, contentId: string): Promise<MessageResponse> {
@@ -179,33 +178,22 @@ export class UsersService {
   }
 
   async getUniverseAffinity(userId: string): Promise<UniverseAffinityResponse> {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        preferences: true,
-        watchHistory: {
-          select: {
-            contentType: true,
-            universe: true,
-          },
-        },
-      },
+    const history = await this.prisma.watchHistory.findMany({
+      where: { userId },
+      select: { universe: true },
     });
 
-    if (!user) {
-      throw new NotFoundException(`User with ID ${userId} not found`);
-    }
-
     const universeCounts: Record<string, number> = {};
-    (user.watchHistory as Array<{ universe?: string }>).forEach((history) => {
-      const universe = history.universe || 'unknown';
+    history.forEach((item) => {
+      const universe = item.universe || 'unknown';
       universeCounts[universe] = (universeCounts[universe] || 0) + 1;
     });
 
-    const prefs = (user.preferences || {}) as { interests?: string[] };
+    const prefs = await this.getPreferences(userId);
+
     return {
       userId,
-      interests: prefs.interests || [],
+      interests: prefs.contentPreferences as string[],
       universeAffinity: universeCounts,
       topUniverses: Object.entries(universeCounts)
         .sort((a, b) => b[1] - a[1])
@@ -218,31 +206,245 @@ export class UsersService {
     userId: string,
     dto: UpdateUniverseAffinityDto
   ): Promise<{ message: string; interests: string[] }> {
+    const interests = dto.interests || [];
+
+    await this.updatePreferences(userId, {
+      contentPreferences: interests,
+    });
+
+    return {
+      message: 'Universe affinity updated',
+      interests,
+    };
+  }
+
+  async getProfile(userId: string): Promise<Record<string, unknown>> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        displayName: true,
+        avatar: true,
+        role: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException(`User not found`);
+    }
+
+    return {
+      success: true,
+      data: user,
+    };
+  }
+
+  async updateProfile(userId: string, dto: UpdateUserProfileDto): Promise<Record<string, unknown>> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
     });
 
     if (!user) {
-      throw new NotFoundException(`User with ID ${userId} not found`);
+      throw new NotFoundException(`User not found`);
     }
-
-    const existingPrefs = (user.preferences || {}) as { interests?: string[] };
 
     const updatedUser = await this.prisma.user.update({
       where: { id: userId },
       data: {
-        preferences: {
-          ...existingPrefs,
-          interests: dto.interests,
-        },
-        updatedAt: new Date(),
+        ...(dto.displayName && { displayName: dto.displayName }),
+        ...(dto.avatar && { avatar: dto.avatar }),
+      },
+      select: {
+        id: true,
+        email: true,
+        displayName: true,
+        avatar: true,
+        role: true,
+        createdAt: true,
+        updatedAt: true,
       },
     });
 
-    const newPrefs = (updatedUser.preferences || {}) as { interests?: string[] };
     return {
-      message: 'Universe affinity updated',
-      interests: newPrefs.interests || [],
+      success: true,
+      data: updatedUser,
+    };
+  }
+
+  async getUserById(userId: string): Promise<Record<string, unknown>> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        displayName: true,
+        avatar: true,
+        role: true,
+        createdAt: true,
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException(`User not found`);
+    }
+
+    return {
+      success: true,
+      data: user,
+    };
+  }
+
+  async followUser(followerId: string, followingId: string): Promise<Record<string, unknown>> {
+    if (followerId === followingId) {
+      throw new BadRequestException('Cannot follow yourself');
+    }
+
+    const userToFollow = await this.prisma.user.findUnique({
+      where: { id: followingId },
+    });
+
+    if (!userToFollow) {
+      throw new NotFoundException(`User not found`);
+    }
+
+    const existingFollow = await this.prisma.following.findUnique({
+      where: {
+        followerId_followingId: {
+          followerId,
+          followingId,
+        },
+      },
+    });
+
+    if (existingFollow) {
+      return {
+        success: true,
+        data: { message: 'Already following this user' },
+      };
+    }
+
+    await this.prisma.following.create({
+      data: {
+        followerId,
+        followingId,
+      },
+    });
+
+    return {
+      success: true,
+      data: { message: 'User followed successfully' },
+    };
+  }
+
+  async unfollowUser(followerId: string, followingId: string): Promise<Record<string, unknown>> {
+    const existingFollow = await this.prisma.following.findUnique({
+      where: {
+        followerId_followingId: {
+          followerId,
+          followingId,
+        },
+      },
+    });
+
+    if (!existingFollow) {
+      return {
+        success: true,
+        data: { message: 'Not following this user' },
+      };
+    }
+
+    await this.prisma.following.delete({
+      where: {
+        followerId_followingId: {
+          followerId,
+          followingId,
+        },
+      },
+    });
+
+    return {
+      success: true,
+      data: { message: 'User unfollowed successfully' },
+    };
+  }
+
+  async getFollowers(userId: string, page: number, limit: number): Promise<Record<string, unknown>> {
+    const skip = (page - 1) * limit;
+
+    const [followingRecords, total] = await this.prisma.$transaction([
+      this.prisma.following.findMany({
+        where: { followingId: userId },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.following.count({
+        where: { followingId: userId },
+      }),
+    ]);
+
+    const followerIds = followingRecords.map(f => f.followerId);
+    const users = await this.prisma.user.findMany({
+      where: { id: { in: followerIds } },
+      select: { id: true, displayName: true, avatar: true },
+    });
+
+    const userMap = new Map(users.map(u => [u.id, u]));
+
+    return {
+      success: true,
+      data: {
+        followers: followingRecords
+          .map(f => userMap.get(f.followerId))
+          .filter(Boolean),
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        },
+      },
+    };
+  }
+
+  async getFollowing(userId: string, page: number, limit: number): Promise<Record<string, unknown>> {
+    const skip = (page - 1) * limit;
+
+    const [followingRecords, total] = await this.prisma.$transaction([
+      this.prisma.following.findMany({
+        where: { followerId: userId },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.following.count({
+        where: { followerId: userId },
+      }),
+    ]);
+
+    const followingIds = followingRecords.map(f => f.followingId);
+    const users = await this.prisma.user.findMany({
+      where: { id: { in: followingIds } },
+      select: { id: true, displayName: true, avatar: true },
+    });
+
+    const userMap = new Map(users.map(u => [u.id, u]));
+
+    return {
+      success: true,
+      data: {
+        following: followingRecords
+          .map(f => userMap.get(f.followingId))
+          .filter(Boolean),
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        },
+      },
     };
   }
 }

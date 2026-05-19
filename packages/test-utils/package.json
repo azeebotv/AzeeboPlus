@@ -1,0 +1,21 @@
+{
+  "name": "@azeebo/test-utils",
+  "version": "1.0.0",
+  "description": "Shared testing utilities for Azeebo services",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch"
+  },
+  "dependencies": {
+    "@nestjs/testing": "^10.0.0",
+    "@prisma/client": "^5.7.0",
+    "@faker-js/faker": "^8.3.1",
+    "axios-mock-adapter": "^1.22.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.3.0"
+  }
+}

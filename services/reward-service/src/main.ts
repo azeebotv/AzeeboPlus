@@ -3,11 +3,17 @@ import { ValidationPipe, Logger } from '@nestjs/common';
 import { AppModule } from './app.module';
 import helmet from 'helmet';
 import { validateEnvironment } from '@azeebo/shared-types';
+import { GlobalExceptionFilter } from '@azeebo/error-handling';
+import { LoggingInterceptor } from '@azeebo/logger';
 
 async function bootstrap(): Promise<void> {
   validateEnvironment(process.env);
 
   const app = await NestFactory.create(AppModule);
+
+  app.useGlobalFilters(new GlobalExceptionFilter());
+  
+  app.useGlobalInterceptors(new LoggingInterceptor());
 
   // Security headers
   app.use(

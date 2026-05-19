@@ -1,13 +1,16 @@
-import { Controller, Get, Post, Patch, Body, Param, Query } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Body, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { RateLimitGuard, RateLimit } from '@azeebo/security';
 import { UniverseService } from './universe.service';
 
 @ApiTags('Universe')
-@Controller('universe')
+@Controller('v1/vertical/universes')
 export class UniverseController {
   constructor(private readonly universeService: UniverseService) {}
 
   @Get()
+  @UseGuards(RateLimitGuard)
+  @RateLimit(100, 60000)
   @ApiOperation({ summary: 'Get all universes' })
   @ApiResponse({ status: 200, description: 'List of universes' })
   async getUniverses(@Query('page') page = 1, @Query('limit') limit = 20): Promise<unknown> {
@@ -61,5 +64,12 @@ export class UniverseController {
     data: Partial<{ name: string; description: string; latitude: number; longitude: number }>
   ): Promise<unknown> {
     return this.universeService.updateLocation(id, data);
+  }
+
+  @Get('categories')
+  @ApiOperation({ summary: 'Get vertical categories' })
+  @ApiResponse({ status: 200, description: 'List of categories' })
+  async getCategories(): Promise<unknown> {
+    return this.universeService.getCategories();
   }
 }

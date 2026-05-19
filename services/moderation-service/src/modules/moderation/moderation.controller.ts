@@ -4,6 +4,7 @@ import { AuthGuard } from '@nestjs/passport';
 
 import { ModerationService } from './moderation.service';
 import { ModerationResponse } from './interfaces/moderation-response.interface';
+import { CreateReportDto, EscalateCaseDto, ScanContentDto } from './dto/moderation.dto';
 
 @ApiTags('Moderation')
 @Controller('moderation')
@@ -18,7 +19,7 @@ export class ModerationController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async reportContent(
     @Request() req: { user: { sub: string } },
-    @Body() body: { type: string; contentId?: string; userId?: string; reason: string }
+    @Body() body: CreateReportDto
   ): Promise<ModerationResponse> {
     return this.moderationService.reportContent(req.user.sub, body);
   }
@@ -38,7 +39,7 @@ export class ModerationController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async submitAppeal(
     @Request() req: { user: { sub: string } },
-    @Body() body: { caseId: string; reason: string }
+    @Body() body: EscalateCaseDto
   ): Promise<ModerationResponse> {
     return this.moderationService.submitAppeal(req.user.sub, body);
   }
@@ -58,8 +59,9 @@ export class ModerationController {
   @ApiResponse({ status: 200, description: 'Trust score' })
   @ApiResponse({ status: 404, description: 'User not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getTrustScore(@Param('userId') userId: string): Promise<ModerationResponse> {
-    return this.moderationService.getTrustScore(userId);
+  async getTrustScore(@Param('userId') userId: string): Promise<{ success: boolean; data: { userId: string; trustScore: number } }> {
+    const trustScore = await this.moderationService.getTrustScore(userId);
+    return { success: true, data: { userId, trustScore } };
   }
 
   @Post('safety-action')
@@ -119,7 +121,7 @@ export class ModerationController {
   @ApiResponse({ status: 400, description: 'Invalid input' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async scanContentMedia(
-    @Body() body: { contentId?: string; mediaUrl: string; scanTypes?: string[] }
+    @Body() body: ScanContentDto
   ): Promise<unknown> {
     return this.moderationService.scanContentMedia({
       contentId: body.contentId,

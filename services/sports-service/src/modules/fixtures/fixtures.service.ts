@@ -27,7 +27,7 @@ export class FixturesService {
         where,
         include: {
           teams: true,
-          FixtureMetadata: true,
+          fixtureMetadata: true,
           PredictionMarket: true,
           _count: { select: { predictions: true, fanBoards: true } },
         },
@@ -49,9 +49,9 @@ export class FixturesService {
       where: { id: eventId },
       include: {
         teams: true,
-        FixtureMetadata: true,
+        fixtureMetadata: true,
         PredictionMarket: true,
-        contests: { include: { prizes: true, entries: true } },
+        contests: true,
         Highlight: { orderBy: { createdAt: 'desc' }, take: 10 },
       },
     });
@@ -91,7 +91,7 @@ export class FixturesService {
           temperature: metadata.temperature,
           attendance: metadata.attendance,
           broadcast: metadata.broadcast,
-          stats: metadata.stats as Record<string, string | number | boolean | null> | null,
+          stats: metadata.stats ? JSON.parse(JSON.stringify(metadata.stats)) : undefined,
         },
       });
       return { success: true, data: { metadataId: updated.id } };
@@ -106,7 +106,7 @@ export class FixturesService {
         temperature: metadata.temperature,
         attendance: metadata.attendance,
         broadcast: metadata.broadcast,
-        stats: metadata.stats as Record<string, string | number | boolean | null> | null,
+        stats: metadata.stats ? JSON.parse(JSON.stringify(metadata.stats)) : undefined,
       },
     });
 

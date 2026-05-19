@@ -7,24 +7,21 @@ import {
   Body,
   Query,
   NotFoundException,
+  Param,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { PrismaService } from '../database/prisma.service';
+import { RateLimitGuard, RateLimit } from '@azeebo/security';
 
 import { WalletService } from './wallet.service';
 import { FundWalletDto } from './dto/fund-wallet.dto';
 import { RedeemRewardDto } from './dto/redeem-reward.dto';
 import { AddBonusCreditDto } from './dto/add-bonus-credit.dto';
 import { AddPromoCreditDto } from './dto/add-promo-credit.dto';
+import { DebitWalletDto, CreditWalletDto } from './dto/wallet-operation.dto';
+import { WithdrawWalletDto, TransferWalletDto } from './dto/withdraw-transfer.dto';
 import { WalletResponse } from './interfaces/wallet-response.interface';
-
-interface WalletOperationDto {
-  walletId: string;
-  amount: number;
-  description: string;
-  idempotencyKey?: string;
-}
 
 interface AuthenticatedRequest {
   user: {
@@ -33,6 +30,7 @@ interface AuthenticatedRequest {
 }
 
 @ApiTags('Wallet')
+@ApiBearerAuth()
 @Controller('wallet')
 export class WalletController {
   constructor(
@@ -54,8 +52,13 @@ export class WalletController {
   @ApiOperation({ summary: 'Get wallet transaction history' })
   @ApiResponse({ status: 200, description: 'Transaction history' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getTransactions(@Request() req: AuthenticatedRequest): Promise<WalletResponse> {
-    return this.walletService.getTransactions(req.user.sub);
+  async getTransactions(
+    @Request() req: AuthenticatedRequest,
+    @Query('page') page = 1,
+    @Query('limit') limit = 20,
+    @Query('cursor') cursor?: string
+  ): Promise<WalletResponse> {
+    return this.walletService.getTransactions(req.user.sub, Number(page), Number(limit), cursor);
   }
 
   @Get('summary')
@@ -68,7 +71,8 @@ export class WalletController {
   }
 
   @Post('fund')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), RateLimitGuard)
+  @RateLimit(10, 60000)
   @ApiOperation({ summary: 'Initialize wallet funding' })
   @ApiResponse({ status: 201, description: 'Payment intent created' })
   @ApiResponse({ status: 400, description: 'Invalid input' })
@@ -81,7 +85,8 @@ export class WalletController {
   }
 
   @Post('redeem-reward')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), RateLimitGuard)
+  @RateLimit(10, 60000)
   @ApiOperation({ summary: 'Convert reward points to wallet balance' })
   @ApiResponse({ status: 200, description: 'Reward redeemed' })
   @ApiResponse({ status: 400, description: 'Invalid input' })
@@ -94,7 +99,8 @@ export class WalletController {
   }
 
   @Post('bonus-credit')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), RateLimitGuard)
+  @RateLimit(10, 3600000)
   @ApiOperation({ summary: 'Add bonus credit to wallet' })
   @ApiResponse({ status: 200, description: 'Bonus credit added' })
   @ApiResponse({ status: 400, description: 'Invalid input' })
@@ -119,7 +125,8 @@ export class WalletController {
   }
 
   @Post('promo-credit')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), RateLimitGuard)
+  @RateLimit(10, 3600000)
   @ApiOperation({ summary: 'Add promo credit to wallet' })
   @ApiResponse({ status: 200, description: 'Promo credit added' })
   @ApiResponse({ status: 400, description: 'Invalid input' })
@@ -169,10 +176,12 @@ export class WalletController {
   }
 
   @Post('debit')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(50, 60000)
   @ApiOperation({ summary: 'Debit wallet (service-to-service)' })
   @ApiResponse({ status: 200, description: 'Wallet debited' })
   @ApiResponse({ status: 400, description: 'Invalid input or insufficient balance' })
-  async debitWallet(@Body() body: WalletOperationDto): Promise<WalletResponse> {
+  async debitWallet(@Body() body: DebitWalletDto): Promise<WalletResponse> {
     return this.walletService.debitBalance(
       body.walletId,
       body.amount,
@@ -183,15 +192,59 @@ export class WalletController {
   }
 
   @Post('credit')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(50, 60000)
   @ApiOperation({ summary: 'Credit wallet (service-to-service)' })
   @ApiResponse({ status: 200, description: 'Wallet credited' })
   @ApiResponse({ status: 400, description: 'Invalid input' })
-  async creditWallet(@Body() body: WalletOperationDto): Promise<WalletResponse> {
+  async creditWallet(@Body() body: CreditWalletDto): Promise<WalletResponse> {
     return this.walletService.creditBalance(
       body.walletId,
       body.amount,
       body.description,
       body.idempotencyKey
     );
+  }
+
+  @Post('withdraw')
+  @UseGuards(AuthGuard('jwt'), RateLimitGuard)
+  @RateLimit(5, 3600000)
+  @ApiOperation({ summary: 'Withdraw funds from wallet' })
+  @ApiResponse({ status: 200, description: 'Withdrawal initiated' })
+  @ApiResponse({ status: 400, description: 'Invalid input or insufficient balance' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async withdraw(
+    @Request() req: AuthenticatedRequest,
+    @Body() withdrawDto: WithdrawWalletDto
+  ): Promise<WalletResponse> {
+    return this.walletService.withdraw(req.user.sub, withdrawDto);
+  }
+
+  @Post('transfer')
+  @UseGuards(AuthGuard('jwt'), RateLimitGuard)
+  @RateLimit(10, 3600000)
+  @ApiOperation({ summary: 'Transfer funds to another user' })
+  @ApiResponse({ status: 200, description: 'Transfer completed' })
+  @ApiResponse({ status: 400, description: 'Invalid input or insufficient balance' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async transfer(
+    @Request() req: AuthenticatedRequest,
+    @Body() transferDto: TransferWalletDto
+  ): Promise<WalletResponse> {
+    return this.walletService.transfer(req.user.sub, transferDto);
+  }
+
+  @Get('transactions/:id')
+  @UseGuards(AuthGuard('jwt'))
+  @ApiOperation({ summary: 'Get transaction details' })
+  @ApiParam({ name: 'id', description: 'Transaction ID' })
+  @ApiResponse({ status: 200, description: 'Transaction details' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 404, description: 'Transaction not found' })
+  async getTransaction(
+    @Request() req: AuthenticatedRequest,
+    @Param('id') id: string
+  ): Promise<WalletResponse> {
+    return this.walletService.getTransaction(req.user.sub, id);
   }
 }

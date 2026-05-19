@@ -339,23 +339,25 @@ nano .env
 **Required Environment Variables for Testing:**
 
 ```bash
-# .env.local or .env for development
+# ⚠️ DEVELOPMENT ONLY - NOT FOR PRODUCTION ⚠️
+# .env.local or .env for development/testing purposes only
 
-# Database Configuration
-DATABASE_URL=postgresql://postgres:password@localhost:5432/azeebo_plus_test
+# Database Configuration - DEVELOPMENT ONLY
+DATABASE_URL=postgresql://postgres:local_dev_password@localhost:5432/azeebo_plus_dev
 DATABASE_HOST=localhost
 DATABASE_PORT=5432
 DATABASE_USER=postgres
-DATABASE_PASSWORD=your_test_password
-DATABASE_NAME=azeebo_plus_test
+DATABASE_PASSWORD=local_dev_password_never_use_in_production
+DATABASE_NAME=azeebo_plus_dev
 
-# Redis Configuration
+# Redis Configuration - DEVELOPMENT ONLY
 REDIS_URL=redis://localhost:6379
 REDIS_HOST=localhost
 REDIS_PORT=6379
 
-# JWT Configuration (use test secrets)
-JWT_SECRET=test_jwt_secret_at_least_32_characters_long
+# JWT Configuration - DEVELOPMENT ONLY (use test secrets)
+# ⚠️ NEVER use these secrets in production! ⚠️
+JWT_SECRET=development_only_secret_must_be_at_least_32_characters_change_in_production
 JWT_EXPIRES_IN=1h
 JWT_REFRESH_EXPIRES_IN=7d
 
@@ -367,10 +369,11 @@ NODE_ENV=test
 
 ```bash
 # Start PostgreSQL and Redis containers for testing
+# ⚠️ DEVELOPMENT/TESTING ONLY - NOT FOR PRODUCTION ⚠️
 docker run -d \
   --name azeebo-postgres-test \
   -e POSTGRES_USER=postgres \
-  -e POSTGRES_PASSWORD=your_test_password \
+  -e POSTGRES_PASSWORD=development_test_password_only \
   -e POSTGRES_DB=azeebo_plus_test \
   -p 5432:5432 \
   postgres:15-alpine
@@ -534,7 +537,7 @@ describe('AuthService Integration', () => {
   it('should register a new user', async () => {
     const result = await authService.register({
       email: 'test@example.com',
-      password: 'Password123!',
+      password: '[REPLACE_WITH_SECURE_PASSWORD]',
       displayName: 'Test User'
     });
     expect(result.success).toBe(true);
@@ -560,7 +563,7 @@ describe('AuthController Integration', () => {
       .post('/auth/register')
       .send({
         email: 'test@example.com',
-        password: 'Password123!',
+        password: '[REPLACE_WITH_SECURE_PASSWORD]',
         displayName: 'Test User'
       })
       .expect(201);
@@ -603,7 +606,8 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   reporter: 'html',
   use: {
-    baseURL: process.env.E2E_BASE_URL || 'http://localhost:3000',
+    # Use environment variable for production testing, default to localhost for development only
+    baseURL: process.env.E2E_BASE_URL || 'http://localhost:3000', # ⚠️ Localhost only for development
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
@@ -670,8 +674,9 @@ brew install k6  # macOS
 # or
 sudo apt install k6  # Ubuntu
 
-# Run load test against local API Gateway
+# ⚠️ DEVELOPMENT ONLY - Run load test against local API Gateway
 cd infra/load-testing
+# For production testing, set BASE_URL to your production API endpoint
 BASE_URL=http://localhost:3013 k6 run load-test.js
 ```
 
@@ -776,7 +781,7 @@ docker ps | grep postgres
 # Restart PostgreSQL container
 docker restart azeebo-postgres-test
 
-# Verify connection
+# ⚠️ DEVELOPMENT ONLY - Verify local connection
 psql -h localhost -p 5432 -U postgres -d azeebo_plus_test
 
 # Check logs
@@ -1452,7 +1457,7 @@ curl https://www.yourdomain.com/api/health
 # Test authentication
 curl -X POST https://api.yourdomain.com/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"test@example.com","password":"test123"}'
+  -d '{"email":"test@example.com","password":"[REPLACE_WITH_SECURE_PASSWORD]"}'
 ```
 
 ---
@@ -1558,17 +1563,61 @@ nano .env
 
 **Essential environment variables for production:**
 ```env
-# Security
+# ⚠️ REQUIRED - Production environment mode (MUST be set to production)
 NODE_ENV=production
+
+# ⚠️ REQUIRED - JWT Secrets (MUST be generated securely, min 32 chars)
+# Services will fail to start if these are missing
 JWT_SECRET=generate-a-64-character-random-string-here
 JWT_EXPIRES_IN=30m
 JWT_REFRESH_EXPIRES_IN=7d
+REFRESH_TOKEN_SECRET=generate-another-64-character-random-string-here
 
-# Database
+# ⚠️ REQUIRED - Database Configuration (MUST be set)
+# Services will fail to start if DATABASE_URL is missing
+DATABASE_URL=postgresql://user:secure-password@db-host:5432/database-name
+
+# ⚠️ REQUIRED - Redis Configuration (MUST be set)
+REDIS_URL=redis://redis-host:6379
+
+# ⚠️ REQUIRED - Service URLs (MUST be set for inter-service communication)
+AUTH_SERVICE_URL=https://auth.yourdomain.com
+USER_SERVICE_URL=https://users.yourdomain.com
+WALLET_SERVICE_URL=https://wallet.yourdomain.com
+PAYMENT_SERVICE_URL=https://payment.yourdomain.com
+CONTENT_SERVICE_URL=https://content.yourdomain.com
+MEDIA_SERVICE_URL=https://media.yourdomain.com
+
+# ⚠️ REQUIRED - CORS Configuration (MUST be set in production)
+ALLOWED_ORIGINS=https://www.yourdomain.com,https://app.yourdomain.com
+
+# Payment Provider Keys (REQUIRED if using payments)
+PAYSTACK_SECRET_KEY=your-paystack-secret-key
+FLUTTERWAVE_SECRET_KEY=your-flutterwave-secret-key
+
+# Optional but recommended
+API_TIMEOUT=30000
+LOG_LEVEL=info
+```
+
+**Fail-Fast Behavior:**
+- Services will throw an error on startup if required variables are missing
+- Required variables include: NODE_ENV, JWT_SECRET, DATABASE_URL, REDIS_URL
+- All service URLs must be configured for inter-service communication
+- CORS origins must be explicitly set in production
+
+**Generating Secure Secrets:**
+```bash
+# Generate a 64-character random secret
+openssl rand -hex 32
+
+# Generate a 128-character random secret
+openssl rand -hex 64
+```
 POSTGRES_USER=azeebo
-POSTGRES_PASSWORD=strong-password-here
+POSTGRES_PASSWORD=[REPLACE_WITH_SECURE_PASSWORD]
 POSTGRES_DB=azeebo_plus
-DATABASE_URL=postgresql://azeebo:strong-password-here@localhost:5432/azeebo_plus
+DATABASE_URL=postgresql://azeebo:[REPLACE_WITH_SECURE_PASSWORD]@localhost:5432/azeebo_plus
 
 # Redis
 REDIS_PASSWORD=redis-password-here

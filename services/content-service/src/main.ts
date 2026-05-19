@@ -1,13 +1,18 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, Logger } from '@nestjs/common';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import helmet from 'helmet';
 import { validateEnvironment } from '@azeebo/shared-types';
+import { LoggingInterceptor } from '@azeebo/logger';
+import { GlobalExceptionFilter } from '@azeebo/error-handling';
 
 async function bootstrap(): Promise<void> {
   validateEnvironment(process.env);
 
   const app = await NestFactory.create(AppModule);
+
+  app.useGlobalFilters(new GlobalExceptionFilter());
 
   app.use(
     helmet({
@@ -33,11 +38,25 @@ async function bootstrap(): Promise<void> {
     })
   );
 
+  app.useGlobalInterceptors(new LoggingInterceptor());
+
   app.enableCors({
     origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
   });
+
+  if (process.env.NODE_ENV !== 'production') {
+    const config = new DocumentBuilder()
+      .setTitle('Content Service')
+      .setDescription('Azeebo+ Content Service API')
+      .setVersion('1.0.0')
+      .addTag('content')
+      .build();
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('docs', app, document);
+    Logger.log('Swagger documentation enabled at /docs');
+  }
 
   const port = process.env.PORT || 3003;
   await app.listen(port);

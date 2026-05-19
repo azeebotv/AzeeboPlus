@@ -137,14 +137,7 @@ export class FlutterwaveProvider {
 
   async processPayout(amount: number, recipient: string, reference: string) {
     this.logger.log(`Processing Flutterwave payout of ${amount} to ${recipient}, reference: ${reference}`);
-    // Flutterwave payout implementation would go here
-    // For now, we'll just log it as a placeholder
-    return {
-      success: true,
-      reference,
-      amount,
-      recipient,
-    };
+    throw new Error('Flutterwave payout is not implemented. Please use wallet-service direct transfer for payouts.');
   }
 
   async verifyWebhookSignature(payload: any, signature: string): Promise<boolean> {

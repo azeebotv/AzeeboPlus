@@ -31,13 +31,19 @@ interface CelebrityNews {
   createdAt: string;
 }
 
+interface CelebrityEntryWithNews extends CelebrityEntry {
+  news: CelebrityNews[];
+}
+
 interface CelebrityResponse {
   success: boolean;
   data?:
     | CelebrityEntry
     | CelebrityEntry[]
     | CelebrityNews[]
+    | CelebrityEntryWithNews
     | { items: CelebrityEntry[]; total: number; page: number; limit: number; totalPages: number }
+    | { items: CelebrityNews[]; total: number; page: number; limit: number; totalPages: number }
     | { message: string };
   error?: { code: string; message: string };
 }

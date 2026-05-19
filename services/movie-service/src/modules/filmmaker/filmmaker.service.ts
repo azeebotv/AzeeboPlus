@@ -23,12 +23,22 @@ interface FilmmakerUpdate {
   createdAt: string;
 }
 
+interface FilmmakerBacker {
+  id: string;
+  userId: string;
+  amount: number;
+  createdAt: string;
+}
+
 interface FilmmakerResponse {
   success: boolean;
   data?:
     | FilmmakerProject
     | FilmmakerProject[]
     | FilmmakerUpdate[]
+    | { items: FilmmakerProject[]; total: number; page: number; limit: number; totalPages: number }
+    | { items: FilmmakerUpdate[]; total: number; page: number; limit: number; totalPages: number }
+    | { items: FilmmakerBacker[]; total: number; page: number; limit: number; totalPages: number }
     | { message: string; backerCount?: number }
     | { hasAccess: boolean };
   error?: { code: string; message: string };

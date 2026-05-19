@@ -147,7 +147,7 @@ export class FanContestsService {
       displayName: e.user.displayName,
       avatar: e.user.avatar,
       score: e.score,
-      enteredAt: e.enteredAt.toISOString(),
+      enteredAt: e.createdAt.toISOString(),
     }));
 
     return {

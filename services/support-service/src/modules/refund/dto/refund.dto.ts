@@ -5,11 +5,11 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 export class RequestRefundDto {
   @ApiProperty()
   @IsString()
-  paymentId: string;
+  paymentId: string = '';
 
   @ApiProperty()
   @IsDecimal()
-  amount: string;
+  amount: string = '';
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -18,23 +18,23 @@ export class RequestRefundDto {
 
   @ApiProperty()
   @IsString()
-  reason: string;
+  reason: string = '';
 
   @ApiProperty()
   @IsString()
-  ticketId: string;
+  ticketId: string = '';
 }
 
 export class ProcessRefundDto {
   @ApiProperty()
   @IsString()
-  refundReference: string;
+  refundReference: string = '';
 }
 
 export class RejectRefundDto {
   @ApiProperty()
   @IsString()
-  reason: string;
+  reason: string = '';
 }
 
 export class RefundQueryDto {

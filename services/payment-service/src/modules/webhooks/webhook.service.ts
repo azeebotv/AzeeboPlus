@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { Prisma } from '../../prisma/client';
+import { WebhookRetryService } from '../payments/webhook-retry.service';
 
 export interface WebhookPayload {
   id: string;
@@ -43,7 +44,10 @@ type WebhookProcessingResult = 'success' | 'failed';
 export class WebhookService {
   private readonly logger = new Logger(WebhookService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private webhookRetryService: WebhookRetryService
+  ) {}
 
   async handlePaystackWebhook(payload: WebhookPayload): Promise<void> {
     const eventId = payload.id;
@@ -80,6 +84,13 @@ export class WebhookService {
         'failed',
         rawPayload,
         errorMessage
+      );
+      await this.webhookRetryService.scheduleRetry(
+        eventId,
+        'paystack',
+        payload.type,
+        payload,
+        error instanceof Error ? error : new Error(errorMessage)
       );
       throw error;
     }
@@ -121,6 +132,13 @@ export class WebhookService {
         rawPayload,
         errorMessage
       );
+      await this.webhookRetryService.scheduleRetry(
+        eventId,
+        'flutterwave',
+        payload.type,
+        payload,
+        error instanceof Error ? error : new Error(errorMessage)
+      );
       throw error;
     }
   }
@@ -147,7 +165,6 @@ export class WebhookService {
         type,
         payload,
         processedAt: new Date(),
-        result,
         failureReason,
       },
     });

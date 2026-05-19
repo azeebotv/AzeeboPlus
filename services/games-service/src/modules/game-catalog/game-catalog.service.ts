@@ -20,7 +20,9 @@ interface GameResponse {
     | Game[]
     | { items: Game[]; total: number; page: number; limit: number; totalPages: number }
     | { sessionId: string; questions: unknown[]; message: string }
-    | { message: string; score: number; correctCount: number }
+    | { message: string; score: number; correctCount: number; totalScore?: number }
+    | { message: string; pointsEarned: number; correctAnswer: string }
+    | { message: string; totalScore: number; level: number; totalGames: number; recentGames: unknown[] }
     | { message: string };
   error?: { code: string; message: string };
 }
@@ -269,6 +271,7 @@ export class GameCatalogService {
     return {
       success: true,
       data: {
+        message: 'User stats retrieved',
         totalScore: scoreEntry?.score || 0,
         level: scoreEntry?.level || 1,
         totalGames,

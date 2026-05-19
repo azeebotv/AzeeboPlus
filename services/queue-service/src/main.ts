@@ -3,6 +3,9 @@ import { Module, ValidationPipe, Logger } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { BullModule } from '@nestjs/bullmq';
 import helmet from 'helmet';
+import { GlobalExceptionFilter } from '@azeebo/error-handling';
+import { LoggingInterceptor } from '@azeebo/logger';
+import { validateEnvironment } from '@azeebo/shared-types';
 import { NotificationProcessor } from './processors/notification.processor';
 import { PaymentProcessor } from './processors/payment.processor';
 import { EmailProcessor } from './processors/email.processor';
@@ -96,7 +99,13 @@ const QUEUE_CONFIG = {
 export class AppModule {}
 
 async function bootstrap() {
+  validateEnvironment(process.env);
+
   const app = await NestFactory.create(AppModule);
+
+  app.useGlobalFilters(new GlobalExceptionFilter());
+
+  app.useGlobalInterceptors(new LoggingInterceptor());
 
   app.use(helmet({
     contentSecurityPolicy: {

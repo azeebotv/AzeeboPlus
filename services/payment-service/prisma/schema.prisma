@@ -28,6 +28,7 @@ model Payment {
   @@index([userId])
   @@index([status])
   @@index([providerRef])
+  @@unique([provider, providerRef])
 }
 
 model WebhookEvent {
@@ -48,6 +49,27 @@ model WebhookEvent {
   @@index([result])
 }
 
+model WebhookRetry {
+  id              String    @id @default(cuid())
+  eventId         String
+  provider        String
+  type            String
+  payload         Json
+  retryCount      Int       @default(0)
+  maxRetries      Int       @default(5)
+  nextRetryAt     DateTime
+  status          String    @default("pending") // pending, processing, failed, completed
+  lastError       String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@map("webhook_retries")
+  @@index([eventId])
+  @@index([status])
+  @@index([nextRetryAt])
+  @@index([provider])
+}
+
 model PaymentIntent {
   id               String    @id @default(cuid())
   userId           String
@@ -61,6 +83,7 @@ model PaymentIntent {
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
   idempotencyKey   String?   @unique
+  refundAmount     Decimal?
 
   refunds Refund[]
 
@@ -88,37 +111,4 @@ model Refund {
   @@index([paymentIntentId])
   @@index([status])
   @@index([idempotencyKey])
-}
-
-model Wallet {
-  id        String    @id @default(cuid())
-  userId    String    @unique
-  balance   Decimal   @default(0)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-
-  transactions WalletTransaction[]
-
-  @@map("wallets")
-  @@index([userId])
-}
-
-model WalletTransaction {
-  id          String    @id @default(cuid())
-  walletId    String
-  type        String    // credit, debit
-  amount      Decimal
-  status      String    @default("completed")
-  description String?
-  reference   String?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  wallet Wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
-
-  @@map("wallet_transactions")
-  @@index([walletId])
-  @@index([type])
-  @@index([status])
-  @@index([reference])
 }

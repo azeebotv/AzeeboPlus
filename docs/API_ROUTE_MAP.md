@@ -27,15 +27,22 @@ Error responses:
 |--------|----------|-------------|
 | POST | /auth/signup | Register new user |
 | POST | /auth/login | Login with email/password |
-| POST | /auth/logout | Logout (invalidate tokens) |
+| DELETE | /auth/logout | Logout (invalidate tokens) |
 | POST | /auth/refresh | Refresh access token |
 | POST | /auth/forgot-password | Request password reset |
 | POST | /auth/reset-password | Reset password with token |
 | POST | /auth/verify-email | Verify email address |
 | POST | /auth/resend-verification | Resend verification email |
-| POST | /auth/mfa/enable | Enable MFA |
+| GET | /auth/me | Get authenticated user |
+| POST | /auth/mfa/setup | Get MFA setup details |
 | POST | /auth/mfa/verify | Verify MFA code |
+| POST | /auth/mfa/enable | Enable MFA |
 | POST | /auth/mfa/disable | Disable MFA |
+| POST | /auth/social/google | Google OAuth login |
+| POST | /auth/social/apple | Apple OAuth login |
+| POST | /auth/social/unlink | Unlink social account |
+| POST | /auth/otp/send | Send OTP |
+| POST | /auth/otp/verify | Verify OTP |
 
 ## Users
 
@@ -43,6 +50,14 @@ Error responses:
 |--------|----------|-------------|
 | GET | /users/me | Get current user profile |
 | PATCH | /users/me | Update current user profile |
+| GET | /users/me/preferences | Get user preferences |
+| PATCH | /users/me/preferences | Update user preferences |
+| GET | /users/me/history | Get viewing history |
+| GET | /users/me/saved | Get saved content |
+| POST | /users/me/saved | Save content |
+| DELETE | /users/me/saved/:contentId | Remove saved content |
+| GET | /users/me/universe-affinity | Get universe affinity |
+| PATCH | /users/me/universe-affinity | Update universe affinity |
 | GET | /users/:id | Get user by ID |
 | GET | /users/:id/content | Get user's content |
 | POST | /users/:id/follow | Follow a user |
@@ -55,21 +70,31 @@ Error responses:
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | GET | /wallet | Get current user's wallet |
+| GET | /wallet/transactions | Get transaction history |
+| GET | /wallet/summary | Get wallet summary |
 | POST | /wallet/fund | Fund wallet |
+| POST | /wallet/redeem-reward | Redeem reward points |
+| POST | /wallet/bonus-credit | Add bonus credit |
+| POST | /wallet/promo-credit | Add promo credit |
+| GET | /wallet/audit-trail | Get audit trail |
+| POST | /wallet/debit | Debit wallet |
+| POST | /wallet/credit | Credit wallet |
 | POST | /wallet/withdraw | Withdraw funds |
 | POST | /wallet/transfer | Transfer to another user |
-| GET | /wallet/transactions | Get transaction history |
 | GET | /wallet/transactions/:id | Get transaction details |
 
 ## Payments
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | /payments/intent | Create payment intent |
+| POST | /payments/initialize | Initialize payment |
 | POST | /payments/verify | Verify payment |
+| GET | /payments/history | Get payment history |
 | POST | /payments/webhook | Payment provider webhook |
+| POST | /payments/refund-request | Request refund |
+| POST | /payments/webhooks/paystack | Paystack webhook |
+| POST | /payments/webhooks/flutterwave | Flutterwave webhook |
 | GET | /payments/:id | Get payment details |
-| POST | /payments/refund | Refund payment |
 
 ## Content
 
@@ -301,6 +326,26 @@ Common query parameters across endpoints:
 | Content API | 100 requests/minute |
 | Admin API | 1000 requests/minute |
 
+## Caching
+
+Frequently accessed GET endpoints are cached using Redis to improve response times:
+
+| Service | Cached Endpoints | TTL |
+|---------|-----------------|-----|
+| Content | GET /content, GET /content/home, GET /content/watch, GET /content/trending, GET /content/recommended | 5-10 min |
+| Content | GET /content/:id, GET /content/:id/comments, GET /content/search | 2-5 min |
+| Reality | GET /reality/shows, GET /reality/shows/:id | 5 min |
+| Sports | GET /sports/home, GET /sports/highlights, GET /sports/fixtures, GET /sports/leaderboard | 5 min |
+
+Cache keys include query parameters and are automatically invalidated on related POST/PATCH/DELETE operations.
+
+## Response Sanitization
+
+All API responses are automatically sanitized to remove sensitive fields:
+- Passwords, tokens, and secrets are never exposed
+- Nested objects are recursively sanitized
+- Applied globally via response interceptor
+
 ## Error Codes
 
 | Code | HTTP Status | Description |
@@ -312,3 +357,722 @@ Common query parameters across endpoints:
 | RATE_LIMITED | 429 | Too many requests |
 | INTERNAL_ERROR | 500 | Server error |
 | SERVICE_UNAVAILABLE | 503 | Service temporarily unavailable |
+
+## Request/Response Examples
+
+### Authentication
+
+**POST /auth/login**
+
+Request:
+```json
+{
+  "email": "user@example.com",
+  "password": "securePassword123"
+}
+```
+
+Response:
+```json
+{
+  "success": true,
+  "data": {
+    "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "user": {
+      "id": "user_123",
+      "email": "user@example.com",
+      "name": "John Doe",
+      "role": "user",
+      "verified": true
+    }
+  },
+  "meta": {}
+}
+```
+
+**POST /auth/signup**
+
+Request:
+```json
+{
+  "email": "newuser@example.com",
+  "password": "securePassword123",
+  "name": "Jane Doe"
+}
+```
+
+Response:
+```json
+{
+  "success": true,
+  "data": {
+    "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "user": {
+      "id": "user_456",
+      "email": "newuser@example.com",
+      "name": "Jane Doe",
+      "role": "user",
+      "verified": false
+    }
+  },
+  "meta": {}
+}
+```
+
+### Wallet
+
+**GET /wallet**
+
+Response:
+```json
+{
+  "success": true,
+  "data": {
+    "id": "wallet_123",
+    "userId": "user_123",
+    "balance": 5000.00,
+    "currency": "NGN",
+    "pendingBalance": 0,
+    "bonusBalance": 1000.00,
+    "createdAt": "2026-01-15T10:30:00Z",
+    "updatedAt": "2026-05-18T14:45:00Z"
+  },
+  "meta": {}
+}
+```
+
+**POST /wallet/fund**
+
+Request:
+```json
+{
+  "amount": 1000.00,
+  "currency": "NGN",
+  "paymentMethod": "card",
+  "metadata": {
+    "cardLast4": "4242"
+  }
+}
+```
+
+Response:
+```json
+{
+  "success": true,
+  "data": {
+    "transactionId": "txn_789",
+    "status": "pending",
+    "amount": 1000.00,
+    "currency": "NGN",
+    "authorizationUrl": "https://payment-provider.com/pay/ref123"
+  },
+  "meta": {}
+}
+```
+
+**POST /wallet/withdraw**
+
+Request:
+```json
+{
+  "amount": 500.00,
+  "bankCode": "001",
+  "accountNumber": "1234567890",
+  "accountName": "John Doe"
+}
+```
+
+Response:
+```json
+{
+  "success": true,
+  "data": {
+    "transactionId": "txn_abc",
+    "status": "processing",
+    "amount": 500.00,
+    "currency": "NGN",
+    "estimatedCompletion": "2026-05-19T10:00:00Z"
+  },
+  "meta": {}
+}
+```
+
+**POST /wallet/transfer**
+
+Request:
+```json
+{
+  "amount": 200.00,
+  "recipientId": "user_456",
+  "note": "Payment for services"
+}
+```
+
+Response:
+```json
+{
+  "success": true,
+  "data": {
+    "transactionId": "txn_xyz",
+    "status": "completed",
+    "amount": 200.00,
+    "currency": "NGN",
+    "recipientId": "user_456",
+    "note": "Payment for services"
+  },
+  "meta": {}
+}
+```
+
+### Payments
+
+**POST /payments/initialize**
+
+Request:
+```json
+{
+  "amount": 5000.00,
+  "currency": "NGN",
+  "email": "user@example.com",
+  "reference": "unique_ref_123",
+  "callbackUrl": "https://client.example.com/callback",
+  "metadata": {
+    "orderId": "order_789",
+    "items": ["item_1", "item_2"]
+  }
+}
+```
+
+Response:
+```json
+{
+  "success": true,
+  "data": {
+    "reference": "unique_ref_123",
+    "authorizationUrl": "https://paystack.com/pay/unique_ref_123",
+    "accessCode": "ACC_abc123",
+    "expiresAt": "2026-05-19T18:00:00Z"
+  },
+  "meta": {}
+}
+```
+
+**GET /payments/verify?reference=unique_ref_123**
+
+Response:
+```json
+{
+  "success": true,
+  "data": {
+    "reference": "unique_ref_123",
+    "status": "success",
+    "amount": 5000.00,
+    "currency": "NGN",
+    "paidAt": "2026-05-18T15:30:00Z",
+    "channel": "card",
+    "card": {
+      "last4": "4242",
+      "expiryMonth": "12",
+      "expiryYear": "2025",
+      "brand": "Visa"
+    }
+  },
+  "meta": {}
+}
+```
+
+### Users
+
+**GET /users/me**
+
+Response:
+```json
+{
+  "success": true,
+  "data": {
+    "id": "user_123",
+    "email": "user@example.com",
+    "name": "John Doe",
+    "role": "user",
+    "username": "johndoe",
+    "avatar": "https://api.azeebo.com/media/avatar.jpg",
+    "bio": "Content creator",
+    "verified": true,
+    "createdAt": "2026-01-15T10:00:00Z"
+  },
+  "meta": {}
+}
+```
+
+**GET /users/me/history?page=1&limit=20**
+
+Response:
+```json
+{
+  "success": true,
+  "data": {
+    "items": [
+      {
+        "contentId": "content_1",
+        "contentType": "video",
+        "title": "How to Create Content",
+        "viewedAt": "2026-05-18T10:30:00Z",
+        "duration": 180
+      }
+    ],
+    "total": 45,
+    "page": 1,
+    "limit": 20,
+    "hasMore": true
+  },
+  "meta": {
+    "page": 1,
+    "limit": 20,
+    "total": 45,
+    "totalPages": 3
+  }
+}
+```
+
+### Content
+
+**GET /content?page=1&limit=20&type=video**
+
+Response:
+```json
+{
+  "success": true,
+  "data": {
+    "items": [
+      {
+        "id": "content_1",
+        "title": "How to Create Content",
+        "description": "Learn content creation tips",
+        "type": "video",
+        "thumbnail": "https://api.azeebo.com/media/thumb.jpg",
+        "duration": 180,
+        "creatorId": "user_456",
+        "creatorName": "Jane Doe",
+        "views": 15000,
+        "likes": 2300,
+        "createdAt": "2026-05-15T08:00:00Z"
+      }
+    ],
+    "total": 150,
+    "page": 1,
+    "limit": 20,
+    "hasMore": true
+  },
+  "meta": {
+    "page": 1,
+    "limit": 20,
+    "total": 150,
+    "totalPages": 8
+  }
+}
+```
+
+**POST /content/:id/comments**
+
+Request:
+```json
+{
+  "content": "Great video! Very informative.",
+  "parentId": null
+}
+```
+
+Response:
+```json
+{
+  "success": true,
+  "data": {
+    "id": "comment_123",
+    "content": "Great video! Very informative.",
+    "userId": "user_123",
+    "userName": "John Doe",
+    "userAvatar": "https://api.azeebo.com/media/avatar.jpg",
+    "parentId": null,
+    "likes": 0,
+    "createdAt": "2026-05-18T15:00:00Z"
+  },
+  "meta": {}
+}
+```
+
+### Search
+
+**GET /search?q=content+creation&page=1&limit=10**
+
+Response:
+```json
+{
+  "success": true,
+  "data": {
+    "items": [
+      {
+        "id": "content_1",
+        "title": "How to Create Content",
+        "type": "video",
+        "score": 0.95
+      }
+    ],
+    "total": 25,
+    "page": 1,
+    "limit": 10,
+    "hasMore": true
+  },
+  "meta": {
+    "page": 1,
+    "limit": 10,
+    "total": 25,
+    "totalPages": 3
+  }
+}
+```
+
+### Notifications
+
+**GET /notifications?page=1&limit=20**
+
+Response:
+```json
+{
+  "success": true,
+  "data": {
+    "items": [
+      {
+        "id": "notif_123",
+        "type": "like",
+        "title": "Someone liked your content",
+        "message": "Jane Doe liked your video",
+        "contentId": "content_1",
+        "read": false,
+        "createdAt": "2026-05-18T14:30:00Z"
+      }
+    ],
+    "total": 15,
+    "page": 1,
+    "limit": 20,
+    "hasMore": false
+  },
+  "meta": {
+    "page": 1,
+    "limit": 20,
+    "total": 15,
+    "totalPages": 1
+  }
+}
+```
+
+### Admin
+
+**GET /admin/users?page=1&limit=20**
+
+Response:
+```json
+{
+  "success": true,
+  "data": {
+    "items": [
+      {
+        "id": "user_123",
+        "email": "user@example.com",
+        "name": "John Doe",
+        "role": "user",
+        "verified": true,
+        "status": "active",
+        "createdAt": "2026-01-15T10:30:00Z"
+      }
+    ],
+    "total": 150,
+    "page": 1,
+    "limit": 20,
+    "totalPages": 8
+  },
+  "meta": {}
+}
+```
+
+**PATCH /admin/users/:id**
+
+Request:
+```json
+{
+  "name": "John Updated",
+  "role": "creator"
+}
+```
+
+Response:
+```json
+{
+  "success": true,
+  "data": {
+    "id": "user_123",
+    "email": "user@example.com",
+    "name": "John Updated",
+    "role": "creator",
+    "verified": true,
+    "status": "active",
+    "updatedAt": "2026-05-19T10:00:00Z"
+  },
+  "meta": {}
+}
+```
+
+**POST /admin/users/:id/suspend**
+
+Request:
+```json
+{
+  "reason": "Violation of terms of service",
+  "duration": "7 days"
+}
+```
+
+Response:
+```json
+{
+  "success": true,
+  "data": {
+    "userId": "user_123",
+    "status": "suspended",
+    "reason": "Violation of terms of service",
+    "suspendedUntil": "2026-05-26T10:00:00Z",
+    "suspendedAt": "2026-05-19T10:00:00Z"
+  },
+  "meta": {}
+}
+```
+
+**PATCH /admin/content/:id/moderate**
+
+Request:
+```json
+{
+  "action": "reject",
+  "reason": "Contains prohibited content"
+}
+```
+
+Response:
+```json
+{
+  "success": true,
+  "data": {
+    "contentId": "content_123",
+    "status": "rejected",
+    "reason": "Contains prohibited content",
+    "moderatedBy": "admin_456",
+    "moderatedAt": "2026-05-19T10:00:00Z"
+  },
+  "meta": {}
+}
+```
+
+**GET /admin/audit-logs?page=1&limit=50**
+
+Response:
+```json
+{
+  "success": true,
+  "data": {
+    "items": [
+      {
+        "id": "audit_789",
+        "action": "user.suspend",
+        "actorId": "admin_456",
+        "targetId": "user_123",
+        "targetType": "user",
+        "details": {
+          "reason": "Violation of terms of service"
+        },
+        "ipAddress": "192.168.1.1",
+        "timestamp": "2026-05-19T10:00:00Z"
+      }
+    ],
+    "total": 500,
+    "page": 1,
+    "limit": 50,
+    "totalPages": 10
+  },
+  "meta": {}
+}
+```
+
+### Support
+
+**POST /support/tickets**
+
+Request:
+```json
+{
+  "subject": "Payment not received",
+  "category": "payment",
+  "priority": "high",
+  "description": "I made a payment 2 hours ago but my wallet was not funded",
+  "metadata": {
+    "transactionId": "txn_123"
+  }
+}
+```
+
+Response:
+```json
+{
+  "success": true,
+  "data": {
+    "id": "ticket_456",
+    "subject": "Payment not received",
+    "category": "payment",
+    "priority": "high",
+    "status": "open",
+    "createdBy": "user_123",
+    "assignedTo": null,
+    "createdAt": "2026-05-19T10:00:00Z",
+    "updatedAt": "2026-05-19T10:00:00Z"
+  },
+  "meta": {}
+}
+```
+
+**GET /support/tickets/my?page=1&limit=20**
+
+Response:
+```json
+{
+  "success": true,
+  "data": {
+    "items": [
+      {
+        "id": "ticket_456",
+        "subject": "Payment not received",
+        "category": "payment",
+        "priority": "high",
+        "status": "open",
+        "assignedTo": "agent_789",
+        "createdAt": "2026-05-19T10:00:00Z",
+        "updatedAt": "2026-05-19T10:30:00Z"
+      }
+    ],
+    "total": 5,
+    "page": 1,
+    "limit": 20,
+    "totalPages": 1
+  },
+  "meta": {}
+}
+```
+
+**POST /support/tickets/:id/messages**
+
+Request:
+```json
+{
+  "message": "Here is the transaction reference: txn_123"
+}
+```
+
+Response:
+```json
+{
+  "success": true,
+  "data": {
+    "id": "msg_789",
+    "ticketId": "ticket_456",
+    "senderId": "user_123",
+    "senderType": "user",
+    "message": "Here is the transaction reference: txn_123",
+    "createdAt": "2026-05-19T10:30:00Z"
+  },
+  "meta": {}
+}
+```
+
+### Error Response Example
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Invalid email format",
+    "details": {
+      "field": "email",
+      "expected": "Valid email address",
+      "received": "invalid-email"
+    }
+  },
+  "meta": {}
+}
+```
+
+## Schema Definitions
+
+### User
+```json
+{
+  "id": "string",
+  "email": "string (email)",
+  "name": "string",
+  "username": "string",
+  "role": "user | creator | admin | super_admin",
+  "avatar": "string (URL)",
+  "bio": "string (optional)",
+  "verified": "boolean",
+  "createdAt": "string (ISO 8601)",
+  "updatedAt": "string (ISO 8601)"
+}
+```
+
+### Wallet
+```json
+{
+  "id": "string",
+  "userId": "string",
+  "balance": "number (decimal)",
+  "currency": "string (3-letter code)",
+  "pendingBalance": "number (decimal)",
+  "bonusBalance": "number (decimal)",
+  "createdAt": "string (ISO 8601)",
+  "updatedAt": "string (ISO 8601)"
+}
+```
+
+### Transaction
+```json
+{
+  "id": "string",
+  "walletId": "string",
+  "type": "fund | withdraw | transfer | debit | credit",
+  "amount": "number (decimal)",
+  "currency": "string (3-letter code)",
+  "status": "pending | processing | completed | failed | cancelled",
+  "reference": "string",
+  "metadata": "object (optional)",
+  "createdAt": "string (ISO 8601)",
+  "updatedAt": "string (ISO 8601)"
+}
+```
+
+### Content
+```json
+{
+  "id": "string",
+  "title": "string",
+  "description": "string",
+  "type": "video | audio | article | image",
+  "thumbnail": "string (URL)",
+  "duration": "number (seconds, optional)",
+  "creatorId": "string",
+  "creatorName": "string",
+  "views": "number",
+  "likes": "number",
+  "status": "draft | published | archived",
+  "createdAt": "string (ISO 8601)",
+  "updatedAt": "string (ISO 8601)"
+}
+```

@@ -44,6 +44,10 @@ interface InfluencerResponse {
   error?: { code: string; message: string };
 }
 
+interface InfluencerEntryWithCollaborations extends InfluencerEntry {
+  collaborations: Collaboration[];
+}
+
 interface CreateInfluencerData {
   userId: string;
   displayName: string;
@@ -149,7 +153,7 @@ export class InfluencerService {
     };
   }
 
-  async getEntryBySlug(slug: string): Promise<InfluencerResponse> {
+  async getEntryBySlug(slug: string): Promise<{ success: boolean; data: InfluencerEntryWithCollaborations }> {
     const entry = await this.prisma.influencerEntry.findUnique({
       where: { slug },
       include: { collaborations: { where: { status: 'active' }, take: 10 } },

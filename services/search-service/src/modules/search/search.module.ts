@@ -5,6 +5,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 
 import { SearchController } from './search.controller';
 import { SearchService } from './search.service';
+import { SearchRepository } from './search.repository';
 import { DatabaseModule } from '../database/database.module';
 
 @Module({
@@ -14,7 +15,7 @@ import { DatabaseModule } from '../database/database.module';
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_SECRET'),
+        secret: configService.getOrThrow<string>('JWT_SECRET'),
         signOptions: {
           expiresIn: configService.get<string>('JWT_EXPIRES_IN', '30m'),
         },
@@ -23,7 +24,7 @@ import { DatabaseModule } from '../database/database.module';
     }),
   ],
   controllers: [SearchController],
-  providers: [SearchService],
-  exports: [SearchService, DatabaseModule],
+  providers: [SearchService, SearchRepository],
+  exports: [SearchService, SearchRepository, DatabaseModule],
 })
 export class SearchModule {}

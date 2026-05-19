@@ -69,11 +69,33 @@ export function useDebounce<T>(value: T, delay: number): T {
 
 /**
  * Hook to use localStorage with React state
+ * WARNING: Do NOT use this hook for storing auth tokens, payment data, PII, 
+ * or analytics identifiers. Use secure storage strategies instead.
  */
+const SENSITIVE_KEY_PATTERNS = [
+  /token/i,
+  /auth/i,
+  /password/i,
+  /payment/i,
+  /credit.?card/i,
+  /pii/i,
+  /analytics.?id/i,
+  /user.?id/i,
+];
+
 export function useLocalStorage<T>(
   key: string,
   initialValue: T
 ): [T, (value: T | ((val: T) => T)) => void] {
+  if (typeof window !== 'undefined') {
+    const isSensitive = SENSITIVE_KEY_PATTERNS.some((pattern) => pattern.test(key));
+    if (isSensitive) {
+      console.warn(
+        `useLocalStorage: Key "${key}" appears to contain sensitive data. ` +
+          'Consider using a secure storage strategy instead of localStorage.'
+      );
+    }
+  }
   const [storedValue, setStoredValue] = useState<T>(() => {
     if (typeof window === 'undefined') {
       return initialValue;

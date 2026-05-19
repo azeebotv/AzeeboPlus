@@ -1,6 +1,7 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { ComedyResponse } from './interfaces/comedy-response.interface';
+import axios from 'axios';
 
 interface ChallengeBody {
   challengeId: string;
@@ -9,7 +10,28 @@ interface ChallengeBody {
 
 @Injectable()
 export class ComedyService {
+  private readonly logger = new Logger(ComedyService.name);
+  private readonly analyticsServiceBaseUrl = process.env.ANALYTICS_SERVICE_URL || 'http://localhost:3008';
+
   constructor(private readonly prisma: PrismaService) {}
+
+  private async trackAnalyticsEvent(
+    eventName: string,
+    userId: string,
+    metadata: Record<string, unknown>
+  ): Promise<void> {
+    try {
+      await axios.post(`${this.analyticsServiceBaseUrl}/analytics/track`, {
+        eventName,
+        userId,
+        universe: 'comedy',
+        metadata,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      this.logger.warn('Failed to track analytics event:', error);
+    }
+  }
 
   async getClips(): Promise<ComedyResponse> {
     const clips = await this.prisma.comedyClip.findMany({
@@ -95,6 +117,11 @@ export class ComedyService {
         challengeId: body.challengeId,
         clipUrl: body.clipUrl,
       },
+    });
+
+    await this.trackAnalyticsEvent('challenge_participated', userId, {
+      challengeId: body.challengeId,
+      entryId: entry.id,
     });
 
     return {

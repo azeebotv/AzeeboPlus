@@ -14,10 +14,12 @@ import { AppealService } from './appeal.service';
 import { CreateAppealDto, DecideAppealDto, AppealQueryDto } from './dto/appeal.dto';
 import { ApiResponseWrapper } from '@azeebo/shared-types';
 import { AuthGuard } from '../../common/guards/auth.guard';
+import { AdminGuard } from '../../common/guards/admin.guard';
 
 interface AuthenticatedRequest {
   user: {
     id: string;
+    role?: string;
   };
 }
 
@@ -46,6 +48,7 @@ export class AppealController {
 
   @Get('pending')
   @ApiOperation({ summary: 'Get pending appeals (admin)' })
+  @UseGuards(AdminGuard)
   async getPendingAppeals(@Query() query: AppealQueryDto) {
     const result = await this.appealService.getPendingAppeals(query);
     return ApiResponseWrapper.paginated(
@@ -69,7 +72,8 @@ export class AppealController {
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Get appeal by ID' })
+  @ApiOperation({ summary: 'Get appeal by ID (admin)' })
+  @UseGuards(AdminGuard)
   async getAppeal(@Param('id') id: string) {
     const appeal = await this.appealService.getAppealById(id);
     return ApiResponseWrapper.success({ appeal });
@@ -77,6 +81,7 @@ export class AppealController {
 
   @Patch(':id/decide')
   @ApiOperation({ summary: 'Decide appeal (admin)' })
+  @UseGuards(AdminGuard)
   async decideAppeal(
     @Param('id') id: string,
     @Request() req: AuthenticatedRequest,

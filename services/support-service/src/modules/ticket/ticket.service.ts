@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import {
+  Prisma,
   SupportTicketCategory,
   SupportTicketPriority,
   SupportTicketStatus,
@@ -27,7 +28,7 @@ export class TicketService {
         description: data.description,
         priority: data.priority || SupportTicketPriority.MEDIUM,
         orderId: data.orderId,
-        metadata: data.metadata || {},
+        metadata: (data.metadata || {}) as Prisma.InputJsonValue,
       },
       include: { messages: true },
     });

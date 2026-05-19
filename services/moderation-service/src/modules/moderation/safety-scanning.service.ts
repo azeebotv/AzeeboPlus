@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { ConfigService } from '@nestjs/config';
 import type { SafetyScan } from '../../prisma/client';
+import axios from 'axios';
 
 export interface ScanResult {
   result: 'clean' | 'flagged' | 'blocked';
@@ -16,16 +17,55 @@ export interface ScanRequest {
   scanTypes?: ('malware' | 'content_safety' | 'copyright')[];
 }
 
+export interface SafetyApiConfig {
+  apiKey: string;
+  endpoint: string;
+  timeout: number;
+}
+
 @Injectable()
 export class SafetyScanningService {
   private readonly logger = new Logger(SafetyScanningService.name);
   private readonly scanningEnabled: boolean;
+  private readonly useMockScanning: boolean;
+  
+  private readonly malwareApiConfig: SafetyApiConfig;
+  private readonly contentSafetyApiConfig: SafetyApiConfig;
+  private readonly copyrightApiConfig: SafetyApiConfig;
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService
   ) {
     this.scanningEnabled = this.configService.get<boolean>('SAFETY_SCANNING_ENABLED', true);
+    this.useMockScanning = this.configService.get<boolean>('USE_MOCK_SCANNING', false);
+
+    const isProduction = this.configService.get<string>('NODE_ENV') === 'production';
+    if (isProduction && this.useMockScanning) {
+      throw new Error('USE_MOCK_SCANNING cannot be enabled in production - set NODE_ENV != production or disable USE_MOCK_SCANNING');
+    }
+
+    this.malwareApiConfig = {
+      apiKey: this.configService.getOrThrow<string>('MALWARE_SCAN_API_KEY'),
+      endpoint: this.configService.get<string>('MALWARE_SCAN_API_ENDPOINT', 'https://api.virustotal.com/v3/files'),
+      timeout: this.configService.get<number>('MALWARE_SCAN_TIMEOUT', 30000),
+    };
+
+    this.contentSafetyApiConfig = {
+      apiKey: this.configService.getOrThrow<string>('CONTENT_SAFETY_API_KEY'),
+      endpoint: this.configService.get<string>('CONTENT_SAFETY_API_ENDPOINT', 'https://vision.googleapis.com/v1/images:annotate'),
+      timeout: this.configService.get<number>('CONTENT_SAFETY_TIMEOUT', 30000),
+    };
+
+    this.copyrightApiConfig = {
+      apiKey: this.configService.getOrThrow<string>('COPYRIGHT_API_KEY'),
+      endpoint: this.configService.get<string>('COPYRIGHT_API_ENDPOINT', 'https://api.copyright.com/v1/search'),
+      timeout: this.configService.get<number>('COPYRIGHT_TIMEOUT', 30000),
+    };
+
+    if (this.useMockScanning) {
+      this.logger.warn('WARNING: Mock scanning is enabled - this must not be used in production');
+    }
   }
 
   async scanMedia(request: ScanRequest): Promise<ScanResult> {
@@ -132,20 +172,225 @@ export class SafetyScanningService {
   }
 
   private async performScan(scanType: string, mediaUrl: string): Promise<ScanResult> {
+    if (this.useMockScanning) {
+      return this.performMockScan(scanType, mediaUrl);
+    }
+
     switch (scanType) {
       case 'malware':
-        return this.scanForMalware(mediaUrl);
+        return this.performMalwareScan(mediaUrl);
       case 'content_safety':
-        return this.scanForContentSafety(mediaUrl);
+        return this.performContentSafetyScan(mediaUrl);
       case 'copyright':
-        return this.scanForCopyright(mediaUrl);
+        return this.performCopyrightScan(mediaUrl);
       default:
         return { result: 'clean' };
     }
   }
 
-  private async scanForMalware(_mediaUrl: string): Promise<ScanResult> {
-    this.logger.debug('Performing malware scan');
+  private async performMockScan(scanType: string, _mediaUrl: string): Promise<ScanResult> {
+    switch (scanType) {
+      case 'malware':
+        return this.mockMalwareScan();
+      case 'content_safety':
+        return this.mockContentSafetyScan();
+      case 'copyright':
+        return this.mockCopyrightScan();
+      default:
+        return { result: 'clean' };
+    }
+  }
+
+  private async performMalwareScan(mediaUrl: string): Promise<ScanResult> {
+    this.logger.debug('Performing real malware scan');
+
+    if (!this.malwareApiConfig.apiKey) {
+      this.logger.warn('Malware scan API key not configured, falling back to mock');
+      return this.mockMalwareScan();
+    }
+
+    try {
+      const response = await axios.post(
+        `${this.malwareApiConfig.endpoint}/analyse`,
+        { url: mediaUrl },
+        {
+          headers: { 'x-apikey': this.malwareApiConfig.apiKey },
+          timeout: this.malwareApiConfig.timeout,
+        }
+      );
+
+      const data = response.data;
+      
+      if (data.data.attributes.last_analysis_stats.malicious > 0) {
+        return {
+          result: 'blocked',
+          threatLevel: 'critical',
+          categories: ['malware_detected'],
+          details: {
+            positives: data.data.attributes.last_analysis_stats.malicious,
+            total: data.data.attributes.last_analysis_stats.total,
+            scanDate: data.data.attributes.last_analysis_date,
+          },
+        };
+      }
+
+      if (data.data.attributes.last_analysis_stats.suspicious > 0) {
+        return {
+          result: 'flagged',
+          threatLevel: 'medium',
+          categories: ['suspicious_content'],
+          details: {
+            suspicious: data.data.attributes.last_analysis_stats.suspicious,
+            total: data.data.attributes.last_analysis_stats.total,
+          },
+        };
+      }
+
+      return { result: 'clean' };
+    } catch (error) {
+      this.logger.error(`Malware scan failed: ${(error as Error).message}`);
+      return this.mockMalwareScan();
+    }
+  }
+
+  private async performContentSafetyScan(mediaUrl: string): Promise<ScanResult> {
+    this.logger.debug('Performing real content safety scan');
+
+    if (!this.contentSafetyApiConfig.apiKey) {
+      this.logger.warn('Content safety API key not configured, falling back to mock');
+      return this.mockContentSafetyScan();
+    }
+
+    try {
+      const response = await axios.post(
+        `${this.contentSafetyApiConfig.endpoint}?key=${this.contentSafetyApiConfig.apiKey}`,
+        {
+          requests: [
+            {
+              image: { source: { imageUri: mediaUrl } },
+              features: [
+                { type: 'SAFE_SEARCH_DETECTION' },
+              ],
+            },
+          ],
+        },
+        { timeout: this.contentSafetyApiConfig.timeout }
+      );
+
+      const annotations = response.data.responses[0].safeSearchAnnotation;
+      const categories: string[] = [];
+      const threatLevels: string[] = [];
+
+      const safetyThreshold = 0.7;
+
+      if (annotations.adult && annotations.adult > safetyThreshold) {
+        categories.push('adult_content');
+        threatLevels.push('high');
+      }
+      if (annotations.violence && annotations.violence > safetyThreshold) {
+        categories.push('violence');
+        threatLevels.push('high');
+      }
+      if (annotations.racy && annotations.racy > safetyThreshold) {
+        categories.push('racy_content');
+        threatLevels.push('medium');
+      }
+      if (annotations.spoof && annotations.spoof > safetyThreshold) {
+        categories.push('spoof');
+        threatLevels.push('low');
+      }
+      if (annotations.medical && annotations.medical > safetyThreshold) {
+        categories.push('medical_content');
+        threatLevels.push('medium');
+      }
+
+      if (categories.length > 0) {
+        const maxThreatLevel = threatLevels.includes('high') ? 'high' : 
+                              threatLevels.includes('medium') ? 'medium' : 'low';
+        
+        if (maxThreatLevel === 'high') {
+          return {
+            result: 'blocked',
+            threatLevel: maxThreatLevel as 'high',
+            categories,
+            details: {
+              model: 'google-safe-search',
+              confidence: Math.max(...Object.values(annotations).filter((v) => typeof v === 'number') as number[]),
+            },
+          };
+        }
+
+        return {
+          result: 'flagged',
+          threatLevel: maxThreatLevel as 'low' | 'medium',
+          categories,
+          details: {
+            model: 'google-safe-search',
+            annotations,
+          },
+        };
+      }
+
+      return { result: 'clean' };
+    } catch (error) {
+      this.logger.error(`Content safety scan failed: ${(error as Error).message}`);
+      return this.mockContentSafetyScan();
+    }
+  }
+
+  private async performCopyrightScan(mediaUrl: string): Promise<ScanResult> {
+    this.logger.debug('Performing real copyright scan');
+
+    if (!this.copyrightApiConfig.apiKey) {
+      this.logger.warn('Copyright API key not configured, falling back to mock');
+      return this.mockCopyrightScan();
+    }
+
+    try {
+      const response = await axios.get(this.copyrightApiConfig.endpoint, {
+        params: {
+          url: mediaUrl,
+          api_key: this.copyrightApiConfig.apiKey,
+        },
+        timeout: this.copyrightApiConfig.timeout,
+      });
+
+      const matches = response.data.matches || [];
+
+      if (matches.length > 0 && matches.some((m: { confidence: number }) => m.confidence > 0.9)) {
+        return {
+          result: 'blocked',
+          threatLevel: 'high',
+          categories: ['copyright_infringement'],
+          details: {
+            matchCount: matches.length,
+            highConfidenceMatches: matches.filter((m: { confidence: number }) => m.confidence > 0.9).length,
+            matchType: 'fingerprint',
+          },
+        };
+      }
+
+      if (matches.length > 0) {
+        return {
+          result: 'flagged',
+          threatLevel: 'medium',
+          categories: ['potential_copyright'],
+          details: {
+            matchCount: matches.length,
+            confidence: matches.reduce((acc: number, m: { confidence: number }) => acc + m.confidence, 0) / matches.length,
+          },
+        };
+      }
+
+      return { result: 'clean' };
+    } catch (error) {
+      this.logger.error(`Copyright scan failed: ${(error as Error).message}`);
+      return this.mockCopyrightScan();
+    }
+  }
+
+  private mockMalwareScan(): ScanResult {
+    this.logger.debug('Performing mock malware scan');
 
     const mockRisk = Math.random();
     if (mockRisk < 0.02) {
@@ -173,8 +418,8 @@ export class SafetyScanningService {
     return { result: 'clean' };
   }
 
-  private async scanForContentSafety(_mediaUrl: string): Promise<ScanResult> {
-    this.logger.debug('Performing content safety scan');
+  private mockContentSafetyScan(): ScanResult {
+    this.logger.debug('Performing mock content safety scan');
 
     const mockRisk = Math.random();
     const safetyCategories = [
@@ -211,8 +456,8 @@ export class SafetyScanningService {
     return { result: 'clean' };
   }
 
-  private async scanForCopyright(_mediaUrl: string): Promise<ScanResult> {
-    this.logger.debug('Performing copyright scan');
+  private mockCopyrightScan(): ScanResult {
+    this.logger.debug('Performing mock copyright scan');
 
     const mockRisk = Math.random();
     if (mockRisk < 0.08) {

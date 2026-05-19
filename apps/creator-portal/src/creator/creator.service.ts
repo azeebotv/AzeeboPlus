@@ -56,7 +56,7 @@ export class CreatorService {
 
   async getDashboardStats(userId: string): Promise<DashboardStats> {
     const contentCount = await this.prisma.contentItem.count({
-      where: { creatorId: userId },
+      where: { creatorId: userId, status: { not: 'archived' } },
     });
 
     const totalViews = await this.prisma.contentItem.aggregate({
@@ -64,18 +64,36 @@ export class CreatorService {
       _sum: { viewCount: true },
     });
 
-    const totalEarnings = 4892; // Will come from wallet/payment service
-    const subscribers = 8421; // Will come from user service
+    const earnings = await this.prisma.walletTransaction.aggregate({
+      where: {
+        wallet: { userId },
+        type: { in: ['earning', 'payout'] },
+      },
+      _sum: { amount: true },
+    });
+
+    const previousPeriodViews = await this.prisma.contentItem.aggregate({
+      where: {
+        creatorId: userId,
+        createdAt: { gte: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000) },
+      },
+      _sum: { viewCount: true },
+    });
+
+    const currentViews = totalViews._sum.viewCount || 0;
+    const prevViews = previousPeriodViews._sum.viewCount || 0;
+    const viewsChangePercent =
+      prevViews > 0 ? (((currentViews - prevViews) / prevViews) * 100).toFixed(1) : '0';
 
     return {
-      totalViews: totalViews._sum.viewCount || 0,
-      subscribers,
-      totalEarnings,
+      totalViews: currentViews,
+      subscribers: 0,
+      totalEarnings: Number(earnings._sum.amount) || 0,
       contentCount,
-      viewsChange: '+12.5%',
-      subscribersChange: '+5.2%',
-      earningsChange: '+18.3%',
-      contentChange: '+3',
+      viewsChange: `${Number(viewsChangePercent) >= 0 ? '+' : ''}${viewsChangePercent}%`,
+      subscribersChange: '+0%',
+      earningsChange: '+0%',
+      contentChange: '+0',
     };
   }
 
@@ -190,30 +208,47 @@ export class CreatorService {
     return true;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async getAnalytics(userId: string, _period = '30days'): Promise<AnalyticsData> {
+  async getAnalytics(userId: string, period = '30days'): Promise<AnalyticsData> {
     const totalViews = await this.prisma.contentItem.aggregate({
       where: { creatorId: userId },
       _sum: { viewCount: true },
     });
 
+    const days = period === '7days' ? 7 : period === '90days' ? 90 : 30;
+    const startDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+
+    const recentContent = await this.prisma.contentItem.findMany({
+      where: { creatorId: userId, createdAt: { gte: startDate } },
+      select: { viewCount: true, createdAt: true },
+    });
+
+    const recentViews = recentContent.reduce((sum, c) => sum + (c.viewCount || 0), 0);
+    const engagementRate =
+      recentViews > 0 && days > 0 ? Math.round((recentViews / days) * 10) / 10 : 0;
+
+    const _recentContentCount = await this.prisma.contentItem.count({
+      where: { creatorId: userId, createdAt: { gte: startDate } },
+    });
+
+    const viewsOverTime = await this.prisma.$queryRaw<{ date: string; views: number }[]>`
+      SELECT 
+        DATE_TRUNC('day', "createdAt") as date,
+        COALESCE(SUM("viewCount"), 0)::int as views
+      FROM "content_items"
+      WHERE "creatorId" = ${userId}
+        AND "createdAt" >= ${startDate}
+      GROUP BY DATE_TRUNC('day', "createdAt")
+      ORDER BY date
+      LIMIT 30
+    `;
+
     return {
       totalViews: totalViews._sum.viewCount || 0,
-      avgWatchTime: '4m 32s',
-      engagementRate: 87.3,
-      newSubscribers: 1247,
-      viewsOverTime: [
-        { date: 'Apr 1', views: 4200 },
-        { date: 'Apr 8', views: 5100 },
-        { date: 'Apr 15', views: 4800 },
-        { date: 'Apr 22', views: 6200 },
-      ],
-      demographics: [
-        { region: 'North America', percentage: 45 },
-        { region: 'Europe', percentage: 30 },
-        { region: 'Asia', percentage: 15 },
-        { region: 'Other', percentage: 10 },
-      ],
+      avgWatchTime: '0m 0s',
+      engagementRate,
+      newSubscribers: 0,
+      viewsOverTime: viewsOverTime.map((v) => ({ date: String(v.date), views: Number(v.views) })),
+      demographics: [],
       topContent: (
         await this.prisma.contentItem.findMany({
           where: { creatorId: userId },
@@ -223,7 +258,7 @@ export class CreatorService {
       ).map((item) => ({
         title: item.title,
         views: item.viewCount,
-        engagement: '90%',
+        engagement: item.viewCount > 0 ? '0%' : '0%',
       })),
     };
   }

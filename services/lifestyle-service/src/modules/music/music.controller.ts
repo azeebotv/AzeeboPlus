@@ -2,8 +2,36 @@ import { Controller, Get, Post, Patch, Delete, Body, Param, Query } from '@nestj
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { MusicService } from './music.service';
 
+interface CreateMusicData {
+  title: string;
+  type: string;
+  description?: string;
+  coverImage?: string;
+  artistName?: string;
+  albumName?: string;
+  duration?: number;
+  genre?: string;
+  trackUrl?: string;
+  isPremium?: boolean;
+  createdById: string;
+}
+
+interface UpdateMusicData {
+  title?: string;
+  type?: string;
+  description?: string;
+  coverImage?: string;
+  artistName?: string;
+  albumName?: string;
+  duration?: number;
+  genre?: string;
+  trackUrl?: string;
+  isPremium?: boolean;
+  status?: string;
+}
+
 @ApiTags('Music')
-@Controller('music')
+@Controller('v1/lifestyle/music')
 export class MusicController {
   constructor(private readonly musicService: MusicService) {}
 
@@ -44,8 +72,8 @@ export class MusicController {
   @Post()
   @ApiOperation({ summary: 'Create music entry' })
   @ApiResponse({ status: 201, description: 'Entry created' })
-  async createEntry(@Body() body: Record<string, unknown>): Promise<unknown> {
-    return this.musicService.createEntry(body as Record<string, string>);
+  async createEntry(@Body() body: CreateMusicData): Promise<unknown> {
+    return this.musicService.createEntry(body);
   }
 
   @Patch(':id')

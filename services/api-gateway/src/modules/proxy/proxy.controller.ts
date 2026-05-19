@@ -13,7 +13,9 @@ import {
   Header,
   Inject,
   Logger,
+  UseGuards,
 } from '@nestjs/common';
+import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import { Request, Response } from 'express';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
@@ -41,11 +43,24 @@ export const SERVICE_ROUTES: ServiceRoute[] = [
     supportedVersions: ['1'],
     defaultVersion: '1',
     endpoints: [
-      { method: 'POST', path: '/signup', description: 'Create new user account' },
-      { method: 'POST', path: '/login', description: 'Authenticate user' },
+      { method: 'POST', path: '/signup', description: 'Register new user' },
+      { method: 'POST', path: '/login', description: 'Login with email/password' },
+      { method: 'DELETE', path: '/logout', description: 'Logout (invalidate tokens)' },
       { method: 'POST', path: '/refresh', description: 'Refresh access token' },
-      { method: 'DELETE', path: '/logout', description: 'Logout user' },
-      { method: 'GET', path: '/me', description: 'Get current user profile' },
+      { method: 'POST', path: '/forgot-password', description: 'Request password reset' },
+      { method: 'POST', path: '/reset-password', description: 'Reset password with token' },
+      { method: 'POST', path: '/verify-email', description: 'Verify email address' },
+      { method: 'POST', path: '/resend-verification', description: 'Resend verification email' },
+      { method: 'GET', path: '/me', description: 'Get authenticated user' },
+      { method: 'POST', path: '/mfa/setup', description: 'Get MFA setup details' },
+      { method: 'POST', path: '/mfa/verify', description: 'Verify MFA code' },
+      { method: 'POST', path: '/mfa/enable', description: 'Enable MFA' },
+      { method: 'POST', path: '/mfa/disable', description: 'Disable MFA' },
+      { method: 'POST', path: '/social/google', description: 'Google OAuth login' },
+      { method: 'POST', path: '/social/apple', description: 'Apple OAuth login' },
+      { method: 'POST', path: '/social/unlink', description: 'Unlink social account' },
+      { method: 'POST', path: '/otp/send', description: 'Send OTP' },
+      { method: 'POST', path: '/otp/verify', description: 'Verify OTP' },
     ],
   },
   {
@@ -54,10 +69,22 @@ export const SERVICE_ROUTES: ServiceRoute[] = [
     supportedVersions: ['1'],
     defaultVersion: '1',
     endpoints: [
-      { method: 'GET', path: '/', description: 'Get user profile' },
-      { method: 'PUT', path: '/', description: 'Update user profile' },
-      { method: 'DELETE', path: '/', description: 'Delete user account' },
-      { method: 'GET', path: '/:userId', description: 'Get user by ID' },
+      { method: 'GET', path: '/me', description: 'Get current user profile' },
+      { method: 'PATCH', path: '/me', description: 'Update current user profile' },
+      { method: 'GET', path: '/me/preferences', description: 'Get user preferences' },
+      { method: 'PATCH', path: '/me/preferences', description: 'Update user preferences' },
+      { method: 'GET', path: '/me/history', description: 'Get viewing history' },
+      { method: 'GET', path: '/me/saved', description: 'Get saved content' },
+      { method: 'POST', path: '/me/saved', description: 'Save content' },
+      { method: 'DELETE', path: '/me/saved/:contentId', description: 'Remove saved content' },
+      { method: 'GET', path: '/me/universe-affinity', description: 'Get universe affinity' },
+      { method: 'PATCH', path: '/me/universe-affinity', description: 'Update universe affinity' },
+      { method: 'GET', path: '/:id', description: 'Get user by ID' },
+      { method: 'GET', path: '/:id/content', description: 'Get user\'s content' },
+      { method: 'POST', path: '/:id/follow', description: 'Follow a user' },
+      { method: 'DELETE', path: '/:id/follow', description: 'Unfollow a user' },
+      { method: 'GET', path: '/:id/followers', description: 'Get user\'s followers' },
+      { method: 'GET', path: '/:id/following', description: 'Get users being followed' },
     ],
   },
   {
@@ -66,10 +93,19 @@ export const SERVICE_ROUTES: ServiceRoute[] = [
     supportedVersions: ['1'],
     defaultVersion: '1',
     endpoints: [
-      { method: 'GET', path: '/', description: 'Get wallet balance' },
-      { method: 'POST', path: '/fund', description: 'Fund wallet' },
-      { method: 'POST', path: '/withdraw', description: 'Withdraw from wallet' },
+      { method: 'GET', path: '/', description: 'Get current user\'s wallet' },
       { method: 'GET', path: '/transactions', description: 'Get transaction history' },
+      { method: 'GET', path: '/summary', description: 'Get wallet summary' },
+      { method: 'POST', path: '/fund', description: 'Fund wallet' },
+      { method: 'POST', path: '/redeem-reward', description: 'Redeem reward points' },
+      { method: 'POST', path: '/bonus-credit', description: 'Add bonus credit' },
+      { method: 'POST', path: '/promo-credit', description: 'Add promo credit' },
+      { method: 'GET', path: '/audit-trail', description: 'Get audit trail' },
+      { method: 'POST', path: '/debit', description: 'Debit wallet' },
+      { method: 'POST', path: '/credit', description: 'Credit wallet' },
+      { method: 'POST', path: '/withdraw', description: 'Withdraw funds' },
+      { method: 'POST', path: '/transfer', description: 'Transfer to another user' },
+      { method: 'GET', path: '/transactions/:id', description: 'Get transaction details' },
     ],
   },
   {
@@ -78,10 +114,14 @@ export const SERVICE_ROUTES: ServiceRoute[] = [
     supportedVersions: ['1'],
     defaultVersion: '1',
     endpoints: [
-      { method: 'POST', path: '/intent', description: 'Create payment intent' },
-      { method: 'GET', path: '/:id', description: 'Get payment status' },
+      { method: 'POST', path: '/initialize', description: 'Initialize payment' },
       { method: 'POST', path: '/verify', description: 'Verify payment' },
-      { method: 'POST', path: '/refund', description: 'Refund payment' },
+      { method: 'GET', path: '/history', description: 'Get payment history' },
+      { method: 'POST', path: '/webhook', description: 'Payment provider webhook' },
+      { method: 'POST', path: '/refund-request', description: 'Request refund' },
+      { method: 'POST', path: '/webhooks/paystack', description: 'Paystack webhook' },
+      { method: 'POST', path: '/webhooks/flutterwave', description: 'Flutterwave webhook' },
+      { method: 'GET', path: '/:id', description: 'Get payment details' },
     ],
   },
   {
@@ -90,11 +130,14 @@ export const SERVICE_ROUTES: ServiceRoute[] = [
     supportedVersions: ['1'],
     defaultVersion: '1',
     endpoints: [
-      { method: 'GET', path: '/', description: 'List content items' },
-      { method: 'GET', path: '/:id', description: 'Get content by ID' },
-      { method: 'POST', path: '/', description: 'Create content' },
-      { method: 'PUT', path: '/:id', description: 'Update content' },
+      { method: 'GET', path: '/', description: 'List content (with filters)' },
+      { method: 'GET', path: '/:id', description: 'Get content details' },
+      { method: 'POST', path: '/', description: 'Create content (creators)' },
+      { method: 'PATCH', path: '/:id', description: 'Update content' },
       { method: 'DELETE', path: '/:id', description: 'Delete content' },
+      { method: 'GET', path: '/:id/comments', description: 'Get content comments' },
+      { method: 'POST', path: '/:id/comments', description: 'Add comment' },
+      { method: 'GET', path: '/:id/analytics', description: 'Get content analytics' },
     ],
   },
   {
@@ -103,10 +146,11 @@ export const SERVICE_ROUTES: ServiceRoute[] = [
     supportedVersions: ['1'],
     defaultVersion: '1',
     endpoints: [
-      { method: 'GET', path: '/', description: 'Get user notifications' },
-      { method: 'PUT', path: '/:id/read', description: 'Mark notification as read' },
-      { method: 'DELETE', path: '/:id', description: 'Delete notification' },
-      { method: 'POST', path: '/', description: 'Send notification' },
+      { method: 'GET', path: '/', description: 'List notifications' },
+      { method: 'PATCH', path: '/:id/read', description: 'Mark as read' },
+      { method: 'PATCH', path: '/read-all', description: 'Mark all as read' },
+      { method: 'GET', path: '/settings', description: 'Get notification settings' },
+      { method: 'PATCH', path: '/settings', description: 'Update settings' },
     ],
   },
   {
@@ -115,9 +159,11 @@ export const SERVICE_ROUTES: ServiceRoute[] = [
     supportedVersions: ['1'],
     defaultVersion: '1',
     endpoints: [
-      { method: 'GET', path: '/', description: 'Get reward account' },
-      { method: 'POST', path: '/claim', description: 'Claim reward' },
-      { method: 'GET', path: '/badges', description: 'Get user badges' },
+      { method: 'GET', path: '/account', description: 'Get reward account' },
+      { method: 'POST', path: '/earn', description: 'Record reward activity' },
+      { method: 'GET', path: '/balance', description: 'Get points balance' },
+      { method: 'GET', path: '/history', description: 'Get reward history' },
+      { method: 'POST', path: '/redeem', description: 'Redeem rewards' },
     ],
   },
   {
@@ -127,7 +173,8 @@ export const SERVICE_ROUTES: ServiceRoute[] = [
     defaultVersion: '1',
     endpoints: [
       { method: 'GET', path: '/', description: 'Search content' },
-      { method: 'GET', path: '/suggest', description: 'Search suggestions' },
+      { method: 'GET', path: '/suggestions', description: 'Get search suggestions' },
+      { method: 'GET', path: '/trending', description: 'Get trending searches' },
     ],
   },
   {
@@ -136,18 +183,11 @@ export const SERVICE_ROUTES: ServiceRoute[] = [
     supportedVersions: ['1'],
     defaultVersion: '1',
     endpoints: [
-      { method: 'POST', path: '/track', description: 'Track event' },
-      { method: 'GET', path: '/stats', description: 'Get analytics stats' },
-    ],
-  },
-  {
-    path: '/moderation',
-    targetUrl: process.env.MODERATION_SERVICE_URL || 'http://moderation-service:3000',
-    supportedVersions: ['1'],
-    defaultVersion: '1',
-    endpoints: [
-      { method: 'POST', path: '/report', description: 'Report content' },
-      { method: 'GET', path: '/status/:id', description: 'Get moderation status' },
+      { method: 'POST', path: '/events', description: 'Track events' },
+      { method: 'GET', path: '/funnels', description: 'Get funnel analytics' },
+      { method: 'GET', path: '/cohorts', description: 'Get cohort analytics' },
+      { method: 'GET', path: '/kpis', description: 'Get universe KPIs' },
+      { method: 'GET', path: '/realtime', description: 'Get realtime stats' },
     ],
   },
   {
@@ -156,18 +196,27 @@ export const SERVICE_ROUTES: ServiceRoute[] = [
     supportedVersions: ['1'],
     defaultVersion: '1',
     endpoints: [
-      { method: 'GET', path: '/', description: 'Get recommendations' },
-      { method: 'POST', path: '/refresh', description: 'Refresh recommendations' },
+      { method: 'GET', path: '/content', description: 'Get content recommendations' },
+      { method: 'GET', path: '/creators', description: 'Get creator recommendations' },
+      { method: 'GET', path: '/cross-universe', description: 'Get cross-universe recommendations' },
+      { method: 'GET', path: '/trending', description: 'Get trending content' },
     ],
   },
   {
-    path: '/creator',
-    targetUrl: process.env.CREATOR_SERVICE_URL || 'http://creator-portal:3000',
+    path: '/creators',
+    targetUrl: process.env.CREATOR_SERVICE_URL || 'http://creator-service:3018',
     supportedVersions: ['1'],
     defaultVersion: '1',
     endpoints: [
+      { method: 'POST', path: '/onboard', description: 'Start creator onboarding' },
+      { method: 'GET', path: '/me', description: 'Get current creator profile' },
+      { method: 'PATCH', path: '/me', description: 'Update creator profile' },
       { method: 'GET', path: '/dashboard', description: 'Get creator dashboard' },
+      { method: 'GET', path: '/stats', description: 'Get creator stats' },
+      { method: 'GET', path: '/earnings', description: 'Get earnings' },
+      { method: 'GET', path: '/content', description: 'Get creator content' },
       { method: 'POST', path: '/content', description: 'Create creator content' },
+      { method: 'POST', path: '/payout-request', description: 'Request payout' },
     ],
   },
   {
@@ -175,21 +224,21 @@ export const SERVICE_ROUTES: ServiceRoute[] = [
     targetUrl: process.env.LIFESTYLE_SERVICE_URL || 'http://lifestyle-service:3016',
     supportedVersions: ['1'],
     defaultVersion: '1',
-    endpoints: [{ method: 'GET', path: '/', description: 'Get lifestyle content' }],
+    endpoints: [
+      { method: 'GET', path: '/feed', description: 'Get lifestyle feed' },
+      { method: 'GET', path: '/categories', description: 'Get categories' },
+      { method: 'GET', path: '/trending', description: 'Get trending content' },
+    ],
   },
   {
     path: '/vertical',
     targetUrl: process.env.VERTICAL_SERVICE_URL || 'http://vertical-service:3017',
     supportedVersions: ['1'],
     defaultVersion: '1',
-    endpoints: [{ method: 'GET', path: '/', description: 'Get vertical content' }],
-  },
-  {
-    path: '/queue',
-    targetUrl: process.env.QUEUE_SERVICE_URL || 'http://queue-service:3015',
-    supportedVersions: ['1'],
-    defaultVersion: '1',
-    endpoints: [{ method: 'POST', path: '/publish', description: 'Publish to queue' }],
+    endpoints: [
+      { method: 'GET', path: '/feed', description: 'Get vertical feed' },
+      { method: 'GET', path: '/categories', description: 'Get categories' },
+    ],
   },
   {
     path: '/reality',
@@ -281,18 +330,58 @@ export const SERVICE_ROUTES: ServiceRoute[] = [
       { method: 'GET', path: '/tickets/my', description: 'Get my tickets' },
       { method: 'GET', path: '/tickets/:id', description: 'Get ticket by ID' },
       { method: 'PATCH', path: '/tickets/:id/status', description: 'Update ticket status' },
+      { method: 'POST', path: '/tickets/:id/messages', description: 'Add message to ticket' },
+      { method: 'POST', path: '/tickets/:id/assign', description: 'Assign ticket' },
+      { method: 'POST', path: '/tickets/:id/escalate', description: 'Escalate ticket' },
+      { method: 'POST', path: '/tickets/:id/close', description: 'Close ticket' },
       { method: 'GET', path: '/refunds/pending', description: 'Get pending refunds (admin)' },
-      { method: 'POST', path: '/refunds', description: 'Request refund' },
+      { method: 'GET', path: '/refunds/my', description: 'Get my refunds' },
+      { method: 'GET', path: '/refunds/:id', description: 'Get refund by ID' },
+      { method: 'PATCH', path: '/refunds/:id/process', description: 'Process refund (admin)' },
+      { method: 'PATCH', path: '/refunds/:id/reject', description: 'Reject refund (admin)' },
       { method: 'GET', path: '/chargebacks/pending', description: 'Get pending chargebacks (admin)' },
+      { method: 'GET', path: '/chargebacks/my', description: 'Get my chargebacks' },
       { method: 'POST', path: '/chargebacks/:id/evidence', description: 'Submit evidence' },
+      { method: 'PATCH', path: '/chargebacks/:id/resolve', description: 'Resolve chargeback (admin)' },
       { method: 'GET', path: '/appeals/pending', description: 'Get pending appeals (admin)' },
-      { method: 'POST', path: '/appeals', description: 'Submit appeal' },
+      { method: 'GET', path: '/appeals/my', description: 'Get my appeals' },
+      { method: 'PATCH', path: '/appeals/:id/decide', description: 'Decide appeal (admin)' },
       { method: 'GET', path: '/takedowns/pending', description: 'Get pending takedowns (admin)' },
+      { method: 'PATCH', path: '/takedowns/:id/decide', description: 'Decide takedown (admin)' },
+      { method: 'GET', path: '/disputes/pending', description: 'Get pending disputes (admin)' },
+      { method: 'GET', path: '/disputes/my', description: 'Get my disputes (creator)' },
+      { method: 'PATCH', path: '/disputes/:id/resolve', description: 'Resolve dispute (admin)' },
+      { method: 'GET', path: '/suspensions/active', description: 'Get active suspensions (admin)' },
+      { method: 'GET', path: '/suspensions/my', description: 'Get my suspensions' },
+      { method: 'POST', path: '/suspensions/:id/reinstate', description: 'Reinstate user (admin)' },
+      { method: 'POST', path: '/suspensions/:id/lift', description: 'Lift suspension early (admin)' },
+      { method: 'GET', path: '/dashboard/stats', description: 'Get support stats (admin)' },
+      { method: 'GET', path: '/dashboard/recent', description: 'Get recent activity (admin)' },
+    ],
+  },
+  {
+    path: '/admin',
+    targetUrl: process.env.ADMIN_SERVICE_URL || process.env.USER_SERVICE_URL || 'http://user-service:3000',
+    supportedVersions: ['1'],
+    defaultVersion: '1',
+    endpoints: [
+      { method: 'GET', path: '/users', description: 'List all users' },
+      { method: 'PATCH', path: '/users/:id', description: 'Update user' },
+      { method: 'POST', path: '/users/:id/suspend', description: 'Suspend user' },
+      { method: 'GET', path: '/content', description: 'List content (all)' },
+      { method: 'PATCH', path: '/content/:id/moderate', description: 'Moderate content' },
+      { method: 'GET', path: '/moderation/reports', description: 'Get reports' },
+      { method: 'PATCH', path: '/moderation/reports/:id', description: 'Resolve report' },
+      { method: 'GET', path: '/analytics', description: 'Get admin analytics' },
+      { method: 'GET', path: '/audit-logs', description: 'Get audit logs' },
+      { method: 'GET', path: '/creators/verification', description: 'Get verification requests' },
+      { method: 'PATCH', path: '/creators/:id/verify', description: 'Verify creator' },
     ],
   },
 ];
 
 @Controller('api')
+@UseGuards(ThrottlerGuard)
 export class ProxyController {
   private readonly logger = new Logger(ProxyController.name);
   private readonly REQUEST_ID_HEADER = 'X-Request-ID';
@@ -327,7 +416,7 @@ export class ProxyController {
       return;
     }
 
-    const cacheKey = this.buildCacheKey(req, version, requestId);
+    const cacheKey = this.buildCacheKey(req, version);
     const cachedResponse = await this.cacheManager.get(cacheKey);
 
     if (cachedResponse) {
@@ -495,7 +584,7 @@ export class ProxyController {
     );
     const validatedVersion = this.validateVersion(version, route) ? version : route.defaultVersion;
 
-    const cacheKey = this.buildCacheKey(req, validatedVersion, requestId);
+    const cacheKey = this.buildCacheKey(req, validatedVersion);
     const cachedResponse = await this.cacheManager.get(cacheKey);
 
     if (cachedResponse) {
@@ -656,7 +745,7 @@ export class ProxyController {
     return route.supportedVersions.includes(version);
   }
 
-  private buildCacheKey(req: Request, version: string, requestId: string): string {
+  private buildCacheKey(req: Request, version: string): string {
     const authHeader = req.headers.authorization || '';
     const userId = this.extractUserIdFromAuth(authHeader);
     const cacheKeyBase = `proxy:${req.method}:${req.url}:v${version}`;
@@ -665,9 +754,14 @@ export class ProxyController {
       return `${cacheKeyBase}:user:${userId}`;
     }
 
-    return `${cacheKeyBase}:request:${requestId}`;
+    return cacheKeyBase;
   }
 
+  /**
+   * Extract user ID from JWT header FOR CACHE PARTITIONING ONLY.
+   * THIS DOES NOT PERFORM JWT VERIFICATION - authentication is handled by upstream services.
+   * We only use this for cache keying to separate cached responses between users.
+   */
   private extractUserIdFromAuth(authHeader: string): string | null {
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return null;
@@ -675,9 +769,22 @@ export class ProxyController {
 
     try {
       const token = authHeader.substring(7);
-      const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
-      return payload.sub || payload.userId || null;
+      const tokenParts = token.split('.');
+
+      // JWT must have exactly 3 parts
+      if (tokenParts.length !== 3) {
+        return null;
+      }
+
+      // Base64 decode the payload (second part)
+      const payloadBase64 = tokenParts[1];
+      const payloadJson = Buffer.from(payloadBase64, 'base64url').toString('utf8');
+      const payload = JSON.parse(payloadJson);
+
+      // Extract user ID from common claims
+      return payload.sub || payload.userId || payload.id || null;
     } catch {
+      // Gracefully fail without leaking errors - just don't use cache partitioning
       return null;
     }
   }
@@ -694,9 +801,10 @@ export class ProxyController {
     version: string = DEFAULT_API_VERSION,
     requestId: string
   ): Promise<unknown> {
+    const service = req.params['service'];
     const path = req.params[0] ? `/${req.params[0]}` : '';
     const queryString = req.url.includes('?') ? req.url.split('?')[1] : '';
-    const targetPath = `${path}${queryString ? `?${queryString}` : ''}`;
+    const targetPath = `/v${version}/${service}${path}${queryString ? `?${queryString}` : ''}`;
     const target = `${targetUrl}${targetPath}`;
 
     try {

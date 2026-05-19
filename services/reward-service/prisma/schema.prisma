@@ -302,6 +302,8 @@ model Mission {
   completions MissionCompletion[]
 
   @@map("missions")
+  @@index([type])
+  @@index([isActive])
 }
 
 model MissionReward {
@@ -328,6 +330,9 @@ model MissionCompletion {
 
   @@map("mission_completions")
   @@unique([userId, missionId])
+  @@index([userId])
+  @@index([missionId])
+  @@index([completedAt])
 }
 
 model Reward {
@@ -358,6 +363,9 @@ model RewardRedemption {
   reward Reward @relation(fields: [rewardId], references: [id])
 
   @@map("reward_redemptions")
+  @@index([userId])
+  @@index([rewardId])
+  @@index([redeemedAt])
 }
 
 model PointsLedger {
@@ -372,4 +380,7 @@ model PointsLedger {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("points_ledger")
+  @@index([userId])
+  @@index([type])
+  @@index([createdAt])
 }

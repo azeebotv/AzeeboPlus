@@ -67,3 +67,171 @@ spec:
   selector:
     matchLabels:
       app: api-gateway
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: content-service-pdb
+  namespace: azeebo
+  labels:
+    app: content-service
+    app.kubernetes.io/part-of: azeebo-platform
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: content-service
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: media-service-pdb
+  namespace: azeebo
+  labels:
+    app: media-service
+    app.kubernetes.io/part-of: azeebo-platform
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: media-service
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: search-service-pdb
+  namespace: azeebo
+  labels:
+    app: search-service
+    app.kubernetes.io/part-of: azeebo-platform
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: search-service
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: notification-service-pdb
+  namespace: azeebo
+  labels:
+    app: notification-service
+    app.kubernetes.io/part-of: azeebo-platform
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: notification-service
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: reward-service-pdb
+  namespace: azeebo
+  labels:
+    app: reward-service
+    app.kubernetes.io/part-of: azeebo-platform
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: reward-service
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: analytics-service-pdb
+  namespace: azeebo
+  labels:
+    app: analytics-service
+    app.kubernetes.io/part-of: azeebo-platform
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: analytics-service
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: recommendation-service-pdb
+  namespace: azeebo
+  labels:
+    app: recommendation-service
+    app.kubernetes.io/part-of: azeebo-platform
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: recommendation-service
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: reality-service-pdb
+  namespace: azeebo
+  labels:
+    app: reality-service
+    app.kubernetes.io/part-of: azeebo-platform
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: reality-service
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: creator-service-pdb
+  namespace: azeebo
+  labels:
+    app: creator-service
+    app.kubernetes.io/part-of: azeebo-platform
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: creator-service
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: lifestyle-service-pdb
+  namespace: azeebo
+  labels:
+    app: lifestyle-service
+    app.kubernetes.io/part-of: azeebo-platform
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: lifestyle-service
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: vertical-service-pdb
+  namespace: azeebo
+  labels:
+    app: vertical-service
+    app.kubernetes.io/part-of: azeebo-platform
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: vertical-service
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: support-service-pdb
+  namespace: azeebo
+  labels:
+    app: support-service
+    app.kubernetes.io/part-of: azeebo-platform
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: support-service

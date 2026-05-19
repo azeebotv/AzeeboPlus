@@ -56,6 +56,26 @@ async function bootstrap(): Promise<void> {
     })
   );
 
+  // CORS configuration
+  const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'];
+  app.enableCors({
+    origin: (
+      origin: string | undefined,
+      callback: (err: Error | null, allow?: boolean) => void
+    ) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
+    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE'],
+    credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    exposedHeaders: ['Content-Disposition'],
+    maxAge: 86400,
+  });
+
   // Swagger documentation - only enable in development
   if (process.env.NODE_ENV !== 'production') {
     const config = new DocumentBuilder()

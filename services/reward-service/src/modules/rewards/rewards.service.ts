@@ -391,4 +391,108 @@ export class RewardsService {
       d1.getDate() === d2.getDate()
     );
   }
+
+  async earnPoints(userId: string, activity: string, amount?: number): Promise<RewardResponse> {
+    const rewardAccount = await this.prisma.rewardAccount.findUnique({
+      where: { userId },
+    });
+
+    if (!rewardAccount) {
+      throw new NotFoundException(`Reward account not found for user ${userId}`);
+    }
+
+    const activityPoints = amount || this.getActivityPoints(activity);
+
+    await this.prisma.rewardAccount.update({
+      where: { userId },
+      data: {
+        points: { increment: activityPoints },
+      },
+    });
+
+    await this.prisma.pointsLedger.create({
+      data: {
+        userId,
+        points: activityPoints,
+        reason: activity,
+        type: 'credit',
+      },
+    });
+
+    return {
+      success: true,
+      data: {
+        message: 'Points earned successfully',
+        activity,
+        pointsEarned: activityPoints,
+        newBalance: rewardAccount.points + activityPoints,
+      },
+    };
+  }
+
+  private getActivityPoints(activity: string): number {
+    const pointsMap: Record<string, number> = {
+      content_view: 1,
+      content_share: 5,
+      content_like: 2,
+      comment: 3,
+      referral_signup: 50,
+      daily_login: 5,
+      profile_complete: 20,
+    };
+    return pointsMap[activity] || 1;
+  }
+
+  async getBalance(userId: string): Promise<RewardResponse> {
+    const rewardAccount = await this.prisma.rewardAccount.findUnique({
+      where: { userId },
+      include: { level: true },
+    });
+
+    if (!rewardAccount) {
+      throw new NotFoundException(`Reward account not found for user ${userId}`);
+    }
+
+    return {
+      success: true,
+      data: {
+        balance: rewardAccount.points,
+        level: rewardAccount.level,
+        userId,
+      },
+    };
+  }
+
+  async getHistory(userId: string, page = 1, limit = 20): Promise<RewardResponse> {
+    const skip = (page - 1) * limit;
+
+    const [ledger, total] = await Promise.all([
+      this.prisma.pointsLedger.findMany({
+        where: { userId },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.pointsLedger.count({ where: { userId } }),
+    ]);
+
+    return {
+      success: true,
+      data: {
+        history: ledger.map(entry => ({
+          id: entry.id,
+          points: entry.points,
+          type: entry.type,
+          reason: entry.reason,
+          createdAt: entry.createdAt,
+        })),
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        },
+      },
+    };
+  }
 }

@@ -12,8 +12,10 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
+import { RateLimitGuard, RateLimit } from '@azeebo/security';
 
 import { ContentService } from './content.service';
+import { AccessControlService } from './access-control.service';
 import { CreateContentDto } from './dto/create-content.dto';
 import { UpdateContentDto } from './dto/update-content.dto';
 import { CreateMediaAssetDto } from './dto/create-media-asset.dto';
@@ -23,9 +25,28 @@ import { ContentResponse } from './interfaces/content-response.interface';
 @ApiTags('Content')
 @Controller('content')
 export class ContentController {
-  constructor(private readonly contentService: ContentService) {}
+  constructor(
+    private readonly contentService: ContentService,
+    private readonly accessControlService: AccessControlService
+  ) {}
+
+  @Get()
+  @UseGuards(RateLimitGuard)
+  @RateLimit(100, 60000)
+  @ApiOperation({ summary: 'List content with filters' })
+  @ApiResponse({ status: 200, description: 'Content list' })
+  async listContent(
+    @Query('universe') universe?: string,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number
+  ): Promise<ContentResponse> {
+    const result = await this.contentService.listContent({ universe }, page, limit);
+    return result;
+  }
 
   @Get('home')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(100, 60000)
   @ApiOperation({ summary: 'Get home feed content' })
   @ApiResponse({ status: 200, description: 'Home feed' })
   async getHomeFeed(@Request() req: { user?: { sub: string } | null }): Promise<ContentResponse> {
@@ -33,6 +54,8 @@ export class ContentController {
   }
 
   @Get('watch')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(100, 60000)
   @ApiOperation({ summary: 'Get watch hub feed' })
   @ApiResponse({ status: 200, description: 'Watch hub feed' })
   async getWatchFeed(@Request() req: { user?: { sub: string } | null }): Promise<ContentResponse> {
@@ -40,6 +63,8 @@ export class ContentController {
   }
 
   @Get(':id')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(200, 60000)
   @ApiOperation({ summary: 'Get content by ID' })
   @ApiResponse({ status: 200, description: 'Content details' })
   @ApiResponse({ status: 404, description: 'Content not found' })
@@ -47,7 +72,45 @@ export class ContentController {
     return this.contentService.getContent(id);
   }
 
+  @Get(':id/comments')
+  @ApiOperation({ summary: 'Get content comments' })
+  @ApiResponse({ status: 200, description: 'Comments list' })
+  @ApiResponse({ status: 404, description: 'Content not found' })
+  async getContentComments(
+    @Param('id') id: string,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number
+  ): Promise<ContentResponse> {
+    return this.contentService.getContentComments(id, page, limit);
+  }
+
+  @Post(':id/comments')
+  @UseGuards(AuthGuard('jwt'))
+  @ApiOperation({ summary: 'Add comment to content' })
+  @ApiResponse({ status: 201, description: 'Comment added' })
+  @ApiResponse({ status: 404, description: 'Content not found' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async addCommentToContent(
+    @Request() req: { user: { sub: string } },
+    @Param('id') id: string,
+    @Body() body: { text: string }
+  ): Promise<ContentResponse> {
+    return this.contentService.addCommentToContent(req.user.sub, id, body.text);
+  }
+
+  @Get(':id/analytics')
+  @UseGuards(AuthGuard('jwt'))
+  @ApiOperation({ summary: 'Get content analytics' })
+  @ApiResponse({ status: 200, description: 'Analytics data' })
+  @ApiResponse({ status: 404, description: 'Content not found' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async getContentAnalytics(@Param('id') id: string): Promise<ContentResponse> {
+    return this.contentService.getContentAnalytics(id);
+  }
+
   @Get('search')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(50, 60000)
   @ApiOperation({ summary: 'Search content' })
   @ApiResponse({ status: 200, description: 'Search results' })
   async searchContent(@Query('q') query: string): Promise<ContentResponse> {
@@ -55,6 +118,8 @@ export class ContentController {
   }
 
   @Get('trending')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(100, 60000)
   @ApiOperation({ summary: 'Get trending content' })
   @ApiResponse({ status: 200, description: 'Trending content' })
   async getTrending(): Promise<ContentResponse> {
@@ -292,6 +357,8 @@ export class ContentController {
   }
 
   @Get('categories')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(200, 60000)
   @ApiOperation({ summary: 'Get all categories' })
   @ApiResponse({ status: 200, description: 'Categories list' })
   async getCategories(): Promise<ContentResponse> {
@@ -511,5 +578,114 @@ export class ContentController {
     @Query('expiresIn') expiresIn: number = 3600
   ): Promise<ContentResponse> {
     return this.contentService.getTranscodedMediaUrl(id, jobId, format, resolution, expiresIn);
+  }
+
+  @Get(':id/access-check')
+  @UseGuards(AuthGuard('jwt'))
+  @ApiOperation({ summary: 'Check if user can access content' })
+  @ApiResponse({ status: 200, description: 'Access check result' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async checkContentAccess(
+    @Request() req: { user: { sub: string } },
+    @Param('id') id: string
+  ): Promise<{ success: boolean; data: { hasAccess: boolean; reason?: string; accessType?: string; expiresAt?: Date } }> {
+    const result = await this.accessControlService.checkContentAccess(req.user.sub, id);
+    return { success: true, data: result };
+  }
+
+  @Get('rentals/:contentId/access')
+  @UseGuards(AuthGuard('jwt'))
+  @ApiOperation({ summary: 'Check rental access for content' })
+  @ApiResponse({ status: 200, description: 'Rental access check result' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async checkRentalAccess(
+    @Request() req: { user: { sub: string } },
+    @Param('contentId') contentId: string
+  ): Promise<{ success: boolean; data: { hasAccess: boolean; reason?: string; accessType?: string; expiresAt?: Date } }> {
+    const result = await this.accessControlService.checkRentalAccess(req.user.sub, contentId);
+    return { success: true, data: result };
+  }
+
+  @Get('passes/access')
+  @UseGuards(AuthGuard('jwt'))
+  @ApiOperation({ summary: 'Check pass access for user' })
+  @ApiResponse({ status: 200, description: 'Pass access check result' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async checkPassAccess(
+    @Request() req: { user: { sub: string } },
+    @Query('universeId') universeId?: string
+  ): Promise<{ success: boolean; data: { hasAccess: boolean; reason?: string; accessType?: string; expiresAt?: Date } }> {
+    const result = await this.accessControlService.checkPassAccess(req.user.sub, universeId);
+    return { success: true, data: result };
+  }
+
+  @Get('screenings/:screeningId/access')
+  @UseGuards(AuthGuard('jwt'))
+  @ApiOperation({ summary: 'Check screening access' })
+  @ApiResponse({ status: 200, description: 'Screening access check result' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async checkScreeningAccess(
+    @Request() req: { user: { sub: string } },
+    @Param('screeningId') screeningId: string
+  ): Promise<{ success: boolean; data: { hasAccess: boolean; reason?: string; accessType?: string; expiresAt?: Date } }> {
+    const result = await this.accessControlService.checkScreeningAccess(req.user.sub, screeningId);
+    return { success: true, data: result };
+  }
+
+  @Get('extras/:extraId/access')
+  @UseGuards(AuthGuard('jwt'))
+  @ApiOperation({ summary: 'Check locked extra access' })
+  @ApiResponse({ status: 200, description: 'Locked extra access check result' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async checkLockedExtraAccess(
+    @Request() req: { user: { sub: string } },
+    @Param('extraId') extraId: string
+  ): Promise<{ success: boolean; data: { hasAccess: boolean; reason?: string; accessType?: string; expiresAt?: Date } }> {
+    const result = await this.accessControlService.checkLockedExtraAccess(req.user.sub, extraId);
+    return { success: true, data: result };
+  }
+
+  @Get(':id/playback-url')
+  @UseGuards(AuthGuard('jwt'))
+  @ApiOperation({ summary: 'Get media playback URL with access check' })
+  @ApiResponse({ status: 200, description: 'Playback URL' })
+  @ApiResponse({ status: 403, description: 'Access denied' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async getMediaPlaybackUrl(
+    @Request() req: { user: { sub: string } },
+    @Param('id') id: string,
+    @Query('expiresIn') expiresIn: number = 3600
+  ): Promise<{ success: boolean; data: { canPlay: boolean; signedUrl?: string; expiresIn?: number; reason?: string } }> {
+    const result = await this.accessControlService.checkMediaPlaybackAccess(req.user.sub, id);
+    return { success: true, data: result };
+  }
+
+  @Get('accessible')
+  @UseGuards(AuthGuard('jwt'))
+  @ApiOperation({ summary: 'Get accessible content for user' })
+  @ApiResponse({ status: 200, description: 'Accessible content list' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async getAccessibleContent(
+    @Request() req: { user: { sub: string } },
+    @Query('universeId') universeId?: string,
+    @Query('windowType') windowType?: string,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number
+  ): Promise<{ success: boolean; data: { freeContent: unknown[]; premiumContent: unknown[]; totalFree: number; totalPremium: number } }> {
+    const result = await this.accessControlService.getAccessibleContent(req.user.sub, { universeId, windowType, page, limit });
+    return { success: true, data: result };
+  }
+
+  @Post(':id/scan')
+  @UseGuards(AuthGuard('jwt'))
+  @ApiOperation({ summary: 'Scan content for safety issues before publication' })
+  @ApiResponse({ status: 200, description: 'Scan result' })
+  @ApiResponse({ status: 404, description: 'Content not found' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async scanContentForSafety(
+    @Request() req: { user: { sub: string } },
+    @Param('id') id: string
+  ): Promise<{ success: boolean; data: { scanId: string; result: string; threatLevel?: string; categories?: string[] } }> {
+    return this.contentService.scanContentForSafety(id);
   }
 }

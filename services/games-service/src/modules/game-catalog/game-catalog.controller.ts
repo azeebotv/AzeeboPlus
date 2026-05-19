@@ -3,7 +3,7 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { GameCatalogService } from './game-catalog.service';
 
 @ApiTags('Game Catalog')
-@Controller('games')
+@Controller('v1/games')
 export class GameCatalogController {
   constructor(private readonly gameCatalogService: GameCatalogService) {}
 

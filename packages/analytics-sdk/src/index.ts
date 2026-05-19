@@ -1,165 +1,189 @@
-import { v4 as uuidv4 } from 'uuid';
-
-interface AnalyticsConfig {
-  endpoint: string;
-  enabled: boolean;
-  debug: boolean;
+export interface AnalyticsEvent {
+  name: string;
+  properties?: Record<string, unknown>;
+  timestamp?: Date;
 }
 
-interface EventEnvelope {
-  user_id: string;
-  session_id: string;
-  platform: 'mobile' | 'web' | 'admin';
-  universe: string;
-  content_id?: string;
-  timestamp: string;
-  device_info: {
-    device_id: string;
-    device_type: string;
-    os_version: string;
-    app_version: string;
-  };
-  experiment_flags?: Record<string, string>;
+export interface AnalyticsConfig {
+  enabled?: boolean;
+  debug?: boolean;
 }
 
-interface AnalyticsEvent {
-  type: string;
-  metadata?: Record<string, unknown>;
-}
-
-class Analytics {
+export class Analytics {
   private config: AnalyticsConfig;
-  private userId: string;
-  private sessionId: string;
-  private platform: 'mobile' | 'web' | 'admin';
-  private appVersion: string;
-  private deviceInfo: EventEnvelope['device_info'];
+  public queue: AnalyticsEvent[] = [];
 
-  constructor(config: AnalyticsConfig) {
-    this.config = config;
-    this.userId = this.generateUserId();
-    this.sessionId = uuidv4();
-    this.platform = this.getPlatform();
-    this.appVersion = process.env.APP_VERSION || '1.0.0';
-    this.deviceInfo = this.getDeviceInfo();
-  }
-
-  private generateUserId(): string {
-    if (typeof window === 'undefined') {
-      return this.sessionId || uuidv4();
-    }
-    const storedId = localStorage.getItem('analytics_user_id');
-    if (storedId) return storedId;
-
-    const newId = uuidv4();
-    localStorage.setItem('analytics_user_id', newId);
-    return newId;
-  }
-
-  private getPlatform(): 'mobile' | 'web' | 'admin' {
-    if (typeof navigator === 'undefined') return 'web';
-    if (navigator.userAgent.match(/iPhone|iPad|iPod|Android/i)) return 'mobile';
-    return 'web';
-  }
-
-  private getDeviceInfo(): EventEnvelope['device_info'] {
-    return {
-      device_id: this.userId,
-      device_type: this.platform === 'mobile' ? 'mobile' : 'desktop',
-      os_version: typeof navigator !== 'undefined' ? navigator.platform : 'unknown',
-      app_version: this.appVersion,
+  constructor(config: AnalyticsConfig = {}) {
+    this.config = {
+      enabled: true,
+      debug: false,
+      ...config,
     };
   }
 
-  track(eventType: string, metadata?: Record<string, unknown>): void {
+  track(event: AnalyticsEvent): void {
     if (!this.config.enabled) return;
 
-    const event: AnalyticsEvent = {
-      type: eventType,
-      metadata: {
-        ...metadata,
-        user_id: this.userId,
-        session_id: this.sessionId,
-        platform: this.platform,
-        timestamp: new Date().toISOString(),
-      },
+    const fullEvent: AnalyticsEvent = {
+      ...event,
+      timestamp: event.timestamp || new Date(),
     };
 
-    if (this.config.debug) {
-      // eslint-disable-next-line no-console
-      console.log('[Analytics] Tracking event:', event);
-    }
+    this.queue.push(fullEvent);
 
-    this.sendEvent(event);
+    this.processQueue();
   }
 
-  screen(screenName: string, metadata?: Record<string, unknown>): void {
-    this.track('screen_view', {
-      screen_name: screenName,
-      ...metadata,
+  private async processQueue(): Promise<void> {
+    // TODO: Send events to analytics backend
+    // For now, just keep queue for testing
+  }
+
+  screenView(screenName: string, properties?: Record<string, unknown>): void {
+    this.track({
+      name: 'screen_view',
+      properties: {
+        screen_name: screenName,
+        ...properties,
+      },
     });
   }
 
-  setUser(userId: string): void {
-    this.userId = userId;
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('analytics_user_id', userId);
-    }
-  }
-
-  setUniverse(universe: string): void {
-    this.universe = universe;
-  }
-
-  setExperimentFlags(flags: Record<string, string>): void {
-    this.experimentFlags = flags;
-  }
-
-  private universe = 'reality';
-  private experimentFlags: Record<string, string> = {};
-
-  private async sendEvent(event: AnalyticsEvent): Promise<void> {
-    if (!this.config.enabled) return;
-
-    const envelope: EventEnvelope = {
-      user_id: this.userId,
-      session_id: this.sessionId,
-      platform: this.platform,
-      universe: this.universe,
-      timestamp: new Date().toISOString(),
-      device_info: this.deviceInfo,
-      experiment_flags: this.experimentFlags,
-    };
-
-    const payload = {
-      ...event,
-      metadata: {
-        ...event.metadata,
-        ...envelope,
+  contentImpression(contentId: string, contentType: string, universe: string): void {
+    this.track({
+      name: 'content_impression',
+      properties: {
+        content_id: contentId,
+        content_type: contentType,
+        universe,
       },
-    };
+    });
+  }
 
-    try {
-      await fetch(this.config.endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      });
-    } catch (error) {
-      if (this.config.debug) {
-        // eslint-disable-next-line no-console
-        console.error('[Analytics] Failed to send event:', error);
-      }
-    }
+  contentClick(contentId: string, contentType: string, universe: string): void {
+    this.track({
+      name: 'content_click',
+      properties: {
+        content_id: contentId,
+        content_type: contentType,
+        universe,
+      },
+    });
+  }
+
+  login(success: boolean, platform: string = 'web'): void {
+    this.track({
+      name: success ? 'login_success' : 'login_failed',
+      properties: { platform },
+    });
+  }
+
+  signup(success: boolean, platform: string = 'web'): void {
+    this.track({
+      name: success ? 'signup_completed' : 'signup_failed',
+      properties: { platform },
+    });
+  }
+
+  voteSubmitted(contestantId: string, amount: number, supervoted: boolean): void {
+    this.track({
+      name: 'vote_submitted',
+      properties: {
+        contestant_id: contestantId,
+        amount,
+        supervoted,
+      },
+    });
+  }
+
+  paymentSuccess(amount: number, currency: string = 'NGN'): void {
+    this.track({
+      name: 'payment_success',
+      properties: {
+        amount,
+        currency,
+      },
+    });
+  }
+
+  rewardEarned(rewardType: string, points: number): void {
+    this.track({
+      name: 'reward_earned',
+      properties: {
+        reward_type: rewardType,
+        points,
+      },
+    });
+  }
+
+  creatorFollow(creatorId: string): void {
+    this.track({
+      name: 'creator_follow',
+      properties: {
+        creator_id: creatorId,
+      },
+    });
+  }
+
+  predictionSubmitted(predictionId: string, answer: string): void {
+    this.track({
+      name: 'prediction_placed',
+      properties: {
+        prediction_id: predictionId,
+        answer,
+      },
+    });
+  }
+
+  gameStarted(gameId: string): void {
+    this.track({
+      name: 'game_started',
+      properties: {
+        game_id: gameId,
+      },
+    });
+  }
+
+  gameCompleted(gameId: string, score: number): void {
+    this.track({
+      name: 'game_completed',
+      properties: {
+        game_id: gameId,
+        score,
+      },
+    });
+  }
+
+  share(contentId: string): void {
+    this.track({
+      name: 'share',
+      properties: {
+        content_id: contentId,
+      },
+    });
+  }
+
+  notificationReceived(notificationId: string): void {
+    this.track({
+      name: 'notification_received',
+      properties: {
+        notification_id: notificationId,
+      },
+    });
+  }
+
+  notificationClicked(notificationId: string): void {
+    this.track({
+      name: 'notification_clicked',
+      properties: {
+        notification_id: notificationId,
+      },
+    });
   }
 }
 
-const analytics = new Analytics({
-  endpoint: process.env.ANALYTICS_ENDPOINT || '/api/analytics/events',
-  enabled: process.env.NODE_ENV === 'production',
-  debug: process.env.NODE_ENV !== 'production',
+// Default instance
+export const analytics = new Analytics({
+  enabled: process.env.NODE_ENV !== 'test',
+  debug: process.env.NODE_ENV === 'development',
 });
-
-export { analytics, Analytics, AnalyticsConfig, EventEnvelope, AnalyticsEvent };

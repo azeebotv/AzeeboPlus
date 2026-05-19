@@ -231,6 +231,12 @@ export class PaystackProvider {
   }
 
   getCircuitBreakerStats(): CircuitBreakerStats {
-    return this.circuitBreaker.getStats();
+    const stats = this.circuitBreaker.getStats() as unknown as Record<string, unknown>;
+    return {
+      state: (stats.state as string) || 'closed',
+      failureCount: (stats.failureCount as number) || 0,
+      successCount: (stats.successCount as number) || 0,
+      lastFailureTime: (stats.lastFailureTime as number | null) || null,
+    };
   }
 }

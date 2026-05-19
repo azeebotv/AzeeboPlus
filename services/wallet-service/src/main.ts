@@ -4,6 +4,7 @@ import { Logger, ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
 import { GlobalExceptionFilter } from '@azeebo/error-handling';
+import { LoggingInterceptor } from '@azeebo/logger';
 import { validateEnvironment } from '@azeebo/shared-types';
 
 async function bootstrap(): Promise<void> {
@@ -30,6 +31,8 @@ async function bootstrap(): Promise<void> {
   app.setGlobalPrefix('v1/wallet');
 
   app.useGlobalFilters(new GlobalExceptionFilter());
+
+  app.useGlobalInterceptors(new LoggingInterceptor());
 
   app.useGlobalPipes(
     new ValidationPipe({

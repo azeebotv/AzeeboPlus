@@ -63,4 +63,56 @@ export class RecommendationController {
       freshnessDays: 7,
     });
   }
+
+  @Get('user-segment')
+  @ApiOperation({ summary: 'Get user segment' })
+  @ApiResponse({ status: 200, description: 'User segment information' })
+  async getUserSegment(@Query('userId') userId: string): Promise<unknown> {
+    return this.recommendationService.getUserSegment(userId);
+  }
+
+  @Get('creator-score')
+  @ApiOperation({ summary: 'Get creator score' })
+  @ApiResponse({ status: 200, description: 'Creator score and tier' })
+  async getCreatorScore(@Query('creatorId') creatorId: string): Promise<unknown> {
+    return this.recommendationService.getCreatorScore(creatorId);
+  }
+
+  @Get('churn-risk')
+  @ApiOperation({ summary: 'Get churn risk assessment' })
+  @ApiResponse({ status: 200, description: 'Churn risk assessment' })
+  async getChurnRisk(@Query('userId') userId: string): Promise<unknown> {
+    return this.recommendationService.getChurnRisk(userId);
+  }
+
+  @Get('monetization-insights')
+  @ApiOperation({ summary: 'Get monetization insights' })
+  @ApiResponse({ status: 200, description: 'Monetization insights and recommendations' })
+  async getMonetizationInsights(@Query('userId') userId: string): Promise<unknown> {
+    return this.recommendationService.getMonetizationInsights(userId);
+  }
+
+  @Get('fraud-risk')
+  @ApiOperation({ summary: 'Assess fraud risk' })
+  @ApiResponse({ status: 200, description: 'Fraud risk assessment' })
+  async assessFraudRisk(
+    @Query('userId') userId?: string,
+    @Query('contentId') contentId?: string,
+    @Query('transactionId') transactionId?: string
+  ): Promise<unknown> {
+    return this.recommendationService.assessFraudRisk({ userId, contentId, transactionId });
+  }
+
+  @Get('personalized-feed')
+  @ApiOperation({ summary: 'Get personalized feed' })
+  @ApiResponse({ status: 200, description: 'Personalized content feed' })
+  async getPersonalizedFeed(
+    @Query('userId') userId: string,
+    @Query('limit') limit?: string
+  ): Promise<unknown> {
+    return this.recommendationService.getPersonalizedFeed(
+      userId,
+      limit ? parseInt(limit, 10) : 20
+    );
+  }
 }

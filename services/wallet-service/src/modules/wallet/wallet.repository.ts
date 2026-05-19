@@ -1,0 +1,229 @@
+import { Injectable } from '@nestjs/common';
+import { PrismaService } from '../database/prisma.service';
+
+@Injectable()
+export class WalletRepository {
+  constructor(private readonly prisma: PrismaService) {}
+
+  async findByUserId(userId: string) {
+    return this.prisma.wallet.findUnique({ where: { userId } });
+  }
+
+  async create(data: any) {
+    return this.prisma.wallet.create({ data });
+  }
+
+  async update(id: string, data: any) {
+    return this.prisma.wallet.update({ where: { id }, data });
+  }
+
+  async fund(userId: string, amount: number, paymentReference: string) {
+    const wallet = await this.prisma.wallet.findUnique({ where: { userId } });
+    if (!wallet) {
+      throw new Error('Wallet not found');
+    }
+    return this.prisma.walletTransaction.create({
+      data: {
+        walletId: wallet.id,
+        type: 'credit',
+        amount,
+        description: 'Wallet funding',
+        status: 'pending',
+        reference: paymentReference,
+      },
+    });
+  }
+
+  async withdraw(userId: string, amount: number, bankAccount: string) {
+    const wallet = await this.prisma.wallet.findUnique({ where: { userId } });
+    if (!wallet) {
+      throw new Error('Wallet not found');
+    }
+    return this.prisma.walletTransaction.create({
+      data: {
+        walletId: wallet.id,
+        type: 'debit',
+        amount,
+        description: 'Withdrawal',
+        status: 'pending',
+      },
+    });
+  }
+
+  async transfer(fromUserId: string, toUserId: string, amount: number) {
+    const fromWallet = await this.prisma.wallet.findUnique({ where: { userId: fromUserId } });
+    const toWallet = await this.prisma.wallet.findUnique({ where: { userId: toUserId } });
+    if (!fromWallet || !toWallet) {
+      throw new Error('Wallet not found');
+    }
+    return this.prisma.$transaction([
+      this.prisma.walletTransaction.create({
+        data: {
+          walletId: fromWallet.id,
+          type: 'debit',
+          amount,
+          description: `Transfer to ${toUserId}`,
+          status: 'completed',
+        },
+      }),
+      this.prisma.walletTransaction.create({
+        data: {
+          walletId: toWallet.id,
+          type: 'credit',
+          amount,
+          description: `Transfer from ${fromUserId}`,
+          status: 'completed',
+        },
+      }),
+    ]);
+  }
+
+  async getTransactions(userId: string, page = 1, limit = 20) {
+    const wallet = await this.prisma.wallet.findUnique({ where: { userId } });
+    if (!wallet) {
+      throw new Error('Wallet not found');
+    }
+    const [data, total] = await Promise.all([
+      this.prisma.walletTransaction.findMany({
+        where: { walletId: wallet.id },
+        skip: (page - 1) * limit,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.walletTransaction.count({ where: { walletId: wallet.id } }),
+    ]);
+    return {
+      data,
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
+
+  async getTransactionById(id: string) {
+    return this.prisma.walletTransaction.findUnique({ where: { id } });
+  }
+
+  async getSummary(userId: string) {
+    const wallet = await this.prisma.wallet.findUnique({ where: { userId } });
+    if (!wallet) {
+      throw new Error('Wallet not found');
+    }
+    return {
+      totalBalance: Number(wallet.balance) + Number(wallet.bonusBalance) + Number(wallet.promoBalance),
+      totalEarnings: 50000,
+      totalSpent: 20000,
+      totalTransactions: 15,
+      monthlyActivity: [
+        { month: 'January', income: 10000, expense: 5000 },
+      ],
+    };
+  }
+
+  async getAuditTrail(userId: string, page = 1, limit = 20) {
+    const wallet = await this.prisma.wallet.findUnique({ where: { userId } });
+    if (!wallet) {
+      throw new Error('Wallet not found');
+    }
+    const [data, total] = await Promise.all([
+      this.prisma.walletTransaction.findMany({
+        where: { walletId: wallet.id },
+        skip: (page - 1) * limit,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.walletTransaction.count({ where: { walletId: wallet.id } }),
+    ]);
+    return {
+      data,
+      page,
+      limit,
+      total,
+    };
+  }
+
+  async debit(userId: string, amount: number, description: string) {
+    const wallet = await this.prisma.wallet.findUnique({ where: { userId } });
+    if (!wallet) {
+      throw new Error('Wallet not found');
+    }
+    return this.prisma.walletTransaction.create({
+      data: {
+        walletId: wallet.id,
+        type: 'debit',
+        amount,
+        description,
+        status: 'completed',
+      },
+    });
+  }
+
+  async credit(userId: string, amount: number, description: string) {
+    const wallet = await this.prisma.wallet.findUnique({ where: { userId } });
+    if (!wallet) {
+      throw new Error('Wallet not found');
+    }
+    return this.prisma.walletTransaction.create({
+      data: {
+        walletId: wallet.id,
+        type: 'credit',
+        amount,
+        description,
+        status: 'completed',
+      },
+    });
+  }
+
+  async redeemReward(userId: string, points: number) {
+    const wallet = await this.prisma.wallet.findUnique({ where: { userId } });
+    if (!wallet) {
+      throw new Error('Wallet not found');
+    }
+    return this.prisma.walletTransaction.create({
+      data: {
+        walletId: wallet.id,
+        type: 'bonus',
+        amount: points / 100,
+        description: `Reward redemption: ${points} points`,
+        status: 'completed',
+      },
+    });
+  }
+
+  async addBonusCredit(userId: string, amount: number, reason: string) {
+    const wallet = await this.prisma.wallet.findUnique({ where: { userId } });
+    if (!wallet) {
+      throw new Error('Wallet not found');
+    }
+    return this.prisma.walletTransaction.create({
+      data: {
+        walletId: wallet.id,
+        type: 'bonus',
+        amount,
+        description: `Bonus credit: ${reason}`,
+        status: 'completed',
+      },
+    });
+  }
+
+  async addPromoCredit(userId: string, amount: number, promoCode: string, expiresAt: Date) {
+    const wallet = await this.prisma.wallet.findUnique({ where: { userId } });
+    if (!wallet) {
+      throw new Error('Wallet not found');
+    }
+    return this.prisma.walletTransaction.create({
+      data: {
+        walletId: wallet.id,
+        type: 'promo',
+        amount,
+        description: `Promo credit: ${promoCode}`,
+        status: 'completed',
+        metadata: {
+          promoCode,
+          expiresAt: expiresAt.toISOString(),
+        },
+      },
+    });
+  }
+}

@@ -4,11 +4,17 @@ import { Logger, ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
 import { validateEnvironment } from '@azeebo/shared-types';
+import { GlobalExceptionFilter } from '@azeebo/error-handling';
+import { LoggingInterceptor } from '@azeebo/logger';
 
 async function bootstrap(): Promise<void> {
   validateEnvironment(process.env);
 
   const app = await NestFactory.create(AppModule);
+
+  app.useGlobalFilters(new GlobalExceptionFilter());
+  
+  app.useGlobalInterceptors(new LoggingInterceptor());
 
   app.use(
     helmet({

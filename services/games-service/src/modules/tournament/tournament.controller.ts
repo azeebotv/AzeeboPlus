@@ -1,9 +1,14 @@
-import { Controller, Get, Post, Body, Param, Query } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { Controller, Get, Post, Body, Param, Query, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { AuthGuard } from '@nestjs/passport';
 import { TournamentService } from './tournament.service';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { JoinTournamentDto, SubmitScoreDto } from './dto/tournament.dto';
 
 @ApiTags('Tournament')
-@Controller('tournaments')
+@ApiBearerAuth()
+@Controller('v1/games/tournaments')
 export class TournamentController {
   constructor(private readonly tournamentService: TournamentService) {}
 
@@ -30,7 +35,7 @@ export class TournamentController {
   @ApiResponse({ status: 201, description: 'Entered' })
   async enterTournament(
     @Param('id') tournamentId: string,
-    @Body() body: { userId: string; initialScore?: number }
+    @Body() body: JoinTournamentDto
   ): Promise<unknown> {
     return this.tournamentService.enterTournament(body.userId, tournamentId, body.initialScore);
   }
@@ -40,7 +45,7 @@ export class TournamentController {
   @ApiResponse({ status: 200, description: 'Score updated' })
   async updateScore(
     @Param('id') tournamentId: string,
-    @Body() body: { userId: string; score: number }
+    @Body() body: SubmitScoreDto
   ): Promise<unknown> {
     return this.tournamentService.updateScore(body.userId, tournamentId, body.score);
   }
@@ -67,6 +72,8 @@ export class TournamentController {
   }
 
   @Post(':id/end')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('ADMIN', 'MODERATOR')
   @ApiOperation({ summary: 'End tournament (admin)' })
   @ApiResponse({ status: 200, description: 'Tournament ended' })
   async endTournament(@Param('id') tournamentId: string): Promise<unknown> {

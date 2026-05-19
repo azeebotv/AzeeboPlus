@@ -42,7 +42,7 @@ interface CrossoverResponse {
   error?: { code: string; message: string };
 }
 
-interface CreateCrossoverData {
+export interface CreateCrossoverData {
   title: string;
   description?: string;
   coverImage?: string;
@@ -51,7 +51,7 @@ interface CreateCrossoverData {
   titleIds: string[];
 }
 
-interface CreateRecapData {
+export interface CreateRecapData {
   titleId: string;
   season?: number;
   episode?: number;

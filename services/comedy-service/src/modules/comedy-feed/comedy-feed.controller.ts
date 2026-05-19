@@ -3,7 +3,7 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ComedyFeedService } from './comedy-feed.service';
 
 @ApiTags('Comedy Feed')
-@Controller('feed')
+@Controller('v1/comedy')
 export class ComedyFeedController {
   constructor(private readonly comedyFeedService: ComedyFeedService) {}
 
@@ -83,4 +83,14 @@ export class ComedyFeedController {
   async recordTrends(@Body() body: { period?: string }): Promise<unknown> {
     return this.comedyFeedService.recordTrend(body.period || 'daily');
   }
+
+  // @Post('specials/:id/rate')
+  // @ApiOperation({ summary: 'Rate a special' })
+  // @ApiResponse({ status: 200, description: 'Rating submitted' })
+  // async rateSpecial(
+  //   @Param('id') id: string,
+  //   @Body() body: { userId: string; rating: number }
+  // ): Promise<unknown> {
+  //   return this.comedyFeedService.rateSpecial(body.userId, id, body.rating);
+  // }
 }

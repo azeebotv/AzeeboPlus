@@ -52,7 +52,7 @@ export class PredictionMarketsService {
         event: {
           include: {
             teams: true,
-            FixtureMetadata: true,
+            fixtureMetadata: true,
           },
         },
         entries: {
@@ -90,8 +90,8 @@ export class PredictionMarketsService {
       data: {
         eventId,
         question,
-        options: options as unknown as Record<string, string | number | boolean | null>,
-        odds: odds as unknown as Record<string, string | number | boolean | null> | null,
+        options: JSON.parse(JSON.stringify(options)),
+        odds: odds ? JSON.parse(JSON.stringify(odds)) : undefined,
       },
     });
 

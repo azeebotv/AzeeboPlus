@@ -1,10 +1,10 @@
-import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
+import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
 import * as admin from 'firebase-admin';
 import { ConfigService } from '@nestjs/config';
 import { CircuitBreaker, CircuitBreakerOpenError } from '@azeebo/shared-types';
 
 @Injectable()
-export class FirebaseService implements OnModuleInit {
+export class FirebaseService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(FirebaseService.name);
   private messaging!: admin.messaging.Messaging;
   private firebaseEnabled: boolean = false;
@@ -38,6 +38,17 @@ export class FirebaseService implements OnModuleInit {
       this.logger.log('Firebase initialized successfully');
     } catch (error) {
       this.logger.error(`Error initializing Firebase: ${(error as Error).message}`);
+    }
+  }
+
+  async onModuleDestroy() {
+    if (this.firebaseEnabled) {
+      try {
+        admin.app().delete();
+        this.logger.log('Firebase app cleaned up successfully');
+      } catch (error) {
+        this.logger.error(`Error cleaning up Firebase: ${(error as Error).message}`);
+      }
     }
   }
 

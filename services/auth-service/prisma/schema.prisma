@@ -15,6 +15,7 @@ model User {
   displayName  String
   avatar       String?
   role         String   @default("user")
+  isVerified   Boolean  @default(false)
   mfaEnabled   Boolean  @default(false)
   mfaSecret    String?
   mfaBackupCodes String?

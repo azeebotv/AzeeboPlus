@@ -7,6 +7,7 @@ import {
   Body,
   HttpCode,
   HttpStatus,
+  Query,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
@@ -77,5 +78,40 @@ export class RewardsController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getLevel(@Request() req: { user: { sub: string } }): Promise<RewardResponse> {
     return this.rewardsService.getLevel(req.user.sub);
+  }
+
+  @Post('earn')
+  @UseGuards(AuthGuard('jwt'))
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Earn points for activity' })
+  @ApiResponse({ status: 200, description: 'Points earned' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async earnPoints(
+    @Request() req: { user: { sub: string } },
+    @Body() body: { activity: string; amount?: number }
+  ): Promise<RewardResponse> {
+    return this.rewardsService.earnPoints(req.user.sub, body.activity, body.amount);
+  }
+
+  @Get('balance')
+  @UseGuards(AuthGuard('jwt'))
+  @ApiOperation({ summary: 'Get points balance' })
+  @ApiResponse({ status: 200, description: 'Points balance' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async getBalance(@Request() req: { user: { sub: string } }): Promise<RewardResponse> {
+    return this.rewardsService.getBalance(req.user.sub);
+  }
+
+  @Get('history')
+  @UseGuards(AuthGuard('jwt'))
+  @ApiOperation({ summary: 'Get reward history' })
+  @ApiResponse({ status: 200, description: 'Reward history' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async getHistory(
+    @Request() req: { user: { sub: string } },
+    @Query('page') page?: number,
+    @Query('limit') limit?: number
+  ): Promise<RewardResponse> {
+    return this.rewardsService.getHistory(req.user.sub, Number(page) || 1, Number(limit) || 20);
   }
 }

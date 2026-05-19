@@ -123,10 +123,65 @@ function validateProductionEnvironment(env: EnvironmentVariables): void {
     errors.push('At least one payment provider secret must be configured in production');
   }
 
+  // Check payment webhook secrets
+  if (env.PAYSTACK_SECRET_KEY && !env.PAYSTACK_WEBHOOK_SECRET) {
+    errors.push('PAYSTACK_WEBHOOK_SECRET must be configured when PAYSTACK_SECRET_KEY is set');
+  }
+
+  if (env.FLUTTERWAVE_SECRET_KEY && !env.FLUTTERWAVE_WEBHOOK_SECRET) {
+    errors.push('FLUTTERWAVE_WEBHOOK_SECRET must be configured when FLUTTERWAVE_SECRET_KEY is set');
+  }
+
   // Check allowed origins
   if (env.ALLOWED_ORIGINS.includes('localhost') || env.ALLOWED_ORIGINS === '*') {
     errors.push('ALLOWED_ORIGINS cannot include localhost or wildcard in production');
   }
+
+  // Check that ALLOWED_ORIGINS is properly configured
+  if (!env.ALLOWED_ORIGINS || env.ALLOWED_ORIGINS.trim() === '') {
+    errors.push('ALLOWED_ORIGINS must be configured in production');
+  }
+
+  // Check AWS credentials if S3 bucket is configured
+  if (env.AWS_S3_BUCKET && (!env.AWS_ACCESS_KEY_ID || !env.AWS_SECRET_ACCESS_KEY)) {
+    errors.push('AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY must be configured when AWS_S3_BUCKET is set');
+  }
+
+  // Check notification provider credentials
+  if (!env.SENDGRID_API_KEY && !env.TWILIO_ACCOUNT_SID) {
+    errors.push('At least one notification provider (SendGrid or Twilio) must be configured in production');
+  }
+
+  if (env.TWILIO_ACCOUNT_SID && (!env.TWILIO_AUTH_TOKEN || !env.TWILIO_PHONE_NUMBER)) {
+    errors.push('TWILIO_AUTH_TOKEN and TWILIO_PHONE_NUMBER must be configured when TWILIO_ACCOUNT_SID is set');
+  }
+
+  // Check that service URLs are not localhost
+  const serviceUrls = [
+    'AUTH_SERVICE_URL',
+    'USER_SERVICE_URL',
+    'WALLET_SERVICE_URL',
+    'PAYMENT_SERVICE_URL',
+    'CONTENT_SERVICE_URL',
+    'NOTIFICATION_SERVICE_URL',
+    'REWARD_SERVICE_URL',
+    'SEARCH_SERVICE_URL',
+    'ANALYTICS_SERVICE_URL',
+    'MODERATION_SERVICE_URL',
+    'RECOMMENDATION_SERVICE_URL',
+    'CREATOR_SERVICE_URL',
+    'LIFESTYLE_SERVICE_URL',
+    'VERTICAL_SERVICE_URL',
+    'QUEUE_SERVICE_URL',
+    'MEDIA_SERVICE_URL',
+  ];
+
+  serviceUrls.forEach((urlName) => {
+    const url = (env as any)[urlName];
+    if (url && (url.includes('localhost') || url.includes('127.0.0.1'))) {
+      errors.push(`${urlName} cannot point to localhost in production`);
+    }
+  });
 
   if (errors.length > 0) {
     throw new Error(`Production environment validation failed:\n${errors.join('\n')}`);

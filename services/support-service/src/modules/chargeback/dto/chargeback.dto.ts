@@ -5,32 +5,32 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 export class CreateChargebackDto {
   @ApiProperty()
   @IsString()
-  ticketId: string;
+  ticketId: string = '';
 
   @ApiProperty()
   @IsString()
-  paymentId: string;
+  paymentId: string = '';
 
   @ApiProperty()
   @IsInt()
   @Min(1)
-  amount: number;
+  amount: number = 1;
 
   @ApiProperty()
   @IsString()
-  reason: string;
+  reason: string = '';
 }
 
 export class SubmitEvidenceDto {
   @ApiProperty()
   @IsObject()
-  evidence: Record<string, unknown>;
+  evidence: Record<string, unknown> = {};
 }
 
 export class ResolveChargebackDto {
   @ApiProperty({ enum: ['WON', 'LOST'] })
   @IsString()
-  resolution: 'WON' | 'LOST';
+  resolution: 'WON' | 'LOST' = 'WON';
 
   @ApiPropertyOptional()
   @IsOptional()

@@ -6,6 +6,8 @@ import { AuthModule } from './modules/auth/auth.module';
 import { AuditModule } from './modules/audit/audit.module';
 import { RedisService } from './common/services/redis.service';
 import { RateLimitGuard } from './common/guards/rate-limit.guard';
+import { CommonModule } from './common/common.module';
+import { MetricsModule } from './modules/metrics/metrics.module';
 
 @Module({
   imports: [
@@ -16,6 +18,8 @@ import { RateLimitGuard } from './common/guards/rate-limit.guard';
     TerminusModule,
     AuditModule,
     AuthModule,
+    CommonModule,
+    MetricsModule,
   ],
   providers: [
     RedisService,

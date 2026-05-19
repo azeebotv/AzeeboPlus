@@ -24,7 +24,12 @@
       "@azeebo/ui/*": ["../../packages/ui/src/*"],
       "@azeebo/design-tokens": ["../../packages/design-tokens/src"],
       "@azeebo/design-tokens/*": ["../../packages/design-tokens/src/*"]
-    }
+    },
+    "types": []
+  },
+  "typeAcquisition": {
+    "enable": true,
+    "exclude": ["axe-core"]
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
   "exclude": ["node_modules", "e2e", "playwright.config.ts"]

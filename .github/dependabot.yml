@@ -1,0 +1,77 @@
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 10
+    target-branch: "develop"
+    labels:
+      - "dependencies"
+      - "automerge"
+    assignees:
+      - "engineering-team"
+    commit-message:
+      prefix: "chore(deps):"
+      include: "scope"
+    ignore:
+      - dependency-name: "@types/node"
+        versions: ["20.x"]
+    groups:
+      react-native-packages:
+        patterns:
+          - "react-native*"
+          - "@react-native*"
+      nestjs-packages:
+        patterns:
+          - "@nestjs/*"
+      prisma-packages:
+        patterns:
+          - "prisma"
+          - "@prisma/client"
+      eslint-packages:
+        patterns:
+          - "eslint*"
+          - "@typescript-eslint/*"
+      testing-packages:
+        patterns:
+          - "jest*"
+          - "@jest/*"
+          - "vitest*"
+          - "@testing-library/*"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+      day: "first"
+    labels:
+      - "dependencies"
+      - "github-actions"
+    commit-message:
+      prefix: "chore(actions):"
+
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+      day: "second"
+    labels:
+      - "dependencies"
+      - "docker"
+    commit-message:
+      prefix: "chore(docker):"
+
+  - package-ecosystem: "terraform"
+    directory: "infra/terraform"
+    schedule:
+      interval: "monthly"
+      day: "third"
+    labels:
+      - "dependencies"
+      - "terraform"
+    commit-message:
+      prefix: "chore(terraform):"

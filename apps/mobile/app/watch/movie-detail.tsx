@@ -22,7 +22,7 @@ export default function MovieDetailScreen() {
       </View>
 
       <View style={styles.heroSection}>
-        <Image source={{ uri: 'https://via.placeholder.com/400x225' }} style={styles.heroImage} />
+        <Image source={{ uri: 'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=epic%20fantasy%20movie%20poster%20with%20ancient%20warriors%20and%20kingdoms%20cinematic&image_size=landscape_16_9' }} style={styles.heroImage} />
         {isPlaying ? (
           <View style={styles.playerControls}>
             <TouchableOpacity style={styles.controlButton}>
@@ -108,11 +108,17 @@ export default function MovieDetailScreen() {
           Similar Movies
         </Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.moviesScroll}>
-          {[1, 2, 3, 4, 5].map((i) => (
-            <TouchableOpacity key={i} style={styles.movieCard}>
-              <Image source={{ uri: `https://via.placeholder.com/150x225` }} style={styles.movieThumbnail} />
+          {[
+            { title: 'Kingdoms Rising', image: 'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=ancient%20kingdom%20battle%20scene%20fantasy%20movie&image_size=portrait_4_3' },
+            { title: 'Warrior\'s Quest', image: 'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=medieval%20warrior%20knight%20armor%20epic%20fantasy&image_size=portrait_4_3' },
+            { title: 'Dragon Realm', image: 'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=epic%20dragon%20battle%20fantasy%20cinematic%20scene&image_size=portrait_4_3' },
+            { title: 'The Crown', image: 'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=royal%20castle%20crown%20medieval%20fantasy%20movie&image_size=portrait_4_3' },
+            { title: 'Sword Master', image: 'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=sword%20fighting%20ancient%20warrior%20action%20movie&image_size=portrait_4_3' },
+          ].map((movie) => (
+            <TouchableOpacity key={movie.title} style={styles.movieCard}>
+              <Image source={{ uri: movie.image }} style={styles.movieThumbnail} />
               <Text style={[styles.movieCardTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
-                Movie {i}
+                {movie.title}
               </Text>
             </TouchableOpacity>
           ))}

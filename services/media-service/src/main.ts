@@ -1,10 +1,17 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, Logger } from '@nestjs/common';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import helmet from 'helmet';
+import { GlobalExceptionFilter } from '@azeebo/error-handling';
+import { LoggingInterceptor } from '@azeebo/logger';
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule);
+
+  app.useGlobalFilters(new GlobalExceptionFilter());
+  
+  app.useGlobalInterceptors(new LoggingInterceptor());
 
   app.use(
     helmet({
@@ -35,6 +42,18 @@ async function bootstrap(): Promise<void> {
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
   });
+
+  if (process.env.NODE_ENV !== 'production') {
+    const config = new DocumentBuilder()
+      .setTitle('Media Service')
+      .setDescription('Azeebo+ Media Service API')
+      .setVersion('1.0.0')
+      .addTag('media')
+      .build();
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('docs', app, document);
+    Logger.log('Swagger documentation enabled at /docs');
+  }
 
   const port = process.env.PORT || 3019;
   await app.listen(port);

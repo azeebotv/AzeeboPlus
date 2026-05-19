@@ -1,9 +1,10 @@
 import { Controller, Get, Post, Patch, Delete, Body, Param, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { LoreService } from './lore.service';
+import { CreateLoreData } from './lore.service';
 
 @ApiTags('Lore')
-@Controller('lore')
+@Controller('v1/vertical/lore')
 export class LoreController {
   constructor(private readonly loreService: LoreService) {}
 
@@ -45,8 +46,8 @@ export class LoreController {
   @Post()
   @ApiOperation({ summary: 'Create lore entry' })
   @ApiResponse({ status: 201, description: 'Entry created' })
-  async createEntry(@Body() body: Record<string, unknown>): Promise<unknown> {
-    return this.loreService.createEntry(body as Record<string, string>);
+  async createEntry(@Body() body: CreateLoreData): Promise<unknown> {
+    return this.loreService.createEntry(body);
   }
 
   @Patch(':id')

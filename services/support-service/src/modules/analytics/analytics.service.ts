@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import {
   SupportAnalyticsEvent,
   SupportTicketCreatedEvent,
@@ -8,18 +8,19 @@ import {
 
 @Injectable()
 export class AnalyticsService {
+  private readonly logger = new Logger(AnalyticsService.name);
   private events: Array<{ event: string; data: Record<string, unknown>; timestamp: Date }> = [];
 
   async trackTicketCreated(data: SupportTicketCreatedEvent): Promise<void> {
-    await this.track(SupportAnalyticsEvent.TICKET_CREATED, data as Record<string, unknown>);
+    await this.track(SupportAnalyticsEvent.TICKET_CREATED, { ...data });
   }
 
   async trackRefundProcessed(data: RefundProcessedEvent): Promise<void> {
-    await this.track(SupportAnalyticsEvent.REFUND_PROCESSED, data as Record<string, unknown>);
+    await this.track(SupportAnalyticsEvent.REFUND_PROCESSED, { ...data });
   }
 
   async trackUserSuspended(data: UserSuspendedEvent): Promise<void> {
-    await this.track(SupportAnalyticsEvent.USER_SUSPENDED, data as Record<string, unknown>);
+    await this.track(SupportAnalyticsEvent.USER_SUSPENDED, { ...data });
   }
 
   async trackUserReinstated(userId: string, suspendedBy: string): Promise<void> {
@@ -43,8 +44,9 @@ export class AnalyticsService {
   }
 
   private async track(event: string, data: Record<string, unknown>): Promise<void> {
-    this.events.push({ event, data, timestamp: new Date() });
-    console.log(`[Analytics] ${event}:`, data);
+    const eventRecord = { event, data, timestamp: new Date() };
+    this.events.push(eventRecord);
+    this.logger.log(JSON.stringify(eventRecord), 'AnalyticsEvent');
   }
 
   getEvents() {

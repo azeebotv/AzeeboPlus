@@ -1,0 +1,140 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: media-service
+  namespace: azeebo
+  labels:
+    app: media-service
+    tier: backend
+spec:
+  replicas: 2
+  revisionHistoryLimit: 5
+  selector:
+    matchLabels:
+      app: media-service
+  template:
+    metadata:
+      labels:
+        app: media-service
+        tier: backend
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "3019"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: azeebo-sa
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        runAsNonRoot: true
+      terminationGracePeriodSeconds: 30
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - media-service
+                topologyKey: kubernetes.io/hostname
+      containers:
+        - name: media-service
+          image: azeebo/media-service:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3019
+              protocol: TCP
+              name: http
+          env:
+            - name: NODE_ENV
+              value: production
+            - name: PORT
+              value: "3019"
+            - name: AWS_REGION
+              valueFrom:
+                configMapKeyRef:
+                  name: azeebo-config
+                  key: aws-region
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: azeebo-secrets
+                  key: aws-access-key-id
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: azeebo-secrets
+                  key: aws-secret-access-key
+            - name: AWS_S3_BUCKET
+              valueFrom:
+                configMapKeyRef:
+                  name: azeebo-config
+                  key: aws-s3-bucket
+            - name: CDN_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: azeebo-config
+                  key: cdn-url
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "200m"
+              ephemeral-storage: "500Mi"
+            limits:
+              memory: "1Gi"
+              cpu: "1000m"
+              ephemeral-storage: "1Gi"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3019
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 3019
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir:
+            medium: Memory
+            sizeLimit: 100Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: media-service
+  namespace: azeebo
+  labels:
+    app: media-service
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "3019"
+spec:
+  type: ClusterIP
+  ports:
+    - port: 3019
+      targetPort: 3019
+      protocol: TCP
+      name: http
+  selector:
+    app: media-service

@@ -15,22 +15,41 @@ export class NotificationsService {
     private readonly smsService: SmsService
   ) {}
 
-  async getNotifications(userId: string) {
-    const notifications = await this.prisma.notification.findMany({
-      where: { userId },
-      orderBy: { createdAt: 'desc' },
-      take: 50,
-    });
+  async getNotifications(userId: string, page = 1, limit = 20) {
+    const skip = (page - 1) * limit;
+    const take = Math.min(limit, 100);
+
+    const [notifications, total] = await Promise.all([
+      this.prisma.notification.findMany({
+        where: { userId },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take,
+      }),
+      this.prisma.notification.count({
+        where: { userId },
+      }),
+    ]);
 
     const unreadCount = await this.prisma.notification.count({
       where: { userId, readAt: null },
     });
+
+    const totalPages = Math.ceil(total / take);
 
     return {
       success: true,
       data: {
         notifications,
         unreadCount,
+        pagination: {
+          total,
+          page,
+          limit: take,
+          totalPages,
+          hasNextPage: page < totalPages,
+          hasPreviousPage: page > 1,
+        },
       },
     };
   }
@@ -93,6 +112,20 @@ export class NotificationsService {
       success: true,
       data: {
         message: 'Notification preferences updated',
+      },
+    };
+  }
+
+  async getPreferences(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { notificationPreferences: true },
+    });
+
+    return {
+      success: true,
+      data: {
+        settings: user?.notificationPreferences || {},
       },
     };
   }

@@ -20,6 +20,7 @@
     "jsx": "react",
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
+    "types": ["jest", "node", "supertest"],
     "paths": {
       "@azeebo/ui": ["./packages/ui/src"],
       "@azeebo/ui/*": ["./packages/ui/src/*"],
@@ -41,8 +42,6 @@
     "dist",
     "**/*.e2e.ts",
     "**/*.e2e.tsx",
-    "**/*.spec.ts",
-    "**/*.spec.tsx",
     "**/detox.setup.ts",
     "**/detox.setup.js",
     "**/e2e/**",

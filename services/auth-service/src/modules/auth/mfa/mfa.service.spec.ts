@@ -15,8 +15,15 @@ describe('MfaService', () => {
     id: 'user-123',
     email: 'test@example.com',
     displayName: 'Test User',
+    password: 'hashed-password',
+    role: 'user',
+    avatar: null,
+    isVerified: false,
     mfaEnabled: false,
     mfaSecret: null,
+    mfaBackupCodes: null,
+    createdAt: new Date(),
+    updatedAt: new Date(),
   };
 
   beforeEach(async () => {

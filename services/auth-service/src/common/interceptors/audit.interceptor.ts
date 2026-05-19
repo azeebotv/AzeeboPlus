@@ -10,7 +10,7 @@ import { AUDIT_LOG_METADATA } from '../decorators/audit-log.decorator';
 export class AuditInterceptor implements NestInterceptor {
   constructor(
     private reflector: Reflector,
-    @Inject(AuditService) private auditService: AuditService
+    @Inject(AuditLogService) private auditService: AuditLogService
   ) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {

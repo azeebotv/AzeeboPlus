@@ -8,7 +8,8 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "lint": "eslint 'src/**/*.ts' --fix",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "test": "jest"
   },
   "dependencies": {
     "@azeebo/shared-types": "workspace:*",

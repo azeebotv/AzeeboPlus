@@ -135,6 +135,53 @@ groups:
           summary: "Disk usage >85% on {{ $labels.instance }}"
           description: "Mount {{ $labels.mountpoint }} is at {{ $value }}%"
 
+      # Authentication Alerts
+      - alert: HighAuthFailureRate
+        expr: rate(auth_failures_total[5m]) / rate(auth_attempts_total[5m]) > 0.1
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Authentication failure rate >10%"
+          description: "Auth failure rate is {{ $value | humanizePercentage }} - potential attack or service issue"
+
+      - alert: HighMfaFailureRate
+        expr: rate(mfa_failures_total[5m]) / rate(mfa_attempts_total[5m]) > 0.2
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "MFA failure rate >20%"
+          description: "MFA failure rate is {{ $value | humanizePercentage }}"
+
+      - alert: UnusualLoginPattern
+        expr: rate(auth_login_attempts_total[10m]) > 100
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Unusual login pattern detected"
+          description: "{{ $value }} login attempts in last 10 minutes - potential brute force attack"
+
+      # Rate Limit Alerts
+      - alert: HighRateLimitViolations
+        expr: rate(rate_limit_violations_total[5m]) > 10
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High rate limit violations on {{ $labels.service }}"
+          description: "{{ $value }} rate limit violations in last 5 minutes on {{ $labels.service }}"
+
+      - alert: RateLimitExhaustion
+        expr: sum by (service) (rate(rate_limit_remaining[1m])) < 100
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Rate limit exhaustion on {{ $labels.service }}"
+          description: "Rate limit nearly exhausted for {{ $labels.service }}"
+
       # Business Metrics
       - alert: PaymentFailureRate
         expr: rate(payment_transactions_total{status="failed"}[5m]) / rate(payment_transactions_total[5m]) > 0.05
@@ -145,6 +192,24 @@ groups:
           summary: "Payment failure rate >5%"
           description: "Payment failure rate is {{ $value | humanizePercentage }}"
 
+      - alert: PaymentProcessingDelay
+        expr: histogram_quantile(0.95, rate(payment_processing_duration_seconds_bucket[5m])) > 30
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High payment processing latency"
+          description: "p95 payment processing time is {{ $value }}s"
+
+      - alert: WalletTransactionFailure
+        expr: rate(wallet_transactions_total{status="failed"}[5m]) / rate(wallet_transactions_total[5m]) > 0.02
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Wallet transaction failure rate >2%"
+          description: "Wallet transaction failure rate is {{ $value | humanizePercentage }}"
+
       - alert: LowNewUserSignups
         expr: rate(user_signups_total[1h]) < 1
         for: 1h
@@ -153,4 +218,82 @@ groups:
         annotations:
           summary: "Low user signups"
           description: "Only {{ $value }} signups in last hour"
+
+      - alert: ContentUploadFailure
+        expr: rate(content_uploads_total{status="failed"}[5m]) / rate(content_uploads_total[5m]) > 0.05
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Content upload failure rate >5%"
+          description: "Content upload failure rate is {{ $value | humanizePercentage }}"
+
+      - alert: PremiumContentAccessDenied
+        expr: rate(premium_content_access_denied_total[5m]) > 50
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High premium content access denials"
+          description: "{{ $value }} access denials in last 5 minutes - check subscription service"
+
+      # Reward Redemption Alerts
+      - alert: RewardRedemptionFailure
+        expr: rate(reward_redemptions_total{status="failed"}[5m]) / rate(reward_redemptions_total[5m]) > 0.03
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Reward redemption failure rate >3%"
+          description: "Reward redemption failure rate is {{ $value | humanizePercentage }}"
+
+      # Subscription Alerts
+      - alert: SubscriptionCancellationSpike
+        expr: rate(subscription_cancellations_total[1h]) > 2 * rate(subscription_cancellations_total[24h])
+        for: 1h
+        labels:
+          severity: warning
+        annotations:
+          summary: "Subscription cancellation spike detected"
+          description: "Cancellation rate increased by 200% - current rate: {{ $value }}/hour"
+
+      # Webhook Alerts
+      - alert: WebhookFailureRate
+        expr: rate(webhook_failures_total[5m]) / rate(webhook_events_total[5m]) > 0.1
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Webhook failure rate >10%"
+          description: "Webhook failure rate is {{ $value | humanizePercentage }}"
+
+      # External Service Alerts
+      - alert: ExternalServiceDown
+        expr: probe_success{job="external-services"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "External service {{ $labels.instance }} down"
+          description: "{{ $labels.instance }} is unreachable"
+
+      # Backup Alerts
+      - alert: BackupFailed
+        expr: backup_last_success_timestamp < time() - 86400
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Backup failed or not run in last 24h"
+          description: "Last successful backup was at {{ $value }}"
+
+      # Cache Alerts
+      - alert: CacheMissRateHigh
+        expr: rate(cache_misses_total[5m]) / (rate(cache_hits_total[5m]) + rate(cache_misses_total[5m])) > 0.3
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Cache miss rate >30%"
+          description: "Cache miss rate is {{ $value | humanizePercentage }}"
 

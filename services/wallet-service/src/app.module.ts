@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { APP_INTERCEPTOR } from '@nestjs/core';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TerminusModule } from '@nestjs/terminus';
 import { ThrottlerModule } from '@nestjs/throttler';
@@ -8,6 +9,8 @@ import { WalletService } from './modules/wallet/wallet.service';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { HealthModule } from './modules/health/health.module';
+import { ResponseWrapperInterceptor, ResponseSanitizationInterceptor } from '@azeebo/logger';
+import { MetricsModule } from './modules/metrics/metrics.module';
 
 @Module({
   imports: [
@@ -34,9 +37,20 @@ import { HealthModule } from './modules/health/health.module';
       inject: [ConfigService],
     }),
     HealthModule,
+    MetricsModule,
   ],
   controllers: [WalletController],
-  providers: [WalletService],
+  providers: [
+    WalletService,
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: ResponseWrapperInterceptor,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: ResponseSanitizationInterceptor,
+    },
+  ],
   exports: [WalletService],
 })
 export class AppModule {}

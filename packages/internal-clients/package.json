@@ -1,0 +1,20 @@
+{
+  "name": "@azeebo/internal-clients",
+  "version": "1.0.0",
+  "description": "Typed internal service clients with retries, timeouts, and idempotency",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch"
+  },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/uuid": "^9.0.7",
+    "typescript": "^5.3.0"
+  }
+}

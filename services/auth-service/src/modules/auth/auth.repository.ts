@@ -120,4 +120,18 @@ export class AuthRepository {
     });
     return result.count;
   }
+
+  async updatePassword(userId: string, hashedPassword: string): Promise<UserEntity> {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { password: hashedPassword },
+    }) as Promise<UserEntity>;
+  }
+
+  async verifyEmail(userId: string): Promise<UserEntity> {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { isVerified: true },
+    }) as Promise<UserEntity>;
+  }
 }

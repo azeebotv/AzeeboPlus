@@ -32,18 +32,35 @@ interface Chapter {
   createdAt: string;
 }
 
+interface TitleWithChapters {
+  id: string;
+  name: string;
+  slug: string;
+  type: string;
+  description?: string;
+  coverImage?: string;
+  status: string;
+  rating: number;
+  viewCount: number;
+  universeId: string;
+  createdAt: Date;
+  updatedAt: Date;
+  chapters: Chapter[];
+}
+
 interface TitleResponse {
   success: boolean;
   data?:
     | Title
     | Title[]
     | Chapter[]
+    | TitleWithChapters
     | { items: Title[]; total: number; page: number; limit: number; totalPages: number }
     | { message: string };
   error?: { code: string; message: string };
 }
 
-interface CreateTitleData {
+export interface CreateTitleData {
   name: string;
   type: string;
   description?: string;
@@ -66,7 +83,7 @@ interface UpdateTitleData {
   rating?: number;
 }
 
-interface CreateChapterData {
+export interface CreateChapterData {
   titleId: string;
   number: number;
   name?: string;

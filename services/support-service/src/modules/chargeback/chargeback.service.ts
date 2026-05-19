@@ -1,10 +1,36 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { Prisma } from '@prisma/client';
+import { createApiClient } from '@azeebo/api-client';
 
 @Injectable()
 export class ChargebackService {
+  private readonly logger = new Logger(ChargebackService.name);
+  private readonly paymentServiceClient = createApiClient({
+    baseUrl: process.env.PAYMENT_SERVICE_URL || 'http://localhost:3003',
+    timeout: 30000,
+  });
+  private readonly walletServiceClient = createApiClient({
+    baseUrl: process.env.WALLET_SERVICE_URL || 'http://localhost:3002',
+    timeout: 30000,
+  });
+  private readonly auditServiceClient = createApiClient({
+    baseUrl: process.env.MODERATION_SERVICE_URL || 'http://localhost:3006',
+    timeout: 30000,
+  });
+
   constructor(private prisma: PrismaService) {}
+
+  async initiateChargeback(data: {
+    ticketId: string;
+    paymentId: string;
+    userId: string;
+    amount: Prisma.Decimal;
+    currency?: string;
+    reason: string;
+  }) {
+    return this.createChargeback(data);
+  }
 
   async createChargeback(data: {
     ticketId: string;
@@ -59,7 +85,7 @@ export class ChargebackService {
     return this.prisma.chargeback.update({
       where: { id },
       data: {
-        metadata: { evidence },
+        metadata: { evidence } as Prisma.InputJsonValue,
       },
     });
   }
@@ -70,12 +96,68 @@ export class ChargebackService {
     resolvedBy: string,
     evidence?: Record<string, unknown>
   ) {
-    const chargeback = await this.prisma.chargeback.update({
+    const chargeback = await this.prisma.chargeback.findUnique({
+      where: { id },
+    });
+
+    if (!chargeback) {
+      throw new NotFoundException('Chargeback not found');
+    }
+
+    if (resolution === 'WON') {
+      try {
+        await this.paymentServiceClient.post('/api/payment/chargeback-resolve', {
+          chargebackId: id,
+          paymentId: chargeback.paymentId,
+          resolution: 'won',
+          resolvedBy,
+          evidence,
+        });
+
+        const walletResponse = await this.walletServiceClient.post('/api/wallet/credit', {
+          userId: chargeback.userId,
+          amount: chargeback.amount.toNumber(),
+          currency: chargeback.currency,
+          description: `Chargeback reversal for payment ${chargeback.paymentId}`,
+          reference: chargeback.chargebackRef || id,
+          transactionType: 'chargeback_reversal',
+        });
+
+        const walletData = walletResponse.data as { id?: string };
+        this.logger.log(
+          `Chargeback won: payment ${chargeback.paymentId}, wallet txn: ${walletData?.id}`
+        );
+      } catch (error) {
+        this.logger.error(
+          `Failed to process chargeback resolution ${id}: ${(error as Error).message}`
+        );
+        throw new BadRequestException('Failed to process chargeback resolution');
+      }
+    } else {
+      try {
+        await this.paymentServiceClient.post('/api/payment/chargeback-resolve', {
+          chargebackId: id,
+          paymentId: chargeback.paymentId,
+          resolution: 'lost',
+          resolvedBy,
+          evidence,
+        });
+        this.logger.log(`Chargeback lost: payment ${chargeback.paymentId}`);
+      } catch (error) {
+        this.logger.error(`Failed to update payment service: ${(error as Error).message}`);
+      }
+    }
+
+    const resolutionText =
+      resolution === 'WON'
+        ? 'Chargeback disputed and won - funds returned to customer'
+        : 'Chargeback lost - payment reversed';
+
+    const updatedChargeback = await this.prisma.chargeback.update({
       where: { id },
       data: {
         status: resolution,
-        resolution:
-          resolution === 'WON' ? 'Payment reversed to customer' : 'Chargeback disputed and won',
+        resolution: resolutionText,
         resolvedAt: new Date(),
         resolvedBy,
         metadata: evidence
@@ -84,29 +166,39 @@ export class ChargebackService {
       },
     });
 
-    if (resolution === 'WON') {
-      await this.prisma.walletTransaction
-        .create({
-          data: {
-            walletId:
-              (await this.prisma.wallet.findUnique({ where: { userId: chargeback.userId } }))?.id ||
-              '',
-            type: 'chargeback_reversal',
-            amount: chargeback.amount,
-            status: 'completed',
-            description: `Chargeback reversal for payment ${chargeback.paymentId}`,
-            reference: chargeback.chargebackRef,
-          },
-        })
-        .catch((err) => {
-          console.error(
-            'Failed to create wallet transaction (wallet-service integration needed):',
-            err
-          );
-        });
-    }
+    await this.createAuditEvent({
+      action: 'chargeback_resolved',
+      resourceType: 'chargeback',
+      resourceId: id,
+      actorType: 'admin',
+      actorId: resolvedBy,
+      previousState: { status: 'PENDING' },
+      newState: { status: resolution, resolution: resolutionText },
+      metadata: {
+        paymentId: chargeback.paymentId,
+        userId: chargeback.userId,
+        amount: chargeback.amount.toNumber(),
+      },
+    });
 
-    return chargeback;
+    return updatedChargeback;
+  }
+
+  private async createAuditEvent(event: {
+    action: string;
+    resourceType: string;
+    resourceId: string;
+    actorType: string;
+    actorId?: string;
+    previousState?: Record<string, unknown>;
+    newState?: Record<string, unknown>;
+    metadata?: Record<string, unknown>;
+  }) {
+    try {
+      await this.auditServiceClient.post('/api/moderation/audit', event);
+    } catch (error) {
+      this.logger.error(`Failed to create audit event: ${(error as Error).message}`);
+    }
   }
 
   async getPendingChargebacks(options?: { page?: number; limit?: number }) {

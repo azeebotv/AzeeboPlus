@@ -3,6 +3,7 @@ import {
   NotFoundException,
   ConflictException,
   BadRequestException,
+  Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { Prisma } from '../../prisma/client';
@@ -27,9 +28,29 @@ interface PremiumExtra {
 
 @Injectable()
 export class RealityService {
+  private readonly logger = new Logger(RealityService.name);
   private readonly walletServiceBaseUrl = process.env.WALLET_SERVICE_URL || 'http://localhost:3006';
+  private readonly analyticsServiceBaseUrl = process.env.ANALYTICS_SERVICE_URL || 'http://localhost:3008';
   private readonly supervoteCost = 10;
   private readonly voteCost = 1;
+
+  private async trackAnalyticsEvent(
+    eventName: string,
+    userId: string,
+    metadata: Record<string, unknown>
+  ): Promise<void> {
+    try {
+      await axios.post(`${this.analyticsServiceBaseUrl}/analytics/track`, {
+        eventName,
+        userId,
+        universe: 'reality',
+        metadata,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      this.logger.error('Failed to track analytics event:', error);
+    }
+  }
 
   private premiumExtras: PremiumExtra[] = [
     {
@@ -209,12 +230,22 @@ export class RealityService {
       throw new ConflictException('User has already voted for this contestant');
     }
 
-    const vote = await this.prisma.vote.create({
-      data: {
-        userId,
-        contestantId,
-        showId,
-      },
+    const vote = await this.prisma.$transaction(async (tx) => {
+      const newVote = await tx.vote.create({
+        data: {
+          userId,
+          contestantId,
+          showId,
+        },
+      });
+
+      return newVote;
+    });
+
+    await this.trackAnalyticsEvent('vote_submitted', userId, {
+      voteId: vote.id,
+      contestantId,
+      showId,
     });
 
     return {
@@ -247,36 +278,61 @@ export class RealityService {
       throw new NotFoundException(`Wallet not found for user`);
     }
 
+    if (Number(wallet.balance) < this.supervoteCost) {
+      throw new BadRequestException('Insufficient balance');
+    }
+
     const idempotencyKey = randomUUID();
 
+    const debitResult = await axios.post(`${this.walletServiceBaseUrl}/wallet/debit`, {
+      walletId: wallet.id,
+      amount: this.supervoteCost,
+      description: `Supervote for contestant ${contestantId} on show ${showId}`,
+      idempotencyKey,
+    }).catch((error: unknown) => {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to debit wallet';
+      throw new ConflictException(errorMessage);
+    });
+
     try {
-      await axios.post(`${this.walletServiceBaseUrl}/wallet/debit`, {
-        walletId: wallet.id,
-        amount: this.supervoteCost,
-        description: `Supervote for contestant ${contestantId} on show ${showId}`,
-        idempotencyKey,
+      const supervote = await this.prisma.$transaction(async (tx) => {
+        return tx.supervote.create({
+          data: {
+            userId,
+            contestantId,
+            showId,
+            amount: this.supervoteCost,
+          },
+        });
       });
 
-      const supervote = await this.prisma.supervote.create({
-        data: {
-          userId,
+      await this.trackAnalyticsEvent('supervote_submitted', userId, {
+          supervoteId: supervote.id,
           contestantId,
           showId,
           amount: this.supervoteCost,
-        },
-      });
+        });
 
-      return {
-        success: true,
-        data: {
-          supervoteId: supervote.id,
-          message: `Supervote submitted successfully. ${this.supervoteCost} NGN has been deducted from your wallet.`,
-        },
-      };
-    } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to submit supervote';
-      throw new ConflictException(errorMessage);
-    }
+        return {
+          success: true,
+          data: {
+            supervoteId: supervote.id,
+            balance: debitResult.data?.balance,
+            message: `Supervote submitted successfully. ${this.supervoteCost} NGN has been deducted from your wallet.`,
+          },
+        };
+      } catch (error: unknown) {
+        await axios.post(`${this.walletServiceBaseUrl}/wallet/credit`, {
+          walletId: wallet.id,
+          amount: this.supervoteCost,
+          description: `Compensation for failed supervote: ${idempotencyKey}`,
+          reference: `compensate:${idempotencyKey}`,
+        }).catch((compensateError: unknown) => {
+          this.logger.error('Failed to compensate wallet after supervote failure:', compensateError);
+        });
+        const errorMessage = error instanceof Error ? error.message : 'Failed to submit supervote';
+        throw new ConflictException(errorMessage);
+      }
   }
 
   async submitPrediction(
@@ -291,6 +347,12 @@ export class RealityService {
         showId,
         prediction: prediction as unknown as Prisma.InputJsonValue,
       },
+    });
+
+    await this.trackAnalyticsEvent('prediction_submitted', userId, {
+      predictionId: predictionRecord.id,
+      showId,
+      predictionType: Object.keys(prediction)[0] || 'unknown',
     });
 
     return {
@@ -375,25 +437,42 @@ export class RealityService {
 
     const idempotencyKey = randomUUID();
 
-    try {
-      await axios.post(`${this.walletServiceBaseUrl}/wallet/debit`, {
-        walletId: wallet.id,
-        amount: totalCost,
-        description: `${quantity} votes for contestant ${contestantId}`,
-        idempotencyKey,
-      });
+    const debitResult = await axios.post(`${this.walletServiceBaseUrl}/wallet/debit`, {
+      walletId: wallet.id,
+      amount: totalCost,
+      description: `${quantity} votes for contestant ${contestantId}`,
+      idempotencyKey,
+    }).catch((error: unknown) => {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to debit wallet';
+      throw new ConflictException(errorMessage);
+    });
 
-      const votes = await Promise.all(
-        Array.from({ length: quantity }, () =>
-          this.prisma.vote.create({
+    try {
+      const votes = await this.prisma.$transaction(async (tx) => {
+        const createdVotes = [];
+
+        for (let i = 0; i < quantity; i++) {
+          const vote = await tx.vote.create({
             data: {
               userId,
               contestantId,
               showId,
             },
-          })
-        )
-      );
+          });
+          createdVotes.push(vote);
+        }
+
+        return createdVotes;
+      });
+
+      await this.trackAnalyticsEvent('vote_submitted', userId, {
+        voteIds: votes.map((v) => v.id),
+        contestantId,
+        showId,
+        voteType: 'bulk',
+        quantity,
+        totalCost,
+      });
 
       return {
         success: true,
@@ -401,10 +480,19 @@ export class RealityService {
           voteIds: votes.map((v) => v.id),
           quantity,
           totalCost,
+          balance: debitResult.data?.balance,
           message: `${quantity} votes submitted successfully`,
         },
       };
     } catch (error: unknown) {
+      await axios.post(`${this.walletServiceBaseUrl}/wallet/credit`, {
+        walletId: wallet.id,
+        amount: totalCost,
+        description: `Compensation for failed votes: ${idempotencyKey}`,
+        reference: `compensate:${idempotencyKey}`,
+      }).catch((compensateError: unknown) => {
+        this.logger.error('Failed to compensate wallet after votes failure:', compensateError);
+      });
       const errorMessage = error instanceof Error ? error.message : 'Failed to submit votes';
       throw new ConflictException(errorMessage);
     }
@@ -478,6 +566,15 @@ export class RealityService {
         amount: extra.price,
         description: `Purchase premium extra: ${extra.name}`,
         idempotencyKey,
+      });
+
+      await this.trackAnalyticsEvent('premium_extra_purchased', userId, {
+        purchaseId: idempotencyKey,
+        extraId,
+        extraName: extra.name,
+        extraType: extra.type,
+        price: extra.price,
+        duration: extra.duration,
       });
 
       return {
@@ -727,6 +824,30 @@ export class RealityService {
     };
   }
 
+  async getContestant(contestantId: string): Promise<RealityResponse> {
+    const contestant = await this.prisma.contestant.findUnique({
+      where: { id: contestantId },
+      include: {
+        show: true,
+        _count: {
+          select: {
+            votes: true,
+            predictions: true,
+          },
+        },
+      },
+    });
+
+    if (!contestant) {
+      throw new NotFoundException('Contestant not found');
+    }
+
+    return {
+      success: true,
+      data: { contestant: contestant as unknown },
+    };
+  }
+
   async createEpisode(
     showId: string,
     data: {
@@ -863,6 +984,13 @@ export class RealityService {
           reason: `Reward for participation in show ${showId}`,
         },
       });
+
+      await this.trackAnalyticsEvent('reward_earned', userId, {
+        showId,
+        pointsEarned,
+        votes,
+        supervotes,
+      });
     }
 
     return {
@@ -870,6 +998,198 @@ export class RealityService {
       data: {
         pointsEarned,
         message: `Reward confirmed! You earned ${pointsEarned} points`,
+      },
+    };
+  }
+
+  async detectVoteFraud(showId: string): Promise<RealityResponse> {
+    const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
+    const suspiciousPatterns = await this.prisma.vote.groupBy({
+      by: ['userId'],
+      where: {
+        showId,
+        createdAt: { gte: thirtyMinutesAgo },
+      },
+      _count: { id: true },
+      having: { id: { _count: { gt: 10 } } },
+    });
+
+    const ipVotes = await this.prisma.$queryRaw<Array<{ ip_address: string; vote_count: bigint }>>`
+      SELECT ip_address, COUNT(*) as vote_count
+      FROM "Vote"
+      WHERE "showId" = ${showId}
+        AND "createdAt" >= ${thirtyMinutesAgo}
+      GROUP BY ip_address
+      HAVING COUNT(*) > 5
+    `;
+
+    const concentration = await this.prisma.contestant.findMany({
+      where: { showId },
+      include: {
+        _count: { select: { votes: true, supervotes: true } },
+      },
+    });
+
+    const totalVotes = concentration.reduce((sum, c) => sum + c._count.votes, 0);
+    const concentrationScores = concentration.map((c) => ({
+      contestantId: c.id,
+      name: c.name,
+      voteShare: totalVotes > 0 ? (c._count.votes / totalVotes) * 100 : 0,
+      isSuspicious: totalVotes > 10 && (c._count.votes / totalVotes) > 50,
+    }));
+
+    const fraudIndicators = {
+      rapidVoters: suspiciousPatterns.length,
+      ipConcentration: ipVotes.length,
+      topContestantConcentration: concentrationScores.filter((c) => c.isSuspicious).length,
+      riskLevel: 'low' as 'low' | 'medium' | 'high' | 'critical',
+    };
+
+    if (fraudIndicators.rapidVoters > 5 || fraudIndicators.ipConcentration > 3 || fraudIndicators.topContestantConcentration > 0) {
+      fraudIndicators.riskLevel = 'high';
+    } else if (fraudIndicators.rapidVoters > 0 || fraudIndicators.ipConcentration > 0) {
+      fraudIndicators.riskLevel = 'medium';
+    }
+
+    return {
+      success: true,
+      data: {
+        fraudIndicators,
+        suspiciousUsers: suspiciousPatterns.map((p) => p.userId),
+        suspiciousIps: ipVotes.map((v) => v.ip_address),
+        concentrationScores,
+      },
+    };
+  }
+
+  async detectSupervoteFraud(showId: string): Promise<RealityResponse> {
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+
+    const bulkSupervoters = await this.prisma.supervote.groupBy({
+      by: ['userId'],
+      where: {
+        showId,
+        createdAt: { gte: oneHourAgo },
+      },
+      _count: { id: true },
+      having: { id: { _count: { gt: 3 } } },
+    });
+
+    const highValueSupervotes = await this.prisma.supervote.groupBy({
+      by: ['contestantId'],
+      where: {
+        showId,
+        createdAt: { gte: oneHourAgo },
+      },
+      _sum: { amount: true },
+      _count: { id: true },
+    });
+
+    const concentration = highValueSupervotes.map((c) => ({
+      contestantId: c.contestantId,
+      totalAmount: c._sum.amount || 0,
+      count: c._count.id,
+      averageAmount: c._count.id > 0 ? (Number(c._sum.amount) || 0) / c._count.id : 0,
+    }));
+
+    const fraudIndicators = {
+      bulkSupervoters: bulkSupervoters.length,
+      highValueConcentration: concentration.filter((c) => c.count > 5 && c.averageAmount > 15).length,
+      riskLevel: 'low' as 'low' | 'medium' | 'high' | 'critical',
+    };
+
+    if (fraudIndicators.bulkSupervoters > 2 || fraudIndicators.highValueConcentration > 0) {
+      fraudIndicators.riskLevel = 'high';
+    } else if (fraudIndicators.bulkSupervoters > 0) {
+      fraudIndicators.riskLevel = 'medium';
+    }
+
+    return {
+      success: true,
+      data: {
+        fraudIndicators,
+        bulkSupervoters: bulkSupervoters.map((p) => ({ userId: p.userId, count: p._count.id })),
+        concentration,
+      },
+    };
+  }
+
+  async detectPredictionFraud(showId: string): Promise<RealityResponse> {
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+    const coordinatedPredictions = await this.prisma.prediction.groupBy({
+      by: ['prediction'],
+      where: {
+        showId,
+        createdAt: { gte: oneDayAgo },
+      },
+      _count: { id: true },
+      having: { id: { _count: { gt: 20 } } },
+    });
+
+    const userPredictionCount = await this.prisma.prediction.groupBy({
+      by: ['userId'],
+      where: {
+        showId,
+        createdAt: { gte: oneDayAgo },
+      },
+      _count: { id: true },
+      having: { id: { _count: { gt: 10 } } },
+    });
+
+    const fraudIndicators = {
+      coordinatedPredictions: coordinatedPredictions.length,
+      excessivePredictors: userPredictionCount.length,
+      riskLevel: 'low' as 'low' | 'medium' | 'high' | 'critical',
+    };
+
+    if (fraudIndicators.coordinatedPredictions > 5 || fraudIndicators.excessivePredictors > 3) {
+      fraudIndicators.riskLevel = 'high';
+    } else if (fraudIndicators.coordinatedPredictions > 0 || fraudIndicators.excessivePredictors > 0) {
+      fraudIndicators.riskLevel = 'medium';
+    }
+
+    return {
+      success: true,
+      data: {
+        fraudIndicators,
+        coordinatedPatterns: coordinatedPredictions.map((p) => ({
+          prediction: p.prediction,
+          count: p._count.id,
+        })),
+        excessiveUsers: userPredictionCount.map((p) => ({ userId: p.userId, count: p._count.id })),
+      },
+    };
+  }
+
+  async getOverallFraudAssessment(showId: string): Promise<RealityResponse> {
+    const voteFraud = await this.detectVoteFraud(showId);
+    const supervoteFraud = await this.detectSupervoteFraud(showId);
+    const predictionFraud = await this.detectPredictionFraud(showId);
+
+    const voteRisk = (voteFraud.data?.fraudIndicators as { riskLevel: string })?.riskLevel || 'low';
+    const supervoteRisk = (supervoteFraud.data?.fraudIndicators as { riskLevel: string })?.riskLevel || 'low';
+    const predictionRisk = (predictionFraud.data?.fraudIndicators as { riskLevel: string })?.riskLevel || 'low';
+
+    const riskLevels = [voteRisk, supervoteRisk, predictionRisk];
+    const overallRisk: 'low' | 'medium' | 'high' | 'critical' =
+      riskLevels.includes('critical') ? 'critical' :
+      riskLevels.includes('high') ? 'high' :
+      riskLevels.includes('medium') ? 'medium' : 'low';
+
+    const recommendations: string[] = [];
+    if (voteRisk === 'high') recommendations.push('Consider implementing IP-based vote limits');
+    if (supervoteRisk === 'high') recommendations.push('Review bulk supervote patterns for refund eligibility');
+    if (predictionRisk === 'high') recommendations.push('Monitor prediction market for market manipulation');
+
+    return {
+      success: true,
+      data: {
+        overallRisk,
+        voteFraudRisk: voteRisk,
+        supervoteFraudRisk: supervoteRisk,
+        predictionFraudRisk: predictionRisk,
+        recommendations,
       },
     };
   }

@@ -11,6 +11,8 @@ interface FacetedFilters {
   dateRange?: { start?: string; end?: string };
   rating?: { min?: number; max?: number };
   sort?: string;
+  page?: number;
+  limit?: number;
 }
 
 interface Facet {
@@ -35,6 +37,10 @@ export class SearchService {
     if (!query || query.length < 2) {
       throw new BadRequestException('Search query must be at least 2 characters');
     }
+
+    const page = filters?.page || 1;
+    const limit = filters?.limit || 20;
+    const skip = (page - 1) * limit;
 
     const whereCondition: Prisma.ContentItemWhereInput = {
       OR: [
@@ -106,23 +112,27 @@ export class SearchService {
       }
     }
 
-    const contentItems = await this.prisma.contentItem.findMany({
-      where: whereCondition,
-      take: 50,
-      orderBy,
-      include: {
-        creator: true,
-        universe: true,
-        categories: true,
-        tags: true,
-      },
-    });
+    const [contentItems, contentTotal] = await Promise.all([
+      this.prisma.contentItem.findMany({
+        where: whereCondition,
+        skip,
+        take: limit,
+        orderBy,
+        include: {
+          creator: true,
+          universe: true,
+          categories: true,
+          tags: true,
+        },
+      }),
+      this.prisma.contentItem.count({ where: whereCondition }),
+    ]);
 
     const creators = await this.prisma.creatorProfile.findMany({
       where: {
         bio: { contains: query, mode: 'insensitive' },
       },
-      take: 20,
+      take: Math.min(limit, 20),
       include: { user: true },
     });
 
@@ -133,20 +143,47 @@ export class SearchService {
           { displayName: { contains: query, mode: 'insensitive' } },
         ],
       },
-      take: 10,
+      take: Math.min(limit, 10),
     });
 
     return {
       success: true,
       data: {
         query,
-        filters,
         results: {
-          content: contentItems,
-          creators,
-          universes,
+          content: contentItems.map(item => ({
+            id: item.id,
+            title: item.title,
+            description: item.description,
+            contentType: (item as any).contentType || 'unknown',
+            status: item.status,
+            viewCount: item.viewCount || 0,
+            averageRating: (item as any).averageRating || 0,
+            createdAt: item.createdAt,
+            updatedAt: item.updatedAt,
+          })),
+          creators: creators.map(creator => ({
+            id: creator.id,
+            bio: creator.bio,
+            user: {
+              id: creator.userId,
+              username: creator.user?.displayName || '',
+              email: creator.user?.email || '',
+            },
+          })),
+          universes: universes.map(uni => ({
+            id: uni.id,
+            name: uni.name,
+            displayName: uni.displayName,
+          })),
         },
-        total: contentItems.length + creators.length + universes.length,
+        total: contentTotal + creators.length + universes.length,
+        pagination: {
+          page,
+          limit,
+          total: contentTotal,
+          totalPages: Math.ceil(contentTotal / limit),
+        },
       },
     };
   }
@@ -207,8 +244,33 @@ export class SearchService {
       success: true,
       data: {
         query,
-        filters,
-        results: { content: contentItems, creators, universes },
+        results: {
+          content: contentItems.map(item => ({
+            id: item.id,
+            title: item.title,
+            description: item.description,
+            contentType: (item as any).contentType || 'unknown',
+            status: item.status,
+            viewCount: item.viewCount || 0,
+            averageRating: (item as any).averageRating || 0,
+            createdAt: item.createdAt,
+            updatedAt: item.updatedAt,
+          })),
+          creators: creators.map(creator => ({
+            id: creator.id,
+            bio: creator.bio,
+            user: {
+              id: creator.userId,
+              username: creator.user?.displayName || '',
+              email: creator.user?.email || '',
+            },
+          })),
+          universes: universes.map(uni => ({
+            id: uni.id,
+            name: uni.name,
+            displayName: uni.displayName,
+          })),
+        },
         total: contentItems.length + creators.length + universes.length,
         facets,
       },
@@ -313,7 +375,9 @@ export class SearchService {
 
     return {
       success: true,
-      data: suggestions.map((s) => s.query),
+      data: {
+        suggestions: suggestions.map((s) => s.query),
+      },
     };
   }
 
@@ -325,7 +389,9 @@ export class SearchService {
 
     return {
       success: true,
-      data: trending,
+      data: {
+        trending: trending.map((t) => ({ query: t.query, count: t.count })),
+      },
     };
   }
 
@@ -400,9 +466,19 @@ export class SearchService {
     return {
       success: true,
       data: {
-        universes: universes.filter((u: UniverseWithCount) => u._count.contentItems > 0),
-        categories: categories.filter((c: CategoryWithCount) => c._count.contentItems > 0),
-        tags: tags.filter((t: TagWithCount) => t._count.contentItems > 0),
+        facets: {
+          universes: universes
+            .filter((u: UniverseWithCount) => u._count.contentItems > 0)
+            .map((u) => ({ id: u.id, name: u.name, count: u._count.contentItems })),
+          categories: categories
+            .filter((c: CategoryWithCount) => c._count.contentItems > 0)
+            .map((c) => ({ id: c.id, name: c.name, count: c._count.contentItems })),
+          tags: tags
+            .filter((t: TagWithCount) => t._count.contentItems > 0)
+            .map((t) => ({ id: t.id, name: t.name, count: t._count.contentItems })),
+          contentTypes: [],
+          dateRanges: [],
+        },
       },
     };
   }

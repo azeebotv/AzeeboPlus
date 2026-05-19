@@ -20,10 +20,12 @@ import {
 import { ApiResponseWrapper } from '@azeebo/shared-types';
 import { Prisma } from '../../prisma/client';
 import { AuthGuard } from '../../common/guards/auth.guard';
+import { AdminGuard } from '../../common/guards/admin.guard';
 
 interface AuthenticatedRequest {
   user: {
     id: string;
+    role?: string;
   };
 }
 
@@ -62,6 +64,7 @@ export class RefundController {
 
   @Get('pending')
   @ApiOperation({ summary: 'Get pending refunds (admin)' })
+  @UseGuards(AdminGuard)
   async getPendingRefunds(@Query() query: RefundQueryDto) {
     const result = await this.refundService.getPendingRefunds(query);
     return ApiResponseWrapper.paginated(
@@ -73,7 +76,8 @@ export class RefundController {
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Get refund by ID' })
+  @ApiOperation({ summary: 'Get refund by ID (admin)' })
+  @UseGuards(AdminGuard)
   async getRefund(@Param('id') id: string) {
     const refund = await this.refundService.getRefundById(id);
     return ApiResponseWrapper.success({ refund });
@@ -81,6 +85,7 @@ export class RefundController {
 
   @Patch(':id/process')
   @ApiOperation({ summary: 'Process refund (admin)' })
+  @UseGuards(AdminGuard)
   async processRefund(
     @Param('id') id: string,
     @Request() req: AuthenticatedRequest,
@@ -92,6 +97,7 @@ export class RefundController {
 
   @Patch(':id/reject')
   @ApiOperation({ summary: 'Reject refund (admin)' })
+  @UseGuards(AdminGuard)
   async rejectRefund(@Param('id') id: string, @Body() dto: RejectRefundDto) {
     const refund = await this.refundService.rejectRefund(id, dto.reason);
     return ApiResponseWrapper.success({ refund });

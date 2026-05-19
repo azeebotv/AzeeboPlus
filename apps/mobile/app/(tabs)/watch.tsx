@@ -1,27 +1,39 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { useColorScheme } from 'react-native';
+import { useRouter } from 'expo-router';
+
+const PLACEHOLDER_IMAGE = '';
 
 const universes = [
-  { id: 'reality', name: 'Reality', icon: '🎭', color: '#FF6B6B' },
-  { id: 'creators', name: 'Creators', icon: '🎤', color: '#4ECDC4' },
-  { id: 'lifestyle', name: 'Lifestyle', icon: '✨', color: '#45B7D1' },
-  { id: 'vertical', name: 'Vertical', icon: '🏰', color: '#96CEB4' },
-  { id: 'movies', name: 'Movies', icon: '🎬', color: '#FFEAA7' },
-  { id: 'games', name: 'Games', icon: '🎮', color: '#DDA0DD' },
-  { id: 'comedy', name: 'Comedy', icon: '😂', color: '#F39C12' },
-  { id: 'sports', name: 'Sports', icon: '⚽', color: '#E74C3C' },
+  { id: 'reality', name: 'Reality', icon: '🎭', color: '#FF6B6B', route: '/watch/reality-show' },
+  { id: 'creators', name: 'Creators', icon: '🎤', color: '#4ECDC4', route: '/creator-dashboard' },
+  { id: 'lifestyle', name: 'Lifestyle', icon: '✨', color: '#45B7D1', route: '/lifestyle' },
+  { id: 'vertical', name: 'Vertical', icon: '🏰', color: '#96CEB4', route: '/vertical-title' },
+  { id: 'movies', name: 'Movies', icon: '🎬', color: '#FFEAA7', route: '/watch/movie-detail' },
+  { id: 'games', name: 'Games', icon: '🎮', color: '#DDA0DD', route: '/watch/gameplay' },
+  { id: 'comedy', name: 'Comedy', icon: '😂', color: '#F39C12', route: '/comedy' },
+  { id: 'sports', name: 'Sports', icon: '⚽', color: '#E74C3C', route: '/sports-prediction' },
 ];
 
 const featuredContent = [
-  { id: '1', title: 'Big Brother Naija S9', universe: 'reality', thumbnail: 'https://via.placeholder.com/300x168', live: true, viewers: '2.5M' },
-  { id: '2', title: 'Davido Live Concert', universe: 'creators', thumbnail: 'https://via.placeholder.com/300x168', live: false, duration: '2:30:00' },
-  { id: '3', title: 'Fashion Week Highlights', universe: 'lifestyle', thumbnail: 'https://via.placeholder.com/300x168', live: false, duration: '45:00' },
-  { id: '4', title: 'Game of Thrones Recap', universe: 'vertical', thumbnail: 'https://via.placeholder.com/300x168', live: false, duration: '15:30' },
+  { id: '1', title: 'Big Brother Naija', universe: 'Reality', thumbnail: PLACEHOLDER_IMAGE, live: true, viewers: '12.5K' },
+  { id: '2', title: 'Wardie: The Rise', universe: 'Vertical', thumbnail: PLACEHOLDER_IMAGE, duration: '2h 15m' },
+  { id: '3', title: 'Nigerian Comedy Awards', universe: 'Comedy', thumbnail: PLACEHOLDER_IMAGE, duration: '45m' },
 ];
+
+const trendingContent = [
+  { id: '1', title: 'The Kings Daughter', universe: 'Movies', thumbnail: PLACEHOLDER_IMAGE, viewers: '8.2K' },
+  { id: '2', title: 'Champions League Final', universe: 'Sports', thumbnail: PLACEHOLDER_IMAGE, viewers: '25K' },
+  { id: '3', title: 'Creator Clash S3', universe: 'Creators', thumbnail: PLACEHOLDER_IMAGE, viewers: '5.1K' },
+  { id: '4', title: 'Lagos Food Festival', universe: 'Lifestyle', thumbnail: PLACEHOLDER_IMAGE, viewers: '3.8K' },
+];
+
+const rewardsPreview = { points: 7850, streak: 5, dailyGoal: 3 };
 
 export default function WatchScreen() {
   const colorScheme = useColorScheme();
+  const router = useRouter();
   const [selectedUniverse, setSelectedUniverse] = useState('reality');
 
   return (
@@ -38,7 +50,10 @@ export default function WatchScreen() {
           {universes.map((universe) => (
             <TouchableOpacity
               key={universe.id}
-              onPress={() => setSelectedUniverse(universe.id)}
+              onPress={() => {
+                setSelectedUniverse(universe.id);
+                router.push(universe.route);
+              }}
               style={[
                 styles.universeButton,
                 selectedUniverse === universe.id && { backgroundColor: universe.color },
@@ -51,6 +66,32 @@ export default function WatchScreen() {
             </TouchableOpacity>
           ))}
         </ScrollView>
+      </View>
+
+      <View style={styles.rewardsStrip}>
+        <TouchableOpacity style={styles.rewardItem} onPress={() => router.push('/(tabs)/rewards')}>
+          <Text style={styles.rewardIcon}>⭐</Text>
+          <View style={styles.rewardInfo}>
+            <Text style={styles.rewardValue}>{rewardsPreview.points.toLocaleString()}</Text>
+            <Text style={styles.rewardLabel}>Points</Text>
+          </View>
+        </TouchableOpacity>
+        <View style={styles.rewardDivider} />
+        <TouchableOpacity style={styles.rewardItem} onPress={() => router.push('/(tabs)/rewards')}>
+          <Text style={styles.rewardIcon}>🔥</Text>
+          <View style={styles.rewardInfo}>
+            <Text style={styles.rewardValue}>{rewardsPreview.streak}</Text>
+            <Text style={styles.rewardLabel}>Day Streak</Text>
+          </View>
+        </TouchableOpacity>
+        <View style={styles.rewardDivider} />
+        <TouchableOpacity style={styles.rewardItem} onPress={() => router.push('/(tabs)/rewards')}>
+          <Text style={styles.rewardIcon}>🎯</Text>
+          <View style={styles.rewardInfo}>
+            <Text style={styles.rewardValue}>{rewardsPreview.dailyGoal}/5</Text>
+            <Text style={styles.rewardLabel}>Daily Goal</Text>
+          </View>
+        </TouchableOpacity>
       </View>
 
       <View style={styles.featuredSection}>
@@ -87,7 +128,7 @@ export default function WatchScreen() {
         <View style={styles.continueList}>
           {[1, 2, 3].map((i) => (
             <TouchableOpacity key={i} style={styles.continueItem}>
-              <Image source={{ uri: `https://via.placeholder.com/120x68` }} style={styles.continueThumbnail} />
+              <Image source={{ uri: PLACEHOLDER_IMAGE }} style={styles.continueThumbnail} />
               <View style={styles.continueInfo}>
                 <Text style={[styles.continueTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
                   Content Title {i}
@@ -107,12 +148,16 @@ export default function WatchScreen() {
           Trending Now
         </Text>
         <View style={styles.popularGrid}>
-          {[1, 2, 3, 4].map((i) => (
-            <TouchableOpacity key={i} style={styles.popularItem}>
-              <Image source={{ uri: `https://via.placeholder.com/160x90` }} style={styles.popularThumbnail} />
+          {trendingContent.map((content) => (
+            <TouchableOpacity key={content.id} style={styles.popularItem}>
+              <Image source={{ uri: content.thumbnail }} style={styles.popularThumbnail} />
+              <View style={styles.popularOverlay}>
+                <Text style={styles.popularUniverse}>{content.universe}</Text>
+              </View>
               <Text style={[styles.popularTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
-                Video {i}
+                {content.title}
               </Text>
+              <Text style={styles.popularViewers}>{content.viewers} watching</Text>
             </TouchableOpacity>
           ))}
         </View>
@@ -171,6 +216,46 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: '#333',
+  },
+  rewardsStrip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-around',
+    backgroundColor: '#8B5CF6',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 20,
+    shadowColor: '#8B5CF6',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  rewardItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  rewardIcon: {
+    fontSize: 24,
+  },
+  rewardInfo: {
+    alignItems: 'flex-start',
+  },
+  rewardValue: {
+    color: '#ffffff',
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  rewardLabel: {
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: 11,
+    fontWeight: '500',
+  },
+  rewardDivider: {
+    width: 1,
+    height: 32,
+    backgroundColor: 'rgba(255,255,255,0.3)',
   },
   featuredSection: {
     marginBottom: 24,
@@ -289,5 +374,24 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '500',
     marginTop: 6,
+  },
+  popularOverlay: {
+    position: 'absolute',
+    top: 8,
+    left: 8,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  popularUniverse: {
+    color: '#ffffff',
+    fontSize: 10,
+    fontWeight: '600',
+  },
+  popularViewers: {
+    color: '#888',
+    fontSize: 11,
+    marginTop: 2,
   },
 });

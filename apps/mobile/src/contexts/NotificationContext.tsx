@@ -33,8 +33,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   }, [isAuthenticated]);
 
   useEffect(() => {
-    const subscription = Notifications.addNotificationReceivedListener(notification => {
-      console.log('Notification received:', notification);
+    const subscription = Notifications.addNotificationReceivedListener(() => {
       getNotifications();
     });
 
@@ -129,8 +128,6 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       }
 
       const token = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
-      console.log('Push token:', token);
-
       const response = await notificationApi.registerPushToken(token);
       if (!response.success) {
         console.log('Failed to register push token with backend');

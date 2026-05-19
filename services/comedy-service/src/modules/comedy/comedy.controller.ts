@@ -1,16 +1,19 @@
 import { Controller, Get, Post, Body, UseGuards, Request, Param } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
+import { RateLimitGuard, RateLimit } from '@azeebo/security';
 
 import { ComedyService } from './comedy.service';
 import { ComedyResponse } from './interfaces/comedy-response.interface';
 
 @ApiTags('Comedy')
-@Controller('comedy')
+@Controller('v1/comedy')
 export class ComedyController {
   constructor(private readonly comedyService: ComedyService) {}
 
   @Get('clips')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(100, 60000)
   @ApiOperation({ summary: 'Comedy clips feed' })
   @ApiResponse({ status: 200, description: 'Clips feed' })
   async getClips(): Promise<ComedyResponse> {
@@ -63,6 +66,8 @@ export class ComedyController {
   }
 
   @Get('trending')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(100, 60000)
   @ApiOperation({ summary: 'Trending comedy clips' })
   @ApiResponse({ status: 200, description: 'Trending clips' })
   async getTrending(): Promise<ComedyResponse> {

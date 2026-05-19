@@ -1,309 +1,289 @@
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  FlatList,
-  ViewStyle,
-} from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, TextInput, FlatList } from 'react-native';
+import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
-const TRENDING_SEARCHES = [
-  'Big Brother Naija',
-  'Nigerian Movies',
-  'Comedy Skits',
-  'Sports Highlights',
-  'Reality TV Shows',
-  'Gaming Streams',
+const universes = [
+  { id: 'all', name: 'All', icon: '🎬', color: '#8B5CF6' },
+  { id: 'reality', name: 'Reality', icon: '🎭', color: '#FF6B6B' },
+  { id: 'creators', name: 'Creators', icon: '🎤', color: '#4ECDC4' },
+  { id: 'lifestyle', name: 'Lifestyle', icon: '✨', color: '#45B7D1' },
+  { id: 'vertical', name: 'Vertical', icon: '🏰', color: '#96CEB4' },
+  { id: 'movies', name: 'Movies', icon: '🎬', color: '#FFEAA7' },
+  { id: 'games', name: 'Games', icon: '🎮', color: '#DDA0DD' },
+  { id: 'comedy', name: 'Comedy', icon: '😂', color: '#F39C12' },
+  { id: 'sports', name: 'Sports', icon: '⚽', color: '#E74C3C' },
 ];
 
-const RECENT_SEARCHES = ['Money Heist', 'Champions League'];
+const trendingSearches = [
+  'Big Brother Naija',
+  'Davido',
+  'Game of Thrones',
+  'Premier League',
+  'Comedy Skits',
+  'Fashion Week',
+];
 
-interface SearchResult {
+const PLACEHOLDER_IMAGE = '';
+
+const searchResults: Array<{
   id: string;
   title: string;
-}
-
-const EmptyStateComponent: React.FC = () => (
-  <View style={styles.emptyState}>
-    <Text style={styles.emptyEmoji}>🔍</Text>
-    <Text style={styles.emptyTitle}>No results found</Text>
-    <Text style={styles.emptySubtitle}>
-      Try different keywords or browse categories
-    </Text>
-  </View>
-);
+  type: string;
+  universe: string;
+  thumbnail: string;
+}> = [];
 
 export default function SearchScreen() {
+  const colorScheme = useColorScheme();
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
-  const [showRecent, setShowRecent] = useState(true);
+  const [selectedUniverse, setSelectedUniverse] = useState('all');
+  const [isSearching, setIsSearching] = useState(false);
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
-    if (query.length > 0) {
-      setShowRecent(false);
-    }
+    setIsSearching(query.length > 0);
   };
 
-  const handleTrendingPress = (term: string) => {
-    setSearchQuery(term);
-    setShowRecent(false);
-  };
+  const filteredResults = searchResults.filter(item => {
+    const matchesQuery = item.title.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesUniverse = selectedUniverse === 'all' || item.universe === selectedUniverse;
+    return matchesQuery && matchesUniverse;
+  });
 
-  const handleRecentPress = (term: string) => {
-    setSearchQuery(term);
-    setShowRecent(false);
-  };
+  const renderSearchResults = () => (
+    <View style={styles.resultsSection}>
+      <Text style={[styles.sectionTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
+        Results ({filteredResults.length})
+      </Text>
+      <FlatList
+        data={filteredResults}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <TouchableOpacity 
+            style={styles.resultItem}
+            onPress={() => router.push(`/watch/${item.id}`)}
+          >
+            <Image source={{ uri: item.thumbnail }} style={styles.resultThumbnail} />
+            <View style={styles.resultInfo}>
+              <Text style={[styles.resultTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
+                {item.title}
+              </Text>
+              <View style={styles.resultMeta}>
+                <Text style={styles.resultType}>{item.type}</Text>
+                <Text style={styles.resultUniverse}>
+                  {universes.find(u => u.id === item.universe)?.name}
+                </Text>
+              </View>
+            </View>
+          </TouchableOpacity>
+        )}
+      />
+    </View>
+  );
 
-  const emptyContainerStyle: ViewStyle = {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  };
+  const renderTrending = () => (
+    <View style={styles.trendingSection}>
+      <Text style={[styles.sectionTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
+        Trending Searches
+      </Text>
+      <View style={styles.trendingList}>
+        {trendingSearches.map((search, index) => (
+          <TouchableOpacity
+            key={index}
+            style={styles.trendingItem}
+            onPress={() => handleSearch(search)}
+          >
+            <Text style={styles.trendingNumber}>{index + 1}</Text>
+            <Text style={[styles.trendingText, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
+              {search}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+    </View>
+  );
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Search</Text>
-      </View>
-
-      <View style={styles.searchContainer}>
+    <ScrollView style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' }]}>
+      <View style={styles.searchHeader}>
         <View style={styles.searchBar}>
           <Text style={styles.searchIcon}>🔍</Text>
           <TextInput
-            style={styles.searchInput}
-            placeholder="Search content, creators, universes..."
+            style={[styles.searchInput, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}
+            placeholder="Search Azeebo+"
             placeholderTextColor="#666"
             value={searchQuery}
             onChangeText={handleSearch}
-            autoCapitalize="none"
-            autoCorrect={false}
+            autoFocus
           />
           {searchQuery.length > 0 && (
-            <TouchableOpacity onPress={() => handleSearch('')}>
+            <TouchableOpacity style={styles.clearButton} onPress={() => handleSearch('')}>
               <Text style={styles.clearIcon}>✕</Text>
             </TouchableOpacity>
           )}
         </View>
       </View>
 
-      {showRecent ? (
-        <View style={styles.content}>
-          {RECENT_SEARCHES.length > 0 && (
-            <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>Recent Searches</Text>
-                <TouchableOpacity>
-                  <Text style={styles.clearAll}>Clear All</Text>
-                </TouchableOpacity>
-              </View>
-              {RECENT_SEARCHES.map((term, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={styles.recentItem}
-                  onPress={() => handleRecentPress(term)}
-                >
-                  <Text style={styles.recentIcon}>🕐</Text>
-                  <Text style={styles.recentText}>{term}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.universeScroll}>
+        {universes.map((universe) => (
+          <TouchableOpacity
+            key={universe.id}
+            onPress={() => setSelectedUniverse(universe.id)}
+            style={[
+              styles.universeButton,
+              selectedUniverse === universe.id && { backgroundColor: universe.color },
+            ]}
+          >
+            <Text style={styles.universeIcon}>{universe.icon}</Text>
+            <Text style={[styles.universeName, selectedUniverse === universe.id && { color: '#ffffff' }]}>
+              {universe.name}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
 
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Trending Searches</Text>
-            <View style={styles.trendingContainer}>
-              {TRENDING_SEARCHES.map((term, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={styles.trendingChip}
-                  onPress={() => handleTrendingPress(term)}
-                >
-                  <Text style={styles.trendingText}>{term}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Browse by Universe</Text>
-            <View style={styles.universeGrid}>
-              {[
-                { name: 'Reality', emoji: '📺', color: '#FF6B6B' },
-                { name: 'Movies', emoji: '🎬', color: '#4ECDC4' },
-                { name: 'Games', emoji: '🎮', color: '#45B7D1' },
-                { name: 'Comedy', emoji: '😂', color: '#96CEB4' },
-                { name: 'Sports', emoji: '⚽', color: '#FFEAA7' },
-                { name: 'Lifestyle', emoji: '🌟', color: '#DDA0DD' },
-              ].map((universe, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={[styles.universeCard, { borderColor: universe.color }]}
-                  onPress={() => router.push('/(tabs)/home')}
-                >
-                  <Text style={styles.universeEmoji}>{universe.emoji}</Text>
-                  <Text style={styles.universeName}>{universe.name}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-        </View>
-      ) : (
-        <FlatList<SearchResult>
-          data={[]}
-          keyExtractor={() => 'empty'}
-          ListEmptyComponent={EmptyStateComponent}
-          contentContainerStyle={emptyContainerStyle}
-          renderItem={() => null}
-        />
-      )}
-    </SafeAreaView>
+      {isSearching ? renderSearchResults() : renderTrending()}
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    paddingTop: 40,
   },
-  header: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#fff',
-  },
-  searchContainer: {
-    paddingHorizontal: 16,
-    paddingBottom: 16,
+  searchHeader: {
+    padding: 16,
+    backgroundColor: '#1a1a1a',
   },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#2a2a2a',
     borderRadius: 12,
-    paddingHorizontal: 16,
-    height: 48,
+    padding: 12,
+    gap: 12,
   },
   searchIcon: {
     fontSize: 18,
-    marginRight: 12,
   },
   searchInput: {
     flex: 1,
     fontSize: 16,
-    color: '#fff',
+  },
+  clearButton: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#444',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   clearIcon: {
-    fontSize: 16,
-    color: '#666',
-    padding: 4,
+    color: '#fff',
+    fontSize: 14,
   },
-  content: {
-    flex: 1,
-  },
-  section: {
-    paddingHorizontal: 16,
-    marginBottom: 24,
-  },
-  sectionHeader: {
+  universeScroll: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    padding: 16,
+    gap: 8,
+    backgroundColor: '#1a1a1a',
+    borderBottomWidth: 1,
+    borderBottomColor: '#2a2a2a',
+  },
+  universeButton: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: '#2a2a2a',
+  },
+  universeIcon: {
+    fontSize: 16,
+  },
+  universeName: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#888',
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#fff',
+    fontWeight: '700',
+    paddingHorizontal: 16,
     marginBottom: 12,
   },
-  clearAll: {
-    fontSize: 14,
-    color: '#007AFF',
+  trendingSection: {
+    marginTop: 16,
   },
-  recentItem: {
+  trendingList: {
+    paddingHorizontal: 16,
+    gap: 8,
+  },
+  trendingItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#1a1a1a',
-  },
-  recentIcon: {
-    fontSize: 16,
-    marginRight: 12,
-  },
-  recentText: {
-    fontSize: 16,
-    color: '#fff',
-  },
-  trendingContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
-  trendingChip: {
+    gap: 12,
+    padding: 12,
     backgroundColor: '#1a1a1a',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    marginRight: 8,
-    marginBottom: 8,
+    borderRadius: 10,
+  },
+  trendingNumber: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#8B5CF6',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
   },
   trendingText: {
-    fontSize: 14,
-    color: '#fff',
+    fontSize: 15,
+    fontWeight: '500',
   },
-  universeGrid: {
+  resultsSection: {
+    marginTop: 16,
+  },
+  resultItem: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-  },
-  universeCard: {
-    width: '48%',
-    aspectRatio: 1,
+    gap: 12,
+    padding: 12,
     backgroundColor: '#1a1a1a',
-    borderRadius: 12,
-    borderWidth: 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 12,
-  },
-  universeEmoji: {
-    fontSize: 32,
+    marginHorizontal: 16,
     marginBottom: 8,
+    borderRadius: 10,
   },
-  universeName: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#fff',
+  resultThumbnail: {
+    width: 100,
+    height: 56,
+    borderRadius: 8,
+    resizeMode: 'cover',
   },
-  emptyContainer: {
+  resultInfo: {
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center',
   },
-  emptyState: {
-    alignItems: 'center',
-  },
-  emptyEmoji: {
-    fontSize: 48,
-    marginBottom: 16,
-  },
-  emptyTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#fff',
-    marginBottom: 8,
-  },
-  emptySubtitle: {
+  resultTitle: {
     fontSize: 14,
-    color: '#666',
-    textAlign: 'center',
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  resultMeta: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  resultType: {
+    fontSize: 12,
+    color: '#8B5CF6',
+    fontWeight: '500',
+  },
+  resultUniverse: {
+    fontSize: 12,
+    color: '#888',
   },
 });

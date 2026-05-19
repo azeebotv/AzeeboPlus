@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '../../generated/prisma';
 import { PrismaService } from '../../database/prisma.service';
+import { AuditLogService } from '../audit/audit.service';
 
 export interface ContentStats {
   totalContent: number;
@@ -12,7 +13,10 @@ export interface ContentStats {
 
 @Injectable()
 export class ContentManagementService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly auditService: AuditLogService
+  ) {}
 
   async getContent(
     page = 1,
@@ -94,7 +98,7 @@ export class ContentManagementService {
     return content;
   }
 
-  async updateContentStatus(contentId: string, status: string): Promise<unknown> {
+  async updateContentStatus(contentId: string, status: string, actorId?: string): Promise<unknown> {
     const content = await this.prisma.contentItem.findUnique({
       where: { id: contentId },
     });
@@ -103,6 +107,7 @@ export class ContentManagementService {
       throw new NotFoundException('Content not found');
     }
 
+    const oldStatus = content.status;
     const updated = await this.prisma.contentItem.update({
       where: { id: contentId },
       data: {
@@ -111,13 +116,21 @@ export class ContentManagementService {
       },
     });
 
+    await this.auditService.log({
+      actorId,
+      action: 'update_content_status',
+      targetType: 'content',
+      targetId: contentId,
+      details: { oldStatus, newStatus: status },
+    });
+
     return {
       success: true,
       data: updated,
     };
   }
 
-  async deleteContent(contentId: string): Promise<unknown> {
+  async deleteContent(contentId: string, actorId?: string): Promise<unknown> {
     const content = await this.prisma.contentItem.findUnique({
       where: { id: contentId },
     });
@@ -129,6 +142,14 @@ export class ContentManagementService {
     await this.prisma.contentItem.update({
       where: { id: contentId },
       data: { status: 'archived' },
+    });
+
+    await this.auditService.log({
+      actorId,
+      action: 'archive_content',
+      targetType: 'content',
+      targetId: contentId,
+      details: { title: content.title, previousStatus: content.status },
     });
 
     return {

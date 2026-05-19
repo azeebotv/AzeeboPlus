@@ -9,18 +9,25 @@ import {
   Put,
   Delete,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
+import { RateLimitGuard, RateLimit } from '@azeebo/security';
 
 import { MoviesService } from './movies.service';
 import { MovieResponse } from './interfaces/movie-response.interface';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { AddToWatchlistDto } from './dto/watchlist.dto';
 
 @ApiTags('Movies')
-@Controller('movies')
+@ApiBearerAuth()
+@Controller('v1/movies')
 export class MoviesController {
   constructor(private readonly moviesService: MoviesService) {}
 
   @Get()
+  @UseGuards(RateLimitGuard)
+  @RateLimit(100, 60000)
   @ApiOperation({ summary: 'Movie catalog' })
   @ApiResponse({ status: 200, description: 'Movie catalog' })
   async listMovies(): Promise<MovieResponse> {
@@ -28,6 +35,8 @@ export class MoviesController {
   }
 
   @Get(':movieId')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(200, 60000)
   @ApiOperation({ summary: 'Movie detail' })
   @ApiResponse({ status: 200, description: 'Movie detail' })
   @ApiResponse({ status: 404, description: 'Movie not found' })
@@ -70,7 +79,7 @@ export class MoviesController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async addToWatchlist(
     @Request() req: { user: { sub: string } },
-    @Body() body: { movieId: string }
+    @Body() body: AddToWatchlistDto
   ): Promise<MovieResponse> {
     return this.moviesService.addToWatchlist(req.user.sub, body.movieId);
   }
@@ -97,7 +106,8 @@ export class MoviesController {
   }
 
   @Post(':movieId/viewing-windows')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('ADMIN', 'MODERATOR')
   @ApiOperation({ summary: 'Create viewing window' })
   @ApiResponse({ status: 201, description: 'Viewing window created' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -115,7 +125,8 @@ export class MoviesController {
   }
 
   @Put('viewing-windows/:windowId')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('ADMIN', 'MODERATOR')
   @ApiOperation({ summary: 'Update viewing window' })
   @ApiResponse({ status: 200, description: 'Viewing window updated' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })

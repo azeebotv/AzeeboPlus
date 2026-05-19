@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, AccessibilityInfo } from 'react-native';
 
 interface StateComponentProps {
   title?: string;
@@ -6,11 +6,12 @@ interface StateComponentProps {
   buttonText?: string;
   onButtonPress?: () => void;
   icon?: string;
+  accessibilityLabel?: string;
 }
 
-export function LoadingState({ title = 'Loading...' }: StateComponentProps) {
+export function LoadingState({ title = 'Loading...', accessibilityLabel }: StateComponentProps) {
   return (
-    <View style={styles.container}>
+    <View style={styles.container} accessible={true} accessibilityLabel={accessibilityLabel || 'Loading'}>
       <ActivityIndicator size="large" color="#8B5CF6" />
       <Text style={styles.title}>{title}</Text>
     </View>
@@ -20,10 +21,11 @@ export function LoadingState({ title = 'Loading...' }: StateComponentProps) {
 export function EmptyState({ 
   title = 'No content found', 
   description = 'There\'s nothing to show here yet',
-  icon = '📭'
+  icon = '📭',
+  accessibilityLabel
 }: StateComponentProps) {
   return (
-    <View style={styles.container}>
+    <View style={styles.container} accessible={true} accessibilityLabel={accessibilityLabel || 'Empty state'}>
       <Text style={styles.icon}>{icon}</Text>
       <Text style={styles.title}>{title}</Text>
       <Text style={styles.description}>{description}</Text>
@@ -35,15 +37,22 @@ export function ErrorState({
   title = 'Something went wrong', 
   description = 'Please try again later',
   buttonText = 'Retry',
-  onButtonPress 
+  onButtonPress,
+  accessibilityLabel
 }: StateComponentProps) {
   return (
-    <View style={styles.container}>
+    <View style={styles.container} accessible={true} accessibilityLabel={accessibilityLabel || 'Error state'}>
       <Text style={styles.icon}>❌</Text>
       <Text style={styles.title}>{title}</Text>
       <Text style={styles.description}>{description}</Text>
       {onButtonPress && (
-        <TouchableOpacity style={styles.button} onPress={onButtonPress}>
+        <TouchableOpacity 
+          style={styles.button} 
+          onPress={onButtonPress}
+          accessible={true}
+          accessibilityLabel={buttonText}
+          accessibilityRole="button"
+        >
           <Text style={styles.buttonText}>{buttonText}</Text>
         </TouchableOpacity>
       )}

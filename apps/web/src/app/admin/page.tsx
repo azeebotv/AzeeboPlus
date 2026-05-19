@@ -34,8 +34,8 @@ const SidebarItem = ({
     href={href}
     className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all"
     style={{
-      backgroundColor: active ? `${colors.primary}20` : 'transparent',
-      color: active ? colors.primary : colors.text.secondary,
+      backgroundColor: active ? `${colors.primary[500]}20` : 'transparent',
+      color: active ? colors.primary[500] : colors.text.secondary,
     }}
   >
     {icon}
@@ -63,15 +63,15 @@ const StatCard = ({
       </h3>
       <div
         className="h-10 w-10 rounded-full flex items-center justify-center"
-        style={{ backgroundColor: `${colors.primary}15` }}
+        style={{ backgroundColor: `${colors.primary[500]}15` }}
       >
-        <span style={{ color: colors.primary }}>{icon}</span>
+        <span style={{ color: colors.primary[500] }}>{icon}</span>
       </div>
     </div>
     <p className="text-3xl font-bold mb-1" style={{ color: colors.text.primary }}>
       {typeof value === 'number' ? value.toLocaleString() : value}
     </p>
-    <p className="text-sm" style={{ color: trend === 'up' ? colors.success : colors.error }}>
+    <p className="text-sm" style={{ color: trend === 'up' ? colors.success[500] : colors.error[500] }}>
       {subtitle}
     </p>
   </Card>
@@ -246,8 +246,8 @@ export default function AdminPage(): JSX.Element {
                           <div
                             className="flex items-center justify-center h-6 w-6 rounded-full font-bold text-xs"
                             style={{
-                              backgroundColor: `${colors.primary}20`,
-                              color: colors.primary,
+                              backgroundColor: `${colors.primary[500]}20`,
+                              color: colors.primary[500],
                             }}
                           >
                             {index + 1}
@@ -282,9 +282,9 @@ export default function AdminPage(): JSX.Element {
                       <div key={activity.id} className="flex items-start gap-3">
                         <div
                           className="h-8 w-8 rounded-full flex items-center justify-center flex-shrink-0"
-                          style={{ backgroundColor: `${colors.primary}15` }}
+                          style={{ backgroundColor: `${colors.primary[500]}15` }}
                         >
-                          <span style={{ color: colors.primary }}>✅</span>
+                          <span style={{ color: colors.primary[500] }}>✅</span>
                         </div>
                         <div className="flex-1">
                           <p className="text-sm" style={{ color: colors.text.primary }}>
@@ -326,7 +326,7 @@ export default function AdminPage(): JSX.Element {
                         </h4>
                         <span
                           className="h-3 w-3 rounded-full"
-                          style={{ backgroundColor: colors.success }}
+                          style={{ backgroundColor: colors.success[500] }}
                         ></span>
                       </div>
                       <p className="text-sm" style={{ color: colors.text.secondary }}>

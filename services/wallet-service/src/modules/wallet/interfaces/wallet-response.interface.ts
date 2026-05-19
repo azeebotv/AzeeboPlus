@@ -71,6 +71,7 @@ export interface WalletResponse {
     | BonusCreditData
     | PromoCreditData
     | AuditTrailData
+    | Record<string, unknown>
     | { message: string };
   error?: {
     code: string;

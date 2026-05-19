@@ -5,27 +5,27 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 export class CreateAppealDto {
   @ApiProperty()
   @IsString()
-  ticketId: string;
+  ticketId: string = '';
 
   @ApiProperty()
   @IsString()
-  appealType: string;
+  appealType: string = '';
 
   @ApiProperty()
   @IsString()
-  resourceId: string;
+  resourceId: string = '';
 
   @ApiProperty()
   @IsString()
-  resourceType: string;
+  resourceType: string = '';
 
   @ApiProperty()
   @IsString()
-  originalDecision: string;
+  originalDecision: string = '';
 
   @ApiProperty()
   @IsString()
-  reason: string;
+  reason: string = '';
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -36,7 +36,7 @@ export class CreateAppealDto {
 export class DecideAppealDto {
   @ApiProperty({ enum: ['APPROVED', 'REJECTED'] })
   @IsString()
-  decision: 'APPROVED' | 'REJECTED';
+  decision: 'APPROVED' | 'REJECTED' = 'APPROVED';
 
   @ApiPropertyOptional()
   @IsOptional()

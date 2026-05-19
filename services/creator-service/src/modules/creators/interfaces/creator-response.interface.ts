@@ -6,6 +6,7 @@ export interface CreatorProfile {
   subscriberCount: number;
   totalViews: number;
   createdAt: Date;
+  verified?: boolean;
 }
 
 export interface CreatorUpload {
@@ -24,6 +25,7 @@ export interface CreatorEarnings {
   pending: number;
   paid: number;
   currency: string;
+  totalEarnings?: number;
 }
 
 export interface CreatorAnalytics {

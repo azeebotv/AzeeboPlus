@@ -2,8 +2,39 @@ import { Controller, Get, Post, Patch, Delete, Body, Param, Query } from '@nestj
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { InfluencerService } from './influencer.service';
 
+interface CreateInfluencerData {
+  userId: string;
+  displayName: string;
+  bio?: string;
+  avatarUrl?: string;
+  coverImage?: string;
+  category?: string;
+  socialLinks?: string;
+}
+
+interface CreateCollaborationData {
+  influencerId: string;
+  brandName: string;
+  campaignName: string;
+  description?: string;
+  coverImage?: string;
+  startDate?: string;
+  endDate?: string;
+}
+
+interface UpdateInfluencerData {
+  displayName?: string;
+  bio?: string;
+  avatarUrl?: string;
+  coverImage?: string;
+  category?: string;
+  isVerified?: boolean;
+  socialLinks?: string;
+  status?: string;
+}
+
 @ApiTags('Influencer')
-@Controller('influencer')
+@Controller('v1/lifestyle/influencers')
 export class InfluencerController {
   constructor(private readonly influencerService: InfluencerService) {}
 
@@ -50,23 +81,23 @@ export class InfluencerController {
   @Post()
   @ApiOperation({ summary: 'Create influencer entry' })
   @ApiResponse({ status: 201, description: 'Entry created' })
-  async createEntry(@Body() body: Record<string, unknown>): Promise<unknown> {
-    return this.influencerService.createEntry(body as Record<string, string>);
+  async createEntry(@Body() body: CreateInfluencerData): Promise<unknown> {
+    return this.influencerService.createEntry(body);
   }
 
   @Post('collaborations')
   @ApiOperation({ summary: 'Create collaboration' })
   @ApiResponse({ status: 201, description: 'Collaboration created' })
-  async createCollaboration(@Body() body: Record<string, unknown>): Promise<unknown> {
-    return this.influencerService.createCollaboration(body as Record<string, string>);
+  async createCollaboration(@Body() body: CreateCollaborationData): Promise<unknown> {
+    return this.influencerService.createCollaboration(body);
   }
 
   @Patch(':id')
   @ApiOperation({ summary: 'Update influencer entry' })
-  @ApiOperation({ status: 200, description: 'Entry updated' })
+  @ApiResponse({ status: 200, description: 'Entry updated' })
   async updateEntry(
     @Param('id') id: string,
-    @Body() body: Record<string, unknown>
+    @Body() body: UpdateInfluencerData
   ): Promise<unknown> {
     return this.influencerService.updateEntry(id, body);
   }

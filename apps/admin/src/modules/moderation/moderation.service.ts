@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '../../generated/prisma';
 import { PrismaService } from '../../database/prisma.service';
+import { AuditLogService } from '../audit/audit.service';
 
 export interface ModerationStats {
   pendingReports: number;
@@ -11,7 +12,10 @@ export interface ModerationStats {
 
 @Injectable()
 export class ModerationService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly auditService: AuditLogService
+  ) {}
 
   async getReports(page = 1, limit = 20, status?: string, type?: string): Promise<unknown> {
     const where: Prisma.ReportWhereInput = {};
@@ -88,6 +92,14 @@ export class ModerationService {
       },
     });
 
+    await this.auditService.log({
+      actorId: adminId,
+      action: 'resolve_report',
+      targetType: 'report',
+      targetId: reportId,
+      details: { action, reason, reportType: report.type, reportStatus: report.status },
+    });
+
     return {
       success: true,
       data: updated,
@@ -111,6 +123,14 @@ export class ModerationService {
         resolvedBy: adminId,
         resolvedAt: new Date(),
       },
+    });
+
+    await this.auditService.log({
+      actorId: adminId,
+      action: 'dismiss_report',
+      targetType: 'report',
+      targetId: reportId,
+      details: { reason, reportType: report.type, reportStatus: report.status },
     });
 
     return {
@@ -138,6 +158,14 @@ export class ModerationService {
         status: 'active',
         expiresAt: duration ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) : null,
       },
+    });
+
+    await this.auditService.log({
+      actorId: adminId,
+      action: 'safety_action',
+      targetType,
+      targetId,
+      details: { actionType, reason, duration },
     });
 
     return {
