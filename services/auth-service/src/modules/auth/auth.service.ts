@@ -111,13 +111,15 @@ export class AuthService {
     const { refreshToken } = refreshTokenDto;
 
     try {
-      const refreshTokenSecret = process.env.REFRESH_TOKEN_SECRET;
-      if (!refreshTokenSecret) {
-        throw new Error('REFRESH_TOKEN_SECRET environment variable is not configured');
+      const jwtRefreshSecret = process.env.JWT_REFRESH_SECRET;
+      if (!jwtRefreshSecret) {
+        throw new Error('JWT_REFRESH_SECRET environment variable is not configured');
       }
 
       const decoded = this.jwtService.verify(refreshToken, {
-        secret: refreshTokenSecret,
+        secret: jwtRefreshSecret,
+        audience: process.env.JWT_AUDIENCE,
+        issuer: process.env.JWT_ISSUER,
       });
 
       const user = await this.authRepository.findById((decoded as { sub: string }).sub);
@@ -168,13 +170,22 @@ export class AuthService {
 
   async validateToken(token: string): Promise<User | null> {
     try {
-      const jwtSecret = process.env.JWT_SECRET;
-      if (!jwtSecret) return null;
+      const jwtAccessSecret = process.env.JWT_ACCESS_SECRET;
+      if (!jwtAccessSecret) return null;
 
-      const decoded = this.jwtService.verify(token, { secret: jwtSecret }) as {
+      const decoded = this.jwtService.verify(token, {
+        secret: jwtAccessSecret,
+        audience: process.env.JWT_AUDIENCE,
+        issuer: process.env.JWT_ISSUER,
+      }) as {
         jti: string;
         sub: string;
+        type: string;
       };
+
+      if (decoded.type !== 'access') {
+        return null;
+      }
 
       const isRevoked = await this.redisService.get(`${this.revokedTokensPrefix}${decoded.jti}`);
       if (isRevoked) {
@@ -269,40 +280,38 @@ export class AuthService {
     refreshToken: string;
     expiresAt: string;
   }> {
-    const jwtSecret = process.env.JWT_SECRET;
-    if (!jwtSecret) {
-      throw new Error('JWT_SECRET environment variable is not configured');
+    const jwtAccessSecret = process.env.JWT_ACCESS_SECRET;
+    const jwtRefreshSecret = process.env.JWT_REFRESH_SECRET;
+
+    if (!jwtAccessSecret || !jwtRefreshSecret) {
+      throw new Error('JWT_ACCESS_SECRET and JWT_REFRESH_SECRET must be configured');
     }
 
     const now = Math.floor(Date.now() / 1000);
     const accessToken = this.jwtService.sign(
       {
-        iss: 'azeebo-auth-service',
-        aud: 'azeebo-api',
+        iss: process.env.JWT_ISSUER || 'azeebo-auth-service',
+        aud: process.env.JWT_AUDIENCE || 'azeebo-api',
         jti: randomUUID(),
         sub: user.id,
         email: user.email,
         role: user.role,
+        type: 'access',
         iat: now,
       },
       {
         expiresIn: this.accessTokenExpiry,
-        secret: jwtSecret,
+        secret: jwtAccessSecret,
       }
     );
-
-    const refreshTokenSecret = process.env.REFRESH_TOKEN_SECRET;
-    if (!refreshTokenSecret) {
-      throw new Error('REFRESH_TOKEN_SECRET environment variable is not configured');
-    }
 
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + this.refreshTokenExpiryDays);
 
     const refreshToken = this.jwtService.sign(
       {
-        iss: 'azeebo-auth-service',
-        aud: 'azeebo-api',
+        iss: process.env.JWT_ISSUER || 'azeebo-auth-service',
+        aud: process.env.JWT_AUDIENCE || 'azeebo-api',
         jti: randomUUID(),
         sub: user.id,
         type: 'refresh',
@@ -310,7 +319,7 @@ export class AuthService {
       },
       {
         expiresIn: this.refreshTokenExpiry,
-        secret: refreshTokenSecret,
+        secret: jwtRefreshSecret,
       }
     );
 

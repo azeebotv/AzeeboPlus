@@ -10,6 +10,7 @@ import { MetricsModule } from './modules/metrics/metrics.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      envFilePath: ['.env', '../../.env'],
     }),
     AnalyticsModule,
     AnalyticsInstrumentationModule,

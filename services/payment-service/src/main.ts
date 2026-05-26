@@ -5,6 +5,7 @@ import { AppModule } from './app.module';
 import helmet from 'helmet';
 import { GlobalExceptionFilter } from '@azeebo/error-handling';
 import { LoggingInterceptor } from '@azeebo/logger';
+import { configureCors } from '@azeebo/security';
 import * as bodyParser from 'body-parser';
 import { validateEnvironment } from '@azeebo/shared-types';
 
@@ -22,7 +23,7 @@ async function bootstrap(): Promise<void> {
 
   app.use('/webhooks/*', bodyParser.raw({ type: 'application/json' }));
 
-  app.use('/webhooks/*', (req: { body: Buffer | object }, res: unknown, next: () => void) => {
+  app.use('/webhooks/*', (req: { body: Buffer | object }, _res: unknown, next: () => void) => {
     if (req.body && Buffer.isBuffer(req.body)) {
       try {
         (req as unknown as { rawBody: string }).rawBody = req.body.toString('utf8');
@@ -63,23 +64,10 @@ async function bootstrap(): Promise<void> {
   );
 
   const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'];
-
-  app.enableCors({
-    origin: (
-      origin: string | undefined,
-      callback: (err: Error | null, allow?: boolean) => void
-    ) => {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error('Not allowed by CORS'));
-      }
-    },
-    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE'],
+  configureCors(app, {
+    allowedOrigins,
     credentials: true,
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-    exposedHeaders: ['Content-Disposition'],
-    maxAge: 86400,
+    maxAge: 3600,
   });
 
   if (process.env.NODE_ENV !== 'production') {

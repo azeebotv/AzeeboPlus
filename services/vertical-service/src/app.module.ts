@@ -9,12 +9,14 @@ import { HealthModule } from './modules/health/health.module';
 import { TitlesModule } from './modules/titles/titles.module';
 import { LoreModule } from './modules/lore/lore.module';
 import { CrossoversModule } from './modules/crossovers/crossovers.module';
+import { RateLimiterModule } from '@azeebo/security';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    RateLimiterModule,
     ThrottlerModule.forRoot([
       {
         ttl: 60000,

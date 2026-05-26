@@ -5,6 +5,8 @@ import './globals.css';
 import { AuthProvider } from '../context/AuthContext';
 import { WalletProvider } from '../context/WalletContext';
 import { ErrorBoundary } from '../components/ErrorBoundary';
+import { QueryProvider } from '../providers/QueryProvider';
+import { ToastProvider } from '@azeebo/ui';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -69,10 +71,21 @@ export default function RootLayout({ children }: { children: React.ReactNode }):
   return (
     <html lang="en">
       <body className={inter.className}>
+        <a href="#main-content" className="skip-link">
+          Skip to main content
+        </a>
         <ErrorBoundary>
-          <AuthProvider>
-            <WalletProvider>{children}</WalletProvider>
-          </AuthProvider>
+          <QueryProvider>
+            <AuthProvider>
+              <WalletProvider>
+                <ToastProvider>
+                  <main id="main-content" role="main">
+                    {children}
+                  </main>
+                </ToastProvider>
+              </WalletProvider>
+            </AuthProvider>
+          </QueryProvider>
         </ErrorBoundary>
       </body>
     </html>

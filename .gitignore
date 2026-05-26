@@ -48,5 +48,11 @@ docker-compose.override.yml
 *.tmp
 *.temp
 
+# Build artifacts
+*.js
+!jest.config.js
+*.js.map
+*.bak
+
 # TypeScript cache
 *.tsbuildinfo

@@ -7,20 +7,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
-
-export interface ErrorResponse {
-  success: boolean;
-  error: {
-    statusCode: number;
-    error: string;
-    message: string | string[];
-    timestamp: string;
-    path: string;
-    method: string;
-    traceId?: string;
-    stack?: string;
-  };
-}
+import { AppError, ErrorResponse } from './types';
 
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
@@ -35,8 +22,14 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     let status: number;
     let message: string | string[];
     let error: string;
+    let details: Record<string, unknown> | undefined;
 
-    if (exception instanceof HttpException) {
+    if (exception instanceof AppError) {
+      status = exception.statusCode;
+      message = exception.message;
+      error = exception.error;
+      details = exception.details;
+    } else if (exception instanceof HttpException) {
       status = exception.getStatus();
       const exceptionResponse = exception.getResponse();
 
@@ -44,6 +37,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         const responseObj = exceptionResponse as Record<string, unknown>;
         message = (responseObj.message as string | string[]) || exception.message;
         error = (responseObj.error as string) || exception.name;
+        details = responseObj.details as Record<string, unknown> | undefined;
       } else {
         message = exception.message;
         error = exception.name;
@@ -72,6 +66,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         path: request.url,
         method: request.method,
         traceId: (request.headers['x-request-id'] as string) || undefined,
+        ...(details ? { details } : {}),
       },
     };
 

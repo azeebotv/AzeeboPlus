@@ -1,19 +1,36 @@
-import { Module, Global } from '@nestjs/common';
+import { Module, Global, DynamicModule } from '@nestjs/common';
 import { RateLimitService } from './rate-limit.service';
 import { RateLimitGuard } from './rate-limit.guard';
 import { RedisModule } from '@nestjs-modules/ioredis';
 
+export interface RateLimiterModuleConfig {
+  redisUrl?: string;
+  defaultTTL?: number;
+  defaultLimit?: number;
+}
+
 @Global()
-@Module({
-  imports: [
-    RedisModule.forRootAsync({
-      useFactory: () => ({
-        type: 'single',
-        url: process.env.REDIS_URL || 'redis://localhost:6379',
-      }),
-    }),
-  ],
-  providers: [RateLimitService, RateLimitGuard],
-  exports: [RateLimitService, RateLimitGuard],
-})
-export class RateLimiterModule {}
+@Module({})
+export class RateLimiterModule {
+  static forRoot(config?: RateLimiterModuleConfig): DynamicModule {
+    const redisUrl = config?.redisUrl || process.env.REDIS_URL || 'redis://localhost:6379';
+
+    return {
+      module: RateLimiterModule,
+      imports: [
+        RedisModule.forRootAsync({
+          useFactory: () => ({
+            type: 'single',
+            url: redisUrl,
+          }),
+        }),
+      ],
+      providers: [RateLimitService, RateLimitGuard],
+      exports: [RateLimitService, RateLimitGuard],
+    };
+  }
+
+  static register(): DynamicModule {
+    return this.forRoot();
+  }
+}

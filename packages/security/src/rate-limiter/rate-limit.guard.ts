@@ -4,7 +4,6 @@ import {
   ExecutionContext,
   HttpException,
   HttpStatus,
-  Logger,
   SetMetadata,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
@@ -16,24 +15,37 @@ export const RateLimit = (limit: number, windowMs: number): ReturnType<typeof Se
 
 @Injectable()
 export class RateLimitGuard implements CanActivate {
-  private readonly logger = new Logger(RateLimitGuard.name);
-
   constructor(
     private reflector: Reflector,
     private rateLimitService: RateLimitService
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
+    const request = context.switchToHttp().getRequest<Request>();
+    const response = context.switchToHttp().getResponse<Response>();
+
+    const clientIp = this.getClientIp(request);
+
+    // Check if IP is blocked
+    const isBlocked = await this.rateLimitService.isBlocked(clientIp);
+    if (isBlocked) {
+      response.setHeader('Retry-After', 3600);
+      throw new HttpException(
+        {
+          statusCode: HttpStatus.TOO_MANY_REQUESTS,
+          message: 'IP address is blocked due to repeated violations.',
+          error: 'Too Many Requests',
+        },
+        HttpStatus.TOO_MANY_REQUESTS
+      );
+    }
+
     const rateLimitOptions = this.reflector.get<RateLimitConfig>('rateLimit', context.getHandler());
 
     if (!rateLimitOptions) {
       return true;
     }
 
-    const request = context.switchToHttp().getRequest<Request>();
-    const response = context.switchToHttp().getResponse();
-
-    const clientIp = this.getClientIp(request);
     const key = this.generateKey(clientIp, request.path);
 
     const result = await this.rateLimitService.checkRateLimit(key, rateLimitOptions);
@@ -41,6 +53,10 @@ export class RateLimitGuard implements CanActivate {
     this.setRateLimitHeaders(response, result);
 
     if (!result.allowed) {
+      // Record violation and potentially block IP
+      await this.rateLimitService.recordViolation(clientIp);
+
+      response.setHeader('Retry-After', Math.ceil((result.resetAt - Date.now()) / 1000));
       throw new HttpException(
         {
           statusCode: HttpStatus.TOO_MANY_REQUESTS,

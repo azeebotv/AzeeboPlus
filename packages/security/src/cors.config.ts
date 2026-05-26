@@ -1,75 +1,78 @@
-import { CorsOptions } from '@nestjs/common/interfaces/external/cors-options.interface';
+import { INestApplication } from '@nestjs/common';
 
-export interface CorsConfig {
+export interface CorsOptions {
   allowedOrigins: string[];
-  allowedMethods?: string[];
-  allowedHeaders?: string[];
-  exposedHeaders?: string[];
   credentials?: boolean;
   maxAge?: number;
 }
 
-const DEFAULT_CORS_CONFIG: Required<CorsConfig> = {
-  allowedOrigins: [],
-  allowedMethods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID'],
-  exposedHeaders: [
-    'X-Request-ID',
-    'X-RateLimit-Limit',
-    'X-RateLimit-Remaining',
-    'X-RateLimit-Reset',
-  ],
-  credentials: true,
-  maxAge: 86400,
-};
+export function configureCors(
+  app: INestApplication,
+  options: CorsOptions,
+): void {
+  const {
+    allowedOrigins,
+    credentials = true,
+    maxAge = 3600,
+  } = options;
 
-export function createCorsConfig(config: CorsConfig): CorsOptions {
-  const finalConfig = { ...DEFAULT_CORS_CONFIG, ...config };
+  const validatedOrigins = allowedOrigins.map((origin) => {
+    if (origin === '*') {
+      throw new Error(
+        'CORS wildcard (*) is not allowed for security reasons',
+      );
+    }
 
-  const originValidator = (
-    origin: string | undefined,
-    callback: (err: Error | null, allow?: boolean) => void
-  ): void => {
-    if (!origin) {
-      if (process.env.NODE_ENV === 'production') {
-        callback(new Error('CORS origin is required'));
+    try {
+      new URL(origin);
+      return origin;
+    } catch {
+      throw new Error(`Invalid CORS origin: ${origin}`);
+    }
+  });
+
+  app.enableCors({
+    origin: (
+      origin: string | undefined,
+      callback: (err: Error | null, allow?: boolean) => void,
+    ) => {
+      if (!origin) {
+        callback(new Error('Not allowed by CORS - missing origin header'));
         return;
       }
-      callback(null, true);
-      return;
-    }
 
-    if (finalConfig.allowedOrigins.includes(origin)) {
-      callback(null, true);
-      return;
-    }
+      const isAllowed = validatedOrigins.some((allowed) => {
+        if (allowed.includes('*')) {
+          const pattern = new RegExp(
+            `^${allowed.replace(/\*/g, '[a-zA-Z0-9-]+')}$`,
+          );
+          return pattern.test(origin);
+        }
+        return allowed === origin;
+      });
 
-    const isLocalhost = origin.match(/^http:\/\/localhost:\d+$/);
-    if (isLocalhost && process.env.NODE_ENV !== 'production') {
-      callback(null, true);
-      return;
-    }
-
-    callback(new Error(`Origin ${origin} not allowed by CORS policy`), false);
-  };
-
-  return {
-    origin: originValidator,
-    methods: finalConfig.allowedMethods,
-    allowedHeaders: finalConfig.allowedHeaders,
-    exposedHeaders: finalConfig.exposedHeaders,
-    credentials: finalConfig.credentials,
-    maxAge: finalConfig.maxAge,
-    optionsSuccessStatus: 204,
-  };
-}
-
-export function requireAllowedOrigins(): string[] {
-  const origins = process.env.ALLOWED_ORIGINS?.split(',').map((o) => o.trim()) || [];
-
-  if (origins.length === 0 && process.env.NODE_ENV === 'production') {
-    throw new Error('ALLOWED_ORIGINS environment variable is required in production');
-  }
-
-  return origins;
+      if (isAllowed) {
+        callback(null, true);
+      } else {
+        callback(new Error(`Not allowed by CORS - origin: ${origin}`));
+      }
+    },
+    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE'],
+    credentials,
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'X-Requested-With',
+      'X-Request-ID',
+      'Accept',
+      'Origin',
+    ],
+    exposedHeaders: [
+      'Content-Disposition',
+      'X-Request-ID',
+      'X-RateLimit-Limit',
+      'X-RateLimit-Remaining',
+    ],
+    maxAge,
+  });
 }

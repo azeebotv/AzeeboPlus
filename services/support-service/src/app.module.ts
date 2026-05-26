@@ -15,10 +15,12 @@ import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { DatabaseModule } from './modules/database/database.module';
 import { SupportModule } from './modules/support/support.module';
 import { AuthGuard } from './common/guards/auth.guard';
+import { RateLimiterModule } from '@azeebo/security';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    RateLimiterModule,
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       useFactory: (configService: ConfigService) => ({

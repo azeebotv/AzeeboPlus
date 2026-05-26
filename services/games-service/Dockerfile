@@ -1,47 +1,47 @@
-# Build stage
-FROM node:20-alpine AS builder
+FROM node:20.11.1-alpine3.19 AS builder
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
+RUN apk add --no-cache curl && \
+    npm install -g pnpm@9.15.0
 
-# Install dependencies
-RUN npm ci --only=production
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY packages/*/package.json ./packages/
+COPY services/games-service/package.json ./services/games-service/
 
-# Copy source
-COPY . .
+RUN pnpm install --frozen-lockfile
 
-# Build application
-RUN npm run build
+COPY services/games-service/src ./services/games-service/src
+COPY services/games-service/tsconfig*.json ./services/games-service/
+COPY services/games-service/prisma ./services/games-service/prisma
 
-# Production stage
-FROM node:20-alpine AS runner
+RUN pnpm --filter games-service build
+
+FROM node:20.11.1-alpine3.19 AS runner
 WORKDIR /app
 
-# Install runtime dependencies
-RUN apk add --no-cache curl
+LABEL org.opencontainers.image.source="https://github.com/azeebo/azeebo-plus"
+LABEL org.opencontainers.image.description="Azeebo+ Games Service"
+LABEL org.opencontainers.image.licenses="Proprietary"
 
-# Create non-root user
-RUN addgroup -g 1001 -S nodejs && \
+RUN apk add --no-cache curl && \
+    addgroup -g 1001 -S nodejs && \
     adduser -S nodejs -u 1001
 
-# Copy from builder
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/package*.json ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY services/games-service/package.json ./services/games-service/
 
-# Change ownership
+RUN pnpm install --prod --frozen-lockfile
+
+COPY --from=builder /app/services/games-service/dist ./services/games-service/dist
+COPY --from=builder /app/services/games-service/prisma ./services/games-service/prisma
+
 RUN chown -R nodejs:nodejs /app
 
-# Switch to non-root user
 USER nodejs
 
-# Expose port
-EXPOSE 3000
+EXPOSE 3012
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1
+HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost:3012/health || exit 1
 
-# Start application
-CMD ["node", "dist/main.js"]
+CMD ["node", "services/games-service/dist/src/main.js"]

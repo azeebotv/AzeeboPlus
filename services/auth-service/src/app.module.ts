@@ -8,18 +8,20 @@ import { RedisService } from './common/services/redis.service';
 import { RateLimitGuard } from './common/guards/rate-limit.guard';
 import { CommonModule } from './common/common.module';
 import { MetricsModule } from './modules/metrics/metrics.module';
+import { HealthModule } from './modules/health/health.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: `.env.${process.env.NODE_ENV || 'development'}`,
+      envFilePath: ['.env', '../../.env'],
     }),
     TerminusModule,
     AuditModule,
     AuthModule,
     CommonModule,
     MetricsModule,
+    HealthModule,
   ],
   providers: [
     RedisService,

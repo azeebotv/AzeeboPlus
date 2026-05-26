@@ -4,8 +4,6 @@ import {
   HealthCheckService,
   HealthCheckResult,
   HealthIndicatorResult,
-  PrismaHealthIndicator,
-  TypeOrmHealthIndicator,
 } from '@nestjs/terminus';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
@@ -14,8 +12,6 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 export class HealthController {
   constructor(
     private health: HealthCheckService,
-    private prismaHealth: PrismaHealthIndicator,
-    private db: TypeOrmHealthIndicator
   ) {}
 
   @Get()

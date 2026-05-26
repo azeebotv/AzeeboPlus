@@ -10,7 +10,7 @@ networks:
 
 services:
   postgres:
-    image: postgres:15-alpine
+    image: postgres:15.6-alpine3.19
     container_name: azeebo_postgres
     ports:
       - "5432:5432"
@@ -18,12 +18,61 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB:-azeebo_plus_dev}
+      AUTH_DB_PASSWORD: ${AUTH_DB_PASSWORD:-auth_dev_password}
+      USER_DB_PASSWORD: ${USER_DB_PASSWORD:-user_dev_password}
+      WALLET_DB_PASSWORD: ${WALLET_DB_PASSWORD:-wallet_dev_password}
+      PAYMENT_DB_PASSWORD: ${PAYMENT_DB_PASSWORD:-payment_dev_password}
+      CONTENT_DB_PASSWORD: ${CONTENT_DB_PASSWORD:-content_dev_password}
+      MEDIA_DB_PASSWORD: ${MEDIA_DB_PASSWORD:-media_dev_password}
+      SEARCH_DB_PASSWORD: ${SEARCH_DB_PASSWORD:-search_dev_password}
+      NOTIFICATION_DB_PASSWORD: ${NOTIFICATION_DB_PASSWORD:-notification_dev_password}
+      REWARD_DB_PASSWORD: ${REWARD_DB_PASSWORD:-reward_dev_password}
+      ANALYTICS_DB_PASSWORD: ${ANALYTICS_DB_PASSWORD:-analytics_dev_password}
+      RECOMMENDATION_DB_PASSWORD: ${RECOMMENDATION_DB_PASSWORD:-recommendation_dev_password}
+      REALITY_DB_PASSWORD: ${REALITY_DB_PASSWORD:-reality_dev_password}
+      MOVIE_DB_PASSWORD: ${MOVIE_DB_PASSWORD:-movie_dev_password}
+      GAMES_DB_PASSWORD: ${GAMES_DB_PASSWORD:-games_dev_password}
+      COMEDY_DB_PASSWORD: ${COMEDY_DB_PASSWORD:-comedy_dev_password}
+      SPORTS_DB_PASSWORD: ${SPORTS_DB_PASSWORD:-sports_dev_password}
+      LIFESTYLE_DB_PASSWORD: ${LIFESTYLE_DB_PASSWORD:-lifestyle_dev_password}
+      VERTICAL_DB_PASSWORD: ${VERTICAL_DB_PASSWORD:-vertical_dev_password}
+      CREATOR_DB_PASSWORD: ${CREATOR_DB_PASSWORD:-creator_dev_password}
+      SUPPORT_DB_PASSWORD: ${SUPPORT_DB_PASSWORD:-support_dev_password}
+      MODERATION_DB_PASSWORD: ${MODERATION_DB_PASSWORD:-moderation_dev_password}
+      QUEUE_DB_PASSWORD: ${QUEUE_DB_PASSWORD:-queue_dev_password}
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./infra/scripts/init-multiple-databases.sh:/docker-entrypoint-initdb.d/init.sh:ro
     networks:
       - azeebo_network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+  pgbouncer:
+    image: edoburu/pgbouncer:1.22.1
+    container_name: azeebo_pgbouncer
+    ports:
+      - "6432:6432"
+    environment:
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD}@postgres:5432
+      POOL_MODE: transaction
+      MAX_CLIENT_CONN: 1000
+      DEFAULT_POOL_SIZE: 20
+      MIN_POOL_SIZE: 5
+      SERVER_TLS_SSLMODE: prefer
+    volumes:
+      - ./infra/config/pgbouncer.ini:/etc/pgbouncer/pgbouncer.ini:ro
+      - ./infra/config/pgbouncer_userlist.txt:/etc/pgbouncer/userlist.txt:ro
+    networks:
+      - azeebo_network
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h localhost -p 6432"]
       interval: 30s
       timeout: 5s
       retries: 5
@@ -45,19 +94,22 @@ services:
 
   auth-service:
     build:
-      context: ./services/auth-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: services/auth-service/Dockerfile
     container_name: azeebo_auth_service
     ports:
       - "3000:3000"
     environment:
       NODE_ENV: production
-      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_URL: ${AUTH_DATABASE_URL}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
-      JWT_SECRET: ${JWT_SECRET}
-      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-30m}
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      JWT_ISSUER: ${JWT_ISSUER:-azeebo-auth-service}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-azeebo-api}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-15m}
     depends_on:
-      postgres:
+      pgbouncer:
         condition: service_healthy
       redis:
         condition: service_healthy
@@ -71,18 +123,20 @@ services:
 
   user-service:
     build:
-      context: ./services/user-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: services/user-service/Dockerfile
     container_name: azeebo_user_service
     ports:
       - "3001:3001"
     environment:
       NODE_ENV: production
-      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_URL: ${USER_DATABASE_URL}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
-      JWT_SECRET: ${JWT_SECRET}
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
+      JWT_ISSUER: ${JWT_ISSUER:-azeebo-auth-service}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-azeebo-api}
     depends_on:
-      postgres:
+      pgbouncer:
         condition: service_healthy
       redis:
         condition: service_healthy
@@ -96,17 +150,17 @@ services:
 
   wallet-service:
     build:
-      context: ./services/wallet-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: services/wallet-service/Dockerfile
     container_name: azeebo_wallet_service
     ports:
       - "3002:3002"
     environment:
       NODE_ENV: production
-      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_URL: ${WALLET_DATABASE_URL}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
     depends_on:
-      postgres:
+      pgbouncer:
         condition: service_healthy
       redis:
         condition: service_healthy
@@ -120,19 +174,19 @@ services:
 
   payment-service:
     build:
-      context: ./services/payment-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: services/payment-service/Dockerfile
     container_name: azeebo_payment_service
     ports:
       - "3003:3003"
     environment:
       NODE_ENV: production
-      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_URL: ${PAYMENT_DATABASE_URL}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
       PAYSTACK_SECRET_KEY: ${PAYSTACK_SECRET_KEY}
       FLUTTERWAVE_SECRET_KEY: ${FLUTTERWAVE_SECRET_KEY}
     depends_on:
-      postgres:
+      pgbouncer:
         condition: service_healthy
       redis:
         condition: service_healthy
@@ -146,17 +200,17 @@ services:
 
   content-service:
     build:
-      context: ./services/content-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: services/content-service/Dockerfile
     container_name: azeebo_content_service
     ports:
       - "3004:3004"
     environment:
       NODE_ENV: production
-      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_URL: ${CONTENT_DATABASE_URL}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
     depends_on:
-      postgres:
+      pgbouncer:
         condition: service_healthy
       redis:
         condition: service_healthy
@@ -170,17 +224,17 @@ services:
 
   search-service:
     build:
-      context: ./services/search-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: services/search-service/Dockerfile
     container_name: azeebo_search_service
     ports:
       - "3005:3005"
     environment:
       NODE_ENV: production
-      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_URL: ${SEARCH_DATABASE_URL}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
     depends_on:
-      postgres:
+      pgbouncer:
         condition: service_healthy
       redis:
         condition: service_healthy
@@ -194,21 +248,21 @@ services:
 
   notification-service:
     build:
-      context: ./services/notification-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: services/notification-service/Dockerfile
     container_name: azeebo_notification_service
     ports:
       - "3006:3006"
     environment:
       NODE_ENV: production
-      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_URL: ${NOTIFICATION_DATABASE_URL}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
       SENDGRID_API_KEY: ${SENDGRID_API_KEY}
       TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID}
       TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN}
       TWILIO_PHONE_NUMBER: ${TWILIO_PHONE_NUMBER}
     depends_on:
-      postgres:
+      pgbouncer:
         condition: service_healthy
       redis:
         condition: service_healthy
@@ -222,17 +276,17 @@ services:
 
   reward-service:
     build:
-      context: ./services/reward-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: services/reward-service/Dockerfile
     container_name: azeebo_reward_service
     ports:
       - "3007:3007"
     environment:
       NODE_ENV: production
-      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_URL: ${REWARD_DATABASE_URL}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
     depends_on:
-      postgres:
+      pgbouncer:
         condition: service_healthy
       redis:
         condition: service_healthy
@@ -246,17 +300,17 @@ services:
 
   analytics-service:
     build:
-      context: ./services/analytics-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: services/analytics-service/Dockerfile
     container_name: azeebo_analytics_service
     ports:
       - "3008:3008"
     environment:
       NODE_ENV: production
-      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_URL: ${ANALYTICS_DATABASE_URL}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
     depends_on:
-      postgres:
+      pgbouncer:
         condition: service_healthy
       redis:
         condition: service_healthy
@@ -270,17 +324,17 @@ services:
 
   recommendation-service:
     build:
-      context: ./services/recommendation-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: services/recommendation-service/Dockerfile
     container_name: azeebo_recommendation_service
     ports:
       - "3009:3009"
     environment:
       NODE_ENV: production
-      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_URL: ${RECOMMENDATION_DATABASE_URL}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
     depends_on:
-      postgres:
+      pgbouncer:
         condition: service_healthy
       redis:
         condition: service_healthy
@@ -294,17 +348,17 @@ services:
 
   reality-service:
     build:
-      context: ./services/reality-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: services/reality-service/Dockerfile
     container_name: azeebo_reality_service
     ports:
       - "3010:3010"
     environment:
       NODE_ENV: production
-      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_URL: ${REALITY_DATABASE_URL}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
     depends_on:
-      postgres:
+      pgbouncer:
         condition: service_healthy
       redis:
         condition: service_healthy
@@ -318,14 +372,15 @@ services:
 
   queue-service:
     build:
-      context: ./services/queue-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: services/queue-service/Dockerfile
     container_name: azeebo_queue_service
     ports:
       - "3015:3015"
     environment:
       NODE_ENV: production
       PORT: 3015
+      DATABASE_URL: ${QUEUE_DATABASE_URL}
       REDIS_HOST: redis
       REDIS_PORT: 6379
       SENDGRID_API_KEY: ${SENDGRID_API_KEY:?err}
@@ -333,6 +388,8 @@ services:
       TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN:?err}
       TWILIO_PHONE_NUMBER: ${TWILIO_PHONE_NUMBER:?err}
     depends_on:
+      pgbouncer:
+        condition: service_healthy
       redis:
         condition: service_healthy
     networks:
@@ -345,17 +402,17 @@ services:
 
   creator-service:
     build:
-      context: ./services/creator-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: services/creator-service/Dockerfile
     container_name: azeebo_creator_service
     ports:
       - "3018:3018"
     environment:
       NODE_ENV: production
-      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_URL: ${CREATOR_DATABASE_URL}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
     depends_on:
-      postgres:
+      pgbouncer:
         condition: service_healthy
       redis:
         condition: service_healthy
@@ -369,20 +426,23 @@ services:
 
   media-service:
     build:
-      context: ./services/media-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: services/media-service/Dockerfile
     container_name: azeebo_media_service
     ports:
       - "3019:3019"
     environment:
       NODE_ENV: production
       PORT: 3019
+      DATABASE_URL: ${MEDIA_DATABASE_URL}
       AWS_REGION: ${AWS_REGION:-us-east-1}
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
       AWS_S3_BUCKET: ${AWS_S3_BUCKET:-azeebo-media}
       CDN_URL: ${CDN_URL}
     depends_on:
+      pgbouncer:
+        condition: service_healthy
       redis:
         condition: service_healthy
     networks:
@@ -395,17 +455,17 @@ services:
 
   lifestyle-service:
     build:
-      context: ./services/lifestyle-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: services/lifestyle-service/Dockerfile
     container_name: azeebo_lifestyle_service
     ports:
       - "3016:3016"
     environment:
       NODE_ENV: production
       PORT: 3016
-      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_URL: ${LIFESTYLE_DATABASE_URL}
     depends_on:
-      postgres:
+      pgbouncer:
         condition: service_healthy
     networks:
       - azeebo_network
@@ -417,17 +477,17 @@ services:
 
   vertical-service:
     build:
-      context: ./services/vertical-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: services/vertical-service/Dockerfile
     container_name: azeebo_vertical_service
     ports:
       - "3017:3017"
     environment:
       NODE_ENV: production
       PORT: 3017
-      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_URL: ${VERTICAL_DATABASE_URL}
     depends_on:
-      postgres:
+      pgbouncer:
         condition: service_healthy
     networks:
       - azeebo_network
@@ -439,18 +499,18 @@ services:
 
   support-service:
     build:
-      context: ./services/support-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: services/support-service/Dockerfile
     container_name: azeebo_support_service
     ports:
       - "3020:3020"
     environment:
       NODE_ENV: production
       PORT: 3020
-      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_URL: ${SUPPORT_DATABASE_URL}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
     depends_on:
-      postgres:
+      pgbouncer:
         condition: service_healthy
       redis:
         condition: service_healthy
@@ -464,8 +524,8 @@ services:
 
   api-gateway:
     build:
-      context: ./services/api-gateway
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: services/api-gateway/Dockerfile
     container_name: azeebo_api_gateway
     ports:
       - "3013:3013"
@@ -532,8 +592,8 @@ services:
 
   web-app:
     build:
-      context: ./apps/web
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: apps/web/Dockerfile
     container_name: azeebo_web_app
     ports:
       - "8080:8080"

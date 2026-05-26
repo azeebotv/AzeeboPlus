@@ -4,11 +4,10 @@ import {
   ExecutionContext,
   HttpException,
   HttpStatus,
-  Logger,
   SetMetadata,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { Request } from 'express';
+import { Request, Response } from 'express';
 import { RedisService } from '../services/redis.service';
 
 export const RateLimit = (limit: number, windowMs: number): ReturnType<typeof SetMetadata> =>
@@ -21,7 +20,9 @@ export interface RateLimitOptions {
 
 @Injectable()
 export class RateLimitGuard implements CanActivate {
-  private readonly logger = new Logger(RateLimitGuard.name);
+  private readonly blockListPrefix = 'rate_limit:blocked:';
+  private readonly violationPrefix = 'rate_limit:violations:';
+  private readonly blockDuration = 3600;
 
   constructor(
     private reflector: Reflector,
@@ -29,6 +30,25 @@ export class RateLimitGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
+    const request = context.switchToHttp().getRequest<Request>();
+    const response = context.switchToHttp().getResponse<Response>();
+
+    const clientIp = this.getClientIp(request);
+
+    // Check if IP is blocked
+    const isBlocked = await this.isBlocked(clientIp);
+    if (isBlocked) {
+      response.setHeader('Retry-After', this.blockDuration);
+      throw new HttpException(
+        {
+          statusCode: HttpStatus.TOO_MANY_REQUESTS,
+          message: 'IP address is blocked due to repeated violations.',
+          error: 'Too Many Requests',
+        },
+        HttpStatus.TOO_MANY_REQUESTS
+      );
+    }
+
     const rateLimitOptions = this.reflector.get<RateLimitOptions>(
       'rateLimit',
       context.getHandler()
@@ -38,11 +58,7 @@ export class RateLimitGuard implements CanActivate {
       return true;
     }
 
-    const request = context.switchToHttp().getRequest<Request>();
-    const response = context.switchToHttp().getResponse();
-
-    const ip = request.ip || request.socket.remoteAddress || 'unknown';
-    const key = `ratelimit:${ip}:${request.path}`;
+    const key = `ratelimit:${clientIp}:${request.path}`;
     const { limit, windowMs } = rateLimitOptions;
     const windowSec = Math.ceil(windowMs / 1000);
 
@@ -60,12 +76,16 @@ export class RateLimitGuard implements CanActivate {
       response.setHeader('X-RateLimit-Reset', Math.ceil(Date.now() / 1000) + ttl);
 
       if (current > limit) {
-        this.logger.warn(`Rate limit exceeded for IP: ${ip}`);
+        // Record violation and potentially block IP
+        await this.recordViolation(clientIp);
+
+        response.setHeader('Retry-After', Math.ceil(ttl));
         throw new HttpException(
           {
             statusCode: HttpStatus.TOO_MANY_REQUESTS,
             message: 'Too many requests, please try again later.',
             error: 'Too Many Requests',
+            retryAfter: Math.ceil(ttl),
           },
           HttpStatus.TOO_MANY_REQUESTS
         );
@@ -76,8 +96,52 @@ export class RateLimitGuard implements CanActivate {
       if (error instanceof HttpException) {
         throw error;
       }
-      this.logger.error(`Rate limit check failed: ${error}`);
       return true;
+    }
+  }
+
+  private getClientIp(request: Request): string {
+    const forwardedFor = request.headers['x-forwarded-for'];
+    const forwardedForIp =
+      typeof forwardedFor === 'string' ? forwardedFor.split(',')[0] : undefined;
+    const realIp = request.headers['x-real-ip'];
+    const realIpString = typeof realIp === 'string' ? realIp : undefined;
+
+    return (
+      request.ip || request.socket.remoteAddress || forwardedForIp || realIpString || 'unknown'
+    );
+  }
+
+  private async isBlocked(ip: string): Promise<boolean> {
+    try {
+      const key = `${this.blockListPrefix}${ip}`;
+      const exists = await this.redisService.get(key);
+      return !!exists;
+    } catch {
+      return false;
+    }
+  }
+
+  private async block(ip: string, duration: number = this.blockDuration): Promise<void> {
+    try {
+      const key = `${this.blockListPrefix}${ip}`;
+      await this.redisService.set(key, 'blocked', duration);
+    } catch {
+      // Silently fail
+    }
+  }
+
+  private async recordViolation(ip: string, threshold: number = 10): Promise<void> {
+    try {
+      const key = `${this.violationPrefix}${ip}`;
+      const count = await this.redisService.incr(key);
+      await this.redisService.expire(key, 3600);
+
+      if (count >= threshold) {
+        await this.block(ip);
+      }
+    } catch {
+      // Silently fail
     }
   }
 }

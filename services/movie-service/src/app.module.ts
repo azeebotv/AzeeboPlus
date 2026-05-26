@@ -5,12 +5,14 @@ import { MoviesModule } from './modules/movies/movies.module';
 import { CinemaPassModule } from './modules/cinema-pass/cinema-pass.module';
 import { FilmmakerModule } from './modules/filmmaker/filmmaker.module';
 import { HealthModule } from './modules/health/health.module';
+import { RateLimiterModule } from '@azeebo/security';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    RateLimiterModule,
     DatabaseModule,
     MoviesModule,
     CinemaPassModule,

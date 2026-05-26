@@ -17,6 +17,9 @@ export interface RateLimitResult {
 @Injectable()
 export class RateLimitService {
   private readonly logger = new Logger(RateLimitService.name);
+  private readonly blockListPrefix = 'rate_limit:blocked:';
+  private readonly violationPrefix = 'rate_limit:violations:';
+  private readonly blockDuration = 3600; // 1 hour default
 
   constructor(@InjectRedis() private readonly redis: Redis) {}
 
@@ -91,6 +94,76 @@ export class RateLimitService {
         resetAt: now + windowMs,
         limit,
       };
+    }
+  }
+
+  // IP Blocking functionality
+  async isBlocked(ip: string): Promise<boolean> {
+    try {
+      const key = `${this.blockListPrefix}${ip}`;
+      const exists = await this.redis.get(key);
+      return !!exists;
+    } catch (error) {
+      this.logger.error(`Failed to check block status for IP ${ip}: ${error}`);
+      return false;
+    }
+  }
+
+  async block(ip: string, duration: number = this.blockDuration): Promise<void> {
+    try {
+      const key = `${this.blockListPrefix}${ip}`;
+      await this.redis.set(key, 'blocked', 'EX', duration);
+      this.logger.warn(`IP ${ip} has been blocked for ${duration} seconds`);
+    } catch (error) {
+      this.logger.error(`Failed to block IP ${ip}: ${error}`);
+    }
+  }
+
+  async unblock(ip: string): Promise<void> {
+    try {
+      const key = `${this.blockListPrefix}${ip}`;
+      await this.redis.del(key);
+      this.logger.log(`IP ${ip} has been unblocked`);
+    } catch (error) {
+      this.logger.error(`Failed to unblock IP ${ip}: ${error}`);
+    }
+  }
+
+  async recordViolation(ip: string, threshold: number = 10): Promise<boolean> {
+    try {
+      const key = `${this.violationPrefix}${ip}`;
+      const count = await this.redis.incr(key);
+      await this.redis.expire(key, 3600); // Reset violations count after 1 hour
+
+      if (count >= threshold) {
+        await this.block(ip);
+        this.logger.warn(`IP ${ip} blocked after ${count} violations`);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      this.logger.error(`Failed to record violation for IP ${ip}: ${error}`);
+      return false;
+    }
+  }
+
+  async getViolationCount(ip: string): Promise<number> {
+    try {
+      const key = `${this.violationPrefix}${ip}`;
+      const count = await this.redis.get(key);
+      return count ? parseInt(count, 10) : 0;
+    } catch (error) {
+      this.logger.error(`Failed to get violation count for IP ${ip}: ${error}`);
+      return 0;
+    }
+  }
+
+  async resetViolations(ip: string): Promise<void> {
+    try {
+      const key = `${this.violationPrefix}${ip}`;
+      await this.redis.del(key);
+    } catch (error) {
+      this.logger.error(`Failed to reset violations for IP ${ip}: ${error}`);
     }
   }
 }

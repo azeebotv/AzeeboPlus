@@ -1,0 +1,73 @@
+#!/bin/bash
+set -e
+
+psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
+    CREATE DATABASE auth_db;
+    CREATE DATABASE user_db;
+    CREATE DATABASE wallet_db;
+    CREATE DATABASE payment_db;
+    CREATE DATABASE content_db;
+    CREATE DATABASE media_db;
+    CREATE DATABASE search_db;
+    CREATE DATABASE notification_db;
+    CREATE DATABASE reward_db;
+    CREATE DATABASE analytics_db;
+    CREATE DATABASE recommendation_db;
+    CREATE DATABASE reality_db;
+    CREATE DATABASE movie_db;
+    CREATE DATABASE games_db;
+    CREATE DATABASE comedy_db;
+    CREATE DATABASE sports_db;
+    CREATE DATABASE lifestyle_db;
+    CREATE DATABASE vertical_db;
+    CREATE DATABASE creator_db;
+    CREATE DATABASE support_db;
+    CREATE DATABASE moderation_db;
+    CREATE DATABASE queue_db;
+
+    CREATE USER auth_user WITH PASSWORD '${AUTH_DB_PASSWORD:-auth_dev_password}';
+    CREATE USER user_user WITH PASSWORD '${USER_DB_PASSWORD:-user_dev_password}';
+    CREATE USER wallet_user WITH PASSWORD '${WALLET_DB_PASSWORD:-wallet_dev_password}';
+    CREATE USER payment_user WITH PASSWORD '${PAYMENT_DB_PASSWORD:-payment_dev_password}';
+    CREATE USER content_user WITH PASSWORD '${CONTENT_DB_PASSWORD:-content_dev_password}';
+    CREATE USER media_user WITH PASSWORD '${MEDIA_DB_PASSWORD:-media_dev_password}';
+    CREATE USER search_user WITH PASSWORD '${SEARCH_DB_PASSWORD:-search_dev_password}';
+    CREATE USER notification_user WITH PASSWORD '${NOTIFICATION_DB_PASSWORD:-notification_dev_password}';
+    CREATE USER reward_user WITH PASSWORD '${REWARD_DB_PASSWORD:-reward_dev_password}';
+    CREATE USER analytics_user WITH PASSWORD '${ANALYTICS_DB_PASSWORD:-analytics_dev_password}';
+    CREATE USER recommendation_user WITH PASSWORD '${RECOMMENDATION_DB_PASSWORD:-recommendation_dev_password}';
+    CREATE USER reality_user WITH PASSWORD '${REALITY_DB_PASSWORD:-reality_dev_password}';
+    CREATE USER movie_user WITH PASSWORD '${MOVIE_DB_PASSWORD:-movie_dev_password}';
+    CREATE USER games_user WITH PASSWORD '${GAMES_DB_PASSWORD:-games_dev_password}';
+    CREATE USER comedy_user WITH PASSWORD '${COMEDY_DB_PASSWORD:-comedy_dev_password}';
+    CREATE USER sports_user WITH PASSWORD '${SPORTS_DB_PASSWORD:-sports_dev_password}';
+    CREATE USER lifestyle_user WITH PASSWORD '${LIFESTYLE_DB_PASSWORD:-lifestyle_dev_password}';
+    CREATE USER vertical_user WITH PASSWORD '${VERTICAL_DB_PASSWORD:-vertical_dev_password}';
+    CREATE USER creator_user WITH PASSWORD '${CREATOR_DB_PASSWORD:-creator_dev_password}';
+    CREATE USER support_user WITH PASSWORD '${SUPPORT_DB_PASSWORD:-support_dev_password}';
+    CREATE USER moderation_user WITH PASSWORD '${MODERATION_DB_PASSWORD:-moderation_dev_password}';
+    CREATE USER queue_user WITH PASSWORD '${QUEUE_DB_PASSWORD:-queue_dev_password}';
+
+    GRANT ALL PRIVILEGES ON DATABASE auth_db TO auth_user;
+    GRANT ALL PRIVILEGES ON DATABASE user_db TO user_user;
+    GRANT ALL PRIVILEGES ON DATABASE wallet_db TO wallet_user;
+    GRANT ALL PRIVILEGES ON DATABASE payment_db TO payment_user;
+    GRANT ALL PRIVILEGES ON DATABASE content_db TO content_user;
+    GRANT ALL PRIVILEGES ON DATABASE media_db TO media_user;
+    GRANT ALL PRIVILEGES ON DATABASE search_db TO search_user;
+    GRANT ALL PRIVILEGES ON DATABASE notification_db TO notification_user;
+    GRANT ALL PRIVILEGES ON DATABASE reward_db TO reward_user;
+    GRANT ALL PRIVILEGES ON DATABASE analytics_db TO analytics_user;
+    GRANT ALL PRIVILEGES ON DATABASE recommendation_db TO recommendation_user;
+    GRANT ALL PRIVILEGES ON DATABASE reality_db TO reality_user;
+    GRANT ALL PRIVILEGES ON DATABASE movie_db TO movie_user;
+    GRANT ALL PRIVILEGES ON DATABASE games_db TO games_user;
+    GRANT ALL PRIVILEGES ON DATABASE comedy_db TO comedy_user;
+    GRANT ALL PRIVILEGES ON DATABASE sports_db TO sports_user;
+    GRANT ALL PRIVILEGES ON DATABASE lifestyle_db TO lifestyle_user;
+    GRANT ALL PRIVILEGES ON DATABASE vertical_db TO vertical_user;
+    GRANT ALL PRIVILEGES ON DATABASE creator_db TO creator_user;
+    GRANT ALL PRIVILEGES ON DATABASE support_db TO support_user;
+    GRANT ALL PRIVILEGES ON DATABASE moderation_db TO moderation_user;
+    GRANT ALL PRIVILEGES ON DATABASE queue_db TO queue_user;
+EOSQL

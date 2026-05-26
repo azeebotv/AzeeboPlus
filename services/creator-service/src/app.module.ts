@@ -6,12 +6,14 @@ import { CreatorsModule } from './modules/creators/creators.module';
 import { DatabaseModule } from './modules/database/database.module';
 import { HealthModule } from './modules/health/health.module';
 import { ResponseWrapperInterceptor, ResponseSanitizationInterceptor } from '@azeebo/logger';
+import { RateLimiterModule } from '@azeebo/security';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    RateLimiterModule,
     ThrottlerModule.forRoot([
       {
         ttl: 60000,

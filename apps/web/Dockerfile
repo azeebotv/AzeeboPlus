@@ -2,39 +2,40 @@
 FROM node:20-alpine AS builder
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
+# Install pnpm
+RUN npm install -g pnpm
+
+# Copy all workspace files for pnpm to resolve dependencies
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY packages ./packages
+COPY services ./services
+COPY apps/web ./apps/web
 
 # Install ALL dependencies (including dev for building)
-RUN npm ci
+RUN pnpm install
 
 # Copy source
 COPY . .
 
 # Build application
-RUN npm run build
+RUN pnpm --filter web build
 
 # Production stage
 FROM node:20-alpine AS runner
 WORKDIR /app
 
 # Install runtime dependencies only
-RUN apk add --no-cache curl && \
-    npm config set production true
+RUN apk add --no-cache curl
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S nodejs -u 1001
 
-# Copy package files for production install
-COPY --from=builder /app/package*.json ./
-
-# Install production dependencies only
-RUN npm ci --omit=dev --ignore-scripts
-
-# Copy built application
-COPY --from=builder /app/.next ./.next
-COPY --from=builder /app/public ./public
+COPY package.json pnpm-lock.yaml ./
+RUN npm install -g pnpm
+COPY --from=builder /app/apps/web/.next ./.next
+COPY --from=builder /app/apps/web/public ./public
+COPY --from=builder /app/node_modules ./node_modules
 
 # Change ownership
 RUN chown -R nodejs:nodejs /app

@@ -1,0 +1,29 @@
+# Node modules
+node_modules
+**/node_modules
+
+# Build outputs
+dist
+build
+.next
+*.log
+
+# Git
+.git
+.gitignore
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode
+.idea
+*.swp
+*.swo
+*~

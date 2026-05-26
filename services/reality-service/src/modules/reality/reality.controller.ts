@@ -12,7 +12,6 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
-import { Cache } from '@azeebo/cache';
 import { RateLimitGuard, RateLimit } from '@azeebo/security';
 
 import { RealityService } from './reality.service';
@@ -29,7 +28,6 @@ export class RealityController {
   constructor(private readonly realityService: RealityService) {}
 
   @Get('shows')
-  @Cache({ key: 'reality:shows', ttl: 300 })
   @UseGuards(RateLimitGuard)
   @RateLimit(100, 60000)
   @ApiOperation({ summary: 'List reality shows' })
@@ -39,7 +37,6 @@ export class RealityController {
   }
 
   @Get('shows/:showId')
-  @Cache({ key: 'reality:shows:{showId}', ttl: 300 })
   @UseGuards(RateLimitGuard)
   @RateLimit(200, 60000)
   @ApiOperation({ summary: 'Get show detail' })

@@ -4,20 +4,21 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TerminusModule } from '@nestjs/terminus';
 import { ThrottlerModule } from '@nestjs/throttler';
 
-import { WalletController } from './modules/wallet/wallet.controller';
-import { WalletService } from './modules/wallet/wallet.service';
+import { WalletModule } from './modules/wallet/wallet.module';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { HealthModule } from './modules/health/health.module';
 import { ResponseWrapperInterceptor, ResponseSanitizationInterceptor } from '@azeebo/logger';
 import { MetricsModule } from './modules/metrics/metrics.module';
+import { RateLimiterModule } from '@azeebo/security';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: `.env.${process.env.NODE_ENV || 'development'}`,
+      envFilePath: ['.env', '../../.env'],
     }),
+    RateLimiterModule,
     ThrottlerModule.forRoot([
       {
         ttl: 60000,
@@ -36,12 +37,12 @@ import { MetricsModule } from './modules/metrics/metrics.module';
       }),
       inject: [ConfigService],
     }),
+    WalletModule,
     HealthModule,
     MetricsModule,
   ],
-  controllers: [WalletController],
+  controllers: [],
   providers: [
-    WalletService,
     {
       provide: APP_INTERCEPTOR,
       useClass: ResponseWrapperInterceptor,
@@ -51,6 +52,6 @@ import { MetricsModule } from './modules/metrics/metrics.module';
       useClass: ResponseSanitizationInterceptor,
     },
   ],
-  exports: [WalletService],
+  exports: [],
 })
 export class AppModule {}

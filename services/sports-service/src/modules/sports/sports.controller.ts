@@ -1,7 +1,6 @@
 import { Controller, Get, Post, Body, UseGuards, Request } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
-import { Cache } from '@azeebo/cache';
 
 import { SportsService } from './sports.service';
 import { SportsResponse } from './interfaces/sports-response.interface';
@@ -13,7 +12,6 @@ export class SportsController {
   constructor(private readonly sportsService: SportsService) {}
 
   @Get('home')
-  @Cache({ key: 'sports:home', ttl: 300 })
   @ApiOperation({ summary: 'Sports home' })
   @ApiResponse({ status: 200, description: 'Sports home' })
   async getHome(): Promise<SportsResponse> {
@@ -21,7 +19,6 @@ export class SportsController {
   }
 
   @Get('highlights')
-  @Cache({ key: 'sports:highlights', ttl: 300 })
   @ApiOperation({ summary: 'Sports highlights' })
   @ApiResponse({ status: 200, description: 'Highlights' })
   async getHighlights(): Promise<SportsResponse> {
@@ -29,7 +26,6 @@ export class SportsController {
   }
 
   @Get('fixtures')
-  @Cache({ key: 'sports:fixtures', ttl: 300 })
   @ApiOperation({ summary: 'Fixtures/events' })
   @ApiResponse({ status: 200, description: 'Events' })
   async getFixtures(): Promise<SportsResponse> {

@@ -6,24 +6,21 @@ import { ContentModule } from './modules/content/content.module';
 import { DatabaseModule } from './modules/database/database.module';
 import { HealthModule } from './modules/health/health.module';
 import { ResponseWrapperInterceptor, ResponseSanitizationInterceptor } from '@azeebo/logger';
-import { CacheModule } from '@azeebo/cache';
-import { CacheInterceptor } from '@azeebo/cache';
+import { RateLimiterModule } from '@azeebo/security';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      envFilePath: ['.env', '../../.env'],
     }),
+    RateLimiterModule,
     ThrottlerModule.forRoot([
       {
         ttl: 60000,
         limit: 100,
       },
     ]),
-    CacheModule.forRoot({
-      defaultTTL: 300,
-      prefix: 'content-service',
-    }),
     DatabaseModule,
     ContentModule,
     HealthModule,
@@ -36,10 +33,6 @@ import { CacheInterceptor } from '@azeebo/cache';
     {
       provide: APP_INTERCEPTOR,
       useClass: ResponseSanitizationInterceptor,
-    },
-    {
-      provide: APP_INTERCEPTOR,
-      useClass: CacheInterceptor,
     },
   ],
 })

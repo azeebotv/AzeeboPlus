@@ -1,25 +1,47 @@
-FROM node:20-alpine AS builder
-
+FROM node:20.11.1-alpine3.19 AS builder
 WORKDIR /app
 
-COPY package*.json ./
-RUN npm install -g pnpm && pnpm install
+RUN apk add --no-cache curl && \
+    npm install -g pnpm@9.15.0
 
-COPY . .
-RUN pnpm build
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY packages/*/package.json ./packages/
+COPY services/media-service/package.json ./services/media-service/
 
-FROM node:20-alpine AS production
+RUN pnpm install --frozen-lockfile
 
+COPY services/media-service/src ./services/media-service/src
+COPY services/media-service/tsconfig*.json ./services/media-service/
+COPY services/media-service/prisma ./services/media-service/prisma
+
+RUN pnpm --filter media-service build
+
+FROM node:20.11.1-alpine3.19 AS runner
 WORKDIR /app
 
-RUN addgroup -g 1001 -S nodejs && adduser -S nestjs -u 1001
+LABEL org.opencontainers.image.source="https://github.com/azeebo/azeebo-plus"
+LABEL org.opencontainers.image.description="Azeebo+ Media Service"
+LABEL org.opencontainers.image.licenses="Proprietary"
 
-COPY --from=builder --chown=nestjs:nodejs /app/dist ./dist
-COPY --from=builder --chown=nestjs:nodejs /app/node_modules ./node_modules
-COPY --from=builder --chown=nestjs:nodejs /app/package.json ./
+RUN apk add --no-cache curl && \
+    addgroup -g 1001 -S nodejs && \
+    adduser -S nodejs -u 1001
 
-USER nestjs
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY services/media-service/package.json ./services/media-service/
+
+RUN pnpm install --prod --frozen-lockfile
+
+COPY --from=builder /app/services/media-service/dist ./services/media-service/dist
+COPY --from=builder /app/services/media-service/prisma ./services/media-service/prisma
+
+RUN chown -R nodejs:nodejs /app
+
+USER nodejs
 
 EXPOSE 3019
 
-CMD ["node", "dist/main.js"]
+HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost:3019/health || exit 1
+
+CMD ["node", "services/media-service/dist/src/main.js"]

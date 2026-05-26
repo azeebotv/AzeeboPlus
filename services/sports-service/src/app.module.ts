@@ -8,18 +8,14 @@ import { FixturesModule } from './modules/fixtures/fixtures.module';
 import { FanContestsModule } from './modules/fan-contests/fan-contests.module';
 import { HealthModule } from './modules/health/health.module';
 import { ResponseWrapperInterceptor, ResponseSanitizationInterceptor } from '@azeebo/logger';
-import { CacheModule } from '@azeebo/cache';
-import { CacheInterceptor } from '@azeebo/cache';
+import { RateLimiterModule } from '@azeebo/security';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
     }),
-    CacheModule.forRoot({
-      defaultTTL: 300,
-      prefix: 'sports-service',
-    }),
+    RateLimiterModule,
     DatabaseModule,
     SportsModule,
     PredictionMarketsModule,
@@ -35,10 +31,6 @@ import { CacheInterceptor } from '@azeebo/cache';
     {
       provide: APP_INTERCEPTOR,
       useClass: ResponseSanitizationInterceptor,
-    },
-    {
-      provide: APP_INTERCEPTOR,
-      useClass: CacheInterceptor,
     },
   ],
 })

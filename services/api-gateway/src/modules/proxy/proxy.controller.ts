@@ -19,6 +19,7 @@ import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import { Request, Response } from 'express';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
+import { ConfigService } from '@nestjs/config';
 import { ApiVersioningConfig, API_VERSION_HEADER, DEFAULT_API_VERSION } from '@azeebo/shared-types';
 import { randomUUID } from 'crypto';
 
@@ -28,20 +29,38 @@ interface Endpoint {
   description: string;
 }
 
+interface ServiceRouteConfig {
+  path: string;
+  envKey: string;
+  fallbackUrl: string;
+  supportedVersions: string[];
+  defaultVersion: string;
+  endpoints?: Endpoint[];
+  // Path building strategy:
+  // - 'default': /v{version}/{service}{path} (for auth service)
+  // - 'includes-prefix': service already has /v{version}/{service} in global prefix (for user, wallet, recommendation)
+  // - 'no-prefix': service has no global prefix (for rewards)
+  // - 'auth-service-strategy': auth service has /v{version} as global prefix, and controller at /auth
+  pathStrategy?: 'default' | 'includes-prefix' | 'no-prefix' | 'auth-service-strategy';
+}
+
 interface ServiceRoute {
   path: string;
   targetUrl: string;
   supportedVersions: string[];
   defaultVersion: string;
   endpoints?: Endpoint[];
+  pathStrategy?: 'default' | 'includes-prefix' | 'no-prefix' | 'auth-service-strategy';
 }
 
-export const SERVICE_ROUTES: ServiceRoute[] = [
+const SERVICE_CONFIGS: ServiceRouteConfig[] = [
   {
     path: '/auth',
-    targetUrl: process.env.AUTH_SERVICE_URL || 'http://auth-service:3000',
+    envKey: 'AUTH_SERVICE_URL',
+    fallbackUrl: 'http://auth-service:3000',
     supportedVersions: ['1'],
     defaultVersion: '1',
+    pathStrategy: 'auth-service-strategy',
     endpoints: [
       { method: 'POST', path: '/signup', description: 'Register new user' },
       { method: 'POST', path: '/login', description: 'Login with email/password' },
@@ -65,9 +84,11 @@ export const SERVICE_ROUTES: ServiceRoute[] = [
   },
   {
     path: '/users',
-    targetUrl: process.env.USER_SERVICE_URL || 'http://user-service:3000',
+    envKey: 'USER_SERVICE_URL',
+    fallbackUrl: 'http://user-service:3000',
     supportedVersions: ['1'],
     defaultVersion: '1',
+    pathStrategy: 'includes-prefix',
     endpoints: [
       { method: 'GET', path: '/me', description: 'Get current user profile' },
       { method: 'PATCH', path: '/me', description: 'Update current user profile' },
@@ -89,9 +110,11 @@ export const SERVICE_ROUTES: ServiceRoute[] = [
   },
   {
     path: '/wallet',
-    targetUrl: process.env.WALLET_SERVICE_URL || 'http://wallet-service:3000',
+    envKey: 'WALLET_SERVICE_URL',
+    fallbackUrl: 'http://wallet-service:3000',
     supportedVersions: ['1'],
     defaultVersion: '1',
+    pathStrategy: 'includes-prefix',
     endpoints: [
       { method: 'GET', path: '/', description: 'Get current user\'s wallet' },
       { method: 'GET', path: '/transactions', description: 'Get transaction history' },
@@ -109,26 +132,12 @@ export const SERVICE_ROUTES: ServiceRoute[] = [
     ],
   },
   {
-    path: '/payments',
-    targetUrl: process.env.PAYMENT_SERVICE_URL || 'http://payment-service:3000',
-    supportedVersions: ['1'],
-    defaultVersion: '1',
-    endpoints: [
-      { method: 'POST', path: '/initialize', description: 'Initialize payment' },
-      { method: 'POST', path: '/verify', description: 'Verify payment' },
-      { method: 'GET', path: '/history', description: 'Get payment history' },
-      { method: 'POST', path: '/webhook', description: 'Payment provider webhook' },
-      { method: 'POST', path: '/refund-request', description: 'Request refund' },
-      { method: 'POST', path: '/webhooks/paystack', description: 'Paystack webhook' },
-      { method: 'POST', path: '/webhooks/flutterwave', description: 'Flutterwave webhook' },
-      { method: 'GET', path: '/:id', description: 'Get payment details' },
-    ],
-  },
-  {
     path: '/content',
-    targetUrl: process.env.CONTENT_SERVICE_URL || 'http://content-service:3000',
+    envKey: 'CONTENT_SERVICE_URL',
+    fallbackUrl: 'http://content-service:3000',
     supportedVersions: ['1'],
     defaultVersion: '1',
+    pathStrategy: 'no-prefix',
     endpoints: [
       { method: 'GET', path: '/', description: 'List content (with filters)' },
       { method: 'GET', path: '/:id', description: 'Get content details' },
@@ -141,241 +150,39 @@ export const SERVICE_ROUTES: ServiceRoute[] = [
     ],
   },
   {
-    path: '/notifications',
-    targetUrl: process.env.NOTIFICATION_SERVICE_URL || 'http://notification-service:3000',
+    path: '/recommendation',
+    envKey: 'RECOMMENDATION_SERVICE_URL',
+    fallbackUrl: 'http://recommendation-service:3000',
     supportedVersions: ['1'],
     defaultVersion: '1',
-    endpoints: [
-      { method: 'GET', path: '/', description: 'List notifications' },
-      { method: 'PATCH', path: '/:id/read', description: 'Mark as read' },
-      { method: 'PATCH', path: '/read-all', description: 'Mark all as read' },
-      { method: 'GET', path: '/settings', description: 'Get notification settings' },
-      { method: 'PATCH', path: '/settings', description: 'Update settings' },
-    ],
-  },
-  {
-    path: '/rewards',
-    targetUrl: process.env.REWARD_SERVICE_URL || 'http://reward-service:3000',
-    supportedVersions: ['1'],
-    defaultVersion: '1',
-    endpoints: [
-      { method: 'GET', path: '/account', description: 'Get reward account' },
-      { method: 'POST', path: '/earn', description: 'Record reward activity' },
-      { method: 'GET', path: '/balance', description: 'Get points balance' },
-      { method: 'GET', path: '/history', description: 'Get reward history' },
-      { method: 'POST', path: '/redeem', description: 'Redeem rewards' },
-    ],
-  },
-  {
-    path: '/search',
-    targetUrl: process.env.SEARCH_SERVICE_URL || 'http://search-service:3000',
-    supportedVersions: ['1'],
-    defaultVersion: '1',
-    endpoints: [
-      { method: 'GET', path: '/', description: 'Search content' },
-      { method: 'GET', path: '/suggestions', description: 'Get search suggestions' },
-      { method: 'GET', path: '/trending', description: 'Get trending searches' },
-    ],
-  },
-  {
-    path: '/analytics',
-    targetUrl: process.env.ANALYTICS_SERVICE_URL || 'http://analytics-service:3000',
-    supportedVersions: ['1'],
-    defaultVersion: '1',
-    endpoints: [
-      { method: 'POST', path: '/events', description: 'Track events' },
-      { method: 'GET', path: '/funnels', description: 'Get funnel analytics' },
-      { method: 'GET', path: '/cohorts', description: 'Get cohort analytics' },
-      { method: 'GET', path: '/kpis', description: 'Get universe KPIs' },
-      { method: 'GET', path: '/realtime', description: 'Get realtime stats' },
-    ],
-  },
-  {
-    path: '/recommendations',
-    targetUrl: process.env.RECOMMENDATION_SERVICE_URL || 'http://recommendation-service:3000',
-    supportedVersions: ['1'],
-    defaultVersion: '1',
+    pathStrategy: 'includes-prefix',
     endpoints: [
       { method: 'GET', path: '/content', description: 'Get content recommendations' },
       { method: 'GET', path: '/creators', description: 'Get creator recommendations' },
       { method: 'GET', path: '/cross-universe', description: 'Get cross-universe recommendations' },
       { method: 'GET', path: '/trending', description: 'Get trending content' },
+      { method: 'GET', path: '/user-segment', description: 'Get user segment' },
+      { method: 'GET', path: '/creator-score', description: 'Get creator score' },
+      { method: 'GET', path: '/churn-risk', description: 'Get churn risk assessment' },
+      { method: 'GET', path: '/monetization-insights', description: 'Get monetization insights' },
+      { method: 'GET', path: '/fraud-risk', description: 'Assess fraud risk' },
+      { method: 'GET', path: '/personalized-feed', description: 'Get personalized feed' },
     ],
   },
   {
-    path: '/creators',
-    targetUrl: process.env.CREATOR_SERVICE_URL || 'http://creator-service:3018',
+    path: '/rewards',
+    envKey: 'REWARD_SERVICE_URL',
+    fallbackUrl: 'http://reward-service:3000',
     supportedVersions: ['1'],
     defaultVersion: '1',
+    pathStrategy: 'no-prefix',
     endpoints: [
-      { method: 'POST', path: '/onboard', description: 'Start creator onboarding' },
-      { method: 'GET', path: '/me', description: 'Get current creator profile' },
-      { method: 'PATCH', path: '/me', description: 'Update creator profile' },
-      { method: 'GET', path: '/dashboard', description: 'Get creator dashboard' },
-      { method: 'GET', path: '/stats', description: 'Get creator stats' },
-      { method: 'GET', path: '/earnings', description: 'Get earnings' },
-      { method: 'GET', path: '/content', description: 'Get creator content' },
-      { method: 'POST', path: '/content', description: 'Create creator content' },
-      { method: 'POST', path: '/payout-request', description: 'Request payout' },
-    ],
-  },
-  {
-    path: '/lifestyle',
-    targetUrl: process.env.LIFESTYLE_SERVICE_URL || 'http://lifestyle-service:3016',
-    supportedVersions: ['1'],
-    defaultVersion: '1',
-    endpoints: [
-      { method: 'GET', path: '/feed', description: 'Get lifestyle feed' },
-      { method: 'GET', path: '/categories', description: 'Get categories' },
-      { method: 'GET', path: '/trending', description: 'Get trending content' },
-    ],
-  },
-  {
-    path: '/vertical',
-    targetUrl: process.env.VERTICAL_SERVICE_URL || 'http://vertical-service:3017',
-    supportedVersions: ['1'],
-    defaultVersion: '1',
-    endpoints: [
-      { method: 'GET', path: '/feed', description: 'Get vertical feed' },
-      { method: 'GET', path: '/categories', description: 'Get categories' },
-    ],
-  },
-  {
-    path: '/reality',
-    targetUrl: process.env.REALITY_SERVICE_URL || 'http://reality-service:3010',
-    supportedVersions: ['1'],
-    defaultVersion: '1',
-    endpoints: [
-      { method: 'GET', path: '/shows', description: 'List reality shows' },
-      { method: 'GET', path: '/shows/:id', description: 'Get show details' },
-      { method: 'GET', path: '/shows/:id/contestants', description: 'Get contestants' },
-      { method: 'POST', path: '/shows/:id/vote', description: 'Vote for contestant' },
-      { method: 'GET', path: '/shows/:id/leaderboard', description: 'Get leaderboard' },
-    ],
-  },
-  {
-    path: '/games',
-    targetUrl: process.env.GAMES_SERVICE_URL || 'http://games-service:3012',
-    supportedVersions: ['1'],
-    defaultVersion: '1',
-    endpoints: [
-      { method: 'GET', path: '/', description: 'List games' },
-      { method: 'GET', path: '/:id', description: 'Get game details' },
-      { method: 'POST', path: '/:id/play', description: 'Start game session' },
-      { method: 'GET', path: '/:id/leaderboard', description: 'Get game leaderboard' },
-      { method: 'GET', path: '/tournaments', description: 'List tournaments' },
-      { method: 'POST', path: '/tournaments/:id/join', description: 'Join tournament' },
-    ],
-  },
-  {
-    path: '/comedy',
-    targetUrl: process.env.COMEDY_SERVICE_URL || 'http://comedy-service:3013',
-    supportedVersions: ['1'],
-    defaultVersion: '1',
-    endpoints: [
-      { method: 'GET', path: '/specials', description: 'List comedy specials' },
-      { method: 'GET', path: '/specials/:id', description: 'Get special details' },
-      { method: 'GET', path: '/feed', description: 'Get comedy feed' },
-      { method: 'POST', path: '/specials/:id/rate', description: 'Rate a special' },
-    ],
-  },
-  {
-    path: '/sports',
-    targetUrl: process.env.SPORTS_SERVICE_URL || 'http://sports-service:3014',
-    supportedVersions: ['1'],
-    defaultVersion: '1',
-    endpoints: [
-      { method: 'GET', path: '/fixtures', description: 'List fixtures' },
-      { method: 'GET', path: '/fixtures/:id', description: 'Get fixture details' },
-      { method: 'GET', path: '/predictions', description: 'Get prediction markets' },
-      { method: 'POST', path: '/predictions', description: 'Place prediction' },
-      { method: 'GET', path: '/fan-contests', description: 'Get fan contests' },
-      { method: 'POST', path: '/fan-contests/:id/enter', description: 'Enter contest' },
-    ],
-  },
-  {
-    path: '/movies',
-    targetUrl: process.env.MOVIE_SERVICE_URL || 'http://movie-service:3011',
-    supportedVersions: ['1'],
-    defaultVersion: '1',
-    endpoints: [
-      { method: 'GET', path: '/', description: 'List movies' },
-      { method: 'GET', path: '/:id', description: 'Get movie details' },
-      { method: 'GET', path: '/cinema-passes', description: 'Get cinema passes' },
-      { method: 'POST', path: '/rent', description: 'Rent a movie' },
-      { method: 'GET', path: '/filmmakers', description: 'List filmmakers' },
-      { method: 'POST', path: '/filmmakers/project', description: 'Create project' },
-    ],
-  },
-  {
-    path: '/media',
-    targetUrl: process.env.MEDIA_SERVICE_URL || 'http://media-service:3019',
-    supportedVersions: ['1'],
-    defaultVersion: '1',
-    endpoints: [
-      { method: 'POST', path: '/upload', description: 'Upload media file' },
-      { method: 'GET', path: '/:id', description: 'Get media details' },
-      { method: 'DELETE', path: '/:id', description: 'Delete media' },
-      { method: 'POST', path: '/:id/process', description: 'Trigger processing' },
-    ],
-  },
-  {
-    path: '/support',
-    targetUrl: process.env.SUPPORT_SERVICE_URL || 'http://support-service:3020',
-    supportedVersions: ['1'],
-    defaultVersion: '1',
-    endpoints: [
-      { method: 'POST', path: '/tickets', description: 'Create support ticket' },
-      { method: 'GET', path: '/tickets', description: 'List all tickets (admin)' },
-      { method: 'GET', path: '/tickets/my', description: 'Get my tickets' },
-      { method: 'GET', path: '/tickets/:id', description: 'Get ticket by ID' },
-      { method: 'PATCH', path: '/tickets/:id/status', description: 'Update ticket status' },
-      { method: 'POST', path: '/tickets/:id/messages', description: 'Add message to ticket' },
-      { method: 'POST', path: '/tickets/:id/assign', description: 'Assign ticket' },
-      { method: 'POST', path: '/tickets/:id/escalate', description: 'Escalate ticket' },
-      { method: 'POST', path: '/tickets/:id/close', description: 'Close ticket' },
-      { method: 'GET', path: '/refunds/pending', description: 'Get pending refunds (admin)' },
-      { method: 'GET', path: '/refunds/my', description: 'Get my refunds' },
-      { method: 'GET', path: '/refunds/:id', description: 'Get refund by ID' },
-      { method: 'PATCH', path: '/refunds/:id/process', description: 'Process refund (admin)' },
-      { method: 'PATCH', path: '/refunds/:id/reject', description: 'Reject refund (admin)' },
-      { method: 'GET', path: '/chargebacks/pending', description: 'Get pending chargebacks (admin)' },
-      { method: 'GET', path: '/chargebacks/my', description: 'Get my chargebacks' },
-      { method: 'POST', path: '/chargebacks/:id/evidence', description: 'Submit evidence' },
-      { method: 'PATCH', path: '/chargebacks/:id/resolve', description: 'Resolve chargeback (admin)' },
-      { method: 'GET', path: '/appeals/pending', description: 'Get pending appeals (admin)' },
-      { method: 'GET', path: '/appeals/my', description: 'Get my appeals' },
-      { method: 'PATCH', path: '/appeals/:id/decide', description: 'Decide appeal (admin)' },
-      { method: 'GET', path: '/takedowns/pending', description: 'Get pending takedowns (admin)' },
-      { method: 'PATCH', path: '/takedowns/:id/decide', description: 'Decide takedown (admin)' },
-      { method: 'GET', path: '/disputes/pending', description: 'Get pending disputes (admin)' },
-      { method: 'GET', path: '/disputes/my', description: 'Get my disputes (creator)' },
-      { method: 'PATCH', path: '/disputes/:id/resolve', description: 'Resolve dispute (admin)' },
-      { method: 'GET', path: '/suspensions/active', description: 'Get active suspensions (admin)' },
-      { method: 'GET', path: '/suspensions/my', description: 'Get my suspensions' },
-      { method: 'POST', path: '/suspensions/:id/reinstate', description: 'Reinstate user (admin)' },
-      { method: 'POST', path: '/suspensions/:id/lift', description: 'Lift suspension early (admin)' },
-      { method: 'GET', path: '/dashboard/stats', description: 'Get support stats (admin)' },
-      { method: 'GET', path: '/dashboard/recent', description: 'Get recent activity (admin)' },
-    ],
-  },
-  {
-    path: '/admin',
-    targetUrl: process.env.ADMIN_SERVICE_URL || process.env.USER_SERVICE_URL || 'http://user-service:3000',
-    supportedVersions: ['1'],
-    defaultVersion: '1',
-    endpoints: [
-      { method: 'GET', path: '/users', description: 'List all users' },
-      { method: 'PATCH', path: '/users/:id', description: 'Update user' },
-      { method: 'POST', path: '/users/:id/suspend', description: 'Suspend user' },
-      { method: 'GET', path: '/content', description: 'List content (all)' },
-      { method: 'PATCH', path: '/content/:id/moderate', description: 'Moderate content' },
-      { method: 'GET', path: '/moderation/reports', description: 'Get reports' },
-      { method: 'PATCH', path: '/moderation/reports/:id', description: 'Resolve report' },
-      { method: 'GET', path: '/analytics', description: 'Get admin analytics' },
-      { method: 'GET', path: '/audit-logs', description: 'Get audit logs' },
-      { method: 'GET', path: '/creators/verification', description: 'Get verification requests' },
-      { method: 'PATCH', path: '/creators/:id/verify', description: 'Verify creator' },
+      { method: 'GET', path: '/', description: 'Get user rewards' },
+      { method: 'POST', path: '/earn', description: 'Earn reward points' },
+      { method: 'POST', path: '/redeem', description: 'Redeem reward points' },
+      { method: 'GET', path: '/history', description: 'Get reward history' },
+      { method: 'GET', path: '/levels', description: 'Get available reward levels' },
+      { method: 'POST', path: '/claim', description: 'Claim a reward' },
     ],
   },
 ];
@@ -387,7 +194,10 @@ export class ProxyController {
   private readonly REQUEST_ID_HEADER = 'X-Request-ID';
   private readonly UPSTREAM_TIMEOUT = 30000;
 
-  constructor(@Inject(CACHE_MANAGER) private cacheManager: Cache) {}
+  constructor(
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
+    private configService: ConfigService
+  ) {}
 
   @Get(':version/:service/*')
   @HttpCode(HttpStatus.OK)
@@ -426,7 +236,7 @@ export class ProxyController {
       return;
     }
 
-    const response = await this.forwardRequest(req, res, route.targetUrl, version, requestId);
+    const response = await this.forwardRequest(req, res, route.targetUrl, version, requestId, route);
     if (response && typeof response === 'object') {
       await this.cacheManager.set(cacheKey, response, 300000);
       res.setHeader(API_VERSION_HEADER, version);
@@ -464,7 +274,7 @@ export class ProxyController {
 
     res.setHeader(API_VERSION_HEADER, version);
     res.setHeader(this.REQUEST_ID_HEADER, requestId);
-    await this.forwardRequest(req, res, route.targetUrl, version, requestId);
+    await this.forwardRequest(req, res, route.targetUrl, version, requestId, route);
   }
 
   @Put(':version/:service/*')
@@ -496,7 +306,7 @@ export class ProxyController {
 
     res.setHeader(API_VERSION_HEADER, version);
     res.setHeader(this.REQUEST_ID_HEADER, requestId);
-    await this.forwardRequest(req, res, route.targetUrl, version, requestId);
+    await this.forwardRequest(req, res, route.targetUrl, version, requestId, route);
   }
 
   @Patch(':version/:service/*')
@@ -528,7 +338,7 @@ export class ProxyController {
 
     res.setHeader(API_VERSION_HEADER, version);
     res.setHeader(this.REQUEST_ID_HEADER, requestId);
-    await this.forwardRequest(req, res, route.targetUrl, version, requestId);
+    await this.forwardRequest(req, res, route.targetUrl, version, requestId, route);
   }
 
   @Delete(':version/:service/*')
@@ -560,7 +370,7 @@ export class ProxyController {
 
     res.setHeader(API_VERSION_HEADER, version);
     res.setHeader(this.REQUEST_ID_HEADER, requestId);
-    await this.forwardRequest(req, res, route.targetUrl, version, requestId);
+    await this.forwardRequest(req, res, route.targetUrl, version, requestId, route);
   }
 
   @Get(':service/*')
@@ -599,7 +409,8 @@ export class ProxyController {
       res,
       route.targetUrl,
       validatedVersion,
-      requestId
+      requestId,
+      route
     );
     if (response && typeof response === 'object') {
       await this.cacheManager.set(cacheKey, response, 300000);
@@ -632,7 +443,7 @@ export class ProxyController {
 
     res.setHeader(API_VERSION_HEADER, validatedVersion);
     res.setHeader(this.REQUEST_ID_HEADER, requestId);
-    await this.forwardRequest(req, res, route.targetUrl, validatedVersion, requestId);
+    await this.forwardRequest(req, res, route.targetUrl, validatedVersion, requestId, route);
   }
 
   @Put(':service/*')
@@ -658,7 +469,7 @@ export class ProxyController {
 
     res.setHeader(API_VERSION_HEADER, validatedVersion);
     res.setHeader(this.REQUEST_ID_HEADER, requestId);
-    await this.forwardRequest(req, res, route.targetUrl, validatedVersion, requestId);
+    await this.forwardRequest(req, res, route.targetUrl, validatedVersion, requestId, route);
   }
 
   @Patch(':service/*')
@@ -684,7 +495,7 @@ export class ProxyController {
 
     res.setHeader(API_VERSION_HEADER, validatedVersion);
     res.setHeader(this.REQUEST_ID_HEADER, requestId);
-    await this.forwardRequest(req, res, route.targetUrl, validatedVersion, requestId);
+    await this.forwardRequest(req, res, route.targetUrl, validatedVersion, requestId, route);
   }
 
   @Delete(':service/*')
@@ -710,7 +521,7 @@ export class ProxyController {
 
     res.setHeader(API_VERSION_HEADER, validatedVersion);
     res.setHeader(this.REQUEST_ID_HEADER, requestId);
-    await this.forwardRequest(req, res, route.targetUrl, validatedVersion, requestId);
+    await this.forwardRequest(req, res, route.targetUrl, validatedVersion, requestId, route);
   }
 
   @Get('routes')
@@ -724,21 +535,48 @@ export class ProxyController {
       defaultVersion: string;
     }[];
   } {
+    // Development: Use localhost URLs directly
+    const devUrls: Record<string, string> = {
+      AUTH_SERVICE_URL: 'http://localhost:3001',
+      USER_SERVICE_URL: 'http://localhost:3002',
+      WALLET_SERVICE_URL: 'http://localhost:3003',
+      CONTENT_SERVICE_URL: 'http://localhost:3004',
+      RECOMMENDATION_SERVICE_URL: 'http://localhost:3017',
+      REWARD_SERVICE_URL: 'http://localhost:3018',
+    };
+    
     return {
       success: true,
-      data: SERVICE_ROUTES.map((r) => ({
+      data: SERVICE_CONFIGS.map((r) => ({
         path: r.path,
-        targetUrl: r.targetUrl,
+        targetUrl: devUrls[r.envKey] || r.fallbackUrl,
         supportedVersions: r.supportedVersions,
         defaultVersion: r.defaultVersion,
+        pathStrategy: r.pathStrategy,
       })),
     };
   }
 
   private findRoute(service: string): ServiceRoute | undefined {
-    return SERVICE_ROUTES.find(
+    // Development: Use localhost URLs directly
+    const devUrls: Record<string, string> = {
+      AUTH_SERVICE_URL: 'http://localhost:3001',
+      USER_SERVICE_URL: 'http://localhost:3002',
+      WALLET_SERVICE_URL: 'http://localhost:3003',
+      CONTENT_SERVICE_URL: 'http://localhost:3004',
+      RECOMMENDATION_SERVICE_URL: 'http://localhost:3017',
+      REWARD_SERVICE_URL: 'http://localhost:3018',
+    };
+    
+    const config = SERVICE_CONFIGS.find(
       (r) => r.path === `/${service}` || r.path.startsWith(`/${service}/`)
     );
+    if (!config) return undefined;
+    return {
+      ...config,
+      targetUrl: devUrls[config.envKey] || config.fallbackUrl,
+      pathStrategy: config.pathStrategy || 'default',
+    };
   }
 
   private validateVersion(version: string, route: ServiceRoute): boolean {
@@ -790,7 +628,7 @@ export class ProxyController {
   }
 
   private isUserSpecificEndpoint(path: string): boolean {
-    const userSpecificPatterns = ['/wallet/', '/notifications', '/rewards', '/creator/', '/users/'];
+    const userSpecificPatterns = ['/wallet/', '/notifications', '/rewards', '/creator/', '/users/', '/recommendations/', '/recommendation/'];
     return userSpecificPatterns.some((pattern) => path.includes(pattern));
   }
 
@@ -799,13 +637,40 @@ export class ProxyController {
     res: Response,
     targetUrl: string,
     version: string = DEFAULT_API_VERSION,
-    requestId: string
+    requestId: string,
+    route: ServiceRoute
   ): Promise<unknown> {
     const service = req.params['service'];
     const path = req.params[0] ? `/${req.params[0]}` : '';
     const queryString = req.url.includes('?') ? req.url.split('?')[1] : '';
-    const targetPath = `/v${version}/${service}${path}${queryString ? `?${queryString}` : ''}`;
+    
+    let targetPath: string;
+    switch (route.pathStrategy) {
+      case 'auth-service-strategy':
+        // Auth service has /v{version} as global prefix, and controllers are at /auth, /health, etc.
+        if (path.startsWith('/health') || path.startsWith('/live') || path.startsWith('/ready')) {
+          targetPath = `/v${version}${path}${queryString ? `?${queryString}` : ''}`;
+        } else {
+          targetPath = `/v${version}/${service}${path}${queryString ? `?${queryString}` : ''}`;
+        }
+        break;
+      case 'includes-prefix':
+        // Service already has /v{version}/{service} as global prefix
+        targetPath = `/v${version}/${service}${path}${queryString ? `?${queryString}` : ''}`;
+        break;
+      case 'no-prefix':
+        // Service has no global prefix, just use /{service}{path}
+        targetPath = `/${service}${path}${queryString ? `?${queryString}` : ''}`;
+        break;
+      case 'default':
+      default:
+        // Default strategy: /v{version}/{service}{path}
+        targetPath = `/v${version}/${service}${path}${queryString ? `?${queryString}` : ''}`;
+        break;
+    }
+    
     const target = `${targetUrl}${targetPath}`;
+    this.logger.log(`Forwarding request to ${target}`);
 
     try {
       const headers: Record<string, string> = {};

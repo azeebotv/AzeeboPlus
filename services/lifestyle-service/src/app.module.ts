@@ -11,12 +11,14 @@ import { CelebrityModule } from './modules/celebrity/celebrity.module';
 import { NightlifeModule } from './modules/nightlife/nightlife.module';
 import { InfluencerModule } from './modules/influencer/influencer.module';
 import { FeedModule } from './modules/feed/feed.module';
+import { RateLimiterModule } from '@azeebo/security';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    RateLimiterModule,
     DatabaseModule,
     HealthModule,
     StoriesModule,

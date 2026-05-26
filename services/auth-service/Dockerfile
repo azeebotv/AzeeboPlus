@@ -1,52 +1,47 @@
-# Build stage
-FROM node:20-alpine AS builder
+FROM node:20.11.1-alpine3.19 AS builder
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
-
-# Install ALL dependencies (including dev for building)
-RUN npm ci
-
-# Copy source
-COPY . .
-
-# Build application
-RUN npm run build
-
-# Production stage
-FROM node:20-alpine AS runner
-WORKDIR /app
-
-# Install runtime dependencies only
 RUN apk add --no-cache curl && \
-    npm config set production true
+    npm install -g pnpm@9.15.0
 
-# Create non-root user
-RUN addgroup -g 1001 -S nodejs && \
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY packages/*/package.json ./packages/
+COPY services/auth-service/package.json ./services/auth-service/
+
+RUN pnpm install --frozen-lockfile
+
+COPY services/auth-service/src ./services/auth-service/src
+COPY services/auth-service/tsconfig*.json ./services/auth-service/
+COPY services/auth-service/prisma ./services/auth-service/prisma
+
+RUN pnpm --filter auth-service build
+
+FROM node:20.11.1-alpine3.19 AS runner
+WORKDIR /app
+
+LABEL org.opencontainers.image.source="https://github.com/azeebo/azeebo-plus"
+LABEL org.opencontainers.image.description="Azeebo+ Auth Service"
+LABEL org.opencontainers.image.licenses="Proprietary"
+
+RUN apk add --no-cache curl && \
+    addgroup -g 1001 -S nodejs && \
     adduser -S nodejs -u 1001
 
-# Copy package files for production install
-COPY --from=builder /app/package*.json ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY services/auth-service/package.json ./services/auth-service/
 
-# Install production dependencies only
-RUN npm ci --omit=dev --ignore-scripts
+RUN pnpm install --prod --frozen-lockfile
 
-# Copy built application
-COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/services/auth-service/dist ./services/auth-service/dist
+COPY --from=builder /app/services/auth-service/prisma ./services/auth-service/prisma
 
-# Change ownership
 RUN chown -R nodejs:nodejs /app
 
-# Switch to non-root user
 USER nodejs
 
-# Expose port
 EXPOSE 3000
 
-# Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
     CMD wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1
 
-# Start application
-CMD ["node", "dist/main.js"]
+CMD ["node", "services/auth-service/dist/src/main.js"]

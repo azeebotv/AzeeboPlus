@@ -26,7 +26,7 @@ export class SharedJwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: configService.get<string>('JWT_SECRET'),
+      secretOrKey: configService.get<string>('JWT_ACCESS_SECRET'),
       audience: configService.get<string>('JWT_AUDIENCE', 'azeebo-api'),
       issuer: configService.get<string>('JWT_ISSUER', 'azeebo-auth-service'),
     });

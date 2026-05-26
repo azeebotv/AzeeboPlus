@@ -1,37 +1,47 @@
-FROM node:20-alpine AS builder
-
+FROM node:20.11.1-alpine3.19 AS builder
 WORKDIR /app
 
-COPY package*.json ./
-COPY prisma ./prisma/
+RUN apk add --no-cache curl && \
+    npm install -g pnpm@9.15.0
 
-RUN npm install
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY packages/*/package.json ./packages/
+COPY services/vertical-service/package.json ./services/vertical-service/
 
-RUN npx prisma generate
+RUN pnpm install --frozen-lockfile
 
-COPY . .
+COPY services/vertical-service/src ./services/vertical-service/src
+COPY services/vertical-service/tsconfig*.json ./services/vertical-service/
+COPY services/vertical-service/prisma ./services/vertical-service/prisma
 
-RUN npm run build
+RUN pnpm --filter vertical-service build
 
-FROM node:20-alpine AS production
-
+FROM node:20.11.1-alpine3.19 AS runner
 WORKDIR /app
 
-RUN addgroup -g 1001 -S nodejs && \
+LABEL org.opencontainers.image.source="https://github.com/azeebo/azeebo-plus"
+LABEL org.opencontainers.image.description="Azeebo+ Vertical Service"
+LABEL org.opencontainers.image.licenses="Proprietary"
+
+RUN apk add --no-cache curl && \
+    addgroup -g 1001 -S nodejs && \
     adduser -S nodejs -u 1001
 
-COPY package*.json ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY services/vertical-service/package.json ./services/vertical-service/
 
-RUN npm install --only=production
+RUN pnpm install --prod --frozen-lockfile
 
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
-COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/services/vertical-service/dist ./services/vertical-service/dist
+COPY --from=builder /app/services/vertical-service/prisma ./services/vertical-service/prisma
 
 RUN chown -R nodejs:nodejs /app
 
 USER nodejs
 
-EXPOSE 3017
+EXPOSE 3021
 
-CMD ["node", "dist/main.js"]
+HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost:3021/health || exit 1
+
+CMD ["node", "services/vertical-service/dist/src/main.js"]

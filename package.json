@@ -18,7 +18,7 @@
     "typecheck": "pnpm -r exec tsc --noEmit",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "clean": "pnpm -r clean && rm -rf node_modules",
-    "dev": "concurrently \"pnpm --filter api-gateway dev\" \"pnpm --filter auth-service dev\" \"pnpm --filter user-service dev\" \"pnpm --filter wallet-service dev\" \"pnpm --filter content-service dev\""
+    "dev": "concurrently \"PORT=3000 pnpm --filter api-gateway start:dev\" \"PORT=3001 pnpm --filter auth-service start:dev\" \"PORT=3002 pnpm --filter user-service start:dev\" \"PORT=3003 pnpm --filter wallet-service start:dev\" \"PORT=3004 pnpm --filter content-service start:dev\" \"PORT=3005 pnpm --filter search-service start:dev\" \"PORT=3006 pnpm --filter notification-service start:dev\" \"PORT=3007 pnpm --filter payment-service start:dev\" \"PORT=3008 pnpm --filter analytics-service start:dev\" \"PORT=3009 pnpm --filter creator-service start:dev\" \"PORT=3010 pnpm --filter movie-service start:dev\" \"PORT=3011 pnpm --filter comedy-service start:dev\" \"PORT=3012 pnpm --filter sports-service start:dev\" \"PORT=3013 pnpm --filter reality-service start:dev\" \"PORT=3014 pnpm --filter games-service start:dev\" \"PORT=3015 pnpm --filter lifestyle-service start:dev\" \"PORT=3016 pnpm --filter vertical-service start:dev\" \"PORT=3017 pnpm --filter recommendation-service start:dev\" \"PORT=3018 pnpm --filter reward-service start:dev\" \"PORT=3019 pnpm --filter moderation-service start:dev\" \"PORT=3020 pnpm --filter support-service start:dev\" \"PORT=3021 pnpm --filter media-service start:dev\" \"PORT=3022 pnpm --filter queue-service start:dev\""
   },
   "devDependencies": {
     "@playwright/test": "^1.59.1",
@@ -34,14 +34,27 @@
     "typescript": "^5.6.0"
   },
   "engines": {
-    "node": ">=20.0.0",
-    "pnpm": ">=7.0.0"
+    "node": ">=20.11.1 <21.0.0",
+    "pnpm": ">=9.0.0 <10.0.0"
   },
   "pnpm": {
     "overrides": {
       "react": "18.3.1",
       "react-dom": "18.3.1"
-    }
+    },
+    "onlyBuiltDependencies": [
+      "@nestjs/core",
+      "@prisma/client",
+      "@prisma/engines",
+      "@scarf/scarf",
+      "bcrypt",
+      "esbuild",
+      "msgpackr-extract",
+      "prisma",
+      "protobufjs",
+      "sharp",
+      "unrs-resolver"
+    ]
   },
   "lint-staged": {
     "*.{ts,tsx}": [

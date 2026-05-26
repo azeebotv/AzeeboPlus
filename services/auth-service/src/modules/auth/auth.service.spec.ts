@@ -39,8 +39,8 @@ describe('AuthService', () => {
   };
 
   beforeEach(async () => {
-    process.env.JWT_SECRET = 'test-jwt-secret';
-    process.env.REFRESH_TOKEN_SECRET = 'test-refresh-secret';
+    process.env.JWT_ACCESS_SECRET = 'test-jwt-secret-for-access-tokens-min-32-chars';
+    process.env.JWT_REFRESH_SECRET = 'test-refresh-secret-for-refresh-tokens-min-32';
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -106,8 +106,8 @@ describe('AuthService', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
-    delete process.env.JWT_SECRET;
-    delete process.env.REFRESH_TOKEN_SECRET;
+    delete process.env.JWT_ACCESS_SECRET;
+    delete process.env.JWT_REFRESH_SECRET;
   });
 
   describe('register', () => {

@@ -19,12 +19,12 @@ export const environmentSchema = z.object({
   REDIS_PORT: z.coerce.number().default(6379),
 
   // JWT
-  JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters'),
-  JWT_EXPIRES_IN: z.string().default('30m'),
+  JWT_ACCESS_SECRET: z.string().min(32, 'JWT_ACCESS_SECRET must be at least 32 characters'),
+  JWT_REFRESH_SECRET: z.string().min(32, 'JWT_REFRESH_SECRET must be at least 32 characters'),
+  JWT_EXPIRES_IN: z.string().default('15m'),
   JWT_REFRESH_EXPIRES_IN: z.string().default('7d'),
   JWT_ISSUER: z.string().default('azeebo-plus'),
   JWT_AUDIENCE: z.string().default('azeebo-plus-users'),
-  REFRESH_TOKEN_SECRET: z.string().min(32, 'REFRESH_TOKEN_SECRET must be at least 32 characters'),
 
   // API Gateway
   API_GATEWAY_PORT: z.coerce.number().default(3013),
@@ -100,12 +100,12 @@ function validateProductionEnvironment(env: EnvironmentVariables): void {
   const errors: string[] = [];
 
   // Check JWT secret strength
-  if (env.JWT_SECRET.length < 64) {
-    errors.push('JWT_SECRET should be at least 64 characters in production');
+  if (env.JWT_ACCESS_SECRET.length < 64) {
+    errors.push('JWT_ACCESS_SECRET should be at least 64 characters in production');
   }
 
-  if (env.REFRESH_TOKEN_SECRET.length < 64) {
-    errors.push('REFRESH_TOKEN_SECRET should be at least 64 characters in production');
+  if (env.JWT_REFRESH_SECRET.length < 64) {
+    errors.push('JWT_REFRESH_SECRET should be at least 64 characters in production');
   }
 
   // Check for localhost database in production

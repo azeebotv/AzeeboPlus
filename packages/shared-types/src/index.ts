@@ -493,6 +493,9 @@ export type { ApiVersionOptions, VersionedResponse } from './api-versioning';
 export { environmentSchema, validateEnvironment } from './env-validation';
 export type { EnvironmentVariables } from './env-validation';
 
+// Secret Validation
+export { validateStartup, isPlaceholderSecret, validateNoPlaceholders } from './secret-validation';
+
 // Universe-specific types
 export interface UniverseKpi {
   universe: Universe;

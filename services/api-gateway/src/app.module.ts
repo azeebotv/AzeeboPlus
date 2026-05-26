@@ -10,6 +10,14 @@ import { ProxyModule } from './modules/proxy/proxy.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      envFilePath: [
+        `${__dirname}/../../.env`,
+        `${__dirname}/../../../.env`,
+        `${process.cwd()}/.env`,
+        `.env.${process.env.NODE_ENV || 'development'}`,
+        '.env',
+      ],
+      cache: true,
     }),
     CacheModule.register({
       isGlobal: true,

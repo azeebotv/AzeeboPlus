@@ -9,6 +9,41 @@ export const universeColors = {
   sports: { primary: '#E74C3C', secondary: '#EC7063' },
 };
 
+export type ColorScale = {
+  50: string;
+  100: string;
+  200: string;
+  300: string;
+  400: string;
+  500: string;
+  600: string;
+  700: string;
+  800: string;
+  900: string;
+};
+
+export type ThemeColors = {
+  background: string;
+  surface: string;
+  card: string;
+  border: string;
+  text: string;
+  textSecondary: string;
+  textMuted: string;
+};
+
+export type DesignTokens = {
+  colors: typeof colors;
+  spacing: typeof spacing;
+  typography: typeof typography;
+  borderRadius: typeof borderRadius;
+  shadows: typeof shadows;
+  transitions: typeof transitions;
+  zIndex: typeof zIndex;
+  themes: typeof themes;
+  gradients: typeof gradients;
+};
+
 export const colors = {
   primary: {
     50: '#f5f3ff',
@@ -258,3 +293,95 @@ export const gradients = {
   success: 'linear-gradient(135deg, #22C55E 0%, #16A34A 100%)',
   dark: 'linear-gradient(180deg, #1a1a1a 0%, #0a0a0a 100%)',
 };
+
+/**
+ * Generates CSS custom properties string for use in stylesheets
+ * Usage: inject into :root or html selector
+ */
+export function generateCSSVariables(): string {
+  const cssVars: string[] = [];
+
+  // Colors
+  Object.entries(colors).forEach(([colorName, colorValue]) => {
+    if (typeof colorValue === 'object') {
+      Object.entries(colorValue).forEach(([shade, hex]) => {
+        cssVars.push(`  --color-${colorName}-${shade}: ${hex};`);
+      });
+    } else {
+      cssVars.push(`  --color-${colorName}: ${colorValue};`);
+    }
+  });
+
+  // Spacing
+  Object.entries(spacing).forEach(([name, value]) => {
+    cssVars.push(`  --spacing-${name}: ${value}px;`);
+  });
+
+  // Typography
+  Object.entries(typography.fontSizes).forEach(([name, value]) => {
+    cssVars.push(`  --font-size-${name}: ${value}px;`);
+  });
+
+  Object.entries(typography.fontWeights).forEach(([name, value]) => {
+    cssVars.push(`  --font-weight-${name}: ${value};`);
+  });
+
+  Object.entries(typography.lineHeights).forEach(([name, value]) => {
+    cssVars.push(`  --line-height-${name}: ${value};`);
+  });
+
+  // Border radius
+  Object.entries(borderRadius).forEach(([name, value]) => {
+    cssVars.push(`  --radius-${name}: ${value === 9999 ? '9999px' : `${value}px`};`);
+  });
+
+  // Shadows
+  Object.entries(shadows).forEach(([name, value]) => {
+    cssVars.push(`  --shadow-${name}: ${value};`);
+  });
+
+  // Transitions
+  Object.entries(transitions).forEach(([name, value]) => {
+    cssVars.push(`  --transition-${name}: ${value};`);
+  });
+
+  // Z-index
+  Object.entries(zIndex).forEach(([name, value]) => {
+    cssVars.push(`  --z-${name}: ${value};`);
+  });
+
+  return `:root {\n${cssVars.join('\n')}\n}`;
+}
+
+/**
+ * Breakpoint definitions for responsive design
+ */
+export const breakpoints = {
+  sm: 640,
+  md: 768,
+  lg: 1024,
+  xl: 1280,
+  '2xl': 1536,
+} as const;
+
+export type Breakpoint = keyof typeof breakpoints;
+
+/**
+ * Media query helper strings
+ */
+export const mediaQueries = {
+  sm: `@media (min-width: ${breakpoints.sm}px)`,
+  md: `@media (min-width: ${breakpoints.md}px)`,
+  lg: `@media (min-width: ${breakpoints.lg}px)`,
+  xl: `@media (min-width: ${breakpoints.xl}px)`,
+  '2xl': `@media (min-width: ${breakpoints['2xl']}px)`,
+  dark: '@media (prefers-color-scheme: dark)',
+  light: '@media (prefers-color-scheme: light)',
+  reducedMotion: '@media (prefers-reduced-motion: reduce)',
+  highContrast: '@media (prefers-contrast: high)',
+} as const;
+
+/**
+ * Animation definitions
+ */
+export * from './animations';

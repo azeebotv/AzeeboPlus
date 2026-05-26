@@ -1,16 +1,11 @@
-import { IsEmail, IsString, MinLength, MaxLength, Matches } from 'class-validator';
+import { IsString, MinLength, MaxLength } from 'class-validator';
+import { IsValidEmail, IsStrongPassword } from '@azeebo/validation';
 
 export class RegisterDto {
-  @IsEmail()
+  @IsValidEmail()
   email!: string;
 
-  @IsString()
-  @MinLength(8)
-  @MaxLength(50)
-  @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/, {
-    message:
-      'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character (@$!%*?&)',
-  })
+  @IsStrongPassword()
   password!: string;
 
   @IsString()

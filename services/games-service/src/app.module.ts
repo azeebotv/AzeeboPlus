@@ -7,12 +7,14 @@ import { GameCatalogModule } from './modules/game-catalog/game-catalog.module';
 import { TournamentModule } from './modules/tournament/tournament.module';
 import { HealthModule } from './modules/health/health.module';
 import { ResponseWrapperInterceptor, ResponseSanitizationInterceptor } from '@azeebo/logger';
+import { RateLimiterModule } from '@azeebo/security';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    RateLimiterModule,
     DatabaseModule,
     GamesModule,
     GameCatalogModule,

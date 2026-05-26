@@ -256,11 +256,29 @@ jobs:
     strategy:
       matrix:
         service:
-          - auth-service
-          - user-service
-          - wallet-service
-          - payment-service
+          - analytics-service
           - api-gateway
+          - auth-service
+          - comedy-service
+          - content-service
+          - creator-service
+          - games-service
+          - lifestyle-service
+          - media-service
+          - moderation-service
+          - movie-service
+          - notification-service
+          - payment-service
+          - queue-service
+          - reality-service
+          - recommendation-service
+          - reward-service
+          - search-service
+          - sports-service
+          - support-service
+          - user-service
+          - vertical-service
+          - wallet-service
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -438,11 +456,14 @@ jobs:
             if [ -d "$service_dir/prisma/migrations" ]; then
               service=$(basename "$service_dir")
               echo "Checking migration idempotency for $service"
-              
+
               for migration in "$service_dir/prisma/migrations"/*; do
                 if [ -f "$migration/migration.sql" ]; then
-                  if grep -q "INSERT\|UPDATE\|DELETE" "$migration/migration.sql" | grep -v "IF NOT EXISTS" | grep -v "ON CONFLICT" | grep -v "MERGE"; then
-                    echo "⚠️  $service migration may not be idempotent: $(basename "$migration")"
+                  # Check for DML statements that may not be idempotent
+                  if grep -qE "^(INSERT|UPDATE|DELETE)" "$migration/migration.sql"; then
+                    if ! grep -qE "(ON CONFLICT|IF NOT EXISTS|IF EXISTS)" "$migration/migration.sql"; then
+                      echo "⚠️  $service migration may not be idempotent: $(basename "$migration")"
+                    fi
                   fi
                 fi
               done

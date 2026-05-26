@@ -1,14 +1,34 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { Logger } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { ValidationPipe } from '@nestjs/common';
 import { LoggingInterceptor } from '@azeebo/logger';
 import { GlobalExceptionFilter } from '@azeebo/error-handling';
+import { SanitizeOutputInterceptor } from '@azeebo/validation';
 import helmet from 'helmet';
 import { validateEnvironment } from '@azeebo/shared-types';
+import { configureCors } from '@azeebo/security';
+import * as bodyParser from 'body-parser';
 
 async function bootstrap(): Promise<void> {
+  // Validate JWT secrets before starting
+  const requiredJwtSecrets = ['JWT_ACCESS_SECRET', 'JWT_REFRESH_SECRET'];
+  const missingSecrets = requiredJwtSecrets.filter(secret => !process.env[secret]);
+
+  if (missingSecrets.length > 0) {
+    Logger.error(`Missing required JWT environment variables: ${missingSecrets.join(', ')}`);
+    process.exit(1);
+  }
+
+  for (const secret of requiredJwtSecrets) {
+    if (process.env[secret]!.length < 32) {
+      Logger.error(`${secret} must be at least 32 characters long`);
+      process.exit(1);
+    }
+  }
+
+  Logger.log('JWT secrets validated successfully');
+
   // Validate environment variables before starting the app
   try {
     validateEnvironment(process.env);
@@ -20,6 +40,10 @@ async function bootstrap(): Promise<void> {
   }
 
   const app = await NestFactory.create(AppModule);
+
+  // Payload size limits (10MB max)
+  app.use(bodyParser.json({ limit: '10mb' }));
+  app.use(bodyParser.urlencoded({ limit: '10mb', extended: true }));
 
   // Security headers
   app.use(
@@ -58,22 +82,10 @@ async function bootstrap(): Promise<void> {
 
   // CORS configuration
   const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'];
-  app.enableCors({
-    origin: (
-      origin: string | undefined,
-      callback: (err: Error | null, allow?: boolean) => void
-    ) => {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error('Not allowed by CORS'));
-      }
-    },
-    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE'],
+  configureCors(app, {
+    allowedOrigins,
     credentials: true,
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-    exposedHeaders: ['Content-Disposition'],
-    maxAge: 86400,
+    maxAge: 3600,
   });
 
   // Swagger documentation - only enable in development

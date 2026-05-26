@@ -1,47 +1,47 @@
-# Build stage
-FROM node:20-alpine AS builder
+FROM node:20.11.1-alpine3.19 AS builder
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
+RUN apk add --no-cache curl && \
+    npm install -g pnpm@9.15.0
 
-# Install dependencies
-RUN npm ci --only=production
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY packages/*/package.json ./packages/
+COPY services/notification-service/package.json ./services/notification-service/
 
-# Copy source
-COPY . .
+RUN pnpm install --frozen-lockfile
 
-# Build application
-RUN npm run build
+COPY services/notification-service/src ./services/notification-service/src
+COPY services/notification-service/tsconfig*.json ./services/notification-service/
+COPY services/notification-service/prisma ./services/notification-service/prisma
 
-# Production stage
-FROM node:20-alpine AS runner
+RUN pnpm --filter notification-service build
+
+FROM node:20.11.1-alpine3.19 AS runner
 WORKDIR /app
 
-# Install runtime dependencies
-RUN apk add --no-cache curl
+LABEL org.opencontainers.image.source="https://github.com/azeebo/azeebo-plus"
+LABEL org.opencontainers.image.description="Azeebo+ Notification Service"
+LABEL org.opencontainers.image.licenses="Proprietary"
 
-# Create non-root user
-RUN addgroup -g 1001 -S nodejs && \
+RUN apk add --no-cache curl && \
+    addgroup -g 1001 -S nodejs && \
     adduser -S nodejs -u 1001
 
-# Copy from builder
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/package*.json ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY services/notification-service/package.json ./services/notification-service/
 
-# Change ownership
+RUN pnpm install --prod --frozen-lockfile
+
+COPY --from=builder /app/services/notification-service/dist ./services/notification-service/dist
+COPY --from=builder /app/services/notification-service/prisma ./services/notification-service/prisma
+
 RUN chown -R nodejs:nodejs /app
 
-# Switch to non-root user
 USER nodejs
 
-# Expose port
-EXPOSE 3000
+EXPOSE 3006
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1
+HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost:3006/health || exit 1
 
-# Start application
-CMD ["node", "dist/main.js"]
+CMD ["node", "services/notification-service/dist/src/main.js"]
