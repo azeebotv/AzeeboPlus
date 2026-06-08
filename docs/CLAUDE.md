@@ -196,4 +196,5 @@ Before submitting a PR, verify:
 - Inline comments for complex logic ("why" not "what")
 - README.md in each service with setup instructions
 - API documentation via Swagger/OpenAPI
-- Keep docs/ structure: product/, design/, engineering/, api/, qa/
+- Keep docs/ organized by concern: `architecture/`, `api/`, `database/`, `deployment/`, `development/`, `operations/`, `product/`, `analytics/`, `media/`, `qa/`
+- See [README.md](README.md) for the full docs index.

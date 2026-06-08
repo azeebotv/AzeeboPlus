@@ -16,3 +16,6 @@ logs/
 .idea/
 # Optional npm cache
 npm-packages/
+
+# Doc Folder
+docs/

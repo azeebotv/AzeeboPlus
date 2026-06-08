@@ -118,14 +118,87 @@ pnpm start
 
 ## 📚 Documentation
 
-- **[Active Backlog](todo.md)** - Current tasks and priorities
-- [API Route Map](docs/API_ROUTE_MAP.md) - Complete API documentation
-- [Payment Webhooks](docs/PAYMENT_WEBHOOKS.md) - Payment provider webhook integration
-- [CLAUDE.md](CLAUDE.md) - Build standards and coding conventions
-- [Review Checklist](docs/REVIEW_CHECKLIST.md) - PR review guidelines
-- [Workflow Commands](docs/WORKFLOW_COMMANDS.md) - Development workflow prompts
-- [Support Workflows](docs/SUPPORT_WORKFLOWS.md) - Support ticket workflows
-- [Analytics Governance](docs/ANALYTICS_GOVERNANCE.md) - Analytics tracking standards
+All documentation lives under `docs/`. Use the table of contents below to find what you need.
+
+### Core
+
+- [CLAUDE.md](CLAUDE.md) — Build standards, coding conventions, and review checklist
+
+### Product
+
+- [Pages.md](product/Pages.md) — Full product page specifications (80 pages)
+- [miss-pages.md](product/miss-pages.md) — Pages still missing in mobile/web vs. spec
+
+### Architecture
+
+- [Architectural Improvements](architecture/ARCHITECTURAL_IMPROVEMENTS.md) — System architecture decisions and refactors
+- [Frontend Hook Integration](architecture/FRONTEND_HOOK_INTEGRATION.md) — Shared React hooks for web & mobile
+- [Offline Support Architecture](architecture/OFFLINE_SUPPORT_ARCHITECTURE.md) — Offline-first mobile design
+- [Modules Migration](architecture/modules-migration.md) — Legacy `modules/*` → `services/*` migration log
+
+### API
+
+- [API Route Map](api/API_ROUTE_MAP.md) — Complete API endpoint reference
+- [API Versioning](api/API_VERSIONING.md) — Versioning policy (`/v1`, `/v2`, …)
+- [Error Codes](api/ERROR_CODES.md) — Canonical error code list
+- [Event Schemas](api/EVENT_SCHEMAS.md) — Domain event payloads
+- [Payment Webhooks](api/PAYMENT_WEBHOOKS.md) — Payment provider webhook integration
+
+### Database
+
+- [Database Schema](database/DATABASE_SCHEMA.md) — Per-service Prisma schemas
+- [Database Query Optimization](database/DATABASE_QUERY_OPTIMIZATION.md) — Indexing, N+1 prevention, PIT tuning
+- [Prisma Schema Ownership](database/PRISMA_SCHEMA_OWNERSHIP.md) — Who owns which schema
+
+### Deployment
+
+- [Deployment Guide](deployment/DEPLOYMENT_GUIDE.md) — End-to-end deployment process
+- [Deployment Runbooks](deployment/DEPLOYMENT_RUNBOOKS.md) — Step-by-step deploy runbooks
+- [Environment Parity](deployment/ENVIRONMENT_PARITY.md) — Dev ↔ staging ↔ prod parity rules
+- [Runbooks](deployment/RUNBOOKS.md) — Operational runbooks
+- [Port Allocation](deployment/port-allocation.md) — Service port assignments
+- [Secrets Management](deployment/secrets-management.md) — Secret handling policy
+- [Coolify Deployment](deployment/coolify.md) — Self-hosted Coolify deploy guide
+
+### Media
+
+- [Asset Optimization Pipeline](media/ASSET_OPTIMIZATION_PIPELINE.md) — Image/video processing pipeline
+
+### Development
+
+- [Developer Onboarding](development/DEVELOPER_ONBOARDING.md) — Local setup, workflow, debugging
+- [Local Testing Guide](development/guide.md) — End-to-end project testing walkthrough
+- [Review Checklist](development/REVIEW_CHECKLIST.md) — PR review guidelines
+- [Workflow Commands](development/WORKFLOW_COMMANDS.md) — Claude / AI workflow prompts
+- [Upgrade](development/UPGRADE.md) — Dependency & runtime upgrade playbook
+
+### Operations
+
+- [Disaster Recovery Runbook](operations/disaster-recovery-runbook.md) — DR procedures
+- [Support Workflows](operations/SUPPORT_WORKFLOWS.md) — Support ticket workflows
+- [Troubleshooting Guide](operations/TROUBLESHOOTING_GUIDE.md) — Common issues & fixes
+
+### Analytics
+
+- [Analytics Governance](analytics/ANALYTICS_GOVERNANCE.md) — Event taxonomy & governance
+
+### QA
+
+- [E2E Test Specifications](qa/e2e-test-specifications.md)
+- [Load Test Specifications](qa/load-test-specifications.md)
+- [Chaos Test Specifications](qa/chaos-test-specifications.md)
+
+### Engineering Standards (`.trae/rules/`)
+
+Workspace-level engineering rules live outside `docs/` and are auto-loaded by the IDE:
+
+- [Engineering Rules & Security Standard](../.trae/rules/CLAUDE.md)
+- [Database Backup Strategy](../.trae/rules/DATABASE_BACKUP_STRATEGY.md)
+- [Data Retention Policy](../.trae/rules/DATA_RETENTION_POLICY.md)
+- [DNS & SSL Setup](../.trae/rules/DNS_SSL_SETUP.md)
+- [Final Security Audit](../.trae/rules/FINAL_SECURITY_AUDIT.md)
+- [Implementation Summary](../.trae/rules/IMPLEMENTATION_SUMMARY.md)
+- [Onboarding](../.trae/rules/ONBOARDING.md)
 
 ## 🔄 Rollout Order & MVP Scope
 
