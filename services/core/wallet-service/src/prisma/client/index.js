@@ -160,7 +160,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "/Users/deprof/www/azeebo+/services/core/wallet-service/src/prisma/client",
+      "value": "/Users/deprof/www/azeebo+/services/wallet-service/src/prisma/client",
       "fromEnvVar": null
     },
     "config": {
@@ -174,7 +174,7 @@ const config = {
       }
     ],
     "previewFeatures": [],
-    "sourceFilePath": "/Users/deprof/www/azeebo+/services/core/wallet-service/prisma/schema.prisma",
+    "sourceFilePath": "/Users/deprof/www/azeebo+/services/wallet-service/prisma/schema.prisma",
     "isCustomOutput": true
   },
   "relativeEnvPaths": {
@@ -188,7 +188,6 @@ const config = {
     "db"
   ],
   "activeProvider": "postgresql",
-  "postinstall": false,
   "inlineDatasources": {
     "db": {
       "url": {

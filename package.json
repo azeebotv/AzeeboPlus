@@ -4,7 +4,7 @@
   "private": true,
   "description": "Azeebo+ Monorepo",
   "workspaces": [
-    "services/*",
+    "services/*/*",
     "apps/*",
     "packages/*"
   ],
@@ -18,7 +18,13 @@
     "typecheck": "pnpm -r exec tsc --noEmit",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "clean": "pnpm -r clean && rm -rf node_modules",
-    "dev": "concurrently --names gateway,auth,user,wallet,payment,content,search,notif,reward,analytics,recommend,reality,movie,comedy,games,queue,lifestyle,vertical,creator,media,support,sports,moderation,engagement,messaging,referral,subscription \"PORT=3013 pnpm --filter api-gateway start:dev\" \"PORT=3000 pnpm --filter auth-service start:dev\" \"PORT=3001 pnpm --filter user-service start:dev\" \"PORT=3002 pnpm --filter wallet-service start:dev\" \"PORT=3003 pnpm --filter payment-service start:dev\" \"PORT=3004 pnpm --filter content-service start:dev\" \"PORT=3005 pnpm --filter search-service start:dev\" \"PORT=3006 pnpm --filter notification-service start:dev\" \"PORT=3007 pnpm --filter reward-service start:dev\" \"PORT=3008 pnpm --filter analytics-service start:dev\" \"PORT=3009 pnpm --filter recommendation-service start:dev\" \"PORT=3010 pnpm --filter reality-service start:dev\" \"PORT=3011 pnpm --filter movie-service start:dev\" \"PORT=3012 pnpm --filter comedy-service start:dev\" \"PORT=3014 pnpm --filter games-service start:dev\" \"PORT=3015 pnpm --filter queue-service start:dev\" \"PORT=3016 pnpm --filter lifestyle-service start:dev\" \"PORT=3017 pnpm --filter vertical-service start:dev\" \"PORT=3018 pnpm --filter creator-service start:dev\" \"PORT=3019 pnpm --filter media-service start:dev\" \"PORT=3020 pnpm --filter support-service start:dev\" \"PORT=3021 pnpm --filter sports-service start:dev\" \"PORT=3022 pnpm --filter moderation-service start:dev\" \"PORT=3023 pnpm --filter engagement-service start:dev\" \"PORT=3024 pnpm --filter messaging-service start:dev\" \"PORT=3025 pnpm --filter referral-service start:dev\" \"PORT=3026 pnpm --filter subscription-service start:dev\""
+    "prisma:generate": "find services packages -name schema.prisma -path '*/prisma/schema.prisma' -exec dirname {} + | while read d; do (cd \"$d/..\" && pnpm exec prisma generate) done",
+    "dev:core": "concurrently --names auth,user,wallet,payment,content,search,media \"PORT=3000 pnpm --filter @azeebo/auth-service start:dev\" \"PORT=3001 pnpm --filter @azeebo/user-service start:dev\" \"PORT=3002 pnpm --filter @azeebo/wallet-service start:dev\" \"PORT=3003 pnpm --filter @azeebo/payment-service start:dev\" \"PORT=3004 pnpm --filter @azeebo/content-service start:dev\" \"PORT=3005 pnpm --filter @azeebo/search-service start:dev\" \"PORT=3019 pnpm --filter @azeebo/media-service start:dev\"",
+    "dev:engagement": "concurrently --names notif,reward,engagement,messaging,referral,subscription \"PORT=3006 pnpm --filter @azeebo/notification-service start:dev\" \"PORT=3007 pnpm --filter @azeebo/reward-service start:dev\" \"PORT=3023 pnpm --filter @azeebo/engagement-service start:dev\" \"PORT=3024 pnpm --filter @azeebo/messaging-service start:dev\" \"PORT=3025 pnpm --filter @azeebo/referral-service start:dev\" \"PORT=3026 pnpm --filter @azeebo/subscription-service start:dev\"",
+    "dev:intelligence": "concurrently --names analytics,recommend \"PORT=3008 pnpm --filter @azeebo/analytics-service start:dev\" \"PORT=3009 pnpm --filter @azeebo/recommendation-service start:dev\"",
+    "dev:universes": "concurrently --names reality,movie,comedy,games,sports,lifestyle,vertical \"PORT=3010 pnpm --filter @azeebo/reality-service start:dev\" \"PORT=3011 pnpm --filter @azeebo/movie-service start:dev\" \"PORT=3012 pnpm --filter @azeebo/comedy-service start:dev\" \"PORT=3014 pnpm --filter @azeebo/games-service start:dev\" \"PORT=3021 pnpm --filter @azeebo/sports-service start:dev\" \"PORT=3016 pnpm --filter @azeebo/lifestyle-service start:dev\" \"PORT=3017 pnpm --filter @azeebo/vertical-service start:dev\"",
+    "dev:operations": "concurrently --names moderation,support,creator,queue \"PORT=3022 pnpm --filter @azeebo/moderation-service start:dev\" \"PORT=3020 pnpm --filter @azeebo/support-service start:dev\" \"PORT=3018 pnpm --filter @azeebo/creator-service start:dev\" \"PORT=3015 pnpm --filter @azeebo/queue-service start:dev\"",
+    "dev:infra": "docker compose up -d"
   },
   "devDependencies": {
     "@playwright/test": "^1.59.1",

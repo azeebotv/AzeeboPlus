@@ -1,0 +1,48 @@
+FROM node:20.11.1-alpine3.19 AS builder
+WORKDIR /app
+
+RUN apk add --no-cache curl && \
+    npm install -g pnpm@9.15.0
+
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.json ./
+COPY packages ./packages
+COPY services/core/payment-service/package.json ./services/core/payment-service/
+
+RUN pnpm install --frozen-lockfile
+
+COPY services/core/payment-service/src ./services/core/payment-service/src
+COPY services/core/payment-service/tsconfig*.json ./services/core/payment-service/
+COPY services/core/payment-service/prisma ./services/core/payment-service/prisma
+
+RUN pnpm --filter payment-service build
+
+FROM node:20.11.1-alpine3.19 AS runner
+WORKDIR /app
+
+LABEL org.opencontainers.image.source="https://github.com/azeebo/azeebo-plus"
+LABEL org.opencontainers.image.description="Azeebo+ Payment Service"
+LABEL org.opencontainers.image.licenses="Proprietary"
+
+RUN apk add --no-cache curl && \
+    npm install -g pnpm@9.15.0 && \
+    addgroup -g 1001 -S nodejs && \
+    adduser -S nodejs -u 1001
+
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY services/core/payment-service/package.json ./services/core/payment-service/
+
+RUN pnpm install --prod --frozen-lockfile
+
+COPY --from=builder /app/services/core/payment-service/dist ./services/core/payment-service/dist
+COPY --from=builder /app/services/core/payment-service/prisma ./services/core/payment-service/prisma
+
+RUN chown -R nodejs:nodejs /app
+
+USER nodejs
+
+EXPOSE 3003
+
+HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost:3003/health || exit 1
+
+CMD ["node", "services/core/payment-service/dist/src/main.js"]

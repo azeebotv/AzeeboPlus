@@ -33,7 +33,9 @@
       "@azeebo/shared-types": ["./packages/shared-types/src"],
       "@azeebo/shared-types/*": ["./packages/shared-types/src/*"],
       "@azeebo/utils": ["./packages/utils/src"],
-      "@azeebo/utils/*": ["./packages/utils/src/*"]
+      "@azeebo/utils/*": ["./packages/utils/src/*"],
+      "@azeebo/shared-services": ["./packages/shared-services/src"],
+      "@azeebo/shared-services/*": ["./packages/shared-services/src/*"]
     }
   },
   "include": ["**/*.ts", "**/*.tsx"],
@@ -47,6 +49,6 @@
     "**/e2e/**",
     "apps/web/e2e/**",
     "apps/mobile/e2e/**",
-    "services/api-gateway/src/app.e2e-spec.ts"
+    "services/gateway/api-gateway/src/app.e2e-spec.ts"
   ]
 }

@@ -421,7 +421,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "/Users/deprof/www/azeebo+/services/core/search-service/src/prisma/client",
+      "value": "/Users/deprof/www/azeebo+/services/search-service/src/prisma/client",
       "fromEnvVar": null
     },
     "config": {
@@ -435,11 +435,11 @@ const config = {
       }
     ],
     "previewFeatures": [],
-    "sourceFilePath": "/Users/deprof/www/azeebo+/services/core/search-service/prisma/schema.prisma",
+    "sourceFilePath": "/Users/deprof/www/azeebo+/services/search-service/prisma/schema.prisma",
     "isCustomOutput": true
   },
   "relativeEnvPaths": {
-    "rootEnvPath": "../../../.env",
+    "rootEnvPath": null,
     "schemaEnvPath": "../../../.env"
   },
   "relativePath": "../../../prisma",
@@ -449,7 +449,6 @@ const config = {
     "db"
   ],
   "activeProvider": "postgresql",
-  "postinstall": false,
   "inlineDatasources": {
     "db": {
       "url": {
