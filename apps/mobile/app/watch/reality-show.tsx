@@ -1,28 +1,56 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Modal } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Modal, ActivityIndicator } from 'react-native';
 import { useColorScheme } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
+import { realityApi } from '../../src/api/engagement';
+import { walletApi } from '../../src/api/wallet';
+import { logger } from '../../src/utils/logger';
 
 const PLACEHOLDER_IMAGE = '';
-
-const contestants = [
-  { id: '1', name: 'Maria', status: 'active', votes: 125000, avatar: '👩', percentage: 28 },
-  { id: '2', name: 'Lisa', status: 'active', votes: 112000, avatar: '👩', percentage: 25 },
-  { id: '3', name: 'John', status: 'active', votes: 98000, avatar: '👨', percentage: 22 },
-  { id: '4', name: 'Mike', status: 'active', votes: 87000, avatar: '👨', percentage: 19 },
-  { id: '5', name: 'David', status: 'active', votes: 76000, avatar: '👨', percentage: 17 },
-  { id: '6', name: 'Sarah', status: 'evicted', votes: 0, avatar: '👩', percentage: 0 },
-];
 
 export default function RealityShowScreen() {
   const colorScheme = useColorScheme();
   const router = useRouter();
+  const { showId } = useLocalSearchParams<{ showId: string }>();
   const [selectedContestant, setSelectedContestant] = useState<string | null>(null);
   const [voteAmount, setVoteAmount] = useState(1);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [voteSuccess, setVoteSuccess] = useState(false);
-  const [walletBalance, setWalletBalance] = useState(2500);
-  const [totalVotes, setTotalVotes] = useState(500000);
+  const [walletBalance, setWalletBalance] = useState(0);
+  const [totalVotes, setTotalVotes] = useState(0);
+  const [contestants, setContestants] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    loadData();
+  }, [showId]);
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const [contestantsRes, walletRes] = await Promise.all([
+        realityApi.getContestants(showId || 'default'),
+        walletApi.getBalance(),
+      ]);
+      
+      if (contestantsRes.success && contestantsRes.data) {
+        setContestants(contestantsRes.data);
+        setTotalVotes(contestantsRes.data.reduce((sum: number, c: any) => sum + (c.votes || 0), 0));
+      }
+      
+      if (walletRes.success && walletRes.data) {
+        setWalletBalance(walletRes.data.balance);
+      }
+    } catch (err) {
+      logger.error('Failed to load reality show data:', err);
+      setError('Failed to load data. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const voteCost = voteAmount * 100;
 
@@ -31,21 +59,56 @@ export default function RealityShowScreen() {
     setShowConfirmation(true);
   };
 
-  const confirmVote = () => {
-    setWalletBalance(prev => prev - voteCost);
-    const contestant = contestants.find(c => c.id === selectedContestant);
-    if (contestant) {
-      contestant.votes += voteAmount;
-      setTotalVotes(prev => prev + voteAmount);
+  const confirmVote = async () => {
+    try {
+      const response = await realityApi.submitVote({
+        showId: showId || 'default',
+        contestantId: selectedContestant,
+        votes: voteAmount,
+      });
+      if (!response.success) {
+        throw new Error(response.error?.message || 'Vote submission failed');
+      }
+      setWalletBalance(prev => prev - voteCost);
+      const contestant = contestants.find(c => c.id === selectedContestant);
+      if (contestant) {
+        contestant.votes += voteAmount;
+        setTotalVotes(prev => prev + voteAmount);
+      }
+      setVoteSuccess(true);
+      setTimeout(() => {
+        setShowConfirmation(false);
+        setVoteSuccess(false);
+        setSelectedContestant(null);
+        setVoteAmount(1);
+      }, 2000);
+    } catch (err) {
+      logger.error('Failed to submit vote:', err);
+      Alert.alert('Error', 'Failed to submit vote. Please try again.');
     }
-    setVoteSuccess(true);
-    setTimeout(() => {
-      setShowConfirmation(false);
-      setVoteSuccess(false);
-      setSelectedContestant(null);
-      setVoteAmount(1);
-    }, 2000);
   };
+
+  if (loading) {
+    return (
+      <View style={[styles.container, styles.centerContent, { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' }]}>
+        <ActivityIndicator size="large" color="#8B5CF6" />
+        <Text style={[styles.loadingText, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
+          Loading...
+        </Text>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={[styles.container, styles.centerContent, { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' }]}>
+        <Text style={[styles.errorText, { color: '#ef4444' }]}>{error}</Text>
+        <TouchableOpacity style={styles.retryButton} onPress={loadData}>
+          <Text style={styles.retryButtonText}>Retry</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   return (
     <ScrollView style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' }]}>
@@ -653,5 +716,30 @@ const styles = StyleSheet.create({
     color: '#aaa',
     fontSize: 14,
     textAlign: 'center',
+  },
+  centerContent: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 16,
+  },
+  errorText: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  retryButton: {
+    backgroundColor: '#8B5CF6',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

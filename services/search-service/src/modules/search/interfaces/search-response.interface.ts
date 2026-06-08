@@ -54,6 +54,12 @@ export interface SearchResponse {
     query?: string;
     total?: number;
     message?: string;
+    pagination?: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+    };
   };
   error?: {
     code: string;

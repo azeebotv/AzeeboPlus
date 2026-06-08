@@ -13,12 +13,25 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../src/contexts/AuthContext';
 import { notificationApi, type NotificationPreferences } from '../../src/api';
+import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
+import { logger } from '../../src/utils/logger';
+import { useBiometric } from '../../src/hooks/useBiometric';
+import Constants from 'expo-constants';
 
 export default function SettingsScreen(): JSX.Element {
   const colorScheme = useColorScheme();
   const { user, isAuthenticated } = useAuth();
+  const {
+    isAvailable,
+    biometricType,
+    isEnabled,
+    isLoading: isBiometricLoading,
+    enableBiometrics,
+    disableBiometrics,
+  } = useBiometric();
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isBiometricToggling, setIsBiometricToggling] = useState(false);
   const [preferences, setPreferences] = useState<NotificationPreferences>({
     email: true,
     push: true,
@@ -47,7 +60,7 @@ export default function SettingsScreen(): JSX.Element {
         setPreferences(response.data);
       }
     } catch (error) {
-      console.error('Failed to fetch preferences:', error);
+      logger.error('Failed to fetch preferences', error);
     } finally {
       setIsLoading(false);
     }
@@ -94,6 +107,65 @@ export default function SettingsScreen(): JSX.Element {
       Alert.alert('Error', error.message || 'Failed to save preferences');
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleBiometricToggle = async (value: boolean) => {
+    if (!isAvailable) {
+      Alert.alert(
+        'Not Available',
+        'Biometric authentication is not available on this device'
+      );
+      return;
+    }
+
+    setIsBiometricToggling(true);
+    try {
+      if (value) {
+        if (!user) {
+          Alert.alert('Error', 'You must be logged in to enable biometric authentication');
+          return;
+        }
+
+        const credentials = JSON.stringify({
+          userId: user.id,
+          email: user.email,
+          timestamp: Date.now(),
+        });
+
+        const success = await enableBiometrics(credentials);
+
+        if (success) {
+          Alert.alert(
+            'Success',
+            `Biometric authentication has been enabled${
+              biometricType === 'face' ? ' (Face ID)' : biometricType === 'fingerprint' ? ' (Fingerprint)' : ''
+            }`
+          );
+        } else {
+          Alert.alert('Error', 'Failed to enable biometric authentication');
+        }
+      } else {
+        await disableBiometrics();
+        Alert.alert('Success', 'Biometric authentication has been disabled');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to update biometric settings');
+    } finally {
+      setIsBiometricToggling(false);
+    }
+  };
+
+  const getBiometricLabel = () => {
+    switch (biometricType) {
+      case 'face':
+        return 'Face ID';
+      case 'fingerprint':
+        return 'Touch ID';
+      case 'iris':
+        return 'Iris';
+      default:
+        return 'Biometric';
     }
   };
 
@@ -181,6 +253,41 @@ export default function SettingsScreen(): JSX.Element {
               trackColor={{ false: '#333', true: '#8B5CF6' }}
               thumbColor="#fff"
             />
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: colorScheme === 'dark' ? '#888' : '#666' }]}>
+            Security
+          </Text>
+
+          <View style={[styles.settingItem, { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' }]}>
+            <View style={styles.settingInfo}>
+              <Text style={styles.settingIcon}>
+                {biometricType === 'face' ? '👤' : biometricType === 'fingerprint' ? '👆' : '🔐'}
+              </Text>
+              <View>
+                <Text style={[styles.settingLabel, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
+                  {getBiometricLabel()}
+                </Text>
+                <Text style={styles.settingDescription}>
+                  {isAvailable
+                    ? `Use ${getBiometricLabel().toLowerCase()} to sign in quickly`
+                    : 'Not available on this device'}
+                </Text>
+              </View>
+            </View>
+            {isBiometricToggling ? (
+              <ActivityIndicator size="small" color="#8B5CF6" />
+            ) : (
+              <Switch
+                value={isEnabled}
+                onValueChange={handleBiometricToggle}
+                trackColor={{ false: '#333', true: '#8B5CF6' }}
+                thumbColor="#fff"
+                disabled={!isAvailable || isBiometricToggling}
+              />
+            )}
           </View>
         </View>
 
@@ -289,7 +396,7 @@ export default function SettingsScreen(): JSX.Element {
             <Text style={[styles.settingLabel, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
               Version
             </Text>
-            <Text style={styles.settingValue}>1.0.0</Text>
+            <Text style={styles.settingValue}>{Constants.expoConfig?.version ?? '1.0.0'}</Text>
           </View>
 
           <TouchableOpacity

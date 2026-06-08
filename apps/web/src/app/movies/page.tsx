@@ -2,65 +2,42 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { Button, Card, Skeleton, Badge, Avatar } from '@azeebo/ui';
-import { colors, gradients, universeColors } from '@azeebo/design-tokens';
+import { colors, universeColors } from '@azeebo/design-tokens';
 import Link from 'next/link';
-
-const mockMovies = [
-  {
-    id: '1',
-    title: 'The African Queen',
-    description: 'An epic adventure set in the heart of Africa',
-    thumbnail: 'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=epic%20african%20adventure%20movie%20poster%20cinematic&image_size=landscape_16_9',
-    duration: '2h 15m',
-    rating: 4.9,
-    isPremium: true,
-    genre: 'Adventure',
-    year: 2026,
-  },
-  {
-    id: '2',
-    title: 'Lagos Streets',
-    description: 'A gritty drama about life in Lagos',
-    thumbnail: 'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=gritty%20drama%20movie%20lagos%20streets%20urban&image_size=landscape_16_9',
-    duration: '1h 58m',
-    rating: 4.7,
-    isPremium: false,
-    genre: 'Drama',
-    year: 2025,
-  },
-  {
-    id: '3',
-    title: 'Love in Accra',
-    description: 'A heartwarming romantic comedy',
-    thumbnail: 'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=romantic%20comedy%20movie%20accra%20ghana%20colorful&image_size=landscape_16_9',
-    duration: '1h 45m',
-    rating: 4.5,
-    isPremium: false,
-    genre: 'Comedy',
-    year: 2026,
-  },
-];
-
-const mockCategories = [
-  { id: '1', name: 'Nollywood', count: 245 },
-  { id: '2', name: 'Gollywood', count: 128 },
-  { id: '3', name: 'Action', count: 89 },
-  { id: '4', name: 'Drama', count: 156 },
-  { id: '5', name: 'Comedy', count: 112 },
-  { id: '6', name: 'Romance', count: 98 },
-];
+import { apiFetch, ContentItem, Category } from '@/lib/api';
+import { webLogger } from '@/lib/logger';
 
 export default function MoviesPage(): JSX.Element {
   const { user, isAuthenticated } = useAuth();
-  const [movies, setMovies] = useState(mockMovies);
-  const [categories, setCategories] = useState(mockCategories);
+  const [movies, setMovies] = useState<ContentItem[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 500);
-    return () => clearTimeout(timer);
+    const fetchMovies = async () => {
+      try {
+        setIsLoading(true);
+        const [moviesRes, categoriesRes] = await Promise.all([
+          apiFetch<ContentItem[]>('/v1/content?universe=movies&limit=20'),
+          apiFetch<Category[]>('/v1/content/categories'),
+        ]);
+
+        if (moviesRes.success && moviesRes.data) {
+          setMovies(moviesRes.data);
+        }
+        if (categoriesRes.success && categoriesRes.data) {
+          setCategories(categoriesRes.data);
+        }
+      } catch (err) {
+        webLogger.error('Failed to fetch movies', err);
+        setError('Failed to load movies. Please try again.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchMovies();
   }, []);
 
   return (
@@ -92,7 +69,7 @@ export default function MoviesPage(): JSX.Element {
             {isAuthenticated ? (
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
-                  <Avatar size="medium" fallback={user?.name?.charAt(0) || 'U'} />
+                  <Avatar size="md" fallback={user?.name?.charAt(0) || 'U'} />
                   <span className="text-sm font-medium" style={{ color: colors.text.primary }}>{user?.name}</span>
                 </div>
               </div>
@@ -114,7 +91,14 @@ export default function MoviesPage(): JSX.Element {
       <section className="relative">
         {isLoading ? (
           <Skeleton height="500px" className="w-full" />
-        ) : (
+        ) : error ? (
+          <div className="h-[500px] flex items-center justify-center">
+            <div className="text-center">
+              <p className="text-lg mb-4" style={{ color: colors.text.secondary }}>{error}</p>
+              <Button variant="primary" onClick={() => window.location.reload()}>Retry</Button>
+            </div>
+          </div>
+        ) : movies.length > 0 ? (
           <div className="relative h-[500px]">
             <img
               src={movies[0].thumbnail}
@@ -124,11 +108,10 @@ export default function MoviesPage(): JSX.Element {
             <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
             <div className="absolute bottom-0 left-0 right-0 p-8 max-w-7xl mx-auto">
               <div className="flex items-center gap-2 mb-4">
-                {movies[0].isPremium && <Badge variant="success">Premium</Badge>}
+                <Badge variant="success">Premium</Badge>
                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium mb-4" style={{ backgroundColor: `${universeColors.movies.primary}30`, color: universeColors.movies.primary }}>
-                  {movies[0].genre}
+                  {movies[0].contentType || 'Movie'}
                 </span>
-                <Badge variant="outline">{movies[0].year}</Badge>
               </div>
               <h2 className="text-4xl font-bold text-white mb-2">{movies[0].title}</h2>
               <p className="text-gray-300 text-lg mb-6 max-w-2xl">{movies[0].description}</p>
@@ -142,19 +125,25 @@ export default function MoviesPage(): JSX.Element {
               </div>
             </div>
           </div>
+        ) : (
+          <div className="h-[500px] flex items-center justify-center">
+            <p className="text-lg" style={{ color: colors.text.secondary }}>No movies available</p>
+          </div>
         )}
       </section>
 
       {/* Categories */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="flex items-center gap-4 overflow-x-auto pb-4">
-          {categories.map((category) => (
-            <Button key={category.id} variant="outline" className="whitespace-nowrap">
-              {category.name} ({category.count})
-            </Button>
-          ))}
-        </div>
-      </section>
+      {categories.length > 0 && (
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="flex items-center gap-4 overflow-x-auto pb-4">
+            {categories.map((category) => (
+              <Button key={category.id} variant="outline" className="whitespace-nowrap">
+                {category.name}{category.contentCount != null ? ` (${category.contentCount})` : ''}
+              </Button>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Movies Grid */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -169,35 +158,47 @@ export default function MoviesPage(): JSX.Element {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {movies.map((movie) => (
-            <Card key={movie.id} padding="none" className="overflow-hidden cursor-pointer hover:shadow-xl transition-shadow">
-              <div className="relative">
-                <img src={movie.thumbnail} alt={movie.title} className="w-full h-48 object-cover" />
-                {movie.isPremium && (
+        {isLoading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <Card key={i} padding="none">
+                <Skeleton height="240px" />
+                <div className="p-4 space-y-3">
+                  <Skeleton width="80%" height="20px" />
+                  <Skeleton width="60%" height="16px" />
+                </div>
+              </Card>
+            ))}
+          </div>
+        ) : movies.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {movies.map((movie) => (
+              <Card key={movie.id} padding="none" className="overflow-hidden cursor-pointer hover:shadow-xl transition-shadow">
+                <div className="relative">
+                  <img src={movie.thumbnail} alt={movie.title} className="w-full h-48 object-cover" />
                   <Badge variant="success" className="absolute top-2 right-2">
                     Premium
                   </Badge>
-                )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
-                <div className="absolute bottom-4 left-4 right-4">
-                  <Badge variant="outline" className="mb-2">{movie.genre}</Badge>
-                  <h3 className="text-xl font-bold text-white">{movie.title}</h3>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+                  <div className="absolute bottom-4 left-4 right-4">
+                    <Badge variant="outline" className="mb-2">{movie.contentType || 'Movie'}</Badge>
+                    <h3 className="text-xl font-bold text-white">{movie.title}</h3>
+                  </div>
                 </div>
-              </div>
-              <div className="p-4">
-                <p className="text-sm text-gray-400 mb-3">{movie.description}</p>
-                <div className="flex items-center justify-between text-sm text-gray-400 mb-4">
-                  <span>⏱️ {movie.duration}</span>
-                  <span>⭐ {movie.rating}</span>
+                <div className="p-4">
+                  <p className="text-sm text-gray-400 mb-3 line-clamp-2">{movie.description}</p>
+                  <Button variant="primary" className="w-full" style={{ backgroundColor: universeColors.movies.primary }}>
+                    Watch Now
+                  </Button>
                 </div>
-                <Button variant="primary" className="w-full" style={{ backgroundColor: universeColors.movies.primary }}>
-                  Watch Now
-                </Button>
-              </div>
-            </Card>
-          ))}
-        </div>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <p className="text-lg" style={{ color: colors.text.secondary }}>No movies available yet</p>
+          </div>
+        )}
       </section>
 
       {/* Footer */}

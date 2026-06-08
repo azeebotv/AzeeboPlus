@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
 import { InitializePaymentDto } from './dto/initialize-payment.dto';
 import { PaystackProvider } from './providers/paystack.provider';
@@ -29,16 +30,20 @@ type PaymentProvider = 'paystack' | 'flutterwave';
 @Injectable()
 export class PaymentsService {
   private readonly logger = new Logger(PaymentsService.name);
-  private readonly analyticsServiceBaseUrl = process.env.ANALYTICS_SERVICE_URL || 'http://localhost:3008';
-  private readonly walletServiceBaseUrl = process.env.WALLET_SERVICE_URL || 'http://localhost:3002';
+  private readonly analyticsServiceBaseUrl: string;
+  private readonly walletServiceBaseUrl: string;
   private readonly MIN_PAYMENT_AMOUNT_NGN = 100;
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly paystackProvider: PaystackProvider,
     private readonly flutterwaveProvider: FlutterwaveProvider,
-    private readonly webhookRetryService: WebhookRetryService
-  ) {}
+    private readonly webhookRetryService: WebhookRetryService,
+    private readonly configService: ConfigService,
+  ) {
+    this.analyticsServiceBaseUrl = this.configService.getOrThrow<string>('ANALYTICS_SERVICE_URL');
+    this.walletServiceBaseUrl = this.configService.getOrThrow<string>('WALLET_SERVICE_URL');
+  }
 
   private getProvider(provider: PaymentProvider) {
     return provider === 'paystack' ? this.paystackProvider : this.flutterwaveProvider;

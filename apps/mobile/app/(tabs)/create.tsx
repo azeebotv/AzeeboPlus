@@ -1,6 +1,11 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Alert } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Alert, TextInput } from 'react-native';
 import { useColorScheme } from 'react-native';
+import { mediaApi } from '../../src/api/media';
+import { contentApi } from '../../src/api/content';
+import { universeApi } from '../../src/api';
+import { logger } from '../../src/utils/logger';
+import { LoadingState, ErrorState } from '../../src/components/StateContainers';
 
 const uploadOptions = [
   { id: 'video', name: 'Video', icon: '📹', color: '#FF6B6B' },
@@ -9,16 +14,8 @@ const uploadOptions = [
   { id: 'story', name: 'Story', icon: '📖', color: '#96CEB4' },
 ];
 
-const universeOptions = [
-  { id: 'reality', name: 'Reality', icon: '🎭' },
-  { id: 'creators', name: 'Creators', icon: '🎤' },
-  { id: 'lifestyle', name: 'Lifestyle', icon: '✨' },
-  { id: 'vertical', name: 'Vertical', icon: '🏰' },
-  { id: 'movies', name: 'Movies', icon: '🎬' },
-  { id: 'games', name: 'Games', icon: '🎮' },
-  { id: 'comedy', name: 'Comedy', icon: '😂' },
-  { id: 'sports', name: 'Sports', icon: '⚽' },
-];
+// TODO: Replace with actual file picker and upload implementation
+const PLACEHOLDER_MEDIA_URL = 'https://placehold.co/600x400/1a1a1a/8B5CF6?text=Media+Upload';
 
 export default function CreateScreen() {
   const colorScheme = useColorScheme();
@@ -27,8 +24,36 @@ export default function CreateScreen() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [isUploading, setIsUploading] = useState(false);
+  const [universeOptions, setUniverseOptions] = useState<{ id: string; name: string; icon: string }[]>([]);
+  const [isLoadingUniverses, setIsLoadingUniverses] = useState(true);
+  const [universesError, setUniversesError] = useState<string | null>(null);
 
-  const handleUpload = () => {
+  const fetchUniverses = async () => {
+    setIsLoadingUniverses(true);
+    setUniversesError(null);
+    try {
+      const res = await universeApi.getUniverses();
+      if (res.success && res.data) {
+        setUniverseOptions(
+          res.data.items.map((u: any) => ({
+            id: u.slug || u.id,
+            name: u.name,
+            icon: '🌐',
+          }))
+        );
+      }
+    } catch (err: any) {
+      setUniversesError(err.message || 'Failed to load universes');
+    } finally {
+      setIsLoadingUniverses(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchUniverses();
+  }, []);
+
+  const handleUpload = async () => {
     if (!selectedUniverse) {
       Alert.alert('Error', 'Please select a universe');
       return;
@@ -37,15 +62,26 @@ export default function CreateScreen() {
       Alert.alert('Error', 'Please enter a title');
       return;
     }
+    
     setIsUploading(true);
-    setTimeout(() => {
+    try {
+      Alert.alert('Coming Soon', 'File upload will be available in the next update. Please use the web app to upload content.');
+      return;
+    } catch (err) {
+      logger.error('Failed to upload content:', err);
+      Alert.alert('Error', 'Failed to upload content. Please try again.');
+    } finally {
       setIsUploading(false);
-      Alert.alert('Success', 'Content uploaded successfully!');
-      setTitle('');
-      setDescription('');
-      setSelectedUniverse(null);
-    }, 2000);
+    }
   };
+
+  if (isLoadingUniverses) {
+    return <LoadingState text="Loading universe options..." />;
+  }
+
+  if (universesError) {
+    return <ErrorState title="Failed to load content options" description={universesError} onRetry={fetchUniverses} />;
+  }
 
   return (
     <ScrollView style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' }]}>

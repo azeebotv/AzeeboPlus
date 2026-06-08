@@ -1,12 +1,14 @@
 import type { Metadata } from 'next';
 import React from 'react';
-import { Inter } from '@next/font/google';
+import { Inter } from 'next/font/google';
 import './globals.css';
 import { AuthProvider } from '../context/AuthContext';
 import { WalletProvider } from '../context/WalletContext';
+import { ThemeProvider } from '../context/ThemeContext';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { QueryProvider } from '../providers/QueryProvider';
 import { ToastProvider } from '@azeebo/ui';
+import { KeyboardNavigationProvider } from '../components/KeyboardNavigationProvider';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -67,24 +69,30 @@ export const metadata: Metadata = {
   manifest: '/site.webmanifest',
 };
 
+export const dynamic = 'force-dynamic';
+
 export default function RootLayout({ children }: { children: React.ReactNode }): JSX.Element {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
         <a href="#main-content" className="skip-link">
           Skip to main content
         </a>
         <ErrorBoundary>
           <QueryProvider>
-            <AuthProvider>
-              <WalletProvider>
-                <ToastProvider>
-                  <main id="main-content" role="main">
-                    {children}
-                  </main>
-                </ToastProvider>
-              </WalletProvider>
-            </AuthProvider>
+            <ThemeProvider>
+              <AuthProvider>
+                <WalletProvider>
+                  <ToastProvider>
+                    <KeyboardNavigationProvider>
+                      <main id="main-content" role="main">
+                        {children}
+                      </main>
+                    </KeyboardNavigationProvider>
+                  </ToastProvider>
+                </WalletProvider>
+              </AuthProvider>
+            </ThemeProvider>
           </QueryProvider>
         </ErrorBoundary>
       </body>

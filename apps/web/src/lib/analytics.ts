@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
+import { webLogger } from '@/lib/logger';
 type EventName = string;
 type EventProperties = Record<string, unknown>;
 
@@ -16,7 +15,7 @@ class Analytics {
 
   private track(eventName: EventName, properties?: EventProperties): void {
     if (this.isDevelopment) {
-      console.log('[Analytics]', eventName, properties);
+      webLogger.log(`[Analytics] ${eventName}`, properties);
     }
 
     const event: AnalyticsEvent = {
@@ -171,7 +170,7 @@ class Analytics {
   }
 
   contentPlayStarted(contentId: string, contentType: string, properties?: EventProperties): void {
-    this.track('content_play_started', {
+    this.track('play_start', {
       contentId,
       contentType,
       ...properties,
@@ -179,7 +178,7 @@ class Analytics {
   }
 
   contentPlayCompleted(contentId: string, contentType: string, watchDuration: number, properties?: EventProperties): void {
-    this.track('content_play_completed', {
+    this.track('play_complete', {
       contentId,
       contentType,
       watchDuration,
@@ -398,8 +397,8 @@ class Analytics {
 
 declare global {
   interface Window {
-    gtag?: (...args: any[]) => void;
-    dataLayer?: any[];
+    gtag?: (...args: unknown[]) => void;
+    dataLayer?: Record<string, unknown>[];
   }
 }
 

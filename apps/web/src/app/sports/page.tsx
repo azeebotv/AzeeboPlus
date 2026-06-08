@@ -2,74 +2,35 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { Button, Card, Skeleton, Badge, Avatar } from '@azeebo/ui';
-import { colors, gradients, universeColors } from '@azeebo/design-tokens';
+import { colors, universeColors } from '@azeebo/design-tokens';
 import Link from 'next/link';
-
-const mockMatches = [
-  {
-    id: '1',
-    team1: 'Super Eagles',
-    team2: 'Black Stars',
-    date: 'Today, 7:00 PM',
-    venue: 'Lagos National Stadium',
-    team1Logo: 'SE',
-    team2Logo: 'BS',
-    isLive: true,
-    score1: 1,
-    score2: 0,
-  },
-  {
-    id: '2',
-    team1: 'Bafana Bafana',
-    team2: 'Indomitable Lions',
-    date: 'Tomorrow, 5:00 PM',
-    venue: 'Johannesburg Stadium',
-    team1Logo: 'BB',
-    team2Logo: 'IL',
-    isLive: false,
-    score1: null,
-    score2: null,
-  },
-  {
-    id: '3',
-    team1: 'Atlas Lions',
-    team2: 'Desert Foxes',
-    date: 'Dec 20, 8:00 PM',
-    venue: 'Casablanca Stadium',
-    team1Logo: 'AL',
-    team2Logo: 'DF',
-    isLive: false,
-    score1: null,
-    score2: null,
-  },
-];
-
-const mockPredictions = [
-  {
-    id: '1',
-    question: 'Who will win Super Eagles vs Black Stars?',
-    options: ['Super Eagles', 'Black Stars', 'Draw'],
-    endTime: '2h 30m left',
-  },
-  {
-    id: '2',
-    question: 'How many goals will be scored in total?',
-    options: ['0-1', '2-3', '4-5', '6+'],
-    endTime: '2h 30m left',
-  },
-];
+import { apiFetch, ContentItem } from '@/lib/api';
+import { webLogger } from '@/lib/logger';
 
 export default function SportsPage(): JSX.Element {
   const { user, isAuthenticated } = useAuth();
-  const [matches, setMatches] = useState(mockMatches);
-  const [predictions, setPredictions] = useState(mockPredictions);
+  const [matches, setMatches] = useState<ContentItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 500);
-    return () => clearTimeout(timer);
+    const fetchContent = async () => {
+      try {
+        setIsLoading(true);
+        const result = await apiFetch<ContentItem[]>('/v1/content?universe=sports&limit=20');
+
+        if (result.success && result.data) {
+          setMatches(result.data);
+        }
+      } catch (err) {
+        webLogger.error('Failed to fetch sports content', err);
+        setError('Failed to load sports content. Please try again.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchContent();
   }, []);
 
   return (
@@ -101,7 +62,7 @@ export default function SportsPage(): JSX.Element {
             {isAuthenticated ? (
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
-                  <Avatar size="medium" fallback={user?.name?.charAt(0) || 'U'} />
+                  <Avatar size="md" fallback={user?.name?.charAt(0) || 'U'} />
                   <span className="text-sm font-medium" style={{ color: colors.text.primary }}>{user?.name}</span>
                 </div>
               </div>
@@ -119,44 +80,26 @@ export default function SportsPage(): JSX.Element {
         </div>
       </header>
 
-      {/* Hero Section - Live Match */}
+      {/* Hero Section */}
       <section className="relative">
         {isLoading ? (
           <Skeleton height="500px" className="w-full" />
-        ) : (
+        ) : error ? (
+          <div className="h-[500px] flex items-center justify-center">
+            <div className="text-center">
+              <p className="text-lg mb-4" style={{ color: colors.text.secondary }}>{error}</p>
+              <Button variant="primary" onClick={() => window.location.reload()}>Retry</Button>
+            </div>
+          </div>
+        ) : matches.length > 0 ? (
           <div className="relative h-[500px]" style={{ background: `linear-gradient(135deg, ${universeColors.sports.primary}, ${universeColors.sports.secondary})` }}>
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="text-center px-4">
-                {matches[0].isLive && (
-                  <Badge variant="error" className="mb-6">
-                    <span className="w-2 h-2 bg-white rounded-full animate-pulse mr-2"></span>
-                    LIVE NOW
-                  </Badge>
-                )}
-                <div className="flex items-center justify-center gap-8 mb-6">
-                  <div className="text-center">
-                    <div className="w-24 h-24 rounded-full bg-white/20 flex items-center justify-center mb-4">
-                      <span className="text-white text-3xl font-bold">{matches[0].team1Logo}</span>
-                    </div>
-                    <h3 className="text-xl font-bold text-white">{matches[0].team1}</h3>
-                  </div>
-                  <div className="text-center">
-                    {matches[0].isLive ? (
-                      <div className="text-6xl font-bold text-white">
-                        {matches[0].score1} - {matches[0].score2}
-                      </div>
-                    ) : (
-                      <div className="text-4xl font-bold text-white/70">VS</div>
-                    )}
-                  </div>
-                  <div className="text-center">
-                    <div className="w-24 h-24 rounded-full bg-white/20 flex items-center justify-center mb-4">
-                      <span className="text-white text-3xl font-bold">{matches[0].team2Logo}</span>
-                    </div>
-                    <h3 className="text-xl font-bold text-white">{matches[0].team2}</h3>
-                  </div>
+                <div className="w-24 h-24 rounded-full bg-white/20 flex items-center justify-center mx-auto mb-4">
+                  <span className="text-white text-3xl font-bold">⚽</span>
                 </div>
-                <p className="text-white/80 text-lg mb-6">{matches[0].venue}</p>
+                <h2 className="text-4xl font-bold text-white mb-2">{matches[0].title}</h2>
+                <p className="text-white/80 text-lg mb-6 max-w-2xl">{matches[0].description}</p>
                 <div className="flex items-center justify-center gap-4">
                   <Button size="lg" variant="secondary">
                     <span>▶️</span> Watch Live
@@ -168,85 +111,64 @@ export default function SportsPage(): JSX.Element {
               </div>
             </div>
           </div>
+        ) : (
+          <div className="h-[500px] flex items-center justify-center">
+            <p className="text-lg" style={{ color: colors.text.secondary }}>No sports content available</p>
+          </div>
         )}
       </section>
 
-      {/* Upcoming Matches */}
+      {/* Content Grid */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="flex items-center justify-between mb-8">
           <div>
             <h2 className="text-2xl sm:text-3xl font-bold" style={{ color: colors.text.primary }}>
-              Upcoming Matches
+              Featured Sports Content
             </h2>
             <p className="text-base mt-1" style={{ color: colors.text.secondary }}>
-              Don\'t miss the action
+              Don&apos;t miss the action
             </p>
           </div>
         </div>
 
-        <div className="space-y-4">
-          {matches.slice(1).map((match) => (
-            <Card key={match.id} padding="md" className="flex items-center justify-between">
-              <div className="flex items-center gap-6">
-                <div className="text-center">
-                  <div className="w-16 h-16 rounded-full bg-gray-700 flex items-center justify-center mb-2">
-                    <span className="text-white text-xl font-bold">{match.team1Logo}</span>
-                  </div>
-                  <span className="text-sm" style={{ color: colors.text.primary }}>{match.team1}</span>
-                </div>
-                <div className="text-center">
-                  <span className="text-2xl font-bold" style={{ color: colors.text.secondary }}>VS</span>
-                </div>
-                <div className="text-center">
-                  <div className="w-16 h-16 rounded-full bg-gray-700 flex items-center justify-center mb-2">
-                    <span className="text-white text-xl font-bold">{match.team2Logo}</span>
-                  </div>
-                  <span className="text-sm" style={{ color: colors.text.primary }}>{match.team2}</span>
-                </div>
-              </div>
-              <div className="text-right">
-                <p className="text-sm" style={{ color: colors.text.secondary }}>{match.date}</p>
-                <p className="text-xs text-gray-500">{match.venue}</p>
-                <Button variant="outline" className="mt-2">
-                  Predict
-                </Button>
-              </div>
-            </Card>
-          ))}
-        </div>
-      </section>
-
-      {/* Prediction Market */}
-      <section className="py-12" style={{ backgroundColor: colors.bg.secondary }}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <h2 className="text-2xl sm:text-3xl font-bold" style={{ color: colors.text.primary }}>
-                Prediction Market
-              </h2>
-              <p className="text-base mt-1" style={{ color: colors.text.secondary }}>
-                Predict and win rewards
-              </p>
-            </div>
-            <Button variant="ghost">View All</Button>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {predictions.map((prediction) => (
-              <Card key={prediction.id} padding="md">
-                <h3 className="text-lg font-bold mb-4" style={{ color: colors.text.primary }}>{prediction.question}</h3>
-                <p className="text-sm mb-4" style={{ color: colors.text.tertiary }}>⏰ {prediction.endTime}</p>
-                <div className="grid grid-cols-2 gap-3">
-                  {prediction.options.map((option, idx) => (
-                    <Button key={idx} variant="outline" className="justify-start">
-                      {option}
-                    </Button>
-                  ))}
+        {isLoading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <Card key={i} padding="none">
+                <Skeleton height="240px" />
+                <div className="p-4 space-y-3">
+                  <Skeleton width="80%" height="20px" />
+                  <Skeleton width="60%" height="16px" />
                 </div>
               </Card>
             ))}
           </div>
-        </div>
+        ) : matches.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {matches.map((match) => (
+              <Card key={match.id} padding="none" className="overflow-hidden cursor-pointer hover:shadow-xl transition-shadow">
+                <div className="relative">
+                  <img src={match.thumbnail} alt={match.title} className="w-full h-48 object-cover" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+                  <div className="absolute bottom-4 left-4 right-4">
+                    <Badge variant="outline" className="mb-2">{match.contentType || 'Sport'}</Badge>
+                    <h3 className="text-xl font-bold text-white">{match.title}</h3>
+                  </div>
+                </div>
+                <div className="p-4">
+                  <p className="text-sm text-gray-400 mb-3 line-clamp-2">{match.description}</p>
+                  <Button variant="primary" className="w-full" style={{ backgroundColor: universeColors.sports.primary }}>
+                    Watch Now
+                  </Button>
+                </div>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <p className="text-lg" style={{ color: colors.text.secondary }}>No sports content available yet</p>
+          </div>
+        )}
       </section>
 
       {/* Footer */}

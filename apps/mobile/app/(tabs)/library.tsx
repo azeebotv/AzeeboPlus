@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,8 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
+import { contentApi } from '../../src/api';
 
 const TABS = [
   { id: 'watchlist', label: 'Watchlist', emoji: '📋' },
@@ -17,20 +19,64 @@ const TABS = [
   { id: 'purchases', label: 'Purchases', emoji: '🛒' },
 ];
 
-const WATCHLIST_ITEMS = [
-  { id: '1', title: 'Village President', universe: 'Reality', emoji: '📺', episodes: 24 },
-  { id: '2', title: 'Breaking Bad', universe: 'Movies', emoji: '🎬', episodes: 62 },
-  { id: '3', title: 'Daily Trivia Challenge', universe: 'Games', emoji: '🎮', episodes: 100 },
-];
+interface WatchlistItem {
+  id: string;
+  title: string;
+  thumbnail: string;
+  savedAt: string;
+  type: string;
+}
 
-const HISTORY_ITEMS = [
-  { id: '4', title: 'Money Heist', progress: 'S5 E3', watched: '2 days ago', emoji: '🎬' },
-  { id: '5', title: 'Champions League', progress: 'Final', watched: '1 week ago', emoji: '⚽' },
-];
+interface HistoryItem {
+  id: string;
+  contentId: string;
+  title: string;
+  thumbnail: string;
+  watchedAt: string;
+  progress: number;
+  duration: number;
+}
 
 export default function LibraryScreen() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('watchlist');
+  const [watchlist, setWatchlist] = useState<WatchlistItem[]>([]);
+  const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchData = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const [savedRes, historyRes] = await Promise.all([
+        contentApi.getSavedContent(1, 50),
+        contentApi.getWatchHistory(1, 50),
+      ]);
+      if (savedRes.success && savedRes.data) {
+        setWatchlist(savedRes.data.items as any);
+      }
+      if (historyRes.success && historyRes.data) {
+        setHistory(historyRes.data.items as any);
+      }
+    } catch (err: any) {
+      setError(err.message || 'Failed to load library');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  if (isLoading) {
+    return <LoadingState text="Loading your library..." />;
+  }
+
+  if (error) {
+    return <ErrorState title="Failed to load library" description={error} onRetry={fetchData} />;
+  }
 
   const renderTab = (tab: typeof TABS[0]) => (
     <TouchableOpacity
@@ -45,91 +91,72 @@ export default function LibraryScreen() {
     </TouchableOpacity>
   );
 
-  const renderWatchlist = () => (
-    <FlatList
-      data={WATCHLIST_ITEMS}
-      keyExtractor={(item) => item.id}
-      contentContainerStyle={styles.listContent}
-      renderItem={({ item }) => (
-        <TouchableOpacity
-          style={styles.itemCard}
-          onPress={() => router.push(`/watch/${item.id}`)}
-        >
-          <View style={styles.itemThumbnail}>
-            <Text style={styles.itemEmoji}>{item.emoji}</Text>
-          </View>
-          <View style={styles.itemInfo}>
-            <Text style={styles.itemTitle}>{item.title}</Text>
-            <Text style={styles.itemMeta}>{item.universe} • {item.episodes} episodes</Text>
-          </View>
-          <TouchableOpacity style={styles.playButton}>
-            <Text style={styles.playButtonText}>▶</Text>
+  const renderWatchlist = () => {
+    if (!watchlist.length) {
+      return <EmptyState icon="📋" title="Your watchlist is empty" description="Start adding content to watch later" />;
+    }
+    return (
+      <FlatList
+        data={watchlist}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.listContent}
+        renderItem={({ item }) => (
+          <TouchableOpacity
+            style={styles.itemCard}
+            onPress={() => router.push(`/watch/${item.contentId || item.id}`)}
+          >
+            <View style={styles.itemThumbnail}>
+              <Text style={styles.itemEmoji}>📺</Text>
+            </View>
+            <View style={styles.itemInfo}>
+              <Text style={styles.itemTitle}>{item.title}</Text>
+              <Text style={styles.itemMeta}>{item.type || 'Content'}</Text>
+            </View>
+            <TouchableOpacity style={styles.playButton}>
+              <Text style={styles.playButtonText}>▶</Text>
+            </TouchableOpacity>
           </TouchableOpacity>
-        </TouchableOpacity>
-      )}
-      ListEmptyComponent={
-        <View style={styles.emptyState}>
-          <Text style={styles.emptyEmoji}>📋</Text>
-          <Text style={styles.emptyTitle}>Your watchlist is empty</Text>
-          <Text style={styles.emptySubtitle}>Start adding content to watch later</Text>
-        </View>
-      }
-    />
-  );
+        )}
+      />
+    );
+  };
 
-  const renderHistory = () => (
-    <FlatList
-      data={HISTORY_ITEMS}
-      keyExtractor={(item) => item.id}
-      contentContainerStyle={styles.listContent}
-      renderItem={({ item }) => (
-        <TouchableOpacity
-          style={styles.itemCard}
-          onPress={() => router.push(`/watch/${item.id}`)}
-        >
-          <View style={styles.itemThumbnail}>
-            <Text style={styles.itemEmoji}>{item.emoji}</Text>
-          </View>
-          <View style={styles.itemInfo}>
-            <Text style={styles.itemTitle}>{item.title}</Text>
-            <Text style={styles.itemMeta}>{item.progress} • Watched {item.watched}</Text>
-          </View>
-          <View style={styles.resumeIndicator}>
-            <Text style={styles.resumeText}>Resume</Text>
-          </View>
-        </TouchableOpacity>
-      )}
-      ListEmptyComponent={
-        <View style={styles.emptyState}>
-          <Text style={styles.emptyEmoji}>🕐</Text>
-          <Text style={styles.emptyTitle}>No watch history</Text>
-          <Text style={styles.emptySubtitle}>Content you watch will appear here</Text>
-        </View>
-      }
-    />
-  );
+  const renderHistory = () => {
+    if (!history.length) {
+      return <EmptyState icon="🕐" title="No watch history" description="Content you watch will appear here" />;
+    }
+    return (
+      <FlatList
+        data={history}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.listContent}
+        renderItem={({ item }) => (
+          <TouchableOpacity
+            style={styles.itemCard}
+            onPress={() => router.push(`/watch/${item.contentId}`)}
+          >
+            <View style={styles.itemThumbnail}>
+              <Text style={styles.itemEmoji}>🎬</Text>
+            </View>
+            <View style={styles.itemInfo}>
+              <Text style={styles.itemTitle}>{item.title}</Text>
+              <Text style={styles.itemMeta}>{Math.round(item.progress)}% complete</Text>
+            </View>
+            <View style={styles.resumeIndicator}>
+              <Text style={styles.resumeText}>Resume</Text>
+            </View>
+          </TouchableOpacity>
+        )}
+      />
+    );
+  };
 
   const renderDownloads = () => (
-    <View style={styles.emptyContainer}>
-      <View style={styles.emptyState}>
-        <Text style={styles.emptyEmoji}>⬇️</Text>
-        <Text style={styles.emptyTitle}>No downloads</Text>
-        <Text style={styles.emptySubtitle}>Download content to watch offline</Text>
-        <TouchableOpacity style={styles.browseButton}>
-          <Text style={styles.browseButtonText}>Browse Content</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+    <EmptyState icon="⬇️" title="No downloads" description="Download content to watch offline" />
   );
 
   const renderPurchases = () => (
-    <View style={styles.emptyContainer}>
-      <View style={styles.emptyState}>
-        <Text style={styles.emptyEmoji}>🛒</Text>
-        <Text style={styles.emptyTitle}>No purchases</Text>
-        <Text style={styles.emptySubtitle}>Your purchased content will appear here</Text>
-      </View>
-    </View>
+    <EmptyState icon="🛒" title="No purchases" description="Your purchased content will appear here" />
   );
 
   return (
@@ -252,41 +279,6 @@ const styles = StyleSheet.create({
   resumeText: {
     color: '#8B5CF6',
     fontSize: 12,
-    fontWeight: '600',
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-  },
-  emptyState: {
-    alignItems: 'center',
-    paddingHorizontal: 32,
-  },
-  emptyEmoji: {
-    fontSize: 64,
-    marginBottom: 16,
-  },
-  emptyTitle: {
-    color: '#fff',
-    fontSize: 20,
-    fontWeight: '600',
-    marginBottom: 8,
-  },
-  emptySubtitle: {
-    color: '#666',
-    fontSize: 16,
-    textAlign: 'center',
-    marginBottom: 24,
-  },
-  browseButton: {
-    backgroundColor: '#8B5CF6',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 12,
-  },
-  browseButtonText: {
-    color: '#fff',
-    fontSize: 16,
     fontWeight: '600',
   },
 });

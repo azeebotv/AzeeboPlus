@@ -1,7 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, TextInput, FlatList } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
+import { contentApi, type ContentItem } from '../../src/api';
+import { logger } from '../../src/utils/logger';
+import { LoadingState, ErrorState, EmptyState } from '../../src/components/StateContainers';
 
 const universes = [
   { id: 'all', name: 'All', icon: '🎬', color: '#8B5CF6' },
@@ -24,41 +27,71 @@ const trendingSearches = [
   'Fashion Week',
 ];
 
-const PLACEHOLDER_IMAGE = '';
-
-const searchResults: Array<{
-  id: string;
-  title: string;
-  type: string;
-  universe: string;
-  thumbnail: string;
-}> = [];
-
 export default function SearchScreen() {
   const colorScheme = useColorScheme();
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedUniverse, setSelectedUniverse] = useState('all');
+  const [searchResults, setSearchResults] = useState<ContentItem[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const performSearch = useCallback(async (query: string) => {
+    if (!query.trim()) {
+      setSearchResults([]);
+      return;
+    }
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await contentApi.searchContent(query);
+      if (response.success && response.data) {
+        setSearchResults(response.data.items);
+      }
+    } catch (err: any) {
+      logger.error('Search failed:', err);
+      setError(err.message || 'Search failed');
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchQuery) {
+        performSearch(searchQuery);
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchQuery, performSearch]);
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
     setIsSearching(query.length > 0);
+    if (!query) {
+      setSearchResults([]);
+    }
   };
-
-  const filteredResults = searchResults.filter(item => {
-    const matchesQuery = item.title.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesUniverse = selectedUniverse === 'all' || item.universe === selectedUniverse;
-    return matchesQuery && matchesUniverse;
-  });
 
   const renderSearchResults = () => (
     <View style={styles.resultsSection}>
+      {isLoading ? (
+        <LoadingState text="Searching..." />
+      ) : error ? (
+        <ErrorState description={error} onRetry={() => performSearch(searchQuery)} />
+      ) : searchResults.length === 0 ? (
+        <View style={{ padding: 20, alignItems: 'center' }}>
+          <Text style={{ fontSize: 48, marginBottom: 12 }}>🔍</Text>
+          <Text style={[{ fontSize: 16, color: '#888' }]}>No results found</Text>
+        </View>
+      ) : (
+      <>
       <Text style={[styles.sectionTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
-        Results ({filteredResults.length})
+        Results ({searchResults.length})
       </Text>
       <FlatList
-        data={filteredResults}
+        data={searchResults}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <TouchableOpacity 
@@ -71,15 +104,17 @@ export default function SearchScreen() {
                 {item.title}
               </Text>
               <View style={styles.resultMeta}>
-                <Text style={styles.resultType}>{item.type}</Text>
+                <Text style={styles.resultType}>{item.contentType || 'Content'}</Text>
                 <Text style={styles.resultUniverse}>
-                  {universes.find(u => u.id === item.universe)?.name}
+                  {item.universe?.name || ''}
                 </Text>
               </View>
             </View>
           </TouchableOpacity>
         )}
       />
+      </>
+      )}
     </View>
   );
 

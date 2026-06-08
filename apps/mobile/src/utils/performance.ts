@@ -1,5 +1,6 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
 import { AccessibilityInfo, useWindowDimensions } from 'react-native';
+import { logger } from './logger';
 
 interface PerformanceMetrics {
   fcp?: number;
@@ -25,6 +26,7 @@ class PerformanceMonitor {
   private metrics: PerformanceMetrics = {};
   private sessionId: string;
   private startTime: number;
+  private static counter = 0;
 
   constructor() {
     this.sessionId = this.generateSessionId();
@@ -32,7 +34,7 @@ class PerformanceMonitor {
   }
 
   private generateSessionId(): string {
-    return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    return `${Date.now()}-${(++PerformanceMonitor.counter).toString(36)}`;
   }
 
   subscribe(handler: ReportHandler): () => void {
@@ -46,7 +48,7 @@ class PerformanceMonitor {
     this.listeners.forEach((handler) => handler(metric));
   }
 
-  private getRating(name: string, value: number): 'good' | 'needs-improvement' | 'poor' {
+  getRating(name: string, value: number): 'good' | 'needs-improvement' | 'poor' {
     const thresholds: Record<string, { good: number; poor: number }> = {
       fcp: { good: 1800, poor: 3000 },
       lcp: { good: 2500, poor: 4000 },
@@ -103,7 +105,7 @@ class PerformanceMonitor {
   }
 
   setMetric(name: string, value: number): void {
-    (this.metrics as any)[name] = value;
+    (this.metrics as Record<string, number>)[name] = value;
     this.report({
       name,
       value,
@@ -282,13 +284,11 @@ export function reportPerformanceMetric(
     value,
     delta: value,
     id: `${metric}-${Date.now()}`,
-    rating: performanceMonitor.getMetrics()
-      ? (performanceMonitor as any).getRating?.(metric, value) || 'needs-improvement'
-      : 'needs-improvement',
+    rating: performanceMonitor.getRating(metric, value),
   });
 
   if (tags) {
-    console.log(`[Performance] ${metric}:`, { value, ...tags });
+    logger.debug(`[Performance] ${metric}`, undefined, { value, ...tags });
   }
 }
 

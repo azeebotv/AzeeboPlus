@@ -2,6 +2,8 @@ import { LoggerService, LogLevel } from '@nestjs/common';
 export { LoggingInterceptor } from './logging.interceptor';
 export { ResponseWrapperInterceptor } from './response-wrapper.interceptor';
 export { ResponseSanitizationInterceptor, SanitizationConfig } from './response-sanitizer.interceptor';
+export { DistributedTracingInterceptor, createTraceHeaders } from './distributed-tracing.interceptor';
+export type { TraceContext } from './distributed-tracing.interceptor';
 
 export interface LogContext {
   traceId?: string;

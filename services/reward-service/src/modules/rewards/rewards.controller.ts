@@ -17,7 +17,7 @@ import { RedeemRewardDto } from './dto/redeem-reward.dto';
 import { RewardResponse } from './interfaces/reward-response.interface';
 
 @ApiTags('Rewards')
-@Controller('rewards')
+@Controller('v1/rewards')
 export class RewardsController {
   constructor(private readonly rewardsService: RewardsService) {}
 

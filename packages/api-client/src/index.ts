@@ -1,4 +1,5 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
+import { randomUUID } from 'crypto';
 import { ApiResponse } from '@azeebo/shared-types';
 
 export interface TokenStorage {
@@ -51,7 +52,7 @@ const DEFAULT_RETRY_CONFIG: RetryConfig = {
 };
 
 function generateIdempotencyKey(): string {
-  return `idemp-${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
+  return `idemp-${Date.now()}-${randomUUID()}`;
 }
 
 function calculateRetryDelay(attempt: number, config: RetryConfig): number {

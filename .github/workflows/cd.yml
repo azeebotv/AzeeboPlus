@@ -2,6 +2,8 @@ name: CD Pipeline - Deploy to Kubernetes
 
 on:
   push:
+    branches:
+      - main
     tags:
       - 'v*'
       - '*-staging'
@@ -245,6 +247,7 @@ jobs:
     environment:
       name: staging
       url: https://staging.azeebo.com
+    if: github.ref == 'refs/heads/main' || github.event.inputs.environment == 'staging' || endsWith(github.ref, '-staging')
 
     steps:
       - name: Checkout code
@@ -276,6 +279,24 @@ jobs:
             echo "Waiting for $service rollout..."
             kubectl rollout status deployment/$service -n azeebo-staging --timeout=10m
           done
+
+      - name: Notify Slack - Staging Deploy Success
+        if: success()
+        uses: slackapi/slack-github-action@v1
+        with:
+          channel-id: ${{ secrets.SLACK_CHANNEL_ID }}
+          slack-message: "✅ *Staging Deploy Success*\n\nBranch: `${{ github.ref_name }}`\nCommit: ${{ github.sha }}\nServices: ${{ needs.detect-changes.outputs.changed_services }}\nURL: https://staging.azeebo.com"
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+
+      - name: Notify Slack - Staging Deploy Failed
+        if: failure()
+        uses: slackapi/slack-github-action@v1
+        with:
+          channel-id: ${{ secrets.SLACK_CHANNEL_ID }}
+          slack-message: "❌ *Staging Deploy Failed*\n\nBranch: `${{ github.ref_name }}`\nCommit: ${{ github.sha }}\nServices: ${{ needs.detect-changes.outputs.changed_services }}\nCheck logs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
 
   smoke-tests-staging:
     name: Run Smoke Tests on Staging
@@ -385,6 +406,24 @@ jobs:
           pnpm test:integration || { echo "Integration tests failed"; exit 1; }
           echo "Integration tests passed!"
 
+      - name: Notify Slack - Smoke Tests Success
+        if: success()
+        uses: slackapi/slack-github-action@v1
+        with:
+          channel-id: ${{ secrets.SLACK_CHANNEL_ID }}
+          slack-message: "🧪 *Staging Smoke Tests Passed*\n\nBranch: `${{ github.ref_name }}`\nCommit: ${{ github.sha }}\nURL: https://staging.azeebo.com"
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+
+      - name: Notify Slack - Smoke Tests Failed
+        if: failure()
+        uses: slackapi/slack-github-action@v1
+        with:
+          channel-id: ${{ secrets.SLACK_CHANNEL_ID }}
+          slack-message: "🚨 *Staging Smoke Tests Failed*\n\nBranch: `${{ github.ref_name }}`\nCommit: ${{ github.sha }}\nCheck logs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+
   promote-to-production:
     name: Promote to Production
     runs-on: ubuntu-latest
@@ -400,6 +439,23 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Require deployment approval
+        run: |
+          echo "Checking for deployment approval..."
+          
+          APPROVALS=$(gh run list --workflow deployment-approval.yml --json databaseId,status,conclusion \
+            --jq '.[] | select(.status == "completed" and .conclusion == "success") | .databaseId')
+          
+          if [ -z "$APPROVALS" ]; then
+            echo "❌ No deployment approval found"
+            echo "Please run the 'Deployment Approval' workflow first"
+            exit 1
+          fi
+          
+          echo "✅ Deployment approval found"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Configure kubectl for production
         uses: azure/k8s-set-context@v4
@@ -421,9 +477,11 @@ jobs:
           CHANGED_SERVICES="${{ needs.detect-changes.outputs.changed_services }}"
           echo "Deploying changed services: $CHANGED_SERVICES"
           
+          chmod +x ./scripts/blue-green-deploy.sh
+          
           for service in $CHANGED_SERVICES; do
-            echo "Deploying $service to production..."
-            kubectl set image deployment/$service $service=${{ env.REGISTRY }}/${{ env.OWNER }}/$service:${IMAGE_TAG} -n azeebo
+            echo "Deploying $service to production using blue-green strategy..."
+            ./scripts/blue-green-deploy.sh azeebo $service "${{ env.REGISTRY }}/${{ env.OWNER }}/$service:${IMAGE_TAG}" 300
           done
 
       - name: Wait for production rollout
@@ -439,6 +497,24 @@ jobs:
           kubectl get pods -n azeebo
           kubectl get services -n azeebo
 
+      - name: Notify Slack - Production Deploy Success
+        if: success()
+        uses: slackapi/slack-github-action@v1
+        with:
+          channel-id: ${{ secrets.SLACK_CHANNEL_ID }}
+          slack-message: "🚀 *Production Deploy Success*\n\nTag: `${{ github.ref_name }}`\nCommit: ${{ github.sha }}\nServices: ${{ needs.detect-changes.outputs.changed_services }}\nURL: https://azeebo.com"
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+
+      - name: Notify Slack - Production Deploy Failed
+        if: failure()
+        uses: slackapi/slack-github-action@v1
+        with:
+          channel-id: ${{ secrets.SLACK_CHANNEL_ID }}
+          slack-message: "🚨 *Production Deploy Failed*\n\nTag: `${{ github.ref_name }}`\nCommit: ${{ github.sha }}\nServices: ${{ needs.detect-changes.outputs.changed_services }}\nCheck logs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+
   smoke-tests-production:
     name: Run Smoke Tests on Production
     runs-on: ubuntu-latest
@@ -448,19 +524,28 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Run production smoke tests
+      - name: Run comprehensive production smoke tests
         run: |
-          echo "Running production smoke tests..."
+          chmod +x ./scripts/docker-smoke-tests.sh
+          ./scripts/docker-smoke-tests.sh https://azeebo.com
 
-          PRODUCTION_URL="https://azeebo.com"
+      - name: Notify Slack - Production Smoke Tests Success
+        if: success()
+        uses: slackapi/slack-github-action@v1
+        with:
+          channel-id: ${{ secrets.SLACK_CHANNEL_ID }}
+          slack-message: "✅ *Production Smoke Tests Passed*\n\nTag: `${{ github.ref_name }}`\nCommit: ${{ github.sha }}\nURL: https://azeebo.com"
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
 
-          echo "Testing critical endpoints..."
-          curl -sf "${PRODUCTION_URL}/api/v1/health" || { echo "Health check failed"; exit 1; }
-          curl -sf "${PRODUCTION_URL}/api/v1/auth/health" || { echo "Auth health failed"; exit 1; }
-          curl -sf "${PRODUCTION_URL}/api/v1/wallet/health" || { echo "Wallet health failed"; exit 1; }
-          curl -sf "${PRODUCTION_URL}/api/v1/payment/health" || { echo "Payment health failed"; exit 1; }
-
-          echo "Production smoke tests passed!"
+      - name: Notify Slack - Production Smoke Tests Failed
+        if: failure()
+        uses: slackapi/slack-github-action@v1
+        with:
+          channel-id: ${{ secrets.SLACK_CHANNEL_ID }}
+          slack-message: "🚨 *Production Smoke Tests Failed*\n\nTag: `${{ github.ref_name }}`\nCommit: ${{ github.sha }}\nCheck logs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
 
   rollback:
     name: Rollback Deployment

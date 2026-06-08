@@ -2,7 +2,7 @@ import { PrismaClient } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
 
 export class TestDatabase {
-  private prisma: PrismaClient;
+  private prisma: any;
 
   constructor() {
     this.prisma = new PrismaClient({

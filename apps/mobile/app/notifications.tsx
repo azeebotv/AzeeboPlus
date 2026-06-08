@@ -1,99 +1,76 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Switch } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
-
-interface Notification {
-  id: string;
-  type: 'vote' | 'reward' | 'content' | 'prediction' | 'system';
-  title: string;
-  message: string;
-  time: string;
-  read: boolean;
-  icon: string;
-  action?: string;
-}
-
-const notifications: Notification[] = [
-  {
-    id: '1',
-    type: 'vote',
-    title: 'Vote Successful',
-    message: 'Your 5 votes for Maria have been counted',
-    time: '2m ago',
-    read: false,
-    icon: '🗳️',
-    action: 'View Results',
-  },
-  {
-    id: '2',
-    type: 'reward',
-    title: 'Reward Earned',
-    message: 'You earned 100 points for watching Big Brother Naija',
-    time: '15m ago',
-    read: false,
-    icon: '🎁',
-    action: 'Redeem',
-  },
-  {
-    id: '3',
-    type: 'content',
-    title: 'New Content Available',
-    message: 'New episode of "Game of Thrones" recap is now available',
-    time: '1h ago',
-    read: true,
-    icon: '📺',
-    action: 'Watch Now',
-  },
-  {
-    id: '4',
-    type: 'prediction',
-    title: 'Prediction Result',
-    message: 'Your prediction was correct! You won 50 points',
-    time: '2h ago',
-    read: true,
-    icon: '🔮',
-    action: 'View History',
-  },
-  {
-    id: '5',
-    type: 'system',
-    title: 'Wallet Updated',
-    message: 'Your wallet has been credited with NGN 500',
-    time: '3h ago',
-    read: true,
-    icon: '💰',
-    action: 'Check Balance',
-  },
-  {
-    id: '6',
-    type: 'content',
-    title: 'Live Now',
-    message: 'Davido Live Concert is now streaming',
-    time: '4h ago',
-    read: true,
-    icon: '🎤',
-    action: 'Watch Live',
-  },
-];
+import { notificationApi, type Notification } from '../../src/api';
+import { logger } from '../../src/utils/logger';
+import { LoadingState, ErrorState, EmptyState } from '../../src/components/StateContainers';
 
 export default function NotificationsScreen() {
   const colorScheme = useColorScheme();
   const router = useRouter();
-  const [notificationsList, setNotificationsList] = useState(notifications);
+  const [notificationsList, setNotificationsList] = useState<Notification[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [pushEnabled, setPushEnabled] = useState(true);
   const [emailEnabled, setEmailEnabled] = useState(true);
 
-  const markAsRead = (id: string) => {
+  const fetchNotifications = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await notificationApi.getNotifications();
+      if (response.success && response.data) {
+        setNotificationsList(response.data.items);
+      }
+    } catch (err: any) {
+      logger.error('Failed to load notifications:', err);
+      setError(err.message || 'Failed to load notifications');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchNotifications();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <ScrollView style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' }]}>
+        <LoadingState text="Loading notifications..." />
+      </ScrollView>
+    );
+  }
+
+  if (error) {
+    return (
+      <ScrollView style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' }]}>
+        <ErrorState description={error} onRetry={fetchNotifications} />
+      </ScrollView>
+    );
+  }
+
+  const markAsRead = async (id: string) => {
     setNotificationsList(prev =>
       prev.map(n => (n.id === id ? { ...n, read: true } : n))
     );
+    try {
+      await notificationApi.markAsRead(id);
+    } catch (err) {
+      logger.error('Failed to mark as read:', err);
+    }
   };
 
-  const markAllAsRead = () => {
+  const markAllAsRead = async () => {
     setNotificationsList(prev =>
       prev.map(n => ({ ...n, read: true }))
     );
+    try {
+      await notificationApi.markAllAsRead();
+    } catch (err) {
+      logger.error('Failed to mark all as read:', err);
+    }
   };
 
   const getNotificationColor = (type: string) => {
@@ -126,7 +103,13 @@ export default function NotificationsScreen() {
       </View>
 
       <View style={styles.notificationList}>
-        {notificationsList.map((notification) => (
+        {notificationsList.length === 0 ? (
+          <View style={{ padding: 40, alignItems: 'center' }}>
+            <Text style={{ fontSize: 48, marginBottom: 12 }}>🔔</Text>
+            <Text style={[{ fontSize: 16, color: '#888' }]}>No notifications yet</Text>
+          </View>
+        ) : (
+        notificationsList.map((notification) => (
           <TouchableOpacity
             key={notification.id}
             style={[
@@ -135,26 +118,21 @@ export default function NotificationsScreen() {
             ]}
             onPress={() => markAsRead(notification.id)}
           >
-            <View style={[styles.iconContainer, { backgroundColor: getNotificationColor(notification.type) }]}>
-              <Text style={styles.icon}>{notification.icon}</Text>
-            </View>
             <View style={styles.notificationContent}>
               <Text style={[styles.notificationTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
                 {notification.title}
               </Text>
-              <Text style={styles.notificationMessage}>{notification.message}</Text>
+              <Text style={styles.notificationMessage}>{notification.body || ''}</Text>
               <View style={styles.notificationFooter}>
-                <Text style={styles.notificationTime}>{notification.time}</Text>
-                {notification.action && (
-                  <Text style={styles.notificationAction}>{notification.action}</Text>
-                )}
+                <Text style={styles.notificationTime}>{new Date(notification.createdAt).toLocaleDateString()}</Text>
               </View>
             </View>
             {!notification.read && (
               <View style={styles.unreadDot} />
             )}
           </TouchableOpacity>
-        ))}
+        ))
+        )}
       </View>
 
       <View style={styles.settingsSection}>

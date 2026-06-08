@@ -4,6 +4,7 @@ import { useAuth } from './AuthContext';
 import * as Notifications from 'expo-notifications';
 import Constants from 'expo-constants';
 import * as Device from 'expo-device';
+import { logger } from '../utils/logger';
 
 interface NotificationContextType {
   notifications: Notification[];
@@ -105,7 +106,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
   const registerForPushNotifications = async () => {
     if (!Device.isDevice) {
-      console.log('Must use physical device for Push Notifications');
+      logger.warn('Must use physical device for Push Notifications');
       return;
     }
 
@@ -117,23 +118,23 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         finalStatus = status;
       }
       if (finalStatus !== 'granted') {
-        console.log('Failed to get push token for push notification!');
+        logger.warn('Failed to get push token for push notification!');
         return;
       }
 
       const projectId = Constants.expoConfig?.extra?.eas?.projectId ?? Constants.easConfig?.projectId;
       if (!projectId) {
-        console.log('Project ID not found, skipping push token registration');
+        logger.warn('Project ID not found, skipping push token registration');
         return;
       }
 
       const token = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
       const response = await notificationApi.registerPushToken(token);
       if (!response.success) {
-        console.log('Failed to register push token with backend');
+        logger.warn('Failed to register push token with backend');
       }
     } catch (error: any) {
-      console.error('Error registering for push notifications:', error);
+      logger.error('Error registering for push notifications', error);
     }
   };
 

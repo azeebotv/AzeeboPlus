@@ -1,0 +1,13 @@
+/// Shared User model definition
+/// Auth-service owns the actual `users` table
+/// Universe services should reference users by userId: String (not re-define the model)
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  displayName String
+  avatar    String?
+  role      String   @default("user")
+  isVerified Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

@@ -1,23 +1,15 @@
 export interface ErrorResponse {
   success: boolean;
   error: {
-    statusCode: number;
-    error: string;
+    code: string;
     message: string | string[];
-    timestamp: string;
-    path: string;
-    method: string;
-    traceId?: string;
-    stack?: string;
+    details?: Record<string, unknown>;
   };
 }
 
 export interface ApiError {
-  statusCode: number;
-  error: string;
+  code: string;
   message: string;
-  traceId: string;
-  timestamp: string;
   details?: Record<string, unknown>;
 }
 

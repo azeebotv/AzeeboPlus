@@ -1,0 +1,30 @@
+# PgBouncer Userlist Template
+# This file should be copied to pgbouncer_userlist.txt and populated with actual passwords
+# The actual file should be in .gitignore for security
+
+# Format: "username" "password"
+# Passwords should be generated using a secure password generator
+
+"postgres" "${POSTGRES_PASSWORD}"
+"auth_user" "${AUTH_DB_PASSWORD}"
+"user_user" "${USER_DB_PASSWORD}"
+"wallet_user" "${WALLET_DB_PASSWORD}"
+"payment_user" "${PAYMENT_DB_PASSWORD}"
+"content_user" "${CONTENT_DB_PASSWORD}"
+"media_user" "${MEDIA_DB_PASSWORD}"
+"search_user" "${SEARCH_DB_PASSWORD}"
+"notification_user" "${NOTIFICATION_DB_PASSWORD}"
+"reward_user" "${REWARD_DB_PASSWORD}"
+"analytics_user" "${ANALYTICS_DB_PASSWORD}"
+"recommendation_user" "${RECOMMENDATION_DB_PASSWORD}"
+"reality_user" "${REALITY_DB_PASSWORD}"
+"movie_user" "${MOVIE_DB_PASSWORD}"
+"games_user" "${GAMES_DB_PASSWORD}"
+"comedy_user" "${COMEDY_DB_PASSWORD}"
+"sports_user" "${SPORTS_DB_PASSWORD}"
+"lifestyle_user" "${LIFESTYLE_DB_PASSWORD}"
+"vertical_user" "${VERTICAL_DB_PASSWORD}"
+"creator_user" "${CREATOR_DB_PASSWORD}"
+"support_user" "${SUPPORT_DB_PASSWORD}"
+"moderation_user" "${MODERATION_DB_PASSWORD}"
+"queue_user" "${QUEUE_DB_PASSWORD}"

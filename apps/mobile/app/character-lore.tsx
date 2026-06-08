@@ -1,20 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Image,
   SafeAreaView,
 } from 'react-native';
 import { useColorScheme } from 'react-native';
-import { useRouter } from 'expo-router';
-import { colors, universeColors } from '@azeebo/design-tokens';
+import { useRouter, useLocalSearchParams } from 'expo-router';
+import { colors } from '@azeebo/design-tokens';
+import { apiClient } from '../src/api/client';
+import { LoadingState, ErrorState } from '../src/components/StateContainers';
 
-const PLACEHOLDER_IMAGE = '';
-
-interface Character {
+interface CharacterData {
   id: string;
   name: string;
   role: string;
@@ -25,61 +24,66 @@ interface Character {
   relationships: { name: string; type: string; avatar: string }[];
 }
 
-const character: Character = {
-  id: '1',
-  name: 'Zara',
-  role: 'The Warrior Queen',
-  description:
-    'Zara is the fearless leader of the Northern Tribe. Known for her strategic mind and unmatched combat skills, she has led her people through countless battles and secured their place as one of the most powerful factions in the realm.',
-  avatar: '👩‍🦰',
-  background: '#FF6B6B',
-  stats: [
-    { label: 'Strength', value: '95' },
-    { label: 'Intelligence', value: '88' },
-    { label: 'Charisma', value: '92' },
-    { label: 'Endurance', value: '85' },
-  ],
-  relationships: [
-    { name: 'Kai', type: 'Ally', avatar: '👨' },
-    { name: 'Luna', type: 'Sister', avatar: '👩' },
-    { name: 'Rex', type: 'Rival', avatar: '🧑' },
-  ],
-};
-
-const loreChapters = [
-  {
-    id: '1',
-    title: 'The Rise of Zara',
-    summary: 'How a young warrior became the queen of the Northern Tribe.',
-    unlocked: true,
-  },
-  {
-    id: '2',
-    title: 'The Battle of Crimson Pass',
-    summary: 'The legendary battle that cemented Zara\'s reputation.',
-    unlocked: true,
-  },
-  {
-    id: '3',
-    title: 'The Lost Relic',
-    summary: 'The mysterious artifact that changed everything.',
-    unlocked: false,
-  },
-];
+interface LoreChapter {
+  id: string;
+  title: string;
+  summary: string;
+  unlocked: boolean;
+}
 
 export default function CharacterLoreScreen() {
   const colorScheme = useColorScheme();
   const router = useRouter();
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const isDark = colorScheme === 'dark';
   const [activeTab, setActiveTab] = useState('story');
+  const [character, setCharacter] = useState<CharacterData | null>(null);
+  const [loreChapters, setLoreChapters] = useState<LoreChapter[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchData = useCallback(async () => {
+    if (!id) {
+      setError('No character ID provided');
+      setIsLoading(false);
+      return;
+    }
+    setIsLoading(true);
+    setError(null);
+    try {
+      const [charRes, loreRes] = await Promise.all([
+        apiClient.get<CharacterData>(`/vertical/characters/${id}`),
+        apiClient.get<LoreChapter[]>(`/vertical/characters/${id}/lore`),
+      ]);
+      setCharacter(charRes);
+      setLoreChapters(loreRes);
+    } catch {
+      setError('Failed to load character data');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [id]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  if (isLoading) {
+    return <LoadingState text="Loading character..." />;
+  }
+
+  if (error || !character) {
+    return <ErrorState description={error || 'Character not found'} onRetry={fetchData} />;
+  }
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView style={[styles.scrollView, { backgroundColor: colorScheme === 'dark' ? colors.dark[900] : colors.light[50] }]}>
+      <ScrollView style={[styles.scrollView, { backgroundColor: isDark ? colors.dark[900] : colors.light[50] }]}>
         <View style={styles.header}>
           <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
             <Text style={styles.backIcon}>←</Text>
           </TouchableOpacity>
-          <Text style={[styles.headerTitle, { color: colorScheme === 'dark' ? colors.text.primary : colors.dark[900] }]}>
+          <Text style={[styles.headerTitle, { color: isDark ? colors.text.primary : colors.dark[900] }]}>
             Character Lore
           </Text>
           <View style={styles.shareButton}>
@@ -87,7 +91,7 @@ export default function CharacterLoreScreen() {
           </View>
         </View>
 
-        <View style={styles.heroSection} style={[styles.heroSection, { backgroundColor: character.background }]}>
+        <View style={[styles.heroSection, { backgroundColor: character.background }]}>
           <View style={styles.heroAvatar}>
             <Text style={styles.heroAvatarText}>{character.avatar}</Text>
           </View>
@@ -112,10 +116,10 @@ export default function CharacterLoreScreen() {
         {activeTab === 'story' && (
           <View style={styles.storySection}>
             <View style={styles.storyCard}>
-              <Text style={[styles.sectionTitle, { color: colorScheme === 'dark' ? colors.text.primary : colors.dark[900] }]}>
+              <Text style={[styles.sectionTitle, { color: isDark ? colors.text.primary : colors.dark[900] }]}>
                 Story
               </Text>
-              <Text style={[styles.storyText, { color: colorScheme === 'dark' ? colors.text.secondary : colors.dark[600] }]}>
+              <Text style={[styles.storyText, { color: isDark ? colors.text.secondary : colors.dark[600] }]}>
                 {character.description}
               </Text>
             </View>
@@ -125,17 +129,17 @@ export default function CharacterLoreScreen() {
         {activeTab === 'stats' && (
           <View style={styles.statsSection}>
             <View style={styles.statsCard}>
-              <Text style={[styles.sectionTitle, { color: colorScheme === 'dark' ? colors.text.primary : colors.dark[900] }]}>
+              <Text style={[styles.sectionTitle, { color: isDark ? colors.text.primary : colors.dark[900] }]}>
                 Attributes
               </Text>
               <View style={styles.statsList}>
                 {character.stats.map((stat, index) => (
                   <View key={index} style={styles.statItem}>
                     <View style={styles.statHeader}>
-                      <Text style={[styles.statLabel, { color: colorScheme === 'dark' ? colors.text.secondary : colors.dark[600] }]}>
+                      <Text style={[styles.statLabel, { color: isDark ? colors.text.secondary : colors.dark[600] }]}>
                         {stat.label}
                       </Text>
-                      <Text style={[styles.statValue, { color: colorScheme === 'dark' ? colors.text.primary : colors.dark[900] }]}>
+                      <Text style={[styles.statValue, { color: isDark ? colors.text.primary : colors.dark[900] }]}>
                         {stat.value}
                       </Text>
                     </View>
@@ -154,7 +158,7 @@ export default function CharacterLoreScreen() {
         {activeTab === 'relationships' && (
           <View style={styles.relationshipsSection}>
             <View style={styles.relationshipsCard}>
-              <Text style={[styles.sectionTitle, { color: colorScheme === 'dark' ? colors.text.primary : colors.dark[900] }]}>
+              <Text style={[styles.sectionTitle, { color: isDark ? colors.text.primary : colors.dark[900] }]}>
                 Relationships
               </Text>
               <View style={styles.relationshipsList}>
@@ -164,7 +168,7 @@ export default function CharacterLoreScreen() {
                       <Text style={styles.relAvatarText}>{rel.avatar}</Text>
                     </View>
                     <View style={styles.relInfo}>
-                      <Text style={[styles.relName, { color: colorScheme === 'dark' ? colors.text.primary : colors.dark[900] }]}>
+                      <Text style={[styles.relName, { color: isDark ? colors.text.primary : colors.dark[900] }]}>
                         {rel.name}
                       </Text>
                       <Text style={styles.relType}>{rel.type}</Text>
@@ -180,7 +184,7 @@ export default function CharacterLoreScreen() {
         {activeTab === 'lore' && (
           <View style={styles.loreSection}>
             <View style={styles.loreCard}>
-              <Text style={[styles.sectionTitle, { color: colorScheme === 'dark' ? colors.text.primary : colors.dark[900] }]}>
+              <Text style={[styles.sectionTitle, { color: isDark ? colors.text.primary : colors.dark[900] }]}>
                 Lore Chapters
               </Text>
               <View style={styles.loreList}>
@@ -199,14 +203,14 @@ export default function CharacterLoreScreen() {
                     <View style={styles.loreInfo}>
                       <Text style={[
                         styles.loreTitle,
-                        { color: colorScheme === 'dark' ? colors.text.primary : colors.dark[900] },
+                        { color: isDark ? colors.text.primary : colors.dark[900] },
                         !chapter.unlocked && styles.loreTextLocked,
                       ]}>
                         {chapter.title}
                       </Text>
                       <Text style={[
                         styles.loreSummary,
-                        { color: colorScheme === 'dark' ? colors.text.secondary : colors.dark[600] },
+                        { color: isDark ? colors.text.secondary : colors.dark[600] },
                         !chapter.unlocked && styles.loreTextLocked,
                       ]}>
                         {chapter.summary}

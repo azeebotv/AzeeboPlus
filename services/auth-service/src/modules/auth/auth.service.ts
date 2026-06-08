@@ -8,11 +8,15 @@ import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { ForgotPasswordDto, ResetPasswordDto, VerifyEmailDto, ResendVerificationDto } from './dto/password-reset.dto';
+import { SelectRoleDto } from './dto/select-role.dto';
+import { RequestOtpDto } from './dto/request-otp.dto';
+import { VerifyOtpDto } from './dto/verify-otp.dto';
 import { AuthResponse } from './interfaces/auth-response.interface';
 import { RefreshTokenResponse } from './interfaces/refresh-token-response.interface';
 import { UserEntity } from './interfaces/auth-entity.interface';
 import { User } from '@azeebo/shared-types';
 import { createSuccessResponse } from '@azeebo/shared-types';
+import { OtpService } from './otp/otp.service';
 import { RedisService } from '../../common/services/redis.service';
 
 @Injectable()
@@ -29,6 +33,7 @@ export class AuthService {
   constructor(
     private readonly authRepository: AuthRepository,
     private readonly jwtService: JwtService,
+    private readonly otpService: OtpService,
     private readonly redisService: RedisService
   ) {}
 
@@ -273,6 +278,49 @@ export class AuthService {
     await this.redisService.set(verificationTokenKey, user.id, 86400);
 
     return { success: true, message: 'If the email exists, a verification link has been sent' };
+  }
+
+  async selectRole(userId: string, selectRoleDto: SelectRoleDto): Promise<{ success: boolean; message: string }> {
+    const user = await this.authRepository.findById(userId);
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
+
+    const allowedRoles = ['user', 'creator', 'moderator'];
+    if (!allowedRoles.includes(selectRoleDto.role)) {
+      throw new BadRequestException('Invalid role selection');
+    }
+
+    await this.authRepository.updateRole(userId, selectRoleDto.role);
+
+    return { success: true, message: 'Role selected successfully' };
+  }
+
+  async requestOtp(requestOtpDto: RequestOtpDto): Promise<{ success: boolean; message: string }> {
+    const user = await this.authRepository.findByEmail(requestOtpDto.email);
+    if (!user) {
+      return { success: true, message: 'If the email exists, an OTP has been sent' };
+    }
+
+    await this.otpService.generateOtp(user.id);
+    return { success: true, message: 'If the email exists, an OTP has been sent' };
+  }
+
+  async verifyOtp(verifyOtpDto: VerifyOtpDto): Promise<AuthResponse> {
+    const user = await this.authRepository.findByEmail(verifyOtpDto.email);
+    if (!user) {
+      throw new BadRequestException('Invalid email or code');
+    }
+
+    await this.otpService.verifyOtp(user.id, verifyOtpDto.code);
+
+    const tokens = await this.generateTokens(user);
+
+    return createSuccessResponse({
+      user: this.mapToUser(user),
+      access_token: tokens.accessToken,
+      refresh_token: tokens.refreshToken,
+    });
   }
 
   private async generateTokens(user: UserEntity): Promise<{

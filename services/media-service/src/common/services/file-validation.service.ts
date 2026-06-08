@@ -109,7 +109,7 @@ export class FileValidationService {
     const dangerousExtensions = ['exe', 'dll', 'bat', 'cmd', 'sh', 'py', 'php', 'js', 'node'];
     const extension = file.originalname.split('.').pop()?.toLowerCase();
     
-    if (dangerousExtensions.includes(extension)) {
+    if (extension && dangerousExtensions.includes(extension)) {
       throw new BadRequestException(`Executable files (.${extension}) are not allowed`);
     }
   }

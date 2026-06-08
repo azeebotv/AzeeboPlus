@@ -17,6 +17,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { UsersService } from './users.service';
 import { UpdateUniverseAffinityDto } from './dto/update-universe-affinity.dto';
 import { UpdateUserProfileDto } from './dto/update-user-profile.dto';
+import { CompleteProfileSetupDto } from './dto/complete-profile-setup.dto';
 import { RateLimitGuard, RateLimit } from '@azeebo/security';
 
 interface AuthenticatedRequest {
@@ -217,5 +218,19 @@ export class UsersController {
     @Body() dto: UpdateUniverseAffinityDto
   ): Promise<{ message: string; interests: string[] }> {
     return this.usersService.updateUniverseAffinity(req.user.sub, dto);
+  }
+
+  @Post('me/complete-profile')
+  @UseGuards(AuthGuard('jwt'), RateLimitGuard)
+  @RateLimit(5, 3600000)
+  @ApiOperation({ summary: 'Complete profile setup after registration' })
+  @ApiResponse({ status: 200, description: 'Profile setup completed' })
+  @ApiResponse({ status: 400, description: 'Invalid input' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async completeProfileSetup(
+    @Request() req: AuthenticatedRequest,
+    @Body() dto: CompleteProfileSetupDto
+  ): Promise<Record<string, unknown>> {
+    return this.usersService.completeProfileSetup(req.user.sub, dto);
   }
 }

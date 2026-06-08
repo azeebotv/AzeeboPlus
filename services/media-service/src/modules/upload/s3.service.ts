@@ -207,11 +207,11 @@ export class S3Service {
   }
 
   private async extractVideoDuration(_buffer: Buffer): Promise<number> {
-    return Math.floor(Math.random() * 300) + 60;
+    return 120; // Mock: 2 minutes default
   }
 
   private async extractAudioDuration(_buffer: Buffer): Promise<number> {
-    return Math.floor(Math.random() * 1800) + 60;
+    return 300; // Mock: 5 minutes default
   }
 
   async getSignedDownloadUrl(key: string, expiresIn = 3600): Promise<string> {

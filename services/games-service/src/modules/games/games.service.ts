@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
 import { GameResponse } from './interfaces/game-response.interface';
 import axios from 'axios';
@@ -6,9 +7,14 @@ import axios from 'axios';
 @Injectable()
 export class GamesService {
   private readonly logger = new Logger(GamesService.name);
-  private readonly analyticsServiceBaseUrl = process.env.ANALYTICS_SERVICE_URL || 'http://localhost:3008';
+  private readonly analyticsServiceBaseUrl: string;
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly configService: ConfigService,
+  ) {
+    this.analyticsServiceBaseUrl = this.configService.getOrThrow<string>('ANALYTICS_SERVICE_URL');
+  }
 
   private async trackAnalyticsEvent(
     eventName: string,
@@ -107,7 +113,8 @@ export class GamesService {
       throw new BadRequestException('Daily challenge already completed');
     }
 
-    const correctAnswer = challenge.questions?.[0]?.correctAnswer;
+    const firstQuestion = challenge.questions?.[0] as Record<string, unknown> | undefined;
+    const correctAnswer = (firstQuestion?.correctAnswer as string) || (firstQuestion?.answer as string);
     const isCorrect = answer === correctAnswer;
 
     await this.prisma.gameSession.create({

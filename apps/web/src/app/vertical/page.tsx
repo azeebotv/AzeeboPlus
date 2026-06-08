@@ -2,80 +2,40 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { Button, Card, Skeleton, Badge, Avatar } from '@azeebo/ui';
-import { colors, gradients, universeColors } from '@azeebo/design-tokens';
+import { colors, universeColors } from '@azeebo/design-tokens';
 import Link from 'next/link';
-
-const mockSeries = [
-  {
-    id: '1',
-    title: 'Kingdom of Oyo',
-    description: 'An epic historical drama about the ancient Oyo Empire',
-    thumbnail: 'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=epic%20historical%20drama%20african%20kingdom%20palace%20royalty&image_size=landscape_16_9',
-    episodes: 24,
-    rating: 4.8,
-    isPremium: true,
-    genre: 'Historical Drama',
-  },
-  {
-    id: '2',
-    title: 'Modern Love Lagos',
-    description: 'A romantic anthology series exploring love in modern Lagos',
-    thumbnail: 'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=romantic%20drama%20lagos%20modern%20couple%20city%20night&image_size=landscape_16_9',
-    episodes: 12,
-    rating: 4.6,
-    isPremium: false,
-    genre: 'Romance',
-  },
-  {
-    id: '3',
-    title: 'Tech Bros',
-    description: 'A comedy about young entrepreneurs building startups in Lagos',
-    thumbnail: 'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=tech%20startup%20comedy%20young%20entrepreneurs%20modern%20office&image_size=landscape_16_9',
-    episodes: 18,
-    rating: 4.5,
-    isPremium: false,
-    genre: 'Comedy',
-  },
-];
-
-const mockCharacters = [
-  {
-    id: '1',
-    name: 'King Alaafin',
-    series: 'Kingdom of Oyo',
-    description: 'The powerful ruler of the Oyo Empire',
-    avatar: 'KA',
-    lore: 'King Alaafin is the 45th ruler of the ancient Oyo Empire, known for his wisdom and military strategy.',
-  },
-  {
-    id: '2',
-    name: 'Amara',
-    series: 'Modern Love Lagos',
-    description: 'A successful lawyer navigating love and career',
-    avatar: 'A',
-    lore: 'Amara is a brilliant corporate lawyer who has to balance her demanding career with her search for true love in Lagos.',
-  },
-  {
-    id: '3',
-    name: 'Chidi',
-    series: 'Tech Bros',
-    description: 'A brilliant but quirky software engineer',
-    avatar: 'C',
-    lore: 'Chidi is a coding prodigy who dropped out of MIT to pursue his startup dream in Lagos tech scene.',
-  },
-];
+import { apiFetch, ContentItem } from '@/lib/api';
+import { webLogger } from '@/lib/logger';
+import { useUniverses, useSettings } from '@/hooks/useDatabase';
 
 export default function VerticalPage(): JSX.Element {
   const { user, isAuthenticated } = useAuth();
-  const [series, setSeries] = useState(mockSeries);
-  const [characters, setCharacters] = useState(mockCharacters);
+  const { isUniverseEnabled } = useUniverses();
+  const { getSetting } = useSettings();
+  const siteName = getSetting('site_name', 'Azeebo+');
+  const isVerticalEnabled = isUniverseEnabled('vertical');
+  const [series, setSeries] = useState<ContentItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 500);
-    return () => clearTimeout(timer);
+    const fetchContent = async () => {
+      try {
+        setIsLoading(true);
+        const result = await apiFetch<ContentItem[]>('/v1/content?universe=vertical&limit=20');
+
+        if (result.success && result.data) {
+          setSeries(result.data);
+        }
+      } catch (err) {
+        webLogger.error('Failed to fetch vertical content', err);
+        setError('Failed to load content. Please try again.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchContent();
   }, []);
 
   return (
@@ -87,7 +47,7 @@ export default function VerticalPage(): JSX.Element {
             <div className="h-10 w-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: universeColors.vertical.primary }}>
               <span className="text-white font-bold text-xl leading-none">A</span>
             </div>
-            <h1 className="text-2xl font-bold hidden sm:block" style={{ color: colors.text.primary }}>Azeebo+</h1>
+            <h1 className="text-2xl font-bold hidden sm:block" style={{ color: colors.text.primary }}>{siteName}</h1>
           </div>
 
           <nav className="hidden md:flex items-center gap-8">
@@ -107,7 +67,7 @@ export default function VerticalPage(): JSX.Element {
             {isAuthenticated ? (
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
-                  <Avatar size="medium" fallback={user?.name?.charAt(0) || 'U'} />
+                  <Avatar size="md" fallback={user?.name?.charAt(0) || 'U'} />
                   <span className="text-sm font-medium" style={{ color: colors.text.primary }}>{user?.name}</span>
                 </div>
               </div>
@@ -129,7 +89,14 @@ export default function VerticalPage(): JSX.Element {
       <section className="relative">
         {isLoading ? (
           <Skeleton height="500px" className="w-full" />
-        ) : (
+        ) : error ? (
+          <div className="h-[500px] flex items-center justify-center">
+            <div className="text-center">
+              <p className="text-lg mb-4" style={{ color: colors.text.secondary }}>{error}</p>
+              <Button variant="primary" onClick={() => window.location.reload()}>Retry</Button>
+            </div>
+          </div>
+        ) : series.length > 0 ? (
           <div className="relative h-[500px]">
             <img
               src={series[0].thumbnail}
@@ -139,9 +106,9 @@ export default function VerticalPage(): JSX.Element {
             <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
             <div className="absolute bottom-0 left-0 right-0 p-8 max-w-7xl mx-auto">
               <div className="flex items-center gap-2 mb-4">
-                {series[0].isPremium && <Badge variant="success">Premium</Badge>}
+                <Badge variant="success">Premium</Badge>
                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium mb-4" style={{ backgroundColor: `${universeColors.vertical.primary}30`, color: universeColors.vertical.primary }}>
-                  {series[0].genre}
+                  {series[0].contentType || 'Vertical'}
                 </span>
               </div>
               <h2 className="text-4xl font-bold text-white mb-2">{series[0].title}</h2>
@@ -155,6 +122,10 @@ export default function VerticalPage(): JSX.Element {
                 </Button>
               </div>
             </div>
+          </div>
+        ) : (
+          <div className="h-[500px] flex items-center justify-center">
+            <p className="text-lg" style={{ color: colors.text.secondary }}>No content available</p>
           </div>
         )}
       </section>
@@ -172,71 +143,47 @@ export default function VerticalPage(): JSX.Element {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {series.map((show) => (
-            <Card key={show.id} padding="none" className="overflow-hidden cursor-pointer hover:shadow-xl transition-shadow">
-              <div className="relative">
-                <img src={show.thumbnail} alt={show.title} className="w-full h-48 object-cover" />
-                {show.isPremium && (
-                  <Badge variant="success" className="absolute top-2 right-2">
-                    Premium
-                  </Badge>
-                )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
-                <div className="absolute bottom-4 left-4 right-4">
-                  <Badge variant="outline" className="mb-2">{show.genre}</Badge>
-                  <h3 className="text-xl font-bold text-white">{show.title}</h3>
+        {isLoading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <Card key={i} padding="none">
+                <Skeleton height="240px" />
+                <div className="p-4 space-y-3">
+                  <Skeleton width="80%" height="20px" />
+                  <Skeleton width="60%" height="16px" />
                 </div>
-              </div>
-              <div className="p-4">
-                <p className="text-sm text-gray-400 mb-3">{show.description}</p>
-                <div className="flex items-center justify-between text-sm text-gray-400 mb-4">
-                  <span>🎬 {show.episodes} episodes</span>
-                  <span>⭐ {show.rating}</span>
-                </div>
-                <Button variant="primary" className="w-full" style={{ backgroundColor: universeColors.vertical.primary }}>
-                  Watch Now
-                </Button>
-              </div>
-            </Card>
-          ))}
-        </div>
-      </section>
-
-      {/* Character Lore */}
-      <section className="py-12" style={{ backgroundColor: colors.bg.secondary }}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <h2 className="text-2xl sm:text-3xl font-bold" style={{ color: colors.text.primary }}>
-                Character Lore
-              </h2>
-              <p className="text-base mt-1" style={{ color: colors.text.secondary }}>
-                Dive deeper into your favorite characters
-              </p>
-            </div>
-            <Button variant="ghost">View All</Button>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {characters.map((character) => (
-              <Card key={character.id} padding="md" className="overflow-hidden cursor-pointer hover:shadow-xl transition-shadow">
-                <div className="flex items-center gap-4 mb-4">
-                  <Avatar size="lg" fallback={character.avatar} />
-                  <div>
-                    <h3 className="text-lg font-bold" style={{ color: colors.text.primary }}>{character.name}</h3>
-                    <Badge variant="outline">{character.series}</Badge>
-                  </div>
-                </div>
-                <p className="text-sm text-gray-400 mb-3">{character.description}</p>
-                <p className="text-sm" style={{ color: colors.text.secondary }}>{character.lore}</p>
-                <Button variant="outline" className="w-full mt-4">
-                  Read Full Lore
-                </Button>
               </Card>
             ))}
           </div>
-        </div>
+        ) : series.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {series.map((show) => (
+              <Card key={show.id} padding="none" className="overflow-hidden cursor-pointer hover:shadow-xl transition-shadow">
+                <div className="relative">
+                  <img src={show.thumbnail} alt={show.title} className="w-full h-48 object-cover" />
+                  <Badge variant="success" className="absolute top-2 right-2">
+                    Premium
+                  </Badge>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+                  <div className="absolute bottom-4 left-4 right-4">
+                    <Badge variant="outline" className="mb-2">{show.contentType || 'Vertical'}</Badge>
+                    <h3 className="text-xl font-bold text-white">{show.title}</h3>
+                  </div>
+                </div>
+                <div className="p-4">
+                  <p className="text-sm text-gray-400 mb-3 line-clamp-2">{show.description}</p>
+                  <Button variant="primary" className="w-full" style={{ backgroundColor: universeColors.vertical.primary }}>
+                    Watch Now
+                  </Button>
+                </div>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <p className="text-lg" style={{ color: colors.text.secondary }}>No series available yet</p>
+          </div>
+        )}
       </section>
 
       {/* Footer */}
@@ -244,7 +191,7 @@ export default function VerticalPage(): JSX.Element {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
             <div>
-              <h4 className="font-bold text-lg mb-4" style={{ color: colors.text.primary }}>Azeebo+</h4>
+              <h4 className="font-bold text-lg mb-4" style={{ color: colors.text.primary }}>{siteName}</h4>
               <ul className="space-y-2" style={{ color: colors.text.secondary }}>
                 {['About', 'Careers', 'Press'].map((item) => (
                   <li key={item} className="text-sm hover:text-gray-200 transition-colors cursor-pointer">
@@ -285,7 +232,7 @@ export default function VerticalPage(): JSX.Element {
             </div>
           </div>
           <div className="mt-12 pt-8 border-t text-center text-sm" style={{ borderColor: colors.border.light, color: colors.text.tertiary }}>
-            <p>© 2026 Azeebo+. All rights reserved.</p>
+            <p>© 2026 {siteName}. All rights reserved.</p>
           </div>
         </div>
       </footer>

@@ -1,9 +1,9 @@
 'use client';
 
 import React from 'react';
-import { useForm, UseFormProps, Controller, FieldValues } from 'react-hook-form';
+import { useForm, UseFormProps, Controller, FieldValues, Path } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ZodType, ZodError } from 'zod';
+import { ZodType, ZodError, type z } from 'zod';
 import { Input, Textarea, Select, Checkbox, Radio } from './Input';
 import { Button } from './web-components';
 
@@ -29,7 +29,7 @@ export function Form<T extends FieldValues>({
 }: FormProps<T>) {
   const form = useForm<T>({
     ...props,
-    resolver: schema ? zodResolver(schema) : undefined,
+    resolver: schema ? (zodResolver(schema as any) as any) : undefined,
   });
 
   const { register, control, handleSubmit, formState } = form;
@@ -43,10 +43,10 @@ export function Form<T extends FieldValues>({
 }
 
 export interface FieldProps<T extends FieldValues> {
-  name: keyof T;
+  name: Path<T>;
   label?: string;
   control: ReturnType<typeof useForm<T>>['control'];
-  rules?: Parameters<typeof Controller<T>['props']['rules']>[0];
+  rules?: object;
   children?: React.ReactNode;
   className?: string;
 }
@@ -176,12 +176,12 @@ export function FormErrorMessageList({ errors, className = '' }: FormErrorMessag
 
 export function useFormValidation<T extends FieldValues>(schema: FormSchema<T>) {
   const form = useForm<T>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(schema as any) as any,
   });
 
   return form;
 }
 
 export function getZodErrorMessage(error: ZodError): string {
-  return error.errors[0]?.message || 'Validation error';
+  return error.issues[0]?.message || 'Validation error';
 }

@@ -12,7 +12,7 @@ interface ApiResponse<T> {
 
 @Injectable()
 export class ResponseWrapperInterceptor implements NestInterceptor {
-  intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
+  intercept(_context: ExecutionContext, next: CallHandler): Observable<unknown> {
     return next.handle().pipe(
       map((response: unknown) => {
         if (this.isApiResponse(response)) {

@@ -134,4 +134,11 @@ export class AuthRepository {
       data: { isVerified: true },
     }) as Promise<UserEntity>;
   }
+
+  async updateRole(userId: string, role: string): Promise<UserEntity> {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { role },
+    }) as Promise<UserEntity>;
+  }
 }

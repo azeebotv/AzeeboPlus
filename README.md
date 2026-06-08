@@ -27,6 +27,10 @@ A comprehensive streaming and content platform built with a microservices archit
 | Universe | sports-service | Sports content |
 | Universe | vertical-service | Universe management |
 | Universe | movie-service | Movie content |
+| Service | engagement-service | User engagement & leaderboards |
+| Service | messaging-service | Direct messaging & chat |
+| Service | referral-service | Referral codes & rewards |
+| Service | subscription-service | Subscription plans & billing |
 
 ## 🚀 Quick Start
 
@@ -99,6 +103,10 @@ pnpm build                # Build all packages
 | vertical-service | 3017 | /vertical |
 | creator-service | 3018 | /creators |
 | support-service | 3020 | /support |
+| engagement-service | 3023 | /engagement |
+| messaging-service | 3024 | /messaging |
+| referral-service | 3025 | /referrals |
+| subscription-service | 3026 | /subscription |
 
 ## 📱 Mobile Setup
 

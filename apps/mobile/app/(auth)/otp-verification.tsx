@@ -12,12 +12,14 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../src/contexts/AuthContext';
+import { LoadingState, ErrorState } from '../../src/components/StateContainers';
 
 export default function OTPVerificationScreen() {
   const router = useRouter();
   const { verifyOTP, resendOTP, isLoading } = useAuth();
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [timer, setTimer] = useState(60);
+  const [error, setError] = useState<string | null>(null);
   const inputRefs = useRef<(TextInput | null)[]>([]);
 
   useEffect(() => {
@@ -59,8 +61,10 @@ export default function OTPVerificationScreen() {
 
   const handleVerify = async (otpCode?: string) => {
     const code = otpCode || otp.join('');
+    setError(null);
+
     if (code.length !== 6) {
-      Alert.alert('Error', 'Please enter the complete 6-digit code');
+      setError('Please enter the complete 6-digit code');
       return;
     }
 
@@ -68,7 +72,7 @@ export default function OTPVerificationScreen() {
       await verifyOTP(code);
       router.replace('/(tabs)/home');
     } catch (error) {
-      Alert.alert('Verification Failed', 'Invalid or expired code');
+      setError('Invalid or expired code');
     }
   };
 
@@ -80,7 +84,7 @@ export default function OTPVerificationScreen() {
       setTimer(60);
       Alert.alert('Code Sent', 'A new verification code has been sent');
     } catch (error) {
-      Alert.alert('Error', 'Unable to resend code');
+      setError('Unable to resend code');
     }
   };
 
@@ -118,6 +122,12 @@ export default function OTPVerificationScreen() {
             />
           ))}
         </View>
+
+        {error && (
+          <View style={styles.errorContainer}>
+            <Text style={styles.errorText}>{error}</Text>
+          </View>
+        )}
 
         <TouchableOpacity
           style={[styles.verifyButton, isLoading && styles.verifyButtonDisabled]}
@@ -216,5 +226,16 @@ const styles = StyleSheet.create({
   resendButtonText: {
     color: '#007AFF',
     fontSize: 16,
+  },
+  errorContainer: {
+    backgroundColor: '#FEE2E2',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 16,
+  },
+  errorText: {
+    color: '#DC2626',
+    fontSize: 14,
+    textAlign: 'center',
   },
 });

@@ -5,6 +5,7 @@ import { MoviesModule } from './modules/movies/movies.module';
 import { CinemaPassModule } from './modules/cinema-pass/cinema-pass.module';
 import { FilmmakerModule } from './modules/filmmaker/filmmaker.module';
 import { HealthModule } from './modules/health/health.module';
+import { AdminModule } from './modules/admin/admin.module';
 import { RateLimiterModule } from '@azeebo/security';
 
 @Module({
@@ -18,6 +19,7 @@ import { RateLimiterModule } from '@azeebo/security';
     CinemaPassModule,
     FilmmakerModule,
     HealthModule,
+    AdminModule,
   ],
 })
 export class AppModule {}

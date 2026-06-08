@@ -3,6 +3,7 @@ import React from 'react';
 
 import { useEffect, useState } from 'react';
 import { api, User, ContentItem } from '../../lib/api';
+import { webLogger } from '@/lib/logger';
 
 interface CreatorProfile extends User {
   contentCount: number;
@@ -10,14 +11,10 @@ interface CreatorProfile extends User {
   bio?: string;
 }
 
-interface CreatorContentItem extends ContentItem {
-  views: number;
-}
-
 export default function CreatorsPage(): JSX.Element {
   const [creators, setCreators] = useState<CreatorProfile[]>([]);
   const [selectedCreator, setSelectedCreator] = useState<CreatorProfile | null>(null);
-  const [creatorContent, setCreatorContent] = useState<CreatorContentItem[]>([]);
+  const [creatorContent, setCreatorContent] = useState<ContentItem[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
@@ -30,7 +27,7 @@ export default function CreatorsPage(): JSX.Element {
           setCreators(response.data.items);
         }
       } catch (error) {
-        // Error handling is intentionally minimal here
+        webLogger.error('Failed to load creators', error);
       } finally {
         setIsLoading(false);
       }
@@ -46,14 +43,10 @@ export default function CreatorsPage(): JSX.Element {
       try {
         const response = await api.creator.getCreatorContent(selectedCreator.id, 1, 10);
         if (response.success && response.data) {
-          const items = response.data.items.map((item: ContentItem) => ({
-            ...item,
-            views: Math.floor(Math.random() * 100000),
-          }));
-          setCreatorContent(items);
+          setCreatorContent(response.data.items);
         }
       } catch (error) {
-        // Error handling is intentionally minimal here
+        webLogger.error('Failed to load creator content', error);
       }
     };
 
@@ -186,7 +179,7 @@ export default function CreatorsPage(): JSX.Element {
             <div className="mt-8">
               <h4 className="font-bold text-xl mb-6">Creator Content</h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {creatorContent.map((item: CreatorContentItem) => (
+                {creatorContent.map((item: ContentItem) => (
                   <div
                     key={item.id}
                     className="bg-muted rounded-lg overflow-hidden hover:shadow-md transition-shadow"

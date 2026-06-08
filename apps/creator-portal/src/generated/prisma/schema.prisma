@@ -185,6 +185,7 @@ model ContentItem {
   id                    String    @id @default(uuid())
   title                 String
   description           String?
+  type                  String    @default("video") // video, audio, document
   thumbnail             String
   mediaUrl              String?
   universeId            String
@@ -232,14 +233,16 @@ model MediaAsset {
 }
 
 model CreatorProfile {
-  id          String   @id @default(uuid())
-  userId      String   @unique
-  bio         String?
-  banner      String?
-  socialLinks Json?
-  verified    Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id            String   @id @default(uuid())
+  userId        String   @unique
+  bio           String?
+  banner        String?
+  socialLinks   Json?
+  payoutMethod  String?
+  minimumPayout Decimal?
+  verified      Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 

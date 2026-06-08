@@ -12,6 +12,7 @@
     "baseUrl": "./",
     "incremental": true,
     "skipLibCheck": true,
+    "types": ["node", "uuid"],
     "strictNullChecks": true,
     "noImplicitAny": false,
     "strictBindCallApply": false,
@@ -19,5 +20,5 @@
     "noFallthroughCasesInSwitch": false
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "test"]
+  "exclude": ["node_modules", "dist", "test", "src/**/*.spec.ts"]
 }

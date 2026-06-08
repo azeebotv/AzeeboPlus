@@ -123,6 +123,9 @@ model EventRsvp {
   @@index([userId])
 }
 
+/// NOTE: This User model is duplicated from auth-service for local relation support.
+/// Consider removing this and using userId: String references instead (see creator-service pattern).
+/// The canonical User definition is in packages/shared-types/prisma/user.prisma
 model User {
   id            String    @id @default(uuid())
   email         String    @unique
@@ -144,6 +147,12 @@ model User {
   celebrityEntries  CelebrityEntry[]
   nightlifeEntries  NightlifeEntry[]
   influencerEntries InfluencerEntry[]
+  challenges        Challenge[]
+  challengeSubmissions ChallengeSubmission[]
+  polls             Poll[]
+  pollVotes         PollVote[]
+  quizzes           Quiz[]
+  quizAttempts      QuizAttempt[]
 }
 
 model SavedItem {
@@ -360,4 +369,161 @@ model InfluencerCollaboration {
 
   @@index([influencerId])
   @@index([status])
+}
+
+model Challenge {
+  id          String   @id @default(uuid())
+  title       String
+  slug        String   @unique
+  description String
+  coverImage  String?
+  type        String   // photo, video, quiz, poll
+  startDate   DateTime
+  endDate     DateTime
+  prize       String?
+  rules       String?
+  status      String   @default("draft") // draft, active, completed, cancelled
+  participantCount Int @default(0)
+  createdById String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  createdBy    User              @relation(fields: [createdById], references: [id])
+  submissions  ChallengeSubmission[]
+
+  @@index([type])
+  @@index([status])
+  @@index([startDate])
+  @@index([endDate])
+}
+
+model ChallengeSubmission {
+  id          String   @id @default(uuid())
+  challengeId String
+  userId      String
+  content     String
+  mediaUrl    String?
+  status      String   @default("pending") // pending, approved, rejected
+  votes       Int      @default(0)
+  submittedAt DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  challenge Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id])
+
+  @@unique([challengeId, userId])
+  @@index([challengeId])
+  @@index([userId])
+  @@index([status])
+}
+
+model Poll {
+  id          String   @id @default(uuid())
+  title       String
+  slug        String   @unique
+  description String?
+  coverImage  String?
+  status      String   @default("draft") // draft, active, closed
+  totalVotes  Int      @default(0)
+  createdById String
+  expiresAt   DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  createdBy User        @relation(fields: [createdById], references: [id])
+  options   PollOption[]
+  votes     PollVote[]
+
+  @@index([status])
+  @@index([createdById])
+}
+
+model PollOption {
+  id          String   @id @default(uuid())
+  pollId      String
+  text        String
+  imageUrl    String?
+  voteCount   Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  poll        Poll      @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  votes       PollVote[]
+
+  @@index([pollId])
+}
+
+model PollVote {
+  id          String   @id @default(uuid())
+  pollId      String
+  optionId    String
+  userId      String
+  votedAt     DateTime @default(now())
+
+  poll        Poll      @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  option      PollOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([pollId, userId])
+  @@index([pollId])
+  @@index([optionId])
+  @@index([userId])
+}
+
+model Quiz {
+  id          String   @id @default(uuid())
+  title       String
+  slug        String   @unique
+  description String?
+  coverImage  String?
+  category    String?
+  difficulty  String   @default("easy") // easy, medium, hard
+  timeLimit   Int?
+  status      String   @default("draft") // draft, published, archived
+  playCount   Int      @default(0)
+  createdById String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  createdBy   User          @relation(fields: [createdById], references: [id])
+  questions   QuizQuestion[]
+  attempts    QuizAttempt[]
+
+  @@index([category])
+  @@index([difficulty])
+  @@index([status])
+}
+
+model QuizQuestion {
+  id          String   @id @default(uuid())
+  quizId      String
+  question    String
+  options     String[]
+  correctAnswer Int
+  explanation String?
+  points      Int      @default(10)
+  order       Int
+
+  quiz        Quiz        @relation(fields: [quizId], references: [id], onDelete: Cascade)
+
+  @@index([quizId])
+  @@index([order])
+}
+
+model QuizAttempt {
+  id          String   @id @default(uuid())
+  quizId      String
+  userId      String
+  score       Int      @default(0)
+  totalQuestions Int
+  answers     Json?
+  completedAt DateTime?
+  startedAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  quiz        Quiz        @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([quizId])
+  @@index([userId])
+  @@index([startedAt])
 }

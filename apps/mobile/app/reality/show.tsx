@@ -1,24 +1,10 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, FlatList } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, FlatList, ActivityIndicator } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
-
-const CONTESTANTS = [
-  { id: '1', name: 'Maria', image: '' },
-  { id: '2', name: 'Kenny', image: '' },
-  { id: '3', name: 'Nini', image: '' },
-  { id: '4', name: 'Cross', image: '' },
-  { id: '5', name: 'Angel', image: '' },
-  { id: '6', name: 'Jerome', image: '' },
-];
-
-const CHAT_MESSAGES = [
-  { id: '1', user: 'Sarah', message: 'Maria is winning!', color: '#FF6B6B' },
-  { id: '2', user: 'Chidi', message: 'Vote Kenny 😍', color: '#4ECDC4' },
-  { id: '3', user: 'Ada', message: 'This season is fire!', color: '#FFEAA7' },
-  { id: '4', user: 'Emeka', message: 'Nini for the win', color: '#DDA0DD' },
-  { id: '5', user: 'Funke', message: 'Cross is so funny 😂', color: '#45B7D1' },
-];
+import { realityApi } from '../../src/api';
+import { useWallet } from '../../src/contexts/WalletContext';
+import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
 
 const VOTE_PACKAGES = [
   { id: '1', votes: 100, price: 100, bonus: 0 },
@@ -31,16 +17,40 @@ export default function RealityShowPage() {
   const colorScheme = useColorScheme();
   const router = useRouter();
   const isDark = colorScheme === 'dark';
-  const [selectedContestant, setSelectedContestant] = useState<typeof CONTESTANTS[0] | null>(null);
-  const [selectedPackage, setSelectedPackage] = useState<typeof VOTE_PACKAGES[0]>(VOTE_PACKAGES[0]);
+  const { wallet } = useWallet();
+  const [contestants, setContestants] = useState<any[]>([]);
+  const [chatMessages, setChatMessages] = useState<any[]>([]);
+  const [selectedContestant, setSelectedContestant] = useState<any | null>(null);
+  const [selectedPackage, setSelectedPackage] = useState(VOTE_PACKAGES[0]);
   const [quantity, setQuantity] = useState(1);
   const [chatMessage, setChatMessage] = useState('');
   const [showVoting, setShowVoting] = useState(false);
-  const [walletBalance] = useState(5000);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const walletBalance = wallet?.balance || 0;
 
   const totalVotes = selectedPackage.votes * quantity;
   const totalPrice = selectedPackage.price * quantity;
   const canAfford = walletBalance >= totalPrice;
+
+  useEffect(() => {
+    loadShowData();
+  }, []);
+
+  const loadShowData = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const contestantsRes = await realityApi.getContestants('current');
+      if (contestantsRes.success && contestantsRes.data) {
+        setContestants(contestantsRes.data);
+      }
+    } catch (err) {
+      setError('Failed to load show data');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleSendMessage = () => {
     if (chatMessage.trim()) {
@@ -54,6 +64,14 @@ export default function RealityShowPage() {
     setSelectedContestant(null);
     setShowVoting(false);
   };
+
+  if (isLoading) {
+    return <LoadingState text="Loading show..." />;
+  }
+
+  if (error) {
+    return <ErrorState title="Failed to load" description={error} onRetry={loadShowData} />;
+  }
 
   return (
     <View style={[styles.container, { backgroundColor: isDark ? '#0a0a0a' : '#ffffff' }]}>
@@ -87,7 +105,7 @@ export default function RealityShowPage() {
       <View style={styles.quickVoteBar}>
         <Text style={styles.quickVoteLabel}>Quick Vote:</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          {CONTESTANTS.slice(0, 4).map((contestant) => (
+          {contestants.slice(0, 4).map((contestant: any) => (
             <TouchableOpacity
               key={contestant.id}
               style={styles.quickVoteButton}
@@ -105,30 +123,34 @@ export default function RealityShowPage() {
           <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
             Contestants
           </Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {CONTESTANTS.map((contestant) => (
-              <TouchableOpacity
-                key={contestant.id}
-                style={[
-                  styles.contestantCard,
-                  selectedContestant?.id === contestant.id && styles.contestantCardSelected,
-                ]}
-                onPress={() => setSelectedContestant(contestant)}
-              >
-                <View style={styles.contestantImagePlaceholder}>
-                  <Text style={styles.contestantInitial}>{contestant.name[0]}</Text>
-                </View>
-                <Text style={[styles.contestantName, { color: isDark ? '#fff' : '#000' }]}>
-                  {contestant.name}
-                </Text>
-                {selectedContestant?.id === contestant.id && (
-                  <View style={styles.selectedBadge}>
-                    <Text style={styles.checkmark}>✓</Text>
+          {contestants.length === 0 ? (
+            <EmptyState title="No contestants" description="No contestants available yet." />
+          ) : (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              {contestants.map((contestant: any) => (
+                <TouchableOpacity
+                  key={contestant.id}
+                  style={[
+                    styles.contestantCard,
+                    selectedContestant?.id === contestant.id && styles.contestantCardSelected,
+                  ]}
+                  onPress={() => setSelectedContestant(contestant)}
+                >
+                  <View style={styles.contestantImagePlaceholder}>
+                    <Text style={styles.contestantInitial}>{contestant.name[0]}</Text>
                   </View>
-                )}
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
+                  <Text style={[styles.contestantName, { color: isDark ? '#fff' : '#000' }]}>
+                    {contestant.name}
+                  </Text>
+                  {selectedContestant?.id === contestant.id && (
+                    <View style={styles.selectedBadge}>
+                      <Text style={styles.checkmark}>✓</Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          )}
         </View>
 
         <View style={styles.actionBar}>
@@ -151,7 +173,7 @@ export default function RealityShowPage() {
             Live Chat
           </Text>
           <View style={styles.chatMessages}>
-            {CHAT_MESSAGES.map((msg) => (
+            {chatMessages.map((msg: any) => (
               <View key={msg.id} style={styles.chatMessage}>
                 <Text style={[styles.chatUser, { color: msg.color }]}>{msg.user}:</Text>
                 <Text style={styles.chatText}>{msg.message}</Text>

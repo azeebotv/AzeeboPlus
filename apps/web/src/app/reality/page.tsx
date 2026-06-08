@@ -1,65 +1,99 @@
 'use client';
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { api } from '../../lib/api';
+import { api, ContentItem } from '../../lib/api';
+import { webLogger } from '../../lib/logger';
 import { Button, Card, Skeleton, Badge, Avatar } from '@azeebo/ui';
 import { colors, gradients } from '@azeebo/design-tokens';
 import Link from 'next/link';
-
-const mockShows = [
-  {
-    id: '1',
-    title: 'The Big Brother',
-    description: '20 housemates compete for the ultimate prize of ₦100 million',
-    thumbnail: 'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=african%20reality%20tv%20show%20house%20with%20colorful%20interior%20design&image_size=landscape_16_9',
-    contestants: 20,
-    votes: 156000,
-    isLive: true,
-    season: 'Season 8',
-  },
-  {
-    id: '2',
-    title: 'Nigerian Idol',
-    description: 'Discover Nigeria\'s next singing superstar',
-    thumbnail: 'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=african%20singing%20competition%20stage%20with%20microphones%20and%20judges&image_size=landscape_16_9',
-    contestants: 12,
-    votes: 89000,
-    isLive: false,
-    season: 'Season 6',
-  },
-  {
-    id: '3',
-    title: 'Survivor Africa',
-    description: 'Contestants battle it out in the wilderness',
-    thumbnail: 'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=african%20wilderness%20survival%20camp%20with%20tents%20and%20savanna%20landscape&image_size=landscape_16_9',
-    contestants: 18,
-    votes: 67000,
-    isLive: false,
-    season: 'Season 4',
-  },
-];
-
-const mockContestants = [
-  { id: '1', name: 'Amara', votes: 45000, status: 'safe', avatar: 'A' },
-  { id: '2', name: 'Chidi', votes: 38000, status: 'safe', avatar: 'C' },
-  { id: '3', name: 'Zainab', votes: 28000, status: 'danger', avatar: 'Z' },
-  { id: '4', name: 'Kola', votes: 25000, status: 'danger', avatar: 'K' },
-  { id: '5', name: 'Tolu', votes: 20000, status: 'eliminated', avatar: 'T' },
-];
+import { useUniverses, useSettings } from '@/hooks/useDatabase';
 
 export default function RealityPage(): JSX.Element {
   const { user, isAuthenticated } = useAuth();
-  const [shows, setShows] = useState(mockShows);
-  const [selectedShow, setSelectedShow] = useState(mockShows[0]);
-  const [contestants, setContestants] = useState(mockContestants);
+  const { isUniverseEnabled, hasFeature, isLoading: universesLoading } = useUniverses();
+  const { getSetting } = useSettings();
+  const siteName = getSetting('site_name', 'Azeebo+');
+  const [shows, setShows] = useState<ContentItem[]>([]);
+  const [selectedShow, setSelectedShow] = useState<ContentItem | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [contestants, setContestants] = useState<Contestant[]>([]);
+  const maxVotes = Math.max(0, ...contestants.map((c) => c.votes));
+
+  interface Contestant {
+    id: string;
+    name: string;
+    avatar: string;
+    votes: number;
+    status: 'safe' | 'danger' | 'eliminated';
+  }
+
+  const isRealityEnabled = isUniverseEnabled('reality');
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 500);
-    return () => clearTimeout(timer);
-  }, []);
+    let cancelled = false;
+
+    async function fetchShows() {
+      if (!isRealityEnabled) {
+        setError('Reality universe is currently unavailable');
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        setIsLoading(true);
+        setError(null);
+        const response = await api.content.getContentByUniverse('reality');
+        if (cancelled) return;
+        if (response.success && response.data) {
+          const items = response.data.items || [];
+          setShows(items);
+          if (items.length > 0) setSelectedShow(items[0]);
+        } else {
+          setError(response.message || 'Failed to load reality shows');
+        }
+      } catch (err) {
+        if (cancelled) return;
+        const message = err instanceof Error ? err.message : 'An unexpected error occurred';
+        setError(message);
+        webLogger.error('Failed to load reality shows', { error: message });
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    }
+
+    fetchShows();
+    return () => { cancelled = true; };
+  }, [isRealityEnabled]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function fetchContestants() {
+      if (!selectedShow) {
+        setContestants([]);
+        return;
+      }
+
+      try {
+        const response = await api.reality.getContestants(selectedShow.id);
+        if (cancelled) return;
+        if (response.success && response.data) {
+          setContestants(response.data);
+        } else {
+          setError(response.message || 'Failed to load contestants');
+        }
+      } catch (err) {
+        if (cancelled) return;
+        const message = err instanceof Error ? err.message : 'An unexpected error occurred';
+        setError(message);
+        webLogger.error('Failed to load contestants', { error: message });
+      }
+    }
+
+    fetchContestants();
+    return () => { cancelled = true; };
+  }, [selectedShow]);
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: colors.bg.primary }}>
@@ -70,7 +104,7 @@ export default function RealityPage(): JSX.Element {
             <div className="h-10 w-10 rounded-xl flex items-center justify-center" style={{ background: gradients.brand }}>
               <span className="text-white font-bold text-xl leading-none">A</span>
             </div>
-            <h1 className="text-2xl font-bold hidden sm:block" style={{ color: colors.text.primary }}>Azeebo+</h1>
+            <h1 className="text-2xl font-bold hidden sm:block" style={{ color: colors.text.primary }}>{siteName}</h1>
           </div>
 
           <nav className="hidden md:flex items-center gap-8">
@@ -90,7 +124,7 @@ export default function RealityPage(): JSX.Element {
             {isAuthenticated ? (
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
-                  <Avatar size="medium" fallback={user?.name?.charAt(0) || 'U'} />
+                  <Avatar size="md" fallback={user?.name?.charAt(0) || 'U'} />
                   <span className="text-sm font-medium" style={{ color: colors.text.primary }}>{user?.name}</span>
                 </div>
               </div>
@@ -112,7 +146,7 @@ export default function RealityPage(): JSX.Element {
       <section className="relative">
         {isLoading ? (
           <Skeleton height="500px" className="w-full" />
-        ) : (
+        ) : selectedShow ? (
           <div className="relative h-[500px]">
             <img
               src={selectedShow.thumbnail}
@@ -121,12 +155,6 @@ export default function RealityPage(): JSX.Element {
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
             <div className="absolute bottom-0 left-0 right-0 p-8 max-w-7xl mx-auto">
-              {selectedShow.isLive && (
-                <Badge variant="error" className="mb-4">
-                  <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse mr-2"></span>
-                  LIVE NOW
-                </Badge>
-              )}
               <h2 className="text-4xl font-bold text-white mb-2">{selectedShow.title}</h2>
               <p className="text-gray-300 text-lg mb-6 max-w-2xl">{selectedShow.description}</p>
               <div className="flex items-center gap-4">
@@ -139,7 +167,7 @@ export default function RealityPage(): JSX.Element {
               </div>
             </div>
           </div>
-        )}
+        ) : null}
       </section>
 
       {/* Shows Grid */}
@@ -160,22 +188,17 @@ export default function RealityPage(): JSX.Element {
             <Card key={show.id} padding="none" className="overflow-hidden cursor-pointer hover:shadow-xl transition-shadow">
               <div className="relative">
                 <img src={show.thumbnail} alt={show.title} className="w-full h-48 object-cover" />
-                {show.isLive && (
-                  <Badge variant="error" className="absolute top-2 right-2">
-                    LIVE
-                  </Badge>
-                )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
                 <div className="absolute bottom-4 left-4 right-4">
-                  <Badge className="mb-2">{show.season}</Badge>
+                  <Badge className="mb-2">{show.contentType || 'Reality'}</Badge>
                   <h3 className="text-xl font-bold text-white">{show.title}</h3>
                 </div>
               </div>
               <div className="p-4">
                 <p className="text-sm text-gray-400 mb-3">{show.description}</p>
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-400">👥 {show.contestants} contestants</span>
-                  <span className="text-gray-400">🗳️ {show.votes.toLocaleString()} votes</span>
+                  <span className="text-gray-400">🎬 {show.duration || 0} min</span>
+                  <span className="text-gray-400">📅 {new Date(show.createdAt).toLocaleDateString()}</span>
                 </div>
                 <Button variant="primary" className="w-full mt-4">
                   Watch Now
@@ -204,7 +227,7 @@ export default function RealityPage(): JSX.Element {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div className="bg-card rounded-xl p-6">
               <h3 className="text-lg font-bold mb-4" style={{ color: colors.text.primary }}>
-                {selectedShow.title} - Current Vote Count
+                {selectedShow?.title || 'Show'} - Current Vote Count
               </h3>
               <div className="space-y-4">
                 {contestants.map((contestant, index) => (
@@ -213,7 +236,7 @@ export default function RealityPage(): JSX.Element {
                       <span className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center text-sm font-bold" style={{ color: colors.text.primary }}>
                         {index + 1}
                       </span>
-                      <Avatar size="medium" fallback={contestant.avatar} />
+                      <Avatar size="md" fallback={contestant.avatar} />
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center justify-between mb-2">
@@ -226,7 +249,7 @@ export default function RealityPage(): JSX.Element {
                         <div
                           className="h-full rounded-full transition-all"
                           style={{
-                            width: `${(contestant.votes / 45000) * 100}%`,
+                            width: `${(contestant.votes / (maxVotes || 1)) * 100}%`,
                             backgroundColor: contestant.status === 'safe' ? colors.success[500] : contestant.status === 'danger' ? colors.error[500] : colors.text.tertiary,
                           }}
                         />
@@ -254,12 +277,12 @@ export default function RealityPage(): JSX.Element {
                 </p>
                 <div className="flex items-center gap-4">
                   <div className="text-center">
-                    <p className="text-3xl font-bold">500</p>
+                    <p className="text-3xl font-bold">{selectedShow?.pointsEarned ?? 0}</p>
                     <p className="text-sm text-white/70">Points Earned</p>
                   </div>
                   <div className="w-px h-12 bg-white/30" />
                   <div className="text-center">
-                    <p className="text-3xl font-bold">25</p>
+                    <p className="text-3xl font-bold">{selectedShow?.votesToday ?? 0}</p>
                     <p className="text-sm text-white/70">Votes Today</p>
                   </div>
                 </div>
@@ -303,7 +326,7 @@ export default function RealityPage(): JSX.Element {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
             <div>
-              <h4 className="font-bold text-lg mb-4" style={{ color: colors.text.primary }}>Azeebo+</h4>
+              <h4 className="font-bold text-lg mb-4" style={{ color: colors.text.primary }}>{siteName}</h4>
               <ul className="space-y-2" style={{ color: colors.text.secondary }}>
                 {['About', 'Careers', 'Press'].map((item) => (
                   <li key={item} className="text-sm hover:text-gray-200 transition-colors cursor-pointer">
@@ -344,7 +367,7 @@ export default function RealityPage(): JSX.Element {
             </div>
           </div>
           <div className="mt-12 pt-8 border-t text-center text-sm" style={{ borderColor: colors.border.light, color: colors.text.tertiary }}>
-            <p>© 2026 Azeebo+. All rights reserved.</p>
+            <p>© 2026 {siteName}. All rights reserved.</p>
           </div>
         </div>
       </footer>

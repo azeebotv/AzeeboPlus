@@ -17,13 +17,13 @@ echo "📡 Checking for localhost URLs in production contexts..."
 LOCALHOST_ISSUES=$(grep -r "localhost" \
   --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" \
   --include="*.env*" --include="*.yaml" --include="*.yml" --include="*.json" \
+  --exclude-dir=node_modules --exclude-dir=.next --exclude-dir=dist --exclude-dir=.git \
   . \
   | grep -v "localhost:3000" \
   | grep -v "localhost:5432" \
   | grep -v "localhost:6379" \
   | grep -v "// localhost" \
   | grep -v "# localhost" \
-  | grep -v "localhost" \
   | wc -l)
 
 if [ $LOCALHOST_ISSUES -gt 0 ]; then
@@ -31,6 +31,7 @@ if [ $LOCALHOST_ISSUES -gt 0 ]; then
   grep -r "localhost" \
     --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" \
     --include="*.env*" --include="*.yaml" --include="*.yml" --include="*.json" \
+    --exclude-dir=node_modules --exclude-dir=.next --exclude-dir=dist --exclude-dir=.git \
     . \
     | grep -v "localhost:3000" \
     | grep -v "localhost:5432" \
@@ -53,6 +54,7 @@ DEFAULT_SECRETS=$(grep -r -i \
   -E "development-secret|test-secret|default-secret|secret123|password123" \
   --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" \
   --include="*.env*" \
+  --exclude-dir=node_modules --exclude-dir=.next --exclude-dir=dist --exclude-dir=.git \
   . \
   | grep -v "test_" \
   | grep -v "development_only" \
@@ -64,6 +66,7 @@ if [ $DEFAULT_SECRETS -gt 0 ]; then
     -E "development-secret|test-secret|default-secret|secret123|password123" \
     --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" \
     --include="*.env*" \
+    --exclude-dir=node_modules --exclude-dir=.next --exclude-dir=dist --exclude-dir=.git \
     . \
     | grep -v "test_" \
     | grep -v "development_only" \
@@ -83,6 +86,7 @@ PROVIDER_KEYS=$(grep -r -i \
   -E "pk_test_|sk_test_|flw_test_|paystack.*key|flutterwave.*key" \
   --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" \
   --include="*.env*" \
+  --exclude-dir=node_modules --exclude-dir=.next --exclude-dir=dist --exclude-dir=.git \
   . \
   | grep -v "REPLACE_WITH" \
   | grep -v "your-key-here" \
@@ -94,6 +98,7 @@ if [ $PROVIDER_KEYS -gt 0 ]; then
     -E "pk_test_|sk_test_|flw_test_|paystack.*key|flutterwave.*key" \
     --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" \
     --include="*.env*" \
+    --exclude-dir=node_modules --exclude-dir=.next --exclude-dir=dist --exclude-dir=.git \
     . \
     | grep -v "REPLACE_WITH" \
     | grep -v "your-key-here" \
@@ -111,16 +116,16 @@ echo "📝 Checking for console.log statements..."
 
 CONSOLE_LOGS=$(grep -r "console.log" \
   --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" \
+  --exclude-dir=node_modules --exclude-dir=.next --exclude-dir=dist --exclude-dir=.git \
   . \
-  | grep -v "console.log(" \
   | wc -l)
 
 if [ $CONSOLE_LOGS -gt 0 ]; then
   echo "❌ Found $CONSOLE_LOGS console.log statements that may need removal"
   grep -r "console.log" \
     --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" \
+    --exclude-dir=node_modules --exclude-dir=.next --exclude-dir=dist --exclude-dir=.git \
     . \
-    | grep -v "console.log(" \
     | head -10
   HAS_ERRORS=1
 else
@@ -136,6 +141,7 @@ echo "🖼️  Checking for placeholder images..."
 PLACEHOLDER_IMAGES=$(grep -r "via.placeholder.com" \
   --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" \
   --include="*.json" \
+  --exclude-dir=node_modules --exclude-dir=.next --exclude-dir=dist --exclude-dir=.git \
   . \
   | wc -l)
 
@@ -144,6 +150,7 @@ if [ $PLACEHOLDER_IMAGES -gt 0 ]; then
   grep -r "via.placeholder.com" \
     --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" \
     --include="*.json" \
+    --exclude-dir=node_modules --exclude-dir=.next --exclude-dir=dist --exclude-dir=.git \
     . \
     | head -10
   HAS_ERRORS=1
@@ -159,6 +166,7 @@ echo "🎲 Checking for Math.random() in business logic..."
 
 MATH_RANDOM=$(grep -r "Math.random()" \
   --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" \
+  --exclude-dir=node_modules --exclude-dir=.next --exclude-dir=dist --exclude-dir=.git \
   . \
   | grep -v "generateIdempotencyKey" \
   | grep -v "test" \
@@ -168,6 +176,7 @@ if [ $MATH_RANDOM -gt 0 ]; then
   echo "❌ Found $MATH_RANDOM Math.random() usages that may need review"
   grep -r "Math.random()" \
     --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" \
+    --exclude-dir=node_modules --exclude-dir=.next --exclude-dir=dist --exclude-dir=.git \
     . \
     | grep -v "generateIdempotencyKey" \
     | grep -v "test" \
@@ -186,6 +195,7 @@ echo "💰 Checking for hardcoded prices..."
 HARDCODED_PRICES=$(grep -r -E "\b[0-9]{3,}\s*(NGN|naira|kobo|dollar|usd|eur|gbp)\b" \
   -i \
   --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" \
+  --exclude-dir=node_modules --exclude-dir=.next --exclude-dir=dist --exclude-dir=.git \
   . \
   | grep -v "test" \
   | grep -v "example" \
@@ -196,6 +206,7 @@ if [ $HARDCODED_PRICES -gt 0 ]; then
   grep -r -E "\b[0-9]{3,}\s*(NGN|naira|kobo|dollar|usd|eur|gbp)\b" \
     -i \
     --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" \
+    --exclude-dir=node_modules --exclude-dir=.next --exclude-dir=dist --exclude-dir=.git \
     . \
     | grep -v "test" \
     | grep -v "example" \

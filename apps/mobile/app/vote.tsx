@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,22 +8,18 @@ import {
   Image,
   SafeAreaView,
   Modal,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { useColorScheme } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { colors, universeColors } from '@azeebo/design-tokens';
+import { realityApi } from '../src/api/engagement';
+import { walletApi } from '../src/api/wallet';
+import { logger } from '../src/utils/logger';
+import { LoadingState, EmptyState, ErrorState } from '../src/components/StateContainers';
 
 const PLACEHOLDER_IMAGE = '';
-
-interface Contestant {
-  id: string;
-  name: string;
-  description: string;
-  avatar: string;
-  votes: number;
-  rank: number;
-  eliminated?: boolean;
-}
 
 interface VotePackage {
   id: string;
@@ -32,15 +28,6 @@ interface VotePackage {
   bonus?: number;
   label: string;
 }
-
-const contestants: Contestant[] = [
-  { id: '1', name: 'Chioma', description: 'The Strategist', avatar: '👩🏾‍🦱', votes: 24500, rank: 1 },
-  { id: '2', name: 'Tunde', description: 'The Charmer', avatar: '👨🏾', votes: 23100, rank: 2 },
-  { id: '3', name: 'Aisha', description: 'The Dark Horse', avatar: '👩🏾', votes: 21800, rank: 3 },
-  { id: '4', name: 'Emeka', description: 'The Rebel', avatar: '👨🏾‍🦱', votes: 19500, rank: 4 },
-  { id: '5', name: 'Ngozi', description: 'The Fan Favorite', avatar: '👩🏾‍🦰', votes: 18200, rank: 5 },
-  { id: '6', name: 'Femi', description: 'The Underdog', avatar: '👨🏾‍🦱', votes: 16800, rank: 6, eliminated: false },
-];
 
 const votePackages: VotePackage[] = [
   { id: '1', votes: 10, price: 100, label: '10 Votes' },
@@ -52,14 +39,47 @@ const votePackages: VotePackage[] = [
 export default function VoteScreen() {
   const colorScheme = useColorScheme();
   const router = useRouter();
+  const { showId } = useLocalSearchParams<{ showId: string }>();
   const isDark = colorScheme === 'dark';
 
-  const [selectedContestant, setSelectedContestant] = useState<Contestant | null>(null);
+  const [selectedContestant, setSelectedContestant] = useState<any | null>(null);
   const [selectedPackage, setSelectedPackage] = useState<VotePackage>(votePackages[0]);
   const [quantity, setQuantity] = useState(1);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [voteSuccess, setVoteSuccess] = useState(false);
-  const [walletBalance] = useState(5000);
+  const [walletBalance, setWalletBalance] = useState(0);
+  const [contestants, setContestants] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    loadData();
+  }, [showId]);
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const [contestantsRes, walletRes] = await Promise.all([
+        realityApi.getContestants(showId || 'default'),
+        walletApi.getBalance(),
+      ]);
+      
+      if (contestantsRes.success && contestantsRes.data) {
+        setContestants(contestantsRes.data);
+      }
+      
+      if (walletRes.success && walletRes.data) {
+        setWalletBalance(walletRes.data.balance);
+      }
+    } catch (err) {
+      logger.error('Failed to load vote data:', err);
+      setError('Failed to load data. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const totalVotes = selectedPackage.votes * quantity + (selectedPackage.bonus ? selectedPackage.bonus * quantity : 0);
   const totalPrice = selectedPackage.price * quantity;
@@ -70,11 +90,40 @@ export default function VoteScreen() {
     setShowConfirmation(true);
   };
 
-  const confirmVote = () => {
-    setShowConfirmation(false);
-    setVoteSuccess(true);
-    setTimeout(() => setVoteSuccess(false), 3000);
+  const confirmVote = async () => {
+    try {
+      const response = await realityApi.submitVote({
+        showId: showId || 'default',
+        contestantId: selectedContestant?.id,
+        votes: totalVotes,
+      });
+      if (!response.success) {
+        throw new Error(response.error?.message || 'Vote submission failed');
+      }
+      setShowConfirmation(false);
+      setVoteSuccess(true);
+      setTimeout(() => setVoteSuccess(false), 3000);
+    } catch (err) {
+      logger.error('Failed to submit vote:', err);
+      Alert.alert('Error', 'Failed to submit vote. Please try again.');
+    }
   };
+
+  if (loading) {
+    return (
+      <SafeAreaView style={[styles.container, styles.centerContent, { backgroundColor: isDark ? colors.dark[900] : colors.light[50] }]}>
+        <LoadingState text="Loading..." />
+      </SafeAreaView>
+    );
+  }
+
+  if (error) {
+    return (
+      <SafeAreaView style={[styles.container, styles.centerContent, { backgroundColor: isDark ? colors.dark[900] : colors.light[50] }]}>
+        <ErrorState title="Failed to load" description={error} onRetry={loadData} />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: isDark ? colors.dark[900] : colors.light[50] }]}>
@@ -700,5 +749,30 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: 'rgba(255,255,255,0.9)',
     textAlign: 'center',
+  },
+  centerContent: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 16,
+  },
+  errorText: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  retryButton: {
+    backgroundColor: '#8B5CF6',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

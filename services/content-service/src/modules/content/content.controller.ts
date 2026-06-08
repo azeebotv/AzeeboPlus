@@ -9,10 +9,12 @@ import {
   UseGuards,
   Request,
   Query,
+  UseInterceptors,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard, RateLimit } from '@azeebo/security';
+import { CacheInterceptor, Cache } from '../../cache';
 
 import { ContentService } from './content.service';
 import { AccessControlService } from './access-control.service';
@@ -23,7 +25,8 @@ import { UpdateMediaAssetDto } from './dto/update-media-asset.dto';
 import { ContentResponse } from './interfaces/content-response.interface';
 
 @ApiTags('Content')
-@Controller('content')
+@Controller('v1/content')
+@UseInterceptors(CacheInterceptor)
 export class ContentController {
   constructor(
     private readonly contentService: ContentService,
@@ -31,6 +34,7 @@ export class ContentController {
   ) {}
 
   @Get()
+  @Cache({ key: 'content:list:{universe}', ttl: 600 })
   @UseGuards(RateLimitGuard)
   @RateLimit(100, 60000)
   @ApiOperation({ summary: 'List content with filters' })
@@ -45,6 +49,7 @@ export class ContentController {
   }
 
   @Get('home')
+  @Cache({ key: 'content:home:{userId}', ttl: 300 })
   @UseGuards(RateLimitGuard)
   @RateLimit(100, 60000)
   @ApiOperation({ summary: 'Get home feed content' })
@@ -54,6 +59,7 @@ export class ContentController {
   }
 
   @Get('watch')
+  @Cache({ key: 'content:watch:{userId}', ttl: 300 })
   @UseGuards(RateLimitGuard)
   @RateLimit(100, 60000)
   @ApiOperation({ summary: 'Get watch hub feed' })
@@ -63,6 +69,7 @@ export class ContentController {
   }
 
   @Get(':id')
+  @Cache({ key: 'content:{id}', ttl: 300 })
   @UseGuards(RateLimitGuard)
   @RateLimit(200, 60000)
   @ApiOperation({ summary: 'Get content by ID' })
@@ -73,6 +80,7 @@ export class ContentController {
   }
 
   @Get(':id/comments')
+  @Cache({ key: 'content:{id}:comments', ttl: 120 })
   @ApiOperation({ summary: 'Get content comments' })
   @ApiResponse({ status: 200, description: 'Comments list' })
   @ApiResponse({ status: 404, description: 'Content not found' })
@@ -109,6 +117,7 @@ export class ContentController {
   }
 
   @Get('search')
+  @Cache({ key: 'content:search:{q}', ttl: 600 })
   @UseGuards(RateLimitGuard)
   @RateLimit(50, 60000)
   @ApiOperation({ summary: 'Search content' })
@@ -118,6 +127,7 @@ export class ContentController {
   }
 
   @Get('trending')
+  @Cache({ key: 'content:trending', ttl: 300 })
   @UseGuards(RateLimitGuard)
   @RateLimit(100, 60000)
   @ApiOperation({ summary: 'Get trending content' })
@@ -127,6 +137,7 @@ export class ContentController {
   }
 
   @Get('recommended')
+  @Cache({ key: 'content:recommended:{userId}', ttl: 1800 })
   @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get recommended content' })
   @ApiResponse({ status: 200, description: 'Recommended content' })

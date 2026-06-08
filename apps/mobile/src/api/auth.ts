@@ -79,4 +79,16 @@ export const authApi = {
   resendVerification: async (email: string): Promise<ApiResponse<{ message: string }>> => {
     return apiClient.post<ApiResponse<{ message: string }>>('/auth/resend-verification', { email });
   },
+
+  getDevices: async (): Promise<ApiResponse<Array<{ id: string; name: string; type: string; lastActive: string; isCurrent: boolean }>>> => {
+    return apiClient.get<ApiResponse<Array<{ id: string; name: string; type: string; lastActive: string; isCurrent: boolean }>>>('/auth/devices');
+  },
+
+  revokeDevice: async (deviceId: string): Promise<ApiResponse<{ message: string }>> => {
+    return apiClient.delete<ApiResponse<{ message: string }>>(`/auth/devices/${deviceId}`);
+  },
+
+  selectRole: async (role: 'user' | 'creator' | 'both'): Promise<ApiResponse<{ role: string }>> => {
+    return apiClient.post<ApiResponse<{ role: string }>>('/auth/role', { role });
+  },
 };

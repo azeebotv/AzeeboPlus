@@ -8,6 +8,5 @@ export {
   BadRequestError,
   ConflictError,
   TooManyRequestsError,
-  ErrorResponse,
-  ApiError,
 } from './types';
+export type { ErrorResponse, ApiError } from './types';

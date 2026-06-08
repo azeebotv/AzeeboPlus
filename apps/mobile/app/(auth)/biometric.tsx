@@ -1,0 +1,330 @@
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  ActivityIndicator,
+  Alert,
+  useColorScheme,
+} from 'react-native';
+import { useRouter } from 'expo-router';
+import { useBiometric } from '../../src/hooks/useBiometric';
+import { useAuth } from '../../src/contexts/AuthContext';
+
+export default function BiometricAuthScreen() {
+  const router = useRouter();
+  const colorScheme = useColorScheme();
+  const { user } = useAuth();
+  const {
+    isAvailable,
+    biometricType,
+    isEnabled,
+    isLoading,
+    error,
+    authenticateWithStoredCredentials,
+    enableBiometrics,
+  } = useBiometric();
+
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
+  const [isEnabling, setIsEnabling] = useState(false);
+
+  useEffect(() => {
+    if (!isAvailable && !isLoading) {
+      Alert.alert(
+        'Biometric Not Available',
+        'Biometric authentication is not available on this device. Please use password login.',
+        [{ text: 'OK', onPress: () => router.replace('/(auth)/login' as any) }]
+      );
+    }
+  }, [isAvailable, isLoading]);
+
+  const handleBiometricLogin = async () => {
+    setIsAuthenticating(true);
+    try {
+      const result = await authenticateWithStoredCredentials();
+
+      if (result.success) {
+        router.replace('/(tabs)/home' as any);
+      } else {
+        Alert.alert(
+          'Authentication Failed',
+          result.error || 'Biometric authentication failed. Please try again.',
+          [
+            { text: 'Retry', onPress: () => handleBiometricLogin() },
+            { text: 'Use Password', onPress: () => router.replace('/(auth)/login' as any) },
+          ]
+        );
+      }
+    } catch (err) {
+      Alert.alert('Error', 'Authentication failed. Please try again.');
+    } finally {
+      setIsAuthenticating(false);
+    }
+  };
+
+  const handleEnableBiometrics = async () => {
+    if (!user) {
+      Alert.alert('Error', 'You must be logged in to enable biometric authentication');
+      return;
+    }
+
+    setIsEnabling(true);
+    try {
+      const credentials = JSON.stringify({
+        userId: user.id,
+        email: user.email,
+        timestamp: Date.now(),
+      });
+
+      const success = await enableBiometrics(credentials);
+
+      if (success) {
+        Alert.alert(
+          'Success',
+          `Biometric authentication has been enabled${
+            biometricType === 'face' ? ' (Face ID)' : biometricType === 'fingerprint' ? ' (Fingerprint)' : ''
+          }`,
+          [{ text: 'OK', onPress: () => router.replace('/(tabs)/home' as any) }]
+        );
+      } else {
+        Alert.alert('Error', 'Failed to enable biometric authentication');
+      }
+    } catch (err) {
+      Alert.alert('Error', 'Failed to enable biometric authentication');
+    } finally {
+      setIsEnabling(false);
+    }
+  };
+
+  const getBiometricIcon = () => {
+    switch (biometricType) {
+      case 'face':
+        return '👤';
+      case 'fingerprint':
+        return '👆';
+      case 'iris':
+        return '👁️';
+      default:
+        return '🔐';
+    }
+  };
+
+  const getBiometricLabel = () => {
+    switch (biometricType) {
+      case 'face':
+        return 'Face ID';
+      case 'fingerprint':
+        return 'Fingerprint';
+      case 'iris':
+        return 'Iris';
+      default:
+        return 'Biometric';
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <View style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#000' : '#fff' }]}>
+        <ActivityIndicator size="large" color="#8B5CF6" />
+        <Text style={[styles.loadingText, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
+          Initializing biometric authentication...
+        </Text>
+      </View>
+    );
+  }
+
+  return (
+    <View style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#000' : '#fff' }]}>
+      <View style={styles.content}>
+        <View style={styles.iconContainer}>
+          <Text style={styles.biometricIcon}>{getBiometricIcon()}</Text>
+        </View>
+
+        <Text style={[styles.title, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
+          {isEnabled ? 'Biometric Login' : `Enable ${getBiometricLabel()}`}
+        </Text>
+
+        <Text style={[styles.subtitle, { color: colorScheme === 'dark' ? '#888' : '#666' }]}>
+          {isEnabled
+            ? `Use your ${getBiometricLabel().toLowerCase()} to sign in quickly and securely`
+            : `Set up ${getBiometricLabel()} for fast and secure access to your account`}
+        </Text>
+
+        {error && (
+          <View style={styles.errorContainer}>
+            <Text style={styles.errorText}>{error}</Text>
+          </View>
+        )}
+
+        <View style={styles.buttonContainer}>
+          {isEnabled ? (
+            <>
+              <TouchableOpacity
+                style={[styles.primaryButton, isAuthenticating && styles.buttonDisabled]}
+                onPress={handleBiometricLogin}
+                disabled={isAuthenticating}
+              >
+                {isAuthenticating ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <>
+                    <Text style={styles.biometricIconSmall}>{getBiometricIcon()}</Text>
+                    <Text style={styles.primaryButtonText}>
+                      Use {getBiometricLabel()}
+                    </Text>
+                  </>
+                )}
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.secondaryButton}
+                onPress={() => router.replace('/(auth)/login' as any)}
+              >
+                <Text style={styles.secondaryButtonText}>Use Password Instead</Text>
+              </TouchableOpacity>
+            </>
+          ) : (
+            <>
+              <TouchableOpacity
+                style={[styles.primaryButton, isEnabling && styles.buttonDisabled]}
+                onPress={handleEnableBiometrics}
+                disabled={isEnabling}
+              >
+                {isEnabling ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <>
+                    <Text style={styles.biometricIconSmall}>{getBiometricIcon()}</Text>
+                    <Text style={styles.primaryButtonText}>
+                      Enable {getBiometricLabel()}
+                    </Text>
+                  </>
+                )}
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.secondaryButton}
+                onPress={() => router.replace('/(auth)/login' as any)}
+              >
+                <Text style={styles.secondaryButtonText}>Skip for Now</Text>
+              </TouchableOpacity>
+            </>
+          )}
+        </View>
+
+        <View style={styles.securityInfo}>
+          <Text style={styles.securityIcon}>🔒</Text>
+          <Text style={[styles.securityText, { color: colorScheme === 'dark' ? '#888' : '#666' }]}>
+            Your biometric data is stored securely on your device and is never shared with our servers
+          </Text>
+        </View>
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    fontSize: 16,
+    marginTop: 16,
+    textAlign: 'center',
+  },
+  iconContainer: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: '#8B5CF620',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 32,
+  },
+  biometricIcon: {
+    fontSize: 64,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  subtitle: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 24,
+    lineHeight: 24,
+  },
+  errorContainer: {
+    backgroundColor: '#FF3B3020',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 24,
+    width: '100%',
+  },
+  errorText: {
+    color: '#FF3B30',
+    fontSize: 14,
+    textAlign: 'center',
+  },
+  buttonContainer: {
+    width: '100%',
+    marginBottom: 32,
+  },
+  primaryButton: {
+    backgroundColor: '#8B5CF6',
+    borderRadius: 12,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  buttonDisabled: {
+    opacity: 0.7,
+  },
+  biometricIconSmall: {
+    fontSize: 20,
+    marginRight: 8,
+  },
+  primaryButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  secondaryButton: {
+    backgroundColor: 'transparent',
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#333',
+  },
+  secondaryButtonText: {
+    color: '#8B5CF6',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  securityInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    maxWidth: 300,
+  },
+  securityIcon: {
+    fontSize: 20,
+    marginRight: 8,
+  },
+  securityText: {
+    fontSize: 12,
+    textAlign: 'center',
+    lineHeight: 18,
+  },
+});

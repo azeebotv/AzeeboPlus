@@ -7,6 +7,7 @@ import { GameCatalogModule } from './modules/game-catalog/game-catalog.module';
 import { TournamentModule } from './modules/tournament/tournament.module';
 import { HealthModule } from './modules/health/health.module';
 import { ResponseWrapperInterceptor, ResponseSanitizationInterceptor } from '@azeebo/logger';
+import { AdminModule } from './modules/admin/admin.module';
 import { RateLimiterModule } from '@azeebo/security';
 
 @Module({
@@ -20,6 +21,7 @@ import { RateLimiterModule } from '@azeebo/security';
     GameCatalogModule,
     TournamentModule,
     HealthModule,
+    AdminModule,
   ],
   providers: [
     {

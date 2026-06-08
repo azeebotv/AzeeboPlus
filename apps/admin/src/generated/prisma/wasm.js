@@ -235,6 +235,19 @@ exports.Prisma.UniverseScalarFieldEnum = {
   description: 'description',
   icon: 'icon',
   color: 'color',
+  isEnabled: 'isEnabled',
+  sortOrder: 'sortOrder',
+  metadata: 'metadata',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.UniverseFeatureFlagScalarFieldEnum = {
+  id: 'id',
+  universeId: 'universeId',
+  featureKey: 'featureKey',
+  isEnabled: 'isEnabled',
+  metadata: 'metadata',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -369,6 +382,17 @@ exports.Prisma.SafetyActionScalarFieldEnum = {
   createdAt: 'createdAt'
 };
 
+exports.Prisma.SystemSettingsScalarFieldEnum = {
+  id: 'id',
+  key: 'key',
+  value: 'value',
+  category: 'category',
+  description: 'description',
+  isPublic: 'isPublic',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.AuditLogScalarFieldEnum = {
   id: 'id',
   actorId: 'actorId',
@@ -389,6 +413,10 @@ exports.Prisma.SortOrder = {
 
 exports.Prisma.NullableJsonNullValueInput = {
   DbNull: Prisma.DbNull,
+  JsonNull: Prisma.JsonNull
+};
+
+exports.Prisma.JsonNullValueInput = {
   JsonNull: Prisma.JsonNull
 };
 
@@ -420,6 +448,7 @@ exports.Prisma.ModelName = {
   PaymentIntent: 'PaymentIntent',
   Refund: 'Refund',
   Universe: 'Universe',
+  UniverseFeatureFlag: 'UniverseFeatureFlag',
   Category: 'Category',
   Tag: 'Tag',
   ContentItem: 'ContentItem',
@@ -430,6 +459,7 @@ exports.Prisma.ModelName = {
   ModerationCase: 'ModerationCase',
   Report: 'Report',
   SafetyAction: 'SafetyAction',
+  SystemSettings: 'SystemSettings',
   AuditLog: 'AuditLog'
 };
 

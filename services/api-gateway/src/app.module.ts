@@ -31,7 +31,7 @@ import { ProxyModule } from './modules/proxy/proxy.module';
           limit: 100,
         },
       ],
-      storage: new ThrottlerStorageRedisService(process.env.REDIS_URL || 'redis://localhost:6379'),
+      storage: new ThrottlerStorageRedisService(process.env.REDIS_URL ?? (() => { throw new Error('REDIS_URL environment variable must be set'); })()),
     }),
     HealthModule,
     ProxyModule,

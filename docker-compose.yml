@@ -18,28 +18,32 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB:-azeebo_plus_dev}
-      AUTH_DB_PASSWORD: ${AUTH_DB_PASSWORD:-auth_dev_password}
-      USER_DB_PASSWORD: ${USER_DB_PASSWORD:-user_dev_password}
-      WALLET_DB_PASSWORD: ${WALLET_DB_PASSWORD:-wallet_dev_password}
-      PAYMENT_DB_PASSWORD: ${PAYMENT_DB_PASSWORD:-payment_dev_password}
-      CONTENT_DB_PASSWORD: ${CONTENT_DB_PASSWORD:-content_dev_password}
-      MEDIA_DB_PASSWORD: ${MEDIA_DB_PASSWORD:-media_dev_password}
-      SEARCH_DB_PASSWORD: ${SEARCH_DB_PASSWORD:-search_dev_password}
-      NOTIFICATION_DB_PASSWORD: ${NOTIFICATION_DB_PASSWORD:-notification_dev_password}
-      REWARD_DB_PASSWORD: ${REWARD_DB_PASSWORD:-reward_dev_password}
-      ANALYTICS_DB_PASSWORD: ${ANALYTICS_DB_PASSWORD:-analytics_dev_password}
-      RECOMMENDATION_DB_PASSWORD: ${RECOMMENDATION_DB_PASSWORD:-recommendation_dev_password}
-      REALITY_DB_PASSWORD: ${REALITY_DB_PASSWORD:-reality_dev_password}
-      MOVIE_DB_PASSWORD: ${MOVIE_DB_PASSWORD:-movie_dev_password}
-      GAMES_DB_PASSWORD: ${GAMES_DB_PASSWORD:-games_dev_password}
-      COMEDY_DB_PASSWORD: ${COMEDY_DB_PASSWORD:-comedy_dev_password}
-      SPORTS_DB_PASSWORD: ${SPORTS_DB_PASSWORD:-sports_dev_password}
-      LIFESTYLE_DB_PASSWORD: ${LIFESTYLE_DB_PASSWORD:-lifestyle_dev_password}
-      VERTICAL_DB_PASSWORD: ${VERTICAL_DB_PASSWORD:-vertical_dev_password}
-      CREATOR_DB_PASSWORD: ${CREATOR_DB_PASSWORD:-creator_dev_password}
-      SUPPORT_DB_PASSWORD: ${SUPPORT_DB_PASSWORD:-support_dev_password}
-      MODERATION_DB_PASSWORD: ${MODERATION_DB_PASSWORD:-moderation_dev_password}
-      QUEUE_DB_PASSWORD: ${QUEUE_DB_PASSWORD:-queue_dev_password}
+      AUTH_DB_PASSWORD: ${AUTH_DB_PASSWORD:?AUTH_DB_PASSWORD must be set}
+      USER_DB_PASSWORD: ${USER_DB_PASSWORD:?USER_DB_PASSWORD must be set}
+      WALLET_DB_PASSWORD: ${WALLET_DB_PASSWORD:?WALLET_DB_PASSWORD must be set}
+      PAYMENT_DB_PASSWORD: ${PAYMENT_DB_PASSWORD:?PAYMENT_DB_PASSWORD must be set}
+      CONTENT_DB_PASSWORD: ${CONTENT_DB_PASSWORD:?CONTENT_DB_PASSWORD must be set}
+      MEDIA_DB_PASSWORD: ${MEDIA_DB_PASSWORD:?MEDIA_DB_PASSWORD must be set}
+      SEARCH_DB_PASSWORD: ${SEARCH_DB_PASSWORD:?SEARCH_DB_PASSWORD must be set}
+      NOTIFICATION_DB_PASSWORD: ${NOTIFICATION_DB_PASSWORD:?NOTIFICATION_DB_PASSWORD must be set}
+      REWARD_DB_PASSWORD: ${REWARD_DB_PASSWORD:?REWARD_DB_PASSWORD must be set}
+      ANALYTICS_DB_PASSWORD: ${ANALYTICS_DB_PASSWORD:?ANALYTICS_DB_PASSWORD must be set}
+      RECOMMENDATION_DB_PASSWORD: ${RECOMMENDATION_DB_PASSWORD:?RECOMMENDATION_DB_PASSWORD must be set}
+      REALITY_DB_PASSWORD: ${REALITY_DB_PASSWORD:?REALITY_DB_PASSWORD must be set}
+      MOVIE_DB_PASSWORD: ${MOVIE_DB_PASSWORD:?MOVIE_DB_PASSWORD must be set}
+      GAMES_DB_PASSWORD: ${GAMES_DB_PASSWORD:?GAMES_DB_PASSWORD must be set}
+      COMEDY_DB_PASSWORD: ${COMEDY_DB_PASSWORD:?COMEDY_DB_PASSWORD must be set}
+      SPORTS_DB_PASSWORD: ${SPORTS_DB_PASSWORD:?SPORTS_DB_PASSWORD must be set}
+      LIFESTYLE_DB_PASSWORD: ${LIFESTYLE_DB_PASSWORD:?LIFESTYLE_DB_PASSWORD must be set}
+      VERTICAL_DB_PASSWORD: ${VERTICAL_DB_PASSWORD:?VERTICAL_DB_PASSWORD must be set}
+      CREATOR_DB_PASSWORD: ${CREATOR_DB_PASSWORD:?CREATOR_DB_PASSWORD must be set}
+      SUPPORT_DB_PASSWORD: ${SUPPORT_DB_PASSWORD:?SUPPORT_DB_PASSWORD must be set}
+      MODERATION_DB_PASSWORD: ${MODERATION_DB_PASSWORD:?MODERATION_DB_PASSWORD must be set}
+      QUEUE_DB_PASSWORD: ${QUEUE_DB_PASSWORD:?QUEUE_DB_PASSWORD must be set}
+      REFERRAL_DB_PASSWORD: ${REFERRAL_DB_PASSWORD:?REFERRAL_DB_PASSWORD must be set}
+      ENGAGEMENT_DB_PASSWORD: ${ENGAGEMENT_DB_PASSWORD:?ENGAGEMENT_DB_PASSWORD must be set}
+      MESSAGING_DB_PASSWORD: ${MESSAGING_DB_PASSWORD:?MESSAGING_DB_PASSWORD must be set}
+      SUBSCRIPTION_DB_PASSWORD: ${SUBSCRIPTION_DB_PASSWORD:?SUBSCRIPTION_DB_PASSWORD must be set}
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./infra/scripts/init-multiple-databases.sh:/docker-entrypoint-initdb.d/init.sh:ro
@@ -52,7 +56,7 @@ services:
       retries: 5
 
   pgbouncer:
-    image: edoburu/pgbouncer:1.22.1
+    image: edoburu/pgbouncer:latest
     container_name: azeebo_pgbouncer
     ports:
       - "6432:6432"
@@ -101,6 +105,7 @@ services:
       - "3000:3000"
     environment:
       NODE_ENV: production
+      PORT: 3000
       DATABASE_URL: ${AUTH_DATABASE_URL}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
       JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
@@ -108,6 +113,7 @@ services:
       JWT_ISSUER: ${JWT_ISSUER:-azeebo-auth-service}
       JWT_AUDIENCE: ${JWT_AUDIENCE:-azeebo-api}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-15m}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
     depends_on:
       pgbouncer:
         condition: service_healthy
@@ -130,11 +136,13 @@ services:
       - "3001:3001"
     environment:
       NODE_ENV: production
+      PORT: 3001
       DATABASE_URL: ${USER_DATABASE_URL}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
       JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
       JWT_ISSUER: ${JWT_ISSUER:-azeebo-auth-service}
       JWT_AUDIENCE: ${JWT_AUDIENCE:-azeebo-api}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
     depends_on:
       pgbouncer:
         condition: service_healthy
@@ -157,8 +165,10 @@ services:
       - "3002:3002"
     environment:
       NODE_ENV: production
+      PORT: 3002
       DATABASE_URL: ${WALLET_DATABASE_URL}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
     depends_on:
       pgbouncer:
         condition: service_healthy
@@ -181,10 +191,12 @@ services:
       - "3003:3003"
     environment:
       NODE_ENV: production
+      PORT: 3003
       DATABASE_URL: ${PAYMENT_DATABASE_URL}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
       PAYSTACK_SECRET_KEY: ${PAYSTACK_SECRET_KEY}
       FLUTTERWAVE_SECRET_KEY: ${FLUTTERWAVE_SECRET_KEY}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
     depends_on:
       pgbouncer:
         condition: service_healthy
@@ -207,8 +219,10 @@ services:
       - "3004:3004"
     environment:
       NODE_ENV: production
+      PORT: 3004
       DATABASE_URL: ${CONTENT_DATABASE_URL}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
     depends_on:
       pgbouncer:
         condition: service_healthy
@@ -231,8 +245,10 @@ services:
       - "3005:3005"
     environment:
       NODE_ENV: production
+      PORT: 3005
       DATABASE_URL: ${SEARCH_DATABASE_URL}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
     depends_on:
       pgbouncer:
         condition: service_healthy
@@ -255,12 +271,14 @@ services:
       - "3006:3006"
     environment:
       NODE_ENV: production
+      PORT: 3006
       DATABASE_URL: ${NOTIFICATION_DATABASE_URL}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
       SENDGRID_API_KEY: ${SENDGRID_API_KEY}
       TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID}
       TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN}
       TWILIO_PHONE_NUMBER: ${TWILIO_PHONE_NUMBER}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
     depends_on:
       pgbouncer:
         condition: service_healthy
@@ -283,8 +301,10 @@ services:
       - "3007:3007"
     environment:
       NODE_ENV: production
+      PORT: 3007
       DATABASE_URL: ${REWARD_DATABASE_URL}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
     depends_on:
       pgbouncer:
         condition: service_healthy
@@ -307,8 +327,10 @@ services:
       - "3008:3008"
     environment:
       NODE_ENV: production
+      PORT: 3008
       DATABASE_URL: ${ANALYTICS_DATABASE_URL}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
     depends_on:
       pgbouncer:
         condition: service_healthy
@@ -331,8 +353,10 @@ services:
       - "3009:3009"
     environment:
       NODE_ENV: production
+      PORT: 3009
       DATABASE_URL: ${RECOMMENDATION_DATABASE_URL}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
     depends_on:
       pgbouncer:
         condition: service_healthy
@@ -355,8 +379,10 @@ services:
       - "3010:3010"
     environment:
       NODE_ENV: production
+      PORT: 3010
       DATABASE_URL: ${REALITY_DATABASE_URL}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
     depends_on:
       pgbouncer:
         condition: service_healthy
@@ -387,6 +413,7 @@ services:
       TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID:?err}
       TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN:?err}
       TWILIO_PHONE_NUMBER: ${TWILIO_PHONE_NUMBER:?err}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
     depends_on:
       pgbouncer:
         condition: service_healthy
@@ -400,6 +427,84 @@ services:
       timeout: 5s
       retries: 5
 
+  engagement-service:
+    build:
+      context: .
+      dockerfile: services/engagement-service/Dockerfile
+    container_name: azeebo_engagement_service
+    ports:
+      - "3023:3023"
+    environment:
+      NODE_ENV: production
+      PORT: 3023
+      DATABASE_URL: ${ENGAGEMENT_DATABASE_URL}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
+    depends_on:
+      pgbouncer:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - azeebo_network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3023/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+  messaging-service:
+    build:
+      context: .
+      dockerfile: services/messaging-service/Dockerfile
+    container_name: azeebo_messaging_service
+    ports:
+      - "3024:3024"
+    environment:
+      NODE_ENV: production
+      PORT: 3024
+      DATABASE_URL: ${MESSAGING_DATABASE_URL}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
+    depends_on:
+      pgbouncer:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - azeebo_network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3024/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+  subscription-service:
+    build:
+      context: .
+      dockerfile: services/subscription-service/Dockerfile
+    container_name: azeebo_subscription_service
+    ports:
+      - "3026:3026"
+    environment:
+      NODE_ENV: production
+      PORT: 3026
+      DATABASE_URL: ${SUBSCRIPTION_DATABASE_URL}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
+    depends_on:
+      pgbouncer:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - azeebo_network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3026/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
   creator-service:
     build:
       context: .
@@ -409,8 +514,10 @@ services:
       - "3018:3018"
     environment:
       NODE_ENV: production
+      PORT: 3018
       DATABASE_URL: ${CREATOR_DATABASE_URL}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
     depends_on:
       pgbouncer:
         condition: service_healthy
@@ -435,11 +542,13 @@ services:
       NODE_ENV: production
       PORT: 3019
       DATABASE_URL: ${MEDIA_DATABASE_URL}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
       AWS_REGION: ${AWS_REGION:-us-east-1}
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
       AWS_S3_BUCKET: ${AWS_S3_BUCKET:-azeebo-media}
       CDN_URL: ${CDN_URL}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
     depends_on:
       pgbouncer:
         condition: service_healthy
@@ -464,6 +573,7 @@ services:
       NODE_ENV: production
       PORT: 3016
       DATABASE_URL: ${LIFESTYLE_DATABASE_URL}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
     depends_on:
       pgbouncer:
         condition: service_healthy
@@ -486,6 +596,7 @@ services:
       NODE_ENV: production
       PORT: 3017
       DATABASE_URL: ${VERTICAL_DATABASE_URL}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
     depends_on:
       pgbouncer:
         condition: service_healthy
@@ -509,6 +620,7 @@ services:
       PORT: 3020
       DATABASE_URL: ${SUPPORT_DATABASE_URL}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
     depends_on:
       pgbouncer:
         condition: service_healthy
@@ -518,6 +630,162 @@ services:
       - azeebo_network
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3020/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+  movie-service:
+    build:
+      context: .
+      dockerfile: services/movie-service/Dockerfile
+    container_name: azeebo_movie_service
+    ports:
+      - "3011:3011"
+    environment:
+      NODE_ENV: production
+      PORT: 3011
+      DATABASE_URL: ${MOVIE_DATABASE_URL}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
+    depends_on:
+      pgbouncer:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - azeebo_network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3011/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+  comedy-service:
+    build:
+      context: .
+      dockerfile: services/comedy-service/Dockerfile
+    container_name: azeebo_comedy_service
+    ports:
+      - "3012:3012"
+    environment:
+      NODE_ENV: production
+      PORT: 3012
+      DATABASE_URL: ${COMEDY_DATABASE_URL}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
+    depends_on:
+      pgbouncer:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - azeebo_network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3012/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+  games-service:
+    build:
+      context: .
+      dockerfile: services/games-service/Dockerfile
+    container_name: azeebo_games_service
+    ports:
+      - "3014:3014"
+    environment:
+      NODE_ENV: production
+      PORT: 3014
+      DATABASE_URL: ${GAMES_DATABASE_URL}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
+    depends_on:
+      pgbouncer:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - azeebo_network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3014/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+  sports-service:
+    build:
+      context: .
+      dockerfile: services/sports-service/Dockerfile
+    container_name: azeebo_sports_service
+    ports:
+      - "3021:3021"
+    environment:
+      NODE_ENV: production
+      PORT: 3021
+      DATABASE_URL: ${SPORTS_DATABASE_URL}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
+    depends_on:
+      pgbouncer:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - azeebo_network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3021/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+  moderation-service:
+    build:
+      context: .
+      dockerfile: services/moderation-service/Dockerfile
+    container_name: azeebo_moderation_service
+    ports:
+      - "3022:3022"
+    environment:
+      NODE_ENV: production
+      PORT: 3022
+      DATABASE_URL: ${MODERATION_DATABASE_URL}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
+    depends_on:
+      pgbouncer:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - azeebo_network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3022/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+  referral-service:
+    build:
+      context: .
+      dockerfile: services/referral-service/Dockerfile
+    container_name: azeebo_referral_service
+    ports:
+      - "3025:3025"
+    environment:
+      NODE_ENV: production
+      PORT: 3025
+      DATABASE_URL: ${REFERRAL_DATABASE_URL}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
+    depends_on:
+      pgbouncer:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - azeebo_network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3025/health"]
       interval: 30s
       timeout: 5s
       retries: 5
@@ -549,6 +817,16 @@ services:
       LIFESTYLE_SERVICE_URL: http://lifestyle-service:3016
       VERTICAL_SERVICE_URL: http://vertical-service:3017
       SUPPORT_SERVICE_URL: http://support-service:3020
+      MOVIE_SERVICE_URL: http://movie-service:3011
+      COMEDY_SERVICE_URL: http://comedy-service:3012
+      GAMES_SERVICE_URL: http://games-service:3014
+      SPORTS_SERVICE_URL: http://sports-service:3021
+      MODERATION_SERVICE_URL: http://moderation-service:3022
+      REFERRAL_SERVICE_URL: http://referral-service:3025
+      ENGAGEMENT_SERVICE_URL: http://engagement-service:3023
+      MESSAGING_SERVICE_URL: http://messaging-service:3024
+      SUBSCRIPTION_SERVICE_URL: http://subscription-service:3026
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
     depends_on:
       auth-service:
         condition: service_healthy
@@ -581,6 +859,26 @@ services:
       vertical-service:
         condition: service_healthy
       support-service:
+        condition: service_healthy
+      movie-service:
+        condition: service_healthy
+      comedy-service:
+        condition: service_healthy
+      games-service:
+        condition: service_healthy
+      sports-service:
+        condition: service_healthy
+      moderation-service:
+        condition: service_healthy
+      referral-service:
+        condition: service_healthy
+      queue-service:
+        condition: service_healthy
+      engagement-service:
+        condition: service_healthy
+      messaging-service:
+        condition: service_healthy
+      subscription-service:
         condition: service_healthy
     networks:
       - azeebo_network

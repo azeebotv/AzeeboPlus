@@ -1,37 +1,54 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
+import { LoadingState, EmptyState, ErrorState } from '../src/components/StateContainers';
+import { apiClient } from '../src/api/client';
 
-const LIVE_MATCHES = [
-  { id: '1', home: 'Chelsea', away: 'Arsenal', score: '2-1', status: 'LIVE', time: '67\'', league: 'Premier League' },
-  { id: '2', home: 'Barcelona', away: 'Real Madrid', score: '0-0', status: 'LIVE', time: '23\'', league: 'La Liga' },
-];
-
-const UPCOMING_MATCHES = [
-  { id: '1', home: 'Man United', away: 'Liverpool', date: 'Today, 8PM', league: 'Premier League', emoji: '🔴' },
-  { id: '2', home: 'PSG', away: 'Marseille', date: 'Tomorrow, 9PM', league: 'Ligue 1', emoji: '💙' },
-  { id: '3', home: 'Bayern', away: 'Dortmund', date: 'Sat, 6PM', league: 'Bundesliga', emoji: '🟡' },
-];
-
-const SPORTS_CATEGORIES = [
-  { id: '1', name: 'Football', emoji: '⚽' },
-  { id: '2', name: 'Basketball', emoji: '🏀' },
-  { id: '3', name: 'Tennis', emoji: '🎾' },
-  { id: '4', name: 'Boxing', emoji: '🥊' },
-  { id: '5', name: 'Athletics', emoji: '🏃' },
-];
-
-const PREDICTION_LEAGUES = [
-  { id: '1', name: 'Premier League', participants: '45K', prize: '₦500K' },
-  { id: '2', name: 'La Liga', participants: '32K', prize: '₦350K' },
-  { id: '3', name: 'Champions League', participants: '67K', prize: '₦1M' },
-];
+interface LiveMatch { id: string; home: string; away: string; score: string; status: string; time: string; league: string; }
+interface UpcomingMatch { id: string; home: string; away: string; date: string; league: string; emoji: string; }
+interface SportCategory { id: string; name: string; emoji: string; }
+interface PredictionLeague { id: string; name: string; participants: string; prize: string; }
 
 export default function SportsUniverseHome() {
   const colorScheme = useColorScheme();
   const router = useRouter();
   const isDark = colorScheme === 'dark';
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [liveMatches, setLiveMatches] = useState<LiveMatch[]>([]);
+  const [upcomingMatches, setUpcomingMatches] = useState<UpcomingMatch[]>([]);
+  const [categories, setCategories] = useState<SportCategory[]>([]);
+  const [predictionLeagues, setPredictionLeagues] = useState<PredictionLeague[]>([]);
+
+  const fetchData = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const [liveRes, upcomingRes, catsRes, leaguesRes] = await Promise.all([
+        apiClient.get<any>('/v1/sports/live'),
+        apiClient.get<any>('/v1/sports/upcoming'),
+        apiClient.get<any>('/v1/sports/categories'),
+        apiClient.get<any>('/v1/sports/prediction-leagues'),
+      ]);
+      setLiveMatches(Array.isArray(liveRes) ? liveRes : liveRes?.data ?? []);
+      setUpcomingMatches(Array.isArray(upcomingRes) ? upcomingRes : upcomingRes?.data ?? []);
+      setCategories(Array.isArray(catsRes) ? catsRes : catsRes?.data ?? []);
+      setPredictionLeagues(Array.isArray(leaguesRes) ? leaguesRes : leaguesRes?.data ?? []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchData(); }, []);
+
+  if (isLoading) return <LoadingState text="Loading sports events..." />;
+  if (error) return <ErrorState description={error} onRetry={fetchData} />;
+  if (!liveMatches.length && !upcomingMatches.length) {
+    return <EmptyState icon="⚽" title="No events available" description="Check back later for sports events" />;
+  }
 
   return (
     <ScrollView style={[styles.container, { backgroundColor: isDark ? '#0a0a0a' : '#ffffff' }]}>
@@ -43,7 +60,7 @@ export default function SportsUniverseHome() {
       </View>
 
       <View style={styles.categoryScroll}>
-        {SPORTS_CATEGORIES.map((cat) => (
+        {categories.map((cat) => (
           <TouchableOpacity key={cat.id} style={styles.categoryChip}>
             <Text style={styles.categoryEmoji}>{cat.emoji}</Text>
             <Text style={styles.categoryName}>{cat.name}</Text>
@@ -57,7 +74,7 @@ export default function SportsUniverseHome() {
           <Text style={styles.liveText}>LIVE NOW</Text>
         </View>
         <View style={styles.liveMatches}>
-          {LIVE_MATCHES.map((match) => (
+          {liveMatches.map((match) => (
             <TouchableOpacity
               key={match.id}
               style={[styles.matchCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
@@ -106,7 +123,7 @@ export default function SportsUniverseHome() {
           </TouchableOpacity>
         </View>
         <View style={styles.upcomingList}>
-          {UPCOMING_MATCHES.map((match) => (
+          {upcomingMatches.map((match) => (
             <TouchableOpacity
               key={match.id}
               style={[styles.upcomingCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
@@ -135,7 +152,7 @@ export default function SportsUniverseHome() {
           </Text>
         </View>
         <View style={styles.predictionList}>
-          {PREDICTION_LEAGUES.map((league) => (
+          {predictionLeagues.map((league) => (
             <TouchableOpacity
               key={league.id}
               style={[styles.predictionCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}

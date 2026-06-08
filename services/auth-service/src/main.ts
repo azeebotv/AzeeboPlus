@@ -81,7 +81,10 @@ async function bootstrap(): Promise<void> {
   );
 
   // CORS configuration
-  const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'];
+  const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',').map(o => o.trim()) ?? [];
+  if (allowedOrigins.length === 0) {
+    throw new Error('ALLOWED_ORIGINS environment variable must be set');
+  }
   configureCors(app, {
     allowedOrigins,
     credentials: true,

@@ -43,8 +43,11 @@ async function bootstrap(): Promise<void> {
     })
   );
 
+  if (!process.env.ALLOWED_ORIGINS) {
+    throw new Error('ALLOWED_ORIGINS environment variable must be set');
+  }
   app.enableCors({
-    origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'],
+    origin: process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim()),
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
   });
@@ -62,8 +65,8 @@ async function bootstrap(): Promise<void> {
   }
 
   app.enableShutdownHooks();
-  await app.listen(process.env.PORT || 3011);
-  Logger.log('Recommendation Service is running on port ' + (process.env.PORT || 3011));
+  await app.listen(process.env.PORT || 3009);
+  Logger.log('Recommendation Service is running on port ' + (process.env.PORT || 3009));
 }
 
 bootstrap();

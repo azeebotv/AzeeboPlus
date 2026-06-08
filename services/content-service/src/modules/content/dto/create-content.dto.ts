@@ -21,7 +21,6 @@ export class CreateContentDto {
   @IsString()
   @IsOptional()
   status?: string;
-  /* eslint-disable @typescript-eslint/no-explicit-any */
   @IsOptional()
-  metadata?: any;
+  metadata?: Record<string, unknown>;
 }

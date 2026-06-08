@@ -22,7 +22,7 @@ import { SavePushTokenDto } from './dto/save-push-token.dto';
 import { NotificationResponse } from './interfaces/notification-response.interface';
 
 @ApiTags('Notifications')
-@Controller('notifications')
+@Controller('v1/notifications')
 export class NotificationsController {
   constructor(private readonly notificationsService: NotificationsService) {}
 

@@ -173,12 +173,33 @@ model Universe {
   description String?
   icon        String?
   color       String?
+  isEnabled   Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  metadata    Json?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   contentItems ContentItem[]
+  featureFlags UniverseFeatureFlag[]
 
   @@map("universes")
+}
+
+model UniverseFeatureFlag {
+  id          String   @id @default(uuid())
+  universeId  String
+  featureKey  String
+  isEnabled   Boolean  @default(true)
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  universe    Universe  @relation(fields: [universeId], references: [id], onDelete: Cascade)
+
+  @@map("universe_feature_flags")
+  @@unique([universeId, featureKey])
+  @@index([universeId])
+  @@index([featureKey])
 }
 
 model Category {
@@ -354,6 +375,19 @@ model SafetyAction {
   createdAt    DateTime @default(now())
 
   @@map("safety_actions")
+}
+
+model SystemSettings {
+  id          String   @id @default(uuid())
+  key         String   @unique
+  value       Json
+  category    String   @default("general")
+  description String?
+  isPublic    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("system_settings")
 }
 
 model AuditLog {

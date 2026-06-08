@@ -39,7 +39,7 @@ import { RateLimitGuard, RateLimit } from '@azeebo/security';
 
 @ApiTags('Payments')
 @ApiBearerAuth()
-@Controller('payments')
+@Controller('v1/payments')
 export class PaymentsController {
   constructor(private readonly paymentsService: PaymentsService) {}
 

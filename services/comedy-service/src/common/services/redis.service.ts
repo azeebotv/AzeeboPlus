@@ -7,15 +7,17 @@ export class RedisService implements OnModuleDestroy {
   private readonly logger = new Logger(RedisService.name);
 
   constructor() {
-    const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
-    this.logger.log(`Connecting to Redis at ${redisUrl}`);
-    this.redis = new Redis(redisUrl);
+    if (!process.env.REDIS_URL) {
+      throw new Error('REDIS_URL environment variable must be set');
+    }
+    this.logger.log(`Connecting to Redis`);
+    this.redis = new Redis(process.env.REDIS_URL);
     
     this.redis.on('connect', () => {
       this.logger.log('Redis connected');
     });
     
-    this.redis.on('error', (err) => {
+    this.redis.on('error', (err: Error) => {
       this.logger.error(`Redis error: ${err.message}`);
     });
   }

@@ -1,7 +1,7 @@
 import { apiClient } from './client';
 import type { ApiResponse } from './auth';
 
-const MEDIA_SERVICE_URL = process.env.EXPO_PUBLIC_MEDIA_SERVICE_URL;
+const MEDIA_BASE_URL = apiClient.getBaseURL();
 
 export interface MediaUploadResponse {
   key: string;
@@ -28,8 +28,12 @@ export interface FileMetadata {
 
 export const mediaApi = {
   uploadImage: async (file: FormData): Promise<ApiResponse<MediaUploadResponse>> => {
-    const response = await fetch(`${MEDIA_SERVICE_URL}/api/media/upload/image`, {
+    const token = apiClient.getToken();
+    const response = await fetch(`${MEDIA_BASE_URL}/api/v1/media/upload/image`, {
       method: 'POST',
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
       body: file,
     });
     const data = await response.json();
@@ -37,8 +41,12 @@ export const mediaApi = {
   },
 
   uploadVideo: async (file: FormData): Promise<ApiResponse<MediaUploadResponse>> => {
-    const response = await fetch(`${MEDIA_SERVICE_URL}/api/media/upload/video`, {
+    const token = apiClient.getToken();
+    const response = await fetch(`${MEDIA_BASE_URL}/api/v1/media/upload/video`, {
       method: 'POST',
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
       body: file,
     });
     const data = await response.json();
@@ -46,8 +54,12 @@ export const mediaApi = {
   },
 
   uploadAvatar: async (file: FormData): Promise<ApiResponse<MediaUploadResponse>> => {
-    const response = await fetch(`${MEDIA_SERVICE_URL}/api/media/upload/avatar`, {
+    const token = apiClient.getToken();
+    const response = await fetch(`${MEDIA_BASE_URL}/api/v1/media/upload/avatar`, {
       method: 'POST',
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
       body: file,
     });
     const data = await response.json();
@@ -62,7 +74,7 @@ export const mediaApi = {
     expiresIn = 3600
   ): Promise<ApiResponse<PresignedUploadResponse>> => {
     return apiClient.get<ApiResponse<PresignedUploadResponse>>(
-      `/api/media/presigned/upload?type=${type}&fileId=${fileId}&extension=${extension}&contentType=${encodeURIComponent(contentType)}&expiresIn=${expiresIn}`
+      `/api/v1/media/presigned/upload?type=${type}&fileId=${fileId}&extension=${extension}&contentType=${encodeURIComponent(contentType)}&expiresIn=${expiresIn}`
     );
   },
 
@@ -71,19 +83,19 @@ export const mediaApi = {
     expiresIn = 3600
   ): Promise<ApiResponse<{ url: string; expiresIn: number }>> => {
     return apiClient.get<ApiResponse<{ url: string; expiresIn: number }>>(
-      `/api/media/presigned/download?key=${encodeURIComponent(key)}&expiresIn=${expiresIn}`
+      `/api/v1/media/presigned/download?key=${encodeURIComponent(key)}&expiresIn=${expiresIn}`
     );
   },
 
   getFileMetadata: async (key: string): Promise<ApiResponse<FileMetadata>> => {
     return apiClient.get<ApiResponse<FileMetadata>>(
-      `/api/media/metadata?key=${encodeURIComponent(key)}`
+      `/api/v1/media/metadata?key=${encodeURIComponent(key)}`
     );
   },
 
   deleteFile: async (key: string): Promise<ApiResponse<{ success: boolean; message: string }>> => {
     return apiClient.delete<ApiResponse<{ success: boolean; message: string }>>(
-      `/api/media/${encodeURIComponent(key)}`
+      `/api/v1/media/${encodeURIComponent(key)}`
     );
   },
 };

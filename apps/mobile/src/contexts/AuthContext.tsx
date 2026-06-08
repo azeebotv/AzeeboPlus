@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { authApi, apiClient, type User, type ApiResponse } from '../api';
+import { authApi, userApi, apiClient, type User, type ApiResponse } from '../api';
 import { useStorage } from '../hooks/useStorage';
+import { logger } from '../utils/logger';
 
 interface AuthContextType {
   user: User | null;
@@ -12,6 +13,7 @@ interface AuthContextType {
   forgotPassword: (email: string) => Promise<void>;
   verifyOTP: (code: string) => Promise<{ success: boolean; message?: string }>;
   resendOTP: () => Promise<void>;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -35,7 +37,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         apiClient.setToken(token);
       }
     } catch (error) {
-      console.error('Auth check failed:', error);
+      logger.error('Auth check failed', error);
     } finally {
       setIsLoading(false);
     }
@@ -61,7 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       return { success: false, message: response.message || 'Login failed' };
     } catch (error: any) {
-      console.error('Login error:', error);
+      logger.error('Login error', error);
       return { success: false, message: error.message || 'An error occurred during login' };
     }
   };
@@ -75,7 +77,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       return { success: false, message: response.message || 'Registration failed' };
     } catch (error: any) {
-      console.error('Register error:', error);
+      logger.error('Register error', error);
       return { success: false, message: error.message || 'An error occurred during registration' };
     }
   };
@@ -84,7 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       await authApi.logout();
     } catch (error) {
-      console.error('Logout error:', error);
+      logger.error('Logout error', error);
     } finally {
       await removeItem('accessToken');
       await removeItem('refreshToken');
@@ -107,13 +109,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       return { success: false, message: response.message || 'OTP verification failed' };
     } catch (error: any) {
-      console.error('OTP verification error:', error);
+      logger.error('OTP verification error', error);
       return { success: false, message: error.message || 'An error occurred during OTP verification' };
     }
   };
 
   const resendOTP = async () => {
     await authApi.resendOTP();
+  };
+
+  const refreshUser = async () => {
+    try {
+      const response = await userApi.getProfile();
+      if (response.success && response.data) {
+        const userData = response.data as any;
+        const userObj: User = {
+          id: userData.id,
+          email: userData.email,
+          name: userData.displayName || userData.name,
+          displayName: userData.displayName,
+          role: userData.role,
+          avatar: userData.avatar,
+          createdAt: userData.createdAt,
+          updatedAt: userData.updatedAt,
+        };
+        await setItem('user', JSON.stringify(userObj));
+        setUser(userObj);
+      }
+    } catch (error) {
+      logger.error('Failed to refresh user', error);
+    }
   };
 
   return (
@@ -128,6 +153,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         forgotPassword,
         verifyOTP,
         resendOTP,
+        refreshUser,
       }}
     >
       {children}

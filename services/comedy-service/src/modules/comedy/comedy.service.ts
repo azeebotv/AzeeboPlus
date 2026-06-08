@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
 import { ComedyResponse } from './interfaces/comedy-response.interface';
 import axios from 'axios';
@@ -11,9 +12,14 @@ interface ChallengeBody {
 @Injectable()
 export class ComedyService {
   private readonly logger = new Logger(ComedyService.name);
-  private readonly analyticsServiceBaseUrl = process.env.ANALYTICS_SERVICE_URL || 'http://localhost:3008';
+  private readonly analyticsServiceBaseUrl: string;
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly configService: ConfigService,
+  ) {
+    this.analyticsServiceBaseUrl = this.configService.getOrThrow<string>('ANALYTICS_SERVICE_URL');
+  }
 
   private async trackAnalyticsEvent(
     eventName: string,

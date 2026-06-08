@@ -16,6 +16,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { AuthGuard } from '@nestjs/passport';
 import { UploadService } from './upload.service';
 import { PremiumContentService } from './premium-content.service';
+import { ApiResponseWrapper } from '@azeebo/shared-types';
 
 @Controller('api/media')
 export class UploadController {
@@ -113,12 +114,12 @@ export class UploadController {
   async getPresignedDownloadUrl(
     @Query('key') key: string,
     @Query('expiresIn') expiresIn = 3600
-  ): Promise<{ url: string; expiresIn: number }> {
+  ): Promise<unknown> {
     if (!key) {
       throw new BadRequestException('Missing required parameter: key');
     }
     const url = await this.uploadService.getPresignedDownloadUrl(key, Number(expiresIn));
-    return { url, expiresIn: Number(expiresIn) };
+    return ApiResponseWrapper.success({ url, expiresIn: Number(expiresIn) });
   }
 
   @Get('metadata')
@@ -130,43 +131,43 @@ export class UploadController {
   }
 
   @Delete(':key')
-  async deleteFile(@Param('key') key: string): Promise<{ success: boolean; message: string }> {
+  async deleteFile(@Param('key') key: string  ): Promise<unknown> {
     await this.uploadService.deleteFile(decodeURIComponent(key));
-    return { success: true, message: 'File deleted successfully' };
+    return ApiResponseWrapper.success({ message: 'File deleted successfully' });
   }
 
   @Get('transcoding/:jobId/status')
-  async getTranscodingJobStatus(@Param('jobId') jobId: string): Promise<{ success: boolean; data: unknown }> {
+  async getTranscodingJobStatus(@Param('jobId') jobId: string  ): Promise<unknown> {
     const job = await this.uploadService.getTranscodingJobStatus(jobId);
     if (!job) {
-      return { success: false, data: { message: 'Transcoding job not found' } };
+      return ApiResponseWrapper.error('NOT_FOUND', 'Transcoding job not found');
     }
-    return { success: true, data: job };
+    return ApiResponseWrapper.success(job);
   }
 
   @Get('transcoding/jobs')
-  async listTranscodingJobs(@Query('status') status?: string): Promise<{ success: boolean; data: unknown[] }> {
-    const jobs = await this.uploadService.listTranscodingJobs(status as any);
-    return { success: true, data: jobs };
+  async listTranscodingJobs(@Query('status') status?: string  ): Promise<unknown> {
+    const jobs = await this.uploadService.listTranscodingJobs(status as 'pending' | 'processing' | 'completed' | 'failed');
+    return ApiResponseWrapper.success(jobs);
   }
 
   @Post('transcoding/retry-failed')
-  async retryFailedTranscodingJobs(): Promise<{ success: boolean; data: { retriedCount: number } }> {
+  async retryFailedTranscodingJobs(  ): Promise<unknown> {
     const retriedCount = await this.uploadService.retryFailedTranscodingJobs();
-    return { success: true, data: { retriedCount } };
+    return ApiResponseWrapper.success({ retriedCount });
   }
 
   @Post('cleanup/orphaned')
   async cleanupOrphanedFiles(
     @Query('prefix') prefix?: string,
     @Query('olderThanDays') olderThanDays = 30
-  ): Promise<{ success: boolean; data: { deletedCount: number } | { [prefix: string]: number } }> {
+  ): Promise<unknown> {
     if (prefix) {
       const deletedCount = await this.uploadService.cleanupOrphanedFiles(prefix, Number(olderThanDays));
-      return { success: true, data: { deletedCount } };
+      return ApiResponseWrapper.success({ deletedCount });
     } else {
       const results = await this.uploadService.cleanupAllOrphanedFiles();
-      return { success: true, data: results };
+      return ApiResponseWrapper.success(results);
     }
   }
 
@@ -175,7 +176,7 @@ export class UploadController {
   async generatePremiumUrl(
     @Request() req: { user: { sub: string } },
     @Body() body: { contentId: string; expiresInSeconds?: number }
-  ): Promise<{ success: boolean; data: unknown }> {
+  ): Promise<unknown> {
     const { contentId, expiresInSeconds } = body;
     if (!contentId) {
       throw new BadRequestException('contentId is required');
@@ -187,7 +188,7 @@ export class UploadController {
       expiresInSeconds
     );
 
-    return { success: true, data: result };
+    return ApiResponseWrapper.success(result);
   }
 
   @Post('premium/url/cdn')
@@ -195,7 +196,7 @@ export class UploadController {
   async generateCdnPremiumUrl(
     @Request() req: { user: { sub: string } },
     @Body() body: { contentId: string; expiresInSeconds?: number }
-  ): Promise<{ success: boolean; data: unknown }> {
+  ): Promise<unknown> {
     const { contentId, expiresInSeconds } = body;
     if (!contentId) {
       throw new BadRequestException('contentId is required');
@@ -207,46 +208,49 @@ export class UploadController {
       expiresInSeconds
     );
 
-    return { success: true, data: result };
+    return ApiResponseWrapper.success(result);
   }
 
   @Post('premium/url/validate')
   async validatePremiumUrl(
     @Body() body: { token: string }
-  ): Promise<{ success: boolean; data: unknown }> {
+  ): Promise<unknown> {
     const { token } = body;
     if (!token) {
       throw new BadRequestException('token is required');
     }
 
     const result = await this.premiumContentService.validatePremiumUrl(token);
-    return { success: result.valid, data: result };
+    if (result.valid) {
+      return ApiResponseWrapper.success(result);
+    }
+    return ApiResponseWrapper.error('INVALID_TOKEN', 'Token is invalid');
   }
 
   @Delete('premium/url/:token')
   @UseGuards(AuthGuard('jwt'))
   async invalidatePremiumUrl(
     @Param('token') token: string
-  ): Promise<{ success: boolean; message: string }> {
+  ): Promise<unknown> {
     await this.premiumContentService.invalidatePremiumUrl(token);
-    return { success: true, message: 'URL invalidated successfully' };
+    return ApiResponseWrapper.success({ message: 'URL invalidated successfully' });
   }
 
   @Delete('premium/urls/user')
   @UseGuards(AuthGuard('jwt'))
   async invalidateAllUserUrls(
     @Request() req: { user: { sub: string } }
-  ): Promise<{ success: boolean; data: { invalidatedCount: number } }> {
+  ): Promise<unknown> {
     const count = await this.premiumContentService.invalidateAllUserUrls(req.user.sub);
-    return { success: true, data: { invalidatedCount: count } };
+    return ApiResponseWrapper.success({ invalidatedCount: count });
   }
 
   @Get('premium/url/:token/analytics')
   @UseGuards(AuthGuard('jwt'))
   async getUrlAnalytics(
     @Param('token') token: string
-  ): Promise<{ success: boolean; data: unknown }> {
+  ): Promise<unknown> {
     const result = await this.premiumContentService.getUrlAnalytics(token);
-    return { success: true, data: result };
+    return ApiResponseWrapper.success(result);
   }
 }

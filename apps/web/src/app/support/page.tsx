@@ -1,11 +1,13 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { Button, Card, Skeleton, Badge, Avatar } from '@azeebo/ui';
+import { Button, Card, Badge, Avatar } from '@azeebo/ui';
 import { colors, gradients } from '@azeebo/design-tokens';
 import Link from 'next/link';
+import { apiFetch } from '@/lib/api';
+import { webLogger } from '@/lib/logger';
 
-const mockFAQ = [
+const faqData = [
   {
     id: '1',
     question: 'How do I reset my password?',
@@ -28,33 +30,51 @@ const mockFAQ = [
   },
 ];
 
-const mockCategories = ['Account', 'Payment', 'Content', 'Technical', 'Creator'];
+const supportCategories = ['Account', 'Payment', 'Content', 'Technical', 'Creator'];
 
 export default function SupportPage(): JSX.Element {
   const { user, isAuthenticated } = useAuth();
-  const [isLoading, setIsLoading] = useState(true);
   const [expandedFAQ, setExpandedFAQ] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     subject: '',
     category: '',
     message: '',
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formSubmitted, setFormSubmitted] = useState(false);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 500);
-    return () => clearTimeout(timer);
-  }, []);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const toggleFAQ = (id: string) => {
     setExpandedFAQ(expandedFAQ === id ? null : id);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setFormSubmitted(true);
+    setIsSubmitting(true);
+    setFormError(null);
+
+    try {
+      const result = await apiFetch('/v1/support/tickets', {
+        method: 'POST',
+        body: JSON.stringify({
+          subject: formData.subject,
+          category: formData.category,
+          message: formData.message,
+        }),
+      });
+
+      if (result.success) {
+        setFormSubmitted(true);
+        setFormData({ subject: '', category: '', message: '' });
+      } else {
+        setFormError(result.message || 'Failed to submit ticket. Please try again.');
+      }
+    } catch (err) {
+      webLogger.error('Failed to submit support ticket', err);
+      setFormError('Failed to submit ticket. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -90,7 +110,7 @@ export default function SupportPage(): JSX.Element {
             {isAuthenticated ? (
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
-                  <Avatar size="medium" fallback={user?.name?.charAt(0) || 'U'} />
+                  <Avatar size="md" fallback={user?.name?.charAt(0) || 'U'} />
                   <span className="text-sm font-medium" style={{ color: colors.text.primary }}>{user?.name}</span>
                 </div>
               </div>
@@ -112,7 +132,7 @@ export default function SupportPage(): JSX.Element {
       <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold mb-4" style={{ color: colors.text.primary }}>
-            How can we help you? 👋
+            How can we help you?
           </h2>
           <p style={{ color: colors.text.secondary }}>
             Find answers to common questions or contact our support team.
@@ -140,27 +160,21 @@ export default function SupportPage(): JSX.Element {
           <h3 className="text-2xl font-bold mb-6" style={{ color: colors.text.primary }}>
             Frequently Asked Questions
           </h3>
-          {isLoading ? (
-            <div className="space-y-4">
-              {[1, 2, 3, 4].map(i => <Skeleton key={i} height="80px" className="rounded-lg" />)}
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {mockFAQ.map((faq) => (
-                <Card key={faq.id} padding="md" className="cursor-pointer">
-                  <div onClick={() => toggleFAQ(faq.id)} className="flex items-center justify-between">
-                    <h4 className="font-bold" style={{ color: colors.text.primary }}>{faq.question}</h4>
-                    <span className="text-2xl" style={{ color: colors.text.secondary }}>{expandedFAQ === faq.id ? '−' : '+'}</span>
-                  </div>
-                  {expandedFAQ === faq.id && (
-                    <p className="mt-4 pt-4 border-t" style={{ borderColor: colors.border.light, color: colors.text.secondary }}>
-                      {faq.answer}
-                    </p>
-                  )}
-                </Card>
-              ))}
-            </div>
-          )}
+          <div className="space-y-4">
+            {faqData.map((faq) => (
+              <Card key={faq.id} padding="md" className="cursor-pointer">
+                <div onClick={() => toggleFAQ(faq.id)} className="flex items-center justify-between">
+                  <h4 className="font-bold" style={{ color: colors.text.primary }}>{faq.question}</h4>
+                  <span className="text-2xl" style={{ color: colors.text.secondary }}>{expandedFAQ === faq.id ? '−' : '+'}</span>
+                </div>
+                {expandedFAQ === faq.id && (
+                  <p className="mt-4 pt-4 border-t" style={{ borderColor: colors.border.light, color: colors.text.secondary }}>
+                    {faq.answer}
+                  </p>
+                )}
+              </Card>
+            ))}
+          </div>
         </div>
 
         {/* Contact Form */}
@@ -175,7 +189,7 @@ export default function SupportPage(): JSX.Element {
                 Ticket Submitted!
               </h4>
               <p className="mb-6" style={{ color: colors.text.secondary }}>
-                We\'ll get back to you within 24 hours.
+                We&apos;ll get back to you within 24 hours.
               </p>
               <Button variant="primary" onClick={() => setFormSubmitted(false)}>
                 Submit Another Ticket
@@ -185,6 +199,12 @@ export default function SupportPage(): JSX.Element {
             <Card padding="md">
               <form onSubmit={handleSubmit}>
                 <div className="space-y-6">
+                  {formError && (
+                    <div className="p-4 rounded-lg" style={{ backgroundColor: 'rgba(239,68,68,0.1)', color: '#EF4444' }}>
+                      {formError}
+                    </div>
+                  )}
+
                   <div>
                     <label className="block font-medium mb-2" style={{ color: colors.text.primary }}>
                       Subject
@@ -214,7 +234,7 @@ export default function SupportPage(): JSX.Element {
                       required
                     >
                       <option value="">Select a category</option>
-                      {mockCategories.map((cat) => (
+                      {supportCategories.map((cat) => (
                         <option key={cat} value={cat}>{cat}</option>
                       ))}
                     </select>
@@ -236,8 +256,8 @@ export default function SupportPage(): JSX.Element {
                     />
                   </div>
 
-                  <Button variant="primary" className="w-full" size="lg">
-                    <span>📤</span> Submit Ticket
+                  <Button variant="primary" className="w-full" size="lg" disabled={isSubmitting}>
+                    {isSubmitting ? 'Submitting...' : 'Submit Ticket'}
                   </Button>
                 </div>
               </form>

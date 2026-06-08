@@ -17,6 +17,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useWallet } from '../../src/contexts/WalletContext';
 import { useAuth } from '../../src/contexts/AuthContext';
+import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
 
 export default function WalletScreen(): JSX.Element {
   const colorScheme = useColorScheme();

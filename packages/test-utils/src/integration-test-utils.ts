@@ -1,7 +1,5 @@
-import { PrismockClient } from '@prismock/nestjs';
-import { Test, TestingModule } from '@nestjs/common';
+import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
-import { RedisPubSub } from 'graphql-redis-subscriptions';
 import Redis from 'ioredis-mock';
 import { randomUUID } from 'crypto';
 
@@ -25,8 +23,8 @@ export interface TestContainer {
 
 export class IntegrationTestEnvironment {
   private app: INestApplication | null = null;
-  private prisma: PrismockClient | null = null;
-  private redis: Redis | null = null;
+  private prisma: any | null = null;
+  private redis: any | null = null;
   private containers: TestContainer[] = [];
 
   async startPostgres(): Promise<void> {
@@ -51,19 +49,19 @@ export class IntegrationTestEnvironment {
     this.containers = [];
   }
 
-  getRedis(): Redis | null {
+  getRedis(): any | null {
     return this.redis;
   }
 
-  getPrisma(): PrismockClient | null {
+  getPrisma(): any | null {
     return this.prisma;
   }
 
-  async createApp(module: TestingModule): Promise<INestApplication> {
-    this.app = await Test.createTestingModule({
-      imports: [module],
-    }).compile();
-    return this.app.init();
+  async createApp(moduleFixture: TestingModule): Promise<INestApplication> {
+    const app = moduleFixture.createNestApplication();
+    await app.init();
+    this.app = app;
+    return app;
   }
 }
 

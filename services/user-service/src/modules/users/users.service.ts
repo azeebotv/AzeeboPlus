@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { PrismaService } from '../database/prisma.service';
 import { UpdateUniverseAffinityDto } from './dto/update-universe-affinity.dto';
 import { UpdateUserProfileDto } from './dto/update-user-profile.dto';
+import { CompleteProfileSetupDto } from './dto/complete-profile-setup.dto';
 import { Prisma } from '../../prisma/client';
 
 interface UniverseAffinityResponse {
@@ -445,6 +446,45 @@ export class UsersService {
           totalPages: Math.ceil(total / limit),
         },
       },
+    };
+  }
+
+  async completeProfileSetup(userId: string, dto: CompleteProfileSetupDto): Promise<Record<string, unknown>> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const updatedUser = await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        ...(dto.displayName && { displayName: dto.displayName }),
+        ...(dto.avatar && { avatar: dto.avatar }),
+        ...(dto.role && { role: dto.role }),
+      },
+      select: {
+        id: true,
+        email: true,
+        displayName: true,
+        avatar: true,
+        role: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    if (dto.interests && dto.interests.length > 0) {
+      await this.updatePreferences(userId, {
+        contentPreferences: dto.interests,
+      });
+    }
+
+    return {
+      success: true,
+      data: updatedUser,
     };
   }
 }

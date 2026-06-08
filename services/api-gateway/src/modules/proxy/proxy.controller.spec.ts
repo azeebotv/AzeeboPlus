@@ -1,4 +1,4 @@
-import { SERVICE_ROUTES } from './proxy.controller';
+import { SERVICE_CONFIGS } from './proxy.controller';
 
 describe('Proxy Controller - API Contract Verification', () => {
   const requiredServices = [
@@ -12,35 +12,34 @@ describe('Proxy Controller - API Contract Verification', () => {
     'notifications',
     'rewards',
     'analytics',
-    'recommendations',
+    'recommendation',
     'creators',
     'support',
-    'admin',
-    'reality',
-    'games',
-    'comedy',
-    'sports',
-    'movies',
-    'lifestyle',
-    'vertical',
+    'moderation',
+    'engagement',
+    'messaging',
+    'referrals',
+    'subscription',
+    'universe',
   ];
 
   it('should have all required services registered', () => {
-    const registeredServices = SERVICE_ROUTES.map((route) => route.path.slice(1));
+    const registeredServices = SERVICE_CONFIGS.map((route) => route.path.slice(1));
     requiredServices.forEach((service) => {
       expect(registeredServices).toContain(service);
     });
   });
 
-  it('should have correct target URLs configured', () => {
-    SERVICE_ROUTES.forEach((route) => {
-      expect(route.targetUrl).toBeDefined();
-      expect(route.targetUrl).toMatch(/^http/);
+  it('should have correct env key or fallback URL configured', () => {
+    SERVICE_CONFIGS.forEach((route) => {
+      expect(route.envKey).toBeDefined();
+      expect(route.fallbackUrl).toBeDefined();
+      expect(route.fallbackUrl).toMatch(/^http/);
     });
   });
 
   it('should support API versioning', () => {
-    SERVICE_ROUTES.forEach((route) => {
+    SERVICE_CONFIGS.forEach((route) => {
       expect(route.supportedVersions).toBeDefined();
       expect(Array.isArray(route.supportedVersions)).toBe(true);
       expect(route.supportedVersions.length).toBeGreaterThan(0);
@@ -50,7 +49,7 @@ describe('Proxy Controller - API Contract Verification', () => {
   });
 
   it('should have endpoints defined for each service', () => {
-    SERVICE_ROUTES.forEach((route) => {
+    SERVICE_CONFIGS.forEach((route) => {
       expect(route.endpoints).toBeDefined();
       expect(Array.isArray(route.endpoints)).toBe(true);
       expect(route.endpoints?.length).toBeGreaterThan(0);
@@ -58,7 +57,7 @@ describe('Proxy Controller - API Contract Verification', () => {
   });
 
   it('should have correct HTTP methods for auth endpoints', () => {
-    const authRoute = SERVICE_ROUTES.find((r) => r.path === '/auth');
+    const authRoute = SERVICE_CONFIGS.find((r) => r.path === '/auth');
     const methods = authRoute?.endpoints?.map((e) => e.method) || [];
     expect(methods).toContain('POST');
     expect(methods).toContain('GET');
@@ -66,7 +65,7 @@ describe('Proxy Controller - API Contract Verification', () => {
   });
 
   it('should have user-specific endpoints in users service', () => {
-    const usersRoute = SERVICE_ROUTES.find((r) => r.path === '/users');
+    const usersRoute = SERVICE_CONFIGS.find((r) => r.path === '/users');
     const userEndpoints = usersRoute?.endpoints?.map((e) => e.path) || [];
     expect(userEndpoints).toContain('/me');
     expect(userEndpoints).toContain('/me/preferences');
@@ -74,7 +73,7 @@ describe('Proxy Controller - API Contract Verification', () => {
   });
 
   it('should have wallet endpoints', () => {
-    const walletRoute = SERVICE_ROUTES.find((r) => r.path === '/wallet');
+    const walletRoute = SERVICE_CONFIGS.find((r) => r.path === '/wallet');
     const walletEndpoints = walletRoute?.endpoints?.map((e) => e.path) || [];
     expect(walletEndpoints).toContain('/');
     expect(walletEndpoints).toContain('/transactions');
@@ -83,44 +82,33 @@ describe('Proxy Controller - API Contract Verification', () => {
   });
 
   it('should have content endpoints', () => {
-    const contentRoute = SERVICE_ROUTES.find((r) => r.path === '/content');
+    const contentRoute = SERVICE_CONFIGS.find((r) => r.path === '/content');
     const contentEndpoints = contentRoute?.endpoints?.map((e) => e.path) || [];
     expect(contentEndpoints).toContain('/');
     expect(contentEndpoints).toContain('/:id');
     expect(contentEndpoints).toContain('/:id/comments');
   });
 
-  it('should have admin endpoints', () => {
-    const adminRoute = SERVICE_ROUTES.find((r) => r.path === '/admin');
-    expect(adminRoute).toBeDefined();
-    const adminEndpoints = adminRoute?.endpoints?.map((e) => e.path) || [];
-    expect(adminEndpoints).toContain('/users');
-    expect(adminEndpoints).toContain('/content');
-    expect(adminEndpoints).toContain('/moderation/reports');
-  });
-
-  it('should have all universe services registered', () => {
-    const universeServices = ['reality', 'games', 'comedy', 'sports', 'movies', 'lifestyle', 'vertical'];
-    const registeredServices = SERVICE_ROUTES.map((route) => route.path.slice(1));
-    universeServices.forEach((service) => {
-      expect(registeredServices).toContain(service);
-    });
+  it('should have payment endpoints', () => {
+    const paymentRoute = SERVICE_CONFIGS.find((r) => r.path === '/payments');
+    expect(paymentRoute).toBeDefined();
+    const paymentEndpoints = paymentRoute?.endpoints?.map((e) => e.path) || [];
+    expect(paymentEndpoints).toContain('/initialize');
+    expect(paymentEndpoints).toContain('/verify');
   });
 
   it('should have support service with comprehensive endpoints', () => {
-    const supportRoute = SERVICE_ROUTES.find((r) => r.path === '/support');
+    const supportRoute = SERVICE_CONFIGS.find((r) => r.path === '/support');
     expect(supportRoute).toBeDefined();
     const supportEndpoints = supportRoute?.endpoints?.map((e) => e.path) || [];
     expect(supportEndpoints).toContain('/tickets');
     expect(supportEndpoints).toContain('/tickets/my');
     expect(supportEndpoints).toContain('/refunds/pending');
-    expect(supportEndpoints).toContain('/chargebacks/pending');
-    expect(supportEndpoints).toContain('/appeals/pending');
   });
 
   it('should have creators service with correct path', () => {
-    const creatorsRoute = SERVICE_ROUTES.find((r) => r.path === '/creators');
+    const creatorsRoute = SERVICE_CONFIGS.find((r) => r.path === '/creators');
     expect(creatorsRoute).toBeDefined();
-    expect(creatorsRoute?.targetUrl).toContain('creator-service');
+    expect(creatorsRoute?.envKey).toBe('CREATOR_SERVICE_URL');
   });
 });

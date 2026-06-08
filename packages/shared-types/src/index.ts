@@ -1,3 +1,24 @@
+// Permission types
+export type Permission =
+  | 'user:read' | 'user:write' | 'user:manage'
+  | 'content:read' | 'content:write' | 'content:moderate'
+  | 'analytics:view' | 'analytics:export'
+  | 'payment:view' | 'payment:refund'
+  | 'admin:access'
+  | 'settings:read' | 'settings:write';
+
+export const PERMISSIONS_KEY = 'permissions';
+
+export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
+  user: ['user:read', 'content:read'],
+  creator: ['user:read', 'user:write', 'content:read', 'content:write', 'analytics:view'],
+  moderator: ['user:read', 'user:write', 'content:read', 'content:write', 'content:moderate', 'analytics:view'],
+  admin: ['user:read', 'user:write', 'user:manage', 'content:read', 'content:write', 'content:moderate', 'analytics:view', 'analytics:export', 'payment:view', 'payment:refund', 'admin:access', 'settings:read', 'settings:write'],
+  super_admin: ['user:read', 'user:write', 'user:manage', 'content:read', 'content:write', 'content:moderate', 'analytics:view', 'analytics:export', 'payment:view', 'payment:refund', 'admin:access', 'settings:read', 'settings:write'],
+  partner: ['analytics:view', 'analytics:export'],
+  sponsor_manager: ['analytics:view'],
+};
+
 // User types
 export interface User {
   id: string;
@@ -5,6 +26,7 @@ export interface User {
   displayName: string;
   avatar?: string;
   role: UserRole;
+  isVerified?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -78,7 +100,7 @@ export interface ContentItem {
   tags?: { id: string; name: string }[];
 }
 
-export type ContentType = 'video' | 'audio' | 'image' | 'article';
+export type ContentType = 'video' | 'audio' | 'image' | 'article' | 'document';
 export type Universe =
   | 'reality'
   | 'creator'
@@ -87,7 +109,8 @@ export type Universe =
   | 'movie'
   | 'games'
   | 'comedy'
-  | 'sports';
+  | 'sports'
+  | 'music';
 export type PublishStatus = 'draft' | 'pending' | 'published' | 'archived';
 
 export interface ContentCreateRequest {
@@ -131,7 +154,7 @@ export interface WalletTransaction {
   createdAt: Date;
 }
 
-export type TransactionType = 'credit' | 'debit' | 'bonus' | 'promo' | 'refund';
+export type TransactionType = 'credit' | 'debit' | 'bonus' | 'promo' | 'refund' | 'earning' | 'payout';
 export type TransactionStatus = 'pending' | 'completed' | 'failed' | 'reversed';
 
 export interface WalletFundRequest {
@@ -493,6 +516,10 @@ export type { ApiVersionOptions, VersionedResponse } from './api-versioning';
 export { environmentSchema, validateEnvironment } from './env-validation';
 export type { EnvironmentVariables } from './env-validation';
 
+// Pricing constants and utilities
+export { DEFAULT_PRICING, getPricing } from './pricing';
+export type { PricingPlan, WalletPricing, ContentPricing } from './pricing';
+
 // Secret Validation
 export { validateStartup, isPlaceholderSecret, validateNoPlaceholders } from './secret-validation';
 
@@ -603,7 +630,7 @@ export interface Subscription {
   providerSubscriptionId?: string;
 }
 
-export type SubscriptionTier = 'basic' | 'standard' | 'premium' | 'enterprise';
+export type SubscriptionTier = 'basic' | 'premium' | 'vip';
 export type SubscriptionStatus = 'active' | 'past_due' | 'cancelled' | 'incomplete' | 'trialing';
 
 export interface SubscriptionCreateRequest {

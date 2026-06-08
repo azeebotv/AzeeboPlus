@@ -18,9 +18,33 @@ export interface Transaction {
   updatedAt?: string;
 }
 
+export interface TransactionDetail {
+  id: string;
+  type: 'credit' | 'debit';
+  amount: number;
+  currency: string;
+  status: 'pending' | 'completed' | 'failed' | 'cancelled';
+  description?: string;
+  reference: string;
+  metadata?: {
+    source?: string;
+    method?: string;
+    fee?: number;
+    relatedTransactionId?: string;
+  };
+  balanceBefore: number;
+  balanceAfter: number;
+  createdAt: string;
+  updatedAt?: string;
+}
+
 export const walletApi = {
   getBalance: async (): Promise<ApiResponse<WalletBalance>> => {
     return apiClient.get<ApiResponse<WalletBalance>>('/wallet/balance');
+  },
+
+  getTransaction: async (id: string): Promise<ApiResponse<TransactionDetail>> => {
+    return apiClient.get<ApiResponse<TransactionDetail>>(`/wallet/transactions/${id}`);
   },
 
   getTransactions: async (

@@ -1,34 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-
-const MOVIE = {
-  id: '1',
-  title: 'Blood Sisters 2',
-  year: '2024',
-  genre: 'Drama',
-  rating: '4.8',
-  duration: '2h 15m',
-  director: 'Kemi Adetiba',
-  synopsis: 'The thrilling sequel continues the story of two friends whose lives become intertwined in a web of secrets, betrayal, and redemption. When a wealthy businessman is found dead, dark secrets surface that threaten to destroy everything they have built.',
-  thumbnail: '',
-};
-
-const CAST = [
-  { id: '1', name: 'Nadia Buari', role: 'Sarah', emoji: '👩🏾' },
-  { id: '2', name: 'Omotola Jalade', role: 'Aisha', emoji: '👩🏾‍🦱' },
-  { id: '3', name: 'Wale Ojo', role: 'Detective Emeka', emoji: '👨🏾' },
-  { id: '4', name: 'Eku Edewor', role: 'Maya', emoji: '👩🏾‍🦳' },
-  { id: '5', name: 'Adesuwa Onyenokwe', role: 'Mrs. Adeola', emoji: '👩🏾‍🦰' },
-];
-
-const SIMILAR_MOVIES = [
-  { id: '1', title: 'The King', genre: 'Drama', emoji: '👑' },
-  { id: '2', title: 'The Milk', genre: 'Drama', emoji: '🥛' },
-  { id: '3', title: 'Queen of Tears', genre: 'Romance', emoji: '👑' },
-  { id: '4', title: 'Lara Croft', genre: 'Action', emoji: '🗡️' },
-];
+import { apiClient } from '../../src/api';
+import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
 
 const PRICING_OPTIONS = [
   { id: '1', type: 'Rent (48h)', price: '₦500', features: ['48 hour access', 'HD quality'] },
@@ -43,6 +18,34 @@ export default function MovieDetailPage() {
   const isDark = colorScheme === 'dark';
   const [selectedOption, setSelectedOption] = useState<typeof PRICING_OPTIONS[0]>(PRICING_OPTIONS[0]);
   const [showPricing, setShowPricing] = useState(false);
+  const [movie, setMovie] = useState<any>(null);
+  const [cast, setCast] = useState<any[]>([]);
+  const [similarMovies, setSimilarMovies] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchMovieData = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const [movieRes, castRes, similarRes] = await Promise.all([
+        apiClient.get<any>(`/movies/${id}`),
+        apiClient.get<any[]>(`/movies/${id}/cast`),
+        apiClient.get<any[]>(`/movies/${id}/similar`),
+      ]);
+      setMovie(movieRes);
+      setCast(castRes || []);
+      setSimilarMovies(similarRes || []);
+    } catch (err: any) {
+      setError(err.message || 'Failed to load movie data');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchMovieData();
+  }, [id]);
 
   const handlePlay = () => {
     setShowPricing(true);

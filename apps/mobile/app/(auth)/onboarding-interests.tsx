@@ -1,27 +1,35 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
-
-const interests = [
-  { id: 'reality', icon: '🎭', label: 'Reality TV' },
-  { id: 'creators', icon: '🎤', label: 'Creators' },
-  { id: 'lifestyle', icon: '✨', label: 'Lifestyle' },
-  { id: 'vertical', icon: '🏰', label: 'Vertical' },
-  { id: 'movies', icon: '🎬', label: 'Movies' },
-  { id: 'games', icon: '🎮', label: 'Games' },
-  { id: 'comedy', icon: '😂', label: 'Comedy' },
-  { id: 'sports', icon: '⚽', label: 'Sports' },
-  { id: 'music', icon: '🎵', label: 'Music' },
-  { id: 'news', icon: '📰', label: 'News' },
-  { id: 'tech', icon: '💻', label: 'Tech' },
-  { id: 'food', icon: '🍔', label: 'Food' },
-];
+import { apiClient } from '../../src/api/client';
+import { LoadingState, ErrorState } from '../../src/components/StateContainers';
 
 export default function OnboardingInterestsScreen() {
   const colorScheme = useColorScheme();
   const router = useRouter();
+  const isDark = colorScheme === 'dark';
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
+  const [interests, setInterests] = useState<Array<{ id: string; icon: string; label: string }>>([]);
+  const [isLoadingInterests, setIsLoadingInterests] = useState(true);
+  const [interestsError, setInterestsError] = useState<string | null>(null);
+
+  const fetchInterests = useCallback(async () => {
+    setIsLoadingInterests(true);
+    setInterestsError(null);
+    try {
+      const res = await apiClient.get<Array<{ id: string; icon: string; label: string }>>('/user/interests');
+      setInterests(res);
+    } catch {
+      setInterestsError('Failed to load interests');
+    } finally {
+      setIsLoadingInterests(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchInterests();
+  }, [fetchInterests]);
 
   const toggleInterest = (id: string) => {
     if (selectedInterests.includes(id)) {
@@ -35,10 +43,18 @@ export default function OnboardingInterestsScreen() {
     router.replace('/(tabs)/home');
   };
 
+  if (isLoadingInterests) {
+    return <LoadingState text="Loading interests..." />;
+  }
+
+  if (interestsError) {
+    return <ErrorState description={interestsError} onRetry={fetchInterests} />;
+  }
+
   return (
-    <View style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#000000' : '#ffffff' }]}>
+    <View style={[styles.container, { backgroundColor: isDark ? '#000000' : '#ffffff' }]}>
       <View style={styles.header}>
-        <Text style={[styles.title, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
+        <Text style={[styles.title, { color: isDark ? '#ffffff' : '#000000' }]}>
           What interests you?
         </Text>
         <Text style={styles.subtitle}>

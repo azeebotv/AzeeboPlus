@@ -17,7 +17,7 @@ import { SearchService } from './search.service';
 import { SearchResponse } from './interfaces/search-response.interface';
 
 @ApiTags('Search')
-@Controller('search')
+@Controller('v1/search')
 export class SearchController {
   constructor(private readonly searchService: SearchService) {}
 

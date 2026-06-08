@@ -7,7 +7,10 @@ export class RedisService implements OnModuleDestroy {
   private client: Redis;
 
   constructor() {
-    this.client = new Redis(process.env.REDIS_URL || 'redis://localhost:6379', {
+    if (!process.env.REDIS_URL) {
+      throw new Error('REDIS_URL environment variable must be set');
+    }
+    this.client = new Redis(process.env.REDIS_URL, {
       retryStrategy: (times: number) => {
         const delay = Math.min(times * 50, 2000);
         return delay;

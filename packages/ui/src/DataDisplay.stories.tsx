@@ -4,7 +4,7 @@ import {
   List,
   ListItem,
   CardListItem,
-  Badge,
+  DisplayBadge,
   Tag,
   ProgressRing,
   StatCard,
@@ -96,8 +96,8 @@ export const CardListItemComponent: StoryObj<typeof CardListItem> = {
   ),
 };
 
-// Badge
-export const BadgeComponent: StoryObj<typeof Badge> = {
+// DisplayBadge
+export const BadgeComponent: StoryObj<typeof DisplayBadge> = {
   argTypes: {
     variant: {
       control: 'select',
@@ -114,12 +114,12 @@ export const BadgeComponent: StoryObj<typeof Badge> = {
   },
   render: (args) => (
     <div className="p-4 flex gap-2">
-      <Badge {...args}>Default</Badge>
-      <Badge {...args} variant="primary">Primary</Badge>
-      <Badge {...args} variant="success">Success</Badge>
-      <Badge {...args} variant="warning">Warning</Badge>
-      <Badge {...args} variant="error">Error</Badge>
-      <Badge {...args} variant="info">Info</Badge>
+      <DisplayBadge {...args}>Default</DisplayBadge>
+      <DisplayBadge {...args} variant="primary">Primary</DisplayBadge>
+      <DisplayBadge {...args} variant="success">Success</DisplayBadge>
+      <DisplayBadge {...args} variant="warning">Warning</DisplayBadge>
+      <DisplayBadge {...args} variant="error">Error</DisplayBadge>
+      <DisplayBadge {...args} variant="info">Info</DisplayBadge>
     </div>
   ),
 };

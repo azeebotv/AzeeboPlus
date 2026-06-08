@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { randomBytes } from 'crypto';
 import * as speakeasy from 'speakeasy';
 import { toDataURL } from 'qrcode';
 
@@ -72,6 +73,6 @@ export class MfaService {
   }
 
   private generateBackupCode(): string {
-    return Math.random().toString(36).slice(2, 8).toUpperCase();
+    return randomBytes(4).toString('hex').toUpperCase();
   }
 }

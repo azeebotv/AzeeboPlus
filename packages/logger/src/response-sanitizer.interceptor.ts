@@ -20,7 +20,7 @@ export class ResponseSanitizationInterceptor implements NestInterceptor {
     this.maskFields = config?.maskFields || DEFAULT_MASK_FIELDS;
   }
 
-  intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
+  intercept(_context: ExecutionContext, next: CallHandler): Observable<unknown> {
     return next.handle().pipe(
       map((response: unknown) => {
         if (!response || typeof response !== 'object') {

@@ -53,6 +53,24 @@ export interface RewardResponse {
     streak?: { current: number; lastCheckInAt: Date | null };
     level?: LevelData;
     message?: string;
+    activity?: string;
+    pointsEarned?: number;
+    newBalance?: number;
+    balance?: number;
+    userId?: string;
+    history?: Array<{
+      id: string;
+      points: number;
+      type: string;
+      reason: string;
+      createdAt: Date;
+    }>;
+    pagination?: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+    };
   };
   error?: {
     code: string;

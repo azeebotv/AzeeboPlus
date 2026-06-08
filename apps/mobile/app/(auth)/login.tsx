@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -12,25 +12,58 @@ import {
 } from 'react-native';
 import { useRouter, Link } from 'expo-router';
 import { useAuth } from '../../src/contexts/AuthContext';
+import { useBiometric } from '../../src/hooks/useBiometric';
+import { LoadingState, ErrorState } from '../../src/components/StateContainers';
 
 export default function LoginScreen() {
   const router = useRouter();
   const { login, isLoading } = useAuth();
+  const { isAvailable, isEnabled, authenticateWithStoredCredentials } = useBiometric();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [showBiometricOption, setShowBiometricOption] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const checkBiometricAvailability = async () => {
+      if (isAvailable && isEnabled) {
+        setShowBiometricOption(true);
+      }
+    };
+    checkBiometricAvailability();
+  }, [isAvailable, isEnabled]);
+
+  const handleBiometricLogin = async () => {
+    try {
+      const result = await authenticateWithStoredCredentials();
+
+      if (result.success) {
+        router.replace('/(tabs)/home' as any);
+      } else {
+        Alert.alert(
+          'Authentication Failed',
+          result.error || 'Biometric authentication failed. Please use your password.',
+          [{ text: 'OK' }]
+        );
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Biometric authentication failed');
+    }
+  };
 
   const handleLogin = async () => {
     if (!email || !password) {
-      Alert.alert('Error', 'Please fill in all fields');
+      setError('Please fill in all fields');
       return;
     }
 
+    setError(null);
     try {
       await login(email, password);
       router.replace('/(tabs)/home');
     } catch (error) {
-      Alert.alert('Login Failed', 'Invalid email or password');
+      setError('Invalid email or password');
     }
   };
 
@@ -93,8 +126,14 @@ export default function LoginScreen() {
             </Link>
           </TouchableOpacity>
 
+          {error && (
+            <View style={styles.errorContainer}>
+              <Text style={styles.errorText}>{error}</Text>
+            </View>
+          )}
+
           <TouchableOpacity
-            style={[styles.loginButton, isLoading && styles.loginButtonDisabled]}
+            style={[styles.loginButton, (isLoading) && styles.loginButtonDisabled]}
             onPress={handleLogin}
             disabled={isLoading}
           >
@@ -104,6 +143,17 @@ export default function LoginScreen() {
               <Text style={styles.loginButtonText}>Sign In</Text>
             )}
           </TouchableOpacity>
+
+          {showBiometricOption && (
+            <TouchableOpacity
+              style={[styles.biometricButton, isLoading && styles.loginButtonDisabled]}
+              onPress={handleBiometricLogin}
+              disabled={isLoading}
+            >
+              <Text style={styles.biometricIcon}>👆</Text>
+              <Text style={styles.biometricButtonText}>Use Biometric Login</Text>
+            </TouchableOpacity>
+          )}
 
           <View style={styles.divider}>
             <View style={styles.dividerLine} />
@@ -222,8 +272,39 @@ const styles = StyleSheet.create({
   loginButtonDisabled: {
     opacity: 0.7,
   },
+  errorContainer: {
+    backgroundColor: '#FEE2E2',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 16,
+  },
+  errorText: {
+    color: '#DC2626',
+    fontSize: 14,
+    textAlign: 'center',
+  },
   loginButtonText: {
     color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  biometricButton: {
+    backgroundColor: '#1a1a1a',
+    borderRadius: 12,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#8B5CF6',
+    marginTop: 12,
+  },
+  biometricIcon: {
+    fontSize: 20,
+    marginRight: 8,
+  },
+  biometricButtonText: {
+    color: '#8B5CF6',
     fontSize: 16,
     fontWeight: '600',
   },

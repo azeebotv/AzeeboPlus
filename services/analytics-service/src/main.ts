@@ -41,8 +41,11 @@ async function bootstrap(): Promise<void> {
 
   app.useGlobalInterceptors(new LoggingInterceptor());
 
+  if (!process.env.ALLOWED_ORIGINS) {
+    throw new Error('ALLOWED_ORIGINS environment variable must be set');
+  }
   app.enableCors({
-    origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'],
+    origin: process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim()),
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
   });
@@ -61,7 +64,7 @@ async function bootstrap(): Promise<void> {
 
   app.enableShutdownHooks();
 
-  const port = process.env.PORT || 3012;
+  const port = process.env.PORT || 3008;
   await app.listen(port);
   const logger = new Logger('Analytics Service');
   logger.log(`Analytics Service running on port ${port}`);

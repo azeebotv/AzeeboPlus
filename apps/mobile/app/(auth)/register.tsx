@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { useRouter, Link } from 'expo-router';
 import { useAuth } from '../../src/contexts/AuthContext';
+import { LoadingState, ErrorState } from '../../src/components/StateContainers';
 
 export default function RegisterScreen() {
   const router = useRouter();
@@ -23,20 +24,23 @@ export default function RegisterScreen() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleRegister = async () => {
+    setError(null);
+
     if (!displayName || !email || !phone || !password || !confirmPassword) {
-      Alert.alert('Error', 'Please fill in all fields');
+      setError('Please fill in all fields');
       return;
     }
 
     if (password !== confirmPassword) {
-      Alert.alert('Error', 'Passwords do not match');
+      setError('Passwords do not match');
       return;
     }
 
     if (password.length < 8) {
-      Alert.alert('Error', 'Password must be at least 8 characters');
+      setError('Password must be at least 8 characters');
       return;
     }
 
@@ -44,7 +48,7 @@ export default function RegisterScreen() {
       await register(email, password, displayName, phone);
       router.replace('/(auth)/otp-verification');
     } catch (error) {
-      Alert.alert('Registration Failed', 'Unable to create account');
+      setError('Unable to create account');
     }
   };
 
@@ -134,6 +138,12 @@ export default function RegisterScreen() {
                 autoCapitalize="none"
               />
             </View>
+
+            {error && (
+              <View style={styles.errorContainer}>
+                <Text style={styles.errorText}>{error}</Text>
+              </View>
+            )}
 
             <TouchableOpacity
               style={[styles.registerButton, isLoading && styles.registerButtonDisabled]}
@@ -248,6 +258,17 @@ const styles = StyleSheet.create({
   },
   registerButtonDisabled: {
     opacity: 0.7,
+  },
+  errorContainer: {
+    backgroundColor: '#FEE2E2',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 16,
+  },
+  errorText: {
+    color: '#DC2626',
+    fontSize: 14,
+    textAlign: 'center',
   },
   registerButtonText: {
     color: '#fff',

@@ -1,40 +1,54 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
+import { LoadingState, EmptyState, ErrorState } from '../src/components/StateContainers';
+import { apiClient } from '../src/api/client';
 
-const FEATURED_CONTENT = [
-  { id: '1', title: 'Summer Fashion Trends 2024', category: 'Fashion', duration: '12:30', emoji: '👗' },
-  { id: '2', title: 'Healthy Breakfast Recipes', category: 'Food', duration: '8:45', emoji: '🥗' },
-  { id: '3', title: 'Home Decor Ideas', category: 'Interior', duration: '15:20', emoji: '🏠' },
-];
-
-const TRENDING_NOW = [
-  { id: '1', title: 'Minimalist Wardrobe Guide', views: '890K', emoji: '👔' },
-  { id: '2', title: 'Quick Dinner Recipes', views: '670K', emoji: '🍝' },
-  { id: '3', title: 'Fitness at Home', views: '1.2M', emoji: '💪' },
-  { id: '4', title: 'Skincare Routine', views: '450K', emoji: '✨' },
-];
-
-const CATEGORIES = [
-  { id: '1', name: 'Fashion', emoji: '👗', count: 124 },
-  { id: '2', name: 'Food & Cooking', emoji: '🍳', count: 98 },
-  { id: '3', name: 'Beauty', emoji: '💄', count: 156 },
-  { id: '4', name: 'Fitness', emoji: '💪', count: 87 },
-  { id: '5', name: 'Home', emoji: '🏠', count: 64 },
-  { id: '6', name: 'Travel', emoji: '✈️', count: 52 },
-];
-
-const CREATORS_TO_FOLLOW = [
-  { id: '1', name: 'StyleByChioma', followers: '890K', avatar: '👩‍🦱' },
-  { id: '2', name: 'ChefBaba', followers: '1.2M', avatar: '👨‍🍳' },
-  { id: '3', name: 'FitQueen', followers: '670K', avatar: '👩‍🦰' },
-];
+interface FeaturedItem { id: string; title: string; category: string; duration: string; emoji: string; }
+interface TrendingItem { id: string; title: string; views: string; emoji: string; }
+interface CategoryItem { id: string; name: string; emoji: string; count: number; }
+interface CreatorItem { id: string; name: string; followers: string; avatar: string; }
 
 export default function LifestyleUniverseHome() {
   const colorScheme = useColorScheme();
   const router = useRouter();
   const isDark = colorScheme === 'dark';
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [featuredContent, setFeaturedContent] = useState<FeaturedItem[]>([]);
+  const [trendingNow, setTrendingNow] = useState<TrendingItem[]>([]);
+  const [categories, setCategories] = useState<CategoryItem[]>([]);
+  const [creatorsToFollow, setCreatorsToFollow] = useState<CreatorItem[]>([]);
+
+  const fetchData = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const [featuredRes, trendingRes, catsRes, creatorsRes] = await Promise.all([
+        apiClient.get<any>('/v1/lifestyle/featured'),
+        apiClient.get<any>('/v1/lifestyle/trending'),
+        apiClient.get<any>('/v1/lifestyle/categories'),
+        apiClient.get<any>('/v1/lifestyle/creators'),
+      ]);
+      setFeaturedContent(Array.isArray(featuredRes) ? featuredRes : featuredRes?.data ?? []);
+      setTrendingNow(Array.isArray(trendingRes) ? trendingRes : trendingRes?.data ?? []);
+      setCategories(Array.isArray(catsRes) ? catsRes : catsRes?.data ?? []);
+      setCreatorsToFollow(Array.isArray(creatorsRes) ? creatorsRes : creatorsRes?.data ?? []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchData(); }, []);
+
+  if (isLoading) return <LoadingState text="Loading lifestyle content..." />;
+  if (error) return <ErrorState description={error} onRetry={fetchData} />;
+  if (!featuredContent.length && !trendingNow.length) {
+    return <EmptyState icon="✨" title="No content available" description="Check back later for lifestyle stories" />;
+  }
 
   return (
     <ScrollView style={[styles.container, { backgroundColor: isDark ? '#0a0a0a' : '#ffffff' }]}>
@@ -46,7 +60,7 @@ export default function LifestyleUniverseHome() {
       </View>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoriesScroll}>
-        {CATEGORIES.map((cat) => (
+        {categories.map((cat) => (
           <TouchableOpacity key={cat.id} style={styles.categoryChip}>
             <Text style={styles.categoryEmoji}>{cat.emoji}</Text>
             <Text style={styles.categoryName}>{cat.name}</Text>
@@ -62,7 +76,7 @@ export default function LifestyleUniverseHome() {
           </Text>
         </View>
         <FlatList
-          data={FEATURED_CONTENT}
+          data={featuredContent}
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.featuredList}
@@ -96,7 +110,7 @@ export default function LifestyleUniverseHome() {
           </TouchableOpacity>
         </View>
         <View style={styles.trendingList}>
-          {TRENDING_NOW.map((item, index) => (
+          {trendingNow.map((item, index) => (
             <TouchableOpacity key={item.id} style={[styles.trendingItem, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}>
               <View style={styles.trendingRank}>
                 <Text style={styles.rankNumber}>{index + 1}</Text>
@@ -122,7 +136,7 @@ export default function LifestyleUniverseHome() {
           </Text>
         </View>
         <FlatList
-          data={CREATORS_TO_FOLLOW}
+          data={creatorsToFollow}
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.creatorsList}

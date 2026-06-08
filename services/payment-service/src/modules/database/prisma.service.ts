@@ -10,7 +10,10 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
     const poolTimeout = parseInt(process.env.DB_POOL_TIMEOUT || '10', 10);
     const idleTimeout = parseInt(process.env.DB_IDLE_TIMEOUT || '5', 10);
 
-    const databaseUrl = new URL(process.env.DATABASE_URL || 'postgresql://localhost:5432/azeebo');
+    if (!process.env.DATABASE_URL) {
+      throw new Error('DATABASE_URL environment variable must be set');
+    }
+    const databaseUrl = new URL(process.env.DATABASE_URL);
     databaseUrl.searchParams.set('connection_limit', connectionLimit.toString());
     databaseUrl.searchParams.set('pool_timeout', poolTimeout.toString());
     databaseUrl.searchParams.set('idle_timeout', idleTimeout.toString());

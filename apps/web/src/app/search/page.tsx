@@ -1,46 +1,48 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { Button, Card, Skeleton, Badge, Avatar } from '@azeebo/ui';
-import { colors, gradients, universeColors } from '@azeebo/design-tokens';
+import { Button, Card, Skeleton, Avatar } from '@azeebo/ui';
+import { colors } from '@azeebo/design-tokens';
 import Link from 'next/link';
-
-const mockResults = {
-  movies: [
-    { id: '1', title: 'The African Queen', description: 'An epic adventure', thumbnail: 'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=movie%20poster%20african%20queen&image_size=square', rating: 4.9 },
-    { id: '2', title: 'Lagos Streets', description: 'A gritty drama', thumbnail: 'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=lagos%20streets%20movie%20poster&image_size=square', rating: 4.7 },
-  ],
-  series: [
-    { id: '1', title: 'Kingdom of Oyo', description: 'Historical drama', thumbnail: 'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=kingdom%20of%20oyo%20series%20poster&image_size=square', episodes: 24 },
-  ],
-  creators: [
-    { id: '1', name: 'Amara Jay', followers: '125K', avatar: 'AJ', bio: 'Nollywood actress & producer' },
-    { id: '2', name: 'Kofi Mensah', followers: '89K', avatar: 'KM', bio: 'Comedian & content creator' },
-  ],
-};
-
-const mockRecentSearches = ['Nollywood', 'comedy', 'football', 'games'];
-
-const mockTrending = ['The African Queen', 'Super Eagles', 'Amara Jay', 'African Quest'];
+import { apiFetch, ContentItem, PaginatedResponse } from '@/lib/api';
+import { webLogger } from '@/lib/logger';
 
 const categories = ['All', 'Movies', 'Series', 'Creators', 'Games', 'Sports'];
 
 export default function SearchPage(): JSX.Element {
   const { user, isAuthenticated } = useAuth();
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState(mockResults);
+  const [results, setResults] = useState<ContentItem[]>([]);
   const [activeCategory, setActiveCategory] = useState('All');
   const [isLoading, setIsLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSearch = (e: React.FormEvent) => {
+  const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (query.trim()) {
-      setIsLoading(true);
-      setHasSearched(true);
-      setTimeout(() => {
-        setIsLoading(false);
-      }, 500);
+    if (!query.trim()) return;
+
+    setIsLoading(true);
+    setHasSearched(true);
+    setError(null);
+
+    try {
+      const params = new URLSearchParams({ q: query });
+      if (activeCategory !== 'All') {
+        params.append('category', activeCategory.toLowerCase());
+      }
+      const result = await apiFetch<PaginatedResponse<ContentItem>>(`/v1/content/search?${params.toString()}`);
+
+      if (result.success && result.data) {
+        setResults(result.data.items || []);
+      } else {
+        setResults([]);
+      }
+    } catch (err) {
+      webLogger.error('Search failed', err);
+      setError('Search failed. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -50,7 +52,7 @@ export default function SearchPage(): JSX.Element {
       <header className="sticky top-0 z-50 backdrop-blur-xl bg-black/40 border-b border-gray-700/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl flex items-center justify-center" style={{ background: gradients.primary }}>
+            <div className="h-10 w-10 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)' }}>
               <span className="text-white font-bold text-xl leading-none">A</span>
             </div>
             <h1 className="text-2xl font-bold hidden sm:block" style={{ color: colors.text.primary }}>Azeebo+</h1>
@@ -73,7 +75,7 @@ export default function SearchPage(): JSX.Element {
             {isAuthenticated ? (
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
-                  <Avatar size="medium" fallback={user?.name?.charAt(0) || 'U'} />
+                  <Avatar size="md" fallback={user?.name?.charAt(0) || 'U'} />
                   <span className="text-sm font-medium" style={{ color: colors.text.primary }}>{user?.name}</span>
                 </div>
               </div>
@@ -108,7 +110,7 @@ export default function SearchPage(): JSX.Element {
               className="absolute right-2 top-1/2 -translate-y-1/2 px-6 py-2 rounded-full font-semibold transition-colors"
               style={{ backgroundColor: colors.primary[500], color: 'white' }}
             >
-              🔍 Search
+              Search
             </button>
           </div>
         </form>
@@ -129,40 +131,10 @@ export default function SearchPage(): JSX.Element {
 
         {/* Search Results or Initial State */}
         {!hasSearched ? (
-          <div className="space-y-8">
-            {/* Recent Searches */}
-            <div>
-              <h3 className="text-xl font-bold mb-4" style={{ color: colors.text.primary }}>Recent Searches</h3>
-              <div className="flex flex-wrap gap-3">
-                {mockRecentSearches.map((search, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => { setQuery(search); setHasSearched(true); }}
-                    className="px-4 py-2 rounded-full flex items-center gap-2"
-                    style={{ backgroundColor: colors.bg.tertiary, color: colors.text.secondary }}
-                  >
-                    <span>⏰</span> {search}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Trending */}
-            <div>
-              <h3 className="text-xl font-bold mb-4" style={{ color: colors.text.primary }}>Trending Now</h3>
-              <div className="flex flex-wrap gap-3">
-                {mockTrending.map((trend, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => { setQuery(trend); setHasSearched(true); }}
-                    className="px-4 py-2 rounded-full flex items-center gap-2"
-                    style={{ backgroundColor: `${colors.primary[500]}20`, color: colors.primary[400] }}
-                  >
-                    <span>🔥</span> {trend}
-                  </button>
-                ))}
-              </div>
-            </div>
+          <div className="text-center py-12">
+            <p className="text-lg" style={{ color: colors.text.secondary }}>
+              Start typing to search for content
+            </p>
           </div>
         ) : (
           <div className="space-y-8">
@@ -180,69 +152,32 @@ export default function SearchPage(): JSX.Element {
                   </div>
                 ))}
               </div>
+            ) : error ? (
+              <div className="text-center py-12">
+                <p className="text-lg mb-4" style={{ color: colors.text.secondary }}>{error}</p>
+                <Button variant="primary" onClick={handleSearch as React.MouseEventHandler<HTMLButtonElement>}>Retry</Button>
+              </div>
+            ) : results.length > 0 ? (
+              <div>
+                <h3 className="text-xl font-bold mb-4" style={{ color: colors.text.primary }}>Results</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {results.map((item) => (
+                    <Card key={item.id} padding="none" className="overflow-hidden cursor-pointer">
+                      <img src={item.thumbnail} alt={item.title} className="w-full h-40 object-cover" />
+                      <div className="p-4">
+                        <h4 className="font-bold" style={{ color: colors.text.primary }}>{item.title}</h4>
+                        <p className="text-sm" style={{ color: colors.text.secondary }}>{item.description}</p>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              </div>
             ) : (
-              <>
-                {/* Movies Results */}
-                {(activeCategory === 'All' || activeCategory === 'Movies') && results.movies.length > 0 && (
-                  <div>
-                    <h3 className="text-xl font-bold mb-4" style={{ color: colors.text.primary }}>Movies</h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {results.movies.map((movie) => (
-                        <Card key={movie.id} padding="none" className="overflow-hidden cursor-pointer">
-                          <img src={movie.thumbnail} alt={movie.title} className="w-full h-40 object-cover" />
-                          <div className="p-4">
-                            <h4 className="font-bold" style={{ color: colors.text.primary }}>{movie.title}</h4>
-                            <p className="text-sm" style={{ color: colors.text.secondary }}>{movie.description}</p>
-                            <div className="flex items-center gap-1 mt-2">
-                              <span>⭐</span>
-                              <span className="text-sm" style={{ color: colors.text.secondary }}>{movie.rating}</span>
-                            </div>
-                          </div>
-                        </Card>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Series Results */}
-                {(activeCategory === 'All' || activeCategory === 'Series') && results.series.length > 0 && (
-                  <div>
-                    <h3 className="text-xl font-bold mb-4" style={{ color: colors.text.primary }}>Series</h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {results.series.map((series) => (
-                        <Card key={series.id} padding="none" className="overflow-hidden cursor-pointer">
-                          <img src={series.thumbnail} alt={series.title} className="w-full h-40 object-cover" />
-                          <div className="p-4">
-                            <h4 className="font-bold" style={{ color: colors.text.primary }}>{series.title}</h4>
-                            <p className="text-sm" style={{ color: colors.text.secondary }}>{series.description}</p>
-                            <div className="flex items-center gap-1 mt-2">
-                              <span>🎬</span>
-                              <span className="text-sm" style={{ color: colors.text.secondary }}>{series.episodes} episodes</span>
-                            </div>
-                          </div>
-                        </Card>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Creators Results */}
-                {(activeCategory === 'All' || activeCategory === 'Creators') && results.creators.length > 0 && (
-                  <div>
-                    <h3 className="text-xl font-bold mb-4" style={{ color: colors.text.primary }}>Creators</h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {results.creators.map((creator) => (
-                        <Card key={creator.id} padding="md" className="text-center cursor-pointer">
-                          <Avatar size="lg" fallback={creator.avatar} className="mx-auto mb-3" />
-                          <h4 className="font-bold" style={{ color: colors.text.primary }}>{creator.name}</h4>
-                          <p className="text-sm" style={{ color: colors.text.secondary }}>{creator.bio}</p>
-                          <p className="text-xs mt-2" style={{ color: colors.text.tertiary }}>👥 {creator.followers} followers</p>
-                        </Card>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </>
+              <div className="text-center py-12">
+                <p className="text-lg" style={{ color: colors.text.secondary }}>
+                  No results found for &ldquo;{query}&rdquo;
+                </p>
+              </div>
             )}
           </div>
         )}

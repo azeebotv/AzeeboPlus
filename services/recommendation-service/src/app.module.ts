@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { TerminusModule } from '@nestjs/terminus';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { RecommendationModule } from './modules/recommendation/recommendation.module';
+import { AdminModule } from './modules/admin/admin.module';
 import { HealthModule } from './modules/health/health.module';
 
 @Module({
@@ -19,6 +20,7 @@ import { HealthModule } from './modules/health/health.module';
     ]),
     TerminusModule,
     RecommendationModule,
+    AdminModule,
     HealthModule,
   ],
 })

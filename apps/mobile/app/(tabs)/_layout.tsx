@@ -47,7 +47,7 @@ function HeaderUtilities({ router, colorScheme }: { router: ReturnType<typeof us
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setIsLive(Math.random() > 0.3);
+      setIsLive(true); // Mock: deterministic live status
     }, 10000);
     return () => clearInterval(interval);
   }, []);

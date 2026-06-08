@@ -12,15 +12,19 @@ import {
 } from 'react-native';
 import { useRouter, Link } from 'expo-router';
 import { useAuth } from '../../src/contexts/AuthContext';
+import { LoadingState, ErrorState } from '../../src/components/StateContainers';
 
 export default function ForgotPasswordScreen() {
   const router = useRouter();
   const { forgotPassword, isLoading } = useAuth();
   const [email, setEmail] = useState('');
+  const [error, setError] = useState<string | null>(null);
 
   const handleResetPassword = async () => {
+    setError(null);
+
     if (!email) {
-      Alert.alert('Error', 'Please enter your email address');
+      setError('Please enter your email address');
       return;
     }
 
@@ -32,7 +36,7 @@ export default function ForgotPasswordScreen() {
         [{ text: 'OK', onPress: () => router.back() }]
       );
     } catch (error) {
-      Alert.alert('Error', 'Unable to send reset email');
+      setError('Unable to send reset email');
     }
   };
 
@@ -63,6 +67,12 @@ export default function ForgotPasswordScreen() {
               autoCorrect={false}
             />
           </View>
+
+          {error && (
+            <View style={styles.errorContainer}>
+              <Text style={styles.errorText}>{error}</Text>
+            </View>
+          )}
 
           <TouchableOpacity
             style={[styles.resetButton, isLoading && styles.resetButtonDisabled]}
@@ -141,6 +151,17 @@ const styles = StyleSheet.create({
   },
   resetButtonDisabled: {
     opacity: 0.7,
+  },
+  errorContainer: {
+    backgroundColor: '#FEE2E2',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 16,
+  },
+  errorText: {
+    color: '#DC2626',
+    fontSize: 14,
+    textAlign: 'center',
   },
   resetButtonText: {
     color: '#fff',

@@ -7,18 +7,18 @@ global.fetch = mockFetch;
 describe('Web App API Client', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    api.setToken('test-token');
+    api.setToken('mock-access-token');
   });
 
   describe('Auth API', () => {
     it('login should call POST /auth/login', async () => {
       const mockResponse = {
-        json: () => Promise.resolve({ success: true, data: { access_token: 'token', refresh_token: 'refresh', user: { id: '1', email: 'test@example.com', name: 'Test', role: 'user' } } }),
+        json: () => Promise.resolve({ success: true, data: { access_token: 'mock-token', refresh_token: 'mock-refresh', user: { id: '1', email: 'test@example.com', name: 'Test', role: 'user' } } }),
         ok: true,
       };
       mockFetch.mockResolvedValue(mockResponse);
 
-      await api.auth.login({ email: 'test@example.com', password: 'password' });
+      await api.auth.login({ email: 'test@example.com', password: 'mock-password' });
 
       expect(mockFetch).toHaveBeenCalledWith(
         expect.stringContaining('/auth/login'),
@@ -28,12 +28,12 @@ describe('Web App API Client', () => {
 
     it('register should call POST /auth/signup', async () => {
       const mockResponse = {
-        json: () => Promise.resolve({ success: true, data: { access_token: 'token', refresh_token: 'refresh', user: { id: '1', email: 'test@example.com', name: 'Test', role: 'user' } } }),
+        json: () => Promise.resolve({ success: true, data: { access_token: 'mock-token', refresh_token: 'mock-refresh', user: { id: '1', email: 'test@example.com', name: 'Test', role: 'user' } } }),
         ok: true,
       };
       mockFetch.mockResolvedValue(mockResponse);
 
-      await api.auth.register({ name: 'Test', email: 'test@example.com', password: 'password' });
+      await api.auth.register({ name: 'Test', email: 'test@example.com', password: 'mock-password' });
 
       expect(mockFetch).toHaveBeenCalledWith(
         expect.stringContaining('/auth/signup'),
@@ -63,7 +63,7 @@ describe('Web App API Client', () => {
       };
       mockFetch.mockResolvedValue(mockResponse);
 
-      await api.auth.resetPassword('token', 'newpassword');
+      await api.auth.resetPassword('mock-token', 'new-mock-password');
 
       expect(mockFetch).toHaveBeenCalledWith(
         expect.stringContaining('/auth/reset-password'),
@@ -138,7 +138,7 @@ describe('Web App API Client', () => {
   describe('Payment API', () => {
     it('initialize should call POST /payments/initialize', async () => {
       const mockResponse = {
-        json: () => Promise.resolve({ success: true, data: { reference: 'ref123', authorizationUrl: 'https://payment.com' } }),
+        json: () => Promise.resolve({ success: true, data: { reference: 'mock-ref123', authorizationUrl: 'https://payment.com' } }),
         ok: true,
       };
       mockFetch.mockResolvedValue(mockResponse);
@@ -154,15 +154,15 @@ describe('Web App API Client', () => {
 
     it('verify should call GET /payments/verify', async () => {
       const mockResponse = {
-        json: () => Promise.resolve({ success: true, data: { status: 'success', amount: 1000, currency: 'NGN', reference: 'ref123' } }),
+        json: () => Promise.resolve({ success: true, data: { status: 'success', amount: 1000, currency: 'NGN', reference: 'mock-ref123' } }),
         ok: true,
       };
       mockFetch.mockResolvedValue(mockResponse);
 
-      await api.payment.verify('ref123');
+      await api.payment.verify('mock-ref123');
 
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/payments/verify?reference=ref123'),
+        expect.stringContaining('/payments/verify?reference=mock-ref123'),
         expect.objectContaining({ method: 'GET' })
       );
     });
@@ -213,7 +213,7 @@ describe('Web App API Client', () => {
       expect(mockFetch).toHaveBeenCalledWith(
         expect.any(String),
         expect.objectContaining({
-          headers: expect.objectContaining({ Authorization: 'Bearer test-token' }),
+          headers: expect.objectContaining({ Authorization: 'Bearer mock-access-token' }),
         })
       );
     });
@@ -226,7 +226,7 @@ describe('Web App API Client', () => {
       mockFetch.mockResolvedValue(mockResponse);
 
       api.setToken(null);
-      await api.auth.login({ email: 'test@example.com', password: 'password' });
+      await api.auth.login({ email: 'test@example.com', password: 'mock-password' });
 
       const callArgs = mockFetch.mock.calls[0][1];
       expect(callArgs.headers.Authorization).toBeUndefined();

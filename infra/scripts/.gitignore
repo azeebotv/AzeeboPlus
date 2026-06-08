@@ -1,0 +1,5 @@
+# Ignore generated PgBouncer userlist (contains passwords)
+pgbouncer_userlist.txt
+
+# Keep the template
+!pgbouncer_userlist.txt.template

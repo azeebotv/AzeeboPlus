@@ -6,8 +6,10 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   private client: RedisClientType;
 
   constructor() {
-    const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
-    this.client = createClient({ url: redisUrl });
+    if (!process.env.REDIS_URL) {
+      throw new Error('REDIS_URL environment variable must be set');
+    }
+    this.client = createClient({ url: process.env.REDIS_URL });
   }
 
   async onModuleInit() {

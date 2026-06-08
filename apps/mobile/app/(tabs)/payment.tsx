@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -15,6 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { paymentApi } from '../../src/api/payment';
 import { useAuth } from '../../src/contexts/AuthContext';
+import { LoadingState, ErrorState } from '../../src/components/StateContainers';
 
 const PAYMENT_AMOUNTS = [
   { value: 5, label: '$5' },
@@ -23,6 +24,11 @@ const PAYMENT_AMOUNTS = [
   { value: 50, label: '$50' },
   { value: 100, label: '$100' },
 ];
+
+const PROVIDER_META: Record<string, { description: string }> = {
+  paystack: { description: 'Secure card payments' },
+  flutterwave: { description: 'Multiple payment options' },
+};
 
 export default function PaymentScreen(): JSX.Element {
   const router = useRouter();
@@ -33,6 +39,32 @@ export default function PaymentScreen(): JSX.Element {
   const [customAmount, setCustomAmount] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showCustomAmount, setShowCustomAmount] = useState(false);
+  const [providers, setProviders] = useState<{ provider: string; name: string }[]>([]);
+  const [selectedProvider, setSelectedProvider] = useState('paystack');
+  const [isLoadingProviders, setIsLoadingProviders] = useState(true);
+  const [providersError, setProvidersError] = useState<string | null>(null);
+
+  const fetchProviders = async () => {
+    setIsLoadingProviders(true);
+    setProvidersError(null);
+    try {
+      const res = await paymentApi.getProviders();
+      if (res.success && res.data) {
+        setProviders(res.data);
+        if (res.data.length > 0) {
+          setSelectedProvider(res.data[0].provider);
+        }
+      }
+    } catch (err: any) {
+      setProvidersError(err.message || 'Failed to load payment providers');
+    } finally {
+      setIsLoadingProviders(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchProviders();
+  }, []);
 
   const handleAmountSelect = (amount: number) => {
     setSelectedAmount(amount);
@@ -128,6 +160,14 @@ export default function PaymentScreen(): JSX.Element {
     );
   }
 
+  if (isLoadingProviders) {
+    return <LoadingState text="Loading payment providers..." />;
+  }
+
+  if (providersError) {
+    return <ErrorState title="Failed to load payment methods" description={providersError} onRetry={fetchProviders} />;
+  }
+
   const displayAmount = showCustomAmount && customAmount ? customAmount : selectedAmount.toString();
 
   return (
@@ -201,28 +241,33 @@ export default function PaymentScreen(): JSX.Element {
             Payment Method
           </Text>
 
-          <View style={[styles.providerOption, { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5', borderColor: '#8B5CF6' }]}>
-            <View style={styles.providerInfo}>
-              <Text style={[styles.providerName, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
-                Paystack
-              </Text>
-              <Text style={styles.providerDescription}>Secure card payments</Text>
-            </View>
-            <View style={[styles.radioOuter, { borderColor: '#8B5CF6' }]}>
-              <View style={styles.radioInner} />
-            </View>
-          </View>
-
-          <View style={[styles.providerOption, { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5', borderColor: 'transparent' }]}>
-            <View style={styles.providerInfo}>
-              <Text style={[styles.providerName, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
-                Flutterwave
-              </Text>
-              <Text style={styles.providerDescription}>Multiple payment options (Coming soon)</Text>
-            </View>
-            <View style={[styles.radioOuter, { borderColor: '#666' }]}>
-            </View>
-          </View>
+          {providers.map((provider) => {
+            const isSelected = selectedProvider === provider.provider;
+            const meta = PROVIDER_META[provider.provider] || {};
+            return (
+              <TouchableOpacity
+                key={provider.provider}
+                onPress={() => setSelectedProvider(provider.provider)}
+                style={[
+                  styles.providerOption,
+                  {
+                    backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5',
+                    borderColor: isSelected ? '#8B5CF6' : 'transparent',
+                  },
+                ]}
+              >
+                <View style={styles.providerInfo}>
+                  <Text style={[styles.providerName, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
+                    {provider.name}
+                  </Text>
+                  <Text style={styles.providerDescription}>{meta.description || ''}</Text>
+                </View>
+                <View style={[styles.radioOuter, { borderColor: isSelected ? '#8B5CF6' : '#666' }]}>
+                  {isSelected && <View style={styles.radioInner} />}
+                </View>
+              </TouchableOpacity>
+            );
+          })}
         </View>
 
         <View style={styles.summarySection}>

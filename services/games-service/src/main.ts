@@ -40,8 +40,11 @@ async function bootstrap(): Promise<void> {
 
   app.useGlobalInterceptors(new LoggingInterceptor());
 
+  if (!process.env.ALLOWED_ORIGINS) {
+    throw new Error('ALLOWED_ORIGINS environment variable must be set');
+  }
   app.enableCors({
-    origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'],
+    origin: process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim()),
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
   });
@@ -58,7 +61,7 @@ async function bootstrap(): Promise<void> {
     Logger.log('Swagger documentation enabled at /docs');
   }
 
-  const port = process.env.PORT || 3018;
+  const port = process.env.PORT || 3014;
   await app.listen(port);
   const logger = new Logger('Games Service');
   logger.log(`Games Service running on port ${port}`);

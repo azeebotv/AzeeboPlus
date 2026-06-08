@@ -1,53 +1,48 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Alert } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Alert, ActivityIndicator } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import { contentApi } from '../../src/api';
+import { logger } from '../../src/utils/logger';
+import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
 
 const { width } = Dimensions.get('window');
-
-const TITLE_DATA = {
-  id: '1',
-  title: 'King of Boys: The Return of the King',
-  type: 'Series',
-  genre: 'Drama / Thriller',
-  rating: '4.8',
-  year: '2024',
-  episodes: 6,
-  duration: '45-60 min',
-  synopsis: 'The follow-up to the critically acclaimed original film follows Alhaja Eniola Salami as she returns to politics after serving her sentence. Her re-emergence threatens to destabilize the already fragile political landscape.',
-  cast: [
-    { id: '1', name: 'Sola Sobowale', role: 'Eniola Salami', emoji: '👩🏾‍🦱' },
-    { id: '2', name: 'Nse Ikpe-Etim', role: 'Adeyemi', emoji: '👩🏾' },
-    { id: '3', name: 'Kehinde Bankole', role: 'Bashira', emoji: '👩🏾‍🦰' },
-    { id: '4', name: 'Alemoh Racca', role: 'Kabiru', emoji: '👨🏾' },
-  ],
-  similarContent: [
-    { id: '1', title: 'Shanty Town', emoji: '🏘️', rating: '4.6' },
-    { id: '2', title: 'Blood Sisters', emoji: '💎', rating: '4.7' },
-    { id: '3', title: 'Glamour', emoji: '💅', rating: '4.5' },
-  ],
-};
-
-const EPISODE_LIST = [
-  { id: '1', number: 1, title: 'The Resurrection', duration: '52 min', free: true },
-  { id: '2', number: 2, title: 'Old Alliances', duration: '48 min', free: true },
-  { id: '3', number: 3, title: 'New Enemies', duration: '55 min', free: false },
-  { id: '4', number: 4, title: 'Betrayal', duration: '50 min', free: false },
-  { id: '5', number: 5, title: 'The Confrontation', duration: '58 min', free: false },
-  { id: '6', number: 6, title: 'Resolution', duration: '62 min', free: false },
-];
-
-const PRICING_OPTIONS = [
-  { id: '1', type: 'Episode', price: '₦200', description: 'Rent for 48 hours' },
-  { id: '2', type: 'Season Pass', price: '₦1,000', description: 'Unlock full series' },
-  { id: '3', type: 'Bundle', price: '₦2,500', description: 'All episodes + exclusive content' },
-];
 
 export default function TitleDetailPage() {
   const colorScheme = useColorScheme();
   const router = useRouter();
+  const { id } = useLocalSearchParams<{ id: string }>();
   const isDark = colorScheme === 'dark';
   const [showFullSynopsis, setShowFullSynopsis] = useState(false);
+  const [titleData, setTitleData] = useState<any>(null);
+  const [episodes, setEpisodes] = useState<any[]>([]);
+  const [pricingOptions, setPricingOptions] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    loadContent();
+  }, [id]);
+
+  const loadContent = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const response = await contentApi.getContent(id || 'default');
+      if (response.success && response.data) {
+        setTitleData(response.data);
+      }
+      const episodesRes = await contentApi.getEpisodes(id || 'default');
+      if (episodesRes.success && episodesRes.data) {
+        setEpisodes(episodesRes.data);
+      }
+    } catch (err) {
+      logger.error('Failed to load content', err);
+      setError('Failed to load content. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handlePlay = (episodeId: string, isFree: boolean) => {
     if (isFree) {
@@ -64,7 +59,7 @@ export default function TitleDetailPage() {
     }
   };
 
-  const handlePurchase = (option: typeof PRICING_OPTIONS[0]) => {
+  const handlePurchase = (option: any) => {
     Alert.alert(
       'Confirm Purchase',
       `Purchase ${option.type} for ${option.price}?`,
@@ -74,6 +69,18 @@ export default function TitleDetailPage() {
       ]
     );
   };
+
+  if (isLoading) {
+    return <LoadingState text="Loading content..." />;
+  }
+
+  if (error) {
+    return <ErrorState title="Failed to load" description={error} onRetry={loadContent} />;
+  }
+
+  if (!titleData) {
+    return <ErrorState title="Content not found" description="This title could not be found." onRetry={loadContent} />;
+  }
 
   return (
     <ScrollView style={[styles.container, { backgroundColor: isDark ? '#0a0a0a' : '#ffffff' }]}>
@@ -95,29 +102,29 @@ export default function TitleDetailPage() {
       <View style={styles.contentSection}>
         <View style={styles.titleHeader}>
           <Text style={[styles.titleText, { color: isDark ? '#ffffff' : '#000000' }]}>
-            {TITLE_DATA.title}
+            {titleData.title}
           </Text>
           <View style={styles.ratingContainer}>
-            <Text style={styles.ratingText}>⭐ {TITLE_DATA.rating}</Text>
+            <Text style={styles.ratingText}>⭐ {titleData.rating}</Text>
           </View>
         </View>
 
         <View style={styles.metaRow}>
-          <Text style={styles.metaText}>{TITLE_DATA.year}</Text>
+          <Text style={styles.metaText}>{titleData.year}</Text>
           <Text style={styles.metaDot}>•</Text>
-          <Text style={styles.metaText}>{TITLE_DATA.type}</Text>
+          <Text style={styles.metaText}>{titleData.type}</Text>
           <Text style={styles.metaDot}>•</Text>
-          <Text style={styles.metaText}>{TITLE_DATA.genre}</Text>
+          <Text style={styles.metaText}>{titleData.genre}</Text>
         </View>
 
         <View style={styles.infoChips}>
           <View style={styles.infoChip}>
             <Text style={styles.chipLabel}>Episodes</Text>
-            <Text style={styles.chipValue}>{TITLE_DATA.episodes}</Text>
+            <Text style={styles.chipValue}>{episodes.length}</Text>
           </View>
           <View style={styles.infoChip}>
             <Text style={styles.chipLabel}>Duration</Text>
-            <Text style={styles.chipValue}>{TITLE_DATA.duration}</Text>
+            <Text style={styles.chipValue}>{titleData.duration}</Text>
           </View>
         </View>
 
@@ -126,7 +133,7 @@ export default function TitleDetailPage() {
             Synopsis
           </Text>
           <Text style={[styles.synopsisText, { color: isDark ? '#ccc' : '#666' }]} numberOfLines={showFullSynopsis ? undefined : 3}>
-            {TITLE_DATA.synopsis}
+            {titleData.synopsis}
           </Text>
           <TouchableOpacity onPress={() => setShowFullSynopsis(!showFullSynopsis)}>
             <Text style={styles.showMoreText}>
@@ -140,7 +147,7 @@ export default function TitleDetailPage() {
             How to Watch
           </Text>
           <View style={styles.pricingCards}>
-            {PRICING_OPTIONS.map((option) => (
+            {pricingOptions.length > 0 ? pricingOptions.map((option) => (
               <TouchableOpacity
                 key={option.id}
                 style={[styles.pricingCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
@@ -152,7 +159,7 @@ export default function TitleDetailPage() {
                 <Text style={styles.pricingPrice}>{option.price}</Text>
                 <Text style={styles.pricingDesc}>{option.description}</Text>
               </TouchableOpacity>
-            ))}
+            )) : null}
           </View>
         </View>
 
@@ -160,7 +167,7 @@ export default function TitleDetailPage() {
           <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
             Episodes
           </Text>
-          {EPISODE_LIST.map((episode) => (
+          {episodes.map((episode) => (
             <TouchableOpacity
               key={episode.id}
               style={[styles.episodeCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
@@ -188,41 +195,45 @@ export default function TitleDetailPage() {
           ))}
         </View>
 
-        <View style={styles.castSection}>
-          <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
-            Cast
-          </Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.castList}>
-            {TITLE_DATA.cast.map((member) => (
-              <View key={member.id} style={[styles.castCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}>
-                <View style={styles.castAvatar}>
-                  <Text style={styles.castEmoji}>{member.emoji}</Text>
+        {titleData.cast && (
+          <View style={styles.castSection}>
+            <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
+              Cast
+            </Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.castList}>
+              {titleData.cast.map((member: any) => (
+                <View key={member.id} style={[styles.castCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}>
+                  <View style={styles.castAvatar}>
+                    <Text style={styles.castEmoji}>{member.emoji}</Text>
+                  </View>
+                  <Text style={[styles.castName, { color: isDark ? '#fff' : '#000' }]}>{member.name}</Text>
+                  <Text style={styles.castRole}>{member.role}</Text>
                 </View>
-                <Text style={[styles.castName, { color: isDark ? '#fff' : '#000' }]}>{member.name}</Text>
-                <Text style={styles.castRole}>{member.role}</Text>
-              </View>
-            ))}
-          </ScrollView>
-        </View>
+              ))}
+            </ScrollView>
+          </View>
+        )}
 
-        <View style={styles.similarSection}>
-          <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
-            More Like This
-          </Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.similarList}>
-            {TITLE_DATA.similarContent.map((item) => (
-              <TouchableOpacity key={item.id} style={[styles.similarCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}>
-                <View style={styles.similarThumbnail}>
-                  <Text style={styles.similarEmoji}>{item.emoji}</Text>
-                </View>
-                <Text style={[styles.similarTitle, { color: isDark ? '#fff' : '#000' }]} numberOfLines={1}>
-                  {item.title}
-                </Text>
-                <Text style={styles.similarRating}>⭐ {item.rating}</Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
+        {titleData.similarContent && (
+          <View style={styles.similarSection}>
+            <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
+              More Like This
+            </Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.similarList}>
+              {titleData.similarContent.map((item: any) => (
+                <TouchableOpacity key={item.id} style={[styles.similarCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}>
+                  <View style={styles.similarThumbnail}>
+                    <Text style={styles.similarEmoji}>{item.emoji}</Text>
+                  </View>
+                  <Text style={[styles.similarTitle, { color: isDark ? '#fff' : '#000' }]} numberOfLines={1}>
+                    {item.title}
+                  </Text>
+                  <Text style={styles.similarRating}>⭐ {item.rating}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        )}
       </View>
 
       <View style={styles.bottomNav}>

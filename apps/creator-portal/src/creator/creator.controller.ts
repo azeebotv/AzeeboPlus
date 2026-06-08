@@ -8,54 +8,50 @@ import {
   Body,
   Param,
   Query,
-  Headers,
-  UnauthorizedException,
+  UseGuards,
+  Request,
 } from '@nestjs/common';
 import { CreatorService, ContentItem } from './creator.service';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
+interface AuthRequest extends Request {
+  user: { id: string; email: string; role: string };
+}
+
+@UseGuards(JwtAuthGuard)
 @Controller('creator')
 export class CreatorController {
   constructor(private readonly creatorService: CreatorService) {}
 
-  private getUserIdFromHeader(authorization: string): string {
-    if (!authorization) {
-      throw new UnauthorizedException('Authorization header required');
-    }
-    return authorization.replace('Bearer ', '') || 'user-1';
-  }
-
   @Get('dashboard')
   async getDashboard(
-    @Headers('authorization') authorization: string
+    @Request() req: AuthRequest
   ): Promise<{ success: boolean; data: unknown }> {
-    const userId = this.getUserIdFromHeader(authorization);
     return {
       success: true,
-      data: await this.creatorService.getDashboardStats(userId),
+      data: await this.creatorService.getDashboardStats(req.user.id),
     };
   }
 
   @Get('content')
   async getContent(
-    @Headers('authorization') authorization: string,
+    @Request() req: AuthRequest,
     @Query('page') page = 1,
     @Query('limit') limit = 20,
     @Query('status') status?: string
   ): Promise<{ success: boolean; data: unknown }> {
-    const userId = this.getUserIdFromHeader(authorization);
     return {
       success: true,
-      data: await this.creatorService.getContent(userId, Number(page), Number(limit), status),
+      data: await this.creatorService.getContent(req.user.id, Number(page), Number(limit), status),
     };
   }
 
   @Post('content')
   async createContent(
-    @Headers('authorization') authorization: string,
+    @Request() req: AuthRequest,
     @Body() body: { title: string; description: string; type: string }
   ): Promise<{ success: boolean; data: unknown }> {
-    const userId = this.getUserIdFromHeader(authorization);
-    const content = await this.creatorService.createContent(userId, body);
+    const content = await this.creatorService.createContent(req.user.id, body);
     return {
       success: true,
       data: content,
@@ -64,12 +60,11 @@ export class CreatorController {
 
   @Patch('content/:id')
   async updateContent(
-    @Headers('authorization') authorization: string,
+    @Request() req: AuthRequest,
     @Param('id') id: string,
     @Body() body: Partial<ContentItem>
   ): Promise<{ success: boolean; data?: unknown; message?: string }> {
-    const userId = this.getUserIdFromHeader(authorization);
-    const content = await this.creatorService.updateContent(id, userId, body);
+    const content = await this.creatorService.updateContent(id, req.user.id, body);
     if (!content) {
       return {
         success: false,
@@ -84,11 +79,10 @@ export class CreatorController {
 
   @Delete('content/:id')
   async deleteContent(
-    @Headers('authorization') authorization: string,
+    @Request() req: AuthRequest,
     @Param('id') id: string
   ): Promise<{ success: boolean; message: string }> {
-    const userId = this.getUserIdFromHeader(authorization);
-    const deleted = await this.creatorService.deleteContent(id, userId);
+    const deleted = await this.creatorService.deleteContent(id, req.user.id);
     return {
       success: deleted,
       message: deleted ? 'Content deleted' : 'Content not found',
@@ -97,48 +91,44 @@ export class CreatorController {
 
   @Get('analytics')
   async getAnalytics(
-    @Headers('authorization') authorization: string,
+    @Request() req: AuthRequest,
     @Query('period') period = '30days'
   ): Promise<{ success: boolean; data: unknown }> {
-    const userId = this.getUserIdFromHeader(authorization);
     return {
       success: true,
-      data: await this.creatorService.getAnalytics(userId, period),
+      data: await this.creatorService.getAnalytics(req.user.id, period),
     };
   }
 
   @Get('earnings')
   async getEarnings(
-    @Headers('authorization') authorization: string,
+    @Request() req: AuthRequest,
     @Query('period') period = 'this-month'
   ): Promise<{ success: boolean; data: unknown }> {
-    const userId = this.getUserIdFromHeader(authorization);
     return {
       success: true,
-      data: await this.creatorService.getEarnings(userId, period),
+      data: await this.creatorService.getEarnings(req.user.id, period),
     };
   }
 
   @Post('payouts/request')
   async requestPayout(
-    @Headers('authorization') authorization: string
+    @Request() req: AuthRequest
   ): Promise<{ success: boolean; data: unknown }> {
-    const userId = this.getUserIdFromHeader(authorization);
     return {
       success: true,
-      data: await this.creatorService.requestPayout(userId),
+      data: await this.creatorService.requestPayout(req.user.id),
     };
   }
 
   @Put('payouts/settings')
   async updatePayoutSettings(
-    @Headers('authorization') authorization: string,
+    @Request() req: AuthRequest,
     @Body() body: { method: string; minimum: number }
   ): Promise<{ success: boolean; data: unknown }> {
-    const userId = this.getUserIdFromHeader(authorization);
     return {
       success: true,
-      data: await this.creatorService.updatePayoutSettings(userId, body),
+      data: await this.creatorService.updatePayoutSettings(req.user.id, body),
     };
   }
 }

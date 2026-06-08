@@ -132,7 +132,8 @@ export class HealthController {
       const check = await import('check-disk-space').then((m) => m.default);
       const diskSpace = await check('/');
 
-      const usedPercent = (diskSpace.used / diskSpace.size) * 100;
+      const used = diskSpace.size - diskSpace.free;
+      const usedPercent = (used / diskSpace.size) * 100;
 
       if (usedPercent > 95) {
         return {

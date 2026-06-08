@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ExecutionContext } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { AuthGuard } from './auth.guard';
-import { AdminGuard } from './admin.guard';
+import { AdminGuard } from '@azeebo/security';
 
 describe('Auth Guard Tests', () => {
   let authGuard: AuthGuard;
@@ -100,7 +100,11 @@ describe('Admin Guard Tests', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        AdminGuard,
+        {
+          provide: AdminGuard,
+          useFactory: (jwtService: JwtService) => new AdminGuard(jwtService, { allowedRoles: ['ADMIN', 'SUPPORT_AGENT'] }),
+          inject: [JwtService],
+        },
         {
           provide: JwtService,
           useValue: {

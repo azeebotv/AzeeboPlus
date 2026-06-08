@@ -863,7 +863,7 @@ export declare namespace DMMF {
         delete = "delete",
         deleteMany = "deleteMany",
         groupBy = "groupBy",
-        count = "count",// TODO: count does not actually exist, why?
+        // count entry removed – invalid enum value
         aggregate = "aggregate",
         findRaw = "findRaw",
         aggregateRaw = "aggregateRaw"

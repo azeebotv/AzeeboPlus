@@ -8,6 +8,7 @@ import { FixturesModule } from './modules/fixtures/fixtures.module';
 import { FanContestsModule } from './modules/fan-contests/fan-contests.module';
 import { HealthModule } from './modules/health/health.module';
 import { ResponseWrapperInterceptor, ResponseSanitizationInterceptor } from '@azeebo/logger';
+import { AdminModule } from './modules/admin/admin.module';
 import { RateLimiterModule } from '@azeebo/security';
 
 @Module({
@@ -22,6 +23,7 @@ import { RateLimiterModule } from '@azeebo/security';
     FixturesModule,
     FanContestsModule,
     HealthModule,
+    AdminModule,
   ],
   providers: [
     {

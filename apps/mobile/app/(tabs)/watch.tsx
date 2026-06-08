@@ -1,43 +1,128 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Alert, ScrollView } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useShare } from '../../src/hooks/useShare';
+import { useHaptic } from '../../src/hooks/useHaptic';
+import { useDeepLink } from '../../src/hooks/useDeepLink';
+import { useOffline } from '../../src/hooks/useOffline';
+import { OfflineBanner } from '../../src/components/OfflineBanner';
+import { PullToRefreshScrollView } from '../../src/components/PullToRefresh';
+import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
+import { contentApi, universeApi } from '../../src/api';
 
 const PLACEHOLDER_IMAGE = '';
-
-const universes = [
-  { id: 'reality', name: 'Reality', icon: '🎭', color: '#FF6B6B', route: '/watch/reality-show' },
-  { id: 'creators', name: 'Creators', icon: '🎤', color: '#4ECDC4', route: '/creator-dashboard' },
-  { id: 'lifestyle', name: 'Lifestyle', icon: '✨', color: '#45B7D1', route: '/lifestyle' },
-  { id: 'vertical', name: 'Vertical', icon: '🏰', color: '#96CEB4', route: '/vertical-title' },
-  { id: 'movies', name: 'Movies', icon: '🎬', color: '#FFEAA7', route: '/watch/movie-detail' },
-  { id: 'games', name: 'Games', icon: '🎮', color: '#DDA0DD', route: '/watch/gameplay' },
-  { id: 'comedy', name: 'Comedy', icon: '😂', color: '#F39C12', route: '/comedy' },
-  { id: 'sports', name: 'Sports', icon: '⚽', color: '#E74C3C', route: '/sports-prediction' },
-];
-
-const featuredContent = [
-  { id: '1', title: 'Big Brother Naija', universe: 'Reality', thumbnail: PLACEHOLDER_IMAGE, live: true, viewers: '12.5K' },
-  { id: '2', title: 'Wardie: The Rise', universe: 'Vertical', thumbnail: PLACEHOLDER_IMAGE, duration: '2h 15m' },
-  { id: '3', title: 'Nigerian Comedy Awards', universe: 'Comedy', thumbnail: PLACEHOLDER_IMAGE, duration: '45m' },
-];
-
-const trendingContent = [
-  { id: '1', title: 'The Kings Daughter', universe: 'Movies', thumbnail: PLACEHOLDER_IMAGE, viewers: '8.2K' },
-  { id: '2', title: 'Champions League Final', universe: 'Sports', thumbnail: PLACEHOLDER_IMAGE, viewers: '25K' },
-  { id: '3', title: 'Creator Clash S3', universe: 'Creators', thumbnail: PLACEHOLDER_IMAGE, viewers: '5.1K' },
-  { id: '4', title: 'Lagos Food Festival', universe: 'Lifestyle', thumbnail: PLACEHOLDER_IMAGE, viewers: '3.8K' },
-];
-
 const rewardsPreview = { points: 7850, streak: 5, dailyGoal: 3 };
 
 export default function WatchScreen() {
   const colorScheme = useColorScheme();
   const router = useRouter();
+  const { share, isSharing } = useShare();
+  const { buttonPress, success } = useHaptic();
+  const { createContentLink } = useDeepLink();
+  const { isOnline, isOfflineMode, cacheContent, getCachedContent } = useOffline();
   const [selectedUniverse, setSelectedUniverse] = useState('reality');
+  const [refreshing, setRefreshing] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [universes, setUniverses] = useState<any[]>([]);
+  const [featuredContent, setFeaturedContent] = useState<any[]>([]);
+  const [trendingContent, setTrendingContent] = useState<any[]>([]);
+
+  const fetchData = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const [universesRes, featuredRes, trendingRes] = await Promise.all([
+        universeApi.getUniverses(),
+        contentApi.getFeaturedContent(5),
+        contentApi.getTrendingContent(4),
+      ]);
+      if (universesRes.success && universesRes.data) {
+        setUniverses(universesRes.data.items);
+      }
+      if (featuredRes.success && featuredRes.data) {
+        setFeaturedContent(featuredRes.data);
+      }
+      if (trendingRes.success && trendingRes.data) {
+        setTrendingContent(trendingRes.data);
+      }
+      const allContent = [...(featuredRes.success && featuredRes.data ? featuredRes.data : []), ...(trendingRes.success && trendingRes.data ? trendingRes.data : [])];
+      await cacheContent('watch_content', allContent, 'content');
+    } catch (err: any) {
+      setError(err.message || 'Failed to load content');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await fetchData();
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    const loadContent = async () => {
+      if (isOnline) {
+        await fetchData();
+      } else {
+        const cached = await getCachedContent('watch_content');
+        if (cached) {
+          setFeaturedContent(cached);
+        }
+        setIsLoading(false);
+      }
+    };
+
+    loadContent();
+  }, [isOnline]);
+
+  const handleShareContent = async (title: string, universe: string, contentId: string) => {
+    await buttonPress();
+    const deepLink = createContentLink(contentId);
+    const shareSuccess = await share({
+      title,
+      message: `Watch "${title}" on Azeebo+ - ${universe} Universe`,
+      url: deepLink,
+    });
+
+    if (shareSuccess) {
+      await success();
+      Alert.alert('Shared!', 'Content shared successfully');
+    }
+  };
+
+  const handleUniverseSelect = async (universeId: string) => {
+    await buttonPress();
+    setSelectedUniverse(universeId);
+  };
+
+  if (isLoading) {
+    return <LoadingState text="Loading content..." />;
+  }
+
+  if (error) {
+    return <ErrorState title="Failed to load content" description={error} onRetry={fetchData} />;
+  }
+
+  if (!featuredContent.length && !trendingContent.length) {
+    return <EmptyState icon="📺" title="No content available" description="Check back later for new content" />;
+  }
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' }]}>
+    <View style={{ flex: 1 }}>
+      <OfflineBanner isOffline={isOfflineMode} />
+      <PullToRefreshScrollView
+        refreshing={refreshing}
+        onRefresh={handleRefresh}
+        tintColor={colorScheme === 'dark' ? '#ffffff' : '#000000'}
+        titleColor={colorScheme === 'dark' ? '#ffffff' : '#000000'}
+        style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' }]}
+      >
       <View style={styles.header}>
         <Text style={[styles.headerTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>Watch</Text>
         <TouchableOpacity style={styles.searchButton}>
@@ -47,19 +132,19 @@ export default function WatchScreen() {
 
       <View style={styles.universeSwitcher}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.universeScroll}>
-          {universes.map((universe) => (
+          {universes.map((universe: any) => (
             <TouchableOpacity
               key={universe.id}
               onPress={() => {
-                setSelectedUniverse(universe.id);
-                router.push(universe.route);
+                handleUniverseSelect(universe.id);
+                router.push(`/watch/${universe.slug || universe.id}`);
               }}
               style={[
                 styles.universeButton,
-                selectedUniverse === universe.id && { backgroundColor: universe.color },
+                selectedUniverse === universe.id && { backgroundColor: '#8B5CF6' },
               ]}
             >
-              <Text style={styles.universeIcon}>{universe.icon}</Text>
+              <Text style={styles.universeIcon}>{universe.icon || '🌐'}</Text>
               <Text style={[styles.universeName, selectedUniverse === universe.id && { color: '#ffffff' }]}>
                 {universe.name}
               </Text>
@@ -99,8 +184,8 @@ export default function WatchScreen() {
           Featured
         </Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.featuredScroll}>
-          {featuredContent.map((content) => (
-            <TouchableOpacity key={content.id} style={styles.featuredCard}>
+          {featuredContent.map((content: any) => (
+            <TouchableOpacity key={content.id} style={styles.featuredCard} activeOpacity={0.9}>
               <Image source={{ uri: content.thumbnail }} style={styles.featuredThumbnail} />
               <View style={styles.featuredOverlay}>
                 {content.live && (
@@ -109,12 +194,20 @@ export default function WatchScreen() {
                     <Text style={styles.viewersText}>{content.viewers} watching</Text>
                   </View>
                 )}
+                <TouchableOpacity
+                  style={styles.shareButton}
+                  onPress={() => handleShareContent(content.title, content.universe || '', content.id)}
+                  disabled={isSharing}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.shareIcon}>📤</Text>
+                </TouchableOpacity>
               </View>
               <Text style={[styles.featuredTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
                 {content.title}
               </Text>
               {!content.live && (
-                <Text style={styles.featuredDuration}>{content.duration}</Text>
+                <Text style={styles.featuredDuration}>{content.duration || ''}</Text>
               )}
             </TouchableOpacity>
           ))}
@@ -148,11 +241,19 @@ export default function WatchScreen() {
           Trending Now
         </Text>
         <View style={styles.popularGrid}>
-          {trendingContent.map((content) => (
-            <TouchableOpacity key={content.id} style={styles.popularItem}>
+          {trendingContent.map((content: any) => (
+            <TouchableOpacity key={content.id} style={styles.popularItem} activeOpacity={0.9}>
               <Image source={{ uri: content.thumbnail }} style={styles.popularThumbnail} />
               <View style={styles.popularOverlay}>
-                <Text style={styles.popularUniverse}>{content.universe}</Text>
+                <Text style={styles.popularUniverse}>{content.universe?.name || content.universe || ''}</Text>
+                <TouchableOpacity
+                  style={styles.popularShareButton}
+                  onPress={() => handleShareContent(content.title, content.universe?.name || content.universe || '', content.id)}
+                  disabled={isSharing}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.popularShareIcon}>📤</Text>
+                </TouchableOpacity>
               </View>
               <Text style={[styles.popularTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
                 {content.title}
@@ -162,7 +263,8 @@ export default function WatchScreen() {
           ))}
         </View>
       </View>
-    </ScrollView>
+      </PullToRefreshScrollView>
+    </View>
   );
 }
 
@@ -288,6 +390,20 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 12,
     borderBottomRightRadius: 12,
   },
+  shareButton: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  shareIcon: {
+    fontSize: 16,
+  },
   liveBadge: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -388,6 +504,20 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 10,
     fontWeight: '600',
+  },
+  popularShareButton: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  popularShareIcon: {
+    fontSize: 14,
   },
   popularViewers: {
     color: '#888',

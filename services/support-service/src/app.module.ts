@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { JwtModule } from '@nestjs/jwt';
+import { JwtModule, JwtService } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { HealthModule } from './modules/health/health.module';
 import { RefundModule } from './modules/refund/refund.module';
@@ -15,7 +15,7 @@ import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { DatabaseModule } from './modules/database/database.module';
 import { SupportModule } from './modules/support/support.module';
 import { AuthGuard } from './common/guards/auth.guard';
-import { RateLimiterModule } from '@azeebo/security';
+import { RateLimiterModule, AdminGuard } from '@azeebo/security';
 
 @Module({
   imports: [
@@ -42,7 +42,14 @@ import { RateLimiterModule } from '@azeebo/security';
     DashboardModule,
     AnalyticsModule,
   ],
-  providers: [AuthGuard],
-  exports: [AuthGuard, JwtModule],
+  providers: [
+    AuthGuard,
+    {
+      provide: AdminGuard,
+      useFactory: (jwtService: JwtService) => new AdminGuard(jwtService, { allowedRoles: ['ADMIN', 'SUPPORT_AGENT'] }),
+      inject: [JwtService],
+    },
+  ],
+  exports: [AuthGuard, JwtModule, AdminGuard],
 })
 export class AppModule {}

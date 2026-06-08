@@ -13462,6 +13462,7 @@ export namespace Prisma {
     id: string | null
     title: string | null
     description: string | null
+    type: string | null
     thumbnail: string | null
     mediaUrl: string | null
     universeId: string | null
@@ -13484,6 +13485,7 @@ export namespace Prisma {
     id: string | null
     title: string | null
     description: string | null
+    type: string | null
     thumbnail: string | null
     mediaUrl: string | null
     universeId: string | null
@@ -13506,6 +13508,7 @@ export namespace Prisma {
     id: number
     title: number
     description: number
+    type: number
     thumbnail: number
     mediaUrl: number
     universeId: number
@@ -13539,6 +13542,7 @@ export namespace Prisma {
     id?: true
     title?: true
     description?: true
+    type?: true
     thumbnail?: true
     mediaUrl?: true
     universeId?: true
@@ -13561,6 +13565,7 @@ export namespace Prisma {
     id?: true
     title?: true
     description?: true
+    type?: true
     thumbnail?: true
     mediaUrl?: true
     universeId?: true
@@ -13583,6 +13588,7 @@ export namespace Prisma {
     id?: true
     title?: true
     description?: true
+    type?: true
     thumbnail?: true
     mediaUrl?: true
     universeId?: true
@@ -13693,6 +13699,7 @@ export namespace Prisma {
     id: string
     title: string
     description: string | null
+    type: string
     thumbnail: string
     mediaUrl: string | null
     universeId: string
@@ -13735,6 +13742,7 @@ export namespace Prisma {
     id?: boolean
     title?: boolean
     description?: boolean
+    type?: boolean
     thumbnail?: boolean
     mediaUrl?: boolean
     universeId?: boolean
@@ -13766,6 +13774,7 @@ export namespace Prisma {
     id?: boolean
     title?: boolean
     description?: boolean
+    type?: boolean
     thumbnail?: boolean
     mediaUrl?: boolean
     universeId?: boolean
@@ -13791,6 +13800,7 @@ export namespace Prisma {
     id?: boolean
     title?: boolean
     description?: boolean
+    type?: boolean
     thumbnail?: boolean
     mediaUrl?: boolean
     universeId?: boolean
@@ -13840,6 +13850,7 @@ export namespace Prisma {
       id: string
       title: string
       description: string | null
+      type: string
       thumbnail: string
       mediaUrl: string | null
       universeId: string
@@ -14260,6 +14271,7 @@ export namespace Prisma {
     readonly id: FieldRef<"ContentItem", 'String'>
     readonly title: FieldRef<"ContentItem", 'String'>
     readonly description: FieldRef<"ContentItem", 'String'>
+    readonly type: FieldRef<"ContentItem", 'String'>
     readonly thumbnail: FieldRef<"ContentItem", 'String'>
     readonly mediaUrl: FieldRef<"ContentItem", 'String'>
     readonly universeId: FieldRef<"ContentItem", 'String'>
@@ -15737,8 +15749,18 @@ export namespace Prisma {
 
   export type AggregateCreatorProfile = {
     _count: CreatorProfileCountAggregateOutputType | null
+    _avg: CreatorProfileAvgAggregateOutputType | null
+    _sum: CreatorProfileSumAggregateOutputType | null
     _min: CreatorProfileMinAggregateOutputType | null
     _max: CreatorProfileMaxAggregateOutputType | null
+  }
+
+  export type CreatorProfileAvgAggregateOutputType = {
+    minimumPayout: Decimal | null
+  }
+
+  export type CreatorProfileSumAggregateOutputType = {
+    minimumPayout: Decimal | null
   }
 
   export type CreatorProfileMinAggregateOutputType = {
@@ -15746,6 +15768,8 @@ export namespace Prisma {
     userId: string | null
     bio: string | null
     banner: string | null
+    payoutMethod: string | null
+    minimumPayout: Decimal | null
     verified: boolean | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -15756,6 +15780,8 @@ export namespace Prisma {
     userId: string | null
     bio: string | null
     banner: string | null
+    payoutMethod: string | null
+    minimumPayout: Decimal | null
     verified: boolean | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -15767,6 +15793,8 @@ export namespace Prisma {
     bio: number
     banner: number
     socialLinks: number
+    payoutMethod: number
+    minimumPayout: number
     verified: number
     createdAt: number
     updatedAt: number
@@ -15774,11 +15802,21 @@ export namespace Prisma {
   }
 
 
+  export type CreatorProfileAvgAggregateInputType = {
+    minimumPayout?: true
+  }
+
+  export type CreatorProfileSumAggregateInputType = {
+    minimumPayout?: true
+  }
+
   export type CreatorProfileMinAggregateInputType = {
     id?: true
     userId?: true
     bio?: true
     banner?: true
+    payoutMethod?: true
+    minimumPayout?: true
     verified?: true
     createdAt?: true
     updatedAt?: true
@@ -15789,6 +15827,8 @@ export namespace Prisma {
     userId?: true
     bio?: true
     banner?: true
+    payoutMethod?: true
+    minimumPayout?: true
     verified?: true
     createdAt?: true
     updatedAt?: true
@@ -15800,6 +15840,8 @@ export namespace Prisma {
     bio?: true
     banner?: true
     socialLinks?: true
+    payoutMethod?: true
+    minimumPayout?: true
     verified?: true
     createdAt?: true
     updatedAt?: true
@@ -15844,6 +15886,18 @@ export namespace Prisma {
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
      * 
+     * Select which fields to average
+    **/
+    _avg?: CreatorProfileAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: CreatorProfileSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
      * Select which fields to find the minimum value
     **/
     _min?: CreatorProfileMinAggregateInputType
@@ -15874,6 +15928,8 @@ export namespace Prisma {
     take?: number
     skip?: number
     _count?: CreatorProfileCountAggregateInputType | true
+    _avg?: CreatorProfileAvgAggregateInputType
+    _sum?: CreatorProfileSumAggregateInputType
     _min?: CreatorProfileMinAggregateInputType
     _max?: CreatorProfileMaxAggregateInputType
   }
@@ -15884,10 +15940,14 @@ export namespace Prisma {
     bio: string | null
     banner: string | null
     socialLinks: JsonValue | null
+    payoutMethod: string | null
+    minimumPayout: Decimal | null
     verified: boolean
     createdAt: Date
     updatedAt: Date
     _count: CreatorProfileCountAggregateOutputType | null
+    _avg: CreatorProfileAvgAggregateOutputType | null
+    _sum: CreatorProfileSumAggregateOutputType | null
     _min: CreatorProfileMinAggregateOutputType | null
     _max: CreatorProfileMaxAggregateOutputType | null
   }
@@ -15912,6 +15972,8 @@ export namespace Prisma {
     bio?: boolean
     banner?: boolean
     socialLinks?: boolean
+    payoutMethod?: boolean
+    minimumPayout?: boolean
     verified?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -15924,6 +15986,8 @@ export namespace Prisma {
     bio?: boolean
     banner?: boolean
     socialLinks?: boolean
+    payoutMethod?: boolean
+    minimumPayout?: boolean
     verified?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -15936,6 +16000,8 @@ export namespace Prisma {
     bio?: boolean
     banner?: boolean
     socialLinks?: boolean
+    payoutMethod?: boolean
+    minimumPayout?: boolean
     verified?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -15959,6 +16025,8 @@ export namespace Prisma {
       bio: string | null
       banner: string | null
       socialLinks: Prisma.JsonValue | null
+      payoutMethod: string | null
+      minimumPayout: Prisma.Decimal | null
       verified: boolean
       createdAt: Date
       updatedAt: Date
@@ -16361,6 +16429,8 @@ export namespace Prisma {
     readonly bio: FieldRef<"CreatorProfile", 'String'>
     readonly banner: FieldRef<"CreatorProfile", 'String'>
     readonly socialLinks: FieldRef<"CreatorProfile", 'Json'>
+    readonly payoutMethod: FieldRef<"CreatorProfile", 'String'>
+    readonly minimumPayout: FieldRef<"CreatorProfile", 'Decimal'>
     readonly verified: FieldRef<"CreatorProfile", 'Boolean'>
     readonly createdAt: FieldRef<"CreatorProfile", 'DateTime'>
     readonly updatedAt: FieldRef<"CreatorProfile", 'DateTime'>
@@ -18839,6 +18909,7 @@ export namespace Prisma {
     id: 'id',
     title: 'title',
     description: 'description',
+    type: 'type',
     thumbnail: 'thumbnail',
     mediaUrl: 'mediaUrl',
     universeId: 'universeId',
@@ -18883,6 +18954,8 @@ export namespace Prisma {
     bio: 'bio',
     banner: 'banner',
     socialLinks: 'socialLinks',
+    payoutMethod: 'payoutMethod',
+    minimumPayout: 'minimumPayout',
     verified: 'verified',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
@@ -19851,6 +19924,7 @@ export namespace Prisma {
     id?: StringFilter<"ContentItem"> | string
     title?: StringFilter<"ContentItem"> | string
     description?: StringNullableFilter<"ContentItem"> | string | null
+    type?: StringFilter<"ContentItem"> | string
     thumbnail?: StringFilter<"ContentItem"> | string
     mediaUrl?: StringNullableFilter<"ContentItem"> | string | null
     universeId?: StringFilter<"ContentItem"> | string
@@ -19881,6 +19955,7 @@ export namespace Prisma {
     id?: SortOrder
     title?: SortOrder
     description?: SortOrderInput | SortOrder
+    type?: SortOrder
     thumbnail?: SortOrder
     mediaUrl?: SortOrderInput | SortOrder
     universeId?: SortOrder
@@ -19914,6 +19989,7 @@ export namespace Prisma {
     NOT?: ContentItemWhereInput | ContentItemWhereInput[]
     title?: StringFilter<"ContentItem"> | string
     description?: StringNullableFilter<"ContentItem"> | string | null
+    type?: StringFilter<"ContentItem"> | string
     thumbnail?: StringFilter<"ContentItem"> | string
     mediaUrl?: StringNullableFilter<"ContentItem"> | string | null
     universeId?: StringFilter<"ContentItem"> | string
@@ -19944,6 +20020,7 @@ export namespace Prisma {
     id?: SortOrder
     title?: SortOrder
     description?: SortOrderInput | SortOrder
+    type?: SortOrder
     thumbnail?: SortOrder
     mediaUrl?: SortOrderInput | SortOrder
     universeId?: SortOrder
@@ -19975,6 +20052,7 @@ export namespace Prisma {
     id?: StringWithAggregatesFilter<"ContentItem"> | string
     title?: StringWithAggregatesFilter<"ContentItem"> | string
     description?: StringNullableWithAggregatesFilter<"ContentItem"> | string | null
+    type?: StringWithAggregatesFilter<"ContentItem"> | string
     thumbnail?: StringWithAggregatesFilter<"ContentItem"> | string
     mediaUrl?: StringNullableWithAggregatesFilter<"ContentItem"> | string | null
     universeId?: StringWithAggregatesFilter<"ContentItem"> | string
@@ -20085,6 +20163,8 @@ export namespace Prisma {
     bio?: StringNullableFilter<"CreatorProfile"> | string | null
     banner?: StringNullableFilter<"CreatorProfile"> | string | null
     socialLinks?: JsonNullableFilter<"CreatorProfile">
+    payoutMethod?: StringNullableFilter<"CreatorProfile"> | string | null
+    minimumPayout?: DecimalNullableFilter<"CreatorProfile"> | Decimal | DecimalJsLike | number | string | null
     verified?: BoolFilter<"CreatorProfile"> | boolean
     createdAt?: DateTimeFilter<"CreatorProfile"> | Date | string
     updatedAt?: DateTimeFilter<"CreatorProfile"> | Date | string
@@ -20097,6 +20177,8 @@ export namespace Prisma {
     bio?: SortOrderInput | SortOrder
     banner?: SortOrderInput | SortOrder
     socialLinks?: SortOrderInput | SortOrder
+    payoutMethod?: SortOrderInput | SortOrder
+    minimumPayout?: SortOrderInput | SortOrder
     verified?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -20112,6 +20194,8 @@ export namespace Prisma {
     bio?: StringNullableFilter<"CreatorProfile"> | string | null
     banner?: StringNullableFilter<"CreatorProfile"> | string | null
     socialLinks?: JsonNullableFilter<"CreatorProfile">
+    payoutMethod?: StringNullableFilter<"CreatorProfile"> | string | null
+    minimumPayout?: DecimalNullableFilter<"CreatorProfile"> | Decimal | DecimalJsLike | number | string | null
     verified?: BoolFilter<"CreatorProfile"> | boolean
     createdAt?: DateTimeFilter<"CreatorProfile"> | Date | string
     updatedAt?: DateTimeFilter<"CreatorProfile"> | Date | string
@@ -20124,12 +20208,16 @@ export namespace Prisma {
     bio?: SortOrderInput | SortOrder
     banner?: SortOrderInput | SortOrder
     socialLinks?: SortOrderInput | SortOrder
+    payoutMethod?: SortOrderInput | SortOrder
+    minimumPayout?: SortOrderInput | SortOrder
     verified?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: CreatorProfileCountOrderByAggregateInput
+    _avg?: CreatorProfileAvgOrderByAggregateInput
     _max?: CreatorProfileMaxOrderByAggregateInput
     _min?: CreatorProfileMinOrderByAggregateInput
+    _sum?: CreatorProfileSumOrderByAggregateInput
   }
 
   export type CreatorProfileScalarWhereWithAggregatesInput = {
@@ -20141,6 +20229,8 @@ export namespace Prisma {
     bio?: StringNullableWithAggregatesFilter<"CreatorProfile"> | string | null
     banner?: StringNullableWithAggregatesFilter<"CreatorProfile"> | string | null
     socialLinks?: JsonNullableWithAggregatesFilter<"CreatorProfile">
+    payoutMethod?: StringNullableWithAggregatesFilter<"CreatorProfile"> | string | null
+    minimumPayout?: DecimalNullableWithAggregatesFilter<"CreatorProfile"> | Decimal | DecimalJsLike | number | string | null
     verified?: BoolWithAggregatesFilter<"CreatorProfile"> | boolean
     createdAt?: DateTimeWithAggregatesFilter<"CreatorProfile"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"CreatorProfile"> | Date | string
@@ -21167,6 +21257,7 @@ export namespace Prisma {
     id?: string
     title: string
     description?: string | null
+    type?: string
     thumbnail: string
     mediaUrl?: string | null
     status: string
@@ -21195,6 +21286,7 @@ export namespace Prisma {
     id?: string
     title: string
     description?: string | null
+    type?: string
     thumbnail: string
     mediaUrl?: string | null
     universeId: string
@@ -21223,6 +21315,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
+    type?: StringFieldUpdateOperationsInput | string
     thumbnail?: StringFieldUpdateOperationsInput | string
     mediaUrl?: NullableStringFieldUpdateOperationsInput | string | null
     status?: StringFieldUpdateOperationsInput | string
@@ -21251,6 +21344,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
+    type?: StringFieldUpdateOperationsInput | string
     thumbnail?: StringFieldUpdateOperationsInput | string
     mediaUrl?: NullableStringFieldUpdateOperationsInput | string | null
     universeId?: StringFieldUpdateOperationsInput | string
@@ -21279,6 +21373,7 @@ export namespace Prisma {
     id?: string
     title: string
     description?: string | null
+    type?: string
     thumbnail: string
     mediaUrl?: string | null
     universeId: string
@@ -21302,6 +21397,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
+    type?: StringFieldUpdateOperationsInput | string
     thumbnail?: StringFieldUpdateOperationsInput | string
     mediaUrl?: NullableStringFieldUpdateOperationsInput | string | null
     status?: StringFieldUpdateOperationsInput | string
@@ -21323,6 +21419,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
+    type?: StringFieldUpdateOperationsInput | string
     thumbnail?: StringFieldUpdateOperationsInput | string
     mediaUrl?: NullableStringFieldUpdateOperationsInput | string | null
     universeId?: StringFieldUpdateOperationsInput | string
@@ -21437,6 +21534,8 @@ export namespace Prisma {
     bio?: string | null
     banner?: string | null
     socialLinks?: NullableJsonNullValueInput | InputJsonValue
+    payoutMethod?: string | null
+    minimumPayout?: Decimal | DecimalJsLike | number | string | null
     verified?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -21449,6 +21548,8 @@ export namespace Prisma {
     bio?: string | null
     banner?: string | null
     socialLinks?: NullableJsonNullValueInput | InputJsonValue
+    payoutMethod?: string | null
+    minimumPayout?: Decimal | DecimalJsLike | number | string | null
     verified?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -21459,6 +21560,8 @@ export namespace Prisma {
     bio?: NullableStringFieldUpdateOperationsInput | string | null
     banner?: NullableStringFieldUpdateOperationsInput | string | null
     socialLinks?: NullableJsonNullValueInput | InputJsonValue
+    payoutMethod?: NullableStringFieldUpdateOperationsInput | string | null
+    minimumPayout?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     verified?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -21471,6 +21574,8 @@ export namespace Prisma {
     bio?: NullableStringFieldUpdateOperationsInput | string | null
     banner?: NullableStringFieldUpdateOperationsInput | string | null
     socialLinks?: NullableJsonNullValueInput | InputJsonValue
+    payoutMethod?: NullableStringFieldUpdateOperationsInput | string | null
+    minimumPayout?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     verified?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -21482,6 +21587,8 @@ export namespace Prisma {
     bio?: string | null
     banner?: string | null
     socialLinks?: NullableJsonNullValueInput | InputJsonValue
+    payoutMethod?: string | null
+    minimumPayout?: Decimal | DecimalJsLike | number | string | null
     verified?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -21492,6 +21599,8 @@ export namespace Prisma {
     bio?: NullableStringFieldUpdateOperationsInput | string | null
     banner?: NullableStringFieldUpdateOperationsInput | string | null
     socialLinks?: NullableJsonNullValueInput | InputJsonValue
+    payoutMethod?: NullableStringFieldUpdateOperationsInput | string | null
+    minimumPayout?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     verified?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -21503,6 +21612,8 @@ export namespace Prisma {
     bio?: NullableStringFieldUpdateOperationsInput | string | null
     banner?: NullableStringFieldUpdateOperationsInput | string | null
     socialLinks?: NullableJsonNullValueInput | InputJsonValue
+    payoutMethod?: NullableStringFieldUpdateOperationsInput | string | null
+    minimumPayout?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     verified?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -22409,6 +22520,7 @@ export namespace Prisma {
     id?: SortOrder
     title?: SortOrder
     description?: SortOrder
+    type?: SortOrder
     thumbnail?: SortOrder
     mediaUrl?: SortOrder
     universeId?: SortOrder
@@ -22436,6 +22548,7 @@ export namespace Prisma {
     id?: SortOrder
     title?: SortOrder
     description?: SortOrder
+    type?: SortOrder
     thumbnail?: SortOrder
     mediaUrl?: SortOrder
     universeId?: SortOrder
@@ -22458,6 +22571,7 @@ export namespace Prisma {
     id?: SortOrder
     title?: SortOrder
     description?: SortOrder
+    type?: SortOrder
     thumbnail?: SortOrder
     mediaUrl?: SortOrder
     universeId?: SortOrder
@@ -22583,15 +22697,32 @@ export namespace Prisma {
     _max?: NestedIntNullableFilter<$PrismaModel>
   }
 
+  export type DecimalNullableFilter<$PrismaModel = never> = {
+    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel> | null
+    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
+    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
+    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    not?: NestedDecimalNullableFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string | null
+  }
+
   export type CreatorProfileCountOrderByAggregateInput = {
     id?: SortOrder
     userId?: SortOrder
     bio?: SortOrder
     banner?: SortOrder
     socialLinks?: SortOrder
+    payoutMethod?: SortOrder
+    minimumPayout?: SortOrder
     verified?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+  }
+
+  export type CreatorProfileAvgOrderByAggregateInput = {
+    minimumPayout?: SortOrder
   }
 
   export type CreatorProfileMaxOrderByAggregateInput = {
@@ -22599,6 +22730,8 @@ export namespace Prisma {
     userId?: SortOrder
     bio?: SortOrder
     banner?: SortOrder
+    payoutMethod?: SortOrder
+    minimumPayout?: SortOrder
     verified?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -22609,9 +22742,31 @@ export namespace Prisma {
     userId?: SortOrder
     bio?: SortOrder
     banner?: SortOrder
+    payoutMethod?: SortOrder
+    minimumPayout?: SortOrder
     verified?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+  }
+
+  export type CreatorProfileSumOrderByAggregateInput = {
+    minimumPayout?: SortOrder
+  }
+
+  export type DecimalNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel> | null
+    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
+    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
+    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    not?: NestedDecimalNullableWithAggregatesFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedDecimalNullableFilter<$PrismaModel>
+    _sum?: NestedDecimalNullableFilter<$PrismaModel>
+    _min?: NestedDecimalNullableFilter<$PrismaModel>
+    _max?: NestedDecimalNullableFilter<$PrismaModel>
   }
 
   export type ContentRelationshipContentIdRelatedContentIdCompoundUniqueInput = {
@@ -23591,6 +23746,14 @@ export namespace Prisma {
     connect?: UserWhereUniqueInput
   }
 
+  export type NullableDecimalFieldUpdateOperationsInput = {
+    set?: Decimal | DecimalJsLike | number | string | null
+    increment?: Decimal | DecimalJsLike | number | string
+    decrement?: Decimal | DecimalJsLike | number | string
+    multiply?: Decimal | DecimalJsLike | number | string
+    divide?: Decimal | DecimalJsLike | number | string
+  }
+
   export type UserUpdateOneRequiredWithoutCreatorProfileNestedInput = {
     create?: XOR<UserCreateWithoutCreatorProfileInput, UserUncheckedCreateWithoutCreatorProfileInput>
     connectOrCreate?: UserCreateOrConnectWithoutCreatorProfileInput
@@ -23891,6 +24054,33 @@ export namespace Prisma {
     not?: NestedFloatNullableFilter<$PrismaModel> | number | null
   }
 
+  export type NestedDecimalNullableFilter<$PrismaModel = never> = {
+    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel> | null
+    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
+    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
+    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    not?: NestedDecimalNullableFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string | null
+  }
+
+  export type NestedDecimalNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel> | null
+    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
+    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
+    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    not?: NestedDecimalNullableWithAggregatesFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedDecimalNullableFilter<$PrismaModel>
+    _sum?: NestedDecimalNullableFilter<$PrismaModel>
+    _min?: NestedDecimalNullableFilter<$PrismaModel>
+    _max?: NestedDecimalNullableFilter<$PrismaModel>
+  }
+
   export type WatchHistoryCreateWithoutUserInput = {
     id?: string
     contentId: string
@@ -24000,6 +24190,7 @@ export namespace Prisma {
     id?: string
     title: string
     description?: string | null
+    type?: string
     thumbnail: string
     mediaUrl?: string | null
     status: string
@@ -24027,6 +24218,7 @@ export namespace Prisma {
     id?: string
     title: string
     description?: string | null
+    type?: string
     thumbnail: string
     mediaUrl?: string | null
     universeId: string
@@ -24065,6 +24257,8 @@ export namespace Prisma {
     bio?: string | null
     banner?: string | null
     socialLinks?: NullableJsonNullValueInput | InputJsonValue
+    payoutMethod?: string | null
+    minimumPayout?: Decimal | DecimalJsLike | number | string | null
     verified?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -24075,6 +24269,8 @@ export namespace Prisma {
     bio?: string | null
     banner?: string | null
     socialLinks?: NullableJsonNullValueInput | InputJsonValue
+    payoutMethod?: string | null
+    minimumPayout?: Decimal | DecimalJsLike | number | string | null
     verified?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -24297,6 +24493,7 @@ export namespace Prisma {
     id?: StringFilter<"ContentItem"> | string
     title?: StringFilter<"ContentItem"> | string
     description?: StringNullableFilter<"ContentItem"> | string | null
+    type?: StringFilter<"ContentItem"> | string
     thumbnail?: StringFilter<"ContentItem"> | string
     mediaUrl?: StringNullableFilter<"ContentItem"> | string | null
     universeId?: StringFilter<"ContentItem"> | string
@@ -24332,6 +24529,8 @@ export namespace Prisma {
     bio?: NullableStringFieldUpdateOperationsInput | string | null
     banner?: NullableStringFieldUpdateOperationsInput | string | null
     socialLinks?: NullableJsonNullValueInput | InputJsonValue
+    payoutMethod?: NullableStringFieldUpdateOperationsInput | string | null
+    minimumPayout?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     verified?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -24342,6 +24541,8 @@ export namespace Prisma {
     bio?: NullableStringFieldUpdateOperationsInput | string | null
     banner?: NullableStringFieldUpdateOperationsInput | string | null
     socialLinks?: NullableJsonNullValueInput | InputJsonValue
+    payoutMethod?: NullableStringFieldUpdateOperationsInput | string | null
+    minimumPayout?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     verified?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -25151,6 +25352,7 @@ export namespace Prisma {
     id?: string
     title: string
     description?: string | null
+    type?: string
     thumbnail: string
     mediaUrl?: string | null
     status: string
@@ -25178,6 +25380,7 @@ export namespace Prisma {
     id?: string
     title: string
     description?: string | null
+    type?: string
     thumbnail: string
     mediaUrl?: string | null
     creatorId: string
@@ -25231,6 +25434,7 @@ export namespace Prisma {
     id?: string
     title: string
     description?: string | null
+    type?: string
     thumbnail: string
     mediaUrl?: string | null
     status: string
@@ -25258,6 +25462,7 @@ export namespace Prisma {
     id?: string
     title: string
     description?: string | null
+    type?: string
     thumbnail: string
     mediaUrl?: string | null
     universeId: string
@@ -25306,6 +25511,7 @@ export namespace Prisma {
     id?: string
     title: string
     description?: string | null
+    type?: string
     thumbnail: string
     mediaUrl?: string | null
     status: string
@@ -25333,6 +25539,7 @@ export namespace Prisma {
     id?: string
     title: string
     description?: string | null
+    type?: string
     thumbnail: string
     mediaUrl?: string | null
     universeId: string
@@ -25802,6 +26009,7 @@ export namespace Prisma {
     id?: string
     title: string
     description?: string | null
+    type?: string
     thumbnail: string
     mediaUrl?: string | null
     status: string
@@ -25829,6 +26037,7 @@ export namespace Prisma {
     id?: string
     title: string
     description?: string | null
+    type?: string
     thumbnail: string
     mediaUrl?: string | null
     universeId: string
@@ -25872,6 +26081,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
+    type?: StringFieldUpdateOperationsInput | string
     thumbnail?: StringFieldUpdateOperationsInput | string
     mediaUrl?: NullableStringFieldUpdateOperationsInput | string | null
     status?: StringFieldUpdateOperationsInput | string
@@ -25899,6 +26109,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
+    type?: StringFieldUpdateOperationsInput | string
     thumbnail?: StringFieldUpdateOperationsInput | string
     mediaUrl?: NullableStringFieldUpdateOperationsInput | string | null
     universeId?: StringFieldUpdateOperationsInput | string
@@ -26022,6 +26233,7 @@ export namespace Prisma {
     id?: string
     title: string
     description?: string | null
+    type?: string
     thumbnail: string
     mediaUrl?: string | null
     status: string
@@ -26049,6 +26261,7 @@ export namespace Prisma {
     id?: string
     title: string
     description?: string | null
+    type?: string
     thumbnail: string
     mediaUrl?: string | null
     universeId: string
@@ -26081,6 +26294,7 @@ export namespace Prisma {
     id?: string
     title: string
     description?: string | null
+    type?: string
     thumbnail: string
     mediaUrl?: string | null
     status: string
@@ -26108,6 +26322,7 @@ export namespace Prisma {
     id?: string
     title: string
     description?: string | null
+    type?: string
     thumbnail: string
     mediaUrl?: string | null
     universeId: string
@@ -26151,6 +26366,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
+    type?: StringFieldUpdateOperationsInput | string
     thumbnail?: StringFieldUpdateOperationsInput | string
     mediaUrl?: NullableStringFieldUpdateOperationsInput | string | null
     status?: StringFieldUpdateOperationsInput | string
@@ -26178,6 +26394,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
+    type?: StringFieldUpdateOperationsInput | string
     thumbnail?: StringFieldUpdateOperationsInput | string
     mediaUrl?: NullableStringFieldUpdateOperationsInput | string | null
     universeId?: StringFieldUpdateOperationsInput | string
@@ -26216,6 +26433,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
+    type?: StringFieldUpdateOperationsInput | string
     thumbnail?: StringFieldUpdateOperationsInput | string
     mediaUrl?: NullableStringFieldUpdateOperationsInput | string | null
     status?: StringFieldUpdateOperationsInput | string
@@ -26243,6 +26461,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
+    type?: StringFieldUpdateOperationsInput | string
     thumbnail?: StringFieldUpdateOperationsInput | string
     mediaUrl?: NullableStringFieldUpdateOperationsInput | string | null
     universeId?: StringFieldUpdateOperationsInput | string
@@ -26390,6 +26609,7 @@ export namespace Prisma {
     id?: string
     title: string
     description?: string | null
+    type?: string
     thumbnail: string
     mediaUrl?: string | null
     universeId: string
@@ -26509,6 +26729,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
+    type?: StringFieldUpdateOperationsInput | string
     thumbnail?: StringFieldUpdateOperationsInput | string
     mediaUrl?: NullableStringFieldUpdateOperationsInput | string | null
     status?: StringFieldUpdateOperationsInput | string
@@ -26536,6 +26757,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
+    type?: StringFieldUpdateOperationsInput | string
     thumbnail?: StringFieldUpdateOperationsInput | string
     mediaUrl?: NullableStringFieldUpdateOperationsInput | string | null
     universeId?: StringFieldUpdateOperationsInput | string
@@ -26563,6 +26785,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
+    type?: StringFieldUpdateOperationsInput | string
     thumbnail?: StringFieldUpdateOperationsInput | string
     mediaUrl?: NullableStringFieldUpdateOperationsInput | string | null
     universeId?: StringFieldUpdateOperationsInput | string
@@ -26746,6 +26969,7 @@ export namespace Prisma {
     id?: string
     title: string
     description?: string | null
+    type?: string
     thumbnail: string
     mediaUrl?: string | null
     creatorId: string
@@ -26768,6 +26992,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
+    type?: StringFieldUpdateOperationsInput | string
     thumbnail?: StringFieldUpdateOperationsInput | string
     mediaUrl?: NullableStringFieldUpdateOperationsInput | string | null
     status?: StringFieldUpdateOperationsInput | string
@@ -26795,6 +27020,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
+    type?: StringFieldUpdateOperationsInput | string
     thumbnail?: StringFieldUpdateOperationsInput | string
     mediaUrl?: NullableStringFieldUpdateOperationsInput | string | null
     creatorId?: StringFieldUpdateOperationsInput | string
@@ -26822,6 +27048,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
+    type?: StringFieldUpdateOperationsInput | string
     thumbnail?: StringFieldUpdateOperationsInput | string
     mediaUrl?: NullableStringFieldUpdateOperationsInput | string | null
     creatorId?: StringFieldUpdateOperationsInput | string
@@ -26844,6 +27071,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
+    type?: StringFieldUpdateOperationsInput | string
     thumbnail?: StringFieldUpdateOperationsInput | string
     mediaUrl?: NullableStringFieldUpdateOperationsInput | string | null
     status?: StringFieldUpdateOperationsInput | string
@@ -26871,6 +27099,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
+    type?: StringFieldUpdateOperationsInput | string
     thumbnail?: StringFieldUpdateOperationsInput | string
     mediaUrl?: NullableStringFieldUpdateOperationsInput | string | null
     universeId?: StringFieldUpdateOperationsInput | string
@@ -26898,6 +27127,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
+    type?: StringFieldUpdateOperationsInput | string
     thumbnail?: StringFieldUpdateOperationsInput | string
     mediaUrl?: NullableStringFieldUpdateOperationsInput | string | null
     universeId?: StringFieldUpdateOperationsInput | string
@@ -26921,6 +27151,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
+    type?: StringFieldUpdateOperationsInput | string
     thumbnail?: StringFieldUpdateOperationsInput | string
     mediaUrl?: NullableStringFieldUpdateOperationsInput | string | null
     status?: StringFieldUpdateOperationsInput | string
@@ -26948,6 +27179,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
+    type?: StringFieldUpdateOperationsInput | string
     thumbnail?: StringFieldUpdateOperationsInput | string
     mediaUrl?: NullableStringFieldUpdateOperationsInput | string | null
     universeId?: StringFieldUpdateOperationsInput | string
@@ -26975,6 +27207,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
+    type?: StringFieldUpdateOperationsInput | string
     thumbnail?: StringFieldUpdateOperationsInput | string
     mediaUrl?: NullableStringFieldUpdateOperationsInput | string | null
     universeId?: StringFieldUpdateOperationsInput | string

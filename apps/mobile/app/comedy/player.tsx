@@ -1,45 +1,75 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Alert } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import { contentApi, type ContentItem, type Recommendation } from '../../src/api';
+import { logger } from '../../src/utils/logger';
+import { LoadingState, ErrorState, EmptyState } from '../../src/components/StateContainers';
 
 const { width } = Dimensions.get('window');
-
-const CLIP_DATA = {
-  id: '1',
-  title: 'Bovi Live Special: Lagos Traffic Tales',
-  creator: 'Bovi',
-  creatorAvatar: '🧔',
-  views: '2.4M',
-  likes: '156K',
-  comments: '8.9K',
-  shares: '45K',
-  duration: '12:30',
-  createdAt: '2 days ago',
-  description: 'Bovi shares hilarious stories about Lagos traffic. From danfo drivers to okada men, you won\'t stop laughing!',
-  tags: ['Comedy', 'Nigerian', 'Lagos', 'Bovi', 'StandUp'],
-};
-
-const COMMENTS = [
-  { id: '1', user: 'Lola', avatar: '👩🏾', text: 'This is absolutely hilarious! 😂😂', time: '1d ago', likes: '234' },
-  { id: '2', user: 'Tunde', avatar: '👨🏾', text: 'Bovi is the GOAT of Nigerian comedy!', time: '1d ago', likes: '189' },
-  { id: '3', user: 'Chichi', avatar: '👩🏾‍🦱', text: 'I can relate to the danfo story 😭', time: '2d ago', likes: '156' },
-];
-
-const RELATED_CLIPS = [
-  { id: '1', title: 'Bovi: Banky W Wedding', duration: '8:45', emoji: '💒' },
-  { id: '2', title: 'Nigerian Dad Stories', duration: '15:20', emoji: '👨' },
-  { id: '3', title: 'Market Woman Comedy', duration: '10:15', emoji: '🏪' },
-  { id: '4', title: 'Church Comedy', duration: '12:30', emoji: '⛪' },
-];
 
 export default function ComedyClipPlayer() {
   const colorScheme = useColorScheme();
   const router = useRouter();
   const isDark = colorScheme === 'dark';
+  const [clip, setClip] = useState<ContentItem | null>(null);
+  const [related, setRelated] = useState<ContentItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [isLiked, setIsLiked] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
   const [showComments, setShowComments] = useState(false);
+
+  const fetchClip = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const featured = await contentApi.getFeaturedContent(1);
+      if (featured.success && featured.data?.[0]) {
+        const clipData = featured.data[0];
+        setClip(clipData);
+        const relatedRes = await contentApi.getTrendingContent(5);
+        if (relatedRes.success && relatedRes.data) {
+          setRelated(relatedRes.data.filter(item => item.id !== clipData.id));
+        }
+      } else {
+        setError('No comedy clip available');
+      }
+    } catch (err: any) {
+      logger.error('Failed to load clip:', err);
+      setError(err.message || 'Failed to load clip');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchClip();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <View style={[styles.container, { backgroundColor: isDark ? '#0a0a0a' : '#ffffff' }]}>
+        <LoadingState text="Loading clip..." />
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={[styles.container, { backgroundColor: isDark ? '#0a0a0a' : '#ffffff' }]}>
+        <ErrorState description={error} onRetry={fetchClip} />
+      </View>
+    );
+  }
+
+  if (!clip) {
+    return (
+      <View style={[styles.container, { backgroundColor: isDark ? '#0a0a0a' : '#ffffff' }]}>
+        <EmptyState icon="😂" title="No Clip" description="No comedy clips available right now." />
+      </View>
+    );
+  }
 
   const handleLike = () => {
     setIsLiked(!isLiked);
@@ -69,7 +99,7 @@ export default function ComedyClipPlayer() {
             </TouchableOpacity>
           </View>
           <View style={styles.durationBadge}>
-            <Text style={styles.durationText}>{CLIP_DATA.duration}</Text>
+            <Text style={styles.durationText}>{clip.duration ? `${Math.floor(clip.duration / 60)}:${String(clip.duration % 60).padStart(2, '0')}` : '00:00'}</Text>
           </View>
         </View>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
@@ -80,14 +110,12 @@ export default function ComedyClipPlayer() {
       <ScrollView style={styles.contentContainer} showsVerticalScrollIndicator={false}>
         <View style={styles.content}>
           <Text style={[styles.title, { color: isDark ? '#ffffff' : '#000000' }]}>
-            {CLIP_DATA.title}
+            {clip.title}
           </Text>
 
           <View style={styles.statsRow}>
-            <Text style={styles.statText}>👁️ {CLIP_DATA.views}</Text>
-            <Text style={styles.statText}>❤️ {isLiked ? parseInt(CLIP_DATA.likes.replace('K', '')) + 1 + 'K' : CLIP_DATA.likes}</Text>
-            <Text style={styles.statText}>💬 {CLIP_DATA.comments}</Text>
-            <Text style={styles.statText}>🔗 {CLIP_DATA.shares}</Text>
+            <Text style={styles.statText}>📅 {new Date(clip.createdAt).toLocaleDateString()}</Text>
+            <Text style={styles.statText}>❤️ 0</Text>
           </View>
 
           <View style={styles.creatorRow}>
@@ -96,8 +124,8 @@ export default function ComedyClipPlayer() {
                 <Text style={styles.creatorAvatarEmoji}>{CLIP_DATA.creatorAvatar}</Text>
               </View>
               <View>
-                <Text style={[styles.creatorName, { color: isDark ? '#fff' : '#000' }]}>{CLIP_DATA.creator}</Text>
-                <Text style={styles.creatorMeta}>{CLIP_DATA.createdAt}</Text>
+                <Text style={[styles.creatorName, { color: isDark ? '#fff' : '#000' }]}>{clip.creator?.name || 'Unknown'}</Text>
+                <Text style={styles.creatorMeta}>{new Date(clip.createdAt).toLocaleDateString()}</Text>
               </View>
             </View>
             <TouchableOpacity
@@ -111,16 +139,18 @@ export default function ComedyClipPlayer() {
           </View>
 
           <Text style={[styles.description, { color: isDark ? '#ccc' : '#666' }]}>
-            {CLIP_DATA.description}
+            {clip.description}
           </Text>
 
+          {clip.categories && clip.categories.length > 0 && (
           <View style={styles.tagsRow}>
-            {CLIP_DATA.tags.map((tag) => (
-              <View key={tag} style={styles.tag}>
-                <Text style={styles.tagText}>#{tag}</Text>
+            {clip.categories.map((cat) => (
+              <View key={cat.id} style={styles.tag}>
+                <Text style={styles.tagText}>#{cat.name}</Text>
               </View>
             ))}
           </View>
+          )}
 
           <View style={styles.actionsRow}>
             <TouchableOpacity style={styles.actionButton} onPress={handleLike}>
@@ -158,32 +188,7 @@ export default function ComedyClipPlayer() {
                   <Text style={styles.postButtonText}>Post</Text>
                 </TouchableOpacity>
               </View>
-              {COMMENTS.map((comment) => (
-                <View key={comment.id} style={[styles.commentCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}>
-                  <View style={styles.commentHeader}>
-                    <View style={styles.commentAvatar}>
-                      <Text style={styles.commentAvatarEmoji}>{comment.avatar}</Text>
-                    </View>
-                    <View style={styles.commentInfo}>
-                      <View style={styles.commentMeta}>
-                        <Text style={[styles.commentUser, { color: isDark ? '#fff' : '#000' }]}>{comment.user}</Text>
-                        <Text style={styles.commentTime}>{comment.time}</Text>
-                      </View>
-                      <Text style={[styles.commentText, { color: isDark ? '#ccc' : '#666' }]}>{comment.text}</Text>
-                      <View style={styles.commentActions}>
-                        <TouchableOpacity style={styles.commentAction}>
-                          <Text style={styles.commentActionIcon}>❤️</Text>
-                          <Text style={styles.commentActionText}>{comment.likes}</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity style={styles.commentAction}>
-                          <Text style={styles.commentActionIcon}>💬</Text>
-                          <Text style={styles.commentActionText}>Reply</Text>
-                        </TouchableOpacity>
-                      </View>
-                    </View>
-                  </View>
-                </View>
-              ))}
+              <Text style={[styles.commentEmpty, { color: isDark ? '#888' : '#999' }]}>No comments yet</Text>
             </View>
           )}
 
@@ -192,16 +197,18 @@ export default function ComedyClipPlayer() {
               Related Clips
             </Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.relatedList}>
-              {RELATED_CLIPS.map((clip) => (
-                <TouchableOpacity key={clip.id} style={[styles.relatedCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}>
+              {related.map((item) => (
+                <TouchableOpacity key={item.id} style={[styles.relatedCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}>
                   <View style={styles.relatedThumbnail}>
-                    <Text style={styles.relatedEmoji}>{clip.emoji}</Text>
+                    <Text style={styles.relatedEmoji}>😂</Text>
+                    {item.duration && (
                     <View style={styles.relatedDuration}>
-                      <Text style={styles.relatedDurationText}>{clip.duration}</Text>
+                      <Text style={styles.relatedDurationText}>{Math.floor(item.duration / 60)}:{String(item.duration % 60).padStart(2, '0')}</Text>
                     </View>
+                    )}
                   </View>
                   <Text style={[styles.relatedTitle, { color: isDark ? '#fff' : '#000' }]} numberOfLines={2}>
-                    {clip.title}
+                    {item.title}
                   </Text>
                 </TouchableOpacity>
               ))}
@@ -249,213 +256,12 @@ const styles = StyleSheet.create({
   videoPlaceholder: {
     flex: 1,
     backgroundColor: '#1a1a1a',
-    alignItems: 'center',
     justifyContent: 'center',
   },
-  videoEmoji: {
-    fontSize: 80,
-  },
-  videoControls: {
-    position: 'absolute',
-    bottom: 20,
-    left: 0,
-    right: 0,
-    alignItems: 'center',
-  },
-  playButton: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: 'rgba(255,255,255,0.9)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  playIcon: {
-    fontSize: 28,
-  },
-  durationBadge: {
-    position: 'absolute',
-    bottom: 20,
-    right: 20,
-    backgroundColor: 'rgba(0,0,0,0.7)',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 4,
-  },
-  durationText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  backButton: {
-    position: 'absolute',
-    top: 50,
-    left: 16,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  backIcon: {
-    color: '#fff',
-    fontSize: 20,
-  },
-  contentContainer: {
-    flex: 1,
-  },
-  content: {
-    padding: 16,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: '700',
-    marginBottom: 10,
-  },
-  statsRow: {
-    flexDirection: 'row',
-    gap: 16,
-    marginBottom: 16,
-  },
-  statText: {
-    color: '#888',
-    fontSize: 13,
-  },
-  creatorRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 16,
-  },
-  creatorInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  creatorAvatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#2a2a2a',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  creatorAvatarEmoji: {
-    fontSize: 24,
-  },
-  creatorName: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  creatorMeta: {
-    color: '#888',
-    fontSize: 12,
-  },
-  followButton: {
-    backgroundColor: '#F39C12',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 20,
-  },
-  followButtonActive: {
-    backgroundColor: '#2a2a2a',
-  },
-  followButtonText: {
-    color: '#000',
+  commentEmpty: {
+    textAlign: 'center',
+    paddingVertical: 20,
     fontSize: 14,
-    fontWeight: '600',
-  },
-  followButtonTextActive: {
-    color: '#fff',
-  },
-  description: {
-    fontSize: 14,
-    lineHeight: 22,
-    marginBottom: 12,
-  },
-  tagsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: 16,
-  },
-  tag: {
-    backgroundColor: '#2a2a2a',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 12,
-  },
-  tagText: {
-    color: '#F39C12',
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  actionsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingVertical: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#2a2a2a',
-    marginBottom: 20,
-  },
-  actionButton: {
-    alignItems: 'center',
-    gap: 4,
-  },
-  actionIcon: {
-    fontSize: 24,
-  },
-  actionText: {
-    fontSize: 12,
-  },
-  commentsSection: {
-    marginBottom: 20,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    marginBottom: 12,
-  },
-  addCommentBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 12,
-    borderRadius: 10,
-    marginBottom: 12,
-    gap: 10,
-  },
-  commentInput: {
-    flex: 1,
-    fontSize: 14,
-  },
-  postButton: {
-    backgroundColor: '#F39C12',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 6,
-  },
-  postButtonText: {
-    color: '#000',
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  commentCard: {
-    padding: 12,
-    borderRadius: 10,
-    marginBottom: 10,
-  },
-  commentHeader: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  commentAvatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#2a2a2a',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   commentAvatarEmoji: {
     fontSize: 18,

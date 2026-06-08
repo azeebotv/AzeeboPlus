@@ -8,6 +8,9 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+/// NOTE: This User model is duplicated from auth-service for local relation support.
+/// Consider removing this and using userId: String references instead (see creator-service pattern).
+/// The canonical User definition is in packages/shared-types/prisma/user.prisma
 model User {
   id                      String   @id @default(uuid())
   email                   String   @unique

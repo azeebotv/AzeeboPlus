@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { SearchModule } from './modules/search/search.module';
+import { AdminModule } from './modules/admin/admin.module';
 import { DatabaseModule } from './modules/database/database.module';
 import { HealthModule } from './modules/health/health.module';
 import { RateLimiterModule } from '@azeebo/security';
@@ -13,6 +14,7 @@ import { RateLimiterModule } from '@azeebo/security';
     RateLimiterModule,
     DatabaseModule,
     SearchModule,
+    AdminModule,
     HealthModule,
   ],
 })

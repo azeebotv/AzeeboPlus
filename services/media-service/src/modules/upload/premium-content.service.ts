@@ -228,7 +228,7 @@ export class PremiumContentService {
     return `${baseUrl}/${s3Key}?token=${token}&expires=${expires}`;
   }
 
-  private async markAsAccessed(token: string, urlData: any): Promise<void> {
+  private async markAsAccessed(token: string, urlData: Record<string, unknown>): Promise<void> {
     const redisKey = `${this.redisKeyPrefix}${token}`;
     urlData.accessed = true;
     urlData.accessedAt = new Date().toISOString();

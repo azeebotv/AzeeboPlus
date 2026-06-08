@@ -29,3 +29,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Prevent compiled JS artifacts in source directory
+src/**/*.js
+src/**/*.js.map

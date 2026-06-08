@@ -31,7 +31,7 @@ export class ModerationController {
   @ApiOperation({ summary: 'Assess content risk' })
   @ApiResponse({ status: 200, description: 'Risk assessment' })
   async assessRisk(@Param('contentId') contentId: string): Promise<unknown> {
-    return this.moderationService.assessContentRisk(contentId);
+    return this.moderationService.getRiskAssessment(contentId);
   }
 
   @Get('scans/:contentId')
@@ -58,7 +58,7 @@ export class ModerationController {
     description: string;
     evidence?: Record<string, unknown>;
   }): Promise<unknown> {
-    return this.moderationService.createModerationCase(data);
+    return this.moderationService.createCase(data);
   }
 
   @Get('cases')
@@ -76,10 +76,6 @@ export class ModerationController {
   ): Promise<unknown> {
     return this.moderationService.getCases({
       status,
-      assignedTo,
-      priority,
-      page: page ? parseInt(page, 10) : 1,
-      limit: limit ? parseInt(limit, 10) : 20,
     });
   }
 
@@ -90,7 +86,7 @@ export class ModerationController {
   @ApiOperation({ summary: 'Get moderation case by ID' })
   @ApiResponse({ status: 200, description: 'Case details' })
   async getCase(@Param('caseId') caseId: string): Promise<unknown> {
-    return this.moderationService.getCase(caseId);
+    return this.moderationService.getCaseById(caseId);
   }
 
   @Patch('cases/:caseId/assign')
@@ -117,7 +113,11 @@ export class ModerationController {
     @Body() body: ResolveModerationDto,
     @Request() req: { user: { userId: string } }
   ): Promise<unknown> {
-    return this.moderationService.resolveCase(caseId, req.user.userId, body.resolution, body.notes);
+    return this.moderationService.resolveCase(caseId, {
+      resolution: body.resolution,
+      resolvedBy: req.user.userId,
+      notes: body.notes,
+    });
   }
 
   @Post('actions')
@@ -137,7 +137,7 @@ export class ModerationController {
     },
     @Request() req: { user: { userId: string } }
   ): Promise<unknown> {
-    return this.moderationService.executeSafetyAction({
+    return this.moderationService.executeAction({
       ...data,
       performedBy: req.user.userId,
     });
@@ -165,8 +165,9 @@ export class ModerationController {
     evidence?: Record<string, unknown>;
   }, @Request() req: { user: { userId: string } }): Promise<unknown> {
     return this.moderationService.submitAppeal({
-      ...data,
-      appellantId: req.user.userId,
+      caseId: data.caseId,
+      userId: req.user.userId,
+      reason: data.reason,
     });
   }
 
@@ -181,7 +182,7 @@ export class ModerationController {
     @Body() body: ModerationDecisionDto,
     @Request() req: { user: { userId: string } }
   ): Promise<unknown> {
-    return this.moderationService.reviewAppeal(appealId, req.user.userId, body.decision, body.notes);
+    return this.moderationService.reviewAppeal(appealId, req.user.userId, body.decision as 'successful' | 'rejected', body.notes);
   }
 
   @Get('trust/:userId')

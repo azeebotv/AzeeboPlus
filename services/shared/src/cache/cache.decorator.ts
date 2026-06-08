@@ -33,7 +33,9 @@ export const Cache = (options: CacheOptions) => {
       return descriptor;
     }
     
-    SetMetadata(CACHE_KEY_METADATA, options.key)(target, propertyKey!);
-    SetMetadata(CACHE_TTL_METADATA, options.ttl)(target, propertyKey!);
+    // For class decorators, apply metadata to the constructor
+    SetMetadata(CACHE_KEY_METADATA, options.key)(target);
+    SetMetadata(CACHE_TTL_METADATA, options.ttl)(target);
+    return target;
   };
 };

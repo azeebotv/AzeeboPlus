@@ -1,0 +1,61 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model SubscriptionPlan {
+  id            String         @id @default(uuid())
+  name          String         @unique
+  description   String
+  price         Decimal        @db.Decimal(10, 2)
+  currency      String         @default("NGN")
+  duration      Int // in days
+  features      String[]
+  isActive      Boolean        @default(true)
+  tier          String // free, basic, premium, enterprise
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  subscriptions Subscription[]
+
+  @@map("subscription_plans")
+}
+
+model Subscription {
+  id              String           @id @default(uuid())
+  userId          String
+  planId          String
+  status          String           @default("active") // active, cancelled, expired, pending
+  startDate       DateTime         @default(now())
+  endDate         DateTime
+  autoRenew       Boolean          @default(true)
+  paymentMethod   String?
+  lastPaymentDate DateTime?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  plan            SubscriptionPlan @relation(fields: [planId], references: [id])
+
+  @@index([userId])
+  @@index([status])
+  @@map("subscriptions")
+}
+
+model SubscriptionTransaction {
+  id              String   @id @default(uuid())
+  subscriptionId  String
+  amount          Decimal  @db.Decimal(10, 2)
+  currency        String   @default("NGN")
+  status          String   @default("completed") // completed, failed, pending, refunded
+  paymentProvider String?
+  providerTxId    String?
+  description     String?
+  createdAt       DateTime @default(now())
+
+  @@index([subscriptionId])
+  @@index([status])
+  @@map("subscription_transactions")
+}

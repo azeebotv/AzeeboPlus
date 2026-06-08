@@ -72,7 +72,7 @@ export function Table<T>({
     if (sortConfig?.key === column.key) {
       return sortConfig.direction === 'asc' ? <Icon name="ChevronUp" size="sm" /> : <Icon name="ChevronDown" size="sm" />;
     }
-    return <Icon name="ChevronUpDown" size="sm" />;
+    return <Icon name="ChevronsUpDown" size="sm" />;
   };
 
   const getKey = (row: T, index: number) => {
@@ -152,7 +152,7 @@ export function Table<T>({
                           ${column.width ? column.width : ''}
                         `}
                       >
-                        {column.render ? column.render(cellValue, row) : (cellValue ?? '-')}
+                        {column.render ? column.render(cellValue, row) : (cellValue as React.ReactNode ?? '-')}
                       </td>
                     );
                   })}
@@ -197,7 +197,7 @@ export function ListItem({
 }: ListItemProps) {
   const getIcon = (icon: IconName | React.ReactNode) => {
     if (typeof icon === 'string') {
-      return <Icon name={icon} size="md" />;
+      return <Icon name={icon as IconName} size="md" />;
     }
     return icon;
   };
@@ -274,7 +274,7 @@ export function CardListItem({
 }: CardListItemProps) {
   const getIcon = (icon: IconName | React.ReactNode) => {
     if (typeof icon === 'string') {
-      return <Icon name={icon} size="lg" />;
+      return <Icon name={icon as IconName} size="lg" />;
     }
     return icon;
   };
@@ -311,20 +311,20 @@ export function CardListItem({
   );
 }
 
-// Badge
-export interface BadgeProps {
+// DisplayBadge
+export interface DisplayBadgeProps {
   children: React.ReactNode;
   variant?: 'default' | 'primary' | 'success' | 'warning' | 'error' | 'info';
   size?: 'sm' | 'md';
   className?: string;
 }
 
-export function Badge({
+export function DisplayBadge({
   children,
   variant = 'default',
   size = 'md',
   className = '',
-}: BadgeProps) {
+}: DisplayBadgeProps) {
   const variantStyles = {
     default: 'bg-bg-tertiary text-text-secondary',
     primary: 'bg-primary-500/10 text-primary-400',
@@ -354,7 +354,7 @@ export function Badge({
 }
 
 // Tag
-export interface TagProps extends BadgeProps {
+export interface TagProps extends DisplayBadgeProps {
   closable?: boolean;
   onClose?: () => void;
 }
@@ -467,7 +467,7 @@ export function StatCard({ title, value, icon, trend, className = '' }: StatCard
   const getIcon = (icon: IconName | React.ReactNode) => {
     if (!icon) return null;
     if (typeof icon === 'string') {
-      return <Icon name={icon} size="lg" />;
+      return <Icon name={icon as IconName} size="lg" />;
     }
     return icon;
   };
@@ -510,7 +510,7 @@ export interface EmptyStateProps {
 export function EmptyState({ icon, title, description, action, className = '' }: EmptyStateProps) {
   const getIcon = (icon: IconName | React.ReactNode) => {
     if (typeof icon === 'string') {
-      return <Icon name={icon} size="3xl" />;
+      return <Icon name={icon as IconName} size="2xl" />;
     }
     return icon;
   };
@@ -557,7 +557,7 @@ export function Timeline({ items, className = '', reversed = false }: TimelinePr
         {displayItems.map((item, index) => {
           const getIcon = (icon: IconName | React.ReactNode) => {
             if (typeof icon === 'string') {
-              return <Icon name={icon} size="sm" />;
+              return <Icon name={icon as IconName} size="sm" />;
             }
             return icon;
           };

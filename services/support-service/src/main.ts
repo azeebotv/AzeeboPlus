@@ -50,13 +50,13 @@ async function bootstrap() {
     })
   );
 
-  const allowedOrigins = configService.get<string>('ALLOWED_ORIGINS')?.split(',');
-  if (!allowedOrigins && process.env.NODE_ENV === 'production') {
-    throw new Error('ALLOWED_ORIGINS environment variable is required in production');
+  const allowedOrigins = configService.get<string>('ALLOWED_ORIGINS')?.split(',').map(o => o.trim());
+  if (!allowedOrigins || allowedOrigins.length === 0) {
+    throw new Error('ALLOWED_ORIGINS environment variable must be set');
   }
 
   app.enableCors({
-    origin: allowedOrigins || ['http://localhost:3000'],
+    origin: allowedOrigins,
     credentials: true,
   });
 

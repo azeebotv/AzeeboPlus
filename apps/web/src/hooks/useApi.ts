@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { useState, useEffect, useCallback } from 'react';
 
 interface UseApiState<T> {
@@ -66,21 +64,21 @@ export function useApi<T>(apiCall: () => Promise<T>, options: UseApiOptions = {}
   };
 }
 
-interface UseMutationState<T> {
-  mutate: (data?: any) => Promise<T>;
+interface UseMutationState<T, P = unknown> {
+  mutate: (data?: P) => Promise<T>;
   isLoading: boolean;
   error: Error | null;
   data: T | null;
   reset: () => void;
 }
 
-export function useMutation<T>(apiCall: (data?: any) => Promise<T>): UseMutationState<T> {
+export function useMutation<T, P = unknown>(apiCall: (data?: P) => Promise<T>): UseMutationState<T, P> {
   const [data, setData] = useState<T | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<Error | null>(null);
 
   const mutate = useCallback(
-    async (payload?: any): Promise<T> => {
+    async (payload?: P): Promise<T> => {
       setIsLoading(true);
       setError(null);
 

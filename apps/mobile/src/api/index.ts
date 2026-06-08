@@ -4,6 +4,8 @@ import type { WalletBalance, Transaction } from './wallet';
 import type { Notification, NotificationPreferences } from './notification';
 import type { MediaUploadResponse, PresignedUploadResponse, FileMetadata } from './media';
 import type { Universe } from './universe';
+import type { Conversation, Message, LiveChatMessage } from './messaging';
+import type { LeaderboardEntry, RankingCategory, PredictionResult } from './engagement';
 
 export type { User, AuthResponse, ApiResponse };
 export type { ContentItem, PaginatedResponse };
@@ -11,6 +13,8 @@ export type { WalletBalance, Transaction };
 export type { Notification, NotificationPreferences };
 export type { MediaUploadResponse, PresignedUploadResponse, FileMetadata };
 export type { Universe };
+export type { Conversation, Message, LiveChatMessage };
+export type { LeaderboardEntry, RankingCategory, PredictionResult };
 
 export { authApi } from './auth';
 export { contentApi } from './content';
@@ -19,4 +23,9 @@ export { paymentApi } from './payment';
 export { notificationApi } from './notification';
 export { mediaApi } from './media';
 export { universeApi } from './universe';
+export { userApi } from './user';
+export { subscriptionApi } from './subscription';
+export { messagingApi, chatApi } from './messaging';
+export { engagementApi, realityApi } from './engagement';
+export { referralApi } from './referral';
 export { apiClient } from './client';

@@ -1,46 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-
-const GAME = {
-  id: '1',
-  title: 'Azeebo Quest',
-  genre: 'Adventure',
-  description: 'Embark on an epic adventure through mystical lands. Solve puzzles, defeat enemies, and collect treasures in this action-packed adventure game.',
-  highScore: 12500,
-  yourBest: 8400,
-  emoji: '🎮',
-};
-
-const GAME_CONTROLS = [
-  { id: '1', label: 'Move', icon: '⬆️' },
-  { id: '2', label: 'Jump', icon: '⬆️' },
-  { id: '3', label: 'Attack', icon: '⚔️' },
-  { id: '4', label: 'Special', icon: '✨' },
-];
-
-const ACHIEVEMENTS = [
-  { id: '1', title: 'First Victory', description: 'Complete your first level', earned: true, emoji: '🏆' },
-  { id: '2', title: 'Speed Runner', description: 'Complete a level in under 2 minutes', earned: true, emoji: '⚡' },
-  { id: '3', title: 'Collector', description: 'Collect 100 coins', earned: false, emoji: '🪙' },
-  { id: '4', title: 'Champion', description: 'Reach 10,000 points', earned: false, emoji: '👑' },
-];
-
-const LEADERBOARD = [
-  { id: '1', name: 'GamerKing', score: 24500, rank: 1, isYou: false },
-  { id: '2', name: 'ProPlayer', score: 23200, rank: 2, isYou: false },
-  { id: '3', name: 'ChampionX', score: 21800, rank: 3, isYou: false },
-  { id: '4', name: 'You', score: 8400, rank: 42, isYou: true },
-  { id: '5', name: 'GameMaster', score: 19500, rank: 4, isYou: false },
-];
-
-const LEVELS = [
-  { id: '1', name: 'Forest of Beginnings', difficulty: 'Easy', stars: 3, unlocked: true },
-  { id: '2', name: 'Crystal Caves', difficulty: 'Medium', stars: 2, unlocked: true },
-  { id: '3', name: 'Dragon\'s Peak', difficulty: 'Hard', stars: 0, unlocked: false },
-  { id: '4', name: 'Sky Kingdom', difficulty: 'Expert', stars: 0, unlocked: false },
-];
+import { apiClient } from '../../src/api';
+import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
 
 export default function GameplayPage() {
   const colorScheme = useColorScheme();
@@ -49,6 +12,44 @@ export default function GameplayPage() {
   const isDark = colorScheme === 'dark';
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentScore, setCurrentScore] = useState(0);
+  const [game, setGame] = useState<any>(null);
+  const [controls, setControls] = useState<any[]>([]);
+  const [achievements, setAchievements] = useState<any[]>([]);
+  const [leaderboard, setLeaderboard] = useState<any[]>([]);
+  const [levels, setLevels] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchGameData = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const [gameRes, levelsRes, leaderboardRes, achievementsRes] = await Promise.all([
+        apiClient.get<any>(`/games/${id}`),
+        apiClient.get<any[]>(`/games/${id}/levels`),
+        apiClient.get<any[]>(`/games/${id}/leaderboard`),
+        apiClient.get<any[]>(`/games/${id}/achievements`),
+      ]);
+      setGame(gameRes);
+      setLevels(levelsRes || []);
+      setLeaderboard(leaderboardRes || []);
+      setAchievements(achievementsRes || []);
+      setControls([
+        { id: '1', label: 'Move', icon: '⬆️' },
+        { id: '2', label: 'Jump', icon: '⬆️' },
+        { id: '3', label: 'Attack', icon: '⚔️' },
+        { id: '4', label: 'Special', icon: '✨' },
+      ]);
+    } catch (err: any) {
+      setError(err.message || 'Failed to load game data');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchGameData();
+  }, [id]);
 
   const handlePlay = () => {
     setIsPlaying(true);
@@ -64,6 +65,18 @@ export default function GameplayPage() {
     alert(`Game Over! Score: ${currentScore.toLocaleString()}`);
   };
 
+  if (isLoading) {
+    return <LoadingState text="Loading game..." />;
+  }
+
+  if (error) {
+    return <ErrorState title="Failed to load game" description={error} onRetry={fetchGameData} />;
+  }
+
+  if (!game) {
+    return <EmptyState icon="🎮" title="Game not found" description="This game could not be found" />;
+  }
+
   if (isPlaying) {
     return (
       <View style={styles.gameContainer}>
@@ -73,14 +86,14 @@ export default function GameplayPage() {
           </TouchableOpacity>
           <View style={styles.gameStats}>
             <Text style={styles.gameScore}>Score: {currentScore.toLocaleString()}</Text>
-            <Text style={styles.gameHighScore}>Best: {GAME.highScore.toLocaleString()}</Text>
+            <Text style={styles.gameHighScore}>Best: {(game.highScore || 0).toLocaleString()}</Text>
           </View>
         </View>
 
         <View style={styles.gameArea}>
           <View style={styles.gamePlaceholder}>
-            <Text style={styles.gameEmoji}>{GAME.emoji}</Text>
-            <Text style={styles.gameStatus}>Playing {GAME.title}</Text>
+            <Text style={styles.gameEmoji}>{game.emoji || '🎮'}</Text>
+            <Text style={styles.gameStatus}>Playing {game.title}</Text>
             <View style={styles.scoreButtons}>
               <TouchableOpacity
                 style={styles.scoreButton}
@@ -120,7 +133,7 @@ export default function GameplayPage() {
             </TouchableOpacity>
           </View>
           <View style={styles.actionButtons}>
-            {GAME_CONTROLS.slice(2).map((control) => (
+            {controls.slice(2).map((control) => (
               <TouchableOpacity key={control.id} style={styles.actionButton}>
                 <Text style={styles.actionIcon}>{control.icon}</Text>
               </TouchableOpacity>
@@ -138,15 +151,15 @@ export default function GameplayPage() {
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
         <View style={styles.headerInfo}>
-          <Text style={[styles.gameTitle, { color: isDark ? '#fff' : '#000' }]}>{GAME.title}</Text>
-          <Text style={styles.gameGenre}>{GAME.genre}</Text>
+          <Text style={[styles.gameTitle, { color: isDark ? '#fff' : '#000' }]}>{game.title}</Text>
+          <Text style={styles.gameGenre}>{game.genre || ''}</Text>
         </View>
       </View>
 
       <ScrollView style={styles.content}>
         <View style={styles.gamePreview}>
           <View style={styles.previewPlaceholder}>
-            <Text style={styles.previewEmoji}>{GAME.emoji}</Text>
+            <Text style={styles.previewEmoji}>{game.emoji || '🎮'}</Text>
             <TouchableOpacity style={styles.playButton} onPress={handlePlay}>
               <Text style={styles.playIcon}>▶</Text>
               <Text style={styles.playText}>Play Now</Text>
@@ -155,12 +168,12 @@ export default function GameplayPage() {
           <View style={styles.scoreBoard}>
             <View style={styles.scoreItem}>
               <Text style={styles.scoreLabel}>High Score</Text>
-              <Text style={styles.scoreValue}>{GAME.highScore.toLocaleString()}</Text>
+              <Text style={styles.scoreValue}>{(game.highScore || 0).toLocaleString()}</Text>
             </View>
             <View style={styles.scoreDivider} />
             <View style={styles.scoreItem}>
               <Text style={styles.scoreLabel}>Your Best</Text>
-              <Text style={[styles.scoreValue, styles.yourScore]}>{GAME.yourBest.toLocaleString()}</Text>
+              <Text style={[styles.scoreValue, styles.yourScore]}>{(game.yourBest || 0).toLocaleString()}</Text>
             </View>
           </View>
         </View>
@@ -170,7 +183,7 @@ export default function GameplayPage() {
             Select Level
           </Text>
           <View style={styles.levelsList}>
-            {LEVELS.map((level) => (
+            {levels.map((level) => (
               <TouchableOpacity
                 key={level.id}
                 style={[
@@ -183,12 +196,12 @@ export default function GameplayPage() {
                   <Text style={[styles.levelName, { color: isDark ? '#fff' : '#000' }]}>
                     {level.unlocked ? level.name : '🔒 ' + level.name}
                   </Text>
-                  <Text style={styles.levelDifficulty}>{level.difficulty}</Text>
+                  <Text style={styles.levelDifficulty}>{level.difficulty || ''}</Text>
                 </View>
                 <View style={styles.levelStars}>
                   {[1, 2, 3].map((star) => (
                     <Text key={star} style={styles.starIcon}>
-                      {star <= level.stars ? '⭐' : '☆'}
+                      {star <= (level.stars || 0) ? '⭐' : '☆'}
                     </Text>
                   ))}
                 </View>
@@ -202,7 +215,7 @@ export default function GameplayPage() {
             Global Leaderboard
           </Text>
           <View style={styles.leaderboardList}>
-            {LEADERBOARD.map((player) => (
+            {leaderboard.map((player) => (
               <View
                 key={player.id}
                 style={[
@@ -237,7 +250,7 @@ export default function GameplayPage() {
             Achievements
           </Text>
           <View style={styles.achievementsList}>
-            {ACHIEVEMENTS.map((achievement) => (
+            {achievements.map((achievement) => (
               <View
                 key={achievement.id}
                 style={[

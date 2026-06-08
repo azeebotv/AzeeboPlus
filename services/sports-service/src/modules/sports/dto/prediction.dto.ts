@@ -4,11 +4,10 @@ import { ApiProperty } from '@nestjs/swagger';
 export class CreatePredictionDto {
   @ApiProperty()
   @IsString()
-  fixtureId!: string;
+  eventId!: string;
 
   @ApiProperty()
-  @IsString()
-  prediction!: string;
+  prediction!: Record<string, unknown>;
 
   @ApiProperty({ required: false })
   @IsOptional()

@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../database/prisma.service';
 
 export interface HealthCheckResult {
   status: 'healthy' | 'degraded' | 'unhealthy';
@@ -116,7 +115,7 @@ export class HealthCheckService {
     };
   }
 
-  async checkDatabase(prisma: PrismaService): Promise<{ status: 'up' | 'down' | 'degraded'; message?: string; latencyMs?: number }> {
+  async checkDatabase(prisma: { $queryRaw: (query: TemplateStringsArray, ...values: any[]) => Promise<any> }): Promise<{ status: 'up' | 'down' | 'degraded'; message?: string; latencyMs?: number }> {
     const start = Date.now();
     try {
       await prisma.$queryRaw`SELECT 1`;

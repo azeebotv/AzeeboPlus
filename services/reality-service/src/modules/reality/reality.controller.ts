@@ -195,12 +195,11 @@ export class RealityController {
   async voteForContestant(
     @Request() req: { user: { sub: string } },
     @Param('showId') showId: string,
-    @Body() body: { contestantId: string; quantity?: number }
+    @Body() body: { contestantId: string }
   ): Promise<RealityResponse> {
     return this.realityService.submitVote(req.user.sub, {
       contestantId: body.contestantId,
       showId,
-      quantity: body.quantity || 1,
     });
   }
 

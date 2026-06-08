@@ -1,38 +1,54 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
+import { LoadingState, EmptyState, ErrorState } from '../src/components/StateContainers';
+import { apiClient } from '../src/api/client';
 
-const TRENDING_CLIPS = [
-  { id: '1', title: 'Bovi Live Special', views: '2.4M', likes: '156K', duration: '12:30', emoji: '😂' },
-  { id: '2', title: 'Aproko Doctors: Episode 45', views: '1.8M', likes: '98K', duration: '24:15', emoji: '👨‍⚕️' },
-  { id: '3', title: 'Nigerian Mom Reactions', views: '890K', likes: '67K', duration: '8:45', emoji: '👩' },
-  { id: '4', title: 'Stand Up with Elisha', views: '650K', likes: '45K', duration: '18:20', emoji: '🎤' },
-];
-
-const FEATURED_CREATORS = [
-  { id: '1', name: 'Bovi', followers: '3.2M', emoji: '🧔' },
-  { id: '2', name: 'Aproko Doctors', followers: '2.1M', emoji: '👨‍⚕️' },
-  { id: '3', name: 'Elisha', followers: '1.5M', emoji: '🎤' },
-];
-
-const CATEGORIES = [
-  { id: '1', name: 'Stand Up', emoji: '🎙️' },
-  { id: '2', name: 'Skits', emoji: '📱' },
-  { id: '3', name: 'Sitcoms', emoji: '📺' },
-  { id: '4', name: 'Roasts', emoji: '🔥' },
-];
-
-const TOP_RATED = [
-  { id: '1', title: 'Comedy Concert 2024', rating: '4.9', emoji: '🎭' },
-  { id: '2', title: 'The Host', rating: '4.8', emoji: '🎤' },
-  { id: '3', title: 'Family Feud', rating: '4.7', emoji: '👨‍👩‍👧' },
-];
+interface ClipItem { id: string; title: string; views: string; likes: string; duration: string; emoji: string; }
+interface CreatorItem { id: string; name: string; followers: string; emoji: string; }
+interface CategoryItem { id: string; name: string; emoji: string; }
+interface TopRatedItem { id: string; title: string; rating: string; emoji: string; }
 
 export default function ComedyUniverseHome() {
   const colorScheme = useColorScheme();
   const router = useRouter();
   const isDark = colorScheme === 'dark';
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [trendingClips, setTrendingClips] = useState<ClipItem[]>([]);
+  const [featuredCreators, setFeaturedCreators] = useState<CreatorItem[]>([]);
+  const [categories, setCategories] = useState<CategoryItem[]>([]);
+  const [topRated, setTopRated] = useState<TopRatedItem[]>([]);
+
+  const fetchData = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const [clipsRes, creatorsRes, categoriesRes, topRes] = await Promise.all([
+        apiClient.get<any>('/v1/comedy/clips'),
+        apiClient.get<any>('/v1/comedy/creators'),
+        apiClient.get<any>('/v1/comedy/categories'),
+        apiClient.get<any>('/v1/comedy/top-rated'),
+      ]);
+      setTrendingClips(Array.isArray(clipsRes) ? clipsRes : clipsRes?.data ?? []);
+      setFeaturedCreators(Array.isArray(creatorsRes) ? creatorsRes : creatorsRes?.data ?? []);
+      setCategories(Array.isArray(categoriesRes) ? categoriesRes : categoriesRes?.data ?? []);
+      setTopRated(Array.isArray(topRes) ? topRes : topRes?.data ?? []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchData(); }, []);
+
+  if (isLoading) return <LoadingState text="Loading comedy clips..." />;
+  if (error) return <ErrorState description={error} onRetry={fetchData} />;
+  if (!trendingClips.length && !featuredCreators.length) {
+    return <EmptyState icon="😂" title="No clips available" description="Check back later for comedy content" />;
+  }
 
   return (
     <ScrollView style={[styles.container, { backgroundColor: isDark ? '#0a0a0a' : '#ffffff' }]}>
@@ -44,7 +60,7 @@ export default function ComedyUniverseHome() {
       </View>
 
       <View style={styles.categoryScroll}>
-        {CATEGORIES.map((cat) => (
+        {categories.map((cat) => (
           <TouchableOpacity key={cat.id} style={styles.categoryChip}>
             <Text style={styles.categoryEmoji}>{cat.emoji}</Text>
             <Text style={styles.categoryName}>{cat.name}</Text>
@@ -57,7 +73,7 @@ export default function ComedyUniverseHome() {
           Trending Clips
         </Text>
         <FlatList
-          data={TRENDING_CLIPS}
+          data={trendingClips}
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.trendingList}
@@ -93,7 +109,7 @@ export default function ComedyUniverseHome() {
           </Text>
         </View>
         <FlatList
-          data={FEATURED_CREATORS}
+          data={featuredCreators}
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.creatorsList}
@@ -123,7 +139,7 @@ export default function ComedyUniverseHome() {
           </TouchableOpacity>
         </View>
         <View style={styles.topRatedGrid}>
-          {TOP_RATED.map((item) => (
+          {topRated.map((item) => (
             <TouchableOpacity key={item.id} style={[styles.topRatedCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}>
               <View style={styles.topRatedThumbnail}>
                 <Text style={styles.topRatedEmoji}>{item.emoji}</Text>

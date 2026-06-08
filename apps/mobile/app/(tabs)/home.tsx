@@ -13,6 +13,7 @@ import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, universeColors } from '@azeebo/design-tokens';
 import { contentApi, universeApi, type ContentItem, type Universe } from '../../src/api';
+import { logger } from '../../src/utils/logger';
 import { LoadingState, ErrorState, EmptyState } from '../../src/components/StateContainers';
 
 // Define a local type for the combined "All" universe
@@ -59,7 +60,7 @@ export default function HomeScreen() {
         setUniverses([{ id: 'all', name: 'All', icon: '🎬' }]);
       }
     } catch (e) {
-      console.error('Error fetching home data:', e);
+      logger.error('Error fetching home data', e);
       setHasError(true);
     } finally {
       setIsLoading(false);
@@ -107,7 +108,7 @@ export default function HomeScreen() {
               accessibilityHint={`Filter content by ${universe.name}`}
             >
               <Text style={styles.universeEmoji}>
-                {isAllUniverse ? (universe as any).icon : '🎬'}
+                {'icon' in universe ? universe.icon : '🎬'}
               </Text>
               <Text
                 style={[

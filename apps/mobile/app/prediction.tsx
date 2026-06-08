@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,60 +8,116 @@ import {
   Image,
   Modal,
   SafeAreaView,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { useColorScheme } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { colors, universeColors } from '@azeebo/design-tokens';
+import { engagementApi, PredictionResult } from '../src/api/engagement';
+import { walletApi } from '../src/api/wallet';
+import { logger } from '../src/utils/logger';
+import { LoadingState, EmptyState, ErrorState } from '../src/components/StateContainers';
 
 const PLACEHOLDER_IMAGE = '';
 
-interface PredictionOption {
-  id: string;
-  label: string;
-  odds: string;
-  avatar: string;
-}
-
-const predictionOptions: PredictionOption[] = [
-  { id: '1', label: 'Maria', odds: '2.5x', avatar: '👩' },
-  { id: '2', label: 'Lisa', odds: '3.0x', avatar: '👩' },
-  { id: '3', label: 'John', odds: '4.0x', avatar: '👨' },
-  { id: '4', label: 'Mike', odds: '5.0x', avatar: '👨' },
-];
-
-const leaderboard = [
-  { rank: 1, name: 'Player123', points: 25400, avatar: '👨' },
-  { rank: 2, name: 'Gamer456', points: 23100, avatar: '👩' },
-  { rank: 3, name: 'Pro789', points: 19800, avatar: '👨' },
-  { rank: 4, name: 'Star000', points: 17500, avatar: '👩' },
+const leaderboardData = [
+  { rank: 1, avatar: '👑', name: 'PredatorKing', points: 15000 },
+  { rank: 2, avatar: '🦅', name: 'EagleEye', points: 12000 },
+  { rank: 3, avatar: '🎯', name: 'SharpShooter', points: 10000 },
+  { rank: 4, avatar: '🧠', name: 'BrainBox', points: 8500 },
+  { rank: 5, avatar: '⭐', name: 'StarPlayer', points: 7200 },
 ];
 
 export default function PredictionScreen() {
   const colorScheme = useColorScheme();
   const router = useRouter();
+  const { predictionId } = useLocalSearchParams<{ predictionId: string }>();
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [betAmount, setBetAmount] = useState(100);
-  const [userPoints, setUserPoints] = useState(12500);
+  const [userPoints, setUserPoints] = useState(0);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [betSuccess, setBetSuccess] = useState(false);
+  const [prediction, setPrediction] = useState<PredictionResult | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const potentialWinnings = Math.floor(betAmount * parseFloat(predictionOptions.find(o => o.id === selectedOption)?.odds || '1'));
+  useEffect(() => {
+    loadData();
+  }, [predictionId]);
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const [predictionRes, walletRes] = await Promise.all([
+        engagementApi.getPredictionResults(predictionId || 'default'),
+        walletApi.getBalance(),
+      ]);
+      
+      if (predictionRes.success && predictionRes.data) {
+        setPrediction(predictionRes.data);
+      }
+      
+      if (walletRes.success && walletRes.data) {
+        setUserPoints(walletRes.data.balance);
+      }
+    } catch (err) {
+      logger.error('Failed to load prediction data:', err);
+      setError('Failed to load data. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const predictionOptions = prediction?.options || [];
+  const potentialWinnings = Math.floor(betAmount * parseFloat(predictionOptions.find(o => o.id === selectedOption)?.percentage?.toString() || '1'));
 
   const handlePlaceBet = () => {
     if (!selectedOption || userPoints < betAmount) return;
     setShowConfirmation(true);
   };
 
-  const confirmBet = () => {
-    setUserPoints(prev => prev - betAmount);
-    setBetSuccess(true);
-    setTimeout(() => {
-      setShowConfirmation(false);
-      setBetSuccess(false);
-      setSelectedOption(null);
-      setBetAmount(100);
-    }, 2000);
+  const confirmBet = async () => {
+    try {
+      const response = await engagementApi.placeBet({
+        predictionId: predictionId || 'default',
+        optionId: selectedOption,
+        amount: betAmount,
+      });
+      if (!response.success) {
+        throw new Error(response.error?.message || 'Bet placement failed');
+      }
+      setUserPoints(prev => prev - betAmount);
+      setBetSuccess(true);
+      setTimeout(() => {
+        setShowConfirmation(false);
+        setBetSuccess(false);
+        setSelectedOption(null);
+        setBetAmount(100);
+      }, 2000);
+    } catch (err) {
+      logger.error('Failed to place bet:', err);
+      Alert.alert('Error', 'Failed to place bet. Please try again.');
+    }
   };
+
+  if (loading) {
+    return (
+      <SafeAreaView style={[styles.container, styles.centerContent, { backgroundColor: colorScheme === 'dark' ? colors.dark[900] : colors.light[50] }]}>
+        <LoadingState text="Loading..." />
+      </SafeAreaView>
+    );
+  }
+
+  if (error) {
+    return (
+      <SafeAreaView style={[styles.container, styles.centerContent, { backgroundColor: colorScheme === 'dark' ? colors.dark[900] : colors.light[50] }]}>
+        <ErrorState title="Failed to load" description={error} onRetry={loadData} />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -224,7 +280,7 @@ export default function PredictionScreen() {
             </TouchableOpacity>
           </View>
           <View style={styles.leaderboard}>
-            {leaderboard.map((entry) => (
+            {leaderboardData.map((entry) => (
               <View key={entry.rank} style={styles.leaderboardItem}>
                 <View style={[
                   styles.rank,
@@ -713,5 +769,30 @@ const styles = StyleSheet.create({
   successMessage: {
     fontSize: 14,
     textAlign: 'center',
+  },
+  centerContent: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 16,
+  },
+  errorText: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  retryButton: {
+    backgroundColor: '#8B5CF6',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

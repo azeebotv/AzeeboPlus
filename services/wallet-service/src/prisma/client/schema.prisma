@@ -1,0 +1,51 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Wallet {
+  id           String   @id @default(uuid())
+  userId       String   @unique
+  balance      Decimal  @default(0)
+  bonusBalance Decimal  @default(0)
+  promoBalance Decimal  @default(0)
+  currency     String   @default("NGN")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  transactions WalletTransaction[]
+
+  @@map("wallets")
+}
+
+model WalletTransaction {
+  id             String   @id @default(uuid())
+  walletId       String
+  type           String // credit, debit, bonus, promo, refund
+  amount         Decimal
+  status         String // pending, completed, failed, reversed
+  description    String?
+  reference      String?
+  provider       String? // paystack, flutterwave, internal
+  providerRef    String? // Unique provider reference (e.g., Paystack transaction ID)
+  metadata       Json?
+  idempotencyKey String?  @unique
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  wallet Wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerRef])
+  @@index([walletId])
+  @@index([type])
+  @@index([status])
+  @@index([createdAt])
+  @@index([idempotencyKey])
+  @@index([provider])
+  @@map("wallet_transactions")
+}

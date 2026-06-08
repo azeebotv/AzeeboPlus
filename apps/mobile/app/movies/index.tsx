@@ -1,49 +1,59 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList, Image } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
+import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
+import { apiClient } from '../../src/api/client';
 
-const FEATURED_MOVIE = {
-  id: '1',
-  title: 'Blood Sisters 2',
-  genre: 'Drama',
-  rating: '4.8',
-  duration: '2h 15m',
-  thumbnail: '',
-};
-
-const TRENDING_MOVIES = [
-  { id: '1', title: 'Avatar', genre: 'Sci-Fi', rating: '4.9', thumbnail: '' },
-  { id: '2', title: 'The King', genre: 'Drama', rating: '4.7', thumbnail: '' },
-  { id: '3', title: 'Lara Croft', genre: 'Action', rating: '4.5', thumbnail: '' },
-  { id: '4', title: 'Queen of Tears', genre: 'Romance', rating: '4.6', thumbnail: '' },
-];
-
-const AFRICAN_CINEMA = [
-  { id: '1', title: 'The Milk', genre: 'Drama', thumbnail: '' },
-  { id: '2', title: 'Four Bullets', genre: 'Action', thumbnail: '' },
-  { id: '3', title: 'The Rumble', genre: 'Documentary', thumbnail: '' },
-];
-
-const HOLLYWOOD_HITS = [
-  { id: '1', title: 'Oppenheimer', genre: 'Drama', thumbnail: '' },
-  { id: '2', title: 'Barbie', genre: 'Comedy', thumbnail: '' },
-  { id: '3', title: 'Dune Part 2', genre: 'Sci-Fi', thumbnail: '' },
-];
-
-const PASSES = [
-  { id: '1', name: 'Movie Pass', price: '₦2,500', period: '/month', features: ['Unlimited movies', 'HD quality', 'Download 5 films'] },
-  { id: '2', name: 'Cinema Plus', price: '₦4,500', period: '/month', features: ['All movies', '4K quality', 'Unlimited downloads', 'Early access'] },
-];
-
-const CATEGORIES = ['All', 'Action', 'Drama', 'Comedy', 'Romance', 'Horror', 'Documentary'];
+interface MovieItem { id: string; title: string; genre: string; rating: string; thumbnail?: string; }
+interface MovieDetail extends MovieItem { duration?: string; }
+interface PassData { id: string; name: string; price: string; period: string; features: string[]; }
 
 export default function MoviesUniverseHome() {
   const colorScheme = useColorScheme();
   const router = useRouter();
   const isDark = colorScheme === 'dark';
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [featuredMovie, setFeaturedMovie] = useState<MovieDetail | null>(null);
+  const [trendingMovies, setTrendingMovies] = useState<MovieItem[]>([]);
+  const [africanCinema, setAfricanCinema] = useState<MovieItem[]>([]);
+  const [hollywoodHits, setHollywoodHits] = useState<MovieItem[]>([]);
+  const [passes, setPasses] = useState<PassData[]>([]);
 
-  const renderMovieCard = (item: typeof TRENDING_MOVIES[0], size: 'large' | 'small' = 'small') => (
+  const fetchData = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const [featuredRes, trendingRes, africanRes, hollywoodRes, passesRes] = await Promise.all([
+        apiClient.get<any>('/v1/movies/featured'),
+        apiClient.get<any>('/v1/movies/trending'),
+        apiClient.get<any>('/v1/movies/african'),
+        apiClient.get<any>('/v1/movies/hollywood'),
+        apiClient.get<any>('/v1/movies/passes'),
+      ]);
+      const featured = Array.isArray(featuredRes) ? featuredRes[0] : featuredRes?.data?.[0] ?? null;
+      setFeaturedMovie(featured ?? null);
+      setTrendingMovies(Array.isArray(trendingRes) ? trendingRes : trendingRes?.data ?? []);
+      setAfricanCinema(Array.isArray(africanRes) ? africanRes : africanRes?.data ?? []);
+      setHollywoodHits(Array.isArray(hollywoodRes) ? hollywoodRes : hollywoodRes?.data ?? []);
+      setPasses(Array.isArray(passesRes) ? passesRes : passesRes?.data ?? []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchData(); }, []);
+
+  if (isLoading) return <LoadingState text="Loading movies..." />;
+  if (error) return <ErrorState description={error} onRetry={fetchData} />;
+  if (!featuredMovie && !trendingMovies.length) {
+    return <EmptyState icon="🎬" title="No movies available" description="Check back later for movies" />;
+  }
+
+  const renderMovieCard = (item: MovieItem, size: 'large' | 'small' = 'small') => (
     <TouchableOpacity
       key={item.id}
       style={[styles.movieCard, size === 'large' && styles.movieCardLarge]}
@@ -93,7 +103,7 @@ export default function MoviesUniverseHome() {
         </View>
         <TouchableOpacity
           style={styles.featuredCard}
-          onPress={() => router.push(`/movies/${FEATURED_MOVIE.id}`)}
+          onPress={() => router.push(`/movies/${featuredMovie?.id ?? '1'}`)}
         >
           <View style={styles.featuredImagePlaceholder}>
             <Text style={styles.featuredEmoji}>🎬</Text>
@@ -101,15 +111,15 @@ export default function MoviesUniverseHome() {
               <Text style={styles.featuredBadgeText}>NEW</Text>
             </View>
             <View style={styles.featuredMeta}>
-              <Text style={styles.featuredRating}>⭐ {FEATURED_MOVIE.rating}</Text>
-              <Text style={styles.featuredDuration}>{FEATURED_MOVIE.duration}</Text>
+              <Text style={styles.featuredRating}>⭐ {featuredMovie?.rating ?? '0.0'}</Text>
+              <Text style={styles.featuredDuration}>{featuredMovie?.duration ?? ''}</Text>
             </View>
           </View>
           <View style={styles.featuredInfo}>
             <Text style={[styles.featuredTitle, { color: isDark ? '#fff' : '#000' }]}>
-              {FEATURED_MOVIE.title}
+              {featuredMovie?.title ?? 'Featured Movie'}
             </Text>
-            <Text style={styles.featuredGenre}>{FEATURED_MOVIE.genre}</Text>
+            <Text style={styles.featuredGenre}>{featuredMovie?.genre ?? ''}</Text>
             <View style={styles.featuredActions}>
               <TouchableOpacity style={styles.playButton}>
                 <Text style={styles.playIcon}>▶</Text>
@@ -133,7 +143,7 @@ export default function MoviesUniverseHome() {
           </TouchableOpacity>
         </View>
         <FlatList
-          data={TRENDING_MOVIES}
+          data={trendingMovies}
           renderItem={({ item }) => renderMovieCard(item, 'small')}
           keyExtractor={(item) => item.id}
           horizontal
@@ -152,7 +162,7 @@ export default function MoviesUniverseHome() {
           </TouchableOpacity>
         </View>
         <FlatList
-          data={AFRICAN_CINEMA}
+          data={africanCinema}
           renderItem={({ item }) => renderMovieCard(item, 'small')}
           keyExtractor={(item) => item.id}
           horizontal
@@ -171,7 +181,7 @@ export default function MoviesUniverseHome() {
           </TouchableOpacity>
         </View>
         <FlatList
-          data={HOLLYWOOD_HITS}
+          data={hollywoodHits}
           renderItem={({ item }) => renderMovieCard(item, 'small')}
           keyExtractor={(item) => item.id}
           horizontal
@@ -185,7 +195,7 @@ export default function MoviesUniverseHome() {
           Available Passes
         </Text>
         <View style={styles.passesList}>
-          {PASSES.map((pass) => (
+          {passes.map((pass) => (
             <TouchableOpacity key={pass.id} style={styles.passCard}>
               <View style={styles.passHeader}>
                 <Text style={[styles.passName, { color: isDark ? '#fff' : '#000' }]}>

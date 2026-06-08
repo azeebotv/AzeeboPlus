@@ -26,7 +26,7 @@ export class ContentService {
   ) {
     this.moderationServiceUrl = this.configService.get<string>(
       'MODERATION_SERVICE_URL',
-      'http://localhost:3004'
+      'http://moderation-service:3022'
     );
     this.safetyScanEnabled = this.configService.get<boolean>(
       'SAFETY_SCAN_ENABLED',
@@ -132,15 +132,36 @@ export class ContentService {
   }
 
   async getHomeFeed(userId?: string) {
+    const contentSelect = {
+      id: true,
+      title: true,
+      slug: true,
+      description: true,
+      thumbnailUrl: true,
+      type: true,
+      status: true,
+      viewCount: true,
+      createdAt: true,
+      universe: {
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+        },
+      },
+    };
+
     const [trending, recommended, latest] = await Promise.all([
       this.prisma.contentItem.findMany({
+        where: { status: 'published' },
+        select: contentSelect,
         orderBy: { viewCount: 'desc' },
         take: 10,
-        include: { universe: true },
       }),
       userId
         ? await this.prisma.contentItem.findMany({
             where: {
+              status: 'published',
               id: {
                 notIn: (
                   await this.prisma.watchHistory.findMany({
@@ -150,15 +171,16 @@ export class ContentService {
                 ).map((h) => h.contentId),
               },
             },
+            select: contentSelect,
             orderBy: { viewCount: 'desc' },
             take: 10,
-            include: { universe: true },
           })
         : [],
       this.prisma.contentItem.findMany({
+        where: { status: 'published' },
+        select: contentSelect,
         orderBy: { createdAt: 'desc' },
         take: 10,
-        include: { universe: true },
       }),
     ]);
 
@@ -176,9 +198,24 @@ export class ContentService {
   async getWatchFeed(_userId?: string) {
     const content = await this.prisma.contentItem.findMany({
       where: { status: 'published' },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        thumbnail: true,
+        status: true,
+        viewCount: true,
+        createdAt: true,
+        universe: {
+          select: {
+            id: true,
+            name: true,
+            displayName: true,
+          },
+        },
+      },
       orderBy: { viewCount: 'desc' },
       take: 50,
-      include: { universe: true },
     });
 
     return {

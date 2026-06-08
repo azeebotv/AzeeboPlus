@@ -3,16 +3,25 @@ import React from 'react';
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
+import { usePWA } from '../hooks/usePWA';
 import { api, ContentItem } from '../lib/api';
 import { Button, Card, ContentCard, HeroCard, Skeleton, Divider, Badge, Avatar } from '@azeebo/ui';
 import { colors, gradients } from '@azeebo/design-tokens';
 import Link from 'next/link';
+import { ThemeToggle } from '../components/ThemeToggle';
+import { useSettings } from '@/hooks/useDatabase';
 
 export default function Home(): JSX.Element {
   const { user, isAuthenticated, logout } = useAuth();
+  const { resolvedTheme } = useTheme();
+  const { isOnline, isInstalled, install } = usePWA();
+  const { getSetting } = useSettings();
+  const siteName = getSetting('site_name', 'Azeebo+');
   const [featuredContent, setFeaturedContent] = useState<ContentItem[]>([]);
   const [trendingContent, setTrendingContent] = useState<ContentItem[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [showInstallPrompt, setShowInstallPrompt] = useState(false);
 
   useEffect(() => {
     const fetchContent = async (): Promise<void> => {
@@ -40,8 +49,57 @@ export default function Home(): JSX.Element {
     fetchContent();
   }, []);
 
+  useEffect(() => {
+    if (!isInstalled && 'serviceWorker' in navigator) {
+      const timer = setTimeout(() => {
+        setShowInstallPrompt(true);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [isInstalled]);
+
+  const handleInstall = async () => {
+    const accepted = await install();
+    if (accepted) {
+      setShowInstallPrompt(false);
+    }
+  };
+
   return (
     <div className="min-h-screen" style={{ backgroundColor: colors.bg.primary }}>
+      {!isOnline && (
+        <div className="bg-yellow-500 text-black text-center py-2 px-4 text-sm font-medium sticky top-0 z-50">
+          ⚠️ You are offline. Some features may not be available.
+        </div>
+      )}
+
+      {showInstallPrompt && !isInstalled && (
+        <div className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-4 sm:w-96 bg-card border border-border rounded-xl shadow-xl p-4 z-50">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="font-semibold text-foreground">Install {siteName}</p>
+              <p className="text-sm text-muted-foreground">Get the app experience on your device</p>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowInstallPrompt(false)}
+              >
+                Later
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={handleInstall}
+              >
+                Install
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <header className="sticky top-0 z-50 backdrop-blur-xl bg-black/40 border-b border-gray-700/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between gap-4">
@@ -52,7 +110,7 @@ export default function Home(): JSX.Element {
             >
               <span className="text-white font-bold text-xl leading-none">A</span>
             </div>
-            <h1 className="text-2xl font-bold hidden sm:block">Azeebo+</h1>
+            <h1 className="text-2xl font-bold hidden sm:block">{siteName}</h1>
           </div>
 
           <nav className="hidden md:flex items-center gap-8">
@@ -69,10 +127,11 @@ export default function Home(): JSX.Element {
           </nav>
 
           <div className="flex items-center gap-4">
+            <ThemeToggle />
             {isAuthenticated ? (
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
-                  <Avatar size="medium" fallback={user?.name?.charAt(0) || 'U'} />
+                  <Avatar size="md" fallback={user?.name?.charAt(0) || 'U'} />
                   <span className="text-sm font-medium" style={{ color: colors.text.primary }}>
                     {user?.name}
                   </span>
@@ -247,7 +306,7 @@ export default function Home(): JSX.Element {
               Unlock Exclusive Rewards
             </h3>
             <p className="text-lg text-white/90 mb-8 max-w-xl mx-auto">
-              Join Azeebo+ today and get rewarded for every show you watch, every vote you cast, and
+              Join {siteName} today and get rewarded for every show you watch, every vote you cast, and
               every share you make.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -275,7 +334,7 @@ export default function Home(): JSX.Element {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
             <div>
               <h4 className="font-bold text-lg mb-4" style={{ color: colors.text.primary }}>
-                Azeebo+
+                {siteName}
               </h4>
               <ul className="space-y-2" style={{ color: colors.text.secondary }}>
                 {['About', 'Careers', 'Press'].map((item) => (
@@ -338,7 +397,7 @@ export default function Home(): JSX.Element {
             className="mt-12 pt-8 border-t text-center text-sm"
             style={{ borderColor: colors.border.light, color: colors.text.tertiary }}
           >
-            <p>© 2026 Azeebo+. All rights reserved.</p>
+            <p>© 2026 {siteName}. All rights reserved.</p>
           </div>
         </div>
       </footer>

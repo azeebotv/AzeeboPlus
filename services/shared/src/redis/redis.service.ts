@@ -6,7 +6,10 @@ export class RedisService implements OnModuleDestroy {
   private redis: Redis;
 
   constructor() {
-    this.redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
+    if (!process.env.REDIS_URL) {
+      throw new Error('REDIS_URL environment variable must be set');
+    }
+    this.redis = new Redis(process.env.REDIS_URL);
   }
 
   async get(key: string): Promise<string | null> {

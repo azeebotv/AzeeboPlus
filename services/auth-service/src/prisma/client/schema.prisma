@@ -1,0 +1,116 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String   @id @default(uuid())
+  email          String   @unique
+  password       String
+  displayName    String
+  avatar         String?
+  role           String   @default("user")
+  isVerified     Boolean  @default(false)
+  mfaEnabled     Boolean  @default(false)
+  mfaSecret      String?
+  mfaBackupCodes String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  sessions       Session[]
+  otps           Otp[]
+  socialAccounts SocialAccount[]
+
+  @@index([role])
+  @@index([createdAt])
+  @@map("users")
+}
+
+model SocialAccount {
+  id           String   @id @default(uuid())
+  userId       String
+  provider     String
+  socialId     String
+  accessToken  String?
+  refreshToken String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([socialId, provider])
+  @@unique([userId, provider])
+  @@index([userId])
+  @@index([provider])
+  @@map("social_accounts")
+}
+
+model Session {
+  id           String   @id @default(uuid())
+  userId       String
+  refreshToken String   @unique
+  expiresAt    DateTime
+  deviceName   String?
+  deviceType   String?
+  os           String?
+  browser      String?
+  ipAddress    String?
+  lastActiveAt DateTime @default(now())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+model Otp {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  code      String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([expiresAt])
+  @@map("otps")
+}
+
+model Role {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("roles")
+}
+
+model AuditLog {
+  id           String   @id @default(uuid())
+  actor        String?
+  action       String
+  resourceType String?
+  resourceId   String?
+  result       String
+  error        String?
+  ipAddress    String?
+  userAgent    String?
+  timestamp    DateTime @default(now())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([actor])
+  @@index([action])
+  @@index([timestamp])
+  @@map("audit_logs")
+}

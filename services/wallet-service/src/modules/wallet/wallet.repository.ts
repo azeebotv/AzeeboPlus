@@ -9,11 +9,11 @@ export class WalletRepository {
     return this.prisma.wallet.findUnique({ where: { userId } });
   }
 
-  async create(data: any) {
+  async create(data: { userId: string; currency?: string }) {
     return this.prisma.wallet.create({ data });
   }
 
-  async update(id: string, data: any) {
+  async update(id: string, data: Partial<{ balance: number; bonusBalance: number; promoBalance: number; currency: string }>) {
     return this.prisma.wallet.update({ where: { id }, data });
   }
 

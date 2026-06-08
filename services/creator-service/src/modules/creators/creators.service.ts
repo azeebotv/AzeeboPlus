@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
 import { Prisma } from '../../prisma/client';
 import { CreatorResponse } from './interfaces/creator-response.interface';
@@ -43,12 +44,20 @@ interface PayoutRequestData {
 @Injectable()
 export class CreatorsService {
   private readonly logger = new Logger(CreatorsService.name);
-  private readonly walletServiceBaseUrl = process.env.WALLET_SERVICE_URL || 'http://localhost:3002';
-  private readonly mediaServiceBaseUrl = process.env.MEDIA_SERVICE_URL || 'http://localhost:3019';
-  private readonly analyticsServiceBaseUrl = process.env.ANALYTICS_SERVICE_URL || 'http://localhost:3008';
-  private readonly minimumPayout = parseInt(process.env.MINIMUM_PAYOUT || '5000', 10);
+  private readonly walletServiceBaseUrl: string;
+  private readonly mediaServiceBaseUrl: string;
+  private readonly analyticsServiceBaseUrl: string;
+  private readonly minimumPayout: number;
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly configService: ConfigService,
+  ) {
+    this.walletServiceBaseUrl = this.configService.getOrThrow<string>('WALLET_SERVICE_URL');
+    this.mediaServiceBaseUrl = this.configService.getOrThrow<string>('MEDIA_SERVICE_URL');
+    this.analyticsServiceBaseUrl = this.configService.getOrThrow<string>('ANALYTICS_SERVICE_URL');
+    this.minimumPayout = parseInt(this.configService.get<string>('MINIMUM_PAYOUT', '5000'), 10);
+  }
 
   private async trackAnalyticsEvent(
     eventName: string,
@@ -611,7 +620,7 @@ export class CreatorsService {
     });
 
     if (existingTip) {
-      await this.trackAnalyticsEvent('tip_sent', userId, {
+      await this.trackAnalyticsEvent('creator_tip_sent', userId, {
         creatorId,
         amount,
         idempotent: true,
@@ -647,7 +656,7 @@ export class CreatorsService {
           orderBy: { createdAt: 'desc' },
         });
         if (existing) {
-          await this.trackAnalyticsEvent('tip_sent', userId, {
+          await this.trackAnalyticsEvent('creator_tip_sent', userId, {
             creatorId,
             amount,
             idempotent: true,
@@ -708,7 +717,7 @@ export class CreatorsService {
 
       const newTip = transactionResult.newTip;
 
-      await this.trackAnalyticsEvent('tip_sent', userId, {
+      await this.trackAnalyticsEvent('creator_tip_sent', userId, {
         creatorId,
         amount,
         idempotencyKey,

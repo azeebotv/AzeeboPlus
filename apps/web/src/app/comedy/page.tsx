@@ -2,71 +2,35 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { Button, Card, Skeleton, Badge, Avatar } from '@azeebo/ui';
-import { colors, gradients } from '@azeebo/design-tokens';
+import { colors } from '@azeebo/design-tokens';
 import Link from 'next/link';
-
-const mockClips = [
-  {
-    id: '1',
-    title: 'When Your Mom Finds Your Phone',
-    comedian: 'Apatroot',
-    views: '2.5M',
-    likes: '128K',
-    thumbnail: 'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=funny%20african%20comedy%20skit%20scene%20with%20exaggerated%20expressions&image_size=landscape_16_9',
-    duration: '4:32',
-  },
-  {
-    id: '2',
-    title: 'Nigerian Parents vs Technology',
-    comedian: 'Taaooma',
-    views: '1.8M',
-    likes: '95K',
-    thumbnail: 'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=comedy%20skit%20showing%20generation%20gap%20with%20technology&image_size=landscape_16_9',
-    duration: '5:45',
-  },
-  {
-    id: '3',
-    title: 'How Lagosians React to Traffic',
-    comedian: 'Zics',
-    views: '1.2M',
-    likes: '67K',
-    thumbnail: 'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=funny%20traffic%20scene%20in%20lagos%20nigeria%20with%20humorous%20characters&image_size=landscape_16_9',
-    duration: '3:18',
-  },
-  {
-    id: '4',
-    title: 'School Memories We All Have',
-    comedian: 'Nigerian Zoomer',
-    views: '980K',
-    likes: '54K',
-    thumbnail: 'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=nigerian%20school%20classroom%20comedy%20scene%20with%20students&image_size=landscape_16_9',
-    duration: '4:02',
-  },
-];
-
-const mockComedians = [
-  { id: '1', name: 'Apatroot', followers: '3.2M', avatar: '😂', clips: 156 },
-  { id: '2', name: 'Taaooma', followers: '2.8M', avatar: '🤣', clips: 98 },
-  { id: '3', name: 'Zics', followers: '1.5M', avatar: '😆', clips: 72 },
-  { id: '4', name: 'Nigerian Zoomer', followers: '1.1M', avatar: '🙃', clips: 45 },
-];
-
-const mockTrending = [
-  { id: '1', title: '#NaijaComedyChallenge', posts: '12.5K', participants: '3.2K' },
-  { id: '2', title: '#FunnyFriday', posts: '8.9K', participants: '2.1K' },
-];
+import { apiFetch, ContentItem } from '@/lib/api';
+import { webLogger } from '@/lib/logger';
 
 export default function ComedyPage(): JSX.Element {
   const { user, isAuthenticated } = useAuth();
-  const [clips, setClips] = useState(mockClips);
-  const [comedians, setComedians] = useState(mockComedians);
+  const [clips, setClips] = useState<ContentItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 500);
-    return () => clearTimeout(timer);
+    const fetchContent = async () => {
+      try {
+        setIsLoading(true);
+        const result = await apiFetch<ContentItem[]>('/v1/content?universe=comedy&limit=20');
+
+        if (result.success && result.data) {
+          setClips(result.data);
+        }
+      } catch (err) {
+        webLogger.error('Failed to fetch comedy content', err);
+        setError('Failed to load comedy content. Please try again.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchContent();
   }, []);
 
   return (
@@ -75,7 +39,7 @@ export default function ComedyPage(): JSX.Element {
       <header className="sticky top-0 z-50 backdrop-blur-xl bg-black/40 border-b border-gray-700/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl flex items-center justify-center" style={{ background: gradients.brand }}>
+            <div className="h-10 w-10 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #F39C12 0%, #E67E22 100%)' }}>
               <span className="text-white font-bold text-xl leading-none">A</span>
             </div>
             <h1 className="text-2xl font-bold hidden sm:block" style={{ color: colors.text.primary }}>Azeebo+</h1>
@@ -98,7 +62,7 @@ export default function ComedyPage(): JSX.Element {
             {isAuthenticated ? (
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
-                  <Avatar size="medium" fallback={user?.name?.charAt(0) || 'U'} />
+                  <Avatar size="md" fallback={user?.name?.charAt(0) || 'U'} />
                   <span className="text-sm font-medium" style={{ color: colors.text.primary }}>{user?.name}</span>
                 </div>
               </div>
@@ -136,31 +100,6 @@ export default function ComedyPage(): JSX.Element {
         </div>
       </section>
 
-      {/* Trending Challenges */}
-      <section className="py-8" style={{ backgroundColor: colors.bg.secondary }}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-4 overflow-x-auto pb-2">
-            {mockTrending.map((trend) => (
-              <Card key={trend.id} className="flex-shrink-0" padding="none">
-                <div className="p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-full bg-yellow-500/20 flex items-center justify-center">
-                      <span className="text-2xl">🔥</span>
-                    </div>
-                    <div>
-                      <h4 className="font-bold" style={{ color: colors.text.primary }}>{trend.title}</h4>
-                      <p className="text-sm" style={{ color: colors.text.secondary }}>
-                        {trend.posts} posts • {trend.participants} participants
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* Featured Clips */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="flex items-center justify-between mb-8">
@@ -175,71 +114,48 @@ export default function ComedyPage(): JSX.Element {
           <Button variant="ghost">View All</Button>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {clips.map((clip) => (
-            <Card key={clip.id} padding="none" className="overflow-hidden cursor-pointer hover:shadow-xl transition-shadow group">
-              <div className="relative">
-                <img src={clip.thumbnail} alt={clip.title} className="w-full h-40 object-cover group-hover:scale-105 transition-transform" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-                <div className="absolute bottom-2 right-2 bg-black/70 px-2 py-1 rounded text-xs text-white">
-                  {clip.duration}
-                </div>
-                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                  <div className="w-14 h-14 rounded-full bg-white/90 flex items-center justify-center">
-                    <span className="text-2xl">▶️</span>
-                  </div>
-                </div>
-              </div>
-              <div className="p-4">
-                <h3 className="font-bold text-sm mb-2 truncate" style={{ color: colors.text.primary }}>{clip.title}</h3>
-                <p className="text-xs" style={{ color: colors.text.secondary }}><Link href={`/creator/${clip.comedian?.toLowerCase().replace(/\s+/g, '-')}`} className="hover:underline">{clip.comedian}</Link></p>
-                <div className="flex items-center gap-4 mt-2 text-xs" style={{ color: colors.text.secondary }}>
-                  <span>👁️ {clip.views}</span>
-                  <span>❤️ {clip.likes}</span>
-                </div>
-              </div>
-            </Card>
-          ))}
-        </div>
-      </section>
-
-      {/* Top Comedians */}
-      <section className="py-12" style={{ backgroundColor: colors.bg.secondary }}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <h2 className="text-2xl sm:text-3xl font-bold" style={{ color: colors.text.primary }}>
-                Top Comedians
-              </h2>
-              <p className="text-base mt-1" style={{ color: colors.text.secondary }}>
-                Follow your favorite creators
-              </p>
-            </div>
-            <Button variant="ghost">View All</Button>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
-            {comedians.map((comedian) => (
-              <Card key={comedian.id} className="text-center cursor-pointer hover:shadow-xl transition-shadow" padding="none">
-                <div className="p-4">
-                  <div className="w-20 h-20 rounded-full bg-yellow-500/20 flex items-center justify-center mx-auto mb-4">
-                    <span className="text-4xl">{comedian.avatar}</span>
-                  </div>
-                  <h3 className="font-bold" style={{ color: colors.text.primary }}>{comedian.name}</h3>
-                  <p className="text-sm mt-1" style={{ color: colors.text.secondary }}>
-                    {comedian.followers} followers
-                  </p>
-                  <p className="text-xs mt-1" style={{ color: colors.text.tertiary }}>
-                    {comedian.clips} clips
-                  </p>
-                  <Button variant="primary" className="w-full mt-4">
-                    Follow
-                  </Button>
+        {isLoading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <Card key={i} padding="none">
+                <Skeleton height="200px" />
+                <div className="p-4 space-y-3">
+                  <Skeleton width="80%" height="20px" />
+                  <Skeleton width="60%" height="16px" />
                 </div>
               </Card>
             ))}
           </div>
-        </div>
+        ) : error ? (
+          <div className="text-center py-12">
+            <p className="text-lg mb-4" style={{ color: colors.text.secondary }}>{error}</p>
+            <Button variant="primary" onClick={() => window.location.reload()}>Retry</Button>
+          </div>
+        ) : clips.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {clips.map((clip) => (
+              <Card key={clip.id} padding="none" className="overflow-hidden cursor-pointer hover:shadow-xl transition-shadow group">
+                <div className="relative">
+                  <img src={clip.thumbnail} alt={clip.title} className="w-full h-40 object-cover group-hover:scale-105 transition-transform" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="w-14 h-14 rounded-full bg-white/90 flex items-center justify-center">
+                      <span className="text-2xl">▶️</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="p-4">
+                  <h3 className="font-bold text-sm mb-2 truncate" style={{ color: colors.text.primary }}>{clip.title}</h3>
+                  <p className="text-sm line-clamp-2" style={{ color: colors.text.secondary }}>{clip.description}</p>
+                </div>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <p className="text-lg" style={{ color: colors.text.secondary }}>No comedy clips available yet</p>
+          </div>
+        )}
       </section>
 
       {/* Categories */}
@@ -257,18 +173,17 @@ export default function ComedyPage(): JSX.Element {
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
           {[
-            { name: 'Skits', icon: '🎭', count: '2.5K' },
-            { name: 'Stand-up', icon: '🎤', count: '500' },
-            { name: 'Improv', icon: '🎨', count: '300' },
-            { name: 'Parodies', icon: '🎬', count: '800' },
-            { name: 'Roasts', icon: '🔥', count: '200' },
-            { name: 'Comedy Series', icon: '📺', count: '150' },
+            { name: 'Skits', icon: '🎭' },
+            { name: 'Stand-up', icon: '🎤' },
+            { name: 'Improv', icon: '🎨' },
+            { name: 'Parodies', icon: '🎬' },
+            { name: 'Roasts', icon: '🔥' },
+            { name: 'Comedy Series', icon: '📺' },
           ].map((category) => (
             <Card key={category.name} className="text-center cursor-pointer hover:shadow-lg transition-shadow" padding="none">
               <div className="p-4">
                 <span className="text-3xl mb-2 block">{category.icon}</span>
                 <h4 className="font-medium text-sm" style={{ color: colors.text.primary }}>{category.name}</h4>
-                <p className="text-xs mt-1" style={{ color: colors.text.secondary }}>{category.count} clips</p>
               </div>
             </Card>
           ))}

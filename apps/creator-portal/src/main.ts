@@ -35,6 +35,12 @@ async function bootstrap(): Promise<void> {
     })
   );
 
+  if (!process.env.CREATOR_ALLOWED_ORIGINS) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('CREATOR_ALLOWED_ORIGINS environment variable must be set in production');
+    }
+    Logger.warn('CREATOR_ALLOWED_ORIGINS not set, using default localhost origin');
+  }
   const allowedOrigins = process.env.CREATOR_ALLOWED_ORIGINS?.split(',') || [
     'http://localhost:3014',
   ];

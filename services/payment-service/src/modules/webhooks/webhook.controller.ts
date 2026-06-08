@@ -32,7 +32,7 @@ export class WebhookController {
   async handlePaystackWebhook(
     @Body() payload: WebhookPayload,
     @Headers('x-paystack-signature') signature: string,
-    @Request() req: any,
+    @Request() req: { rawBody?: string },
   ) {
     const reference =
       (payload.data as Record<string, unknown>)?.reference as string;
@@ -113,7 +113,7 @@ export class WebhookController {
   async handleFlutterwaveWebhook(
     @Body() payload: WebhookPayload,
     @Headers('verif-hash') signature: string,
-    @Request() req: any,
+    @Request() req: { rawBody?: string },
   ) {
     const reference =
       ((payload.data as Record<string, unknown>)?.txRef as string) ||

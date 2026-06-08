@@ -1,43 +1,86 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList, Dimensions } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
+import { creatorApi, CreatorDashboard, CreatorAnalytics } from '../../src/api/creator';
+import { LoadingState, ErrorState } from '../../src/components/StateContainers';
 
 const { width } = Dimensions.get('window');
 
-const STATS = [
-  { id: '1', label: 'Total Views', value: '1.2M', change: '+12%', emoji: '👁️' },
-  { id: '2', label: 'Followers', value: '45.2K', change: '+8%', emoji: '👥' },
-  { id: '3', label: 'Engagement', value: '8.5%', change: '+2%', emoji: '❤️' },
-  { id: '4', label: 'Earnings', value: '₦125K', change: '+15%', emoji: '💰' },
-];
-
-const RECENT_CONTENT = [
-  { id: '1', title: 'New Dance Tutorial', views: '45K', likes: '3.2K', comments: '245', time: '2h ago', emoji: '💃' },
-  { id: '2', title: 'Afrobeat Challenge', views: '120K', likes: '12K', comments: '890', time: '1d ago', emoji: '🎵' },
-  { id: '3', title: 'Behind the Scenes', views: '23K', likes: '2.1K', comments: '156', time: '2d ago', emoji: '🎬' },
-];
-
-const NOTIFICATIONS = [
-  { id: '1', message: 'You earned ₦5,000 from your latest content', time: '1h ago', type: 'earning' },
-  { id: '2', message: 'Marcus commented on your video', time: '3h ago', type: 'comment' },
-  { id: '3', message: 'Your video is trending in Dance!', time: '5h ago', type: 'trending' },
-];
-
-const ANALYTICS_DATA = [
-  { day: 'Mon', views: 12000 },
-  { day: 'Tue', views: 15000 },
-  { day: 'Wed', views: 8000 },
-  { day: 'Thu', views: 22000 },
-  { day: 'Fri', views: 18000 },
-  { day: 'Sat', views: 25000 },
-  { day: 'Sun', views: 30000 },
-];
+function formatNumber(num: number): string {
+  if (num >= 1_000_000) return (num / 1_000_000).toFixed(1) + 'M';
+  if (num >= 1_000) return (num / 1_000).toFixed(1) + 'K';
+  return String(num);
+}
 
 export default function CreatorDashboard() {
   const colorScheme = useColorScheme();
   const router = useRouter();
   const isDark = colorScheme === 'dark';
+  const [dashboardData, setDashboardData] = useState<CreatorDashboard | null>(null);
+  const [analyticsData, setAnalyticsData] = useState<CreatorAnalytics | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchData = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const [dashboardRes, analyticsRes] = await Promise.all([
+        creatorApi.getDashboard(),
+        creatorApi.getAnalytics(),
+      ]);
+      if (dashboardRes.success) setDashboardData(dashboardRes.data);
+      if (analyticsRes.success) setAnalyticsData(analyticsRes.data);
+    } catch (err) {
+      setError('Failed to load dashboard data. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  if (isLoading) {
+    return <LoadingState text="Loading dashboard..." />;
+  }
+
+  if (error) {
+    return <ErrorState description={error} onRetry={fetchData} />;
+  }
+
+  const stats = [
+    { id: '1', label: 'Total Views', value: formatNumber(dashboardData?.totalViews ?? 0), change: '', emoji: '👁️' },
+    { id: '2', label: 'Followers', value: formatNumber(dashboardData?.totalFollowers ?? 0), change: '', emoji: '👥' },
+    { id: '3', label: 'Total Content', value: String(dashboardData?.totalContent ?? 0), change: '', emoji: '📹' },
+    { id: '4', label: 'Total Likes', value: formatNumber(dashboardData?.totalLikes ?? 0), change: '', emoji: '❤️' },
+  ];
+
+  const recentContent = dashboardData?.topContent?.map((item) => ({
+    id: item.id,
+    title: item.title,
+    views: formatNumber(item.views),
+    likes: formatNumber(item.likes),
+    comments: '0',
+    time: '',
+    emoji: '🎬',
+  })) ?? [];
+
+  const recentActivity = dashboardData?.recentActivity?.map((item, idx) => ({
+    id: String(idx),
+    message: item.description,
+    time: item.timestamp ? new Date(item.timestamp).toLocaleDateString() : '',
+    type: item.type === 'earnings' ? 'earning' : item.type === 'content' ? 'trending' : 'comment',
+  })) ?? [];
+
+  const weeklyViews = analyticsData?.viewsOverTime?.slice(-7).map((item) => ({
+    day: new Date(item.date).toLocaleDateString('en', { weekday: 'short' }),
+    views: item.views,
+  })) ?? [];
+
+  const maxViews = Math.max(...weeklyViews.map((w) => w.views), 1);
 
   return (
     <ScrollView style={[styles.container, { backgroundColor: isDark ? '#0a0a0a' : '#ffffff' }]}>
@@ -59,7 +102,7 @@ export default function CreatorDashboard() {
           </View>
           <View style={styles.creatorDetails}>
             <Text style={[styles.creatorName, { color: isDark ? '#fff' : '#000' }]}>Your Channel</Text>
-            <Text style={styles.creatorCategory}>Dance • Music</Text>
+            <Text style={styles.creatorCategory}>Creator</Text>
           </View>
           <TouchableOpacity style={styles.editButton}>
             <Text style={styles.editIcon}>✏️</Text>
@@ -68,13 +111,13 @@ export default function CreatorDashboard() {
       </View>
 
       <View style={styles.statsGrid}>
-        {STATS.map((stat) => (
+        {stats.map((stat) => (
           <View key={stat.id} style={[styles.statCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}>
             <Text style={styles.statEmoji}>{stat.emoji}</Text>
             <Text style={[styles.statValue, { color: isDark ? '#fff' : '#000' }]}>{stat.value}</Text>
             <Text style={styles.statLabel}>{stat.label}</Text>
             <View style={styles.statChange}>
-              <Text style={styles.changeText}>{stat.change}</Text>
+              <Text style={styles.changeText}>{stat.change || '-'}</Text>
             </View>
           </View>
         ))}
@@ -91,17 +134,19 @@ export default function CreatorDashboard() {
         </View>
         <View style={styles.chartContainer}>
           <View style={styles.chartPlaceholder}>
-            {ANALYTICS_DATA.map((item, index) => (
+            {weeklyViews.length > 0 ? weeklyViews.map((item, index) => (
               <View key={index} style={styles.chartBar}>
                 <View
                   style={[
                     styles.bar,
-                    { height: (item.views / 30000) * 100 },
+                    { height: (item.views / maxViews) * 100 },
                   ]}
                 />
                 <Text style={styles.chartLabel}>{item.day}</Text>
               </View>
-            ))}
+            )) : (
+              <Text style={{ color: '#888', textAlign: 'center', width: '100%' }}>No data available</Text>
+            )}
           </View>
         </View>
       </View>
@@ -116,7 +161,7 @@ export default function CreatorDashboard() {
           </TouchableOpacity>
         </View>
         <View style={styles.contentList}>
-          {RECENT_CONTENT.map((item) => (
+          {recentContent.length > 0 ? recentContent.map((item) => (
             <TouchableOpacity key={item.id} style={[styles.contentItem, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}>
               <View style={styles.contentThumbnail}>
                 <Text style={styles.contentEmoji}>{item.emoji}</Text>
@@ -136,18 +181,20 @@ export default function CreatorDashboard() {
                 <Text style={styles.moreIcon}>⋮</Text>
               </TouchableOpacity>
             </TouchableOpacity>
-          ))}
+          )) : (
+            <Text style={{ color: '#888', textAlign: 'center', padding: 20 }}>No content yet</Text>
+          )}
         </View>
       </View>
 
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
-            Notifications
+            Recent Activity
           </Text>
         </View>
         <View style={styles.notificationsList}>
-          {NOTIFICATIONS.map((notification) => (
+          {recentActivity.length > 0 ? recentActivity.map((notification) => (
             <View key={notification.id} style={[styles.notificationItem, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}>
               <View style={[
                 styles.notificationDot,
@@ -162,7 +209,9 @@ export default function CreatorDashboard() {
                 <Text style={styles.notificationTime}>{notification.time}</Text>
               </View>
             </View>
-          ))}
+          )) : (
+            <Text style={{ color: '#888', textAlign: 'center', padding: 20 }}>No recent activity</Text>
+          )}
         </View>
       </View>
 

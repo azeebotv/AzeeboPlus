@@ -6,6 +6,7 @@ import { ComedyModule } from './modules/comedy/comedy.module';
 import { ComedyFeedModule } from './modules/comedy-feed/comedy-feed.module';
 import { HealthModule } from './modules/health/health.module';
 import { ResponseWrapperInterceptor, ResponseSanitizationInterceptor } from '@azeebo/logger';
+import { AdminModule } from './modules/admin/admin.module';
 import { RateLimiterModule, RateLimitGuard } from '@azeebo/security';
 
 @Global()
@@ -19,6 +20,7 @@ import { RateLimiterModule, RateLimitGuard } from '@azeebo/security';
     ComedyModule,
     ComedyFeedModule,
     HealthModule,
+    AdminModule,
   ],
   providers: [
     {

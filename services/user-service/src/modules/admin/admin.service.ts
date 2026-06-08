@@ -24,7 +24,7 @@ export class AdminService {
         action: entry.action,
         targetType: entry.targetType,
         targetId: entry.targetId,
-        details: entry.details || {},
+        details: (entry.details || {}) as unknown as Record<string, unknown>,
         ipAddress: entry.ipAddress,
         userAgent: entry.userAgent,
       },
@@ -350,93 +350,18 @@ export class AdminService {
   }
 
   async moderateContent(contentId: string, action: string, reason: string, actorId: string, actorRole: string) {
-    const content = await this.prisma.contentItem.findUnique({ where: { id: contentId } });
-    if (!content) {
-      throw new NotFoundException('Content not found');
-    }
-
-    const statusMap: Record<string, string> = {
-      approve: 'published',
-      reject: 'rejected',
-      flag: 'flagged',
-    };
-
-    const result = await this.prisma.contentItem.update({
-      where: { id: contentId },
-      data: {
-        status: statusMap[action] || 'flagged',
-      },
-    });
-
-    await this.logAudit({
-      actorId,
-      actorRole,
-      action: `content.${action}`,
-      targetType: 'content',
-      targetId: contentId,
-      details: {
-        previousStatus: content.status,
-        newStatus: statusMap[action] || 'flagged',
-        reason,
-      },
-    });
-
-    return result;
+    // Content moderation is handled by content-service and moderation-service
+    throw new NotFoundException('Content moderation is handled by content-service. Use the content-service admin API instead.');
   }
 
   async getModerationReports(page = 1, limit = 20, status?: string) {
-    const skip = (page - 1) * limit;
-    const where = status ? { status } : {};
-
-    const [reports, total] = await Promise.all([
-      this.prisma.moderationReport.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy: { createdAt: 'desc' },
-      }),
-      this.prisma.moderationReport.count({ where }),
-    ]);
-
-    return {
-      reports,
-      meta: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-      },
-    };
+    // Moderation reports are handled by moderation-service
+    throw new NotFoundException('Moderation reports are handled by moderation-service. Use the moderation-service admin API instead.');
   }
 
   async resolveReport(reportId: string, resolution: string, actorId: string, actorRole: string) {
-    const report = await this.prisma.moderationReport.findUnique({ where: { id: reportId } });
-    if (!report) {
-      throw new NotFoundException('Report not found');
-    }
-
-    const result = await this.prisma.moderationReport.update({
-      where: { id: reportId },
-      data: {
-        status: 'resolved',
-        resolution,
-      },
-    });
-
-    await this.logAudit({
-      actorId,
-      actorRole,
-      action: 'moderation_report.resolved',
-      targetType: 'moderation_report',
-      targetId: reportId,
-      details: {
-        previousStatus: report.status,
-        resolution,
-        contentId: report.contentId,
-      },
-    });
-
-    return result;
+    // Report resolution is handled by moderation-service
+    throw new NotFoundException('Report resolution is handled by moderation-service. Use the moderation-service admin API instead.');
   }
 
   async getAuditLogs(page = 1, limit = 20, userId?: string) {
@@ -465,70 +390,12 @@ export class AdminService {
   }
 
   async getVerificationRequests(page = 1, limit = 20, status?: string) {
-    const skip = (page - 1) * limit;
-    const where = status ? { status } : {};
-
-    const [requests, total] = await Promise.all([
-      this.prisma.creatorVerification.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy: { createdAt: 'desc' },
-        include: {
-          user: true,
-        },
-      }),
-      this.prisma.creatorVerification.count({ where }),
-    ]);
-
-    return {
-      requests,
-      meta: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-      },
-    };
+    // Creator verification is handled by creator-service
+    throw new NotFoundException('Creator verification is handled by creator-service. Use the creator-service admin API instead.');
   }
 
   async verifyCreator(creatorId: string, status: string, notes: string | undefined, actorId: string, actorRole: string) {
-    const request = await this.prisma.creatorVerification.findUnique({
-      where: { id: creatorId },
-    });
-    if (!request) {
-      throw new NotFoundException('Verification request not found');
-    }
-
-    const updated = await this.prisma.creatorVerification.update({
-      where: { id: creatorId },
-      data: {
-        status,
-        notes,
-      },
-    });
-
-    if (status === 'approved') {
-      await this.prisma.user.update({
-        where: { id: request.userId },
-        data: { role: 'creator' },
-      });
-    }
-
-    await this.logAudit({
-      actorId,
-      actorRole,
-      action: 'creator_verification.' + status,
-      targetType: 'creator_verification',
-      targetId: creatorId,
-      details: {
-        userId: request.userId,
-        previousStatus: request.status,
-        newStatus: status,
-        notes,
-      },
-    });
-
-    return updated;
+    // Creator verification is handled by creator-service
+    throw new NotFoundException('Creator verification is handled by creator-service. Use the creator-service admin API instead.');
   }
 }

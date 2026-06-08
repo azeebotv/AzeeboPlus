@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
+import { useSettings } from '../hooks/useDatabase';
 
 interface SeoMetaProps {
   title?: string;
@@ -12,10 +13,12 @@ interface SeoMetaProps {
 
 export function SeoMeta({ title, description, image, noIndex = false }: SeoMetaProps): JSX.Element {
   const pathname = usePathname();
+  const { getSetting } = useSettings();
+  const siteName = getSetting('site_name', 'Azeebo+');
 
   useEffect(() => {
     if (title) {
-      document.title = `${title} | Azeebo+`;
+      document.title = `${title} | ${siteName}`;
     }
 
     const metaDescription = document.querySelector('meta[name="description"]');
@@ -25,7 +28,7 @@ export function SeoMeta({ title, description, image, noIndex = false }: SeoMetaP
 
     const ogTitle = document.querySelector('meta[property="og:title"]');
     if (title && ogTitle) {
-      ogTitle.setAttribute('content', `${title} | Azeebo+`);
+      ogTitle.setAttribute('content', `${title} | ${siteName}`);
     }
 
     const ogDescription = document.querySelector('meta[property="og:description"]');
@@ -45,20 +48,24 @@ export function SeoMeta({ title, description, image, noIndex = false }: SeoMetaP
 
     return () => {
       if (title) {
-        document.title = 'Azeebo+ - Premium Content Streaming';
+        const seoTitle = getSetting('seo_title', `${siteName} - Premium Content Streaming`);
+        document.title = seoTitle;
       }
     };
-  }, [title, description, image, noIndex]);
+  }, [title, description, image, noIndex, siteName]);
 
   return <></>;
 }
 
 export function DefaultSeoMeta(): JSX.Element {
   const pathname = usePathname();
+  const { getSetting } = useSettings();
+  const siteName = getSetting('site_name', 'Azeebo+');
 
   useEffect(() => {
-    document.title = `Azeebo+ - Premium Content Streaming`;
-  }, [pathname]);
+    const seoTitle = getSetting('seo_title', `${siteName} - Premium Content Streaming`);
+    document.title = seoTitle;
+  }, [pathname, siteName]);
 
   return <></>;
 }

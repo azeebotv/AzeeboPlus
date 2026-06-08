@@ -299,3 +299,163 @@ body {
 .skip-link:focus {
   top: 0;
 }
+
+/* Light Theme (overrides when .dark class is not present) */
+html:not(.dark) {
+  --color-dark-900: #ffffff;
+  --color-dark-800: #f9fafb;
+  --color-dark-700: #f3f4f6;
+  --color-dark-600: #e5e7eb;
+  --color-dark-500: #d1d5db;
+  --color-dark-400: #9ca3af;
+  --color-dark-300: #6b7280;
+  --color-dark-200: #4b5563;
+  --color-dark-100: #374151;
+
+  --color-light-50: #0a0a0a;
+  --color-light-100: #111111;
+  --color-light-200: #1a1a1a;
+  --color-light-300: #222222;
+  --color-light-400: #2a2a2a;
+  --color-light-500: #333333;
+  --color-light-600: #444444;
+  --color-light-700: #666666;
+  --color-light-800: #888888;
+  --color-light-900: #d4d4d4;
+
+  --text-primary: #111827;
+  --text-secondary: #4b5563;
+  --text-tertiary: #6b7280;
+  --text-inverse: #f3f4f6;
+
+  --bg-primary: #ffffff;
+  --bg-secondary: #f9fafb;
+  --bg-tertiary: #f3f4f6;
+  --bg-hover: #e5e7eb;
+
+  --border-default: #d1d5db;
+  --border-light: #e5e7eb;
+  --border-focus: #6366f1;
+
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+/* Print Styles */
+@media print {
+  *,
+  *::before,
+  *::after {
+    background: transparent !important;
+    color: #000 !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  body {
+    background: white !important;
+    color: black !important;
+    font-size: 12pt !important;
+    line-height: 1.5 !important;
+  }
+
+  a,
+  a:visited {
+    color: #000 !important;
+    text-decoration: underline !important;
+  }
+
+  a[href^="http"]::after,
+  a[href^="ftp"]::after {
+    content: " (" attr(href) ")";
+    font-size: 90%;
+    opacity: 0.8;
+  }
+
+  thead {
+    display: table-header-group;
+  }
+
+  tfoot {
+    display: table-footer-group;
+  }
+
+  tr,
+  img,
+  svg {
+    page-break-inside: avoid;
+  }
+
+  img {
+    max-width: 100% !important;
+  }
+
+  p,
+  h2,
+  h3 {
+    orphans: 3;
+    widows: 3;
+  }
+
+  h2,
+  h3 {
+    page-break-after: avoid;
+  }
+
+  @page {
+    margin: 2cm;
+  }
+
+  .print\:hidden {
+    display: none !important;
+  }
+
+  .print\:block {
+    display: block !important;
+  }
+
+  .print\:mb-4 {
+    margin-bottom: 1rem !important;
+  }
+
+  .print\:text-2xl {
+    font-size: 1.5rem !important;
+  }
+
+  header,
+  footer,
+  nav,
+  .skip-link,
+  button,
+  .no-print {
+    display: none !important;
+  }
+
+  main {
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .bg-card,
+  .bg-muted,
+  .bg-background {
+    background: white !important;
+    border: 1px solid #ddd !important;
+  }
+
+  .border-border,
+  .border-b {
+    border-color: #ddd !important;
+  }
+
+  .text-muted-foreground {
+    color: #666 !important;
+  }
+
+  .text-foreground {
+    color: #000 !important;
+  }
+}

@@ -59,20 +59,11 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     const errorResponse: ErrorResponse = {
       success: false,
       error: {
-        statusCode: status,
-        error,
+        code: error,
         message,
-        timestamp: new Date().toISOString(),
-        path: request.url,
-        method: request.method,
-        traceId: (request.headers['x-request-id'] as string) || undefined,
         ...(details ? { details } : {}),
       },
     };
-
-    if (!this.isProduction && exception instanceof Error) {
-      errorResponse.error.stack = exception.stack;
-    }
 
     response.status(status).json(errorResponse);
   }

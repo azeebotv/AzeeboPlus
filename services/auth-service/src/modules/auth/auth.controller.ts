@@ -1,12 +1,15 @@
-import { Controller, Get, Post, UseGuards, Request, Delete, Body } from '@nestjs/common';
+import { Controller, Get, Post, UseGuards, Request, Body } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { ForgotPasswordDto, ResetPasswordDto, VerifyEmailDto, ResendVerificationDto } from './dto/password-reset.dto';
+import { RequestOtpDto } from './dto/request-otp.dto';
+import { VerifyOtpDto } from './dto/verify-otp.dto';
+import { SelectRoleDto } from './dto/select-role.dto';
 import { AuthResponse } from './interfaces/auth-response.interface';
 import { RefreshTokenResponse } from './interfaces/refresh-token-response.interface';
 import { RateLimitGuard, RateLimit } from '@azeebo/security';
@@ -54,7 +57,7 @@ export class AuthController {
     return this.authService.refreshToken(refreshTokenDto);
   }
 
-  @Delete('logout')
+  @Post('logout')
   @UseGuards(AuthGuard('jwt'))
   @UseGuards(RateLimitGuard)
   @ApiOperation({ summary: 'User logout' })
@@ -118,5 +121,40 @@ export class AuthController {
   @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   async resendVerification(@Body() resendVerificationDto: ResendVerificationDto) {
     return this.authService.resendVerification(resendVerificationDto);
+  }
+
+  @Post('select-role')
+  @UseGuards(AuthGuard('jwt'), RateLimitGuard)
+  @RateLimit(3, 3600000)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Select user role after registration' })
+  @ApiResponse({ status: 200, description: 'Role selected successfully' })
+  @ApiResponse({ status: 400, description: 'Invalid role' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
+  async selectRole(@Request() req: AuthRequest, @Body() selectRoleDto: SelectRoleDto) {
+    return this.authService.selectRole(req.user.id, selectRoleDto);
+  }
+
+  @Post('request-otp')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(3, 3600000)
+  @ApiOperation({ summary: 'Request an OTP code for email verification' })
+  @ApiResponse({ status: 200, description: 'OTP sent successfully' })
+  @ApiResponse({ status: 400, description: 'Invalid input' })
+  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
+  async requestOtp(@Body() requestOtpDto: RequestOtpDto) {
+    return this.authService.requestOtp(requestOtpDto);
+  }
+
+  @Post('verify-otp')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(5, 900000)
+  @ApiOperation({ summary: 'Verify an OTP code' })
+  @ApiResponse({ status: 200, description: 'OTP verified successfully' })
+  @ApiResponse({ status: 400, description: 'Invalid OTP' })
+  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
+  async verifyOtp(@Body() verifyOtpDto: VerifyOtpDto): Promise<AuthResponse> {
+    return this.authService.verifyOtp(verifyOtpDto);
   }
 }

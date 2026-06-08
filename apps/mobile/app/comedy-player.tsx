@@ -1,40 +1,87 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, TextInput } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
+import { contentApi, type ContentItem } from '../../src/api';
+import { apiClient } from '../../src/api';
+import { logger } from '../../src/utils/logger';
+import { LoadingState, ErrorState, EmptyState } from '../../src/components/StateContainers';
 
-const PLACEHOLDER_IMAGE = '';
-
-const clipData = {
-  id: '1',
-  title: 'When your village people find you online',
-  comedian: '@apatroot',
-  views: '850K',
-  likes: '45K',
-  thumbnail: PLACEHOLDER_IMAGE,
-  duration: '02:34',
-  uploadedAt: '2 days ago',
-};
-
-const comments = [
-  { id: '1', user: '@user1', avatar: '👤', comment: 'This is too funny 😂', time: '2h ago', likes: '1.2K' },
-  { id: '2', user: '@user2', avatar: '👤', comment: 'Village people no dey play 😂😂', time: '1h ago', likes: '856' },
-  { id: '3', user: '@user3', avatar: '👤', comment: 'Apatroot never disappoints', time: '30m ago', likes: '423' },
-];
+interface ClipComment {
+  id: string;
+  user: string;
+  avatar: string;
+  text: string;
+  time: string;
+  likes: string;
+}
 
 export default function ComedyPlayerScreen() {
   const colorScheme = useColorScheme();
   const router = useRouter();
+  const [clip, setClip] = useState<ContentItem | null>(null);
+  const [comments, setComments] = useState<ClipComment[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [currentTime, setCurrentTime] = useState('00:00');
+  const [currentTime] = useState('00:00');
   const [isLiked, setIsLiked] = useState(false);
   const [isFollowed, setIsFollowed] = useState(false);
   const [commentInput, setCommentInput] = useState('');
 
+  const fetchClip = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const featured = await contentApi.getFeaturedContent(1);
+      if (featured.success && featured.data?.[0]) {
+        setClip(featured.data[0]);
+      } else {
+        setError('No comedy clip available');
+        return;
+      }
+      const commentsRes = await apiClient.get<ClipComment[]>(`/content/comments/${featured.data[0].id}`).catch(() => []);
+      setComments(Array.isArray(commentsRes) ? commentsRes : []);
+    } catch (err: any) {
+      logger.error('Failed to load clip:', err);
+      setError(err.message || 'Failed to load clip');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchClip();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <View style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' }]}>
+        <LoadingState text="Loading clip..." />
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' }]}>
+        <ErrorState description={error} onRetry={fetchClip} />
+      </View>
+    );
+  }
+
+  if (!clip) {
+    return (
+      <View style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' }]}>
+        <EmptyState icon="😂" title="No Clip" description="No comedy clips available right now." />
+      </View>
+    );
+  }
+
   return (
     <View style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' }]}>
       <View style={styles.videoSection}>
-        <Image source={{ uri: clipData.thumbnail }} style={styles.videoPlayer} />
+        <Image source={{ uri: clip.thumbnail }} style={styles.videoPlayer} />
         <View style={styles.videoOverlay}>
           <TouchableOpacity 
             style={styles.playButton}
@@ -49,7 +96,7 @@ export default function ComedyPlayerScreen() {
           </View>
           <View style={styles.timeDisplay}>
             <Text style={styles.currentTime}>{currentTime}</Text>
-            <Text style={styles.totalTime}>{clipData.duration}</Text>
+            <Text style={styles.totalTime}>{clip.duration ? `${Math.floor(clip.duration / 60)}:${String(clip.duration % 60).padStart(2, '0')}` : '00:00'}</Text>
           </View>
         </View>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
@@ -61,15 +108,15 @@ export default function ComedyPlayerScreen() {
         <View style={styles.clipInfo}>
           <View style={styles.titleRow}>
             <Text style={[styles.clipTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
-              {clipData.title}
+              {clip.title}
             </Text>
             <TouchableOpacity style={styles.moreButton}>
               <Text style={styles.moreIcon}>⋮</Text>
             </TouchableOpacity>
           </View>
           <View style={styles.statsRow}>
-            <Text style={styles.statText}>👁️ {clipData.views}</Text>
-            <Text style={styles.statText}>❤️ {isLiked ? (parseInt(clipData.likes) + 1) + 'K' : clipData.likes}</Text>
+            <Text style={styles.statText}>📅 {new Date(clip.createdAt).toLocaleDateString()}</Text>
+            <Text style={styles.statText}>❤️ 0</Text>
             <Text style={styles.statText}>💬 Comments</Text>
           </View>
         </View>
@@ -81,7 +128,7 @@ export default function ComedyPlayerScreen() {
             </View>
             <View style={styles.comedianDetails}>
               <Text style={[styles.comedianName, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
-                {clipData.comedian}
+                {clip.creator?.name || 'Unknown Creator'}
               </Text>
               <Text style={styles.comedianFollowers}>1.2M followers</Text>
             </View>
@@ -135,27 +182,31 @@ export default function ComedyPlayerScreen() {
             </TouchableOpacity>
           </View>
           <View style={styles.commentsList}>
-            {comments.map((comment) => (
-              <View key={comment.id} style={styles.commentItem}>
-                <View style={styles.commentAvatar}>
-                  <Text style={styles.commentAvatarText}>{comment.avatar}</Text>
-                </View>
-                <View style={styles.commentContent}>
-                  <View style={styles.commentHeader}>
-                    <Text style={[styles.commentUser, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
-                      {comment.user}
-                    </Text>
-                    <Text style={styles.commentTime}>{comment.time}</Text>
+            {comments.length === 0 ? (
+              <Text style={[styles.commentEmptyText, { color: colorScheme === 'dark' ? '#666' : '#999' }]}>No comments yet</Text>
+            ) : (
+              comments.map((comment) => (
+                <View key={comment.id} style={styles.commentItem}>
+                  <View style={styles.commentAvatar}>
+                    <Text style={styles.commentAvatarText}>{comment.avatar}</Text>
                   </View>
-                  <Text style={[styles.commentText, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
-                    {comment.comment}
-                  </Text>
-                  <TouchableOpacity style={styles.commentLike}>
-                    <Text style={styles.commentLikeText}>❤️ {comment.likes}</Text>
-                  </TouchableOpacity>
+                  <View style={styles.commentContent}>
+                    <View style={styles.commentHeader}>
+                      <Text style={[styles.commentUser, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
+                        {comment.user}
+                      </Text>
+                      <Text style={styles.commentTime}>{comment.time}</Text>
+                    </View>
+                    <Text style={[styles.commentText, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
+                      {comment.text}
+                    </Text>
+                    <TouchableOpacity style={styles.commentLike}>
+                      <Text style={styles.commentLikeText}>❤️ {comment.likes}</Text>
+                    </TouchableOpacity>
+                  </View>
                 </View>
-              </View>
-            ))}
+              ))
+            )}
           </View>
         </View>
 
@@ -429,5 +480,10 @@ const styles = StyleSheet.create({
   },
   bottomPadding: {
     height: 32,
+  },
+  commentEmptyText: {
+    textAlign: 'center',
+    paddingVertical: 20,
+    fontSize: 14,
   },
 });

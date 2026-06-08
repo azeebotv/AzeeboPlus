@@ -47,7 +47,10 @@ async function bootstrap(): Promise<void> {
     })
   );
 
-  const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'];
+  if (!process.env.ALLOWED_ORIGINS) {
+    throw new Error('ALLOWED_ORIGINS environment variable must be set');
+  }
+  const allowedOrigins = process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim());
 
   app.enableCors({
     origin: (
@@ -81,7 +84,7 @@ async function bootstrap(): Promise<void> {
     Logger.log('Swagger documentation enabled at /api/docs');
   }
 
-  const port = process.env.PORT || 3000;
+  const port = process.env.PORT || 3018;
   await app.listen(port);
   const logger = new Logger('Creator Service');
   logger.log(`Creator Service running on port ${port}`);

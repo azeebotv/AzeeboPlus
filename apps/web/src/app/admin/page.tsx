@@ -146,7 +146,7 @@ export default function AdminPage(): JSX.Element {
 
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
-              <Avatar size="medium" fallback={user.name?.charAt(0)} />
+              <Avatar size="md" fallback={user.name?.charAt(0)} />
               <span className="text-sm font-medium" style={{ color: colors.text.primary }}>
                 {user.name}
               </span>
@@ -169,6 +169,7 @@ export default function AdminPage(): JSX.Element {
             <SidebarItem href="/admin/users" icon="👥" label="Users" />
             <SidebarItem href="/admin/content" icon="🎬" label="Content" />
             <SidebarItem href="/admin/creators" icon="✨" label="Creators" />
+            <SidebarItem href="/admin/universes" icon="🌍" label="Universes" />
             <SidebarItem href="/admin/payments" icon="💳" label="Payments" />
             <SidebarItem href="/admin/analytics" icon="📈" label="Analytics" />
             <SidebarItem href="/admin/settings" icon="⚙️" label="Settings" />
@@ -198,7 +199,7 @@ export default function AdminPage(): JSX.Element {
               ))}
             </div>
           ) : error ? (
-            <ErrorState message={error} onRetry={() => window.location.reload()} />
+            <ErrorState description={error} onButtonPress={() => window.location.reload()} />
           ) : (
             <>
               {/* Stats Cards */}
@@ -252,7 +253,7 @@ export default function AdminPage(): JSX.Element {
                           >
                             {index + 1}
                           </div>
-                          <Avatar size="medium" fallback={creator.name.charAt(0)} />
+                          <Avatar size="md" fallback={creator.name.charAt(0)} />
                           <div>
                             <h4 className="font-medium" style={{ color: colors.text.primary }}>
                               {creator.name}

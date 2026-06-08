@@ -1,25 +1,11 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, ActivityIndicator } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
-
-const CATEGORY_OPTIONS = [
-  { id: '1', label: 'Music', emoji: '🎵' },
-  { id: '2', label: 'Dance', emoji: '💃' },
-  { id: '3', label: 'Comedy', emoji: '😂' },
-  { id: '4', label: 'Cooking', emoji: '🍳' },
-  { id: '5', label: 'Fashion', emoji: '👗' },
-  { id: '6', label: 'Vlogs', emoji: '📹' },
-  { id: '7', label: 'Gaming', emoji: '🎮' },
-  { id: '8', label: 'Art', emoji: '🎨' },
-];
-
-const CONTENT_TYPE_OPTIONS = [
-  { id: '1', label: 'Short Videos' },
-  { id: '2', label: 'Long-form Content' },
-  { id: '3', label: 'Live Streams' },
-  { id: '4', label: 'All of the above' },
-];
+import { creatorApi } from '../../src/api/creator';
+import { apiClient } from '../../src/api/client';
+import { logger } from '../../src/utils/logger';
+import { LoadingState, ErrorState } from '../../src/components/StateContainers';
 
 export default function CreatorSignup() {
   const colorScheme = useColorScheme();
@@ -35,6 +21,32 @@ export default function CreatorSignup() {
     goals: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [categories, setCategories] = useState<Array<{ id: string; label: string; emoji: string }>>([]);
+  const [contentTypes, setContentTypes] = useState<Array<{ id: string; label: string }>>([]);
+  const [isLoadingOptions, setIsLoadingOptions] = useState(true);
+  const [optionsError, setOptionsError] = useState<string | null>(null);
+
+  const fetchOptions = useCallback(async () => {
+    setIsLoadingOptions(true);
+    setOptionsError(null);
+    try {
+      const [cats, types] = await Promise.all([
+        apiClient.get<Array<{ id: string; label: string; emoji: string }>>('/creators/categories'),
+        apiClient.get<Array<{ id: string; label: string }>>('/creators/content-types'),
+      ]);
+      setCategories(cats);
+      setContentTypes(types);
+    } catch (err) {
+      logger.error('Failed to load creator options:', err);
+      setOptionsError('Failed to load options. Please check your connection and try again.');
+    } finally {
+      setIsLoadingOptions(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchOptions();
+  }, [fetchOptions]);
 
   const handleNext = () => {
     if (step === 1 && !selectedCategory) {
@@ -61,18 +73,44 @@ export default function CreatorSignup() {
   };
 
   const handleSubmit = async () => {
+    if (!selectedCategory || !selectedContentType || !formData.displayName.trim()) {
+      Alert.alert('Error', 'Please fill in all required fields');
+      return;
+    }
+    
     setIsSubmitting(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      Alert.alert('Success', 'Your creator application has been submitted!', [
-        { text: 'OK', onPress: () => router.push('/creators/dashboard') }
-      ]);
+      const response = await creatorApi.onboard({
+        category: selectedCategory,
+        contentType: selectedContentType,
+        displayName: formData.displayName,
+        bio: formData.bio,
+        socialLink: formData.socialLink,
+        goals: formData.goals,
+      });
+      
+      if (response.success) {
+        Alert.alert('Success', 'Your creator application has been submitted!', [
+          { text: 'OK', onPress: () => router.push('/creators/dashboard') }
+        ]);
+      } else {
+        Alert.alert('Error', 'Failed to submit application. Please try again.');
+      }
     } catch (error) {
+      logger.error('Failed to submit creator application:', error);
       Alert.alert('Error', 'Failed to submit application. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  if (isLoadingOptions) {
+    return <LoadingState text="Loading options..." />;
+  }
+
+  if (optionsError) {
+    return <ErrorState description={optionsError} onRetry={fetchOptions} />;
+  }
 
   return (
     <ScrollView style={[styles.container, { backgroundColor: isDark ? '#0a0a0a' : '#ffffff' }]}>
@@ -104,7 +142,7 @@ export default function CreatorSignup() {
             </Text>
             <Text style={styles.stepDesc}>Choose the category that best describes your content</Text>
             <View style={styles.optionsGrid}>
-              {CATEGORY_OPTIONS.map((option) => (
+              {categories.map((option) => (
                 <TouchableOpacity
                   key={option.id}
                   style={[
@@ -132,7 +170,7 @@ export default function CreatorSignup() {
             </Text>
             <Text style={styles.stepDesc}>Select the type of content you plan to create</Text>
             <View style={styles.optionsList}>
-              {CONTENT_TYPE_OPTIONS.map((option) => (
+              {contentTypes.map((option) => (
                 <TouchableOpacity
                   key={option.id}
                   style={[

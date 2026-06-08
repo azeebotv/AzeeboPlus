@@ -1,0 +1,103 @@
+name: Deployment Approval
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to approve deployment'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - staging
+          - production
+      run_id:
+        description: 'GitHub Actions run ID to approve'
+        required: true
+      approver_notes:
+        description: 'Notes for this approval (optional)'
+        required: false
+        default: ''
+
+jobs:
+  approve-deployment:
+    name: Approve Deployment
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ github.event.inputs.environment }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Validate approver
+        run: |
+          APPROVERS=("admin-user" "devops-lead" "tech-lead")
+          APPROVER="${{ github.actor }}"
+          
+          if [[ ! " ${APPROVERS[@]} " =~ " ${APPROVER} " ]]; then
+            echo "❌ $APPROVER is not authorized to approve deployments"
+            exit 1
+          fi
+          
+          echo "✅ $APPROVER is authorized"
+
+      - name: Get workflow run details
+        run: |
+          RUN_ID="${{ github.event.inputs.run_id }}"
+          echo "Fetching details for run $RUN_ID..."
+          
+          gh run view $RUN_ID --json status,conclusion,headBranch,headSha,workflowName \
+            --jq '{status: .status, conclusion: .conclusion, branch: .headBranch, commit: .headSha, workflow: .workflowName}' \
+            > run-details.json
+          
+          cat run-details.json
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Validate run is ready for approval
+        run: |
+          STATUS=$(jq -r '.status' run-details.json)
+          CONCLUSION=$(jq -r '.conclusion' run-details.json)
+          
+          if [ "$STATUS" != "completed" ]; then
+            echo "❌ Run is still in progress"
+            exit 1
+          fi
+          
+          if [ "$CONCLUSION" != "success" ]; then
+            echo "❌ Run did not succeed (conclusion: $CONCLUSION)"
+            exit 1
+          fi
+          
+          echo "✅ Run is ready for approval"
+
+      - name: Create approval record
+        run: |
+          cat > approval-record.json << EOF
+          {
+            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "approver": "${{ github.actor }}",
+            "environment": "${{ github.event.inputs.environment }}",
+            "run_id": "${{ github.event.inputs.run_id }}",
+            "notes": "${{ github.event.inputs.approver_notes }}",
+            "approved": true
+          }
+          EOF
+          
+          cat approval-record.json
+
+      - name: Store approval record
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployment-approval-${{ github.event.inputs.run_id }}
+          path: approval-record.json
+          retention-days: 90
+
+      - name: Notify Slack - Deployment Approved
+        uses: slackapi/slack-github-action@v1
+        with:
+          channel-id: ${{ secrets.SLACK_CHANNEL_ID }}
+          slack-message: "✅ *Deployment Approved*\n\nApprover: ${{ github.actor }}\nEnvironment: `${{ github.event.inputs.environment }}`\nRun ID: ${{ github.event.inputs.run_id }}\nNotes: ${{ github.event.inputs.approver_notes || 'None' }}"
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}

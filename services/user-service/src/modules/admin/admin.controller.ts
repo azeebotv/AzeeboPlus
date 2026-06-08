@@ -9,10 +9,20 @@ import {
   Body,
   Query,
   UseGuards,
+  Req,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AdminService } from './admin.service';
-import { AdminGuard } from '../../common/guards/admin.guard';
+import { AdminGuard } from '@azeebo/security';
+import { Request } from 'express';
+
+interface AuthenticatedRequest extends Request {
+  user?: {
+    id: string;
+    role: string;
+    email?: string;
+  };
+}
 
 @ApiTags('Admin - User Service')
 @Controller('admin')
@@ -56,9 +66,12 @@ export class AdminController {
   @ApiResponse({ status: 403, description: 'Forbidden' })
   async updateSubscription(
     @Param('subscriptionId') subscriptionId: string,
-    @Body() updateData: Record<string, unknown>
+    @Body() updateData: Record<string, unknown>,
+    @Req() req: AuthenticatedRequest
   ) {
-    return this.adminService.updateSubscription(subscriptionId, updateData);
+    const actorId = req.user?.id || 'admin';
+    const actorRole = req.user?.role || 'admin';
+    return this.adminService.updateSubscription(subscriptionId, updateData, actorId, actorRole);
   }
 
   @Delete('subscriptions/:subscriptionId')
@@ -66,8 +79,10 @@ export class AdminController {
   @ApiResponse({ status: 200, description: 'Subscription deleted' })
   @ApiResponse({ status: 404, description: 'Subscription not found' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
-  async deleteSubscription(@Param('subscriptionId') subscriptionId: string) {
-    return this.adminService.deleteSubscription(subscriptionId);
+  async deleteSubscription(@Param('subscriptionId') subscriptionId: string, @Req() req: AuthenticatedRequest) {
+    const actorId = req.user?.id || 'admin';
+    const actorRole = req.user?.role || 'admin';
+    return this.adminService.deleteSubscription(subscriptionId, actorId, actorRole);
   }
 
   @Get('preferences/:userId')
@@ -86,9 +101,12 @@ export class AdminController {
   @ApiResponse({ status: 403, description: 'Forbidden' })
   async updateUserPreferences(
     @Param('userId') userId: string,
-    @Body() preferences: Record<string, unknown>
+    @Body() preferences: Record<string, unknown>,
+    @Req() req: AuthenticatedRequest
   ) {
-    return this.adminService.updateUserPreferences(userId, preferences);
+    const actorId = req.user?.id || 'admin';
+    const actorRole = req.user?.role || 'admin';
+    return this.adminService.updateUserPreferences(userId, preferences, actorId, actorRole);
   }
 
   @Delete('watch-history/:userId')
@@ -98,9 +116,12 @@ export class AdminController {
   @ApiResponse({ status: 403, description: 'Forbidden' })
   async deleteWatchHistory(
     @Param('userId') userId: string,
-    @Query('contentId') contentId?: string
+    @Query('contentId') contentId: string | undefined,
+    @Req() req: AuthenticatedRequest
   ) {
-    return this.adminService.deleteWatchHistory(userId, contentId);
+    const actorId = req.user?.id || 'admin';
+    const actorRole = req.user?.role || 'admin';
+    return this.adminService.deleteWatchHistory(userId, contentId, actorId, actorRole);
   }
 
   @Delete('saved-items/:userId')
@@ -110,9 +131,12 @@ export class AdminController {
   @ApiResponse({ status: 403, description: 'Forbidden' })
   async deleteSavedItems(
     @Param('userId') userId: string,
-    @Query('contentId') contentId?: string
+    @Query('contentId') contentId: string | undefined,
+    @Req() req: AuthenticatedRequest
   ) {
-    return this.adminService.deleteSavedItems(userId, contentId);
+    const actorId = req.user?.id || 'admin';
+    const actorRole = req.user?.role || 'admin';
+    return this.adminService.deleteSavedItems(userId, contentId, actorId, actorRole);
   }
 
   @Get('users/:id')
@@ -131,9 +155,12 @@ export class AdminController {
   @ApiResponse({ status: 403, description: 'Forbidden' })
   async updateUser(
     @Param('id') id: string,
-    @Body() updateData: Record<string, unknown>
+    @Body() updateData: Record<string, unknown>,
+    @Req() req: AuthenticatedRequest
   ) {
-    return this.adminService.updateUser(id, updateData);
+    const actorId = req.user?.id || 'admin';
+    const actorRole = req.user?.role || 'admin';
+    return this.adminService.updateUser(id, updateData, actorId, actorRole);
   }
 
   @Post('users/:id/suspend')
@@ -143,9 +170,12 @@ export class AdminController {
   @ApiResponse({ status: 403, description: 'Forbidden' })
   async suspendUser(
     @Param('id') id: string,
-    @Body() body: { reason: string }
+    @Body() body: { reason: string },
+    @Req() req: AuthenticatedRequest
   ) {
-    return this.adminService.suspendUser(id, body.reason);
+    const actorId = req.user?.id || 'admin';
+    const actorRole = req.user?.role || 'admin';
+    return this.adminService.suspendUser(id, body.reason, actorId, actorRole);
   }
 
   @Patch('content/:id/moderate')
@@ -155,9 +185,12 @@ export class AdminController {
   @ApiResponse({ status: 403, description: 'Forbidden' })
   async moderateContent(
     @Param('id') id: string,
-    @Body() body: { action: string; reason: string }
+    @Body() body: { action: string; reason: string },
+    @Req() req: AuthenticatedRequest
   ) {
-    return this.adminService.moderateContent(id, body.action, body.reason);
+    const actorId = req.user?.id || 'admin';
+    const actorRole = req.user?.role || 'admin';
+    return this.adminService.moderateContent(id, body.action, body.reason, actorId, actorRole);
   }
 
   @Get('moderation/reports')
@@ -179,9 +212,12 @@ export class AdminController {
   @ApiResponse({ status: 403, description: 'Forbidden' })
   async resolveReport(
     @Param('id') id: string,
-    @Body() body: { resolution: string }
+    @Body() body: { resolution: string },
+    @Req() req: AuthenticatedRequest
   ) {
-    return this.adminService.resolveReport(id, body.resolution);
+    const actorId = req.user?.id || 'admin';
+    const actorRole = req.user?.role || 'admin';
+    return this.adminService.resolveReport(id, body.resolution, actorId, actorRole);
   }
 
   @Get('analytics')
@@ -223,8 +259,11 @@ export class AdminController {
   @ApiResponse({ status: 403, description: 'Forbidden' })
   async verifyCreator(
     @Param('id') id: string,
-    @Body() body: { status: string; notes?: string }
+    @Body() body: { status: string; notes?: string },
+    @Req() req: AuthenticatedRequest
   ) {
-    return this.adminService.verifyCreator(id, body.status, body.notes);
+    const actorId = req.user?.id || 'admin';
+    const actorRole = req.user?.role || 'admin';
+    return this.adminService.verifyCreator(id, body.status, body.notes, actorId, actorRole);
   }
 }

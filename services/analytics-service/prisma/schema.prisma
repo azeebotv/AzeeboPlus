@@ -561,3 +561,45 @@ model FraudDetection {
 
   @@map("fraud_detections")
 }
+
+model CustomReport {
+  id            String   @id @default(uuid())
+  name          String
+  description   String?
+  category      String   @default("general")
+  createdBy     String
+  metrics       Json     // Array of metric configurations
+  dimensions    Json     // Array of dimension configurations
+  filters       Json     @default("[]") // Array of filter configurations
+  dateField     String   @default("createdAt")
+  dateRange     String   @default("30d")
+  startDate     DateTime?
+  endDate       DateTime?
+  isPublic      Boolean  @default(false)
+  chartConfig   Json     @default("{}")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  executions    ReportExecution[]
+
+  @@index([createdBy])
+  @@index([category])
+  @@map("custom_reports")
+}
+
+model ReportExecution {
+  id            String   @id @default(uuid())
+  reportId      String
+  executedBy    String
+  executionTime Int      // in milliseconds
+  rowCount      Int
+  parameters    Json     // Execution parameters used
+  executedAt    DateTime @default(now())
+
+  report        CustomReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  @@index([reportId])
+  @@index([executedBy])
+  @@index([executedAt])
+  @@map("report_executions")
+}

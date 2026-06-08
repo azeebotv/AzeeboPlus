@@ -2,6 +2,7 @@
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
+  transpilePackages: ['@azeebo/ui', '@azeebo/design-tokens', '@azeebo/utils', '@azeebo/api-client', '@azeebo/shared-types', '@azeebo/validation', '@azeebo/error-handling', '@azeebo/logger'],
   eslint: {
     ignoreDuringBuilds: true,
   },
@@ -41,11 +42,11 @@ const nextConfig = {
     return [
       {
         source: '/api/:path*',
-        destination: 'http://localhost:3001/:path*',
+        destination: 'http://localhost:3013/api/:path*',
       },
       {
         source: '/auth/:path*',
-        destination: 'http://localhost:3002/:path*',
+        destination: 'http://localhost:3013/api/v1/auth/:path*',
       },
     ]
   },

@@ -13,6 +13,8 @@ import { OtpController } from './otp/otp.controller';
 import { OtpService } from './otp/otp.service';
 import { SocialAuthController } from './social/social.controller';
 import { SocialAuthService } from './social/social.service';
+import { DeviceController } from './device/device.controller';
+import { DeviceService } from './device/device.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
 import { RateLimiterModule } from '@azeebo/security';
@@ -27,7 +29,7 @@ import { RedisService } from '../../common/services/redis.service';
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_SECRET'),
+        secret: configService.getOrThrow<string>('JWT_SECRET'),
         signOptions: {
           expiresIn: configService.get<string>('JWT_EXPIRES_IN', '30m'),
         },
@@ -35,17 +37,18 @@ import { RedisService } from '../../common/services/redis.service';
       inject: [ConfigService],
     }),
   ],
-  controllers: [AuthController, MfaController, OtpController, SocialAuthController],
+  controllers: [AuthController, MfaController, OtpController, SocialAuthController, DeviceController],
   providers: [
     AuthService,
     AuthRepository,
     MfaService,
     OtpService,
     SocialAuthService,
+    DeviceService,
     JwtStrategy,
     JwtRefreshStrategy,
     RedisService,
   ],
-  exports: [AuthService, AuthRepository, DatabaseModule, MfaService, OtpService, SocialAuthService],
+  exports: [AuthService, AuthRepository, DatabaseModule, MfaService, OtpService, SocialAuthService, DeviceService],
 })
 export class AuthModule {}

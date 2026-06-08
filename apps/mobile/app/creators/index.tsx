@@ -1,40 +1,54 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
+import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
+import { apiClient } from '../../src/api/client';
 
-const FEATURED_CREATORS = [
-  { id: '1', name: 'Zara', followers: '2.4M', content: '245', avatar: '👩‍🎨', verified: true },
-  { id: '2', name: 'Marcus', followers: '1.8M', content: '189', avatar: '👨‍🎤', verified: true },
-  { id: '3', name: 'Lola', followers: '1.2M', content: '312', avatar: '👩‍🎤', verified: true },
-  { id: '4', name: 'Tunde', followers: '890K', content: '156', avatar: '👨‍🎨', verified: false },
-];
-
-const TRENDING_CONTENT = [
-  { id: '1', title: 'Afrobeat Dance Tutorial', views: '1.2M', creator: 'Zara', likes: '89K', thumbnail: '💃' },
-  { id: '2', title: 'Nigerian Cooking: Jollof Rice', views: '890K', creator: 'Lola', likes: '56K', thumbnail: '🍲' },
-  { id: '3', title: 'Comedy Skit: Market Scene', views: '2.1M', creator: 'Marcus', likes: '156K', thumbnail: '😂' },
-  { id: '4', title: 'Fashion Lookbook 2024', views: '670K', creator: 'Tunde', likes: '42K', thumbnail: '👗' },
-];
-
-const CATEGORIES = [
-  { id: '1', name: 'Music', emoji: '🎵' },
-  { id: '2', name: 'Dance', emoji: '💃' },
-  { id: '3', name: 'Comedy', emoji: '😂' },
-  { id: '4', name: 'Cooking', emoji: '🍳' },
-  { id: '5', name: 'Fashion', emoji: '👗' },
-  { id: '6', name: 'Vlogs', emoji: '📹' },
-];
-
-const CREATOR_CARDS = [
-  { id: '1', title: 'Become a Creator', description: 'Start your journey and share your talents with the world', emoji: '✨', action: 'Sign up' },
-  { id: '2', title: 'Monetize', description: 'Earn from your content and connect with your fans', emoji: '💰', action: 'Learn more' },
-];
+interface CreatorData { id: string; name: string; followers: string; content: string; avatar: string; verified: boolean; }
+interface TrendingContentItem { id: string; title: string; views: string; creator: string; likes: string; thumbnail: string; }
+interface CategoryData { id: string; name: string; emoji: string; }
+interface CreatorCardData { id: string; title: string; description: string; emoji: string; action: string; }
 
 export default function CreatorUniverseHome() {
   const colorScheme = useColorScheme();
   const router = useRouter();
   const isDark = colorScheme === 'dark';
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [featuredCreators, setFeaturedCreators] = useState<CreatorData[]>([]);
+  const [trendingContent, setTrendingContent] = useState<TrendingContentItem[]>([]);
+  const [categories, setCategories] = useState<CategoryData[]>([]);
+  const [creatorCards, setCreatorCards] = useState<CreatorCardData[]>([]);
+
+  const fetchData = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const [creatorsRes, contentRes, catsRes, cardsRes] = await Promise.all([
+        apiClient.get<any>('/v1/creators/featured'),
+        apiClient.get<any>('/v1/creators/trending'),
+        apiClient.get<any>('/v1/creators/categories'),
+        apiClient.get<any>('/v1/creators/cards'),
+      ]);
+      setFeaturedCreators(Array.isArray(creatorsRes) ? creatorsRes : creatorsRes?.data ?? []);
+      setTrendingContent(Array.isArray(contentRes) ? contentRes : contentRes?.data ?? []);
+      setCategories(Array.isArray(catsRes) ? catsRes : catsRes?.data ?? []);
+      setCreatorCards(Array.isArray(cardsRes) ? cardsRes : cardsRes?.data ?? []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchData(); }, []);
+
+  if (isLoading) return <LoadingState text="Loading creators..." />;
+  if (error) return <ErrorState description={error} onRetry={fetchData} />;
+  if (!featuredCreators.length && !trendingContent.length) {
+    return <EmptyState icon="🎤" title="No creators available" description="Check back later for creator content" />;
+  }
 
   return (
     <ScrollView style={[styles.container, { backgroundColor: isDark ? '#0a0a0a' : '#ffffff' }]}>
@@ -64,7 +78,7 @@ export default function CreatorUniverseHome() {
 
       <View style={styles.categoriesSection}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoriesList}>
-          {CATEGORIES.map((category) => (
+          {categories.map((category) => (
             <TouchableOpacity key={category.id} style={styles.categoryButton}>
               <Text style={styles.categoryEmoji}>{category.emoji}</Text>
               <Text style={styles.categoryName}>{category.name}</Text>
@@ -83,7 +97,7 @@ export default function CreatorUniverseHome() {
           </TouchableOpacity>
         </View>
         <FlatList
-          data={FEATURED_CREATORS}
+          data={featuredCreators}
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.creatorsList}
@@ -113,7 +127,7 @@ export default function CreatorUniverseHome() {
           Trending Content
         </Text>
         <View style={styles.contentGrid}>
-          {TRENDING_CONTENT.map((item) => (
+          {trendingContent.map((item) => (
             <TouchableOpacity key={item.id} style={[styles.contentCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}>
               <View style={styles.contentThumbnail}>
                 <Text style={styles.contentThumbnailEmoji}>{item.thumbnail}</Text>
@@ -138,7 +152,7 @@ export default function CreatorUniverseHome() {
 
       <View style={styles.cardsSection}>
         <View style={styles.cardsRow}>
-          {CREATOR_CARDS.map((card) => (
+          {creatorCards.map((card) => (
             <TouchableOpacity key={card.id} style={[styles.infoCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}>
               <Text style={styles.cardEmoji}>{card.emoji}</Text>
               <Text style={[styles.cardTitle, { color: isDark ? '#fff' : '#000' }]}>{card.title}</Text>

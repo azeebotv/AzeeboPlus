@@ -117,7 +117,7 @@ export class EmailService implements OnModuleInit {
 
     const msg = {
       to,
-      from: this.configService.get('SENDGRID_FROM_EMAIL', 'no-reply@azeebo.com'),
+      from: this.configService.get('SENDGRID_FROM_EMAIL', 'no-reply@azeebo.plus'),
       subject,
       html,
     };
@@ -146,7 +146,7 @@ export class EmailService implements OnModuleInit {
 
     const msg = {
       to,
-      from: this.configService.get('SENDGRID_FROM_EMAIL', 'no-reply@azeebo.com'),
+      from: this.configService.get('SENDGRID_FROM_EMAIL', 'no-reply@azeebo.plus'),
       subject,
       html,
     };

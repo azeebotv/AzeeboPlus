@@ -36,6 +36,10 @@ Azeebo+ is a multi-universe content platform built with NestJS microservices, Pr
 | reality-service | 3010 | /reality |
 | creator-service | 3018 | /creators |
 | support-service | 3020 | /support |
+| engagement-service | 3023 | /engagement |
+| messaging-service | 3024 | /messaging |
+| referral-service | 3025 | /referrals |
+| subscription-service | 3026 | /subscription |
 
 ## Coding Standards
 
@@ -84,18 +88,25 @@ return ApiResponseWrapper.paginated(data, page, limit, total);
 - `signup`
 - `signup_completed`
 - `vote_submitted`
+- `vote_initiated`
 - `payment_success`
 - `payment_failed`
+- `payment_initiated`
 - `reward_earned`
 - `reward_redeemed`
 - `creator_follow`
+- `creator_followed`
 - `creator_tip_sent`
+- `creator_tipped`
 - `prediction_placed`
+- `prediction_submitted`
 - `game_started`
 - `game_completed`
 - `share`
+- `share_initiated`
 - `notification_received`
 - `notification_clicked`
+- `notification_opened`
 
 ### Universe Names
 `reality`, `creator`, `lifestyle`, `vertical`, `movie`, `games`, `comedy`, `sports`

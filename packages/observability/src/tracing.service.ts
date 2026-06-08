@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { randomUUID } from 'crypto';
 
 export interface Span {
   traceId: string;
@@ -52,11 +53,11 @@ export class TracingService {
   }
 
   generateTraceId(): string {
-    return `${Date.now().toString(16)}-${Math.random().toString(16).slice(2, 18)}-${Math.random().toString(16).slice(2, 10)}`;
+    return randomUUID();
   }
 
   generateSpanId(): string {
-    return `${Math.random().toString(16).slice(2, 10)}${Math.random().toString(16).slice(2, 10)}`;
+    return randomUUID().replace(/-/g, '').slice(0, 16);
   }
 
   startSpan(name: string, parentContext?: TraceContext, tags?: Record<string, string | number | boolean>): Span {
@@ -112,6 +113,7 @@ export class TracingService {
       try {
         exporter(span);
       } catch (err) {
+        // eslint-disable-next-line no-console
         console.error('Span export failed:', err);
       }
     }

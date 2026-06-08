@@ -7,7 +7,7 @@ import { ModerationResponse } from './interfaces/moderation-response.interface';
 import { CreateReportDto, EscalateCaseDto, ScanContentDto } from './dto/moderation.dto';
 
 @ApiTags('Moderation')
-@Controller('moderation')
+@Controller('v1/moderation')
 export class ModerationController {
   constructor(private readonly moderationService: ModerationService) {}
 

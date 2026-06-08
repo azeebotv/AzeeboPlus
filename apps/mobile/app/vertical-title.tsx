@@ -1,51 +1,64 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { useColorScheme } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
+import { apiClient } from '../src/api/client';
+import { LoadingState, ErrorState } from '../src/components/StateContainers';
 
 const PLACEHOLDER_IMAGE = '';
 
-const titleData = {
-  id: '1',
-  title: 'The Crowned',
-  genre: 'Fantasy Drama',
-  universe: 'Vertical',
-  thumbnail: PLACEHOLDER_IMAGE,
-  rating: 9.2,
-  year: 2024,
-  seasons: 3,
-  episodes: 28,
-  status: 'Ongoing',
-  synopsis: 'In a realm where ancient kingdoms vie for power, a young queen must navigate the treacherous waters of court politics, betrayal, and forbidden magic to reclaim her birthright and unite the fractured land.',
-  cast: ['Amara Diallo', 'Kofi Mensah', 'Zoe Williams', 'Emeka Obi'],
-};
+interface TitleData {
+  id: string;
+  title: string;
+  genre: string;
+  universe: string;
+  thumbnail: string;
+  rating: number;
+  year: number;
+  seasons: number;
+  episodes: number;
+  status: string;
+  synopsis: string;
+  cast: string[];
+}
 
-const characters = [
-  { id: '1', name: 'Queen Amara', actor: 'Amara Diallo', role: 'Protagonist', avatar: '👸', description: 'The rightful heir to the throne, forced into exile as a child.' },
-  { id: '2', name: 'Lord Kofi', actor: 'Kofi Mensah', role: 'Antagonist', avatar: '🗡️', description: 'The power-hungry regent who seized the throne during the civil war.' },
-  { id: '3', name: 'Princess Elena', actor: 'Zoe Williams', role: 'Supporting', avatar: '👸', description: 'Amara\'s younger sister, torn between family and love.' },
-  { id: '4', name: 'General Emeka', actor: 'Emeka Obi', role: 'Ally', avatar: '⚔️', description: 'Loyal commander of the royal guard, protector of the true queen.' },
-];
+interface CharacterItem {
+  id: string;
+  name: string;
+  actor: string;
+  role: string;
+  avatar: string;
+  description: string;
+}
 
-const loreData = [
-  { id: '1', title: 'The Three Kingdoms', icon: '🏰', content: 'The realm is divided into three kingdoms: the Northern Highlands, the Central Plains, and the Southern Isles. Each kingdom has its own unique culture, magic system, and ruling family.' },
-  { id: '2', title: 'The Magic System', icon: '✨', content: 'Magic in this world flows from the Ancient Tree, a mystical entity that predates civilization. Users must bond with elemental spirits to channel magical abilities.' },
-  { id: '3', title: 'The Prophecy', icon: '📜', content: 'An ancient prophecy speaks of a crowned one who will unite the three kingdoms and restore balance to the realm. Many believe this refers to the return of the true queen.' },
-  { id: '4', title: 'The Royal Lineage', icon: '👑', content: 'The royal family of the Central Plains has ruled for over 500 years, descending from the first Emperor who unified the realm under the Ancient Tree\'s blessing.' },
-];
+interface LoreItem {
+  id: string;
+  title: string;
+  icon: string;
+  content: string;
+}
 
-const timeline = [
-  { id: '1', episode: 'S1E1', title: 'The Exile', year: '2024', description: 'Young Princess Amara is forced to flee as Lord Kofi seizes power.' },
-  { id: '2', episode: 'S1E5', title: 'The Alliance', year: '2024', description: 'Amara forms an alliance with the Northern tribes.' },
-  { id: '3', episode: 'S2E1', title: 'The Return', year: '2025', description: 'After years in hiding, Amara returns to claim her birthright.' },
-  { id: '4', episode: 'S3E1', title: 'The Final Battle', year: '2026', description: 'The confrontation between Amara and Kofi begins.' },
-];
+interface TimelineItem {
+  id: string;
+  episode: string;
+  title: string;
+  year: string;
+  description: string;
+}
 
 export default function VerticalTitleScreen() {
   const colorScheme = useColorScheme();
   const router = useRouter();
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const isDark = colorScheme === 'dark';
   const [activeTab, setActiveTab] = useState('overview');
   const [isFollowing, setIsFollowing] = useState(false);
+  const [titleData, setTitleData] = useState<TitleData | null>(null);
+  const [characters, setCharacters] = useState<CharacterItem[]>([]);
+  const [loreData, setLoreData] = useState<LoreItem[]>([]);
+  const [timeline, setTimeline] = useState<TimelineItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const tabs = [
     { id: 'overview', label: 'Overview' },
@@ -54,10 +67,48 @@ export default function VerticalTitleScreen() {
     { id: 'timeline', label: 'Timeline' },
   ];
 
+  const fetchData = useCallback(async () => {
+    if (!id) {
+      setError('No title ID provided');
+      setIsLoading(false);
+      return;
+    }
+    setIsLoading(true);
+    setError(null);
+    try {
+      const [titleRes, charsRes, loreRes, timelineRes] = await Promise.all([
+        apiClient.get<TitleData>(`/vertical/titles/${id}`),
+        apiClient.get<CharacterItem[]>(`/vertical/titles/${id}/characters`),
+        apiClient.get<LoreItem[]>(`/vertical/titles/${id}/lore`),
+        apiClient.get<TimelineItem[]>(`/vertical/titles/${id}/timeline`),
+      ]);
+      setTitleData(titleRes);
+      setCharacters(charsRes);
+      setLoreData(loreRes);
+      setTimeline(timelineRes);
+    } catch {
+      setError('Failed to load title data');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [id]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  if (isLoading) {
+    return <LoadingState text="Loading title..." />;
+  }
+
+  if (error || !titleData) {
+    return <ErrorState description={error || 'Title not found'} onRetry={fetchData} />;
+  }
+
   return (
-    <ScrollView style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' }]}>
+    <ScrollView style={[styles.container, { backgroundColor: isDark ? '#0a0a0a' : '#ffffff' }]}>
       <View style={styles.heroSection}>
-        <Image source={{ uri: titleData.thumbnail }} style={styles.heroImage} />
+        <Image source={{ uri: titleData.thumbnail || PLACEHOLDER_IMAGE }} style={styles.heroImage} />
         <View style={styles.heroOverlay}>
           <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
             <Text style={styles.backIcon}>←</Text>
@@ -122,11 +173,11 @@ export default function VerticalTitleScreen() {
             <Text style={[styles.statusBadge, { color: titleData.status === 'Ongoing' ? '#10B981' : '#888' }]}>
               {titleData.status}
             </Text>
-            <Text style={[styles.synopsis, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
+            <Text style={[styles.synopsis, { color: isDark ? '#ffffff' : '#000000' }]}>
               {titleData.synopsis}
             </Text>
             <View style={styles.castSection}>
-              <Text style={[styles.sectionTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
+              <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
                 Cast
               </Text>
               <View style={styles.castList}>
@@ -151,7 +202,7 @@ export default function VerticalTitleScreen() {
                   <Text style={styles.characterAvatarText}>{character.avatar}</Text>
                 </View>
                 <View style={styles.characterInfo}>
-                  <Text style={[styles.characterName, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
+                  <Text style={[styles.characterName, { color: isDark ? '#ffffff' : '#000000' }]}>
                     {character.name}
                   </Text>
                   <Text style={styles.characterRole}>{character.role}</Text>
@@ -171,7 +222,7 @@ export default function VerticalTitleScreen() {
                   <Text style={styles.loreIconText}>{item.icon}</Text>
                 </View>
                 <View style={styles.loreContent}>
-                  <Text style={[styles.loreTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
+                  <Text style={[styles.loreTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
                     {item.title}
                   </Text>
                   <Text style={styles.loreText}>{item.content}</Text>
@@ -194,7 +245,7 @@ export default function VerticalTitleScreen() {
                     <Text style={styles.timelineEpisode}>{item.episode}</Text>
                     <Text style={styles.timelineYear}>{item.year}</Text>
                   </View>
-                  <Text style={[styles.timelineTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
+                  <Text style={[styles.timelineTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
                     {item.title}
                   </Text>
                   <Text style={styles.timelineDescription}>{item.description}</Text>

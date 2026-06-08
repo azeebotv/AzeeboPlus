@@ -9,6 +9,7 @@ import React, {
   ReactNode,
 } from 'react';
 import { api, User, AuthResponse } from '../lib/api';
+import { webLogger } from '@/lib/logger';
 
 interface AuthContextType {
   user: User | null;
@@ -24,6 +25,7 @@ interface AuthContextType {
   ) => Promise<{ success: boolean; message?: string }>;
   logout: () => Promise<void>;
   updateUser: (user: User) => void;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -56,21 +58,25 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     api.setToken(access_token);
     localStorage.setItem('user', JSON.stringify(userData));
     localStorage.setItem('refreshToken', refresh_token);
+    localStorage.setItem('accessToken', access_token);
   }, []);
 
   const refreshAccessToken = useCallback(async () => {
-    if (!refreshToken) {
+    const currentRefreshToken = localStorage.getItem('refreshToken') || refreshToken;
+    if (!currentRefreshToken) {
       return false;
     }
 
     try {
-      const response = await api.auth.refreshToken(refreshToken);
+      const response = await api.auth.refreshToken(currentRefreshToken);
       if (response.success && response.data) {
         const newToken = response.data.access_token;
         const newRefreshToken = response.data.refresh_token;
         setToken(newToken);
         setRefreshToken(newRefreshToken);
         api.setToken(newToken);
+        localStorage.setItem('accessToken', newToken);
+        localStorage.setItem('refreshToken', newRefreshToken);
         return true;
       }
       return false;
@@ -84,12 +90,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       try {
         const storedUser = localStorage.getItem('user');
         const storedRefreshToken = localStorage.getItem('refreshToken');
+        const storedAccessToken = localStorage.getItem('accessToken');
 
         if (storedUser) {
           setUser(JSON.parse(storedUser));
         }
         if (storedRefreshToken) {
           setRefreshToken(storedRefreshToken);
+        }
+        if (storedAccessToken) {
+          setToken(storedAccessToken);
+          api.setToken(storedAccessToken);
         }
       } catch (error) {
         // Error handling is intentionally minimal
@@ -162,12 +173,36 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       api.setToken(null);
       localStorage.removeItem('user');
       localStorage.removeItem('refreshToken');
+      localStorage.removeItem('accessToken');
     }
   };
 
   const updateUser = (updatedUser: User): void => {
     setUser(updatedUser);
     localStorage.setItem('user', JSON.stringify(updatedUser));
+  };
+
+  const refreshUser = async (): Promise<void> => {
+    try {
+      const response = await api.user.getProfile();
+      if (response.success && response.data) {
+        const userData = response.data;
+        const userObj: User = {
+          id: userData.id,
+          email: userData.email,
+          name: userData.displayName || userData.name,
+          displayName: userData.displayName,
+          role: userData.role,
+          avatar: userData.avatar,
+          createdAt: userData.createdAt,
+          updatedAt: userData.updatedAt,
+        };
+        setUser(userObj);
+        localStorage.setItem('user', JSON.stringify(userObj));
+      }
+    } catch (error) {
+      webLogger.error('Failed to refresh user', error);
+    }
   };
 
   const value: AuthContextType = {
@@ -180,6 +215,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     register,
     logout,
     updateUser,
+    refreshUser,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

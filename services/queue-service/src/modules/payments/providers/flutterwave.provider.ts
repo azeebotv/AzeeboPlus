@@ -72,8 +72,9 @@ export class FlutterwaveProvider {
         reference: response.data.data.reference,
         authorizationUrl: response.data.data.link,
       };
-    } catch (error: any) {
-      throw new BadRequestException(`Flutterwave initialization failed: ${error.message}`);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      throw new BadRequestException(`Flutterwave initialization failed: ${message}`);
     }
   }
 
@@ -100,8 +101,9 @@ export class FlutterwaveProvider {
         paidAt: new Date(response.data.data.created_at),
         reference: response.data.data.tx_ref,
       };
-    } catch (error: any) {
-      throw new BadRequestException(`Flutterwave verification failed: ${error.message}`);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      throw new BadRequestException(`Flutterwave verification failed: ${message}`);
     }
   }
 
@@ -130,8 +132,9 @@ export class FlutterwaveProvider {
         amount: response.data.data.amount,
         status: response.data.data.status,
       };
-    } catch (error: any) {
-      throw new BadRequestException(`Flutterwave refund failed: ${error.message}`);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      throw new BadRequestException(`Flutterwave refund failed: ${message}`);
     }
   }
 
@@ -140,7 +143,7 @@ export class FlutterwaveProvider {
     throw new Error('Flutterwave payout is not implemented. Please use wallet-service direct transfer for payouts.');
   }
 
-  async verifyWebhookSignature(payload: any, signature: string): Promise<boolean> {
+  async verifyWebhookSignature(payload: Record<string, unknown>, signature: string): Promise<boolean> {
     const hash = createHmac('sha256', this.apiKey)
       .update(JSON.stringify(payload))
       .digest('hex');

@@ -29,6 +29,127 @@ export interface ContentItem {
   updatedAt: string;
 }
 
+export interface Episode {
+  id: string;
+  title: string;
+  description: string;
+  episodeNumber: number;
+  seasonNumber: number;
+  duration: number;
+  thumbnail: string;
+  releaseDate: string;
+  isLocked: boolean;
+  contentId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Contestant {
+  id: string;
+  name: string;
+  description: string;
+  avatar: string;
+  votes: number;
+  rank: number;
+  eliminated?: boolean;
+  episodeId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Vote {
+  id: string;
+  userId: string;
+  contestantId: string;
+  episodeId: string;
+  isSuperVote: boolean;
+  voteCount: number;
+  createdAt: string;
+}
+
+export interface VoteResult {
+  contestantId: string;
+  contestantName: string;
+  totalVotes: number;
+  percentage: number;
+  rank: number;
+}
+
+export interface CreatorContent {
+  id: string;
+  title: string;
+  description: string;
+  status: 'draft' | 'published' | 'scheduled' | 'archived';
+  thumbnail?: string;
+  mediaUrl?: string;
+  contentType: string;
+  universe: string;
+  publishedAt?: string;
+  scheduledAt?: string;
+  views: number;
+  likes: number;
+  comments: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreatorAnalytics {
+  totalViews: number;
+  totalLikes: number;
+  totalComments: number;
+  totalFollowers: number;
+  viewsThisWeek: number;
+  viewsThisMonth: number;
+  topContent: CreatorContent[];
+  viewsOverTime: { date: string; views: number }[];
+}
+
+export interface CreatorEarnings {
+  totalEarnings: number;
+  pendingEarnings: number;
+  paidEarnings: number;
+  currency: string;
+  earningsHistory: { date: string; amount: number; type: string }[];
+}
+
+export interface MonetizationSettings {
+  isMonetized: boolean;
+  monetizationTier: string;
+  adRevenueShare: number;
+  subscriptionRevenueShare: number;
+  minimumPayout: number;
+  payoutMethod: string;
+  payoutAccount?: string;
+}
+
+export interface CreatorProfile {
+  id: string;
+  userId: string;
+  displayName: string;
+  bio?: string;
+  avatar?: string;
+  banner?: string;
+  category: string;
+  contentType: string;
+  socialLinks?: Record<string, string>;
+  followers: number;
+  following: number;
+  totalContent: number;
+  isVerified: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Recommendation {
+  id: string;
+  title: string;
+  description: string;
+  thumbnail: string;
+  type: 'content' | 'creator' | 'universe';
+  reason: string;
+  score: number;
+}
+
 export interface PaginatedResponse<T> {
   items: T[];
   total: number;
@@ -98,5 +219,102 @@ export const contentApi = {
 
   removeSavedContent: async (contentId: string): Promise<ApiResponse<{ message: string }>> => {
     return apiClient.delete<ApiResponse<{ message: string }>>(`/user/saved/${contentId}`);
+  },
+
+  getEpisode: async (episodeId: string): Promise<ApiResponse<Episode>> => {
+    return apiClient.get<ApiResponse<Episode>>(`/content/episodes/${episodeId}`);
+  },
+
+  vote: async (data: { episodeId?: string; contestantId?: string; isSuperVote: boolean }): Promise<ApiResponse<Vote>> => {
+    return apiClient.post<ApiResponse<Vote>>('/content/vote', data);
+  },
+
+  getEpisodes: async (contentId: string): Promise<ApiResponse<Episode[]>> => {
+    return apiClient.get<ApiResponse<Episode[]>>(`/content/${contentId}/episodes`);
+  },
+
+  getContestant: async (contestantId: string): Promise<ApiResponse<Contestant>> => {
+    return apiClient.get<ApiResponse<Contestant>>(`/content/contestants/${contestantId}`);
+  },
+
+  getContestants: async (episodeId: string): Promise<ApiResponse<Contestant[]>> => {
+    return apiClient.get<ApiResponse<Contestant[]>>(`/content/episodes/${episodeId}/contestants`);
+  },
+
+  superVote: async (data: {
+    contestantId: string;
+    episodeId: string;
+    voteCount: number;
+  }): Promise<ApiResponse<Vote>> => {
+    return apiClient.post<ApiResponse<Vote>>('/content/super-vote', data);
+  },
+
+  getResults: async (contentId: string): Promise<ApiResponse<VoteResult[]>> => {
+    return apiClient.get<ApiResponse<VoteResult[]>>(`/content/${contentId}/results`);
+  },
+
+  getCreatorContent: async (): Promise<ApiResponse<CreatorContent[]>> => {
+    return apiClient.get<ApiResponse<CreatorContent[]>>('/creator/content');
+  },
+
+  deleteContent: async (contentId: string): Promise<ApiResponse<{ message: string }>> => {
+    return apiClient.delete<ApiResponse<{ message: string }>>(`/creator/content/${contentId}`);
+  },
+
+  publishContent: async (contentId: string): Promise<ApiResponse<{ message: string }>> => {
+    return apiClient.post<ApiResponse<{ message: string }>>(`/creator/content/${contentId}/publish`);
+  },
+
+  getDrafts: async (): Promise<ApiResponse<CreatorContent[]>> => {
+    return apiClient.get<ApiResponse<CreatorContent[]>>('/creator/drafts');
+  },
+
+  deleteDraft: async (draftId: string): Promise<ApiResponse<{ message: string }>> => {
+    return apiClient.delete<ApiResponse<{ message: string }>>(`/creator/drafts/${draftId}`);
+  },
+
+  getPublishedContent: async (): Promise<ApiResponse<CreatorContent[]>> => {
+    return apiClient.get<ApiResponse<CreatorContent[]>>('/creator/published');
+  },
+
+  getScheduledPosts: async (): Promise<ApiResponse<CreatorContent[]>> => {
+    return apiClient.get<ApiResponse<CreatorContent[]>>('/creator/scheduled');
+  },
+
+  getCreatorAnalytics: async (): Promise<ApiResponse<CreatorAnalytics>> => {
+    return apiClient.get<ApiResponse<CreatorAnalytics>>('/creator/analytics');
+  },
+
+  getEarnings: async (): Promise<ApiResponse<CreatorEarnings>> => {
+    return apiClient.get<ApiResponse<CreatorEarnings>>('/creator/earnings');
+  },
+
+  getMonetizationSettings: async (): Promise<ApiResponse<MonetizationSettings>> => {
+    return apiClient.get<ApiResponse<MonetizationSettings>>('/creator/monetization');
+  },
+
+  updateMonetizationSettings: async (data: Partial<MonetizationSettings>): Promise<ApiResponse<MonetizationSettings>> => {
+    return apiClient.put<ApiResponse<MonetizationSettings>>('/creator/monetization', data);
+  },
+
+  getCreatorProfile: async (creatorId: string): Promise<ApiResponse<CreatorProfile>> => {
+    return apiClient.get<ApiResponse<CreatorProfile>>(`/creator/profile/${creatorId}`);
+  },
+
+  getRecommendations: async (type?: string): Promise<ApiResponse<Recommendation[]>> => {
+    const url = type ? `/content/recommendations?type=${type}` : '/content/recommendations';
+    return apiClient.get<ApiResponse<Recommendation[]>>(url);
+  },
+
+  createContent: async (data: {
+    title: string;
+    description?: string;
+    universe: string;
+    contentType: string;
+    mediaUrl?: string;
+    thumbnail?: string;
+    isPremium?: boolean;
+  }): Promise<ApiResponse<ContentItem>> => {
+    return apiClient.post<ApiResponse<ContentItem>>('/content', data);
   },
 };

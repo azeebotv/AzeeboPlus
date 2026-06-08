@@ -148,8 +148,7 @@ export class NotificationsService {
     type: string,
     title: string,
     message: string,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    metadata?: any
+    metadata?: Record<string, unknown>
   ) {
     return this.prisma.notification.create({
       data: {

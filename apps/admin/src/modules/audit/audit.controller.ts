@@ -1,7 +1,13 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import { Controller, Get, Param, Query } from '@nestjs/common';
 import { AuditLogService } from './audit.service';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { UseGuards } from '@nestjs/common';
 
 @Controller('admin/audit')
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles('admin')
 export class AuditController {
   constructor(private readonly auditService: AuditLogService) {}
 
@@ -32,20 +38,20 @@ export class AuditController {
 
   @Get('target/:targetType/:targetId')
   async getLogsForTarget(
-    @Query('targetType') _targetType: string,
-    @Query('targetId') _targetId: string,
+    @Param('targetType') targetType: string,
+    @Param('targetId') targetId: string,
     @Query('page') page = 1,
     @Query('limit') limit = 20
   ): Promise<{ logs: unknown[]; total: number; page: number; limit: number; totalPages: number }> {
-    return this.auditService.getLogsForTarget(_targetType, _targetId, Number(page), Number(limit));
+    return this.auditService.getLogsForTarget(targetType, targetId, Number(page), Number(limit));
   }
 
   @Get('actor/:actorId')
   async getLogsByActor(
-    @Query('actorId') _actorId: string,
+    @Param('actorId') actorId: string,
     @Query('page') page = 1,
     @Query('limit') limit = 20
   ): Promise<{ logs: unknown[]; total: number; page: number; limit: number; totalPages: number }> {
-    return this.auditService.getLogsByActor(_actorId, Number(page), Number(limit));
+    return this.auditService.getLogsByActor(actorId, Number(page), Number(limit));
   }
 }

@@ -1,48 +1,60 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, FlatList } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
+import { LoadingState, EmptyState, ErrorState } from '../src/components/StateContainers';
+import { apiClient } from '../src/api/client';
 
-const LIVE_SHOWS = [
-  {
-    id: 'bbnaija',
-    title: 'Big Brother Naija',
-    subtitle: 'Season 9 - Live',
-    thumbnail: '',
-    viewers: '2.4M',
-    isLive: true,
-  },
-  {
-    id: 'edition',
-    title: 'Big Brother Naija',
-    subtitle: 'All Stars - Highlights',
-    thumbnail: '',
-    viewers: '850K',
-    isLive: false,
-  },
-];
+interface LiveShow {
+  id: string; title: string; subtitle: string; thumbnail: string; viewers: string; isLive: boolean;
+}
 
-const CONTESTANTS = [
-  { id: '1', name: 'Maria', votes: 245000, image: '' },
-  { id: '2', name: 'Kenny', votes: 198000, image: '' },
-  { id: '3', name: 'Nini', votes: 187000, image: '' },
-  { id: '4', name: 'Cross', votes: 156000, image: '' },
-  { id: '5', name: 'Angel', votes: 142000, image: '' },
-  { id: '6', name: 'Jerome', votes: 98000, image: '' },
-];
+interface Contestant {
+  id: string; name: string; votes: number; image: string;
+}
 
-const FEATURED_CONTENT = [
-  { id: '1', title: 'Week 1 Highlights', duration: '45:30', thumbnail: '' },
-  { id: '2', title: 'Eviction Night', duration: '1:20:00', thumbnail: '' },
-  { id: '3', title: 'Head of House', duration: '32:15', thumbnail: '' },
-];
+interface FeaturedItem {
+  id: string; title: string; duration: string; thumbnail: string;
+}
 
 export default function RealityUniverseHome() {
   const colorScheme = useColorScheme();
   const router = useRouter();
   const isDark = colorScheme === 'dark';
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [liveShows, setLiveShows] = useState<LiveShow[]>([]);
+  const [contestants, setContestants] = useState<Contestant[]>([]);
+  const [featuredContent, setFeaturedContent] = useState<FeaturedItem[]>([]);
 
-  const renderContestantCard = ({ item, index }: { item: typeof CONTESTANTS[0]; index: number }) => (
+  const fetchData = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const [showsRes, contestantsRes, featuredRes] = await Promise.all([
+        apiClient.get<any>('/v1/reality/shows'),
+        apiClient.get<any>('/v1/reality/contestants'),
+        apiClient.get<any>('/v1/reality/featured'),
+      ]);
+      setLiveShows(Array.isArray(showsRes) ? showsRes : showsRes?.data ?? []);
+      setContestants(Array.isArray(contestantsRes) ? contestantsRes : contestantsRes?.data ?? []);
+      setFeaturedContent(Array.isArray(featuredRes) ? featuredRes : featuredRes?.data ?? []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchData(); }, []);
+
+  if (isLoading) return <LoadingState text="Loading reality shows..." />;
+  if (error) return <ErrorState description={error} onRetry={fetchData} />;
+  if (!liveShows.length && !contestants.length && !featuredContent.length) {
+    return <EmptyState icon="🎭" title="No shows available" description="Check back later for reality shows" />;
+  }
+
+  const renderContestantCard = ({ item, index }: { item: Contestant; index: number }) => (
     <TouchableOpacity
       style={[styles.contestantCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
       onPress={() => router.push('/vote')}
@@ -121,7 +133,7 @@ export default function RealityUniverseHome() {
           </TouchableOpacity>
         </View>
         <FlatList
-          data={CONTESTANTS}
+          data={contestants}
           renderItem={renderContestantCard}
           keyExtractor={(item) => item.id}
           horizontal
@@ -137,7 +149,7 @@ export default function RealityUniverseHome() {
           </Text>
         </View>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.highlightsList}>
-          {FEATURED_CONTENT.map((item) => (
+          {featuredContent.map((item) => (
             <TouchableOpacity
               key={item.id}
               style={[styles.highlightCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}

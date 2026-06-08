@@ -1,32 +1,50 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
+import { LoadingState, EmptyState, ErrorState } from '../src/components/StateContainers';
+import { apiClient } from '../src/api/client';
 
-const FEATURED_SERIES = [
-  { id: '1', title: 'The Crown', season: 'Season 5', rating: '4.9', emoji: '👑' },
-  { id: '2', title: 'Bridgerton', season: 'Season 3', rating: '4.7', emoji: '💃' },
-  { id: '3', title: 'The Witcher', season: 'Season 3', rating: '4.8', emoji: '⚔️' },
-];
-
-const VERTICAL_CONTENT = [
-  { id: '1', title: 'Diary of a Mad Black Woman', episodes: 8, emoji: '📱' },
-  { id: '2', title: 'The King of Boys', episodes: 6, emoji: '🎭' },
-  { id: '3', title: 'Shanty Town', episodes: 10, emoji: '🏘️' },
-];
-
-const GENRES = [
-  { id: '1', name: 'Drama', emoji: '🎭' },
-  { id: '2', name: 'Romance', emoji: '💕' },
-  { id: '3', name: 'Thriller', emoji: '🔪' },
-  { id: '4', name: 'Comedy', emoji: '😂' },
-  { id: '5', name: 'Epic', emoji: '🏰' },
-];
+interface FeaturedSeries { id: string; title: string; season: string; rating: string; emoji: string; }
+interface VerticalItem { id: string; title: string; episodes: number; emoji: string; }
+interface GenreItem { id: string; name: string; emoji: string; }
 
 export default function VerticalUniverseHome() {
   const colorScheme = useColorScheme();
   const router = useRouter();
   const isDark = colorScheme === 'dark';
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [featuredSeries, setFeaturedSeries] = useState<FeaturedSeries[]>([]);
+  const [verticalContent, setVerticalContent] = useState<VerticalItem[]>([]);
+  const [genres, setGenres] = useState<GenreItem[]>([]);
+
+  const fetchData = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const [seriesRes, contentRes, genresRes] = await Promise.all([
+        apiClient.get<any>('/v1/vertical/featured'),
+        apiClient.get<any>('/v1/vertical/series'),
+        apiClient.get<any>('/v1/vertical/genres'),
+      ]);
+      setFeaturedSeries(Array.isArray(seriesRes) ? seriesRes : seriesRes?.data ?? []);
+      setVerticalContent(Array.isArray(contentRes) ? contentRes : contentRes?.data ?? []);
+      setGenres(Array.isArray(genresRes) ? genresRes : genresRes?.data ?? []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchData(); }, []);
+
+  if (isLoading) return <LoadingState text="Loading vertical series..." />;
+  if (error) return <ErrorState description={error} onRetry={fetchData} />;
+  if (!featuredSeries.length && !verticalContent.length) {
+    return <EmptyState icon="🏰" title="No series available" description="Check back later for vertical content" />;
+  }
 
   return (
     <ScrollView style={[styles.container, { backgroundColor: isDark ? '#0a0a0a' : '#ffffff' }]}>
@@ -39,7 +57,7 @@ export default function VerticalUniverseHome() {
       </View>
 
       <View style={styles.genreScroll}>
-        {GENRES.map((genre) => (
+        {genres.map((genre) => (
           <TouchableOpacity key={genre.id} style={styles.genreChip}>
             <Text style={styles.genreEmoji}>{genre.emoji}</Text>
             <Text style={styles.genreName}>{genre.name}</Text>
@@ -52,7 +70,7 @@ export default function VerticalUniverseHome() {
           Featured Series
         </Text>
         <FlatList
-          data={FEATURED_SERIES}
+          data={featuredSeries}
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.featuredList}
@@ -89,7 +107,7 @@ export default function VerticalUniverseHome() {
           </TouchableOpacity>
         </View>
         <View style={styles.verticalGrid}>
-          {VERTICAL_CONTENT.map((item) => (
+          {verticalContent.map((item) => (
             <TouchableOpacity key={item.id} style={[styles.verticalCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}>
               <View style={styles.verticalThumbnail}>
                 <Text style={styles.verticalEmoji}>{item.emoji}</Text>

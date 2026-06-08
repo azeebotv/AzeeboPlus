@@ -1,4 +1,5 @@
 import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
 import { Prisma } from '@prisma/client';
 import { createApiClient } from '@azeebo/api-client';
@@ -6,20 +7,27 @@ import { createApiClient } from '@azeebo/api-client';
 @Injectable()
 export class ChargebackService {
   private readonly logger = new Logger(ChargebackService.name);
-  private readonly paymentServiceClient = createApiClient({
-    baseUrl: process.env.PAYMENT_SERVICE_URL || 'http://localhost:3003',
-    timeout: 30000,
-  });
-  private readonly walletServiceClient = createApiClient({
-    baseUrl: process.env.WALLET_SERVICE_URL || 'http://localhost:3002',
-    timeout: 30000,
-  });
-  private readonly auditServiceClient = createApiClient({
-    baseUrl: process.env.MODERATION_SERVICE_URL || 'http://localhost:3006',
-    timeout: 30000,
-  });
+  private readonly paymentServiceClient;
+  private readonly walletServiceClient;
+  private readonly auditServiceClient;
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private configService: ConfigService,
+  ) {
+    this.paymentServiceClient = createApiClient({
+      baseUrl: this.configService.getOrThrow<string>('PAYMENT_SERVICE_URL'),
+      timeout: 30000,
+    });
+    this.walletServiceClient = createApiClient({
+      baseUrl: this.configService.getOrThrow<string>('WALLET_SERVICE_URL'),
+      timeout: 30000,
+    });
+    this.auditServiceClient = createApiClient({
+      baseUrl: this.configService.getOrThrow<string>('MODERATION_SERVICE_URL'),
+      timeout: 30000,
+    });
+  }
 
   async initiateChargeback(data: {
     ticketId: string;

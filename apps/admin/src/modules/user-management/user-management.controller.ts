@@ -1,7 +1,17 @@
-import { Controller, Get, Put, Delete, Param, Query, Body } from '@nestjs/common';
+import { Controller, Get, Put, Delete, Param, Query, Body, UseGuards, Req } from '@nestjs/common';
+import { Request } from 'express';
 import { UserManagementService } from './user-management.service';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+
+interface AuthRequest extends Request {
+  user: { id: string; email: string; role: string };
+}
 
 @Controller('admin/users')
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles('admin')
 export class UserManagementController {
   constructor(private readonly userService: UserManagementService) {}
 
@@ -33,17 +43,21 @@ export class UserManagementController {
   @Put(':id/suspend')
   async suspendUser(
     @Param('id') id: string,
-    @Body() body: { reason: string; suspendedBy: string; durationDays?: number }
+    @Req() req: AuthRequest,
+    @Body() body: { reason: string; durationDays?: number }
   ): Promise<unknown> {
-    return this.userService.suspendUser(id, body.reason, body.suspendedBy, body.durationDays);
+    const actorId = req.user.id;
+    return this.userService.suspendUser(id, body.reason, actorId, body.durationDays);
   }
 
   @Put(':id/suspension/revoke')
   async revokeSuspension(
     @Param('id') id: string,
-    @Body() body: { revokedBy: string; reason: string }
+    @Req() req: AuthRequest,
+    @Body() body: { reason: string }
   ): Promise<unknown> {
-    return this.userService.revokeSuspension(id, body.revokedBy, body.reason);
+    const actorId = req.user.id;
+    return this.userService.revokeSuspension(id, actorId, body.reason);
   }
 
   @Get(':id/suspensions')

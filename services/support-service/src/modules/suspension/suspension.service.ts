@@ -1,20 +1,27 @@
 import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
 import { createApiClient } from '@azeebo/api-client';
 
 @Injectable()
 export class SuspensionService {
   private readonly logger = new Logger(SuspensionService.name);
-  private readonly notificationServiceClient = createApiClient({
-    baseUrl: process.env.NOTIFICATION_SERVICE_URL || 'http://localhost:3006',
-    timeout: 30000,
-  });
-  private readonly auditServiceClient = createApiClient({
-    baseUrl: process.env.MODERATION_SERVICE_URL || 'http://localhost:3006',
-    timeout: 30000,
-  });
+  private readonly notificationServiceClient;
+  private readonly auditServiceClient;
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private configService: ConfigService,
+  ) {
+    this.notificationServiceClient = createApiClient({
+      baseUrl: this.configService.getOrThrow<string>('NOTIFICATION_SERVICE_URL'),
+      timeout: 30000,
+    });
+    this.auditServiceClient = createApiClient({
+      baseUrl: this.configService.getOrThrow<string>('MODERATION_SERVICE_URL'),
+      timeout: 30000,
+    });
+  }
 
   async suspendUser(data: {
     ticketId: string;

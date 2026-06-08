@@ -7,7 +7,7 @@ import { SportsResponse } from './interfaces/sports-response.interface';
 import { CreatePredictionDto, EnterContestDto } from './dto/prediction.dto';
 
 @ApiTags('Sports')
-@Controller('sports')
+@Controller('v1/sports')
 export class SportsController {
   constructor(private readonly sportsService: SportsService) {}
 
@@ -33,7 +33,6 @@ export class SportsController {
   }
 
   @Get('fixtures/:id')
-  @Cache({ key: 'sports:fixtures:{id}', ttl: 300 })
   @ApiOperation({ summary: 'Get fixture details' })
   @ApiResponse({ status: 200, description: 'Fixture details' })
   async getFixtureDetails(): Promise<SportsResponse> {
@@ -41,7 +40,6 @@ export class SportsController {
   }
 
   @Get('predictions')
-  @Cache({ key: 'sports:predictions', ttl: 300 })
   @ApiOperation({ summary: 'Prediction opportunities' })
   @ApiResponse({ status: 200, description: 'Predictions' })
   async getPredictions(): Promise<SportsResponse> {
@@ -62,7 +60,6 @@ export class SportsController {
   }
 
   @Get('leaderboard')
-  @Cache({ key: 'sports:leaderboard', ttl: 300 })
   @ApiOperation({ summary: 'Sports leaderboard' })
   @ApiResponse({ status: 200, description: 'Leaderboard' })
   async getLeaderboard(): Promise<SportsResponse> {
@@ -70,7 +67,6 @@ export class SportsController {
   }
 
   @Get('fan-boards')
-  @Cache({ key: 'sports:fan-boards', ttl: 300 })
   @ApiOperation({ summary: 'Fan boards' })
   @ApiResponse({ status: 200, description: 'Fan boards' })
   async getFanBoards(): Promise<SportsResponse> {
@@ -78,7 +74,6 @@ export class SportsController {
   }
 
   @Get('fan-contests')
-  @Cache({ key: 'sports:fan-contests', ttl: 300 })
   @ApiOperation({ summary: 'Fan contests' })
   @ApiResponse({ status: 200, description: 'Fan contests' })
   async getFanContests(): Promise<SportsResponse> {

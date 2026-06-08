@@ -1,7 +1,12 @@
-import { Controller, Get, Put, Delete, Param, Query, Body } from '@nestjs/common';
+import { Controller, Get, Put, Delete, Param, Query, Body, UseGuards } from '@nestjs/common';
 import { ContentManagementService } from './content-management.service';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
 
 @Controller('admin/content')
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles('admin')
 export class ContentManagementController {
   constructor(private readonly contentService: ContentManagementService) {}
 

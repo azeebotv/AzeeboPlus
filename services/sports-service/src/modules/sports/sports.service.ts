@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
 import { SportsResponse } from './interfaces/sports-response.interface';
 import axios from 'axios';
@@ -12,10 +13,18 @@ interface PredictionBody {
 @Injectable()
 export class SportsService {
   private readonly logger = new Logger(SportsService.name);
-  private readonly analyticsServiceBaseUrl = process.env.ANALYTICS_SERVICE_URL || 'http://localhost:3008';
-  private readonly walletServiceBaseUrl = process.env.WALLET_SERVICE_URL || 'http://localhost:3006';
+  private readonly analyticsServiceBaseUrl: string;
+  private readonly walletServiceBaseUrl: string;
   private readonly predictionFee = 10;
   private readonly contestEntryFee = 50;
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly configService: ConfigService,
+  ) {
+    this.analyticsServiceBaseUrl = this.configService.getOrThrow<string>('ANALYTICS_SERVICE_URL');
+    this.walletServiceBaseUrl = this.configService.getOrThrow<string>('WALLET_SERVICE_URL');
+  }
 
   private async trackAnalyticsEvent(
     eventName: string,
@@ -171,7 +180,6 @@ export class SportsService {
           userId,
           eventId: body.eventId,
           prediction: body.prediction as unknown as Record<string, string | number | boolean | null>,
-          fee: this.predictionFee,
         },
       });
 
@@ -280,9 +288,10 @@ export class SportsService {
       throw new BadRequestException('Contest is not active');
     }
 
-    const existingEntry = await this.prisma.contestEntry.findUnique({
+    const existingEntry = await this.prisma.contestEntry.findFirst({
       where: {
-        userId_contestId: { userId, contestId },
+        userId,
+        contestId,
       },
     });
 
@@ -323,7 +332,7 @@ export class SportsService {
         data: {
           userId,
           contestId,
-          fee: this.contestEntryFee,
+          entryData: { fee: this.contestEntryFee },
         },
       });
 
@@ -383,7 +392,6 @@ export class SportsService {
       await this.prisma.predictionEntry.update({
         where: { id: prediction.id },
         data: {
-          isCorrect,
           points: isCorrect ? 100 : 0,
         },
       });
@@ -392,7 +400,7 @@ export class SportsService {
         correctCount++;
         const wallet = await this.prisma.wallet.findUnique({ where: { userId: prediction.userId } });
         if (wallet) {
-          const rewardAmount = 100 + prediction.fee;
+          const rewardAmount = 100;
           await axios.post(`${this.walletServiceBaseUrl}/wallet/credit`, {
             walletId: wallet.id,
             amount: rewardAmount,
@@ -405,7 +413,7 @@ export class SportsService {
         await this.trackAnalyticsEvent('prediction_correct', prediction.userId, {
           predictionId: prediction.id,
           eventId,
-          reward: 100 + prediction.fee,
+          reward: 100,
         });
       } else {
         incorrectCount++;

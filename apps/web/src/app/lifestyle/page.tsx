@@ -2,80 +2,35 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { Button, Card, Skeleton, Badge, Avatar } from '@azeebo/ui';
-import { colors, gradients, universeColors } from '@azeebo/design-tokens';
+import { colors, universeColors } from '@azeebo/design-tokens';
 import Link from 'next/link';
-
-const mockEvents = [
-  {
-    id: '1',
-    title: 'Lagos Fashion Week',
-    description: 'Experience the vibrant fashion scene of Lagos with top African designers',
-    thumbnail: 'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=fashion%20runway%20show%20with%20african%20designers%20colorful%20outfits&image_size=landscape_16_9',
-    date: 'Dec 15-20, 2026',
-    location: 'Lagos, Nigeria',
-    attendees: 5000,
-    category: 'Fashion',
-  },
-  {
-    id: '2',
-    title: 'Abuja Food Festival',
-    description: 'Taste the best culinary creations from across Africa',
-    thumbnail: 'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=food%20festival%20with%20variety%20of%20african%20dishes%20colorful&image_size=landscape_16_9',
-    date: 'Jan 5-8, 2027',
-    location: 'Abuja, Nigeria',
-    attendees: 3200,
-    category: 'Food',
-  },
-  {
-    id: '3',
-    title: 'Nairobi Music Festival',
-    description: 'Live performances from top African artists',
-    thumbnail: 'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=music%20concert%20festival%20with%20crowd%20and%20stage%20lights&image_size=landscape_16_9',
-    date: 'Feb 10-14, 2027',
-    location: 'Nairobi, Kenya',
-    attendees: 8000,
-    category: 'Music',
-  },
-];
-
-const mockCityGuides = [
-  {
-    id: '1',
-    city: 'Lagos',
-    country: 'Nigeria',
-    description: 'The commercial capital of Nigeria',
-    attractions: 45,
-    thumbnail: 'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=lagos%20nigeria%20skyline%20modern%20cityscape%20vibrant&image_size=landscape_16_9',
-  },
-  {
-    id: '2',
-    city: 'Johannesburg',
-    country: 'South Africa',
-    description: 'The city of gold',
-    attractions: 38,
-    thumbnail: 'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=johannesburg%20south%20africa%20city%20skyline%20modern%20buildings&image_size=landscape_16_9',
-  },
-  {
-    id: '3',
-    city: 'Accra',
-    country: 'Ghana',
-    description: 'The capital city of Ghana',
-    attractions: 28,
-    thumbnail: 'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=accra%20ghana%20cityscape%20coastal%20modern%20buildings&image_size=landscape_16_9',
-  },
-];
+import { apiFetch, ContentItem } from '@/lib/api';
+import { webLogger } from '@/lib/logger';
 
 export default function LifestylePage(): JSX.Element {
   const { user, isAuthenticated } = useAuth();
-  const [events, setEvents] = useState(mockEvents);
-  const [cityGuides, setCityGuides] = useState(mockCityGuides);
+  const [events, setEvents] = useState<ContentItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 500);
-    return () => clearTimeout(timer);
+    const fetchContent = async () => {
+      try {
+        setIsLoading(true);
+        const result = await apiFetch<ContentItem[]>('/v1/content?universe=lifestyle&limit=20');
+
+        if (result.success && result.data) {
+          setEvents(result.data);
+        }
+      } catch (err) {
+        webLogger.error('Failed to fetch lifestyle content', err);
+        setError('Failed to load lifestyle content. Please try again.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchContent();
   }, []);
 
   return (
@@ -107,7 +62,7 @@ export default function LifestylePage(): JSX.Element {
             {isAuthenticated ? (
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
-                  <Avatar size="medium" fallback={user?.name?.charAt(0) || 'U'} />
+                  <Avatar size="md" fallback={user?.name?.charAt(0) || 'U'} />
                   <span className="text-sm font-medium" style={{ color: colors.text.primary }}>{user?.name}</span>
                 </div>
               </div>
@@ -129,7 +84,14 @@ export default function LifestylePage(): JSX.Element {
       <section className="relative">
         {isLoading ? (
           <Skeleton height="500px" className="w-full" />
-        ) : (
+        ) : error ? (
+          <div className="h-[500px] flex items-center justify-center">
+            <div className="text-center">
+              <p className="text-lg mb-4" style={{ color: colors.text.secondary }}>{error}</p>
+              <Button variant="primary" onClick={() => window.location.reload()}>Retry</Button>
+            </div>
+          </div>
+        ) : events.length > 0 ? (
           <div className="relative h-[500px]">
             <img
               src={events[0].thumbnail}
@@ -153,6 +115,10 @@ export default function LifestylePage(): JSX.Element {
               </div>
             </div>
           </div>
+        ) : (
+          <div className="h-[500px] flex items-center justify-center">
+            <p className="text-lg" style={{ color: colors.text.secondary }}>No events available</p>
+          </div>
         )}
       </section>
 
@@ -169,82 +135,44 @@ export default function LifestylePage(): JSX.Element {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {events.map((event) => (
-            <Card key={event.id} padding="none" className="overflow-hidden cursor-pointer hover:shadow-xl transition-shadow">
-              <div className="relative">
-                <img src={event.thumbnail} alt={event.title} className="w-full h-48 object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
-                <div className="absolute bottom-4 left-4 right-4">
-                  <Badge variant="outline" className="mb-2">{event.category}</Badge>
-                  <h3 className="text-xl font-bold text-white">{event.title}</h3>
+        {isLoading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <Card key={i} padding="none">
+                <Skeleton height="240px" />
+                <div className="p-4 space-y-3">
+                  <Skeleton width="80%" height="20px" />
+                  <Skeleton width="60%" height="16px" />
                 </div>
-              </div>
-              <div className="p-4">
-                <p className="text-sm text-gray-400 mb-3">{event.description}</p>
-                <div className="space-y-2 mb-4">
-                  <div className="flex items-center gap-2 text-sm text-gray-400">
-                    <span>📅</span>
-                    <span>{event.date}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-gray-400">
-                    <span>📍</span>
-                    <span>{event.location}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-gray-400">
-                    <span>👥</span>
-                    <span>{event.attendees.toLocaleString()} attending</span>
-                  </div>
-                </div>
-                <Button variant="primary" className="w-full" style={{ backgroundColor: universeColors.lifestyle.primary }}>
-                  Get Tickets
-                </Button>
-              </div>
-            </Card>
-          ))}
-        </div>
-      </section>
-
-      {/* City Guides */}
-      <section className="py-12" style={{ backgroundColor: colors.bg.secondary }}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <h2 className="text-2xl sm:text-3xl font-bold" style={{ color: colors.text.primary }}>
-                City Guides
-              </h2>
-              <p className="text-base mt-1" style={{ color: colors.text.secondary }}>
-                Explore the best of African cities
-              </p>
-            </div>
-            <Button variant="ghost">View All</Button>
+              </Card>
+            ))}
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {cityGuides.map((city) => (
-              <Card key={city.id} padding="none" className="overflow-hidden cursor-pointer hover:shadow-xl transition-shadow">
+        ) : events.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {events.map((event) => (
+              <Card key={event.id} padding="none" className="overflow-hidden cursor-pointer hover:shadow-xl transition-shadow">
                 <div className="relative">
-                  <img src={city.thumbnail} alt={city.city} className="w-full h-40 object-cover" />
+                  <img src={event.thumbnail} alt={event.title} className="w-full h-48 object-cover" />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
                   <div className="absolute bottom-4 left-4 right-4">
-                    <h3 className="text-xl font-bold text-white">{city.city}</h3>
-                    <p className="text-sm text-gray-300">{city.country}</p>
+                    <Badge variant="outline" className="mb-2">{event.contentType || 'Event'}</Badge>
+                    <h3 className="text-xl font-bold text-white">{event.title}</h3>
                   </div>
                 </div>
                 <div className="p-4">
-                  <p className="text-sm text-gray-400 mb-3">{city.description}</p>
-                  <div className="flex items-center gap-2 text-sm text-gray-400 mb-4">
-                    <span>🏛️</span>
-                    <span>{city.attractions} attractions</span>
-                  </div>
-                  <Button variant="outline" className="w-full">
-                    Explore City
+                  <p className="text-sm text-gray-400 mb-3 line-clamp-2">{event.description}</p>
+                  <Button variant="primary" className="w-full" style={{ backgroundColor: universeColors.lifestyle.primary }}>
+                    Get Tickets
                   </Button>
                 </div>
               </Card>
             ))}
           </div>
-        </div>
+        ) : (
+          <div className="text-center py-12">
+            <p className="text-lg" style={{ color: colors.text.secondary }}>No events available yet</p>
+          </div>
+        )}
       </section>
 
       {/* Footer */}

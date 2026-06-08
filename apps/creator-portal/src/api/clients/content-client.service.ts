@@ -47,8 +47,11 @@ export class ContentClientService {
   private readonly contentServiceUrl: string;
 
   constructor(private readonly configService: ConfigService) {
-    this.contentServiceUrl =
-      this.configService.get<string>('CONTENT_SERVICE_URL') || 'http://localhost:3001';
+    const url = this.configService.get<string>('CONTENT_SERVICE_URL');
+    if (!url && process.env.NODE_ENV === 'production') {
+      throw new Error('CONTENT_SERVICE_URL environment variable must be set in production');
+    }
+    this.contentServiceUrl = url || 'http://localhost:3004';
   }
 
   private async request<T>(

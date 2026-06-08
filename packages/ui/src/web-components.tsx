@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import { colors } from '@azeebo/design-tokens';
 import { Icon, IconName } from './Icon';
@@ -53,7 +55,7 @@ export function Button({
 
   const getIcon = (icon: IconName | React.ReactNode) => {
     if (typeof icon === 'string') {
-      return <Icon name={icon} size={size === 'sm' ? 'sm' : 'md'} />;
+      return <Icon name={icon as IconName} size={size === 'sm' ? 'sm' : 'md'} />;
     }
     return icon;
   };
@@ -96,8 +98,8 @@ export interface CardProps {
   variant?: 'default' | 'elevated' | 'outlined';
   as?: React.ElementType;
   role?: string;
-  aria-label?: string;
-  aria-describedby?: string;
+  'aria-label'?: string;
+  'aria-describedby'?: string;
 }
 
 export function Card({
@@ -132,7 +134,7 @@ export function Card({
       aria-label={ariaLabel}
       aria-describedby={ariaDescribedby}
       tabIndex={onClick ? 0 : undefined}
-      onKeyDown={onClick ? (e) => e.key === 'Enter' && onClick() : undefined}
+      onKeyDown={onClick ? (e: React.KeyboardEvent) => e.key === 'Enter' && onClick() : undefined}
     >
       {children}
     </Component>
@@ -287,7 +289,7 @@ export interface DividerProps {
   className?: string;
   orientation?: 'horizontal' | 'vertical';
   role?: string;
-  aria-orientation?: 'horizontal' | 'vertical';
+  'aria-orientation'?: 'horizontal' | 'vertical';
 }
 
 export function Divider({ className = '', orientation = 'horizontal', role = 'separator', 'aria-orientation': ariaOrientation }: DividerProps): React.ReactElement {
@@ -307,7 +309,7 @@ export interface BadgeProps {
   children: React.ReactNode;
   onClick?: () => void;
   role?: string;
-  aria-label?: string;
+  'aria-label'?: string;
 }
 
 export function Badge({
@@ -537,6 +539,41 @@ export function ProgressBar({
       </div>
       {showLabel && (
         <span className="text-xs text-text-tertiary mt-1 block" aria-hidden="true">{Math.round(percentage)}%</span>
+      )}
+    </div>
+  );
+}
+
+// Error State Component
+export interface ErrorStateProps {
+  title?: string;
+  description?: string;
+  buttonText?: string;
+  onButtonPress?: () => void;
+}
+
+export function ErrorState({
+  title = 'Something went wrong',
+  description = 'Please try again later',
+  buttonText = 'Retry',
+  onButtonPress,
+}: ErrorStateProps): React.ReactElement {
+  return (
+    <div className="flex flex-col items-center justify-center py-12 text-center">
+      <div className="w-16 h-16 rounded-full bg-error-500/20 flex items-center justify-center mb-4">
+        <svg className="w-8 h-8 text-error-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        </svg>
+      </div>
+      <h3 className="text-lg font-semibold text-text-primary mb-2">{title}</h3>
+      <p className="text-text-secondary mb-6 max-w-sm">{description}</p>
+      {onButtonPress && (
+        <button
+          onClick={onButtonPress}
+          className="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-dark-800"
+        >
+          {buttonText}
+        </button>
       )}
     </div>
   );

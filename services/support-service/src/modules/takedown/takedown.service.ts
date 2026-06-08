@@ -1,4 +1,5 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
 import { Prisma } from '../../prisma/client';
 import { createApiClient } from '@azeebo/api-client';
@@ -6,16 +7,22 @@ import { createApiClient } from '@azeebo/api-client';
 @Injectable()
 export class TakedownService {
   private readonly logger = new Logger(TakedownService.name);
-  private readonly contentServiceClient = createApiClient({
-    baseUrl: process.env.CONTENT_SERVICE_URL || 'http://localhost:3004',
-    timeout: 30000,
-  });
-  private readonly auditServiceClient = createApiClient({
-    baseUrl: process.env.MODERATION_SERVICE_URL || 'http://localhost:3006',
-    timeout: 30000,
-  });
+  private readonly contentServiceClient;
+  private readonly auditServiceClient;
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private configService: ConfigService,
+  ) {
+    this.contentServiceClient = createApiClient({
+      baseUrl: this.configService.getOrThrow<string>('CONTENT_SERVICE_URL'),
+      timeout: 30000,
+    });
+    this.auditServiceClient = createApiClient({
+      baseUrl: this.configService.getOrThrow<string>('MODERATION_SERVICE_URL'),
+      timeout: 30000,
+    });
+  }
 
   async createTakedown(data: {
     ticketId: string;

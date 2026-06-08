@@ -3,6 +3,8 @@ import React from 'react';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { api } from '@/lib/api';
+import { webLogger } from '@/lib/logger';
 
 const FORGOT_PASSWORD_TIMEOUT_MS = parseInt(process.env.FORGOT_PASSWORD_TIMEOUT_MS || '3000', 10);
 
@@ -20,18 +22,18 @@ export default function ForgotPasswordPage(): JSX.Element {
     setIsLoading(true);
 
     try {
-      // In a real implementation, this would call the backend API
-      // For now, we'll simulate a successful response
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      setSuccess('Password reset email sent successfully');
-      setEmail('');
-
-      // Redirect to login page after timeout
-      setTimeout(() => {
-        router.push('/auth/login');
-      }, FORGOT_PASSWORD_TIMEOUT_MS);
+      const response = await api.auth.requestPasswordReset(email);
+      if (response.success) {
+        setSuccess('Password reset email sent successfully');
+        setEmail('');
+        setTimeout(() => {
+          router.push('/auth/login');
+        }, FORGOT_PASSWORD_TIMEOUT_MS);
+      } else {
+        setError(response.message || 'Failed to send reset email. Please try again.');
+      }
     } catch (error) {
+      webLogger.error('Forgot password request failed', error);
       setError('An error occurred. Please try again.');
     } finally {
       setIsLoading(false);

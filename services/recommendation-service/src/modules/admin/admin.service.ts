@@ -1,0 +1,62 @@
+import { Injectable } from '@nestjs/common';
+import { PrismaService } from '../database/prisma.service';
+import { ApiResponseWrapper } from '@azeebo/shared-types';
+
+@Injectable()
+export class AdminService {
+  constructor(private readonly prisma: PrismaService) {}
+
+  async getStats() {
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    const [totalRequests, recommendationsToday] = await Promise.all([
+      this.prisma.recommendationLog.count(),
+      this.prisma.recommendationLog.count({
+        where: { timestamp: { gte: todayStart } },
+      }),
+    ]);
+
+    return ApiResponseWrapper.success({
+      totalRequests,
+      recommendationsToday,
+    });
+  }
+
+  async getModels() {
+    const models = [
+      {
+        id: 'content-based',
+        name: 'Content-Based Filtering',
+        description: 'Recommends items similar to what the user has interacted with',
+        active: true,
+      },
+      {
+        id: 'collaborative',
+        name: 'Collaborative Filtering',
+        description: 'Recommends items based on similar user behavior',
+        active: true,
+      },
+      {
+        id: 'cross-universe',
+        name: 'Cross-Universe Discovery',
+        description: 'Recommends content across different universes',
+        active: true,
+      },
+      {
+        id: 'trending',
+        name: 'Trending Content',
+        description: 'Recommends currently popular content',
+        active: true,
+      },
+      {
+        id: 'engagement-based',
+        name: 'Engagement-Based',
+        description: 'Recommends based on predicted user engagement',
+        active: false,
+      },
+    ];
+
+    return ApiResponseWrapper.success(models);
+  }
+}

@@ -14,7 +14,7 @@ import { TakedownService } from './takedown.service';
 import { CreateTakedownDto, DecideTakedownDto, TakedownQueryDto } from './dto/takedown.dto';
 import { ApiResponseWrapper } from '@azeebo/shared-types';
 import { AuthGuard } from '../../common/guards/auth.guard';
-import { AdminGuard } from '../../common/guards/admin.guard';
+import { AdminGuard } from '@azeebo/security';
 
 interface AuthenticatedRequest {
   user: {

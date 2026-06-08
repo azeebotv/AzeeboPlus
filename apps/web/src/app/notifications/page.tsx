@@ -1,63 +1,64 @@
 'use client';
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { Button, Card, Skeleton, Badge, Avatar } from '@azeebo/ui';
+import { Button, Card, Skeleton } from '@azeebo/ui';
 import { colors, gradients } from '@azeebo/design-tokens';
 import Link from 'next/link';
+import { apiFetch } from '@/lib/api';
+import { webLogger } from '@/lib/logger';
+import { Avatar } from '@azeebo/ui';
 
-const mockNotifications = [
-  {
-    id: '1',
-    type: 'reward',
-    title: 'You earned 50 points!',
-    description: 'Congratulations on watching your 10th movie!',
-    date: '2 minutes ago',
-    read: false,
-  },
-  {
-    id: '2',
-    type: 'content',
-    title: 'New episode available!',
-    description: 'Kingdom of Oyo Episode 5 is now available to watch.',
-    date: '1 hour ago',
-    read: false,
-  },
-  {
-    id: '3',
-    type: 'reminder',
-    title: 'Match starts in 30 minutes!',
-    description: 'Don\'t miss Super Eagles vs Black Stars!',
-    date: '2 hours ago',
-    read: true,
-  },
-  {
-    id: '4',
-    type: 'transaction',
-    title: 'Deposit successful!',
-    description: 'Your wallet has been credited with ₦5,000.',
-    date: 'Yesterday',
-    read: true,
-  },
-];
+interface Notification {
+  id: string;
+  type: string;
+  title: string;
+  description: string;
+  date: string;
+  read: boolean;
+}
 
 export default function NotificationsPage(): JSX.Element {
   const { user, isAuthenticated } = useAuth();
-  const [notifications, setNotifications] = useState(mockNotifications);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 500);
-    return () => clearTimeout(timer);
+    const fetchNotifications = async () => {
+      try {
+        setIsLoading(true);
+        const result = await apiFetch<Notification[]>('/v1/notifications');
+
+        if (result.success && result.data) {
+          setNotifications(result.data);
+        }
+      } catch (err) {
+        webLogger.error('Failed to fetch notifications', err);
+        setError('Failed to load notifications. Please try again.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchNotifications();
   }, []);
 
-  const markAsRead = (id: string) => {
-    setNotifications(notifications.map(n => n.id === id ? { ...n, read: true } : n));
+  const markAsRead = async (id: string) => {
+    try {
+      await apiFetch(`/v1/notifications/${id}/read`, { method: 'PUT' });
+      setNotifications(notifications.map(n => n.id === id ? { ...n, read: true } : n));
+    } catch (err) {
+      webLogger.error('Failed to mark notification as read', err);
+    }
   };
 
-  const markAllAsRead = () => {
-    setNotifications(notifications.map(n => ({ ...n, read: true })));
+  const markAllAsRead = async () => {
+    try {
+      await apiFetch('/v1/notifications/read-all', { method: 'PUT' });
+      setNotifications(notifications.map(n => ({ ...n, read: true })));
+    } catch (err) {
+      webLogger.error('Failed to mark all notifications as read', err);
+    }
   };
 
   const unreadCount = notifications.filter(n => !n.read).length;
@@ -91,7 +92,7 @@ export default function NotificationsPage(): JSX.Element {
             {isAuthenticated ? (
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
-                  <Avatar size="medium" fallback={user?.name?.charAt(0) || 'U'} />
+                  <Avatar size="md" fallback={user?.name?.charAt(0) || 'U'} />
                   <span className="text-sm font-medium" style={{ color: colors.text.primary }}>{user?.name}</span>
                 </div>
               </div>
@@ -134,7 +135,12 @@ export default function NotificationsPage(): JSX.Element {
               <Skeleton key={i} height="80px" className="w-full" />
             ))}
           </div>
-        ) : (
+        ) : error ? (
+          <div className="text-center py-12">
+            <p className="text-lg mb-4" style={{ color: colors.text.secondary }}>{error}</p>
+            <Button variant="primary" onClick={() => window.location.reload()}>Retry</Button>
+          </div>
+        ) : notifications.length > 0 ? (
           <div className="space-y-4">
             {notifications.map((notification) => (
               <div key={notification.id} className={`cursor-pointer transition-all border-l-4 ${!notification.read ? 'border-l-primary-500' : 'border-l-transparent'} p-4 bg-white rounded-lg shadow-sm`} onClick={() => markAsRead(notification.id)}>
@@ -157,6 +163,10 @@ export default function NotificationsPage(): JSX.Element {
                 </div>
               </div>
             ))}
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <p className="text-lg" style={{ color: colors.text.secondary }}>No notifications yet</p>
           </div>
         )}
       </section>

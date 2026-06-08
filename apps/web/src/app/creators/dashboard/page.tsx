@@ -2,36 +2,42 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../../context/AuthContext';
 import { Button, Card, Skeleton, Badge, Avatar } from '@azeebo/ui';
-import { colors, gradients, universeColors } from '@azeebo/design-tokens';
+import { colors, universeColors } from '@azeebo/design-tokens';
 import Link from 'next/link';
+import { apiFetch } from '@/lib/api';
+import { webLogger } from '@/lib/logger';
 
-const mockStats = [
-  { label: 'Total Views', value: '1.2M', icon: '👁️' },
-  { label: 'Followers', value: '89K', icon: '👥' },
-  { label: 'Videos', value: '24', icon: '🎬' },
-  { label: 'Revenue', value: '₦450K', icon: '💰' },
-];
-
-const mockRecentVideos = [
-  { id: '1', title: 'Behind the Scenes', views: '24K', date: '2 days ago', thumbnail: 'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=behind%20the%20scenes%20video%20thumbnail&image_size=square' },
-  { id: '2', title: 'Q&A Session', views: '18K', date: '5 days ago', thumbnail: 'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=qa%20session%20video%20thumbnail&image_size=square' },
-  { id: '3', title: 'Collaboration Special', views: '42K', date: '1 week ago', thumbnail: 'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=collaboration%20video%20thumbnail&image_size=square' },
-];
-
-const mockRecentComments = [
-  { id: '1', user: 'Fan123', comment: 'Amazing content! Love your work!', date: '2h ago' },
-  { id: '2', user: 'NollywoodFan', comment: 'Can\'t wait for the next video!', date: '5h ago' },
-];
+interface DashboardStats {
+  totalViews: number;
+  followers: number;
+  videos: number;
+  revenue: number;
+}
 
 export default function CreatorDashboardPage(): JSX.Element {
   const { user, isAuthenticated } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [stats, setStats] = useState<DashboardStats | null>(null);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 500);
-    return () => clearTimeout(timer);
+    const fetchDashboard = async () => {
+      try {
+        setIsLoading(true);
+        const result = await apiFetch<DashboardStats>('/v1/creators/dashboard/stats');
+
+        if (result.success && result.data) {
+          setStats(result.data);
+        }
+      } catch (err) {
+        webLogger.error('Failed to fetch creator dashboard stats', err);
+        setError('Failed to load dashboard. Please try again.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchDashboard();
   }, []);
 
   return (
@@ -63,7 +69,7 @@ export default function CreatorDashboardPage(): JSX.Element {
             {isAuthenticated ? (
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
-                  <Avatar size="medium" fallback={user?.name?.charAt(0) || 'U'} />
+                  <Avatar size="md" fallback={user?.name?.charAt(0) || 'U'} />
                   <span className="text-sm font-medium" style={{ color: colors.text.primary }}>{user?.name}</span>
                 </div>
               </div>
@@ -83,110 +89,109 @@ export default function CreatorDashboardPage(): JSX.Element {
         {/* Welcome Section */}
         <div className="mb-8">
           <h2 className="text-3xl font-bold mb-2" style={{ color: colors.text.primary }}>
-            Welcome back, {user?.name || 'Creator'}! 👋
+            Welcome back, {user?.name || 'Creator'}!
           </h2>
-          <p style={{ color: colors.text.secondary }}>Here\'s what\'s happening with your content.</p>
+          <p style={{ color: colors.text.secondary }}>Here&apos;s what&apos;s happening with your content.</p>
         </div>
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {isLoading ? (
-            mockStats.map((_, idx) => <Skeleton key={idx} height="120px" className="rounded-lg" />)
+            Array.from({ length: 4 }).map((_, idx) => (
+              <Skeleton key={idx} height="120px" className="rounded-lg" />
+            ))
+          ) : error ? (
+            <div className="lg:col-span-4 text-center py-8">
+              <p className="mb-4" style={{ color: colors.text.secondary }}>{error}</p>
+              <Button variant="primary" onClick={() => window.location.reload()}>Retry</Button>
+            </div>
+          ) : stats ? (
+            <>
+              <Card padding="md">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-3xl">👁️</span>
+                  <Badge variant="outline">Views</Badge>
+                </div>
+                <p className="text-2xl font-bold mb-1" style={{ color: colors.text.primary }}>{stats.totalViews.toLocaleString()}</p>
+                <p className="text-sm" style={{ color: colors.text.secondary }}>Total Views</p>
+              </Card>
+              <Card padding="md">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-3xl">👥</span>
+                  <Badge variant="outline">Followers</Badge>
+                </div>
+                <p className="text-2xl font-bold mb-1" style={{ color: colors.text.primary }}>{stats.followers.toLocaleString()}</p>
+                <p className="text-sm" style={{ color: colors.text.secondary }}>Followers</p>
+              </Card>
+              <Card padding="md">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-3xl">🎬</span>
+                  <Badge variant="outline">Videos</Badge>
+                </div>
+                <p className="text-2xl font-bold mb-1" style={{ color: colors.text.primary }}>{stats.videos}</p>
+                <p className="text-sm" style={{ color: colors.text.secondary }}>Videos</p>
+              </Card>
+              <Card padding="md">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-3xl">💰</span>
+                  <Badge variant="outline">Revenue</Badge>
+                </div>
+                <p className="text-2xl font-bold mb-1" style={{ color: colors.text.primary }}>₦{stats.revenue.toLocaleString()}</p>
+                <p className="text-sm" style={{ color: colors.text.secondary }}>Revenue</p>
+              </Card>
+            </>
           ) : (
-            mockStats.map((stat, idx) => (
+            Array.from({ length: 4 }).map((_, idx) => (
               <Card key={idx} padding="md">
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-3xl">{stat.icon}</span>
-                  <Badge variant="outline">+12%</Badge>
+                  <span className="text-3xl">📊</span>
+                  <Badge variant="outline">--</Badge>
                 </div>
-                <p className="text-2xl font-bold mb-1" style={{ color: colors.text.primary }}>{stat.value}</p>
-                <p className="text-sm" style={{ color: colors.text.secondary }}>{stat.label}</p>
+                <p className="text-2xl font-bold mb-1" style={{ color: colors.text.primary }}>--</p>
+                <p className="text-sm" style={{ color: colors.text.secondary }}>Loading...</p>
               </Card>
             ))
           )}
         </div>
 
-        {/* Main Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Recent Videos */}
-          <div className="lg:col-span-2">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-bold" style={{ color: colors.text.primary }}>Recent Videos</h3>
-              <Button variant="outline">
-                <span>➕</span> Upload New
-              </Button>
-            </div>
-            {isLoading ? (
-              <div className="space-y-4">
-                {[1, 2, 3].map(i => <Skeleton key={i} height="120px" className="rounded-lg" />)}
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {mockRecentVideos.map((video) => (
-                  <Card key={video.id} padding="md" className="flex items-center gap-4">
-                    <img src={video.thumbnail} alt={video.title} className="w-40 h-24 object-cover rounded-lg" />
-                    <div className="flex-1">
-                      <h4 className="font-bold" style={{ color: colors.text.primary }}>{video.title}</h4>
-                      <p className="text-sm" style={{ color: colors.text.secondary }}>👁️ {video.views} views • {video.date}</p>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm">Edit</Button>
-                      <Button variant="ghost" size="sm">Analytics</Button>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Recent Comments & Quick Actions */}
-          <div className="space-y-6">
-            {/* Recent Comments */}
-            <div>
-              <h3 className="text-xl font-bold mb-6" style={{ color: colors.text.primary }}>Recent Comments</h3>
-              {isLoading ? (
-                <div className="space-y-4">
-                  {[1, 2].map(i => <Skeleton key={i} height="80px" className="rounded-lg" />)}
-                </div>
-              ) : (
-                <Card padding="md">
-                  <div className="space-y-4">
-                    {mockRecentComments.map((comment) => (
-                      <div key={comment.id} className="pb-4 border-b border-gray-700 last:border-0 last:pb-0">
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="font-medium" style={{ color: colors.text.primary }}>{comment.user}</span>
-                          <span className="text-xs" style={{ color: colors.text.tertiary }}>{comment.date}</span>
-                        </div>
-                        <p className="text-sm" style={{ color: colors.text.secondary }}>{comment.comment}</p>
-                      </div>
-                    ))}
-                  </div>
-                </Card>
-              )}
-            </div>
-
-            {/* Quick Actions */}
-            <div>
+        {/* Quick Actions */}
+        {!isLoading && !error && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2">
               <h3 className="text-xl font-bold mb-6" style={{ color: colors.text.primary }}>Quick Actions</h3>
-              <Card padding="md">
-                <div className="space-y-3">
-                  <Button variant="outline" className="w-full justify-start">
-                    <span className="mr-2">📊</span> View Analytics
-                  </Button>
-                  <Button variant="outline" className="w-full justify-start">
-                    <span className="mr-2">💰</span> View Earnings
-                  </Button>
-                  <Button variant="outline" className="w-full justify-start">
-                    <span className="mr-2">⚙️</span> Manage Settings
-                  </Button>
-                  <Button variant="outline" className="w-full justify-start">
-                    <span className="mr-2">❓</span> Get Support
-                  </Button>
-                </div>
-              </Card>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Link href="/creators/dashboard/content">
+                  <Card padding="md" className="cursor-pointer hover:shadow-lg transition-shadow">
+                    <span className="text-3xl mb-3 block">📝</span>
+                    <h4 className="font-bold" style={{ color: colors.text.primary }}>Manage Content</h4>
+                    <p className="text-sm" style={{ color: colors.text.secondary }}>Upload and manage your videos</p>
+                  </Card>
+                </Link>
+                <Link href="/creators/dashboard/analytics">
+                  <Card padding="md" className="cursor-pointer hover:shadow-lg transition-shadow">
+                    <span className="text-3xl mb-3 block">📊</span>
+                    <h4 className="font-bold" style={{ color: colors.text.primary }}>View Analytics</h4>
+                    <p className="text-sm" style={{ color: colors.text.secondary }}>Track your performance</p>
+                  </Card>
+                </Link>
+                <Link href="/creators/dashboard/earnings">
+                  <Card padding="md" className="cursor-pointer hover:shadow-lg transition-shadow">
+                    <span className="text-3xl mb-3 block">💰</span>
+                    <h4 className="font-bold" style={{ color: colors.text.primary }}>View Earnings</h4>
+                    <p className="text-sm" style={{ color: colors.text.secondary }}>Check your earnings</p>
+                  </Card>
+                </Link>
+                <Link href="/creators/dashboard/settings">
+                  <Card padding="md" className="cursor-pointer hover:shadow-lg transition-shadow">
+                    <span className="text-3xl mb-3 block">⚙️</span>
+                    <h4 className="font-bold" style={{ color: colors.text.primary }}>Manage Settings</h4>
+                    <p className="text-sm" style={{ color: colors.text.secondary }}>Update your creator profile</p>
+                  </Card>
+                </Link>
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </section>
 
       {/* Footer */}

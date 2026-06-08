@@ -1,31 +1,85 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useColorScheme } from 'react-native';
+import { apiClient } from '../../src/api';
+import { logger } from '../../src/utils/logger';
+import { LoadingState, ErrorState, EmptyState } from '../../src/components/StateContainers';
 
-const rewards = [
-  { id: '1', title: '100 Points', description: 'Watch 5 videos', progress: 3, total: 5, icon: '🎬', color: '#FF6B6B' },
-  { id: '2', title: '250 Points', description: 'Invite 3 friends', progress: 1, total: 3, icon: '👥', color: '#4ECDC4' },
-  { id: '3', title: '500 Points', description: 'Complete profile', progress: 4, total: 5, icon: '✅', color: '#45B7D1' },
-  { id: '4', title: '1000 Points', description: 'First purchase', progress: 0, total: 1, icon: '🛒', color: '#96CEB4' },
-];
+interface RewardItem {
+  id: string;
+  title: string;
+  description: string;
+  progress: number;
+  total: number;
+  icon: string;
+  color: string;
+}
 
-const rewardsHistory = [
-  { id: '1', title: 'Watch Bonus', points: 50, date: 'Today', icon: '🎬' },
-  { id: '2', title: 'Daily Login', points: 10, date: 'Today', icon: '📅' },
-  { id: '3', title: 'Referral Bonus', points: 250, date: 'Yesterday', icon: '👥' },
-  { id: '4', title: 'Video Watch', points: 20, date: '2 days ago', icon: '🎬' },
-];
+interface RewardHistoryItem {
+  id: string;
+  title: string;
+  points: number;
+  date: string;
+  icon: string;
+}
 
-const redeemOptions = [
-  { id: '1', name: '100 NGN', points: 1000, icon: '💳' },
-  { id: '2', name: '500 NGN', points: 5000, icon: '💰' },
-  { id: '3', name: '1000 NGN', points: 10000, icon: '💵' },
-  { id: '4', name: 'Premium Month', points: 3000, icon: '⭐' },
-];
+interface RedeemOption {
+  id: string;
+  name: string;
+  points: number;
+  icon: string;
+}
 
 export default function RewardsScreen() {
   const colorScheme = useColorScheme();
-  const [currentPoints] = useState(7850);
+  const [rewards, setRewards] = useState<RewardItem[]>([]);
+  const [history, setHistory] = useState<RewardHistoryItem[]>([]);
+  const [redeemOptions, setRedeemOptions] = useState<RedeemOption[]>([]);
+  const [currentPoints, setCurrentPoints] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchRewards = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const [pointsRes, rewardsRes, historyRes, redeemRes] = await Promise.all([
+        apiClient.get<{ points: number }>('/rewards/points').catch(() => ({ points: 0 })),
+        apiClient.get<RewardItem[]>('/rewards/quests').catch(() => []),
+        apiClient.get<RewardHistoryItem[]>('/rewards/history').catch(() => []),
+        apiClient.get<RedeemOption[]>('/rewards/redeem-options').catch(() => []),
+      ]);
+      setCurrentPoints(pointsRes.points);
+      setRewards(Array.isArray(rewardsRes) ? rewardsRes : []);
+      setHistory(Array.isArray(historyRes) ? historyRes : []);
+      setRedeemOptions(Array.isArray(redeemRes) ? redeemRes : []);
+    } catch (err: any) {
+      logger.error('Failed to load rewards:', err);
+      setError(err.message || 'Failed to load rewards');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchRewards();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <ScrollView style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' }]}>
+        <LoadingState text="Loading rewards..." />
+      </ScrollView>
+    );
+  }
+
+  if (error) {
+    return (
+      <ScrollView style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' }]}>
+        <ErrorState description={error} onRetry={fetchRewards} />
+      </ScrollView>
+    );
+  }
 
   const isDark = colorScheme === 'dark';
 
@@ -109,20 +163,24 @@ export default function RewardsScreen() {
           Recent Activity
         </Text>
         <View style={styles.historyList}>
-          {rewardsHistory.map((item) => (
-            <View key={item.id} style={[styles.historyItem, { backgroundColor: isDark ? '#1a1a1a' : '#f8f9fa' }]}>
-              <View style={styles.historyIconView}>
-                <Text style={styles.historyIconText}>{item.icon}</Text>
+          {history.length === 0 ? (
+            <Text style={{ color: '#888', textAlign: 'center', padding: 20 }}>No recent activity</Text>
+          ) : (
+            history.map((item) => (
+              <View key={item.id} style={[styles.historyItem, { backgroundColor: isDark ? '#1a1a1a' : '#f8f9fa' }]}>
+                <View style={styles.historyIconView}>
+                  <Text style={styles.historyIconText}>{item.icon}</Text>
+                </View>
+                <View style={styles.historyInfo}>
+                  <Text style={[styles.historyTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
+                    {item.title}
+                  </Text>
+                  <Text style={styles.historyDate}>{item.date}</Text>
+                </View>
+                <Text style={styles.historyPoints}>+{item.points}</Text>
               </View>
-              <View style={styles.historyInfo}>
-                <Text style={[styles.historyTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
-                  {item.title}
-                </Text>
-                <Text style={styles.historyDate}>{item.date}</Text>
-              </View>
-              <Text style={styles.historyPoints}>+{item.points}</Text>
-            </View>
-          ))}
+            ))
+          )}
         </View>
       </View>
 

@@ -11,6 +11,10 @@ import { CelebrityModule } from './modules/celebrity/celebrity.module';
 import { NightlifeModule } from './modules/nightlife/nightlife.module';
 import { InfluencerModule } from './modules/influencer/influencer.module';
 import { FeedModule } from './modules/feed/feed.module';
+import { ChallengeModule } from './modules/challenges/challenge.module';
+import { PollModule } from './modules/polls/poll.module';
+import { QuizModule } from './modules/quizzes/quiz.module';
+import { AdminModule } from './modules/admin/admin.module';
 import { RateLimiterModule } from '@azeebo/security';
 
 @Module({
@@ -30,6 +34,10 @@ import { RateLimiterModule } from '@azeebo/security';
     NightlifeModule,
     InfluencerModule,
     FeedModule,
+    ChallengeModule,
+    PollModule,
+    QuizModule,
+    AdminModule,
   ],
 })
 export class AppModule {}

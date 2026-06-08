@@ -4,57 +4,65 @@ import { useAuth } from '../../context/AuthContext';
 import { Button, Card, Skeleton, Badge, Avatar } from '@azeebo/ui';
 import { colors, gradients } from '@azeebo/design-tokens';
 import Link from 'next/link';
+import { apiFetch } from '@/lib/api';
+import { webLogger } from '@/lib/logger';
 
-const mockRewards = [
-  {
-    id: '1',
-    title: 'Free Movie Rental',
-    description: 'Watch any premium movie for free',
-    points: 500,
-    image: 'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=movie%20ticket%20reward%20voucher%20premium&image_size=square',
-  },
-  {
-    id: '2',
-    title: 'Premium Content Pass',
-    description: '3 days of unlimited premium access',
-    points: 1000,
-    image: 'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=premium%20pass%20reward%20golden%20ticket&image_size=square',
-  },
-  {
-    id: '3',
-    title: 'Creator Merchandise',
-    description: 'Exclusive creator merchandise',
-    points: 2000,
-    image: 'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=merchandise%20tshirt%20reward%20exclusive&image_size=square',
-  },
-];
+interface Reward {
+  id: string;
+  title: string;
+  description: string;
+  points: number;
+  image?: string;
+}
 
-const mockAchievements = [
-  { id: '1', name: 'First Vote', description: 'Cast your first vote', unlocked: true, icon: '✅' },
-  { id: '2', name: '7 Day Streak', description: 'Active for 7 consecutive days', unlocked: true, icon: '🔥' },
-  { id: '3', name: 'Game Master', description: 'Complete 10 games', unlocked: false, icon: '🎮' },
-  { id: '4', name: 'Top Predictor', description: 'Win 5 predictions in a row', unlocked: false, icon: '🎯' },
-];
+interface Achievement {
+  id: string;
+  name: string;
+  description: string;
+  unlocked: boolean;
+  icon: string;
+}
 
-const mockLeaderboard = [
-  { id: '1', name: 'RewardsKing', points: 54800, avatar: 'RK' },
-  { id: '2', name: 'PointCollector', points: 48200, avatar: 'PC' },
-  { id: '3', name: 'LoyalUser', points: 42100, avatar: 'LU' },
-];
+interface LeaderboardEntry {
+  id: string;
+  name: string;
+  points: number;
+  avatar?: string;
+}
 
 export default function RewardsPage(): JSX.Element {
   const { user, isAuthenticated } = useAuth();
-  const [rewards, setRewards] = useState(mockRewards);
-  const [achievements, setAchievements] = useState(mockAchievements);
-  const [leaderboard, setLeaderboard] = useState(mockLeaderboard);
-  const [userPoints, setUserPoints] = useState(2450);
+  const [rewards, setRewards] = useState<Reward[]>([]);
+  const [achievements, setAchievements] = useState<Achievement[]>([]);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [userPoints, setUserPoints] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 500);
-    return () => clearTimeout(timer);
+    const fetchRewards = async () => {
+      try {
+        setIsLoading(true);
+        const [rewardsRes, balanceRes] = await Promise.all([
+          apiFetch<Reward[]>('/v1/rewards'),
+          apiFetch<{ balance: number }>('/v1/wallet/balance'),
+        ]);
+
+        if (rewardsRes.success && rewardsRes.data) {
+          setRewards(rewardsRes.data);
+        }
+        if (balanceRes.success && balanceRes.data) {
+          setUserPoints(balanceRes.data.balance);
+        }
+      } catch (err) {
+        webLogger.error('Failed to fetch rewards', err);
+        setError('Failed to load rewards. Please try again.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchRewards();
   }, []);
 
   return (
@@ -86,7 +94,7 @@ export default function RewardsPage(): JSX.Element {
             {isAuthenticated ? (
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
-                  <Avatar size="medium" fallback={user?.name?.charAt(0) || 'U'} />
+                  <Avatar size="md" fallback={user?.name?.charAt(0) || 'U'} />
                   <span className="text-sm font-medium" style={{ color: colors.text.primary }}>{user?.name}</span>
                 </div>
               </div>
@@ -140,77 +148,50 @@ export default function RewardsPage(): JSX.Element {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {rewards.map((reward) => (
-            <Card key={reward.id} padding="none" className="overflow-hidden">
-              <div className="relative">
-                <img src={reward.image} alt={reward.title} className="w-full h-48 object-cover" />
-                <Badge variant="success" className="absolute top-2 right-2">
-                  {reward.points} pts
-                </Badge>
-              </div>
-              <div className="p-4">
-                <h3 className="text-lg font-bold mb-2" style={{ color: colors.text.primary }}>{reward.title}</h3>
-                <p className="text-sm text-gray-400 mb-4">{reward.description}</p>
-                <Button variant="primary" className="w-full" disabled={userPoints < reward.points}>
-                  {userPoints >= reward.points ? 'Redeem' : 'Not enough points'}
-                </Button>
-              </div>
-            </Card>
-          ))}
-        </div>
-      </section>
-
-      {/* Achievements & Leaderboard */}
-      <section className="py-12" style={{ backgroundColor: colors.bg.secondary }}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div>
-              <h2 className="text-2xl font-bold mb-6" style={{ color: colors.text.primary }}>
-                Achievements
-              </h2>
-              <div className="space-y-4">
-                {achievements.map((achievement) => (
-                  <Card key={achievement.id} padding="md" className={`flex items-center gap-4 ${achievement.unlocked ? '' : 'opacity-50'}`}>
-                    <span className="text-4xl">{achievement.icon}</span>
-                    <div className="flex-1">
-                      <h3 className="font-bold" style={{ color: colors.text.primary }}>{achievement.name}</h3>
-                      <p className="text-sm" style={{ color: colors.text.secondary }}>{achievement.description}</p>
-                    </div>
-                    {achievement.unlocked ? (
-                      <Badge variant="success">Unlocked</Badge>
-                    ) : (
-                      <Badge variant="outline">Locked</Badge>
-                    )}
-                  </Card>
-                ))}
-              </div>
-            </div>
-            <div>
-              <h2 className="text-2xl font-bold mb-6" style={{ color: colors.text.primary }}>
-                Top Earners
-              </h2>
-              <Card padding="md">
-                <div className="space-y-4">
-                  {leaderboard.map((player, index) => (
-                    <div key={player.id} className="flex items-center gap-4">
-                      <span className="w-8 h-8 rounded-full flex items-center justify-center text-lg font-bold" style={{ backgroundColor: index === 0 ? '#FFD700' : index === 1 ? '#C0C0C0' : index === 2 ? '#CD7F32' : colors.bg.tertiary, color: index < 3 ? '#000' : colors.text.primary }}>
-                        {index + 1}
-                      </span>
-                      <Avatar size="medium" fallback={player.avatar} />
-                      <div className="flex-1">
-                        <span className="font-medium" style={{ color: colors.text.primary }}>{player.name}</span>
-                      </div>
-                      <span className="font-bold" style={{ color: colors.primary[500] }}>
-                        {player.points.toLocaleString()} pts
-                      </span>
-                    </div>
-                  ))}
+        {isLoading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <Card key={i} padding="none">
+                <Skeleton height="200px" />
+                <div className="p-4 space-y-3">
+                  <Skeleton width="80%" height="20px" />
+                  <Skeleton width="60%" height="16px" />
                 </div>
               </Card>
-            </div>
+            ))}
           </div>
-        </div>
+        ) : error ? (
+          <div className="text-center py-12">
+            <p className="text-lg mb-4" style={{ color: colors.text.secondary }}>{error}</p>
+            <Button variant="primary" onClick={() => window.location.reload()}>Retry</Button>
+          </div>
+        ) : rewards.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {rewards.map((reward) => (
+              <Card key={reward.id} padding="none" className="overflow-hidden">
+                <div className="relative">
+                  {reward.image && (
+                    <img src={reward.image} alt={reward.title} className="w-full h-48 object-cover" />
+                  )}
+                  <Badge variant="success" className="absolute top-2 right-2">
+                    {reward.points} pts
+                  </Badge>
+                </div>
+                <div className="p-4">
+                  <h3 className="text-lg font-bold mb-2" style={{ color: colors.text.primary }}>{reward.title}</h3>
+                  <p className="text-sm text-gray-400 mb-4">{reward.description}</p>
+                  <Button variant="primary" className="w-full" disabled={userPoints < reward.points}>
+                    {userPoints >= reward.points ? 'Redeem' : 'Not enough points'}
+                  </Button>
+                </div>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <p className="text-lg" style={{ color: colors.text.secondary }}>No rewards available yet</p>
+          </div>
+        )}
       </section>
 
       {/* Footer */}

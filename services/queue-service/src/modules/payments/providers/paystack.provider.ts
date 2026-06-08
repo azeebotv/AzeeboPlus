@@ -180,7 +180,7 @@ export class PaystackProvider {
     throw new Error('Paystack payout is not implemented. Please use wallet-service direct transfer for payouts.');
   }
 
-  async verifyWebhookSignature(payload: any, signature: string): Promise<boolean> {
+  async verifyWebhookSignature(payload: Record<string, unknown>, signature: string): Promise<boolean> {
     const hash: string = createHmac('sha512', this.apiKey)
       .update(JSON.stringify(payload))
       .digest('hex');

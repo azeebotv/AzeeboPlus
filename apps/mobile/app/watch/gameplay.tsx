@@ -1,35 +1,51 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { useColorScheme } from 'react-native';
+import { useRouter } from 'expo-router';
+import { apiClient } from '../../src/api';
+import { logger } from '../../src/utils/logger';
+import { LoadingState, ErrorState, EmptyState } from '../../src/components/StateContainers';
+
+interface GameQuestion {
+  id: number;
+  question: string;
+  options: string[];
+  correct: string;
+}
 
 export default function GameplayScreen() {
   const colorScheme = useColorScheme();
+  const router = useRouter();
   const [score, setScore] = useState(0);
   const [timeLeft, setTimeLeft] = useState(60);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
+  const [questions, setQuestions] = useState<GameQuestion[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const questions = [
-    {
-      id: 1,
-      question: 'What is the capital of Nigeria?',
-      options: ['Abuja', 'Lagos', 'Kano', 'Port Harcourt'],
-      correct: 'Abuja',
-    },
-    {
-      id: 2,
-      question: 'Who won the 2022 World Cup?',
-      options: ['Brazil', 'Argentina', 'France', 'Germany'],
-      correct: 'Argentina',
-    },
-    {
-      id: 3,
-      question: 'What is the largest ocean?',
-      options: ['Atlantic', 'Indian', 'Pacific', 'Arctic'],
-      correct: 'Pacific',
-    },
-  ];
+  const fetchQuestions = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await apiClient.get<{ questions: GameQuestion[] }>('/games/trivia');
+      if (response?.questions?.length) {
+        setQuestions(response.questions);
+      } else {
+        setError('No game questions available');
+      }
+    } catch (err: any) {
+      logger.error('Failed to load game:', err);
+      setError(err.message || 'Failed to load game');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchQuestions();
+  }, []);
 
   useEffect(() => {
     if (timeLeft > 0) {
@@ -64,10 +80,34 @@ export default function GameplayScreen() {
 
   const isGameOver = timeLeft === 0 || (currentQuestion === questions.length - 1 && selectedAnswer);
 
+  if (isLoading) {
+    return (
+      <View style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' }]}>
+        <LoadingState text="Loading game..." />
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' }]}>
+        <ErrorState description={error} onRetry={fetchQuestions} />
+      </View>
+    );
+  }
+
+  if (questions.length === 0) {
+    return (
+      <View style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' }]}>
+        <EmptyState icon="🎮" title="No Games" description="No trivia games available right now." />
+      </View>
+    );
+  }
+
   return (
     <ScrollView style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' }]}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton}>
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
         <View style={styles.headerStats}>

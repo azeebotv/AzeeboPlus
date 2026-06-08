@@ -8,11 +8,13 @@ import {
   Query,
   NotFoundException,
   Param,
+  UseInterceptors,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { PrismaService } from '../database/prisma.service';
 import { RateLimitGuard, RateLimit } from '@azeebo/security';
+import { CacheInterceptor, Cache } from '../../cache';
 
 import { WalletService } from './wallet.service';
 import { FundWalletDto } from './dto/fund-wallet.dto';
@@ -31,7 +33,8 @@ interface AuthenticatedRequest {
 
 @ApiTags('Wallet')
 @ApiBearerAuth()
-@Controller('wallet')
+@Controller('v1/wallet')
+@UseInterceptors(CacheInterceptor)
 export class WalletController {
   constructor(
     private readonly walletService: WalletService,
@@ -39,6 +42,7 @@ export class WalletController {
   ) {}
 
   @Get()
+  @Cache({ key: 'wallet:balance:{userId}', ttl: 60 })
   @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get wallet balance' })
   @ApiResponse({ status: 200, description: 'Wallet balance' })
@@ -48,6 +52,7 @@ export class WalletController {
   }
 
   @Get('transactions')
+  @Cache({ key: 'wallet:transactions:{userId}', ttl: 60 })
   @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get wallet transaction history' })
   @ApiResponse({ status: 200, description: 'Transaction history' })
@@ -62,6 +67,7 @@ export class WalletController {
   }
 
   @Get('summary')
+  @Cache({ key: 'wallet:summary:{userId}', ttl: 60 })
   @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get wallet summary widget' })
   @ApiResponse({ status: 200, description: 'Wallet summary' })

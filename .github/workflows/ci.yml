@@ -253,6 +253,29 @@ jobs:
     name: Docker Smoke Tests
     runs-on: ubuntu-latest
     needs: build
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: azeebo_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     strategy:
       matrix:
         service:
@@ -295,15 +318,30 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Run smoke test container
+      - name: Run ${{ matrix.service }} container
         run: |
-          docker run --rm --name smoke-test-${{ matrix.service }} \
-            --env DATABASE_URL="postgresql://test:test@host.docker.internal:5432/test" \
-            --env REDIS_URL="redis://host.docker.internal:6379" \
-            --env JWT_SECRET="test-secret" \
+          docker run -d --name smoke-test-${{ matrix.service }} \
+            --network host \
+            --env DATABASE_URL="postgresql://test:test@localhost:5432/azeebo_test" \
+            --env REDIS_URL="redis://localhost:6379" \
+            --env JWT_SECRET="test-secret-for-smoke-tests" \
             --env NODE_ENV="test" \
-            azeebo/${{ matrix.service }}:test \
-            sh -c "echo 'Container started successfully' && exit 0" || exit 1
+            --env PORT=3000 \
+            azeebo/${{ matrix.service }}:test
+
+      - name: Wait for service to start
+        run: sleep 10
+
+      - name: Run smoke tests
+        run: |
+          chmod +x ./scripts/docker-smoke-tests.sh
+          ./scripts/docker-smoke-tests.sh http://localhost:3000
+
+      - name: Cleanup container
+        if: always()
+        run: |
+          docker stop smoke-test-${{ matrix.service }} || true
+          docker rm smoke-test-${{ matrix.service }} || true
 
   artifact-check:
     name: Check for Committed Generated Artifacts

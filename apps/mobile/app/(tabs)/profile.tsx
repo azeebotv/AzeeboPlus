@@ -18,6 +18,8 @@ import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../src/contexts/AuthContext';
 import { authApi } from '../../src/api';
+import { logger } from '../../src/utils/logger';
+import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
 
 const MENU_ITEMS = [
   { id: 'subscriptions', label: 'Subscriptions', icon: '📺', action: 'navigate' },
@@ -62,10 +64,10 @@ export default function ProfileScreen() {
     try {
       const response = await authApi.getProfile();
       if (response.success && response.data) {
-        console.log('Profile fetched:', response.data);
+        logger.log('Profile fetched', undefined, response.data);
       }
     } catch (error) {
-      console.error('Failed to fetch profile:', error);
+      logger.error('Failed to fetch profile', error);
     } finally {
       setIsRefreshing(false);
     }

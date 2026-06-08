@@ -3,6 +3,7 @@ import { APP_INTERCEPTOR } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { UploadModule } from './modules/upload/upload.module';
+import { AdminModule } from './modules/admin/admin.module';
 import { HealthModule } from './modules/health/health.module';
 import { ResponseWrapperInterceptor, ResponseSanitizationInterceptor } from '@azeebo/logger';
 
@@ -18,6 +19,7 @@ import { ResponseWrapperInterceptor, ResponseSanitizationInterceptor } from '@az
       },
     ]),
     UploadModule,
+    AdminModule,
     HealthModule,
   ],
   providers: [

@@ -1,50 +1,60 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
+import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
+import { apiClient } from '../../src/api/client';
 
-const FEATURED_GAME = {
-  id: '1',
-  title: 'Azeebo Quest',
-  genre: 'Adventure',
-  players: '12.5K',
-  emoji: '🎮',
-};
-
-const TRENDING_GAMES = [
-  { id: '1', title: 'Speed Kings', genre: 'Racing', players: '8.2K', emoji: '🏎️' },
-  { id: '2', title: 'Puzzle Master', genre: 'Puzzle', players: '6.8K', emoji: '🧩' },
-  { id: '3', title: 'Battle Arena', genre: 'Fighting', players: '9.1K', emoji: '⚔️' },
-  { id: '4', title: 'Word Wizard', genre: 'Word', players: '4.5K', emoji: '✏️' },
-];
-
-const TOURNAMENTS = [
-  { id: '1', title: 'Azeebo Cup', prize: '₦500,000', entrants: '2.4K', status: 'Live', emoji: '🏆' },
-  { id: '2', title: 'Speed Challenge', prize: '₦100,000', entrants: '890', status: 'Tomorrow', emoji: '🏁' },
-  { id: '3', title: 'Puzzle Championship', prize: '₦75,000', entrants: '456', status: 'Soon', emoji: '🧩' },
-];
-
-const GAME_CATEGORIES = [
-  { id: '1', name: 'All Games', emoji: '🎮', count: 48 },
-  { id: '2', name: 'Action', emoji: '⚔️', count: 12 },
-  { id: '3', name: 'Puzzle', emoji: '🧩', count: 8 },
-  { id: '4', name: 'Racing', emoji: '🏎️', count: 6 },
-  { id: '5', name: 'Word', emoji: '✏️', count: 5 },
-];
-
-const TOP_PLAYERS = [
-  { id: '1', name: 'GamerKing', score: 24500, rank: 1, emoji: '👑' },
-  { id: '2', name: 'ProPlayer', score: 23200, rank: 2, emoji: '🥈' },
-  { id: '3', name: 'ChampionX', score: 21800, rank: 3, emoji: '🥉' },
-  { id: '4', name: 'GameMaster', score: 19500, rank: 4, emoji: '🎮' },
-];
+interface GameData { id: string; title: string; genre: string; players: string; emoji: string; }
+interface TournamentData { id: string; title: string; prize: string; entrants: string; status: string; emoji: string; }
+interface CategoryData { id: string; name: string; emoji: string; count: number; }
+interface PlayerData { id: string; name: string; score: number; rank: number; emoji: string; }
 
 export default function GamesUniverseHome() {
   const colorScheme = useColorScheme();
   const router = useRouter();
   const isDark = colorScheme === 'dark';
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [featuredGame, setFeaturedGame] = useState<GameData | null>(null);
+  const [trendingGames, setTrendingGames] = useState<GameData[]>([]);
+  const [tournaments, setTournaments] = useState<TournamentData[]>([]);
+  const [categories, setCategories] = useState<CategoryData[]>([]);
+  const [topPlayers, setTopPlayers] = useState<PlayerData[]>([]);
 
-  const renderGameCard = (item: typeof TRENDING_GAMES[0]) => (
+  const fetchData = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const [featuredRes, trendingRes, tournamentsRes, catsRes, playersRes] = await Promise.all([
+        apiClient.get<any>('/v1/games/featured'),
+        apiClient.get<any>('/v1/games/trending'),
+        apiClient.get<any>('/v1/games/tournaments'),
+        apiClient.get<any>('/v1/games/categories'),
+        apiClient.get<any>('/v1/games/leaderboard'),
+      ]);
+      const featured = Array.isArray(featuredRes) ? featuredRes[0] : featuredRes?.data?.[0] ?? null;
+      setFeaturedGame(featured ?? null);
+      setTrendingGames(Array.isArray(trendingRes) ? trendingRes : trendingRes?.data ?? []);
+      setTournaments(Array.isArray(tournamentsRes) ? tournamentsRes : tournamentsRes?.data ?? []);
+      setCategories(Array.isArray(catsRes) ? catsRes : catsRes?.data ?? []);
+      setTopPlayers(Array.isArray(playersRes) ? playersRes : playersRes?.data ?? []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchData(); }, []);
+
+  if (isLoading) return <LoadingState text="Loading games..." />;
+  if (error) return <ErrorState description={error} onRetry={fetchData} />;
+  if (!featuredGame && !trendingGames.length) {
+    return <EmptyState icon="🎮" title="No games available" description="Check back later for games" />;
+  }
+
+  const renderGameCard = (item: GameData) => (
     <TouchableOpacity
       key={item.id}
       style={[styles.gameCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
@@ -87,13 +97,13 @@ export default function GamesUniverseHome() {
       <View style={styles.featuredSection}>
         <TouchableOpacity style={styles.featuredGame} onPress={() => router.push('/games/1')}>
           <View style={styles.featuredImagePlaceholder}>
-            <Text style={styles.featuredEmoji}>{FEATURED_GAME.emoji}</Text>
+            <Text style={styles.featuredEmoji}>{featuredGame?.emoji ?? '🎮'}</Text>
             <View style={styles.featuredBadge}>
               <Text style={styles.featuredBadgeText}>FEATURED</Text>
             </View>
             <View style={styles.featuredOverlay}>
-              <Text style={styles.featuredTitle}>{FEATURED_GAME.title}</Text>
-              <Text style={styles.featuredGenre}>{FEATURED_GAME.genre} • {FEATURED_GAME.players} players</Text>
+              <Text style={styles.featuredTitle}>{featuredGame?.title ?? 'Featured Game'}</Text>
+              <Text style={styles.featuredGenre}>{featuredGame?.genre ?? ''}{featuredGame ? ` • ${featuredGame.players} players` : ''}</Text>
               <TouchableOpacity style={styles.featuredPlayButton}>
                 <Text style={styles.featuredPlayIcon}>▶</Text>
                 <Text style={styles.featuredPlayText}>Play Now</Text>
@@ -105,7 +115,7 @@ export default function GamesUniverseHome() {
 
       <View style={styles.categoriesSection}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoriesList}>
-          {GAME_CATEGORIES.map((cat) => (
+          {categories.map((cat) => (
             <TouchableOpacity key={cat.id} style={styles.categoryChip}>
               <Text style={styles.categoryEmoji}>{cat.emoji}</Text>
               <Text style={styles.categoryName}>{cat.name}</Text>
@@ -127,7 +137,7 @@ export default function GamesUniverseHome() {
           </TouchableOpacity>
         </View>
         <FlatList
-          data={TRENDING_GAMES}
+          data={trendingGames}
           renderItem={({ item }) => renderGameCard(item)}
           keyExtractor={(item) => item.id}
           horizontal
@@ -143,7 +153,7 @@ export default function GamesUniverseHome() {
           </Text>
         </View>
         <View style={styles.tournamentsList}>
-          {TOURNAMENTS.map((tournament) => (
+          {tournaments.map((tournament) => (
             <TouchableOpacity key={tournament.id} style={styles.tournamentCard}>
               <View style={styles.tournamentLeft}>
                 <Text style={styles.tournamentEmoji}>{tournament.emoji}</Text>
@@ -178,7 +188,7 @@ export default function GamesUniverseHome() {
           </Text>
         </View>
         <View style={styles.leaderboardList}>
-          {TOP_PLAYERS.map((player) => (
+          {topPlayers.map((player) => (
             <View key={player.id} style={styles.leaderboardItem}>
               <View style={[
                 styles.rankBadge,

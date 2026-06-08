@@ -64,6 +64,11 @@ export type Refund = $Result.DefaultSelection<Prisma.$RefundPayload>
  */
 export type Universe = $Result.DefaultSelection<Prisma.$UniversePayload>
 /**
+ * Model UniverseFeatureFlag
+ * 
+ */
+export type UniverseFeatureFlag = $Result.DefaultSelection<Prisma.$UniverseFeatureFlagPayload>
+/**
  * Model Category
  * 
  */
@@ -113,6 +118,11 @@ export type Report = $Result.DefaultSelection<Prisma.$ReportPayload>
  * 
  */
 export type SafetyAction = $Result.DefaultSelection<Prisma.$SafetyActionPayload>
+/**
+ * Model SystemSettings
+ * 
+ */
+export type SystemSettings = $Result.DefaultSelection<Prisma.$SystemSettingsPayload>
 /**
  * Model AuditLog
  * 
@@ -343,6 +353,16 @@ export class PrismaClient<
   get universe(): Prisma.UniverseDelegate<ExtArgs>;
 
   /**
+   * `prisma.universeFeatureFlag`: Exposes CRUD operations for the **UniverseFeatureFlag** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more UniverseFeatureFlags
+    * const universeFeatureFlags = await prisma.universeFeatureFlag.findMany()
+    * ```
+    */
+  get universeFeatureFlag(): Prisma.UniverseFeatureFlagDelegate<ExtArgs>;
+
+  /**
    * `prisma.category`: Exposes CRUD operations for the **Category** model.
     * Example usage:
     * ```ts
@@ -441,6 +461,16 @@ export class PrismaClient<
     * ```
     */
   get safetyAction(): Prisma.SafetyActionDelegate<ExtArgs>;
+
+  /**
+   * `prisma.systemSettings`: Exposes CRUD operations for the **SystemSettings** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more SystemSettings
+    * const systemSettings = await prisma.systemSettings.findMany()
+    * ```
+    */
+  get systemSettings(): Prisma.SystemSettingsDelegate<ExtArgs>;
 
   /**
    * `prisma.auditLog`: Exposes CRUD operations for the **AuditLog** model.
@@ -902,6 +932,7 @@ export namespace Prisma {
     PaymentIntent: 'PaymentIntent',
     Refund: 'Refund',
     Universe: 'Universe',
+    UniverseFeatureFlag: 'UniverseFeatureFlag',
     Category: 'Category',
     Tag: 'Tag',
     ContentItem: 'ContentItem',
@@ -912,6 +943,7 @@ export namespace Prisma {
     ModerationCase: 'ModerationCase',
     Report: 'Report',
     SafetyAction: 'SafetyAction',
+    SystemSettings: 'SystemSettings',
     AuditLog: 'AuditLog'
   };
 
@@ -928,7 +960,7 @@ export namespace Prisma {
 
   export type TypeMap<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, ClientOptions = {}> = {
     meta: {
-      modelProps: "user" | "userSuspension" | "watchHistory" | "savedItem" | "wallet" | "walletTransaction" | "notification" | "paymentIntent" | "refund" | "universe" | "category" | "tag" | "contentItem" | "mediaAsset" | "creatorProfile" | "contentRelationship" | "payoutRequest" | "moderationCase" | "report" | "safetyAction" | "auditLog"
+      modelProps: "user" | "userSuspension" | "watchHistory" | "savedItem" | "wallet" | "walletTransaction" | "notification" | "paymentIntent" | "refund" | "universe" | "universeFeatureFlag" | "category" | "tag" | "contentItem" | "mediaAsset" | "creatorProfile" | "contentRelationship" | "payoutRequest" | "moderationCase" | "report" | "safetyAction" | "systemSettings" | "auditLog"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1632,6 +1664,76 @@ export namespace Prisma {
           }
         }
       }
+      UniverseFeatureFlag: {
+        payload: Prisma.$UniverseFeatureFlagPayload<ExtArgs>
+        fields: Prisma.UniverseFeatureFlagFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.UniverseFeatureFlagFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UniverseFeatureFlagPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.UniverseFeatureFlagFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UniverseFeatureFlagPayload>
+          }
+          findFirst: {
+            args: Prisma.UniverseFeatureFlagFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UniverseFeatureFlagPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.UniverseFeatureFlagFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UniverseFeatureFlagPayload>
+          }
+          findMany: {
+            args: Prisma.UniverseFeatureFlagFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UniverseFeatureFlagPayload>[]
+          }
+          create: {
+            args: Prisma.UniverseFeatureFlagCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UniverseFeatureFlagPayload>
+          }
+          createMany: {
+            args: Prisma.UniverseFeatureFlagCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.UniverseFeatureFlagCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UniverseFeatureFlagPayload>[]
+          }
+          delete: {
+            args: Prisma.UniverseFeatureFlagDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UniverseFeatureFlagPayload>
+          }
+          update: {
+            args: Prisma.UniverseFeatureFlagUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UniverseFeatureFlagPayload>
+          }
+          deleteMany: {
+            args: Prisma.UniverseFeatureFlagDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.UniverseFeatureFlagUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.UniverseFeatureFlagUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UniverseFeatureFlagPayload>
+          }
+          aggregate: {
+            args: Prisma.UniverseFeatureFlagAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateUniverseFeatureFlag>
+          }
+          groupBy: {
+            args: Prisma.UniverseFeatureFlagGroupByArgs<ExtArgs>
+            result: $Utils.Optional<UniverseFeatureFlagGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.UniverseFeatureFlagCountArgs<ExtArgs>
+            result: $Utils.Optional<UniverseFeatureFlagCountAggregateOutputType> | number
+          }
+        }
+      }
       Category: {
         payload: Prisma.$CategoryPayload<ExtArgs>
         fields: Prisma.CategoryFieldRefs
@@ -2332,6 +2434,76 @@ export namespace Prisma {
           }
         }
       }
+      SystemSettings: {
+        payload: Prisma.$SystemSettingsPayload<ExtArgs>
+        fields: Prisma.SystemSettingsFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.SystemSettingsFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SystemSettingsPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.SystemSettingsFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SystemSettingsPayload>
+          }
+          findFirst: {
+            args: Prisma.SystemSettingsFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SystemSettingsPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.SystemSettingsFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SystemSettingsPayload>
+          }
+          findMany: {
+            args: Prisma.SystemSettingsFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SystemSettingsPayload>[]
+          }
+          create: {
+            args: Prisma.SystemSettingsCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SystemSettingsPayload>
+          }
+          createMany: {
+            args: Prisma.SystemSettingsCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.SystemSettingsCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SystemSettingsPayload>[]
+          }
+          delete: {
+            args: Prisma.SystemSettingsDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SystemSettingsPayload>
+          }
+          update: {
+            args: Prisma.SystemSettingsUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SystemSettingsPayload>
+          }
+          deleteMany: {
+            args: Prisma.SystemSettingsDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.SystemSettingsUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.SystemSettingsUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SystemSettingsPayload>
+          }
+          aggregate: {
+            args: Prisma.SystemSettingsAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateSystemSettings>
+          }
+          groupBy: {
+            args: Prisma.SystemSettingsGroupByArgs<ExtArgs>
+            result: $Utils.Optional<SystemSettingsGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.SystemSettingsCountArgs<ExtArgs>
+            result: $Utils.Optional<SystemSettingsCountAggregateOutputType> | number
+          }
+        }
+      }
       AuditLog: {
         payload: Prisma.$AuditLogPayload<ExtArgs>
         fields: Prisma.AuditLogFieldRefs
@@ -2729,10 +2901,12 @@ export namespace Prisma {
 
   export type UniverseCountOutputType = {
     contentItems: number
+    featureFlags: number
   }
 
   export type UniverseCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     contentItems?: boolean | UniverseCountOutputTypeCountContentItemsArgs
+    featureFlags?: boolean | UniverseCountOutputTypeCountFeatureFlagsArgs
   }
 
   // Custom InputTypes
@@ -2751,6 +2925,13 @@ export namespace Prisma {
    */
   export type UniverseCountOutputTypeCountContentItemsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: ContentItemWhereInput
+  }
+
+  /**
+   * UniverseCountOutputType without action
+   */
+  export type UniverseCountOutputTypeCountFeatureFlagsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: UniverseFeatureFlagWhereInput
   }
 
 
@@ -12110,8 +12291,18 @@ export namespace Prisma {
 
   export type AggregateUniverse = {
     _count: UniverseCountAggregateOutputType | null
+    _avg: UniverseAvgAggregateOutputType | null
+    _sum: UniverseSumAggregateOutputType | null
     _min: UniverseMinAggregateOutputType | null
     _max: UniverseMaxAggregateOutputType | null
+  }
+
+  export type UniverseAvgAggregateOutputType = {
+    sortOrder: number | null
+  }
+
+  export type UniverseSumAggregateOutputType = {
+    sortOrder: number | null
   }
 
   export type UniverseMinAggregateOutputType = {
@@ -12121,6 +12312,8 @@ export namespace Prisma {
     description: string | null
     icon: string | null
     color: string | null
+    isEnabled: boolean | null
+    sortOrder: number | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -12132,6 +12325,8 @@ export namespace Prisma {
     description: string | null
     icon: string | null
     color: string | null
+    isEnabled: boolean | null
+    sortOrder: number | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -12143,11 +12338,22 @@ export namespace Prisma {
     description: number
     icon: number
     color: number
+    isEnabled: number
+    sortOrder: number
+    metadata: number
     createdAt: number
     updatedAt: number
     _all: number
   }
 
+
+  export type UniverseAvgAggregateInputType = {
+    sortOrder?: true
+  }
+
+  export type UniverseSumAggregateInputType = {
+    sortOrder?: true
+  }
 
   export type UniverseMinAggregateInputType = {
     id?: true
@@ -12156,6 +12362,8 @@ export namespace Prisma {
     description?: true
     icon?: true
     color?: true
+    isEnabled?: true
+    sortOrder?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -12167,6 +12375,8 @@ export namespace Prisma {
     description?: true
     icon?: true
     color?: true
+    isEnabled?: true
+    sortOrder?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -12178,6 +12388,9 @@ export namespace Prisma {
     description?: true
     icon?: true
     color?: true
+    isEnabled?: true
+    sortOrder?: true
+    metadata?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -12221,6 +12434,18 @@ export namespace Prisma {
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
      * 
+     * Select which fields to average
+    **/
+    _avg?: UniverseAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: UniverseSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
      * Select which fields to find the minimum value
     **/
     _min?: UniverseMinAggregateInputType
@@ -12251,6 +12476,8 @@ export namespace Prisma {
     take?: number
     skip?: number
     _count?: UniverseCountAggregateInputType | true
+    _avg?: UniverseAvgAggregateInputType
+    _sum?: UniverseSumAggregateInputType
     _min?: UniverseMinAggregateInputType
     _max?: UniverseMaxAggregateInputType
   }
@@ -12262,9 +12489,14 @@ export namespace Prisma {
     description: string | null
     icon: string | null
     color: string | null
+    isEnabled: boolean
+    sortOrder: number
+    metadata: JsonValue | null
     createdAt: Date
     updatedAt: Date
     _count: UniverseCountAggregateOutputType | null
+    _avg: UniverseAvgAggregateOutputType | null
+    _sum: UniverseSumAggregateOutputType | null
     _min: UniverseMinAggregateOutputType | null
     _max: UniverseMaxAggregateOutputType | null
   }
@@ -12290,9 +12522,13 @@ export namespace Prisma {
     description?: boolean
     icon?: boolean
     color?: boolean
+    isEnabled?: boolean
+    sortOrder?: boolean
+    metadata?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     contentItems?: boolean | Universe$contentItemsArgs<ExtArgs>
+    featureFlags?: boolean | Universe$featureFlagsArgs<ExtArgs>
     _count?: boolean | UniverseCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["universe"]>
 
@@ -12303,6 +12539,9 @@ export namespace Prisma {
     description?: boolean
     icon?: boolean
     color?: boolean
+    isEnabled?: boolean
+    sortOrder?: boolean
+    metadata?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }, ExtArgs["result"]["universe"]>
@@ -12314,12 +12553,16 @@ export namespace Prisma {
     description?: boolean
     icon?: boolean
     color?: boolean
+    isEnabled?: boolean
+    sortOrder?: boolean
+    metadata?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
   export type UniverseInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     contentItems?: boolean | Universe$contentItemsArgs<ExtArgs>
+    featureFlags?: boolean | Universe$featureFlagsArgs<ExtArgs>
     _count?: boolean | UniverseCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type UniverseIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
@@ -12328,6 +12571,7 @@ export namespace Prisma {
     name: "Universe"
     objects: {
       contentItems: Prisma.$ContentItemPayload<ExtArgs>[]
+      featureFlags: Prisma.$UniverseFeatureFlagPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -12336,6 +12580,9 @@ export namespace Prisma {
       description: string | null
       icon: string | null
       color: string | null
+      isEnabled: boolean
+      sortOrder: number
+      metadata: Prisma.JsonValue | null
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["universe"]>
@@ -12703,6 +12950,7 @@ export namespace Prisma {
   export interface Prisma__UniverseClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     contentItems<T extends Universe$contentItemsArgs<ExtArgs> = {}>(args?: Subset<T, Universe$contentItemsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ContentItemPayload<ExtArgs>, T, "findMany"> | Null>
+    featureFlags<T extends Universe$featureFlagsArgs<ExtArgs> = {}>(args?: Subset<T, Universe$featureFlagsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UniverseFeatureFlagPayload<ExtArgs>, T, "findMany"> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -12738,6 +12986,9 @@ export namespace Prisma {
     readonly description: FieldRef<"Universe", 'String'>
     readonly icon: FieldRef<"Universe", 'String'>
     readonly color: FieldRef<"Universe", 'String'>
+    readonly isEnabled: FieldRef<"Universe", 'Boolean'>
+    readonly sortOrder: FieldRef<"Universe", 'Int'>
+    readonly metadata: FieldRef<"Universe", 'Json'>
     readonly createdAt: FieldRef<"Universe", 'DateTime'>
     readonly updatedAt: FieldRef<"Universe", 'DateTime'>
   }
@@ -13074,6 +13325,26 @@ export namespace Prisma {
   }
 
   /**
+   * Universe.featureFlags
+   */
+  export type Universe$featureFlagsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UniverseFeatureFlag
+     */
+    select?: UniverseFeatureFlagSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UniverseFeatureFlagInclude<ExtArgs> | null
+    where?: UniverseFeatureFlagWhereInput
+    orderBy?: UniverseFeatureFlagOrderByWithRelationInput | UniverseFeatureFlagOrderByWithRelationInput[]
+    cursor?: UniverseFeatureFlagWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: UniverseFeatureFlagScalarFieldEnum | UniverseFeatureFlagScalarFieldEnum[]
+  }
+
+  /**
    * Universe without action
    */
   export type UniverseDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -13085,6 +13356,959 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: UniverseInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model UniverseFeatureFlag
+   */
+
+  export type AggregateUniverseFeatureFlag = {
+    _count: UniverseFeatureFlagCountAggregateOutputType | null
+    _min: UniverseFeatureFlagMinAggregateOutputType | null
+    _max: UniverseFeatureFlagMaxAggregateOutputType | null
+  }
+
+  export type UniverseFeatureFlagMinAggregateOutputType = {
+    id: string | null
+    universeId: string | null
+    featureKey: string | null
+    isEnabled: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type UniverseFeatureFlagMaxAggregateOutputType = {
+    id: string | null
+    universeId: string | null
+    featureKey: string | null
+    isEnabled: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type UniverseFeatureFlagCountAggregateOutputType = {
+    id: number
+    universeId: number
+    featureKey: number
+    isEnabled: number
+    metadata: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type UniverseFeatureFlagMinAggregateInputType = {
+    id?: true
+    universeId?: true
+    featureKey?: true
+    isEnabled?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type UniverseFeatureFlagMaxAggregateInputType = {
+    id?: true
+    universeId?: true
+    featureKey?: true
+    isEnabled?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type UniverseFeatureFlagCountAggregateInputType = {
+    id?: true
+    universeId?: true
+    featureKey?: true
+    isEnabled?: true
+    metadata?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type UniverseFeatureFlagAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which UniverseFeatureFlag to aggregate.
+     */
+    where?: UniverseFeatureFlagWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of UniverseFeatureFlags to fetch.
+     */
+    orderBy?: UniverseFeatureFlagOrderByWithRelationInput | UniverseFeatureFlagOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: UniverseFeatureFlagWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` UniverseFeatureFlags from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` UniverseFeatureFlags.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned UniverseFeatureFlags
+    **/
+    _count?: true | UniverseFeatureFlagCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: UniverseFeatureFlagMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: UniverseFeatureFlagMaxAggregateInputType
+  }
+
+  export type GetUniverseFeatureFlagAggregateType<T extends UniverseFeatureFlagAggregateArgs> = {
+        [P in keyof T & keyof AggregateUniverseFeatureFlag]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateUniverseFeatureFlag[P]>
+      : GetScalarType<T[P], AggregateUniverseFeatureFlag[P]>
+  }
+
+
+
+
+  export type UniverseFeatureFlagGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: UniverseFeatureFlagWhereInput
+    orderBy?: UniverseFeatureFlagOrderByWithAggregationInput | UniverseFeatureFlagOrderByWithAggregationInput[]
+    by: UniverseFeatureFlagScalarFieldEnum[] | UniverseFeatureFlagScalarFieldEnum
+    having?: UniverseFeatureFlagScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: UniverseFeatureFlagCountAggregateInputType | true
+    _min?: UniverseFeatureFlagMinAggregateInputType
+    _max?: UniverseFeatureFlagMaxAggregateInputType
+  }
+
+  export type UniverseFeatureFlagGroupByOutputType = {
+    id: string
+    universeId: string
+    featureKey: string
+    isEnabled: boolean
+    metadata: JsonValue | null
+    createdAt: Date
+    updatedAt: Date
+    _count: UniverseFeatureFlagCountAggregateOutputType | null
+    _min: UniverseFeatureFlagMinAggregateOutputType | null
+    _max: UniverseFeatureFlagMaxAggregateOutputType | null
+  }
+
+  type GetUniverseFeatureFlagGroupByPayload<T extends UniverseFeatureFlagGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<UniverseFeatureFlagGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof UniverseFeatureFlagGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], UniverseFeatureFlagGroupByOutputType[P]>
+            : GetScalarType<T[P], UniverseFeatureFlagGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type UniverseFeatureFlagSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    universeId?: boolean
+    featureKey?: boolean
+    isEnabled?: boolean
+    metadata?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    universe?: boolean | UniverseDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["universeFeatureFlag"]>
+
+  export type UniverseFeatureFlagSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    universeId?: boolean
+    featureKey?: boolean
+    isEnabled?: boolean
+    metadata?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    universe?: boolean | UniverseDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["universeFeatureFlag"]>
+
+  export type UniverseFeatureFlagSelectScalar = {
+    id?: boolean
+    universeId?: boolean
+    featureKey?: boolean
+    isEnabled?: boolean
+    metadata?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type UniverseFeatureFlagInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    universe?: boolean | UniverseDefaultArgs<ExtArgs>
+  }
+  export type UniverseFeatureFlagIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    universe?: boolean | UniverseDefaultArgs<ExtArgs>
+  }
+
+  export type $UniverseFeatureFlagPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "UniverseFeatureFlag"
+    objects: {
+      universe: Prisma.$UniversePayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      universeId: string
+      featureKey: string
+      isEnabled: boolean
+      metadata: Prisma.JsonValue | null
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["universeFeatureFlag"]>
+    composites: {}
+  }
+
+  type UniverseFeatureFlagGetPayload<S extends boolean | null | undefined | UniverseFeatureFlagDefaultArgs> = $Result.GetResult<Prisma.$UniverseFeatureFlagPayload, S>
+
+  type UniverseFeatureFlagCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<UniverseFeatureFlagFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: UniverseFeatureFlagCountAggregateInputType | true
+    }
+
+  export interface UniverseFeatureFlagDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['UniverseFeatureFlag'], meta: { name: 'UniverseFeatureFlag' } }
+    /**
+     * Find zero or one UniverseFeatureFlag that matches the filter.
+     * @param {UniverseFeatureFlagFindUniqueArgs} args - Arguments to find a UniverseFeatureFlag
+     * @example
+     * // Get one UniverseFeatureFlag
+     * const universeFeatureFlag = await prisma.universeFeatureFlag.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends UniverseFeatureFlagFindUniqueArgs>(args: SelectSubset<T, UniverseFeatureFlagFindUniqueArgs<ExtArgs>>): Prisma__UniverseFeatureFlagClient<$Result.GetResult<Prisma.$UniverseFeatureFlagPayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one UniverseFeatureFlag that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {UniverseFeatureFlagFindUniqueOrThrowArgs} args - Arguments to find a UniverseFeatureFlag
+     * @example
+     * // Get one UniverseFeatureFlag
+     * const universeFeatureFlag = await prisma.universeFeatureFlag.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends UniverseFeatureFlagFindUniqueOrThrowArgs>(args: SelectSubset<T, UniverseFeatureFlagFindUniqueOrThrowArgs<ExtArgs>>): Prisma__UniverseFeatureFlagClient<$Result.GetResult<Prisma.$UniverseFeatureFlagPayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first UniverseFeatureFlag that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UniverseFeatureFlagFindFirstArgs} args - Arguments to find a UniverseFeatureFlag
+     * @example
+     * // Get one UniverseFeatureFlag
+     * const universeFeatureFlag = await prisma.universeFeatureFlag.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends UniverseFeatureFlagFindFirstArgs>(args?: SelectSubset<T, UniverseFeatureFlagFindFirstArgs<ExtArgs>>): Prisma__UniverseFeatureFlagClient<$Result.GetResult<Prisma.$UniverseFeatureFlagPayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first UniverseFeatureFlag that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UniverseFeatureFlagFindFirstOrThrowArgs} args - Arguments to find a UniverseFeatureFlag
+     * @example
+     * // Get one UniverseFeatureFlag
+     * const universeFeatureFlag = await prisma.universeFeatureFlag.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends UniverseFeatureFlagFindFirstOrThrowArgs>(args?: SelectSubset<T, UniverseFeatureFlagFindFirstOrThrowArgs<ExtArgs>>): Prisma__UniverseFeatureFlagClient<$Result.GetResult<Prisma.$UniverseFeatureFlagPayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more UniverseFeatureFlags that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UniverseFeatureFlagFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all UniverseFeatureFlags
+     * const universeFeatureFlags = await prisma.universeFeatureFlag.findMany()
+     * 
+     * // Get first 10 UniverseFeatureFlags
+     * const universeFeatureFlags = await prisma.universeFeatureFlag.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const universeFeatureFlagWithIdOnly = await prisma.universeFeatureFlag.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends UniverseFeatureFlagFindManyArgs>(args?: SelectSubset<T, UniverseFeatureFlagFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UniverseFeatureFlagPayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a UniverseFeatureFlag.
+     * @param {UniverseFeatureFlagCreateArgs} args - Arguments to create a UniverseFeatureFlag.
+     * @example
+     * // Create one UniverseFeatureFlag
+     * const UniverseFeatureFlag = await prisma.universeFeatureFlag.create({
+     *   data: {
+     *     // ... data to create a UniverseFeatureFlag
+     *   }
+     * })
+     * 
+     */
+    create<T extends UniverseFeatureFlagCreateArgs>(args: SelectSubset<T, UniverseFeatureFlagCreateArgs<ExtArgs>>): Prisma__UniverseFeatureFlagClient<$Result.GetResult<Prisma.$UniverseFeatureFlagPayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many UniverseFeatureFlags.
+     * @param {UniverseFeatureFlagCreateManyArgs} args - Arguments to create many UniverseFeatureFlags.
+     * @example
+     * // Create many UniverseFeatureFlags
+     * const universeFeatureFlag = await prisma.universeFeatureFlag.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends UniverseFeatureFlagCreateManyArgs>(args?: SelectSubset<T, UniverseFeatureFlagCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many UniverseFeatureFlags and returns the data saved in the database.
+     * @param {UniverseFeatureFlagCreateManyAndReturnArgs} args - Arguments to create many UniverseFeatureFlags.
+     * @example
+     * // Create many UniverseFeatureFlags
+     * const universeFeatureFlag = await prisma.universeFeatureFlag.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many UniverseFeatureFlags and only return the `id`
+     * const universeFeatureFlagWithIdOnly = await prisma.universeFeatureFlag.createManyAndReturn({ 
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends UniverseFeatureFlagCreateManyAndReturnArgs>(args?: SelectSubset<T, UniverseFeatureFlagCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UniverseFeatureFlagPayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a UniverseFeatureFlag.
+     * @param {UniverseFeatureFlagDeleteArgs} args - Arguments to delete one UniverseFeatureFlag.
+     * @example
+     * // Delete one UniverseFeatureFlag
+     * const UniverseFeatureFlag = await prisma.universeFeatureFlag.delete({
+     *   where: {
+     *     // ... filter to delete one UniverseFeatureFlag
+     *   }
+     * })
+     * 
+     */
+    delete<T extends UniverseFeatureFlagDeleteArgs>(args: SelectSubset<T, UniverseFeatureFlagDeleteArgs<ExtArgs>>): Prisma__UniverseFeatureFlagClient<$Result.GetResult<Prisma.$UniverseFeatureFlagPayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one UniverseFeatureFlag.
+     * @param {UniverseFeatureFlagUpdateArgs} args - Arguments to update one UniverseFeatureFlag.
+     * @example
+     * // Update one UniverseFeatureFlag
+     * const universeFeatureFlag = await prisma.universeFeatureFlag.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends UniverseFeatureFlagUpdateArgs>(args: SelectSubset<T, UniverseFeatureFlagUpdateArgs<ExtArgs>>): Prisma__UniverseFeatureFlagClient<$Result.GetResult<Prisma.$UniverseFeatureFlagPayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more UniverseFeatureFlags.
+     * @param {UniverseFeatureFlagDeleteManyArgs} args - Arguments to filter UniverseFeatureFlags to delete.
+     * @example
+     * // Delete a few UniverseFeatureFlags
+     * const { count } = await prisma.universeFeatureFlag.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends UniverseFeatureFlagDeleteManyArgs>(args?: SelectSubset<T, UniverseFeatureFlagDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more UniverseFeatureFlags.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UniverseFeatureFlagUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many UniverseFeatureFlags
+     * const universeFeatureFlag = await prisma.universeFeatureFlag.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends UniverseFeatureFlagUpdateManyArgs>(args: SelectSubset<T, UniverseFeatureFlagUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one UniverseFeatureFlag.
+     * @param {UniverseFeatureFlagUpsertArgs} args - Arguments to update or create a UniverseFeatureFlag.
+     * @example
+     * // Update or create a UniverseFeatureFlag
+     * const universeFeatureFlag = await prisma.universeFeatureFlag.upsert({
+     *   create: {
+     *     // ... data to create a UniverseFeatureFlag
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the UniverseFeatureFlag we want to update
+     *   }
+     * })
+     */
+    upsert<T extends UniverseFeatureFlagUpsertArgs>(args: SelectSubset<T, UniverseFeatureFlagUpsertArgs<ExtArgs>>): Prisma__UniverseFeatureFlagClient<$Result.GetResult<Prisma.$UniverseFeatureFlagPayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of UniverseFeatureFlags.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UniverseFeatureFlagCountArgs} args - Arguments to filter UniverseFeatureFlags to count.
+     * @example
+     * // Count the number of UniverseFeatureFlags
+     * const count = await prisma.universeFeatureFlag.count({
+     *   where: {
+     *     // ... the filter for the UniverseFeatureFlags we want to count
+     *   }
+     * })
+    **/
+    count<T extends UniverseFeatureFlagCountArgs>(
+      args?: Subset<T, UniverseFeatureFlagCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], UniverseFeatureFlagCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a UniverseFeatureFlag.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UniverseFeatureFlagAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends UniverseFeatureFlagAggregateArgs>(args: Subset<T, UniverseFeatureFlagAggregateArgs>): Prisma.PrismaPromise<GetUniverseFeatureFlagAggregateType<T>>
+
+    /**
+     * Group by UniverseFeatureFlag.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UniverseFeatureFlagGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends UniverseFeatureFlagGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: UniverseFeatureFlagGroupByArgs['orderBy'] }
+        : { orderBy?: UniverseFeatureFlagGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, UniverseFeatureFlagGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetUniverseFeatureFlagGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the UniverseFeatureFlag model
+   */
+  readonly fields: UniverseFeatureFlagFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for UniverseFeatureFlag.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__UniverseFeatureFlagClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    universe<T extends UniverseDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UniverseDefaultArgs<ExtArgs>>): Prisma__UniverseClient<$Result.GetResult<Prisma.$UniversePayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the UniverseFeatureFlag model
+   */ 
+  interface UniverseFeatureFlagFieldRefs {
+    readonly id: FieldRef<"UniverseFeatureFlag", 'String'>
+    readonly universeId: FieldRef<"UniverseFeatureFlag", 'String'>
+    readonly featureKey: FieldRef<"UniverseFeatureFlag", 'String'>
+    readonly isEnabled: FieldRef<"UniverseFeatureFlag", 'Boolean'>
+    readonly metadata: FieldRef<"UniverseFeatureFlag", 'Json'>
+    readonly createdAt: FieldRef<"UniverseFeatureFlag", 'DateTime'>
+    readonly updatedAt: FieldRef<"UniverseFeatureFlag", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * UniverseFeatureFlag findUnique
+   */
+  export type UniverseFeatureFlagFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UniverseFeatureFlag
+     */
+    select?: UniverseFeatureFlagSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UniverseFeatureFlagInclude<ExtArgs> | null
+    /**
+     * Filter, which UniverseFeatureFlag to fetch.
+     */
+    where: UniverseFeatureFlagWhereUniqueInput
+  }
+
+  /**
+   * UniverseFeatureFlag findUniqueOrThrow
+   */
+  export type UniverseFeatureFlagFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UniverseFeatureFlag
+     */
+    select?: UniverseFeatureFlagSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UniverseFeatureFlagInclude<ExtArgs> | null
+    /**
+     * Filter, which UniverseFeatureFlag to fetch.
+     */
+    where: UniverseFeatureFlagWhereUniqueInput
+  }
+
+  /**
+   * UniverseFeatureFlag findFirst
+   */
+  export type UniverseFeatureFlagFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UniverseFeatureFlag
+     */
+    select?: UniverseFeatureFlagSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UniverseFeatureFlagInclude<ExtArgs> | null
+    /**
+     * Filter, which UniverseFeatureFlag to fetch.
+     */
+    where?: UniverseFeatureFlagWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of UniverseFeatureFlags to fetch.
+     */
+    orderBy?: UniverseFeatureFlagOrderByWithRelationInput | UniverseFeatureFlagOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for UniverseFeatureFlags.
+     */
+    cursor?: UniverseFeatureFlagWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` UniverseFeatureFlags from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` UniverseFeatureFlags.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of UniverseFeatureFlags.
+     */
+    distinct?: UniverseFeatureFlagScalarFieldEnum | UniverseFeatureFlagScalarFieldEnum[]
+  }
+
+  /**
+   * UniverseFeatureFlag findFirstOrThrow
+   */
+  export type UniverseFeatureFlagFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UniverseFeatureFlag
+     */
+    select?: UniverseFeatureFlagSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UniverseFeatureFlagInclude<ExtArgs> | null
+    /**
+     * Filter, which UniverseFeatureFlag to fetch.
+     */
+    where?: UniverseFeatureFlagWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of UniverseFeatureFlags to fetch.
+     */
+    orderBy?: UniverseFeatureFlagOrderByWithRelationInput | UniverseFeatureFlagOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for UniverseFeatureFlags.
+     */
+    cursor?: UniverseFeatureFlagWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` UniverseFeatureFlags from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` UniverseFeatureFlags.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of UniverseFeatureFlags.
+     */
+    distinct?: UniverseFeatureFlagScalarFieldEnum | UniverseFeatureFlagScalarFieldEnum[]
+  }
+
+  /**
+   * UniverseFeatureFlag findMany
+   */
+  export type UniverseFeatureFlagFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UniverseFeatureFlag
+     */
+    select?: UniverseFeatureFlagSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UniverseFeatureFlagInclude<ExtArgs> | null
+    /**
+     * Filter, which UniverseFeatureFlags to fetch.
+     */
+    where?: UniverseFeatureFlagWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of UniverseFeatureFlags to fetch.
+     */
+    orderBy?: UniverseFeatureFlagOrderByWithRelationInput | UniverseFeatureFlagOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing UniverseFeatureFlags.
+     */
+    cursor?: UniverseFeatureFlagWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` UniverseFeatureFlags from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` UniverseFeatureFlags.
+     */
+    skip?: number
+    distinct?: UniverseFeatureFlagScalarFieldEnum | UniverseFeatureFlagScalarFieldEnum[]
+  }
+
+  /**
+   * UniverseFeatureFlag create
+   */
+  export type UniverseFeatureFlagCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UniverseFeatureFlag
+     */
+    select?: UniverseFeatureFlagSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UniverseFeatureFlagInclude<ExtArgs> | null
+    /**
+     * The data needed to create a UniverseFeatureFlag.
+     */
+    data: XOR<UniverseFeatureFlagCreateInput, UniverseFeatureFlagUncheckedCreateInput>
+  }
+
+  /**
+   * UniverseFeatureFlag createMany
+   */
+  export type UniverseFeatureFlagCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many UniverseFeatureFlags.
+     */
+    data: UniverseFeatureFlagCreateManyInput | UniverseFeatureFlagCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * UniverseFeatureFlag createManyAndReturn
+   */
+  export type UniverseFeatureFlagCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UniverseFeatureFlag
+     */
+    select?: UniverseFeatureFlagSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many UniverseFeatureFlags.
+     */
+    data: UniverseFeatureFlagCreateManyInput | UniverseFeatureFlagCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UniverseFeatureFlagIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * UniverseFeatureFlag update
+   */
+  export type UniverseFeatureFlagUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UniverseFeatureFlag
+     */
+    select?: UniverseFeatureFlagSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UniverseFeatureFlagInclude<ExtArgs> | null
+    /**
+     * The data needed to update a UniverseFeatureFlag.
+     */
+    data: XOR<UniverseFeatureFlagUpdateInput, UniverseFeatureFlagUncheckedUpdateInput>
+    /**
+     * Choose, which UniverseFeatureFlag to update.
+     */
+    where: UniverseFeatureFlagWhereUniqueInput
+  }
+
+  /**
+   * UniverseFeatureFlag updateMany
+   */
+  export type UniverseFeatureFlagUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update UniverseFeatureFlags.
+     */
+    data: XOR<UniverseFeatureFlagUpdateManyMutationInput, UniverseFeatureFlagUncheckedUpdateManyInput>
+    /**
+     * Filter which UniverseFeatureFlags to update
+     */
+    where?: UniverseFeatureFlagWhereInput
+  }
+
+  /**
+   * UniverseFeatureFlag upsert
+   */
+  export type UniverseFeatureFlagUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UniverseFeatureFlag
+     */
+    select?: UniverseFeatureFlagSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UniverseFeatureFlagInclude<ExtArgs> | null
+    /**
+     * The filter to search for the UniverseFeatureFlag to update in case it exists.
+     */
+    where: UniverseFeatureFlagWhereUniqueInput
+    /**
+     * In case the UniverseFeatureFlag found by the `where` argument doesn't exist, create a new UniverseFeatureFlag with this data.
+     */
+    create: XOR<UniverseFeatureFlagCreateInput, UniverseFeatureFlagUncheckedCreateInput>
+    /**
+     * In case the UniverseFeatureFlag was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<UniverseFeatureFlagUpdateInput, UniverseFeatureFlagUncheckedUpdateInput>
+  }
+
+  /**
+   * UniverseFeatureFlag delete
+   */
+  export type UniverseFeatureFlagDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UniverseFeatureFlag
+     */
+    select?: UniverseFeatureFlagSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UniverseFeatureFlagInclude<ExtArgs> | null
+    /**
+     * Filter which UniverseFeatureFlag to delete.
+     */
+    where: UniverseFeatureFlagWhereUniqueInput
+  }
+
+  /**
+   * UniverseFeatureFlag deleteMany
+   */
+  export type UniverseFeatureFlagDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which UniverseFeatureFlags to delete
+     */
+    where?: UniverseFeatureFlagWhereInput
+  }
+
+  /**
+   * UniverseFeatureFlag without action
+   */
+  export type UniverseFeatureFlagDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UniverseFeatureFlag
+     */
+    select?: UniverseFeatureFlagSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UniverseFeatureFlagInclude<ExtArgs> | null
   }
 
 
@@ -23179,6 +24403,916 @@ export namespace Prisma {
 
 
   /**
+   * Model SystemSettings
+   */
+
+  export type AggregateSystemSettings = {
+    _count: SystemSettingsCountAggregateOutputType | null
+    _min: SystemSettingsMinAggregateOutputType | null
+    _max: SystemSettingsMaxAggregateOutputType | null
+  }
+
+  export type SystemSettingsMinAggregateOutputType = {
+    id: string | null
+    key: string | null
+    category: string | null
+    description: string | null
+    isPublic: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type SystemSettingsMaxAggregateOutputType = {
+    id: string | null
+    key: string | null
+    category: string | null
+    description: string | null
+    isPublic: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type SystemSettingsCountAggregateOutputType = {
+    id: number
+    key: number
+    value: number
+    category: number
+    description: number
+    isPublic: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type SystemSettingsMinAggregateInputType = {
+    id?: true
+    key?: true
+    category?: true
+    description?: true
+    isPublic?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type SystemSettingsMaxAggregateInputType = {
+    id?: true
+    key?: true
+    category?: true
+    description?: true
+    isPublic?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type SystemSettingsCountAggregateInputType = {
+    id?: true
+    key?: true
+    value?: true
+    category?: true
+    description?: true
+    isPublic?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type SystemSettingsAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which SystemSettings to aggregate.
+     */
+    where?: SystemSettingsWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SystemSettings to fetch.
+     */
+    orderBy?: SystemSettingsOrderByWithRelationInput | SystemSettingsOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: SystemSettingsWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SystemSettings from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SystemSettings.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned SystemSettings
+    **/
+    _count?: true | SystemSettingsCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: SystemSettingsMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: SystemSettingsMaxAggregateInputType
+  }
+
+  export type GetSystemSettingsAggregateType<T extends SystemSettingsAggregateArgs> = {
+        [P in keyof T & keyof AggregateSystemSettings]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateSystemSettings[P]>
+      : GetScalarType<T[P], AggregateSystemSettings[P]>
+  }
+
+
+
+
+  export type SystemSettingsGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: SystemSettingsWhereInput
+    orderBy?: SystemSettingsOrderByWithAggregationInput | SystemSettingsOrderByWithAggregationInput[]
+    by: SystemSettingsScalarFieldEnum[] | SystemSettingsScalarFieldEnum
+    having?: SystemSettingsScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: SystemSettingsCountAggregateInputType | true
+    _min?: SystemSettingsMinAggregateInputType
+    _max?: SystemSettingsMaxAggregateInputType
+  }
+
+  export type SystemSettingsGroupByOutputType = {
+    id: string
+    key: string
+    value: JsonValue
+    category: string
+    description: string | null
+    isPublic: boolean
+    createdAt: Date
+    updatedAt: Date
+    _count: SystemSettingsCountAggregateOutputType | null
+    _min: SystemSettingsMinAggregateOutputType | null
+    _max: SystemSettingsMaxAggregateOutputType | null
+  }
+
+  type GetSystemSettingsGroupByPayload<T extends SystemSettingsGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<SystemSettingsGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof SystemSettingsGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], SystemSettingsGroupByOutputType[P]>
+            : GetScalarType<T[P], SystemSettingsGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type SystemSettingsSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    key?: boolean
+    value?: boolean
+    category?: boolean
+    description?: boolean
+    isPublic?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["systemSettings"]>
+
+  export type SystemSettingsSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    key?: boolean
+    value?: boolean
+    category?: boolean
+    description?: boolean
+    isPublic?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["systemSettings"]>
+
+  export type SystemSettingsSelectScalar = {
+    id?: boolean
+    key?: boolean
+    value?: boolean
+    category?: boolean
+    description?: boolean
+    isPublic?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+
+  export type $SystemSettingsPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "SystemSettings"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      key: string
+      value: Prisma.JsonValue
+      category: string
+      description: string | null
+      isPublic: boolean
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["systemSettings"]>
+    composites: {}
+  }
+
+  type SystemSettingsGetPayload<S extends boolean | null | undefined | SystemSettingsDefaultArgs> = $Result.GetResult<Prisma.$SystemSettingsPayload, S>
+
+  type SystemSettingsCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<SystemSettingsFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: SystemSettingsCountAggregateInputType | true
+    }
+
+  export interface SystemSettingsDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['SystemSettings'], meta: { name: 'SystemSettings' } }
+    /**
+     * Find zero or one SystemSettings that matches the filter.
+     * @param {SystemSettingsFindUniqueArgs} args - Arguments to find a SystemSettings
+     * @example
+     * // Get one SystemSettings
+     * const systemSettings = await prisma.systemSettings.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends SystemSettingsFindUniqueArgs>(args: SelectSubset<T, SystemSettingsFindUniqueArgs<ExtArgs>>): Prisma__SystemSettingsClient<$Result.GetResult<Prisma.$SystemSettingsPayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one SystemSettings that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {SystemSettingsFindUniqueOrThrowArgs} args - Arguments to find a SystemSettings
+     * @example
+     * // Get one SystemSettings
+     * const systemSettings = await prisma.systemSettings.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends SystemSettingsFindUniqueOrThrowArgs>(args: SelectSubset<T, SystemSettingsFindUniqueOrThrowArgs<ExtArgs>>): Prisma__SystemSettingsClient<$Result.GetResult<Prisma.$SystemSettingsPayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first SystemSettings that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SystemSettingsFindFirstArgs} args - Arguments to find a SystemSettings
+     * @example
+     * // Get one SystemSettings
+     * const systemSettings = await prisma.systemSettings.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends SystemSettingsFindFirstArgs>(args?: SelectSubset<T, SystemSettingsFindFirstArgs<ExtArgs>>): Prisma__SystemSettingsClient<$Result.GetResult<Prisma.$SystemSettingsPayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first SystemSettings that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SystemSettingsFindFirstOrThrowArgs} args - Arguments to find a SystemSettings
+     * @example
+     * // Get one SystemSettings
+     * const systemSettings = await prisma.systemSettings.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends SystemSettingsFindFirstOrThrowArgs>(args?: SelectSubset<T, SystemSettingsFindFirstOrThrowArgs<ExtArgs>>): Prisma__SystemSettingsClient<$Result.GetResult<Prisma.$SystemSettingsPayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more SystemSettings that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SystemSettingsFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all SystemSettings
+     * const systemSettings = await prisma.systemSettings.findMany()
+     * 
+     * // Get first 10 SystemSettings
+     * const systemSettings = await prisma.systemSettings.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const systemSettingsWithIdOnly = await prisma.systemSettings.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends SystemSettingsFindManyArgs>(args?: SelectSubset<T, SystemSettingsFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SystemSettingsPayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a SystemSettings.
+     * @param {SystemSettingsCreateArgs} args - Arguments to create a SystemSettings.
+     * @example
+     * // Create one SystemSettings
+     * const SystemSettings = await prisma.systemSettings.create({
+     *   data: {
+     *     // ... data to create a SystemSettings
+     *   }
+     * })
+     * 
+     */
+    create<T extends SystemSettingsCreateArgs>(args: SelectSubset<T, SystemSettingsCreateArgs<ExtArgs>>): Prisma__SystemSettingsClient<$Result.GetResult<Prisma.$SystemSettingsPayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many SystemSettings.
+     * @param {SystemSettingsCreateManyArgs} args - Arguments to create many SystemSettings.
+     * @example
+     * // Create many SystemSettings
+     * const systemSettings = await prisma.systemSettings.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends SystemSettingsCreateManyArgs>(args?: SelectSubset<T, SystemSettingsCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many SystemSettings and returns the data saved in the database.
+     * @param {SystemSettingsCreateManyAndReturnArgs} args - Arguments to create many SystemSettings.
+     * @example
+     * // Create many SystemSettings
+     * const systemSettings = await prisma.systemSettings.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many SystemSettings and only return the `id`
+     * const systemSettingsWithIdOnly = await prisma.systemSettings.createManyAndReturn({ 
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends SystemSettingsCreateManyAndReturnArgs>(args?: SelectSubset<T, SystemSettingsCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SystemSettingsPayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a SystemSettings.
+     * @param {SystemSettingsDeleteArgs} args - Arguments to delete one SystemSettings.
+     * @example
+     * // Delete one SystemSettings
+     * const SystemSettings = await prisma.systemSettings.delete({
+     *   where: {
+     *     // ... filter to delete one SystemSettings
+     *   }
+     * })
+     * 
+     */
+    delete<T extends SystemSettingsDeleteArgs>(args: SelectSubset<T, SystemSettingsDeleteArgs<ExtArgs>>): Prisma__SystemSettingsClient<$Result.GetResult<Prisma.$SystemSettingsPayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one SystemSettings.
+     * @param {SystemSettingsUpdateArgs} args - Arguments to update one SystemSettings.
+     * @example
+     * // Update one SystemSettings
+     * const systemSettings = await prisma.systemSettings.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends SystemSettingsUpdateArgs>(args: SelectSubset<T, SystemSettingsUpdateArgs<ExtArgs>>): Prisma__SystemSettingsClient<$Result.GetResult<Prisma.$SystemSettingsPayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more SystemSettings.
+     * @param {SystemSettingsDeleteManyArgs} args - Arguments to filter SystemSettings to delete.
+     * @example
+     * // Delete a few SystemSettings
+     * const { count } = await prisma.systemSettings.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends SystemSettingsDeleteManyArgs>(args?: SelectSubset<T, SystemSettingsDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more SystemSettings.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SystemSettingsUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many SystemSettings
+     * const systemSettings = await prisma.systemSettings.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends SystemSettingsUpdateManyArgs>(args: SelectSubset<T, SystemSettingsUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one SystemSettings.
+     * @param {SystemSettingsUpsertArgs} args - Arguments to update or create a SystemSettings.
+     * @example
+     * // Update or create a SystemSettings
+     * const systemSettings = await prisma.systemSettings.upsert({
+     *   create: {
+     *     // ... data to create a SystemSettings
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the SystemSettings we want to update
+     *   }
+     * })
+     */
+    upsert<T extends SystemSettingsUpsertArgs>(args: SelectSubset<T, SystemSettingsUpsertArgs<ExtArgs>>): Prisma__SystemSettingsClient<$Result.GetResult<Prisma.$SystemSettingsPayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of SystemSettings.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SystemSettingsCountArgs} args - Arguments to filter SystemSettings to count.
+     * @example
+     * // Count the number of SystemSettings
+     * const count = await prisma.systemSettings.count({
+     *   where: {
+     *     // ... the filter for the SystemSettings we want to count
+     *   }
+     * })
+    **/
+    count<T extends SystemSettingsCountArgs>(
+      args?: Subset<T, SystemSettingsCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], SystemSettingsCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a SystemSettings.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SystemSettingsAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends SystemSettingsAggregateArgs>(args: Subset<T, SystemSettingsAggregateArgs>): Prisma.PrismaPromise<GetSystemSettingsAggregateType<T>>
+
+    /**
+     * Group by SystemSettings.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SystemSettingsGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends SystemSettingsGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: SystemSettingsGroupByArgs['orderBy'] }
+        : { orderBy?: SystemSettingsGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, SystemSettingsGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetSystemSettingsGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the SystemSettings model
+   */
+  readonly fields: SystemSettingsFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for SystemSettings.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__SystemSettingsClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the SystemSettings model
+   */ 
+  interface SystemSettingsFieldRefs {
+    readonly id: FieldRef<"SystemSettings", 'String'>
+    readonly key: FieldRef<"SystemSettings", 'String'>
+    readonly value: FieldRef<"SystemSettings", 'Json'>
+    readonly category: FieldRef<"SystemSettings", 'String'>
+    readonly description: FieldRef<"SystemSettings", 'String'>
+    readonly isPublic: FieldRef<"SystemSettings", 'Boolean'>
+    readonly createdAt: FieldRef<"SystemSettings", 'DateTime'>
+    readonly updatedAt: FieldRef<"SystemSettings", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * SystemSettings findUnique
+   */
+  export type SystemSettingsFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SystemSettings
+     */
+    select?: SystemSettingsSelect<ExtArgs> | null
+    /**
+     * Filter, which SystemSettings to fetch.
+     */
+    where: SystemSettingsWhereUniqueInput
+  }
+
+  /**
+   * SystemSettings findUniqueOrThrow
+   */
+  export type SystemSettingsFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SystemSettings
+     */
+    select?: SystemSettingsSelect<ExtArgs> | null
+    /**
+     * Filter, which SystemSettings to fetch.
+     */
+    where: SystemSettingsWhereUniqueInput
+  }
+
+  /**
+   * SystemSettings findFirst
+   */
+  export type SystemSettingsFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SystemSettings
+     */
+    select?: SystemSettingsSelect<ExtArgs> | null
+    /**
+     * Filter, which SystemSettings to fetch.
+     */
+    where?: SystemSettingsWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SystemSettings to fetch.
+     */
+    orderBy?: SystemSettingsOrderByWithRelationInput | SystemSettingsOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for SystemSettings.
+     */
+    cursor?: SystemSettingsWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SystemSettings from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SystemSettings.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of SystemSettings.
+     */
+    distinct?: SystemSettingsScalarFieldEnum | SystemSettingsScalarFieldEnum[]
+  }
+
+  /**
+   * SystemSettings findFirstOrThrow
+   */
+  export type SystemSettingsFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SystemSettings
+     */
+    select?: SystemSettingsSelect<ExtArgs> | null
+    /**
+     * Filter, which SystemSettings to fetch.
+     */
+    where?: SystemSettingsWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SystemSettings to fetch.
+     */
+    orderBy?: SystemSettingsOrderByWithRelationInput | SystemSettingsOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for SystemSettings.
+     */
+    cursor?: SystemSettingsWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SystemSettings from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SystemSettings.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of SystemSettings.
+     */
+    distinct?: SystemSettingsScalarFieldEnum | SystemSettingsScalarFieldEnum[]
+  }
+
+  /**
+   * SystemSettings findMany
+   */
+  export type SystemSettingsFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SystemSettings
+     */
+    select?: SystemSettingsSelect<ExtArgs> | null
+    /**
+     * Filter, which SystemSettings to fetch.
+     */
+    where?: SystemSettingsWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SystemSettings to fetch.
+     */
+    orderBy?: SystemSettingsOrderByWithRelationInput | SystemSettingsOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing SystemSettings.
+     */
+    cursor?: SystemSettingsWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SystemSettings from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SystemSettings.
+     */
+    skip?: number
+    distinct?: SystemSettingsScalarFieldEnum | SystemSettingsScalarFieldEnum[]
+  }
+
+  /**
+   * SystemSettings create
+   */
+  export type SystemSettingsCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SystemSettings
+     */
+    select?: SystemSettingsSelect<ExtArgs> | null
+    /**
+     * The data needed to create a SystemSettings.
+     */
+    data: XOR<SystemSettingsCreateInput, SystemSettingsUncheckedCreateInput>
+  }
+
+  /**
+   * SystemSettings createMany
+   */
+  export type SystemSettingsCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many SystemSettings.
+     */
+    data: SystemSettingsCreateManyInput | SystemSettingsCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * SystemSettings createManyAndReturn
+   */
+  export type SystemSettingsCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SystemSettings
+     */
+    select?: SystemSettingsSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many SystemSettings.
+     */
+    data: SystemSettingsCreateManyInput | SystemSettingsCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * SystemSettings update
+   */
+  export type SystemSettingsUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SystemSettings
+     */
+    select?: SystemSettingsSelect<ExtArgs> | null
+    /**
+     * The data needed to update a SystemSettings.
+     */
+    data: XOR<SystemSettingsUpdateInput, SystemSettingsUncheckedUpdateInput>
+    /**
+     * Choose, which SystemSettings to update.
+     */
+    where: SystemSettingsWhereUniqueInput
+  }
+
+  /**
+   * SystemSettings updateMany
+   */
+  export type SystemSettingsUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update SystemSettings.
+     */
+    data: XOR<SystemSettingsUpdateManyMutationInput, SystemSettingsUncheckedUpdateManyInput>
+    /**
+     * Filter which SystemSettings to update
+     */
+    where?: SystemSettingsWhereInput
+  }
+
+  /**
+   * SystemSettings upsert
+   */
+  export type SystemSettingsUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SystemSettings
+     */
+    select?: SystemSettingsSelect<ExtArgs> | null
+    /**
+     * The filter to search for the SystemSettings to update in case it exists.
+     */
+    where: SystemSettingsWhereUniqueInput
+    /**
+     * In case the SystemSettings found by the `where` argument doesn't exist, create a new SystemSettings with this data.
+     */
+    create: XOR<SystemSettingsCreateInput, SystemSettingsUncheckedCreateInput>
+    /**
+     * In case the SystemSettings was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<SystemSettingsUpdateInput, SystemSettingsUncheckedUpdateInput>
+  }
+
+  /**
+   * SystemSettings delete
+   */
+  export type SystemSettingsDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SystemSettings
+     */
+    select?: SystemSettingsSelect<ExtArgs> | null
+    /**
+     * Filter which SystemSettings to delete.
+     */
+    where: SystemSettingsWhereUniqueInput
+  }
+
+  /**
+   * SystemSettings deleteMany
+   */
+  export type SystemSettingsDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which SystemSettings to delete
+     */
+    where?: SystemSettingsWhereInput
+  }
+
+  /**
+   * SystemSettings without action
+   */
+  export type SystemSettingsDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SystemSettings
+     */
+    select?: SystemSettingsSelect<ExtArgs> | null
+  }
+
+
+  /**
    * Model AuditLog
    */
 
@@ -24266,11 +26400,27 @@ export namespace Prisma {
     description: 'description',
     icon: 'icon',
     color: 'color',
+    isEnabled: 'isEnabled',
+    sortOrder: 'sortOrder',
+    metadata: 'metadata',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
 
   export type UniverseScalarFieldEnum = (typeof UniverseScalarFieldEnum)[keyof typeof UniverseScalarFieldEnum]
+
+
+  export const UniverseFeatureFlagScalarFieldEnum: {
+    id: 'id',
+    universeId: 'universeId',
+    featureKey: 'featureKey',
+    isEnabled: 'isEnabled',
+    metadata: 'metadata',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type UniverseFeatureFlagScalarFieldEnum = (typeof UniverseFeatureFlagScalarFieldEnum)[keyof typeof UniverseFeatureFlagScalarFieldEnum]
 
 
   export const CategoryScalarFieldEnum: {
@@ -24433,6 +26583,20 @@ export namespace Prisma {
   export type SafetyActionScalarFieldEnum = (typeof SafetyActionScalarFieldEnum)[keyof typeof SafetyActionScalarFieldEnum]
 
 
+  export const SystemSettingsScalarFieldEnum: {
+    id: 'id',
+    key: 'key',
+    value: 'value',
+    category: 'category',
+    description: 'description',
+    isPublic: 'isPublic',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type SystemSettingsScalarFieldEnum = (typeof SystemSettingsScalarFieldEnum)[keyof typeof SystemSettingsScalarFieldEnum]
+
+
   export const AuditLogScalarFieldEnum: {
     id: 'id',
     actorId: 'actorId',
@@ -24463,6 +26627,13 @@ export namespace Prisma {
   };
 
   export type NullableJsonNullValueInput = (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput]
+
+
+  export const JsonNullValueInput: {
+    JsonNull: typeof JsonNull
+  };
+
+  export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
 
 
   export const QueryMode: {
@@ -25303,9 +27474,13 @@ export namespace Prisma {
     description?: StringNullableFilter<"Universe"> | string | null
     icon?: StringNullableFilter<"Universe"> | string | null
     color?: StringNullableFilter<"Universe"> | string | null
+    isEnabled?: BoolFilter<"Universe"> | boolean
+    sortOrder?: IntFilter<"Universe"> | number
+    metadata?: JsonNullableFilter<"Universe">
     createdAt?: DateTimeFilter<"Universe"> | Date | string
     updatedAt?: DateTimeFilter<"Universe"> | Date | string
     contentItems?: ContentItemListRelationFilter
+    featureFlags?: UniverseFeatureFlagListRelationFilter
   }
 
   export type UniverseOrderByWithRelationInput = {
@@ -25315,9 +27490,13 @@ export namespace Prisma {
     description?: SortOrderInput | SortOrder
     icon?: SortOrderInput | SortOrder
     color?: SortOrderInput | SortOrder
+    isEnabled?: SortOrder
+    sortOrder?: SortOrder
+    metadata?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     contentItems?: ContentItemOrderByRelationAggregateInput
+    featureFlags?: UniverseFeatureFlagOrderByRelationAggregateInput
   }
 
   export type UniverseWhereUniqueInput = Prisma.AtLeast<{
@@ -25330,9 +27509,13 @@ export namespace Prisma {
     description?: StringNullableFilter<"Universe"> | string | null
     icon?: StringNullableFilter<"Universe"> | string | null
     color?: StringNullableFilter<"Universe"> | string | null
+    isEnabled?: BoolFilter<"Universe"> | boolean
+    sortOrder?: IntFilter<"Universe"> | number
+    metadata?: JsonNullableFilter<"Universe">
     createdAt?: DateTimeFilter<"Universe"> | Date | string
     updatedAt?: DateTimeFilter<"Universe"> | Date | string
     contentItems?: ContentItemListRelationFilter
+    featureFlags?: UniverseFeatureFlagListRelationFilter
   }, "id" | "name">
 
   export type UniverseOrderByWithAggregationInput = {
@@ -25342,11 +27525,16 @@ export namespace Prisma {
     description?: SortOrderInput | SortOrder
     icon?: SortOrderInput | SortOrder
     color?: SortOrderInput | SortOrder
+    isEnabled?: SortOrder
+    sortOrder?: SortOrder
+    metadata?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: UniverseCountOrderByAggregateInput
+    _avg?: UniverseAvgOrderByAggregateInput
     _max?: UniverseMaxOrderByAggregateInput
     _min?: UniverseMinOrderByAggregateInput
+    _sum?: UniverseSumOrderByAggregateInput
   }
 
   export type UniverseScalarWhereWithAggregatesInput = {
@@ -25359,8 +27547,77 @@ export namespace Prisma {
     description?: StringNullableWithAggregatesFilter<"Universe"> | string | null
     icon?: StringNullableWithAggregatesFilter<"Universe"> | string | null
     color?: StringNullableWithAggregatesFilter<"Universe"> | string | null
+    isEnabled?: BoolWithAggregatesFilter<"Universe"> | boolean
+    sortOrder?: IntWithAggregatesFilter<"Universe"> | number
+    metadata?: JsonNullableWithAggregatesFilter<"Universe">
     createdAt?: DateTimeWithAggregatesFilter<"Universe"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Universe"> | Date | string
+  }
+
+  export type UniverseFeatureFlagWhereInput = {
+    AND?: UniverseFeatureFlagWhereInput | UniverseFeatureFlagWhereInput[]
+    OR?: UniverseFeatureFlagWhereInput[]
+    NOT?: UniverseFeatureFlagWhereInput | UniverseFeatureFlagWhereInput[]
+    id?: StringFilter<"UniverseFeatureFlag"> | string
+    universeId?: StringFilter<"UniverseFeatureFlag"> | string
+    featureKey?: StringFilter<"UniverseFeatureFlag"> | string
+    isEnabled?: BoolFilter<"UniverseFeatureFlag"> | boolean
+    metadata?: JsonNullableFilter<"UniverseFeatureFlag">
+    createdAt?: DateTimeFilter<"UniverseFeatureFlag"> | Date | string
+    updatedAt?: DateTimeFilter<"UniverseFeatureFlag"> | Date | string
+    universe?: XOR<UniverseRelationFilter, UniverseWhereInput>
+  }
+
+  export type UniverseFeatureFlagOrderByWithRelationInput = {
+    id?: SortOrder
+    universeId?: SortOrder
+    featureKey?: SortOrder
+    isEnabled?: SortOrder
+    metadata?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    universe?: UniverseOrderByWithRelationInput
+  }
+
+  export type UniverseFeatureFlagWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    universeId_featureKey?: UniverseFeatureFlagUniverseIdFeatureKeyCompoundUniqueInput
+    AND?: UniverseFeatureFlagWhereInput | UniverseFeatureFlagWhereInput[]
+    OR?: UniverseFeatureFlagWhereInput[]
+    NOT?: UniverseFeatureFlagWhereInput | UniverseFeatureFlagWhereInput[]
+    universeId?: StringFilter<"UniverseFeatureFlag"> | string
+    featureKey?: StringFilter<"UniverseFeatureFlag"> | string
+    isEnabled?: BoolFilter<"UniverseFeatureFlag"> | boolean
+    metadata?: JsonNullableFilter<"UniverseFeatureFlag">
+    createdAt?: DateTimeFilter<"UniverseFeatureFlag"> | Date | string
+    updatedAt?: DateTimeFilter<"UniverseFeatureFlag"> | Date | string
+    universe?: XOR<UniverseRelationFilter, UniverseWhereInput>
+  }, "id" | "universeId_featureKey">
+
+  export type UniverseFeatureFlagOrderByWithAggregationInput = {
+    id?: SortOrder
+    universeId?: SortOrder
+    featureKey?: SortOrder
+    isEnabled?: SortOrder
+    metadata?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: UniverseFeatureFlagCountOrderByAggregateInput
+    _max?: UniverseFeatureFlagMaxOrderByAggregateInput
+    _min?: UniverseFeatureFlagMinOrderByAggregateInput
+  }
+
+  export type UniverseFeatureFlagScalarWhereWithAggregatesInput = {
+    AND?: UniverseFeatureFlagScalarWhereWithAggregatesInput | UniverseFeatureFlagScalarWhereWithAggregatesInput[]
+    OR?: UniverseFeatureFlagScalarWhereWithAggregatesInput[]
+    NOT?: UniverseFeatureFlagScalarWhereWithAggregatesInput | UniverseFeatureFlagScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"UniverseFeatureFlag"> | string
+    universeId?: StringWithAggregatesFilter<"UniverseFeatureFlag"> | string
+    featureKey?: StringWithAggregatesFilter<"UniverseFeatureFlag"> | string
+    isEnabled?: BoolWithAggregatesFilter<"UniverseFeatureFlag"> | boolean
+    metadata?: JsonNullableWithAggregatesFilter<"UniverseFeatureFlag">
+    createdAt?: DateTimeWithAggregatesFilter<"UniverseFeatureFlag"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"UniverseFeatureFlag"> | Date | string
   }
 
   export type CategoryWhereInput = {
@@ -26186,6 +28443,73 @@ export namespace Prisma {
     status?: StringWithAggregatesFilter<"SafetyAction"> | string
     expiresAt?: DateTimeNullableWithAggregatesFilter<"SafetyAction"> | Date | string | null
     createdAt?: DateTimeWithAggregatesFilter<"SafetyAction"> | Date | string
+  }
+
+  export type SystemSettingsWhereInput = {
+    AND?: SystemSettingsWhereInput | SystemSettingsWhereInput[]
+    OR?: SystemSettingsWhereInput[]
+    NOT?: SystemSettingsWhereInput | SystemSettingsWhereInput[]
+    id?: StringFilter<"SystemSettings"> | string
+    key?: StringFilter<"SystemSettings"> | string
+    value?: JsonFilter<"SystemSettings">
+    category?: StringFilter<"SystemSettings"> | string
+    description?: StringNullableFilter<"SystemSettings"> | string | null
+    isPublic?: BoolFilter<"SystemSettings"> | boolean
+    createdAt?: DateTimeFilter<"SystemSettings"> | Date | string
+    updatedAt?: DateTimeFilter<"SystemSettings"> | Date | string
+  }
+
+  export type SystemSettingsOrderByWithRelationInput = {
+    id?: SortOrder
+    key?: SortOrder
+    value?: SortOrder
+    category?: SortOrder
+    description?: SortOrderInput | SortOrder
+    isPublic?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type SystemSettingsWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    key?: string
+    AND?: SystemSettingsWhereInput | SystemSettingsWhereInput[]
+    OR?: SystemSettingsWhereInput[]
+    NOT?: SystemSettingsWhereInput | SystemSettingsWhereInput[]
+    value?: JsonFilter<"SystemSettings">
+    category?: StringFilter<"SystemSettings"> | string
+    description?: StringNullableFilter<"SystemSettings"> | string | null
+    isPublic?: BoolFilter<"SystemSettings"> | boolean
+    createdAt?: DateTimeFilter<"SystemSettings"> | Date | string
+    updatedAt?: DateTimeFilter<"SystemSettings"> | Date | string
+  }, "id" | "key">
+
+  export type SystemSettingsOrderByWithAggregationInput = {
+    id?: SortOrder
+    key?: SortOrder
+    value?: SortOrder
+    category?: SortOrder
+    description?: SortOrderInput | SortOrder
+    isPublic?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: SystemSettingsCountOrderByAggregateInput
+    _max?: SystemSettingsMaxOrderByAggregateInput
+    _min?: SystemSettingsMinOrderByAggregateInput
+  }
+
+  export type SystemSettingsScalarWhereWithAggregatesInput = {
+    AND?: SystemSettingsScalarWhereWithAggregatesInput | SystemSettingsScalarWhereWithAggregatesInput[]
+    OR?: SystemSettingsScalarWhereWithAggregatesInput[]
+    NOT?: SystemSettingsScalarWhereWithAggregatesInput | SystemSettingsScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"SystemSettings"> | string
+    key?: StringWithAggregatesFilter<"SystemSettings"> | string
+    value?: JsonWithAggregatesFilter<"SystemSettings">
+    category?: StringWithAggregatesFilter<"SystemSettings"> | string
+    description?: StringNullableWithAggregatesFilter<"SystemSettings"> | string | null
+    isPublic?: BoolWithAggregatesFilter<"SystemSettings"> | boolean
+    createdAt?: DateTimeWithAggregatesFilter<"SystemSettings"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"SystemSettings"> | Date | string
   }
 
   export type AuditLogWhereInput = {
@@ -27058,9 +29382,13 @@ export namespace Prisma {
     description?: string | null
     icon?: string | null
     color?: string | null
+    isEnabled?: boolean
+    sortOrder?: number
+    metadata?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
     contentItems?: ContentItemCreateNestedManyWithoutUniverseInput
+    featureFlags?: UniverseFeatureFlagCreateNestedManyWithoutUniverseInput
   }
 
   export type UniverseUncheckedCreateInput = {
@@ -27070,9 +29398,13 @@ export namespace Prisma {
     description?: string | null
     icon?: string | null
     color?: string | null
+    isEnabled?: boolean
+    sortOrder?: number
+    metadata?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
     contentItems?: ContentItemUncheckedCreateNestedManyWithoutUniverseInput
+    featureFlags?: UniverseFeatureFlagUncheckedCreateNestedManyWithoutUniverseInput
   }
 
   export type UniverseUpdateInput = {
@@ -27082,9 +29414,13 @@ export namespace Prisma {
     description?: NullableStringFieldUpdateOperationsInput | string | null
     icon?: NullableStringFieldUpdateOperationsInput | string | null
     color?: NullableStringFieldUpdateOperationsInput | string | null
+    isEnabled?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    metadata?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     contentItems?: ContentItemUpdateManyWithoutUniverseNestedInput
+    featureFlags?: UniverseFeatureFlagUpdateManyWithoutUniverseNestedInput
   }
 
   export type UniverseUncheckedUpdateInput = {
@@ -27094,9 +29430,13 @@ export namespace Prisma {
     description?: NullableStringFieldUpdateOperationsInput | string | null
     icon?: NullableStringFieldUpdateOperationsInput | string | null
     color?: NullableStringFieldUpdateOperationsInput | string | null
+    isEnabled?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    metadata?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     contentItems?: ContentItemUncheckedUpdateManyWithoutUniverseNestedInput
+    featureFlags?: UniverseFeatureFlagUncheckedUpdateManyWithoutUniverseNestedInput
   }
 
   export type UniverseCreateManyInput = {
@@ -27106,6 +29446,9 @@ export namespace Prisma {
     description?: string | null
     icon?: string | null
     color?: string | null
+    isEnabled?: boolean
+    sortOrder?: number
+    metadata?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -27117,6 +29460,9 @@ export namespace Prisma {
     description?: NullableStringFieldUpdateOperationsInput | string | null
     icon?: NullableStringFieldUpdateOperationsInput | string | null
     color?: NullableStringFieldUpdateOperationsInput | string | null
+    isEnabled?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    metadata?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -27128,6 +29474,78 @@ export namespace Prisma {
     description?: NullableStringFieldUpdateOperationsInput | string | null
     icon?: NullableStringFieldUpdateOperationsInput | string | null
     color?: NullableStringFieldUpdateOperationsInput | string | null
+    isEnabled?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type UniverseFeatureFlagCreateInput = {
+    id?: string
+    featureKey: string
+    isEnabled?: boolean
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    universe: UniverseCreateNestedOneWithoutFeatureFlagsInput
+  }
+
+  export type UniverseFeatureFlagUncheckedCreateInput = {
+    id?: string
+    universeId: string
+    featureKey: string
+    isEnabled?: boolean
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type UniverseFeatureFlagUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    featureKey?: StringFieldUpdateOperationsInput | string
+    isEnabled?: BoolFieldUpdateOperationsInput | boolean
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    universe?: UniverseUpdateOneRequiredWithoutFeatureFlagsNestedInput
+  }
+
+  export type UniverseFeatureFlagUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    universeId?: StringFieldUpdateOperationsInput | string
+    featureKey?: StringFieldUpdateOperationsInput | string
+    isEnabled?: BoolFieldUpdateOperationsInput | boolean
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type UniverseFeatureFlagCreateManyInput = {
+    id?: string
+    universeId: string
+    featureKey: string
+    isEnabled?: boolean
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type UniverseFeatureFlagUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    featureKey?: StringFieldUpdateOperationsInput | string
+    isEnabled?: BoolFieldUpdateOperationsInput | boolean
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type UniverseFeatureFlagUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    universeId?: StringFieldUpdateOperationsInput | string
+    featureKey?: StringFieldUpdateOperationsInput | string
+    isEnabled?: BoolFieldUpdateOperationsInput | boolean
+    metadata?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -28061,6 +30479,83 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type SystemSettingsCreateInput = {
+    id?: string
+    key: string
+    value: JsonNullValueInput | InputJsonValue
+    category?: string
+    description?: string | null
+    isPublic?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type SystemSettingsUncheckedCreateInput = {
+    id?: string
+    key: string
+    value: JsonNullValueInput | InputJsonValue
+    category?: string
+    description?: string | null
+    isPublic?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type SystemSettingsUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    key?: StringFieldUpdateOperationsInput | string
+    value?: JsonNullValueInput | InputJsonValue
+    category?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    isPublic?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SystemSettingsUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    key?: StringFieldUpdateOperationsInput | string
+    value?: JsonNullValueInput | InputJsonValue
+    category?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    isPublic?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SystemSettingsCreateManyInput = {
+    id?: string
+    key: string
+    value: JsonNullValueInput | InputJsonValue
+    category?: string
+    description?: string | null
+    isPublic?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type SystemSettingsUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    key?: StringFieldUpdateOperationsInput | string
+    value?: JsonNullValueInput | InputJsonValue
+    category?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    isPublic?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SystemSettingsUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    key?: StringFieldUpdateOperationsInput | string
+    value?: JsonNullValueInput | InputJsonValue
+    category?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    isPublic?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type AuditLogCreateInput = {
     id?: string
     actorId?: string | null
@@ -28839,6 +31334,27 @@ export namespace Prisma {
     amount?: SortOrder
   }
 
+  export type IntFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel>
+    in?: number[] | ListIntFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntFilter<$PrismaModel> | number
+  }
+
+  export type UniverseFeatureFlagListRelationFilter = {
+    every?: UniverseFeatureFlagWhereInput
+    some?: UniverseFeatureFlagWhereInput
+    none?: UniverseFeatureFlagWhereInput
+  }
+
+  export type UniverseFeatureFlagOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
   export type UniverseCountOrderByAggregateInput = {
     id?: SortOrder
     name?: SortOrder
@@ -28846,8 +31362,15 @@ export namespace Prisma {
     description?: SortOrder
     icon?: SortOrder
     color?: SortOrder
+    isEnabled?: SortOrder
+    sortOrder?: SortOrder
+    metadata?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+  }
+
+  export type UniverseAvgOrderByAggregateInput = {
+    sortOrder?: SortOrder
   }
 
   export type UniverseMaxOrderByAggregateInput = {
@@ -28857,6 +31380,8 @@ export namespace Prisma {
     description?: SortOrder
     icon?: SortOrder
     color?: SortOrder
+    isEnabled?: SortOrder
+    sortOrder?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -28868,6 +31393,66 @@ export namespace Prisma {
     description?: SortOrder
     icon?: SortOrder
     color?: SortOrder
+    isEnabled?: SortOrder
+    sortOrder?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type UniverseSumOrderByAggregateInput = {
+    sortOrder?: SortOrder
+  }
+
+  export type IntWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel>
+    in?: number[] | ListIntFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntWithAggregatesFilter<$PrismaModel> | number
+    _count?: NestedIntFilter<$PrismaModel>
+    _avg?: NestedFloatFilter<$PrismaModel>
+    _sum?: NestedIntFilter<$PrismaModel>
+    _min?: NestedIntFilter<$PrismaModel>
+    _max?: NestedIntFilter<$PrismaModel>
+  }
+
+  export type UniverseRelationFilter = {
+    is?: UniverseWhereInput
+    isNot?: UniverseWhereInput
+  }
+
+  export type UniverseFeatureFlagUniverseIdFeatureKeyCompoundUniqueInput = {
+    universeId: string
+    featureKey: string
+  }
+
+  export type UniverseFeatureFlagCountOrderByAggregateInput = {
+    id?: SortOrder
+    universeId?: SortOrder
+    featureKey?: SortOrder
+    isEnabled?: SortOrder
+    metadata?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type UniverseFeatureFlagMaxOrderByAggregateInput = {
+    id?: SortOrder
+    universeId?: SortOrder
+    featureKey?: SortOrder
+    isEnabled?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type UniverseFeatureFlagMinOrderByAggregateInput = {
+    id?: SortOrder
+    universeId?: SortOrder
+    featureKey?: SortOrder
+    isEnabled?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -28927,22 +31512,6 @@ export namespace Prisma {
     description?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
-  }
-
-  export type IntFilter<$PrismaModel = never> = {
-    equals?: number | IntFieldRefInput<$PrismaModel>
-    in?: number[] | ListIntFieldRefInput<$PrismaModel>
-    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
-    lt?: number | IntFieldRefInput<$PrismaModel>
-    lte?: number | IntFieldRefInput<$PrismaModel>
-    gt?: number | IntFieldRefInput<$PrismaModel>
-    gte?: number | IntFieldRefInput<$PrismaModel>
-    not?: NestedIntFilter<$PrismaModel> | number
-  }
-
-  export type UniverseRelationFilter = {
-    is?: UniverseWhereInput
-    isNot?: UniverseWhereInput
   }
 
   export type MediaAssetNullableRelationFilter = {
@@ -29053,22 +31622,6 @@ export namespace Prisma {
 
   export type ContentItemSumOrderByAggregateInput = {
     viewCount?: SortOrder
-  }
-
-  export type IntWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: number | IntFieldRefInput<$PrismaModel>
-    in?: number[] | ListIntFieldRefInput<$PrismaModel>
-    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
-    lt?: number | IntFieldRefInput<$PrismaModel>
-    lte?: number | IntFieldRefInput<$PrismaModel>
-    gt?: number | IntFieldRefInput<$PrismaModel>
-    gte?: number | IntFieldRefInput<$PrismaModel>
-    not?: NestedIntWithAggregatesFilter<$PrismaModel> | number
-    _count?: NestedIntFilter<$PrismaModel>
-    _avg?: NestedFloatFilter<$PrismaModel>
-    _sum?: NestedIntFilter<$PrismaModel>
-    _min?: NestedIntFilter<$PrismaModel>
-    _max?: NestedIntFilter<$PrismaModel>
   }
 
   export type IntNullableFilter<$PrismaModel = never> = {
@@ -29387,6 +31940,84 @@ export namespace Prisma {
     status?: SortOrder
     expiresAt?: SortOrder
     createdAt?: SortOrder
+  }
+  export type JsonFilter<$PrismaModel = never> = 
+    | PatchUndefined<
+        Either<Required<JsonFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonFilterBase<$PrismaModel>>, 'path'>>,
+        Required<JsonFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<JsonFilterBase<$PrismaModel>>, 'path'>>
+
+  export type JsonFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+  }
+
+  export type SystemSettingsCountOrderByAggregateInput = {
+    id?: SortOrder
+    key?: SortOrder
+    value?: SortOrder
+    category?: SortOrder
+    description?: SortOrder
+    isPublic?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type SystemSettingsMaxOrderByAggregateInput = {
+    id?: SortOrder
+    key?: SortOrder
+    category?: SortOrder
+    description?: SortOrder
+    isPublic?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type SystemSettingsMinOrderByAggregateInput = {
+    id?: SortOrder
+    key?: SortOrder
+    category?: SortOrder
+    description?: SortOrder
+    isPublic?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+  export type JsonWithAggregatesFilter<$PrismaModel = never> = 
+    | PatchUndefined<
+        Either<Required<JsonWithAggregatesFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonWithAggregatesFilterBase<$PrismaModel>>, 'path'>>,
+        Required<JsonWithAggregatesFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<JsonWithAggregatesFilterBase<$PrismaModel>>, 'path'>>
+
+  export type JsonWithAggregatesFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedJsonFilter<$PrismaModel>
+    _max?: NestedJsonFilter<$PrismaModel>
   }
 
   export type AuditLogCountOrderByAggregateInput = {
@@ -30099,11 +32730,33 @@ export namespace Prisma {
     connect?: ContentItemWhereUniqueInput | ContentItemWhereUniqueInput[]
   }
 
+  export type UniverseFeatureFlagCreateNestedManyWithoutUniverseInput = {
+    create?: XOR<UniverseFeatureFlagCreateWithoutUniverseInput, UniverseFeatureFlagUncheckedCreateWithoutUniverseInput> | UniverseFeatureFlagCreateWithoutUniverseInput[] | UniverseFeatureFlagUncheckedCreateWithoutUniverseInput[]
+    connectOrCreate?: UniverseFeatureFlagCreateOrConnectWithoutUniverseInput | UniverseFeatureFlagCreateOrConnectWithoutUniverseInput[]
+    createMany?: UniverseFeatureFlagCreateManyUniverseInputEnvelope
+    connect?: UniverseFeatureFlagWhereUniqueInput | UniverseFeatureFlagWhereUniqueInput[]
+  }
+
   export type ContentItemUncheckedCreateNestedManyWithoutUniverseInput = {
     create?: XOR<ContentItemCreateWithoutUniverseInput, ContentItemUncheckedCreateWithoutUniverseInput> | ContentItemCreateWithoutUniverseInput[] | ContentItemUncheckedCreateWithoutUniverseInput[]
     connectOrCreate?: ContentItemCreateOrConnectWithoutUniverseInput | ContentItemCreateOrConnectWithoutUniverseInput[]
     createMany?: ContentItemCreateManyUniverseInputEnvelope
     connect?: ContentItemWhereUniqueInput | ContentItemWhereUniqueInput[]
+  }
+
+  export type UniverseFeatureFlagUncheckedCreateNestedManyWithoutUniverseInput = {
+    create?: XOR<UniverseFeatureFlagCreateWithoutUniverseInput, UniverseFeatureFlagUncheckedCreateWithoutUniverseInput> | UniverseFeatureFlagCreateWithoutUniverseInput[] | UniverseFeatureFlagUncheckedCreateWithoutUniverseInput[]
+    connectOrCreate?: UniverseFeatureFlagCreateOrConnectWithoutUniverseInput | UniverseFeatureFlagCreateOrConnectWithoutUniverseInput[]
+    createMany?: UniverseFeatureFlagCreateManyUniverseInputEnvelope
+    connect?: UniverseFeatureFlagWhereUniqueInput | UniverseFeatureFlagWhereUniqueInput[]
+  }
+
+  export type IntFieldUpdateOperationsInput = {
+    set?: number
+    increment?: number
+    decrement?: number
+    multiply?: number
+    divide?: number
   }
 
   export type ContentItemUpdateManyWithoutUniverseNestedInput = {
@@ -30120,6 +32773,20 @@ export namespace Prisma {
     deleteMany?: ContentItemScalarWhereInput | ContentItemScalarWhereInput[]
   }
 
+  export type UniverseFeatureFlagUpdateManyWithoutUniverseNestedInput = {
+    create?: XOR<UniverseFeatureFlagCreateWithoutUniverseInput, UniverseFeatureFlagUncheckedCreateWithoutUniverseInput> | UniverseFeatureFlagCreateWithoutUniverseInput[] | UniverseFeatureFlagUncheckedCreateWithoutUniverseInput[]
+    connectOrCreate?: UniverseFeatureFlagCreateOrConnectWithoutUniverseInput | UniverseFeatureFlagCreateOrConnectWithoutUniverseInput[]
+    upsert?: UniverseFeatureFlagUpsertWithWhereUniqueWithoutUniverseInput | UniverseFeatureFlagUpsertWithWhereUniqueWithoutUniverseInput[]
+    createMany?: UniverseFeatureFlagCreateManyUniverseInputEnvelope
+    set?: UniverseFeatureFlagWhereUniqueInput | UniverseFeatureFlagWhereUniqueInput[]
+    disconnect?: UniverseFeatureFlagWhereUniqueInput | UniverseFeatureFlagWhereUniqueInput[]
+    delete?: UniverseFeatureFlagWhereUniqueInput | UniverseFeatureFlagWhereUniqueInput[]
+    connect?: UniverseFeatureFlagWhereUniqueInput | UniverseFeatureFlagWhereUniqueInput[]
+    update?: UniverseFeatureFlagUpdateWithWhereUniqueWithoutUniverseInput | UniverseFeatureFlagUpdateWithWhereUniqueWithoutUniverseInput[]
+    updateMany?: UniverseFeatureFlagUpdateManyWithWhereWithoutUniverseInput | UniverseFeatureFlagUpdateManyWithWhereWithoutUniverseInput[]
+    deleteMany?: UniverseFeatureFlagScalarWhereInput | UniverseFeatureFlagScalarWhereInput[]
+  }
+
   export type ContentItemUncheckedUpdateManyWithoutUniverseNestedInput = {
     create?: XOR<ContentItemCreateWithoutUniverseInput, ContentItemUncheckedCreateWithoutUniverseInput> | ContentItemCreateWithoutUniverseInput[] | ContentItemUncheckedCreateWithoutUniverseInput[]
     connectOrCreate?: ContentItemCreateOrConnectWithoutUniverseInput | ContentItemCreateOrConnectWithoutUniverseInput[]
@@ -30132,6 +32799,34 @@ export namespace Prisma {
     update?: ContentItemUpdateWithWhereUniqueWithoutUniverseInput | ContentItemUpdateWithWhereUniqueWithoutUniverseInput[]
     updateMany?: ContentItemUpdateManyWithWhereWithoutUniverseInput | ContentItemUpdateManyWithWhereWithoutUniverseInput[]
     deleteMany?: ContentItemScalarWhereInput | ContentItemScalarWhereInput[]
+  }
+
+  export type UniverseFeatureFlagUncheckedUpdateManyWithoutUniverseNestedInput = {
+    create?: XOR<UniverseFeatureFlagCreateWithoutUniverseInput, UniverseFeatureFlagUncheckedCreateWithoutUniverseInput> | UniverseFeatureFlagCreateWithoutUniverseInput[] | UniverseFeatureFlagUncheckedCreateWithoutUniverseInput[]
+    connectOrCreate?: UniverseFeatureFlagCreateOrConnectWithoutUniverseInput | UniverseFeatureFlagCreateOrConnectWithoutUniverseInput[]
+    upsert?: UniverseFeatureFlagUpsertWithWhereUniqueWithoutUniverseInput | UniverseFeatureFlagUpsertWithWhereUniqueWithoutUniverseInput[]
+    createMany?: UniverseFeatureFlagCreateManyUniverseInputEnvelope
+    set?: UniverseFeatureFlagWhereUniqueInput | UniverseFeatureFlagWhereUniqueInput[]
+    disconnect?: UniverseFeatureFlagWhereUniqueInput | UniverseFeatureFlagWhereUniqueInput[]
+    delete?: UniverseFeatureFlagWhereUniqueInput | UniverseFeatureFlagWhereUniqueInput[]
+    connect?: UniverseFeatureFlagWhereUniqueInput | UniverseFeatureFlagWhereUniqueInput[]
+    update?: UniverseFeatureFlagUpdateWithWhereUniqueWithoutUniverseInput | UniverseFeatureFlagUpdateWithWhereUniqueWithoutUniverseInput[]
+    updateMany?: UniverseFeatureFlagUpdateManyWithWhereWithoutUniverseInput | UniverseFeatureFlagUpdateManyWithWhereWithoutUniverseInput[]
+    deleteMany?: UniverseFeatureFlagScalarWhereInput | UniverseFeatureFlagScalarWhereInput[]
+  }
+
+  export type UniverseCreateNestedOneWithoutFeatureFlagsInput = {
+    create?: XOR<UniverseCreateWithoutFeatureFlagsInput, UniverseUncheckedCreateWithoutFeatureFlagsInput>
+    connectOrCreate?: UniverseCreateOrConnectWithoutFeatureFlagsInput
+    connect?: UniverseWhereUniqueInput
+  }
+
+  export type UniverseUpdateOneRequiredWithoutFeatureFlagsNestedInput = {
+    create?: XOR<UniverseCreateWithoutFeatureFlagsInput, UniverseUncheckedCreateWithoutFeatureFlagsInput>
+    connectOrCreate?: UniverseCreateOrConnectWithoutFeatureFlagsInput
+    upsert?: UniverseUpsertWithoutFeatureFlagsInput
+    connect?: UniverseWhereUniqueInput
+    update?: XOR<XOR<UniverseUpdateToOneWithWhereWithoutFeatureFlagsInput, UniverseUpdateWithoutFeatureFlagsInput>, UniverseUncheckedUpdateWithoutFeatureFlagsInput>
   }
 
   export type ContentItemCreateNestedManyWithoutCategoriesInput = {
@@ -30284,14 +32979,6 @@ export namespace Prisma {
     connectOrCreate?: ContentRelationshipCreateOrConnectWithoutRelatedContentInput | ContentRelationshipCreateOrConnectWithoutRelatedContentInput[]
     createMany?: ContentRelationshipCreateManyRelatedContentInputEnvelope
     connect?: ContentRelationshipWhereUniqueInput | ContentRelationshipWhereUniqueInput[]
-  }
-
-  export type IntFieldUpdateOperationsInput = {
-    set?: number
-    increment?: number
-    decrement?: number
-    multiply?: number
-    divide?: number
   }
 
   export type UniverseUpdateOneRequiredWithoutContentItemsNestedInput = {
@@ -30794,6 +33481,28 @@ export namespace Prisma {
     gt?: number | FloatFieldRefInput<$PrismaModel>
     gte?: number | FloatFieldRefInput<$PrismaModel>
     not?: NestedFloatNullableFilter<$PrismaModel> | number | null
+  }
+  export type NestedJsonFilter<$PrismaModel = never> = 
+    | PatchUndefined<
+        Either<Required<NestedJsonFilterBase<$PrismaModel>>, Exclude<keyof Required<NestedJsonFilterBase<$PrismaModel>>, 'path'>>,
+        Required<NestedJsonFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<NestedJsonFilterBase<$PrismaModel>>, 'path'>>
+
+  export type NestedJsonFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
   }
 
   export type WatchHistoryCreateWithoutUserInput = {
@@ -32601,6 +35310,34 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type UniverseFeatureFlagCreateWithoutUniverseInput = {
+    id?: string
+    featureKey: string
+    isEnabled?: boolean
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type UniverseFeatureFlagUncheckedCreateWithoutUniverseInput = {
+    id?: string
+    featureKey: string
+    isEnabled?: boolean
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type UniverseFeatureFlagCreateOrConnectWithoutUniverseInput = {
+    where: UniverseFeatureFlagWhereUniqueInput
+    create: XOR<UniverseFeatureFlagCreateWithoutUniverseInput, UniverseFeatureFlagUncheckedCreateWithoutUniverseInput>
+  }
+
+  export type UniverseFeatureFlagCreateManyUniverseInputEnvelope = {
+    data: UniverseFeatureFlagCreateManyUniverseInput | UniverseFeatureFlagCreateManyUniverseInput[]
+    skipDuplicates?: boolean
+  }
+
   export type ContentItemUpsertWithWhereUniqueWithoutUniverseInput = {
     where: ContentItemWhereUniqueInput
     update: XOR<ContentItemUpdateWithoutUniverseInput, ContentItemUncheckedUpdateWithoutUniverseInput>
@@ -32615,6 +35352,111 @@ export namespace Prisma {
   export type ContentItemUpdateManyWithWhereWithoutUniverseInput = {
     where: ContentItemScalarWhereInput
     data: XOR<ContentItemUpdateManyMutationInput, ContentItemUncheckedUpdateManyWithoutUniverseInput>
+  }
+
+  export type UniverseFeatureFlagUpsertWithWhereUniqueWithoutUniverseInput = {
+    where: UniverseFeatureFlagWhereUniqueInput
+    update: XOR<UniverseFeatureFlagUpdateWithoutUniverseInput, UniverseFeatureFlagUncheckedUpdateWithoutUniverseInput>
+    create: XOR<UniverseFeatureFlagCreateWithoutUniverseInput, UniverseFeatureFlagUncheckedCreateWithoutUniverseInput>
+  }
+
+  export type UniverseFeatureFlagUpdateWithWhereUniqueWithoutUniverseInput = {
+    where: UniverseFeatureFlagWhereUniqueInput
+    data: XOR<UniverseFeatureFlagUpdateWithoutUniverseInput, UniverseFeatureFlagUncheckedUpdateWithoutUniverseInput>
+  }
+
+  export type UniverseFeatureFlagUpdateManyWithWhereWithoutUniverseInput = {
+    where: UniverseFeatureFlagScalarWhereInput
+    data: XOR<UniverseFeatureFlagUpdateManyMutationInput, UniverseFeatureFlagUncheckedUpdateManyWithoutUniverseInput>
+  }
+
+  export type UniverseFeatureFlagScalarWhereInput = {
+    AND?: UniverseFeatureFlagScalarWhereInput | UniverseFeatureFlagScalarWhereInput[]
+    OR?: UniverseFeatureFlagScalarWhereInput[]
+    NOT?: UniverseFeatureFlagScalarWhereInput | UniverseFeatureFlagScalarWhereInput[]
+    id?: StringFilter<"UniverseFeatureFlag"> | string
+    universeId?: StringFilter<"UniverseFeatureFlag"> | string
+    featureKey?: StringFilter<"UniverseFeatureFlag"> | string
+    isEnabled?: BoolFilter<"UniverseFeatureFlag"> | boolean
+    metadata?: JsonNullableFilter<"UniverseFeatureFlag">
+    createdAt?: DateTimeFilter<"UniverseFeatureFlag"> | Date | string
+    updatedAt?: DateTimeFilter<"UniverseFeatureFlag"> | Date | string
+  }
+
+  export type UniverseCreateWithoutFeatureFlagsInput = {
+    id?: string
+    name: string
+    displayName: string
+    description?: string | null
+    icon?: string | null
+    color?: string | null
+    isEnabled?: boolean
+    sortOrder?: number
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    contentItems?: ContentItemCreateNestedManyWithoutUniverseInput
+  }
+
+  export type UniverseUncheckedCreateWithoutFeatureFlagsInput = {
+    id?: string
+    name: string
+    displayName: string
+    description?: string | null
+    icon?: string | null
+    color?: string | null
+    isEnabled?: boolean
+    sortOrder?: number
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    contentItems?: ContentItemUncheckedCreateNestedManyWithoutUniverseInput
+  }
+
+  export type UniverseCreateOrConnectWithoutFeatureFlagsInput = {
+    where: UniverseWhereUniqueInput
+    create: XOR<UniverseCreateWithoutFeatureFlagsInput, UniverseUncheckedCreateWithoutFeatureFlagsInput>
+  }
+
+  export type UniverseUpsertWithoutFeatureFlagsInput = {
+    update: XOR<UniverseUpdateWithoutFeatureFlagsInput, UniverseUncheckedUpdateWithoutFeatureFlagsInput>
+    create: XOR<UniverseCreateWithoutFeatureFlagsInput, UniverseUncheckedCreateWithoutFeatureFlagsInput>
+    where?: UniverseWhereInput
+  }
+
+  export type UniverseUpdateToOneWithWhereWithoutFeatureFlagsInput = {
+    where?: UniverseWhereInput
+    data: XOR<UniverseUpdateWithoutFeatureFlagsInput, UniverseUncheckedUpdateWithoutFeatureFlagsInput>
+  }
+
+  export type UniverseUpdateWithoutFeatureFlagsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    displayName?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    icon?: NullableStringFieldUpdateOperationsInput | string | null
+    color?: NullableStringFieldUpdateOperationsInput | string | null
+    isEnabled?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    contentItems?: ContentItemUpdateManyWithoutUniverseNestedInput
+  }
+
+  export type UniverseUncheckedUpdateWithoutFeatureFlagsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    displayName?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    icon?: NullableStringFieldUpdateOperationsInput | string | null
+    color?: NullableStringFieldUpdateOperationsInput | string | null
+    isEnabled?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    contentItems?: ContentItemUncheckedUpdateManyWithoutUniverseNestedInput
   }
 
   export type ContentItemCreateWithoutCategoriesInput = {
@@ -32774,8 +35616,12 @@ export namespace Prisma {
     description?: string | null
     icon?: string | null
     color?: string | null
+    isEnabled?: boolean
+    sortOrder?: number
+    metadata?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
+    featureFlags?: UniverseFeatureFlagCreateNestedManyWithoutUniverseInput
   }
 
   export type UniverseUncheckedCreateWithoutContentItemsInput = {
@@ -32785,8 +35631,12 @@ export namespace Prisma {
     description?: string | null
     icon?: string | null
     color?: string | null
+    isEnabled?: boolean
+    sortOrder?: number
+    metadata?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
+    featureFlags?: UniverseFeatureFlagUncheckedCreateNestedManyWithoutUniverseInput
   }
 
   export type UniverseCreateOrConnectWithoutContentItemsInput = {
@@ -33002,8 +35852,12 @@ export namespace Prisma {
     description?: NullableStringFieldUpdateOperationsInput | string | null
     icon?: NullableStringFieldUpdateOperationsInput | string | null
     color?: NullableStringFieldUpdateOperationsInput | string | null
+    isEnabled?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    metadata?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    featureFlags?: UniverseFeatureFlagUpdateManyWithoutUniverseNestedInput
   }
 
   export type UniverseUncheckedUpdateWithoutContentItemsInput = {
@@ -33013,8 +35867,12 @@ export namespace Prisma {
     description?: NullableStringFieldUpdateOperationsInput | string | null
     icon?: NullableStringFieldUpdateOperationsInput | string | null
     color?: NullableStringFieldUpdateOperationsInput | string | null
+    isEnabled?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    metadata?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    featureFlags?: UniverseFeatureFlagUncheckedUpdateManyWithoutUniverseNestedInput
   }
 
   export type UserUpsertWithoutContentItemsInput = {
@@ -34674,6 +37532,15 @@ export namespace Prisma {
     isPremiere?: boolean
   }
 
+  export type UniverseFeatureFlagCreateManyUniverseInput = {
+    id?: string
+    featureKey: string
+    isEnabled?: boolean
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
   export type ContentItemUpdateWithoutUniverseInput = {
     id?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
@@ -34748,6 +37615,33 @@ export namespace Prisma {
     windowType?: StringFieldUpdateOperationsInput | string
     isExclusive?: BoolFieldUpdateOperationsInput | boolean
     isPremiere?: BoolFieldUpdateOperationsInput | boolean
+  }
+
+  export type UniverseFeatureFlagUpdateWithoutUniverseInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    featureKey?: StringFieldUpdateOperationsInput | string
+    isEnabled?: BoolFieldUpdateOperationsInput | boolean
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type UniverseFeatureFlagUncheckedUpdateWithoutUniverseInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    featureKey?: StringFieldUpdateOperationsInput | string
+    isEnabled?: BoolFieldUpdateOperationsInput | boolean
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type UniverseFeatureFlagUncheckedUpdateManyWithoutUniverseInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    featureKey?: StringFieldUpdateOperationsInput | string
+    isEnabled?: BoolFieldUpdateOperationsInput | boolean
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type ContentItemUpdateWithoutCategoriesInput = {
@@ -35099,6 +37993,10 @@ export namespace Prisma {
      */
     export type UniverseArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = UniverseDefaultArgs<ExtArgs>
     /**
+     * @deprecated Use UniverseFeatureFlagDefaultArgs instead
+     */
+    export type UniverseFeatureFlagArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = UniverseFeatureFlagDefaultArgs<ExtArgs>
+    /**
      * @deprecated Use CategoryDefaultArgs instead
      */
     export type CategoryArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = CategoryDefaultArgs<ExtArgs>
@@ -35138,6 +38036,10 @@ export namespace Prisma {
      * @deprecated Use SafetyActionDefaultArgs instead
      */
     export type SafetyActionArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = SafetyActionDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use SystemSettingsDefaultArgs instead
+     */
+    export type SystemSettingsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = SystemSettingsDefaultArgs<ExtArgs>
     /**
      * @deprecated Use AuditLogDefaultArgs instead
      */

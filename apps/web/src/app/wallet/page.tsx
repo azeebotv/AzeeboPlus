@@ -4,51 +4,45 @@ import { useAuth } from '../../context/AuthContext';
 import { Button, Card, Skeleton, Badge, Avatar } from '@azeebo/ui';
 import { colors, gradients } from '@azeebo/design-tokens';
 import Link from 'next/link';
+import { apiFetch, Transaction } from '@/lib/api';
+import { webLogger } from '@/lib/logger';
 
-const mockTransactions = [
-  {
-    id: '1',
-    type: 'deposit',
-    amount: 5000,
-    description: 'Wallet deposit via card',
-    date: 'Today, 2:30 PM',
-    status: 'success',
-  },
-  {
-    id: '2',
-    type: 'purchase',
-    amount: 1500,
-    description: 'Movie rental: The African Queen',
-    date: 'Yesterday, 7:45 PM',
-    status: 'success',
-  },
-  {
-    id: '3',
-    type: 'withdraw',
-    amount: 2000,
-    description: 'Withdrawal to bank account',
-    date: 'Dec 15, 10:20 AM',
-    status: 'pending',
-  },
-];
-
-const mockPaymentMethods = [
-  { id: '1', type: 'card', last4: '4242', expiry: '12/28', isDefault: true },
-  { id: '2', type: 'bank', name: 'Access Bank', last4: '8888', isDefault: false },
-];
+interface WalletBalance {
+  balance: number;
+  currency: string;
+}
 
 export default function WalletPage(): JSX.Element {
   const { user, isAuthenticated } = useAuth();
-  const [balance, setBalance] = useState(12500);
-  const [transactions, setTransactions] = useState(mockTransactions);
-  const [paymentMethods, setPaymentMethods] = useState(mockPaymentMethods);
+  const [balance, setBalance] = useState(0);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 500);
-    return () => clearTimeout(timer);
+    const fetchWallet = async () => {
+      try {
+        setIsLoading(true);
+        const [balanceRes, transactionsRes] = await Promise.all([
+          apiFetch<WalletBalance>('/v1/wallet/balance'),
+          apiFetch<Transaction[]>('/v1/wallet/transactions'),
+        ]);
+
+        if (balanceRes.success && balanceRes.data) {
+          setBalance(balanceRes.data.balance);
+        }
+        if (transactionsRes.success && transactionsRes.data) {
+          setTransactions(transactionsRes.data);
+        }
+      } catch (err) {
+        webLogger.error('Failed to fetch wallet data', err);
+        setError('Failed to load wallet data. Please try again.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchWallet();
   }, []);
 
   return (
@@ -80,7 +74,7 @@ export default function WalletPage(): JSX.Element {
             {isAuthenticated ? (
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
-                  <Avatar size="medium" fallback={user?.name?.charAt(0) || 'U'} />
+                  <Avatar size="md" fallback={user?.name?.charAt(0) || 'U'} />
                   <span className="text-sm font-medium" style={{ color: colors.text.primary }}>{user?.name}</span>
                 </div>
               </div>
@@ -103,61 +97,29 @@ export default function WalletPage(): JSX.Element {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {isLoading ? (
             <Skeleton height="200px" className="w-full" />
+          ) : error ? (
+            <div className="text-center">
+              <p className="text-white/80 mb-4">{error}</p>
+              <Button variant="secondary" onClick={() => window.location.reload()}>Retry</Button>
+            </div>
           ) : (
             <div className="text-center">
               <p className="text-white/80 mb-2">Your Wallet Balance</p>
               <h2 className="text-6xl font-bold text-white mb-6">₦{balance.toLocaleString()}</h2>
               <div className="flex items-center justify-center gap-4">
-                <Button size="lg" style={{ backgroundColor: 'white', color: colors.primary[600] }}>
-                  <span>💰</span> Deposit
-                </Button>
-                <Button size="lg" variant="outline" style={{ borderColor: 'white', color: 'white' }}>
-                  <span>💳</span> Withdraw
-                </Button>
+                <Link href="/wallet/add-funds">
+                  <Button size="lg" style={{ backgroundColor: 'white', color: colors.primary[600] }}>
+                    Deposit
+                  </Button>
+                </Link>
+                <Link href="/wallet/withdraw">
+                  <Button size="lg" variant="outline" style={{ borderColor: 'white', color: 'white' }}>
+                    Withdraw
+                  </Button>
+                </Link>
               </div>
             </div>
           )}
-        </div>
-      </section>
-
-      {/* Payment Methods */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h2 className="text-2xl sm:text-3xl font-bold" style={{ color: colors.text.primary }}>
-              Payment Methods
-            </h2>
-            <p className="text-base mt-1" style={{ color: colors.text.secondary }}>
-              Manage your payment methods
-            </p>
-          </div>
-          <Button variant="outline">
-            <span>➕</span> Add Method
-          </Button>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {paymentMethods.map((method) => (
-            <Card key={method.id} padding="md" className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-lg flex items-center justify-center" style={{ backgroundColor: colors.bg.tertiary }}>
-                  <span className="text-2xl">{method.type === 'card' ? '💳' : '🏦'}</span>
-                </div>
-                <div>
-                  <p className="font-medium" style={{ color: colors.text.primary }}>
-                    {method.type === 'card' ? `•••• ${method.last4}` : method.name}
-                  </p>
-                  {method.type === 'card' && (
-                    <p className="text-sm" style={{ color: colors.text.secondary }}>Expires {method.expiry}</p>
-                  )}
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                {method.isDefault && <Badge variant="success">Default</Badge>}
-                <Button variant="ghost" size="sm">Edit</Button>
-              </div>
-            </Card>
-          ))}
         </div>
       </section>
 
@@ -173,33 +135,47 @@ export default function WalletPage(): JSX.Element {
                 View all your transactions
               </p>
             </div>
-            <Button variant="ghost">View All</Button>
+            <Link href="/wallet/transactions">
+              <Button variant="ghost">View All</Button>
+            </Link>
           </div>
 
           <Card padding="md">
-            <div className="space-y-4">
-              {transactions.map((transaction) => (
-                <div key={transaction.id} className="flex items-center justify-between py-4 border-b border-gray-700 last:border-0">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: transaction.type === 'deposit' ? `${colors.success[500]}20` : transaction.type === 'purchase' ? `${colors.primary[500]}20` : `${colors.warning[500]}20` }}>
-                      <span className="text-2xl">{transaction.type === 'deposit' ? '⬆️' : transaction.type === 'purchase' ? '🎬' : '⬇️'}</span>
+            {isLoading ? (
+              <div className="space-y-4">
+                {[1, 2, 3].map(i => (
+                  <Skeleton key={i} height="60px" className="w-full" />
+                ))}
+              </div>
+            ) : transactions.length > 0 ? (
+              <div className="space-y-4">
+                {transactions.slice(0, 5).map((transaction) => (
+                  <div key={transaction.id} className="flex items-center justify-between py-4 border-b border-gray-700 last:border-0">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: transaction.type === 'credit' ? `${colors.success[500]}20` : `${colors.primary[500]}20` }}>
+                        <span className="text-2xl">{transaction.type === 'credit' ? '⬆️' : '⬇️'}</span>
+                      </div>
+                      <div>
+                        <p className="font-medium" style={{ color: colors.text.primary }}>{transaction.description || 'Transaction'}</p>
+                        <p className="text-sm" style={{ color: colors.text.secondary }}>{new Date(transaction.createdAt).toLocaleDateString()}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-medium" style={{ color: colors.text.primary }}>{transaction.description}</p>
-                      <p className="text-sm" style={{ color: colors.text.secondary }}>{transaction.date}</p>
+                    <div className="text-right">
+                      <p className="font-bold text-lg" style={{ color: transaction.type === 'credit' ? colors.success[500] : colors.text.primary }}>
+                        {transaction.type === 'credit' ? '+' : '-'}{' '}₦{transaction.amount.toLocaleString()}
+                      </p>
+                      <Badge variant={transaction.status === 'completed' ? 'success' : transaction.status === 'pending' ? 'warning' : 'error'}>
+                        {transaction.status}
+                      </Badge>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="font-bold text-lg" style={{ color: transaction.type === 'deposit' ? colors.success[500] : colors.text.primary }}>
-                      {transaction.type === 'deposit' ? '+' : '-'}{' '}₦{transaction.amount.toLocaleString()}
-                    </p>
-                    <Badge variant={transaction.status === 'success' ? 'success' : 'warning'}>
-                      {transaction.status}
-                    </Badge>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <p style={{ color: colors.text.secondary }}>No transactions yet</p>
+              </div>
+            )}
           </Card>
         </div>
       </section>

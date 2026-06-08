@@ -1,73 +1,38 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput } from 'react-native';
 import { useColorScheme } from 'react-native';
+import { apiClient } from '../../src/api';
+import { logger } from '../../src/utils/logger';
+import { LoadingState, ErrorState, EmptyState } from '../../src/components/StateContainers';
 
-const upcomingMatches = [
-  {
-    id: '1',
-    league: 'English Premier League',
-    homeTeam: { name: 'Manchester United', logo: '⚽', score: null },
-    awayTeam: { name: 'Liverpool', logo: '🔴', score: null },
-    date: 'May 15, 2026',
-    time: '3:00 PM',
-    status: 'upcoming',
-    odds: { home: '2.10', draw: '3.20', away: '3.50' },
-  },
-  {
-    id: '2',
-    league: 'La Liga',
-    homeTeam: { name: 'Barcelona', logo: '🔵', score: null },
-    awayTeam: { name: 'Real Madrid', logo: '⚪', score: null },
-    date: 'May 16, 2026',
-    time: '4:30 PM',
-    status: 'upcoming',
-    odds: { home: '1.90', draw: '3.40', away: '3.80' },
-  },
-  {
-    id: '3',
-    league: 'Serie A',
-    homeTeam: { name: 'AC Milan', logo: '🔴⚫', score: null },
-    awayTeam: { name: 'Juventus', logo: '⚪⚫', score: null },
-    date: 'May 17, 2026',
-    time: '2:00 PM',
-    status: 'upcoming',
-    odds: { home: '2.30', draw: '3.10', away: '3.00' },
-  },
-];
+interface SportsMatch {
+  id: string;
+  league: string;
+  homeTeam: { name: string; logo: string; score: number | null };
+  awayTeam: { name: string; logo: string; score: number | null };
+  date: string;
+  time: string;
+  status: 'upcoming' | 'live' | 'completed';
+  odds?: { home: string; draw: string; away: string };
+  minute?: number;
+}
 
-const inProgressMatches = [
-  {
-    id: '4',
-    league: 'Bundesliga',
-    homeTeam: { name: 'Bayern Munich', logo: '🔴⚪', score: 2 },
-    awayTeam: { name: 'Borussia Dortmund', logo: '🟡⚫', score: 1 },
-    date: 'Today',
-    time: 'Live',
-    status: 'live',
-    minute: 65,
-  },
-];
-
-const pastMatches = [
-  {
-    id: '5',
-    league: 'UEFA Champions League',
-    homeTeam: { name: 'Manchester City', logo: '🔵', score: 3 },
-    awayTeam: { name: 'Arsenal', logo: '🔴', score: 1 },
-    date: 'May 12, 2026',
-    time: '8:00 PM',
-    status: 'completed',
-  },
-];
-
-const predictions = [
-  { id: '1', match: 'Man Utd vs Liverpool', prediction: 'Man Utd Win', stake: '₦5,000', potentialWin: '₦10,500', status: 'pending' },
-  { id: '2', match: 'Barcelona vs Real Madrid', prediction: 'Draw', stake: '₦3,000', potentialWin: '₦9,600', status: 'pending' },
-];
+interface BetEntry {
+  id: string;
+  match: string;
+  prediction: string;
+  stake: string;
+  potentialWin: string;
+  status: string;
+}
 
 export default function SportsPredictionScreen() {
   const colorScheme = useColorScheme();
   const [activeTab, setActiveTab] = useState('upcoming');
+  const [matches, setMatches] = useState<SportsMatch[]>([]);
+  const [bets, setBets] = useState<BetEntry[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedMatch, setSelectedMatch] = useState<string | null>(null);
   const [selectedBet, setSelectedBet] = useState<string | null>(null);
   const [betAmount, setBetAmount] = useState('');
@@ -79,14 +44,66 @@ export default function SportsPredictionScreen() {
     { id: 'my-bets', label: 'My Bets' },
   ];
 
-  const handleBet = () => {
-    if (selectedMatch && selectedBet && betAmount) {
-      alert(`Bet placed: ${selectedBet} with ₦${betAmount}`);
-      setSelectedMatch(null);
-      setSelectedBet(null);
-      setBetAmount('');
+  const fetchData = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const matchesRes = await apiClient.get<SportsMatch[]>('/sports/matches');
+      setMatches(Array.isArray(matchesRes) ? matchesRes : []);
+      const betsRes = await apiClient.get<BetEntry[]>('/sports/predictions').catch(() => []);
+      setBets(Array.isArray(betsRes) ? betsRes : []);
+    } catch (err: any) {
+      logger.error('Failed to load sports data:', err);
+      setError(err.message || 'Failed to load sports data');
+    } finally {
+      setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const handleBet = () => {
+    if (selectedMatch && selectedBet && betAmount) {
+      apiClient.post('/sports/predictions', { matchId: selectedMatch, selection: selectedBet, amount: parseFloat(betAmount) })
+        .then(() => {
+          alert(`Bet placed: ${selectedBet} with ₦${betAmount}`);
+          setSelectedMatch(null);
+          setSelectedBet(null);
+          setBetAmount('');
+        })
+        .catch((err: any) => alert(err.message || 'Failed to place bet'));
+    }
+  };
+
+  const upcomingMatches = matches.filter(m => m.status === 'upcoming');
+  const inProgressMatches = matches.filter(m => m.status === 'live');
+  const pastMatches = matches.filter(m => m.status === 'completed');
+
+  if (isLoading) {
+    return (
+      <View style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' }]}>
+        <LoadingState text="Loading sports..." />
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' }]}>
+        <ErrorState description={error} onRetry={fetchData} />
+      </View>
+    );
+  }
+
+  if (matches.length === 0) {
+    return (
+      <View style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' }]}>
+        <EmptyState icon="⚽" title="No Matches" description="No sports matches available right now." />
+      </View>
+    );
+  }
 
   return (
     <View style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' }]}>
@@ -281,32 +298,36 @@ export default function SportsPredictionScreen() {
 
         {activeTab === 'my-bets' && (
           <View style={styles.betsList}>
-            {predictions.map((prediction) => (
-              <View key={prediction.id} style={styles.betCard}>
-                <View style={styles.betHeader}>
-                  <Text style={[styles.betMatch, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
-                    {prediction.match}
-                  </Text>
-                  <View style={[styles.betStatus, prediction.status === 'pending' && styles.statusPending]}>
-                    <Text style={styles.betStatusText}>{prediction.status.toUpperCase()}</Text>
+            {bets.length === 0 ? (
+              <Text style={{ color: '#888', textAlign: 'center', padding: 20 }}>No bets placed yet</Text>
+            ) : (
+              bets.map((prediction) => (
+                <View key={prediction.id} style={styles.betCard}>
+                  <View style={styles.betHeader}>
+                    <Text style={[styles.betMatch, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
+                      {prediction.match}
+                    </Text>
+                    <View style={[styles.betStatus, prediction.status === 'pending' && styles.statusPending]}>
+                      <Text style={styles.betStatusText}>{prediction.status.toUpperCase()}</Text>
+                    </View>
+                  </View>
+                  <View style={styles.betDetails}>
+                    <View style={styles.betDetail}>
+                      <Text style={styles.betLabel}>Prediction:</Text>
+                      <Text style={styles.betValue}>{prediction.prediction}</Text>
+                    </View>
+                    <View style={styles.betDetail}>
+                      <Text style={styles.betLabel}>Stake:</Text>
+                      <Text style={styles.betValue}>{prediction.stake}</Text>
+                    </View>
+                    <View style={styles.betDetail}>
+                      <Text style={styles.betLabel}>Potential Win:</Text>
+                      <Text style={styles.betValue}>{prediction.potentialWin}</Text>
+                    </View>
                   </View>
                 </View>
-                <View style={styles.betDetails}>
-                  <View style={styles.betDetail}>
-                    <Text style={styles.betLabel}>Prediction:</Text>
-                    <Text style={styles.betValue}>{prediction.prediction}</Text>
-                  </View>
-                  <View style={styles.betDetail}>
-                    <Text style={styles.betLabel}>Stake:</Text>
-                    <Text style={styles.betValue}>{prediction.stake}</Text>
-                  </View>
-                  <View style={styles.betDetail}>
-                    <Text style={styles.betLabel}>Potential Win:</Text>
-                    <Text style={styles.betValue}>{prediction.potentialWin}</Text>
-                  </View>
-                </View>
-              </View>
-            ))}
+              ))
+            )}
           </View>
         )}
       </ScrollView>

@@ -1,0 +1,75 @@
+name: Database Backup
+
+on:
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to backup'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: ${{ github.event.inputs.environment || 'production' }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+      - name: Run encrypted backup
+        env:
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_PORT: ${{ secrets.DB_PORT }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_BACKUP_ENCRYPTION_KEY: ${{ secrets.DB_BACKUP_ENCRYPTION_KEY }}
+          BACKUP_DIR: /tmp/backups
+          BACKUP_RETENTION_DAYS: 30
+          S3_BACKUP_BUCKET: ${{ secrets.S3_BACKUP_BUCKET }}
+          S3_REGION: ${{ secrets.S3_REGION }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        run: |
+          chmod +x ./scripts/encrypted-db-backup.sh
+          ./scripts/encrypted-db-backup.sh
+
+      - name: Verify backup
+        run: |
+          BACKUP_FILE=$(ls -t /tmp/backups/azeebo_backup_*.enc 2>/dev/null | head -1)
+          if [ -z "$BACKUP_FILE" ]; then
+            echo "❌ No backup file found"
+            exit 1
+          fi
+          echo "✅ Backup verified: $BACKUP_FILE"
+          
+          if [ -f "${BACKUP_FILE}.sha256" ]; then
+            cd /tmp/backups
+            sha256sum -c "${BACKUP_FILE}.sha256"
+            echo "✅ Checksum verified"
+          fi
+
+      - name: Notify on failure
+        if: failure()
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          curl -s -X POST "$SLACK_WEBHOOK_URL" \
+            -H 'Content-type: application/json' \
+            --data "{
+              \"text\": \"🚨 Database Backup Failed\nEnvironment: ${{ github.event.inputs.environment || 'production' }}\nWorkflow: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}\"
+            }"

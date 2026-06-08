@@ -24,6 +24,8 @@ interface ToastContextType {
 
 const ToastContext = createContext<ToastContextType | undefined>(undefined);
 
+let toastCounter = 0;
+
 export function useToast(): ToastContextType {
   const context = useContext(ToastContext);
   if (!context) {
@@ -41,7 +43,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 
   const addToast = useCallback(
     (toast: Omit<Toast, 'id'>) => {
-      const id = Math.random().toString(36).slice(2, 9);
+      const id = `toast-${++toastCounter}`;
       const newToast = { ...toast, id };
       setToasts((prev) => [...prev, newToast]);
 

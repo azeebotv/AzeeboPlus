@@ -1,6 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/explicit-function-return-type */
-/* eslint-disable no-console */
+import { webLogger } from './logger';
 
 interface PerformanceMetrics {
   name: string;
@@ -36,11 +34,11 @@ class PerformanceMonitor {
       try {
         const clsObserver = new PerformanceObserver((list) => {
           for (const entry of list.getEntries()) {
-            if (!(entry as any).hadRecentInput) {
+            if (!(entry as Record<string, unknown>).hadRecentInput) {
               this.recordMetric({
                 name: 'CLS',
-                value: (entry as any).value,
-                rating: this.getCLSRating((entry as any).value),
+                value: (entry as Record<string, unknown>).value as number,
+                rating: this.getCLSRating((entry as Record<string, unknown>).value as number),
               });
             }
           }
@@ -48,7 +46,7 @@ class PerformanceMonitor {
         clsObserver.observe({ type: 'layout-shift', buffered: true });
         this.observers.push(clsObserver);
       } catch (e) {
-        console.error('Failed to initialize CLS observer:', e);
+        webLogger.error('Failed to initialize CLS observer', e);
       }
     }
   }
@@ -60,15 +58,15 @@ class PerformanceMonitor {
           for (const entry of list.getEntries()) {
             this.recordMetric({
               name: 'FID',
-              value: (entry as any).duration,
-              rating: this.getFIDRating((entry as any).duration),
+              value: (entry as Record<string, unknown>).duration as number,
+              rating: this.getFIDRating((entry as Record<string, unknown>).duration as number),
             });
           }
         });
         fidObserver.observe({ type: 'first-input', buffered: true });
         this.observers.push(fidObserver);
       } catch (e) {
-        console.error('Failed to initialize FID observer:', e);
+        webLogger.error('Failed to initialize FID observer', e);
       }
     }
   }
@@ -79,7 +77,8 @@ class PerformanceMonitor {
         const lcpObserver = new PerformanceObserver((list) => {
           const entries = list.getEntries();
           const lastEntry = entries[entries.length - 1];
-          const value = (lastEntry as any).renderTime || (lastEntry as any).loadTime;
+          const entryRecord = lastEntry as Record<string, unknown>;
+          const value = (entryRecord.renderTime as number) || (entryRecord.loadTime as number);
           this.recordMetric({
             name: 'LCP',
             value: value,
@@ -89,7 +88,7 @@ class PerformanceMonitor {
         lcpObserver.observe({ type: 'largest-contentful-paint', buffered: true });
         this.observers.push(lcpObserver);
       } catch (e) {
-        console.error('Failed to initialize LCP observer:', e);
+        webLogger.error('Failed to initialize LCP observer', e);
       }
     }
   }
@@ -101,15 +100,15 @@ class PerformanceMonitor {
           for (const entry of list.getEntries()) {
             this.recordMetric({
               name: 'TTFB',
-              value: (entry as any).responseStart,
-              rating: this.getTTFBRating((entry as any).responseStart),
+              value: (entry as Record<string, unknown>).responseStart as number,
+              rating: this.getTTFBRating((entry as Record<string, unknown>).responseStart as number),
             });
           }
         });
         ttfbObserver.observe({ type: 'navigation', buffered: true });
         this.observers.push(ttfbObserver);
       } catch (e) {
-        console.error('Failed to initialize TTFB observer:', e);
+        webLogger.error('Failed to initialize TTFB observer', e);
       }
     }
   }
@@ -119,11 +118,12 @@ class PerformanceMonitor {
       try {
         const resourceObserver = new PerformanceObserver((list) => {
           for (const entry of list.getEntries()) {
+            const entryRecord = entry as Record<string, unknown>;
             const resource: ResourceTiming = {
               name: entry.name,
               duration: entry.duration,
-              size: (entry as any).transferSize || 0,
-              type: (entry as any).initiatorType || 'other',
+              size: (entryRecord.transferSize as number) || 0,
+              type: (entryRecord.initiatorType as string) || 'other',
             };
             this.logResourceTiming(resource);
           }
@@ -131,7 +131,7 @@ class PerformanceMonitor {
         resourceObserver.observe({ type: 'resource', buffered: true });
         this.observers.push(resourceObserver);
       } catch (e) {
-        console.error('Failed to initialize resource timing observer:', e);
+        webLogger.error('Failed to initialize resource timing observer', e);
       }
     }
   }
@@ -163,13 +163,13 @@ class PerformanceMonitor {
   private recordMetric(metric: PerformanceMetrics): void {
     this.metrics.push(metric);
     if (process.env.NODE_ENV === 'development') {
-      console.log(`[Performance] ${metric.name}: ${metric.value.toFixed(2)} (${metric.rating})`);
+      webLogger.debug(`[Performance] ${metric.name}: ${metric.value.toFixed(2)} (${metric.rating})`);
     }
   }
 
   private logResourceTiming(resource: ResourceTiming): void {
     if (process.env.NODE_ENV === 'development') {
-      console.log(
+      webLogger.debug(
         `[Resource] ${resource.name} - ${resource.duration.toFixed(2)}ms (${this.formatBytes(resource.size)})`
       );
     }

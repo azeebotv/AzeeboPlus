@@ -18,24 +18,24 @@
     "typecheck": "pnpm -r exec tsc --noEmit",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "clean": "pnpm -r clean && rm -rf node_modules",
-    "dev": "concurrently \"PORT=3000 pnpm --filter api-gateway start:dev\" \"PORT=3001 pnpm --filter auth-service start:dev\" \"PORT=3002 pnpm --filter user-service start:dev\" \"PORT=3003 pnpm --filter wallet-service start:dev\" \"PORT=3004 pnpm --filter content-service start:dev\" \"PORT=3005 pnpm --filter search-service start:dev\" \"PORT=3006 pnpm --filter notification-service start:dev\" \"PORT=3007 pnpm --filter payment-service start:dev\" \"PORT=3008 pnpm --filter analytics-service start:dev\" \"PORT=3009 pnpm --filter creator-service start:dev\" \"PORT=3010 pnpm --filter movie-service start:dev\" \"PORT=3011 pnpm --filter comedy-service start:dev\" \"PORT=3012 pnpm --filter sports-service start:dev\" \"PORT=3013 pnpm --filter reality-service start:dev\" \"PORT=3014 pnpm --filter games-service start:dev\" \"PORT=3015 pnpm --filter lifestyle-service start:dev\" \"PORT=3016 pnpm --filter vertical-service start:dev\" \"PORT=3017 pnpm --filter recommendation-service start:dev\" \"PORT=3018 pnpm --filter reward-service start:dev\" \"PORT=3019 pnpm --filter moderation-service start:dev\" \"PORT=3020 pnpm --filter support-service start:dev\" \"PORT=3021 pnpm --filter media-service start:dev\" \"PORT=3022 pnpm --filter queue-service start:dev\""
+    "dev": "concurrently --names gateway,auth,user,wallet,payment,content,search,notif,reward,analytics,recommend,reality,movie,comedy,games,queue,lifestyle,vertical,creator,media,support,sports,moderation,engagement,messaging,referral,subscription \"PORT=3013 pnpm --filter api-gateway start:dev\" \"PORT=3000 pnpm --filter auth-service start:dev\" \"PORT=3001 pnpm --filter user-service start:dev\" \"PORT=3002 pnpm --filter wallet-service start:dev\" \"PORT=3003 pnpm --filter payment-service start:dev\" \"PORT=3004 pnpm --filter content-service start:dev\" \"PORT=3005 pnpm --filter search-service start:dev\" \"PORT=3006 pnpm --filter notification-service start:dev\" \"PORT=3007 pnpm --filter reward-service start:dev\" \"PORT=3008 pnpm --filter analytics-service start:dev\" \"PORT=3009 pnpm --filter recommendation-service start:dev\" \"PORT=3010 pnpm --filter reality-service start:dev\" \"PORT=3011 pnpm --filter movie-service start:dev\" \"PORT=3012 pnpm --filter comedy-service start:dev\" \"PORT=3014 pnpm --filter games-service start:dev\" \"PORT=3015 pnpm --filter queue-service start:dev\" \"PORT=3016 pnpm --filter lifestyle-service start:dev\" \"PORT=3017 pnpm --filter vertical-service start:dev\" \"PORT=3018 pnpm --filter creator-service start:dev\" \"PORT=3019 pnpm --filter media-service start:dev\" \"PORT=3020 pnpm --filter support-service start:dev\" \"PORT=3021 pnpm --filter sports-service start:dev\" \"PORT=3022 pnpm --filter moderation-service start:dev\" \"PORT=3023 pnpm --filter engagement-service start:dev\" \"PORT=3024 pnpm --filter messaging-service start:dev\" \"PORT=3025 pnpm --filter referral-service start:dev\" \"PORT=3026 pnpm --filter subscription-service start:dev\""
   },
   "devDependencies": {
     "@playwright/test": "^1.59.1",
+    "@types/body-parser": "^1.19.6",
+    "@types/express": "^5.0.6",
     "@types/jest": "^29.5.14",
     "@types/multer": "^1.4.13",
     "@types/node": "^25.6.2",
     "@types/supertest": "^7.2.0",
+    "@types/uuid": "^11.0.0",
     "concurrently": "^8.2.2",
     "husky": "^8.0.0",
     "lint-staged": "^15.0.0",
     "prettier": "^3.2.0",
+    "prisma": "5.22.0",
     "supertest": "^7.2.2",
     "typescript": "^5.6.0"
-  },
-  "engines": {
-    "node": ">=20.11.1 <21.0.0",
-    "pnpm": ">=9.0.0 <10.0.0"
   },
   "pnpm": {
     "overrides": {

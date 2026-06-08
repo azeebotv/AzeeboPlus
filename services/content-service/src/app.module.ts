@@ -5,6 +5,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { ContentModule } from './modules/content/content.module';
 import { DatabaseModule } from './modules/database/database.module';
 import { HealthModule } from './modules/health/health.module';
+import { PublicModule } from './modules/public/public.module';
 import { ResponseWrapperInterceptor, ResponseSanitizationInterceptor } from '@azeebo/logger';
 import { RateLimiterModule } from '@azeebo/security';
 
@@ -24,6 +25,7 @@ import { RateLimiterModule } from '@azeebo/security';
     DatabaseModule,
     ContentModule,
     HealthModule,
+    PublicModule,
   ],
   providers: [
     {

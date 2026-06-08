@@ -244,6 +244,7 @@ exports.Prisma.ContentItemScalarFieldEnum = {
   id: 'id',
   title: 'title',
   description: 'description',
+  type: 'type',
   thumbnail: 'thumbnail',
   mediaUrl: 'mediaUrl',
   universeId: 'universeId',
@@ -282,6 +283,8 @@ exports.Prisma.CreatorProfileScalarFieldEnum = {
   bio: 'bio',
   banner: 'banner',
   socialLinks: 'socialLinks',
+  payoutMethod: 'payoutMethod',
+  minimumPayout: 'minimumPayout',
   verified: 'verified',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'

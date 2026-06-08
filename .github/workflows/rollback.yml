@@ -1,0 +1,114 @@
+name: Rollback Deployment
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to rollback'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+      service:
+        description: 'Service to rollback (leave empty for all)'
+        required: false
+        default: ''
+      target_tag:
+        description: 'Docker tag to rollback to (previous working version)'
+        required: true
+
+env:
+  REGISTRY: ghcr.io
+  OWNER: ${{ github.repository_owner }}
+
+jobs:
+  rollback:
+    name: Rollback ${{ inputs.service || 'all services' }} to ${{ inputs.target_tag }}
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ inputs.environment }}
+      url: ${{ inputs.environment == 'staging' && 'https://staging.azeebo.com' || 'https://azeebo.com' }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure kubectl
+        uses: azure/k8s-set-context@v4
+        with:
+          kubeconfig: ${{ inputs.environment == 'staging' && secrets.STAGING_KUBE_CONFIG || secrets.PRODUCTION_KUBE_CONFIG }}
+
+      - name: Set namespace
+        run: |
+          if [ "${{ inputs.environment }}" = "staging" ]; then
+            echo "NAMESPACE=azeebo-staging" >> $GITHUB_ENV
+          else
+            echo "NAMESPACE=azeebo-production" >> $GITHUB_ENV
+          fi
+
+      - name: Rollback single service
+        if: inputs.service != ''
+        run: |
+          echo "Rolling back ${{ inputs.service }} to ${{ inputs.target_tag }}..."
+          
+          kubectl set image deployment/${{ inputs.service }} \
+            ${{ inputs.service }}=${{ env.REGISTRY }}/${{ env.OWNER }}/${{ inputs.service }}:${{ inputs.target_tag }} \
+            -n ${{ env.NAMESPACE }}
+          
+          echo "Waiting for rollout..."
+          kubectl rollout status deployment/${{ inputs.service }} -n ${{ env.NAMESPACE }} --timeout=10m
+          
+          echo "Rollback complete!"
+
+      - name: Rollback all services
+        if: inputs.service == ''
+        run: |
+          SERVICES="analytics-service api-gateway auth-service comedy-service content-service creator-service games-service lifestyle-service media-service moderation-service movie-service notification-service payment-service queue-service reality-service recommendation-service reward-service search-service sports-service support-service user-service vertical-service wallet-service"
+          
+          for service in $SERVICES; do
+            echo "Rolling back $service to ${{ inputs.target_tag }}..."
+            
+            kubectl set image deployment/$service \
+              $service=${{ env.REGISTRY }}/${{ env.OWNER }}/$service:${{ inputs.target_tag }} \
+              -n ${{ env.NAMESPACE }}
+            
+            echo "Waiting for $service rollout..."
+            kubectl rollout status deployment/$service -n ${{ env.NAMESPACE }} --timeout=10m
+          done
+          
+          echo "All services rolled back!"
+
+      - name: Verify rollback
+        run: |
+          echo "Verifying rollback..."
+          
+          if [ "${{ inputs.environment }}" = "staging" ]; then
+            BASE_URL="https://staging.azeebo.com"
+          else
+            BASE_URL="https://azeebo.com"
+          fi
+          
+          echo "Testing health endpoint..."
+          curl -sf "${BASE_URL}/api/v1/health" || { echo "Health check failed after rollback"; exit 1; }
+          
+          echo "Rollback verification successful!"
+
+      - name: Notify Slack - Rollback Success
+        if: success()
+        uses: slackapi/slack-github-action@v1
+        with:
+          channel-id: ${{ secrets.SLACK_CHANNEL_ID }}
+          slack-message: "🔄 *Rollback Complete*\n\nEnvironment: `${{ inputs.environment }}`\nService: ${{ inputs.service || 'All Services' }}\nTarget Tag: `${{ inputs.target_tag }}`\nURL: ${{ inputs.environment == 'staging' && 'https://staging.azeebo.com' || 'https://azeebo.com' }}"
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+
+      - name: Notify Slack - Rollback Failed
+        if: failure()
+        uses: slackapi/slack-github-action@v1
+        with:
+          channel-id: ${{ secrets.SLACK_CHANNEL_ID }}
+          slack-message: "🚨 *Rollback Failed*\n\nEnvironment: `${{ inputs.environment }}`\nService: ${{ inputs.service || 'All Services' }}\nTarget Tag: `${{ inputs.target_tag }}`\nCheck logs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}

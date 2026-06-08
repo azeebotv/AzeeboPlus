@@ -9,6 +9,7 @@ import { HealthModule } from './modules/health/health.module';
 import { TitlesModule } from './modules/titles/titles.module';
 import { LoreModule } from './modules/lore/lore.module';
 import { CrossoversModule } from './modules/crossovers/crossovers.module';
+import { AdminModule } from './modules/admin/admin.module';
 import { RateLimiterModule } from '@azeebo/security';
 
 @Module({
@@ -31,6 +32,7 @@ import { RateLimiterModule } from '@azeebo/security';
     TitlesModule,
     LoreModule,
     CrossoversModule,
+    AdminModule,
   ],
 })
 export class AppModule {}

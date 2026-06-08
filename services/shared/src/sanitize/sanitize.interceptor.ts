@@ -37,7 +37,7 @@ export class SanitizeInterceptor implements NestInterceptor {
       return data.map((item) => this.sanitizeObject(item));
     }
 
-    return this.sanitizeObject(data);
+    return this.sanitizeObject(data as Record<string, unknown>);
   }
 
   private sanitizeObject(obj: Record<string, unknown>): Record<string, unknown> {

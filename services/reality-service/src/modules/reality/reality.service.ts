@@ -5,6 +5,7 @@ import {
   BadRequestException,
   Logger,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
 import { Prisma } from '../../prisma/client';
 import { RealityResponse } from './interfaces/reality-response.interface';
@@ -29,10 +30,18 @@ interface PremiumExtra {
 @Injectable()
 export class RealityService {
   private readonly logger = new Logger(RealityService.name);
-  private readonly walletServiceBaseUrl = process.env.WALLET_SERVICE_URL || 'http://localhost:3006';
-  private readonly analyticsServiceBaseUrl = process.env.ANALYTICS_SERVICE_URL || 'http://localhost:3008';
+  private readonly walletServiceBaseUrl: string;
+  private readonly analyticsServiceBaseUrl: string;
   private readonly supervoteCost = 10;
   private readonly voteCost = 1;
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly configService: ConfigService,
+  ) {
+    this.walletServiceBaseUrl = this.configService.getOrThrow<string>('WALLET_SERVICE_URL');
+    this.analyticsServiceBaseUrl = this.configService.getOrThrow<string>('ANALYTICS_SERVICE_URL');
+  }
 
   private async trackAnalyticsEvent(
     eventName: string,
@@ -86,8 +95,6 @@ export class RealityService {
       duration: 7,
     },
   ];
-
-  constructor(private readonly prisma: PrismaService) {}
 
   async listShows(): Promise<RealityResponse> {
     const shows = await this.prisma.realityShow.findMany({
@@ -349,7 +356,7 @@ export class RealityService {
       },
     });
 
-    await this.trackAnalyticsEvent('prediction_submitted', userId, {
+    await this.trackAnalyticsEvent('prediction_placed', userId, {
       predictionId: predictionRecord.id,
       showId,
       predictionType: Object.keys(prediction)[0] || 'unknown',

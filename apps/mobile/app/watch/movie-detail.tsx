@@ -1,16 +1,76 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { useColorScheme } from 'react-native';
+import { useRouter } from 'expo-router';
+import { contentApi, type ContentItem } from '../../src/api';
+import { logger } from '../../src/utils/logger';
+import { LoadingState, ErrorState, EmptyState } from '../../src/components/StateContainers';
 
 export default function MovieDetailScreen() {
   const colorScheme = useColorScheme();
+  const router = useRouter();
+  const [movie, setMovie] = useState<ContentItem | null>(null);
+  const [related, setRelated] = useState<ContentItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress] = useState(0);
+
+  const fetchMovie = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const featured = await contentApi.getFeaturedContent(1);
+      if (featured.success && featured.data?.[0]) {
+        const movieData = featured.data[0];
+        setMovie(movieData);
+        const relatedRes = await contentApi.getTrendingContent(5);
+        if (relatedRes.success && relatedRes.data) {
+          setRelated(relatedRes.data.filter(item => item.id !== movieData.id));
+        }
+      } else {
+        setError('No movie content available');
+      }
+    } catch (err: any) {
+      logger.error('Failed to load movie:', err);
+      setError(err.message || 'Failed to load movie');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchMovie();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <View style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' }]}>
+        <LoadingState text="Loading movie..." />
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' }]}>
+        <ErrorState description={error} onRetry={fetchMovie} />
+      </View>
+    );
+  }
+
+  if (!movie) {
+    return (
+      <View style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' }]}>
+        <EmptyState icon="🎬" title="No Movie" description="No movie content available right now." />
+      </View>
+    );
+  }
 
   return (
     <ScrollView style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' }]}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton}>
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
@@ -22,7 +82,7 @@ export default function MovieDetailScreen() {
       </View>
 
       <View style={styles.heroSection}>
-        <Image source={{ uri: 'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=epic%20fantasy%20movie%20poster%20with%20ancient%20warriors%20and%20kingdoms%20cinematic&image_size=landscape_16_9' }} style={styles.heroImage} />
+        <Image source={{ uri: movie.thumbnail }} style={styles.heroImage} />
         {isPlaying ? (
           <View style={styles.playerControls}>
             <TouchableOpacity style={styles.controlButton}>
@@ -45,19 +105,16 @@ export default function MovieDetailScreen() {
 
       <View style={styles.infoSection}>
         <Text style={[styles.movieTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
-          The Last Kingdom
+          {movie.title}
         </Text>
         <View style={styles.movieMeta}>
-          <Text style={styles.metaItem}>2024</Text>
+          <Text style={styles.metaItem}>{new Date(movie.createdAt).getFullYear()}</Text>
           <Text style={styles.metaDivider}>•</Text>
-          <Text style={styles.metaItem}>Action</Text>
+          <Text style={styles.metaItem}>{movie.contentType || 'Movie'}</Text>
           <Text style={styles.metaDivider}>•</Text>
-          <Text style={styles.metaItem}>2h 34m</Text>
+          <Text style={styles.metaItem}>{movie.duration ? `${Math.floor(movie.duration / 60)}h ${movie.duration % 60}m` : 'N/A'}</Text>
         </View>
-        <Text style={styles.movieDescription}>
-          A thrilling adventure set in ancient times, following the journey of a young warrior 
-          who must unite warring kingdoms to defeat a common enemy.
-        </Text>
+        <Text style={styles.movieDescription}>{movie.description}</Text>
       </View>
 
       <View style={styles.actionsSection}>
@@ -103,27 +160,23 @@ export default function MovieDetailScreen() {
         </ScrollView>
       </View>
 
-      <View style={styles.recommendationsSection}>
-        <Text style={[styles.sectionTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
-          Similar Movies
-        </Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.moviesScroll}>
-          {[
-            { title: 'Kingdoms Rising', image: 'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=ancient%20kingdom%20battle%20scene%20fantasy%20movie&image_size=portrait_4_3' },
-            { title: 'Warrior\'s Quest', image: 'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=medieval%20warrior%20knight%20armor%20epic%20fantasy&image_size=portrait_4_3' },
-            { title: 'Dragon Realm', image: 'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=epic%20dragon%20battle%20fantasy%20cinematic%20scene&image_size=portrait_4_3' },
-            { title: 'The Crown', image: 'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=royal%20castle%20crown%20medieval%20fantasy%20movie&image_size=portrait_4_3' },
-            { title: 'Sword Master', image: 'https://neeko-copilot.bytedance.net/api/text_to_image?prompt=sword%20fighting%20ancient%20warrior%20action%20movie&image_size=portrait_4_3' },
-          ].map((movie) => (
-            <TouchableOpacity key={movie.title} style={styles.movieCard}>
-              <Image source={{ uri: movie.image }} style={styles.movieThumbnail} />
-              <Text style={[styles.movieCardTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
-                {movie.title}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </View>
+      {related.length > 0 && (
+        <View style={styles.recommendationsSection}>
+          <Text style={[styles.sectionTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
+            Similar Movies
+          </Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.moviesScroll}>
+            {related.map((item) => (
+              <TouchableOpacity key={item.id} style={styles.movieCard} onPress={() => router.push(`/watch/${item.id}`)}>
+                <Image source={{ uri: item.thumbnail }} style={styles.movieThumbnail} />
+                <Text style={[styles.movieCardTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
+                  {item.title}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+      )}
     </ScrollView>
   );
 }

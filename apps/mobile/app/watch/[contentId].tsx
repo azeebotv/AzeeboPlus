@@ -7,13 +7,14 @@ import {
   Dimensions,
   ScrollView,
   useColorScheme,
-  ActivityIndicator,
   Alert,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useVideoPlayer } from '../../src/hooks/useVideoPlayer';
 import { contentApi, type ContentItem } from '../../src/api';
+import { logger } from '../../src/utils/logger';
+import { LoadingState, ErrorState, EmptyState } from '../../src/components/StateContainers';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -32,7 +33,7 @@ export default function WatchScreen() {
       try {
         await contentApi.addToWatchHistory(contentId);
       } catch (err) {
-        console.error('Failed to update watch progress:', err);
+        logger.error('Failed to update watch progress', err);
       }
     }
   }, [contentId]);
@@ -60,34 +61,34 @@ export default function WatchScreen() {
     onComplete: handleComplete,
   });
 
-  useEffect(() => {
-    const fetchContent = async () => {
-      if (!contentId) return;
+  const fetchContent = useCallback(async () => {
+    if (!contentId) return;
 
-      setIsLoading(true);
-      setError(null);
+    setIsLoading(true);
+    setError(null);
 
-      try {
-        const response = await contentApi.getContentById(contentId);
-        if (response.success && response.data) {
-          setContent(response.data);
-        } else {
-          setError('Content not found');
-        }
-
-        const relatedResponse = await contentApi.getTrendingContent(5);
-        if (relatedResponse.success && relatedResponse.data) {
-          setRelatedContent(relatedResponse.data.filter(item => item.id !== contentId));
-        }
-      } catch (err: any) {
-        setError(err.message || 'Failed to load content');
-      } finally {
-        setIsLoading(false);
+    try {
+      const response = await contentApi.getContentById(contentId);
+      if (response.success && response.data) {
+        setContent(response.data);
+      } else {
+        setError('Content not found');
       }
-    };
 
-    fetchContent();
+      const relatedResponse = await contentApi.getTrendingContent(5);
+      if (relatedResponse.success && relatedResponse.data) {
+        setRelatedContent(relatedResponse.data.filter(item => item.id !== contentId));
+      }
+    } catch (err: any) {
+      setError(err.message || 'Failed to load content');
+    } finally {
+      setIsLoading(false);
+    }
   }, [contentId]);
+
+  useEffect(() => {
+    fetchContent();
+  }, [fetchContent]);
 
   const handleSeek = (time: number) => {
     seek(time);
@@ -100,25 +101,24 @@ export default function WatchScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={[styles.container, styles.centered, { backgroundColor: colorScheme === 'dark' ? '#000' : '#fff' }]}>
-        <ActivityIndicator size="large" color="#8B5CF6" />
-        <Text style={[styles.loadingText, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
-          Loading content...
-        </Text>
+      <SafeAreaView style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#000' : '#fff' }]}>
+        <LoadingState text="Loading content..." />
       </SafeAreaView>
     );
   }
 
-  if (error || !content) {
+  if (error) {
     return (
-      <SafeAreaView style={[styles.container, styles.centered, { backgroundColor: colorScheme === 'dark' ? '#000' : '#fff' }]}>
-        <Text style={[styles.errorIcon]}>⚠️</Text>
-        <Text style={[styles.errorText, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
-          {error || 'Content not found'}
-        </Text>
-        <TouchableOpacity style={styles.retryButton} onPress={() => router.back()}>
-          <Text style={styles.retryButtonText}>Go Back</Text>
-        </TouchableOpacity>
+      <SafeAreaView style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#000' : '#fff' }]}>
+        <ErrorState description={error} onRetry={fetchContent} />
+      </SafeAreaView>
+    );
+  }
+
+  if (!content) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#000' : '#fff' }]}>
+        <EmptyState icon="📺" title="Content not found" description="The content you're looking for doesn't exist or has been removed." />
       </SafeAreaView>
     );
   }
@@ -302,33 +302,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  centered: {
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    marginTop: 16,
-    fontSize: 16,
-  },
-  errorIcon: {
-    fontSize: 48,
-    marginBottom: 16,
-  },
-  errorText: {
-    fontSize: 16,
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  retryButton: {
-    backgroundColor: '#8B5CF6',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 8,
-  },
-  retryButtonText: {
-    color: '#fff',
-    fontWeight: '600',
-  },
+
   backButton: {
     padding: 16,
   },

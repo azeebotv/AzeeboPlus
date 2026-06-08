@@ -1,56 +1,102 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
+import { apiClient } from '../../../src/api';
+import { logger } from '../../../src/utils/logger';
+import { LoadingState, ErrorState, EmptyState } from '../../../src/components/StateContainers';
 
-const MATCH_INFO = {
-  home: 'Chelsea',
-  away: 'Arsenal',
-  league: 'Premier League',
-  time: 'Today, 8PM',
-  emojiHome: '🔵',
-  emojiAway: '🔴',
-};
+interface MatchInfo {
+  home: string;
+  away: string;
+  league: string;
+  time: string;
+  emojiHome: string;
+  emojiAway: string;
+}
 
-const PREDICTION_OPTIONS = [
-  { id: '1', label: 'Home Win', odds: 2.1, selected: false },
-  { id: '2', label: 'Draw', odds: 3.4, selected: false },
-  { id: '3', label: 'Away Win', odds: 3.6, selected: false },
-];
+interface PredictionOption {
+  id: string;
+  label: string;
+  odds: number;
+}
 
-const SCORE_OPTIONS = [
-  { id: '1-0', label: '1-0', odds: 8.5 },
-  { id: '2-0', label: '2-0', odds: 12.0 },
-  { id: '2-1', label: '2-1', odds: 15.0 },
-  { id: '3-0', label: '3-0', odds: 25.0 },
-  { id: '3-1', label: '3-1', odds: 30.0 },
-  { id: '1-1', label: '1-1', odds: 7.0 },
-  { id: '2-2', label: '2-2', odds: 18.0 },
-  { id: '0-0', label: '0-0', odds: 10.0 },
-];
-
-const EXTRA_PREDICTIONS = [
-  { id: 'btts_yes', label: 'Both Teams to Score', options: ['Yes', 'No'], odds: { yes: 1.8, no: 1.9 } },
-  { id: 'over_25', label: 'Over 2.5 Goals', options: ['Over', 'Under'], odds: { over: 2.0, under: 1.8 } },
-];
+interface ScoreOption {
+  id: string;
+  label: string;
+  odds: number;
+}
 
 export default function SportsPredictionPage() {
   const colorScheme = useColorScheme();
   const router = useRouter();
   const isDark = colorScheme === 'dark';
+  const [matchInfo, setMatchInfo] = useState<MatchInfo | null>(null);
+  const [predictionOptions, setPredictionOptions] = useState<PredictionOption[]>([]);
+  const [scoreOptions, setScoreOptions] = useState<ScoreOption[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [stake, setStake] = useState('1000');
   const [selectedPrediction, setSelectedPrediction] = useState<string | null>(null);
   const [selectedScore, setSelectedScore] = useState<string | null>(null);
   const [extraSelections, setExtraSelections] = useState<Record<string, string>>({});
   const [potentialWin, setPotentialWin] = useState(0);
 
+  const fetchData = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const [matchRes, optsRes, scoresRes] = await Promise.all([
+        apiClient.get<MatchInfo>('/sports/current-match').catch(() => null),
+        apiClient.get<PredictionOption[]>('/sports/prediction-options').catch(() => []),
+        apiClient.get<ScoreOption[]>('/sports/score-options').catch(() => []),
+      ]);
+      setMatchInfo(matchRes);
+      setPredictionOptions(Array.isArray(optsRes) ? optsRes : []);
+      setScoreOptions(Array.isArray(scoresRes) ? scoresRes : []);
+    } catch (err: any) {
+      logger.error('Failed to load prediction data:', err);
+      setError(err.message || 'Failed to load prediction data');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <View style={[styles.container, { backgroundColor: isDark ? '#0a0a0a' : '#ffffff' }]}>
+        <LoadingState text="Loading predictions..." />
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={[styles.container, { backgroundColor: isDark ? '#0a0a0a' : '#ffffff' }]}>
+        <ErrorState description={error} onRetry={fetchData} />
+      </View>
+    );
+  }
+
+  if (!matchInfo) {
+    return (
+      <View style={[styles.container, { backgroundColor: isDark ? '#0a0a0a' : '#ffffff' }]}>
+        <EmptyState icon="⚽" title="No Match" description="No match currently available for predictions." />
+      </View>
+    );
+  }
+
   const calculateWin = (predId: string | null, scoreId: string | null) => {
     if (!predId) {
       setPotentialWin(0);
       return;
     }
-    const pred = PREDICTION_OPTIONS.find(p => p.id === predId);
-    const score = SCORE_OPTIONS.find(s => s.id === scoreId);
+    const pred = predictionOptions.find(p => p.id === predId);
+    const score = scoreOptions.find(s => s.id === scoreId);
     const stakeNum = parseFloat(stake) || 0;
 
     let odds = pred?.odds || 1;
@@ -126,22 +172,22 @@ export default function SportsPredictionPage() {
         </Text>
       </View>
 
-      <View style={[styles.matchHeader, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}>
+        <View style={[styles.matchHeader, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}>
         <View style={styles.matchLeague}>
-          <Text style={styles.leagueText}>{MATCH_INFO.league}</Text>
-          <Text style={styles.matchTime}>{MATCH_INFO.time}</Text>
+          <Text style={styles.leagueText}>{matchInfo.league}</Text>
+          <Text style={styles.matchTime}>{matchInfo.time}</Text>
         </View>
         <View style={styles.matchTeamsRow}>
           <View style={styles.teamColumn}>
-            <Text style={styles.teamEmojiLarge}>{MATCH_INFO.emojiHome}</Text>
-            <Text style={[styles.teamNameLarge, { color: isDark ? '#fff' : '#000' }]}>{MATCH_INFO.home}</Text>
+            <Text style={styles.teamEmojiLarge}>{matchInfo.emojiHome}</Text>
+            <Text style={[styles.teamNameLarge, { color: isDark ? '#fff' : '#000' }]}>{matchInfo.home}</Text>
           </View>
           <View style={styles.vsContainer}>
             <Text style={styles.vsText}>VS</Text>
           </View>
           <View style={[styles.teamColumn, styles.teamColumnRight]}>
-            <Text style={styles.teamEmojiLarge}>{MATCH_INFO.emojiAway}</Text>
-            <Text style={[styles.teamNameLarge, { color: isDark ? '#fff' : '#000' }]}>{MATCH_INFO.away}</Text>
+            <Text style={styles.teamEmojiLarge}>{matchInfo.emojiAway}</Text>
+            <Text style={[styles.teamNameLarge, { color: isDark ? '#fff' : '#000' }]}>{matchInfo.away}</Text>
           </View>
         </View>
       </View>
@@ -151,7 +197,7 @@ export default function SportsPredictionPage() {
           Match Result
         </Text>
         <View style={styles.predictionRow}>
-          {PREDICTION_OPTIONS.map((option) => (
+          {predictionOptions.map((option) => (
             <TouchableOpacity
               key={option.id}
               style={[
@@ -180,7 +226,7 @@ export default function SportsPredictionPage() {
           Correct Score (Optional)
         </Text>
         <View style={styles.scoreGrid}>
-          {SCORE_OPTIONS.map((option) => (
+          {scoreOptions.map((option) => (
             <TouchableOpacity
               key={option.id}
               style={[
@@ -203,7 +249,10 @@ export default function SportsPredictionPage() {
         <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
           Extra Predictions
         </Text>
-        {EXTRA_PREDICTIONS.map((extra) => (
+        {[
+          { id: 'btts_yes', label: 'Both Teams to Score', options: ['Yes', 'No'], odds: { yes: 1.8, no: 1.9 } as Record<string, number> },
+          { id: 'over_25', label: 'Over 2.5 Goals', options: ['Over', 'Under'], odds: { over: 2.0, under: 1.8 } as Record<string, number> },
+        ].map((extra) => (
           <View key={extra.id} style={[styles.extraCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}>
             <Text style={[styles.extraTitle, { color: isDark ? '#fff' : '#000' }]}>{extra.label}</Text>
             <View style={styles.extraOptions}>

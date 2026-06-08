@@ -3,7 +3,7 @@ import { RedisService } from '../redis/redis.service';
 
 export interface CacheSetOptions {
   key: string;
-  value: any;
+  value: unknown;
   ttl?: number;
 }
 
@@ -45,7 +45,7 @@ export class CacheService {
    * @param value - The value to cache (will be JSON stringified)
    * @param ttl - Time to live in seconds (defaults to 300s / 5min)
    */
-  async set(key: string, value: any, ttl?: number): Promise<void> {
+  async set(key: string, value: unknown, ttl?: number): Promise<void> {
     try {
       const serialized = JSON.stringify(value);
       const ttlSeconds = ttl || this.defaultTtl;

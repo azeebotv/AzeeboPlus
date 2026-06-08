@@ -1,21 +1,13 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
+import { creatorApi, CreatorDashboard, CreatorEarnings, CreatorAnalytics } from '../../src/api/creator';
+import { LoadingState, ErrorState } from '../../src/components/StateContainers';
 
-const stats = [
-  { label: 'Total Earnings', value: '₦245,000', change: '+12%', icon: '💰' },
-  { label: 'Subscribers', value: '12.5K', change: '+8%', icon: '👥' },
-  { label: 'Tips Received', value: '342', change: '+24%', icon: '🎁' },
-  { label: 'Total Views', value: '1.2M', change: '+15%', icon: '👁️' },
-];
-
-const recentActivities = [
-  { id: '1', type: 'tip', message: 'Segun tipped you ₦500', time: '2m ago', icon: '🎁' },
-  { id: '2', type: 'subscribe', message: 'New subscriber: Chioma', time: '15m ago', icon: '👋' },
-  { id: '3', type: 'view', message: 'Your content reached 1K views', time: '1h ago', icon: '🔥' },
-  { id: '4', type: 'withdrawal', message: 'Withdrawal of ₦50,000 processed', time: '3h ago', icon: '✅' },
-];
+function formatCurrency(amount: number): string {
+  return '₦' + amount.toLocaleString();
+}
 
 const quickActions = [
   { id: '1', title: 'Upload Content', icon: '📤', color: '#8B5CF6' },
@@ -27,14 +19,67 @@ const quickActions = [
 export default function CreatorDashboardScreen() {
   const colorScheme = useColorScheme();
   const router = useRouter();
-  const [earnings] = useState({
-    available: 45000,
-    pending: 12500,
-    withdrawn: 197500,
-  });
+  const isDark = colorScheme === 'dark';
+  const [dashboard, setDashboard] = useState<CreatorDashboard | null>(null);
+  const [earnings, setEarnings] = useState<CreatorEarnings | null>(null);
+  const [analytics, setAnalytics] = useState<CreatorAnalytics | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchData = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const [dashboardRes, earningsRes, analyticsRes] = await Promise.all([
+        creatorApi.getDashboard(),
+        creatorApi.getEarnings(),
+        creatorApi.getAnalytics(),
+      ]);
+      if (dashboardRes.success) setDashboard(dashboardRes.data);
+      if (earningsRes.success) setEarnings(earningsRes.data);
+      if (analyticsRes.success) setAnalytics(analyticsRes.data);
+    } catch (err) {
+      setError('Failed to load dashboard data. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  if (isLoading) {
+    return <LoadingState text="Loading dashboard..." />;
+  }
+
+  if (error) {
+    return <ErrorState description={error} onRetry={fetchData} />;
+  }
+
+  const statItems = [
+    { label: 'Total Earnings', value: formatCurrency(earnings?.totalEarnings ?? 0), change: '', icon: '💰' },
+    { label: 'Subscribers', value: String(dashboard?.totalFollowers ?? 0), change: '', icon: '👥' },
+    { label: 'Total Views', value: String(dashboard?.totalViews ?? 0), change: '', icon: '👁️' },
+    { label: 'Total Content', value: String(dashboard?.totalContent ?? 0), change: '', icon: '📹' },
+  ];
+
+  const activities = dashboard?.recentActivity?.map((a, i) => ({
+    id: String(i),
+    type: a.type === 'earnings' ? 'tip' : 'view',
+    message: a.description,
+    time: a.timestamp ? new Date(a.timestamp).toLocaleDateString() : '',
+    icon: a.type === 'earnings' ? '💰' : '🔥',
+  })) ?? [];
+
+  const displayEarnings = {
+    available: earnings?.totalEarnings ?? 0,
+    pending: earnings?.pendingEarnings ?? 0,
+    withdrawn: earnings?.paidEarnings ?? 0,
+  };
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' }]}>
+    <ScrollView style={[styles.container, { backgroundColor: isDark ? '#0a0a0a' : '#ffffff' }]}>
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <Text style={styles.greeting}>Hello,</Text>
@@ -54,40 +99,40 @@ export default function CreatorDashboardScreen() {
             <Text style={styles.withdrawText}>Withdraw</Text>
           </TouchableOpacity>
         </View>
-        <Text style={styles.earningsAmount}>₦{earnings.available.toLocaleString()}</Text>
+        <Text style={styles.earningsAmount}>{formatCurrency(displayEarnings.available)}</Text>
         <View style={styles.earningsBreakdown}>
           <View style={styles.earningItem}>
             <Text style={styles.earningLabel}>Available</Text>
-            <Text style={styles.earningValue}>₦{earnings.available.toLocaleString()}</Text>
+            <Text style={styles.earningValue}>{formatCurrency(displayEarnings.available)}</Text>
           </View>
           <View style={styles.earningDivider} />
           <View style={styles.earningItem}>
             <Text style={styles.earningLabel}>Pending</Text>
-            <Text style={styles.earningValue}>₦{earnings.pending.toLocaleString()}</Text>
+            <Text style={styles.earningValue}>{formatCurrency(displayEarnings.pending)}</Text>
           </View>
           <View style={styles.earningDivider} />
           <View style={styles.earningItem}>
             <Text style={styles.earningLabel}>Withdrawn</Text>
-            <Text style={styles.earningValue}>₦{earnings.withdrawn.toLocaleString()}</Text>
+            <Text style={styles.earningValue}>{formatCurrency(displayEarnings.withdrawn)}</Text>
           </View>
         </View>
       </View>
 
       <View style={styles.statsGrid}>
-        {stats.map((stat, index) => (
+        {statItems.map((stat, index) => (
           <View key={index} style={styles.statCard}>
             <Text style={styles.statIcon}>{stat.icon}</Text>
-            <Text style={[styles.statValue, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
+            <Text style={[styles.statValue, { color: isDark ? '#ffffff' : '#000000' }]}>
               {stat.value}
             </Text>
             <Text style={styles.statLabel}>{stat.label}</Text>
-            <Text style={styles.statChange}>{stat.change}</Text>
+            <Text style={styles.statChange}>{stat.change || '-'}</Text>
           </View>
         ))}
       </View>
 
       <View style={styles.quickActions}>
-        <Text style={[styles.sectionTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
+        <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
           Quick Actions
         </Text>
         <View style={styles.actionsGrid}>
@@ -96,7 +141,7 @@ export default function CreatorDashboardScreen() {
               <View style={[styles.actionIcon, { backgroundColor: action.color }]}>
                 <Text style={styles.actionEmoji}>{action.icon}</Text>
               </View>
-              <Text style={[styles.actionTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
+              <Text style={[styles.actionTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
                 {action.title}
               </Text>
             </TouchableOpacity>
@@ -106,7 +151,7 @@ export default function CreatorDashboardScreen() {
 
       <View style={styles.activitySection}>
         <View style={styles.activityHeader}>
-          <Text style={[styles.sectionTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
+          <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
             Recent Activity
           </Text>
           <TouchableOpacity>
@@ -114,30 +159,34 @@ export default function CreatorDashboardScreen() {
           </TouchableOpacity>
         </View>
         <View style={styles.activityList}>
-          {recentActivities.map((activity) => (
+          {activities.length > 0 ? activities.map((activity) => (
             <View key={activity.id} style={styles.activityItem}>
               <View style={styles.activityIcon}>
                 <Text style={styles.activityEmoji}>{activity.icon}</Text>
               </View>
               <View style={styles.activityContent}>
-                <Text style={[styles.activityMessage, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
+                <Text style={[styles.activityMessage, { color: isDark ? '#ffffff' : '#000000' }]}>
                   {activity.message}
                 </Text>
                 <Text style={styles.activityTime}>{activity.time}</Text>
               </View>
             </View>
-          ))}
+          )) : (
+            <View style={{ padding: 16, alignItems: 'center' }}>
+              <Text style={{ color: '#666' }}>No recent activity</Text>
+            </View>
+          )}
         </View>
       </View>
 
       <View style={styles.payoutSection}>
-        <Text style={[styles.sectionTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
+        <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
           Next Payout
         </Text>
         <View style={styles.payoutCard}>
           <View style={styles.payoutInfo}>
-            <Text style={styles.payoutDate}>May 15, 2026</Text>
-            <Text style={styles.payoutAmount}>₦45,000</Text>
+            <Text style={styles.payoutDate}>Next payout</Text>
+            <Text style={styles.payoutAmount}>{formatCurrency(displayEarnings.available)}</Text>
           </View>
           <TouchableOpacity style={styles.payoutButton}>
             <Text style={styles.payoutButtonText}>Schedule</Text>

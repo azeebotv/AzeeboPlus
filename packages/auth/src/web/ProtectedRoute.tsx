@@ -1,7 +1,38 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { LoadingState } from '@azeebo/ui';
+
+// Auth context interface for ProtectedRoute
+export interface AuthState {
+  user: { role?: string; [key: string]: unknown } | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+}
+
+// Context to hold auth state - must be provided by a parent AuthProvider
+const ProtectedAuthContext = createContext<AuthState | undefined>(undefined);
+
+export function useProtectedAuth(): AuthState {
+  const context = useContext(ProtectedAuthContext);
+  if (!context) {
+    throw new Error('useProtectedAuth must be used within a ProtectedAuthProvider');
+  }
+  return context;
+}
+
+export interface ProtectedAuthProviderProps {
+  children: ReactNode;
+  value: AuthState;
+}
+
+export function ProtectedAuthProvider({ children, value }: ProtectedAuthProviderProps) {
+  return (
+    <ProtectedAuthContext.Provider value={value}>
+      {children}
+    </ProtectedAuthContext.Provider>
+  );
+}
 
 export interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -19,47 +50,40 @@ export function ProtectedRoute({
   redirectTo = '/auth/login',
 }: ProtectedRouteProps) {
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(true);
-  const [isAuthorized, setIsAuthorized] = useState(false);
+  const { user, isAuthenticated, isLoading } = useProtectedAuth();
 
   useEffect(() => {
-    const checkAuth = async () => {
-      // TODO: Replace with actual auth check
-      // For now, simulate a check
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Mock: Check if user is logged in
-      const mockUser = localStorage.getItem('azeebo_user');
-      const isAuthenticated = !!mockUser;
-      
-      if (!isAuthenticated && requireAuth) {
-        router.push(redirectTo);
-        return;
-      }
+    if (isLoading) return;
 
-      if (requireAdmin || requireCreator) {
-        // Mock admin/creator check
-        const userData = mockUser ? JSON.parse(mockUser) : null;
-        const hasRole = requireAdmin ? userData?.role === 'admin' : userData?.role === 'creator';
-        
-        if (!hasRole) {
-          router.push('/unauthorized');
-          return;
-        }
-      }
+    if (requireAuth && !isAuthenticated) {
+      router.push(redirectTo);
+      return;
+    }
 
-      setIsAuthorized(true);
-      setIsLoading(false);
-    };
+    if (requireAdmin && user?.role !== 'admin') {
+      router.push('/unauthorized');
+      return;
+    }
 
-    checkAuth();
-  }, [requireAuth, requireAdmin, requireCreator, redirectTo, router]);
+    if (requireCreator && user?.role !== 'creator' && user?.role !== 'admin') {
+      router.push('/unauthorized');
+      return;
+    }
+  }, [isLoading, isAuthenticated, user, requireAuth, requireAdmin, requireCreator, redirectTo, router]);
 
   if (isLoading) {
     return <LoadingState title="Checking authorization..." />;
   }
 
-  if (!isAuthorized) {
+  if (requireAuth && !isAuthenticated) {
+    return null;
+  }
+
+  if (requireAdmin && user?.role !== 'admin') {
+    return null;
+  }
+
+  if (requireCreator && user?.role !== 'creator' && user?.role !== 'admin') {
     return null;
   }
 

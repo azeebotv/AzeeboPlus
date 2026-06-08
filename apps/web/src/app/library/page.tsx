@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { api, ContentItem } from '../../lib/api';
+import { webLogger } from '@/lib/logger';
 
 interface SavedContentItem extends ContentItem {
   savedAt?: string;
@@ -34,24 +35,19 @@ export default function LibraryPage(): JSX.Element {
 
         const historyResponse = await api.user.getWatchHistory(1, 20);
         if (historyResponse.success && historyResponse.data) {
-          const items = historyResponse.data.items.map((item: ContentItem, index: number) => ({
+          const items = historyResponse.data.items.map((item: ContentItem) => ({
             ...item,
-            watchedAt: new Date(Date.now() - index * 86400000).toISOString(),
-            progress: Math.floor(Math.random() * 100),
+            watchedAt: item.createdAt || new Date().toISOString(),
           }));
           setWatchHistory(items);
         }
 
         const featuredResponse = await api.content.getFeaturedContent(6);
         if (featuredResponse.success && featuredResponse.data) {
-          const items = featuredResponse.data.map((item: ContentItem, index: number) => ({
-            ...item,
-            savedAt: new Date(Date.now() - index * 43200000).toISOString(),
-          }));
-          setSavedContent(items);
+          setSavedContent(featuredResponse.data);
         }
       } catch (error) {
-        // Error handling is intentionally minimal here
+        webLogger.error('Failed to load library data', error);
       } finally {
         setIsLoading(false);
       }

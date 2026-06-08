@@ -1,4 +1,5 @@
 import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
 import { Prisma } from '../../prisma/client';
 import { createApiClient } from '@azeebo/api-client';
@@ -6,20 +7,27 @@ import { createApiClient } from '@azeebo/api-client';
 @Injectable()
 export class AppealService {
   private readonly logger = new Logger(AppealService.name);
-  private readonly contentServiceClient = createApiClient({
-    baseUrl: process.env.CONTENT_SERVICE_URL || 'http://localhost:3004',
-    timeout: 30000,
-  });
-  private readonly moderationServiceClient = createApiClient({
-    baseUrl: process.env.MODERATION_SERVICE_URL || 'http://localhost:3006',
-    timeout: 30000,
-  });
-  private readonly userServiceClient = createApiClient({
-    baseUrl: process.env.USER_SERVICE_URL || 'http://localhost:3001',
-    timeout: 30000,
-  });
+  private readonly contentServiceClient;
+  private readonly moderationServiceClient;
+  private readonly userServiceClient;
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private configService: ConfigService,
+  ) {
+    this.contentServiceClient = createApiClient({
+      baseUrl: this.configService.getOrThrow<string>('CONTENT_SERVICE_URL'),
+      timeout: 30000,
+    });
+    this.moderationServiceClient = createApiClient({
+      baseUrl: this.configService.getOrThrow<string>('MODERATION_SERVICE_URL'),
+      timeout: 30000,
+    });
+    this.userServiceClient = createApiClient({
+      baseUrl: this.configService.getOrThrow<string>('USER_SERVICE_URL'),
+      timeout: 30000,
+    });
+  }
 
   async submitAppeal(data: {
     ticketId: string;

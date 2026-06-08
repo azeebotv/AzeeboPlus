@@ -122,7 +122,7 @@ export class CreatorService {
     return {
       items: items.map((item) => ({
         ...item,
-        type: 'video' as const,
+        type: item.type as 'video' | 'audio' | 'document',
         viewCount: item.viewCount,
       })),
       total,
@@ -133,7 +133,7 @@ export class CreatorService {
     userId: string,
     data: { title: string; description?: string; type: string; universeId?: string }
   ): Promise<ContentItem> {
-    const universeId = data.universeId || 'creator';
+    const universeId = data.universeId || '00000000-0000-0000-0000-000000000001'; // Default 'videos' universe
 
     const creatorProfile = await this.prisma.creatorProfile.findUnique({
       where: { userId },
@@ -149,6 +149,7 @@ export class CreatorService {
       data: {
         title: data.title,
         description: data.description,
+        type: data.type || 'video',
         thumbnail: '', // Will be filled in via media service
         status: 'draft',
         creatorId: userId,
@@ -158,7 +159,7 @@ export class CreatorService {
 
     return {
       ...content,
-      type: data.type as 'video' | 'audio' | 'document',
+      type: content.type as 'video' | 'audio' | 'document',
     };
   }
 
@@ -186,7 +187,7 @@ export class CreatorService {
 
     return {
       ...updated,
-      type: 'video',
+      type: (updated.type as 'video' | 'audio' | 'document') || 'video',
       viewCount: updated.viewCount,
     };
   }
@@ -258,13 +259,30 @@ export class CreatorService {
       ).map((item) => ({
         title: item.title,
         views: item.viewCount,
-        engagement: item.viewCount > 0 ? '0%' : '0%',
+        engagement: item.viewCount > 0 ? `${((item.viewCount / (recentViews || 1)) * 100).toFixed(1)}%` : '0.0%',
       })),
     };
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async getEarnings(userId: string, _period = 'this-month'): Promise<EarningsData> {
+    const earningsAggregate = await this.prisma.walletTransaction.aggregate({
+      where: {
+        wallet: { userId },
+        type: 'earning',
+      },
+      _sum: { amount: true },
+      _count: true,
+    });
+
+    const allEarningsAggregate = await this.prisma.walletTransaction.aggregate({
+      where: {
+        wallet: { userId },
+        type: 'earning',
+      },
+      _sum: { amount: true },
+    });
+
     const pendingPayouts = await this.prisma.payoutRequest.aggregate({
       where: { userId, status: 'pending' },
       _sum: { amount: true },
@@ -272,10 +290,10 @@ export class CreatorService {
 
     const pendingAmount = pendingPayouts._sum.amount;
     return {
-      total: 1247.5,
-      count: 47,
+      total: Number(earningsAggregate._sum.amount) || 0,
+      count: earningsAggregate._count || 0,
       pendingPayout: pendingAmount ? Number(pendingAmount) : 0,
-      lifetimeEarnings: 48293.45,
+      lifetimeEarnings: Number(allEarningsAggregate._sum.amount) || 0,
     };
   }
 
@@ -319,13 +337,13 @@ export class CreatorService {
     await this.prisma.creatorProfile.upsert({
       where: { userId },
       update: {
-        socialLinks: {
-          ...data,
-        },
+        payoutMethod: data.method,
+        minimumPayout: data.minimum,
       },
       create: {
         userId,
-        socialLinks: data,
+        payoutMethod: data.method,
+        minimumPayout: data.minimum,
       },
     });
 

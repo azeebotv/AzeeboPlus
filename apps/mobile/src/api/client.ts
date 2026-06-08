@@ -1,4 +1,5 @@
 import Constants from 'expo-constants';
+import { certificatePinningService } from '../utils/certificatePinning';
 
 interface ApiClientConfig {
   baseURL: string;
@@ -12,12 +13,20 @@ interface ApiError extends Error {
 
 class ApiClientClass {
   private config: ApiClientConfig = {
-    baseURL: Constants.expoConfig?.extra?.apiBaseURL || 'http://localhost:3013',
+    baseURL: Constants.expoConfig?.extra?.apiBaseURL || (__DEV__ ? 'http://localhost:3013' : ''),
     token: null,
   };
 
   setToken(token: string | null): void {
     this.config.token = token;
+  }
+
+  getBaseURL(): string {
+    return this.config.baseURL;
+  }
+
+  getToken(): string | null {
+    return this.config.token;
   }
 
   private async request<T>(
@@ -41,7 +50,7 @@ class ApiClientClass {
     const timeoutId = setTimeout(() => controller.abort(), 30000);
 
     try {
-      const response = await fetch(url, {
+      const response = await certificatePinningService.fetchWithPinning(url, {
         method,
         headers,
         body: body ? JSON.stringify(body) : undefined,
@@ -72,7 +81,7 @@ class ApiClientClass {
         throw timeoutError;
       }
 
-      if (error instanceof ApiError) {
+      if (error instanceof Error && 'status' in error) {
         throw error;
       }
       const networkError: ApiError = new Error('Network error. Please check your connection.');

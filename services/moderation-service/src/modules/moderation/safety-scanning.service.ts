@@ -391,87 +391,16 @@ export class SafetyScanningService {
 
   private mockMalwareScan(): ScanResult {
     this.logger.debug('Performing mock malware scan');
-
-    const mockRisk = Math.random();
-    if (mockRisk < 0.02) {
-      return {
-        result: 'blocked',
-        threatLevel: 'critical',
-        categories: ['malware_detected'],
-        details: {
-          signature: 'EICAR_TEST',
-          confidence: 0.98,
-        },
-      };
-    }
-    if (mockRisk < 0.05) {
-      return {
-        result: 'flagged',
-        threatLevel: 'medium',
-        categories: ['suspicious_content'],
-        details: {
-          heuristicMatch: true,
-          confidence: 0.72,
-        },
-      };
-    }
     return { result: 'clean' };
   }
 
   private mockContentSafetyScan(): ScanResult {
     this.logger.debug('Performing mock content safety scan');
-
-    const mockRisk = Math.random();
-    const safetyCategories = [
-      'violence',
-      'adult_content',
-      'hate_speech',
-      'graphic_content',
-      'harmful_content',
-    ];
-
-    if (mockRisk < 0.03) {
-      const detectedCategories = safetyCategories.slice(0, Math.floor(Math.random() * 2) + 1);
-      return {
-        result: 'blocked',
-        threatLevel: 'high',
-        categories: detectedCategories,
-        details: {
-          model: 'azeebo-safety-v2',
-          confidence: 0.95,
-        },
-      };
-    }
-    if (mockRisk < 0.1) {
-      return {
-        result: 'flagged',
-        threatLevel: 'low',
-        categories: ['potentially_inappropriate'],
-        details: {
-          model: 'azeebo-safety-v2',
-          confidence: 0.65,
-        },
-      };
-    }
     return { result: 'clean' };
   }
 
   private mockCopyrightScan(): ScanResult {
     this.logger.debug('Performing mock copyright scan');
-
-    const mockRisk = Math.random();
-    if (mockRisk < 0.08) {
-      return {
-        result: 'flagged',
-        threatLevel: 'medium',
-        categories: ['copyright_match'],
-        details: {
-          matchCount: Math.floor(Math.random() * 5) + 1,
-          matchType: 'fingerprint',
-          confidence: 0.88,
-        },
-      };
-    }
     return { result: 'clean' };
   }
 

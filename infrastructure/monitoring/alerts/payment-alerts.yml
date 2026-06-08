@@ -1,0 +1,47 @@
+groups:
+  - name: payment_alerts
+    rules:
+      - alert: HighPaymentFailureRate
+        expr: rate(payment_failed_total[5m]) / rate(payment_processed_total[5m]) > 0.10
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High payment failure rate ({{ $value | humanizePercentage }})"
+          description: "Payment failure rate is above 10% for more than 5 minutes."
+
+      - alert: PaymentFailureSpike
+        expr: increase(payment_failed_total[5m]) > 10
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Payment failure spike detected ({{ $value }} failures)"
+          description: "More than 10 payment failures in the last 5 minutes."
+
+      - alert: PaymentProcessingDelay
+        expr: histogram_quantile(0.95, rate(payment_processing_duration_seconds_bucket[5m])) > 30
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High payment processing delay ({{ $value }}s)"
+          description: "95th percentile payment processing time is above 30 seconds."
+
+      - alert: PaymentWebhookFailure
+        expr: rate(payment_webhook_failed_total[5m]) > 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Payment webhook failures detected"
+          description: "Payment webhook processing is failing for {{ $labels.service }}."
+
+      - alert: LowPaymentVolume
+        expr: rate(payment_processed_total[1h]) < 0.01
+        for: 30m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Unusually low payment volume"
+          description: "Payment processing rate is unusually low. This may indicate an issue with the payment flow."

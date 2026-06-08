@@ -76,16 +76,33 @@ export const environmentSchema = z.object({
 
 export type EnvironmentVariables = z.infer<typeof environmentSchema>;
 
+export class EnvValidationError extends Error {
+  constructor(
+    public missing: string[],
+    public invalid: string[]
+  ) {
+    super('Environment validation failed');
+    this.name = 'EnvValidationError';
+  }
+}
+
 export function validateEnvironment(env: Record<string, string | undefined>): EnvironmentVariables {
   const result = environmentSchema.safeParse(env);
 
   if (!result.success) {
-    const errorMessages = result.error.issues.map((issue) => {
+    const missing: string[] = [];
+    const invalid: string[] = [];
+
+    result.error.issues.forEach((issue) => {
       const path = issue.path.join('.');
-      return `${path}: ${issue.message}`;
+      if (issue.code === 'invalid_type' || issue.code === 'unrecognized_keys') {
+        invalid.push(`${path}: ${issue.message}`);
+      } else {
+        missing.push(path);
+      }
     });
 
-    throw new Error(`Invalid environment variables:\n${errorMessages.join('\n')}`);
+    throw new EnvValidationError(missing, invalid);
   }
 
   // Production-specific validations

@@ -39,13 +39,16 @@ async function bootstrap(): Promise<void> {
     })
   );
 
+  if (!process.env.ALLOWED_ORIGINS) {
+    throw new Error('ALLOWED_ORIGINS environment variable must be set');
+  }
   app.enableCors({
-    origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'],
+    origin: process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim()),
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
   });
 
-  const port = process.env.PORT || 3020;
+  const port = process.env.PORT || 3021;
   await app.listen(port);
   const logger = new Logger('Sports Service');
   logger.log(`Sports Service running on port ${port}`);

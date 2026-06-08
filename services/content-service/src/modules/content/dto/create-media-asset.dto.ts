@@ -18,8 +18,7 @@ export class CreateMediaAssetDto {
   @IsOptional()
   duration?: number;
 
-  /* eslint-disable @typescript-eslint/no-explicit-any */
   @IsObject()
   @IsOptional()
-  metadata?: any;
+  metadata?: Record<string, unknown>;
 }

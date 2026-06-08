@@ -89,7 +89,7 @@ export class WebhookService {
         eventId,
         'paystack',
         payload.type,
-        payload,
+        payload as unknown as Record<string, unknown>,
         error instanceof Error ? error : new Error(errorMessage)
       );
       throw error;
@@ -136,7 +136,7 @@ export class WebhookService {
         eventId,
         'flutterwave',
         payload.type,
-        payload,
+        payload as unknown as Record<string, unknown>,
         error instanceof Error ? error : new Error(errorMessage)
       );
       throw error;

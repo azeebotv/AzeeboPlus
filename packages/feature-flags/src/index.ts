@@ -1,4 +1,5 @@
 import Redis from 'ioredis';
+import { randomBytes } from 'crypto';
 
 export interface FeatureFlag {
   key: string;
@@ -22,7 +23,11 @@ export class FeatureFlagService {
   private defaultFlags: Record<string, boolean>;
 
   constructor(config: FeatureFlagConfig = {}) {
-    this.redis = config.redis || new Redis(config.redisUrl || process.env.FEATURE_FLAG_REDIS_URL || 'redis://localhost:6379');
+    const redisUrl = config.redisUrl || process.env.FEATURE_FLAG_REDIS_URL;
+    if (!redisUrl && !config.redis && process.env.NODE_ENV === 'production') {
+      throw new Error('FeatureFlagService: FEATURE_FLAG_REDIS_URL is required in production');
+    }
+    this.redis = config.redis || new Redis(redisUrl || 'redis://localhost:6379');
     this.prefix = config.prefix || 'feature_flags:';
     this.defaultFlags = config.defaultFlags || {};
   }
@@ -47,7 +52,8 @@ export class FeatureFlagService {
         const hash = this.hashUserId(userId, key);
         return hash < flag.rolloutPercentage;
       }
-      return Math.random() * 100 < flag.rolloutPercentage;
+      const roll = randomBytes(1)[0] / 256 * 100;
+      return roll < flag.rolloutPercentage;
     }
 
     return true;
