@@ -1,5 +1,5 @@
 {
-  "extends": "../../../tsconfig.json"
+  "extends": "../../../tsconfig.json",
   "compilerOptions": {
     "module": "commonjs",
     "declaration": true,
@@ -13,7 +13,7 @@
     "baseUrl": "./",
     "incremental": true,
     "paths": {
-      "@azeebo/*": ["../../../packages/*/src"]
+      "@azeebo/*": ["../../../packages/*/src"],
       "@vertical/*": ["./*"]
     }
   },

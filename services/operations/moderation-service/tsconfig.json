@@ -1,5 +1,5 @@
 {
-  "extends": "../../../tsconfig.json"
+  "extends": "../../../tsconfig.json",
   "compilerOptions": {
     "outDir": "dist",
     "baseUrl": "./",
@@ -9,7 +9,7 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "paths": {
-      "@azeebo/*": ["../../../packages/*/src"]
+      "@azeebo/*": ["../../../packages/*/src"],
       "@moderation/*": ["./*"]
     }
   },
