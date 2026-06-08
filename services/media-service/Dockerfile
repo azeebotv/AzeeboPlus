@@ -12,7 +12,6 @@ RUN pnpm install --frozen-lockfile
 
 COPY services/media-service/src ./services/media-service/src
 COPY services/media-service/tsconfig*.json ./services/media-service/
-COPY services/media-service/prisma ./services/media-service/prisma
 
 RUN pnpm --filter media-service build
 
@@ -33,7 +32,6 @@ COPY services/media-service/package.json ./services/media-service/
 RUN pnpm install --prod --frozen-lockfile
 
 COPY --from=builder /app/services/media-service/dist ./services/media-service/dist
-COPY --from=builder /app/services/media-service/prisma ./services/media-service/prisma
 
 RUN chown -R nodejs:nodejs /app
 

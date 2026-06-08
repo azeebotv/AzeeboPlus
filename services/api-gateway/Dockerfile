@@ -12,7 +12,6 @@ RUN pnpm install --frozen-lockfile
 
 COPY services/api-gateway/src ./services/api-gateway/src
 COPY services/api-gateway/tsconfig*.json ./services/api-gateway/
-COPY services/api-gateway/prisma ./services/api-gateway/prisma
 
 RUN pnpm --filter api-gateway build
 
@@ -33,7 +32,6 @@ COPY services/api-gateway/package.json ./services/api-gateway/
 RUN pnpm install --prod --frozen-lockfile
 
 COPY --from=builder /app/services/api-gateway/dist ./services/api-gateway/dist
-COPY --from=builder /app/services/api-gateway/prisma ./services/api-gateway/prisma
 
 RUN chown -R nodejs:nodejs /app
 

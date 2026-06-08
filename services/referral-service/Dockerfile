@@ -1,21 +1,47 @@
-FROM node:20-alpine AS builder
-
+FROM node:20.11.1-alpine3.19 AS builder
 WORKDIR /app
 
-COPY package*.json ./
-RUN npm ci
+RUN apk add --no-cache curl && \
+    npm install -g pnpm@9.15.0
 
-COPY . .
-RUN npm run build
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY packages/*/package.json ./packages/
+COPY services/referral-service/package.json ./services/referral-service/
 
-FROM node:20-alpine
+RUN pnpm install --frozen-lockfile
 
+COPY services/referral-service/src ./services/referral-service/src
+COPY services/referral-service/tsconfig*.json ./services/referral-service/
+COPY services/referral-service/prisma ./services/referral-service/prisma
+
+RUN pnpm --filter referral-service build
+
+FROM node:20.11.1-alpine3.19 AS runner
 WORKDIR /app
 
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/package.json ./
+LABEL org.opencontainers.image.source="https://github.com/azeebo/azeebo-plus"
+LABEL org.opencontainers.image.description="Azeebo+ Referral Service"
+LABEL org.opencontainers.image.licenses="Proprietary"
 
-EXPOSE 3010
+RUN apk add --no-cache curl && \
+    addgroup -g 1001 -S nodejs && \
+    adduser -S nodejs -u 1001
 
-CMD ["node", "dist/main.js"]
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY services/referral-service/package.json ./services/referral-service/
+
+RUN pnpm install --prod --frozen-lockfile
+
+COPY --from=builder /app/services/referral-service/dist ./services/referral-service/dist
+COPY --from=builder /app/services/referral-service/prisma ./services/referral-service/prisma
+
+RUN chown -R nodejs:nodejs /app
+
+USER nodejs
+
+EXPOSE 3025
+
+HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost:3025/health || exit 1
+
+CMD ["node", "services/referral-service/dist/src/main.js"]
