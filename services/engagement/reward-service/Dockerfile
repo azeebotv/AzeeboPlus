@@ -14,7 +14,7 @@ COPY services/engagement/reward-service/src ./services/engagement/reward-service
 COPY services/engagement/reward-service/tsconfig*.json ./services/engagement/reward-service/
 COPY services/engagement/reward-service/prisma ./services/engagement/reward-service/prisma
 
-RUN pnpm --filter reward-service build
+RUN pnpm --filter @azeebo/reward-service build
 
 FROM node:20.11.1-alpine3.19 AS runner
 WORKDIR /app
@@ -45,4 +45,4 @@ EXPOSE 3007
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
     CMD wget --no-verbose --tries=1 --spider http://localhost:3007/health || exit 1
 
-CMD ["node", "services/engagement/reward-service/dist/src/main.js"]
+CMD ["node", "services/engagement/reward-service/dist/services/engagement/reward-service/src/main.js"]

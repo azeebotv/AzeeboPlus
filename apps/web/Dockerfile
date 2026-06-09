@@ -18,7 +18,7 @@ RUN pnpm install
 COPY . .
 
 # Build application
-RUN pnpm --filter web build
+RUN pnpm --filter @azeebo/web build
 
 # Production stage
 FROM node:20-alpine AS runner

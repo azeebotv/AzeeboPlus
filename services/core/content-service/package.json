@@ -21,6 +21,7 @@
     "@azeebo/logger": "workspace:*",
     "@azeebo/moderation-service": "workspace:*",
     "@azeebo/security": "workspace:*",
+    "@azeebo/shared-services": "workspace:*",
     "@azeebo/shared-types": "workspace:*",
     "@nestjs/common": "^10.0.0",
     "@nestjs/config": "^3.0.0",

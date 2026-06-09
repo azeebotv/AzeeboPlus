@@ -14,7 +14,7 @@ COPY services/operations/moderation-service/src ./services/operations/moderation
 COPY services/operations/moderation-service/tsconfig*.json ./services/operations/moderation-service/
 COPY services/operations/moderation-service/prisma ./services/operations/moderation-service/prisma
 
-RUN pnpm --filter moderation-service build
+RUN pnpm --filter @azeebo/moderation-service build
 
 FROM node:20.11.1-alpine3.19 AS runner
 WORKDIR /app
@@ -45,4 +45,4 @@ EXPOSE 3014
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
     CMD wget --no-verbose --tries=1 --spider http://localhost:3014/health || exit 1
 
-CMD ["node", "services/operations/moderation-service/dist/src/main.js"]
+CMD ["node", "services/operations/moderation-service/dist/services/operations/moderation-service/src/main.js"]

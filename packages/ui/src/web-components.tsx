@@ -578,3 +578,106 @@ export function ErrorState({
     </div>
   );
 }
+
+// Chip Component
+export interface ChipProps {
+  label: string;
+  variant?: 'default' | 'primary' | 'success' | 'warning' | 'danger';
+  size?: 'sm' | 'md';
+  onRemove?: () => void;
+  className?: string;
+}
+
+export function Chip({ label, variant = 'default', size = 'md', onRemove, className = '' }: ChipProps): React.ReactElement {
+  const variantClasses: Record<string, string> = {
+    default: 'bg-gray-100 text-gray-800',
+    primary: 'bg-purple-100 text-purple-800',
+    success: 'bg-green-100 text-green-800',
+    warning: 'bg-yellow-100 text-yellow-800',
+    danger: 'bg-red-100 text-red-800',
+  };
+  const sizeClasses = size === 'sm' ? 'px-2 py-0.5 text-xs' : 'px-3 py-1 text-sm';
+  return (
+    <span className={`inline-flex items-center gap-1 rounded-full font-medium ${sizeClasses} ${variantClasses[variant]} ${className}`}>
+      {label}
+      {onRemove && (
+        <button onClick={onRemove} className="ml-1 hover:opacity-70" aria-label={`Remove ${label}`}>
+          ×
+        </button>
+      )}
+    </span>
+  );
+}
+
+// Spinner Component
+export interface SpinnerProps {
+  size?: 'sm' | 'md' | 'lg';
+  color?: string;
+  className?: string;
+}
+
+export function Spinner({ size = 'md', color, className = '' }: SpinnerProps): React.ReactElement {
+  const sizeClasses: Record<string, string> = { sm: 'h-4 w-4', md: 'h-8 w-8', lg: 'h-12 w-12' };
+  return (
+    <svg
+      className={`animate-spin ${sizeClasses[size]} ${className}`}
+      style={color ? { color } : undefined}
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+      role="status"
+      aria-label="Loading"
+    >
+      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+    </svg>
+  );
+}
+
+// Table HTML wrapper components
+export function Tbody({ children, className = '' }: { children?: React.ReactNode; className?: string }): React.ReactElement {
+  return <tbody className={className}>{children}</tbody>;
+}
+
+export function Thead({ children, className = '' }: { children?: React.ReactNode; className?: string }): React.ReactElement {
+  return <thead className={className}>{children}</thead>;
+}
+
+export function Tr({ children, className = '' }: { children?: React.ReactNode; className?: string }): React.ReactElement {
+  return <tr className={className}>{children}</tr>;
+}
+
+export function Th({ children, className = '' }: { children?: React.ReactNode; className?: string }): React.ReactElement {
+  return <th className={`px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider ${className}`}>{children}</th>;
+}
+
+export function Td({ children, className = '' }: { children?: React.ReactNode; className?: string }): React.ReactElement {
+  return <td className={`px-4 py-3 ${className}`}>{children}</td>;
+}
+
+// RadioGroup Component
+export interface RadioGroupProps {
+  value?: string;
+  onValueChange?: (value: string) => void;
+  children?: React.ReactNode;
+  className?: string;
+  name?: string;
+}
+
+export function RadioGroup({ value, onValueChange, children, className = '', name }: RadioGroupProps): React.ReactElement {
+  return (
+    <div className={className} role="radiogroup">
+      {React.Children.map(children, (child) => {
+        if (React.isValidElement(child)) {
+          const childValue = (child.props as Record<string, unknown>).value as string | undefined;
+          return React.cloneElement(child as React.ReactElement<Record<string, unknown>>, {
+            name,
+            checked: childValue === value,
+            onChange: () => onValueChange?.(childValue || ''),
+          });
+        }
+        return child;
+      })}
+    </div>
+  );
+}

@@ -1,1 +1,1 @@
-export * from '../../../shared/src/cache';
+export * from '../../../../../packages/shared-services/src/cache';

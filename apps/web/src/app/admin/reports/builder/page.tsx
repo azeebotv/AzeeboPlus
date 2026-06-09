@@ -109,7 +109,7 @@ export default function ReportBuilderPage(): JSX.Element {
     try {
       const response = await api.admin.getCustomReports();
       if (response.success && response.data) {
-        setReports(response.data);
+        setReports(response.data as unknown as CustomReport[]);
       }
     } catch (error) {
       webLogger.error('Failed to load reports', error);
@@ -120,7 +120,7 @@ export default function ReportBuilderPage(): JSX.Element {
 
   const handleCreateReport = async (): Promise<void> => {
     try {
-      const response = await api.admin.createCustomReport(newReport);
+      const response = await api.admin.createCustomReport(newReport as unknown as Parameters<typeof api.admin.createCustomReport>[0]);
       if (response.success) {
         setShowCreateForm(false);
         setNewReport({
@@ -147,7 +147,7 @@ export default function ReportBuilderPage(): JSX.Element {
     setIsExecuting(true);
     try {
       const response = await api.admin.executeReport(selectedReport);
-      setExecutionResult(response);
+      setExecutionResult(response as unknown as ReportExecutionResult);
     } catch (error) {
       webLogger.error('Failed to execute report', error);
       setExecutionResult({

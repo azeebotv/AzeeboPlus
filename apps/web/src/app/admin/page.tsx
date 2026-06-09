@@ -109,7 +109,7 @@ export default function AdminPage(): JSX.Element {
           throw new Error('Failed to fetch dashboard data');
         }
 
-        setStats(dashboardResponse.data);
+        setStats(dashboardResponse.data as unknown as AdminStats);
       } catch (error) {
         setError('Failed to load dashboard data');
       } finally {

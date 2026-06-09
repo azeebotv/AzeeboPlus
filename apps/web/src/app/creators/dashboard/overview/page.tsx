@@ -1,3 +1,4 @@
+'use client';
 import React, { useState, useEffect } from 'react';
 import { api } from '@/lib/api';
 import { webLogger } from '@/lib/logger';
@@ -77,7 +78,7 @@ export default function OverviewPage(): JSX.Element {
   if (error) {
     return (
       <div className="text-center py-12">
-        <p className="text-lg" style={{ color: colors.text.secondatory }}>
+        <p className="text-lg" style={{ color: colors.text.secondary }}>
           {error}
         </p>
         <Button variant="primary" onClick={() => window.location.reload()}>
@@ -227,7 +228,7 @@ export default function OverviewPage(): JSX.Element {
             </div>
           )}
         </div>
-      </div>
+      </Card>
     </div>
   );
 }

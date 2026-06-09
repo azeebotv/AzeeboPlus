@@ -13,7 +13,7 @@ RUN pnpm install --frozen-lockfile
 COPY services/gateway/api-gateway/src ./services/gateway/api-gateway/src
 COPY services/gateway/api-gateway/tsconfig*.json ./services/gateway/api-gateway/
 
-RUN pnpm --filter api-gateway build
+RUN pnpm --filter @azeebo/api-gateway build
 
 FROM node:20.11.1-alpine3.19 AS runner
 WORKDIR /app
@@ -43,4 +43,4 @@ EXPOSE 3013
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
     CMD wget --no-verbose --tries=1 --spider http://localhost:3013/health || exit 1
 
-CMD ["node", "services/gateway/api-gateway/dist/src/main.js"]
+CMD ["node", "services/gateway/api-gateway/dist/services/gateway/api-gateway/src/main.js"]

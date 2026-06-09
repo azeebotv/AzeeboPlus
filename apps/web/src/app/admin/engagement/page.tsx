@@ -39,10 +39,10 @@ export default function EngagementMonitoringPage(): JSX.Element {
       ]);
 
       if (metricsRes.success && metricsRes.data) {
-        setMetrics(metricsRes.data);
+        setMetrics(metricsRes.data as unknown as EngagementMetrics);
       }
       if (trendsRes.success && trendsRes.data) {
-        setTrends(trendsRes.data);
+        setTrends(trendsRes.data as unknown as EngagementTrend[]);
       }
     } catch (error) {
       webLogger.error('Failed to load engagement data:', error);

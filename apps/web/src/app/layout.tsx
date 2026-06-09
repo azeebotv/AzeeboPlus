@@ -13,7 +13,7 @@ import { KeyboardNavigationProvider } from '../components/KeyboardNavigationProv
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || 'https://azeebo.com'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || 'https://azeeboplus.com'),
   title: {
     default: 'Azeebo+ - Premium Content Streaming',
     template: '%s | Azeebo+',

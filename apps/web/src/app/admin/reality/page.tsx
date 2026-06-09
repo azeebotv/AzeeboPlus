@@ -31,7 +31,7 @@ export default function RealityManagementPage(): JSX.Element {
     try {
       const response = await api.admin.getRealityShows();
       if (response.success && response.data) {
-        setShows(response.data.items || []);
+        setShows((response.data.items || []) as unknown as RealityShow[]);
       }
     } catch (error) {
       webLogger.error('Failed to load reality shows:', error);

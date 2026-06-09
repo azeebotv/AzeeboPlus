@@ -156,7 +156,7 @@ export class NotificationsService {
         type,
         title,
         message,
-        metadata: metadata || {},
+        metadata: (metadata || {}) as any,
       },
     });
   }

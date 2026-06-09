@@ -24,7 +24,7 @@ export class AdminService {
         action: entry.action,
         targetType: entry.targetType,
         targetId: entry.targetId,
-        details: (entry.details || {}) as unknown as Record<string, unknown>,
+        details: (entry.details || {}) as any,
         ipAddress: entry.ipAddress,
         userAgent: entry.userAgent,
       },

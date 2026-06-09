@@ -692,6 +692,12 @@ class ApiClient {
         `/api/v1/creators/${creatorId}/content?page=${page}&limit=${limit}`
       );
     },
+
+    getAnalytics: async (params?: { range?: string }): Promise<ApiResponse<unknown>> => {
+      const searchParams = new URLSearchParams();
+      if (params?.range) searchParams.append('range', params.range);
+      return this.request<unknown>(`/api/v1/creators/analytics?${searchParams.toString()}`);
+    },
   };
 
   moderation = {

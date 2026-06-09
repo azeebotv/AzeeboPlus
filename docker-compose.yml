@@ -47,6 +47,8 @@ services:
       ENGAGEMENT_DB_PASSWORD: ${ENGAGEMENT_DB_PASSWORD:?ENGAGEMENT_DB_PASSWORD must be set}
       MESSAGING_DB_PASSWORD: ${MESSAGING_DB_PASSWORD:?MESSAGING_DB_PASSWORD must be set}
       SUBSCRIPTION_DB_PASSWORD: ${SUBSCRIPTION_DB_PASSWORD:?SUBSCRIPTION_DB_PASSWORD must be set}
+      ADMIN_DB_PASSWORD: ${ADMIN_DB_PASSWORD:?ADMIN_DB_PASSWORD must be set}
+      CREATOR_PORTAL_DB_PASSWORD: ${CREATOR_PORTAL_DB_PASSWORD:?CREATOR_PORTAL_DB_PASSWORD must be set}
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./infra/scripts/init-multiple-databases.sh:/docker-entrypoint-initdb.d/init.sh:ro

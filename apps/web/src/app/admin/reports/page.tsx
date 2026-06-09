@@ -47,7 +47,7 @@ export default function ReportsAnalyticsPage(): JSX.Element {
     try {
       const response = await api.admin.getReports(timeRange);
       if (response.success && response.data) {
-        setReport(response.data);
+        setReport(response.data as unknown as PlatformReport);
       }
     } catch (error) {
       webLogger.error('Failed to load report', error);

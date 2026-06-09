@@ -14,7 +14,7 @@ COPY services/universes/comedy-service/src ./services/universes/comedy-service/s
 COPY services/universes/comedy-service/tsconfig*.json ./services/universes/comedy-service/
 COPY services/universes/comedy-service/prisma ./services/universes/comedy-service/prisma
 
-RUN pnpm --filter comedy-service build
+RUN pnpm --filter @azeebo/comedy-service build
 
 FROM node:20.11.1-alpine3.19 AS runner
 WORKDIR /app
@@ -45,4 +45,4 @@ EXPOSE 3011
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
     CMD wget --no-verbose --tries=1 --spider http://localhost:3011/health || exit 1
 
-CMD ["node", "services/universes/comedy-service/dist/src/main.js"]
+CMD ["node", "services/universes/comedy-service/dist/services/universes/comedy-service/src/main.js"]

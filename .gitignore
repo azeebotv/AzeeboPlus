@@ -14,8 +14,12 @@ logs/
 # IDE files
 .vscode/
 .idea/
+# Stale backups from the dockerfile fix
+*.bak
+Dockerfile.bak
 # Optional npm cache
 npm-packages/
 
 # Doc Folder
 docs/
+.trae/

@@ -14,7 +14,7 @@ COPY services/operations/creator-service/src ./services/operations/creator-servi
 COPY services/operations/creator-service/tsconfig*.json ./services/operations/creator-service/
 COPY services/operations/creator-service/prisma ./services/operations/creator-service/prisma
 
-RUN pnpm --filter creator-service build
+RUN pnpm --filter @azeebo/creator-service build
 
 FROM node:20.11.1-alpine3.19 AS runner
 WORKDIR /app
@@ -45,4 +45,4 @@ EXPOSE 3018
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
     CMD wget --no-verbose --tries=1 --spider http://localhost:3018/health || exit 1
 
-CMD ["node", "services/operations/creator-service/dist/src/main.js"]
+CMD ["node", "services/operations/creator-service/dist/services/operations/creator-service/src/main.js"]

@@ -1,3 +1,4 @@
+'use client';
 import React, { useState, useEffect } from 'react';
 import { api } from '@/lib/api';
 import { webLogger } from '@/lib/logger';
@@ -241,7 +242,7 @@ export default function EarningsPage(): JSX.Element {
             </BarChart>
           </ResponsiveContainer>
         </div>
-      </div>
+      </Card>
 
       {/* Recent Transactions */}
       <Card padding="none">
@@ -308,7 +309,7 @@ export default function EarningsPage(): JSX.Element {
             </div>
           )}
         </div>
-      </div>
+      </Card>
     </div>
   );
 }

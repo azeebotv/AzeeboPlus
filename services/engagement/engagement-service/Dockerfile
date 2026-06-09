@@ -13,7 +13,7 @@ RUN pnpm install --frozen-lockfile
 COPY services/engagement/engagement-service/src ./services/engagement/engagement-service/src
 COPY services/engagement/engagement-service/tsconfig*.json ./services/engagement/engagement-service/
 
-RUN pnpm --filter engagement-service build
+RUN pnpm --filter @azeebo/engagement-service build
 
 FROM node:20.11.1-alpine3.19 AS runner
 WORKDIR /app
@@ -43,4 +43,4 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
     CMD wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1
 
-CMD ["node", "services/engagement/engagement-service/dist/src/main.js"]
+CMD ["node", "services/engagement/engagement-service/dist/services/engagement/engagement-service/src/main.js"]

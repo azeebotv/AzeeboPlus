@@ -1,7 +1,6 @@
 export * from './state-handlers';
 export * from './hooks';
 export * from './web-components';
-export * from './components';
 export * from './Input';
 export * from './Modal';
 export * from './Toast';

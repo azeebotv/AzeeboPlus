@@ -14,7 +14,7 @@ COPY services/universes/games-service/src ./services/universes/games-service/src
 COPY services/universes/games-service/tsconfig*.json ./services/universes/games-service/
 COPY services/universes/games-service/prisma ./services/universes/games-service/prisma
 
-RUN pnpm --filter games-service build
+RUN pnpm --filter @azeebo/games-service build
 
 FROM node:20.11.1-alpine3.19 AS runner
 WORKDIR /app
@@ -45,4 +45,4 @@ EXPOSE 3012
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
     CMD wget --no-verbose --tries=1 --spider http://localhost:3012/health || exit 1
 
-CMD ["node", "services/universes/games-service/dist/src/main.js"]
+CMD ["node", "services/universes/games-service/dist/services/universes/games-service/src/main.js"]

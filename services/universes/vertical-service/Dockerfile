@@ -14,7 +14,7 @@ COPY services/universes/vertical-service/src ./services/universes/vertical-servi
 COPY services/universes/vertical-service/tsconfig*.json ./services/universes/vertical-service/
 COPY services/universes/vertical-service/prisma ./services/universes/vertical-service/prisma
 
-RUN pnpm --filter vertical-service build
+RUN pnpm --filter @azeebo/vertical-service build
 
 FROM node:20.11.1-alpine3.19 AS runner
 WORKDIR /app
@@ -45,4 +45,4 @@ EXPOSE 3021
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
     CMD wget --no-verbose --tries=1 --spider http://localhost:3021/health || exit 1
 
-CMD ["node", "services/universes/vertical-service/dist/src/main.js"]
+CMD ["node", "services/universes/vertical-service/dist/services/universes/vertical-service/src/main.js"]

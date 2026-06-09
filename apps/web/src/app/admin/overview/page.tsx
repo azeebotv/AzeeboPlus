@@ -48,7 +48,7 @@ export default function PlatformOverviewPage(): JSX.Element {
     try {
       const response = await api.admin.getPlatformOverview();
       if (response.success && response.data) {
-        setOverview(response.data);
+        setOverview(response.data as unknown as PlatformOverview);
       }
     } catch (error) {
       webLogger.error('Failed to load platform overview:', error);

@@ -13,7 +13,7 @@ RUN pnpm install --frozen-lockfile
 COPY services/core/media-service/src ./services/core/media-service/src
 COPY services/core/media-service/tsconfig*.json ./services/core/media-service/
 
-RUN pnpm --filter media-service build
+RUN pnpm --filter @azeebo/media-service build
 
 FROM node:20.11.1-alpine3.19 AS runner
 WORKDIR /app
@@ -43,4 +43,4 @@ EXPOSE 3019
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
     CMD wget --no-verbose --tries=1 --spider http://localhost:3019/health || exit 1
 
-CMD ["node", "services/core/media-service/dist/src/main.js"]
+CMD ["node", "services/core/media-service/dist/services/core/media-service/src/main.js"]

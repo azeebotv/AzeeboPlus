@@ -14,7 +14,7 @@ COPY services/universes/movie-service/src ./services/universes/movie-service/src
 COPY services/universes/movie-service/tsconfig*.json ./services/universes/movie-service/
 COPY services/universes/movie-service/prisma ./services/universes/movie-service/prisma
 
-RUN pnpm --filter movie-service build
+RUN pnpm --filter @azeebo/movie-service build
 
 FROM node:20.11.1-alpine3.19 AS runner
 WORKDIR /app
@@ -45,4 +45,4 @@ EXPOSE 3016
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
     CMD wget --no-verbose --tries=1 --spider http://localhost:3016/health || exit 1
 
-CMD ["node", "services/universes/movie-service/dist/src/main.js"]
+CMD ["node", "services/universes/movie-service/dist/services/universes/movie-service/src/main.js"]

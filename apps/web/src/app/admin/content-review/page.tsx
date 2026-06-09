@@ -32,7 +32,7 @@ export default function ContentReviewQueuePage(): JSX.Element {
     try {
       const response = await api.admin.getContentReviewQueue();
       if (response.success && response.data) {
-        setReviews(response.data.items || []);
+        setReviews((response.data.items || []) as unknown as ContentReview[]);
       }
     } catch (error) {
       webLogger.error('Failed to load content review queue:', error);

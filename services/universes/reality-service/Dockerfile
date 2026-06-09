@@ -14,7 +14,7 @@ COPY services/universes/reality-service/src ./services/universes/reality-service
 COPY services/universes/reality-service/tsconfig*.json ./services/universes/reality-service/
 COPY services/universes/reality-service/prisma ./services/universes/reality-service/prisma
 
-RUN pnpm --filter reality-service build
+RUN pnpm --filter @azeebo/reality-service build
 
 FROM node:20.11.1-alpine3.19 AS runner
 WORKDIR /app
@@ -45,4 +45,4 @@ EXPOSE 3010
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
     CMD wget --no-verbose --tries=1 --spider http://localhost:3010/health || exit 1
 
-CMD ["node", "services/universes/reality-service/dist/src/main.js"]
+CMD ["node", "services/universes/reality-service/dist/services/universes/reality-service/src/main.js"]

@@ -31,7 +31,7 @@ export default function WalletManagementPage(): JSX.Element {
     try {
       const response = await api.admin.getWallets();
       if (response.success && response.data) {
-        setWallets(response.data.items || []);
+        setWallets((response.data.items || []) as unknown as Wallet[]);
       }
     } catch (error) {
       webLogger.error('Failed to load wallets:', error);

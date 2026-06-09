@@ -14,7 +14,7 @@ COPY services/core/wallet-service/src ./services/core/wallet-service/src
 COPY services/core/wallet-service/tsconfig*.json ./services/core/wallet-service/
 COPY services/core/wallet-service/prisma ./services/core/wallet-service/prisma
 
-RUN pnpm --filter wallet-service build
+RUN pnpm --filter @azeebo/wallet-service build
 
 FROM node:20.11.1-alpine3.19 AS runner
 WORKDIR /app
@@ -45,4 +45,4 @@ EXPOSE 3002
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
     CMD wget --no-verbose --tries=1 --spider http://localhost:3002/health || exit 1
 
-CMD ["node", "services/core/wallet-service/dist/src/main.js"]
+CMD ["node", "services/core/wallet-service/dist/services/core/wallet-service/src/main.js"]

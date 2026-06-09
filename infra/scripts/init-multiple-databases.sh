@@ -28,6 +28,8 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-E
     CREATE DATABASE messaging_db;
     CREATE DATABASE referral_db;
     CREATE DATABASE subscription_db;
+    CREATE DATABASE admin_db;
+    CREATE DATABASE creator_portal_db;
 
     CREATE USER auth_user WITH PASSWORD '${AUTH_DB_PASSWORD:-auth_dev_password}';
     CREATE USER user_user WITH PASSWORD '${USER_DB_PASSWORD:-user_dev_password}';
@@ -55,6 +57,8 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-E
     CREATE USER messaging_user WITH PASSWORD '${MESSAGING_DB_PASSWORD:-messaging_dev_password}';
     CREATE USER referral_user WITH PASSWORD '${REFERRAL_DB_PASSWORD:-referral_dev_password}';
     CREATE USER subscription_user WITH PASSWORD '${SUBSCRIPTION_DB_PASSWORD:-subscription_dev_password}';
+    CREATE USER admin_user WITH PASSWORD '${ADMIN_DB_PASSWORD:-admin_dev_password}';
+    CREATE USER creator_portal_user WITH PASSWORD '${CREATOR_PORTAL_DB_PASSWORD:-creator_portal_dev_password}';
 
     GRANT ALL PRIVILEGES ON DATABASE auth_db TO auth_user;
     GRANT ALL PRIVILEGES ON DATABASE user_db TO user_user;
@@ -82,4 +86,6 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-E
     GRANT ALL PRIVILEGES ON DATABASE messaging_db TO messaging_user;
     GRANT ALL PRIVILEGES ON DATABASE referral_db TO referral_user;
     GRANT ALL PRIVILEGES ON DATABASE subscription_db TO subscription_user;
+    GRANT ALL PRIVILEGES ON DATABASE admin_db TO admin_user;
+    GRANT ALL PRIVILEGES ON DATABASE creator_portal_db TO creator_portal_user;
 EOSQL

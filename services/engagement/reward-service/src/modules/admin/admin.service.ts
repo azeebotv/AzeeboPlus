@@ -119,7 +119,7 @@ export class AdminService {
         description: data.description,
         points: data.points,
         type: data.type,
-        metadata: data.metadata as Prisma.InputJsonValue,
+        metadata: data.metadata as any,
       },
     });
 
@@ -150,7 +150,7 @@ export class AdminService {
         ...(data.points !== undefined && { points: data.points }),
         ...(data.type !== undefined && { type: data.type }),
         ...(data.isActive !== undefined && { isActive: data.isActive }),
-        ...(data.metadata !== undefined && { metadata: data.metadata as Prisma.InputJsonValue }),
+        ...(data.metadata !== undefined && { metadata: data.metadata as any }),
       },
     });
 

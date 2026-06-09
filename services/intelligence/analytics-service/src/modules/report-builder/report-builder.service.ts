@@ -4,9 +4,10 @@ import { CreateReportDto, ExecuteReportDto, FilterConfig, MetricConfig, MetricTy
 
 interface ReportResult {
   success: boolean;
-  data?: Record<string, unknown>[];
+  data?: any;
   columns?: string[];
   error?: string;
+  message?: string;
   metadata?: {
     totalRows: number;
     executionTime: number;
@@ -48,9 +49,9 @@ export class ReportBuilderService {
           description: dto.description,
           category: dto.category || 'general',
           createdBy: userId,
-          metrics: dto.metrics as unknown as Record<string, unknown>,
-          dimensions: dto.dimensions as unknown as Record<string, unknown>,
-          filters: (dto.filters || []) as unknown as Record<string, unknown>,
+          metrics: dto.metrics as any,
+          dimensions: dto.dimensions as any,
+          filters: (dto.filters || []) as any,
           dateField: dto.dateField || 'createdAt',
           dateRange: dto.dateRange || '30d',
           startDate: dto.startDate ? new Date(dto.startDate) : null,
@@ -186,7 +187,7 @@ export class ReportBuilderService {
             endDate,
             additionalFilters,
             groupBy: dto.groupBy,
-          } as unknown as Record<string, unknown>,
+          } as any,
         },
       });
 
@@ -243,16 +244,16 @@ export class ReportBuilderService {
           ...(dto.name && { name: dto.name }),
           ...(dto.description !== undefined && { description: dto.description }),
           ...(dto.category && { category: dto.category }),
-          ...(dto.metrics && { metrics: dto.metrics as unknown as Record<string, unknown> }),
-          ...(dto.dimensions && { dimensions: dto.dimensions as unknown as Record<string, unknown> }),
-          ...(dto.filters !== undefined && { filters: dto.filters as unknown as Record<string, unknown> }),
+          ...(dto.metrics && { metrics: dto.metrics as any }),
+          ...(dto.dimensions && { dimensions: dto.dimensions as any }),
+          ...(dto.filters !== undefined && { filters: dto.filters as any }),
           ...(dto.dateField && { dateField: dto.dateField }),
           ...(dto.dateRange && { dateRange: dto.dateRange }),
           ...(dto.startDate && { startDate: new Date(dto.startDate) }),
           ...(dto.endDate && { endDate: new Date(dto.endDate) }),
           ...(dto.isPublic !== undefined && { isPublic: dto.isPublic }),
           ...(dto.chartConfig && { chartConfig: dto.chartConfig }),
-        },
+        } as any,
       });
 
       return {
@@ -448,11 +449,12 @@ export class ReportBuilderService {
       const conditions: string[] = [];
 
       if (query.where.createdAt) {
-        if (query.where.createdAt.gte) {
-          conditions.push(`created_at >= '${query.where.createdAt.gte.toISOString()}'`);
+        const createdAt = query.where.createdAt as any;
+        if (createdAt.gte) {
+          conditions.push(`created_at >= '${createdAt.gte.toISOString()}'`);
         }
-        if (query.where.createdAt.lte) {
-          conditions.push(`created_at <= '${query.where.createdAt.lte.toISOString()}'`);
+        if (createdAt.lte) {
+          conditions.push(`created_at <= '${createdAt.lte.toISOString()}'`);
         }
       }
 

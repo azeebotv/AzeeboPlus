@@ -19,7 +19,7 @@ import { ReportBuilderService } from './report-builder.service';
 import { CreateReportDto, ExecuteReportDto } from './dto/report-builder.dto';
 
 interface AuthenticatedRequest extends Request {
-  user?: {
+  user: {
     sub: string;
     role: string;
   };

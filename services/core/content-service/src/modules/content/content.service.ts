@@ -357,7 +357,7 @@ export class ContentService {
       throw new BadRequestException('Not authorized to update this content');
     }
 
-    const updatedContent = await this.contentRepository.update(id, updateContentDto);
+    const updatedContent = await this.contentRepository.update(id, updateContentDto as any);
 
     return {
       success: true,
@@ -488,7 +488,7 @@ export class ContentService {
       data: {
         ...createMediaAssetDto,
         contentItemId: contentId,
-      },
+      } as any,
       include: { contentItem: true },
     });
 
@@ -528,7 +528,7 @@ export class ContentService {
       data: {
         ...updateMediaAssetDto,
         updatedAt: new Date(),
-      },
+      } as any,
       include: { contentItem: true },
     });
 

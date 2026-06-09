@@ -14,7 +14,7 @@ COPY services/operations/queue-service/src ./services/operations/queue-service/s
 COPY services/operations/queue-service/tsconfig*.json ./services/operations/queue-service/
 COPY services/operations/queue-service/prisma ./services/operations/queue-service/prisma
 
-RUN pnpm --filter queue-service build
+RUN pnpm --filter @azeebo/queue-service build
 
 FROM node:20.11.1-alpine3.19 AS runner
 WORKDIR /app
@@ -45,4 +45,4 @@ EXPOSE 3015
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
     CMD wget --no-verbose --tries=1 --spider http://localhost:3015/health || exit 1
 
-CMD ["node", "services/operations/queue-service/dist/src/main.js"]
+CMD ["node", "services/operations/queue-service/dist/services/operations/queue-service/src/main.js"]

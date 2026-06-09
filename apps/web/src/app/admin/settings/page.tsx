@@ -40,7 +40,7 @@ export default function SystemSettingsPage(): JSX.Element {
     try {
       const response = await api.admin.getAllSettings();
       if (response.success && response.data) {
-        setSettings(response.data);
+        setSettings(response.data as unknown as SystemSetting[]);
       }
     } catch (error) {
       webLogger.error('Failed to load settings', error);
@@ -94,7 +94,7 @@ export default function SystemSettingsPage(): JSX.Element {
     try {
       let parsedValue;
       try {
-        parsedValue = JSON.parse(selectedSetting.value);
+        parsedValue = JSON.parse(String(selectedSetting.value));
       } catch {
         parsedValue = selectedSetting.value;
       }

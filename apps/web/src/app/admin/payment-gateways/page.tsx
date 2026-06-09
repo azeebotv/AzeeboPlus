@@ -37,7 +37,7 @@ export default function PaymentGatewaySettingsPage(): JSX.Element {
     try {
       const response = await api.admin.getPaymentGateways();
       if (response.success && response.data) {
-        setGateways(response.data);
+        setGateways(response.data as unknown as PaymentGateway[]);
       }
     } catch (error) {
       webLogger.error('Failed to load payment gateways:', error);

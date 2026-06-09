@@ -68,7 +68,7 @@ export class ContentRepository {
       data: {
         ...data,
         status: 'draft',
-      },
+      } as any,
       include: { universe: true },
     });
   }

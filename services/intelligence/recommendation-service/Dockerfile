@@ -14,7 +14,7 @@ COPY services/intelligence/recommendation-service/src ./services/intelligence/re
 COPY services/intelligence/recommendation-service/tsconfig*.json ./services/intelligence/recommendation-service/
 COPY services/intelligence/recommendation-service/prisma ./services/intelligence/recommendation-service/prisma
 
-RUN pnpm --filter recommendation-service build
+RUN pnpm --filter @azeebo/recommendation-service build
 
 FROM node:20.11.1-alpine3.19 AS runner
 WORKDIR /app
@@ -45,4 +45,4 @@ EXPOSE 3009
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
     CMD wget --no-verbose --tries=1 --spider http://localhost:3009/health || exit 1
 
-CMD ["node", "services/intelligence/recommendation-service/dist/src/main.js"]
+CMD ["node", "services/intelligence/recommendation-service/dist/services/intelligence/recommendation-service/src/main.js"]

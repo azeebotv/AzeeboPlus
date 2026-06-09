@@ -33,7 +33,7 @@ export default function CreatorManagementPage(): JSX.Element {
     try {
       const response = await api.admin.getCreators();
       if (response.success && response.data) {
-        setCreators(response.data.items || []);
+        setCreators((response.data.items || []) as unknown as Creator[]);
       }
     } catch (error) {
       webLogger.error('Failed to load creators:', error);

@@ -14,7 +14,7 @@ COPY services/core/user-service/src ./services/core/user-service/src
 COPY services/core/user-service/tsconfig*.json ./services/core/user-service/
 COPY services/core/user-service/prisma ./services/core/user-service/prisma
 
-RUN pnpm --filter user-service build
+RUN pnpm --filter @azeebo/user-service build
 
 FROM node:20.11.1-alpine3.19 AS runner
 WORKDIR /app
@@ -45,4 +45,4 @@ EXPOSE 3001
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
     CMD wget --no-verbose --tries=1 --spider http://localhost:3001/health || exit 1
 
-CMD ["node", "services/core/user-service/dist/src/main.js"]
+CMD ["node", "services/core/user-service/dist/services/core/user-service/src/main.js"]

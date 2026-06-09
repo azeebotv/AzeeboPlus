@@ -30,7 +30,7 @@ export default function NotificationManagementPage(): JSX.Element {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newTemplate, setNewTemplate] = useState({
     name: '',
-    type: 'email' as const,
+    type: 'email' as 'email' | 'push' | 'sms' | 'in-app',
     subject: '',
     content: '',
   });
@@ -47,10 +47,10 @@ export default function NotificationManagementPage(): JSX.Element {
       ]);
 
       if (templatesRes.success && templatesRes.data) {
-        setTemplates(templatesRes.data);
+        setTemplates(templatesRes.data as unknown as NotificationTemplate[]);
       }
       if (statsRes.success && statsRes.data) {
-        setStats(statsRes.data);
+        setStats(statsRes.data as unknown as NotificationStats);
       }
     } catch (error) {
       webLogger.error('Failed to load notification data:', error);
@@ -73,7 +73,7 @@ export default function NotificationManagementPage(): JSX.Element {
 
   const toggleTemplate = async (id: string, isActive: boolean): Promise<void> => {
     try {
-      await api.admin.updateNotificationTemplate(id, { isActive: !isActive });
+      await api.admin.updateNotificationTemplate(id, { isActive: !isActive } as unknown as Partial<NotificationTemplate>);
       loadData();
     } catch (error) {
       webLogger.error('Failed to toggle template:', error);

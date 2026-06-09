@@ -14,7 +14,7 @@ COPY services/engagement/referral-service/src ./services/engagement/referral-ser
 COPY services/engagement/referral-service/tsconfig*.json ./services/engagement/referral-service/
 COPY services/engagement/referral-service/prisma ./services/engagement/referral-service/prisma
 
-RUN pnpm --filter referral-service build
+RUN pnpm --filter @azeebo/referral-service build
 
 FROM node:20.11.1-alpine3.19 AS runner
 WORKDIR /app
@@ -45,4 +45,4 @@ EXPOSE 3025
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
     CMD wget --no-verbose --tries=1 --spider http://localhost:3025/health || exit 1
 
-CMD ["node", "services/engagement/referral-service/dist/src/main.js"]
+CMD ["node", "services/engagement/referral-service/dist/services/engagement/referral-service/src/main.js"]

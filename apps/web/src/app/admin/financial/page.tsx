@@ -46,7 +46,7 @@ export default function FinancialMonitoringPage(): JSX.Element {
       );
 
       if (result.success && result.data) {
-        setMetrics(result.data);
+        setMetrics(result.data as unknown as FinancialMetrics);
       }
     } catch (error) {
       webLogger.error('Failed to load financial metrics', error);

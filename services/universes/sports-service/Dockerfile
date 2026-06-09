@@ -14,7 +14,7 @@ COPY services/universes/sports-service/src ./services/universes/sports-service/s
 COPY services/universes/sports-service/tsconfig*.json ./services/universes/sports-service/
 COPY services/universes/sports-service/prisma ./services/universes/sports-service/prisma
 
-RUN pnpm --filter sports-service build
+RUN pnpm --filter @azeebo/sports-service build
 
 FROM node:20.11.1-alpine3.19 AS runner
 WORKDIR /app
@@ -45,4 +45,4 @@ EXPOSE 3017
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
     CMD wget --no-verbose --tries=1 --spider http://localhost:3017/health || exit 1
 
-CMD ["node", "services/universes/sports-service/dist/src/main.js"]
+CMD ["node", "services/universes/sports-service/dist/services/universes/sports-service/src/main.js"]

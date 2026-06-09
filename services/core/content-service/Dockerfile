@@ -14,7 +14,7 @@ COPY services/core/content-service/src ./services/core/content-service/src
 COPY services/core/content-service/tsconfig*.json ./services/core/content-service/
 COPY services/core/content-service/prisma ./services/core/content-service/prisma
 
-RUN pnpm --filter content-service build
+RUN pnpm --filter @azeebo/content-service build
 
 FROM node:20.11.1-alpine3.19 AS runner
 WORKDIR /app
@@ -45,4 +45,4 @@ EXPOSE 3004
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
     CMD wget --no-verbose --tries=1 --spider http://localhost:3004/health || exit 1
 
-CMD ["node", "services/core/content-service/dist/src/main.js"]
+CMD ["node", "services/core/content-service/dist/services/core/content-service/src/main.js"]

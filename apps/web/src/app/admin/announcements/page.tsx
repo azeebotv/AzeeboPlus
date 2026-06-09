@@ -24,8 +24,8 @@ export default function AnnouncementCenterPage(): JSX.Element {
   const [newAnnouncement, setNewAnnouncement] = useState({
     title: '',
     content: '',
-    type: 'info' as const,
-    priority: 'medium' as const,
+    type: 'info' as 'info' | 'warning' | 'update' | 'maintenance',
+    priority: 'medium' as 'low' | 'medium' | 'high' | 'critical',
     targetAudience: 'all',
   });
 
@@ -38,7 +38,7 @@ export default function AnnouncementCenterPage(): JSX.Element {
       const result = await apiFetch<Announcement[]>('/api/v1/admin/announcements');
 
       if (result.success && result.data) {
-        setAnnouncements(result.data);
+        setAnnouncements(result.data as unknown as Announcement[]);
       }
     } catch (error) {
       webLogger.error('Failed to load announcements', error);

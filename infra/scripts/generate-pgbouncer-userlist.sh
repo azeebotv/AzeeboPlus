@@ -1,80 +1,33 @@
 #!/bin/bash
+# generate-pgbouncer-userlist.sh
+# Builds infra/config/pgbouncer_userlist.txt from the running postgres
+# container by reading the SCRAM-SHA-256 password hashes from pg_authid.
+#
+# Pgbouncer is configured with `auth_type = scram-sha-256`, so its userlist
+# must contain the same SCRAM-SHA-256 verifier strings that postgres stored
+# for each role. This script is the single source of truth for keeping the
+# pgbouncer userlist in sync with postgres.
 
-# Script to generate PgBouncer userlist from environment variables
-# Usage: ./generate-pgbouncer-userlist.sh
+set -euo pipefail
 
-set -e
+POSTGRES_CONTAINER="${POSTGRES_CONTAINER:-azeebo_postgres}"
+POSTGRES_DB="${POSTGRES_DB:-azeebo_plus_dev}"
+POSTGRES_USER="${POSTGRES_USER:-postgres}"
+OUT_FILE="${OUT_FILE:-/Users/deprof/www/azeebo+/infra/config/pgbouncer_userlist.txt}"
+TMP="$(mktemp)"
+trap 'rm -f "$TMP"' EXIT
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CONFIG_DIR="$(dirname "$SCRIPT_DIR")/config"
-TEMPLATE_FILE="$CONFIG_DIR/pgbouncer_userlist.txt.template"
-OUTPUT_FILE="$CONFIG_DIR/pgbouncer_userlist.txt"
+docker exec "$POSTGRES_CONTAINER" \
+  psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -t -A -F "|" \
+  -c "SELECT rolname, rolpassword FROM pg_authid WHERE rolpassword IS NOT NULL AND rolpassword <> '';" \
+  > "$TMP"
 
-# Check if template exists
-if [ ! -f "$TEMPLATE_FILE" ]; then
-    echo "❌ Template file not found: $TEMPLATE_FILE"
-    exit 1
-fi
+count=$(wc -l < "$TMP" | tr -d ' ')
+: > "$OUT_FILE"
+while IFS='|' read -r user hash; do
+  [ -n "${user:-}" ] && [ -n "${hash:-}" ] || continue
+  printf '"%s" "%s"\n' "$user" "$hash" >> "$OUT_FILE"
+done < "$TMP"
 
-# Check if required environment variables are set
-REQUIRED_VARS=(
-    "POSTGRES_PASSWORD"
-    "AUTH_DB_PASSWORD"
-    "USER_DB_PASSWORD"
-    "WALLET_DB_PASSWORD"
-    "PAYMENT_DB_PASSWORD"
-    "CONTENT_DB_PASSWORD"
-    "MEDIA_DB_PASSWORD"
-    "SEARCH_DB_PASSWORD"
-    "NOTIFICATION_DB_PASSWORD"
-    "REWARD_DB_PASSWORD"
-    "ANALYTICS_DB_PASSWORD"
-    "RECOMMENDATION_DB_PASSWORD"
-    "REALITY_DB_PASSWORD"
-    "MOVIE_DB_PASSWORD"
-    "GAMES_DB_PASSWORD"
-    "COMEDY_DB_PASSWORD"
-    "SPORTS_DB_PASSWORD"
-    "LIFESTYLE_DB_PASSWORD"
-    "VERTICAL_DB_PASSWORD"
-    "CREATOR_DB_PASSWORD"
-    "SUPPORT_DB_PASSWORD"
-    "MODERATION_DB_PASSWORD"
-    "QUEUE_DB_PASSWORD"
-)
-
-MISSING_VARS=()
-for var in "${REQUIRED_VARS[@]}"; do
-    if [ -z "${!var}" ]; then
-        MISSING_VARS+=("$var")
-    fi
-done
-
-if [ ${#MISSING_VARS[@]} -gt 0 ]; then
-    echo "❌ Missing required environment variables:"
-    for var in "${MISSING_VARS[@]}"; do
-        echo "   - $var"
-    done
-    exit 1
-fi
-
-# Generate userlist from template
-echo "📝 Generating PgBouncer userlist..."
-
-# Use envsubst to replace variables in template
-if command -v envsubst &> /dev/null; then
-    envsubst < "$TEMPLATE_FILE" > "$OUTPUT_FILE"
-else
-    # Fallback: manual replacement
-    cp "$TEMPLATE_FILE" "$OUTPUT_FILE"
-    
-    for var in "${REQUIRED_VARS[@]}"; do
-        value="${!var}"
-        # Escape special characters in password for sed
-        escaped_value=$(printf '%s\n' "$value" | sed -e 's/[\/&]/\\&/g')
-        sed -i "s/\${${var}}/${escaped_value}/g" "$OUTPUT_FILE"
-    done
-fi
-
-echo "✅ PgBouncer userlist generated: $OUTPUT_FILE"
-echo "⚠️  Remember to add pgbouncer_userlist.txt to .gitignore"
+wrote=$(wc -l < "$OUT_FILE" | tr -d ' ')
+echo "Generated $wrote entries (postgres reported $count) -> $OUT_FILE"

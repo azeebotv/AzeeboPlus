@@ -14,7 +14,7 @@ COPY services/universes/lifestyle-service/src ./services/universes/lifestyle-ser
 COPY services/universes/lifestyle-service/tsconfig*.json ./services/universes/lifestyle-service/
 COPY services/universes/lifestyle-service/prisma ./services/universes/lifestyle-service/prisma
 
-RUN pnpm --filter lifestyle-service build
+RUN pnpm --filter @azeebo/lifestyle-service build
 
 FROM node:20.11.1-alpine3.19 AS runner
 WORKDIR /app
@@ -45,4 +45,4 @@ EXPOSE 3013
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
     CMD wget --no-verbose --tries=1 --spider http://localhost:3013/health || exit 1
 
-CMD ["node", "services/universes/lifestyle-service/dist/src/main.js"]
+CMD ["node", "services/universes/lifestyle-service/dist/services/universes/lifestyle-service/src/main.js"]

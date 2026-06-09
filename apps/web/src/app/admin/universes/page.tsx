@@ -15,8 +15,9 @@ interface Universe {
   isEnabled: boolean;
   sortOrder: number;
   metadata?: Record<string, unknown>;
-    contentItems: number;
-  };
+  contentItems: number;
+  featureFlags: FeatureFlag[];
+  _count?: { contentItems?: number };
 }
 
 interface FeatureFlag {
@@ -51,7 +52,7 @@ export default function UniverseManagementPage(): JSX.Element {
     try {
       const response = await api.admin.getAllUniverses();
       if (response.success && response.data) {
-        setUniverses(response.data);
+        setUniverses(response.data as unknown as Universe[]);
       }
     } catch (error) {
       webLogger.error('Failed to load universes', error);
@@ -172,7 +173,7 @@ export default function UniverseManagementPage(): JSX.Element {
               )}
 
               <div className="flex items-center gap-2 mb-4 text-sm text-muted-foreground">
-                <span>{universe._count.contentItems} content items</span>
+                <span>{universe._count?.contentItems ?? universe.contentItems} content items</span>
                 <span>•</span>
                 <span>{universe.featureFlags.length} feature flags</span>
               </div>

@@ -14,7 +14,7 @@ COPY services/core/payment-service/src ./services/core/payment-service/src
 COPY services/core/payment-service/tsconfig*.json ./services/core/payment-service/
 COPY services/core/payment-service/prisma ./services/core/payment-service/prisma
 
-RUN pnpm --filter payment-service build
+RUN pnpm --filter @azeebo/payment-service build
 
 FROM node:20.11.1-alpine3.19 AS runner
 WORKDIR /app
@@ -45,4 +45,4 @@ EXPOSE 3003
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
     CMD wget --no-verbose --tries=1 --spider http://localhost:3003/health || exit 1
 
-CMD ["node", "services/core/payment-service/dist/src/main.js"]
+CMD ["node", "services/core/payment-service/dist/services/core/payment-service/src/main.js"]

@@ -11,12 +11,13 @@
     "test:e2e:ui": "playwright test --ui"
   },
   "dependencies": {
-    "@azeebo/ui": "workspace:*",
     "@azeebo/design-tokens": "workspace:*",
+    "@azeebo/ui": "workspace:*",
     "@tanstack/react-query": "^5.56.0",
     "next": "^14.2.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "recharts": "^3.8.1",
     "zustand": "^4.5.5"
   },
   "devDependencies": {
