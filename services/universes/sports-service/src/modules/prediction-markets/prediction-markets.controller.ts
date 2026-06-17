@@ -3,8 +3,7 @@ import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard, RateLimit } from '@azeebo/security';
 import { PredictionMarketsService } from './prediction-markets.service';
-import { RolesGuard } from '../../common/guards/roles.guard';
-import { Roles } from '../../common/decorators/roles.decorator';
+import { RolesGuard, Roles } from '@azeebo/shared-services';
 import { CreatePredictionDto, SubmitPredictionDto, ResolvePredictionDto } from './dto/prediction.dto';
 
 @ApiTags('Prediction Markets')

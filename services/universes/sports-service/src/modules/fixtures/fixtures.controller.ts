@@ -3,8 +3,7 @@ import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard, RateLimit } from '@azeebo/security';
 import { FixturesService } from './fixtures.service';
-import { RolesGuard } from '../../common/guards/roles.guard';
-import { Roles } from '../../common/decorators/roles.decorator';
+import { RolesGuard, Roles } from '@azeebo/shared-services';
 import { UpdateFixtureResultDto } from './dto/update-fixture-result.dto';
 
 @ApiTags('Fixtures')

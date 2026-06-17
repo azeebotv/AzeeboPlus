@@ -3,8 +3,7 @@ import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard, RateLimit } from '@azeebo/security';
 import { FanContestsService } from './fan-contests.service';
-import { RolesGuard } from '../../common/guards/roles.guard';
-import { Roles } from '../../common/decorators/roles.decorator';
+import { RolesGuard, Roles } from '@azeebo/shared-services';
 import { JoinContestDto, SubmitContestScoreDto } from './dto/contest.dto';
 
 @ApiTags('Fan Contests')

@@ -16,8 +16,7 @@ import { RateLimitGuard, RateLimit } from '@azeebo/security';
 
 import { RealityService } from './reality.service';
 import { RealityResponse } from './interfaces/reality-response.interface';
-import { RolesGuard } from '../../common/guards/roles.guard';
-import { Roles } from '../../common/decorators/roles.decorator';
+import { RolesGuard, Roles } from '@azeebo/shared-services';
 import { CastVoteDto, BuyVoteDto, MakePredictionDto } from './dto/vote.dto';
 import { CreateShowDto, UpdateShowDto, CreateEpisodeDto, UpdateEpisodeDto, CreateSeasonDto, CreateContestantDto, UpdateContestantDto } from './dto/show.dto';
 
