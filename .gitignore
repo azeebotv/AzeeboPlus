@@ -2,6 +2,11 @@
 node_modules/
 # Build output
 dist/
+.next/
+**/prisma/client/
+**/generated/prisma/
+*.tsbuildinfo
+coverage/
 # Logs
 yarn-error.log
 npm-debug.log*
@@ -17,9 +22,13 @@ logs/
 # Stale backups from the dockerfile fix
 *.bak
 Dockerfile.bak
+# PgBouncer credentials
+infra/config/pgbouncer_userlist.txt
+
 # Optional npm cache
 npm-packages/
 
 # Doc Folder
 docs/
+docx/
 .trae/

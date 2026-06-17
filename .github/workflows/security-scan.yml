@@ -58,7 +58,7 @@ jobs:
         uses: zaproxy/action-full-scan@v0.8.0
         with:
           target: 'https://api.azeebo.com'
-          rules_file_name: 'infrastructure/security/zap-config.yaml'
+          rules_file_name: 'infra/security/zap-config.yaml'
           cmd_options: '-a'
           allow_issue_writing: true
           artifact_name: 'zap_report'
