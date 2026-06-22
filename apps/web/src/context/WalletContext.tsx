@@ -6,6 +6,7 @@ import React, {
   useEffect,
   useState,
   useCallback,
+  useRef,
   ReactNode,
 } from 'react';
 import { api, WalletBalance, Transaction } from '../lib/api';
@@ -44,11 +45,13 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const isRefreshing = useRef<boolean>(false);
 
   const refreshBalance = useCallback(async (): Promise<void> => {
-    if (!isAuthenticated) return;
+    if (!isAuthenticated || isRefreshing.current) return;
 
     try {
+      isRefreshing.current = true;
       setIsLoading(true);
       setError(null);
       const response = await api.wallet.getBalance();
@@ -60,14 +63,16 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     } catch (err) {
       setError('Failed to fetch wallet balance');
     } finally {
+      isRefreshing.current = false;
       setIsLoading(false);
     }
   }, [isAuthenticated]);
 
   const refreshTransactions = useCallback(async (): Promise<void> => {
-    if (!isAuthenticated) return;
+    if (!isAuthenticated || isRefreshing.current) return;
 
     try {
+      isRefreshing.current = true;
       setIsLoading(true);
       setError(null);
       const response = await api.wallet.getTransactions(1, 20);
@@ -79,6 +84,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     } catch (err) {
       setError('Failed to fetch transactions');
     } finally {
+      isRefreshing.current = false;
       setIsLoading(false);
     }
   }, [isAuthenticated]);

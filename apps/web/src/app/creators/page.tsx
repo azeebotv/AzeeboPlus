@@ -194,8 +194,8 @@ export default function CreatorsPage(): JSX.Element {
                     <div className="p-4">
                       <h5 className="font-semibold mb-2">{item.title}</h5>
                       <div className="flex items-center justify-between text-sm text-muted-foreground">
-                        <span>{(item as any).views?.toLocaleString() || '0'} views</span>
-                        <span>{new Date((item as any).createdAt).toLocaleDateString()}</span>
+                        <span>{item.views?.toLocaleString() || '0'} views</span>
+                        <span>{new Date(item.createdAt).toLocaleDateString()}</span>
                       </div>
                     </div>
                   </div>

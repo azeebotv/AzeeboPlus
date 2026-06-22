@@ -188,7 +188,7 @@ export default function OverviewPage(): JSX.Element {
               {recentContent.map((item) => (
                 <div key={item.id} className="flex items-start gap-4 p-4 bg-gray-50 rounded-lg">
                   <img
-                    src={(item as any).thumbnail}
+                    src={item.thumbnail}
                     alt={item.title}
                     className="w-16 h-16 object-cover rounded"
                   />
@@ -212,7 +212,7 @@ export default function OverviewPage(): JSX.Element {
                             d="M13 10V3L4 14h7v7l9-11h-7z"
                           />
                         </svg>
-                        {(item as any).views?.toLocaleString() || '0'} views
+                        {item.views?.toLocaleString() || '0'} views
                       </span>
                       <span className="flex items-center gap-1">
                         <svg
@@ -228,7 +228,7 @@ export default function OverviewPage(): JSX.Element {
                             d="M8 12h.01M12 12h.01M16 12h.01M12 16h.01M8 16h.01M16 16h.01"
                           />
                         </svg>
-                        {(item as any).likes?.toLocaleString() || '0'} likes
+                        {item.likes?.toLocaleString() || '0'} likes
                       </span>
                       <Badge variant="outline" className="text-xs">
                         {item.contentType || 'Video'}

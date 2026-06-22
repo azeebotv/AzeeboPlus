@@ -1,10 +1,13 @@
-import { Module } from '@nestjs/common';
+import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { CacheModule } from '@nestjs/cache-manager';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { ThrottlerStorageRedisService } from 'nestjs-throttler-storage-redis';
 import { HealthModule } from './modules/health/health.module';
 import { ProxyModule } from './modules/proxy/proxy.module';
+import { GatewayAuthGuard } from './guards/gateway-auth.guard';
+import { LegacyRedirectMiddleware } from './common/legacy-redirect.middleware';
 
 @Module({
   imports: [
@@ -41,5 +44,16 @@ import { ProxyModule } from './modules/proxy/proxy.module';
     HealthModule,
     ProxyModule,
   ],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: GatewayAuthGuard,
+    },
+  ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    // T-H21/T-H22/T-H24: redirect legacy unversioned paths to versioned
+    consumer.apply(LegacyRedirectMiddleware).forRoutes('api');
+  }
+}

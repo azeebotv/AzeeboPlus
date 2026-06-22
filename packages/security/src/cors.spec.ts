@@ -1,0 +1,116 @@
+import { configureCors } from './cors.config';
+
+describe('configureCors', () => {
+  let mockApp: { enableCors: jest.Mock };
+
+  beforeEach(() => {
+    mockApp = { enableCors: jest.fn() };
+  });
+
+  it('should call enableCors with correct configuration', () => {
+    configureCors(mockApp as any, {
+      allowedOrigins: ['https://azeebo.com'],
+    });
+
+    expect(mockApp.enableCors).toHaveBeenCalledTimes(1);
+    const config = mockApp.enableCors.mock.calls[0][0];
+    expect(config.methods).toContain('GET');
+    expect(config.methods).toContain('POST');
+    expect(config.credentials).toBe(true);
+    expect(config.maxAge).toBe(3600);
+  });
+
+  it('should throw for wildcard origin', () => {
+    expect(() => {
+      configureCors(mockApp as any, {
+        allowedOrigins: ['*'],
+      });
+    }).toThrow('CORS wildcard (*) is not allowed');
+  });
+
+  it('should throw for invalid origin URL', () => {
+    expect(() => {
+      configureCors(mockApp as any, {
+        allowedOrigins: ['not-a-url'],
+      });
+    }).toThrow('Invalid CORS origin');
+  });
+
+  it('should accept custom maxAge and credentials', () => {
+    configureCors(mockApp as any, {
+      allowedOrigins: ['https://azeebo.com'],
+      credentials: false,
+      maxAge: 7200,
+    });
+
+    const config = mockApp.enableCors.mock.calls[0][0];
+    expect(config.credentials).toBe(false);
+    expect(config.maxAge).toBe(7200);
+  });
+
+  it('should configure allowed headers', () => {
+    configureCors(mockApp as any, {
+      allowedOrigins: ['https://azeebo.com'],
+    });
+
+    const config = mockApp.enableCors.mock.calls[0][0];
+    expect(config.allowedHeaders).toContain('Content-Type');
+    expect(config.allowedHeaders).toContain('Authorization');
+    expect(config.allowedHeaders).toContain('X-Request-ID');
+  });
+
+  it('should configure exposed headers', () => {
+    configureCors(mockApp as any, {
+      allowedOrigins: ['https://azeebo.com'],
+    });
+
+    const config = mockApp.enableCors.mock.calls[0][0];
+    expect(config.exposedHeaders).toContain('X-Request-ID');
+    expect(config.exposedHeaders).toContain('X-RateLimit-Limit');
+  });
+
+  describe('origin validation callback', () => {
+    it('should allow matching origins', () => {
+      configureCors(mockApp as any, {
+        allowedOrigins: ['https://azeebo.com'],
+      });
+
+      const originCallback = mockApp.enableCors.mock.calls[0][0].origin;
+      const callback = jest.fn();
+      originCallback('https://azeebo.com', callback);
+      expect(callback).toHaveBeenCalledWith(null, true);
+    });
+
+    it('should reject non-matching origins', () => {
+      configureCors(mockApp as any, {
+        allowedOrigins: ['https://azeebo.com'],
+      });
+
+      const originCallback = mockApp.enableCors.mock.calls[0][0].origin;
+      const callback = jest.fn();
+      originCallback('https://evil.com', callback);
+      // CORS callback receives Error as first arg, no second arg on rejection
+      expect(callback).toHaveBeenCalledWith(
+        expect.any(Error)
+      );
+      const errorArg = callback.mock.calls[0][0];
+      expect(errorArg.message).toContain('Not allowed by CORS');
+    });
+
+    it('should reject missing origin', () => {
+      configureCors(mockApp as any, {
+        allowedOrigins: ['https://azeebo.com'],
+      });
+
+      const originCallback = mockApp.enableCors.mock.calls[0][0].origin;
+      const callback = jest.fn();
+      originCallback(undefined, callback);
+      // CORS callback receives Error as first arg, no second arg on rejection
+      expect(callback).toHaveBeenCalledWith(
+        expect.any(Error)
+      );
+      const errorArg = callback.mock.calls[0][0];
+      expect(errorArg.message).toContain('missing origin');
+    });
+  });
+});

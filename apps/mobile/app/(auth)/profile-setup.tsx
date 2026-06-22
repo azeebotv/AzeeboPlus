@@ -85,7 +85,7 @@ export default function ProfileSetupScreen() {
       Alert.alert('Success', 'Profile setup completed!', [
         {
           text: 'Continue',
-          onPress: () => router.replace('/(tabs)/home' as any),
+          onPress: () => router.replace('/(tabs)/home'),
         },
       ]);
     } catch (error: any) {
@@ -96,7 +96,7 @@ export default function ProfileSetupScreen() {
   };
 
   const handleSkip = () => {
-    router.replace('/(tabs)/home' as any);
+    router.replace('/(tabs)/home');
   };
 
   return (

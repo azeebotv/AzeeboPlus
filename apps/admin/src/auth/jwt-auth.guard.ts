@@ -4,6 +4,10 @@ import { AuthGuard } from '@nestjs/passport';
 import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
 
+interface AuthenticatedRequest extends Request {
+  user: Record<string, unknown>;
+}
+
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {
   constructor(private readonly jwtService: JwtService) {
@@ -23,7 +27,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
         secret: process.env.JWT_SECRET,
       });
       // Attach payload to request for downstream handlers
-      (request as any).user = payload;
+      (request as AuthenticatedRequest).user = payload;
       return true;
     } catch (err) {
       throw new UnauthorizedException('Invalid or expired token');

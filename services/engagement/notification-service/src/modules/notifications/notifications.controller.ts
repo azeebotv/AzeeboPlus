@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/explicit-function-return-type */
 import {
   Controller,
   Get,
@@ -99,7 +98,7 @@ export class NotificationsController {
   @ApiOperation({ summary: 'Get unread notification count' })
   @ApiResponse({ status: 200, description: 'Unread count' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getUnreadCount(@Request() req: { user: { sub: string } }) {
+  async getUnreadCount(@Request() req: { user: { sub: string } }): Promise<NotificationResponse> {
     return this.notificationsService.getUnreadCount(req.user.sub);
   }
 

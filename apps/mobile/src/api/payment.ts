@@ -39,11 +39,11 @@ export const paymentApi = {
     email: string;
     metadata?: Record<string, string>;
   }): Promise<ApiResponse<PaymentInitResponse>> => {
-    return apiClient.post<ApiResponse<PaymentInitResponse>>('/payments/initialize', data);
+    return apiClient.post<ApiResponse<PaymentInitResponse>>('/v1/payments/initialize', data);
   },
 
   verify: async (reference: string): Promise<ApiResponse<PaymentVerifyResponse>> => {
-    return apiClient.get<ApiResponse<PaymentVerifyResponse>>(`/payments/verify/${reference}`);
+    return apiClient.get<ApiResponse<PaymentVerifyResponse>>(`/v1/payments/verify/${reference}`);
   },
 
   getTransactions: async (
@@ -66,10 +66,10 @@ export const paymentApi = {
         limit: number;
         totalPages: number;
       }>
-    >(`/payments/transactions?page=${page}&limit=${limit}`);
+    '/v1/payments/transactions?page=${page}&limit=${limit}'
   },
 
   getProviders: async (): Promise<ApiResponse<{ provider: string; name: string }[]>> => {
-    return apiClient.get<ApiResponse<{ provider: string; name: string }[]>>('/payments/providers');
+    return apiClient.get<ApiResponse<{ provider: string; name: string }[]>>('/v1/payments/providers');
   },
 };

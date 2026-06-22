@@ -7,7 +7,7 @@ import {
   ActivityIndicator,
   TouchableOpacity,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, type Href } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { contentApi } from '../../src/api';
 import { logger } from '../../src/utils/logger';
@@ -107,7 +107,7 @@ export default function EarningsDashboardScreen() {
           <Text style={styles.balanceAmount}>{formatCurrency(earnings.availableBalance)}</Text>
           <TouchableOpacity
             style={styles.withdrawButton}
-            onPress={() => router.push('/(tabs)/wallet/withdraw' as any)}
+            onPress={() => router.push('/(tabs)/wallet/withdraw' as Href)}
           >
             <Text style={styles.withdrawButtonText}>Withdraw Funds</Text>
           </TouchableOpacity>

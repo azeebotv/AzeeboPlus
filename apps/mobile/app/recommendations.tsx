@@ -53,9 +53,9 @@ export default function RecommendationsScreen() {
       style={styles.card}
       onPress={() => {
         if (item.type === 'content') {
-          router.push(`/content/${item.id}` as any);
+          router.push(`/content/${item.id}`)
         } else if (item.type === 'creator') {
-          router.push(`/profile/${item.id}` as any);
+          router.push(`/profile/${item.id}`)
         }
       }}
     >

@@ -17,12 +17,12 @@ interface AuthContextType {
   refreshToken: string | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<{ success: boolean; message?: string }>;
+  login: (email: string, password: string) => Promise<{ success: boolean; message?: string; code?: string; fieldErrors?: Record<string, string[]> }>;
   register: (
     name: string,
     email: string,
     password: string
-  ) => Promise<{ success: boolean; message?: string }>;
+  ) => Promise<{ success: boolean; message?: string; code?: string; fieldErrors?: Record<string, string[]> }>;
   logout: () => Promise<void>;
   updateUser: (user: User) => void;
   refreshUser: () => Promise<void>;
@@ -56,13 +56,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setRefreshToken(refresh_token);
     setUser(userData);
     api.setToken(access_token);
+    // T-C01: Only store non-sensitive user profile in localStorage.
+    // Tokens are kept in memory and sent via Authorization header.
+    // TODO: Switch to HttpOnly cookies when backend supports Set-Cookie.
     localStorage.setItem('user', JSON.stringify(userData));
-    localStorage.setItem('refreshToken', refresh_token);
-    localStorage.setItem('accessToken', access_token);
   }, []);
 
   const refreshAccessToken = useCallback(async () => {
-    const currentRefreshToken = localStorage.getItem('refreshToken') || refreshToken;
+    // T-C01: Use in-memory refreshToken, not localStorage
+    const currentRefreshToken = refreshToken;
     if (!currentRefreshToken) {
       return false;
     }
@@ -75,8 +77,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setToken(newToken);
         setRefreshToken(newRefreshToken);
         api.setToken(newToken);
-        localStorage.setItem('accessToken', newToken);
-        localStorage.setItem('refreshToken', newRefreshToken);
         return true;
       }
       return false;
@@ -88,19 +88,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     const loadUser = async (): Promise<void> => {
       try {
+        // T-C01: Only restore non-sensitive user profile from localStorage.
+        // Tokens must be re-authenticated on page reload.
         const storedUser = localStorage.getItem('user');
-        const storedRefreshToken = localStorage.getItem('refreshToken');
-        const storedAccessToken = localStorage.getItem('accessToken');
 
         if (storedUser) {
           setUser(JSON.parse(storedUser));
-        }
-        if (storedRefreshToken) {
-          setRefreshToken(storedRefreshToken);
-        }
-        if (storedAccessToken) {
-          setToken(storedAccessToken);
-          api.setToken(storedAccessToken);
         }
       } catch (error) {
         // Error handling is intentionally minimal
@@ -127,14 +120,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const login = async (
     email: string,
     password: string
-  ): Promise<{ success: boolean; message?: string }> => {
+  ): Promise<{ success: boolean; message?: string; code?: string; fieldErrors?: Record<string, string[]> }> => {
     try {
       const response = await api.auth.login({ email, password });
       if (response.success && response.data) {
         handleAuthResponse(response.data);
         return { success: true };
       } else {
-        return { success: false, message: response.message };
+        return {
+          success: false,
+          message: response.message,
+          code: response.code,
+          fieldErrors: response.details?.fieldErrors,
+        };
       }
     } catch (error) {
       return { success: false, message: 'An error occurred during login' };
@@ -145,14 +143,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     name: string,
     email: string,
     password: string
-  ): Promise<{ success: boolean; message?: string }> => {
+  ): Promise<{ success: boolean; message?: string; code?: string; fieldErrors?: Record<string, string[]> }> => {
     try {
       const response = await api.auth.register({ name, email, password });
       if (response.success && response.data) {
         handleAuthResponse(response.data);
         return { success: true };
       } else {
-        return { success: false, message: response.message };
+        return {
+          success: false,
+          message: response.message,
+          code: response.code,
+          fieldErrors: response.details?.fieldErrors,
+        };
       }
     } catch (error) {
       return { success: false, message: 'An error occurred during registration' };
@@ -171,6 +174,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setRefreshToken(null);
       setUser(null);
       api.setToken(null);
+      // T-C01: Clear all auth-related localStorage entries
       localStorage.removeItem('user');
       localStorage.removeItem('refreshToken');
       localStorage.removeItem('accessToken');

@@ -32,3 +32,6 @@ npm-packages/
 docs/
 docx/
 .trae/
+
+# Pact contract test artifacts
+pacts/

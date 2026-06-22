@@ -29,7 +29,7 @@ export function Form<T extends FieldValues>({
 }: FormProps<T>) {
   const form = useForm<T>({
     ...props,
-    resolver: schema ? (zodResolver(schema as any) as any) : undefined,
+    resolver: schema ? zodResolver(schema as z.ZodTypeAny) : undefined,
   });
 
   const { register, control, handleSubmit, formState } = form;
@@ -72,7 +72,7 @@ export function Field<T extends FieldValues>({
         };
 
         if (children) {
-          return React.cloneElement(children as React.ReactElement<any>, {
+          return React.cloneElement(children as React.ReactElement<unknown>, {
             ...inputProps,
             className,
           });
@@ -165,7 +165,7 @@ export function FormErrorMessageList({ errors, className = '' }: FormErrorMessag
 
 export function useFormValidation<T extends FieldValues>(schema: FormSchema<T>) {
   const form = useForm<T>({
-    resolver: zodResolver(schema as any) as any,
+    resolver: zodResolver(schema as z.ZodTypeAny),
   });
 
   return form;

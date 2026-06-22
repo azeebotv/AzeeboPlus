@@ -9,7 +9,7 @@ import {
   Image,
   Alert,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, type Href } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { contentApi } from '../../src/api';
 import { logger } from '../../src/utils/logger';
@@ -107,7 +107,7 @@ export default function DraftsScreen() {
   const renderDraft = ({ item }: { item: Draft }) => (
     <TouchableOpacity
       style={styles.draftCard}
-      onPress={() => router.push(`/(creator)/upload?id=${item.id}` as any)}
+      onPress={() => router.push(`/(creator)/upload?id=${item.id}` as Href)}
     >
       <Image source={{ uri: item.thumbnail }} style={styles.thumbnail} />
       <View style={styles.draftContent}>
@@ -163,7 +163,7 @@ export default function DraftsScreen() {
         <Text style={styles.title}>Drafts</Text>
         <TouchableOpacity
           style={styles.addButton}
-          onPress={() => router.push('/(creator)/upload' as any)}
+          onPress={() => router.push('/(creator)/upload' as Href)}
         >
           <Text style={styles.addButtonText}>+</Text>
         </TouchableOpacity>

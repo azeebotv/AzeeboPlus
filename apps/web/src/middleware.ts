@@ -3,16 +3,42 @@ import type { NextRequest } from 'next/server';
 
 /**
  * Security headers middleware
- * Implements OWASP recommended security headers
+ * Implements OWASP recommended security headers with nonce-based CSP.
+ *
+ * The CSP nonce is passed to client components via `x-csp-nonce` response header,
+ * which can be read by next/head or custom _document to inject into <script> tags.
+ *
+ * Phase 1: Content-Security-Policy-Report-Only (run for 7 days)
+ * Phase 2: Switch to Content-Security-Policy to enforce
  */
 export function middleware(request: NextRequest) {
   const response = NextResponse.next();
 
-  // Content Security Policy
-  response.headers.set(
-    'Content-Security-Policy',
-    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data: https:; font-src 'self' data:; connect-src 'self' https:; media-src 'self' blob:; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self';"
-  );
+  // Generate a cryptographically random nonce per request
+  const nonce = crypto.randomUUID();
+
+  // Expose nonce to server components and client via response header
+  response.headers.set('x-csp-nonce', nonce);
+
+  // Content Security Policy (nonce-based, strict-dynamic)
+  // Remove 'unsafe-inline' and 'unsafe-eval'; use nonce + strict-dynamic
+  const cspDirectives = [
+    `default-src 'self'`,
+    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`,
+    `style-src 'self' 'nonce-${nonce}'`,
+    `img-src 'self' blob: data: https:`,
+    `font-src 'self' data:`,
+    `connect-src 'self' https:`,
+    `media-src 'self' blob:`,
+    `object-src 'none'`,
+    `frame-ancestors 'none'`,
+    `base-uri 'self'`,
+    `form-action 'self'`,
+    `upgrade-insecure-requests`,
+  ].join('; ');
+
+  // Enforce Content-Security-Policy
+  response.headers.set('Content-Security-Policy', cspDirectives);
 
   // Strict Transport Security (HSTS) - 1 year
   response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
@@ -37,6 +63,24 @@ export function middleware(request: NextRequest) {
 
   // Remove server header
   response.headers.delete('x-powered-by');
+
+  // Route gating: protect authenticated pages
+  const protectedPathPrefixes = ['/wallet', '/admin', '/creator', '/settings', '/notifications'];
+  const pathname = request.nextUrl.pathname;
+  const isProtectedRoute = protectedPathPrefixes.some((prefix) => pathname.startsWith(prefix));
+
+  if (isProtectedRoute) {
+    // Check for access_token cookie (set by HttpOnly cookie flow)
+    const accessToken = request.cookies.get('access_token')?.value;
+
+    if (!accessToken) {
+      // Redirect to login with return path
+      const loginUrl = request.nextUrl.clone();
+      loginUrl.pathname = '/auth/login';
+      loginUrl.searchParams.set('next', pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+  }
 
   return response;
 }

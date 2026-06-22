@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { APP_INTERCEPTOR } from '@nestjs/core';
+import { APP_INTERCEPTOR, APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { ContentModule } from './modules/content/content.module';
@@ -8,6 +8,7 @@ import { HealthModule } from './modules/health/health.module';
 import { PublicModule } from './modules/public/public.module';
 import { ResponseWrapperInterceptor, ResponseSanitizationInterceptor } from '@azeebo/logger';
 import { RateLimiterModule } from '@azeebo/security';
+import { ServiceAuthGuard } from '@azeebo/security';
 import { CacheModule } from './cache/cache.module';
 
 @Module({
@@ -38,6 +39,11 @@ import { CacheModule } from './cache/cache.module';
       provide: APP_INTERCEPTOR,
       useClass: ResponseSanitizationInterceptor,
     },
+    {
+      provide: APP_GUARD,
+      useClass: ServiceAuthGuard,
+    },
   ],
 })
 export class AppModule {}
+

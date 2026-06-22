@@ -19,8 +19,7 @@ import { useBiometric } from '../../src/hooks/useBiometric';
 import Constants from 'expo-constants';
 
 // Type declaration for expo-constants
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const safeConstants = (Constants as any) as { expoConfig?: { version?: string; name?: string } };
+const safeConstants = Constants as unknown as { expoConfig?: { version?: string; name?: string } };
 
 export default function SettingsScreen() {
   const colorScheme = useColorScheme();

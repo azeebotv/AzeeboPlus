@@ -23,6 +23,10 @@ env:
   REGISTRY: ghcr.io
   OWNER: ${{ github.repository_owner }}
 
+permissions:
+  contents: read
+  id-token: write
+
 jobs:
   rollback:
     name: Rollback ${{ inputs.service || 'all services' }} to ${{ inputs.target_tag }}
@@ -33,10 +37,16 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4.0.2
+        with:
+          role-to-assume: ${{ secrets.AWS_OIDC_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION || 'us-east-1' }}
 
       - name: Configure kubectl
-        uses: azure/k8s-set-context@v4
+        uses: azure/k8s-set-context@086689ee9e37b40b50fd1f75838e3e294e14dbf8 # v4.0.2
         with:
           kubeconfig: ${{ inputs.environment == 'staging' && secrets.STAGING_KUBE_CONFIG || secrets.PRODUCTION_KUBE_CONFIG }}
 
@@ -97,7 +107,7 @@ jobs:
 
       - name: Notify Slack - Rollback Success
         if: success()
-        uses: slackapi/slack-github-action@v1
+        uses: slackapi/slack-github-action@485a9d42d3a49605f4898a3e6526e5a02eab28e0 # v1.27.1
         with:
           channel-id: ${{ secrets.SLACK_CHANNEL_ID }}
           slack-message: "🔄 *Rollback Complete*\n\nEnvironment: `${{ inputs.environment }}`\nService: ${{ inputs.service || 'All Services' }}\nTarget Tag: `${{ inputs.target_tag }}`\nURL: ${{ inputs.environment == 'staging' && 'https://staging.azeebo.com' || 'https://azeebo.com' }}"
@@ -106,7 +116,7 @@ jobs:
 
       - name: Notify Slack - Rollback Failed
         if: failure()
-        uses: slackapi/slack-github-action@v1
+        uses: slackapi/slack-github-action@485a9d42d3a49605f4898a3e6526e5a02eab28e0 # v1.27.1
         with:
           channel-id: ${{ secrets.SLACK_CHANNEL_ID }}
           slack-message: "🚨 *Rollback Failed*\n\nEnvironment: `${{ inputs.environment }}`\nService: ${{ inputs.service || 'All Services' }}\nTarget Tag: `${{ inputs.target_tag }}`\nCheck logs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"

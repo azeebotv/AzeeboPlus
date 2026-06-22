@@ -34,7 +34,7 @@ export default function BiometricAuthScreen() {
       Alert.alert(
         'Biometric Not Available',
         'Biometric authentication is not available on this device. Please use password login.',
-        [{ text: 'OK', onPress: () => router.replace('/(auth)/login' as any) }]
+        [{ text: 'OK', onPress: () => router.replace('/(auth)/login') }]
       );
     }
   }, [isAvailable, isLoading]);
@@ -45,14 +45,14 @@ export default function BiometricAuthScreen() {
       const result = await authenticateWithStoredCredentials();
 
       if (result.success) {
-        router.replace('/(tabs)/home' as any);
+        router.replace('/(tabs)/home')
       } else {
         Alert.alert(
           'Authentication Failed',
           result.error || 'Biometric authentication failed. Please try again.',
           [
             { text: 'Retry', onPress: () => handleBiometricLogin() },
-            { text: 'Use Password', onPress: () => router.replace('/(auth)/login' as any) },
+            { text: 'Use Password', onPress: () => router.replace('/(auth)/login') },
           ]
         );
       }
@@ -89,7 +89,7 @@ export default function BiometricAuthScreen() {
                 ? ' (Fingerprint)'
                 : ''
           }`,
-          [{ text: 'OK', onPress: () => router.replace('/(tabs)/home' as any) }]
+          [{ text: 'OK', onPress: () => router.replace('/(tabs)/home') }]
         );
       } else {
         Alert.alert('Error', 'Failed to enable biometric authentication');
@@ -183,7 +183,7 @@ export default function BiometricAuthScreen() {
 
               <TouchableOpacity
                 style={styles.secondaryButton}
-                onPress={() => router.replace('/(auth)/login' as any)}
+                onPress={() => router.replace('/(auth)/login')}
               >
                 <Text style={styles.secondaryButtonText}>Use Password Instead</Text>
               </TouchableOpacity>
@@ -207,7 +207,7 @@ export default function BiometricAuthScreen() {
 
               <TouchableOpacity
                 style={styles.secondaryButton}
-                onPress={() => router.replace('/(auth)/login' as any)}
+                onPress={() => router.replace('/(auth)/login')}
               >
                 <Text style={styles.secondaryButtonText}>Skip for Now</Text>
               </TouchableOpacity>

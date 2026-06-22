@@ -1,9 +1,10 @@
-# Node modules
+# Dependencies
 node_modules
 **/node_modules
 
 # Build outputs (exclude service dist, but keep packages/*/dist for runtime)
 dist
+**/dist
 build
 .next
 *.log
@@ -21,8 +22,21 @@ build
 
 # Environment files
 .env
-.env.local
-.env.*.local
+.env.*
+!.env.example
+
+# Documentation and non-runtime directories
+audit-evidence/
+docs/
+docx/
+infra/
+scripts/
+.github/
+.qoder/
+
+# Markdown (except README)
+*.md
+!README.md
 
 # OS files
 .DS_Store
@@ -34,3 +48,12 @@ Thumbs.db
 *.swp
 *.swo
 *~
+
+# Docker and config files
+docker-compose*.yml
+.eslintrc.json
+.prettierrc
+prettier.config.*
+jest.config.*
+tsconfig*.json
+stryker.config.*

@@ -25,8 +25,9 @@ LABEL org.opencontainers.image.licenses="Proprietary"
 
 RUN apk add --no-cache curl && \
     for i in 1 2 3 4 5; do npm install -g pnpm@9.15.0 @nestjs/cli prisma@5.22.0 && break || (echo "Retry $i/5..." && sleep 10); done && \
-    addgroup -g 1001 -S nodejs && \
-    adduser -S nodejs -u 1001
+    addgroup -g 65532 -S nodejs && \
+    apk add --no-cache tini && \
+    adduser -S nodejs -u 65532
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY services/universes/comedy-service/package.json ./services/universes/comedy-service/
@@ -44,7 +45,8 @@ USER nodejs
 
 EXPOSE 3011
 
-HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:3011/health || exit 1
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost:3011/live || exit 1
 
+ENTRYPOINT ["/sbin/tini", "--"]
 CMD ["node", "services/universes/comedy-service/dist/services/universes/comedy-service/src/main.js"]

@@ -45,38 +45,38 @@ export const notificationApi = {
         limit: number;
         totalPages: number;
       }>
-    >(`/notifications?page=${page}&limit=${limit}`);
+    >(`/v1/notifications?page=${page}&limit=${limit}`);
   },
 
   markAsRead: async (notificationId: string): Promise<ApiResponse<{ message: string }>> => {
     return apiClient.post<ApiResponse<{ message: string }>>(
-      `/notifications/${notificationId}/read`
+      `/v1/notifications/${notificationId}/read`
     );
   },
 
   markAllAsRead: async (): Promise<ApiResponse<{ message: string }>> => {
-    return apiClient.post<ApiResponse<{ message: string }>>('/notifications/read-all');
+    return apiClient.post<ApiResponse<{ message: string }>>('/v1/notifications/read-all');
   },
 
   deleteNotification: async (notificationId: string): Promise<ApiResponse<{ message: string }>> => {
-    return apiClient.delete<ApiResponse<{ message: string }>>(`/notifications/${notificationId}`);
+    return apiClient.delete<ApiResponse<{ message: string }>>(`/v1/notifications/${notificationId}`);
   },
 
   registerPushToken: async (token: string): Promise<ApiResponse<{ message: string }>> => {
-    return apiClient.post<ApiResponse<{ message: string }>>('/notifications/register-token', {
+    return apiClient.post<ApiResponse<{ message: string }>>('/v1/notifications/register-token', {
       token,
     });
   },
 
   getPreferences: async (): Promise<ApiResponse<NotificationPreferences>> => {
-    return apiClient.get<ApiResponse<NotificationPreferences>>('/notifications/preferences');
+    return apiClient.get<ApiResponse<NotificationPreferences>>('/v1/notifications/preferences');
   },
 
   updatePreferences: async (
     preferences: Partial<NotificationPreferences>
   ): Promise<ApiResponse<NotificationPreferences>> => {
     return apiClient.patch<ApiResponse<NotificationPreferences>>(
-      '/notifications/preferences',
+      '/v1/notifications/preferences',
       preferences
     );
   },

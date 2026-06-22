@@ -1,4 +1,5 @@
 import { Controller, Get, HttpCode, HttpStatus } from '@nestjs/common';
+import { Public } from '@azeebo/security';
 import { PrismaService } from '../database/prisma.service';
 import {
   HealthCheckResult,
@@ -6,6 +7,7 @@ import {
   ExternalService,
 } from './interfaces/health.interfaces';
 
+@Public()
 @Controller('health')
 export class HealthController {
   private readonly externalServices: ExternalService[] = [

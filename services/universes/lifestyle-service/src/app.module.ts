@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { DatabaseModule } from './modules/database/database.module';
 import { StoriesModule } from './modules/stories/stories.module';
@@ -16,6 +17,7 @@ import { PollModule } from './modules/polls/poll.module';
 import { QuizModule } from './modules/quizzes/quiz.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { RateLimiterModule } from '@azeebo/security';
+import { ServiceAuthGuard } from '@azeebo/security';
 
 @Module({
   imports: [
@@ -39,5 +41,12 @@ import { RateLimiterModule } from '@azeebo/security';
     QuizModule,
     AdminModule,
   ],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: ServiceAuthGuard,
+    },
+  ],
 })
 export class AppModule {}
+

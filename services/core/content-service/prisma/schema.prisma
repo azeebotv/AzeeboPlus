@@ -159,7 +159,7 @@ model Rental {
   startTime   DateTime @default(now())
   endTime     DateTime
   status      String   @default("active") // active, expired, cancelled
-  price       Decimal
+  price       Decimal  @db.Decimal(18, 2)
   currency    String   @default("NGN")
   transactionId String?
   createdAt   DateTime @default(now())
@@ -183,7 +183,7 @@ model Pass {
   status      String   @default("active") // active, expired, cancelled, suspended
   startTime   DateTime @default(now())
   endTime     DateTime
-  price       Decimal
+  price       Decimal  @db.Decimal(18, 2)
   currency    String   @default("NGN")
   transactionId String?
   autoRenew   Boolean  @default(false)
@@ -209,7 +209,7 @@ model Screening {
   status        String   @default("scheduled") // scheduled, live, ended, cancelled
   maxViewers    Int?
   currentViewers Int     @default(0)
-  price         Decimal?
+  price         Decimal? @db.Decimal(18, 2)
   currency      String   @default("NGN")
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -230,7 +230,7 @@ model LockedExtra {
   description String?
   thumbnail   String?
   mediaUrl    String?
-  price       Decimal?
+  price       Decimal? @db.Decimal(18, 2)
   currency    String   @default("NGN")
   unlockType  String   @default("purchase") // purchase, rental, pass, subscription
   isUnlocked  Boolean  @default(false)
@@ -250,7 +250,7 @@ model UserUnlock {
   unlockType  String   // rental, pass, screening, locked_extra
   resourceId  String
   transactionId String?
-  price       Decimal?
+  price       Decimal? @db.Decimal(18, 2)
   currency    String   @default("NGN")
   unlockedAt  DateTime @default(now())
   expiresAt   DateTime?

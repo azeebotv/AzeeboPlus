@@ -32,7 +32,7 @@ model CreatorProfile {
 model CreatorEarning {
   id          String   @id @default(uuid())
   creatorId   String
-  amount      Decimal
+  amount      Decimal  @db.Decimal(18, 2)
   type        String   // tip, subscription, rental, payout
   referenceId String?
   status      String   @default("pending")
@@ -98,7 +98,7 @@ model ChallengeEntry {
 model PayoutRequest {
   id             String   @id @default(uuid())
   creatorId      String
-  amount         Decimal
+  amount         Decimal  @db.Decimal(18, 2)
   method         String
   accountDetails Json
   status         String   @default("pending")
@@ -137,7 +137,7 @@ model Tip {
   id        String   @id @default(uuid())
   fromUserId String
   toUserId   String
-  amount    Decimal
+  amount    Decimal  @db.Decimal(18, 2)
   createdAt DateTime @default(now())
 
   @@map("tips")
@@ -217,7 +217,7 @@ model Notification {
 model Wallet {
   id        String   @id @default(uuid())
   userId    String   @unique
-  balance   Decimal  @default(0)
+  balance   Decimal  @default(0) @db.Decimal(18, 2)
   currency  String   @default("NGN")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -230,7 +230,7 @@ model WalletTransaction {
   id          String   @id @default(uuid())
   walletId    String
   type        String   // credit, debit
-  amount      Decimal
+  amount      Decimal  @db.Decimal(18, 2)
   description String
   reference   String?
   createdAt   DateTime @default(now())

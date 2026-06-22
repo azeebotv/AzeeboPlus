@@ -85,7 +85,7 @@ model Refund {
   ticketId        String   @unique
   paymentId       String
   userId          String
-  amount          Decimal  
+  amount          Decimal  @db.Decimal(18, 2)
   currency        String   @default("NGN")
   reason          String
   status          String   @default("PENDING")
@@ -109,7 +109,7 @@ model Chargeback {
   ticketId        String   @unique
   paymentId       String
   userId          String
-  amount          Decimal  
+  amount          Decimal  @db.Decimal(18, 2)
   currency        String   @default("NGN")
   reason          String
   status          String   @default("PENDING")
@@ -183,7 +183,7 @@ model PayoutDispute {
   ticketId      String   @unique
   creatorId     String
   payoutId      String
-  amount        Decimal  
+  amount        Decimal  @db.Decimal(18, 2)
   currency      String   @default("NGN")
   reason        String
   evidence      Json?
@@ -191,7 +191,7 @@ model PayoutDispute {
   resolution    String?
   resolvedAt    DateTime?
   resolvedBy    String?
-  compensation  Decimal? 
+  compensation  Decimal? @db.Decimal(18, 2)
   metadata      Json?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt

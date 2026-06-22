@@ -1,5 +1,5 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe, Logger } from '@nestjs/common';
+import { ValidationPipe, Logger, VersioningType } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import helmet from 'helmet';
@@ -19,7 +19,7 @@ async function bootstrap(): Promise<void> {
       contentSecurityPolicy: {
         directives: {
           defaultSrc: ["'self'"],
-          styleSrc: ["'self'", "'unsafe-inline'"],
+          styleSrc: ["'self'"],
           imgSrc: ["'self'", 'data:', 'https:'],
         },
       },
@@ -60,6 +60,9 @@ async function bootstrap(): Promise<void> {
     SwaggerModule.setup('docs', app, document);
     Logger.log('Swagger documentation enabled at /docs');
   }
+
+  // API versioning
+  app.enableVersioning({ type: VersioningType.URI, prefix: 'v', defaultVersion: '1' });
 
   const port = process.env.PORT || 3011;
   await app.listen(port);

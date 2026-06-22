@@ -23,13 +23,11 @@ export default function OnboardingPage() {
 
   const handleComplete = async () => {
     try {
-      const token = localStorage.getItem('token');
-      if (token) {
-        await apiFetch('/user/preferences', {
-          method: 'PUT',
-          body: JSON.stringify({ interests: selectedInterests, onboardingCompleted: true }),
-        });
-      }
+      // Auth is handled via HttpOnly cookies sent with credentials: 'include'
+      await apiFetch('/user/preferences', {
+        method: 'PUT',
+        body: JSON.stringify({ interests: selectedInterests, onboardingCompleted: true }),
+      });
       localStorage.setItem('onboardingCompleted', 'true');
       router.push('/');
     } catch (error) {

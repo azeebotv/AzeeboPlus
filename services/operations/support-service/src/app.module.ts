@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule, JwtService } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
@@ -16,6 +17,7 @@ import { DatabaseModule } from './modules/database/database.module';
 import { SupportModule } from './modules/support/support.module';
 import { AuthGuard } from './common/guards/auth.guard';
 import { RateLimiterModule, AdminGuard } from '@azeebo/security';
+import { ServiceAuthGuard } from '@azeebo/security';
 
 @Module({
   imports: [
@@ -50,7 +52,12 @@ import { RateLimiterModule, AdminGuard } from '@azeebo/security';
         new AdminGuard(jwtService, { allowedRoles: ['ADMIN', 'SUPPORT_AGENT'] }),
       inject: [JwtService],
     },
+    {
+      provide: APP_GUARD,
+      useClass: ServiceAuthGuard,
+    },
   ],
   exports: [AuthGuard, JwtModule, AdminGuard],
 })
 export class AppModule {}
+

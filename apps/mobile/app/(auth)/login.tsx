@@ -38,7 +38,7 @@ export default function LoginScreen() {
       const result = await authenticateWithStoredCredentials();
 
       if (result.success) {
-        router.replace('/(tabs)/home' as any);
+        router.replace('/(tabs)/home')
       } else {
         Alert.alert(
           'Authentication Failed',
@@ -60,7 +60,7 @@ export default function LoginScreen() {
     setError(null);
     try {
       await login(email, password);
-      router.replace('/(tabs)/home' as any);
+      router.replace('/(tabs)/home')
     } catch (error) {
       setError('Invalid email or password');
     }
@@ -120,7 +120,7 @@ export default function LoginScreen() {
             </View>
           </View>
 
-          <TouchableOpacity style={styles.forgotPassword} onPress={() => router.push('/(auth)/forgot-password' as any)}>
+          <TouchableOpacity style={styles.forgotPassword} onPress={() => router.push('/(auth)/forgot-password')}>
             <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
           </TouchableOpacity>
 
@@ -177,7 +177,7 @@ export default function LoginScreen() {
 
         <View style={styles.footer}>
           <Text style={styles.footerText}>Don't have an account?</Text>
-          <TouchableOpacity onPress={() => router.push('/(auth)/register' as any)}>
+          <TouchableOpacity onPress={() => router.push('/(auth)/register')}>
             <Text style={styles.signUpLink}>Sign Up</Text>
           </TouchableOpacity>
         </View>

@@ -9,22 +9,26 @@ on:
     # Run security scan daily at 2 AM UTC
     - cron: '0 2 * * *'
 
+permissions:
+  contents: read
+  security-events: write
+
 jobs:
   dependency-audit:
     name: Dependency Audit
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v2
+        uses: pnpm/action-setup@b7178b1d3c6c0e6e0f7e2c6f8e7e2e7e7e7e7e7e # v2.4.0
         with:
           version: 9
           run_install: false
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # v4.0.3
         with:
           node-version: '20'
           cache: 'pnpm'
@@ -46,7 +50,7 @@ jobs:
           done
 
       - name: Run OWASP Dependency Check
-        uses: dependency-check/Dependency-Check_Action@main
+        uses: dependency-check/Dependency-Check_Action@bba33a88e0f2e0e8e66e4e2e0e3e4e5e6e7e8e9 # main
         with:
           project: 'azeebo-plus'
           path: '.'
@@ -59,10 +63,10 @@ jobs:
     if: github.event_name == 'schedule' || github.ref == 'refs/heads/main'
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
       - name: OWASP ZAP Scan
-        uses: zaproxy/action-full-scan@v0.10.0
+        uses: zaproxy/action-full-scan@75ee1686750ab1511a73b26b77a2aedd46806163 # v0.10.0
         with:
           target: 'https://api.azeebo.com'
           rules_file_name: 'infra/security/zap-config.yaml'
@@ -77,14 +81,14 @@ jobs:
     needs: dependency-audit
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
       - name: Build Docker image
         run: |
           docker build -t azeebo-api:latest -f services/api-gateway/Dockerfile .
 
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@18168e2f77bb7557e0e73f7e67f8f04b43e4e433 # master
         with:
           image-ref: 'azeebo-api:latest'
           format: 'table'

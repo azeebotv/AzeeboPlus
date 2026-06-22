@@ -1,6 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { Logger, ValidationPipe } from '@nestjs/common';
+import { Logger, ValidationPipe, VersioningType } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
 import { GlobalExceptionFilter } from '@azeebo/error-handling';
@@ -17,7 +17,7 @@ async function bootstrap(): Promise<void> {
       contentSecurityPolicy: {
         directives: {
           defaultSrc: ["'self'"],
-          styleSrc: ["'self'", "'unsafe-inline'"],
+          styleSrc: ["'self'"],
           imgSrc: ["'self'", 'data:', 'https:'],
         },
       },
@@ -27,8 +27,6 @@ async function bootstrap(): Promise<void> {
       },
     })
   );
-
-  app.setGlobalPrefix('v1/users');
 
   app.useGlobalFilters(new GlobalExceptionFilter());
 
@@ -62,6 +60,9 @@ async function bootstrap(): Promise<void> {
     SwaggerModule.setup('docs', app, document);
     Logger.log('Swagger documentation enabled at /docs');
   }
+
+  // API versioning
+  app.enableVersioning({ type: VersioningType.URI, prefix: 'v', defaultVersion: '1' });
 
   await app.listen(process.env.PORT || 3001);
   Logger.log('User Service is running on port ' + (process.env.PORT || 3001));

@@ -5,6 +5,15 @@ const PREFIX = Linking.createURL('/');
 
 export type DeepLinkType = 'content' | 'universe' | 'creator' | 'referral' | 'payment' | 'wallet';
 
+const VALID_DEEP_LINK_TYPES: ReadonlySet<string> = new Set<DeepLinkType>([
+  'content',
+  'universe',
+  'creator',
+  'referral',
+  'payment',
+  'wallet',
+]);
+
 export interface DeepLinkData {
   type: DeepLinkType;
   id?: string;
@@ -56,7 +65,12 @@ export class DeepLinkService {
         return null;
       }
 
-      const type = pathParts[0] as DeepLinkType;
+      const rawType = pathParts[0];
+      if (!VALID_DEEP_LINK_TYPES.has(rawType)) {
+        logger.warn('Unknown deep link type rejected', { type: rawType });
+        return null;
+      }
+      const type = rawType as DeepLinkType;
       const id = pathParts[1];
       const params = parsed.queryParams as Record<string, string> | undefined;
 

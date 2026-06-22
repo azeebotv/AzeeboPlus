@@ -10,7 +10,7 @@ import {
   Alert,
   ScrollView,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, type Href } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { contentApi } from '../../src/api';
 import { logger } from '../../src/utils/logger';
@@ -145,7 +145,7 @@ export default function ContentManagerScreen() {
   const renderGridItem = ({ item }: { item: ContentItem }) => (
     <TouchableOpacity
       style={styles.gridItem}
-      onPress={() => router.push(`/(creator)/content-detail?id=${item.id}` as any)}
+      onPress={() => router.push(`/(creator)/content-detail?id=${item.id}` as Href)}
     >
       <Image source={{ uri: item.thumbnail }} style={styles.gridThumbnail} />
       <View style={styles.gridOverlay}>
@@ -168,7 +168,7 @@ export default function ContentManagerScreen() {
   const renderListItem = ({ item }: { item: ContentItem }) => (
     <TouchableOpacity
       style={styles.listItem}
-      onPress={() => router.push(`/(creator)/content-detail?id=${item.id}` as any)}
+      onPress={() => router.push(`/(creator)/content-detail?id=${item.id}` as Href)}
     >
       <Image source={{ uri: item.thumbnail }} style={styles.listThumbnail} />
       <View style={styles.listContent}>
@@ -229,7 +229,7 @@ export default function ContentManagerScreen() {
         <Text style={styles.title}>Content Manager</Text>
         <TouchableOpacity
           style={styles.addButton}
-          onPress={() => router.push('/(creator)/upload' as any)}
+          onPress={() => router.push('/(creator)/upload' as Href)}
         >
           <Text style={styles.addButtonText}>+</Text>
         </TouchableOpacity>

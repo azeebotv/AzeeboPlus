@@ -20,7 +20,7 @@ async function bootstrap(): Promise<void> {
       contentSecurityPolicy: {
         directives: {
           defaultSrc: ["'self'"],
-          styleSrc: ["'self'", "'unsafe-inline'"],
+          styleSrc: ["'self'"],
           imgSrc: ["'self'", 'data:', 'https:'],
         },
       },
@@ -41,13 +41,37 @@ async function bootstrap(): Promise<void> {
 
   app.useGlobalInterceptors(new LoggingInterceptor());
 
+  // Allow-listed origins for all frontend apps
+  const allowedOrigins = [
+    'https://app.azeebo.com',
+    'https://creator.azeebo.com',
+    'https://admin.azeebo.com',
+    'http://localhost:3000',
+    'http://localhost:4000',
+    'http://localhost:4014',
+    'http://localhost:4016',
+  ];
+
+  // Accept env-var overrides for additional origins
   const originsEnv = process.env.ALLOWED_ORIGINS || process.env.CORS_ORIGIN;
-  if (!originsEnv) {
-    throw new Error('ALLOWED_ORIGINS or CORS_ORIGIN environment variable is required');
+  if (originsEnv) {
+    originsEnv.split(',').forEach((o: string) => {
+      const trimmed = o.trim();
+      if (trimmed && !allowedOrigins.includes(trimmed)) {
+        allowedOrigins.push(trimmed);
+      }
+    });
   }
-  const allowedOrigins = originsEnv.split(',').map((o: string) => o.trim());
+
   app.enableCors({
-    origin: allowedOrigins,
+    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+      // Allow requests with no origin (server-to-server, curl, mobile apps)
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
   });

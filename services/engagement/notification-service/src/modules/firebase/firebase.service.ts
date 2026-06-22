@@ -1,8 +1,7 @@
-/* eslint-disable @typescript-eslint/explicit-function-return-type */
 import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
 import * as admin from 'firebase-admin';
 import { ConfigService } from '@nestjs/config';
-import { CircuitBreaker, CircuitBreakerOpenError } from '@azeebo/shared-types';
+import { CircuitBreaker, CircuitBreakerOpenError, CircuitBreakerStats } from '@azeebo/shared-types';
 
 @Injectable()
 export class FirebaseService implements OnModuleInit, OnModuleDestroy {
@@ -19,7 +18,7 @@ export class FirebaseService implements OnModuleInit, OnModuleDestroy {
     });
   }
 
-  async onModuleInit() {
+  async onModuleInit(): Promise<void> {
     const serviceAccount = this.configService.get('FIREBASE_SERVICE_ACCOUNT');
 
     if (!serviceAccount) {
@@ -42,7 +41,7 @@ export class FirebaseService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  async onModuleDestroy() {
+  async onModuleDestroy(): Promise<void> {
     if (this.firebaseEnabled) {
       try {
         admin.app().delete();
@@ -58,7 +57,7 @@ export class FirebaseService implements OnModuleInit, OnModuleDestroy {
     title: string,
     body: string,
     data?: Record<string, string>
-  ) {
+  ): Promise<boolean> {
     if (!this.firebaseEnabled || !this.messaging) {
       this.logger.warn('Firebase messaging not initialized. Push notification not sent.');
       return false;
@@ -95,7 +94,7 @@ export class FirebaseService implements OnModuleInit, OnModuleDestroy {
     title: string,
     body: string,
     data?: Record<string, string>
-  ) {
+  ): Promise<boolean> {
     if (!this.firebaseEnabled || !this.messaging) {
       this.logger.warn('Firebase messaging not initialized. Push notification not sent.');
       return false;
@@ -127,7 +126,7 @@ export class FirebaseService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  async subscribeToTopic(token: string, topic: string) {
+  async subscribeToTopic(token: string, topic: string): Promise<boolean> {
     if (!this.firebaseEnabled || !this.messaging) {
       this.logger.warn('Firebase messaging not initialized. Subscription not processed.');
       return false;
@@ -150,7 +149,7 @@ export class FirebaseService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  async unsubscribeFromTopic(token: string, topic: string) {
+  async unsubscribeFromTopic(token: string, topic: string): Promise<boolean> {
     if (!this.firebaseEnabled || !this.messaging) {
       this.logger.warn('Firebase messaging not initialized. Unsubscription not processed.');
       return false;
@@ -173,7 +172,7 @@ export class FirebaseService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  getCircuitBreakerStats() {
+  getCircuitBreakerStats(): CircuitBreakerStats {
     return this.circuitBreaker.getStats();
   }
 }

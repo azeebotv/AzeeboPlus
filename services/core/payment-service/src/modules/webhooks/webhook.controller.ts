@@ -11,12 +11,14 @@ import {
   Request,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { Public } from '@azeebo/security';
 import { WebhookService, WebhookPayload } from './webhook.service';
 import { WebhookSecurityService } from './webhook-security.service';
 import { PaystackWebhookGuard } from './guards/paystack-webhook.guard';
 import { FlutterwaveWebhookGuard } from './guards/flutterwave-webhook.guard';
 import { ApiResponseWrapper } from '@azeebo/shared-types';
 
+@Public()
 @Controller('webhooks')
 export class WebhookController {
   private readonly logger = new Logger(WebhookController.name);

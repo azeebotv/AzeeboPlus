@@ -41,8 +41,8 @@ LABEL org.opencontainers.image.licenses="Proprietary"
 RUN apk add --no-cache curl
 
 # Create non-root user
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nodejs -u 1001
+RUN addgroup -g 65532 -S nodejs && \
+    adduser -S nodejs -u 65532
 
 COPY --from=builder /app/apps/web/.next ./apps/web/.next
 COPY --from=builder /app/apps/web/package.json ./apps/web/package.json

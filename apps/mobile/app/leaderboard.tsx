@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
   Image,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, type Href } from 'expo-router';
 import { engagementApi } from '../src/api';
 import { logger } from '../src/utils/logger';
 import { LoadingState, ErrorState, EmptyState } from '../src/components/StateContainers';
@@ -175,7 +175,7 @@ export default function LeaderboardScreen() {
           <TouchableOpacity
             key={entry.userId}
             style={[styles.listItem, entry.isCurrentUser && styles.listItemCurrentUser]}
-            onPress={() => router.push(`/profile/${entry.userId}` as any)}
+            onPress={() => router.push(`/profile/${entry.userId}` as Href)}
           >
             <Text style={[styles.rankText, { color: getRankColor(entry.rank) }]}>
               {getRankIcon(entry.rank)}

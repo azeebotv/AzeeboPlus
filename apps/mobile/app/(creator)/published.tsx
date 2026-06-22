@@ -87,7 +87,7 @@ export default function PublishedContentScreen() {
   const renderContent = ({ item }: { item: PublishedItem }) => (
     <TouchableOpacity
       style={styles.card}
-      onPress={() => router.push(`/(creator)/content-detail?id=${item.id}` as any)}
+      onPress={() => router.push(`/(creator)/content-detail?id=${item.id}`)}
     >
       <Image source={{ uri: item.thumbnail }} style={styles.thumbnail} />
       <View style={styles.content}>

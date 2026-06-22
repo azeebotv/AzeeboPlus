@@ -1,6 +1,6 @@
-/* eslint-disable @typescript-eslint/explicit-function-return-type */
 import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
+import { Prisma } from '../../prisma/client';
 import { FirebaseService } from '../firebase/firebase.service';
 import { EmailService } from '../email/email.service';
 import { SmsService } from '../sms/sms.service';
@@ -15,7 +15,7 @@ export class NotificationsService {
     private readonly smsService: SmsService
   ) {}
 
-  async getNotifications(userId: string, page = 1, limit = 20) {
+  async getNotifications(userId: string, page = 1, limit = 20): Promise<{ success: boolean; data: Record<string, unknown> }> {
     const skip = (page - 1) * limit;
     const take = Math.min(limit, 100);
 
@@ -54,7 +54,7 @@ export class NotificationsService {
     };
   }
 
-  async markAsRead(userId: string, notificationId: string) {
+  async markAsRead(userId: string, notificationId: string): Promise<{ success: boolean; data: { message: string } }> {
     const notification = await this.prisma.notification.findUnique({
       where: { id: notificationId },
     });
@@ -82,7 +82,7 @@ export class NotificationsService {
     };
   }
 
-  async markAllAsRead(userId: string) {
+  async markAllAsRead(userId: string): Promise<{ success: boolean; data: { message: string } }> {
     await this.prisma.notification.updateMany({
       where: { userId, readAt: null },
       data: {
@@ -98,7 +98,7 @@ export class NotificationsService {
     };
   }
 
-  async updatePreferences(userId: string, preferences: Record<string, boolean>) {
+  async updatePreferences(userId: string, preferences: Record<string, boolean>): Promise<{ success: boolean; data: { message: string } }> {
     await this.prisma.user.update({
       where: { id: userId },
       data: {
@@ -116,7 +116,7 @@ export class NotificationsService {
     };
   }
 
-  async getPreferences(userId: string) {
+  async getPreferences(userId: string): Promise<{ success: boolean; data: Record<string, unknown> }> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       select: { notificationPreferences: true },
@@ -130,7 +130,7 @@ export class NotificationsService {
     };
   }
 
-  async getUnreadCount(userId: string) {
+  async getUnreadCount(userId: string): Promise<{ success: boolean; data: Record<string, unknown> }> {
     const count = await this.prisma.notification.count({
       where: { userId, readAt: null },
     });
@@ -149,19 +149,19 @@ export class NotificationsService {
     title: string,
     message: string,
     metadata?: Record<string, unknown>
-  ) {
+  ): Promise<Record<string, unknown>> {
     return this.prisma.notification.create({
       data: {
         userId,
         type,
         title,
         message,
-        metadata: (metadata || {}) as any,
+        metadata: (metadata || {}) as Prisma.InputJsonValue,
       },
     });
   }
 
-  async savePushToken(userId: string, token: string, deviceType: string) {
+  async savePushToken(userId: string, token: string, deviceType: string): Promise<{ success: boolean; data: { message: string } }> {
     // Check if token already exists
     const existingToken = await this.prisma.pushToken.findUnique({
       where: { token },
@@ -196,7 +196,7 @@ export class NotificationsService {
     };
   }
 
-  async getPushTokens(userId: string) {
+  async getPushTokens(userId: string): Promise<{ success: boolean; data: Record<string, unknown> }> {
     const tokens = await this.prisma.pushToken.findMany({
       where: { userId },
     });
@@ -209,7 +209,7 @@ export class NotificationsService {
     };
   }
 
-  async deletePushToken(userId: string, token: string) {
+  async deletePushToken(userId: string, token: string): Promise<{ success: boolean; data: { message: string } }> {
     const existingToken = await this.prisma.pushToken.findUnique({
       where: { token },
     });
@@ -237,7 +237,7 @@ export class NotificationsService {
     title: string,
     body: string,
     data?: Record<string, string>
-  ) {
+  ): Promise<boolean> {
     // Get all push tokens for the user
     const tokens = await this.prisma.pushToken.findMany({
       where: { userId },
@@ -254,7 +254,7 @@ export class NotificationsService {
     return this.firebaseService.sendMulticastNotification(tokenValues, title, body, data);
   }
 
-  async sendEmailNotification(userId: string, subject: string, body: string) {
+  async sendEmailNotification(userId: string, subject: string, body: string): Promise<boolean> {
     // Get user email
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
@@ -268,7 +268,7 @@ export class NotificationsService {
     return this.emailService.sendCustomEmail(user.email, subject, body);
   }
 
-  async sendWelcomeEmail(userId: string) {
+  async sendWelcomeEmail(userId: string): Promise<boolean> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
     });
@@ -283,7 +283,7 @@ export class NotificationsService {
     });
   }
 
-  async sendPasswordResetEmail(userId: string, resetLink: string) {
+  async sendPasswordResetEmail(userId: string, resetLink: string): Promise<boolean> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
     });
@@ -305,7 +305,7 @@ export class NotificationsService {
     amount: number,
     currency: string,
     description: string
-  ) {
+  ): Promise<boolean> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
     });
@@ -325,7 +325,7 @@ export class NotificationsService {
     });
   }
 
-  async sendContentPublishedEmail(userId: string, contentTitle: string, contentLink: string) {
+  async sendContentPublishedEmail(userId: string, contentTitle: string, contentLink: string): Promise<boolean> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
     });
@@ -347,7 +347,7 @@ export class NotificationsService {
     );
   }
 
-  async sendContentFeaturedEmail(userId: string, contentTitle: string, contentLink: string) {
+  async sendContentFeaturedEmail(userId: string, contentTitle: string, contentLink: string): Promise<boolean> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
     });
@@ -369,7 +369,7 @@ export class NotificationsService {
     );
   }
 
-  async sendSmsNotification(userId: string, message: string) {
+  async sendSmsNotification(userId: string, message: string): Promise<boolean> {
     // Get user phone number (assuming user has a phone field)
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
@@ -389,7 +389,7 @@ export class NotificationsService {
     return this.smsService.sendSms(user.phone, message);
   }
 
-  async sendWelcomeSms(userId: string) {
+  async sendWelcomeSms(userId: string): Promise<boolean> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
     });
@@ -404,7 +404,7 @@ export class NotificationsService {
     });
   }
 
-  async sendPasswordResetSms(userId: string, resetCode: string) {
+  async sendPasswordResetSms(userId: string, resetCode: string): Promise<boolean> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
     });
@@ -424,7 +424,7 @@ export class NotificationsService {
     transactionId: string,
     amount: number,
     currency: string
-  ) {
+  ): Promise<boolean> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
     });
@@ -441,7 +441,7 @@ export class NotificationsService {
     });
   }
 
-  async sendContentPublishedSms(userId: string, contentTitle: string) {
+  async sendContentPublishedSms(userId: string, contentTitle: string): Promise<boolean> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
     });
@@ -456,7 +456,7 @@ export class NotificationsService {
     });
   }
 
-  async sendContentFeaturedSms(userId: string, contentTitle: string) {
+  async sendContentFeaturedSms(userId: string, contentTitle: string): Promise<boolean> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
     });
@@ -471,7 +471,7 @@ export class NotificationsService {
     });
   }
 
-  async sendAccountVerificationSms(userId: string, verificationCode: string) {
+  async sendAccountVerificationSms(userId: string, verificationCode: string): Promise<boolean> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
     });

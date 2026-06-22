@@ -26,8 +26,8 @@ LABEL org.opencontainers.image.licenses="Proprietary"
 
 RUN apk add --no-cache curl && \
     for i in 1 2 3 4 5; do npm install -g pnpm@9.15.0 @nestjs/cli prisma@5.22.0 && break || (echo "Retry $i/5..." && sleep 10); done && \
-    addgroup -g 1001 -S nodejs && \
-    adduser -S nestjs -u 1001
+    addgroup -g 65532 -S nodejs && \
+    adduser -S nestjs -u 65532
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/admin/package.json ./apps/admin/

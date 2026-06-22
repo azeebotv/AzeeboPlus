@@ -294,7 +294,7 @@ export default function ContentPage(): JSX.Element {
                     <div className="mt-2 flex items-center gap-4 text-sm text-gray-500">
                       <span className="flex items-center gap-1">
                         <EyeIcon className="h-3 w-3" />{' '}
-                        {((item as any).views ?? 0).toLocaleString()} views
+                        {(item.views ?? 0).toLocaleString()} views
                       </span>
                       <span className="flex items-center gap-1">
                         <svg
@@ -310,7 +310,7 @@ export default function ContentPage(): JSX.Element {
                             d="M8 12h.01M12 12h.01M16 12h.01M12 16h.01M8 16h.01M16 16h.01"
                           />
                         </svg>
-                        {((item as any).likes ?? 0).toLocaleString()} likes
+                        {(item.likes ?? 0).toLocaleString()} likes
                       </span>
                       <span className="flex items-center gap-1">
                         <svg
@@ -326,7 +326,7 @@ export default function ContentPage(): JSX.Element {
                             d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 11-1.357 6.374A5.988 5.988 0 0013 18h-1.04A5.98 5.98 0 005 12h1.422a5.98 5.98 0 003.714 1.186A11.977 11.977 0 0112 5.672z"
                           />
                         </svg>
-                        {((item as any).comments ?? 0).toLocaleString()} comments
+                        {(item.comments ?? 0).toLocaleString()} comments
                       </span>
                       <span className="flex items-center gap-1">
                         <span className="text-xs" style={{ color: colors.text.secondary }}>

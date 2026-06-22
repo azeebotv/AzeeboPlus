@@ -10,6 +10,8 @@ import {
   Delete,
   Param,
   Query,
+  HttpException,
+  HttpStatus,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
@@ -179,6 +181,87 @@ export class UsersController {
     @Param('contentId') contentId: string
   ): Promise<{ message: string }> {
     return this.usersService.unsaveItem(req.user.sub, contentId);
+  }
+
+  @Get('watch-history')
+  @UseGuards(AuthGuard('jwt'))
+  @ApiOperation({ summary: 'Get watch history' })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiResponse({ status: 200, description: 'Watch history' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async getWatchHistory(
+    @Request() req: AuthenticatedRequest,
+    @Query('page') page = 1,
+    @Query('limit') limit = 20
+  ): Promise<unknown> {
+    throw new HttpException(
+      { message: 'Not yet implemented', feature: 'user-watch-history' },
+      HttpStatus.NOT_IMPLEMENTED
+    );
+  }
+
+  @Post('watch-history')
+  @UseGuards(AuthGuard('jwt'))
+  @ApiOperation({ summary: 'Add to watch history' })
+  @ApiResponse({ status: 201, description: 'Added to watch history' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async addToWatchHistory(
+    @Request() req: AuthenticatedRequest,
+    @Body() body: { contentId: string }
+  ): Promise<{ message: string }> {
+    throw new HttpException(
+      { message: 'Not yet implemented', feature: 'user-watch-history' },
+      HttpStatus.NOT_IMPLEMENTED
+    );
+  }
+
+  @Get('saved')
+  @UseGuards(AuthGuard('jwt'))
+  @ApiOperation({ summary: 'Get saved content' })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiResponse({ status: 200, description: 'Saved content' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async getSaved(
+    @Request() req: AuthenticatedRequest,
+    @Query('page') page = 1,
+    @Query('limit') limit = 20
+  ): Promise<unknown> {
+    throw new HttpException(
+      { message: 'Not yet implemented', feature: 'user-saved' },
+      HttpStatus.NOT_IMPLEMENTED
+    );
+  }
+
+  @Post('saved')
+  @UseGuards(AuthGuard('jwt'))
+  @ApiOperation({ summary: 'Save content' })
+  @ApiResponse({ status: 201, description: 'Content saved' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async saveContent(
+    @Request() req: AuthenticatedRequest,
+    @Body() body: { contentId: string }
+  ): Promise<{ message: string }> {
+    throw new HttpException(
+      { message: 'Not yet implemented', feature: 'user-saved' },
+      HttpStatus.NOT_IMPLEMENTED
+    );
+  }
+
+  @Delete('saved/:contentId')
+  @UseGuards(AuthGuard('jwt'))
+  @ApiOperation({ summary: 'Remove saved content' })
+  @ApiResponse({ status: 200, description: 'Saved content removed' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async removeSaved(
+    @Request() req: AuthenticatedRequest,
+    @Param('contentId') contentId: string
+  ): Promise<{ message: string }> {
+    throw new HttpException(
+      { message: 'Not yet implemented', feature: 'user-saved' },
+      HttpStatus.NOT_IMPLEMENTED
+    );
   }
 
   @Get('me/universe-affinity')

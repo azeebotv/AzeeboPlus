@@ -2,10 +2,17 @@
   "name": "azeebo-scripts",
   "version": "1.0.0",
   "description": "Automation scripts for Azeebo+ platform",
+  "packageManager": "pnpm@10.33.2",
+  "engines": {
+    "node": ">=20.11.1",
+    "pnpm": ">=10.33.2"
+  },
   "scripts": {
     "docs-sync": "ts-node --project tsconfig.scripts.json scripts/docs-sync.ts",
     "docs-sync:watch": "nodemon --watch services --exec ts-node --project tsconfig.scripts.json scripts/docs-sync.ts",
-    "coverage-analyze": "ts-node --project tsconfig.scripts.json scripts/coverage-analyzer.ts"
+    "coverage-analyze": "ts-node --project tsconfig.scripts.json scripts/coverage-analyzer.ts",
+    "contracts": "pnpm --filter @azeebo/contract-tests test:contracts",
+    "contracts:watch": "pnpm --filter @azeebo/contract-tests test:watch"
   },
   "dependencies": {
     "glob": "^13.0.6",

@@ -6,6 +6,46 @@ const CACHE_PREFIX = 'offline_cache_';
 const CACHE_EXPIRY_PREFIX = 'offline_cache_expiry_';
 const DEFAULT_EXPIRY_HOURS = 24;
 
+/** Default time-to-live for offline cache entries (15 minutes). */
+export const DEFAULT_CACHE_TTL_MS = 900_000;
+
+/** Default time-to-live for offline cache entries (15 minutes). */
+export const DEFAULT_CACHE_TTL_MS = 900_000;
+
+/** Keys whose values are redacted before persisting to unencrypted AsyncStorage. */
+const SENSITIVE_FIELD_PATTERNS: RegExp[] = [
+  /token/i,
+  /password/i,
+  /secret/i,
+  /auth/i,
+  /credential/i,
+  /\bkey\b/i,
+  /session/i,
+  /ssn/i,
+  /credit/i,
+];
+
+/** Return a shallow copy with sensitive top-level values redacted. */
+function redactSensitiveFields(
+  data: Record<string, unknown>,
+): Record<string, unknown> {
+  const cleaned: Record<string, unknown> = {};
+  const strippedKeys: string[] = [];
+  for (const [k, v] of Object.entries(data)) {
+    if (SENSITIVE_FIELD_PATTERNS.some((re) => re.test(k))) {
+      strippedKeys.push(k);
+    } else {
+      cleaned[k] = v;
+    }
+  }
+  if (strippedKeys.length > 0) {
+    logger.warn('Stripped sensitive fields from offline cache', {
+      keys: strippedKeys,
+    });
+  }
+  return cleaned;
+}
+
 export interface OfflineAction {
   type: string;
   endpoint: string;
@@ -17,9 +57,10 @@ export interface OfflineAction {
 
 export interface CachedContent {
   id: string;
-  data: unknown;
+  data: Record<string, unknown>;
   timestamp: number;
   expiry: number;
+  cachedAt: number;
   type: 'content' | 'universe' | 'user' | 'wallet';
 }
 
@@ -31,19 +72,23 @@ export class OfflineModeService {
 
   static async cacheContent(
     key: string,
-    data: unknown,
+    data: Record<string, unknown>,
     type: CachedContent['type'] = 'content',
-    expiryHours: number = DEFAULT_EXPIRY_HOURS
+    expiryHours: number = DEFAULT_EXPIRY_HOURS,
+    ttlMs: number = DEFAULT_CACHE_TTL_MS
   ): Promise<void> {
     try {
       const now = Date.now();
       const expiry = now + expiryHours * 60 * 60 * 1000;
 
+      const sanitised = redactSensitiveFields(data);
+
       const cached: CachedContent = {
         id: key,
-        data,
+        data: sanitised,
         timestamp: now,
         expiry,
+        cachedAt: now,
         type,
       };
 
@@ -54,7 +99,10 @@ export class OfflineModeService {
     }
   }
 
-  static async getCachedContent(key: string): Promise<unknown | null> {
+  static async getCachedContent(
+    key: string,
+    ttlMs: number = DEFAULT_CACHE_TTL_MS
+  ): Promise<Record<string, unknown> | null> {
     try {
       const cachedStr = await AsyncStorage.getItem(`${CACHE_PREFIX}${key}`);
       if (!cachedStr) return null;
@@ -62,6 +110,11 @@ export class OfflineModeService {
       const cached: CachedContent = JSON.parse(cachedStr);
 
       if (Date.now() > cached.expiry) {
+        await this.clearCache(key);
+        return null;
+      }
+
+      if (cached.cachedAt && Date.now() - cached.cachedAt > ttlMs) {
         await this.clearCache(key);
         return null;
       }

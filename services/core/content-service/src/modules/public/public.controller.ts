@@ -1,6 +1,8 @@
 import { Controller, Get, Logger } from '@nestjs/common';
+import { Public } from '@azeebo/security';
 import { PrismaService } from '../database/prisma.service';
 
+@Public()
 @Controller('public')
 export class PublicController {
   private readonly logger = new Logger(PublicController.name);

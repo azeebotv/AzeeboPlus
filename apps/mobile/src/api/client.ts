@@ -6,9 +6,31 @@ interface ApiClientConfig {
   token: string | null;
 }
 
+/**
+ * RFC 7807 (Problem Details for HTTP APIs) error envelope.
+ * @see https://datatracker.ietf.org/doc/html/rfc7807
+ *
+ * Matches the web frontend and shared error-handling package interfaces.
+ */
 interface ApiError extends Error {
-  status?: number;
-  data?: unknown;
+  // --- RFC 7807 fields ---
+  type?: string;         // A URI reference that identifies the problem type
+  title?: string;        // A short, human-readable summary of the problem type
+  status?: number;       // HTTP status code
+  detail?: string;       // A human-readable explanation specific to this occurrence
+  instance?: string;     // A URI reference that identifies the specific occurrence
+
+  // --- Application-level fields ---
+  code?: string;         // Application-specific error code (e.g. "EMAIL_ALREADY_EXISTS")
+  error?: string;        // Legacy error string for backward compat
+  statusCode?: number;   // Legacy status code for backward compat
+  details?: {
+    fieldErrors?: Record<string, string[]>;
+    [key: string]: unknown;
+  };
+  timestamp?: string;    // ISO 8601 timestamp of the error
+  path?: string;         // Request path that caused the error
+  data?: unknown;        // Raw response body for diagnostics
 }
 
 class ApiClientClass {
@@ -67,9 +89,23 @@ class ApiClientClass {
 
       if (!response.ok) {
         const error: ApiError = new Error(
-          (data as { message?: string })?.message || 'An error occurred'
+          (data as { message?: string; detail?: string })?.message ||
+          (data as { detail?: string })?.detail ||
+          'An error occurred'
         );
+        // RFC 7807 fields
         error.status = response.status;
+        error.type = (data as { type?: string })?.type;
+        error.title = (data as { title?: string })?.title;
+        error.detail = (data as { detail?: string })?.detail;
+        error.instance = (data as { instance?: string })?.instance;
+        // Application-level fields
+        error.code = (data as { code?: string })?.code;
+        error.error = (data as { error?: string })?.error;
+        error.statusCode = response.status;
+        error.details = (data as { details?: ApiError['details'] })?.details;
+        error.timestamp = (data as { timestamp?: string })?.timestamp;
+        error.path = (data as { path?: string })?.path;
         error.data = data;
         throw error;
       }

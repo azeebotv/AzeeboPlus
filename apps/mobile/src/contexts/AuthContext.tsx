@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { authApi, userApi, apiClient, type User, type ApiResponse } from '../api';
 import { useStorage } from '../hooks/useStorage';
+import { useSecureStorage } from '../hooks/useSecureStorage';
 import { logger } from '../utils/logger';
 
 interface AuthContextType {
@@ -27,6 +28,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { getItem, setItem, removeItem } = useStorage();
+  // T-C06: Secure storage for JWT tokens (expo-secure-store with OS-level encryption)
+  const { getItem: getSecureItem, setItem: setSecureItem, removeItem: removeSecureItem } = useSecureStorage();
 
   useEffect(() => {
     checkAuth();
@@ -34,7 +37,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const checkAuth = async () => {
     try {
-      const token = await getItem('accessToken');
+      // T-C06: Read tokens from secure storage, user profile from regular storage
+      const token = await getSecureItem('accessToken');
       const userData = await getItem('user');
 
       if (token && userData) {
@@ -53,8 +57,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   ) => {
     if (response.success && response.data) {
       const { access_token, refresh_token, user: userData } = response.data;
-      await setItem('accessToken', access_token);
-      await setItem('refreshToken', refresh_token);
+      // T-C06: Store tokens in secure storage, user profile in regular storage
+      await setSecureItem('accessToken', access_token);
+      await setSecureItem('refreshToken', refresh_token);
       await setItem('user', JSON.stringify(userData));
       apiClient.setToken(access_token);
       setUser(userData);
@@ -99,8 +104,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       logger.error('Logout error', error);
     } finally {
-      await removeItem('accessToken');
-      await removeItem('refreshToken');
+      // T-C06: Remove tokens from secure storage, user from regular storage
+      await removeSecureItem('accessToken');
+      await removeSecureItem('refreshToken');
       await removeItem('user');
       apiClient.setToken(null);
       setUser(null);
@@ -138,7 +144,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const response = await userApi.getProfile();
       if (response.success && response.data) {
-        const userData = response.data as any;
+        const userData = response.data as User;
         const userObj: User = {
           id: userData.id,
           email: userData.email,

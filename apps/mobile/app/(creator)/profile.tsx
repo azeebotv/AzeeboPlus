@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
   Image,
 } from 'react-native';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useRouter, useLocalSearchParams, type Href } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { contentApi } from '../../src/api';
 import { logger } from '../../src/utils/logger';
@@ -217,7 +217,7 @@ export default function CreatorProfileScreen() {
             <TouchableOpacity
               key={content.id}
               style={styles.contentCard}
-              onPress={() => router.push(`/(creator)/content-detail?id=${content.id}` as any)}
+              onPress={() => router.push(`/(creator)/content-detail?id=${content.id}` as Href)}
             >
               <Image source={{ uri: content.thumbnail }} style={styles.contentThumbnail} />
               <View style={styles.contentInfo}>

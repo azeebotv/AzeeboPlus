@@ -1,4 +1,5 @@
 import { NodeSDK } from '@opentelemetry/sdk-node';
+import { ParentBased, TraceIdRatioBased } from '@opentelemetry/sdk-trace-base';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 import { Resource } from '@opentelemetry/resources';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
@@ -38,21 +39,7 @@ export function initializeOpenTelemetry(config: Partial<OpenTelemetryConfig> = {
       [SemanticResourceAttributes.DEPLOYMENT_ENVIRONMENT]: finalConfig.environment,
     }),
     traceExporter,
-  });
-
-  sdk.configurePipeline({
-    spanProcessor: {
-      exporter: traceExporter,
-      sampler: {
-        shouldSample: ({ traceId, parentId, name }) => {
-          // Sample based on configuration ratio
-          if (Math.random() < finalConfig.samplingRatio!) {
-            return { decision: 1, traceId, attributes: { 'otel.sample.priority': 1 } };
-          }
-          return { decision: 0, traceId, attributes: {} };
-        },
-      },
-    },
+    sampler: ParentBased({ root: TraceIdRatioBased(finalConfig.samplingRatio!) }),
   });
 
   registerInstrumentations({

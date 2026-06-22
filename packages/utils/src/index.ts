@@ -157,3 +157,5 @@ export function toNumber(value: string | number | undefined): number {
 export function addDecimals(value: number, decimals: number = 2): string {
   return value.toFixed(decimals);
 }
+
+export { withRetry, RetryOptions } from './retry';

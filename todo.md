@@ -426,7 +426,7 @@ This task is the primary detector for FABLE 5 pillar **F** violations: hard-code
 - **Findings:** P1-042..P1-045 (4 findings: 0 Critical, 0 High, 3 Medium, 1 Low).
 
 **Implementation instructions**
-Compare `CLAUDE.md`, `CONTRIBUTING.md`, `README.md`, `TASKS.md`, `issues.md`, `infra/INFRA_ISSUES_AND_FIXES.md`, `EXPO_ENVIRONMENT.md`, and every package-level `README.md` against current code.
+Compare `CLAUDE.md`, `CONTRIBUTING.md`, `README.md`, `tasks.md`, `infra/INFRA_ISSUES_AND_FIXES.md`, `EXPO_ENVIRONMENT.md`, and every package-level `README.md` against current code.
 
 **Root cause framing**
 Stale docs mislead new engineers and on-call responders — directly violates FABLE 5 pillar **E**.
@@ -473,7 +473,7 @@ No remediation is possible without a contract index. FABLE 5 pillar **A** requir
 3. Document the extraction date and commit SHA.
 
 **Success criteria**
-- Every endpoint across all 14 services indexed.
+- Every endpoint across all 27 services indexed.
 - Schema includes all 7 fields per §2.2 of the prompt.
 
 **Verification checklist**
@@ -805,45 +805,6 @@ Missing `PodSecurityStandards`, missing `NetworkPolicy`, and missing PDBs are th
 
 ---
 
-### T-P3-004 — Staging ↔ production parity diff  ✅ DONE
-- **Priority:** 🟠 P1 — High
-- **Owner:** DevOps/SRE
-- **Effort:** XL · **Risk:** low
-- **Depends on:** T-P3-002
-- **Blocks:** T-P3-004 (parity diff)
-
-**Implementation instructions**
-For every manifest under `infra/k8s/base/**`:
-- `Deployment`/`StatefulSet`: replicas, strategy, anti-affinity, `topologySpreadConstraints`.
-- `Service`/`Ingress`: TLS, host, class, annotations.
-- `HPA`: min/max, target metrics.
-- `PodDisruptionBudget`, `NetworkPolicy` (default-deny), `ServiceAccount` + `RBAC`.
-- Resource `requests`/`limits`/`probes`.
-- `priorityClassName`, `terminationGracePeriodSeconds`, `securityContext`, `seccompProfile`, `imagePullPolicy`.
-- `PodSecurityStandards: restricted` compliance.
-- Sidecar/init container footprint.
-
-Special manifests: `pgbouncer.yaml`, `postgres-ha.yaml`, `redis.yaml`, `queue-service.yaml`, `external-secrets.yaml`, `blue-green-config.yaml`.
-
-**Root cause framing**
-Missing `PodSecurityStandards`, missing `NetworkPolicy`, and missing PDBs are the three most common production-grade K8s gaps (FABLE 5 pillars **F**, **B**, **L**).
-
-**Resolution steps**
-1. Audit each manifest against the checklist above.
-2. Apply missing pieces (NetworkPolicy default-deny + explicit allow, restricted PSS, PDB).
-3. File findings.
-
-**Success criteria**
-- Every workload has requests/limits + probes.
-- Every workload has PDB.
-- Every namespace has default-deny NetworkPolicy.
-
-**Verification checklist**
-- [ ] All manifests reviewed.
-- [ ] Restricted PSS verified.
-
----
-
 ### T-P3-004 — Staging ↔ production parity diff
 - **Priority:** 🟠 P1 — High
 - **Owner:** DevOps/SRE
@@ -860,7 +821,7 @@ diff -ru infra/k8s/base/ infra/k8s/production/ >> audit-evidence/P3/parity.diff
 
 For each diff hunk, classify as *intentional* (with ADR citation) or *unintentional drift*. Reject silent drift.
 
-Also diff `secrets.example.yaml` against actual `secrets.yaml` (without leaking values) to ensure secret surface parity.
+Also diff `infra/k8s/staging/secrets.example.yaml` against actual `infra/k8s/secrets.yaml` (without leaking values) to ensure secret surface parity.
 
 **Root cause framing**
 Parity drift is the #1 cause of "works in staging, fails in prod" incidents (FABLE 5 pillar **B**).
@@ -1195,10 +1156,10 @@ For each issue `P?-NNN`, verify the FABLE 5 pillar(s) listed in the remediation 
 Per the user's explicit instruction in the AskUserQuestion response ("Run only honest Phase 0"), the following tasks are **deferred**, not failed and not faked:
 
 **Phase 1 — Codebase Audit (T-P1-001..T-P1-008, 8 tasks, all deferred)**
-- Reason: each requires reading every controller/page/test across 4 apps + 14 services + 17 packages and producing 6-item RCAs + `P1-NNN` findings. The verification checklists ("every Critical/High has an RCA block", "all file refs use `file://` links") cannot be honestly satisfied without hours of focused human review per task. Doing it from this session would require fabricating evidence, which [COMPREHENSIVE_AUDIT_PROMPT.md](file:///Users/deprof/www/azeebo+/COMPREHENSIVE_AUDIT_PROMPT.md) §1 forbids ("surface-level fixes are explicitly forbidden").
+- Reason: each requires reading every controller/page/test across 4 apps + 27 services + 17 packages and producing 6-item RCAs + `P1-NNN` findings. The verification checklists ("every Critical/High has an RCA block", "all file refs use `file://` links") cannot be honestly satisfied without hours of focused human review per task. Doing it from this session would require fabricating evidence, which [COMPREHENSIVE_AUDIT_PROMPT.md](file:///Users/deprof/www/azeebo+/COMPREHENSIVE_AUDIT_PROMPT.md) §1 forbids ("surface-level fixes are explicitly forbidden").
 
 **Phase 2 — API Mismatch (T-P2-001..T-P2-006, 6 tasks, all deferred)**
-- Reason: T-P2-001 alone requires extracting every `@Controller` route across ~14 services, with DTO classes and guard metadata — typically done with `ts-morph` or `nestjs-router` introspector and produces JSON artefacts of hundreds of KB. T-P2-002 the same for 4 frontends. Without those two indexes, T-P2-003..T-P2-006 cannot begin.
+- Reason: T-P2-001 alone requires extracting every `@Controller` route across ~27 services, with DTO classes and guard metadata — typically done with `ts-morph` or `nestjs-router` introspector and produces JSON artefacts of hundreds of KB. T-P2-002 the same for 4 frontends. Without those two indexes, T-P2-003..T-P2-006 cannot begin.
 
 **Phase 3 — Deployment / Infra (T-P3-001..T-P3-007, 7 tasks, all deferred)**
 - Reason: T-P3-001 requires inspecting all 9 GH workflows for SHA-pinned actions; T-P3-003 requires reading ~40 K8s manifests + proposing patches; T-P3-004 requires a literal `diff` between `infra/k8s/staging/` and `infra/k8s/production/`; T-P3-007 requires Kyverno/OPA policy authoring. All are real engineering deliverables, not file listings.

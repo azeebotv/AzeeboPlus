@@ -122,7 +122,7 @@ export default function SuperVoteScreen() {
           { text: 'Cancel', style: 'cancel' },
           {
             text: 'Add Funds',
-            onPress: () => router.push('/(tabs)/wallet/add-funds' as any),
+            onPress: () => router.push('/(tabs)/wallet/add-funds'),
           },
         ]
       );

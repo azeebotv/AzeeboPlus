@@ -1,8 +1,7 @@
-/* eslint-disable @typescript-eslint/explicit-function-return-type */
 import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import twilio from 'twilio';
-import { CircuitBreaker, CircuitBreakerOpenError } from '@azeebo/shared-types';
+import { CircuitBreaker, CircuitBreakerOpenError, CircuitBreakerStats } from '@azeebo/shared-types';
 
 @Injectable()
 export class SmsService implements OnModuleInit {
@@ -19,7 +18,7 @@ export class SmsService implements OnModuleInit {
     });
   }
 
-  async onModuleInit() {
+  async onModuleInit(): Promise<void> {
     const accountSid = this.configService.get('TWILIO_ACCOUNT_SID');
     const authToken = this.configService.get('TWILIO_AUTH_TOKEN');
     const fromNumber = this.configService.get('TWILIO_PHONE_NUMBER');
@@ -33,7 +32,7 @@ export class SmsService implements OnModuleInit {
     }
   }
 
-  async sendSms(to: string, message: string) {
+  async sendSms(to: string, message: string): Promise<boolean> {
     if (!this.smsEnabled || !this.client) {
       this.logger.warn('Twilio client not initialized. SMS not sent.');
       return false;
@@ -61,7 +60,7 @@ export class SmsService implements OnModuleInit {
     }
   }
 
-  async sendSmsWithTemplate(to: string, templateName: string, data: Record<string, unknown>) {
+  async sendSmsWithTemplate(to: string, templateName: string, data: Record<string, unknown>): Promise<boolean> {
     const message = this.getTemplateMessage(templateName, data);
     return this.sendSms(to, message);
   }
@@ -91,7 +90,7 @@ export class SmsService implements OnModuleInit {
     }
   }
 
-  async sendBulkSms(numbers: string[], message: string) {
+  async sendBulkSms(numbers: string[], message: string): Promise<boolean> {
     if (!this.smsEnabled || !this.client) {
       this.logger.warn('Twilio client not initialized. Bulk SMS not sent.');
       return false;
@@ -123,7 +122,7 @@ export class SmsService implements OnModuleInit {
     }
   }
 
-  async getSmsStatus(messageSid: string) {
+  async getSmsStatus(messageSid: string): Promise<string | null> {
     if (!this.smsEnabled || !this.client) {
       this.logger.warn('Twilio client not initialized. Cannot get SMS status.');
       return null;
@@ -139,7 +138,7 @@ export class SmsService implements OnModuleInit {
     }
   }
 
-  getCircuitBreakerStats() {
+  getCircuitBreakerStats(): CircuitBreakerStats {
     return this.circuitBreaker.getStats();
   }
 }

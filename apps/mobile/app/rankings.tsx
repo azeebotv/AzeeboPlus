@@ -142,7 +142,7 @@ export default function RankingsScreen() {
             <TouchableOpacity
               key={entry.userId}
               style={styles.listItem}
-              onPress={() => router.push(`/profile/${entry.userId}` as any)}
+              onPress={() => router.push(`/profile/${entry.userId}`)}
             >
               <Text style={styles.rankText}>#{entry.rank}</Text>
               <Text style={styles.listName}>{entry.displayName}</Text>

@@ -37,7 +37,7 @@ export default function DeviceManagementScreen() {
 
   const loadDevices = async () => {
     try {
-      const response = await (authApi as any).getDevices();
+      const response = await authApi.getDevices();
       if (response.success && response.data) {
         setDevices(response.data);
       }
@@ -62,7 +62,7 @@ export default function DeviceManagementScreen() {
         style: 'destructive',
         onPress: async () => {
           try {
-            await (authApi as any).revokeDevice(deviceId);
+            await authApi.revokeDevice(deviceId);
             setDevices(devices.filter((d) => d.id !== deviceId));
           } catch (error) {
             Alert.alert('Error', 'Failed to revoke device');

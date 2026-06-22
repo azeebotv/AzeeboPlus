@@ -83,9 +83,9 @@ model SavedItem {
 model Wallet {
   id           String   @id @default(uuid())
   userId       String   @unique
-  balance Decimal    @default(0)
-  bonusBalance Decimal    @default(0)
-  promoBalance Decimal    @default(0)
+  balance Decimal    @default(0) @db.Decimal(18, 2)
+  bonusBalance Decimal    @default(0) @db.Decimal(18, 2)
+  promoBalance Decimal    @default(0) @db.Decimal(18, 2)
   currency     String   @default("NGN")
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -100,7 +100,7 @@ model WalletTransaction {
   id          String   @id @default(uuid())
   walletId    String
   type        String // credit, debit, bonus, promo, refund
-  amount Decimal
+  amount Decimal  @db.Decimal(18, 2)
   status      String // pending, completed, failed, reversed
   description String?
   reference   String?
@@ -138,7 +138,7 @@ model Notification {
 model PaymentIntent {
   id                String    @id @default(uuid())
   userId            String
-  amount Decimal
+  amount Decimal  @db.Decimal(18, 2)
   currency          String    @default("NGN")
   status            String // pending, processing, completed, failed, refunded
   description       String?
@@ -161,7 +161,7 @@ model PaymentIntent {
 model Refund {
   id                String   @id @default(uuid())
   paymentIntentId   String
-  amount Decimal
+  amount Decimal  @db.Decimal(18, 2)
   reason            String
   status            String // pending, processing, completed, failed
   providerReference String?
@@ -666,7 +666,7 @@ model Supervote {
   userId       String
   contestantId String
   showId       String
-  amount       Decimal  @default(10)
+  amount       Decimal  @default(10) @db.Decimal(18, 2)
   createdAt    DateTime @default(now())
 
   user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)

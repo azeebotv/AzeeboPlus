@@ -138,7 +138,13 @@ export class CircuitBreakerProxyService {
               };
             } catch (retryError) {
               lastError = retryError as Error;
-              const shouldRetry = attempt < DEFAULT_RETRY_CONFIG.retries && this.shouldRetryStatus((retryError as any).status);
+              const retryStatus =
+                typeof retryError === 'object' &&
+                retryError !== null &&
+                'status' in retryError
+                  ? (retryError as { status: number }).status
+                  : undefined;
+              const shouldRetry = attempt < DEFAULT_RETRY_CONFIG.retries && this.shouldRetryStatus(retryStatus);
               if (!shouldRetry) {
                 throw retryError;
               }

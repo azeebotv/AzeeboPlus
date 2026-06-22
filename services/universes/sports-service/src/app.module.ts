@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { APP_INTERCEPTOR } from '@nestjs/core';
+import { APP_INTERCEPTOR, APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { DatabaseModule } from './modules/database/database.module';
 import { SportsModule } from './modules/sports/sports.module';
@@ -10,6 +10,7 @@ import { HealthModule } from './modules/health/health.module';
 import { ResponseWrapperInterceptor, ResponseSanitizationInterceptor } from '@azeebo/logger';
 import { AdminModule } from './modules/admin/admin.module';
 import { RateLimiterModule } from '@azeebo/security';
+import { ServiceAuthGuard } from '@azeebo/security';
 
 @Module({
   imports: [
@@ -33,6 +34,10 @@ import { RateLimiterModule } from '@azeebo/security';
     {
       provide: APP_INTERCEPTOR,
       useClass: ResponseSanitizationInterceptor,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: ServiceAuthGuard,
     },
   ],
 })

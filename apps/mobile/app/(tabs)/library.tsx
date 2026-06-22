@@ -47,10 +47,28 @@ export default function LibraryScreen() {
         contentApi.getWatchHistory(1, 50),
       ]);
       if (savedRes.success && savedRes.data) {
-        setWatchlist(savedRes.data.items as any);
+        setWatchlist(
+          savedRes.data.items.map((item) => ({
+            id: item.id,
+            title: item.title,
+            thumbnail: item.thumbnail,
+            savedAt: item.createdAt,
+            type: item.contentType ?? 'content',
+          }))
+        );
       }
       if (historyRes.success && historyRes.data) {
-        setHistory(historyRes.data.items as any);
+        setHistory(
+          historyRes.data.items.map((item) => ({
+            id: item.id,
+            contentId: item.id,
+            title: item.title,
+            thumbnail: item.thumbnail,
+            watchedAt: item.updatedAt,
+            progress: 0,
+            duration: item.duration ?? 0,
+          }))
+        );
       }
     } catch (err: any) {
       setError(err.message || 'Failed to load library');

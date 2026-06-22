@@ -1,9 +1,8 @@
-/* eslint-disable @typescript-eslint/explicit-function-return-type */
 import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
 import sgMail from '@sendgrid/mail';
 import * as Handlebars from 'handlebars';
 import { ConfigService } from '@nestjs/config';
-import { CircuitBreaker, CircuitBreakerOpenError } from '@azeebo/shared-types';
+import { CircuitBreaker, CircuitBreakerOpenError, CircuitBreakerStats } from '@azeebo/shared-types';
 
 @Injectable()
 export class EmailService implements OnModuleInit {
@@ -20,7 +19,7 @@ export class EmailService implements OnModuleInit {
     });
   }
 
-  async onModuleInit() {
+  async onModuleInit(): Promise<void> {
     const sendgridApiKey = this.configService.get('SENDGRID_API_KEY');
 
     if (sendgridApiKey) {
@@ -34,7 +33,7 @@ export class EmailService implements OnModuleInit {
     this.registerTemplates();
   }
 
-  private registerTemplates() {
+  private registerTemplates(): void {
     this.templates['welcome'] = Handlebars.compile(`
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h1 style="color: #333;">Welcome to Azeebo+!</h1>
@@ -167,11 +166,11 @@ export class EmailService implements OnModuleInit {
     }
   }
 
-  addTemplate(name: string, template: string) {
+  addTemplate(name: string, template: string): void {
     this.templates[name] = Handlebars.compile(template);
   }
 
-  getCircuitBreakerStats() {
+  getCircuitBreakerStats(): CircuitBreakerStats {
     return this.circuitBreaker.getStats();
   }
 }

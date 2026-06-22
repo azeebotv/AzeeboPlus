@@ -116,7 +116,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await apiClient.post('/wallet/transfer', {
+      const response = await apiClient.post('/v1/wallet/transfer', {
         amount,
         recipientId,
         description,

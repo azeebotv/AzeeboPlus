@@ -1,5 +1,7 @@
 import { Controller, Get, HttpCode, HttpStatus } from '@nestjs/common';
+import { Public } from '@azeebo/security';
 
+@Public()
 @Controller('health')
 export class HealthController {
   @Get()

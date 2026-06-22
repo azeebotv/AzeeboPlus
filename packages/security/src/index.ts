@@ -13,6 +13,9 @@ export {
 } from './helmet.config';
 export { RequestIdMiddleware } from './request-id.middleware';
 export { AdminGuard, AdminGuardOptions } from './guards/admin.guard';
+export { ServiceAuthGuard } from './guards/service-auth.guard';
 export { PermissionsGuard } from './guards/permissions.guard';
+export { IdempotencyGuard } from './guards/idempotency.guard';
 export { Permissions } from './decorators/permissions.decorator';
+export { Public, IS_PUBLIC_KEY } from './decorators/public.decorator';
 export { PERMISSIONS_KEY } from '@azeebo/shared-types';

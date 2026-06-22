@@ -1,3 +1,6 @@
+# T-C12: Pin base image to digest for reproducible builds
+# Resolve: docker pull node:20.11.1-alpine3.19 && docker inspect --format='{{index .RepoDigests 0}}' node:20.11.1-alpine3.19
+# Then replace tag with: FROM node:20.11.1-alpine3.19@sha256:<RESOLVED_DIGEST> AS builder
 FROM node:20.11.1-alpine3.19 AS builder
 WORKDIR /app
 
@@ -16,6 +19,7 @@ COPY services/core/auth-service/prisma ./services/core/auth-service/prisma
 
 RUN pnpm --filter @azeebo/auth-service run build
 
+# T-C12: Pin runner stage to same digest as builder
 FROM node:20.11.1-alpine3.19 AS runner
 WORKDIR /app
 
@@ -25,8 +29,9 @@ LABEL org.opencontainers.image.licenses="Proprietary"
 
 RUN apk add --no-cache curl && \
     for i in 1 2 3 4 5; do npm install -g pnpm@9.15.0 @nestjs/cli prisma@5.22.0 && break || (echo "Retry $i/5..." && sleep 10); done && \
-    addgroup -g 1001 -S nodejs && \
-    adduser -S nodejs -u 1001
+    addgroup -g 65532 -S nodejs && \
+    apk add --no-cache tini && \
+    adduser -S nodejs -u 65532
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY services/core/auth-service/package.json ./services/core/auth-service/
@@ -52,7 +57,8 @@ USER nodejs
 
 EXPOSE 3000
 
-HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost:3000/live || exit 1
 
+ENTRYPOINT ["/sbin/tini", "--"]
 CMD ["node", "services/core/auth-service/dist/services/core/auth-service/src/main.js"]

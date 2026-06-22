@@ -1,102 +1,112 @@
 import { isPlaceholderSecret, validateNoPlaceholders } from './secret-validation';
 
-describe('Secret Validation', () => {
-  describe('isPlaceholderSecret', () => {
-    it('should detect "your_secret_key" as placeholder', () => {
-      expect(isPlaceholderSecret('your_secret_key')).toBe(true);
-    });
+// Mock console to suppress output during tests
+beforeEach(() => {
+  jest.spyOn(console, 'log').mockImplementation(() => {});
+  jest.spyOn(console, 'warn').mockImplementation(() => {});
+  jest.spyOn(console, 'error').mockImplementation(() => {});
+});
 
-    it('should detect "change_me" as placeholder', () => {
-      expect(isPlaceholderSecret('change_me')).toBe(true);
-    });
+afterEach(() => {
+  jest.restoreAllMocks();
+});
 
-    it('should detect "example_value" as placeholder', () => {
-      expect(isPlaceholderSecret('example_value')).toBe(true);
-    });
-
-    it('should detect "xxx" as placeholder', () => {
-      expect(isPlaceholderSecret('xxx')).toBe(true);
-    });
-
-    it('should detect "test123" as placeholder', () => {
-      expect(isPlaceholderSecret('test123')).toBe(true);
-    });
-
-    it('should detect "dummy_key" as placeholder', () => {
-      expect(isPlaceholderSecret('dummy_key')).toBe(true);
-    });
-
-    it('should detect "secret_value" as placeholder', () => {
-      expect(isPlaceholderSecret('secret_value')).toBe(true);
-    });
-
-    it('should detect "password123" as placeholder', () => {
-      expect(isPlaceholderSecret('password123')).toBe(true);
-    });
-
-    it('should accept a real JWT secret', () => {
-      expect(isPlaceholderSecret('a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0')).toBe(false);
-    });
-
-    it('should accept a base64 encoded secret', () => {
-      expect(isPlaceholderSecret('dGhpcyBpcyBhIHJlYWwgc2VjcmV0IGtleQ==')).toBe(false);
-    });
-
-    it('should accept a hex encoded key', () => {
-      expect(isPlaceholderSecret('a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4')).toBe(false);
-    });
+describe('isPlaceholderSecret', () => {
+  it('should detect "your_*" patterns', () => {
+    expect(isPlaceholderSecret('your_secret_key_here')).toBe(true);
+    expect(isPlaceholderSecret('your-api-key')).toBe(true);
   });
 
-  describe('validateNoPlaceholders', () => {
-    it('should return empty array when all secrets are valid', () => {
-      const env = {
-        JWT_ACCESS_SECRET: 'a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6',
-        JWT_REFRESH_SECRET: 'x9y8z7w6v5u4t3s2r1q0p9o8n7m6l5k4',
-      };
-      const secretKeys = ['JWT_ACCESS_SECRET', 'JWT_REFRESH_SECRET'];
+  it('should detect "change_me" patterns', () => {
+    expect(isPlaceholderSecret('change_me')).toBe(true);
+    expect(isPlaceholderSecret('changeMe123')).toBe(true);
+  });
 
-      const result = validateNoPlaceholders(env, secretKeys);
+  it('should detect "replace_me" patterns', () => {
+    expect(isPlaceholderSecret('replace_me')).toBe(true);
+    expect(isPlaceholderSecret('replace-me-now')).toBe(true);
+  });
 
-      expect(result).toEqual([]);
-    });
+  it('should detect "example" patterns', () => {
+    expect(isPlaceholderSecret('example_secret')).toBe(true);
+  });
 
-    it('should return keys with placeholder values', () => {
-      const env = {
-        JWT_ACCESS_SECRET: 'your_jwt_secret',
-        JWT_REFRESH_SECRET: 'x9y8z7w6v5u4t3s2r1q0p9o8n7m6l5k4',
-      };
-      const secretKeys = ['JWT_ACCESS_SECRET', 'JWT_REFRESH_SECRET'];
+  it('should detect "xxx" patterns', () => {
+    expect(isPlaceholderSecret('xxx')).toBe(true);
+    expect(isPlaceholderSecret('xxxxx')).toBe(true);
+  });
 
-      const result = validateNoPlaceholders(env, secretKeys);
+  it('should detect "placeholder" patterns', () => {
+    expect(isPlaceholderSecret('placeholder_key')).toBe(true);
+  });
 
-      expect(result).toContain('JWT_ACCESS_SECRET');
-      expect(result).not.toContain('JWT_REFRESH_SECRET');
-    });
+  it('should detect "test" patterns', () => {
+    expect(isPlaceholderSecret('test_secret')).toBe(true);
+  });
 
-    it('should ignore undefined keys', () => {
-      const env = {
-        JWT_ACCESS_SECRET: 'a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6',
-      };
-      const secretKeys = ['JWT_ACCESS_SECRET', 'JWT_REFRESH_SECRET'];
+  it('should detect "dummy" patterns', () => {
+    expect(isPlaceholderSecret('dummy_key')).toBe(true);
+  });
 
-      const result = validateNoPlaceholders(env, secretKeys);
+  it('should detect "secret" patterns', () => {
+    expect(isPlaceholderSecret('secret_key_value')).toBe(true);
+  });
 
-      expect(result).toEqual([]);
-    });
+  it('should detect "password" patterns', () => {
+    expect(isPlaceholderSecret('password123')).toBe(true);
+  });
 
-    it('should detect multiple placeholders', () => {
-      const env = {
-        JWT_ACCESS_SECRET: 'test_secret',
-        JWT_REFRESH_SECRET: 'dummy_key',
-        SESSION_SECRET: 'a1b2c3d4e5f6g7h8',
-      };
-      const secretKeys = ['JWT_ACCESS_SECRET', 'JWT_REFRESH_SECRET', 'SESSION_SECRET'];
+  it('should detect "key" patterns', () => {
+    expect(isPlaceholderSecret('key_value')).toBe(true);
+  });
 
-      const result = validateNoPlaceholders(env, secretKeys);
+  it('should detect "token" patterns', () => {
+    expect(isPlaceholderSecret('token_value')).toBe(true);
+  });
 
-      expect(result).toContain('JWT_ACCESS_SECRET');
-      expect(result).toContain('JWT_REFRESH_SECRET');
-      expect(result).not.toContain('SESSION_SECRET');
-    });
+  it('should return false for real-looking secrets', () => {
+    expect(isPlaceholderSecret('sk_live_abc123def456')).toBe(false);
+    expect(isPlaceholderSecret('AKIAIOSFODNN7EXAMPLE')).toBe(false);
+  });
+
+  it('should return false for empty string', () => {
+    expect(isPlaceholderSecret('')).toBe(false);
+  });
+});
+
+describe('validateNoPlaceholders', () => {
+  it('should find placeholder secrets', () => {
+    const env = {
+      JWT_SECRET: 'your_secret_key',
+      API_KEY: 'real_key_12345',
+      DB_PASSWORD: 'change_me',
+    };
+    const result = validateNoPlaceholders(env, ['JWT_SECRET', 'API_KEY', 'DB_PASSWORD']);
+    expect(result).toContain('JWT_SECRET');
+    expect(result).toContain('DB_PASSWORD');
+    expect(result).not.toContain('API_KEY');
+  });
+
+  it('should return empty array when no placeholders', () => {
+    const env = {
+      JWT_SECRET: 'sk_live_abc123def456ghi789',
+      API_KEY: 'real_key_12345',
+    };
+    const result = validateNoPlaceholders(env, ['JWT_SECRET', 'API_KEY']);
+    expect(result).toEqual([]);
+  });
+
+  it('should handle undefined values', () => {
+    const env = {
+      JWT_SECRET: undefined,
+    };
+    const result = validateNoPlaceholders(env, ['JWT_SECRET']);
+    expect(result).toEqual([]);
+  });
+
+  it('should handle empty secret keys list', () => {
+    const env = { KEY: 'value' };
+    const result = validateNoPlaceholders(env, []);
+    expect(result).toEqual([]);
   });
 });

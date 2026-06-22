@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
+import { Prisma } from '../../prisma/client';
 
 interface AuditLogEntry {
   actorId: string;
@@ -24,7 +25,7 @@ export class AdminService {
         action: entry.action,
         targetType: entry.targetType,
         targetId: entry.targetId,
-        details: (entry.details || {}) as any,
+        details: (entry.details || {}) as Prisma.InputJsonValue,
         ipAddress: entry.ipAddress,
         userAgent: entry.userAgent,
       },

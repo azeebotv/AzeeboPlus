@@ -8,11 +8,45 @@ const BIOMETRIC_CREDENTIALS_KEY = 'biometric_credentials';
 
 export type BiometricType = 'face' | 'fingerprint' | 'iris' | 'none';
 
+/**
+ * Typed credentials for biometric storage.
+ * SECURITY: Never store JWT tokens or raw auth tokens in biometric storage.
+ * Only store non-sensitive identifiers needed for app-launch unlock.
+ */
+export interface BiometricCredentials {
+  userId: string;
+  email: string;
+  timestamp: number;
+}
+
 export interface BiometricResult {
   success: boolean;
   error?: string;
   biometricType?: BiometricType;
 }
+
+
+/**
+ * Biometric authentication service for app-launch unlock convenience.
+ *
+ * **This is NOT a token store.** Biometric credentials contain only the
+ * non-sensitive identifiers (userId, email) needed to re-display the user's
+ * identity on the unlock screen. Actual auth tokens (JWTs) are stored in
+ * `expo-secure-store`, which uses hardware-backed Keystore (Android) /
+ * Secure Enclave (iOS) for encryption at rest.
+ *
+ * Flow:
+ * 1. On login, `enableBiometrics()` stores userId + email in SecureStore.
+ * 2. On app launch, `authenticateWithStoredCredentials()` prompts biometric
+ *    verification, then returns the stored identifiers so the UI can show
+ *    the user's name/email while the real token refresh happens in the
+ *    background.
+ * 3. Biometric credentials do NOT contain JWT tokens. If the refresh token
+ *    is expired the user must re-enter their password.
+ *
+ * @see BiometricCredentials - the shape of data stored here
+ * @see expo-secure-store - where actual auth tokens live
+ */
 
 export class BiometricAuthService {
   static async isAvailable(): Promise<boolean> {
@@ -69,7 +103,7 @@ export class BiometricAuthService {
         promptMessage,
         cancelLabel,
         fallbackLabel: 'Use Passcode',
-        disableDeviceFallback: true,
+        disableDeviceFallback: false,
       });
 
       if (result.success) {
@@ -92,7 +126,7 @@ export class BiometricAuthService {
     }
   }
 
-  static async enableBiometrics(credentials: string): Promise<boolean> {
+  static async enableBiometrics(credentials: BiometricCredentials): Promise<boolean> {
     try {
       const authResult = await this.authenticate('Enable biometric authentication');
 
@@ -100,8 +134,15 @@ export class BiometricAuthService {
         return false;
       }
 
+      // SECURITY: Validate that credentials do not contain tokens
+      const credentialStr = JSON.stringify(credentials);
+      if (credentialStr.includes('token') || credentialStr.includes('Token') || credentialStr.includes('jwt') || credentialStr.includes('JWT')) {
+        logger.error('Attempted to store token-shaped data in biometric storage');
+        return false;
+      }
+
       await SecureStore.setItemAsync(BIOMETRIC_ENABLED_KEY, 'true');
-      await SecureStore.setItemAsync(BIOMETRIC_CREDENTIALS_KEY, credentials);
+      await SecureStore.setItemAsync(BIOMETRIC_CREDENTIALS_KEY, credentialStr);
 
       return true;
     } catch (error) {

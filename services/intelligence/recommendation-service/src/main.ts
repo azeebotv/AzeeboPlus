@@ -1,6 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { Logger, ValidationPipe } from '@nestjs/common';
+import { Logger, ValidationPipe, VersioningType } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
 import { validateEnvironment } from '@azeebo/shared-types';
@@ -21,7 +21,7 @@ async function bootstrap(): Promise<void> {
       contentSecurityPolicy: {
         directives: {
           defaultSrc: ["'self'"],
-          styleSrc: ["'self'", "'unsafe-inline'"],
+          styleSrc: ["'self'"],
           imgSrc: ["'self'", 'data:', 'https:'],
         },
       },
@@ -31,8 +31,6 @@ async function bootstrap(): Promise<void> {
       },
     })
   );
-
-  app.setGlobalPrefix('v1/recommendation');
 
   app.useGlobalPipes(
     new ValidationPipe({
@@ -63,6 +61,9 @@ async function bootstrap(): Promise<void> {
     SwaggerModule.setup('docs', app, document);
     Logger.log('Swagger documentation enabled at /docs');
   }
+
+  // API versioning
+  app.enableVersioning({ type: VersioningType.URI, prefix: 'v', defaultVersion: '1' });
 
   app.enableShutdownHooks();
   await app.listen(process.env.PORT || 3009);

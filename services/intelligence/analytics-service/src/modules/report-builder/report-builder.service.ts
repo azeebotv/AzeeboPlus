@@ -1,4 +1,5 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Prisma, PrismaClient, ProductEvent } from '@prisma/client';
 import { PrismaService } from '../database/prisma.service';
 import {
   CreateReportDto,
@@ -9,9 +10,11 @@ import {
   DimensionConfig,
 } from './dto/report-builder.dto';
 
+type ReportRow = Record<string, unknown>;
+
 interface ReportResult {
   success: boolean;
-  data?: any;
+  data?: ReportRow | ReportRow[] | unknown;
   columns?: string[];
   error?: string;
   message?: string;
@@ -56,9 +59,9 @@ export class ReportBuilderService {
           description: dto.description,
           category: dto.category || 'general',
           createdBy: userId,
-          metrics: dto.metrics as any,
-          dimensions: dto.dimensions as any,
-          filters: (dto.filters || []) as any,
+          metrics: dto.metrics as unknown as Prisma.InputJsonValue,
+          dimensions: dto.dimensions as unknown as Prisma.InputJsonValue,
+          filters: (dto.filters || []) as unknown as Prisma.InputJsonValue,
           dateField: dto.dateField || 'createdAt',
           dateRange: dto.dateRange || '30d',
           startDate: dto.startDate ? new Date(dto.startDate) : null,
@@ -201,7 +204,7 @@ export class ReportBuilderService {
             endDate,
             additionalFilters,
             groupBy: dto.groupBy,
-          } as any,
+          } as unknown as Prisma.InputJsonValue,
         },
       });
 
@@ -262,16 +265,16 @@ export class ReportBuilderService {
           ...(dto.name && { name: dto.name }),
           ...(dto.description !== undefined && { description: dto.description }),
           ...(dto.category && { category: dto.category }),
-          ...(dto.metrics && { metrics: dto.metrics as any }),
-          ...(dto.dimensions && { dimensions: dto.dimensions as any }),
-          ...(dto.filters !== undefined && { filters: dto.filters as any }),
+          ...(dto.metrics && { metrics: dto.metrics as unknown as Prisma.InputJsonValue }),
+          ...(dto.dimensions && { dimensions: dto.dimensions as unknown as Prisma.InputJsonValue }),
+          ...(dto.filters !== undefined && { filters: dto.filters as unknown as Prisma.InputJsonValue }),
           ...(dto.dateField && { dateField: dto.dateField }),
           ...(dto.dateRange && { dateRange: dto.dateRange }),
           ...(dto.startDate && { startDate: new Date(dto.startDate) }),
           ...(dto.endDate && { endDate: new Date(dto.endDate) }),
           ...(dto.isPublic !== undefined && { isPublic: dto.isPublic }),
-          ...(dto.chartConfig && { chartConfig: dto.chartConfig }),
-        } as any,
+          ...(dto.chartConfig && { chartConfig: dto.chartConfig as unknown as Prisma.InputJsonValue }),
+        } as unknown as Prisma.CustomReportUpdateInput,
       });
 
       return {
@@ -491,20 +494,20 @@ export class ReportBuilderService {
           const countKeys = Object.keys(query._count);
           const countField = this.mapFieldName(countKeys[0]);
           const result = await this.prisma.productEvent.groupBy({
-            by: groupByFields.length > 0 ? (groupByFields as any) : undefined,
+            by: (groupByFields.length > 0 ? groupByFields : undefined) as unknown as (keyof ProductEvent)[],
             where,
-            _count: { [countField]: true } as any,
+            _count: { [countField]: true },
             orderBy,
             take: query.take,
             skip: query.skip,
           });
 
-          return result.map((row: any) => {
-            const transformed: Record<string, unknown> = {};
+          return result.map((row) => {
+            const transformed: ReportRow = {};
             Object.keys(query.select || {})
               .filter((f) => f !== 'id')
               .forEach((f) => {
-                transformed[f] = row[this.mapFieldName(f)];
+                transformed[f] = row[this.mapFieldName(f) as keyof typeof row];
               });
             transformed[`${countKeys[0]}_count`] = row._count[countField];
             return transformed;
@@ -514,9 +517,8 @@ export class ReportBuilderService {
         if (query._sum) {
           const sumKeys = Object.keys(query._sum);
           const sumField = this.mapFieldName(sumKeys[0]);
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const result = await (this.prisma.productEvent.groupBy as any)({
-            by: groupByFields.length > 0 ? groupByFields : undefined,
+          const result = await this.prisma.productEvent.groupBy({
+            by: (groupByFields.length > 0 ? groupByFields : undefined) as unknown as (keyof ProductEvent)[],
             where,
             _sum: { [sumField]: true },
             orderBy,
@@ -524,12 +526,12 @@ export class ReportBuilderService {
             skip: query.skip,
           });
 
-          return result.map((row: any) => {
-            const transformed: Record<string, unknown> = {};
+          return result.map((row) => {
+            const transformed: ReportRow = {};
             Object.keys(query.select || {})
               .filter((f) => f !== 'id')
               .forEach((f) => {
-                transformed[f] = row[this.mapFieldName(f)];
+                transformed[f] = row[this.mapFieldName(f) as keyof typeof row];
               });
             transformed[`${sumKeys[0]}_sum`] = row._sum[sumField];
             return transformed;
@@ -539,9 +541,8 @@ export class ReportBuilderService {
         if (query._avg) {
           const avgKeys = Object.keys(query._avg);
           const avgField = this.mapFieldName(avgKeys[0]);
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const result = await (this.prisma.productEvent.groupBy as any)({
-            by: groupByFields.length > 0 ? groupByFields : undefined,
+          const result = await this.prisma.productEvent.groupBy({
+            by: (groupByFields.length > 0 ? groupByFields : undefined) as unknown as (keyof ProductEvent)[],
             where,
             _avg: { [avgField]: true },
             orderBy,
@@ -549,12 +550,12 @@ export class ReportBuilderService {
             skip: query.skip,
           });
 
-          return result.map((row: any) => {
-            const transformed: Record<string, unknown> = {};
+          return result.map((row) => {
+            const transformed: ReportRow = {};
             Object.keys(query.select || {})
               .filter((f) => f !== 'id')
               .forEach((f) => {
-                transformed[f] = row[this.mapFieldName(f)];
+                transformed[f] = row[this.mapFieldName(f) as keyof typeof row];
               });
             transformed[`${avgKeys[0]}_avg`] = row._avg[avgField];
             return transformed;
@@ -565,20 +566,20 @@ export class ReportBuilderService {
           const minKeys = Object.keys(query._min);
           const minField = this.mapFieldName(minKeys[0]);
           const result = await this.prisma.productEvent.groupBy({
-            by: groupByFields.length > 0 ? (groupByFields as any) : undefined,
+            by: (groupByFields.length > 0 ? groupByFields : undefined) as unknown as (keyof ProductEvent)[],
             where,
-            _min: { [minField]: true } as any,
+            _min: { [minField]: true },
             orderBy,
             take: query.take,
             skip: query.skip,
           });
 
-          return result.map((row: any) => {
-            const transformed: Record<string, unknown> = {};
+          return result.map((row) => {
+            const transformed: ReportRow = {};
             Object.keys(query.select || {})
               .filter((f) => f !== 'id')
               .forEach((f) => {
-                transformed[f] = row[this.mapFieldName(f)];
+                transformed[f] = row[this.mapFieldName(f) as keyof typeof row];
               });
             transformed[`${minKeys[0]}_min`] = row._min[minField];
             return transformed;
@@ -589,20 +590,20 @@ export class ReportBuilderService {
           const maxKeys = Object.keys(query._max);
           const maxField = this.mapFieldName(maxKeys[0]);
           const result = await this.prisma.productEvent.groupBy({
-            by: groupByFields.length > 0 ? (groupByFields as any) : undefined,
+            by: (groupByFields.length > 0 ? groupByFields : undefined) as unknown as (keyof ProductEvent)[],
             where,
-            _max: { [maxField]: true } as any,
+            _max: { [maxField]: true },
             orderBy,
             take: query.take,
             skip: query.skip,
           });
 
-          return result.map((row: any) => {
-            const transformed: Record<string, unknown> = {};
+          return result.map((row) => {
+            const transformed: ReportRow = {};
             Object.keys(query.select || {})
               .filter((f) => f !== 'id')
               .forEach((f) => {
-                transformed[f] = row[this.mapFieldName(f)];
+                transformed[f] = row[this.mapFieldName(f) as keyof typeof row];
               });
             transformed[`${maxKeys[0]}_max`] = row._max[maxField];
             return transformed;
@@ -613,7 +614,7 @@ export class ReportBuilderService {
       // Regular findMany without aggregation
       const results = await this.prisma.productEvent.findMany({
         where,
-        select: Object.keys(select).length > 0 ? (select as any) : undefined,
+        select: Object.keys(select).length > 0 ? select : undefined,
         orderBy,
         take: query.take,
         skip: query.skip,

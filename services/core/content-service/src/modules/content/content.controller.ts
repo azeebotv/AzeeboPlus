@@ -10,6 +10,8 @@ import {
   Request,
   Query,
   UseInterceptors,
+  HttpException,
+  HttpStatus,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
@@ -68,6 +70,19 @@ export class ContentController {
     return this.contentService.getWatchFeed(req?.user?.sub);
   }
 
+  @Get('featured')
+  @Cache({ key: 'content:featured', ttl: 600 })
+  @UseGuards(RateLimitGuard)
+  @RateLimit(100, 60000)
+  @ApiOperation({ summary: 'Get featured content' })
+  @ApiResponse({ status: 200, description: 'Featured content' })
+  async getFeatured(): Promise<ContentResponse> {
+    throw new HttpException(
+      { message: 'Not yet implemented', feature: 'content-featured' },
+      HttpStatus.NOT_IMPLEMENTED
+    );
+  }
+
   @Get(':id')
   @Cache({ key: 'content:{id}', ttl: 300 })
   @UseGuards(RateLimitGuard)
@@ -104,6 +119,48 @@ export class ContentController {
     @Body() body: { text: string }
   ): Promise<ContentResponse> {
     return this.contentService.addCommentToContent(req.user.sub, id, body.text);
+  }
+
+  @Get(':id/results')
+  @UseGuards(AuthGuard('jwt'))
+  @ApiOperation({ summary: 'Get vote results for content' })
+  @ApiResponse({ status: 200, description: 'Vote results' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async getContentResults(@Param('id') id: string): Promise<ContentResponse> {
+    throw new HttpException(
+      { message: 'Not yet implemented', feature: 'content-results' },
+      HttpStatus.NOT_IMPLEMENTED
+    );
+  }
+
+  @Post('vote')
+  @UseGuards(AuthGuard('jwt'))
+  @ApiOperation({ summary: 'Vote on content' })
+  @ApiResponse({ status: 201, description: 'Vote recorded' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async vote(
+    @Request() req: { user: { sub: string } },
+    @Body() body: { contestantId?: string; episodeId?: string; isSuperVote: boolean }
+  ): Promise<ContentResponse> {
+    throw new HttpException(
+      { message: 'Not yet implemented', feature: 'content-vote' },
+      HttpStatus.NOT_IMPLEMENTED
+    );
+  }
+
+  @Post('super-vote')
+  @UseGuards(AuthGuard('jwt'))
+  @ApiOperation({ summary: 'Super vote on content' })
+  @ApiResponse({ status: 201, description: 'Super vote recorded' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async superVote(
+    @Request() req: { user: { sub: string } },
+    @Body() body: { contestantId: string; episodeId: string; voteCount: number }
+  ): Promise<ContentResponse> {
+    throw new HttpException(
+      { message: 'Not yet implemented', feature: 'content-super-vote' },
+      HttpStatus.NOT_IMPLEMENTED
+    );
   }
 
   @Get(':id/analytics')

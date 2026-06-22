@@ -88,7 +88,7 @@ export default function ForgotPasswordScreen() {
         </View>
 
         <View style={styles.footer}>
-          <TouchableOpacity onPress={() => router.push('/(auth)/login' as any)}>
+          <TouchableOpacity onPress={() => router.push('/(auth)/login')}>
             <Text style={styles.backToLogin}>← Back to Sign In</Text>
           </TouchableOpacity>
         </View>

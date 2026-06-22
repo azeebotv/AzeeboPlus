@@ -8,7 +8,7 @@ import {
   ActivityIndicator,
   Image,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, type Href } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { contentApi } from '../../src/api';
 import { logger } from '../../src/utils/logger';
@@ -102,7 +102,7 @@ export default function ScheduledPostsScreen() {
   const renderPost = ({ item }: { item: ScheduledPost }) => (
     <TouchableOpacity
       style={styles.card}
-      onPress={() => router.push(`/(creator)/content-detail?id=${item.id}` as any)}
+      onPress={() => router.push(`/(creator)/content-detail?id=${item.id}` as Href)}
     >
       <Image source={{ uri: item.thumbnail }} style={styles.thumbnail} />
       <View style={styles.content}>

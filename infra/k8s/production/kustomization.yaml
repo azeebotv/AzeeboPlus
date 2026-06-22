@@ -72,6 +72,7 @@ images:
     newTag: v1.0.0
 
 patchesStrategicMerge:
+  # ---- Production resource overrides (higher limits) ----
   - |-
     apiVersion: apps/v1
     kind: Deployment
@@ -79,4 +80,356 @@ patchesStrategicMerge:
       name: auth-service
     spec:
       replicas: 3
-
+      template:
+        spec:
+          affinity:
+            podAntiAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                - labelSelector:
+                    matchExpressions:
+                      - key: app
+                        operator: In
+                        values:
+                          - auth-service
+                  topologyKey: kubernetes.io/hostname
+          containers:
+            - name: auth-service
+              resources:
+                requests:
+                  memory: "256Mi"
+                  cpu: "250m"
+                  ephemeral-storage: "200Mi"
+                limits:
+                  memory: "512Mi"
+                  cpu: "1000m"
+                  ephemeral-storage: "500Mi"
+  - |-
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: user-service
+    spec:
+      replicas: 3
+      template:
+        spec:
+          affinity:
+            podAntiAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                - labelSelector:
+                    matchExpressions:
+                      - key: app
+                        operator: In
+                        values:
+                          - user-service
+                  topologyKey: kubernetes.io/hostname
+          containers:
+            - name: user-service
+              resources:
+                requests:
+                  memory: "256Mi"
+                  cpu: "250m"
+                  ephemeral-storage: "200Mi"
+                limits:
+                  memory: "512Mi"
+                  cpu: "1000m"
+                  ephemeral-storage: "500Mi"
+  - |-
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: wallet-service
+    spec:
+      replicas: 3
+      template:
+        spec:
+          affinity:
+            podAntiAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                - labelSelector:
+                    matchExpressions:
+                      - key: app
+                        operator: In
+                        values:
+                          - wallet-service
+                  topologyKey: kubernetes.io/hostname
+          containers:
+            - name: wallet-service
+              resources:
+                requests:
+                  memory: "256Mi"
+                  cpu: "250m"
+                  ephemeral-storage: "200Mi"
+                limits:
+                  memory: "512Mi"
+                  cpu: "1000m"
+                  ephemeral-storage: "500Mi"
+  - |-
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: payment-service
+    spec:
+      replicas: 3
+      template:
+        spec:
+          affinity:
+            podAntiAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                - labelSelector:
+                    matchExpressions:
+                      - key: app
+                        operator: In
+                        values:
+                          - payment-service
+                  topologyKey: kubernetes.io/hostname
+          containers:
+            - name: payment-service
+              resources:
+                requests:
+                  memory: "256Mi"
+                  cpu: "250m"
+                  ephemeral-storage: "200Mi"
+                limits:
+                  memory: "512Mi"
+                  cpu: "1000m"
+                  ephemeral-storage: "500Mi"
+  - |-
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: content-service
+    spec:
+      replicas: 3
+      template:
+        spec:
+          affinity:
+            podAntiAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                - labelSelector:
+                    matchExpressions:
+                      - key: app
+                        operator: In
+                        values:
+                          - content-service
+                  topologyKey: kubernetes.io/hostname
+          containers:
+            - name: content-service
+              resources:
+                requests:
+                  memory: "256Mi"
+                  cpu: "250m"
+                  ephemeral-storage: "200Mi"
+                limits:
+                  memory: "512Mi"
+                  cpu: "1000m"
+                  ephemeral-storage: "500Mi"
+  - |-
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: notification-service
+    spec:
+      replicas: 3
+      template:
+        spec:
+          affinity:
+            podAntiAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                - labelSelector:
+                    matchExpressions:
+                      - key: app
+                        operator: In
+                        values:
+                          - notification-service
+                  topologyKey: kubernetes.io/hostname
+          containers:
+            - name: notification-service
+              resources:
+                requests:
+                  memory: "256Mi"
+                  cpu: "250m"
+                  ephemeral-storage: "200Mi"
+                limits:
+                  memory: "512Mi"
+                  cpu: "1000m"
+                  ephemeral-storage: "500Mi"
+  - |-
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: search-service
+    spec:
+      replicas: 3
+      template:
+        spec:
+          affinity:
+            podAntiAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                - labelSelector:
+                    matchExpressions:
+                      - key: app
+                        operator: In
+                        values:
+                          - search-service
+                  topologyKey: kubernetes.io/hostname
+          containers:
+            - name: search-service
+              resources:
+                requests:
+                  memory: "256Mi"
+                  cpu: "250m"
+                  ephemeral-storage: "200Mi"
+                limits:
+                  memory: "512Mi"
+                  cpu: "1000m"
+                  ephemeral-storage: "500Mi"
+  - |-
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: analytics-service
+    spec:
+      replicas: 3
+      template:
+        spec:
+          affinity:
+            podAntiAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                - labelSelector:
+                    matchExpressions:
+                      - key: app
+                        operator: In
+                        values:
+                          - analytics-service
+                  topologyKey: kubernetes.io/hostname
+          containers:
+            - name: analytics-service
+              resources:
+                requests:
+                  memory: "256Mi"
+                  cpu: "250m"
+                  ephemeral-storage: "200Mi"
+                limits:
+                  memory: "512Mi"
+                  cpu: "1000m"
+                  ephemeral-storage: "500Mi"
+  - |-
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: moderation-service
+    spec:
+      replicas: 3
+      template:
+        spec:
+          affinity:
+            podAntiAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                - labelSelector:
+                    matchExpressions:
+                      - key: app
+                        operator: In
+                        values:
+                          - moderation-service
+                  topologyKey: kubernetes.io/hostname
+          containers:
+            - name: moderation-service
+              resources:
+                requests:
+                  memory: "256Mi"
+                  cpu: "250m"
+                  ephemeral-storage: "200Mi"
+                limits:
+                  memory: "512Mi"
+                  cpu: "1000m"
+                  ephemeral-storage: "500Mi"
+  - |-
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: recommendation-service
+    spec:
+      replicas: 3
+      template:
+        spec:
+          affinity:
+            podAntiAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                - labelSelector:
+                    matchExpressions:
+                      - key: app
+                        operator: In
+                        values:
+                          - recommendation-service
+                  topologyKey: kubernetes.io/hostname
+          containers:
+            - name: recommendation-service
+              resources:
+                requests:
+                  memory: "256Mi"
+                  cpu: "250m"
+                  ephemeral-storage: "200Mi"
+                limits:
+                  memory: "512Mi"
+                  cpu: "1000m"
+                  ephemeral-storage: "500Mi"
+  - |-
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: api-gateway
+    spec:
+      replicas: 3
+      template:
+        spec:
+          affinity:
+            podAntiAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                - labelSelector:
+                    matchExpressions:
+                      - key: app
+                        operator: In
+                        values:
+                          - api-gateway
+                  topologyKey: kubernetes.io/hostname
+          containers:
+            - name: api-gateway
+              resources:
+                requests:
+                  memory: "256Mi"
+                  cpu: "250m"
+                  ephemeral-storage: "200Mi"
+                limits:
+                  memory: "512Mi"
+                  cpu: "1000m"
+                  ephemeral-storage: "500Mi"
+  - |-
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: web-app
+    spec:
+      replicas: 3
+      template:
+        spec:
+          affinity:
+            podAntiAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                - labelSelector:
+                    matchExpressions:
+                      - key: app
+                        operator: In
+                        values:
+                          - web-app
+                  topologyKey: kubernetes.io/hostname
+          containers:
+            - name: web-app
+              resources:
+                requests:
+                  memory: "256Mi"
+                  cpu: "250m"
+                  ephemeral-storage: "200Mi"
+                limits:
+                  memory: "512Mi"
+                  cpu: "1000m"
+                  ephemeral-storage: "500Mi"

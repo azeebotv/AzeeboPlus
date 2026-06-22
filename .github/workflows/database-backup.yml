@@ -14,6 +14,10 @@ on:
           - production
           - staging
 
+permissions:
+  contents: read
+  id-token: write
+
 jobs:
   backup:
     runs-on: ubuntu-latest
@@ -22,12 +26,18 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
       - name: Setup PostgreSQL client
         run: |
           sudo apt-get update
           sudo apt-get install -y postgresql-client
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4.0.2
+        with:
+          role-to-assume: ${{ secrets.AWS_OIDC_ROLE_ARN }}
+          aws-region: ${{ secrets.S3_REGION || 'us-east-1' }}
 
       - name: Run encrypted backup
         env:
@@ -42,8 +52,6 @@ jobs:
           S3_BACKUP_BUCKET: ${{ secrets.S3_BACKUP_BUCKET }}
           S3_REGION: ${{ secrets.S3_REGION }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         run: |
           chmod +x ./scripts/encrypted-db-backup.sh
           ./scripts/encrypted-db-backup.sh

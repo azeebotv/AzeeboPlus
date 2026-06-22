@@ -14,6 +14,10 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+  pull-requests: read
+
 env:
   NODE_VERSION: '20.x'
   PNPM_VERSION: '9'
@@ -24,16 +28,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
       - name: Setup Node.js ${{ env.NODE_VERSION }}
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # v4.0.3
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a75f2bd2c4 # v4.0.0
         with:
           version: ${{ env.PNPM_VERSION }}
           run_install: false
@@ -44,7 +48,7 @@ jobs:
           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
 
       - name: Setup pnpm cache
-        uses: actions/cache@v5
+        uses: actions/cache@d4323d4df104b026a6aa633fdb10d75f44eec5f5 # v4.2.0
         with:
           path: ${{ env.STORE_PATH }}
           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
@@ -58,7 +62,7 @@ jobs:
         run: pnpm -r prisma:generate
 
       - name: Upload Prisma clients cache
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@0b2256b8c012f0828dc542b3febcab082c67f72b # v4.3.4
         with:
           name: prisma-clients
           path: |
@@ -72,16 +76,16 @@ jobs:
     needs: install-and-prisma
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
       - name: Setup Node.js ${{ env.NODE_VERSION }}
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # v4.0.3
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a75f2bd2c4 # v4.0.0
         with:
           version: ${{ env.PNPM_VERSION }}
           run_install: false
@@ -104,13 +108,13 @@ jobs:
           fi
 
       - name: Dependency Review
-        uses: actions/dependency-review-action@v4
+        uses: actions/dependency-review-action@5a2ce3f5b92ee19cbb9f07e7b9932c2980e8d56f # v4.3.3
         with:
           fail-on-severity: high
           comment-summary-in-pr: true
 
       - name: Upload audit results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@0b2256b8c012f0828dc542b3febcab082c67f72b # v4.3.4
         with:
           name: audit-results
           path: audit-results.json
@@ -122,16 +126,16 @@ jobs:
     needs: install-and-prisma
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
       - name: Setup Node.js ${{ env.NODE_VERSION }}
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # v4.0.3
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a75f2bd2c4 # v4.0.0
         with:
           version: ${{ env.PNPM_VERSION }}
           run_install: false
@@ -140,12 +144,20 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Restore Prisma clients cache
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
         with:
           name: prisma-clients
 
       - name: Lint code
         run: pnpm run lint
+
+      - name: Check for empty directories
+        run: |
+          EMPTY=$(find . -maxdepth 2 -type d -empty 2>/dev/null | grep -v node_modules | grep -v dist | grep -v .git | head -5)
+          if [ -n "$EMPTY" ]; then
+            echo "Warning: Empty directories found:"
+            echo "$EMPTY"
+          fi
 
       - name: Type check all packages
         run: pnpm run typecheck
@@ -180,16 +192,16 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
       - name: Setup Node.js ${{ env.NODE_VERSION }}
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # v4.0.3
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a75f2bd2c4 # v4.0.0
         with:
           version: ${{ env.PNPM_VERSION }}
           run_install: false
@@ -198,7 +210,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Restore Prisma clients cache
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
         with:
           name: prisma-clients
 
@@ -221,16 +233,16 @@ jobs:
     needs: lint
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
       - name: Setup Node.js ${{ env.NODE_VERSION }}
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # v4.0.3
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a75f2bd2c4 # v4.0.0
         with:
           version: ${{ env.PNPM_VERSION }}
           run_install: false
@@ -239,7 +251,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Restore Prisma clients cache
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
         with:
           name: prisma-clients
 
@@ -304,13 +316,13 @@ jobs:
           - wallet-service
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@988b5a0280414f521da01fcc637b64a0f23d2c89 # v3.7.1
 
       - name: Build ${{ matrix.service }}
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@5cd11c3a4ced0cb55f796551abcdecee4a88e7de # v6.10.0
         with:
           context: ./services/${{ matrix.service }}
           load: true
@@ -349,7 +361,7 @@ jobs:
     needs: build
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
       - name: Check for committed artifacts
         run: |
@@ -366,16 +378,16 @@ jobs:
     needs: install-and-prisma
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
       - name: Setup Node.js ${{ env.NODE_VERSION }}
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # v4.0.3
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a75f2bd2c4 # v4.0.0
         with:
           version: ${{ env.PNPM_VERSION }}
           run_install: false
@@ -392,6 +404,17 @@ jobs:
           if grep -r -E "(password|secret|api_key|apikey|token|private_key)" --include="*.ts" --include="*.js" --include="*.yaml" --include="*.yml" . 2>/dev/null | grep -v "node_modules" | grep -v ".git" | grep -v "*.test.ts" | grep -v "*.spec.ts" | grep -v "example" | grep -v "test" | grep -v "# " | head -20; then
             echo "Potential secrets found - review above output"
           fi
+
+      - name: Verify .env is not committed
+        run: |
+          ENVS=$(git ls-files '*.env' '.env*')
+          if [ -n "$ENVS" ]; then
+            echo "❌ The following .env files are tracked by git (security risk):"
+            echo "$ENVS"
+            echo "Remove them from tracking: git rm --cached <file>"
+            exit 1
+          fi
+          echo "✅ No .env files committed"
 
       - name: Run secret verification script
         run: |
@@ -419,16 +442,16 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
       - name: Setup Node.js ${{ env.NODE_VERSION }}
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # v4.0.3
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a75f2bd2c4 # v4.0.0
         with:
           version: ${{ env.PNPM_VERSION }}
           run_install: false
@@ -437,7 +460,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Restore Prisma clients cache
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
         with:
           name: prisma-clients
 
@@ -520,16 +543,16 @@ jobs:
     needs: build
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
       - name: Setup Node.js ${{ env.NODE_VERSION }}
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # v4.0.3
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a75f2bd2c4 # v4.0.0
         with:
           version: ${{ env.PNPM_VERSION }}
           run_install: false
@@ -538,7 +561,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Restore Prisma clients cache
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
         with:
           name: prisma-clients
 
@@ -546,7 +569,7 @@ jobs:
         run: pnpm --filter='@azeebo/web' build
 
       - name: Upload web build artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@0b2256b8c012f0828dc542b3febcab082c67f72b # v4.3.4
         with:
           name: web-build
           path: apps/web/.next
@@ -558,16 +581,16 @@ jobs:
     needs: build
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
       - name: Setup Node.js ${{ env.NODE_VERSION }}
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # v4.0.3
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a75f2bd2c4 # v4.0.0
         with:
           version: ${{ env.PNPM_VERSION }}
           run_install: false
@@ -576,7 +599,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Restore Prisma clients cache
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
         with:
           name: prisma-clients
 
@@ -609,7 +632,7 @@ jobs:
           --health-retries 5
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
       - name: Setup test database
         run: |
@@ -677,7 +700,7 @@ jobs:
     needs: install-and-prisma
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
       - name: Validate analytics event naming conventions
         run: |

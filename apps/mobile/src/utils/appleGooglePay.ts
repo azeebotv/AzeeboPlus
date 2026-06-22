@@ -109,7 +109,7 @@ export class AppleGooglePayService {
     description: string
   ): Promise<string | null> {
     try {
-      const response = await fetch(`${process.env.EXPO_PUBLIC_API_BASE_URL}/payments/intent`, {
+      const response = await fetch(`${process.env.EXPO_PUBLIC_API_BASE_URL}/v1/payments/intent`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

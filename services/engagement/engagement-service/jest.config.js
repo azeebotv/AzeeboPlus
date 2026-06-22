@@ -27,4 +27,5 @@ module.exports = {
       statements: 70,
     },
   },
+  passWithNoTests: false,
 };

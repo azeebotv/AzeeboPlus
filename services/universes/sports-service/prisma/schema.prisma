@@ -89,9 +89,9 @@ model SavedItem {
 model Wallet {
   id           String   @id @default(uuid())
   userId       String   @unique
-  balance Decimal    @default(0)
-  bonusBalance Decimal    @default(0)
-  promoBalance Decimal    @default(0)
+  balance Decimal    @default(0) @db.Decimal(18, 2)
+  bonusBalance Decimal    @default(0) @db.Decimal(18, 2)
+  promoBalance Decimal    @default(0) @db.Decimal(18, 2)
   currency     String   @default("NGN")
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -106,7 +106,7 @@ model WalletTransaction {
   id          String   @id @default(uuid())
   walletId    String
   type        String // credit, debit, bonus, promo, refund
-  amount Decimal
+  amount Decimal  @db.Decimal(18, 2)
   status      String // pending, completed, failed, reversed
   description String?
   reference   String?
@@ -144,7 +144,7 @@ model Notification {
 model PaymentIntent {
   id                String    @id @default(uuid())
   userId            String
-  amount Decimal
+  amount Decimal  @db.Decimal(18, 2)
   currency          String    @default("NGN")
   status            String // pending, processing, completed, failed, refunded
   description       String?
@@ -163,7 +163,7 @@ model PaymentIntent {
 model Refund {
   id                String   @id @default(uuid())
   paymentIntentId   String
-  amount Decimal
+  amount Decimal  @db.Decimal(18, 2)
   reason            String
   status            String // pending, processing, completed, failed
   providerReference String?
@@ -518,7 +518,7 @@ model Tip {
   id         String   @id @default(uuid())
   fromUserId String
   toUserId   String
-  amount Decimal
+  amount Decimal  @db.Decimal(18, 2)
   createdAt  DateTime @default(now())
 
   fromUser User @relation("Sender", fields: [fromUserId], references: [id], onDelete: Cascade)
@@ -550,7 +550,7 @@ model Subscription {
 model CreatorEarning {
   id          String    @id @default(uuid())
   creatorId   String
-  amount Decimal
+  amount Decimal  @db.Decimal(18, 2)
   type        String // tip, subscription, rental, payout
   referenceId String?
   status      String    @default("pending")
@@ -688,8 +688,8 @@ model Contest {
   eventId     String
   title       String
   description String?
-  entryFee Decimal     @default(0)
-  prizePool Decimal
+  entryFee Decimal     @default(0) @db.Decimal(18, 2)
+  prizePool Decimal  @db.Decimal(18, 2)
   status      String    @default("active")
   startsAt    DateTime
   endsAt      DateTime?
@@ -711,7 +711,7 @@ model ContestPrize {
   id        String   @id @default(uuid())
   contestId String
   rank      Int
-  amount Decimal
+  amount Decimal  @db.Decimal(18, 2)
   createdAt DateTime @default(now())
 
   contest Contest @relation(fields: [contestId], references: [id], onDelete: Cascade)
@@ -745,7 +745,7 @@ model PredictionMarket {
   question      String
   options       Json
   odds          Json?
-  totalPool   Decimal @default(0)
+  totalPool   Decimal @default(0) @db.Decimal(18, 2)
   status        String   @default("active")
   settlementType String? // automatic, manual
   createdAt     DateTime @default(now())
@@ -780,7 +780,7 @@ model PredictionReward {
   eventId     String   @unique
   correctPredictions Int @default(0)
   rewardPoints Int     @default(0)
-  bonusPool Decimal @default(0)
+  bonusPool Decimal @default(0) @db.Decimal(18, 2)
   createdAt   DateTime @default(now())
 
   event SportsEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)

@@ -38,8 +38,23 @@ helm install kube-prometheus-stack prometheus-community/kube-prometheus-stack \
   --create-namespace \
   --wait
 
+# 4. Install Kyverno (image signature verification / policy engine)
+echo "Installing Kyverno..."
+helm repo add kyverno https://kyverno.github.io/kyverno/
+helm repo update
+helm install kyverno kyverno/kyverno \
+  -n kyverno \
+  --create-namespace \
+  --set replicaCount=3 \
+  --wait
+
+# Apply image verification ClusterPolicy
+echo "Applying Kyverno ClusterPolicy for cosign image verification..."
+kubectl apply -f infra/k8s/base/kyverno-image-verify.yaml
+
 echo "All operators installed successfully!"
 echo "Next steps:"
 echo "  1. Configure AWS/GCP secrets in Secrets Manager"
 echo "  2. Apply ExternalSecret manifests: kubectl apply -f infra/k8s/base/external-secrets.yaml"
 echo "  3. Deploy PostgreSQL HA: kubectl apply -f infra/k8s/base/postgres-ha.yaml"
+echo "  4. Verify Kyverno rejects unsigned images: kubectl run test-unsigned --image=nginx -n azeebo"

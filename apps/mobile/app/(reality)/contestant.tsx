@@ -101,7 +101,7 @@ export default function ContestantProfileScreen() {
       await contentApi.vote({
         contestantId,
         isSuperVote: isSuper,
-      } as any);
+      });
 
       Alert.alert(
         'Success',

@@ -1,5 +1,6 @@
 import { Controller, Post, Body, Get } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
+import { Public } from '@azeebo/security';
 import {
   AnalyticsInstrumentationService,
   AnalyticsEvent,
@@ -7,6 +8,7 @@ import {
 } from './analytics-instrumentation.service';
 
 @ApiTags('Analytics Instrumentation')
+@Public()
 @Controller('instrumentation')
 export class AnalyticsInstrumentationController {
   constructor(private readonly analyticsInstrumentationService: AnalyticsInstrumentationService) {}

@@ -1,4 +1,5 @@
 import { Controller, Get } from '@nestjs/common';
+import { Public } from '@azeebo/security';
 import {
   HealthCheck,
   HealthCheckService,
@@ -6,6 +7,7 @@ import {
   HealthIndicatorResult,
 } from '@nestjs/terminus';
 
+@Public()
 @Controller()
 export class HealthController {
   constructor(private health: HealthCheckService) {}

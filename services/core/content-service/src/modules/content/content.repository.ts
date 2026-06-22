@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
+import { Prisma } from '../../prisma/client';
 import { CreateContentDto } from './dto/create-content.dto';
 
 interface CommentEntity {
@@ -72,7 +73,7 @@ export class ContentRepository {
       data: {
         ...data,
         status: 'draft',
-      } as any,
+      } as Prisma.ContentItemCreateInput,
       include: { universe: true },
     });
   }

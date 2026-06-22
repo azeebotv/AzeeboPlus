@@ -44,7 +44,7 @@ export function useOffline() {
   const cacheContent = useCallback(
     async (
       key: string,
-      data: unknown,
+      data: Record<string, unknown>,
       type: 'content' | 'universe' | 'user' | 'wallet' = 'content'
     ) => {
       await OfflineModeService.cacheContent(key, data, type);

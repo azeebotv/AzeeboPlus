@@ -1,9 +1,23 @@
-import { Controller, Post, Body, Request, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Query,
+  Request,
+  UseGuards,
+  BadRequestException,
+  Logger,
+} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 
 import { SocialAuthService } from './social.service';
-import { RateLimitGuard } from '../../../common/guards/rate-limit.guard';
+import { RateLimitGuard, RateLimit } from '../../../common/guards/rate-limit.guard';
+import {
+  SocialAuthCallbackDto,
+  SocialAuthAuthorizeResponseDto,
+} from '../dto/social-auth.dto';
 
 interface SocialLoginResponse {
   success: boolean;
@@ -32,16 +46,101 @@ interface UnlinkRequest {
 @ApiTags('Social Auth')
 @Controller('auth/social')
 export class SocialAuthController {
+  private readonly logger = new Logger(SocialAuthController.name);
+
   constructor(private readonly socialAuthService: SocialAuthService) {}
+
+  // ─── Authorize endpoints (initiate OAuth flow) ──────────────────────
+
+  @Get('google/authorize')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(10, 60000) // 10 requests per minute
+  @ApiOperation({ summary: 'Initiate Google OAuth flow with state parameter' })
+  @ApiResponse({ status: 200, description: 'Returns state and authorization URL' })
+  @ApiQuery({ name: 'redirectUri', required: false, description: 'Redirect URI' })
+  async googleAuthorize(
+    @Query('redirectUri') redirectUri?: string
+  ): Promise<SocialAuthAuthorizeResponseDto> {
+    const state = this.socialAuthService.generateState('google');
+    const authorizeUrl = this.socialAuthService.buildAuthorizeUrl('google', state, redirectUri);
+
+    this.logger.log(`Google OAuth authorize initiated: state=${state.substring(0, 8)}...`);
+
+    return { state, authorizeUrl };
+  }
+
+  @Get('apple/authorize')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(10, 60000) // 10 requests per minute
+  @ApiOperation({ summary: 'Initiate Apple OAuth flow with state parameter' })
+  @ApiResponse({ status: 200, description: 'Returns state and authorization URL' })
+  @ApiQuery({ name: 'redirectUri', required: false, description: 'Redirect URI' })
+  async appleAuthorize(
+    @Query('redirectUri') redirectUri?: string
+  ): Promise<SocialAuthAuthorizeResponseDto> {
+    const state = this.socialAuthService.generateState('apple');
+    const authorizeUrl = this.socialAuthService.buildAuthorizeUrl('apple', state, redirectUri);
+
+    this.logger.log(`Apple OAuth authorize initiated: state=${state.substring(0, 8)}...`);
+
+    return { state, authorizeUrl };
+  }
+
+  // ─── Callback endpoint (validate state + exchange code) ─────────────
+
+  @Post('callback')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(10, 60000) // 10 requests per minute
+  @ApiOperation({ summary: 'OAuth callback with state validation' })
+  @ApiResponse({ status: 200, description: 'Login successful' })
+  @ApiResponse({ status: 400, description: 'Invalid state or missing parameters' })
+  @ApiResponse({ status: 401, description: 'Invalid credentials' })
+  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
+  async socialCallback(
+    @Body() dto: SocialAuthCallbackDto
+  ): Promise<SocialLoginResponse> {
+    // Check for OAuth provider error
+    if (dto.error) {
+      this.logger.warn(`Social callback error from provider: ${dto.error}`);
+      throw new BadRequestException(`OAuth provider error: ${dto.error}`);
+    }
+
+    // Validate the state parameter (CSRF protection)
+    const provider = this.socialAuthService.validateState(dto.state);
+
+    this.logger.log(
+      `Social callback: state validated, provider=${provider}, code=${dto.code.substring(0, 8)}...`
+    );
+
+    // Build a minimal social user from the callback data.
+    // In production, the code would be exchanged for tokens via the provider's API
+    // and the id_token would be verified. For now, we use the code as the socialId
+    // to maintain compatibility with the existing flow.
+    const socialUser = {
+      email: `user@${provider}.com`, // Will be extracted from verified token in production
+      displayName: `${provider.charAt(0).toUpperCase() + provider.slice(1)} User`,
+      socialId: dto.code,
+      provider: provider as 'google' | 'apple',
+      accessToken: '',
+      refreshToken: '',
+    };
+
+    return this.socialAuthService.socialLogin(socialUser);
+  }
+
+  // ─── Direct login endpoints (legacy, kept for backward compat) ──────
 
   @Post('google')
   @UseGuards(RateLimitGuard)
-  @ApiOperation({ summary: 'Google social login' })
+  @RateLimit(5, 900000) // 5 requests per 15 minutes
+  @ApiOperation({ summary: 'Google social login (legacy - prefer /authorize + /callback)' })
   @ApiResponse({ status: 200, description: 'Login successful' })
   @ApiResponse({ status: 401, description: 'Invalid credentials' })
   async googleLogin(
     @Body() dto: { idToken: string; accessToken?: string; refreshToken?: string }
   ): Promise<SocialLoginResponse> {
+    this.logger.warn('Legacy Google login endpoint used - migrate to /authorize + /callback flow');
+
     const socialUser = {
       email: 'user@gmail.com',
       displayName: 'Google User',
@@ -56,12 +155,15 @@ export class SocialAuthController {
 
   @Post('apple')
   @UseGuards(RateLimitGuard)
-  @ApiOperation({ summary: 'Apple social login' })
+  @RateLimit(5, 900000) // 5 requests per 15 minutes
+  @ApiOperation({ summary: 'Apple social login (legacy - prefer /authorize + /callback)' })
   @ApiResponse({ status: 200, description: 'Login successful' })
   @ApiResponse({ status: 401, description: 'Invalid credentials' })
   async appleLogin(
     @Body() dto: { identityToken: string; accessToken?: string; refreshToken?: string }
   ): Promise<SocialLoginResponse> {
+    this.logger.warn('Legacy Apple login endpoint used - migrate to /authorize + /callback flow');
+
     const socialUser = {
       email: 'user@apple.com',
       displayName: 'Apple User',

@@ -40,11 +40,11 @@ export interface TransactionDetail {
 
 export const walletApi = {
   getBalance: async (): Promise<ApiResponse<WalletBalance>> => {
-    return apiClient.get<ApiResponse<WalletBalance>>('/wallet/balance');
+    return apiClient.get<ApiResponse<WalletBalance>>('/v1/wallet/balance');
   },
 
   getTransaction: async (id: string): Promise<ApiResponse<TransactionDetail>> => {
-    return apiClient.get<ApiResponse<TransactionDetail>>(`/wallet/transactions/${id}`);
+    return apiClient.get<ApiResponse<TransactionDetail>>(`/v1/wallet/transactions/${id}`);
   },
 
   getTransactions: async (
@@ -67,7 +67,7 @@ export const walletApi = {
         limit: number;
         totalPages: number;
       }>
-    >(`/wallet/transactions?page=${page}&limit=${limit}`);
+    >(`/v1/wallet/transactions?page=${page}&limit=${limit}`)
   },
 
   fundWallet: async (data: {
@@ -76,7 +76,7 @@ export const walletApi = {
     email: string;
   }): Promise<ApiResponse<{ authorizationUrl: string; reference: string }>> => {
     return apiClient.post<ApiResponse<{ authorizationUrl: string; reference: string }>>(
-      '/wallet/fund',
+      '/v1/wallet/fund',
       data
     );
   },
@@ -86,7 +86,7 @@ export const walletApi = {
     bankCode: string;
     accountNumber: string;
   }): Promise<ApiResponse<{ message: string }>> => {
-    return apiClient.post<ApiResponse<{ message: string }>>('/wallet/withdraw', data);
+    return apiClient.post<ApiResponse<{ message: string }>>('/v1/wallet/withdraw', data);
   },
 
   getSummary: async (): Promise<
@@ -108,14 +108,14 @@ export const walletApi = {
         totalSpent: number;
         totalWithdrawn: number;
       }>
-    >('/wallet/summary');
+    >'/v1/wallet/summary')
   },
 
   redeemReward: async (data: {
     points: number;
   }): Promise<ApiResponse<{ message: string; creditedAmount: number }>> => {
     return apiClient.post<ApiResponse<{ message: string; creditedAmount: number }>>(
-      '/wallet/redeem-reward',
+      '/v1/wallet/redeem-reward',
       data
     );
   },
@@ -126,7 +126,7 @@ export const walletApi = {
     description?: string;
   }): Promise<ApiResponse<{ message: string; transactionId: string }>> => {
     return apiClient.post<ApiResponse<{ message: string; transactionId: string }>>(
-      '/wallet/transfer',
+      '/v1/wallet/transfer',
       data
     );
   },
