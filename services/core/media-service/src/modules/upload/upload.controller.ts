@@ -131,13 +131,13 @@ export class UploadController {
   }
 
   @Delete(':key')
-  async deleteFile(@Param('key') key: string  ): Promise<unknown> {
+  async deleteFile(@Param('key') key: string): Promise<unknown> {
     await this.uploadService.deleteFile(decodeURIComponent(key));
     return ApiResponseWrapper.success({ message: 'File deleted successfully' });
   }
 
   @Get('transcoding/:jobId/status')
-  async getTranscodingJobStatus(@Param('jobId') jobId: string  ): Promise<unknown> {
+  async getTranscodingJobStatus(@Param('jobId') jobId: string): Promise<unknown> {
     const job = await this.uploadService.getTranscodingJobStatus(jobId);
     if (!job) {
       return ApiResponseWrapper.error('NOT_FOUND', 'Transcoding job not found');
@@ -146,13 +146,15 @@ export class UploadController {
   }
 
   @Get('transcoding/jobs')
-  async listTranscodingJobs(@Query('status') status?: string  ): Promise<unknown> {
-    const jobs = await this.uploadService.listTranscodingJobs(status as 'pending' | 'processing' | 'completed' | 'failed');
+  async listTranscodingJobs(@Query('status') status?: string): Promise<unknown> {
+    const jobs = await this.uploadService.listTranscodingJobs(
+      status as 'pending' | 'processing' | 'completed' | 'failed'
+    );
     return ApiResponseWrapper.success(jobs);
   }
 
   @Post('transcoding/retry-failed')
-  async retryFailedTranscodingJobs(  ): Promise<unknown> {
+  async retryFailedTranscodingJobs(): Promise<unknown> {
     const retriedCount = await this.uploadService.retryFailedTranscodingJobs();
     return ApiResponseWrapper.success({ retriedCount });
   }
@@ -163,7 +165,10 @@ export class UploadController {
     @Query('olderThanDays') olderThanDays = 30
   ): Promise<unknown> {
     if (prefix) {
-      const deletedCount = await this.uploadService.cleanupOrphanedFiles(prefix, Number(olderThanDays));
+      const deletedCount = await this.uploadService.cleanupOrphanedFiles(
+        prefix,
+        Number(olderThanDays)
+      );
       return ApiResponseWrapper.success({ deletedCount });
     } else {
       const results = await this.uploadService.cleanupAllOrphanedFiles();
@@ -212,9 +217,7 @@ export class UploadController {
   }
 
   @Post('premium/url/validate')
-  async validatePremiumUrl(
-    @Body() body: { token: string }
-  ): Promise<unknown> {
+  async validatePremiumUrl(@Body() body: { token: string }): Promise<unknown> {
     const { token } = body;
     if (!token) {
       throw new BadRequestException('token is required');
@@ -229,27 +232,21 @@ export class UploadController {
 
   @Delete('premium/url/:token')
   @UseGuards(AuthGuard('jwt'))
-  async invalidatePremiumUrl(
-    @Param('token') token: string
-  ): Promise<unknown> {
+  async invalidatePremiumUrl(@Param('token') token: string): Promise<unknown> {
     await this.premiumContentService.invalidatePremiumUrl(token);
     return ApiResponseWrapper.success({ message: 'URL invalidated successfully' });
   }
 
   @Delete('premium/urls/user')
   @UseGuards(AuthGuard('jwt'))
-  async invalidateAllUserUrls(
-    @Request() req: { user: { sub: string } }
-  ): Promise<unknown> {
+  async invalidateAllUserUrls(@Request() req: { user: { sub: string } }): Promise<unknown> {
     const count = await this.premiumContentService.invalidateAllUserUrls(req.user.sub);
     return ApiResponseWrapper.success({ invalidatedCount: count });
   }
 
   @Get('premium/url/:token/analytics')
   @UseGuards(AuthGuard('jwt'))
-  async getUrlAnalytics(
-    @Param('token') token: string
-  ): Promise<unknown> {
+  async getUrlAnalytics(@Param('token') token: string): Promise<unknown> {
     const result = await this.premiumContentService.getUrlAnalytics(token);
     return ApiResponseWrapper.success(result);
   }

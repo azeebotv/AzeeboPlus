@@ -52,20 +52,29 @@ export default function TransactionDetailPage(): JSX.Element {
 
   const getStatusColor = (status: string): string => {
     switch (status) {
-      case 'completed': return 'text-green-500';
-      case 'pending': return 'text-yellow-500';
-      case 'failed': return 'text-red-500';
-      case 'cancelled': return 'text-gray-500';
-      default: return 'text-muted-foreground';
+      case 'completed':
+        return 'text-green-500';
+      case 'pending':
+        return 'text-yellow-500';
+      case 'failed':
+        return 'text-red-500';
+      case 'cancelled':
+        return 'text-gray-500';
+      default:
+        return 'text-muted-foreground';
     }
   };
 
   const getTypeIcon = (type: string): string => {
     switch (type) {
-      case 'credit': return '↓';
-      case 'debit': return '↑';
-      case 'refund': return '↩';
-      default: return '•';
+      case 'credit':
+        return '↓';
+      case 'debit':
+        return '↑';
+      case 'refund':
+        return '↩';
+      default:
+        return '•';
     }
   };
 
@@ -90,7 +99,9 @@ export default function TransactionDetailPage(): JSX.Element {
         <div className="text-center">
           <div className="text-6xl mb-4">⚠️</div>
           <h2 className="text-xl font-bold text-foreground mb-2">Transaction not found</h2>
-          <a href="/wallet/transactions" className="text-primary hover:underline">Back to Transactions</a>
+          <a href="/wallet/transactions" className="text-primary hover:underline">
+            Back to Transactions
+          </a>
         </div>
       </div>
     );
@@ -106,7 +117,9 @@ export default function TransactionDetailPage(): JSX.Element {
         <div className="mb-8 print:mb-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-foreground mb-2 print:text-2xl">Transaction Receipt</h1>
+              <h1 className="text-3xl font-bold text-foreground mb-2 print:text-2xl">
+                Transaction Receipt
+              </h1>
               <p className="text-sm text-muted-foreground print:hidden">
                 Generated on {new Date().toLocaleDateString()} at {new Date().toLocaleTimeString()}
               </p>
@@ -116,8 +129,18 @@ export default function TransactionDetailPage(): JSX.Element {
               className="print:hidden px-4 py-2 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
               aria-label="Print this receipt"
             >
-              <svg className="w-5 h-5 inline mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+              <svg
+                className="w-5 h-5 inline mr-2"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
+                />
               </svg>
               Print Receipt
             </button>
@@ -128,13 +151,18 @@ export default function TransactionDetailPage(): JSX.Element {
           <div className="flex items-center gap-4 mb-6">
             <span className="text-4xl">{getTypeIcon(transaction.type)}</span>
             <div className="flex-1">
-              <h2 className="text-xl font-bold text-foreground">{transaction.type.toUpperCase()}</h2>
+              <h2 className="text-xl font-bold text-foreground">
+                {transaction.type.toUpperCase()}
+              </h2>
               <p className={`font-semibold ${getStatusColor(transaction.status)}`}>
                 {transaction.status.charAt(0).toUpperCase() + transaction.status.slice(1)}
               </p>
             </div>
-            <span className={`text-2xl font-bold ${transaction.type === 'debit' ? 'text-red-500' : 'text-green-500'}`}>
-              {transaction.type === 'debit' ? '-' : '+'}{transaction.currency} {transaction.amount.toLocaleString()}
+            <span
+              className={`text-2xl font-bold ${transaction.type === 'debit' ? 'text-red-500' : 'text-green-500'}`}
+            >
+              {transaction.type === 'debit' ? '-' : '+'}
+              {transaction.currency} {transaction.amount.toLocaleString()}
             </span>
           </div>
         </div>
@@ -154,15 +182,21 @@ export default function TransactionDetailPage(): JSX.Element {
             </div>
             <div className="px-6 py-4 flex justify-between">
               <span className="text-muted-foreground">Date</span>
-              <span className="text-foreground">{new Date(transaction.createdAt).toLocaleString()}</span>
+              <span className="text-foreground">
+                {new Date(transaction.createdAt).toLocaleString()}
+              </span>
             </div>
             <div className="px-6 py-4 flex justify-between">
               <span className="text-muted-foreground">Balance Before</span>
-              <span className="text-foreground">{transaction.currency} {transaction.balanceBefore.toLocaleString()}</span>
+              <span className="text-foreground">
+                {transaction.currency} {transaction.balanceBefore.toLocaleString()}
+              </span>
             </div>
             <div className="px-6 py-4 flex justify-between">
               <span className="text-muted-foreground">Balance After</span>
-              <span className="text-foreground">{transaction.currency} {transaction.balanceAfter.toLocaleString()}</span>
+              <span className="text-foreground">
+                {transaction.currency} {transaction.balanceAfter.toLocaleString()}
+              </span>
             </div>
           </div>
         </div>
@@ -188,7 +222,9 @@ export default function TransactionDetailPage(): JSX.Element {
               {transaction.metadata.fee !== undefined && (
                 <div className="px-6 py-4 flex justify-between">
                   <span className="text-muted-foreground">Fee</span>
-                  <span className="text-foreground">{transaction.currency} {transaction.metadata.fee}</span>
+                  <span className="text-foreground">
+                    {transaction.currency} {transaction.metadata.fee}
+                  </span>
                 </div>
               )}
             </div>

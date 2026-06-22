@@ -111,9 +111,8 @@ export default function ContentManagerPage(): JSX.Element {
     });
   };
 
-  const filteredContent = filter === 'all'
-    ? content
-    : content.filter((item) => item.status === filter);
+  const filteredContent =
+    filter === 'all' ? content : content.filter((item) => item.status === filter);
 
   if (isLoading) {
     return (
@@ -136,7 +135,12 @@ export default function ContentManagerPage(): JSX.Element {
               className="text-muted-foreground hover:text-foreground mb-2 flex items-center gap-2"
             >
               <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 19l-7-7 7-7"
+                />
               </svg>
               Back
             </button>
@@ -206,11 +210,7 @@ export default function ContentManagerPage(): JSX.Element {
                 className="bg-card rounded-lg border border-border overflow-hidden cursor-pointer hover:shadow-lg transition-shadow"
               >
                 <div className="relative">
-                  <img
-                    src={item.thumbnail}
-                    alt={item.title}
-                    className="w-full h-40 object-cover"
-                  />
+                  <img src={item.thumbnail} alt={item.title} className="w-full h-40 object-cover" />
                   <div className="absolute top-2 right-2 bg-black/50 rounded-full w-8 h-8 flex items-center justify-center">
                     <span>{getTypeIcon(item.type)}</span>
                   </div>
@@ -236,16 +236,14 @@ export default function ContentManagerPage(): JSX.Element {
                 key={item.id}
                 className="bg-card rounded-lg border border-border overflow-hidden flex"
               >
-                <img
-                  src={item.thumbnail}
-                  alt={item.title}
-                  className="w-40 h-40 object-cover"
-                />
+                <img src={item.thumbnail} alt={item.title} className="w-40 h-40 object-cover" />
                 <div className="flex-1 p-4">
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex-1">
                       <h3 className="text-lg font-semibold text-foreground">{item.title}</h3>
-                      <p className="text-sm text-muted-foreground line-clamp-2">{item.description}</p>
+                      <p className="text-sm text-muted-foreground line-clamp-2">
+                        {item.description}
+                      </p>
                     </div>
                     <span className="text-2xl ml-2">{getTypeIcon(item.type)}</span>
                   </div>

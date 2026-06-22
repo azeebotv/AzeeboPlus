@@ -118,7 +118,9 @@ export class AnalyticsInstrumentationService {
             universe: event.universe,
             timestamp: event.timestamp || new Date(),
             appVersion: event.appVersion,
-            experimentFlags: event.experimentFlags ? JSON.stringify(event.experimentFlags) : undefined,
+            experimentFlags: event.experimentFlags
+              ? JSON.stringify(event.experimentFlags)
+              : undefined,
             metadata: event.metadata ? JSON.stringify(event.metadata) : undefined,
           },
         })

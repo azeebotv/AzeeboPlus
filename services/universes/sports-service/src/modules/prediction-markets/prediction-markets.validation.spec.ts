@@ -1,5 +1,9 @@
 import { validate } from 'class-validator';
-import { CreatePredictionDto, SubmitPredictionDto, ResolvePredictionDto } from './dto/prediction.dto';
+import {
+  CreatePredictionDto,
+  SubmitPredictionDto,
+  ResolvePredictionDto,
+} from './dto/prediction.dto';
 
 describe('Prediction Markets Validation Tests', () => {
   describe('CreatePredictionDto', () => {

@@ -15,12 +15,12 @@ describe('Mobile Accessibility Tests', () => {
         { id: 'walletTab', label: 'Wallet' },
         { id: 'rewardsTab', label: 'Rewards' },
       ];
-      
+
       accessibleElements.forEach((element) => {
         expect(element.id).toBeDefined();
         expect(element.label).toBeTruthy();
       });
-      
+
       expect(accessibleElements.length).toBeGreaterThan(0);
     });
 
@@ -32,7 +32,7 @@ describe('Mobile Accessibility Tests', () => {
         'emptyState',
         'confirmationDialog',
       ];
-      
+
       expect(announcementTypes).toBeDefined();
       expect(announcementTypes.length).toBe(5);
     });
@@ -48,7 +48,7 @@ describe('Mobile Accessibility Tests', () => {
         'forgotPasswordLink',
         'registerLink',
       ];
-      
+
       expect(focusOrder).toHaveLength(6);
     });
 
@@ -58,7 +58,7 @@ describe('Mobile Accessibility Tests', () => {
         hasHighContrast: true,
         isVisible: true,
       };
-      
+
       expect(focusStates.hasOutline).toBe(true);
       expect(focusStates.hasHighContrast).toBe(true);
       expect(focusStates.isVisible).toBe(true);
@@ -74,7 +74,7 @@ describe('Mobile Accessibility Tests', () => {
         'arrowKeyNavigation',
         'backButtonSupport',
       ];
-      
+
       expect(keyboardFeatures).toHaveLength(5);
     });
 
@@ -88,7 +88,7 @@ describe('Mobile Accessibility Tests', () => {
         'pinchToZoom',
         'spreadToZoom',
       ];
-      
+
       expect(gestures).toHaveLength(7);
     });
   });
@@ -101,7 +101,7 @@ describe('Mobile Accessibility Tests', () => {
         uiComponents: '3:1',
         textOnImages: '4.5:1',
       };
-      
+
       expect(contrastRequirements.normalText).toBe('4.5:1');
       expect(contrastRequirements.largeText).toBe('3:1');
     });
@@ -113,7 +113,7 @@ describe('Mobile Accessibility Tests', () => {
         parallaxCanBeDisabled: true,
         autoPlayVideosDisabled: true,
       };
-      
+
       expect(motionFeatures.animationsCanBeDisabled).toBe(true);
       expect(motionFeatures.transitionsCanBeDisabled).toBe(true);
     });
@@ -128,7 +128,7 @@ describe('Mobile Accessibility Tests', () => {
         extraLarge: 20,
         accessibility: 24,
       };
-      
+
       expect(Object.keys(fontSizes).length).toBe(5);
     });
 
@@ -139,7 +139,7 @@ describe('Mobile Accessibility Tests', () => {
         'ImagesScaleProperly',
         'LayoutRemainsUsable',
       ];
-      
+
       expect(layoutChecks).toHaveLength(4);
     });
   });
@@ -156,7 +156,7 @@ describe('Mobile Accessibility Tests', () => {
         { element: 'list', role: 'list' },
         { element: 'listItem', role: 'listItem' },
       ];
-      
+
       expect(roles.length).toBe(8);
     });
 
@@ -168,7 +168,7 @@ describe('Mobile Accessibility Tests', () => {
         'Enter your email address',
         'Tap to toggle',
       ];
-      
+
       expect(hints.length).toBe(5);
     });
   });
@@ -182,7 +182,7 @@ describe('Mobile Accessibility Tests', () => {
         'validationError',
         'timeoutError',
       ];
-      
+
       expect(errorTypes.length).toBe(5);
     });
 
@@ -194,7 +194,7 @@ describe('Mobile Accessibility Tests', () => {
         network: 'Please check your internet connection',
         server: 'Something went wrong, please try again',
       };
-      
+
       expect(Object.keys(errorMessages).length).toBe(5);
     });
   });

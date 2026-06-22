@@ -71,7 +71,9 @@ export class WebhookRetryService implements OnModuleInit, OnModuleDestroy {
             updatedAt: new Date(),
           },
         });
-        this.logger.warn(`Scheduled retry ${newRetryCount} for webhook event ${eventId} at ${newNextRetryAt}`);
+        this.logger.warn(
+          `Scheduled retry ${newRetryCount} for webhook event ${eventId} at ${newNextRetryAt}`
+        );
       }
     } else {
       const nextRetryAt = new Date(Date.now() + this.getExponentialBackoffDelay(0));
@@ -139,7 +141,13 @@ export class WebhookRetryService implements OnModuleInit, OnModuleDestroy {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       this.logger.error(`Failed to process retry ${retry.id}: ${errorMessage}`);
-      await this.scheduleRetry(retry.eventId, retry.provider, retry.type, retry.payload as Record<string, unknown>, error instanceof Error ? error : new Error(errorMessage));
+      await this.scheduleRetry(
+        retry.eventId,
+        retry.provider,
+        retry.type,
+        retry.payload as Record<string, unknown>,
+        error instanceof Error ? error : new Error(errorMessage)
+      );
     }
   }
 
@@ -172,7 +180,7 @@ export class WebhookRetryService implements OnModuleInit, OnModuleDestroy {
     payload: Prisma.JsonValue;
   }): Promise<void> {
     const data = (retry.payload as Record<string, unknown>).data as Record<string, unknown>;
-    const reference = data?.tx_ref as string || data?.reference as string;
+    const reference = (data?.tx_ref as string) || (data?.reference as string);
 
     switch (retry.type) {
       case 'charge.completed':

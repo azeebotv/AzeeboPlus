@@ -259,12 +259,14 @@ export class CreatorService {
       ).map((item) => ({
         title: item.title,
         views: item.viewCount,
-        engagement: item.viewCount > 0 ? `${((item.viewCount / (recentViews || 1)) * 100).toFixed(1)}%` : '0.0%',
+        engagement:
+          item.viewCount > 0
+            ? `${((item.viewCount / (recentViews || 1)) * 100).toFixed(1)}%`
+            : '0.0%',
       })),
     };
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async getEarnings(userId: string, _period = 'this-month'): Promise<EarningsData> {
     const earningsAggregate = await this.prisma.walletTransaction.aggregate({
       where: {

@@ -2,7 +2,7 @@ import { Injectable, BadRequestException, UnauthorizedException, Logger } from '
 import { ConfigService } from '@nestjs/config';
 import { S3Service } from './s3.service';
 import { RedisService } from '../../common/services/redis.service';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 
 export interface PremiumUrlResponse {
   url: string;
@@ -21,8 +21,8 @@ export interface UrlValidationResult {
 @Injectable()
 export class PremiumContentService {
   private readonly logger = new Logger(PremiumContentService.name);
-  private readonly defaultExpirySeconds = 300; // 5 minutes
-  private readonly maxExpirySeconds = 3600; // 1 hour
+  private readonly defaultExpirySeconds: number;
+  private readonly maxExpirySeconds: number;
   private readonly redisKeyPrefix = 'premium_url:';
   private readonly cdnUrl: string;
 
@@ -32,6 +32,8 @@ export class PremiumContentService {
     private readonly configService: ConfigService
   ) {
     this.cdnUrl = this.configService.get<string>('CDN_URL') || '';
+    this.defaultExpirySeconds = this.configService.get<number>('DEFAULT_URL_EXPIRY_SECONDS', 300);
+    this.maxExpirySeconds = this.configService.get<number>('MAX_URL_EXPIRY_SECONDS', 3600);
   }
 
   async generatePremiumUrl(
@@ -40,7 +42,7 @@ export class PremiumContentService {
     expiresInSeconds?: number
   ): Promise<PremiumUrlResponse> {
     const expiry = this.validateExpiry(expiresInSeconds);
-    const urlToken = uuidv4();
+    const urlToken = randomUUID();
     const expiresAt = new Date(Date.now() + expiry * 1000);
 
     const redisKey = `${this.redisKeyPrefix}${urlToken}`;
@@ -58,7 +60,9 @@ export class PremiumContentService {
     const s3Key = await this.resolveContentKey(contentId);
     const signedUrl = await this.s3Service.getSignedDownloadUrl(s3Key, expiry);
 
-    this.logger.log(`Generated premium URL for content ${contentId}, user ${userId}, expires ${expiresAt}`);
+    this.logger.log(
+      `Generated premium URL for content ${contentId}, user ${userId}, expires ${expiresAt}`
+    );
 
     return {
       url: signedUrl,
@@ -74,7 +78,7 @@ export class PremiumContentService {
     expiresInSeconds?: number
   ): Promise<PremiumUrlResponse> {
     const expiry = this.validateExpiry(expiresInSeconds);
-    const urlToken = uuidv4();
+    const urlToken = randomUUID();
     const expiresAt = new Date(Date.now() + expiry * 1000);
 
     const redisKey = `${this.redisKeyPrefix}${urlToken}`;
@@ -92,7 +96,9 @@ export class PremiumContentService {
     const s3Key = await this.resolveContentKey(contentId);
     const cdnUrl = this.buildCdnUrl(s3Key, urlToken, expiry);
 
-    this.logger.log(`Generated CDN premium URL for content ${contentId}, user ${userId}, expires ${expiresAt}`);
+    this.logger.log(
+      `Generated CDN premium URL for content ${contentId}, user ${userId}, expires ${expiresAt}`
+    );
 
     return {
       url: cdnUrl,
@@ -146,7 +152,7 @@ export class PremiumContentService {
   async invalidatePremiumUrl(urlToken: string): Promise<void> {
     const redisKey = `${this.redisKeyPrefix}${urlToken}`;
     const result = await this.redisService.del(redisKey);
-    
+
     if (result > 0) {
       this.logger.log(`Invalidated premium URL token: ${urlToken}`);
     }
@@ -222,9 +228,10 @@ export class PremiumContentService {
   }
 
   private buildCdnUrl(s3Key: string, token: string, expiresInSeconds: number): string {
-    const baseUrl = this.cdnUrl || `https://${this.configService.get<string>('AWS_S3_BUCKET')}.s3.amazonaws.com`;
+    const baseUrl =
+      this.cdnUrl || `https://${this.configService.get<string>('AWS_S3_BUCKET')}.s3.amazonaws.com`;
     const expires = Math.floor(Date.now() / 1000) + expiresInSeconds;
-    
+
     return `${baseUrl}/${s3Key}?token=${token}&expires=${expires}`;
   }
 

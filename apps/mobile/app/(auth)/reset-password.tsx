@@ -55,10 +55,7 @@ export default function ResetPasswordScreen() {
     }
 
     if (!token) {
-      Alert.alert(
-        'Error',
-        'Invalid reset link. Please request a new password reset link.'
-      );
+      Alert.alert('Error', 'Invalid reset link. Please request a new password reset link.');
       return;
     }
 
@@ -72,10 +69,7 @@ export default function ResetPasswordScreen() {
         },
       ]);
     } catch (error: any) {
-      Alert.alert(
-        'Error',
-        error?.message || 'Failed to reset password. Please try again.'
-      );
+      Alert.alert('Error', error?.message || 'Failed to reset password. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -94,9 +88,7 @@ export default function ResetPasswordScreen() {
           <View style={styles.header}>
             <Text style={styles.logo}>AZEEBO+</Text>
             <Text style={styles.title}>Reset Password</Text>
-            <Text style={styles.subtitle}>
-              Create a new strong password for your account
-            </Text>
+            <Text style={styles.subtitle}>Create a new strong password for your account</Text>
           </View>
 
           <View style={styles.form}>
@@ -114,10 +106,7 @@ export default function ResetPasswordScreen() {
               testID="new-password"
             />
 
-            <PasswordStrengthMeter
-              password={newPassword}
-              onStrengthChange={setPasswordStrength}
-            />
+            <PasswordStrengthMeter password={newPassword} onStrengthChange={setPasswordStrength} />
 
             <PasswordInput
               value={confirmPassword}
@@ -137,10 +126,7 @@ export default function ResetPasswordScreen() {
             />
 
             <TouchableOpacity
-              style={[
-                styles.resetButton,
-                isLoading && styles.resetButtonDisabled,
-              ]}
+              style={[styles.resetButton, isLoading && styles.resetButtonDisabled]}
               onPress={handleReset}
               disabled={isLoading}
               testID="reset-button"

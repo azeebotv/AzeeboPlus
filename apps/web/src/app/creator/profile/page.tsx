@@ -34,7 +34,7 @@ export default function CreatorProfilePage(): JSX.Element {
   const router = useRouter();
   const searchParams = useSearchParams();
   const creatorId = searchParams.get('creatorId') || '';
-  
+
   const [profile, setProfile] = useState<CreatorProfile | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
@@ -121,7 +121,12 @@ export default function CreatorProfilePage(): JSX.Element {
               className="text-muted-foreground hover:text-foreground mb-2 flex items-center gap-2"
             >
               <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 19l-7-7 7-7"
+                />
               </svg>
               Back
             </button>
@@ -143,11 +148,15 @@ export default function CreatorProfilePage(): JSX.Element {
 
               <div className="flex justify-center md:justify-start gap-8 mt-6">
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-foreground">{formatNumber(profile.followers)}</p>
+                  <p className="text-2xl font-bold text-foreground">
+                    {formatNumber(profile.followers)}
+                  </p>
                   <p className="text-sm text-muted-foreground">Followers</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-foreground">{formatNumber(profile.following)}</p>
+                  <p className="text-2xl font-bold text-foreground">
+                    {formatNumber(profile.following)}
+                  </p>
                   <p className="text-sm text-muted-foreground">Following</p>
                 </div>
                 <div className="text-center">
@@ -155,7 +164,9 @@ export default function CreatorProfilePage(): JSX.Element {
                   <p className="text-sm text-muted-foreground">Content</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-foreground">{formatNumber(profile.totalViews)}</p>
+                  <p className="text-2xl font-bold text-foreground">
+                    {formatNumber(profile.totalViews)}
+                  </p>
                   <p className="text-sm text-muted-foreground">Views</p>
                 </div>
               </div>

@@ -41,10 +41,7 @@ export class EngagementController {
   @RateLimit(30, 60000)
   @ApiOperation({ summary: 'Get prediction results for a content' })
   @ApiResponse({ status: 200, description: 'Prediction results' })
-  async getPredictionResults(
-    @Request() req: AuthRequest,
-    @Query('contentId') contentId: string
-  ) {
+  async getPredictionResults(@Request() req: AuthRequest, @Query('contentId') contentId: string) {
     return this.engagementService.getPredictionResults(req.user.id, contentId);
   }
 

@@ -1,0 +1,272 @@
+=== captured at ===
+2026-06-22T11:03:53Z
+
+=== service directories discovered ===
+services/core/auth-service/src
+services/core/content-service/src
+services/core/media-service/src
+services/core/payment-service/src
+services/core/search-service/src
+services/core/user-service/src
+services/core/wallet-service/src
+services/engagement/engagement-service/src
+services/engagement/messaging-service/src
+services/engagement/notification-service/src
+services/engagement/referral-service/src
+services/engagement/reward-service/src
+services/engagement/subscription-service/src
+services/gateway/api-gateway/src
+services/intelligence/analytics-service/src
+services/intelligence/recommendation-service/src
+services/operations/moderation-service/src
+services/operations/queue-service/src
+services/operations/support-service/src
+services/universes/comedy-service/src
+services/universes/creator-service/src
+services/universes/games-service/src
+services/universes/lifestyle-service/src
+services/universes/movie-service/src
+services/universes/reality-service/src
+services/universes/sports-service/src
+services/universes/vertical-service/src
+
+=== main.ts files ===
+services/core/media-service/src/main.ts
+services/core/payment-service/src/main.ts
+services/core/wallet-service/src/main.ts
+services/core/search-service/src/main.ts
+services/core/user-service/src/main.ts
+services/core/auth-service/src/main.ts
+services/core/content-service/src/main.ts
+services/intelligence/recommendation-service/src/main.ts
+services/intelligence/analytics-service/src/main.ts
+services/operations/support-service/src/main.ts
+services/operations/moderation-service/src/main.ts
+services/operations/queue-service/src/main.ts
+services/engagement/notification-service/src/main.ts
+services/engagement/reward-service/src/main.ts
+services/engagement/subscription-service/src/main.ts
+services/engagement/referral-service/src/main.ts
+services/engagement/engagement-service/src/main.ts
+services/engagement/messaging-service/src/main.ts
+services/universes/creator-service/src/main.ts
+services/universes/comedy-service/src/main.ts
+services/universes/reality-service/src/main.ts
+services/universes/games-service/src/main.ts
+services/universes/lifestyle-service/src/main.ts
+services/universes/movie-service/src/main.ts
+services/universes/vertical-service/src/main.ts
+services/universes/sports-service/src/main.ts
+services/gateway/api-gateway/src/main.ts
+
+=== app.module.ts files ===
+services/core/media-service/src/app.module.ts
+services/core/payment-service/src/app.module.ts
+services/core/wallet-service/src/app.module.ts
+services/core/search-service/src/app.module.ts
+services/core/user-service/src/app.module.ts
+services/core/auth-service/src/app.module.ts
+services/core/content-service/src/app.module.ts
+services/intelligence/recommendation-service/src/app.module.ts
+services/intelligence/analytics-service/src/app.module.ts
+services/operations/support-service/src/app.module.ts
+services/operations/moderation-service/src/app.module.ts
+services/engagement/notification-service/src/app.module.ts
+services/engagement/reward-service/src/app.module.ts
+services/engagement/subscription-service/src/app.module.ts
+services/engagement/referral-service/src/app.module.ts
+services/engagement/engagement-service/src/app.module.ts
+services/engagement/messaging-service/src/app.module.ts
+services/universes/creator-service/src/app.module.ts
+services/universes/comedy-service/src/app.module.ts
+services/universes/reality-service/src/app.module.ts
+services/universes/games-service/src/app.module.ts
+services/universes/lifestyle-service/src/app.module.ts
+services/universes/movie-service/src/app.module.ts
+services/universes/vertical-service/src/app.module.ts
+services/universes/sports-service/src/app.module.ts
+services/gateway/api-gateway/src/app.module.ts
+apps/admin/src/app.module.ts
+apps/creator-portal/src/app.module.ts
+
+=== per-service: ValidationPipe presence ===
+services/core/media-service/src/main.ts                                ValidationPipe: present
+services/core/payment-service/src/main.ts                              ValidationPipe: present
+services/core/wallet-service/src/main.ts                               ValidationPipe: present
+services/core/search-service/src/main.ts                               ValidationPipe: present
+services/core/user-service/src/main.ts                                 ValidationPipe: present
+services/core/auth-service/src/main.ts                                 ValidationPipe: present
+services/core/content-service/src/main.ts                              ValidationPipe: present
+services/intelligence/recommendation-service/src/main.ts               ValidationPipe: present
+services/intelligence/analytics-service/src/main.ts                    ValidationPipe: present
+services/operations/support-service/src/main.ts                        ValidationPipe: present
+services/operations/moderation-service/src/main.ts                     ValidationPipe: present
+services/operations/queue-service/src/main.ts                          ValidationPipe: present
+services/engagement/notification-service/src/main.ts                   ValidationPipe: present
+services/engagement/reward-service/src/main.ts                         ValidationPipe: present
+services/engagement/subscription-service/src/main.ts                   ValidationPipe: present
+services/engagement/referral-service/src/main.ts                       ValidationPipe: present
+services/engagement/engagement-service/src/main.ts                     ValidationPipe: present
+services/engagement/messaging-service/src/main.ts                      ValidationPipe: present
+services/universes/creator-service/src/main.ts                         ValidationPipe: present
+services/universes/comedy-service/src/main.ts                          ValidationPipe: present
+services/universes/reality-service/src/main.ts                         ValidationPipe: present
+services/universes/games-service/src/main.ts                           ValidationPipe: present
+services/universes/lifestyle-service/src/main.ts                       ValidationPipe: present
+services/universes/movie-service/src/main.ts                           ValidationPipe: present
+services/universes/vertical-service/src/main.ts                        ValidationPipe: present
+services/universes/sports-service/src/main.ts                          ValidationPipe: present
+services/gateway/api-gateway/src/main.ts                               ValidationPipe: present
+apps/admin/src/main.ts                                                 ValidationPipe: present
+apps/creator-portal/src/main.ts                                        ValidationPipe: present
+
+=== per-service: helmet presence ===
+services/core/media-service/src/main.ts                                helmet: present
+services/core/payment-service/src/main.ts                              helmet: present
+services/core/wallet-service/src/main.ts                               helmet: present
+services/core/search-service/src/main.ts                               helmet: present
+services/core/user-service/src/main.ts                                 helmet: present
+services/core/auth-service/src/main.ts                                 helmet: present
+services/core/content-service/src/main.ts                              helmet: present
+services/intelligence/recommendation-service/src/main.ts               helmet: present
+services/intelligence/analytics-service/src/main.ts                    helmet: present
+services/operations/support-service/src/main.ts                        helmet: present
+services/operations/moderation-service/src/main.ts                     helmet: present
+services/operations/queue-service/src/main.ts                          helmet: present
+services/engagement/notification-service/src/main.ts                   helmet: present
+services/engagement/reward-service/src/main.ts                         helmet: present
+services/engagement/subscription-service/src/main.ts                   helmet: present
+services/engagement/referral-service/src/main.ts                       helmet: present
+services/engagement/engagement-service/src/main.ts                     helmet: present
+services/engagement/messaging-service/src/main.ts                      helmet: present
+services/universes/creator-service/src/main.ts                         helmet: present
+services/universes/comedy-service/src/main.ts                          helmet: present
+services/universes/reality-service/src/main.ts                         helmet: present
+services/universes/games-service/src/main.ts                           helmet: present
+services/universes/lifestyle-service/src/main.ts                       helmet: present
+services/universes/movie-service/src/main.ts                           helmet: present
+services/universes/vertical-service/src/main.ts                        helmet: present
+services/universes/sports-service/src/main.ts                          helmet: present
+services/gateway/api-gateway/src/main.ts                               helmet: present
+apps/admin/src/main.ts                                                 helmet: present
+apps/creator-portal/src/main.ts                                        helmet: present
+
+=== per-service: global guards (APP_GUARD) ===
+services/core/media-service/src/app.module.ts                          import { APP_INTERCEPTOR } from '@nestjs/core';
+      provide: APP_INTERCEPTOR,
+      provide: APP_INTERCEPTOR,
+services/core/payment-service/src/app.module.ts                        import { APP_INTERCEPTOR } from '@nestjs/core';
+      provide: APP_INTERCEPTOR,
+      provide: APP_INTERCEPTOR,
+services/core/wallet-service/src/app.module.ts                         import { APP_INTERCEPTOR } from '@nestjs/core';
+      provide: APP_INTERCEPTOR,
+      provide: APP_INTERCEPTOR,
+services/core/search-service/src/app.module.ts                         (no APP_GUARD/INTERCEPTOR/FILTER/PIPE)
+services/core/user-service/src/app.module.ts                           import { APP_INTERCEPTOR } from '@nestjs/core';
+      provide: APP_INTERCEPTOR,
+      provide: APP_INTERCEPTOR,
+services/core/auth-service/src/app.module.ts                           import { APP_GUARD } from '@nestjs/core';
+      provide: APP_GUARD,
+services/core/content-service/src/app.module.ts                        import { APP_INTERCEPTOR } from '@nestjs/core';
+      provide: APP_INTERCEPTOR,
+      provide: APP_INTERCEPTOR,
+services/intelligence/recommendation-service/src/app.module.ts         (no APP_GUARD/INTERCEPTOR/FILTER/PIPE)
+services/intelligence/analytics-service/src/app.module.ts              (no APP_GUARD/INTERCEPTOR/FILTER/PIPE)
+services/operations/support-service/src/app.module.ts                  (no APP_GUARD/INTERCEPTOR/FILTER/PIPE)
+services/operations/moderation-service/src/app.module.ts               (no APP_GUARD/INTERCEPTOR/FILTER/PIPE)
+services/engagement/notification-service/src/app.module.ts             import { APP_INTERCEPTOR } from '@nestjs/core';
+      provide: APP_INTERCEPTOR,
+      provide: APP_INTERCEPTOR,
+services/engagement/reward-service/src/app.module.ts                   (no APP_GUARD/INTERCEPTOR/FILTER/PIPE)
+services/engagement/subscription-service/src/app.module.ts             (no APP_GUARD/INTERCEPTOR/FILTER/PIPE)
+services/engagement/referral-service/src/app.module.ts                 (no APP_GUARD/INTERCEPTOR/FILTER/PIPE)
+services/engagement/engagement-service/src/app.module.ts               (no APP_GUARD/INTERCEPTOR/FILTER/PIPE)
+services/engagement/messaging-service/src/app.module.ts                (no APP_GUARD/INTERCEPTOR/FILTER/PIPE)
+services/universes/creator-service/src/app.module.ts                   import { APP_INTERCEPTOR } from '@nestjs/core';
+      provide: APP_INTERCEPTOR,
+      provide: APP_INTERCEPTOR,
+services/universes/comedy-service/src/app.module.ts                    import { APP_INTERCEPTOR, APP_GUARD } from '@nestjs/core';
+      provide: APP_INTERCEPTOR,
+      provide: APP_INTERCEPTOR,
+      provide: APP_GUARD,
+services/universes/reality-service/src/app.module.ts                   (no APP_GUARD/INTERCEPTOR/FILTER/PIPE)
+services/universes/games-service/src/app.module.ts                     import { APP_INTERCEPTOR } from '@nestjs/core';
+      provide: APP_INTERCEPTOR,
+      provide: APP_INTERCEPTOR,
+services/universes/lifestyle-service/src/app.module.ts                 (no APP_GUARD/INTERCEPTOR/FILTER/PIPE)
+services/universes/movie-service/src/app.module.ts                     (no APP_GUARD/INTERCEPTOR/FILTER/PIPE)
+services/universes/vertical-service/src/app.module.ts                  (no APP_GUARD/INTERCEPTOR/FILTER/PIPE)
+services/universes/sports-service/src/app.module.ts                    import { APP_INTERCEPTOR } from '@nestjs/core';
+      provide: APP_INTERCEPTOR,
+      provide: APP_INTERCEPTOR,
+services/gateway/api-gateway/src/app.module.ts                         (no APP_GUARD/INTERCEPTOR/FILTER/PIPE)
+apps/admin/src/app.module.ts                                           (no APP_GUARD/INTERCEPTOR/FILTER/PIPE)
+apps/creator-portal/src/app.module.ts                                  (no APP_GUARD/INTERCEPTOR/FILTER/PIPE)
+
+=== per-service: controller count + endpoint count ===
+services/core/auth-service                                   controllers=8 endpoints=34
+services/core/content-service                                controllers=5 endpoints=81
+services/core/media-service                                  controllers=3 endpoints=27
+services/core/payment-service                                controllers=5 endpoints=18
+services/core/search-service                                 controllers=3 endpoints=11
+services/core/user-service                                   controllers=4 endpoints=42
+services/core/wallet-service                                 controllers=4 endpoints=22
+services/gateway/api-gateway                                 controllers=3 endpoints=17
+services/universes/games-service                             controllers=5 endpoints=28
+services/universes/movie-service                             controllers=5 endpoints=32
+
+=== controllers WITHOUT @UseGuards anywhere in file ===
+services/core/media-service/src/modules/health/health.controller.ts
+services/core/payment-service/src/modules/metrics/metrics.controller.ts
+services/core/payment-service/src/modules/health/health.controller.ts
+services/core/wallet-service/src/modules/metrics/metrics.controller.ts
+services/core/wallet-service/src/modules/health/health.controller.ts
+services/core/search-service/src/modules/health/health.controller.ts
+services/core/user-service/src/modules/health/health.controller.ts
+services/core/user-service/src/modules/user/user-deletion.controller.ts
+services/core/auth-service/src/modules/metrics/metrics.controller.ts
+services/core/auth-service/src/modules/health/health.controller.ts
+services/core/content-service/src/modules/health/health.controller.ts
+services/core/content-service/src/modules/public/public.controller.ts
+services/intelligence/recommendation-service/src/modules/recommendation/recommendation.controller.ts
+services/intelligence/recommendation-service/src/modules/health/health.controller.ts
+services/intelligence/analytics-service/src/modules/analytics-instrumentation/analytics-instrumentation.controller.ts
+services/intelligence/analytics-service/src/modules/metrics/metrics.controller.ts
+services/intelligence/analytics-service/src/modules/intelligence/intelligence.controller.ts
+services/intelligence/analytics-service/src/modules/health/health.controller.ts
+services/operations/support-service/src/modules/health/health.controller.ts
+services/operations/support-service/src/modules/dashboard/support-dashboard.controller.ts
+services/operations/support-service/src/modules/ticket/ticket.controller.ts
+services/operations/moderation-service/src/modules/health/health.controller.ts
+services/operations/queue-service/src/modules/health/health.controller.ts
+services/engagement/notification-service/src/modules/health/health.controller.ts
+services/engagement/reward-service/src/modules/health/health.controller.ts
+services/engagement/subscription-service/src/modules/health/health.controller.ts
+services/engagement/referral-service/src/modules/health/health.controller.ts
+services/engagement/engagement-service/src/modules/health/health.controller.ts
+services/engagement/messaging-service/src/modules/health/health.controller.ts
+services/universes/creator-service/src/modules/health/health.controller.ts
+services/universes/comedy-service/src/modules/comedy-feed/comedy-feed.controller.ts
+services/universes/comedy-service/src/modules/health/health.controller.ts
+services/universes/reality-service/src/modules/health/health.controller.ts
+services/universes/games-service/src/modules/game-catalog/game-catalog.controller.ts
+services/universes/games-service/src/modules/health/health.controller.ts
+services/universes/lifestyle-service/src/modules/music/music.controller.ts
+services/universes/lifestyle-service/src/modules/influencer/influencer.controller.ts
+services/universes/lifestyle-service/src/modules/celebrity/celebrity.controller.ts
+services/universes/lifestyle-service/src/modules/health/health.controller.ts
+services/universes/lifestyle-service/src/modules/city-guide/city-guide.controller.ts
+services/universes/lifestyle-service/src/modules/social/social.controller.ts
+services/universes/lifestyle-service/src/modules/nightlife/nightlife.controller.ts
+services/universes/movie-service/src/modules/health/health.controller.ts
+services/universes/movie-service/src/modules/cinema-pass/cinema-pass.controller.ts
+services/universes/movie-service/src/modules/filmmaker/filmmaker.controller.ts
+services/universes/vertical-service/src/modules/crossovers/crossovers.controller.ts
+services/universes/vertical-service/src/modules/lore/lore.controller.ts
+services/universes/vertical-service/src/modules/health/health.controller.ts
+services/universes/vertical-service/src/modules/titles/titles.controller.ts
+services/universes/vertical-service/src/modules/characters/characters.controller.ts
+services/universes/vertical-service/src/modules/timeline/timeline.controller.ts
+services/universes/sports-service/src/modules/health/health.controller.ts
+services/gateway/api-gateway/src/modules/health/circuit-breaker.controller.ts
+services/gateway/api-gateway/src/modules/health/health.controller.ts

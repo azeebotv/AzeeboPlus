@@ -5,10 +5,34 @@ import { useRouter } from 'expo-router';
 import { LoadingState, EmptyState, ErrorState } from '../src/components/StateContainers';
 import { apiClient } from '../src/api/client';
 
-interface LiveMatch { id: string; home: string; away: string; score: string; status: string; time: string; league: string; }
-interface UpcomingMatch { id: string; home: string; away: string; date: string; league: string; emoji: string; }
-interface SportCategory { id: string; name: string; emoji: string; }
-interface PredictionLeague { id: string; name: string; participants: string; prize: string; }
+interface LiveMatch {
+  id: string;
+  home: string;
+  away: string;
+  score: string;
+  status: string;
+  time: string;
+  league: string;
+}
+interface UpcomingMatch {
+  id: string;
+  home: string;
+  away: string;
+  date: string;
+  league: string;
+  emoji: string;
+}
+interface SportCategory {
+  id: string;
+  name: string;
+  emoji: string;
+}
+interface PredictionLeague {
+  id: string;
+  name: string;
+  participants: string;
+  prize: string;
+}
 
 export default function SportsUniverseHome() {
   const colorScheme = useColorScheme();
@@ -31,10 +55,10 @@ export default function SportsUniverseHome() {
         apiClient.get<any>('/v1/sports/categories'),
         apiClient.get<any>('/v1/sports/prediction-leagues'),
       ]);
-      setLiveMatches(Array.isArray(liveRes) ? liveRes : liveRes?.data ?? []);
-      setUpcomingMatches(Array.isArray(upcomingRes) ? upcomingRes : upcomingRes?.data ?? []);
-      setCategories(Array.isArray(catsRes) ? catsRes : catsRes?.data ?? []);
-      setPredictionLeagues(Array.isArray(leaguesRes) ? leaguesRes : leaguesRes?.data ?? []);
+      setLiveMatches(Array.isArray(liveRes) ? liveRes : (liveRes?.data ?? []));
+      setUpcomingMatches(Array.isArray(upcomingRes) ? upcomingRes : (upcomingRes?.data ?? []));
+      setCategories(Array.isArray(catsRes) ? catsRes : (catsRes?.data ?? []));
+      setPredictionLeagues(Array.isArray(leaguesRes) ? leaguesRes : (leaguesRes?.data ?? []));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load');
     } finally {
@@ -42,12 +66,20 @@ export default function SportsUniverseHome() {
     }
   };
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   if (isLoading) return <LoadingState text="Loading sports events..." />;
   if (error) return <ErrorState description={error} onRetry={fetchData} />;
   if (!liveMatches.length && !upcomingMatches.length) {
-    return <EmptyState icon="⚽" title="No events available" description="Check back later for sports events" />;
+    return (
+      <EmptyState
+        icon="⚽"
+        title="No events available"
+        description="Check back later for sports events"
+      />
+    );
   }
 
   return (
@@ -90,13 +122,19 @@ export default function SportsUniverseHome() {
               <View style={styles.matchTeams}>
                 <View style={styles.teamInfo}>
                   <Text style={styles.teamEmoji}>🔵</Text>
-                  <Text style={[styles.teamName, { color: isDark ? '#fff' : '#000' }]}>{match.home}</Text>
+                  <Text style={[styles.teamName, { color: isDark ? '#fff' : '#000' }]}>
+                    {match.home}
+                  </Text>
                 </View>
                 <View style={styles.scoreDisplay}>
-                  <Text style={[styles.scoreText, { color: isDark ? '#fff' : '#000' }]}>{match.score}</Text>
+                  <Text style={[styles.scoreText, { color: isDark ? '#fff' : '#000' }]}>
+                    {match.score}
+                  </Text>
                 </View>
                 <View style={[styles.teamInfo, styles.teamInfoRight]}>
-                  <Text style={[styles.teamName, { color: isDark ? '#fff' : '#000' }]}>{match.away}</Text>
+                  <Text style={[styles.teamName, { color: isDark ? '#fff' : '#000' }]}>
+                    {match.away}
+                  </Text>
                   <Text style={styles.teamEmoji}>🔴</Text>
                 </View>
               </View>
@@ -159,7 +197,9 @@ export default function SportsUniverseHome() {
               onPress={() => router.push('/sports/prediction')}
             >
               <View style={styles.predictionInfo}>
-                <Text style={[styles.predictionName, { color: isDark ? '#fff' : '#000' }]}>{league.name}</Text>
+                <Text style={[styles.predictionName, { color: isDark ? '#fff' : '#000' }]}>
+                  {league.name}
+                </Text>
                 <View style={styles.predictionMeta}>
                   <Text style={styles.predictionParticipants}>👥 {league.participants}</Text>
                   <Text style={styles.predictionPrize}>🏆 {league.prize}</Text>

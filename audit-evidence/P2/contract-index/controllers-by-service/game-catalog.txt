@@ -1,0 +1,10 @@
+===== services/universes/games-service/src/modules/game-catalog/game-catalog.controller.ts =====
+6:@Controller('v1/games')
+10:  @Get()
+22:  @Get('categories')
+29:  @Get('stats/:userId')
+36:  @Get(':slug')
+43:  @Post(':gameId/start')
+53:  @Post('answer')
+75:  @Post(':sessionId/complete')
+

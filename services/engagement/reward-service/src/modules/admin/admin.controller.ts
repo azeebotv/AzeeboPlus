@@ -1,13 +1,4 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Put,
-  Param,
-  Body,
-  Query,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Get, Post, Put, Param, Body, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AdminService } from './admin.service';
 import { AdminGuard } from '@azeebo/security';
@@ -34,7 +25,7 @@ export class AdminController {
     @Query('page') page?: number,
     @Query('limit') limit?: number,
     @Query('levelId') levelId?: string,
-    @Query('minPoints') minPoints?: number,
+    @Query('minPoints') minPoints?: number
   ) {
     return this.adminService.getRewards({ page, limit, levelId, minPoints });
   }
@@ -47,7 +38,7 @@ export class AdminController {
   async getRewardTransactions(
     @Param('id') id: string,
     @Query('page') page?: number,
-    @Query('limit') limit?: number,
+    @Query('limit') limit?: number
   ) {
     return this.adminService.getRewardTransactions(id, { page, limit });
   }
@@ -56,10 +47,7 @@ export class AdminController {
   @ApiOperation({ summary: 'List active missions (admin)' })
   @ApiResponse({ status: 200, description: 'List of missions' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
-  async getMissions(
-    @Query('type') type?: string,
-    @Query('isActive') isActive?: string,
-  ) {
+  async getMissions(@Query('type') type?: string, @Query('isActive') isActive?: string) {
     return this.adminService.getMissions({ type, isActive });
   }
 
@@ -68,7 +56,14 @@ export class AdminController {
   @ApiResponse({ status: 201, description: 'Mission created' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   async createMission(
-    @Body() body: { title: string; description?: string; points: number; type: string; metadata?: Record<string, unknown> },
+    @Body()
+    body: {
+      title: string;
+      description?: string;
+      points: number;
+      type: string;
+      metadata?: Record<string, unknown>;
+    }
   ) {
     return this.adminService.createMission(body);
   }
@@ -80,7 +75,15 @@ export class AdminController {
   @ApiResponse({ status: 403, description: 'Forbidden' })
   async updateMission(
     @Param('id') id: string,
-    @Body() body: { title?: string; description?: string; points?: number; type?: string; isActive?: boolean; metadata?: Record<string, unknown> },
+    @Body()
+    body: {
+      title?: string;
+      description?: string;
+      points?: number;
+      type?: string;
+      isActive?: boolean;
+      metadata?: Record<string, unknown>;
+    }
   ) {
     return this.adminService.updateMission(id, body);
   }

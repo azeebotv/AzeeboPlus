@@ -1,0 +1,13 @@
+===== services/operations/support-service/src/modules/takedown/takedown.controller.ts =====
+27:@Controller('support/takedowns')
+28:@UseGuards(AuthGuard)
+33:  @Post()
+46:  @Get('pending')
+48:  @UseGuards(AdminGuard)
+59:  @Get('content/:contentId')
+61:  @UseGuards(AdminGuard)
+67:  @Get(':id')
+69:  @UseGuards(AdminGuard)
+75:  @Patch(':id/decide')
+77:  @UseGuards(AdminGuard)
+

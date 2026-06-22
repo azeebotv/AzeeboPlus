@@ -1,4 +1,14 @@
-import { Controller, Get, Post, Delete, Body, Param, Query, UseGuards, Request } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Delete,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+  Request,
+} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 
@@ -36,17 +46,19 @@ export class MessagingController {
     @Query('limit') limit = 50,
     @Query('offset') offset = 0
   ) {
-    return this.messagingService.getMessages(req.user.id, conversationId, Number(limit), Number(offset));
+    return this.messagingService.getMessages(
+      req.user.id,
+      conversationId,
+      Number(limit),
+      Number(offset)
+    );
   }
 
   @Post('conversations')
   @RateLimit(10, 60000)
   @ApiOperation({ summary: 'Create a new conversation' })
   @ApiResponse({ status: 201, description: 'Conversation created' })
-  async createConversation(
-    @Request() req: AuthRequest,
-    @Body() dto: CreateConversationDto
-  ) {
+  async createConversation(@Request() req: AuthRequest, @Body() dto: CreateConversationDto) {
     return this.messagingService.createConversation(req.user.id, dto);
   }
 

@@ -138,11 +138,11 @@ export default function UniverseManagementPage(): JSX.Element {
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-3xl font-bold text-foreground">Universe Management</h1>
-            <p className="text-muted-foreground mt-1">Manage platform universes and feature flags</p>
+            <p className="text-muted-foreground mt-1">
+              Manage platform universes and feature flags
+            </p>
           </div>
-          <Button onClick={() => setShowCreateModal(true)}>
-            Create Universe
-          </Button>
+          <Button onClick={() => setShowCreateModal(true)}>Create Universe</Button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -270,9 +270,7 @@ export default function UniverseManagementPage(): JSX.Element {
                 <div>
                   <p className="font-medium">{flag.featureKey}</p>
                   {flag.metadata && (
-                    <p className="text-sm text-muted-foreground">
-                      {JSON.stringify(flag.metadata)}
-                    </p>
+                    <p className="text-sm text-muted-foreground">{JSON.stringify(flag.metadata)}</p>
                   )}
                 </div>
                 <Switch checked={flag.isEnabled} />

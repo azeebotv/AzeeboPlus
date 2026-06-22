@@ -9,7 +9,7 @@ import {
   ListObjectsV2Command,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 import { CircuitBreaker, CircuitBreakerOpenError, CircuitBreakerStats } from '@azeebo/shared-types';
 import * as fileType from 'file-type';
 
@@ -90,7 +90,9 @@ export class S3Service {
 
     if (sniffedType && sniffedType !== declaredType) {
       this.logger.warn(`MIME type mismatch: declared=${declaredType}, sniffed=${sniffedType}`);
-      throw new BadRequestException(`File type mismatch: expected ${declaredType}, got ${sniffedType}`);
+      throw new BadRequestException(
+        `File type mismatch: expected ${declaredType}, got ${sniffedType}`
+      );
     }
 
     const validatedType = sniffedType || declaredType;
@@ -108,10 +110,12 @@ export class S3Service {
 
     const fileExtension = this.getFileExtension(file.originalname);
     if (!this.isExtensionValid(validatedType, fileExtension)) {
-      throw new BadRequestException(`File extension ${fileExtension} is not valid for ${validatedType}`);
+      throw new BadRequestException(
+        `File extension ${fileExtension} is not valid for ${validatedType}`
+      );
     }
 
-    const key = `${folder}/${uuidv4()}.${fileExtension}`;
+    const key = `${folder}/${randomUUID()}.${fileExtension}`;
 
     try {
       await this.circuitBreaker.execute(async () => {
@@ -344,7 +348,9 @@ export class S3Service {
             await this.deleteFile(item.Key || '');
             deletedCount++;
           } catch (error) {
-            this.logger.error(`Failed to delete orphaned file ${item.Key}: ${(error as Error).message}`);
+            this.logger.error(
+              `Failed to delete orphaned file ${item.Key}: ${(error as Error).message}`
+            );
           }
         }
       }

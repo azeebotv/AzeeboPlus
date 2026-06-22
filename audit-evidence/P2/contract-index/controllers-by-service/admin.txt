@@ -1,0 +1,7 @@
+===== services/universes/vertical-service/src/modules/admin/admin.controller.ts =====
+7:@Controller('admin')
+8:@UseGuards(AdminGuard)
+12:  @Get('stats')
+19:  @Get('titles')
+26:  @Get('characters')
+

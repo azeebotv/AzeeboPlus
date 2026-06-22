@@ -165,7 +165,12 @@ export default function EpisodesPage(): JSX.Element {
             className="text-muted-foreground hover:text-foreground mb-4 flex items-center gap-2"
           >
             <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 19l-7-7 7-7"
+              />
             </svg>
             Back
           </button>
@@ -223,17 +228,13 @@ export default function EpisodesPage(): JSX.Element {
                   </span>
                 </div>
 
-                <h3 className="text-lg font-semibold text-foreground mb-1">
-                  {episode.title}
-                </h3>
+                <h3 className="text-lg font-semibold text-foreground mb-1">{episode.title}</h3>
 
                 <p className="text-sm text-muted-foreground mb-2 line-clamp-2">
                   {episode.description}
                 </p>
 
-                <p className="text-xs text-muted-foreground">
-                  {formatDate(episode.releaseDate)}
-                </p>
+                <p className="text-xs text-muted-foreground">{formatDate(episode.releaseDate)}</p>
               </div>
             </div>
           ))}

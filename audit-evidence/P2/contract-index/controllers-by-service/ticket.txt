@@ -1,0 +1,12 @@
+===== services/operations/support-service/src/modules/ticket/ticket.controller.ts =====
+15:@Controller('support')
+19:  @Post('tickets')
+34:  @Get('tickets')
+47:  @Get('tickets/my')
+60:  @Get('tickets/:id')
+71:  @Patch('tickets/:id/status')
+79:  @Post('tickets/:id/messages')
+98:  @Post('tickets/:id/assign')
+106:  @Post('tickets/:id/escalate')
+114:  @Post('tickets/:id/close')
+

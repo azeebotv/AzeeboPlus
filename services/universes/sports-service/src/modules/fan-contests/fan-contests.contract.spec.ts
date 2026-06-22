@@ -227,7 +227,9 @@ describe('Fan Contests Controller Contract Tests', () => {
         },
       });
 
-      const response = await request(app.getHttpServer()).get('/v1/contests/contest-1/rank/user-123');
+      const response = await request(app.getHttpServer()).get(
+        '/v1/contests/contest-1/rank/user-123'
+      );
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual({

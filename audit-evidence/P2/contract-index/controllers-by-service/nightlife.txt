@@ -1,0 +1,9 @@
+===== services/universes/lifestyle-service/src/modules/nightlife/nightlife.controller.ts =====
+38:@Controller('v1/lifestyle/nightlife')
+42:  @Get()
+55:  @Get('featured')
+62:  @Get(':slug')
+69:  @Post()
+76:  @Patch(':id')
+86:  @Delete(':id')
+

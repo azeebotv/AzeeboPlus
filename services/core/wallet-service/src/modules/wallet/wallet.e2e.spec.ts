@@ -41,7 +41,9 @@ describe('WalletService E2E Tests', () => {
   beforeEach(async () => {
     const walletFindUniqueMock = jest.fn();
     const walletUpdateMock = jest.fn();
-    const txCreateMock = jest.fn().mockImplementation((data) => Promise.resolve({ ...mockTransaction, ...data }));
+    const txCreateMock = jest
+      .fn()
+      .mockImplementation((data) => Promise.resolve({ ...mockTransaction, ...data }));
     const txFindUniqueMock = jest.fn();
 
     const module: TestingModule = await Test.createTestingModule({
@@ -73,7 +75,9 @@ describe('WalletService E2E Tests', () => {
                     results.push({ ...mockTransaction, ...op.walletTransaction.create.data });
                   } else if (op.wallet?.update) {
                     if (op.wallet.update.data.balance?.increment) {
-                      updatedBalance = new Prisma.Decimal(updatedBalance).add(op.wallet.update.data.balance.increment);
+                      updatedBalance = new Prisma.Decimal(updatedBalance).add(
+                        op.wallet.update.data.balance.increment
+                      );
                     }
                     const updatedWallet = { ...mockWallet, balance: updatedBalance };
                     results.push(updatedWallet);
@@ -89,13 +93,19 @@ describe('WalletService E2E Tests', () => {
                   update: jest.fn((args) => {
                     let updatedWallet = { ...mockWallet };
                     if (args.data.balance?.increment) {
-                      updatedWallet.balance = new Prisma.Decimal(mockWallet.balance).add(args.data.balance.increment);
+                      updatedWallet.balance = new Prisma.Decimal(mockWallet.balance).add(
+                        args.data.balance.increment
+                      );
                     }
                     if (args.data.balance?.decrement) {
-                      updatedWallet.balance = new Prisma.Decimal(mockWallet.balance).sub(args.data.balance.decrement);
+                      updatedWallet.balance = new Prisma.Decimal(mockWallet.balance).sub(
+                        args.data.balance.decrement
+                      );
                     }
                     if (args.data.bonusBalance?.increment) {
-                      updatedWallet.bonusBalance = new Prisma.Decimal(mockWallet.bonusBalance).add(args.data.bonusBalance.increment);
+                      updatedWallet.bonusBalance = new Prisma.Decimal(mockWallet.bonusBalance).add(
+                        args.data.bonusBalance.increment
+                      );
                     }
                     walletFindUniqueMock.mockResolvedValue(updatedWallet);
                     return updatedWallet;
@@ -142,12 +152,7 @@ describe('WalletService E2E Tests', () => {
       (prisma.walletTransaction.findUnique as jest.Mock).mockResolvedValue(existingTransaction);
       (prisma.wallet.findUnique as jest.Mock).mockResolvedValue(mockWallet);
 
-      const result = await service.creditBalance(
-        'wallet-123',
-        500,
-        'Test credit',
-        idempotencyKey
-      );
+      const result = await service.creditBalance('wallet-123', 500, 'Test credit', idempotencyKey);
 
       expect(result.success).toBe(true);
       expect((result.data as any).balance).toBe(1000);
@@ -195,12 +200,7 @@ describe('WalletService E2E Tests', () => {
         balance: new Prisma.Decimal(1500),
       });
 
-      const result = await service.creditBalance(
-        'wallet-123',
-        500,
-        'Test credit',
-        idempotencyKey
-      );
+      const result = await service.creditBalance('wallet-123', 500, 'Test credit', idempotencyKey);
 
       expect(result.success).toBe(true);
       expect((result.data as any).balance).toBe(1500);
@@ -228,7 +228,9 @@ describe('WalletService E2E Tests', () => {
 
       (prisma.walletTransaction.findUnique as jest.Mock).mockResolvedValue(null);
       (prisma.wallet.findUnique as jest.Mock).mockResolvedValue(mockWallet);
-      (prisma.walletTransaction.create as jest.Mock).mockRejectedValueOnce(new Error('Transaction failed'));
+      (prisma.walletTransaction.create as jest.Mock).mockRejectedValueOnce(
+        new Error('Transaction failed')
+      );
 
       await expect(
         service.debitBalance('wallet-123', 300, 'Test debit', 'ref-127', idempotencyKey)
@@ -250,12 +252,7 @@ describe('WalletService E2E Tests', () => {
         balance: new Prisma.Decimal(1500),
       });
 
-      const result = await service.creditBalance(
-        'wallet-123',
-        500,
-        'Test credit',
-        idempotencyKey
-      );
+      const result = await service.creditBalance('wallet-123', 500, 'Test credit', idempotencyKey);
 
       expect((result.data as any).balance).toBe(1500);
       expect((result.data as any).bonusBalance).toBe(200);
@@ -325,12 +322,7 @@ describe('WalletService E2E Tests', () => {
         balance: new Prisma.Decimal(1500),
       });
 
-      const result = await service.creditBalance(
-        'wallet-123',
-        500,
-        'Test',
-        idempotencyKey
-      );
+      const result = await service.creditBalance('wallet-123', 500, 'Test', idempotencyKey);
 
       expect(result.success).toBe(true);
     });

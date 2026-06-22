@@ -170,9 +170,7 @@ export class AnomalyDetectionService {
       }
 
       const history = this.metricHistory.get(rule.metric) || [];
-      const windowSamples = history.filter(
-        (s) => s.timestamp.getTime() > Date.now() - rule.window
-      );
+      const windowSamples = history.filter((s) => s.timestamp.getTime() > Date.now() - rule.window);
 
       if (windowSamples.length === 0) {
         continue;
@@ -255,7 +253,10 @@ export class AnomalyDetectionService {
       }));
   }
 
-  getMetricStats(metric: string, windowMs: number = 3600000): {
+  getMetricStats(
+    metric: string,
+    windowMs: number = 3600000
+  ): {
     avg: number;
     min: number;
     max: number;
@@ -264,9 +265,7 @@ export class AnomalyDetectionService {
   } | null {
     const history = this.metricHistory.get(metric) || [];
     const cutoff = Date.now() - windowMs;
-    const samples = history
-      .filter((s) => s.timestamp.getTime() > cutoff)
-      .map((s) => s.value);
+    const samples = history.filter((s) => s.timestamp.getTime() > cutoff).map((s) => s.value);
 
     if (samples.length === 0) {
       return null;

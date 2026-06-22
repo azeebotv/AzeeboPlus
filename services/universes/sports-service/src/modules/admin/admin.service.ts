@@ -6,19 +6,23 @@ export class AdminService {
   constructor(private prisma: PrismaService) {}
 
   async getStats() {
-    const [totalEvents, totalPredictions, totalUsers, eventsByStatus, eventsBySport] = await Promise.all([
-      this.prisma.sportsEvent.count(),
-      this.prisma.predictionEntry.count(),
-      this.prisma.user.count(),
-      this.prisma.sportsEvent.groupBy({ by: ['status'], _count: { status: true } }),
-      this.prisma.sportsEvent.groupBy({ by: ['sport'], _count: { sport: true } }),
-    ]);
+    const [totalEvents, totalPredictions, totalUsers, eventsByStatus, eventsBySport] =
+      await Promise.all([
+        this.prisma.sportsEvent.count(),
+        this.prisma.predictionEntry.count(),
+        this.prisma.user.count(),
+        this.prisma.sportsEvent.groupBy({ by: ['status'], _count: { status: true } }),
+        this.prisma.sportsEvent.groupBy({ by: ['sport'], _count: { sport: true } }),
+      ]);
 
     return {
       totalEvents,
       totalPredictions,
       totalUsers,
-      eventsByStatus: eventsByStatus.reduce((acc, s) => ({ ...acc, [s.status]: s._count.status }), {}),
+      eventsByStatus: eventsByStatus.reduce(
+        (acc, s) => ({ ...acc, [s.status]: s._count.status }),
+        {}
+      ),
       eventsBySport: eventsBySport.reduce((acc, s) => ({ ...acc, [s.sport]: s._count.sport }), {}),
     };
   }

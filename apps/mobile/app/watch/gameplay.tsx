@@ -82,7 +82,12 @@ export default function GameplayScreen() {
 
   if (isLoading) {
     return (
-      <View style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' }]}>
+      <View
+        style={[
+          styles.container,
+          { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' },
+        ]}
+      >
         <LoadingState text="Loading game..." />
       </View>
     );
@@ -90,7 +95,12 @@ export default function GameplayScreen() {
 
   if (error) {
     return (
-      <View style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' }]}>
+      <View
+        style={[
+          styles.container,
+          { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' },
+        ]}
+      >
         <ErrorState description={error} onRetry={fetchQuestions} />
       </View>
     );
@@ -98,14 +108,24 @@ export default function GameplayScreen() {
 
   if (questions.length === 0) {
     return (
-      <View style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' }]}>
+      <View
+        style={[
+          styles.container,
+          { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' },
+        ]}
+      >
         <EmptyState icon="🎮" title="No Games" description="No trivia games available right now." />
       </View>
     );
   }
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' }]}>
+    <ScrollView
+      style={[
+        styles.container,
+        { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' },
+      ]}
+    >
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backIcon}>←</Text>
@@ -117,11 +137,15 @@ export default function GameplayScreen() {
           </View>
           <View style={styles.stat}>
             <Text style={styles.statLabel}>Time</Text>
-            <Text style={[styles.statValue, timeLeft <= 10 && { color: '#EF4444' }]}>{timeLeft}s</Text>
+            <Text style={[styles.statValue, timeLeft <= 10 && { color: '#EF4444' }]}>
+              {timeLeft}s
+            </Text>
           </View>
           <View style={styles.stat}>
             <Text style={styles.statLabel}>Round</Text>
-            <Text style={styles.statValue}>{currentQuestion + 1}/{questions.length}</Text>
+            <Text style={styles.statValue}>
+              {currentQuestion + 1}/{questions.length}
+            </Text>
           </View>
         </View>
       </View>
@@ -129,7 +153,9 @@ export default function GameplayScreen() {
       {!isGameOver ? (
         <>
           <View style={styles.questionSection}>
-            <Text style={[styles.question, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
+            <Text
+              style={[styles.question, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}
+            >
               {questions[currentQuestion].question}
             </Text>
           </View>
@@ -144,8 +170,12 @@ export default function GameplayScreen() {
                   styles.optionButton,
                   selectedAnswer === option && isCorrect && { backgroundColor: '#22C55E' },
                   selectedAnswer === option && !isCorrect && { backgroundColor: '#EF4444' },
-                  selectedAnswer !== option && isCorrect && option === questions[currentQuestion].correct && { backgroundColor: '#22C55E' },
-                  selectedAnswer !== null && selectedAnswer !== option && option !== questions[currentQuestion].correct && { opacity: 0.5 },
+                  selectedAnswer !== option &&
+                    isCorrect &&
+                    option === questions[currentQuestion].correct && { backgroundColor: '#22C55E' },
+                  selectedAnswer !== null &&
+                    selectedAnswer !== option &&
+                    option !== questions[currentQuestion].correct && { opacity: 0.5 },
                 ]}
               >
                 <Text style={[styles.optionText, selectedAnswer === option && { color: '#fff' }]}>
@@ -172,7 +202,9 @@ export default function GameplayScreen() {
           </View>
           <View style={styles.resultsStats}>
             <View style={styles.resultStat}>
-              <Text style={styles.resultStatValue}>{Math.round((score / (questions.length * 100)) * 100)}%</Text>
+              <Text style={styles.resultStatValue}>
+                {Math.round((score / (questions.length * 100)) * 100)}%
+              </Text>
               <Text style={styles.resultStatLabel}>Accuracy</Text>
             </View>
             <View style={styles.resultStat}>

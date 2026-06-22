@@ -4,7 +4,7 @@
 # All profiles: docker compose -f docker-compose.yml -f docker-compose.services.yml --profile all up -d
 
 x-common-env: &common-env
-  NODE_ENV: development
+  NODE_ENV: ${NODE_ENV:-development}
   REDIS_URL: redis://redis:6379
   POSTGRES_HOST: pgbouncer
   POSTGRES_PORT: "6432"
@@ -509,7 +509,7 @@ services:
       SUBSCRIPTION_SERVICE_URL: http://subscription-service:3026
       RATE_LIMIT_TTL: ${RATE_LIMIT_TTL:-60}
       RATE_LIMIT_MAX: ${RATE_LIMIT_MAX:-100}
-      CORS_ORIGIN: ${CORS_ORIGIN:-*}
+      CORS_ORIGIN: ${CORS_ORIGIN:?CORS_ORIGIN must be set}
     profiles:
       - gateway
       - all
@@ -526,7 +526,8 @@ services:
       - "4000:3000"
     environment:
       NODE_ENV: development
-      NEXT_PUBLIC_API_URL: http://localhost:3013
+      API_GATEWAY_URL: http://api-gateway:3013
+      NEXT_PUBLIC_API_URL: http://localhost:4000
     networks:
       - azeebo_network
     depends_on:

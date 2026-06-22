@@ -136,13 +136,11 @@ describe('Auth Controller Contract Tests', () => {
         return `token-${(payload as any).sub}`;
       });
 
-      const response = await request(app.getHttpServer())
-        .post('/auth/signup')
-        .send({
-          email: 'test@example.com',
-          password: 'password123',
-          displayName: 'Test User',
-        });
+      const response = await request(app.getHttpServer()).post('/auth/signup').send({
+        email: 'test@example.com',
+        password: 'password123',
+        displayName: 'Test User',
+      });
 
       expect(response.status).toBe(201);
       expect(response.body.success).toBe(true);
@@ -183,12 +181,10 @@ describe('Auth Controller Contract Tests', () => {
         return `token-${(payload as any).sub}`;
       });
 
-      const response = await request(app.getHttpServer())
-        .post('/auth/login')
-        .send({
-          email: 'test@example.com',
-          password: 'password123',
-        });
+      const response = await request(app.getHttpServer()).post('/auth/login').send({
+        email: 'test@example.com',
+        password: 'password123',
+      });
 
       expect(response.status).toBe(201);
       expect(response.body.success).toBe(true);

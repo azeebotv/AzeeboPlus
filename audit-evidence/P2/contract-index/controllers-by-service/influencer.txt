@@ -1,0 +1,11 @@
+===== services/universes/lifestyle-service/src/modules/influencer/influencer.controller.ts =====
+37:@Controller('v1/lifestyle/influencers')
+41:  @Get()
+60:  @Get('featured')
+67:  @Get(':slug')
+74:  @Get(':influencerId/collaborations')
+81:  @Post()
+88:  @Post('collaborations')
+95:  @Patch(':id')
+102:  @Delete(':id')
+

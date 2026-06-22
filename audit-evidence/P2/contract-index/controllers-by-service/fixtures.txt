@@ -1,0 +1,11 @@
+===== services/universes/sports-service/src/modules/fixtures/fixtures.controller.ts =====
+11:@Controller('v1/sports/fixtures')
+15:  @Get()
+35:  @Get('sports')
+41:  @Get(':id')
+42:  @UseGuards(RateLimitGuard)
+49:  @Post(':id/metadata')
+50:  @UseGuards(AuthGuard('jwt'), RolesGuard)
+69:  @Post(':id/result')
+70:  @UseGuards(AuthGuard('jwt'), RolesGuard)
+

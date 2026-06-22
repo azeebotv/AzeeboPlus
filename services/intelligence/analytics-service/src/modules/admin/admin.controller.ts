@@ -1,9 +1,4 @@
-import {
-  Controller,
-  Get,
-  Query,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { AdminService } from './admin.service';
 import { AdminGuard } from '@azeebo/security';
@@ -38,7 +33,7 @@ export class AdminController {
     @Query('limit') limit?: number,
     @Query('eventName') eventName?: string,
     @Query('startDate') startDate?: string,
-    @Query('endDate') endDate?: string,
+    @Query('endDate') endDate?: string
   ) {
     return this.adminService.getEvents({ page, limit, eventName, startDate, endDate });
   }

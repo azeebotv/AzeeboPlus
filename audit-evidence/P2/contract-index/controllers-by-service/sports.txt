@@ -1,0 +1,15 @@
+===== services/universes/sports-service/src/modules/sports/sports.controller.ts =====
+10:@Controller('v1/sports')
+14:  @Get('home')
+21:  @Get('highlights')
+28:  @Get('fixtures')
+35:  @Get('fixtures/:id')
+42:  @Get('predictions')
+49:  @Post('predictions')
+50:  @UseGuards(AuthGuard('jwt'))
+62:  @Get('leaderboard')
+69:  @Get('fan-boards')
+76:  @Get('fan-contests')
+83:  @Post('fan-contests/:id/enter')
+84:  @UseGuards(AuthGuard('jwt'))
+

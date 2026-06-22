@@ -48,7 +48,8 @@ export class PaymentsController {
   @RateLimit(10, 60000)
   @ApiOperation({
     summary: 'Initialize a payment',
-    description: 'Creates a new payment intent and returns a payment URL for the user to complete payment',
+    description:
+      'Creates a new payment intent and returns a payment URL for the user to complete payment',
   })
   @ApiBody({
     type: InitializePaymentDto,

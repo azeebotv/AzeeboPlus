@@ -37,9 +37,13 @@ interface PaginatedResult<T> {
 export class SearchRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async searchContent(query: string, page: number = 1, limit: number = 20): Promise<PaginatedResult<SearchContentResult>> {
+  async searchContent(
+    query: string,
+    page: number = 1,
+    limit: number = 20
+  ): Promise<PaginatedResult<SearchContentResult>> {
     const skip = (page - 1) * limit;
-    
+
     const contentItems = await this.prisma.contentItem.findMany({
       where: {
         OR: [
@@ -64,7 +68,7 @@ export class SearchRepository {
     });
 
     return {
-      data: contentItems.map(item => ({
+      data: contentItems.map((item) => ({
         id: item.id,
         title: item.title,
         universe: item.universeId || 'unknown',
@@ -76,9 +80,13 @@ export class SearchRepository {
     };
   }
 
-  async searchCreators(query: string, page: number = 1, limit: number = 20): Promise<PaginatedResult<SearchCreatorsResult>> {
+  async searchCreators(
+    query: string,
+    page: number = 1,
+    limit: number = 20
+  ): Promise<PaginatedResult<SearchCreatorsResult>> {
     const skip = (page - 1) * limit;
-    
+
     const creators = await this.prisma.creatorProfile.findMany({
       where: {
         OR: [
@@ -101,7 +109,7 @@ export class SearchRepository {
     });
 
     return {
-      data: creators.map(creator => ({
+      data: creators.map((creator) => ({
         id: creator.id,
         displayName: creator.user?.displayName || '',
         score: 0.85,
@@ -137,12 +145,12 @@ export class SearchRepository {
     ]);
 
     return {
-      content: contentItems.map(item => ({
+      content: contentItems.map((item) => ({
         id: item.id,
         title: item.title,
         universe: item.universeId || 'unknown',
       })),
-      creators: creators.map(creator => ({
+      creators: creators.map((creator) => ({
         id: creator.id,
         displayName: creator.user?.displayName || '',
       })),
@@ -157,7 +165,7 @@ export class SearchRepository {
       take: 10,
     });
 
-    return suggestions.map(s => s.query);
+    return suggestions.map((s) => s.query);
   }
 
   async getTrending(): Promise<TrendingResult[]> {
@@ -166,7 +174,7 @@ export class SearchRepository {
       take: 20,
     });
 
-    return trending.map(item => ({
+    return trending.map((item) => ({
       id: item.id,
       title: item.query,
       viewCount: item.count,

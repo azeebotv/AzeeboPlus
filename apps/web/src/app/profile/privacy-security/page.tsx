@@ -41,7 +41,12 @@ export default function PrivacySecurityPage(): JSX.Element {
             className="text-muted-foreground hover:text-foreground mb-4 flex items-center gap-2"
           >
             <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 19l-7-7 7-7"
+              />
             </svg>
             Back
           </button>
@@ -60,7 +65,9 @@ export default function PrivacySecurityPage(): JSX.Element {
                   </div>
                   <div>
                     <h3 className="font-medium text-foreground">Two-Factor Authentication</h3>
-                    <p className="text-sm text-muted-foreground">Add an extra layer of security to your account</p>
+                    <p className="text-sm text-muted-foreground">
+                      Add an extra layer of security to your account
+                    </p>
                   </div>
                 </div>
                 <button
@@ -102,7 +109,9 @@ export default function PrivacySecurityPage(): JSX.Element {
                   </div>
                   <div>
                     <h3 className="font-medium text-foreground">Active Sessions</h3>
-                    <p className="text-sm text-muted-foreground">Manage your active login sessions</p>
+                    <p className="text-sm text-muted-foreground">
+                      Manage your active login sessions
+                    </p>
                   </div>
                 </div>
                 <button className="text-primary hover:text-primary/90 text-sm font-medium">
@@ -117,7 +126,9 @@ export default function PrivacySecurityPage(): JSX.Element {
                   </div>
                   <div>
                     <h3 className="font-medium text-foreground">Login Alerts</h3>
-                    <p className="text-sm text-muted-foreground">Get notified of suspicious login attempts</p>
+                    <p className="text-sm text-muted-foreground">
+                      Get notified of suspicious login attempts
+                    </p>
                   </div>
                 </div>
                 <button
@@ -147,7 +158,9 @@ export default function PrivacySecurityPage(): JSX.Element {
                   </div>
                   <div>
                     <h3 className="font-medium text-foreground">Profile Visibility</h3>
-                    <p className="text-sm text-muted-foreground">Control who can see your profile</p>
+                    <p className="text-sm text-muted-foreground">
+                      Control who can see your profile
+                    </p>
                   </div>
                 </div>
                 <button

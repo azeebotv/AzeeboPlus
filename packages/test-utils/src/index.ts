@@ -1,13 +1,19 @@
-import { PrismaClient } from '@prisma/client';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 
 export class TestDatabase {
   private prisma: any;
 
-  constructor() {
-    this.prisma = new PrismaClient({
-      datasourceUrl: process.env.TEST_DATABASE_URL,
-    });
+  constructor(prismaClient?: any) {
+    if (prismaClient) {
+      this.prisma = prismaClient;
+    } else {
+      // Dynamic import - requires prisma generate to have been run
+
+      const { PrismaClient } = require('@prisma/client');
+      this.prisma = new PrismaClient({
+        datasourceUrl: process.env.TEST_DATABASE_URL,
+      });
+    }
   }
 
   async connect(): Promise<void> {
@@ -35,12 +41,14 @@ export class TestDatabase {
     }
   }
 
-  async createTestUser(overrides: Partial<{ email: string; displayName: string }> = {}): Promise<{ id: string; email: string }> {
+  async createTestUser(
+    overrides: Partial<{ email: string; displayName: string }> = {}
+  ): Promise<{ id: string; email: string }> {
     const user = await this.prisma.user.create({
       data: {
-        id: uuidv4(),
-        email: overrides.email || `test_${uuidv4()}@example.com`,
-        displayName: overrides.displayName || `Test User ${uuidv4().slice(0, 8)}`,
+        id: randomUUID(),
+        email: overrides.email || `test_${randomUUID()}@example.com`,
+        displayName: overrides.displayName || `Test User ${randomUUID().slice(0, 8)}`,
         createdAt: new Date(),
         updatedAt: new Date(),
       },
@@ -51,7 +59,7 @@ export class TestDatabase {
   async createTestWallet(userId: string): Promise<{ id: string; balance: string }> {
     const wallet = await this.prisma.wallet.create({
       data: {
-        id: uuidv4(),
+        id: randomUUID(),
         userId,
         balance: '100000',
         currency: 'NGN',
@@ -79,7 +87,7 @@ export class MockWalletService {
   private wallets: Map<string, { balance: number; userId: string }> = new Map();
 
   createWallet(userId: string, initialBalance: number = 100000): string {
-    const walletId = uuidv4();
+    const walletId = randomUUID();
     this.wallets.set(walletId, { balance: initialBalance, userId });
     return walletId;
   }
@@ -104,11 +112,13 @@ export class MockWalletService {
 }
 
 export const generateTestJwt = (userId: string, roles: string[] = ['user']): string => {
-  return Buffer.from(JSON.stringify({ userId, roles, exp: Date.now() + 3600000 })).toString('base64');
+  return Buffer.from(JSON.stringify({ userId, roles, exp: Date.now() + 3600000 })).toString(
+    'base64'
+  );
 };
 
 export const generateIdempotencyKey = (): string => {
-  return uuidv4();
+  return randomUUID();
 };
 
 export const mockAxiosResponse = <T>(data: T, status: number = 200) => ({
@@ -140,7 +150,7 @@ export const createTestContext = () => {
 };
 
 export const testUserPayload = {
-  id: uuidv4(),
+  id: randomUUID(),
   email: 'test@example.com',
   displayName: 'Test User',
   roles: ['user'],
@@ -148,7 +158,7 @@ export const testUserPayload = {
 };
 
 export const testWalletPayload = {
-  id: uuidv4(),
+  id: randomUUID(),
   userId: testUserPayload.id,
   balance: '100000',
   currency: 'NGN',
@@ -157,17 +167,17 @@ export const testWalletPayload = {
 };
 
 export const testVotePayload = {
-  id: uuidv4(),
+  id: randomUUID(),
   userId: testUserPayload.id,
-  showId: uuidv4(),
-  contestantId: uuidv4(),
+  showId: randomUUID(),
+  contestantId: randomUUID(),
   amount: 100,
   isSuperVote: false,
   createdAt: new Date().toISOString(),
 };
 
 export const testPaymentPayload = {
-  id: uuidv4(),
+  id: randomUUID(),
   userId: testUserPayload.id,
   amount: 50000,
   currency: 'NGN',
@@ -178,7 +188,7 @@ export const testPaymentPayload = {
 };
 
 export const testAnalyticsEventPayload = {
-  id: uuidv4(),
+  id: randomUUID(),
   eventName: 'screen_view',
   userId: testUserPayload.id,
   universe: 'reality',

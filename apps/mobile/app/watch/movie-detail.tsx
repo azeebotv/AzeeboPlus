@@ -26,7 +26,7 @@ export default function MovieDetailScreen() {
         setMovie(movieData);
         const relatedRes = await contentApi.getTrendingContent(5);
         if (relatedRes.success && relatedRes.data) {
-          setRelated(relatedRes.data.filter(item => item.id !== movieData.id));
+          setRelated(relatedRes.data.filter((item) => item.id !== movieData.id));
         }
       } else {
         setError('No movie content available');
@@ -45,7 +45,12 @@ export default function MovieDetailScreen() {
 
   if (isLoading) {
     return (
-      <View style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' }]}>
+      <View
+        style={[
+          styles.container,
+          { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' },
+        ]}
+      >
         <LoadingState text="Loading movie..." />
       </View>
     );
@@ -53,7 +58,12 @@ export default function MovieDetailScreen() {
 
   if (error) {
     return (
-      <View style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' }]}>
+      <View
+        style={[
+          styles.container,
+          { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' },
+        ]}
+      >
         <ErrorState description={error} onRetry={fetchMovie} />
       </View>
     );
@@ -61,19 +71,35 @@ export default function MovieDetailScreen() {
 
   if (!movie) {
     return (
-      <View style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' }]}>
-        <EmptyState icon="🎬" title="No Movie" description="No movie content available right now." />
+      <View
+        style={[
+          styles.container,
+          { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' },
+        ]}
+      >
+        <EmptyState
+          icon="🎬"
+          title="No Movie"
+          description="No movie content available right now."
+        />
       </View>
     );
   }
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' }]}>
+    <ScrollView
+      style={[
+        styles.container,
+        { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' },
+      ]}
+    >
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
+        <Text
+          style={[styles.headerTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}
+        >
           Movie
         </Text>
         <TouchableOpacity style={styles.shareButton}>
@@ -94,17 +120,16 @@ export default function MovieDetailScreen() {
             <Text style={styles.timeText}>01:23:45 / 02:34:00</Text>
           </View>
         ) : (
-          <TouchableOpacity 
-            style={styles.playButton} 
-            onPress={() => setIsPlaying(true)}
-          >
+          <TouchableOpacity style={styles.playButton} onPress={() => setIsPlaying(true)}>
             <Text style={styles.playIcon}>▶</Text>
           </TouchableOpacity>
         )}
       </View>
 
       <View style={styles.infoSection}>
-        <Text style={[styles.movieTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
+        <Text
+          style={[styles.movieTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}
+        >
           {movie.title}
         </Text>
         <View style={styles.movieMeta}>
@@ -112,7 +137,9 @@ export default function MovieDetailScreen() {
           <Text style={styles.metaDivider}>•</Text>
           <Text style={styles.metaItem}>{movie.contentType || 'Movie'}</Text>
           <Text style={styles.metaDivider}>•</Text>
-          <Text style={styles.metaItem}>{movie.duration ? `${Math.floor(movie.duration / 60)}h ${movie.duration % 60}m` : 'N/A'}</Text>
+          <Text style={styles.metaItem}>
+            {movie.duration ? `${Math.floor(movie.duration / 60)}h ${movie.duration % 60}m` : 'N/A'}
+          </Text>
         </View>
         <Text style={styles.movieDescription}>{movie.description}</Text>
       </View>
@@ -120,27 +147,49 @@ export default function MovieDetailScreen() {
       <View style={styles.actionsSection}>
         <TouchableOpacity style={styles.actionButton}>
           <Text style={styles.actionIcon}>🎬</Text>
-          <Text style={[styles.actionText, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>Play</Text>
+          <Text
+            style={[styles.actionText, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}
+          >
+            Play
+          </Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.actionButton}>
           <Text style={styles.actionIcon}>📖</Text>
-          <Text style={[styles.actionText, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>Watchlist</Text>
+          <Text
+            style={[styles.actionText, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}
+          >
+            Watchlist
+          </Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.actionButton}>
           <Text style={styles.actionIcon}>⭐</Text>
-          <Text style={[styles.actionText, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>Rate</Text>
+          <Text
+            style={[styles.actionText, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}
+          >
+            Rate
+          </Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.actionButton}>
           <Text style={styles.actionIcon}>👥</Text>
-          <Text style={[styles.actionText, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>Share</Text>
+          <Text
+            style={[styles.actionText, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}
+          >
+            Share
+          </Text>
         </TouchableOpacity>
       </View>
 
       <View style={styles.castSection}>
-        <Text style={[styles.sectionTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
+        <Text
+          style={[styles.sectionTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}
+        >
           Cast
         </Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.castScroll}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.castScroll}
+        >
           {[
             { name: 'John Doe', role: 'Lead Actor', avatar: '👨' },
             { name: 'Jane Smith', role: 'Lead Actress', avatar: '👩' },
@@ -151,7 +200,9 @@ export default function MovieDetailScreen() {
               <View style={styles.castAvatar}>
                 <Text style={styles.castAvatarText}>{actor.avatar}</Text>
               </View>
-              <Text style={[styles.castName, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
+              <Text
+                style={[styles.castName, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}
+              >
                 {actor.name}
               </Text>
               <Text style={styles.castRole}>{actor.role}</Text>
@@ -162,14 +213,29 @@ export default function MovieDetailScreen() {
 
       {related.length > 0 && (
         <View style={styles.recommendationsSection}>
-          <Text style={[styles.sectionTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
+          <Text
+            style={[styles.sectionTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}
+          >
             Similar Movies
           </Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.moviesScroll}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.moviesScroll}
+          >
             {related.map((item) => (
-              <TouchableOpacity key={item.id} style={styles.movieCard} onPress={() => router.push(`/watch/${item.id}`)}>
+              <TouchableOpacity
+                key={item.id}
+                style={styles.movieCard}
+                onPress={() => router.push(`/watch/${item.id}`)}
+              >
                 <Image source={{ uri: item.thumbnail }} style={styles.movieThumbnail} />
-                <Text style={[styles.movieCardTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
+                <Text
+                  style={[
+                    styles.movieCardTitle,
+                    { color: colorScheme === 'dark' ? '#ffffff' : '#000000' },
+                  ]}
+                >
                   {item.title}
                 </Text>
               </TouchableOpacity>

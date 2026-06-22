@@ -78,7 +78,9 @@ describe('TitlesService', () => {
 
       await service.getTitles(1, 20, undefined, 'series');
 
-      expect((prismaService.title.findMany as jest.Mock).mock.calls[0][0].where.type).toBe('series');
+      expect((prismaService.title.findMany as jest.Mock).mock.calls[0][0].where.type).toBe(
+        'series'
+      );
     });
   });
 
@@ -133,7 +135,9 @@ describe('TitlesService', () => {
     it('should throw NotFoundException if title not found', async () => {
       (prismaService.title.findUnique as jest.Mock).mockResolvedValue(null);
 
-      await expect(service.updateTitle('not-found', { name: 'Updated' })).rejects.toThrow(NotFoundException);
+      await expect(service.updateTitle('not-found', { name: 'Updated' })).rejects.toThrow(
+        NotFoundException
+      );
     });
   });
 

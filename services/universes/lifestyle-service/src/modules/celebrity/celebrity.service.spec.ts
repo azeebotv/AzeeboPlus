@@ -92,7 +92,9 @@ describe('CelebrityService', () => {
       const result = await service.getEntries(1, 20, 'Actor');
 
       expect(result.success).toBe(true);
-      expect((prismaService.celebrityEntry.findMany as jest.Mock).mock.calls[0][0].where.profession).toBe('Actor');
+      expect(
+        (prismaService.celebrityEntry.findMany as jest.Mock).mock.calls[0][0].where.profession
+      ).toBe('Actor');
     });
 
     it('should filter by featured', async () => {
@@ -101,7 +103,9 @@ describe('CelebrityService', () => {
 
       await service.getEntries(1, 20, undefined, true);
 
-      expect((prismaService.celebrityEntry.findMany as jest.Mock).mock.calls[0][0].where.isFeatured).toBe(true);
+      expect(
+        (prismaService.celebrityEntry.findMany as jest.Mock).mock.calls[0][0].where.isFeatured
+      ).toBe(true);
     });
   });
 
@@ -170,7 +174,9 @@ describe('CelebrityService', () => {
     it('should throw NotFoundException if celebrity not found', async () => {
       (prismaService.celebrityEntry.findUnique as jest.Mock).mockResolvedValue(null);
 
-      await expect(service.updateEntry('not-found', { name: 'Updated' })).rejects.toThrow(NotFoundException);
+      await expect(service.updateEntry('not-found', { name: 'Updated' })).rejects.toThrow(
+        NotFoundException
+      );
     });
   });
 

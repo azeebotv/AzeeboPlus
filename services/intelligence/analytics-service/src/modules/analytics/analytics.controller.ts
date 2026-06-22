@@ -98,7 +98,9 @@ export class AnalyticsController {
   @ApiOperation({ summary: 'Get retention metrics' })
   @ApiResponse({ status: 200, description: 'Retention metrics' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getRetentionMetrics(@Query('period') period?: '7d' | '30d' | '90d'): Promise<AnalyticsResponse> {
+  async getRetentionMetrics(
+    @Query('period') period?: '7d' | '30d' | '90d'
+  ): Promise<AnalyticsResponse> {
     return this.analyticsService.getRetentionMetrics(period);
   }
 
@@ -107,7 +109,9 @@ export class AnalyticsController {
   @ApiOperation({ summary: 'Get revenue metrics' })
   @ApiResponse({ status: 200, description: 'Revenue metrics' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getRevenueMetrics(@Query('period') period?: '7d' | '30d' | '90d'): Promise<AnalyticsResponse> {
+  async getRevenueMetrics(
+    @Query('period') period?: '7d' | '30d' | '90d'
+  ): Promise<AnalyticsResponse> {
     return this.analyticsService.getRevenueMetrics(period);
   }
 
@@ -116,7 +120,9 @@ export class AnalyticsController {
   @ApiOperation({ summary: 'Get engagement metrics' })
   @ApiResponse({ status: 200, description: 'Engagement metrics' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getEngagementMetrics(@Query('period') period?: '7d' | '30d' | '90d'): Promise<AnalyticsResponse> {
+  async getEngagementMetrics(
+    @Query('period') period?: '7d' | '30d' | '90d'
+  ): Promise<AnalyticsResponse> {
     return this.analyticsService.getEngagementMetrics(period);
   }
 
@@ -154,7 +160,10 @@ export class AnalyticsController {
   @ApiOperation({ summary: 'Track batch events' })
   @ApiResponse({ status: 200, description: 'Events tracked' })
   async trackBatch(
-    @Body() body: { events: Array<{ type: string; userId?: string; metadata?: Record<string, unknown> }> }
+    @Body()
+    body: {
+      events: Array<{ type: string; userId?: string; metadata?: Record<string, unknown> }>;
+    }
   ): Promise<{ success: boolean }> {
     return this.analyticsService.trackBatch(body.events);
   }

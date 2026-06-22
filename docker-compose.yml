@@ -1,102 +1,142 @@
-# Azeebo+ Infrastructure Services
-# Usage: docker compose up -d
-# With services: docker compose -f docker-compose.yml -f docker-compose.services.yml up -d
-# With profiles: docker compose -f docker-compose.yml -f docker-compose.services.yml --profile core up -d
 
-volumes:
-  postgres_data:
-  redis_data:
-
-networks:
-  azeebo_network:
-    driver: bridge
 
 services:
+  # Auth Service
+  auth-service:
+    build:
+      context: .
+      dockerfile: services/core/auth-service/Dockerfile
+    ports:
+      - "3001:3000"
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - azeebo-network
+
+  # Engagement Service
+  engagement-service:
+    build:
+      context: .
+      dockerfile: services/engagement/engagement-service/Dockerfile
+    ports:
+      - "3002:3000"
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - azeebo-network
+
+  # Support Service
+  support-service:
+    build:
+      context: .
+      dockerfile: services/operations/support-service/Dockerfile
+    ports:
+      - "3003:3000"
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - azeebo-network
+
+  # Universe Service (Lifestyle)
+  lifestyle-service:
+    build:
+      context: .
+      dockerfile: services/universes/lifestyle-service/Dockerfile
+    ports:
+      - "3004:3000"
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - azeebo-network
+
+  # Web App
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    depends_on:
+      - auth-service
+      - engagement-service
+      - support-service
+      - lifestyle-service
+    networks:
+      - azeebo-network
+
+  # Admin App
+  admin:
+    build:
+      context: .
+      dockerfile: apps/admin/Dockerfile
+    ports:
+      - "3005:3000"
+    env_file:
+      - .env
+    depends_on:
+      - auth-service
+      - engagement-service
+      - support-service
+      - lifestyle-service
+    networks:
+      - azeebo-network
+
+  # Database
   postgres:
-    image: postgres:15.6-alpine3.19
-    container_name: azeebo_postgres
+    image: postgres:15-alpine
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB:-azeebo_plus_dev}
-      AUTH_DB_PASSWORD: ${AUTH_DB_PASSWORD:?AUTH_DB_PASSWORD must be set}
-      USER_DB_PASSWORD: ${USER_DB_PASSWORD:?USER_DB_PASSWORD must be set}
-      WALLET_DB_PASSWORD: ${WALLET_DB_PASSWORD:?WALLET_DB_PASSWORD must be set}
-      PAYMENT_DB_PASSWORD: ${PAYMENT_DB_PASSWORD:?PAYMENT_DB_PASSWORD must be set}
-      CONTENT_DB_PASSWORD: ${CONTENT_DB_PASSWORD:?CONTENT_DB_PASSWORD must be set}
-      MEDIA_DB_PASSWORD: ${MEDIA_DB_PASSWORD:?MEDIA_DB_PASSWORD must be set}
-      SEARCH_DB_PASSWORD: ${SEARCH_DB_PASSWORD:?SEARCH_DB_PASSWORD must be set}
-      NOTIFICATION_DB_PASSWORD: ${NOTIFICATION_DB_PASSWORD:?NOTIFICATION_DB_PASSWORD must be set}
-      REWARD_DB_PASSWORD: ${REWARD_DB_PASSWORD:?REWARD_DB_PASSWORD must be set}
-      ANALYTICS_DB_PASSWORD: ${ANALYTICS_DB_PASSWORD:?ANALYTICS_DB_PASSWORD must be set}
-      RECOMMENDATION_DB_PASSWORD: ${RECOMMENDATION_DB_PASSWORD:?RECOMMENDATION_DB_PASSWORD must be set}
-      REALITY_DB_PASSWORD: ${REALITY_DB_PASSWORD:?REALITY_DB_PASSWORD must be set}
-      MOVIE_DB_PASSWORD: ${MOVIE_DB_PASSWORD:?MOVIE_DB_PASSWORD must be set}
-      GAMES_DB_PASSWORD: ${GAMES_DB_PASSWORD:?GAMES_DB_PASSWORD must be set}
-      COMEDY_DB_PASSWORD: ${COMEDY_DB_PASSWORD:?COMEDY_DB_PASSWORD must be set}
-      SPORTS_DB_PASSWORD: ${SPORTS_DB_PASSWORD:?SPORTS_DB_PASSWORD must be set}
-      LIFESTYLE_DB_PASSWORD: ${LIFESTYLE_DB_PASSWORD:?LIFESTYLE_DB_PASSWORD must be set}
-      VERTICAL_DB_PASSWORD: ${VERTICAL_DB_PASSWORD:?VERTICAL_DB_PASSWORD must be set}
-      CREATOR_DB_PASSWORD: ${CREATOR_DB_PASSWORD:?CREATOR_DB_PASSWORD must be set}
-      SUPPORT_DB_PASSWORD: ${SUPPORT_DB_PASSWORD:?SUPPORT_DB_PASSWORD must be set}
-      MODERATION_DB_PASSWORD: ${MODERATION_DB_PASSWORD:?MODERATION_DB_PASSWORD must be set}
-      QUEUE_DB_PASSWORD: ${QUEUE_DB_PASSWORD:?QUEUE_DB_PASSWORD must be set}
-      REFERRAL_DB_PASSWORD: ${REFERRAL_DB_PASSWORD:?REFERRAL_DB_PASSWORD must be set}
-      ENGAGEMENT_DB_PASSWORD: ${ENGAGEMENT_DB_PASSWORD:?ENGAGEMENT_DB_PASSWORD must be set}
-      MESSAGING_DB_PASSWORD: ${MESSAGING_DB_PASSWORD:?MESSAGING_DB_PASSWORD must be set}
-      SUBSCRIPTION_DB_PASSWORD: ${SUBSCRIPTION_DB_PASSWORD:?SUBSCRIPTION_DB_PASSWORD must be set}
-      ADMIN_DB_PASSWORD: ${ADMIN_DB_PASSWORD:?ADMIN_DB_PASSWORD must be set}
-      CREATOR_PORTAL_DB_PASSWORD: ${CREATOR_PORTAL_DB_PASSWORD:?CREATOR_PORTAL_DB_PASSWORD must be set}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./infra/scripts/init-multiple-databases.sh:/docker-entrypoint-initdb.d/init.sh:ro
+      - postgres-data:/var/lib/postgresql/data
     networks:
-      - azeebo_network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 30s
-      timeout: 5s
-      retries: 5
+      - azeebo-network
 
-  pgbouncer:
-    image: edoburu/pgbouncer:latest
-    container_name: azeebo_pgbouncer
-    ports:
-      - "6432:6432"
-    environment:
-      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD}@postgres:5432
-      POOL_MODE: transaction
-      MAX_CLIENT_CONN: 1000
-      DEFAULT_POOL_SIZE: 20
-      MIN_POOL_SIZE: 5
-      SERVER_TLS_SSLMODE: prefer
-    volumes:
-      - ./infra/config/pgbouncer.ini:/etc/pgbouncer/pgbouncer.ini:ro
-      - ./infra/config/pgbouncer_userlist.txt:/etc/pgbouncer/userlist.txt:ro
-    networks:
-      - azeebo_network
-    depends_on:
-      postgres:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -h localhost -p 6432"]
-      interval: 30s
-      timeout: 5s
-      retries: 5
-
+  # Redis
   redis:
     image: redis:7-alpine
-    container_name: azeebo_redis
     ports:
       - "6379:6379"
     volumes:
-      - redis_data:/data
+      - redis-data:/data
     networks:
-      - azeebo_network
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 30s
-      timeout: 5s
-      retries: 5
+      - azeebo-network
+
+# Networks
+networks:
+  azeebo-network:
+    driver: bridge
+
+# Volumes
+volumes:
+  postgres-data:
+  redis-data:

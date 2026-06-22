@@ -64,7 +64,9 @@ export const userApi = {
     return { success: true, data: response };
   },
 
-  async updateProfile(data: Partial<Pick<UserProfile, 'displayName' | 'avatar' | 'bio'>>): Promise<ApiResponse<UserProfile>> {
+  async updateProfile(
+    data: Partial<Pick<UserProfile, 'displayName' | 'avatar' | 'bio'>>
+  ): Promise<ApiResponse<UserProfile>> {
     const response = await apiClient.patch<UserProfile>('/v1/users/me', data);
     return { success: true, data: response };
   },
@@ -79,18 +81,54 @@ export const userApi = {
     return { success: true, data: response };
   },
 
-  async updatePreferences(preferences: Partial<UserPreferences>): Promise<ApiResponse<UserPreferences>> {
+  async updatePreferences(
+    preferences: Partial<UserPreferences>
+  ): Promise<ApiResponse<UserPreferences>> {
     const response = await apiClient.put<UserPreferences>('/v1/users/me/preferences', preferences);
     return { success: true, data: response };
   },
 
-  async getWatchHistory(page = 1, limit = 20): Promise<ApiResponse<{ items: WatchHistoryItem[]; total: number; page: number; limit: number; totalPages: number }>> {
-    const response = await apiClient.get<{ items: WatchHistoryItem[]; total: number; page: number; limit: number; totalPages: number }>(`/v1/users/me/history?page=${page}&limit=${limit}`);
+  async getWatchHistory(
+    page = 1,
+    limit = 20
+  ): Promise<
+    ApiResponse<{
+      items: WatchHistoryItem[];
+      total: number;
+      page: number;
+      limit: number;
+      totalPages: number;
+    }>
+  > {
+    const response = await apiClient.get<{
+      items: WatchHistoryItem[];
+      total: number;
+      page: number;
+      limit: number;
+      totalPages: number;
+    }>(`/v1/users/me/history?page=${page}&limit=${limit}`);
     return { success: true, data: response };
   },
 
-  async getSavedItems(page = 1, limit = 20): Promise<ApiResponse<{ items: SavedItem[]; total: number; page: number; limit: number; totalPages: number }>> {
-    const response = await apiClient.get<{ items: SavedItem[]; total: number; page: number; limit: number; totalPages: number }>(`/v1/users/me/saved?page=${page}&limit=${limit}`);
+  async getSavedItems(
+    page = 1,
+    limit = 20
+  ): Promise<
+    ApiResponse<{
+      items: SavedItem[];
+      total: number;
+      page: number;
+      limit: number;
+      totalPages: number;
+    }>
+  > {
+    const response = await apiClient.get<{
+      items: SavedItem[];
+      total: number;
+      page: number;
+      limit: number;
+      totalPages: number;
+    }>(`/v1/users/me/saved?page=${page}&limit=${limit}`);
     return { success: true, data: response };
   },
 

@@ -1,7 +1,7 @@
 import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '../../prisma/client';
 import { createApiClient } from '@azeebo/api-client';
 
 @Injectable()
@@ -24,7 +24,10 @@ export class RefundService {
     timeout: 30000,
   });
 
-  constructor(private prisma: PrismaService, private configService: ConfigService) {
+  constructor(
+    private prisma: PrismaService,
+    private configService: ConfigService
+  ) {
     const timeout = parseInt(this.configService.get<string>('DEFAULT_API_TIMEOUT') || '30000', 10);
     this.paymentServiceClient = createApiClient({
       baseUrl: this.configService.getOrThrow<string>('PAYMENT_SERVICE_URL'),

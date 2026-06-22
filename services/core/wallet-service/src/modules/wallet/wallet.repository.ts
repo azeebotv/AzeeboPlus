@@ -13,7 +13,10 @@ export class WalletRepository {
     return this.prisma.wallet.create({ data });
   }
 
-  async update(id: string, data: Partial<{ balance: number; bonusBalance: number; promoBalance: number; currency: string }>) {
+  async update(
+    id: string,
+    data: Partial<{ balance: number; bonusBalance: number; promoBalance: number; currency: string }>
+  ) {
     return this.prisma.wallet.update({ where: { id }, data });
   }
 
@@ -111,13 +114,12 @@ export class WalletRepository {
       throw new Error('Wallet not found');
     }
     return {
-      totalBalance: Number(wallet.balance) + Number(wallet.bonusBalance) + Number(wallet.promoBalance),
+      totalBalance:
+        Number(wallet.balance) + Number(wallet.bonusBalance) + Number(wallet.promoBalance),
       totalEarnings: 50000,
       totalSpent: 20000,
       totalTransactions: 15,
-      monthlyActivity: [
-        { month: 'January', income: 10000, expense: 5000 },
-      ],
+      monthlyActivity: [{ month: 'January', income: 10000, expense: 5000 }],
     };
   }
 

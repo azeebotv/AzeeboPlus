@@ -39,10 +39,10 @@ export class AdminService {
       include: {
         episodes: {
           take: 10,
-          orderBy: { number: 'desc' }
+          orderBy: { number: 'desc' },
         },
-        contestants: true
-      }
+        contestants: true,
+      },
     });
 
     if (!show) {

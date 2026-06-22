@@ -22,7 +22,13 @@ interface GameResponse {
     | { sessionId: string; questions: unknown[]; message: string }
     | { message: string; score: number; correctCount: number; totalScore?: number }
     | { message: string; pointsEarned: number; correctAnswer: string }
-    | { message: string; totalScore: number; level: number; totalGames: number; recentGames: unknown[] }
+    | {
+        message: string;
+        totalScore: number;
+        level: number;
+        totalGames: number;
+        recentGames: unknown[];
+      }
     | { message: string };
   error?: { code: string; message: string };
 }

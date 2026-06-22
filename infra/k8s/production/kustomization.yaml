@@ -31,7 +31,7 @@ configMapGenerator:
     literals:
       - ENVIRONMENT=production
       - LOG_LEVEL=info
-      - API_GATEWAY_URL=http://api-gateway.azeebo.svc.cluster.local:3000
+      - API_GATEWAY_URL=http://api-gateway.azeebo.svc.cluster.local:3013
 
 images:
   - name: azeebo/auth-service

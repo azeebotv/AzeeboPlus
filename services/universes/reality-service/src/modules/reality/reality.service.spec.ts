@@ -138,12 +138,8 @@ describe('RealityService', () => {
     it('should throw NotFoundException when show does not exist', async () => {
       mockPrismaService.realityShow.findUnique.mockResolvedValue(null);
 
-      await expect(service.getShow('nonexistent')).rejects.toThrow(
-        NotFoundException,
-      );
-      await expect(service.getShow('nonexistent')).rejects.toThrow(
-        'Show not found',
-      );
+      await expect(service.getShow('nonexistent')).rejects.toThrow(NotFoundException);
+      await expect(service.getShow('nonexistent')).rejects.toThrow('Show not found');
     });
   });
 
@@ -224,9 +220,7 @@ describe('RealityService', () => {
     it('should throw NotFoundException when contestant does not exist', async () => {
       mockPrismaService.contestant.findUnique.mockResolvedValue(null);
 
-      await expect(service.getContestant('nonexistent')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.getContestant('nonexistent')).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -261,7 +255,12 @@ describe('RealityService', () => {
 
   describe('submitVote', () => {
     it('should submit a vote successfully', async () => {
-      const mockVote = { id: 'vote-1', userId: 'user-1', contestantId: 'contestant-1', showId: 'show-1' };
+      const mockVote = {
+        id: 'vote-1',
+        userId: 'user-1',
+        contestantId: 'contestant-1',
+        showId: 'show-1',
+      };
 
       mockPrismaService.vote.findUnique.mockResolvedValue(null);
       (mockPrismaService as any).$transaction = jest.fn(async (cb) => {
@@ -269,7 +268,10 @@ describe('RealityService', () => {
       });
       mockPrismaService.vote.create.mockResolvedValue(mockVote);
 
-      const result = await service.submitVote('user-1', { contestantId: 'contestant-1', showId: 'show-1' });
+      const result = await service.submitVote('user-1', {
+        contestantId: 'contestant-1',
+        showId: 'show-1',
+      });
 
       expect(result.success).toBe(true);
       expect(result.data?.voteId).toBe('vote-1');
@@ -278,9 +280,9 @@ describe('RealityService', () => {
     it('should throw ConflictException if user already voted', async () => {
       mockPrismaService.vote.findUnique.mockResolvedValue({ id: 'vote-1' });
 
-      await expect(service.submitVote('user-1', { contestantId: 'contestant-1', showId: 'show-1' })).rejects.toThrow(
-        ConflictException,
-      );
+      await expect(
+        service.submitVote('user-1', { contestantId: 'contestant-1', showId: 'show-1' })
+      ).rejects.toThrow(ConflictException);
     });
   });
 });

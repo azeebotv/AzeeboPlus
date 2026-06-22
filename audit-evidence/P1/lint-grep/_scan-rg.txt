@@ -1,0 +1,138 @@
+=== captured at ===
+2026-06-22T11:16:39Z
+
+=== rg: 'as any' (no type filter, .ts/.tsx/.js/.jsx, excl. specs) ===
+./services/gateway/api-gateway/src/common/circuit-breaker-proxy.service.ts:141:              const shouldRetry = attempt < DEFAULT_RETRY_CONFIG.retries && this.shouldRetryStatus((retryError as any).status);
+./services/core/content-service/src/modules/content/content.service.ts:385:    const updatedContent = await this.contentRepository.update(id, updateContentDto as any);
+./services/core/content-service/src/modules/content/content.service.ts:516:      } as any,
+./services/core/content-service/src/modules/content/content.service.ts:556:      } as any,
+./services/intelligence/analytics-service/src/modules/report-builder/report-builder.service.ts:59:          metrics: dto.metrics as any,
+./services/intelligence/analytics-service/src/modules/report-builder/report-builder.service.ts:60:          dimensions: dto.dimensions as any,
+./services/intelligence/analytics-service/src/modules/report-builder/report-builder.service.ts:61:          filters: (dto.filters || []) as any,
+./services/intelligence/analytics-service/src/modules/report-builder/report-builder.service.ts:204:          } as any,
+./services/intelligence/analytics-service/src/modules/report-builder/report-builder.service.ts:265:          ...(dto.metrics && { metrics: dto.metrics as any }),
+./services/intelligence/analytics-service/src/modules/report-builder/report-builder.service.ts:266:          ...(dto.dimensions && { dimensions: dto.dimensions as any }),
+./services/intelligence/analytics-service/src/modules/report-builder/report-builder.service.ts:267:          ...(dto.filters !== undefined && { filters: dto.filters as any }),
+./services/intelligence/analytics-service/src/modules/report-builder/report-builder.service.ts:274:        } as any,
+./services/intelligence/analytics-service/src/modules/report-builder/report-builder.service.ts:494:            by: groupByFields.length > 0 ? (groupByFields as any) : undefined,
+./services/intelligence/analytics-service/src/modules/report-builder/report-builder.service.ts:496:            _count: { [countField]: true } as any,
+./services/intelligence/analytics-service/src/modules/report-builder/report-builder.service.ts:518:          const result = await (this.prisma.productEvent.groupBy as any)({
+./services/intelligence/analytics-service/src/modules/report-builder/report-builder.service.ts:543:          const result = await (this.prisma.productEvent.groupBy as any)({
+./services/intelligence/analytics-service/src/modules/report-builder/report-builder.service.ts:568:            by: groupByFields.length > 0 ? (groupByFields as any) : undefined,
+./services/intelligence/analytics-service/src/modules/report-builder/report-builder.service.ts:570:            _min: { [minField]: true } as any,
+./services/intelligence/analytics-service/src/modules/report-builder/report-builder.service.ts:592:            by: groupByFields.length > 0 ? (groupByFields as any) : undefined,
+./services/intelligence/analytics-service/src/modules/report-builder/report-builder.service.ts:594:            _max: { [maxField]: true } as any,
+./services/intelligence/analytics-service/src/modules/report-builder/report-builder.service.ts:616:        select: Object.keys(select).length > 0 ? (select as any) : undefined,
+./services/core/content-service/src/modules/content/content.repository.ts:75:      } as any,
+./services/core/user-service/src/modules/admin/admin.service.ts:27:        details: (entry.details || {}) as any,
+./services/operations/support-service/src/modules/webhook/webhook.service.ts:52:        payload: event.payload as any,
+./services/engagement/reward-service/src/modules/admin/admin.service.ts:116:        metadata: data.metadata as any,
+./services/engagement/reward-service/src/modules/admin/admin.service.ts:147:        ...(data.metadata !== undefined && { metadata: data.metadata as any }),
+./services/engagement/notification-service/src/modules/notifications/notifications.service.ts:159:        metadata: (metadata || {}) as any,
+./apps/mobile/app/(reality)/super-vote.tsx:125:            onPress: () => router.push('/(tabs)/wallet/add-funds' as any),
+./apps/mobile/app/(reality)/contestant.tsx:104:      } as any);
+./apps/mobile/app/recommendations.tsx:56:          router.push(`/content/${item.id}` as any);
+
+=== rg: '@ts-ignore' ===
+
+=== rg: 'eslint-disable' ===
+./packages/analytics-sdk/src/index.ts:48:      // eslint-disable-next-line no-console
+./packages/observability/src/metrics.service.ts:322:        // eslint-disable-next-line no-console
+./packages/observability/src/tracing.service.ts:120:        // eslint-disable-next-line no-console
+./packages/logger/src/index.ts:93:        // eslint-disable-next-line no-console
+./packages/logger/src/index.ts:97:        // eslint-disable-next-line no-console
+./packages/ui/src/hooks.ts:39:    // eslint-disable-next-line react-hooks/exhaustive-deps
+./packages/shared-types/src/index.ts:45:  // eslint-disable-next-line @typescript-eslint/naming-convention
+./packages/shared-types/src/index.ts:63:  // eslint-disable-next-line @typescript-eslint/naming-convention
+./packages/shared-types/src/index.ts:93:    // eslint-disable-next-line @typescript-eslint/naming-convention
+./packages/shared-types/src/index.ts:95:    // eslint-disable-next-line @typescript-eslint/naming-convention
+./packages/shared-types/src/index.ts:113:  // eslint-disable-next-line @typescript-eslint/naming-convention
+./packages/shared-types/src/secret-validation.ts:1:/* eslint-disable no-console */
+./services/engagement/notification-service/src/modules/email/email.service.ts:1:/* eslint-disable @typescript-eslint/explicit-function-return-type */
+./services/engagement/notification-service/src/modules/notifications/notifications.service.ts:1:/* eslint-disable @typescript-eslint/explicit-function-return-type */
+./services/engagement/notification-service/src/modules/notifications/notifications.controller.ts:1:/* eslint-disable @typescript-eslint/explicit-function-return-type */
+./services/engagement/notification-service/src/modules/firebase/firebase.service.ts:1:/* eslint-disable @typescript-eslint/explicit-function-return-type */
+./services/engagement/notification-service/src/modules/sms/sms.service.ts:1:/* eslint-disable @typescript-eslint/explicit-function-return-type */
+./services/engagement/notification-service/src/modules/database/prisma.service.ts:1:/* eslint-disable @typescript-eslint/explicit-function-return-type */
+./services/core/content-service/src/modules/content/content.service.ts:1:/* eslint-disable @typescript-eslint/explicit-function-return-type */
+./services/core/content-service/src/modules/content/content.service.spec.ts:12:  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+./services/core/content-service/src/modules/content/content.service.spec.ts:14:  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+./services/intelligence/analytics-service/src/modules/report-builder/report-builder.service.ts:517:          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+./services/intelligence/analytics-service/src/modules/report-builder/report-builder.service.ts:542:          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+./services/core/auth-service/src/modules/auth/otp/otp.service.ts:49:    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+./apps/mobile/app/(reality)/episode.tsx:18:// eslint-disable-next-line @typescript-eslint/no-namespace
+./apps/mobile/src/utils/logger.ts:40:          // eslint-disable-next-line no-console
+./apps/mobile/src/utils/logger.ts:44:          // eslint-disable-next-line no-console
+./apps/mobile/src/utils/logger.ts:48:          // eslint-disable-next-line no-console
+./apps/mobile/src/utils/logger.ts:52:          // eslint-disable-next-line no-console
+./apps/mobile/app/(tabs)/_layout.tsx:8:  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
+=== rg: 'TODO|FIXME|XXX|HACK' (count per file) ===
+./apps/mobile/app/(tabs)/create.tsx:1
+
+=== rg: 'console.log' (count per file, excl. specs/scripts) ===
+./packages/test-utils/src/integration-test-utils.ts:2
+./packages/shared-types/src/secret-validation.ts:2
+./packages/logger/src/index.ts:1
+./packages/analytics-sdk/src/index.ts:1
+./apps/web/src/lib/logger.ts:1
+./apps/mobile/src/utils/logger.ts:1
+
+=== .env file ===
+EXISTS: .env
+# ============================================================
+# Azeebo+ Environment Variables
+# Copy to .env and fill in actual values
+# NEVER commit .env to version control
+# ============================================================
+
+# ---- PostgreSQL ----
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=change_me_postgres_password
+POSTGRES_DB=azeebo_plus_dev
+
+# ---- Per-Service Database Passwords ----
+AUTH_DB_PASSWORD=change_me_auth
+USER_DB_PASSWORD=change_me_user
+WALLET_DB_PASSWORD=change_me_wallet
+PAYMENT_DB_PASSWORD=change_me_payment
+CONTENT_DB_PASSWORD=change_me_content
+MEDIA_DB_PASSWORD=change_me_media
+SEARCH_DB_PASSWORD=change_me_search
+NOTIFICATION_DB_PASSWORD=change_me_notification
+REWARD_DB_PASSWORD=change_me_reward
+ANALYTICS_DB_PASSWORD=change_me_analytics
+RECOMMENDATION_DB_PASSWORD=change_me_recommendation
+REALITY_DB_PASSWORD=change_me_reality
+MOVIE_DB_PASSWORD=change_me_movie
+GAMES_DB_PASSWORD=change_me_games
+COMEDY_DB_PASSWORD=change_me_comedy
+SPORTS_DB_PASSWORD=change_me_sports
+LIFESTYLE_DB_PASSWORD=change_me_lifestyle
+VERTICAL_DB_PASSWORD=change_me_vertical
+CREATOR_DB_PASSWORD=change_me_creator
+SUPPORT_DB_PASSWORD=change_me_support
+MODERATION_DB_PASSWORD=change_me_moderation
+QUEUE_DB_PASSWORD=change_me_queue
+ENGAGEMENT_DB_PASSWORD=change_me_engagement
+MESSAGING_DB_PASSWORD=change_me_messaging
+REFERRAL_DB_PASSWORD=change_me_referral
+SUBSCRIPTION_DB_PASSWORD=change_me_subscription
+ADMIN_DB_PASSWORD=change_me_admin
+CREATOR_PORTAL_DB_PASSWORD=change_me_creator_portal
+
+# ---- JWT (minimum 32 characters) ----
+JWT_ACCESS_SECRET=change_me_jwt_access_secret_min_32_chars
+JWT_REFRESH_SECRET=change_me_jwt_refresh_secret_min_32_chars
+JWT_EXPIRES_IN=1d
+JWT_REFRESH_EXPIRES_IN=7d
+
+# ---- Payment Gateways ----
+PAYSTACK_PUBLIC_KEY=your_paystack_public_key
+PAYSTACK_SECRET_KEY=your_paystack_secret_key
+
+=== .env in .gitignore? ===
+.env
+.env.*
+
+=== rg: hardcoded 'process.env.NEXT_PUBLIC.* || http://localhost' ===

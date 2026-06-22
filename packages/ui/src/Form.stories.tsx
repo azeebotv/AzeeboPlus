@@ -25,18 +25,10 @@ export const FormWithValidation: StoryObj<typeof Form> = {
         {({ register, formState: { errors } }) => (
           <div className="space-y-4">
             <FormField label="Email" error={errors.email?.message}>
-              <Field
-                {...register('email')}
-                type="email"
-                placeholder="Enter your email"
-              />
+              <Field {...register('email')} type="email" placeholder="Enter your email" />
             </FormField>
             <FormField label="Password" error={errors.password?.message}>
-              <Field
-                {...register('password')}
-                type="password"
-                placeholder="Enter your password"
-              />
+              <Field {...register('password')} type="password" placeholder="Enter your password" />
             </FormField>
             <label className="flex items-center gap-2 cursor-pointer">
               <Field {...register('rememberMe')} type="checkbox" />

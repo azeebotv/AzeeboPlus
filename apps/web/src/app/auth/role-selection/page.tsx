@@ -19,8 +19,8 @@ export default function RoleSelectionPage() {
       // For now, we'll just store it locally and navigate to profile setup
       // await api.auth.setRole({ role });
       // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
       // Navigate to profile setup
       router.push('/auth/profile-setup');
     } catch (err: any) {
@@ -33,7 +33,10 @@ export default function RoleSelectionPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: colors.bg.primary }}>
+      <div
+        className="min-h-screen flex items-center justify-center"
+        style={{ backgroundColor: colors.bg.primary }}
+      >
         <Spinner size="lg" />
       </div>
     );
@@ -59,21 +62,20 @@ export default function RoleSelectionPage() {
             disabled={isLoading}
           >
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#3b82f620' }}>
+              <div
+                className="h-10 w-10 rounded-lg flex items-center justify-center"
+                style={{ backgroundColor: '#3b82f620' }}
+              >
                 <span className="text-2xl">👀</span>
               </div>
               <div>
                 <h2 className="font-semibold" style={{ color: colors.text.primary }}>
                   Viewer
                 </h2>
-                <p className="text-sm text-gray-500">
-                  Watch shows, vote, and enjoy content
-                </p>
+                <p className="text-sm text-gray-500">Watch shows, vote, and enjoy content</p>
               </div>
             </div>
-            {isLoading && (
-              <Spinner size="sm" className="ml-4" />
-            )}
+            {isLoading && <Spinner size="sm" className="ml-4" />}
           </Button>
 
           <Button
@@ -83,21 +85,20 @@ export default function RoleSelectionPage() {
             disabled={isLoading}
           >
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#10b98120' }}>
+              <div
+                className="h-10 w-10 rounded-lg flex items-center justify-center"
+                style={{ backgroundColor: '#10b98120' }}
+              >
                 <span className="text-2xl">🎥</span>
               </div>
               <div>
                 <h2 className="font-semibold" style={{ color: colors.text.primary }}>
                   Creator
                 </h2>
-                <p className="text-sm text-gray-500">
-                  Upload content, engage with fans, and earn
-                </p>
+                <p className="text-sm text-gray-500">Upload content, engage with fans, and earn</p>
               </div>
             </div>
-            {isLoading && (
-              <Spinner size="sm" className="ml-4" />
-            )}
+            {isLoading && <Spinner size="sm" className="ml-4" />}
           </Button>
 
           <Button
@@ -107,21 +108,20 @@ export default function RoleSelectionPage() {
             disabled={isLoading}
           >
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#8b5cf620' }}>
+              <div
+                className="h-10 w-10 rounded-lg flex items-center justify-center"
+                style={{ backgroundColor: '#8b5cf620' }}
+              >
                 <span className="text-2xl">👀🎥</span>
               </div>
               <div>
                 <h2 className="font-semibold" style={{ color: colors.text.primary }}>
                   Both
                 </h2>
-                <p className="text-sm text-gray-500">
-                  Watch and create content
-                </p>
+                <p className="text-sm text-gray-500">Watch and create content</p>
               </div>
             </div>
-            {isLoading && (
-              <Spinner size="sm" className="ml-4" />
-            )}
+            {isLoading && <Spinner size="sm" className="ml-4" />}
           </Button>
         </div>
 

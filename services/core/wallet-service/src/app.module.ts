@@ -30,9 +30,9 @@ import { RateLimiterModule } from '@azeebo/security';
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_SECRET'),
+        secret: configService.get<string>('JWT_ACCESS_SECRET'),
         signOptions: {
-          expiresIn: configService.get<string>('JWT_EXPIRES_IN', '30m'),
+          expiresIn: configService.get<string>('JWT_EXPIRES_IN', '30m') as const,
         },
       }),
       inject: [ConfigService],

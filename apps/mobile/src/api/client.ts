@@ -13,7 +13,10 @@ interface ApiError extends Error {
 
 class ApiClientClass {
   private config: ApiClientConfig = {
-    baseURL: Constants.expoConfig?.extra?.apiBaseURL || (__DEV__ ? 'http://localhost:3013' : ''),
+    baseURL:
+      process.env.EXPO_PUBLIC_API_BASE_URL ||
+      Constants.expoConfig?.extra?.apiBaseURL ||
+      (__DEV__ ? 'http://localhost:3013' : 'http://api-gateway:3013'),
     token: null,
   };
 

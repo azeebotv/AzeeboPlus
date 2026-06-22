@@ -1,11 +1,4 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Param,
-  Query,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Get, Post, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AdminService } from './admin.service';
 import { AdminGuard } from '@azeebo/security';
@@ -32,7 +25,7 @@ export class AdminController {
     @Query('page') page?: number,
     @Query('limit') limit?: number,
     @Query('role') role?: string,
-    @Query('status') status?: string,
+    @Query('status') status?: string
   ) {
     return this.adminService.getUsers({ page, limit, role, status });
   }

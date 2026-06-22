@@ -10,10 +10,9 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
-import { useRouter, Link } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { useAuth } from '../../src/contexts/AuthContext';
 import { useBiometric } from '../../src/hooks/useBiometric';
-import { LoadingState, ErrorState } from '../../src/components/StateContainers';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -61,14 +60,17 @@ export default function LoginScreen() {
     setError(null);
     try {
       await login(email, password);
-      router.replace('/(tabs)/home');
+      router.replace('/(tabs)/home' as any);
     } catch (error) {
       setError('Invalid email or password');
     }
   };
 
   const handleSocialLogin = (provider: 'google' | 'apple') => {
-    Alert.alert('Coming Soon', `${provider.charAt(0).toUpperCase() + provider.slice(1)} login will be available soon`);
+    Alert.alert(
+      'Coming Soon',
+      `${provider.charAt(0).toUpperCase() + provider.slice(1)} login will be available soon`
+    );
   };
 
   return (
@@ -113,17 +115,13 @@ export default function LoginScreen() {
                 style={styles.showButton}
                 onPress={() => setShowPassword(!showPassword)}
               >
-                <Text style={styles.showButtonText}>
-                  {showPassword ? 'Hide' : 'Show'}
-                </Text>
+                <Text style={styles.showButtonText}>{showPassword ? 'Hide' : 'Show'}</Text>
               </TouchableOpacity>
             </View>
           </View>
 
-          <TouchableOpacity style={styles.forgotPassword}>
-            <Link href="/(auth)/forgot-password">
-              <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-            </Link>
+          <TouchableOpacity style={styles.forgotPassword} onPress={() => router.push('/(auth)/forgot-password' as any)}>
+            <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
           </TouchableOpacity>
 
           {error && (
@@ -133,7 +131,7 @@ export default function LoginScreen() {
           )}
 
           <TouchableOpacity
-            style={[styles.loginButton, (isLoading) && styles.loginButtonDisabled]}
+            style={[styles.loginButton, isLoading && styles.loginButtonDisabled]}
             onPress={handleLogin}
             disabled={isLoading}
           >
@@ -179,11 +177,9 @@ export default function LoginScreen() {
 
         <View style={styles.footer}>
           <Text style={styles.footerText}>Don't have an account?</Text>
-          <Link href="/(auth)/register" asChild>
-            <TouchableOpacity>
-              <Text style={styles.signUpLink}> Sign Up</Text>
-            </TouchableOpacity>
-          </Link>
+          <TouchableOpacity onPress={() => router.push('/(auth)/register' as any)}>
+            <Text style={styles.signUpLink}>Sign Up</Text>
+          </TouchableOpacity>
         </View>
       </View>
     </KeyboardAvoidingView>

@@ -5,10 +5,31 @@ import { useRouter } from 'expo-router';
 import { LoadingState, EmptyState, ErrorState } from '../src/components/StateContainers';
 import { apiClient } from '../src/api/client';
 
-interface ClipItem { id: string; title: string; views: string; likes: string; duration: string; emoji: string; }
-interface CreatorItem { id: string; name: string; followers: string; emoji: string; }
-interface CategoryItem { id: string; name: string; emoji: string; }
-interface TopRatedItem { id: string; title: string; rating: string; emoji: string; }
+interface ClipItem {
+  id: string;
+  title: string;
+  views: string;
+  likes: string;
+  duration: string;
+  emoji: string;
+}
+interface CreatorItem {
+  id: string;
+  name: string;
+  followers: string;
+  emoji: string;
+}
+interface CategoryItem {
+  id: string;
+  name: string;
+  emoji: string;
+}
+interface TopRatedItem {
+  id: string;
+  title: string;
+  rating: string;
+  emoji: string;
+}
 
 export default function ComedyUniverseHome() {
   const colorScheme = useColorScheme();
@@ -31,10 +52,10 @@ export default function ComedyUniverseHome() {
         apiClient.get<any>('/v1/comedy/categories'),
         apiClient.get<any>('/v1/comedy/top-rated'),
       ]);
-      setTrendingClips(Array.isArray(clipsRes) ? clipsRes : clipsRes?.data ?? []);
-      setFeaturedCreators(Array.isArray(creatorsRes) ? creatorsRes : creatorsRes?.data ?? []);
-      setCategories(Array.isArray(categoriesRes) ? categoriesRes : categoriesRes?.data ?? []);
-      setTopRated(Array.isArray(topRes) ? topRes : topRes?.data ?? []);
+      setTrendingClips(Array.isArray(clipsRes) ? clipsRes : (clipsRes?.data ?? []));
+      setFeaturedCreators(Array.isArray(creatorsRes) ? creatorsRes : (creatorsRes?.data ?? []));
+      setCategories(Array.isArray(categoriesRes) ? categoriesRes : (categoriesRes?.data ?? []));
+      setTopRated(Array.isArray(topRes) ? topRes : (topRes?.data ?? []));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load');
     } finally {
@@ -42,12 +63,20 @@ export default function ComedyUniverseHome() {
     }
   };
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   if (isLoading) return <LoadingState text="Loading comedy clips..." />;
   if (error) return <ErrorState description={error} onRetry={fetchData} />;
   if (!trendingClips.length && !featuredCreators.length) {
-    return <EmptyState icon="😂" title="No clips available" description="Check back later for comedy content" />;
+    return (
+      <EmptyState
+        icon="😂"
+        title="No clips available"
+        description="Check back later for comedy content"
+      />
+    );
   }
 
   return (
@@ -79,7 +108,9 @@ export default function ComedyUniverseHome() {
           contentContainerStyle={styles.trendingList}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
-            <TouchableOpacity style={[styles.clipCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}>
+            <TouchableOpacity
+              style={[styles.clipCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
+            >
               <View style={styles.clipThumbnail}>
                 <Text style={styles.clipEmoji}>{item.emoji}</Text>
                 <View style={styles.durationBadge}>
@@ -90,7 +121,10 @@ export default function ComedyUniverseHome() {
                 </View>
               </View>
               <View style={styles.clipInfo}>
-                <Text style={[styles.clipTitle, { color: isDark ? '#fff' : '#000' }]} numberOfLines={2}>
+                <Text
+                  style={[styles.clipTitle, { color: isDark ? '#fff' : '#000' }]}
+                  numberOfLines={2}
+                >
                   {item.title}
                 </Text>
                 <View style={styles.clipMeta}>
@@ -115,11 +149,15 @@ export default function ComedyUniverseHome() {
           contentContainerStyle={styles.creatorsList}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
-            <TouchableOpacity style={[styles.creatorCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}>
+            <TouchableOpacity
+              style={[styles.creatorCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
+            >
               <View style={styles.creatorAvatar}>
                 <Text style={styles.creatorEmoji}>{item.emoji}</Text>
               </View>
-              <Text style={[styles.creatorName, { color: isDark ? '#fff' : '#000' }]}>{item.name}</Text>
+              <Text style={[styles.creatorName, { color: isDark ? '#fff' : '#000' }]}>
+                {item.name}
+              </Text>
               <Text style={styles.creatorFollowers}>{item.followers}</Text>
               <TouchableOpacity style={styles.subscribeButton}>
                 <Text style={styles.subscribeText}>Subscribe</Text>
@@ -140,7 +178,10 @@ export default function ComedyUniverseHome() {
         </View>
         <View style={styles.topRatedGrid}>
           {topRated.map((item) => (
-            <TouchableOpacity key={item.id} style={[styles.topRatedCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}>
+            <TouchableOpacity
+              key={item.id}
+              style={[styles.topRatedCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
+            >
               <View style={styles.topRatedThumbnail}>
                 <Text style={styles.topRatedEmoji}>{item.emoji}</Text>
                 <View style={styles.ratingBadge}>

@@ -1,20 +1,14 @@
-import type { User, AuthResponse, ApiResponse } from './auth';
-import type { ContentItem, PaginatedResponse } from './content';
-import type { WalletBalance, Transaction } from './wallet';
-import type { Notification, NotificationPreferences } from './notification';
-import type { MediaUploadResponse, PresignedUploadResponse, FileMetadata } from './media';
-import type { Universe } from './universe';
-import type { Conversation, Message, LiveChatMessage } from './messaging';
-import type { LeaderboardEntry, RankingCategory, PredictionResult } from './engagement';
-
-export type { User, AuthResponse, ApiResponse };
-export type { ContentItem, PaginatedResponse };
-export type { WalletBalance, Transaction };
-export type { Notification, NotificationPreferences };
-export type { MediaUploadResponse, PresignedUploadResponse, FileMetadata };
-export type { Universe };
-export type { Conversation, Message, LiveChatMessage };
-export type { LeaderboardEntry, RankingCategory, PredictionResult };
+export type { User, AuthResponse, ApiResponse } from './auth';
+export type { ContentItem, PaginatedResponse } from './content';
+export type { WalletBalance, Transaction } from './wallet';
+export type { Notification, NotificationPreferences } from './notification';
+export type { MediaUploadResponse, PresignedUploadResponse, FileMetadata } from './media';
+export type { Universe } from './universe';
+export type { Conversation, Message, LiveChatMessage } from './messaging';
+export type { LeaderboardEntry, RankingCategory, PredictionResult } from './engagement';
+export type { CreatorProfile, CreatorDashboard, CreatorEarnings } from './creator';
+export type { SupportTicket, CreateTicketData } from './support';
+export type { Recommendation } from './recommendation';
 
 export { authApi } from './auth';
 export { contentApi } from './content';
@@ -28,4 +22,6 @@ export { subscriptionApi } from './subscription';
 export { messagingApi, chatApi } from './messaging';
 export { engagementApi, realityApi } from './engagement';
 export { referralApi } from './referral';
+export { creatorApi } from './creator';
+export { supportApi } from './support';
 export { apiClient } from './client';

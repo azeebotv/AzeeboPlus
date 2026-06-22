@@ -107,10 +107,27 @@ export const creatorApi = {
     return apiClient.get<ApiResponse<CreatorDashboard>>('/creators/dashboard');
   },
 
-  getContent: async (page = 1, limit = 20): Promise<ApiResponse<{ items: CreatorContentItem[]; total: number; page: number; limit: number; totalPages: number }>> => {
-    return apiClient.get<ApiResponse<{ items: CreatorContentItem[]; total: number; page: number; limit: number; totalPages: number }>>(
-      `/creators/content?page=${page}&limit=${limit}`
-    );
+  getContent: async (
+    page = 1,
+    limit = 20
+  ): Promise<
+    ApiResponse<{
+      items: CreatorContentItem[];
+      total: number;
+      page: number;
+      limit: number;
+      totalPages: number;
+    }>
+  > => {
+    return apiClient.get<
+      ApiResponse<{
+        items: CreatorContentItem[];
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
+      }>
+    >(`/creators/content?page=${page}&limit=${limit}`);
   },
 
   getAnalytics: async (): Promise<ApiResponse<CreatorAnalytics>> => {

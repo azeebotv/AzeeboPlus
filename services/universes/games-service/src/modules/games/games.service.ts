@@ -11,7 +11,7 @@ export class GamesService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly configService: ConfigService,
+    private readonly configService: ConfigService
   ) {
     this.analyticsServiceBaseUrl = this.configService.getOrThrow<string>('ANALYTICS_SERVICE_URL');
   }
@@ -114,7 +114,8 @@ export class GamesService {
     }
 
     const firstQuestion = challenge.questions?.[0] as Record<string, unknown> | undefined;
-    const correctAnswer = (firstQuestion?.correctAnswer as string) || (firstQuestion?.answer as string);
+    const correctAnswer =
+      (firstQuestion?.correctAnswer as string) || (firstQuestion?.answer as string);
     const isCorrect = answer === correctAnswer;
 
     await this.prisma.gameSession.create({

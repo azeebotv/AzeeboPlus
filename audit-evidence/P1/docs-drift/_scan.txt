@@ -1,0 +1,159 @@
+=== captured at ===
+2026-06-22T11:17:58Z
+
+=== root-level docs ===
+-rw-r--r--@ 1 deprof  staff  23517 Jun 17 01:45 CLAUDE.md
+-rw-r--r--@ 1 deprof  staff   4637 Jun 17 00:51 CONTRIBUTING.md
+-rw-r--r--@ 1 deprof  staff   6326 Jun 17 01:45 README.md
+
+=== EXPO_ENVIRONMENT.md + INFRA_ISSUES_AND_FIXES.md ===
+-rw-r--r--@ 1 deprof  staff   2230 May  6 14:16 apps/mobile/EXPO_ENVIRONMENT.md
+-rw-r--r--@ 1 deprof  staff  14969 Jun  9 14:48 infra/INFRA_ISSUES_AND_FIXES.md
+
+=== file sizes ===
+CLAUDE.md                                          537 lines
+CONTRIBUTING.md                                    185 lines
+README.md                                          182 lines
+apps/mobile/EXPO_ENVIRONMENT.md                    88 lines
+infra/INFRA_ISSUES_AND_FIXES.md                    408 lines
+
+=== package-level READMEs ===
+./docs/README.md
+./README.md
+./packages/ui/README.md
+./packages/error-handling/README.md
+./packages/test-utils/README.md
+./packages/logger/README.md
+./packages/shared-types/README.md
+./packages/security/README.md
+./packages/feature-flags/README.md
+./packages/utils/README.md
+./packages/observability/README.md
+./packages/design-tokens/README.md
+./packages/analytics-sdk/README.md
+./packages/api-client/README.md
+./packages/internal-clients/README.md
+./docx/README.md
+./services/core/media-service/README.md
+./services/core/payment-service/README.md
+./services/core/wallet-service/README.md
+./services/core/search-service/README.md
+./services/core/user-service/README.md
+./services/core/auth-service/README.md
+./services/core/content-service/README.md
+./services/intelligence/recommendation-service/README.md
+./services/intelligence/analytics-service/README.md
+./services/operations/support-service/README.md
+./services/operations/moderation-service/README.md
+./services/operations/queue-service/README.md
+./services/engagement/notification-service/README.md
+./services/engagement/reward-service/README.md
+./services/engagement/subscription-service/README.md
+./services/engagement/referral-service/README.md
+./services/engagement/engagement-service/README.md
+./services/engagement/messaging-service/README.md
+./services/universes/creator-service/README.md
+./services/universes/comedy-service/README.md
+./services/universes/reality-service/README.md
+./services/universes/games-service/README.md
+./services/universes/lifestyle-service/README.md
+./services/universes/movie-service/README.md
+./services/universes/vertical-service/README.md
+./services/universes/sports-service/README.md
+./services/gateway/api-gateway/README.md
+
+=== CLAUDE.md head ===
+# Azeebo+ Engineering Rules
+
+> **Document Purpose**: This file provides AI-assisted development guidelines for Claude Code and other AI tools working on the Azeebo+ codebase. All engineers and AI assistants must follow these rules.
+
+---
+
+## Architecture
+
+### Repository Structure
+Azeebo+ uses a **modular monorepo** with categorized service organization:
+
+```
+azeebo-plus/
+├── apps/                          # Client applications
+│   ├── mobile/                    # React Native mobile app
+│   ├── web/                       # Next.js web application
+│   ├── admin/                     # Admin dashboard
+│   └── creator-portal/            # Creator management portal
+│
+├── services/                      # Backend microservices (categorized)
+│   ├── core/                      # Essential platform services
+│   │   ├── auth-service/          # Authentication & authorization
+│   │   ├── user-service/          # User management
+│   │   ├── wallet-service/        # Wallet & balance management
+│   │   ├── payment-service/       # Payment processing
+│   │   ├── content-service/       # Content management
+│   │   ├── search-service/        # Search functionality
+│   │   └── media-service/         # Media upload & processing
+│   │
+│   ├── universes/                 # Universe-specific business logic
+
+=== README.md head ===
+# Azeebo+ Platform
+
+A modular digital entertainment platform that functions as a shared operating system for multiple content universes.
+
+## Overview
+
+Azeebo+ is a multi-universe entertainment platform built with a modular architecture. It supports Reality TV, Creator Economy, Lifestyle, Gaming, Comedy, Sports, Premium Content, and Digital Cinema - all sharing a common infrastructure layer.
+
+## Architecture
+
+```
+azeebo-plus/
+├── apps/                    # Client applications
+│   ├── mobile/             # React Native mobile app
+│   ├── web/                # Next.js web application
+│   ├── admin/              # Admin dashboard
+│   └── creator-portal/     # Creator management portal
+│
+├── services/               # Backend microservices (categorized)
+│   ├── core/              # Essential platform services
+│   ├── universes/         # Universe-specific business logic
+│   ├── engagement/        # User interaction services
+│   ├── operations/        # Platform operations
+│   ├── intelligence/      # Data & analytics
+│   └── gateway/           # API gateway & routing
+│
+├── packages/              # Shared code libraries
+├── infra/                 # Infrastructure configurations
+└── ci/                    # CI/CD scripts
+```
+
+=== INFRA_ISSUES_AND_FIXES.md head ===
+# Infrastructure Issues & Resolutions Log
+
+> **Scope:** full infrastructure + services monorepo (`/services`, `/apps`,
+> `/packages`, plus root `docker-compose.yml`, `Dockerfile`,
+> `docker-compose.services.yml`).
+> **Captured during:** initial deep-check → build → containerize → launch
+> pass on 2026-06-09.
+
+This log records every issue found while bringing the Azeebo+ infrastructure
+online, the root cause, the fix that resolved it, and the verification step
+that proved it. Use it as the runbook when spinning up a fresh environment
+or when a regression surfaces the same symptom.
+
+---
+
+## 0. Final state
+
+After every fix below, the following end-state is reproducible from a clean
+clone:
+
+```bash
+# 1. Generate the SCRAM-SHA-256 userlist that pgbouncer will use
+bash infra/scripts/generate-pgbouncer-userlist.sh
+
+# 2. Bring the infrastructure stack up
+docker compose up -d
+
+# 3. Verify
+docker compose ps                 # all services healthy
+docker exec azeebo_redis redis-cli ping                                    # PONG

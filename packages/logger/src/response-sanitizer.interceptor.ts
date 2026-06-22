@@ -7,7 +7,15 @@ export interface SanitizationConfig {
   maskFields?: string[];
 }
 
-const DEFAULT_EXCLUDE_FIELDS = ['password', 'passwordHash', 'token', 'refreshToken', 'secret', 'apiKey', 'secretKey'];
+const DEFAULT_EXCLUDE_FIELDS = [
+  'password',
+  'passwordHash',
+  'token',
+  'refreshToken',
+  'secret',
+  'apiKey',
+  'secretKey',
+];
 const DEFAULT_MASK_FIELDS = ['email', 'phone', 'ssn'];
 
 @Injectable()

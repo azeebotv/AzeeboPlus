@@ -364,7 +364,11 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
     endpoints: [
       { method: 'GET', path: '/leaderboard', description: 'Get leaderboard' },
       { method: 'GET', path: '/rankings', description: 'Get rankings by category' },
-      { method: 'GET', path: '/predictions/:contentId/results', description: 'Get prediction results' },
+      {
+        method: 'GET',
+        path: '/predictions/:contentId/results',
+        description: 'Get prediction results',
+      },
       { method: 'POST', path: '/predictions', description: 'Submit a prediction' },
     ],
   },
@@ -441,9 +445,7 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
     supportedVersions: ['1'],
     defaultVersion: '1',
     pathStrategy: 'no-prefix',
-    endpoints: [
-      { method: 'GET', path: '/', description: 'Get all universes' },
-    ],
+    endpoints: [{ method: 'GET', path: '/', description: 'Get all universes' }],
   },
   {
     path: '/comedy',
@@ -578,12 +580,14 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
 export class ProxyController {
   private readonly logger = new Logger(ProxyController.name);
   private readonly REQUEST_ID_HEADER = 'X-Request-ID';
-  private readonly UPSTREAM_TIMEOUT = 30000;
+  private readonly UPSTREAM_TIMEOUT: number;
 
   constructor(
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
     private configService: ConfigService
-  ) {}
+  ) {
+    this.UPSTREAM_TIMEOUT = this.configService.get<number>('UPSTREAM_TIMEOUT', 30000);
+  }
 
   @Get(':version/:service/*')
   @HttpCode(HttpStatus.OK)
@@ -622,7 +626,14 @@ export class ProxyController {
       return;
     }
 
-    const response = await this.forwardRequest(req, res, route.targetUrl, version, requestId, route);
+    const response = await this.forwardRequest(
+      req,
+      res,
+      route.targetUrl,
+      version,
+      requestId,
+      route
+    );
     if (response && typeof response === 'object') {
       await this.cacheManager.set(cacheKey, response, 300000);
       res.setHeader(API_VERSION_HEADER, version);
@@ -994,7 +1005,15 @@ export class ProxyController {
   }
 
   private isUserSpecificEndpoint(path: string): boolean {
-    const userSpecificPatterns = ['/wallet/', '/notifications', '/rewards', '/creator/', '/users/', '/recommendations/', '/recommendation/'];
+    const userSpecificPatterns = [
+      '/wallet/',
+      '/notifications',
+      '/rewards',
+      '/creator/',
+      '/users/',
+      '/recommendations/',
+      '/recommendation/',
+    ];
     return userSpecificPatterns.some((pattern) => path.includes(pattern));
   }
 
@@ -1009,7 +1028,7 @@ export class ProxyController {
     const service = req.params['service'];
     const path = req.params[0] ? `/${req.params[0]}` : '';
     const queryString = req.url.includes('?') ? req.url.split('?')[1] : '';
-    
+
     let targetPath: string;
     switch (route.pathStrategy) {
       case 'auth-service-strategy':
@@ -1034,7 +1053,7 @@ export class ProxyController {
         targetPath = `/v${version}/${service}${path}${queryString ? `?${queryString}` : ''}`;
         break;
     }
-    
+
     const target = `${targetUrl}${targetPath}`;
     this.logger.log(`Forwarding request to ${target}`);
 

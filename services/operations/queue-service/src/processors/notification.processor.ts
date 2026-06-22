@@ -1,17 +1,24 @@
 import { Processor, WorkerHost, OnWorkerEvent } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import { Logger } from '@nestjs/common';
-import { PrismaService } from '../modules/database/prisma.service';
 import { EmailService } from '../modules/email/email.service';
 import { FirebaseService } from '../modules/firebase/firebase.service';
 import { SmsService } from '../modules/sms/sms.service';
 
+// Per CLAUDE.md § Cross-Service Model Duplication, queue-service references
+// `userId` as a plain string and does NOT query the User or PushToken tables.
+// The producer (notification-service) supplies the contact info in the payload.
 export interface NotificationJobData {
   userId: string;
   type: 'push' | 'email' | 'sms';
   title: string;
   message: string;
   data?: Record<string, string>;
+  // Contact details supplied by the producer (notification-service) so the
+  // queue worker does not need to read another service's canonical data.
+  email?: string;
+  phone?: string;
+  pushTokens?: string[];
   maxRetries?: number;
   retryDelay?: number;
 }
@@ -24,10 +31,9 @@ export class NotificationProcessor extends WorkerHost {
   private static readonly BACKOFF_MULTIPLIER = 2;
 
   constructor(
-    private readonly prismaService: PrismaService,
     private readonly emailService: EmailService,
     private readonly firebaseService: FirebaseService,
-    private readonly smsService: SmsService,
+    private readonly smsService: SmsService
   ) {
     super();
   }
@@ -35,6 +41,7 @@ export class NotificationProcessor extends WorkerHost {
   async process(job: Job<NotificationJobData>): Promise<void> {
     this.logger.log(`Processing notification job ${job.id} (attempt ${job.attemptsMade + 1})`);
 
+    this.currentJobData = job.data;
     const { userId, type, title, message, data } = job.data;
 
     try {
@@ -67,14 +74,11 @@ export class NotificationProcessor extends WorkerHost {
     userId: string,
     title: string,
     message: string,
-    data?: Record<string, string>,
+    data?: Record<string, string>
   ): Promise<void> {
-    this.logger.debug(`Sending push notification to ${userId}: ${title}`);
-    const pushTokens = await this.prismaService.pushToken.findMany({
-      where: { userId },
-      select: { token: true },
-    });
-    for (const { token } of pushTokens) {
+    this.logger.info(`Sending push notification to ${userId}: ${title}`);
+    const pushTokens = this.currentJobData?.pushTokens ?? [];
+    for (const token of pushTokens) {
       await this.firebaseService.sendPushNotification(token, title, message, data);
     }
   }
@@ -83,36 +87,38 @@ export class NotificationProcessor extends WorkerHost {
     userId: string,
     subject: string,
     body: string,
-    data?: Record<string, string>,
+    data?: Record<string, string>
   ): Promise<void> {
-    this.logger.debug(`Sending email to ${userId}: ${subject}`);
-    const user = await this.prismaService.user.findUnique({
-      where: { id: userId },
-      select: { email: true, displayName: true },
-    });
-    if (user?.email) {
-      await this.emailService.sendCustomEmail(user.email, subject, `<p>${body}</p>`);
+    this.logger.info(`Sending email to ${userId}: ${subject}`);
+    const email = this.currentJobData?.email;
+    if (email) {
+      await this.emailService.sendCustomEmail(email, subject, `<p>${body}</p>`);
+    } else {
+      this.logger.warn(`No email address in payload for user ${userId}; skipping email`);
     }
   }
 
   private async sendSms(
     userId: string,
     message: string,
-    data?: Record<string, string>,
+    data?: Record<string, string>
   ): Promise<void> {
-    this.logger.debug(`Sending SMS to ${userId}`);
-    const user = await this.prismaService.user.findUnique({
-      where: { id: userId },
-      select: { phone: true },
-    });
-    if (user?.phone) {
-      await this.smsService.sendSms(user.phone, message);
+    this.logger.info(`Sending SMS to ${userId}`);
+    const phone = this.currentJobData?.phone;
+    if (phone) {
+      await this.smsService.sendSms(phone, message);
+    } else {
+      this.logger.warn(`No phone number in payload for user ${userId}; skipping SMS`);
     }
   }
 
+  // Holds the current job's payload so private helpers can access contact info
+  // without querying another service's canonical data.
+  private currentJobData: NotificationJobData | null = null;
+
   @OnWorkerEvent('active')
   onActive(job: Job) {
-    this.logger.debug(`Job ${job.id} is now active and processing`);
+    this.logger.info(`Job ${job.id} is now active and processing`);
   }
 
   @OnWorkerEvent('completed')
@@ -135,7 +141,7 @@ export class NotificationProcessor extends WorkerHost {
 
   @OnWorkerEvent('progress')
   onProgress(job: Job, progress: number | object) {
-    this.logger.debug(`Job ${job.id} progress: ${JSON.stringify(progress)}`);
+    this.logger.info(`Job ${job.id} progress: ${JSON.stringify(progress)}`);
   }
 
   @OnWorkerEvent('drained')

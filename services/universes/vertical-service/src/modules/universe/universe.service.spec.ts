@@ -15,7 +15,12 @@ describe('UniverseService', () => {
           provide: PrismaService,
           useValue: {
             universeMap: { findMany: jest.fn(), findUnique: jest.fn(), count: jest.fn() },
-            location: { findMany: jest.fn(), findUnique: jest.fn(), create: jest.fn(), update: jest.fn() },
+            location: {
+              findMany: jest.fn(),
+              findUnique: jest.fn(),
+              create: jest.fn(),
+              update: jest.fn(),
+            },
           },
         },
       ],
@@ -81,7 +86,18 @@ describe('UniverseService', () => {
         status: 'active',
         createdAt: mockDate,
         locations: [
-          { id: 'loc-1', name: 'Location 1', slug: 'loc-1', description: '', imageUrl: '', latitude: 0, longitude: 0, universeId: 'universe-1', parentId: null, createdAt: mockDate },
+          {
+            id: 'loc-1',
+            name: 'Location 1',
+            slug: 'loc-1',
+            description: '',
+            imageUrl: '',
+            latitude: 0,
+            longitude: 0,
+            universeId: 'universe-1',
+            parentId: null,
+            createdAt: mockDate,
+          },
         ],
       };
       (prismaService.universeMap.findUnique as jest.Mock).mockResolvedValue(mockUniverse);
@@ -104,7 +120,19 @@ describe('UniverseService', () => {
     it('should return all locations when no filter', async () => {
       const mockDate = new Date('2024-01-01');
       const mockLocations = [
-        { id: 'loc-1', name: 'Location 1', slug: 'loc-1', description: '', imageUrl: '', latitude: 0, longitude: 0, universeId: 'universe-1', parentId: null, createdAt: mockDate, universe: { name: 'Universe 1' } },
+        {
+          id: 'loc-1',
+          name: 'Location 1',
+          slug: 'loc-1',
+          description: '',
+          imageUrl: '',
+          latitude: 0,
+          longitude: 0,
+          universeId: 'universe-1',
+          parentId: null,
+          createdAt: mockDate,
+          universe: { name: 'Universe 1' },
+        },
       ];
       (prismaService.location.findMany as jest.Mock).mockResolvedValue(mockLocations);
 
@@ -118,7 +146,19 @@ describe('UniverseService', () => {
       const mockDate = new Date('2024-01-01');
       const mockUniverse = { id: 'universe-1', slug: 'universe-1' };
       const mockLocations = [
-        { id: 'loc-1', name: 'Location 1', slug: 'loc-1', description: '', imageUrl: '', latitude: 0, longitude: 0, universeId: 'universe-1', parentId: null, createdAt: mockDate, universe: { name: 'Universe 1' } },
+        {
+          id: 'loc-1',
+          name: 'Location 1',
+          slug: 'loc-1',
+          description: '',
+          imageUrl: '',
+          latitude: 0,
+          longitude: 0,
+          universeId: 'universe-1',
+          parentId: null,
+          createdAt: mockDate,
+          universe: { name: 'Universe 1' },
+        },
       ];
 
       (prismaService.universeMap.findUnique as jest.Mock).mockResolvedValue(mockUniverse);
@@ -150,7 +190,18 @@ describe('UniverseService', () => {
         universe: { name: 'Universe 1' },
         parent: null,
         children: [
-          { id: 'child-1', name: 'Child', slug: 'child', description: '', imageUrl: '', latitude: 0, longitude: 0, universeId: 'universe-1', parentId: 'loc-1', createdAt: mockDate },
+          {
+            id: 'child-1',
+            name: 'Child',
+            slug: 'child',
+            description: '',
+            imageUrl: '',
+            latitude: 0,
+            longitude: 0,
+            universeId: 'universe-1',
+            parentId: 'loc-1',
+            createdAt: mockDate,
+          },
         ],
       };
       (prismaService.location.findUnique as jest.Mock).mockResolvedValue(mockLocation);
@@ -241,7 +292,9 @@ describe('UniverseService', () => {
     it('should throw NotFoundException when location not found', async () => {
       (prismaService.location.findUnique as jest.Mock).mockResolvedValue(null);
 
-      await expect(service.updateLocation(locationId, { description: 'Updated' })).rejects.toThrow(NotFoundException);
+      await expect(service.updateLocation(locationId, { description: 'Updated' })).rejects.toThrow(
+        NotFoundException
+      );
     });
   });
 

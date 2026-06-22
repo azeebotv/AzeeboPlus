@@ -5,10 +5,34 @@ import { useRouter } from 'expo-router';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
 import { apiClient } from '../../src/api/client';
 
-interface GameData { id: string; title: string; genre: string; players: string; emoji: string; }
-interface TournamentData { id: string; title: string; prize: string; entrants: string; status: string; emoji: string; }
-interface CategoryData { id: string; name: string; emoji: string; count: number; }
-interface PlayerData { id: string; name: string; score: number; rank: number; emoji: string; }
+interface GameData {
+  id: string;
+  title: string;
+  genre: string;
+  players: string;
+  emoji: string;
+}
+interface TournamentData {
+  id: string;
+  title: string;
+  prize: string;
+  entrants: string;
+  status: string;
+  emoji: string;
+}
+interface CategoryData {
+  id: string;
+  name: string;
+  emoji: string;
+  count: number;
+}
+interface PlayerData {
+  id: string;
+  name: string;
+  score: number;
+  rank: number;
+  emoji: string;
+}
 
 export default function GamesUniverseHome() {
   const colorScheme = useColorScheme();
@@ -33,12 +57,14 @@ export default function GamesUniverseHome() {
         apiClient.get<any>('/v1/games/categories'),
         apiClient.get<any>('/v1/games/leaderboard'),
       ]);
-      const featured = Array.isArray(featuredRes) ? featuredRes[0] : featuredRes?.data?.[0] ?? null;
+      const featured = Array.isArray(featuredRes)
+        ? featuredRes[0]
+        : (featuredRes?.data?.[0] ?? null);
       setFeaturedGame(featured ?? null);
-      setTrendingGames(Array.isArray(trendingRes) ? trendingRes : trendingRes?.data ?? []);
-      setTournaments(Array.isArray(tournamentsRes) ? tournamentsRes : tournamentsRes?.data ?? []);
-      setCategories(Array.isArray(catsRes) ? catsRes : catsRes?.data ?? []);
-      setTopPlayers(Array.isArray(playersRes) ? playersRes : playersRes?.data ?? []);
+      setTrendingGames(Array.isArray(trendingRes) ? trendingRes : (trendingRes?.data ?? []));
+      setTournaments(Array.isArray(tournamentsRes) ? tournamentsRes : (tournamentsRes?.data ?? []));
+      setCategories(Array.isArray(catsRes) ? catsRes : (catsRes?.data ?? []));
+      setTopPlayers(Array.isArray(playersRes) ? playersRes : (playersRes?.data ?? []));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load');
     } finally {
@@ -46,12 +72,16 @@ export default function GamesUniverseHome() {
     }
   };
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   if (isLoading) return <LoadingState text="Loading games..." />;
   if (error) return <ErrorState description={error} onRetry={fetchData} />;
   if (!featuredGame && !trendingGames.length) {
-    return <EmptyState icon="🎮" title="No games available" description="Check back later for games" />;
+    return (
+      <EmptyState icon="🎮" title="No games available" description="Check back later for games" />
+    );
   }
 
   const renderGameCard = (item: GameData) => (
@@ -103,7 +133,10 @@ export default function GamesUniverseHome() {
             </View>
             <View style={styles.featuredOverlay}>
               <Text style={styles.featuredTitle}>{featuredGame?.title ?? 'Featured Game'}</Text>
-              <Text style={styles.featuredGenre}>{featuredGame?.genre ?? ''}{featuredGame ? ` • ${featuredGame.players} players` : ''}</Text>
+              <Text style={styles.featuredGenre}>
+                {featuredGame?.genre ?? ''}
+                {featuredGame ? ` • ${featuredGame.players} players` : ''}
+              </Text>
               <TouchableOpacity style={styles.featuredPlayButton}>
                 <Text style={styles.featuredPlayIcon}>▶</Text>
                 <Text style={styles.featuredPlayText}>Play Now</Text>
@@ -114,7 +147,11 @@ export default function GamesUniverseHome() {
       </View>
 
       <View style={styles.categoriesSection}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoriesList}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.categoriesList}
+        >
           {categories.map((cat) => (
             <TouchableOpacity key={cat.id} style={styles.categoryChip}>
               <Text style={styles.categoryEmoji}>{cat.emoji}</Text>
@@ -165,14 +202,12 @@ export default function GamesUniverseHome() {
                 <Text style={styles.tournamentPrize}>Prize: {tournament.prize}</Text>
                 <Text style={styles.tournamentEntrants}>👥 {tournament.entrants} entrants</Text>
               </View>
-              <View style={[
-                styles.tournamentStatus,
-                tournament.status === 'Live' && styles.statusLive,
-              ]}>
-                <Text style={[
-                  styles.statusText,
-                  tournament.status === 'Live' && styles.statusTextLive,
-                ]}>
+              <View
+                style={[styles.tournamentStatus, tournament.status === 'Live' && styles.statusLive]}
+              >
+                <Text
+                  style={[styles.statusText, tournament.status === 'Live' && styles.statusTextLive]}
+                >
                   {tournament.status}
                 </Text>
               </View>
@@ -190,10 +225,7 @@ export default function GamesUniverseHome() {
         <View style={styles.leaderboardList}>
           {topPlayers.map((player) => (
             <View key={player.id} style={styles.leaderboardItem}>
-              <View style={[
-                styles.rankBadge,
-                player.rank <= 3 && styles.rankBadgeTop,
-              ]}>
+              <View style={[styles.rankBadge, player.rank <= 3 && styles.rankBadgeTop]}>
                 <Text style={styles.rankEmoji}>{player.emoji}</Text>
               </View>
               <Text style={[styles.playerName, { color: isDark ? '#fff' : '#000' }]}>

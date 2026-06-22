@@ -7,7 +7,7 @@
   "scripts": {
     "build": "tsc",
     "clean": "rm -rf dist",
-    "lint": "eslint 'src/**/*.ts' --fix"
+    "lint": "eslint src --fix"
   },
   "peerDependencies": {
     "react": "^18.0.0",

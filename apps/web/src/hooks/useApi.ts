@@ -72,7 +72,9 @@ interface UseMutationState<T, P = unknown> {
   reset: () => void;
 }
 
-export function useMutation<T, P = unknown>(apiCall: (data?: P) => Promise<T>): UseMutationState<T, P> {
+export function useMutation<T, P = unknown>(
+  apiCall: (data?: P) => Promise<T>
+): UseMutationState<T, P> {
   const [data, setData] = useState<T | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<Error | null>(null);

@@ -1,242 +1,213 @@
-# Azeebo+ Monorepo
+# Azeebo+ Documentation Guide
 
-A comprehensive streaming and content platform built with a microservices architecture.
+This directory contains comprehensive documentation for the Azeebo+ platform. Use this guide to navigate the documentation and understand what each document covers.
 
-## 📦 Packages Overview
+## 📚 Documentation Index
 
-| Type | Package | Description |
-|------|---------|-------------|
-| Shared | `@azeebo/shared-types` | TypeScript types shared across services |
-| Service | auth-service | Authentication & authorization |
-| Service | user-service | User profile management |
-| Service | wallet-service | Wallet transactions & balances |
-| Service | payment-service | Payment processing |
-| Service | content-service | Video content management |
-| Service | media-service | Media upload & CDN |
-| Service | search-service | Content search |
-| Service | notification-service | Email/SMS notifications |
-| Service | reward-service | Loyalty rewards |
-| Service | analytics-service | Analytics & reporting |
-| Service | recommendation-service | Personalized recommendations |
-| Service | support-service | Support tickets & workflows |
-| Universe | reality-service | Reality TV content |
-| Universe | creator-service | Creator platform |
-| Universe | lifestyle-service | Culture & events |
-| Universe | games-service | Interactive games |
-| Universe | comedy-service | Comedy content |
-| Universe | sports-service | Sports content |
-| Universe | vertical-service | Universe management |
-| Universe | movie-service | Movie content |
-| Service | engagement-service | User engagement & leaderboards |
-| Service | messaging-service | Direct messaging & chat |
-| Service | referral-service | Referral codes & rewards |
-| Service | subscription-service | Subscription plans & billing |
+### Core Architecture & Setup
 
-## 🚀 Quick Start
+| Document | Description | Status | Last Updated |
+|----------|-------------|--------|--------------|
+| [SERVICE-ORGANIZATION.md](./SERVICE-ORGANIZATION.md) | Complete guide to service categorization, decision trees, and organizational principles | ✅ Current | 2026-06-16 |
+| [API-REFERENCE.md](./API-REFERENCE.md) | API endpoints, request/response formats, and integration examples | ✅ Current | 2026-06-16 |
+| [DEVELOPER-ONBOARDING.md](./DEVELOPER-ONBOARDING.md) | Getting started guide for new developers, setup instructions, and workflow overview | ✅ Current | 2026-06-16 |
 
-### Prerequisites
+### Technical Standards
 
-- **Node.js**: 20.x or higher
-- **pnpm**: 8.x or higher
-- **Docker**: Latest stable version
+| Document | Description | Status | Last Updated |
+|----------|-------------|--------|--------------|
+| [TESTING-STRATEGY.md](./TESTING-STRATEGY.md) | Testing pyramid, coverage goals, test types, and quality assurance guidelines | ✅ Current | 2026-06-16 |
+| [PERFORMANCE-OPTIMIZATION.md](./PERFORMANCE-OPTIMIZATION.md) | Caching strategies, database optimization, frontend performance, and monitoring | ✅ Current | 2026-06-16 |
+| [MONITORING-OBSERVABILITY.md](./MONITORING-OBSERVABILITY.md) | Metrics, logging, tracing, alerting, and observability setup | ✅ Current | 2026-06-16 |
 
-### Installation
+### Operations & Maintenance
 
-```bash
-pnpm install
-```
+| Document | Description | Status | Last Updated |
+|----------|-------------|--------|--------------|
+| [DOCS-SYNC.md](./DOCS-SYNC.md) | Documentation synchronization script usage and automation | ✅ Current | 2026-06-16 |
+| [DIAGNOSTICS-FIXES.md](./DIAGNOSTICS-FIXES.md) | Common issues, troubleshooting guides, and resolution steps | ✅ Current | 2026-06-16 |
 
-### Environment Setup
+## 🎯 Recommended Reading Order
 
-```bash
-cp .env.example .env
-```
+### For New Developers
+1. Start with [DEVELOPER-ONBOARDING.md](./DEVELOPER-ONBOARDING.md) - Get your environment set up
+2. Read [SERVICE-ORGANIZATION.md](./SERVICE-ORGANIZATION.md) - Understand the architecture
+3. Review [API-REFERENCE.md](./API-REFERENCE.md) - Learn the API contracts
+4. Check [TESTING-STRATEGY.md](./TESTING-STRATEGY.md) - Understand testing requirements
 
-### Database Setup
+### For Existing Team Members
+1. Review [SERVICE-ORGANIZATION.md](./SERVICE-ORGANIZATION.md) - Stay current on architecture
+2. Check [API-REFERENCE.md](./API-REFERENCE.md) - Keep up with API changes
+3. Monitor [MONITORING-OBSERVABILITY.md](./MONITORING-OBSERVABILITY.md) - Stay informed on observability
 
-```bash
-pnpm -r prisma generate
-pnpm -r exec prisma migrate deploy
-```
+### For Operations & DevOps
+1. Start with [MONITORING-OBSERVABILITY.md](./MONITORING-OBSERVABILITY.md) - Understand monitoring setup
+2. Review [PERFORMANCE-OPTIMIZATION.md](./PERFORMANCE-OPTIMIZATION.md) - Performance tuning guide
+3. Check [DOCS-SYNC.md](./DOCS-SYNC.md) - Documentation automation
 
-### Build & Run
+## 📖 Document Details
 
-```bash
-pnpm build
-pnpm dev
-```
+### SERVICE-ORGANIZATION.md
+**Purpose**: Defines how services are organized into categories (core, universes, engagement, operations, intelligence, gateway)
 
-## 🔧 Development Commands
+**Key Topics**:
+- Service categorization principles
+- Decision trees for service placement
+- No duplication policy
+- Shared services vs universe-specific logic
+- Service boundaries and responsibilities
 
-```bash
-pnpm test                 # Run all tests
-pnpm run test:unit        # Unit tests only
-pnpm run test:integration # Integration tests with DB
-pnpm lint                 # Linting
-pnpm typecheck            # Type checking
-pnpm build                # Build all packages
-```
+**When to Read**: When you need to understand where a service belongs or how to organize new functionality
 
-## 🌐 Service Ports & API Gateway
+---
 
-**Gateway Base URL**: `http://localhost:3000`
+### API-REFERENCE.md
+**Purpose**: Complete API documentation with endpoints, request/response formats, and examples
 
-| Service | Port | Route Prefix |
-|---------|------|--------------|
-| auth-service | 3000 | /auth |
-| user-service | 3001 | /users |
-| wallet-service | 3002 | /wallet |
-| payment-service | 3003 | /payment |
-| content-service | 3004 | /content |
-| media-service | 3019 | /media |
-| search-service | 3005 | /search |
-| notification-service | 3006 | /notifications |
-| reward-service | 3007 | /rewards |
-| analytics-service | 3008 | /analytics |
-| recommendation-service | 3009 | /recommendation |
-| reality-service | 3010 | /reality |
-| movie-service | 3011 | /movies |
-| games-service | 3012 | /games |
-| comedy-service | 3013 | /comedy |
-| sports-service | 3014 | /sports |
-| lifestyle-service | 3016 | /lifestyle |
-| vertical-service | 3017 | /vertical |
-| creator-service | 3018 | /creators |
-| support-service | 3020 | /support |
-| engagement-service | 3023 | /engagement |
-| messaging-service | 3024 | /messaging |
-| referral-service | 3025 | /referrals |
-| subscription-service | 3026 | /subscription |
+**Key Topics**:
+- RESTful API standards
+- Endpoint documentation
+- Request/response schemas
+- Authentication requirements
+- Error handling
+- Rate limiting
 
-## 📱 Mobile Setup
+**When to Read**: When integrating with services, building new endpoints, or troubleshooting API issues
 
-```bash
-cd apps/mobile
-pnpm install
-pnpm start
-```
+---
 
-## 📚 Documentation
+### DEVELOPER-ONBOARDING.md
+**Purpose**: Comprehensive guide for new developers to get started quickly
 
-All documentation lives under `docs/`. Use the table of contents below to find what you need.
+**Key Topics**:
+- Development environment setup
+- Required tools and dependencies
+- Project structure overview
+- Development workflow
+- Code review process
+- Testing requirements
 
-### Core
+**When to Read**: When joining the team or setting up a new development environment
 
-- [CLAUDE.md](CLAUDE.md) — Build standards, coding conventions, and review checklist
+---
 
-### Product
+### TESTING-STRATEGY.md
+**Purpose**: Defines testing approach, coverage requirements, and quality standards
 
-- [Pages.md](product/Pages.md) — Full product page specifications (80 pages)
-- [miss-pages.md](product/miss-pages.md) — Pages still missing in mobile/web vs. spec
+**Key Topics**:
+- Testing pyramid (unit, integration, E2E)
+- Coverage requirements (>80%)
+- Test types and when to use each
+- Mocking strategies
+- Test data management
+- CI/CD integration
 
-### Architecture
+**When to Read**: When writing tests, reviewing test coverage, or planning testing strategy
 
-- [Architectural Improvements](architecture/ARCHITECTURAL_IMPROVEMENTS.md) — System architecture decisions and refactors
-- [Frontend Hook Integration](architecture/FRONTEND_HOOK_INTEGRATION.md) — Shared React hooks for web & mobile
-- [Offline Support Architecture](architecture/OFFLINE_SUPPORT_ARCHITECTURE.md) — Offline-first mobile design
-- [Modules Migration](architecture/modules-migration.md) — Legacy `modules/*` → `services/*` migration log
+---
 
-### API
+### PERFORMANCE-OPTIMIZATION.md
+**Purpose**: Guidelines for optimizing application performance
 
-- [API Route Map](api/API_ROUTE_MAP.md) — Complete API endpoint reference
-- [API Versioning](api/API_VERSIONING.md) — Versioning policy (`/v1`, `/v2`, …)
-- [Error Codes](api/ERROR_CODES.md) — Canonical error code list
-- [Event Schemas](api/EVENT_SCHEMAS.md) — Domain event payloads
-- [Payment Webhooks](api/PAYMENT_WEBHOOKS.md) — Payment provider webhook integration
+**Key Topics**:
+- Caching strategies (Redis, CDN)
+- Database optimization (indexing, query optimization)
+- Frontend performance (lazy loading, code splitting)
+- Monitoring and profiling
+- Performance budgets
+- Optimization checklist
 
-### Database
+**When to Read**: When optimizing performance, troubleshooting slow endpoints, or planning architecture
 
-- [Database Schema](database/DATABASE_SCHEMA.md) — Per-service Prisma schemas
-- [Database Query Optimization](database/DATABASE_QUERY_OPTIMIZATION.md) — Indexing, N+1 prevention, PIT tuning
-- [Prisma Schema Ownership](database/PRISMA_SCHEMA_OWNERSHIP.md) — Who owns which schema
+---
 
-### Deployment
+### MONITORING-OBSERVABILITY.md
+**Purpose**: Comprehensive guide to monitoring, logging, and observability
 
-- [Deployment Guide](deployment/DEPLOYMENT_GUIDE.md) — End-to-end deployment process
-- [Deployment Runbooks](deployment/DEPLOYMENT_RUNBOOKS.md) — Step-by-step deploy runbooks
-- [Environment Parity](deployment/ENVIRONMENT_PARITY.md) — Dev ↔ staging ↔ prod parity rules
-- [Runbooks](deployment/RUNBOOKS.md) — Operational runbooks
-- [Port Allocation](deployment/port-allocation.md) — Service port assignments
-- [Secrets Management](deployment/secrets-management.md) — Secret handling policy
-- [Coolify Deployment](deployment/coolify.md) — Self-hosted Coolify deploy guide
+**Key Topics**:
+- Metrics collection and visualization
+- Logging standards and practices
+- Distributed tracing
+- Alerting and incident response
+- Dashboard setup
+- Observability tools
 
-### Media
+**When to Read**: When setting up monitoring, troubleshooting issues, or implementing observability
 
-- [Asset Optimization Pipeline](media/ASSET_OPTIMIZATION_PIPELINE.md) — Image/video processing pipeline
+---
 
-### Development
+### DOCS-SYNC.md
+**Purpose**: Documentation for the automated documentation synchronization script
 
-- [Developer Onboarding](development/DEVELOPER_ONBOARDING.md) — Local setup, workflow, debugging
-- [Local Testing Guide](development/guide.md) — End-to-end project testing walkthrough
-- [Review Checklist](development/REVIEW_CHECKLIST.md) — PR review guidelines
-- [Workflow Commands](development/WORKFLOW_COMMANDS.md) — Claude / AI workflow prompts
-- [Upgrade](development/UPGRADE.md) — Dependency & runtime upgrade playbook
+**Key Topics**:
+- Script usage and commands
+- Automation workflows
+- Documentation generation
+- Sync schedules
+- Configuration options
 
-### Operations
+**When to Read**: When maintaining documentation or setting up documentation automation
 
-- [Disaster Recovery Runbook](operations/disaster-recovery-runbook.md) — DR procedures
-- [Support Workflows](operations/SUPPORT_WORKFLOWS.md) — Support ticket workflows
-- [Troubleshooting Guide](operations/TROUBLESHOOTING_GUIDE.md) — Common issues & fixes
+---
 
-### Analytics
+### DIAGNOSTICS-FIXES.md
+**Purpose**: Troubleshooting guide for common issues and their solutions
 
-- [Analytics Governance](analytics/ANALYTICS_GOVERNANCE.md) — Event taxonomy & governance
+**Key Topics**:
+- Common error messages
+- Diagnostic procedures
+- Resolution steps
+- Known issues and workarounds
+- Debugging tips
 
-### QA
+**When to Read**: When encountering errors, troubleshooting issues, or debugging problems
 
-- [E2E Test Specifications](qa/e2e-test-specifications.md)
-- [Load Test Specifications](qa/load-test-specifications.md)
-- [Chaos Test Specifications](qa/chaos-test-specifications.md)
+---
 
-### Engineering Standards (`.trae/rules/`)
+## 🔄 Documentation Maintenance
 
-Workspace-level engineering rules live outside `docs/` and are auto-loaded by the IDE:
+### Update Frequency
+- **Architecture docs**: Update when making structural changes
+- **API docs**: Update with every API change
+- **Operational docs**: Review quarterly
+- **All docs**: Review before major releases
 
-- [Engineering Rules & Security Standard](../.trae/rules/CLAUDE.md)
-- [Database Backup Strategy](../.trae/rules/DATABASE_BACKUP_STRATEGY.md)
-- [Data Retention Policy](../.trae/rules/DATA_RETENTION_POLICY.md)
-- [DNS & SSL Setup](../.trae/rules/DNS_SSL_SETUP.md)
-- [Final Security Audit](../.trae/rules/FINAL_SECURITY_AUDIT.md)
-- [Implementation Summary](../.trae/rules/IMPLEMENTATION_SUMMARY.md)
-- [Onboarding](../.trae/rules/ONBOARDING.md)
+### Contributing to Documentation
+1. Keep documentation close to code
+2. Update docs in the same PR as code changes
+3. Use clear, concise language
+4. Include examples where helpful
+5. Review documentation for accuracy
 
-## 🔄 Rollout Order & MVP Scope
+### Documentation Standards
+- Use markdown formatting
+- Include code examples
+- Provide context and rationale
+- Link to related documents
+- Keep sections focused and scannable
 
-**Phase 1 - Foundation**: auth, user, wallet, payment, content, media  
-**Phase 2 - Universe 1**: Reality, Creator  
-**Phase 3 - Universe 2**: Lifestyle, Games  
-**Phase 4 - Universe 3**: Comedy, Sports  
-**Phase 5 - Universe 4**: Vertical, Movie  
+## 📝 Additional Resources
 
-## ⚠️ Known Blockers
+### External Documentation
+- [Root README](../README.md) - Project overview and quick start
+- [CLAUDE.md](../CLAUDE.md) - AI-assisted development guidelines
+- [Quick Reference Guides](../docx/) - Condensed reference documents
 
-- Support service integration tests pending
-- Typed API client package needs to be created
-- Backup/restore verification in CI is new (monitor for failures)
+### Related Resources
+- Service-specific READMEs in each service directory
+- Package documentation in `/packages/*/README.md`
+- Inline code documentation and JSDoc comments
 
-## 🏗️ CI/CD Status
+## 🆘 Getting Help
 
-| Gate | Status | Notes |
-|------|--------|-------|
-| Install | ✅ Passing | |
-| Prisma Generate | ✅ Passing | |
-| Build | ⚠️ Partial | All services pass; mobile app has config issue |
-| Lint | ⚠️ Partial | Services pass; web app has prettier formatting issues |
-| Typecheck | ✅ Passing | |
-| Unit Tests | ⚠️ Partial | analytics-service fails due to test DB connection |
-| Integration Tests | ⚠️ Partial | Dependent on test database availability |
-| Docker Smoke | ⏳ Pending | |
-| Backup/Restore | ⏳ Pending | |
+If you can't find what you're looking for:
+1. Check the [root README](../README.md)
+2. Review [DEVELOPER-ONBOARDING.md](./DEVELOPER-ONBOARDING.md)
+3. Ask in the engineering Slack channel
+4. Consult the technical lead
 
-## 📁 Generated Artifact Policy
+---
 
-- **Never commit**: `dist/`, `node_modules/.prisma/`, `.next/`, `.expo/`
-- **Commit**: Prisma schema files (`prisma/schema.prisma`)
-- **Generated on CI**: All build artifacts are generated during CI pipeline
-
-## CI/CD
-
-The project uses GitHub Actions for CI/CD. See:
-- `.github/workflows/ci.yml` - CI pipeline
-- `.github/workflows/cd.yml` - CD deployment
-- `.github/workflows/pr-checks.yml` - PR validation
+**Last Updated**: 2026-06-16  
+**Maintained By**: Engineering Team  
+**Version**: 1.0

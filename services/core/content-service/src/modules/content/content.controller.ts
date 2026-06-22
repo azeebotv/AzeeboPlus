@@ -599,7 +599,10 @@ export class ContentController {
   async checkContentAccess(
     @Request() req: { user: { sub: string } },
     @Param('id') id: string
-  ): Promise<{ success: boolean; data: { hasAccess: boolean; reason?: string; accessType?: string; expiresAt?: Date } }> {
+  ): Promise<{
+    success: boolean;
+    data: { hasAccess: boolean; reason?: string; accessType?: string; expiresAt?: Date };
+  }> {
     const result = await this.accessControlService.checkContentAccess(req.user.sub, id);
     return { success: true, data: result };
   }
@@ -612,7 +615,10 @@ export class ContentController {
   async checkRentalAccess(
     @Request() req: { user: { sub: string } },
     @Param('contentId') contentId: string
-  ): Promise<{ success: boolean; data: { hasAccess: boolean; reason?: string; accessType?: string; expiresAt?: Date } }> {
+  ): Promise<{
+    success: boolean;
+    data: { hasAccess: boolean; reason?: string; accessType?: string; expiresAt?: Date };
+  }> {
     const result = await this.accessControlService.checkRentalAccess(req.user.sub, contentId);
     return { success: true, data: result };
   }
@@ -625,7 +631,10 @@ export class ContentController {
   async checkPassAccess(
     @Request() req: { user: { sub: string } },
     @Query('universeId') universeId?: string
-  ): Promise<{ success: boolean; data: { hasAccess: boolean; reason?: string; accessType?: string; expiresAt?: Date } }> {
+  ): Promise<{
+    success: boolean;
+    data: { hasAccess: boolean; reason?: string; accessType?: string; expiresAt?: Date };
+  }> {
     const result = await this.accessControlService.checkPassAccess(req.user.sub, universeId);
     return { success: true, data: result };
   }
@@ -638,7 +647,10 @@ export class ContentController {
   async checkScreeningAccess(
     @Request() req: { user: { sub: string } },
     @Param('screeningId') screeningId: string
-  ): Promise<{ success: boolean; data: { hasAccess: boolean; reason?: string; accessType?: string; expiresAt?: Date } }> {
+  ): Promise<{
+    success: boolean;
+    data: { hasAccess: boolean; reason?: string; accessType?: string; expiresAt?: Date };
+  }> {
     const result = await this.accessControlService.checkScreeningAccess(req.user.sub, screeningId);
     return { success: true, data: result };
   }
@@ -651,7 +663,10 @@ export class ContentController {
   async checkLockedExtraAccess(
     @Request() req: { user: { sub: string } },
     @Param('extraId') extraId: string
-  ): Promise<{ success: boolean; data: { hasAccess: boolean; reason?: string; accessType?: string; expiresAt?: Date } }> {
+  ): Promise<{
+    success: boolean;
+    data: { hasAccess: boolean; reason?: string; accessType?: string; expiresAt?: Date };
+  }> {
     const result = await this.accessControlService.checkLockedExtraAccess(req.user.sub, extraId);
     return { success: true, data: result };
   }
@@ -666,7 +681,10 @@ export class ContentController {
     @Request() req: { user: { sub: string } },
     @Param('id') id: string,
     @Query('expiresIn') expiresIn: number = 3600
-  ): Promise<{ success: boolean; data: { canPlay: boolean; signedUrl?: string; expiresIn?: number; reason?: string } }> {
+  ): Promise<{
+    success: boolean;
+    data: { canPlay: boolean; signedUrl?: string; expiresIn?: number; reason?: string };
+  }> {
     const result = await this.accessControlService.checkMediaPlaybackAccess(req.user.sub, id);
     return { success: true, data: result };
   }
@@ -682,8 +700,21 @@ export class ContentController {
     @Query('windowType') windowType?: string,
     @Query('page') page?: number,
     @Query('limit') limit?: number
-  ): Promise<{ success: boolean; data: { freeContent: unknown[]; premiumContent: unknown[]; totalFree: number; totalPremium: number } }> {
-    const result = await this.accessControlService.getAccessibleContent(req.user.sub, { universeId, windowType, page, limit });
+  ): Promise<{
+    success: boolean;
+    data: {
+      freeContent: unknown[];
+      premiumContent: unknown[];
+      totalFree: number;
+      totalPremium: number;
+    };
+  }> {
+    const result = await this.accessControlService.getAccessibleContent(req.user.sub, {
+      universeId,
+      windowType,
+      page,
+      limit,
+    });
     return { success: true, data: result };
   }
 
@@ -696,7 +727,10 @@ export class ContentController {
   async scanContentForSafety(
     @Request() req: { user: { sub: string } },
     @Param('id') id: string
-  ): Promise<{ success: boolean; data: { scanId: string; result: string; threatLevel?: string; categories?: string[] } }> {
+  ): Promise<{
+    success: boolean;
+    data: { scanId: string; result: string; threatLevel?: string; categories?: string[] };
+  }> {
     return this.contentService.scanContentForSafety(id);
   }
 }

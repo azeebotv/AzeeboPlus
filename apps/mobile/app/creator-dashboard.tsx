@@ -2,7 +2,12 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
-import { creatorApi, CreatorDashboard, CreatorEarnings, CreatorAnalytics } from '../../src/api/creator';
+import {
+  creatorApi,
+  CreatorDashboard,
+  CreatorEarnings,
+  CreatorAnalytics,
+} from '../../src/api/creator';
 import { LoadingState, ErrorState } from '../../src/components/StateContainers';
 
 function formatCurrency(amount: number): string {
@@ -58,19 +63,25 @@ export default function CreatorDashboardScreen() {
   }
 
   const statItems = [
-    { label: 'Total Earnings', value: formatCurrency(earnings?.totalEarnings ?? 0), change: '', icon: '💰' },
+    {
+      label: 'Total Earnings',
+      value: formatCurrency(earnings?.totalEarnings ?? 0),
+      change: '',
+      icon: '💰',
+    },
     { label: 'Subscribers', value: String(dashboard?.totalFollowers ?? 0), change: '', icon: '👥' },
     { label: 'Total Views', value: String(dashboard?.totalViews ?? 0), change: '', icon: '👁️' },
     { label: 'Total Content', value: String(dashboard?.totalContent ?? 0), change: '', icon: '📹' },
   ];
 
-  const activities = dashboard?.recentActivity?.map((a, i) => ({
-    id: String(i),
-    type: a.type === 'earnings' ? 'tip' : 'view',
-    message: a.description,
-    time: a.timestamp ? new Date(a.timestamp).toLocaleDateString() : '',
-    icon: a.type === 'earnings' ? '💰' : '🔥',
-  })) ?? [];
+  const activities =
+    dashboard?.recentActivity?.map((a, i) => ({
+      id: String(i),
+      type: a.type === 'earnings' ? 'tip' : 'view',
+      message: a.description,
+      time: a.timestamp ? new Date(a.timestamp).toLocaleDateString() : '',
+      icon: a.type === 'earnings' ? '💰' : '🔥',
+    })) ?? [];
 
   const displayEarnings = {
     available: earnings?.totalEarnings ?? 0,
@@ -159,19 +170,21 @@ export default function CreatorDashboardScreen() {
           </TouchableOpacity>
         </View>
         <View style={styles.activityList}>
-          {activities.length > 0 ? activities.map((activity) => (
-            <View key={activity.id} style={styles.activityItem}>
-              <View style={styles.activityIcon}>
-                <Text style={styles.activityEmoji}>{activity.icon}</Text>
+          {activities.length > 0 ? (
+            activities.map((activity) => (
+              <View key={activity.id} style={styles.activityItem}>
+                <View style={styles.activityIcon}>
+                  <Text style={styles.activityEmoji}>{activity.icon}</Text>
+                </View>
+                <View style={styles.activityContent}>
+                  <Text style={[styles.activityMessage, { color: isDark ? '#ffffff' : '#000000' }]}>
+                    {activity.message}
+                  </Text>
+                  <Text style={styles.activityTime}>{activity.time}</Text>
+                </View>
               </View>
-              <View style={styles.activityContent}>
-                <Text style={[styles.activityMessage, { color: isDark ? '#ffffff' : '#000000' }]}>
-                  {activity.message}
-                </Text>
-                <Text style={styles.activityTime}>{activity.time}</Text>
-              </View>
-            </View>
-          )) : (
+            ))
+          ) : (
             <View style={{ padding: 16, alignItems: 'center' }}>
               <Text style={{ color: '#666' }}>No recent activity</Text>
             </View>

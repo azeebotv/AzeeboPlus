@@ -100,7 +100,12 @@ export default function EarningsDashboardPage(): JSX.Element {
               className="text-muted-foreground hover:text-foreground mb-2 flex items-center gap-2"
             >
               <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 19l-7-7 7-7"
+                />
               </svg>
               Back
             </button>
@@ -121,11 +126,15 @@ export default function EarningsDashboardPage(): JSX.Element {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           <div className="bg-card rounded-lg border border-border p-6">
-            <p className="text-2xl font-bold text-foreground">{formatCurrency(earnings.pendingEarnings)}</p>
+            <p className="text-2xl font-bold text-foreground">
+              {formatCurrency(earnings.pendingEarnings)}
+            </p>
             <p className="text-sm text-muted-foreground mt-1">Pending Earnings</p>
           </div>
           <div className="bg-card rounded-lg border border-border p-6">
-            <p className="text-2xl font-bold text-foreground">{formatCurrency(earnings.lifetimeEarnings)}</p>
+            <p className="text-2xl font-bold text-foreground">
+              {formatCurrency(earnings.lifetimeEarnings)}
+            </p>
             <p className="text-sm text-muted-foreground mt-1">Lifetime Earnings</p>
           </div>
         </div>
@@ -136,19 +145,27 @@ export default function EarningsDashboardPage(): JSX.Element {
             <div className="space-y-4">
               <div className="flex justify-between items-center">
                 <span className="text-foreground">Subscriptions</span>
-                <span className="font-semibold text-foreground">{formatCurrency(earnings.revenueBreakdown.subscriptions)}</span>
+                <span className="font-semibold text-foreground">
+                  {formatCurrency(earnings.revenueBreakdown.subscriptions)}
+                </span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-foreground">Tips</span>
-                <span className="font-semibold text-foreground">{formatCurrency(earnings.revenueBreakdown.tips)}</span>
+                <span className="font-semibold text-foreground">
+                  {formatCurrency(earnings.revenueBreakdown.tips)}
+                </span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-foreground">Ads</span>
-                <span className="font-semibold text-foreground">{formatCurrency(earnings.revenueBreakdown.ads)}</span>
+                <span className="font-semibold text-foreground">
+                  {formatCurrency(earnings.revenueBreakdown.ads)}
+                </span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-foreground">Super Votes</span>
-                <span className="font-semibold text-foreground">{formatCurrency(earnings.revenueBreakdown.superVotes)}</span>
+                <span className="font-semibold text-foreground">
+                  {formatCurrency(earnings.revenueBreakdown.superVotes)}
+                </span>
               </div>
             </div>
           </div>
@@ -157,10 +174,15 @@ export default function EarningsDashboardPage(): JSX.Element {
             <h2 className="text-xl font-bold text-foreground mb-4">Earnings History</h2>
             <div className="space-y-3 max-h-80 overflow-y-auto">
               {earnings.earningsHistory.slice(0, 10).map((item, index) => (
-                <div key={index} className="flex justify-between items-center pb-3 border-b border-border">
+                <div
+                  key={index}
+                  className="flex justify-between items-center pb-3 border-b border-border"
+                >
                   <div>
                     <p className="font-medium text-foreground">{item.source}</p>
-                    <p className="text-sm text-muted-foreground">{new Date(item.date).toLocaleDateString()}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {new Date(item.date).toLocaleDateString()}
+                    </p>
                   </div>
                   <div className="text-right">
                     <p className="font-semibold text-foreground">{formatCurrency(item.amount)}</p>

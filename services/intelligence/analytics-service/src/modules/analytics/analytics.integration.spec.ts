@@ -14,7 +14,11 @@ describe('AnalyticsService Integration', () => {
     eventName: 'content_view',
     userId: 'user-123',
     sessionId: 'session-1',
-    metadata: JSON.stringify({ session_id: 'session-1', platform: 'mobile', timestamp: '2024-01-01T00:00:00Z' }),
+    metadata: JSON.stringify({
+      session_id: 'session-1',
+      platform: 'mobile',
+      timestamp: '2024-01-01T00:00:00Z',
+    }),
     timestamp: new Date(),
     createdAt: new Date(),
   };
@@ -59,7 +63,11 @@ describe('AnalyticsService Integration', () => {
           type: 'content_view',
           userId: 'user-123',
           sessionId: 'session-1',
-          metadata: { session_id: 'session-1', platform: 'mobile', timestamp: '2024-01-01T00:00:00Z' },
+          metadata: {
+            session_id: 'session-1',
+            platform: 'mobile',
+            timestamp: '2024-01-01T00:00:00Z',
+          },
         },
       ];
 
@@ -78,7 +86,11 @@ describe('AnalyticsService Integration', () => {
           type: 'invalid_event_name',
           userId: 'user-123',
           sessionId: 'session-1',
-          metadata: { session_id: 'session-1', platform: 'mobile', timestamp: '2024-01-01T00:00:00Z' },
+          metadata: {
+            session_id: 'session-1',
+            platform: 'mobile',
+            timestamp: '2024-01-01T00:00:00Z',
+          },
         },
       ];
 
@@ -90,7 +102,11 @@ describe('AnalyticsService Integration', () => {
         type: 'content_view',
         userId: 'user-123',
         sessionId: 'session-1',
-        metadata: { session_id: 'session-1', platform: 'mobile', timestamp: '2024-01-01T00:00:00Z' },
+        metadata: {
+          session_id: 'session-1',
+          platform: 'mobile',
+          timestamp: '2024-01-01T00:00:00Z',
+        },
       });
 
       await expect(service.ingestEvents(events)).rejects.toThrow(BadRequestException);
@@ -114,7 +130,9 @@ describe('AnalyticsService Integration', () => {
       (prisma.user.count as jest.Mock).mockResolvedValue(100);
       (prisma.contentItem.count as jest.Mock).mockResolvedValue(50);
       (prisma.productEvent.count as jest.Mock).mockResolvedValue(1000);
-      (prisma.productEvent.groupBy as jest.Mock).mockResolvedValue([{ userId: 'user-1', _count: true }]);
+      (prisma.productEvent.groupBy as jest.Mock).mockResolvedValue([
+        { userId: 'user-1', _count: true },
+      ]);
 
       const result = await service.getDashboard();
 
@@ -124,7 +142,9 @@ describe('AnalyticsService Integration', () => {
 
   describe('getFunnels', () => {
     it('should return funnel analytics', async () => {
-      (prisma.productEvent.groupBy as jest.Mock).mockResolvedValue([{ userId: 'user-1', _count: 5 }]);
+      (prisma.productEvent.groupBy as jest.Mock).mockResolvedValue([
+        { userId: 'user-1', _count: 5 },
+      ]);
 
       const result = await service.getFunnels('signup');
 
@@ -132,7 +152,9 @@ describe('AnalyticsService Integration', () => {
     });
 
     it('should return all funnels when name not specified', async () => {
-      (prisma.productEvent.groupBy as jest.Mock).mockResolvedValue([{ userId: 'user-1', _count: 5 }]);
+      (prisma.productEvent.groupBy as jest.Mock).mockResolvedValue([
+        { userId: 'user-1', _count: 5 },
+      ]);
 
       const result = await service.getFunnels();
 
@@ -175,9 +197,7 @@ describe('AnalyticsService Integration', () => {
     it('should track batch of events', async () => {
       (prisma.$transaction as jest.Mock).mockResolvedValue([mockEvent]);
 
-      const result = await service.trackBatch([
-        { type: 'content_view', userId: 'user-123' },
-      ]);
+      const result = await service.trackBatch([{ type: 'content_view', userId: 'user-123' }]);
 
       expect(result.success).toBe(true);
     });
@@ -187,7 +207,9 @@ describe('AnalyticsService Integration', () => {
     it('should return daily statistics', async () => {
       (prisma.user.count as jest.Mock).mockResolvedValue(100);
       (prisma.productEvent.count as jest.Mock).mockResolvedValue(50);
-      (prisma.productEvent.groupBy as jest.Mock).mockResolvedValue([{ userId: 'user-1', _count: true }]);
+      (prisma.productEvent.groupBy as jest.Mock).mockResolvedValue([
+        { userId: 'user-1', _count: true },
+      ]);
 
       const result = await service.getDailyStats(new Date());
 

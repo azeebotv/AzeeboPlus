@@ -51,11 +51,41 @@ export default function ResultsScreen() {
   const loadResults = async () => {
     try {
       const response = await contentApi.getResults(contentId);
-      
+
       if (response.success && response.data) {
-        setResults(response.data);
-        if (response.data.length > 0) {
-          setSelectedEpisode(response.data[0].id);
+        const data = response.data;
+        // Map VoteResult[] to EpisodeResult[]
+        setResults(
+          data.map((vote, index) => ({
+            id: vote.contestantId ?? `id-${index}`,
+            episodeNumber: 1,
+            seasonNumber: 1,
+            title: `Episode ${index + 1}`,
+            date: new Date().toISOString(),
+            contestants: data.map((v, i) => ({
+              id: v.contestantId ?? `id-${i}`,
+              name: v.contestantName ?? `Contestant ${i + 1}`,
+              avatar: '',
+              votes: v.totalVotes ?? 0,
+              percentage: v.percentage ?? 0,
+              rank: v.rank ?? i + 1,
+            })),
+            winner:
+              data.length > 0
+                ? {
+                    id: data[0].contestantId ?? 'id-0',
+                    name: data[0].contestantName ?? 'Winner',
+                    avatar: '',
+                    votes: data[0].totalVotes ?? 0,
+                    percentage: data[0].percentage ?? 0,
+                    rank: data[0].rank ?? 1,
+                    isWinner: true,
+                  }
+                : undefined,
+          }))
+        );
+        if (data.length > 0) {
+          setSelectedEpisode(data[0].contestantId ?? 'id-0');
         }
       }
     } catch (error) {
@@ -81,10 +111,7 @@ export default function ResultsScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backButtonText}>←</Text>
         </TouchableOpacity>
         <View style={styles.headerContent}>
@@ -134,14 +161,12 @@ export default function ResultsScreen() {
             <View style={styles.winnerCard}>
               <Text style={styles.winnerLabel}>🏆 Winner</Text>
               <View style={styles.winnerContent}>
-                <Image
-                  source={{ uri: selectedResult.winner.avatar }}
-                  style={styles.winnerAvatar}
-                />
+                <Image source={{ uri: selectedResult.winner.avatar }} style={styles.winnerAvatar} />
                 <View style={styles.winnerInfo}>
                   <Text style={styles.winnerName}>{selectedResult.winner.name}</Text>
                   <Text style={styles.winnerVotes}>
-                    {selectedResult.winner.votes.toLocaleString()} votes ({selectedResult.winner.percentage}%)
+                    {selectedResult.winner.votes.toLocaleString()} votes (
+                    {selectedResult.winner.percentage}%)
                   </Text>
                 </View>
               </View>
@@ -159,7 +184,8 @@ export default function ResultsScreen() {
                 <View style={styles.evictedInfo}>
                   <Text style={styles.evictedName}>{selectedResult.evicted.name}</Text>
                   <Text style={styles.evictedVotes}>
-                    {selectedResult.evicted.votes.toLocaleString()} votes ({selectedResult.evicted.percentage}%)
+                    {selectedResult.evicted.votes.toLocaleString()} votes (
+                    {selectedResult.evicted.percentage}%)
                   </Text>
                 </View>
               </View>
@@ -182,10 +208,7 @@ export default function ResultsScreen() {
                   <View style={styles.rankBadge}>
                     <Text style={styles.rankText}>#{contestant.rank}</Text>
                   </View>
-                  <Image
-                    source={{ uri: contestant.avatar }}
-                    style={styles.contestantAvatar}
-                  />
+                  <Image source={{ uri: contestant.avatar }} style={styles.contestantAvatar} />
                   <View style={styles.contestantInfo}>
                     <Text style={styles.contestantName}>{contestant.name}</Text>
                     <Text style={styles.contestantVotes}>

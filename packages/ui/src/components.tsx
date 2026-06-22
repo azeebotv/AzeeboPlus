@@ -1,4 +1,11 @@
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, AccessibilityInfo } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ActivityIndicator,
+  AccessibilityInfo,
+} from 'react-native';
 
 interface StateComponentProps {
   title?: string;
@@ -11,21 +18,29 @@ interface StateComponentProps {
 
 export function LoadingState({ title = 'Loading...', accessibilityLabel }: StateComponentProps) {
   return (
-    <View style={styles.container} accessible={true} accessibilityLabel={accessibilityLabel || 'Loading'}>
+    <View
+      style={styles.container}
+      accessible={true}
+      accessibilityLabel={accessibilityLabel || 'Loading'}
+    >
       <ActivityIndicator size="large" color="#8B5CF6" />
       <Text style={styles.title}>{title}</Text>
     </View>
   );
 }
 
-export function EmptyState({ 
-  title = 'No content found', 
-  description = 'There\'s nothing to show here yet',
+export function EmptyState({
+  title = 'No content found',
+  description = "There's nothing to show here yet",
   icon = '📭',
-  accessibilityLabel
+  accessibilityLabel,
 }: StateComponentProps) {
   return (
-    <View style={styles.container} accessible={true} accessibilityLabel={accessibilityLabel || 'Empty state'}>
+    <View
+      style={styles.container}
+      accessible={true}
+      accessibilityLabel={accessibilityLabel || 'Empty state'}
+    >
       <Text style={styles.icon}>{icon}</Text>
       <Text style={styles.title}>{title}</Text>
       <Text style={styles.description}>{description}</Text>
@@ -33,21 +48,25 @@ export function EmptyState({
   );
 }
 
-export function ErrorState({ 
-  title = 'Something went wrong', 
+export function ErrorState({
+  title = 'Something went wrong',
   description = 'Please try again later',
   buttonText = 'Retry',
   onButtonPress,
-  accessibilityLabel
+  accessibilityLabel,
 }: StateComponentProps) {
   return (
-    <View style={styles.container} accessible={true} accessibilityLabel={accessibilityLabel || 'Error state'}>
+    <View
+      style={styles.container}
+      accessible={true}
+      accessibilityLabel={accessibilityLabel || 'Error state'}
+    >
       <Text style={styles.icon}>❌</Text>
       <Text style={styles.title}>{title}</Text>
       <Text style={styles.description}>{description}</Text>
       {onButtonPress && (
-        <TouchableOpacity 
-          style={styles.button} 
+        <TouchableOpacity
+          style={styles.button}
           onPress={onButtonPress}
           accessible={true}
           accessibilityLabel={buttonText}
@@ -60,11 +79,11 @@ export function ErrorState({
   );
 }
 
-export function SuccessState({ 
-  title = 'Success!', 
+export function SuccessState({
+  title = 'Success!',
   description = 'Your action was completed successfully',
   buttonText = 'Continue',
-  onButtonPress 
+  onButtonPress,
 }: StateComponentProps) {
   return (
     <View style={styles.container}>
@@ -80,11 +99,11 @@ export function SuccessState({
   );
 }
 
-export function NoInternetState({ 
-  title = 'No Internet Connection', 
+export function NoInternetState({
+  title = 'No Internet Connection',
   description = 'Please check your network and try again',
   buttonText = 'Retry',
-  onButtonPress 
+  onButtonPress,
 }: StateComponentProps) {
   return (
     <View style={styles.container}>
@@ -100,11 +119,11 @@ export function NoInternetState({
   );
 }
 
-export function PaymentFailureState({ 
-  title = 'Payment Failed', 
+export function PaymentFailureState({
+  title = 'Payment Failed',
   description = 'Your payment could not be processed',
   buttonText = 'Try Again',
-  onButtonPress 
+  onButtonPress,
 }: StateComponentProps) {
   return (
     <View style={styles.container}>
@@ -120,11 +139,11 @@ export function PaymentFailureState({
   );
 }
 
-export function ContentUnavailableState({ 
-  title = 'Content Unavailable', 
+export function ContentUnavailableState({
+  title = 'Content Unavailable',
   description = 'This content is no longer available',
   buttonText = 'Browse More',
-  onButtonPress 
+  onButtonPress,
 }: StateComponentProps) {
   return (
     <View style={styles.container}>
@@ -140,8 +159,8 @@ export function ContentUnavailableState({
   );
 }
 
-export function ModerationRemovedState({ 
-  title = 'Content Removed', 
+export function ModerationRemovedState({
+  title = 'Content Removed',
   description = 'This content has been removed due to community guidelines',
 }: StateComponentProps) {
   return (
@@ -153,11 +172,11 @@ export function ModerationRemovedState({
   );
 }
 
-export function LockedPremiumState({ 
-  title = 'Premium Content', 
+export function LockedPremiumState({
+  title = 'Premium Content',
   description = 'Upgrade to premium to access this content',
   buttonText = 'Go Premium',
-  onButtonPress 
+  onButtonPress,
 }: StateComponentProps) {
   return (
     <View style={styles.container}>
@@ -173,11 +192,11 @@ export function LockedPremiumState({
   );
 }
 
-export function FirstTimeState({ 
-  title = 'Welcome!', 
+export function FirstTimeState({
+  title = 'Welcome!',
   description = 'Get started by exploring our content',
   buttonText = 'Explore',
-  onButtonPress 
+  onButtonPress,
 }: StateComponentProps) {
   return (
     <View style={styles.container}>

@@ -41,11 +41,18 @@ export function useOffline() {
     return () => clearInterval(interval);
   }, []);
 
-  const cacheContent = useCallback(async (key: string, data: unknown, type: 'content' | 'universe' | 'user' | 'wallet' = 'content') => {
-    await OfflineModeService.cacheContent(key, data, type);
-    const cacheSize = await OfflineModeService.getCacheSize();
-    setState((prev) => ({ ...prev, cacheSize }));
-  }, []);
+  const cacheContent = useCallback(
+    async (
+      key: string,
+      data: unknown,
+      type: 'content' | 'universe' | 'user' | 'wallet' = 'content'
+    ) => {
+      await OfflineModeService.cacheContent(key, data, type);
+      const cacheSize = await OfflineModeService.getCacheSize();
+      setState((prev) => ({ ...prev, cacheSize }));
+    },
+    []
+  );
 
   const getCachedContent = useCallback(async (key: string) => {
     return await OfflineModeService.getCachedContent(key);

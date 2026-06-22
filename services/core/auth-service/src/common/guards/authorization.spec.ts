@@ -25,13 +25,14 @@ describe('Authorization Tests', () => {
     reflector = module.get<Reflector>(Reflector);
   });
 
-  const createMockContext = (user?: { id: string; role?: string }) => ({
-    switchToHttp: () => ({
-      getRequest: () => ({ user }),
-    }),
-    getHandler: jest.fn(),
-    getClass: jest.fn(),
-  }) as unknown as ExecutionContext;
+  const createMockContext = (user?: { id: string; role?: string }) =>
+    ({
+      switchToHttp: () => ({
+        getRequest: () => ({ user }),
+      }),
+      getHandler: jest.fn(),
+      getClass: jest.fn(),
+    }) as unknown as ExecutionContext;
 
   describe('Admin Authorization', () => {
     it('should allow admin access to admin-only endpoints', () => {

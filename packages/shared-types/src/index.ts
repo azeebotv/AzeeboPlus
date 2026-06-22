@@ -1,21 +1,66 @@
 // Permission types
 export type Permission =
-  | 'user:read' | 'user:write' | 'user:manage'
-  | 'content:read' | 'content:write' | 'content:moderate'
-  | 'analytics:view' | 'analytics:export'
-  | 'payment:view' | 'payment:refund'
+  | 'user:read'
+  | 'user:write'
+  | 'user:manage'
+  | 'content:read'
+  | 'content:write'
+  | 'content:moderate'
+  | 'analytics:view'
+  | 'analytics:export'
+  | 'payment:view'
+  | 'payment:refund'
   | 'admin:access'
-  | 'settings:read' | 'settings:write';
+  | 'settings:read'
+  | 'settings:write';
 
 export const PERMISSIONS_KEY = 'permissions';
 
 export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
   user: ['user:read', 'content:read'],
   creator: ['user:read', 'user:write', 'content:read', 'content:write', 'analytics:view'],
-  moderator: ['user:read', 'user:write', 'content:read', 'content:write', 'content:moderate', 'analytics:view'],
-  admin: ['user:read', 'user:write', 'user:manage', 'content:read', 'content:write', 'content:moderate', 'analytics:view', 'analytics:export', 'payment:view', 'payment:refund', 'admin:access', 'settings:read', 'settings:write'],
-  super_admin: ['user:read', 'user:write', 'user:manage', 'content:read', 'content:write', 'content:moderate', 'analytics:view', 'analytics:export', 'payment:view', 'payment:refund', 'admin:access', 'settings:read', 'settings:write'],
+  moderator: [
+    'user:read',
+    'user:write',
+    'content:read',
+    'content:write',
+    'content:moderate',
+    'analytics:view',
+  ],
+  admin: [
+    'user:read',
+    'user:write',
+    'user:manage',
+    'content:read',
+    'content:write',
+    'content:moderate',
+    'analytics:view',
+    'analytics:export',
+    'payment:view',
+    'payment:refund',
+    'admin:access',
+    'settings:read',
+    'settings:write',
+  ],
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  super_admin: [
+    'user:read',
+    'user:write',
+    'user:manage',
+    'content:read',
+    'content:write',
+    'content:moderate',
+    'analytics:view',
+    'analytics:export',
+    'payment:view',
+    'payment:refund',
+    'admin:access',
+    'settings:read',
+    'settings:write',
+  ],
+
   partner: ['analytics:view', 'analytics:export'],
+  // eslint-disable-next-line @typescript-eslint/naming-convention
   sponsor_manager: ['analytics:view'],
 };
 
@@ -45,7 +90,9 @@ export interface AuthResponse {
   success: boolean;
   data?: {
     user: User;
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     access_token: string;
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     refresh_token?: string;
   };
   error?: ApiError;
@@ -63,6 +110,7 @@ export interface RegisterRequest {
 }
 
 export interface RefreshTokenRequest {
+  // eslint-disable-next-line @typescript-eslint/naming-convention
   refresh_token: string;
 }
 
@@ -154,7 +202,14 @@ export interface WalletTransaction {
   createdAt: Date;
 }
 
-export type TransactionType = 'credit' | 'debit' | 'bonus' | 'promo' | 'refund' | 'earning' | 'payout';
+export type TransactionType =
+  | 'credit'
+  | 'debit'
+  | 'bonus'
+  | 'promo'
+  | 'refund'
+  | 'earning'
+  | 'payout';
 export type TransactionStatus = 'pending' | 'completed' | 'failed' | 'reversed';
 
 export interface WalletFundRequest {

@@ -1,0 +1,13 @@
+===== apps/creator-portal/src/creator/creator.controller.ts =====
+21:@UseGuards(JwtAuthGuard)
+22:@Controller('creator')
+26:  @Get('dashboard')
+34:  @Get('content')
+47:  @Post('content')
+59:  @Patch('content/:id')
+78:  @Delete('content/:id')
+90:  @Get('analytics')
+101:  @Get('earnings')
+112:  @Post('payouts/request')
+120:  @Put('payouts/settings')
+

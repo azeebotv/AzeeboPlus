@@ -1,5 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  ActivityIndicator,
+} from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import { apiClient } from '../../src/api/client';
@@ -10,7 +17,9 @@ export default function OnboardingInterestsScreen() {
   const router = useRouter();
   const isDark = colorScheme === 'dark';
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
-  const [interests, setInterests] = useState<Array<{ id: string; icon: string; label: string }>>([]);
+  const [interests, setInterests] = useState<Array<{ id: string; icon: string; label: string }>>(
+    []
+  );
   const [isLoadingInterests, setIsLoadingInterests] = useState(true);
   const [interestsError, setInterestsError] = useState<string | null>(null);
 
@@ -18,7 +27,8 @@ export default function OnboardingInterestsScreen() {
     setIsLoadingInterests(true);
     setInterestsError(null);
     try {
-      const res = await apiClient.get<Array<{ id: string; icon: string; label: string }>>('/user/interests');
+      const res =
+        await apiClient.get<Array<{ id: string; icon: string; label: string }>>('/user/interests');
       setInterests(res);
     } catch {
       setInterestsError('Failed to load interests');
@@ -57,9 +67,7 @@ export default function OnboardingInterestsScreen() {
         <Text style={[styles.title, { color: isDark ? '#ffffff' : '#000000' }]}>
           What interests you?
         </Text>
-        <Text style={styles.subtitle}>
-          Select at least 3 topics to personalize your experience
-        </Text>
+        <Text style={styles.subtitle}>Select at least 3 topics to personalize your experience</Text>
       </View>
 
       <ScrollView style={styles.interestsScroll}>
@@ -74,7 +82,12 @@ export default function OnboardingInterestsScreen() {
               ]}
             >
               <Text style={styles.interestIcon}>{interest.icon}</Text>
-              <Text style={[styles.interestLabel, selectedInterests.includes(interest.id) && { color: '#ffffff' }]}>
+              <Text
+                style={[
+                  styles.interestLabel,
+                  selectedInterests.includes(interest.id) && { color: '#ffffff' },
+                ]}
+              >
                 {interest.label}
               </Text>
             </TouchableOpacity>
@@ -85,9 +98,7 @@ export default function OnboardingInterestsScreen() {
       <View style={styles.footer}>
         <Text style={styles.progressText}>
           {selectedInterests.length} selected
-          {selectedInterests.length >= 3 && (
-            <Text style={styles.progressComplete}> - Ready!</Text>
-          )}
+          {selectedInterests.length >= 3 && <Text style={styles.progressComplete}> - Ready!</Text>}
         </Text>
         <TouchableOpacity
           onPress={handleContinue}

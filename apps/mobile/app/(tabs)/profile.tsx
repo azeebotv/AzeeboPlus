@@ -100,24 +100,20 @@ export default function ProfileScreen() {
   };
 
   const handleLogout = () => {
-    Alert.alert(
-      'Logout',
-      'Are you sure you want to logout?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Logout',
-          style: 'destructive',
-          onPress: async () => {
-            await logout();
-            router.replace('/(auth)/login');
-          },
+    Alert.alert('Logout', 'Are you sure you want to logout?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Logout',
+        style: 'destructive',
+        onPress: async () => {
+          await logout();
+          router.replace('/(auth)/login');
         },
-      ]
-    );
+      },
+    ]);
   };
 
-  const handleMenuPress = (item: typeof MENU_ITEMS[0]) => {
+  const handleMenuPress = (item: (typeof MENU_ITEMS)[0]) => {
     if (item.id === 'subscriptions') {
       Alert.alert('Coming Soon', 'Subscription management will be available soon');
     } else if (item.id === 'notifications') {
@@ -131,16 +127,16 @@ export default function ProfileScreen() {
 
   if (!isAuthenticated) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#000' : '#fff' }]} edges={['top']}>
+      <SafeAreaView
+        style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#000' : '#fff' }]}
+        edges={['top']}
+      >
         <View style={styles.unauthenticatedContainer}>
           <Text style={styles.lockIcon}>🔒</Text>
           <Text style={[styles.lockText, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
             Please log in to view your profile
           </Text>
-          <TouchableOpacity
-            style={styles.loginButton}
-            onPress={() => router.push('/(auth)/login')}
-          >
+          <TouchableOpacity style={styles.loginButton} onPress={() => router.push('/(auth)/login')}>
             <Text style={styles.loginButtonText}>Log In</Text>
           </TouchableOpacity>
         </View>
@@ -152,10 +148,15 @@ export default function ProfileScreen() {
   const avatarInitial = displayName.charAt(0).toUpperCase();
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#000' : '#fff' }]} edges={['top']}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#000' : '#fff' }]}
+      edges={['top']}
+    >
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <Text style={[styles.title, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>Profile</Text>
+          <Text style={[styles.title, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
+            Profile
+          </Text>
         </View>
 
         <View style={styles.profileSection}>
@@ -176,39 +177,71 @@ export default function ProfileScreen() {
                 <Text style={styles.verifiedText}>✓ Verified</Text>
               </View>
             )}
-            <TouchableOpacity
-              style={styles.editButton}
-              onPress={() => setShowEditModal(true)}
-            >
+            <TouchableOpacity style={styles.editButton} onPress={() => setShowEditModal(true)}>
               <Text style={styles.editButtonText}>Edit Profile</Text>
             </TouchableOpacity>
           </View>
         </View>
 
-        <View style={[styles.statsContainer, { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' }]}>
+        <View
+          style={[
+            styles.statsContainer,
+            { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' },
+          ]}
+        >
           <View style={styles.statItem}>
-            <Text style={[styles.statValue, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>127</Text>
+            <Text style={[styles.statValue, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
+              127
+            </Text>
             <Text style={styles.statLabel}>Watched</Text>
           </View>
-          <View style={[styles.statDivider, { backgroundColor: colorScheme === 'dark' ? '#333' : '#e0e0e0' }]} />
+          <View
+            style={[
+              styles.statDivider,
+              { backgroundColor: colorScheme === 'dark' ? '#333' : '#e0e0e0' },
+            ]}
+          />
           <View style={styles.statItem}>
-            <Text style={[styles.statValue, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>12</Text>
+            <Text style={[styles.statValue, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
+              12
+            </Text>
             <Text style={styles.statLabel}>Lists</Text>
           </View>
-          <View style={[styles.statDivider, { backgroundColor: colorScheme === 'dark' ? '#333' : '#e0e0e0' }]} />
+          <View
+            style={[
+              styles.statDivider,
+              { backgroundColor: colorScheme === 'dark' ? '#333' : '#e0e0e0' },
+            ]}
+          />
           <View style={styles.statItem}>
-            <Text style={[styles.statValue, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>5</Text>
+            <Text style={[styles.statValue, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
+              5
+            </Text>
             <Text style={styles.statLabel}>Reviews</Text>
           </View>
         </View>
 
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colorScheme === 'dark' ? '#888' : '#666' }]}>Preferences</Text>
-          <View style={[styles.preferenceItem, { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' }]}>
+          <Text style={[styles.sectionTitle, { color: colorScheme === 'dark' ? '#888' : '#666' }]}>
+            Preferences
+          </Text>
+          <View
+            style={[
+              styles.preferenceItem,
+              { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' },
+            ]}
+          >
             <View style={styles.preferenceInfo}>
               <Text style={styles.preferenceIcon}>🔔</Text>
               <View>
-                <Text style={[styles.preferenceLabel, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>Push Notifications</Text>
+                <Text
+                  style={[
+                    styles.preferenceLabel,
+                    { color: colorScheme === 'dark' ? '#fff' : '#000' },
+                  ]}
+                >
+                  Push Notifications
+                </Text>
                 <Text style={styles.preferenceSubtitle}>Receive alerts on your device</Text>
               </View>
             </View>
@@ -219,11 +252,23 @@ export default function ProfileScreen() {
               thumbColor="#fff"
             />
           </View>
-          <View style={[styles.preferenceItem, { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' }]}>
+          <View
+            style={[
+              styles.preferenceItem,
+              { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' },
+            ]}
+          >
             <View style={styles.preferenceInfo}>
               <Text style={styles.preferenceIcon}>📧</Text>
               <View>
-                <Text style={[styles.preferenceLabel, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>Email Notifications</Text>
+                <Text
+                  style={[
+                    styles.preferenceLabel,
+                    { color: colorScheme === 'dark' ? '#fff' : '#000' },
+                  ]}
+                >
+                  Email Notifications
+                </Text>
                 <Text style={styles.preferenceSubtitle}>Receive updates via email</Text>
               </View>
             </View>
@@ -237,15 +282,22 @@ export default function ProfileScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colorScheme === 'dark' ? '#888' : '#666' }]}>Account</Text>
+          <Text style={[styles.sectionTitle, { color: colorScheme === 'dark' ? '#888' : '#666' }]}>
+            Account
+          </Text>
           {MENU_ITEMS.map((item) => (
             <TouchableOpacity
               key={item.id}
-              style={[styles.menuItem, { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' }]}
+              style={[
+                styles.menuItem,
+                { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' },
+              ]}
               onPress={() => handleMenuPress(item)}
             >
               <Text style={styles.menuIcon}>{item.icon}</Text>
-              <Text style={[styles.menuLabel, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>{item.label}</Text>
+              <Text style={[styles.menuLabel, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
+                {item.label}
+              </Text>
               <Text style={styles.menuArrow}>›</Text>
             </TouchableOpacity>
           ))}
@@ -272,9 +324,16 @@ export default function ProfileScreen() {
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.modalOverlay}
         >
-          <View style={[styles.modalContent, { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#fff' }]}>
+          <View
+            style={[
+              styles.modalContent,
+              { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#fff' },
+            ]}
+          >
             <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
+              <Text
+                style={[styles.modalTitle, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}
+              >
                 Edit Profile
               </Text>
               <TouchableOpacity onPress={() => setShowEditModal(false)}>
@@ -285,7 +344,13 @@ export default function ProfileScreen() {
             <View style={styles.inputContainer}>
               <Text style={styles.inputLabel}>Display Name</Text>
               <TextInput
-                style={[styles.input, { backgroundColor: colorScheme === 'dark' ? '#333' : '#f5f5f5', color: colorScheme === 'dark' ? '#fff' : '#000' }]}
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: colorScheme === 'dark' ? '#333' : '#f5f5f5',
+                    color: colorScheme === 'dark' ? '#fff' : '#000',
+                  },
+                ]}
                 placeholder="Enter your name"
                 placeholderTextColor="#666"
                 value={editForm.name}
@@ -296,7 +361,13 @@ export default function ProfileScreen() {
             <View style={styles.inputContainer}>
               <Text style={styles.inputLabel}>Phone Number</Text>
               <TextInput
-                style={[styles.input, { backgroundColor: colorScheme === 'dark' ? '#333' : '#f5f5f5', color: colorScheme === 'dark' ? '#fff' : '#000' }]}
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: colorScheme === 'dark' ? '#333' : '#f5f5f5',
+                    color: colorScheme === 'dark' ? '#fff' : '#000',
+                  },
+                ]}
                 placeholder="Enter your phone number"
                 placeholderTextColor="#666"
                 keyboardType="phone-pad"
@@ -307,11 +378,21 @@ export default function ProfileScreen() {
 
             <View style={styles.modalButtons}>
               <TouchableOpacity
-                style={[styles.cancelButton, { borderColor: colorScheme === 'dark' ? '#333' : '#e0e0e0' }]}
+                style={[
+                  styles.cancelButton,
+                  { borderColor: colorScheme === 'dark' ? '#333' : '#e0e0e0' },
+                ]}
                 onPress={() => setShowEditModal(false)}
                 disabled={isLoading}
               >
-                <Text style={[styles.cancelButtonText, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>Cancel</Text>
+                <Text
+                  style={[
+                    styles.cancelButtonText,
+                    { color: colorScheme === 'dark' ? '#fff' : '#000' },
+                  ]}
+                >
+                  Cancel
+                </Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.saveButton}

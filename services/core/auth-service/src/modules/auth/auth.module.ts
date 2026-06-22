@@ -29,15 +29,21 @@ import { RedisService } from '../../common/services/redis.service';
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
-        secret: configService.getOrThrow<string>('JWT_SECRET'),
+        secret: configService.getOrThrow<string>('JWT_ACCESS_SECRET'),
         signOptions: {
-          expiresIn: configService.get<string>('JWT_EXPIRES_IN', '30m'),
+          expiresIn: configService.get<string>('JWT_EXPIRES_IN', '30m') as const,
         },
       }),
       inject: [ConfigService],
     }),
   ],
-  controllers: [AuthController, MfaController, OtpController, SocialAuthController, DeviceController],
+  controllers: [
+    AuthController,
+    MfaController,
+    OtpController,
+    SocialAuthController,
+    DeviceController,
+  ],
   providers: [
     AuthService,
     AuthRepository,
@@ -49,6 +55,14 @@ import { RedisService } from '../../common/services/redis.service';
     JwtRefreshStrategy,
     RedisService,
   ],
-  exports: [AuthService, AuthRepository, DatabaseModule, MfaService, OtpService, SocialAuthService, DeviceService],
+  exports: [
+    AuthService,
+    AuthRepository,
+    DatabaseModule,
+    MfaService,
+    OtpService,
+    SocialAuthService,
+    DeviceService,
+  ],
 })
 export class AuthModule {}

@@ -6,20 +6,27 @@ export class AdminService {
   constructor(private prisma: PrismaService) {}
 
   async getStats() {
-    const [totalGames, totalTournaments, totalUsers, gamesByCategory, tournamentsByStatus] = await Promise.all([
-      this.prisma.game.count(),
-      this.prisma.tournament.count(),
-      this.prisma.user.count(),
-      this.prisma.game.groupBy({ by: ['category'], _count: { category: true } }),
-      this.prisma.tournament.groupBy({ by: ['status'], _count: { status: true } }),
-    ]);
+    const [totalGames, totalTournaments, totalUsers, gamesByCategory, tournamentsByStatus] =
+      await Promise.all([
+        this.prisma.game.count(),
+        this.prisma.tournament.count(),
+        this.prisma.user.count(),
+        this.prisma.game.groupBy({ by: ['category'], _count: { category: true } }),
+        this.prisma.tournament.groupBy({ by: ['status'], _count: { status: true } }),
+      ]);
 
     return {
       totalGames,
       totalTournaments,
       totalUsers,
-      gamesByCategory: gamesByCategory.reduce((acc, c) => ({ ...acc, [c.category]: c._count.category }), {}),
-      tournamentsByStatus: tournamentsByStatus.reduce((acc, s) => ({ ...acc, [s.status]: s._count.status }), {}),
+      gamesByCategory: gamesByCategory.reduce(
+        (acc, c) => ({ ...acc, [c.category]: c._count.category }),
+        {}
+      ),
+      tournamentsByStatus: tournamentsByStatus.reduce(
+        (acc, s) => ({ ...acc, [s.status]: s._count.status }),
+        {}
+      ),
     };
   }
 

@@ -41,7 +41,19 @@ export default function PublishedContentScreen() {
       setError(null);
       const response = await contentApi.getPublishedContent();
       if (response.success && response.data) {
-        setContent(response.data);
+        // Map CreatorContent[] to PublishedItem[]
+        setContent(
+          response.data.map((item) => ({
+            id: item.id,
+            title: item.title,
+            thumbnail: item.thumbnail ?? '',
+            views: item.views,
+            likes: item.likes,
+            earnings: 0,
+            publishedAt: item.publishedAt ?? item.createdAt,
+            type: (item.contentType?.toLowerCase() || 'video') as 'video' | 'image' | 'audio',
+          }))
+        );
       }
     } catch (err) {
       logger.error('Failed to load published content', err);
@@ -80,7 +92,9 @@ export default function PublishedContentScreen() {
       <Image source={{ uri: item.thumbnail }} style={styles.thumbnail} />
       <View style={styles.content}>
         <View style={styles.cardHeader}>
-          <Text style={styles.cardTitle} numberOfLines={1}>{item.title}</Text>
+          <Text style={styles.cardTitle} numberOfLines={1}>
+            {item.title}
+          </Text>
           <Text style={styles.type}>{getTypeIcon(item.type)}</Text>
         </View>
         <View style={styles.stats}>
@@ -121,10 +135,7 @@ export default function PublishedContentScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backButtonText}>←</Text>
         </TouchableOpacity>
         <Text style={styles.title}>Published Content</Text>

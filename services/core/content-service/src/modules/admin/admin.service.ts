@@ -21,7 +21,12 @@ export class AdminService {
     };
   }
 
-  async getAllContent(options?: { page?: number; limit?: number; status?: string; universeId?: string }) {
+  async getAllContent(options?: {
+    page?: number;
+    limit?: number;
+    status?: string;
+    universeId?: string;
+  }) {
     const page = options?.page || 1;
     const limit = options?.limit || 20;
     const skip = (page - 1) * limit;

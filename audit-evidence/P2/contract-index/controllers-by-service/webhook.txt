@@ -1,0 +1,7 @@
+===== services/core/payment-service/src/modules/webhooks/webhook.controller.ts =====
+20:@Controller('webhooks')
+33:  @Post('paystack')
+34:  @UseGuards(PaystackWebhookGuard)
+104:  @Post('flutterwave')
+105:  @UseGuards(FlutterwaveWebhookGuard)
+

@@ -15,6 +15,18 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { contentApi } from '../../src/api';
 import { logger } from '../../src/utils/logger';
 
+// eslint-disable-next-line @typescript-eslint/no-namespace
+declare global {
+  namespace NodeJS {
+    interface Global {
+      setTimeout: typeof setTimeout;
+      clearTimeout: typeof clearTimeout;
+      setInterval: typeof setInterval;
+      clearInterval: typeof clearInterval;
+    }
+  }
+}
+
 const { width: screenWidth } = Dimensions.get('window');
 
 interface Episode {
@@ -41,7 +53,7 @@ export default function EpisodePlayerScreen() {
   const [showSubtitles, setShowSubtitles] = useState(false);
   const [selectedSubtitle, setSelectedSubtitle] = useState<string | null>(null);
   const [showControls, setShowControls] = useState(true);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     loadEpisode();
@@ -55,7 +67,7 @@ export default function EpisodePlayerScreen() {
   const loadEpisode = async () => {
     try {
       const response = await contentApi.getEpisode(episodeId);
-      
+
       if (response.success && response.data) {
         setEpisode(response.data);
       }
@@ -71,7 +83,7 @@ export default function EpisodePlayerScreen() {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
     const secs = Math.floor(seconds % 60);
-    
+
     if (hours > 0) {
       return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     }
@@ -107,15 +119,11 @@ export default function EpisodePlayerScreen() {
   };
 
   const handleVote = () => {
-    Alert.alert(
-      'Vote for Contestant',
-      'Would you like to use a Super Vote (2x weight)?',
-      [
-        { text: 'Regular Vote', onPress: () => submitVote(false) },
-        { text: 'Super Vote', onPress: () => submitVote(true) },
-        { text: 'Cancel', style: 'cancel' },
-      ]
-    );
+    Alert.alert('Vote for Contestant', 'Would you like to use a Super Vote (2x weight)?', [
+      { text: 'Regular Vote', onPress: () => submitVote(false) },
+      { text: 'Super Vote', onPress: () => submitVote(true) },
+      { text: 'Cancel', style: 'cancel' },
+    ]);
   };
 
   const submitVote = async (isSuper: boolean) => {
@@ -146,10 +154,7 @@ export default function EpisodePlayerScreen() {
       <SafeAreaView style={styles.container} edges={['top']}>
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>Episode not found</Text>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => router.back()}
-          >
+          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
             <Text style={styles.backButtonText}>Go Back</Text>
           </TouchableOpacity>
         </View>
@@ -162,17 +167,11 @@ export default function EpisodePlayerScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.playerContainer}>
-        <TouchableOpacity
-          style={styles.backButtonAbsolute}
-          onPress={() => router.back()}
-        >
+        <TouchableOpacity style={styles.backButtonAbsolute} onPress={() => router.back()}>
           <Text style={styles.backButtonText}>←</Text>
         </TouchableOpacity>
 
-        <View
-          style={styles.videoPlaceholder}
-          onTouchEnd={() => setShowControls(!showControls)}
-        >
+        <View style={styles.videoPlaceholder} onTouchEnd={() => setShowControls(!showControls)}>
           <Text style={styles.videoTitle}>{episode.title}</Text>
           <Text style={styles.videoSubtitle}>
             S{episode.seasonNumber} E{episode.episodeNumber}
@@ -217,10 +216,7 @@ export default function EpisodePlayerScreen() {
           </View>
 
           <View style={styles.actionButtons}>
-            <TouchableOpacity
-              style={styles.actionButton}
-              onPress={() => setShowSubtitles(true)}
-            >
+            <TouchableOpacity style={styles.actionButton} onPress={() => setShowSubtitles(true)}>
               <Text style={styles.actionButtonText}>💬 Subtitles</Text>
             </TouchableOpacity>
 

@@ -7,8 +7,18 @@ import { LoadingState, EmptyState, ErrorState } from '../../src/components/State
 
 const PRICING_OPTIONS = [
   { id: '1', type: 'Rent (48h)', price: '₦500', features: ['48 hour access', 'HD quality'] },
-  { id: '2', type: 'Buy', price: '₦1,500', features: ['Permanent access', 'HD quality', 'Download'] },
-  { id: '3', type: 'Pass', price: '₦4,500/mo', features: ['All movies', '4K quality', 'Unlimited'] },
+  {
+    id: '2',
+    type: 'Buy',
+    price: '₦1,500',
+    features: ['Permanent access', 'HD quality', 'Download'],
+  },
+  {
+    id: '3',
+    type: 'Pass',
+    price: '₦4,500/mo',
+    features: ['All movies', '4K quality', 'Unlimited'],
+  },
 ];
 
 export default function MovieDetailPage() {
@@ -16,7 +26,9 @@ export default function MovieDetailPage() {
   const router = useRouter();
   const { id } = useLocalSearchParams();
   const isDark = colorScheme === 'dark';
-  const [selectedOption, setSelectedOption] = useState<typeof PRICING_OPTIONS[0]>(PRICING_OPTIONS[0]);
+  const [selectedOption, setSelectedOption] = useState<(typeof PRICING_OPTIONS)[0]>(
+    PRICING_OPTIONS[0]
+  );
   const [showPricing, setShowPricing] = useState(false);
   const [movie, setMovie] = useState<any>(null);
   const [cast, setCast] = useState<any[]>([]);
@@ -168,7 +180,9 @@ export default function MovieDetailPage() {
 
       {showPricing && (
         <View style={styles.pricingModal}>
-          <View style={[styles.pricingContent, { backgroundColor: isDark ? '#1a1a1a' : '#ffffff' }]}>
+          <View
+            style={[styles.pricingContent, { backgroundColor: isDark ? '#1a1a1a' : '#ffffff' }]}
+          >
             <View style={styles.pricingHeader}>
               <Text style={[styles.pricingTitle, { color: isDark ? '#fff' : '#000' }]}>
                 Choose how to watch
@@ -196,7 +210,9 @@ export default function MovieDetailPage() {
                   </View>
                   <View style={styles.pricingOptionFeatures}>
                     {option.features.map((feature, index) => (
-                      <Text key={index} style={styles.pricingOptionFeature}>✓ {feature}</Text>
+                      <Text key={index} style={styles.pricingOptionFeature}>
+                        ✓ {feature}
+                      </Text>
                     ))}
                   </View>
                   {selectedOption.id === option.id && (
@@ -209,9 +225,7 @@ export default function MovieDetailPage() {
             </View>
 
             <TouchableOpacity style={styles.purchaseButton} onPress={handlePurchase}>
-              <Text style={styles.purchaseButtonText}>
-                Pay {selectedOption.price}
-              </Text>
+              <Text style={styles.purchaseButtonText}>Pay {selectedOption.price}</Text>
             </TouchableOpacity>
 
             {selectedOption.id === '3' && (

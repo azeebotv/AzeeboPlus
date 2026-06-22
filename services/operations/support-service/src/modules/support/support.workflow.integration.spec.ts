@@ -211,7 +211,11 @@ describe('Support Workflow (Integration)', () => {
         createdAt: new Date(),
       });
 
-      const reply = await supportService.addReply(userId, createdTicketId, 'We will process your refund request shortly.');
+      const reply = await supportService.addReply(
+        userId,
+        createdTicketId,
+        'We will process your refund request shortly.'
+      );
 
       expect(reply.id).toBeDefined();
       expect(reply.message).toBe('We will process your refund request shortly.');
@@ -266,7 +270,9 @@ describe('Support Workflow (Integration)', () => {
         updatedAt: new Date(),
       });
 
-      const updatedTicket = await supportService.updateTicket(userId, createdTicketId, { title: 'Refund Request - Processed' });
+      const updatedTicket = await supportService.updateTicket(userId, createdTicketId, {
+        title: 'Refund Request - Processed',
+      });
 
       expect(updatedTicket.status).toBe('resolved');
     });
@@ -311,7 +317,9 @@ describe('Support Workflow (Integration)', () => {
         updatedAt: new Date(),
       });
 
-      await expect(supportService.getTicketById(userId, createdTicketId)).rejects.toThrow(ForbiddenException);
+      await expect(supportService.getTicketById(userId, createdTicketId)).rejects.toThrow(
+        ForbiddenException
+      );
     });
   });
 
@@ -529,7 +537,9 @@ describe('Support Workflow (Integration)', () => {
     it('should handle non-existent ticket', async () => {
       mockPrisma.supportTicket.findUnique.mockResolvedValue(null);
 
-      await expect(supportService.getTicketById(userId, 'non-existent-ticket')).rejects.toThrow(NotFoundException);
+      await expect(supportService.getTicketById(userId, 'non-existent-ticket')).rejects.toThrow(
+        NotFoundException
+      );
     });
 
     it('should prevent duplicate refund requests', async () => {

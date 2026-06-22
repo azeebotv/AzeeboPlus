@@ -44,8 +44,6 @@ configMapGenerator:
       - ENVIRONMENT=production
       - LOG_LEVEL=info
       - API_GATEWAY_URL=http://api-gateway.azeebo.svc.cluster.local:3013
-
-configMapGenerator:
   - name: service-config
     literals:
       - LOG_FORMAT=json
@@ -54,38 +52,38 @@ configMapGenerator:
 
 images:
   - name: azeebo/auth-service
-    newTag: latest
+    newTag: v1.0.0
   - name: azeebo/api-gateway
-    newTag: latest
+    newTag: v1.0.0
   - name: azeebo/user-service
-    newTag: latest
+    newTag: v1.0.0
   - name: azeebo/wallet-service
-    newTag: latest
+    newTag: v1.0.0
   - name: azeebo/payment-service
-    newTag: latest
+    newTag: v1.0.0
   - name: azeebo/content-service
-    newTag: latest
+    newTag: v1.0.0
   - name: azeebo/media-service
-    newTag: latest
+    newTag: v1.0.0
   - name: azeebo/search-service
-    newTag: latest
+    newTag: v1.0.0
   - name: azeebo/notification-service
-    newTag: latest
+    newTag: v1.0.0
   - name: azeebo/reward-service
-    newTag: latest
+    newTag: v1.0.0
   - name: azeebo/analytics-service
-    newTag: latest
+    newTag: v1.0.0
   - name: azeebo/recommendation-service
-    newTag: latest
+    newTag: v1.0.0
   - name: azeebo/reality-service
-    newTag: latest
+    newTag: v1.0.0
   - name: azeebo/creator-service
-    newTag: latest
+    newTag: v1.0.0
   - name: azeebo/lifestyle-service
-    newTag: latest
+    newTag: v1.0.0
   - name: azeebo/vertical-service
-    newTag: latest
+    newTag: v1.0.0
   - name: azeebo/support-service
-    newTag: latest
+    newTag: v1.0.0
   - name: azeebo/queue-service
-    newTag: latest
+    newTag: v1.0.0

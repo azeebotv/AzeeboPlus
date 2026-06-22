@@ -23,7 +23,7 @@ export function usePushNotifications() {
   useEffect(() => {
     const initialize = async () => {
       const supported = PushNotificationService.isSupported();
-      
+
       if (!supported) {
         setState({
           isSupported: false,
@@ -55,7 +55,7 @@ export function usePushNotifications() {
 
     try {
       const subscription = await PushNotificationService.subscribe();
-      
+
       setState({
         isSupported: true,
         permission: 'granted',
@@ -81,7 +81,7 @@ export function usePushNotifications() {
 
     try {
       const result = await PushNotificationService.unsubscribe();
-      
+
       setState((prev) => ({
         ...prev,
         isSubscribed: false,

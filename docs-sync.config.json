@@ -1,0 +1,8 @@
+{
+  "servicesDir": "./services",
+  "docsDir": "./docs",
+  "outputFormat": "both",
+  "includeExamples": true,
+  "generateGraphs": true,
+  "validateConsistency": true
+}

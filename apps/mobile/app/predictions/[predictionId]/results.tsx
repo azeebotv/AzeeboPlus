@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView,
-  ActivityIndicator, RefreshControl,
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { realityApi } from '../../../src/api';
@@ -92,9 +96,7 @@ export default function PredictionResultsScreen() {
         <View style={styles.resultHeader}>
           <Text style={styles.resultLabel}>Your Answer</Text>
           <View style={[styles.badge, result.isCorrect ? styles.badgeSuccess : styles.badgeError]}>
-            <Text style={styles.badgeText}>
-              {result.isCorrect ? '✓ Correct' : '✗ Incorrect'}
-            </Text>
+            <Text style={styles.badgeText}>{result.isCorrect ? '✓ Correct' : '✗ Incorrect'}</Text>
           </View>
         </View>
         <Text style={styles.answerText}>{result.userAnswer}</Text>

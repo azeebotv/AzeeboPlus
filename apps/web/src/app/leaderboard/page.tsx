@@ -50,19 +50,27 @@ export default function LeaderboardPage(): JSX.Element {
 
   const getRankIcon = (rank: number): string => {
     switch (rank) {
-      case 1: return '🥇';
-      case 2: return '🥈';
-      case 3: return '🥉';
-      default: return `#${rank}`;
+      case 1:
+        return '🥇';
+      case 2:
+        return '🥈';
+      case 3:
+        return '🥉';
+      default:
+        return `#${rank}`;
     }
   };
 
   const getRankColor = (rank: number): string => {
     switch (rank) {
-      case 1: return 'text-yellow-500';
-      case 2: return 'text-gray-400';
-      case 3: return 'text-orange-600';
-      default: return 'text-muted-foreground';
+      case 1:
+        return 'text-yellow-500';
+      case 2:
+        return 'text-gray-400';
+      case 3:
+        return 'text-orange-600';
+      default:
+        return 'text-muted-foreground';
     }
   };
 
@@ -82,7 +90,9 @@ export default function LeaderboardPage(): JSX.Element {
       <div className="max-w-5xl mx-auto">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">Leaderboard</h1>
-          <p className="text-muted-foreground">Top performers this {timePeriod === 'alltime' ? 'all time' : timePeriod}</p>
+          <p className="text-muted-foreground">
+            Top performers this {timePeriod === 'alltime' ? 'all time' : timePeriod}
+          </p>
         </div>
 
         <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
@@ -125,8 +135,8 @@ export default function LeaderboardPage(): JSX.Element {
                 entry.rank === 1
                   ? 'border-yellow-500'
                   : entry.rank === 2
-                  ? 'border-gray-400'
-                  : 'border-orange-600'
+                    ? 'border-gray-400'
+                    : 'border-orange-600'
               }`}
             >
               <span className="text-4xl">{getRankIcon(entry.rank)}</span>
@@ -151,9 +161,15 @@ export default function LeaderboardPage(): JSX.Element {
                 <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Rank</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">User</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Level</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Streak</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Correct</th>
-                <th className="px-6 py-4 text-right text-sm font-semibold text-foreground">Points</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">
+                  Streak
+                </th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">
+                  Correct
+                </th>
+                <th className="px-6 py-4 text-right text-sm font-semibold text-foreground">
+                  Points
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">

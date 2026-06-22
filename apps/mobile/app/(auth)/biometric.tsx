@@ -83,7 +83,11 @@ export default function BiometricAuthScreen() {
         Alert.alert(
           'Success',
           `Biometric authentication has been enabled${
-            biometricType === 'face' ? ' (Face ID)' : biometricType === 'fingerprint' ? ' (Fingerprint)' : ''
+            biometricType === 'face'
+              ? ' (Face ID)'
+              : biometricType === 'fingerprint'
+                ? ' (Fingerprint)'
+                : ''
           }`,
           [{ text: 'OK', onPress: () => router.replace('/(tabs)/home' as any) }]
         );
@@ -125,7 +129,9 @@ export default function BiometricAuthScreen() {
 
   if (isLoading) {
     return (
-      <View style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#000' : '#fff' }]}>
+      <View
+        style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#000' : '#fff' }]}
+      >
         <ActivityIndicator size="large" color="#8B5CF6" />
         <Text style={[styles.loadingText, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
           Initializing biometric authentication...
@@ -170,9 +176,7 @@ export default function BiometricAuthScreen() {
                 ) : (
                   <>
                     <Text style={styles.biometricIconSmall}>{getBiometricIcon()}</Text>
-                    <Text style={styles.primaryButtonText}>
-                      Use {getBiometricLabel()}
-                    </Text>
+                    <Text style={styles.primaryButtonText}>Use {getBiometricLabel()}</Text>
                   </>
                 )}
               </TouchableOpacity>
@@ -196,9 +200,7 @@ export default function BiometricAuthScreen() {
                 ) : (
                   <>
                     <Text style={styles.biometricIconSmall}>{getBiometricIcon()}</Text>
-                    <Text style={styles.primaryButtonText}>
-                      Enable {getBiometricLabel()}
-                    </Text>
+                    <Text style={styles.primaryButtonText}>Enable {getBiometricLabel()}</Text>
                   </>
                 )}
               </TouchableOpacity>
@@ -216,7 +218,8 @@ export default function BiometricAuthScreen() {
         <View style={styles.securityInfo}>
           <Text style={styles.securityIcon}>🔒</Text>
           <Text style={[styles.securityText, { color: colorScheme === 'dark' ? '#888' : '#666' }]}>
-            Your biometric data is stored securely on your device and is never shared with our servers
+            Your biometric data is stored securely on your device and is never shared with our
+            servers
           </Text>
         </View>
       </View>

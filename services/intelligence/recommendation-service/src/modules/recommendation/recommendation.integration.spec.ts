@@ -59,7 +59,11 @@ describe('Recommendation Service Integration Tests', () => {
             title: 'Recommended Video',
             description: 'Based on your watch history',
             thumbnail: 'https://example.com/thumb.jpg',
-            creator: { id: 'creator-1', displayName: 'Test Creator', avatar: 'https://example.com/avatar.jpg' },
+            creator: {
+              id: 'creator-1',
+              displayName: 'Test Creator',
+              avatar: 'https://example.com/avatar.jpg',
+            },
             universe: { id: 'universe-1', name: 'Reality', slug: 'reality' },
             score: 0.95,
             explainability: {
@@ -89,7 +93,11 @@ describe('Recommendation Service Integration Tests', () => {
             title: 'Popular Content',
             description: 'Trending now',
             thumbnail: 'https://example.com/thumb.jpg',
-            creator: { id: 'creator-1', displayName: 'Test Creator', avatar: 'https://example.com/avatar.jpg' },
+            creator: {
+              id: 'creator-1',
+              displayName: 'Test Creator',
+              avatar: 'https://example.com/avatar.jpg',
+            },
             universe: { id: 'universe-1', name: 'Reality', slug: 'reality' },
             score: 0.9,
             explainability: {
@@ -101,8 +109,7 @@ describe('Recommendation Service Integration Tests', () => {
         ],
       });
 
-      const response = await request(app.getHttpServer())
-        .get('/recommendation/content');
+      const response = await request(app.getHttpServer()).get('/recommendation/content');
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -142,7 +149,11 @@ describe('Recommendation Service Integration Tests', () => {
             title: 'Cross Universe Content',
             description: 'From multiple universes',
             thumbnail: 'https://example.com/thumb.jpg',
-            creator: { id: 'creator-1', displayName: 'Test Creator', avatar: 'https://example.com/avatar.jpg' },
+            creator: {
+              id: 'creator-1',
+              displayName: 'Test Creator',
+              avatar: 'https://example.com/avatar.jpg',
+            },
             universe: { id: 'universe-1', name: 'Reality', slug: 'reality' },
             score: 0.85,
             explainability: {
@@ -173,7 +184,11 @@ describe('Recommendation Service Integration Tests', () => {
             title: 'Feed Item 1',
             description: 'Personalized for you',
             thumbnail: 'https://example.com/thumb.jpg',
-            creator: { id: 'creator-1', displayName: 'Test Creator', avatar: 'https://example.com/avatar.jpg' },
+            creator: {
+              id: 'creator-1',
+              displayName: 'Test Creator',
+              avatar: 'https://example.com/avatar.jpg',
+            },
             universe: { id: 'universe-1', name: 'Reality', slug: 'reality' },
             score: 0.92,
             explainability: {
@@ -200,8 +215,7 @@ describe('Recommendation Service Integration Tests', () => {
         new Error('Recommendation engine unavailable')
       );
 
-      const response = await request(app.getHttpServer())
-        .get('/recommendation/content');
+      const response = await request(app.getHttpServer()).get('/recommendation/content');
 
       expect(response.status).toBe(500);
     });

@@ -77,7 +77,10 @@ export class MetricsService implements OnModuleInit, OnModuleDestroy {
     };
   }
 
-  incrementTransactionCounter(type: 'fund' | 'withdraw' | 'transfer' | 'debit' | 'credit', status: 'success' | 'failed') {
+  incrementTransactionCounter(
+    type: 'fund' | 'withdraw' | 'transfer' | 'debit' | 'credit',
+    status: 'success' | 'failed'
+  ) {
     this.transactionCounter.inc({ type, status });
   }
 

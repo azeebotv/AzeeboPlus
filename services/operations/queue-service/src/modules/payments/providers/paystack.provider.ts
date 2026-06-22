@@ -66,7 +66,8 @@ export class PaystackProvider {
               userId: userId,
               app: 'azeebo-plus',
             },
-            callback_url: process.env.PAYSTACK_CALLBACK_URL || 'https://api.azeebo.plus/payments/webhook',
+            callback_url:
+              process.env.PAYSTACK_CALLBACK_URL || 'https://api.azeebo.plus/payments/webhook',
           },
           {
             headers: {
@@ -176,11 +177,18 @@ export class PaystackProvider {
   }
 
   async processPayout(amount: number, recipient: string, reference: string) {
-    this.logger.log(`Processing Paystack payout of ${amount} to ${recipient}, reference: ${reference}`);
-    throw new Error('Paystack payout is not implemented. Please use wallet-service direct transfer for payouts.');
+    this.logger.log(
+      `Processing Paystack payout of ${amount} to ${recipient}, reference: ${reference}`
+    );
+    throw new Error(
+      'Paystack payout is not implemented. Please use wallet-service direct transfer for payouts.'
+    );
   }
 
-  async verifyWebhookSignature(payload: Record<string, unknown>, signature: string): Promise<boolean> {
+  async verifyWebhookSignature(
+    payload: Record<string, unknown>,
+    signature: string
+  ): Promise<boolean> {
     const hash: string = createHmac('sha512', this.apiKey)
       .update(JSON.stringify(payload))
       .digest('hex');

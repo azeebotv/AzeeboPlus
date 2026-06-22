@@ -180,7 +180,11 @@ export class SystemSettingsService {
           const created = await this.createSetting(setting);
           results.push({ key: setting.key, success: true, data: created });
         } catch (error) {
-          results.push({ key: setting.key, success: false, error: error instanceof Error ? error.message : 'Unknown error' });
+          results.push({
+            key: setting.key,
+            success: false,
+            error: error instanceof Error ? error.message : 'Unknown error',
+          });
         }
       }
 
@@ -200,7 +204,11 @@ export class SystemSettingsService {
           const updated = await this.updateSetting(setting.key, { value: setting.value });
           results.push({ key: setting.key, success: true, data: updated });
         } catch (error) {
-          results.push({ key: setting.key, success: false, error: error instanceof Error ? error.message : 'Unknown error' });
+          results.push({
+            key: setting.key,
+            success: false,
+            error: error instanceof Error ? error.message : 'Unknown error',
+          });
         }
       }
 

@@ -151,18 +151,20 @@ export class SearchService {
       data: {
         query,
         results: {
-          content: contentItems.map(item => ({
+          content: contentItems.map((item) => ({
             id: item.id,
             title: item.title,
             description: item.description,
-            contentType: ((item as unknown as Record<string, unknown>).contentType as string) || 'unknown',
+            contentType:
+              ((item as unknown as Record<string, unknown>).contentType as string) || 'unknown',
             status: item.status,
             viewCount: item.viewCount || 0,
-            averageRating: ((item as unknown as Record<string, unknown>).averageRating as number) || 0,
+            averageRating:
+              ((item as unknown as Record<string, unknown>).averageRating as number) || 0,
             createdAt: item.createdAt,
             updatedAt: item.updatedAt,
           })),
-          creators: creators.map(creator => ({
+          creators: creators.map((creator) => ({
             id: creator.id,
             bio: creator.bio,
             user: {
@@ -171,7 +173,7 @@ export class SearchService {
               email: creator.user?.email || '',
             },
           })),
-          universes: universes.map(uni => ({
+          universes: universes.map((uni) => ({
             id: uni.id,
             name: uni.name,
             displayName: uni.displayName,
@@ -245,18 +247,20 @@ export class SearchService {
       data: {
         query,
         results: {
-          content: contentItems.map(item => ({
+          content: contentItems.map((item) => ({
             id: item.id,
             title: item.title,
             description: item.description,
-            contentType: ((item as unknown as Record<string, unknown>).contentType as string) || 'unknown',
+            contentType:
+              ((item as unknown as Record<string, unknown>).contentType as string) || 'unknown',
             status: item.status,
             viewCount: item.viewCount || 0,
-            averageRating: ((item as unknown as Record<string, unknown>).averageRating as number) || 0,
+            averageRating:
+              ((item as unknown as Record<string, unknown>).averageRating as number) || 0,
             createdAt: item.createdAt,
             updatedAt: item.updatedAt,
           })),
-          creators: creators.map(creator => ({
+          creators: creators.map((creator) => ({
             id: creator.id,
             bio: creator.bio,
             user: {
@@ -265,7 +269,7 @@ export class SearchService {
               email: creator.user?.email || '',
             },
           })),
-          universes: universes.map(uni => ({
+          universes: universes.map((uni) => ({
             id: uni.id,
             name: uni.name,
             displayName: uni.displayName,

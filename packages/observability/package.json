@@ -10,16 +10,16 @@
   },
   "dependencies": {},
   "peerDependencies": {
-    "@nestjs/common": "^10.0.0",
-    "@nestjs/config": "^3.0.0"
+    "@nestjs/common": "^11.1.27",
+    "@nestjs/config": "^4.0.4"
   },
   "devDependencies": {
-    "@nestjs/common": "^10.0.0",
-    "@nestjs/config": "^3.0.0",
+    "@nestjs/common": "^11.1.27",
+    "@nestjs/config": "^4.0.4",
     "@types/jest": "^29.5.0",
-    "@types/node": "^20.0.0",
+    "@types/node": "^25.9.3",
     "jest": "^29.7.0",
     "ts-jest": "^29.1.0",
-    "typescript": "^5.6.0"
+    "typescript": "^5.8.4"
   }
 }

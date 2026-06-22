@@ -6,7 +6,10 @@ interface OfflineBannerProps {
   queueLength?: number;
 }
 
-export function OfflineBanner({ isOffline, queueLength = 0 }: OfflineBannerProps): React.ReactElement | null {
+export function OfflineBanner({
+  isOffline,
+  queueLength = 0,
+}: OfflineBannerProps): React.ReactElement | null {
   const opacity = React.useRef(new Animated.Value(0)).current;
 
   React.useEffect(() => {

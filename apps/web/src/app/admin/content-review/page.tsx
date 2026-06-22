@@ -97,9 +97,7 @@ export default function ContentReviewQueuePage(): JSX.Element {
     }
   };
 
-  const filteredReviews = filter === 'all'
-    ? reviews
-    : reviews.filter((r) => r.status === filter);
+  const filteredReviews = filter === 'all' ? reviews : reviews.filter((r) => r.status === filter);
 
   if (isLoading) {
     return (
@@ -122,7 +120,12 @@ export default function ContentReviewQueuePage(): JSX.Element {
               className="text-muted-foreground hover:text-foreground mb-2 flex items-center gap-2"
             >
               <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 19l-7-7 7-7"
+                />
               </svg>
               Back
             </button>
@@ -152,11 +155,7 @@ export default function ContentReviewQueuePage(): JSX.Element {
               key={review.id}
               className="bg-card rounded-lg border border-border overflow-hidden"
             >
-              <img
-                src={review.thumbnail}
-                alt={review.title}
-                className="w-full h-40 object-cover"
-              />
+              <img src={review.thumbnail} alt={review.title} className="w-full h-40 object-cover" />
               <div className="p-4">
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-lg font-semibold text-foreground truncate">{review.title}</h3>

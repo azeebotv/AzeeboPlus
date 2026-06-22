@@ -1,0 +1,11 @@
+===== services/universes/lifestyle-service/src/modules/city-guide/city-guide.controller.ts =====
+42:@Controller('v1/lifestyle/city-guide')
+46:  @Get()
+59:  @Get('featured')
+66:  @Get('search')
+77:  @Get('tags')
+84:  @Get(':slug')
+91:  @Post()
+98:  @Patch(':id')
+108:  @Delete(':id')
+

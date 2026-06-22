@@ -68,13 +68,13 @@ export default function EpisodesScreen() {
     try {
       setIsLoading(true);
       setError(null);
-      
+
       const response = await realityApi.getEpisodes(showId || 'default');
-      
+
       if (response.success && response.data) {
         const data = response.data as EpisodesResponse;
         setShowTitle(data.title || 'Reality Show');
-        
+
         // Group episodes by season
         const episodesBySeason: { [key: number]: Episode[] } = {};
         if (data.episodes && Array.isArray(data.episodes)) {
@@ -96,12 +96,12 @@ export default function EpisodesScreen() {
             });
           });
         }
-        
+
         const seasonsList = Object.entries(episodesBySeason).map(([seasonNum, episodes]) => ({
           seasonNumber: parseInt(seasonNum),
           episodes: episodes.sort((a, b) => a.episodeNumber - b.episodeNumber),
         }));
-        
+
         setSeasons(seasonsList);
       }
     } catch (err) {
@@ -162,14 +162,11 @@ export default function EpisodesScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backButtonText}>←</Text>
         </TouchableOpacity>
         <View style={styles.headerContent}>
-          <Text style={styles.title}>{contentTitle}</Text>
+          <Text style={styles.title}>{showTitle}</Text>
           <Text style={styles.subtitle}>Episodes</Text>
         </View>
       </View>
@@ -203,17 +200,11 @@ export default function EpisodesScreen() {
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <TouchableOpacity
-            style={[
-              styles.episodeCard,
-              item.isLocked && styles.episodeCardLocked,
-            ]}
+            style={[styles.episodeCard, item.isLocked && styles.episodeCardLocked]}
             onPress={() => handleEpisodePress(item)}
             disabled={item.isLocked}
           >
-            <Image
-              source={{ uri: item.thumbnail }}
-              style={styles.episodeThumbnail}
-            />
+            <Image source={{ uri: item.thumbnail }} style={styles.episodeThumbnail} />
             {item.isLocked && (
               <View style={styles.lockOverlay}>
                 <Text style={styles.lockIcon}>🔒</Text>
@@ -224,17 +215,13 @@ export default function EpisodesScreen() {
                 <Text style={styles.episodeNumber}>
                   E{item.episodeNumber.toString().padStart(2, '0')}
                 </Text>
-                <Text style={styles.episodeDuration}>
-                  {formatDuration(item.duration)}
-                </Text>
+                <Text style={styles.episodeDuration}>{formatDuration(item.duration)}</Text>
               </View>
               <Text style={styles.episodeTitle}>{item.title}</Text>
               <Text style={styles.episodeDescription} numberOfLines={2}>
                 {item.description}
               </Text>
-              <Text style={styles.episodeDate}>
-                {formatDate(item.releaseDate)}
-              </Text>
+              <Text style={styles.episodeDate}>{formatDate(item.releaseDate)}</Text>
             </View>
           </TouchableOpacity>
         )}

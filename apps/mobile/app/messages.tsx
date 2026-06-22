@@ -1,8 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import {
-  View, Text, StyleSheet, FlatList,
-  TouchableOpacity, TextInput,
-  ActivityIndicator, RefreshControl,
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+  TextInput,
+  ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { messagingApi } from '../src/api';
@@ -111,10 +116,7 @@ export default function MessagesScreen() {
   };
 
   const renderConversation = ({ item }: { item: Conversation }) => (
-    <TouchableOpacity
-      style={styles.conversationItem}
-      onPress={() => openConversation(item)}
-    >
+    <TouchableOpacity style={styles.conversationItem} onPress={() => openConversation(item)}>
       <View style={styles.avatarContainer}>
         <View style={styles.avatar}>
           <Text style={styles.avatarText}>{item.participantName.charAt(0)}</Text>
@@ -160,18 +162,25 @@ export default function MessagesScreen() {
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.messagesList}
           renderItem={({ item }) => (
-            <View style={[
-              styles.messageBubble,
-              item.senderId === 'me' ? styles.messageBubbleSent : styles.messageBubbleReceived,
-            ]}>
-              <Text style={[
-                styles.messageText,
-                item.senderId === 'me' ? styles.messageTextSent : styles.messageTextReceived,
-              ]}>
+            <View
+              style={[
+                styles.messageBubble,
+                item.senderId === 'me' ? styles.messageBubbleSent : styles.messageBubbleReceived,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.messageText,
+                  item.senderId === 'me' ? styles.messageTextSent : styles.messageTextReceived,
+                ]}
+              >
                 {item.content}
               </Text>
               <Text style={styles.messageTime}>
-                {new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                {new Date(item.timestamp).toLocaleTimeString([], {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
               </Text>
             </View>
           )}
@@ -186,7 +195,10 @@ export default function MessagesScreen() {
             placeholderTextColor="#6B7280"
           />
           <TouchableOpacity
-            style={[styles.sendButton, (!newMessage.trim() || isSending) && styles.sendButtonDisabled]}
+            style={[
+              styles.sendButton,
+              (!newMessage.trim() || isSending) && styles.sendButtonDisabled,
+            ]}
             onPress={sendMessage}
             disabled={!newMessage.trim() || isSending}
           >

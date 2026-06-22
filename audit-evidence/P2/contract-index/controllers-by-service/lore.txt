@@ -1,0 +1,9 @@
+===== services/universes/vertical-service/src/modules/lore/lore.controller.ts =====
+7:@Controller('v1/vertical/lore')
+11:  @Get()
+32:  @Get('categories')
+39:  @Get(':slug')
+46:  @Post()
+53:  @Patch(':id')
+63:  @Delete(':id')
+

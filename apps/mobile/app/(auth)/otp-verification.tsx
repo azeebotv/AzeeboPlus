@@ -102,9 +102,7 @@ export default function OTPVerificationScreen() {
       <View style={styles.content}>
         <View style={styles.header}>
           <Text style={styles.title}>Verify Your Phone</Text>
-          <Text style={styles.subtitle}>
-            Enter the 6-digit code sent to your phone number
-          </Text>
+          <Text style={styles.subtitle}>Enter the 6-digit code sent to your phone number</Text>
         </View>
 
         <View style={styles.otpContainer}>

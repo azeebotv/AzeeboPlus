@@ -1,0 +1,10 @@
+===== apps/admin/src/modules/dashboard/dashboard.controller.ts =====
+7:@Controller('admin/dashboard')
+8:@UseGuards(JwtAuthGuard, RolesGuard)
+13:  @Get('stats')
+18:  @Get('revenue')
+23:  @Get('content-trend')
+28:  @Get('top-content')
+33:  @Get('top-creators')
+38:  @Get('recent-activity')
+

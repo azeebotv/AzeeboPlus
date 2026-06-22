@@ -1,0 +1,6 @@
+===== services/universes/vertical-service/src/modules/health/health.controller.ts =====
+9:@Controller()
+13:  @Get('health')
+26:  @Get('ready')
+39:  @Get('live')
+

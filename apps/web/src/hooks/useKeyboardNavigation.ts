@@ -15,19 +15,16 @@ export function useKeyboardNavigation(shortcuts: KeyboardShortcut[] = []) {
     return () => cleanups.forEach((cleanup) => cleanup());
   }, []);
 
-  const registerCustom = useCallback(
-    (customShortcuts: KeyboardShortcut[]) => {
-      const cleanups: Array<() => void> = [];
+  const registerCustom = useCallback((customShortcuts: KeyboardShortcut[]) => {
+    const cleanups: Array<() => void> = [];
 
-      customShortcuts.forEach((shortcut) => {
-        const cleanup = registerKeyboardShortcut(shortcut);
-        cleanups.push(cleanup);
-      });
+    customShortcuts.forEach((shortcut) => {
+      const cleanup = registerKeyboardShortcut(shortcut);
+      cleanups.push(cleanup);
+    });
 
-      return () => cleanups.forEach((cleanup) => cleanup());
-    },
-    []
-  );
+    return () => cleanups.forEach((cleanup) => cleanup());
+  }, []);
 
   useEffect(() => {
     const defaultCleanup = registerDefaults();

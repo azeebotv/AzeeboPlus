@@ -123,10 +123,10 @@ describe('Wallet E2E Tests - Webhooks, Retries, and Failures', () => {
     });
 
     (prismaService.wallet.update as jest.Mock).mockImplementation((args) => {
-      const newBalance = args?.data?.balance?.increment 
-        ? (100000 + args.data.balance.increment).toString() 
+      const newBalance = args?.data?.balance?.increment
+        ? (100000 + args.data.balance.increment).toString()
         : args?.data?.balance || '100000';
-      
+
       return Promise.resolve({
         id: testWalletId,
         userId: testUserId,
@@ -423,7 +423,9 @@ describe('Wallet E2E Tests - Webhooks, Retries, and Failures', () => {
       };
 
       (prismaService.wallet.findUnique as jest.Mock).mockResolvedValue(mockWallet);
-      (prismaService.walletTransaction.create as jest.Mock).mockRejectedValueOnce(new Error('Paystack API error'));
+      (prismaService.walletTransaction.create as jest.Mock).mockRejectedValueOnce(
+        new Error('Paystack API error')
+      );
 
       await expect(
         walletService.initiateDeposit({
@@ -447,7 +449,9 @@ describe('Wallet E2E Tests - Webhooks, Retries, and Failures', () => {
       };
 
       (prismaService.wallet.findUnique as jest.Mock).mockResolvedValue(mockWallet);
-      (prismaService.walletTransaction.create as jest.Mock).mockRejectedValueOnce(new Error('Flutterwave API error'));
+      (prismaService.walletTransaction.create as jest.Mock).mockRejectedValueOnce(
+        new Error('Flutterwave API error')
+      );
 
       await expect(
         walletService.initiateDeposit({
@@ -476,18 +480,16 @@ describe('Wallet E2E Tests - Webhooks, Retries, and Failures', () => {
 
       // We need to mock $transaction to reject when it's called as an array
       // Let's override $transaction just for this test
-      (prismaService.$transaction as jest.Mock)
-        .mockReset()
-        .mockImplementationOnce(async (arg) => {
-          if (Array.isArray(arg)) {
-            // Wait - the problem is that when we use Promise.all(arg), each operation is called individually!
-            // So to simulate a transaction failure, we need to mock one of the operations to reject!
-            // Since debitWallet does [walletTransaction.create, wallet.update], let's mock walletTransaction.create to reject!
-            throw new Error('Provider timeout');
-          } else if (typeof arg === 'function') {
-            return arg(prismaService);
-          }
-        });
+      (prismaService.$transaction as jest.Mock).mockReset().mockImplementationOnce(async (arg) => {
+        if (Array.isArray(arg)) {
+          // Wait - the problem is that when we use Promise.all(arg), each operation is called individually!
+          // So to simulate a transaction failure, we need to mock one of the operations to reject!
+          // Since debitWallet does [walletTransaction.create, wallet.update], let's mock walletTransaction.create to reject!
+          throw new Error('Provider timeout');
+        } else if (typeof arg === 'function') {
+          return arg(prismaService);
+        }
+      });
 
       (prismaService.walletTransaction.create as jest.Mock).mockImplementation(() => {
         throw new Error('Provider timeout');
@@ -521,7 +523,9 @@ describe('Wallet E2E Tests - Webhooks, Retries, and Failures', () => {
 
       (prismaService.wallet.findUnique as jest.Mock).mockResolvedValue(mockWallet);
       (prismaService.walletTransaction.findUnique as jest.Mock).mockResolvedValue(null);
-      (prismaService.wallet.update as jest.Mock).mockImplementation(() => Promise.reject(new Error('Database error')));
+      (prismaService.wallet.update as jest.Mock).mockImplementation(() =>
+        Promise.reject(new Error('Database error'))
+      );
       (prismaService.walletTransaction.create as jest.Mock).mockResolvedValue({
         id: randomUUID(),
         walletId: testWalletId,
@@ -563,7 +567,9 @@ describe('Wallet E2E Tests - Webhooks, Retries, and Failures', () => {
 
       (prismaService.wallet.findUnique as jest.Mock).mockResolvedValue(mockWallet);
       (prismaService.walletTransaction.findUnique as jest.Mock).mockResolvedValue(null);
-      (prismaService.walletTransaction.create as jest.Mock).mockImplementation(() => Promise.reject(new Error('Failed to create transaction record')));
+      (prismaService.walletTransaction.create as jest.Mock).mockImplementation(() =>
+        Promise.reject(new Error('Failed to create transaction record'))
+      );
 
       await expect(
         walletService.debitWallet({
@@ -671,8 +677,10 @@ describe('Wallet E2E Tests - Webhooks, Retries, and Failures', () => {
 
       (prismaService.walletTransaction.findUnique as jest.Mock).mockReset();
       (prismaService.wallet.findUnique as jest.Mock).mockReset();
-      
-      (prismaService.walletTransaction.findUnique as jest.Mock).mockResolvedValue(existingTransaction);
+
+      (prismaService.walletTransaction.findUnique as jest.Mock).mockResolvedValue(
+        existingTransaction
+      );
       (prismaService.wallet.findUnique as jest.Mock).mockResolvedValue(mockWallet);
 
       const result = await walletService.debitWallet({
@@ -692,7 +700,9 @@ describe('Wallet E2E Tests - Webhooks, Retries, and Failures', () => {
       const webhookId = `wh_${randomUUID()}`;
 
       (prismaService.walletTransaction.findFirst as jest.Mock).mockResolvedValue(null);
-      (prismaService.walletTransaction.create as jest.Mock).mockRejectedValue(new Error('Temporary failure'));
+      (prismaService.walletTransaction.create as jest.Mock).mockRejectedValue(
+        new Error('Temporary failure')
+      );
 
       const retryQueue: string[] = [];
 

@@ -1,11 +1,4 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Query,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Get, Post, Body, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { AdminService } from './admin.service';
 import { AdminGuard } from '@azeebo/security';
@@ -38,7 +31,7 @@ export class AdminController {
     @Query('page') page?: number,
     @Query('limit') limit?: number,
     @Query('type') type?: string,
-    @Query('status') status?: string,
+    @Query('status') status?: string
   ) {
     return this.adminService.getNotifications({ page, limit, type, status });
   }
@@ -48,7 +41,7 @@ export class AdminController {
   @ApiResponse({ status: 200, description: 'System notification sent' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   async sendSystemNotification(
-    @Body() body: { title: string; message: string; type?: string; userIds?: string[] },
+    @Body() body: { title: string; message: string; type?: string; userIds?: string[] }
   ) {
     const result = await this.adminService.sendSystemNotification(body);
     return ApiResponseWrapper.success(result);

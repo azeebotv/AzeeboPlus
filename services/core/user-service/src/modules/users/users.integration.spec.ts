@@ -154,7 +154,7 @@ describe('UsersService Integration', () => {
 
       (prisma.watchHistory.findMany as jest.Mock).mockResolvedValue(mockWatchHistory);
 
-      const result = await service.getWatchHistory(userId) as Record<string, unknown>;
+      const result = (await service.getWatchHistory(userId)) as Record<string, unknown>;
 
       expect(result.success).toBe(true);
       const data = result.data as unknown[];

@@ -67,7 +67,11 @@ class Analytics {
     });
   }
 
-  userSignupSubmitted(method: 'email' | 'google' | 'apple', data: Record<string, unknown>, properties?: EventProperties): void {
+  userSignupSubmitted(
+    method: 'email' | 'google' | 'apple',
+    data: Record<string, unknown>,
+    properties?: EventProperties
+  ): void {
     this.track('user_signup_submitted', {
       method,
       data: Object.keys(data),
@@ -75,7 +79,11 @@ class Analytics {
     });
   }
 
-  userSignupCompleted(userId: string, method: 'email' | 'google' | 'apple', properties?: EventProperties): void {
+  userSignupCompleted(
+    userId: string,
+    method: 'email' | 'google' | 'apple',
+    properties?: EventProperties
+  ): void {
     this.track('user_signup_completed', {
       userId,
       method,
@@ -84,7 +92,11 @@ class Analytics {
     this.setUserId(userId);
   }
 
-  userSignupFailed(method: 'email' | 'google' | 'apple', error: string, properties?: EventProperties): void {
+  userSignupFailed(
+    method: 'email' | 'google' | 'apple',
+    error: string,
+    properties?: EventProperties
+  ): void {
     this.track('user_signup_failed', {
       method,
       error,
@@ -106,7 +118,11 @@ class Analytics {
     });
   }
 
-  userLoginCompleted(userId: string, method: 'email' | 'google' | 'apple', properties?: EventProperties): void {
+  userLoginCompleted(
+    userId: string,
+    method: 'email' | 'google' | 'apple',
+    properties?: EventProperties
+  ): void {
     this.track('user_login_completed', {
       userId,
       method,
@@ -115,7 +131,11 @@ class Analytics {
     this.setUserId(userId);
   }
 
-  userLoginFailed(method: 'email' | 'google' | 'apple', error: string, properties?: EventProperties): void {
+  userLoginFailed(
+    method: 'email' | 'google' | 'apple',
+    error: string,
+    properties?: EventProperties
+  ): void {
     this.track('user_login_failed', {
       method,
       error,
@@ -128,14 +148,22 @@ class Analytics {
     this.clearUser();
   }
 
-  contentSearched(query: string, filters?: Record<string, unknown>, properties?: EventProperties): void {
+  contentSearched(
+    query: string,
+    filters?: Record<string, unknown>,
+    properties?: EventProperties
+  ): void {
     this.track('content_search_viewed', {
       query,
       ...properties,
     });
   }
 
-  contentSearchSubmitted(query: string, filters?: Record<string, unknown>, properties?: EventProperties): void {
+  contentSearchSubmitted(
+    query: string,
+    filters?: Record<string, unknown>,
+    properties?: EventProperties
+  ): void {
     this.track('content_search_submitted', {
       query,
       filters: filters ? Object.keys(filters) : undefined,
@@ -159,7 +187,13 @@ class Analytics {
     });
   }
 
-  contentViewed(contentId: string, contentType: string, title: string, universe: string, properties?: EventProperties): void {
+  contentViewed(
+    contentId: string,
+    contentType: string,
+    title: string,
+    universe: string,
+    properties?: EventProperties
+  ): void {
     this.track('content_viewed', {
       contentId,
       contentType,
@@ -177,7 +211,12 @@ class Analytics {
     });
   }
 
-  contentPlayCompleted(contentId: string, contentType: string, watchDuration: number, properties?: EventProperties): void {
+  contentPlayCompleted(
+    contentId: string,
+    contentType: string,
+    watchDuration: number,
+    properties?: EventProperties
+  ): void {
     this.track('play_complete', {
       contentId,
       contentType,
@@ -186,7 +225,12 @@ class Analytics {
     });
   }
 
-  contentPlayFailed(contentId: string, contentType: string, error: string, properties?: EventProperties): void {
+  contentPlayFailed(
+    contentId: string,
+    contentType: string,
+    error: string,
+    properties?: EventProperties
+  ): void {
     this.track('content_play_failed', {
       contentId,
       contentType,
@@ -195,7 +239,12 @@ class Analytics {
     });
   }
 
-  contentPaused(contentId: string, contentType: string, pausedAt: number, properties?: EventProperties): void {
+  contentPaused(
+    contentId: string,
+    contentType: string,
+    pausedAt: number,
+    properties?: EventProperties
+  ): void {
     this.track('content_paused', {
       contentId,
       contentType,
@@ -212,7 +261,12 @@ class Analytics {
     });
   }
 
-  contentShared(contentId: string, contentType: string, shareMethod: 'copy_link' | 'twitter' | 'facebook' | 'email', properties?: EventProperties): void {
+  contentShared(
+    contentId: string,
+    contentType: string,
+    shareMethod: 'copy_link' | 'twitter' | 'facebook' | 'email',
+    properties?: EventProperties
+  ): void {
     this.track('content_shared', {
       contentId,
       contentType,
@@ -237,7 +291,12 @@ class Analytics {
     });
   }
 
-  paymentViewed(amount: number, currency: string, paymentMethod: string, properties?: EventProperties): void {
+  paymentViewed(
+    amount: number,
+    currency: string,
+    paymentMethod: string,
+    properties?: EventProperties
+  ): void {
     this.track('payment_viewed', {
       amount,
       currency,
@@ -246,7 +305,12 @@ class Analytics {
     });
   }
 
-  paymentSubmitted(amount: number, currency: string, paymentMethod: string, properties?: EventProperties): void {
+  paymentSubmitted(
+    amount: number,
+    currency: string,
+    paymentMethod: string,
+    properties?: EventProperties
+  ): void {
     this.track('payment_submitted', {
       amount,
       currency,
@@ -255,7 +319,13 @@ class Analytics {
     });
   }
 
-  paymentProcessed(transactionId: string, amount: number, currency: string, paymentMethod: string, properties?: EventProperties): void {
+  paymentProcessed(
+    transactionId: string,
+    amount: number,
+    currency: string,
+    paymentMethod: string,
+    properties?: EventProperties
+  ): void {
     this.track('payment_completed', {
       transactionId,
       amount,
@@ -265,7 +335,13 @@ class Analytics {
     });
   }
 
-  paymentFailed(amount: number, currency: string, paymentMethod: string, error: string, properties?: EventProperties): void {
+  paymentFailed(
+    amount: number,
+    currency: string,
+    paymentMethod: string,
+    error: string,
+    properties?: EventProperties
+  ): void {
     this.track('payment_failed', {
       amount,
       currency,
@@ -275,7 +351,12 @@ class Analytics {
     });
   }
 
-  walletFunded(amount: number, currency: string, fundingSource: string, properties?: EventProperties): void {
+  walletFunded(
+    amount: number,
+    currency: string,
+    fundingSource: string,
+    properties?: EventProperties
+  ): void {
     this.track('wallet_funded', {
       amount,
       currency,
@@ -284,7 +365,12 @@ class Analytics {
     });
   }
 
-  walletWithdrawal(amount: number, currency: string, withdrawalMethod: string, properties?: EventProperties): void {
+  walletWithdrawal(
+    amount: number,
+    currency: string,
+    withdrawalMethod: string,
+    properties?: EventProperties
+  ): void {
     this.track('wallet_withdrawal_initiated', {
       amount,
       currency,
@@ -293,7 +379,12 @@ class Analytics {
     });
   }
 
-  walletWithdrawalCompleted(amount: number, currency: string, transactionId: string, properties?: EventProperties): void {
+  walletWithdrawalCompleted(
+    amount: number,
+    currency: string,
+    transactionId: string,
+    properties?: EventProperties
+  ): void {
     this.track('wallet_withdrawal_completed', {
       amount,
       currency,
@@ -302,7 +393,12 @@ class Analytics {
     });
   }
 
-  subscriptionStarted(planId: string, planName: string, billingCycle: 'monthly' | 'yearly', properties?: EventProperties): void {
+  subscriptionStarted(
+    planId: string,
+    planName: string,
+    billingCycle: 'monthly' | 'yearly',
+    properties?: EventProperties
+  ): void {
     this.track('subscription_started', {
       planId,
       planName,
@@ -311,7 +407,12 @@ class Analytics {
     });
   }
 
-  subscriptionCancelled(planId: string, planName: string, reason?: string, properties?: EventProperties): void {
+  subscriptionCancelled(
+    planId: string,
+    planName: string,
+    reason?: string,
+    properties?: EventProperties
+  ): void {
     this.track('subscription_cancelled', {
       planId,
       planName,
@@ -320,7 +421,12 @@ class Analytics {
     });
   }
 
-  subscriptionRenewed(planId: string, planName: string, billingCycle: 'monthly' | 'yearly', properties?: EventProperties): void {
+  subscriptionRenewed(
+    planId: string,
+    planName: string,
+    billingCycle: 'monthly' | 'yearly',
+    properties?: EventProperties
+  ): void {
     this.track('subscription_renewed', {
       planId,
       planName,
@@ -329,7 +435,12 @@ class Analytics {
     });
   }
 
-  rewardEarned(rewardType: string, amount: number, reason: string, properties?: EventProperties): void {
+  rewardEarned(
+    rewardType: string,
+    amount: number,
+    reason: string,
+    properties?: EventProperties
+  ): void {
     this.track('reward_earned', {
       rewardType,
       amount,
@@ -338,7 +449,12 @@ class Analytics {
     });
   }
 
-  rewardRedeemed(rewardType: string, amount: number, redeemedFor: string, properties?: EventProperties): void {
+  rewardRedeemed(
+    rewardType: string,
+    amount: number,
+    redeemedFor: string,
+    properties?: EventProperties
+  ): void {
     this.track('reward_redeemed', {
       rewardType,
       amount,
@@ -355,7 +471,11 @@ class Analytics {
     this.track('content_upload_started', properties);
   }
 
-  contentUploadCompleted(contentId: string, contentType: string, properties?: EventProperties): void {
+  contentUploadCompleted(
+    contentId: string,
+    contentType: string,
+    properties?: EventProperties
+  ): void {
     this.track('content_upload_completed', {
       contentId,
       contentType,

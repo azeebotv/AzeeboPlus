@@ -60,7 +60,11 @@ export class TracingService {
     return randomUUID().replace(/-/g, '').slice(0, 16);
   }
 
-  startSpan(name: string, parentContext?: TraceContext, tags?: Record<string, string | number | boolean>): Span {
+  startSpan(
+    name: string,
+    parentContext?: TraceContext,
+    tags?: Record<string, string | number | boolean>
+  ): Span {
     if (!this.shouldSample()) {
       const partialSpan: Span = {
         traceId: parentContext?.traceId || this.generateTraceId(),
@@ -138,7 +142,11 @@ export class TracingService {
     span.status = 'error';
   }
 
-  createChildSpan(name: string, parentSpan: Span, tags?: Record<string, string | number | boolean>): Span {
+  createChildSpan(
+    name: string,
+    parentSpan: Span,
+    tags?: Record<string, string | number | boolean>
+  ): Span {
     return this.startSpan(name, { traceId: parentSpan.traceId, spanId: parentSpan.spanId }, tags);
   }
 

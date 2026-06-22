@@ -1,0 +1,6 @@
+===== services/gateway/api-gateway/src/modules/health/circuit-breaker.controller.ts =====
+4:@Controller('health')
+8:  @Get('circuit-breaker')
+18:  @Get('circuit-breaker/:service')
+39:  @Post('circuit-breaker/:service/reset')
+

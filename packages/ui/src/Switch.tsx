@@ -21,7 +21,9 @@ export const Switch: React.FC<SwitchProps> = ({
 }) => {
   const handleChange = onChange || onCheckedChange;
   return (
-    <label className={`flex items-center gap-2 cursor-pointer ${disabled ? 'opacity-50' : ''} ${className}`}>
+    <label
+      className={`flex items-center gap-2 cursor-pointer ${disabled ? 'opacity-50' : ''} ${className}`}
+    >
       <button
         type="button"
         role="switch"

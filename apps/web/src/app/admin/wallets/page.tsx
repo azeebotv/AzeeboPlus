@@ -72,9 +72,7 @@ export default function WalletManagementPage(): JSX.Element {
     }
   };
 
-  const filteredWallets = filter === 'all'
-    ? wallets
-    : wallets.filter((w) => w.status === filter);
+  const filteredWallets = filter === 'all' ? wallets : wallets.filter((w) => w.status === filter);
 
   const searchedWallets = searchQuery
     ? filteredWallets.filter(
@@ -105,7 +103,12 @@ export default function WalletManagementPage(): JSX.Element {
               className="text-muted-foreground hover:text-foreground mb-2 flex items-center gap-2"
             >
               <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 19l-7-7 7-7"
+                />
               </svg>
               Back
             </button>
@@ -143,11 +146,21 @@ export default function WalletManagementPage(): JSX.Element {
             <thead className="bg-muted">
               <tr>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">User</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Balance</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Deposits</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Withdrawals</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Status</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Actions</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">
+                  Balance
+                </th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">
+                  Deposits
+                </th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">
+                  Withdrawals
+                </th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">
+                  Status
+                </th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -159,9 +172,15 @@ export default function WalletManagementPage(): JSX.Element {
                       <p className="text-sm text-muted-foreground">{wallet.email}</p>
                     </div>
                   </td>
-                  <td className="px-6 py-4 font-semibold text-foreground">{formatCurrency(wallet.balance)}</td>
-                  <td className="px-6 py-4 text-green-500">{formatCurrency(wallet.totalDeposits)}</td>
-                  <td className="px-6 py-4 text-red-500">{formatCurrency(wallet.totalWithdrawals)}</td>
+                  <td className="px-6 py-4 font-semibold text-foreground">
+                    {formatCurrency(wallet.balance)}
+                  </td>
+                  <td className="px-6 py-4 text-green-500">
+                    {formatCurrency(wallet.totalDeposits)}
+                  </td>
+                  <td className="px-6 py-4 text-red-500">
+                    {formatCurrency(wallet.totalWithdrawals)}
+                  </td>
                   <td className="px-6 py-4">
                     <span className={`text-sm font-medium ${getStatusColor(wallet.status)}`}>
                       {wallet.status}

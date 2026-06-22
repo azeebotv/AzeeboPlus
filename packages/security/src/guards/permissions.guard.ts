@@ -17,7 +17,7 @@ export class PermissionsGuard implements CanActivate {
     if (!user) throw new ForbiddenException('No user found');
 
     const userPermissions = ROLE_PERMISSIONS[user.role as keyof typeof ROLE_PERMISSIONS] || [];
-    const hasAll = requiredPermissions.every(p => userPermissions.includes(p));
+    const hasAll = requiredPermissions.every((p) => userPermissions.includes(p));
     if (!hasAll) throw new ForbiddenException('Insufficient permissions');
     return true;
   }

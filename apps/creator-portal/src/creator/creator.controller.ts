@@ -24,9 +24,7 @@ export class CreatorController {
   constructor(private readonly creatorService: CreatorService) {}
 
   @Get('dashboard')
-  async getDashboard(
-    @Request() req: AuthRequest
-  ): Promise<{ success: boolean; data: unknown }> {
+  async getDashboard(@Request() req: AuthRequest): Promise<{ success: boolean; data: unknown }> {
     return {
       success: true,
       data: await this.creatorService.getDashboardStats(req.user.id),
@@ -112,9 +110,7 @@ export class CreatorController {
   }
 
   @Post('payouts/request')
-  async requestPayout(
-    @Request() req: AuthRequest
-  ): Promise<{ success: boolean; data: unknown }> {
+  async requestPayout(@Request() req: AuthRequest): Promise<{ success: boolean; data: unknown }> {
     return {
       success: true,
       data: await this.creatorService.requestPayout(req.user.id),

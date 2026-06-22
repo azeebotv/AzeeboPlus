@@ -24,18 +24,41 @@ export const supportApi = {
     return apiClient.post<ApiResponse<SupportTicket>>('/support/tickets', data);
   },
 
-  getTickets: async (page = 1, limit = 20): Promise<ApiResponse<{ items: SupportTicket[]; total: number; page: number; limit: number; totalPages: number }>> => {
-    return apiClient.get<ApiResponse<{ items: SupportTicket[]; total: number; page: number; limit: number; totalPages: number }>>(
-      `/support/tickets?page=${page}&limit=${limit}`
-    );
+  getTickets: async (
+    page = 1,
+    limit = 20
+  ): Promise<
+    ApiResponse<{
+      items: SupportTicket[];
+      total: number;
+      page: number;
+      limit: number;
+      totalPages: number;
+    }>
+  > => {
+    return apiClient.get<
+      ApiResponse<{
+        items: SupportTicket[];
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
+      }>
+    >(`/support/tickets?page=${page}&limit=${limit}`);
   },
 
   getTicketById: async (ticketId: string): Promise<ApiResponse<SupportTicket>> => {
     return apiClient.get<ApiResponse<SupportTicket>>(`/support/tickets/${ticketId}`);
   },
 
-  addMessage: async (ticketId: string, message: string): Promise<ApiResponse<{ message: string }>> => {
-    return apiClient.post<ApiResponse<{ message: string }>>(`/support/tickets/${ticketId}/messages`, { message });
+  addMessage: async (
+    ticketId: string,
+    message: string
+  ): Promise<ApiResponse<{ message: string }>> => {
+    return apiClient.post<ApiResponse<{ message: string }>>(
+      `/support/tickets/${ticketId}/messages`,
+      { message }
+    );
   },
 
   closeTicket: async (ticketId: string): Promise<ApiResponse<{ message: string }>> => {

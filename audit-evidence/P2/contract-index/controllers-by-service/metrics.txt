@@ -1,0 +1,4 @@
+===== services/intelligence/analytics-service/src/modules/metrics/metrics.controller.ts =====
+4:@Controller('metrics')
+8:  @Get()
+

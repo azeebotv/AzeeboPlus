@@ -1,6 +1,6 @@
 generator client {
   provider = "prisma-client-js"
-  output   = "../src/prisma/client"
+  output = "../generated/prisma/client"
 }
 
 datasource db {
@@ -415,4 +415,47 @@ model UserSearch {
   query  SearchQueryLog @relation(fields: [queryId], references: [id])
 
   @@map("user_searches")
+}
+
+// Category A migration: admin-managed suggestion entries for the search
+// autocomplete. When present, these are merged with aggregate-driven
+// suggestions from SearchQueryLog.
+model Suggestion {
+  id          String   @id @default(uuid())
+  term        String   @unique
+  type        String   // trending, promoted, category, manual
+  universe    String?  // reality, creator, lifestyle, vertical, movie, games, comedy, sports
+  weight      Int      @default(0)
+  isActive    Boolean  @default(true)
+  startsAt    DateTime?
+  endsAt      DateTime?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("suggestions")
+  @@index([type])
+  @@index([universe])
+  @@index([isActive])
+  @@index([weight])
+}
+
+// Category A migration: deterministic, admin-managed ranking rules applied
+// at query time alongside engine-side relevance scoring.
+model RankingRule {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  signal      String   // recency, popularity, boost_universe, demote_status
+  weight      Decimal  @default(1)
+  conditions  Json     // e.g. { universe: "movie", status: "published" }
+  isActive    Boolean  @default(true)
+  priority    Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("ranking_rules")
+  @@index([signal])
+  @@index([isActive])
+  @@index([priority])
 }

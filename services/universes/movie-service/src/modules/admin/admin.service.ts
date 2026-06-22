@@ -17,7 +17,10 @@ export class AdminService {
       totalMovies,
       totalPremieres,
       totalUsers,
-      moviesByStatus: moviesByStatus.reduce((acc, s) => ({ ...acc, [s.status]: s._count.status }), {}),
+      moviesByStatus: moviesByStatus.reduce(
+        (acc, s) => ({ ...acc, [s.status]: s._count.status }),
+        {}
+      ),
     };
   }
 

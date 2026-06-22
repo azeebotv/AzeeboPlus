@@ -93,7 +93,10 @@ export class IntelligenceService {
       where: { creatorId },
     });
 
-    const totalViews = contentItems.reduce((sum: number, c: { viewCount: number }) => sum + c.viewCount, 0);
+    const totalViews = contentItems.reduce(
+      (sum: number, c: { viewCount: number }) => sum + c.viewCount,
+      0
+    );
     const engagementScore = Math.min(100, totalViews / 10);
     const growthScore = Math.min(100, contentItems.length * 5);
     const monetizationScore = 0;
@@ -288,7 +291,9 @@ export class IntelligenceService {
     };
   }
 
-  async getCrossUniverseRecommendations(userId: string): Promise<{ success: boolean; data?: unknown }> {
+  async getCrossUniverseRecommendations(
+    userId: string
+  ): Promise<{ success: boolean; data?: unknown }> {
     const [watchHistory, rewardAccount] = await Promise.all([
       this.prisma.watchHistory.findMany({
         where: { userId },
@@ -298,20 +303,21 @@ export class IntelligenceService {
       this.prisma.rewardAccount.findUnique({ where: { userId } }),
     ]);
 
-    const contentIds = watchHistory.map(w => w.contentId);
+    const contentIds = watchHistory.map((w) => w.contentId);
 
     const watchedContent = await this.prisma.contentItem.findMany({
       where: { id: { in: contentIds } },
       include: { universe: true },
     });
 
-    const contentById = new Map(watchedContent.map(c => [c.id, c]));
+    const contentById = new Map(watchedContent.map((c) => [c.id, c]));
 
     const universePreferences: Record<string, number> = {};
     for (const history of watchHistory) {
       const content = contentById.get(history.contentId);
       if (content?.universe?.name) {
-        universePreferences[content.universe.name] = (universePreferences[content.universe.name] || 0) + 1;
+        universePreferences[content.universe.name] =
+          (universePreferences[content.universe.name] || 0) + 1;
       }
     }
 
@@ -320,8 +326,17 @@ export class IntelligenceService {
       .slice(0, 3)
       .map(([name]) => name);
 
-    const allUniverses = ['reality', 'creator', 'lifestyle', 'games', 'comedy', 'sports', 'movie', 'vertical'];
-    const unexploredUniverses = allUniverses.filter(u => !topUniverses.includes(u));
+    const allUniverses = [
+      'reality',
+      'creator',
+      'lifestyle',
+      'games',
+      'comedy',
+      'sports',
+      'movie',
+      'vertical',
+    ];
+    const unexploredUniverses = allUniverses.filter((u) => !topUniverses.includes(u));
 
     const recommendedContent: Record<string, unknown[]> = {};
 
@@ -333,7 +348,7 @@ export class IntelligenceService {
         include: { universe: true },
       });
       if (content.length > 0) {
-        recommendedContent[universe] = content.map(c => ({
+        recommendedContent[universe] = content.map((c) => ({
           id: c.id,
           title: c.title,
           universe: c.universe?.displayName,
@@ -373,7 +388,7 @@ export class IntelligenceService {
         voteByUserSession.set(key, (voteByUserSession.get(key) || 0) + 1);
       }
     }
-    const rapidVotes = Array.from(voteByUserSession.values()).filter(count => count > 20).length;
+    const rapidVotes = Array.from(voteByUserSession.values()).filter((count) => count > 20).length;
 
     const rapidPredictionEvents = await this.prisma.productEvent.count({
       where: {
@@ -389,11 +404,13 @@ export class IntelligenceService {
       },
     });
 
-    const suspiciousSessionCount = await this.prisma.productEvent.groupBy({
-      by: ['sessionId'],
-      where: { timestamp: { gte: thirtyDaysAgo } },
-      _count: true,
-    }).then(results => results.filter(r => r._count > 500).length);
+    const suspiciousSessionCount = await this.prisma.productEvent
+      .groupBy({
+        by: ['sessionId'],
+        where: { timestamp: { gte: thirtyDaysAgo } },
+        _count: true,
+      })
+      .then((results) => results.filter((r) => r._count > 500).length);
 
     const patterns = [];
 
@@ -439,7 +456,8 @@ export class IntelligenceService {
         analyzedPeriod: '30 days',
         patternsDetected: patterns.length,
         patterns,
-        requiresReview: patterns.filter(p => p.severity === 'critical' || p.severity === 'high').length,
+        requiresReview: patterns.filter((p) => p.severity === 'critical' || p.severity === 'high')
+          .length,
       },
     };
   }
@@ -467,8 +485,12 @@ export class IntelligenceService {
     const totalInteractions = userEngagementScores.reduce((sum, u) => sum + u._count, 0);
     const avgInteractionsPerUser = userCount > 0 ? totalInteractions / userCount : 0;
 
-    const highlyEngaged = userEngagementScores.filter(u => u._count > avgInteractionsPerUser * 1.5).length;
-    const moderatelyEngaged = userEngagementScores.filter(u => u._count > avgInteractionsPerUser * 0.5 && u._count <= avgInteractionsPerUser * 1.5).length;
+    const highlyEngaged = userEngagementScores.filter(
+      (u) => u._count > avgInteractionsPerUser * 1.5
+    ).length;
+    const moderatelyEngaged = userEngagementScores.filter(
+      (u) => u._count > avgInteractionsPerUser * 0.5 && u._count <= avgInteractionsPerUser * 1.5
+    ).length;
     const lowEngagement = userCount - highlyEngaged - moderatelyEngaged;
 
     const engagementDistribution = {
@@ -480,7 +502,7 @@ export class IntelligenceService {
     const topEvents = contentInteractions
       .sort((a, b) => b._count - a._count)
       .slice(0, 5)
-      .map(e => ({ event: e.eventName, count: e._count }));
+      .map((e) => ({ event: e.eventName, count: e._count }));
 
     return {
       success: true,

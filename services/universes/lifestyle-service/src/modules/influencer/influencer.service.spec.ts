@@ -58,7 +58,9 @@ describe('InfluencerService', () => {
 
   describe('getEntries', () => {
     it('should return paginated influencer entries', async () => {
-      (prismaService.influencerEntry.findMany as jest.Mock).mockResolvedValue([mockInfluencerEntry]);
+      (prismaService.influencerEntry.findMany as jest.Mock).mockResolvedValue([
+        mockInfluencerEntry,
+      ]);
       (prismaService.influencerEntry.count as jest.Mock).mockResolvedValue(1);
 
       const result = await service.getEntries();
@@ -68,27 +70,37 @@ describe('InfluencerService', () => {
     });
 
     it('should filter by category', async () => {
-      (prismaService.influencerEntry.findMany as jest.Mock).mockResolvedValue([mockInfluencerEntry]);
+      (prismaService.influencerEntry.findMany as jest.Mock).mockResolvedValue([
+        mockInfluencerEntry,
+      ]);
       (prismaService.influencerEntry.count as jest.Mock).mockResolvedValue(1);
 
       await service.getEntries(1, 20, 'lifestyle');
 
-      expect((prismaService.influencerEntry.findMany as jest.Mock).mock.calls[0][0].where.category).toBe('lifestyle');
+      expect(
+        (prismaService.influencerEntry.findMany as jest.Mock).mock.calls[0][0].where.category
+      ).toBe('lifestyle');
     });
 
     it('should filter by verified status', async () => {
-      (prismaService.influencerEntry.findMany as jest.Mock).mockResolvedValue([mockInfluencerEntry]);
+      (prismaService.influencerEntry.findMany as jest.Mock).mockResolvedValue([
+        mockInfluencerEntry,
+      ]);
       (prismaService.influencerEntry.count as jest.Mock).mockResolvedValue(1);
 
       await service.getEntries(1, 20, undefined, true);
 
-      expect((prismaService.influencerEntry.findMany as jest.Mock).mock.calls[0][0].where.isVerified).toBe(true);
+      expect(
+        (prismaService.influencerEntry.findMany as jest.Mock).mock.calls[0][0].where.isVerified
+      ).toBe(true);
     });
   });
 
   describe('getEntryBySlug', () => {
     it('should return influencer entry', async () => {
-      (prismaService.influencerEntry.findUnique as jest.Mock).mockResolvedValue(mockInfluencerEntry);
+      (prismaService.influencerEntry.findUnique as jest.Mock).mockResolvedValue(
+        mockInfluencerEntry
+      );
       (prismaService.influencerEntry.update as jest.Mock).mockResolvedValue(mockInfluencerEntry);
 
       const result = await service.getEntryBySlug('test-influencer');
@@ -106,7 +118,9 @@ describe('InfluencerService', () => {
 
   describe('getFeatured', () => {
     it('should return featured influencers', async () => {
-      (prismaService.influencerEntry.findMany as jest.Mock).mockResolvedValue([mockInfluencerEntry]);
+      (prismaService.influencerEntry.findMany as jest.Mock).mockResolvedValue([
+        mockInfluencerEntry,
+      ]);
 
       const result = await service.getFeatured();
 
@@ -132,14 +146,18 @@ describe('InfluencerService', () => {
 
   describe('updateEntry', () => {
     it('should update influencer entry successfully', async () => {
-      (prismaService.influencerEntry.findUnique as jest.Mock).mockResolvedValue(mockInfluencerEntry);
+      (prismaService.influencerEntry.findUnique as jest.Mock).mockResolvedValue(
+        mockInfluencerEntry
+      );
       (prismaService.influencerEntry.update as jest.Mock).mockResolvedValue({
         ...mockInfluencerEntry,
         displayName: 'Updated Influencer',
         slug: 'updated-influencer',
       });
 
-      const result = await service.updateEntry('influencer-1', { displayName: 'Updated Influencer' });
+      const result = await service.updateEntry('influencer-1', {
+        displayName: 'Updated Influencer',
+      });
 
       expect(result.success).toBe(true);
       expect((result.data as any).displayName).toBe('Updated Influencer');
@@ -148,13 +166,17 @@ describe('InfluencerService', () => {
     it('should throw NotFoundException if influencer not found', async () => {
       (prismaService.influencerEntry.findUnique as jest.Mock).mockResolvedValue(null);
 
-      await expect(service.updateEntry('not-found', { displayName: 'Updated' })).rejects.toThrow(NotFoundException);
+      await expect(service.updateEntry('not-found', { displayName: 'Updated' })).rejects.toThrow(
+        NotFoundException
+      );
     });
   });
 
   describe('deleteEntry', () => {
     it('should delete influencer entry successfully', async () => {
-      (prismaService.influencerEntry.findUnique as jest.Mock).mockResolvedValue(mockInfluencerEntry);
+      (prismaService.influencerEntry.findUnique as jest.Mock).mockResolvedValue(
+        mockInfluencerEntry
+      );
       (prismaService.influencerEntry.delete as jest.Mock).mockResolvedValue(mockInfluencerEntry);
 
       const result = await service.deleteEntry('influencer-1');

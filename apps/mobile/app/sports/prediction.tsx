@@ -85,7 +85,11 @@ export default function SportsPredictionPage() {
   if (!matchInfo) {
     return (
       <View style={[styles.container, { backgroundColor: isDark ? '#0a0a0a' : '#ffffff' }]}>
-        <EmptyState icon="⚽" title="No Match" description="No match currently available for predictions." />
+        <EmptyState
+          icon="⚽"
+          title="No Match"
+          description="No match currently available for predictions."
+        />
       </View>
     );
   }
@@ -95,8 +99,8 @@ export default function SportsPredictionPage() {
       setPotentialWin(0);
       return;
     }
-    const pred = predictionOptions.find(p => p.id === predId);
-    const score = scoreOptions.find(s => s.id === scoreId);
+    const pred = predictionOptions.find((p) => p.id === predId);
+    const score = scoreOptions.find((s) => s.id === scoreId);
     const stakeNum = parseFloat(stake) || 0;
 
     let odds = pred?.odds || 1;
@@ -153,10 +157,10 @@ export default function SportsPredictionPage() {
           text: 'Confirm',
           onPress: () => {
             Alert.alert('Success', 'Your prediction has been placed!', [
-              { text: 'OK', onPress: () => router.back() }
+              { text: 'OK', onPress: () => router.back() },
             ]);
-          }
-        }
+          },
+        },
       ]
     );
   };
@@ -172,7 +176,7 @@ export default function SportsPredictionPage() {
         </Text>
       </View>
 
-        <View style={[styles.matchHeader, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}>
+      <View style={[styles.matchHeader, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}>
         <View style={styles.matchLeague}>
           <Text style={styles.leagueText}>{matchInfo.league}</Text>
           <Text style={styles.matchTime}>{matchInfo.time}</Text>
@@ -180,14 +184,18 @@ export default function SportsPredictionPage() {
         <View style={styles.matchTeamsRow}>
           <View style={styles.teamColumn}>
             <Text style={styles.teamEmojiLarge}>{matchInfo.emojiHome}</Text>
-            <Text style={[styles.teamNameLarge, { color: isDark ? '#fff' : '#000' }]}>{matchInfo.home}</Text>
+            <Text style={[styles.teamNameLarge, { color: isDark ? '#fff' : '#000' }]}>
+              {matchInfo.home}
+            </Text>
           </View>
           <View style={styles.vsContainer}>
             <Text style={styles.vsText}>VS</Text>
           </View>
           <View style={[styles.teamColumn, styles.teamColumnRight]}>
             <Text style={styles.teamEmojiLarge}>{matchInfo.emojiAway}</Text>
-            <Text style={[styles.teamNameLarge, { color: isDark ? '#fff' : '#000' }]}>{matchInfo.away}</Text>
+            <Text style={[styles.teamNameLarge, { color: isDark ? '#fff' : '#000' }]}>
+              {matchInfo.away}
+            </Text>
           </View>
         </View>
       </View>
@@ -250,11 +258,26 @@ export default function SportsPredictionPage() {
           Extra Predictions
         </Text>
         {[
-          { id: 'btts_yes', label: 'Both Teams to Score', options: ['Yes', 'No'], odds: { yes: 1.8, no: 1.9 } as Record<string, number> },
-          { id: 'over_25', label: 'Over 2.5 Goals', options: ['Over', 'Under'], odds: { over: 2.0, under: 1.8 } as Record<string, number> },
+          {
+            id: 'btts_yes',
+            label: 'Both Teams to Score',
+            options: ['Yes', 'No'],
+            odds: { yes: 1.8, no: 1.9 } as Record<string, number>,
+          },
+          {
+            id: 'over_25',
+            label: 'Over 2.5 Goals',
+            options: ['Over', 'Under'],
+            odds: { over: 2.0, under: 1.8 } as Record<string, number>,
+          },
         ].map((extra) => (
-          <View key={extra.id} style={[styles.extraCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}>
-            <Text style={[styles.extraTitle, { color: isDark ? '#fff' : '#000' }]}>{extra.label}</Text>
+          <View
+            key={extra.id}
+            style={[styles.extraCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
+          >
+            <Text style={[styles.extraTitle, { color: isDark ? '#fff' : '#000' }]}>
+              {extra.label}
+            </Text>
             <View style={styles.extraOptions}>
               <TouchableOpacity
                 style={[
@@ -264,7 +287,12 @@ export default function SportsPredictionPage() {
                 onPress={() => handleExtraSelect(extra.id, extra.options[0])}
               >
                 <Text style={styles.extraOptionText}>{extra.options[0]}</Text>
-                <Text style={styles.extraOdds}>@{(extra.odds as Record<string, number>)[extra.options[0].toLowerCase() as string] || 1.8}</Text>
+                <Text style={styles.extraOdds}>
+                  @
+                  {(extra.odds as Record<string, number>)[
+                    extra.options[0].toLowerCase() as string
+                  ] || 1.8}
+                </Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[
@@ -274,7 +302,12 @@ export default function SportsPredictionPage() {
                 onPress={() => handleExtraSelect(extra.id, extra.options[1])}
               >
                 <Text style={styles.extraOptionText}>{extra.options[1]}</Text>
-                <Text style={styles.extraOdds}>@{(extra.odds as Record<string, number>)[extra.options[1].toLowerCase() as string] || 1.9}</Text>
+                <Text style={styles.extraOdds}>
+                  @
+                  {(extra.odds as Record<string, number>)[
+                    extra.options[1].toLowerCase() as string
+                  ] || 1.9}
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -293,13 +326,18 @@ export default function SportsPredictionPage() {
               contentEditable
               suppressContentEditableWarning
               onChangeText={handleStakeChange}
-            >{stake}</Text>
+            >
+              {stake}
+            </Text>
           </View>
           <View style={styles.quickStakes}>
             {['500', '1000', '2500', '5000'].map((amount) => (
               <TouchableOpacity
                 key={amount}
-                style={[styles.quickStakeButton, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
+                style={[
+                  styles.quickStakeButton,
+                  { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' },
+                ]}
                 onPress={() => handleStakeChange(amount)}
               >
                 <Text style={[styles.quickStakeText, { color: isDark ? '#fff' : '#000' }]}>

@@ -21,7 +21,9 @@ export default function RealityManagementPage(): JSX.Element {
   const router = useRouter();
   const [shows, setShows] = useState<RealityShow[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [filter, setFilter] = useState<'all' | 'active' | 'upcoming' | 'completed' | 'paused'>('all');
+  const [filter, setFilter] = useState<'all' | 'active' | 'upcoming' | 'completed' | 'paused'>(
+    'all'
+  );
 
   useEffect(() => {
     loadShows();
@@ -70,9 +72,7 @@ export default function RealityManagementPage(): JSX.Element {
     }
   };
 
-  const filteredShows = filter === 'all'
-    ? shows
-    : shows.filter((s) => s.status === filter);
+  const filteredShows = filter === 'all' ? shows : shows.filter((s) => s.status === filter);
 
   if (isLoading) {
     return (
@@ -95,7 +95,12 @@ export default function RealityManagementPage(): JSX.Element {
               className="text-muted-foreground hover:text-foreground mb-2 flex items-center gap-2"
             >
               <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 19l-7-7 7-7"
+                />
               </svg>
               Back
             </button>
@@ -127,15 +132,8 @@ export default function RealityManagementPage(): JSX.Element {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredShows.map((show) => (
-            <div
-              key={show.id}
-              className="bg-card rounded-lg border border-border overflow-hidden"
-            >
-              <img
-                src={show.thumbnail}
-                alt={show.name}
-                className="w-full h-40 object-cover"
-              />
+            <div key={show.id} className="bg-card rounded-lg border border-border overflow-hidden">
+              <img src={show.thumbnail} alt={show.name} className="w-full h-40 object-cover" />
               <div className="p-4">
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-lg font-semibold text-foreground">{show.name}</h3>
@@ -143,7 +141,9 @@ export default function RealityManagementPage(): JSX.Element {
                     {show.status}
                   </span>
                 </div>
-                <p className="text-sm text-muted-foreground mb-4 line-clamp-2">{show.description}</p>
+                <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
+                  {show.description}
+                </p>
                 <div className="grid grid-cols-3 gap-2 mb-4">
                   <div className="text-center">
                     <p className="text-lg font-bold text-foreground">{show.totalEpisodes}</p>
@@ -154,7 +154,9 @@ export default function RealityManagementPage(): JSX.Element {
                     <p className="text-xs text-muted-foreground">Contestants</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-lg font-bold text-foreground">{show.totalVotes.toLocaleString()}</p>
+                    <p className="text-lg font-bold text-foreground">
+                      {show.totalVotes.toLocaleString()}
+                    </p>
                     <p className="text-xs text-muted-foreground">Votes</p>
                   </div>
                 </div>

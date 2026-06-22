@@ -13,7 +13,7 @@ export class AppealService {
 
   constructor(
     private prisma: PrismaService,
-    private configService: ConfigService,
+    private configService: ConfigService
   ) {
     this.contentServiceClient = createApiClient({
       baseUrl: this.configService.getOrThrow<string>('CONTENT_SERVICE_URL'),

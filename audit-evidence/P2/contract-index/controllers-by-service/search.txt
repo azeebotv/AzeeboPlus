@@ -1,0 +1,13 @@
+===== services/core/search-service/src/modules/search/search.controller.ts =====
+20:@Controller('v1/search')
+24:  @Get()
+25:  @UseGuards(RateLimitGuard)
+53:  @Get('faceted')
+76:  @Get('suggestions')
+77:  @UseGuards(RateLimitGuard)
+85:  @Get('trending')
+86:  @UseGuards(RateLimitGuard)
+94:  @Get('facets')
+104:  @Post('log')
+105:  @UseGuards(AuthGuard('jwt'))
+

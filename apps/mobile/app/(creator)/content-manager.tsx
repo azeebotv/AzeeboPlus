@@ -45,9 +45,22 @@ export default function ContentManagerScreen() {
       setIsLoading(true);
       setError(null);
       const response = await contentApi.getCreatorContent();
-      
+
       if (response.success && response.data) {
-        setContent(response.data);
+        // Map CreatorContent[] to ContentItem[] interface
+        setContent(
+          response.data.map((item) => ({
+            id: item.id,
+            title: item.title,
+            description: item.description,
+            thumbnail: item.thumbnail ?? '',
+            status: item.status as 'draft' | 'processing' | 'published' | 'archived',
+            views: item.views,
+            earnings: 0,
+            createdAt: item.createdAt,
+            type: (item.contentType?.toLowerCase() || 'video') as 'video' | 'image' | 'audio',
+          }))
+        );
       }
     } catch (err) {
       logger.error('Failed to load content', err);
@@ -90,9 +103,8 @@ export default function ContentManagerScreen() {
     }
   };
 
-  const filteredContent = filter === 'all' 
-    ? content 
-    : content.filter((item) => item.status === filter);
+  const filteredContent =
+    filter === 'all' ? content : content.filter((item) => item.status === filter);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -140,7 +152,9 @@ export default function ContentManagerScreen() {
         <Text style={styles.gridType}>{getTypeIcon(item.type)}</Text>
       </View>
       <View style={styles.gridContent}>
-        <Text style={styles.gridTitle} numberOfLines={1}>{item.title}</Text>
+        <Text style={styles.gridTitle} numberOfLines={1}>
+          {item.title}
+        </Text>
         <View style={styles.gridFooter}>
           <Text style={[styles.gridStatus, { color: getStatusColor(item.status) }]}>
             {item.status}
@@ -159,10 +173,14 @@ export default function ContentManagerScreen() {
       <Image source={{ uri: item.thumbnail }} style={styles.listThumbnail} />
       <View style={styles.listContent}>
         <View style={styles.listHeader}>
-          <Text style={styles.listTitle} numberOfLines={1}>{item.title}</Text>
+          <Text style={styles.listTitle} numberOfLines={1}>
+            {item.title}
+          </Text>
           <Text style={styles.listType}>{getTypeIcon(item.type)}</Text>
         </View>
-        <Text style={styles.listDescription} numberOfLines={2}>{item.description}</Text>
+        <Text style={styles.listDescription} numberOfLines={2}>
+          {item.description}
+        </Text>
         <View style={styles.listFooter}>
           <View style={styles.listMeta}>
             <Text style={[styles.listStatus, { color: getStatusColor(item.status) }]}>
@@ -173,17 +191,11 @@ export default function ContentManagerScreen() {
           <View style={styles.listActions}>
             <Text style={styles.listStats}>{item.views.toLocaleString()} views</Text>
             {item.status === 'draft' && (
-              <TouchableOpacity
-                style={styles.publishButton}
-                onPress={() => handlePublish(item.id)}
-              >
+              <TouchableOpacity style={styles.publishButton} onPress={() => handlePublish(item.id)}>
                 <Text style={styles.publishButtonText}>Publish</Text>
               </TouchableOpacity>
             )}
-            <TouchableOpacity
-              style={styles.deleteButton}
-              onPress={() => handleDelete(item.id)}
-            >
+            <TouchableOpacity style={styles.deleteButton} onPress={() => handleDelete(item.id)}>
               <Text style={styles.deleteButtonText}>🗑</Text>
             </TouchableOpacity>
           </View>
@@ -211,10 +223,7 @@ export default function ContentManagerScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backButtonText}>←</Text>
         </TouchableOpacity>
         <Text style={styles.title}>Content Manager</Text>
@@ -231,17 +240,11 @@ export default function ContentManagerScreen() {
           {(['all', 'draft', 'published', 'archived'] as const).map((f) => (
             <TouchableOpacity
               key={f}
-              style={[
-                styles.filterButton,
-                filter === f && styles.filterButtonActive,
-              ]}
+              style={[styles.filterButton, filter === f && styles.filterButtonActive]}
               onPress={() => setFilter(f)}
             >
               <Text
-                style={[
-                  styles.filterButtonText,
-                  filter === f && styles.filterButtonTextActive,
-                ]}
+                style={[styles.filterButtonText, filter === f && styles.filterButtonTextActive]}
               >
                 {f.charAt(0).toUpperCase() + f.slice(1)}
               </Text>

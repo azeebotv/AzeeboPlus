@@ -63,10 +63,7 @@ describe('AdminService', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        AdminService,
-        { provide: PrismaService, useValue: mockPrismaService },
-      ],
+      providers: [AdminService, { provide: PrismaService, useValue: mockPrismaService }],
     }).compile();
 
     service = module.get<AdminService>(AdminService);
@@ -120,11 +117,22 @@ describe('AdminService', () => {
 
     describe('updateSubscription', () => {
       it('should update subscription and log audit', async () => {
-        mockPrismaService.subscription.findUnique.mockResolvedValue({ id: 'sub-1', status: 'active' });
-        mockPrismaService.subscription.update.mockResolvedValue({ id: 'sub-1', status: 'cancelled' });
+        mockPrismaService.subscription.findUnique.mockResolvedValue({
+          id: 'sub-1',
+          status: 'active',
+        });
+        mockPrismaService.subscription.update.mockResolvedValue({
+          id: 'sub-1',
+          status: 'cancelled',
+        });
         mockPrismaService.auditLog.create.mockResolvedValue({ id: 'log-1' });
 
-        const result = await service.updateSubscription('sub-1', { status: 'cancelled' }, 'admin-1', 'super_admin');
+        const result = await service.updateSubscription(
+          'sub-1',
+          { status: 'cancelled' },
+          'admin-1',
+          'super_admin'
+        );
 
         expect(result.status).toBe('cancelled');
         expect(mockPrismaService.auditLog.create).toHaveBeenCalled();
@@ -133,7 +141,10 @@ describe('AdminService', () => {
 
     describe('deleteSubscription', () => {
       it('should delete subscription and log audit', async () => {
-        mockPrismaService.subscription.findUnique.mockResolvedValue({ id: 'sub-1', userId: 'user-1' });
+        mockPrismaService.subscription.findUnique.mockResolvedValue({
+          id: 'sub-1',
+          userId: 'user-1',
+        });
         mockPrismaService.subscription.delete.mockResolvedValue({ id: 'sub-1' });
         mockPrismaService.auditLog.create.mockResolvedValue({ id: 'log-1' });
 
@@ -170,7 +181,12 @@ describe('AdminService', () => {
         mockPrismaService.user.update.mockResolvedValue({ id: 'user-1', role: 'creator' });
         mockPrismaService.auditLog.create.mockResolvedValue({ id: 'log-1' });
 
-        const result = await service.updateUser('user-1', { role: 'creator' }, 'admin-1', 'super_admin');
+        const result = await service.updateUser(
+          'user-1',
+          { role: 'creator' },
+          'admin-1',
+          'super_admin'
+        );
 
         expect(result.role).toBe('creator');
         expect(mockPrismaService.auditLog.create).toHaveBeenCalled();
@@ -183,7 +199,12 @@ describe('AdminService', () => {
         mockPrismaService.user.update.mockResolvedValue({ id: 'user-1', role: 'suspended' });
         mockPrismaService.auditLog.create.mockResolvedValue({ id: 'log-1' });
 
-        const result = await service.suspendUser('user-1', 'Violation of terms', 'admin-1', 'super_admin');
+        const result = await service.suspendUser(
+          'user-1',
+          'Violation of terms',
+          'admin-1',
+          'super_admin'
+        );
 
         expect(result.role).toBe('suspended');
         expect(mockPrismaService.auditLog.create).toHaveBeenCalledWith(
@@ -196,11 +217,23 @@ describe('AdminService', () => {
   describe('Content Moderation', () => {
     describe('moderateContent', () => {
       it('should moderate content and log audit', async () => {
-        mockPrismaService.contentItem.findUnique.mockResolvedValue({ id: 'content-1', status: 'pending' });
-        mockPrismaService.contentItem.update.mockResolvedValue({ id: 'content-1', status: 'published' });
+        mockPrismaService.contentItem.findUnique.mockResolvedValue({
+          id: 'content-1',
+          status: 'pending',
+        });
+        mockPrismaService.contentItem.update.mockResolvedValue({
+          id: 'content-1',
+          status: 'published',
+        });
         mockPrismaService.auditLog.create.mockResolvedValue({ id: 'log-1' });
 
-        const result = await service.moderateContent('content-1', 'approve', 'Looks good', 'admin-1', 'super_admin');
+        const result = await service.moderateContent(
+          'content-1',
+          'approve',
+          'Looks good',
+          'admin-1',
+          'super_admin'
+        );
 
         expect(result.status).toBe('published');
         expect(mockPrismaService.auditLog.create).toHaveBeenCalledWith(
@@ -211,8 +244,9 @@ describe('AdminService', () => {
       it('should throw NotFoundException if content not found', async () => {
         mockPrismaService.contentItem.findUnique.mockResolvedValue(null);
 
-        await expect(service.moderateContent('not-found', 'approve', '', 'admin-1', 'super_admin'))
-          .rejects.toThrow(NotFoundException);
+        await expect(
+          service.moderateContent('not-found', 'approve', '', 'admin-1', 'super_admin')
+        ).rejects.toThrow(NotFoundException);
       });
     });
 
@@ -241,11 +275,22 @@ describe('AdminService', () => {
 
     describe('resolveReport', () => {
       it('should resolve report and log audit', async () => {
-        mockPrismaService.moderationReport.findUnique.mockResolvedValue({ id: 'report-1', status: 'pending' });
-        mockPrismaService.moderationReport.update.mockResolvedValue({ id: 'report-1', status: 'resolved' });
+        mockPrismaService.moderationReport.findUnique.mockResolvedValue({
+          id: 'report-1',
+          status: 'pending',
+        });
+        mockPrismaService.moderationReport.update.mockResolvedValue({
+          id: 'report-1',
+          status: 'resolved',
+        });
         mockPrismaService.auditLog.create.mockResolvedValue({ id: 'log-1' });
 
-        const result = await service.resolveReport('report-1', 'Content removed', 'admin-1', 'super_admin');
+        const result = await service.resolveReport(
+          'report-1',
+          'Content removed',
+          'admin-1',
+          'super_admin'
+        );
 
         expect(result.status).toBe('resolved');
         expect(mockPrismaService.auditLog.create).toHaveBeenCalled();
@@ -293,12 +338,25 @@ describe('AdminService', () => {
 
     describe('verifyCreator', () => {
       it('should approve creator and update role', async () => {
-        mockPrismaService.creatorVerification.findUnique.mockResolvedValue({ id: 'req-1', userId: 'user-1', status: 'pending' });
-        mockPrismaService.creatorVerification.update.mockResolvedValue({ id: 'req-1', status: 'approved' });
+        mockPrismaService.creatorVerification.findUnique.mockResolvedValue({
+          id: 'req-1',
+          userId: 'user-1',
+          status: 'pending',
+        });
+        mockPrismaService.creatorVerification.update.mockResolvedValue({
+          id: 'req-1',
+          status: 'approved',
+        });
         mockPrismaService.user.update.mockResolvedValue({ id: 'user-1', role: 'creator' });
         mockPrismaService.auditLog.create.mockResolvedValue({ id: 'log-1' });
 
-        const result = await service.verifyCreator('req-1', 'approved', 'Verified', 'admin-1', 'super_admin');
+        const result = await service.verifyCreator(
+          'req-1',
+          'approved',
+          'Verified',
+          'admin-1',
+          'super_admin'
+        );
 
         expect(result.status).toBe('approved');
         expect(mockPrismaService.user.update).toHaveBeenCalledWith({
@@ -308,11 +366,24 @@ describe('AdminService', () => {
       });
 
       it('should reject without updating role', async () => {
-        mockPrismaService.creatorVerification.findUnique.mockResolvedValue({ id: 'req-1', userId: 'user-1', status: 'pending' });
-        mockPrismaService.creatorVerification.update.mockResolvedValue({ id: 'req-1', status: 'rejected' });
+        mockPrismaService.creatorVerification.findUnique.mockResolvedValue({
+          id: 'req-1',
+          userId: 'user-1',
+          status: 'pending',
+        });
+        mockPrismaService.creatorVerification.update.mockResolvedValue({
+          id: 'req-1',
+          status: 'rejected',
+        });
         mockPrismaService.auditLog.create.mockResolvedValue({ id: 'log-1' });
 
-        const result = await service.verifyCreator('req-1', 'rejected', 'Insufficient evidence', 'admin-1', 'super_admin');
+        const result = await service.verifyCreator(
+          'req-1',
+          'rejected',
+          'Insufficient evidence',
+          'admin-1',
+          'super_admin'
+        );
 
         expect(result.status).toBe('rejected');
         expect(mockPrismaService.user.update).not.toHaveBeenCalled();
@@ -323,11 +394,22 @@ describe('AdminService', () => {
   describe('User Data Management', () => {
     describe('deleteWatchHistory', () => {
       it('should delete specific watch history item', async () => {
-        mockPrismaService.watchHistory.findUnique.mockResolvedValue({ userId: 'user-1', contentId: 'content-1' });
-        mockPrismaService.watchHistory.delete.mockResolvedValue({ userId: 'user-1', contentId: 'content-1' });
+        mockPrismaService.watchHistory.findUnique.mockResolvedValue({
+          userId: 'user-1',
+          contentId: 'content-1',
+        });
+        mockPrismaService.watchHistory.delete.mockResolvedValue({
+          userId: 'user-1',
+          contentId: 'content-1',
+        });
         mockPrismaService.auditLog.create.mockResolvedValue({ id: 'log-1' });
 
-        const result = await service.deleteWatchHistory('user-1', 'content-1', 'admin-1', 'super_admin');
+        const result = await service.deleteWatchHistory(
+          'user-1',
+          'content-1',
+          'admin-1',
+          'super_admin'
+        );
 
         expect(result.message).toBe('Watch history deleted successfully');
       });
@@ -337,7 +419,12 @@ describe('AdminService', () => {
         mockPrismaService.watchHistory.deleteMany.mockResolvedValue({ count: 5 });
         mockPrismaService.auditLog.create.mockResolvedValue({ id: 'log-1' });
 
-        const result = await service.deleteWatchHistory('user-1', undefined, 'admin-1', 'super_admin');
+        const result = await service.deleteWatchHistory(
+          'user-1',
+          undefined,
+          'admin-1',
+          'super_admin'
+        );
 
         expect(result.message).toBe('Watch history deleted successfully');
         expect(mockPrismaService.auditLog.create).toHaveBeenCalledWith(
@@ -348,11 +435,22 @@ describe('AdminService', () => {
 
     describe('deleteSavedItems', () => {
       it('should delete specific saved item', async () => {
-        mockPrismaService.savedItem.findUnique.mockResolvedValue({ userId: 'user-1', contentId: 'content-1' });
-        mockPrismaService.savedItem.delete.mockResolvedValue({ userId: 'user-1', contentId: 'content-1' });
+        mockPrismaService.savedItem.findUnique.mockResolvedValue({
+          userId: 'user-1',
+          contentId: 'content-1',
+        });
+        mockPrismaService.savedItem.delete.mockResolvedValue({
+          userId: 'user-1',
+          contentId: 'content-1',
+        });
         mockPrismaService.auditLog.create.mockResolvedValue({ id: 'log-1' });
 
-        const result = await service.deleteSavedItems('user-1', 'content-1', 'admin-1', 'super_admin');
+        const result = await service.deleteSavedItems(
+          'user-1',
+          'content-1',
+          'admin-1',
+          'super_admin'
+        );
 
         expect(result.message).toBe('Saved items deleted successfully');
       });
@@ -397,7 +495,12 @@ describe('AdminService', () => {
         });
         mockPrismaService.auditLog.create.mockResolvedValue({ id: 'log-1' });
 
-        const result = await service.updateUserPreferences('user-1', { darkMode: false }, 'admin-1', 'super_admin');
+        const result = await service.updateUserPreferences(
+          'user-1',
+          { darkMode: false },
+          'admin-1',
+          'super_admin'
+        );
 
         expect(result.darkMode).toBe(false);
         expect(mockPrismaService.auditLog.create).toHaveBeenCalled();

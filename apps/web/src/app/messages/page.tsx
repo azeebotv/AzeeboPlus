@@ -51,7 +51,9 @@ export default function MessagesPage(): JSX.Element {
   const openConversation = async (conversation: Conversation): Promise<void> => {
     setSelectedConversation(conversation);
     try {
-      const result = await apiFetch<Message[]>(`/v1/messaging/conversations/${conversation.id}/messages`);
+      const result = await apiFetch<Message[]>(
+        `/v1/messaging/conversations/${conversation.id}/messages`
+      );
 
       if (result.success && result.data) {
         setMessages(result.data);
@@ -66,10 +68,13 @@ export default function MessagesPage(): JSX.Element {
 
     setIsSending(true);
     try {
-      const result = await apiFetch(`/v1/messaging/conversations/${selectedConversation.id}/messages`, {
-        method: 'POST',
-        body: JSON.stringify({ content: newMessage.trim() }),
-      });
+      const result = await apiFetch(
+        `/v1/messaging/conversations/${selectedConversation.id}/messages`,
+        {
+          method: 'POST',
+          body: JSON.stringify({ content: newMessage.trim() }),
+        }
+      );
 
       if (result.success) {
         setNewMessage('');
@@ -119,7 +124,9 @@ export default function MessagesPage(): JSX.Element {
   return (
     <div className="min-h-screen bg-background">
       <div className="flex h-screen">
-        <div className={`w-full md:w-96 border-r border-border bg-card ${selectedConversation ? 'hidden md:block' : ''}`}>
+        <div
+          className={`w-full md:w-96 border-r border-border bg-card ${selectedConversation ? 'hidden md:block' : ''}`}
+        >
           <div className="p-6 border-b border-border">
             <h1 className="text-2xl font-bold text-foreground">Messages</h1>
           </div>
@@ -151,11 +158,17 @@ export default function MessagesPage(): JSX.Element {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-1">
-                      <h3 className="font-semibold text-foreground truncate">{conversation.participantName}</h3>
-                      <span className="text-xs text-muted-foreground">{formatTime(conversation.lastMessageTime)}</span>
+                      <h3 className="font-semibold text-foreground truncate">
+                        {conversation.participantName}
+                      </h3>
+                      <span className="text-xs text-muted-foreground">
+                        {formatTime(conversation.lastMessageTime)}
+                      </span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <p className="text-sm text-muted-foreground truncate">{conversation.lastMessage}</p>
+                      <p className="text-sm text-muted-foreground truncate">
+                        {conversation.lastMessage}
+                      </p>
                       {conversation.unreadCount > 0 && (
                         <span className="bg-primary text-white text-xs font-bold px-2 py-1 rounded-full ml-2">
                           {conversation.unreadCount}
@@ -189,8 +202,12 @@ export default function MessagesPage(): JSX.Element {
                 )}
               </div>
               <div>
-                <h2 className="font-semibold text-foreground">{selectedConversation.participantName}</h2>
-                <p className="text-xs text-green-500">{selectedConversation.isOnline ? 'Online' : 'Offline'}</p>
+                <h2 className="font-semibold text-foreground">
+                  {selectedConversation.participantName}
+                </h2>
+                <p className="text-xs text-green-500">
+                  {selectedConversation.isOnline ? 'Online' : 'Offline'}
+                </p>
               </div>
             </div>
 
@@ -208,8 +225,13 @@ export default function MessagesPage(): JSX.Element {
                     }`}
                   >
                     <p className="text-sm">{message.content}</p>
-                    <p className={`text-xs mt-1 ${message.senderId === 'me' ? 'text-white/70' : 'text-muted-foreground'}`}>
-                      {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    <p
+                      className={`text-xs mt-1 ${message.senderId === 'me' ? 'text-white/70' : 'text-muted-foreground'}`}
+                    >
+                      {new Date(message.timestamp).toLocaleTimeString([], {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
                     </p>
                   </div>
                 </div>
@@ -230,7 +252,9 @@ export default function MessagesPage(): JSX.Element {
                   onClick={sendMessage}
                   disabled={!newMessage.trim() || isSending}
                   className={`px-6 py-3 bg-primary text-white rounded-lg font-semibold ${
-                    !newMessage.trim() || isSending ? 'opacity-50 cursor-not-allowed' : 'hover:bg-primary/90'
+                    !newMessage.trim() || isSending
+                      ? 'opacity-50 cursor-not-allowed'
+                      : 'hover:bg-primary/90'
                   }`}
                 >
                   {isSending ? 'Sending...' : 'Send'}

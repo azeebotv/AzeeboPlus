@@ -89,7 +89,9 @@ describe('CityGuideService', () => {
 
       await service.getEntries(1, 20, 'restaurant');
 
-      expect((prismaService.cityGuideEntry.findMany as jest.Mock).mock.calls[0][0].where.type).toBe('restaurant');
+      expect((prismaService.cityGuideEntry.findMany as jest.Mock).mock.calls[0][0].where.type).toBe(
+        'restaurant'
+      );
     });
 
     it('should filter by city', async () => {
@@ -98,7 +100,9 @@ describe('CityGuideService', () => {
 
       await service.getEntries(1, 20, undefined, 'New York');
 
-      expect((prismaService.cityGuideEntry.findMany as jest.Mock).mock.calls[0][0].where.city).toBe('New York');
+      expect((prismaService.cityGuideEntry.findMany as jest.Mock).mock.calls[0][0].where.city).toBe(
+        'New York'
+      );
     });
   });
 
@@ -167,7 +171,9 @@ describe('CityGuideService', () => {
     it('should throw NotFoundException if entry not found', async () => {
       (prismaService.cityGuideEntry.findUnique as jest.Mock).mockResolvedValue(null);
 
-      await expect(service.updateEntry('not-found', { name: 'Updated' })).rejects.toThrow(NotFoundException);
+      await expect(service.updateEntry('not-found', { name: 'Updated' })).rejects.toThrow(
+        NotFoundException
+      );
     });
   });
 

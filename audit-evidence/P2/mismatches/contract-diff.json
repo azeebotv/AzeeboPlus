@@ -1,0 +1,5825 @@
+{
+  "captured_at": "2026-06-22T11:58:38.706Z",
+  "total_backend_routes": 827,
+  "total_frontend_urls": 140,
+  "matches": 108,
+  "unmatched_frontend_calls": 32,
+  "backend_only_routes": 787,
+  "unmatched_calls_sample": [
+    {
+      "surface": "apps/web/src/lib/api.ts",
+      "frontend_method": "if",
+      "url": "http://localhost:3013",
+      "line": 27
+    },
+    {
+      "surface": "mobile/content.ts",
+      "frontend_method": "getFeaturedContent",
+      "url": "/content/featured?limit=${limit}"
+    },
+    {
+      "surface": "mobile/content.ts",
+      "frontend_method": "getTrendingContent",
+      "url": "/content/trending?limit=${limit}"
+    },
+    {
+      "surface": "mobile/content.ts",
+      "frontend_method": "getContentById",
+      "url": "/content/${contentId}"
+    },
+    {
+      "surface": "mobile/content.ts",
+      "frontend_method": "addToWatchHistory",
+      "url": "/user/watch-history"
+    },
+    {
+      "surface": "mobile/content.ts",
+      "frontend_method": "saveContent",
+      "url": "/user/saved"
+    },
+    {
+      "surface": "mobile/content.ts",
+      "frontend_method": "removeSavedContent",
+      "url": "/user/saved/${contentId}"
+    },
+    {
+      "surface": "mobile/content.ts",
+      "frontend_method": "getEpisode",
+      "url": "/content/episodes/${episodeId}"
+    },
+    {
+      "surface": "mobile/content.ts",
+      "frontend_method": "vote",
+      "url": "/content/vote"
+    },
+    {
+      "surface": "mobile/content.ts",
+      "frontend_method": "getEpisodes",
+      "url": "/content/${contentId}/episodes"
+    },
+    {
+      "surface": "mobile/content.ts",
+      "frontend_method": "getContestant",
+      "url": "/content/contestants/${contestantId}"
+    },
+    {
+      "surface": "mobile/content.ts",
+      "frontend_method": "getContestants",
+      "url": "/content/episodes/${episodeId}/contestants"
+    },
+    {
+      "surface": "mobile/content.ts",
+      "frontend_method": "superVote",
+      "url": "/content/super-vote"
+    },
+    {
+      "surface": "mobile/content.ts",
+      "frontend_method": "getResults",
+      "url": "/content/${contentId}/results"
+    },
+    {
+      "surface": "mobile/content.ts",
+      "frontend_method": "getRecommendations",
+      "url": "/content/recommendations?type=${type}"
+    },
+    {
+      "surface": "mobile/content.ts",
+      "frontend_method": "getRecommendations",
+      "url": "/content/recommendations"
+    },
+    {
+      "surface": "mobile/content.ts",
+      "frontend_method": "createContent",
+      "url": "/content"
+    },
+    {
+      "surface": "mobile/notification.ts",
+      "frontend_method": "markAsRead",
+      "url": "/notifications/${notificationId}/read"
+    },
+    {
+      "surface": "mobile/notification.ts",
+      "frontend_method": "markAllAsRead",
+      "url": "/notifications/read-all"
+    },
+    {
+      "surface": "mobile/notification.ts",
+      "frontend_method": "deleteNotification",
+      "url": "/notifications/${notificationId}"
+    },
+    {
+      "surface": "mobile/notification.ts",
+      "frontend_method": "registerPushToken",
+      "url": "/notifications/register-token"
+    },
+    {
+      "surface": "mobile/notification.ts",
+      "frontend_method": "getPreferences",
+      "url": "/notifications/preferences"
+    },
+    {
+      "surface": "mobile/payment.ts",
+      "frontend_method": "initialize",
+      "url": "/payments/initialize"
+    },
+    {
+      "surface": "mobile/payment.ts",
+      "frontend_method": "verify",
+      "url": "/payments/verify/${reference}"
+    },
+    {
+      "surface": "mobile/payment.ts",
+      "frontend_method": "getProviders",
+      "url": "/payments/providers"
+    },
+    {
+      "surface": "mobile/wallet.ts",
+      "frontend_method": "getBalance",
+      "url": "/wallet/balance"
+    },
+    {
+      "surface": "mobile/wallet.ts",
+      "frontend_method": "getTransaction",
+      "url": "/wallet/transactions/${id}"
+    },
+    {
+      "surface": "mobile/wallet.ts",
+      "frontend_method": "fundWallet",
+      "url": "/wallet/fund"
+    },
+    {
+      "surface": "mobile/wallet.ts",
+      "frontend_method": "withdraw",
+      "url": "/wallet/withdraw"
+    },
+    {
+      "surface": "mobile/wallet.ts",
+      "frontend_method": "getSummary",
+      "url": "/wallet/summary"
+    },
+    {
+      "surface": "mobile/wallet.ts",
+      "frontend_method": "redeemReward",
+      "url": "/wallet/redeem-reward"
+    },
+    {
+      "surface": "mobile/wallet.ts",
+      "frontend_method": "transfer",
+      "url": "/wallet/transfer"
+    }
+  ],
+  "matches_sample": [
+    {
+      "surface": "apps/web/src/lib/api.ts",
+      "frontend_method": "if",
+      "url": "/api/v1/auth/login",
+      "matched_prefix_length": "api/media/presigned/upload",
+      "candidates": [
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/presigned/upload",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/presigned/download",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/metadata",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/transcoding/:jobId/status",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/transcoding/jobs",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/premium/url/:token/analytics",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/image",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/video",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/audio",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/document",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/thumbnail",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/avatar",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/banner",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/transcoding/retry-failed",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/cleanup/orphaned",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url/cdn",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url/validate",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/:key",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/premium/url/:token",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/premium/urls/user",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        }
+      ]
+    },
+    {
+      "surface": "apps/web/src/lib/api.ts",
+      "frontend_method": "if",
+      "url": "/api/v1/auth/signup",
+      "matched_prefix_length": "api/media/presigned/upload",
+      "candidates": [
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/presigned/upload",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/presigned/download",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/metadata",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/transcoding/:jobId/status",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/transcoding/jobs",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/premium/url/:token/analytics",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/image",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/video",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/audio",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/document",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/thumbnail",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/avatar",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/banner",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/transcoding/retry-failed",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/cleanup/orphaned",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url/cdn",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url/validate",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/:key",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/premium/url/:token",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/premium/urls/user",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        }
+      ]
+    },
+    {
+      "surface": "apps/web/src/lib/api.ts",
+      "frontend_method": "",
+      "url": "/api/v1/auth/logout",
+      "matched_prefix_length": "api/media/presigned/upload",
+      "candidates": [
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/presigned/upload",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/presigned/download",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/metadata",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/transcoding/:jobId/status",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/transcoding/jobs",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/premium/url/:token/analytics",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/image",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/video",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/audio",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/document",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/thumbnail",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/avatar",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/banner",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/transcoding/retry-failed",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/cleanup/orphaned",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url/cdn",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url/validate",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/:key",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/premium/url/:token",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/premium/urls/user",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        }
+      ]
+    },
+    {
+      "surface": "apps/web/src/lib/api.ts",
+      "frontend_method": "",
+      "url": "/api/v1/auth/refresh",
+      "matched_prefix_length": "api/media/presigned/upload",
+      "candidates": [
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/presigned/upload",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/presigned/download",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/metadata",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/transcoding/:jobId/status",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/transcoding/jobs",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/premium/url/:token/analytics",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/image",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/video",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/audio",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/document",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/thumbnail",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/avatar",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/banner",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/transcoding/retry-failed",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/cleanup/orphaned",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url/cdn",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url/validate",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/:key",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/premium/url/:token",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/premium/urls/user",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        }
+      ]
+    },
+    {
+      "surface": "apps/web/src/lib/api.ts",
+      "frontend_method": "",
+      "url": "/api/v1/auth/mfa/verify",
+      "matched_prefix_length": "api/media/presigned/upload",
+      "candidates": [
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/presigned/upload",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/presigned/download",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/metadata",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/transcoding/:jobId/status",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/transcoding/jobs",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/premium/url/:token/analytics",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/image",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/video",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/audio",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/document",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/thumbnail",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/avatar",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/banner",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/transcoding/retry-failed",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/cleanup/orphaned",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url/cdn",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url/validate",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/:key",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/premium/url/:token",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/premium/urls/user",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        }
+      ]
+    },
+    {
+      "surface": "apps/web/src/lib/api.ts",
+      "frontend_method": "",
+      "url": "/api/v1/auth/forgot-password",
+      "matched_prefix_length": "api/media/presigned/upload",
+      "candidates": [
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/presigned/upload",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/presigned/download",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/metadata",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/transcoding/:jobId/status",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/transcoding/jobs",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/premium/url/:token/analytics",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/image",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/video",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/audio",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/document",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/thumbnail",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/avatar",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/banner",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/transcoding/retry-failed",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/cleanup/orphaned",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url/cdn",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url/validate",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/:key",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/premium/url/:token",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/premium/urls/user",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        }
+      ]
+    },
+    {
+      "surface": "apps/web/src/lib/api.ts",
+      "frontend_method": "",
+      "url": "/api/v1/auth/reset-password",
+      "matched_prefix_length": "api/media/presigned/upload",
+      "candidates": [
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/presigned/upload",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/presigned/download",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/metadata",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/transcoding/:jobId/status",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/transcoding/jobs",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/premium/url/:token/analytics",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/image",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/video",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/audio",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/document",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/thumbnail",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/avatar",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/banner",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/transcoding/retry-failed",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/cleanup/orphaned",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url/cdn",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url/validate",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/:key",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/premium/url/:token",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/premium/urls/user",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        }
+      ]
+    },
+    {
+      "surface": "apps/web/src/lib/api.ts",
+      "frontend_method": "",
+      "url": "/api/v1/auth/verify-email",
+      "matched_prefix_length": "api/media/presigned/upload",
+      "candidates": [
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/presigned/upload",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/presigned/download",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/metadata",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/transcoding/:jobId/status",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/transcoding/jobs",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/premium/url/:token/analytics",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/image",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/video",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/audio",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/document",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/thumbnail",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/avatar",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/banner",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/transcoding/retry-failed",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/cleanup/orphaned",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url/cdn",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url/validate",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/:key",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/premium/url/:token",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/premium/urls/user",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        }
+      ]
+    },
+    {
+      "surface": "apps/web/src/lib/api.ts",
+      "frontend_method": "",
+      "url": "/api/v1/auth/resend-verification",
+      "matched_prefix_length": "api/media/presigned/upload",
+      "candidates": [
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/presigned/upload",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/presigned/download",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/metadata",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/transcoding/:jobId/status",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/transcoding/jobs",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/premium/url/:token/analytics",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/image",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/video",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/audio",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/document",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/thumbnail",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/avatar",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/banner",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/transcoding/retry-failed",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/cleanup/orphaned",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url/cdn",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url/validate",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/:key",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/premium/url/:token",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/premium/urls/user",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        }
+      ]
+    },
+    {
+      "surface": "apps/web/src/lib/api.ts",
+      "frontend_method": "",
+      "url": "/api/v1/users/me",
+      "matched_prefix_length": "api/media/presigned/upload",
+      "candidates": [
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/presigned/upload",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/presigned/download",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/metadata",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/transcoding/:jobId/status",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/transcoding/jobs",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/premium/url/:token/analytics",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/image",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/video",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/audio",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/document",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/thumbnail",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/avatar",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/banner",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/transcoding/retry-failed",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/cleanup/orphaned",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url/cdn",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url/validate",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/:key",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/premium/url/:token",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/premium/urls/user",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        }
+      ]
+    },
+    {
+      "surface": "apps/web/src/lib/api.ts",
+      "frontend_method": "",
+      "url": "/api/v1/users/me/complete-profile",
+      "matched_prefix_length": "api/media/presigned/upload",
+      "candidates": [
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/presigned/upload",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/presigned/download",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/metadata",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/transcoding/:jobId/status",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/transcoding/jobs",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/premium/url/:token/analytics",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/image",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/video",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/audio",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/document",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/thumbnail",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/avatar",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/banner",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/transcoding/retry-failed",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/cleanup/orphaned",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url/cdn",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url/validate",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/:key",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/premium/url/:token",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/premium/urls/user",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        }
+      ]
+    },
+    {
+      "surface": "apps/web/src/lib/api.ts",
+      "frontend_method": "",
+      "url": "/api/v1/users/me/history?page=${page}&limit=${limit}",
+      "matched_prefix_length": "api/media/presigned/upload",
+      "candidates": [
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/presigned/upload",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/presigned/download",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/metadata",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/transcoding/:jobId/status",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/transcoding/jobs",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/premium/url/:token/analytics",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/image",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/video",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/audio",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/document",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/thumbnail",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/avatar",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/banner",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/transcoding/retry-failed",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/cleanup/orphaned",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url/cdn",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url/validate",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/:key",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/premium/url/:token",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/premium/urls/user",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        }
+      ]
+    },
+    {
+      "surface": "apps/web/src/lib/api.ts",
+      "frontend_method": "",
+      "url": "/api/v1/users/me/history",
+      "matched_prefix_length": "api/media/presigned/upload",
+      "candidates": [
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/presigned/upload",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/presigned/download",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/metadata",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/transcoding/:jobId/status",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/transcoding/jobs",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/premium/url/:token/analytics",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/image",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/video",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/audio",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/document",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/thumbnail",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/avatar",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/banner",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/transcoding/retry-failed",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/cleanup/orphaned",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url/cdn",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url/validate",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/:key",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/premium/url/:token",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/premium/urls/user",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        }
+      ]
+    },
+    {
+      "surface": "apps/web/src/lib/api.ts",
+      "frontend_method": "",
+      "url": "/api/v1/users/me/preferences",
+      "matched_prefix_length": "api/media/presigned/upload",
+      "candidates": [
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/presigned/upload",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/presigned/download",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/metadata",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/transcoding/:jobId/status",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/transcoding/jobs",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/premium/url/:token/analytics",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/image",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/video",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/audio",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/document",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/thumbnail",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/avatar",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/banner",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/transcoding/retry-failed",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/cleanup/orphaned",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url/cdn",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url/validate",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/:key",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/premium/url/:token",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/premium/urls/user",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        }
+      ]
+    },
+    {
+      "surface": "apps/web/src/lib/api.ts",
+      "frontend_method": "",
+      "url": "/api/v1/content/${contentId}",
+      "matched_prefix_length": "api/media/presigned/upload",
+      "candidates": [
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/presigned/upload",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/presigned/download",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/metadata",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/transcoding/:jobId/status",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/transcoding/jobs",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/premium/url/:token/analytics",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/image",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/video",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/audio",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/document",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/thumbnail",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/avatar",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/banner",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/transcoding/retry-failed",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/cleanup/orphaned",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url/cdn",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url/validate",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/:key",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/premium/url/:token",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/premium/urls/user",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        }
+      ]
+    },
+    {
+      "surface": "apps/web/src/lib/api.ts",
+      "frontend_method": "",
+      "url": "/api/v1/content/featured?limit=${limit}",
+      "matched_prefix_length": "api/media/presigned/upload",
+      "candidates": [
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/presigned/upload",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/presigned/download",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/metadata",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/transcoding/:jobId/status",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/transcoding/jobs",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/premium/url/:token/analytics",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/image",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/video",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/audio",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/document",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/thumbnail",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/avatar",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/banner",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/transcoding/retry-failed",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/cleanup/orphaned",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url/cdn",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url/validate",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/:key",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/premium/url/:token",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/premium/urls/user",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        }
+      ]
+    },
+    {
+      "surface": "apps/web/src/lib/api.ts",
+      "frontend_method": "",
+      "url": "/api/v1/content/trending?limit=${limit}",
+      "matched_prefix_length": "api/media/presigned/upload",
+      "candidates": [
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/presigned/upload",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/presigned/download",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/metadata",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/transcoding/:jobId/status",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/transcoding/jobs",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/premium/url/:token/analytics",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/image",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/video",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/audio",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/document",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/thumbnail",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/avatar",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/banner",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/transcoding/retry-failed",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/cleanup/orphaned",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url/cdn",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url/validate",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/:key",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/premium/url/:token",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/premium/urls/user",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        }
+      ]
+    },
+    {
+      "surface": "apps/web/src/lib/api.ts",
+      "frontend_method": "",
+      "url": "/api/v1/content/universe/${universeId}?page=${page}&limit=${limit}",
+      "matched_prefix_length": "api/media/presigned/upload",
+      "candidates": [
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/presigned/upload",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/presigned/download",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/metadata",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/transcoding/:jobId/status",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/transcoding/jobs",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/premium/url/:token/analytics",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/image",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/video",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/audio",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/document",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/thumbnail",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/avatar",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/banner",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/transcoding/retry-failed",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/cleanup/orphaned",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url/cdn",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url/validate",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/:key",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/premium/url/:token",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/premium/urls/user",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        }
+      ]
+    },
+    {
+      "surface": "apps/web/src/lib/api.ts",
+      "frontend_method": "",
+      "url": "/api/v1/content/category/${categoryId}?page=${page}&limit=${limit}",
+      "matched_prefix_length": "api/media/presigned/upload",
+      "candidates": [
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/presigned/upload",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/presigned/download",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/metadata",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/transcoding/:jobId/status",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/transcoding/jobs",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/premium/url/:token/analytics",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/image",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/video",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/audio",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/document",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/thumbnail",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/avatar",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/banner",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/transcoding/retry-failed",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/cleanup/orphaned",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url/cdn",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url/validate",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/:key",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/premium/url/:token",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/premium/urls/user",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        }
+      ]
+    },
+    {
+      "surface": "apps/web/src/lib/api.ts",
+      "frontend_method": "if",
+      "url": "/api/v1/content/search?${params.toString()}",
+      "matched_prefix_length": "api/media/presigned/upload",
+      "candidates": [
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/presigned/upload",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/presigned/download",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/metadata",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/transcoding/:jobId/status",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/transcoding/jobs",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/premium/url/:token/analytics",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/image",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/video",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/audio",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/document",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/thumbnail",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/avatar",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/banner",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/transcoding/retry-failed",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/cleanup/orphaned",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url/cdn",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url/validate",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/:key",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/premium/url/:token",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/premium/urls/user",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        }
+      ]
+    },
+    {
+      "surface": "apps/web/src/lib/api.ts",
+      "frontend_method": "if",
+      "url": "/api/v1/content/${contentId}/media/signed-url",
+      "matched_prefix_length": "api/media/presigned/upload",
+      "candidates": [
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/presigned/upload",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/presigned/download",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/metadata",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/transcoding/:jobId/status",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/transcoding/jobs",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/premium/url/:token/analytics",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/image",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/video",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/audio",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/document",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/thumbnail",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/avatar",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/banner",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/transcoding/retry-failed",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/cleanup/orphaned",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url/cdn",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url/validate",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/:key",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/premium/url/:token",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/premium/urls/user",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        }
+      ]
+    },
+    {
+      "surface": "apps/web/src/lib/api.ts",
+      "frontend_method": "if",
+      "url": "/api/v1/content",
+      "matched_prefix_length": "api/media/presigned/upload",
+      "candidates": [
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/presigned/upload",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/presigned/download",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/metadata",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/transcoding/:jobId/status",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/transcoding/jobs",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/premium/url/:token/analytics",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/image",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/video",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/audio",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/document",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/thumbnail",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/avatar",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/banner",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/transcoding/retry-failed",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/cleanup/orphaned",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url/cdn",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url/validate",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/:key",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/premium/url/:token",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/premium/urls/user",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        }
+      ]
+    },
+    {
+      "surface": "apps/web/src/lib/api.ts",
+      "frontend_method": "if",
+      "url": "/api/v1/content/categories",
+      "matched_prefix_length": "api/media/presigned/upload",
+      "candidates": [
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/presigned/upload",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/presigned/download",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/metadata",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/transcoding/:jobId/status",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/transcoding/jobs",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/premium/url/:token/analytics",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/image",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/video",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/audio",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/document",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/thumbnail",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/avatar",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/banner",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/transcoding/retry-failed",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/cleanup/orphaned",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url/cdn",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url/validate",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/:key",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/premium/url/:token",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/premium/urls/user",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        }
+      ]
+    },
+    {
+      "surface": "apps/web/src/lib/api.ts",
+      "frontend_method": "",
+      "url": "/api/v1/content/${contentId}/related?limit=${limit}",
+      "matched_prefix_length": "api/media/presigned/upload",
+      "candidates": [
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/presigned/upload",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/presigned/download",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/metadata",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/transcoding/:jobId/status",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/transcoding/jobs",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/premium/url/:token/analytics",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/image",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/video",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/audio",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/document",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/thumbnail",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/avatar",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/banner",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/transcoding/retry-failed",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/cleanup/orphaned",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url/cdn",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url/validate",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/:key",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/premium/url/:token",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/premium/urls/user",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        }
+      ]
+    },
+    {
+      "surface": "apps/web/src/lib/api.ts",
+      "frontend_method": "",
+      "url": "/api/v1/content/creator/${creatorId}?limit=${limit}",
+      "matched_prefix_length": "api/media/presigned/upload",
+      "candidates": [
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/presigned/upload",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/presigned/download",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/metadata",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/transcoding/:jobId/status",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/transcoding/jobs",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/premium/url/:token/analytics",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/image",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/video",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/audio",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/document",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/thumbnail",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/avatar",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/banner",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/transcoding/retry-failed",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/cleanup/orphaned",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url/cdn",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url/validate",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/:key",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/premium/url/:token",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/premium/urls/user",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        }
+      ]
+    },
+    {
+      "surface": "apps/web/src/lib/api.ts",
+      "frontend_method": "if",
+      "url": "/api/v1/content/me?${searchParams.toString()}",
+      "matched_prefix_length": "api/media/presigned/upload",
+      "candidates": [
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/presigned/upload",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/presigned/download",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/metadata",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/transcoding/:jobId/status",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/transcoding/jobs",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/premium/url/:token/analytics",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/image",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/video",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/audio",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/document",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/thumbnail",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/avatar",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/banner",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/transcoding/retry-failed",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/cleanup/orphaned",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url/cdn",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url/validate",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/:key",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/premium/url/:token",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/premium/urls/user",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        }
+      ]
+    },
+    {
+      "surface": "apps/web/src/lib/api.ts",
+      "frontend_method": "if",
+      "url": "/api/v1/reality/shows/${showId}/contestants",
+      "matched_prefix_length": "api/media/presigned/upload",
+      "candidates": [
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/presigned/upload",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/presigned/download",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/metadata",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/transcoding/:jobId/status",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/transcoding/jobs",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/premium/url/:token/analytics",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/image",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/video",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/audio",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/document",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/thumbnail",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/avatar",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/banner",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/transcoding/retry-failed",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/cleanup/orphaned",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url/cdn",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url/validate",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/:key",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/premium/url/:token",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/premium/urls/user",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        }
+      ]
+    },
+    {
+      "surface": "apps/web/src/lib/api.ts",
+      "frontend_method": "if",
+      "url": "/api/v1/wallet",
+      "matched_prefix_length": "api/media/presigned/upload",
+      "candidates": [
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/presigned/upload",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/presigned/download",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/metadata",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/transcoding/:jobId/status",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/transcoding/jobs",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/premium/url/:token/analytics",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/image",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/video",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/audio",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/document",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/thumbnail",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/avatar",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/banner",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/transcoding/retry-failed",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/cleanup/orphaned",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url/cdn",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url/validate",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/:key",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/premium/url/:token",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/premium/urls/user",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        }
+      ]
+    },
+    {
+      "surface": "apps/web/src/lib/api.ts",
+      "frontend_method": "if",
+      "url": "/api/v1/wallet/transactions?page=${page}&limit=${limit}",
+      "matched_prefix_length": "api/media/presigned/upload",
+      "candidates": [
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/presigned/upload",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/presigned/download",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/metadata",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/transcoding/:jobId/status",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/transcoding/jobs",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/premium/url/:token/analytics",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/image",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/video",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/audio",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/document",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/thumbnail",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/avatar",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/banner",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/transcoding/retry-failed",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/cleanup/orphaned",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url/cdn",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url/validate",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/:key",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/premium/url/:token",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/premium/urls/user",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        }
+      ]
+    },
+    {
+      "surface": "apps/web/src/lib/api.ts",
+      "frontend_method": "",
+      "url": "/api/v1/wallet/fund",
+      "matched_prefix_length": "api/media/presigned/upload",
+      "candidates": [
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/presigned/upload",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/presigned/download",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/metadata",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/transcoding/:jobId/status",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/transcoding/jobs",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Get",
+          "full_path": "api/media/premium/url/:token/analytics",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/image",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/video",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/audio",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/document",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/thumbnail",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/avatar",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/upload/banner",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/transcoding/retry-failed",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/cleanup/orphaned",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url/cdn",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Post",
+          "full_path": "api/media/premium/url/validate",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/:key",
+          "guards": "(none)",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/premium/url/:token",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        },
+        {
+          "service": "services/core/media-service",
+          "method": "Delete",
+          "full_path": "api/media/premium/urls/user",
+          "guards": "AuthGuard('jwt'",
+          "public": false
+        }
+      ]
+    }
+  ],
+  "backend_only_sample": [
+    {
+      "service": "services/core/auth-service",
+      "method": "Get",
+      "full_path": "admin/stats"
+    },
+    {
+      "service": "services/core/auth-service",
+      "method": "Get",
+      "full_path": "admin/users"
+    },
+    {
+      "service": "services/core/auth-service",
+      "method": "Get",
+      "full_path": "admin/users/:id"
+    },
+    {
+      "service": "services/core/auth-service",
+      "method": "Post",
+      "full_path": "admin/users/:id/suspend"
+    },
+    {
+      "service": "services/core/auth-service",
+      "method": "Post",
+      "full_path": "admin/users/:id/activate"
+    },
+    {
+      "service": "services/core/auth-service",
+      "method": "Get",
+      "full_path": "health"
+    },
+    {
+      "service": "services/core/auth-service",
+      "method": "Get",
+      "full_path": "health/live"
+    },
+    {
+      "service": "services/core/auth-service",
+      "method": "Get",
+      "full_path": "health/ready"
+    },
+    {
+      "service": "services/core/auth-service",
+      "method": "Get",
+      "full_path": "metrics"
+    },
+    {
+      "service": "services/core/auth-service",
+      "method": "Get",
+      "full_path": "mfa/setup"
+    },
+    {
+      "service": "services/core/auth-service",
+      "method": "Post",
+      "full_path": "mfa/verify"
+    },
+    {
+      "service": "services/core/auth-service",
+      "method": "Post",
+      "full_path": "mfa/enable"
+    },
+    {
+      "service": "services/core/auth-service",
+      "method": "Post",
+      "full_path": "mfa/disable"
+    },
+    {
+      "service": "services/core/auth-service",
+      "method": "Post",
+      "full_path": "otp/send"
+    },
+    {
+      "service": "services/core/auth-service",
+      "method": "Post",
+      "full_path": "otp/verify"
+    },
+    {
+      "service": "services/core/content-service",
+      "method": "Get",
+      "full_path": "admin/stats"
+    },
+    {
+      "service": "services/core/content-service",
+      "method": "Get",
+      "full_path": "admin/content"
+    },
+    {
+      "service": "services/core/content-service",
+      "method": "Get",
+      "full_path": "admin/content/:contentId"
+    },
+    {
+      "service": "services/core/content-service",
+      "method": "Put",
+      "full_path": "admin/content/:contentId/status"
+    },
+    {
+      "service": "services/core/content-service",
+      "method": "Delete",
+      "full_path": "admin/content/:contentId"
+    },
+    {
+      "service": "services/core/content-service",
+      "method": "Get",
+      "full_path": "admin/universes"
+    },
+    {
+      "service": "services/core/content-service",
+      "method": "Get",
+      "full_path": "admin/content/:contentId/comments"
+    },
+    {
+      "service": "services/core/content-service",
+      "method": "Get",
+      "full_path": "v1/content"
+    },
+    {
+      "service": "services/core/content-service",
+      "method": "Get",
+      "full_path": "v1/content/home"
+    },
+    {
+      "service": "services/core/content-service",
+      "method": "Get",
+      "full_path": "v1/content/watch"
+    },
+    {
+      "service": "services/core/content-service",
+      "method": "Get",
+      "full_path": "v1/content/:id"
+    },
+    {
+      "service": "services/core/content-service",
+      "method": "Get",
+      "full_path": "v1/content/:id/comments"
+    },
+    {
+      "service": "services/core/content-service",
+      "method": "Post",
+      "full_path": "v1/content/:id/comments"
+    },
+    {
+      "service": "services/core/content-service",
+      "method": "Get",
+      "full_path": "v1/content/:id/analytics"
+    },
+    {
+      "service": "services/core/content-service",
+      "method": "Get",
+      "full_path": "v1/content/search"
+    },
+    {
+      "service": "services/core/content-service",
+      "method": "Get",
+      "full_path": "v1/content/trending"
+    },
+    {
+      "service": "services/core/content-service",
+      "method": "Get",
+      "full_path": "v1/content/recommended"
+    },
+    {
+      "service": "services/core/content-service",
+      "method": "Post",
+      "full_path": "v1/content"
+    },
+    {
+      "service": "services/core/content-service",
+      "method": "Patch",
+      "full_path": "v1/content/:id"
+    },
+    {
+      "service": "services/core/content-service",
+      "method": "Delete",
+      "full_path": "v1/content/:id"
+    },
+    {
+      "service": "services/core/content-service",
+      "method": "Post",
+      "full_path": "v1/content/:id/publish"
+    },
+    {
+      "service": "services/core/content-service",
+      "method": "Post",
+      "full_path": "v1/content/:id/unpublish"
+    },
+    {
+      "service": "services/core/content-service",
+      "method": "Post",
+      "full_path": "v1/content/:id/media"
+    },
+    {
+      "service": "services/core/content-service",
+      "method": "Patch",
+      "full_path": "v1/content/:id/media"
+    },
+    {
+      "service": "services/core/content-service",
+      "method": "Delete",
+      "full_path": "v1/content/:id/media"
+    },
+    {
+      "service": "services/core/content-service",
+      "method": "Get",
+      "full_path": "v1/content/:id/media"
+    },
+    {
+      "service": "services/core/content-service",
+      "method": "Get",
+      "full_path": "v1/content/:id/media/signed-url"
+    },
+    {
+      "service": "services/core/content-service",
+      "method": "Post",
+      "full_path": "v1/content/:id/media/thumbnail"
+    },
+    {
+      "service": "services/core/content-service",
+      "method": "Post",
+      "full_path": "v1/content/:id/report"
+    },
+    {
+      "service": "services/core/content-service",
+      "method": "Get",
+      "full_path": "v1/content/:id/moderation-status"
+    },
+    {
+      "service": "services/core/content-service",
+      "method": "Post",
+      "full_path": "v1/content/categories"
+    },
+    {
+      "service": "services/core/content-service",
+      "method": "Patch",
+      "full_path": "v1/content/categories/:id"
+    },
+    {
+      "service": "services/core/content-service",
+      "method": "Delete",
+      "full_path": "v1/content/categories/:id"
+    },
+    {
+      "service": "services/core/content-service",
+      "method": "Get",
+      "full_path": "v1/content/categories"
+    },
+    {
+      "service": "services/core/content-service",
+      "method": "Post",
+      "full_path": "v1/content/tags"
+    },
+    {
+      "service": "services/core/content-service",
+      "method": "Patch",
+      "full_path": "v1/content/tags/:id"
+    },
+    {
+      "service": "services/core/content-service",
+      "method": "Delete",
+      "full_path": "v1/content/tags/:id"
+    },
+    {
+      "service": "services/core/content-service",
+      "method": "Get",
+      "full_path": "v1/content/tags"
+    },
+    {
+      "service": "services/core/content-service",
+      "method": "Post",
+      "full_path": "v1/content/:id/categories/:categoryId"
+    },
+    {
+      "service": "services/core/content-service",
+      "method": "Delete",
+      "full_path": "v1/content/:id/categories/:categoryId"
+    },
+    {
+      "service": "services/core/content-service",
+      "method": "Post",
+      "full_path": "v1/content/:id/tags/:tagId"
+    },
+    {
+      "service": "services/core/content-service",
+      "method": "Delete",
+      "full_path": "v1/content/:id/tags/:tagId"
+    },
+    {
+      "service": "services/core/content-service",
+      "method": "Get",
+      "full_path": "v1/content/categories/:id/content"
+    },
+    {
+      "service": "services/core/content-service",
+      "method": "Get",
+      "full_path": "v1/content/tags/:id/content"
+    },
+    {
+      "service": "services/core/content-service",
+      "method": "Post",
+      "full_path": "v1/content/:id/relationships"
+    },
+    {
+      "service": "services/core/content-service",
+      "method": "Delete",
+      "full_path": "v1/content/:id/relationships/:relatedContentId"
+    },
+    {
+      "service": "services/core/content-service",
+      "method": "Get",
+      "full_path": "v1/content/:id/relationships"
+    },
+    {
+      "service": "services/core/content-service",
+      "method": "Get",
+      "full_path": "v1/content/:id/related"
+    },
+    {
+      "service": "services/core/content-service",
+      "method": "Post",
+      "full_path": "v1/content/:id/transcode"
+    },
+    {
+      "service": "services/core/content-service",
+      "method": "Get",
+      "full_path": "v1/content/:id/transcode/:jobId/status"
+    },
+    {
+      "service": "services/core/content-service",
+      "method": "Get",
+      "full_path": "v1/content/:id/transcode/:jobId/url"
+    },
+    {
+      "service": "services/core/content-service",
+      "method": "Get",
+      "full_path": "v1/content/:id/access-check"
+    },
+    {
+      "service": "services/core/content-service",
+      "method": "Get",
+      "full_path": "v1/content/rentals/:contentId/access"
+    },
+    {
+      "service": "services/core/content-service",
+      "method": "Get",
+      "full_path": "v1/content/passes/access"
+    },
+    {
+      "service": "services/core/content-service",
+      "method": "Get",
+      "full_path": "v1/content/screenings/:screeningId/access"
+    },
+    {
+      "service": "services/core/content-service",
+      "method": "Get",
+      "full_path": "v1/content/extras/:extraId/access"
+    },
+    {
+      "service": "services/core/content-service",
+      "method": "Get",
+      "full_path": "v1/content/:id/playback-url"
+    },
+    {
+      "service": "services/core/content-service",
+      "method": "Get",
+      "full_path": "v1/content/accessible"
+    },
+    {
+      "service": "services/core/content-service",
+      "method": "Post",
+      "full_path": "v1/content/:id/scan"
+    },
+    {
+      "service": "services/core/content-service",
+      "method": "Get",
+      "full_path": "health"
+    },
+    {
+      "service": "services/core/content-service",
+      "method": "Get",
+      "full_path": "health/live"
+    },
+    {
+      "service": "services/core/content-service",
+      "method": "Get",
+      "full_path": "health/ready"
+    },
+    {
+      "service": "services/core/content-service",
+      "method": "Post",
+      "full_path": "v1/moderation/scan/:contentId"
+    },
+    {
+      "service": "services/core/content-service",
+      "method": "Get",
+      "full_path": "v1/moderation/risk/:contentId"
+    },
+    {
+      "service": "services/core/content-service",
+      "method": "Get",
+      "full_path": "v1/moderation/scans/:contentId"
+    },
+    {
+      "service": "services/core/content-service",
+      "method": "Post",
+      "full_path": "v1/moderation/cases"
+    },
+    {
+      "service": "services/core/content-service",
+      "method": "Get",
+      "full_path": "v1/moderation/cases"
+    },
+    {
+      "service": "services/core/content-service",
+      "method": "Get",
+      "full_path": "v1/moderation/cases/:caseId"
+    },
+    {
+      "service": "services/core/content-service",
+      "method": "Patch",
+      "full_path": "v1/moderation/cases/:caseId/assign"
+    },
+    {
+      "service": "services/core/content-service",
+      "method": "Patch",
+      "full_path": "v1/moderation/cases/:caseId/resolve"
+    },
+    {
+      "service": "services/core/content-service",
+      "method": "Post",
+      "full_path": "v1/moderation/actions"
+    },
+    {
+      "service": "services/core/content-service",
+      "method": "Get",
+      "full_path": "v1/moderation/actions/case/:caseId"
+    },
+    {
+      "service": "services/core/content-service",
+      "method": "Post",
+      "full_path": "v1/moderation/appeals"
+    },
+    {
+      "service": "services/core/content-service",
+      "method": "Patch",
+      "full_path": "v1/moderation/appeals/:appealId/review"
+    },
+    {
+      "service": "services/core/content-service",
+      "method": "Get",
+      "full_path": "v1/moderation/trust/:userId"
+    },
+    {
+      "service": "services/core/content-service",
+      "method": "Patch",
+      "full_path": "v1/moderation/trust/:userId"
+    },
+    {
+      "service": "services/core/content-service",
+      "method": "Get",
+      "full_path": "v1/moderation/stats"
+    },
+    {
+      "service": "services/core/content-service",
+      "method": "Get",
+      "full_path": "public/universes"
+    },
+    {
+      "service": "services/core/content-service",
+      "method": "Get",
+      "full_path": "public/settings"
+    },
+    {
+      "service": "services/core/content-service",
+      "method": "Get",
+      "full_path": "public/settings/:key"
+    },
+    {
+      "service": "services/core/content-service",
+      "method": "Get",
+      "full_path": "public/universes/:name/features"
+    },
+    {
+      "service": "services/core/media-service",
+      "method": "Get",
+      "full_path": "admin/stats"
+    },
+    {
+      "service": "services/core/media-service",
+      "method": "Get",
+      "full_path": "admin/uploads"
+    },
+    {
+      "service": "services/core/media-service",
+      "method": "Delete",
+      "full_path": "admin/uploads/:id"
+    },
+    {
+      "service": "services/core/media-service",
+      "method": "Get",
+      "full_path": "health"
+    },
+    {
+      "service": "services/core/media-service",
+      "method": "Get",
+      "full_path": "health/live"
+    },
+    {
+      "service": "services/core/media-service",
+      "method": "Get",
+      "full_path": "health/ready"
+    },
+    {
+      "service": "services/core/payment-service",
+      "method": "Get",
+      "full_path": "admin/stats"
+    },
+    {
+      "service": "services/core/payment-service",
+      "method": "Get",
+      "full_path": "admin/payments"
+    },
+    {
+      "service": "services/core/payment-service",
+      "method": "Get",
+      "full_path": "admin/payments/:paymentId"
+    },
+    {
+      "service": "services/core/payment-service",
+      "method": "Get",
+      "full_path": "admin/payment-intents"
+    },
+    {
+      "service": "services/core/payment-service",
+      "method": "Get",
+      "full_path": "admin/refunds"
+    },
+    {
+      "service": "services/core/payment-service",
+      "method": "Get",
+      "full_path": "admin/webhook-events"
+    },
+    {
+      "service": "services/core/payment-service",
+      "method": "Get",
+      "full_path": "health"
+    },
+    {
+      "service": "services/core/payment-service",
+      "method": "Get",
+      "full_path": "health/live"
+    },
+    {
+      "service": "services/core/payment-service",
+      "method": "Get",
+      "full_path": "health/ready"
+    },
+    {
+      "service": "services/core/payment-service",
+      "method": "Get",
+      "full_path": "metrics"
+    },
+    {
+      "service": "services/core/payment-service",
+      "method": "Post",
+      "full_path": "v1/payments/initialize"
+    },
+    {
+      "service": "services/core/payment-service",
+      "method": "Post",
+      "full_path": "v1/payments/verify"
+    },
+    {
+      "service": "services/core/payment-service",
+      "method": "Get",
+      "full_path": "v1/payments/history"
+    },
+    {
+      "service": "services/core/payment-service",
+      "method": "Get",
+      "full_path": "v1/payments/:id"
+    },
+    {
+      "service": "services/core/payment-service",
+      "method": "Post",
+      "full_path": "v1/payments/webhook"
+    },
+    {
+      "service": "services/core/payment-service",
+      "method": "Post",
+      "full_path": "v1/payments/refund-request"
+    },
+    {
+      "service": "services/core/payment-service",
+      "method": "Post",
+      "full_path": "webhooks/paystack"
+    },
+    {
+      "service": "services/core/payment-service",
+      "method": "Post",
+      "full_path": "webhooks/flutterwave"
+    },
+    {
+      "service": "services/core/search-service",
+      "method": "Get",
+      "full_path": "admin/stats"
+    },
+    {
+      "service": "services/core/search-service",
+      "method": "Get",
+      "full_path": "admin/queries"
+    },
+    {
+      "service": "services/core/search-service",
+      "method": "Get",
+      "full_path": "health"
+    },
+    {
+      "service": "services/core/search-service",
+      "method": "Get",
+      "full_path": "health/live"
+    },
+    {
+      "service": "services/core/search-service",
+      "method": "Get",
+      "full_path": "health/ready"
+    },
+    {
+      "service": "services/core/search-service",
+      "method": "Get",
+      "full_path": "v1/search"
+    },
+    {
+      "service": "services/core/search-service",
+      "method": "Get",
+      "full_path": "v1/search/faceted"
+    },
+    {
+      "service": "services/core/search-service",
+      "method": "Get",
+      "full_path": "v1/search/suggestions"
+    },
+    {
+      "service": "services/core/search-service",
+      "method": "Get",
+      "full_path": "v1/search/trending"
+    },
+    {
+      "service": "services/core/search-service",
+      "method": "Get",
+      "full_path": "v1/search/facets"
+    },
+    {
+      "service": "services/core/search-service",
+      "method": "Post",
+      "full_path": "v1/search/log"
+    },
+    {
+      "service": "services/core/user-service",
+      "method": "Get",
+      "full_path": "admin/stats"
+    },
+    {
+      "service": "services/core/user-service",
+      "method": "Get",
+      "full_path": "admin/subscriptions"
+    },
+    {
+      "service": "services/core/user-service",
+      "method": "Get",
+      "full_path": "admin/subscriptions/:subscriptionId"
+    },
+    {
+      "service": "services/core/user-service",
+      "method": "Put",
+      "full_path": "admin/subscriptions/:subscriptionId"
+    },
+    {
+      "service": "services/core/user-service",
+      "method": "Delete",
+      "full_path": "admin/subscriptions/:subscriptionId"
+    },
+    {
+      "service": "services/core/user-service",
+      "method": "Get",
+      "full_path": "admin/preferences/:userId"
+    },
+    {
+      "service": "services/core/user-service",
+      "method": "Put",
+      "full_path": "admin/preferences/:userId"
+    },
+    {
+      "service": "services/core/user-service",
+      "method": "Delete",
+      "full_path": "admin/watch-history/:userId"
+    },
+    {
+      "service": "services/core/user-service",
+      "method": "Delete",
+      "full_path": "admin/saved-items/:userId"
+    },
+    {
+      "service": "services/core/user-service",
+      "method": "Get",
+      "full_path": "admin/users/:id"
+    },
+    {
+      "service": "services/core/user-service",
+      "method": "Patch",
+      "full_path": "admin/users/:id"
+    },
+    {
+      "service": "services/core/user-service",
+      "method": "Post",
+      "full_path": "admin/users/:id/suspend"
+    },
+    {
+      "service": "services/core/user-service",
+      "method": "Patch",
+      "full_path": "admin/content/:id/moderate"
+    },
+    {
+      "service": "services/core/user-service",
+      "method": "Get",
+      "full_path": "admin/moderation/reports"
+    },
+    {
+      "service": "services/core/user-service",
+      "method": "Patch",
+      "full_path": "admin/moderation/reports/:id"
+    },
+    {
+      "service": "services/core/user-service",
+      "method": "Get",
+      "full_path": "admin/analytics"
+    },
+    {
+      "service": "services/core/user-service",
+      "method": "Get",
+      "full_path": "admin/audit-logs"
+    },
+    {
+      "service": "services/core/user-service",
+      "method": "Get",
+      "full_path": "admin/creators/verification"
+    },
+    {
+      "service": "services/core/user-service",
+      "method": "Patch",
+      "full_path": "admin/creators/:id/verify"
+    },
+    {
+      "service": "services/core/user-service",
+      "method": "Get",
+      "full_path": "health"
+    },
+    {
+      "service": "services/core/user-service",
+      "method": "Get",
+      "full_path": "health/live"
+    },
+    {
+      "service": "services/core/user-service",
+      "method": "Get",
+      "full_path": "health/ready"
+    },
+    {
+      "service": "services/core/user-service",
+      "method": "Post",
+      "full_path": "privacy/deletion-request"
+    },
+    {
+      "service": "services/core/user-service",
+      "method": "Delete",
+      "full_path": "privacy/data/:userId"
+    },
+    {
+      "service": "services/core/user-service",
+      "method": "Get",
+      "full_path": "privacy/data/:userId/export"
+    },
+    {
+      "service": "services/core/user-service",
+      "method": "Get",
+      "full_path": "privacy/deletion-status/:userId"
+    },
+    {
+      "service": "services/core/user-service",
+      "method": "Get",
+      "full_path": "v1/users/me"
+    },
+    {
+      "service": "services/core/user-service",
+      "method": "Patch",
+      "full_path": "v1/users/me"
+    },
+    {
+      "service": "services/core/user-service",
+      "method": "Get",
+      "full_path": "v1/users/:id"
+    },
+    {
+      "service": "services/core/user-service",
+      "method": "Post",
+      "full_path": "v1/users/:id/follow"
+    },
+    {
+      "service": "services/core/user-service",
+      "method": "Delete",
+      "full_path": "v1/users/:id/follow"
+    },
+    {
+      "service": "services/core/user-service",
+      "method": "Get",
+      "full_path": "v1/users/:id/followers"
+    },
+    {
+      "service": "services/core/user-service",
+      "method": "Get",
+      "full_path": "v1/users/:id/following"
+    },
+    {
+      "service": "services/core/user-service",
+      "method": "Get",
+      "full_path": "v1/users/me/preferences"
+    },
+    {
+      "service": "services/core/user-service",
+      "method": "Put",
+      "full_path": "v1/users/me/preferences"
+    },
+    {
+      "service": "services/core/user-service",
+      "method": "Get",
+      "full_path": "v1/users/me/history"
+    },
+    {
+      "service": "services/core/user-service",
+      "method": "Get",
+      "full_path": "v1/users/me/saved"
+    },
+    {
+      "service": "services/core/user-service",
+      "method": "Post",
+      "full_path": "v1/users/me/saved"
+    },
+    {
+      "service": "services/core/user-service",
+      "method": "Delete",
+      "full_path": "v1/users/me/saved/:contentId"
+    },
+    {
+      "service": "services/core/user-service",
+      "method": "Get",
+      "full_path": "v1/users/me/universe-affinity"
+    },
+    {
+      "service": "services/core/user-service",
+      "method": "Patch",
+      "full_path": "v1/users/me/universe-affinity"
+    },
+    {
+      "service": "services/core/user-service",
+      "method": "Post",
+      "full_path": "v1/users/me/complete-profile"
+    },
+    {
+      "service": "services/core/wallet-service",
+      "method": "Get",
+      "full_path": "admin/stats"
+    },
+    {
+      "service": "services/core/wallet-service",
+      "method": "Get",
+      "full_path": "admin/wallets"
+    },
+    {
+      "service": "services/core/wallet-service",
+      "method": "Get",
+      "full_path": "admin/wallets/:walletId"
+    },
+    {
+      "service": "services/core/wallet-service",
+      "method": "Get",
+      "full_path": "admin/wallets/user/:userId"
+    },
+    {
+      "service": "services/core/wallet-service",
+      "method": "Get",
+      "full_path": "admin/wallets/:walletId/transactions"
+    },
+    {
+      "service": "services/core/wallet-service",
+      "method": "Get",
+      "full_path": "health"
+    },
+    {
+      "service": "services/core/wallet-service",
+      "method": "Get",
+      "full_path": "health/live"
+    },
+    {
+      "service": "services/core/wallet-service",
+      "method": "Get",
+      "full_path": "health/ready"
+    },
+    {
+      "service": "services/core/wallet-service",
+      "method": "Get",
+      "full_path": "metrics"
+    },
+    {
+      "service": "services/core/wallet-service",
+      "method": "Get",
+      "full_path": "v1/wallet"
+    },
+    {
+      "service": "services/core/wallet-service",
+      "method": "Get",
+      "full_path": "v1/wallet/transactions"
+    },
+    {
+      "service": "services/core/wallet-service",
+      "method": "Get",
+      "full_path": "v1/wallet/summary"
+    },
+    {
+      "service": "services/core/wallet-service",
+      "method": "Post",
+      "full_path": "v1/wallet/fund"
+    },
+    {
+      "service": "services/core/wallet-service",
+      "method": "Post",
+      "full_path": "v1/wallet/redeem-reward"
+    },
+    {
+      "service": "services/core/wallet-service",
+      "method": "Post",
+      "full_path": "v1/wallet/bonus-credit"
+    },
+    {
+      "service": "services/core/wallet-service",
+      "method": "Post",
+      "full_path": "v1/wallet/promo-credit"
+    },
+    {
+      "service": "services/core/wallet-service",
+      "method": "Get",
+      "full_path": "v1/wallet/audit-trail"
+    },
+    {
+      "service": "services/core/wallet-service",
+      "method": "Post",
+      "full_path": "v1/wallet/debit"
+    },
+    {
+      "service": "services/core/wallet-service",
+      "method": "Post",
+      "full_path": "v1/wallet/credit"
+    },
+    {
+      "service": "services/core/wallet-service",
+      "method": "Post",
+      "full_path": "v1/wallet/withdraw"
+    },
+    {
+      "service": "services/core/wallet-service",
+      "method": "Post",
+      "full_path": "v1/wallet/transfer"
+    },
+    {
+      "service": "services/core/wallet-service",
+      "method": "Get",
+      "full_path": "v1/wallet/transactions/:id"
+    },
+    {
+      "service": "services/gateway/api-gateway",
+      "method": "Get",
+      "full_path": "health/circuit-breaker"
+    },
+    {
+      "service": "services/gateway/api-gateway",
+      "method": "Get",
+      "full_path": "health/circuit-breaker/:service"
+    },
+    {
+      "service": "services/gateway/api-gateway",
+      "method": "Post",
+      "full_path": "health/circuit-breaker/:service/reset"
+    },
+    {
+      "service": "services/gateway/api-gateway",
+      "method": "Get",
+      "full_path": "/health"
+    },
+    {
+      "service": "services/gateway/api-gateway",
+      "method": "Get",
+      "full_path": "/ready"
+    }
+  ]
+}

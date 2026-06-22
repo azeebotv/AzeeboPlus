@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 
-interface CreateChallengeInput {
+export interface CreateChallengeInput {
   title: string;
   description?: string;
   coverImage?: string;
@@ -13,7 +13,7 @@ interface CreateChallengeInput {
   endDate?: string;
 }
 
-interface ChallengeSubmissionInput {
+export interface ChallengeSubmissionInput {
   content: string;
   mediaUrl?: string;
 }
@@ -69,11 +69,24 @@ export class ChallengeService {
   }
 
   async createChallenge(userId: string, data: CreateChallengeInput) {
-    const slug = data.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    const slug = data.title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '');
 
     const challenge = await this.prisma.challenge.create({
       data: {
-        ...data,
+        title: data.title,
+        description: data.description || '',
+        coverImage: data.coverImage || '',
+        type: data.type || 'photo',
+        status: data.status || 'draft',
+        rules: data.rules || '',
+        prize: data.prize || '',
+        startDate: data.startDate ? new Date(data.startDate) : new Date(),
+        endDate: data.endDate
+          ? new Date(data.endDate)
+          : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
         slug,
         createdById: userId,
       },

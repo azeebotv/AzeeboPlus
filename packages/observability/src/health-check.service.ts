@@ -51,7 +51,12 @@ export class HealthCheckService {
     version: string,
     checks: Array<{
       name: string;
-      check: () => Promise<{ status: 'up' | 'down' | 'degraded'; message?: string; latencyMs?: number; metadata?: Record<string, unknown> }>;
+      check: () => Promise<{
+        status: 'up' | 'down' | 'degraded';
+        message?: string;
+        latencyMs?: number;
+        metadata?: Record<string, unknown>;
+      }>;
     }>
   ): Promise<HealthCheckResult> {
     const results = await Promise.all(
@@ -115,7 +120,9 @@ export class HealthCheckService {
     };
   }
 
-  async checkDatabase(prisma: { $queryRaw: (query: TemplateStringsArray, ...values: any[]) => Promise<any> }): Promise<{ status: 'up' | 'down' | 'degraded'; message?: string; latencyMs?: number }> {
+  async checkDatabase(prisma: {
+    $queryRaw: (query: TemplateStringsArray, ...values: any[]) => Promise<any>;
+  }): Promise<{ status: 'up' | 'down' | 'degraded'; message?: string; latencyMs?: number }> {
     const start = Date.now();
     try {
       await prisma.$queryRaw`SELECT 1`;
@@ -129,7 +136,9 @@ export class HealthCheckService {
     }
   }
 
-  async checkRedis(redisUrl?: string): Promise<{ status: 'up' | 'down' | 'degraded'; message?: string; latencyMs?: number }> {
+  async checkRedis(
+    redisUrl?: string
+  ): Promise<{ status: 'up' | 'down' | 'degraded'; message?: string; latencyMs?: number }> {
     const start = Date.now();
     try {
       if (!redisUrl) {
@@ -167,10 +176,18 @@ export class HealthCheckService {
       }
 
       if (response.status >= 500) {
-        return { status: 'down', message: `HTTP ${response.status}`, latencyMs: Date.now() - start };
+        return {
+          status: 'down',
+          message: `HTTP ${response.status}`,
+          latencyMs: Date.now() - start,
+        };
       }
 
-      return { status: 'degraded', message: `HTTP ${response.status}`, latencyMs: Date.now() - start };
+      return {
+        status: 'degraded',
+        message: `HTTP ${response.status}`,
+        latencyMs: Date.now() - start,
+      };
     } catch (error) {
       return {
         status: 'down',
@@ -184,7 +201,9 @@ export class HealthCheckService {
     return { status: 'ok' };
   }
 
-  async getReadiness(checks: Array<() => Promise<boolean>>): Promise<{ status: 'ok' | 'error'; message?: string }> {
+  async getReadiness(
+    checks: Array<() => Promise<boolean>>
+  ): Promise<{ status: 'ok' | 'error'; message?: string }> {
     const results = await Promise.all(checks.map((c) => c().catch(() => false)));
 
     if (results.every((r) => r)) {

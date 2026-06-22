@@ -25,7 +25,7 @@ async function bootstrap() {
         },
       },
       hsts: { maxAge: 31536000, includeSubDomains: true },
-    }),
+    })
   );
 
   // Global validation pipe
@@ -35,22 +35,16 @@ async function bootstrap() {
       transform: true,
       forbidNonWhitelisted: true,
       transformOptions: { enableImplicitConversion: true },
-    }),
+    })
   );
 
   // CORS configuration (fallback to localhost)
-  const allowedOrigins = process.env.ADMIN_ALLOWED_ORIGINS?.split(',') || [
-    'http://localhost:3016',
-  ];
+  const allowedOrigins = process.env.ADMIN_ALLOWED_ORIGINS?.split(',') || ['http://localhost:3016'];
   app.enableCors({
     origin: allowedOrigins,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: [
-      'Content-Type',
-      'Authorization',
-      'X-Requested-With',
-    ],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
     exposedHeaders: ['X-Total-Count', 'X-Page-Count'],
     maxAge: 86400,
   });

@@ -1,7 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { ApiResponseWrapper } from '@azeebo/shared-types';
 import { Prisma } from '@prisma/client';
@@ -61,10 +58,7 @@ export class AdminService {
     return ApiResponseWrapper.paginated(accounts, page, limit, total);
   }
 
-  async getRewardTransactions(
-    id: string,
-    options?: { page?: number; limit?: number },
-  ) {
+  async getRewardTransactions(id: string, options?: { page?: number; limit?: number }) {
     const account = await this.prisma.rewardAccount.findUnique({
       where: { id },
     });
@@ -135,7 +129,7 @@ export class AdminService {
       type?: string;
       isActive?: boolean;
       metadata?: Record<string, unknown>;
-    },
+    }
   ) {
     const existing = await this.prisma.mission.findUnique({ where: { id } });
     if (!existing) {

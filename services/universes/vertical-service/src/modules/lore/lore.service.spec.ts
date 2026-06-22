@@ -78,7 +78,9 @@ describe('LoreService', () => {
 
       await service.getEntries(1, 20, undefined, 'history');
 
-      expect((prismaService.loreEntry.findMany as jest.Mock).mock.calls[0][0].where.category).toBe('history');
+      expect((prismaService.loreEntry.findMany as jest.Mock).mock.calls[0][0].where.category).toBe(
+        'history'
+      );
     });
 
     it('should filter by importance', async () => {
@@ -87,7 +89,9 @@ describe('LoreService', () => {
 
       await service.getEntries(1, 20, undefined, undefined, 'high');
 
-      expect((prismaService.loreEntry.findMany as jest.Mock).mock.calls[0][0].where.importance).toBe('high');
+      expect(
+        (prismaService.loreEntry.findMany as jest.Mock).mock.calls[0][0].where.importance
+      ).toBe('high');
     });
   });
 
@@ -154,7 +158,9 @@ describe('LoreService', () => {
     it('should throw NotFoundException if lore not found', async () => {
       (prismaService.loreEntry.findUnique as jest.Mock).mockResolvedValue(null);
 
-      await expect(service.updateEntry('not-found', { title: 'Updated' })).rejects.toThrow(NotFoundException);
+      await expect(service.updateEntry('not-found', { title: 'Updated' })).rejects.toThrow(
+        NotFoundException
+      );
     });
   });
 

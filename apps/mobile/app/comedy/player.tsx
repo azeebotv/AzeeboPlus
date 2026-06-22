@@ -1,5 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Dimensions,
+  Alert,
+} from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { contentApi, type ContentItem, type Recommendation } from '../../src/api';
@@ -30,7 +38,7 @@ export default function ComedyClipPlayer() {
         setClip(clipData);
         const relatedRes = await contentApi.getTrendingContent(5);
         if (relatedRes.success && relatedRes.data) {
-          setRelated(relatedRes.data.filter(item => item.id !== clipData.id));
+          setRelated(relatedRes.data.filter((item) => item.id !== clipData.id));
         }
       } else {
         setError('No comedy clip available');
@@ -99,7 +107,11 @@ export default function ComedyClipPlayer() {
             </TouchableOpacity>
           </View>
           <View style={styles.durationBadge}>
-            <Text style={styles.durationText}>{clip.duration ? `${Math.floor(clip.duration / 60)}:${String(clip.duration % 60).padStart(2, '0')}` : '00:00'}</Text>
+            <Text style={styles.durationText}>
+              {clip.duration
+                ? `${Math.floor(clip.duration / 60)}:${String(clip.duration % 60).padStart(2, '0')}`
+                : '00:00'}
+            </Text>
           </View>
         </View>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
@@ -124,8 +136,12 @@ export default function ComedyClipPlayer() {
                 <Text style={styles.creatorAvatarEmoji}>{CLIP_DATA.creatorAvatar}</Text>
               </View>
               <View>
-                <Text style={[styles.creatorName, { color: isDark ? '#fff' : '#000' }]}>{clip.creator?.name || 'Unknown'}</Text>
-                <Text style={styles.creatorMeta}>{new Date(clip.createdAt).toLocaleDateString()}</Text>
+                <Text style={[styles.creatorName, { color: isDark ? '#fff' : '#000' }]}>
+                  {clip.creator?.name || 'Unknown'}
+                </Text>
+                <Text style={styles.creatorMeta}>
+                  {new Date(clip.createdAt).toLocaleDateString()}
+                </Text>
               </View>
             </View>
             <TouchableOpacity
@@ -143,13 +159,13 @@ export default function ComedyClipPlayer() {
           </Text>
 
           {clip.categories && clip.categories.length > 0 && (
-          <View style={styles.tagsRow}>
-            {clip.categories.map((cat) => (
-              <View key={cat.id} style={styles.tag}>
-                <Text style={styles.tagText}>#{cat.name}</Text>
-              </View>
-            ))}
-          </View>
+            <View style={styles.tagsRow}>
+              {clip.categories.map((cat) => (
+                <View key={cat.id} style={styles.tag}>
+                  <Text style={styles.tagText}>#{cat.name}</Text>
+                </View>
+              ))}
+            </View>
           )}
 
           <View style={styles.actionsRow}>
@@ -178,7 +194,9 @@ export default function ComedyClipPlayer() {
               <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
                 Comments
               </Text>
-              <View style={[styles.addCommentBar, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}>
+              <View
+                style={[styles.addCommentBar, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
+              >
                 <TextInput
                   style={[styles.commentInput, { color: isDark ? '#fff' : '#000' }]}
                   placeholder="Add a comment..."
@@ -188,7 +206,9 @@ export default function ComedyClipPlayer() {
                   <Text style={styles.postButtonText}>Post</Text>
                 </TouchableOpacity>
               </View>
-              <Text style={[styles.commentEmpty, { color: isDark ? '#888' : '#999' }]}>No comments yet</Text>
+              <Text style={[styles.commentEmpty, { color: isDark ? '#888' : '#999' }]}>
+                No comments yet
+              </Text>
             </View>
           )}
 
@@ -196,18 +216,31 @@ export default function ComedyClipPlayer() {
             <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
               Related Clips
             </Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.relatedList}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.relatedList}
+            >
               {related.map((item) => (
-                <TouchableOpacity key={item.id} style={[styles.relatedCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}>
+                <TouchableOpacity
+                  key={item.id}
+                  style={[styles.relatedCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
+                >
                   <View style={styles.relatedThumbnail}>
                     <Text style={styles.relatedEmoji}>😂</Text>
                     {item.duration && (
-                    <View style={styles.relatedDuration}>
-                      <Text style={styles.relatedDurationText}>{Math.floor(item.duration / 60)}:{String(item.duration % 60).padStart(2, '0')}</Text>
-                    </View>
+                      <View style={styles.relatedDuration}>
+                        <Text style={styles.relatedDurationText}>
+                          {Math.floor(item.duration / 60)}:
+                          {String(item.duration % 60).padStart(2, '0')}
+                        </Text>
+                      </View>
                     )}
                   </View>
-                  <Text style={[styles.relatedTitle, { color: isDark ? '#fff' : '#000' }]} numberOfLines={2}>
+                  <Text
+                    style={[styles.relatedTitle, { color: isDark ? '#fff' : '#000' }]}
+                    numberOfLines={2}
+                  >
                     {item.title}
                   </Text>
                 </TouchableOpacity>

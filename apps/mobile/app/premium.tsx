@@ -1,8 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  View, Text, StyleSheet, ScrollView,
-  TouchableOpacity, Alert,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { subscriptionApi } from '../src/api';
 import { logger } from '../src/utils/logger';
@@ -46,15 +43,17 @@ export default function PremiumAccessScreen() {
       ]);
 
       if (plansResponse.success && plansResponse.data) {
-        setPlans(plansResponse.data.map((plan: any) => ({
-          id: plan.id,
-          name: plan.name,
-          description: plan.description,
-          price: plan.price,
-          duration: plan.duration === 7 ? 'weekly' : plan.duration === 30 ? 'monthly' : 'yearly',
-          features: plan.features,
-          isPopular: plan.tier === 'premium',
-        })));
+        setPlans(
+          plansResponse.data.map((plan: any) => ({
+            id: plan.id,
+            name: plan.name,
+            description: plan.description,
+            price: plan.price,
+            duration: plan.duration === 7 ? 'weekly' : plan.duration === 30 ? 'monthly' : 'yearly',
+            features: plan.features,
+            isPopular: plan.tier === 'premium',
+          }))
+        );
       }
 
       if (statusResponse.success && statusResponse.data) {
@@ -79,11 +78,9 @@ export default function PremiumAccessScreen() {
     try {
       const response = await subscriptionApi.subscribe({ planId, autoRenew: true });
       if (response.success) {
-        Alert.alert(
-          'Success',
-          'You are now a premium member!',
-          [{ text: 'OK', onPress: () => loadPremiumData() }]
-        );
+        Alert.alert('Success', 'You are now a premium member!', [
+          { text: 'OK', onPress: () => loadPremiumData() },
+        ]);
       }
     } catch (error: any) {
       Alert.alert('Error', error.message || 'Failed to subscribe');
@@ -119,10 +116,14 @@ export default function PremiumAccessScreen() {
 
   const getDurationLabel = (duration: string): string => {
     switch (duration) {
-      case 'weekly': return '/week';
-      case 'monthly': return '/month';
-      case 'yearly': return '/year';
-      default: return '';
+      case 'weekly':
+        return '/week';
+      case 'monthly':
+        return '/month';
+      case 'yearly':
+        return '/year';
+      default:
+        return '';
     }
   };
 
@@ -178,10 +179,7 @@ export default function PremiumAccessScreen() {
         {plans.map((plan) => (
           <TouchableOpacity
             key={plan.id}
-            style={[
-              styles.planCard,
-              plan.isPopular && styles.planCardPopular,
-            ]}
+            style={[styles.planCard, plan.isPopular && styles.planCardPopular]}
             onPress={() => handleSubscribe(plan.id)}
             disabled={isPurchasing}
           >
@@ -207,10 +205,7 @@ export default function PremiumAccessScreen() {
               ))}
             </View>
             <TouchableOpacity
-              style={[
-                styles.subscribeButton,
-                plan.isPopular && styles.subscribeButtonPopular,
-              ]}
+              style={[styles.subscribeButton, plan.isPopular && styles.subscribeButtonPopular]}
               onPress={() => handleSubscribe(plan.id)}
               disabled={isPurchasing}
             >

@@ -1,0 +1,10 @@
+===== services/universes/lifestyle-service/src/modules/music/music.controller.ts =====
+34:@Controller('v1/lifestyle/music')
+38:  @Get()
+51:  @Get('trending')
+58:  @Get('genres')
+65:  @Get(':slug')
+72:  @Post()
+79:  @Patch(':id')
+89:  @Delete(':id')
+

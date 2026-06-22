@@ -1,0 +1,11 @@
+===== services/universes/vertical-service/src/modules/titles/titles.controller.ts =====
+7:@Controller('v1/vertical/titles')
+11:  @Get()
+24:  @Get('featured')
+31:  @Get(':slug')
+38:  @Post()
+45:  @Patch(':id')
+55:  @Delete(':id')
+62:  @Post(':titleId/chapters')
+72:  @Get(':titleId/chapters/:number')
+

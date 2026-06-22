@@ -63,19 +63,25 @@ export default function AddFundsScreen() {
     fetchProviders();
   }, []);
 
-  const paymentMethods = providers.length > 0
-    ? providers.map((p) => ({
-        id: p.provider,
-        name: PAYMENT_METHOD_META[p.provider]?.name || p.name,
-        icon: PAYMENT_METHOD_META[p.provider]?.icon || '💳',
-        description: PAYMENT_METHOD_META[p.provider]?.description || '',
-      }))
-    : Object.entries(PAYMENT_METHOD_META).map(([id, meta]) => ({ id, ...meta }));
+  const paymentMethods =
+    providers.length > 0
+      ? providers.map((p) => ({
+          id: p.provider,
+          name: PAYMENT_METHOD_META[p.provider]?.name || p.name,
+          icon: PAYMENT_METHOD_META[p.provider]?.icon || '💳',
+          description: PAYMENT_METHOD_META[p.provider]?.description || '',
+        }))
+      : Object.entries(PAYMENT_METHOD_META).map(([id, meta]) => ({ id, ...meta }));
 
   const allPaymentMethods = isAppleGooglePayAvailable
     ? [
         ...paymentMethods,
-        { id: 'apple_google_pay', name: paymentMethodLabel, icon: Platform.OS === 'ios' ? '🍎' : '🤖', description: `Pay with ${paymentMethodLabel}` },
+        {
+          id: 'apple_google_pay',
+          name: paymentMethodLabel,
+          icon: Platform.OS === 'ios' ? '🍎' : '🤖',
+          description: `Pay with ${paymentMethodLabel}`,
+        },
       ]
     : paymentMethods;
 
@@ -117,17 +123,12 @@ export default function AddFundsScreen() {
         const { authorizationUrl } = response.data;
 
         if (authorizationUrl) {
-          Alert.alert(
-            'Payment Initiated',
-            'You will be redirected to complete your payment.',
-            [
-              {
-                text: 'Continue',
-                onPress: () => {
-                },
-              },
-            ]
-          );
+          Alert.alert('Payment Initiated', 'You will be redirected to complete your payment.', [
+            {
+              text: 'Continue',
+              onPress: () => {},
+            },
+          ]);
         } else {
           Alert.alert('Success', 'Wallet funded successfully!', [
             { text: 'OK', onPress: () => router.back() },
@@ -135,10 +136,7 @@ export default function AddFundsScreen() {
         }
       }
     } catch (error: any) {
-      Alert.alert(
-        'Error',
-        error?.message || 'Failed to add funds. Please try again.'
-      );
+      Alert.alert('Error', error?.message || 'Failed to add funds. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -150,16 +148,11 @@ export default function AddFundsScreen() {
     const result = await processPayment(numAmount, 'NGN', 'Wallet funding');
 
     if (result.success) {
-      Alert.alert(
-        'Success',
-        'Wallet funded successfully!',
-        [{ text: 'OK', onPress: () => router.back() }]
-      );
+      Alert.alert('Success', 'Wallet funded successfully!', [
+        { text: 'OK', onPress: () => router.back() },
+      ]);
     } else {
-      Alert.alert(
-        'Payment Failed',
-        result.error || 'Failed to process payment. Please try again.'
-      );
+      Alert.alert('Payment Failed', result.error || 'Failed to process payment. Please try again.');
     }
   };
 
@@ -175,20 +168,20 @@ export default function AddFundsScreen() {
   }
 
   if (providersError) {
-    return <ErrorState title="Failed to load payment methods" description={providersError} onRetry={fetchProviders} />;
+    return (
+      <ErrorState
+        title="Failed to load payment methods"
+        description={providersError}
+        onRetry={fetchProviders}
+      />
+    );
   }
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => router.back()}
-          >
+          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
             <Text style={styles.backButtonText}>←</Text>
           </TouchableOpacity>
           <Text style={styles.title}>Add Funds</Text>
@@ -258,19 +251,14 @@ export default function AddFundsScreen() {
                     selectedMethod === method.id && styles.methodRadioSelected,
                   ]}
                 >
-                  {selectedMethod === method.id && (
-                    <View style={styles.methodRadioInner} />
-                  )}
+                  {selectedMethod === method.id && <View style={styles.methodRadioInner} />}
                 </View>
               </TouchableOpacity>
             ))}
           </View>
 
           <TouchableOpacity
-            style={[
-              styles.addButton,
-              isLoading && styles.addButtonDisabled,
-            ]}
+            style={[styles.addButton, isLoading && styles.addButtonDisabled]}
             onPress={handleAddFunds}
             disabled={isLoading}
           >
@@ -286,10 +274,8 @@ export default function AddFundsScreen() {
           <View style={styles.infoCard}>
             <Text style={styles.infoTitle}>ℹ️ Information</Text>
             <Text style={styles.infoText}>
-              • Minimum deposit: ₦100{'\n'}
-              • Maximum deposit: ₦1,000,000{'\n'}
-              • Funds are added instantly{'\n'}
-              • Transaction fees may apply
+              • Minimum deposit: ₦100{'\n'}• Maximum deposit: ₦1,000,000{'\n'}• Funds are added
+              instantly{'\n'}• Transaction fees may apply
             </Text>
           </View>
         </View>

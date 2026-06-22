@@ -161,20 +161,26 @@ function validateProductionEnvironment(env: EnvironmentVariables): void {
 
   // Check AWS credentials if S3 bucket is configured
   if (env.AWS_S3_BUCKET && (!env.AWS_ACCESS_KEY_ID || !env.AWS_SECRET_ACCESS_KEY)) {
-    errors.push('AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY must be configured when AWS_S3_BUCKET is set');
+    errors.push(
+      'AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY must be configured when AWS_S3_BUCKET is set'
+    );
   }
 
   // Check notification provider credentials
   if (!env.SENDGRID_API_KEY && !env.TWILIO_ACCOUNT_SID) {
-    errors.push('At least one notification provider (SendGrid or Twilio) must be configured in production');
+    errors.push(
+      'At least one notification provider (SendGrid or Twilio) must be configured in production'
+    );
   }
 
   if (env.TWILIO_ACCOUNT_SID && (!env.TWILIO_AUTH_TOKEN || !env.TWILIO_PHONE_NUMBER)) {
-    errors.push('TWILIO_AUTH_TOKEN and TWILIO_PHONE_NUMBER must be configured when TWILIO_ACCOUNT_SID is set');
+    errors.push(
+      'TWILIO_AUTH_TOKEN and TWILIO_PHONE_NUMBER must be configured when TWILIO_ACCOUNT_SID is set'
+    );
   }
 
   // Check that service URLs are not localhost
-  const serviceUrls = [
+  const serviceUrls: Array<keyof EnvironmentVariables> = [
     'AUTH_SERVICE_URL',
     'USER_SERVICE_URL',
     'WALLET_SERVICE_URL',
@@ -194,8 +200,8 @@ function validateProductionEnvironment(env: EnvironmentVariables): void {
   ];
 
   serviceUrls.forEach((urlName) => {
-    const url = (env as any)[urlName];
-    if (url && (url.includes('localhost') || url.includes('127.0.0.1'))) {
+    const url = env[urlName];
+    if (typeof url === 'string' && (url.includes('localhost') || url.includes('127.0.0.1'))) {
       errors.push(`${urlName} cannot point to localhost in production`);
     }
   });

@@ -87,14 +87,10 @@ const QUEUE_CONFIG = {
       { name: 'payments', ...QUEUE_CONFIG.payments },
       { name: 'emails', ...QUEUE_CONFIG.emails },
       { name: 'analytics', ...QUEUE_CONFIG.analytics },
-      { name: 'content-processing', ...QUEUE_CONFIG['content-processing'] },
+      { name: 'content-processing', ...QUEUE_CONFIG['content-processing'] }
     ),
   ],
-  providers: [
-    NotificationProcessor,
-    PaymentProcessor,
-    EmailProcessor,
-  ],
+  providers: [NotificationProcessor, PaymentProcessor, EmailProcessor],
 })
 export class AppModule {}
 
@@ -107,32 +103,36 @@ async function bootstrap() {
 
   app.useGlobalInterceptors(new LoggingInterceptor());
 
-  app.use(helmet({
-    contentSecurityPolicy: {
-      directives: {
-        defaultSrc: ["'self'"],
-        styleSrc: ["'self'", "'unsafe-inline'"],
-        imgSrc: ["'self'", 'data:', 'https:'],
-        scriptSrc: ["'self'"],
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          styleSrc: ["'self'", "'unsafe-inline'"],
+          imgSrc: ["'self'", 'data:', 'https:'],
+          scriptSrc: ["'self'"],
+        },
       },
-    },
-    hsts: {
-      maxAge: 31536000,
-      includeSubDomains: true,
-    },
-  }));
+      hsts: {
+        maxAge: 31536000,
+        includeSubDomains: true,
+      },
+    })
+  );
 
-  app.useGlobalPipes(new ValidationPipe({
-    whitelist: true,
-    transform: true,
-    forbidNonWhitelisted: true,
-  }));
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      transform: true,
+      forbidNonWhitelisted: true,
+    })
+  );
 
   if (!process.env.ALLOWED_ORIGINS) {
     throw new Error('ALLOWED_ORIGINS environment variable must be set');
   }
   app.enableCors({
-    origin: process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim()),
+    origin: process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim()),
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
   });

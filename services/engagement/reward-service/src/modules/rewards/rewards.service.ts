@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
 import { RewardResponse } from './interfaces/reward-response.interface';
 
@@ -14,9 +15,14 @@ interface MissionWithCompletion {
 
 @Injectable()
 export class RewardsService {
-  private readonly defaultPaginationLimit = 100;
+  private readonly defaultPaginationLimit: number;
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly configService: ConfigService
+  ) {
+    this.defaultPaginationLimit = this.configService.get<number>('DEFAULT_PAGINATION_LIMIT', 100);
+  }
 
   async getRewardAccount(userId: string): Promise<RewardResponse> {
     const rewardAccount = await this.prisma.rewardAccount.findUnique({
@@ -479,7 +485,7 @@ export class RewardsService {
     return {
       success: true,
       data: {
-        history: ledger.map(entry => ({
+        history: ledger.map((entry) => ({
           id: entry.id,
           points: entry.points,
           type: entry.type,

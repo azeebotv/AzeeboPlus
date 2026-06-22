@@ -14,7 +14,11 @@ import {
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 
-import { ChallengeService } from './challenge.service';
+import {
+  ChallengeService,
+  CreateChallengeInput,
+  ChallengeSubmissionInput,
+} from './challenge.service';
 
 @ApiTags('Challenges')
 @Controller('challenges')
@@ -54,7 +58,7 @@ export class ChallengeController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async createChallenge(
     @Request() req: { user: { sub: string } },
-    @Body() data: Record<string, unknown>
+    @Body() data: CreateChallengeInput
   ) {
     return this.challengeService.createChallenge(req.user.sub, data);
   }
@@ -69,7 +73,7 @@ export class ChallengeController {
   async submitToChallenge(
     @Request() req: { user: { sub: string } },
     @Param('id') challengeId: string,
-    @Body() data: Record<string, unknown>
+    @Body() data: ChallengeSubmissionInput
   ) {
     return this.challengeService.submitToChallenge(challengeId, req.user.sub, data);
   }

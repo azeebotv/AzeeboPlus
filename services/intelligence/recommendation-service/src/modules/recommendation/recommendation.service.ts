@@ -398,7 +398,9 @@ export class RecommendationService {
     const [user, watchHistory, payments, rewards] = await Promise.all([
       this.prisma.user.findUnique({ where: { id: userId } }),
       this.prisma.watchHistory.count({ where: { userId, watchedAt: { gte: thirtyDaysAgo } } }),
-      this.prisma.paymentIntent.count({ where: { userId, status: 'completed', createdAt: { gte: thirtyDaysAgo } } }),
+      this.prisma.paymentIntent.count({
+        where: { userId, status: 'completed', createdAt: { gte: thirtyDaysAgo } },
+      }),
       this.prisma.pointsLedger.aggregate({
         _sum: { points: true },
         where: { userId, type: 'credit', createdAt: { gte: thirtyDaysAgo } },
@@ -407,7 +409,9 @@ export class RecommendationService {
     const subscriptions = 0; // Subscription model not available in this service
 
     const totalPoints = rewards._sum.points || 0;
-    const daysSinceSignup = Math.floor((Date.now() - (user?.createdAt?.getTime() || Date.now())) / (1000 * 60 * 60 * 24));
+    const daysSinceSignup = Math.floor(
+      (Date.now() - (user?.createdAt?.getTime() || Date.now())) / (1000 * 60 * 60 * 24)
+    );
 
     let segment: UserSegment;
 
@@ -416,35 +420,60 @@ export class RecommendationService {
         segmentId: 'power_user',
         name: 'Power User',
         description: 'Highly engaged and monetized user',
-        characteristics: { watchCount: watchHistory, paymentCount: payments, hasSubscription: subscriptions > 0, pointsEarned: totalPoints },
+        characteristics: {
+          watchCount: watchHistory,
+          paymentCount: payments,
+          hasSubscription: subscriptions > 0,
+          pointsEarned: totalPoints,
+        },
       };
     } else if (watchHistory >= 10 && totalPoints >= 100) {
       segment = {
         segmentId: 'engaged',
         name: 'Engaged User',
         description: 'Regular active user with moderate engagement',
-        characteristics: { watchCount: watchHistory, paymentCount: payments, hasSubscription: subscriptions > 0, pointsEarned: totalPoints },
+        characteristics: {
+          watchCount: watchHistory,
+          paymentCount: payments,
+          hasSubscription: subscriptions > 0,
+          pointsEarned: totalPoints,
+        },
       };
     } else if (watchHistory >= 3 || payments >= 1) {
       segment = {
         segmentId: 'casual',
         name: 'Casual User',
         description: 'Occasional user with light engagement',
-        characteristics: { watchCount: watchHistory, paymentCount: payments, hasSubscription: subscriptions > 0, pointsEarned: totalPoints },
+        characteristics: {
+          watchCount: watchHistory,
+          paymentCount: payments,
+          hasSubscription: subscriptions > 0,
+          pointsEarned: totalPoints,
+        },
       };
     } else if (daysSinceSignup < 7) {
       segment = {
         segmentId: 'new',
         name: 'New User',
         description: 'Recently registered user',
-        characteristics: { watchCount: watchHistory, paymentCount: payments, daysSinceSignup, pointsEarned: totalPoints },
+        characteristics: {
+          watchCount: watchHistory,
+          paymentCount: payments,
+          daysSinceSignup,
+          pointsEarned: totalPoints,
+        },
       };
     } else {
       segment = {
         segmentId: 'dormant',
         name: 'Dormant User',
         description: 'User with little to no recent activity',
-        characteristics: { watchCount: watchHistory, paymentCount: payments, daysSinceSignup, pointsEarned: totalPoints },
+        characteristics: {
+          watchCount: watchHistory,
+          paymentCount: payments,
+          daysSinceSignup,
+          pointsEarned: totalPoints,
+        },
       };
     }
 
@@ -459,7 +488,11 @@ export class RecommendationService {
       this.prisma.creatorProfile.findUnique({ where: { userId: creatorId } }),
       this.prisma.contentItem.count({ where: { creatorId } }),
       this.prisma.productEvent.count({
-        where: { type: 'content_view', metadata: { path: ['creatorId'], equals: creatorId }, timestamp: { gte: thirtyDaysAgo } },
+        where: {
+          type: 'content_view',
+          metadata: { path: ['creatorId'], equals: creatorId },
+          timestamp: { gte: thirtyDaysAgo },
+        },
       }),
     ]);
     const followers = 0; // Follower model not available in this service
@@ -506,7 +539,9 @@ export class RecommendationService {
       this.prisma.productEvent.count({ where: { userId, timestamp: { gte: sevenDaysAgo } } }),
       this.prisma.productEvent.findFirst({ where: { userId }, orderBy: { timestamp: 'desc' } }),
       this.prisma.paymentIntent.count({ where: { userId, status: 'completed' } }),
-      this.prisma.pointsLedger.count({ where: { userId, type: 'credit', createdAt: { gte: thirtyDaysAgo } } }),
+      this.prisma.pointsLedger.count({
+        where: { userId, type: 'credit', createdAt: { gte: thirtyDaysAgo } },
+      }),
     ]);
     const subscriptions = 0; // Subscription model not available in this service
 
@@ -545,7 +580,9 @@ export class RecommendationService {
       factors.push('No rewards earned recently');
     }
 
-    const daysSinceSignup = Math.floor((Date.now() - (user?.createdAt?.getTime() || Date.now())) / (1000 * 60 * 60 * 24));
+    const daysSinceSignup = Math.floor(
+      (Date.now() - (user?.createdAt?.getTime() || Date.now())) / (1000 * 60 * 60 * 24)
+    );
     if (daysSinceSignup < 7) {
       riskScore -= 10;
     }
@@ -574,21 +611,31 @@ export class RecommendationService {
     };
   }
 
-  async getMonetizationInsights(userId: string): Promise<{ success: boolean; data?: MonetizationInsight }> {
+  async getMonetizationInsights(
+    userId: string
+  ): Promise<{ success: boolean; data?: MonetizationInsight }> {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
     const [payments, watchHistory, rewards, user] = await Promise.all([
-      this.prisma.paymentIntent.aggregate({ _sum: { amount: true }, where: { userId, status: 'completed' } }),
+      this.prisma.paymentIntent.aggregate({
+        _sum: { amount: true },
+        where: { userId, status: 'completed' },
+      }),
       this.prisma.watchHistory.count({ where: { userId, watchedAt: { gte: thirtyDaysAgo } } }),
-      this.prisma.pointsLedger.aggregate({ _sum: { points: true }, where: { userId, type: 'credit' } }),
+      this.prisma.pointsLedger.aggregate({
+        _sum: { points: true },
+        where: { userId, type: 'credit' },
+      }),
       this.prisma.user.findUnique({ where: { id: userId } }),
     ]);
     const subscriptions = 0; // Subscription model not available in this service
 
     const totalSpent = Number(payments._sum.amount) || 0;
     const totalPoints = rewards._sum.points || 0;
-    const daysSinceSignup = Math.floor((Date.now() - (user?.createdAt?.getTime() || Date.now())) / (1000 * 60 * 60 * 24));
+    const daysSinceSignup = Math.floor(
+      (Date.now() - (user?.createdAt?.getTime() || Date.now())) / (1000 * 60 * 60 * 24)
+    );
 
     const avgMonthlySpend = totalSpent / Math.max(1, Math.ceil(daysSinceSignup / 30));
     const engagementRate = watchHistory / Math.max(1, daysSinceSignup);
@@ -601,22 +648,38 @@ export class RecommendationService {
     if (avgMonthlySpend >= 5000 && engagementRate >= 2) {
       predictedLTV = avgMonthlySpend * 24;
       optimalPricePoint = 5000;
-      recommendedActions = ['Offer premium subscriptions', 'Promote exclusive content', 'Suggest creator tips'];
+      recommendedActions = [
+        'Offer premium subscriptions',
+        'Promote exclusive content',
+        'Suggest creator tips',
+      ];
       segment = 'high_value';
     } else if (avgMonthlySpend >= 1000 || subscriptions >= 1) {
       predictedLTV = avgMonthlySpend * 18;
       optimalPricePoint = 2000;
-      recommendedActions = ['Promote annual subscriptions', 'Offer bundled passes', 'Highlight loyalty rewards'];
+      recommendedActions = [
+        'Promote annual subscriptions',
+        'Offer bundled passes',
+        'Highlight loyalty rewards',
+      ];
       segment = 'medium_value';
     } else if (watchHistory >= 10 || totalPoints >= 50) {
       predictedLTV = avgMonthlySpend * 12 + 5000;
       optimalPricePoint = 1000;
-      recommendedActions = ['Offer introductory discounts', 'Promote freemium features', 'Suggest first purchase bonuses'];
+      recommendedActions = [
+        'Offer introductory discounts',
+        'Promote freemium features',
+        'Suggest first purchase bonuses',
+      ];
       segment = 'potential_value';
     } else {
       predictedLTV = avgMonthlySpend * 6;
       optimalPricePoint = 500;
-      recommendedActions = ['Onboard with free content', 'Highlight value proposition', 'Send welcome offers'];
+      recommendedActions = [
+        'Onboard with free content',
+        'Highlight value proposition',
+        'Send welcome offers',
+      ];
       segment = 'new_user';
     }
 
@@ -632,9 +695,12 @@ export class RecommendationService {
     };
   }
 
-  async assessFraudRisk(
-    data: { userId?: string; contentId?: string; transactionId?: string; voteActivity?: unknown }
-  ): Promise<{ success: boolean; data?: FraudRisk }> {
+  async assessFraudRisk(data: {
+    userId?: string;
+    contentId?: string;
+    transactionId?: string;
+    voteActivity?: unknown;
+  }): Promise<{ success: boolean; data?: FraudRisk }> {
     const { userId, contentId, transactionId } = data;
 
     const indicators: { name: string; score: number; description: string }[] = [];
@@ -642,43 +708,70 @@ export class RecommendationService {
 
     if (userId) {
       const user = await this.prisma.user.findUnique({ where: { id: userId } });
-      const daysSinceSignup = Math.floor((Date.now() - (user?.createdAt?.getTime() || Date.now())) / (1000 * 60 * 60 * 24));
+      const daysSinceSignup = Math.floor(
+        (Date.now() - (user?.createdAt?.getTime() || Date.now())) / (1000 * 60 * 60 * 24)
+      );
 
       if (daysSinceSignup < 1) {
         riskScore += 25;
-        indicators.push({ name: 'new_account', score: 25, description: 'Account created within last 24 hours' });
+        indicators.push({
+          name: 'new_account',
+          score: 25,
+          description: 'Account created within last 24 hours',
+        });
       }
 
       // Vote model not available in this service - skipping vote-based risk
 
-      const paymentCount = await this.prisma.paymentIntent.count({ where: { userId, createdAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) } } });
+      const paymentCount = await this.prisma.paymentIntent.count({
+        where: { userId, createdAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) } },
+      });
       if (paymentCount > 5) {
         riskScore += 15;
-        indicators.push({ name: 'rapid_payments', score: 15, description: 'Multiple payments in short period' });
+        indicators.push({
+          name: 'rapid_payments',
+          score: 15,
+          description: 'Multiple payments in short period',
+        });
       }
     }
 
     if (contentId) {
-      const content = await this.prisma.contentItem.findUnique({ where: { id: contentId }, include: { creator: true } });
+      const content = await this.prisma.contentItem.findUnique({
+        where: { id: contentId },
+        include: { creator: true },
+      });
       if (content && content.createdAt && content.creator) {
-        const hoursSinceUpload = Math.floor((Date.now() - content.createdAt.getTime()) / (1000 * 60 * 60));
+        const hoursSinceUpload = Math.floor(
+          (Date.now() - content.createdAt.getTime()) / (1000 * 60 * 60)
+        );
         if (hoursSinceUpload < 1) {
           const viewCount = await this.prisma.productEvent.count({
             where: { type: 'content_view', metadata: { path: ['contentId'], equals: contentId } },
           });
           if (viewCount > 100) {
             riskScore += 30;
-            indicators.push({ name: 'rapid_views', score: 30, description: 'Abnormally high views for new content' });
+            indicators.push({
+              name: 'rapid_views',
+              score: 30,
+              description: 'Abnormally high views for new content',
+            });
           }
         }
       }
     }
 
     if (transactionId) {
-      const transaction = await this.prisma.paymentIntent.findUnique({ where: { id: transactionId } });
+      const transaction = await this.prisma.paymentIntent.findUnique({
+        where: { id: transactionId },
+      });
       if (transaction && transaction.amount && Number(transaction.amount) > 100000) {
         riskScore += 20;
-        indicators.push({ name: 'large_transaction', score: 20, description: 'Transaction amount exceeds normal limits' });
+        indicators.push({
+          name: 'large_transaction',
+          score: 20,
+          description: 'Transaction amount exceeds normal limits',
+        });
       }
     }
 
@@ -701,7 +794,10 @@ export class RecommendationService {
     };
   }
 
-  async getPersonalizedFeed(userId: string, limit = 20): Promise<{ success: boolean; data?: RecommendationOutput[] }> {
+  async getPersonalizedFeed(
+    userId: string,
+    limit = 20
+  ): Promise<{ success: boolean; data?: RecommendationOutput[] }> {
     const segmentResult = await this.getUserSegment(userId);
     const churnResult = await this.getChurnRisk(userId);
 
@@ -714,9 +810,15 @@ export class RecommendationService {
     const recommendations = await this.getContentRecommendations(baseInput);
 
     if (segmentResult.data?.segmentId === 'power_user') {
-      const crossUniverse = await this.getCrossUniverseRecommendations(userId, Math.floor(limit * 0.3));
+      const crossUniverse = await this.getCrossUniverseRecommendations(
+        userId,
+        Math.floor(limit * 0.3)
+      );
       if (crossUniverse.data) {
-        recommendations.data = [...(recommendations.data || []).slice(0, Math.floor(limit * 0.7)), ...crossUniverse.data];
+        recommendations.data = [
+          ...(recommendations.data || []).slice(0, Math.floor(limit * 0.7)),
+          ...crossUniverse.data,
+        ];
       }
     }
 

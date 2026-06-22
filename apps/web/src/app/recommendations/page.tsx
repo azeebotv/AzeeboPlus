@@ -77,19 +77,26 @@ export default function RecommendationsPage(): JSX.Element {
           <div className="text-center py-20">
             <div className="text-6xl mb-4">🎯</div>
             <h2 className="text-xl font-bold text-foreground mb-2">No recommendations yet</h2>
-            <p className="text-muted-foreground">Interact with more content to get personalized suggestions</p>
+            <p className="text-muted-foreground">
+              Interact with more content to get personalized suggestions
+            </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {recommendations.map((rec) => (
-              <div key={rec.id} className="bg-card rounded-xl border border-border overflow-hidden hover:shadow-lg transition-shadow">
+              <div
+                key={rec.id}
+                className="bg-card rounded-xl border border-border overflow-hidden hover:shadow-lg transition-shadow"
+              >
                 <div className="h-40 bg-muted relative">
                   <span className="absolute top-2 left-2 bg-primary text-white text-xs font-bold px-2 py-1 rounded">
                     {rec.type.toUpperCase()}
                   </span>
                 </div>
                 <div className="p-4">
-                  <h3 className="text-lg font-bold text-foreground mb-2 line-clamp-2">{rec.title}</h3>
+                  <h3 className="text-lg font-bold text-foreground mb-2 line-clamp-2">
+                    {rec.title}
+                  </h3>
                   <p className="text-sm text-muted-foreground mb-3">{rec.reason}</p>
                   <div className="flex items-center gap-2">
                     <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">

@@ -5,9 +5,23 @@ import { useRouter } from 'expo-router';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
 import { apiClient } from '../../src/api/client';
 
-interface MovieItem { id: string; title: string; genre: string; rating: string; thumbnail?: string; }
-interface MovieDetail extends MovieItem { duration?: string; }
-interface PassData { id: string; name: string; price: string; period: string; features: string[]; }
+interface MovieItem {
+  id: string;
+  title: string;
+  genre: string;
+  rating: string;
+  thumbnail?: string;
+}
+interface MovieDetail extends MovieItem {
+  duration?: string;
+}
+interface PassData {
+  id: string;
+  name: string;
+  price: string;
+  period: string;
+  features: string[];
+}
 
 export default function MoviesUniverseHome() {
   const colorScheme = useColorScheme();
@@ -32,12 +46,14 @@ export default function MoviesUniverseHome() {
         apiClient.get<any>('/v1/movies/hollywood'),
         apiClient.get<any>('/v1/movies/passes'),
       ]);
-      const featured = Array.isArray(featuredRes) ? featuredRes[0] : featuredRes?.data?.[0] ?? null;
+      const featured = Array.isArray(featuredRes)
+        ? featuredRes[0]
+        : (featuredRes?.data?.[0] ?? null);
       setFeaturedMovie(featured ?? null);
-      setTrendingMovies(Array.isArray(trendingRes) ? trendingRes : trendingRes?.data ?? []);
-      setAfricanCinema(Array.isArray(africanRes) ? africanRes : africanRes?.data ?? []);
-      setHollywoodHits(Array.isArray(hollywoodRes) ? hollywoodRes : hollywoodRes?.data ?? []);
-      setPasses(Array.isArray(passesRes) ? passesRes : passesRes?.data ?? []);
+      setTrendingMovies(Array.isArray(trendingRes) ? trendingRes : (trendingRes?.data ?? []));
+      setAfricanCinema(Array.isArray(africanRes) ? africanRes : (africanRes?.data ?? []));
+      setHollywoodHits(Array.isArray(hollywoodRes) ? hollywoodRes : (hollywoodRes?.data ?? []));
+      setPasses(Array.isArray(passesRes) ? passesRes : (passesRes?.data ?? []));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load');
     } finally {
@@ -45,12 +61,16 @@ export default function MoviesUniverseHome() {
     }
   };
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   if (isLoading) return <LoadingState text="Loading movies..." />;
   if (error) return <ErrorState description={error} onRetry={fetchData} />;
   if (!featuredMovie && !trendingMovies.length) {
-    return <EmptyState icon="🎬" title="No movies available" description="Check back later for movies" />;
+    return (
+      <EmptyState icon="🎬" title="No movies available" description="Check back later for movies" />
+    );
   }
 
   const renderMovieCard = (item: MovieItem, size: 'large' | 'small' = 'small') => (
@@ -208,7 +228,9 @@ export default function MoviesUniverseHome() {
               </View>
               <View style={styles.passFeatures}>
                 {pass.features.map((feature, index) => (
-                  <Text key={index} style={styles.passFeature}>✓ {feature}</Text>
+                  <Text key={index} style={styles.passFeature}>
+                    ✓ {feature}
+                  </Text>
                 ))}
               </View>
               <TouchableOpacity style={styles.subscribeButton}>

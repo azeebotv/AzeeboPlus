@@ -55,9 +55,16 @@ function generateIdempotencyKey(): string {
   return `idemp-${Date.now()}-${randomUUID()}`;
 }
 
+function jitter(value: number, factor: number = 0.3): number {
+  const randomization = value * factor;
+  return Math.random() * randomization;
+}
+
 function calculateRetryDelay(attempt: number, config: RetryConfig): number {
-  const delay = config.delay * Math.pow(config.backoffFactor, attempt);
-  return Math.min(delay, config.maxDelay);
+  const exponentialDelay = config.delay * Math.pow(config.backoffFactor, attempt);
+  const cappedDelay = Math.min(exponentialDelay, config.maxDelay);
+  const jitterAmount = jitter(cappedDelay);
+  return Math.round(cappedDelay + jitterAmount);
 }
 
 class ApiClient {
@@ -86,9 +93,7 @@ class ApiClient {
           'ApiClient: tokenStorage is required in production. Please provide a secure storage implementation.'
         );
       }
-      console.warn(
-        'ApiClient: Using localStorage for token storage is not secure for production.'
-      );
+      console.warn('ApiClient: Using localStorage for token storage is not secure for production.');
       this.tokenStorage = new LocalStorageTokenStorage(this.config.authStorageKey);
     }
 
@@ -201,8 +206,7 @@ class ApiClient {
       success: false,
       error: {
         code: axiosError.response?.status?.toString() || 'UNKNOWN',
-        message:
-          axiosError.response?.data?.message || lastError?.message || 'An error occurred',
+        message: axiosError.response?.data?.message || lastError?.message || 'An error occurred',
       },
     };
   }

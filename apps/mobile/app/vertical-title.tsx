@@ -108,7 +108,10 @@ export default function VerticalTitleScreen() {
   return (
     <ScrollView style={[styles.container, { backgroundColor: isDark ? '#0a0a0a' : '#ffffff' }]}>
       <View style={styles.heroSection}>
-        <Image source={{ uri: titleData.thumbnail || PLACEHOLDER_IMAGE }} style={styles.heroImage} />
+        <Image
+          source={{ uri: titleData.thumbnail || PLACEHOLDER_IMAGE }}
+          style={styles.heroImage}
+        />
         <View style={styles.heroOverlay}>
           <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
             <Text style={styles.backIcon}>←</Text>
@@ -135,7 +138,7 @@ export default function VerticalTitleScreen() {
       </View>
 
       <View style={styles.actions}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={[styles.followButton, isFollowing && styles.followButtonActive]}
           onPress={() => setIsFollowing(!isFollowing)}
         >
@@ -152,7 +155,11 @@ export default function VerticalTitleScreen() {
       </View>
 
       <View style={styles.tabsContainer}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabs}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.tabs}
+        >
           {tabs.map((tab) => (
             <TouchableOpacity
               key={tab.id}
@@ -170,7 +177,12 @@ export default function VerticalTitleScreen() {
       <View style={styles.content}>
         {activeTab === 'overview' && (
           <View>
-            <Text style={[styles.statusBadge, { color: titleData.status === 'Ongoing' ? '#10B981' : '#888' }]}>
+            <Text
+              style={[
+                styles.statusBadge,
+                { color: titleData.status === 'Ongoing' ? '#10B981' : '#888' },
+              ]}
+            >
               {titleData.status}
             </Text>
             <Text style={[styles.synopsis, { color: isDark ? '#ffffff' : '#000000' }]}>

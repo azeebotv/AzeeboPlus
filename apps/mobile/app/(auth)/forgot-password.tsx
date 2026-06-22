@@ -10,7 +10,7 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
-import { useRouter, Link } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { useAuth } from '../../src/contexts/AuthContext';
 import { LoadingState, ErrorState } from '../../src/components/StateContainers';
 
@@ -88,11 +88,9 @@ export default function ForgotPasswordScreen() {
         </View>
 
         <View style={styles.footer}>
-          <Link href="/(auth)/login" asChild>
-            <TouchableOpacity>
-              <Text style={styles.backToLogin}>← Back to Sign In</Text>
-            </TouchableOpacity>
-          </Link>
+          <TouchableOpacity onPress={() => router.push('/(auth)/login' as any)}>
+            <Text style={styles.backToLogin}>← Back to Sign In</Text>
+          </TouchableOpacity>
         </View>
       </View>
     </KeyboardAvoidingView>

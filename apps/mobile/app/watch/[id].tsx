@@ -1,5 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Alert, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Dimensions,
+  Alert,
+  ActivityIndicator,
+} from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { contentApi } from '../../src/api';
@@ -60,14 +69,13 @@ export default function TitleDetailPage() {
   };
 
   const handlePurchase = (option: any) => {
-    Alert.alert(
-      'Confirm Purchase',
-      `Purchase ${option.type} for ${option.price}?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Purchase', onPress: () => Alert.alert('Success', `${option.type} purchased successfully!`) },
-      ]
-    );
+    Alert.alert('Confirm Purchase', `Purchase ${option.type} for ${option.price}?`, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Purchase',
+        onPress: () => Alert.alert('Success', `${option.type} purchased successfully!`),
+      },
+    ]);
   };
 
   if (isLoading) {
@@ -79,7 +87,13 @@ export default function TitleDetailPage() {
   }
 
   if (!titleData) {
-    return <ErrorState title="Content not found" description="This title could not be found." onRetry={loadContent} />;
+    return (
+      <ErrorState
+        title="Content not found"
+        description="This title could not be found."
+        onRetry={loadContent}
+      />
+    );
   }
 
   return (
@@ -132,13 +146,14 @@ export default function TitleDetailPage() {
           <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
             Synopsis
           </Text>
-          <Text style={[styles.synopsisText, { color: isDark ? '#ccc' : '#666' }]} numberOfLines={showFullSynopsis ? undefined : 3}>
+          <Text
+            style={[styles.synopsisText, { color: isDark ? '#ccc' : '#666' }]}
+            numberOfLines={showFullSynopsis ? undefined : 3}
+          >
             {titleData.synopsis}
           </Text>
           <TouchableOpacity onPress={() => setShowFullSynopsis(!showFullSynopsis)}>
-            <Text style={styles.showMoreText}>
-              {showFullSynopsis ? 'Show less' : 'Show more'}
-            </Text>
+            <Text style={styles.showMoreText}>{showFullSynopsis ? 'Show less' : 'Show more'}</Text>
           </TouchableOpacity>
         </View>
 
@@ -147,19 +162,24 @@ export default function TitleDetailPage() {
             How to Watch
           </Text>
           <View style={styles.pricingCards}>
-            {pricingOptions.length > 0 ? pricingOptions.map((option) => (
-              <TouchableOpacity
-                key={option.id}
-                style={[styles.pricingCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
-                onPress={() => handlePurchase(option)}
-              >
-                <Text style={[styles.pricingType, { color: isDark ? '#fff' : '#000' }]}>
-                  {option.type}
-                </Text>
-                <Text style={styles.pricingPrice}>{option.price}</Text>
-                <Text style={styles.pricingDesc}>{option.description}</Text>
-              </TouchableOpacity>
-            )) : null}
+            {pricingOptions.length > 0
+              ? pricingOptions.map((option) => (
+                  <TouchableOpacity
+                    key={option.id}
+                    style={[
+                      styles.pricingCard,
+                      { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' },
+                    ]}
+                    onPress={() => handlePurchase(option)}
+                  >
+                    <Text style={[styles.pricingType, { color: isDark ? '#fff' : '#000' }]}>
+                      {option.type}
+                    </Text>
+                    <Text style={styles.pricingPrice}>{option.price}</Text>
+                    <Text style={styles.pricingDesc}>{option.description}</Text>
+                  </TouchableOpacity>
+                ))
+              : null}
           </View>
         </View>
 
@@ -188,7 +208,9 @@ export default function TitleDetailPage() {
                   <Text style={styles.episodeDuration}>{episode.duration}</Text>
                 </View>
               </View>
-              <TouchableOpacity style={[styles.episodePlayButton, episode.free && styles.episodePlayButtonActive]}>
+              <TouchableOpacity
+                style={[styles.episodePlayButton, episode.free && styles.episodePlayButtonActive]}
+              >
                 <Text style={styles.playButtonIcon}>▶️</Text>
               </TouchableOpacity>
             </TouchableOpacity>
@@ -200,13 +222,22 @@ export default function TitleDetailPage() {
             <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
               Cast
             </Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.castList}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.castList}
+            >
               {titleData.cast.map((member: any) => (
-                <View key={member.id} style={[styles.castCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}>
+                <View
+                  key={member.id}
+                  style={[styles.castCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
+                >
                   <View style={styles.castAvatar}>
                     <Text style={styles.castEmoji}>{member.emoji}</Text>
                   </View>
-                  <Text style={[styles.castName, { color: isDark ? '#fff' : '#000' }]}>{member.name}</Text>
+                  <Text style={[styles.castName, { color: isDark ? '#fff' : '#000' }]}>
+                    {member.name}
+                  </Text>
                   <Text style={styles.castRole}>{member.role}</Text>
                 </View>
               ))}
@@ -219,13 +250,23 @@ export default function TitleDetailPage() {
             <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
               More Like This
             </Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.similarList}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.similarList}
+            >
               {titleData.similarContent.map((item: any) => (
-                <TouchableOpacity key={item.id} style={[styles.similarCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}>
+                <TouchableOpacity
+                  key={item.id}
+                  style={[styles.similarCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
+                >
                   <View style={styles.similarThumbnail}>
                     <Text style={styles.similarEmoji}>{item.emoji}</Text>
                   </View>
-                  <Text style={[styles.similarTitle, { color: isDark ? '#fff' : '#000' }]} numberOfLines={1}>
+                  <Text
+                    style={[styles.similarTitle, { color: isDark ? '#fff' : '#000' }]}
+                    numberOfLines={1}
+                  >
                     {item.title}
                   </Text>
                   <Text style={styles.similarRating}>⭐ {item.rating}</Text>

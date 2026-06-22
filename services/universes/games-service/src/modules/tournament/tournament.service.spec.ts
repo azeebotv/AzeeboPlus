@@ -71,7 +71,9 @@ describe('TournamentService', () => {
 
       await service.getTournaments(1, 20, 'active');
 
-      expect((prismaService.tournament.findMany as jest.Mock).mock.calls[0][0].where.status).toBe('active');
+      expect((prismaService.tournament.findMany as jest.Mock).mock.calls[0][0].where.status).toBe(
+        'active'
+      );
     });
   });
 
@@ -112,7 +114,9 @@ describe('TournamentService', () => {
     it('should throw NotFoundException if tournament not found', async () => {
       (prismaService.tournament.findUnique as jest.Mock).mockResolvedValue(null);
 
-      await expect(service.enterTournament('user-1', 'not-found')).rejects.toThrow(NotFoundException);
+      await expect(service.enterTournament('user-1', 'not-found')).rejects.toThrow(
+        NotFoundException
+      );
     });
 
     it('should throw BadRequestException if tournament not active', async () => {
@@ -121,7 +125,9 @@ describe('TournamentService', () => {
         status: 'ended',
       });
 
-      await expect(service.enterTournament('user-1', 'tournament-1')).rejects.toThrow(BadRequestException);
+      await expect(service.enterTournament('user-1', 'tournament-1')).rejects.toThrow(
+        BadRequestException
+      );
     });
 
     it('should throw BadRequestException if already entered', async () => {
@@ -132,7 +138,9 @@ describe('TournamentService', () => {
         tournamentId: 'tournament-1',
       });
 
-      await expect(service.enterTournament('user-1', 'tournament-1')).rejects.toThrow(BadRequestException);
+      await expect(service.enterTournament('user-1', 'tournament-1')).rejects.toThrow(
+        BadRequestException
+      );
     });
   });
 
@@ -158,7 +166,9 @@ describe('TournamentService', () => {
     it('should throw NotFoundException if not entered', async () => {
       (prismaService.tournamentEntry.findUnique as jest.Mock).mockResolvedValue(null);
 
-      await expect(service.updateScore('user-1', 'tournament-1', 50)).rejects.toThrow(NotFoundException);
+      await expect(service.updateScore('user-1', 'tournament-1', 50)).rejects.toThrow(
+        NotFoundException
+      );
     });
   });
 

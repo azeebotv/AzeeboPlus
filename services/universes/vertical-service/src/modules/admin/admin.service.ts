@@ -6,20 +6,27 @@ export class AdminService {
   constructor(private prisma: PrismaService) {}
 
   async getStats() {
-    const [totalTitles, totalCharacters, totalUniverses, titlesByStatus, charactersByRole] = await Promise.all([
-      this.prisma.title.count(),
-      this.prisma.character.count(),
-      this.prisma.universeMap.count(),
-      this.prisma.title.groupBy({ by: ['status'], _count: { status: true } }),
-      this.prisma.character.groupBy({ by: ['role'], _count: { role: true } }),
-    ]);
+    const [totalTitles, totalCharacters, totalUniverses, titlesByStatus, charactersByRole] =
+      await Promise.all([
+        this.prisma.title.count(),
+        this.prisma.character.count(),
+        this.prisma.universeMap.count(),
+        this.prisma.title.groupBy({ by: ['status'], _count: { status: true } }),
+        this.prisma.character.groupBy({ by: ['role'], _count: { role: true } }),
+      ]);
 
     return {
       totalTitles,
       totalCharacters,
       totalUniverses,
-      titlesByStatus: titlesByStatus.reduce((acc, s) => ({ ...acc, [String(s.status)]: s._count.status }), {}),
-      charactersByRole: charactersByRole.reduce((acc, r) => ({ ...acc, [String(r.role)]: r._count.role }), {}),
+      titlesByStatus: titlesByStatus.reduce(
+        (acc, s) => ({ ...acc, [String(s.status)]: s._count.status }),
+        {}
+      ),
+      charactersByRole: charactersByRole.reduce(
+        (acc, r) => ({ ...acc, [String(r.role)]: r._count.role }),
+        {}
+      ),
     };
   }
 

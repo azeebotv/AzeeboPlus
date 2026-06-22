@@ -66,7 +66,7 @@ async function bootstrap(): Promise<void> {
   if (!process.env.ALLOWED_ORIGINS) {
     throw new Error('ALLOWED_ORIGINS environment variable must be set');
   }
-  const allowedOrigins = process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim());
+  const allowedOrigins = process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim());
   configureCors(app, {
     allowedOrigins,
     credentials: true,

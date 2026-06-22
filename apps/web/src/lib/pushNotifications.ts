@@ -10,11 +10,7 @@ export interface PushSubscriptionData {
 
 export class PushNotificationService {
   static isSupported(): boolean {
-    return (
-      'serviceWorker' in navigator &&
-      'PushManager' in window &&
-      'Notification' in window
-    );
+    return 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
   }
 
   static async requestPermission(): Promise<NotificationPermission> {

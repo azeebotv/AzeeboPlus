@@ -105,14 +105,12 @@ describe('Payments Service Authorization Tests', () => {
       const testApp = await createTestApp(false);
       await testApp.init();
 
-      const response = await request(testApp.getHttpServer())
-        .post('/payments/initialize')
-        .send({
-          amount: 1000,
-          currency: 'NGN',
-          paymentMethod: 'card',
-          description: 'Wallet funding',
-        });
+      const response = await request(testApp.getHttpServer()).post('/payments/initialize').send({
+        amount: 1000,
+        currency: 'NGN',
+        paymentMethod: 'card',
+        description: 'Wallet funding',
+      });
 
       expect(response.status).toBe(401);
       expect(mockPaymentsService.initializePayment).not.toHaveBeenCalled();
@@ -124,13 +122,11 @@ describe('Payments Service Authorization Tests', () => {
       const testApp = await createTestApp(false);
       await testApp.init();
 
-      const response = await request(testApp.getHttpServer())
-        .post('/payments/initialize')
-        .send({
-          amount: 1000,
-          currency: 'NGN',
-          paymentMethod: 'card',
-        });
+      const response = await request(testApp.getHttpServer()).post('/payments/initialize').send({
+        amount: 1000,
+        currency: 'NGN',
+        paymentMethod: 'card',
+      });
 
       expect(response.status).toBe(401);
 

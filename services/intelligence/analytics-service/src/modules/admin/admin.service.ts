@@ -14,15 +14,14 @@ export class AdminService {
       where: { createdAt: { gte: today } },
     });
 
-    const avgSizeResult = await this.prisma.$queryRaw<
-      { avg: number | null }[]
-    >`
+    const avgSizeResult = await this.prisma.$queryRaw<{ avg: number | null }[]>`
       SELECT AVG(LENGTH(COALESCE("metadata"::text, ''))) as avg
       FROM "product_events"
     `;
-    const avgMetadataSize = Array.isArray(avgSizeResult) && avgSizeResult.length > 0
-      ? Number(avgSizeResult[0].avg || 0)
-      : 0;
+    const avgMetadataSize =
+      Array.isArray(avgSizeResult) && avgSizeResult.length > 0
+        ? Number(avgSizeResult[0].avg || 0)
+        : 0;
 
     const uniqueUsers = await this.prisma.productEvent.groupBy({
       by: ['userId'],

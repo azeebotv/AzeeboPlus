@@ -24,9 +24,8 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     _error: Error,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+
     _errorInfo: React.ErrorInfo
   ): void {
     // Error logging is intentionally minimal

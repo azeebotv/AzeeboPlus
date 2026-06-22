@@ -59,22 +59,14 @@ describe('WebhookController', () => {
       };
 
       await expect(
-        controller.handlePaystackWebhook(
-          payloadWithoutRef as WebhookPayload,
-          'signature',
-          mockReq,
-        ),
+        controller.handlePaystackWebhook(payloadWithoutRef as WebhookPayload, 'signature', mockReq)
       ).rejects.toThrow(BadRequestException);
     });
 
     it('should return early for duplicate webhook', async () => {
       mockWebhookSecurity.isDuplicate.mockResolvedValue(true);
 
-      const result = await controller.handlePaystackWebhook(
-        validPayload,
-        'signature',
-        mockReq,
-      );
+      const result = await controller.handlePaystackWebhook(validPayload, 'signature', mockReq);
 
       expect(result).toEqual({
         success: true,
@@ -88,7 +80,7 @@ describe('WebhookController', () => {
       mockWebhookSecurity.verifyPaystackSignature.mockReturnValue(false);
 
       await expect(
-        controller.handlePaystackWebhook(validPayload, 'invalid', mockReq),
+        controller.handlePaystackWebhook(validPayload, 'invalid', mockReq)
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -98,7 +90,7 @@ describe('WebhookController', () => {
       mockWebhookSecurity.isReplay.mockResolvedValue(true);
 
       await expect(
-        controller.handlePaystackWebhook(validPayload, 'valid', mockReq),
+        controller.handlePaystackWebhook(validPayload, 'valid', mockReq)
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -108,22 +100,14 @@ describe('WebhookController', () => {
       mockWebhookSecurity.isReplay.mockResolvedValue(false);
       mockWebhookService.handlePaystackWebhook.mockResolvedValue(undefined);
 
-      const result = await controller.handlePaystackWebhook(
-        validPayload,
-        'valid',
-        mockReq,
-      );
+      const result = await controller.handlePaystackWebhook(validPayload, 'valid', mockReq);
 
       expect(result).toEqual({
         success: true,
         data: { received: true },
       });
-      expect(mockWebhookSecurity.markAsProcessed).toHaveBeenCalledWith(
-        'test-ref',
-      );
-      expect(mockWebhookSecurity.recordInReplayWindow).toHaveBeenCalledWith(
-        'test-ref',
-      );
+      expect(mockWebhookSecurity.markAsProcessed).toHaveBeenCalledWith('test-ref');
+      expect(mockWebhookSecurity.recordInReplayWindow).toHaveBeenCalledWith('test-ref');
     });
   });
 
@@ -148,19 +132,15 @@ describe('WebhookController', () => {
         controller.handleFlutterwaveWebhook(
           payloadWithoutRef as WebhookPayload,
           'signature',
-          mockReq,
-        ),
+          mockReq
+        )
       ).rejects.toThrow(BadRequestException);
     });
 
     it('should return early for duplicate webhook', async () => {
       mockWebhookSecurity.isDuplicate.mockResolvedValue(true);
 
-      const result = await controller.handleFlutterwaveWebhook(
-        validPayload,
-        'signature',
-        mockReq,
-      );
+      const result = await controller.handleFlutterwaveWebhook(validPayload, 'signature', mockReq);
 
       expect(result).toEqual({
         success: true,
@@ -173,7 +153,7 @@ describe('WebhookController', () => {
       mockWebhookSecurity.verifyFlutterwaveSignature.mockReturnValue(false);
 
       await expect(
-        controller.handleFlutterwaveWebhook(validPayload, 'invalid', mockReq),
+        controller.handleFlutterwaveWebhook(validPayload, 'invalid', mockReq)
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -183,7 +163,7 @@ describe('WebhookController', () => {
       mockWebhookSecurity.isReplay.mockResolvedValue(true);
 
       await expect(
-        controller.handleFlutterwaveWebhook(validPayload, 'valid', mockReq),
+        controller.handleFlutterwaveWebhook(validPayload, 'valid', mockReq)
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -193,19 +173,13 @@ describe('WebhookController', () => {
       mockWebhookSecurity.isReplay.mockResolvedValue(false);
       mockWebhookService.handleFlutterwaveWebhook.mockResolvedValue(undefined);
 
-      const result = await controller.handleFlutterwaveWebhook(
-        validPayload,
-        'valid',
-        mockReq,
-      );
+      const result = await controller.handleFlutterwaveWebhook(validPayload, 'valid', mockReq);
 
       expect(result).toEqual({
         success: true,
         data: { received: true },
       });
-      expect(mockWebhookSecurity.markAsProcessed).toHaveBeenCalledWith(
-        'test-ref',
-      );
+      expect(mockWebhookSecurity.markAsProcessed).toHaveBeenCalledWith('test-ref');
     });
   });
 });

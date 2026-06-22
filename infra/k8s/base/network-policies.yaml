@@ -70,7 +70,7 @@ spec:
               app: admin
       ports:
         - protocol: TCP
-          port: 3000
+          port: 3001
   egress:
     - to:
         - namespaceSelector:
@@ -111,7 +111,7 @@ spec:
               app: api-gateway
       ports:
         - protocol: TCP
-          port: 3000
+          port: 3002
   egress:
     - to:
         - namespaceSelector:
@@ -131,7 +131,7 @@ spec:
               name: azeebo
       ports:
         - protocol: TCP
-          port: 3000
+          port: 3003
     - to:
         - namespaceSelector: {}
       ports:
@@ -165,7 +165,7 @@ spec:
               app: wallet-service
       ports:
         - protocol: TCP
-          port: 3000
+          port: 3003
   egress:
     - to:
         - namespaceSelector:
@@ -204,7 +204,7 @@ spec:
               name: azeebo
       ports:
         - protocol: TCP
-          port: 3000
+          port: 3013
   egress:
     - to:
         - namespaceSelector:
@@ -212,7 +212,9 @@ spec:
               name: azeebo
       ports:
         - protocol: TCP
-          port: 3000
+          portRange:
+            start: 3000
+            end: 3026
     - to:
         - namespaceSelector: {}
       ports:

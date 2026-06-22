@@ -92,38 +92,54 @@ export default function EngagementMonitoringPage(): JSX.Element {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
               <div className="bg-card rounded-lg border border-border p-4">
                 <p className="text-sm text-muted-foreground mb-1">Daily Active Users</p>
-                <p className="text-2xl font-bold text-foreground">{metrics.dailyActiveUsers.toLocaleString()}</p>
+                <p className="text-2xl font-bold text-foreground">
+                  {metrics.dailyActiveUsers.toLocaleString()}
+                </p>
               </div>
               <div className="bg-card rounded-lg border border-border p-4">
                 <p className="text-sm text-muted-foreground mb-1">Monthly Active Users</p>
-                <p className="text-2xl font-bold text-foreground">{metrics.monthlyActiveUsers.toLocaleString()}</p>
+                <p className="text-2xl font-bold text-foreground">
+                  {metrics.monthlyActiveUsers.toLocaleString()}
+                </p>
               </div>
               <div className="bg-card rounded-lg border border-border p-4">
                 <p className="text-sm text-muted-foreground mb-1">Avg Session Duration</p>
-                <p className="text-2xl font-bold text-foreground">{metrics.averageSessionDuration} min</p>
+                <p className="text-2xl font-bold text-foreground">
+                  {metrics.averageSessionDuration} min
+                </p>
               </div>
               <div className="bg-card rounded-lg border border-border p-4">
                 <p className="text-sm text-muted-foreground mb-1">Content Views</p>
-                <p className="text-2xl font-bold text-foreground">{metrics.contentViews.toLocaleString()}</p>
+                <p className="text-2xl font-bold text-foreground">
+                  {metrics.contentViews.toLocaleString()}
+                </p>
               </div>
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
               <div className="bg-card rounded-lg border border-border p-4">
                 <p className="text-sm text-muted-foreground mb-1">Interactions</p>
-                <p className="text-2xl font-bold text-purple-500">{metrics.interactions.toLocaleString()}</p>
+                <p className="text-2xl font-bold text-purple-500">
+                  {metrics.interactions.toLocaleString()}
+                </p>
               </div>
               <div className="bg-card rounded-lg border border-border p-4">
                 <p className="text-sm text-muted-foreground mb-1">Predictions Made</p>
-                <p className="text-2xl font-bold text-blue-500">{metrics.predictions.toLocaleString()}</p>
+                <p className="text-2xl font-bold text-blue-500">
+                  {metrics.predictions.toLocaleString()}
+                </p>
               </div>
               <div className="bg-card rounded-lg border border-border p-4">
                 <p className="text-sm text-muted-foreground mb-1">Leaderboard Views</p>
-                <p className="text-2xl font-bold text-green-500">{metrics.leaderboardViews.toLocaleString()}</p>
+                <p className="text-2xl font-bold text-green-500">
+                  {metrics.leaderboardViews.toLocaleString()}
+                </p>
               </div>
               <div className="bg-card rounded-lg border border-border p-4">
                 <p className="text-sm text-muted-foreground mb-1">Referral Signups</p>
-                <p className="text-2xl font-bold text-orange-500">{metrics.referralSignups.toLocaleString()}</p>
+                <p className="text-2xl font-bold text-orange-500">
+                  {metrics.referralSignups.toLocaleString()}
+                </p>
               </div>
             </div>
           </>
@@ -144,7 +160,9 @@ export default function EngagementMonitoringPage(): JSX.Element {
                         style={{ width: `${Math.min((trend.activeUsers / 10000) * 100, 100)}%` }}
                       />
                     </div>
-                    <span className="text-sm font-semibold text-foreground w-16 text-right">{trend.activeUsers.toLocaleString()}</span>
+                    <span className="text-sm font-semibold text-foreground w-16 text-right">
+                      {trend.activeUsers.toLocaleString()}
+                    </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-muted-foreground w-20">Views</span>
@@ -154,7 +172,9 @@ export default function EngagementMonitoringPage(): JSX.Element {
                         style={{ width: `${Math.min((trend.contentViews / 50000) * 100, 100)}%` }}
                       />
                     </div>
-                    <span className="text-sm font-semibold text-foreground w-16 text-right">{trend.contentViews.toLocaleString()}</span>
+                    <span className="text-sm font-semibold text-foreground w-16 text-right">
+                      {trend.contentViews.toLocaleString()}
+                    </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-muted-foreground w-20">Interactions</span>
@@ -164,7 +184,9 @@ export default function EngagementMonitoringPage(): JSX.Element {
                         style={{ width: `${Math.min((trend.interactions / 20000) * 100, 100)}%` }}
                       />
                     </div>
-                    <span className="text-sm font-semibold text-foreground w-16 text-right">{trend.interactions.toLocaleString()}</span>
+                    <span className="text-sm font-semibold text-foreground w-16 text-right">
+                      {trend.interactions.toLocaleString()}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -176,7 +198,9 @@ export default function EngagementMonitoringPage(): JSX.Element {
           <div className="text-center py-20">
             <div className="text-6xl mb-4">📊</div>
             <h2 className="text-xl font-bold text-foreground mb-2">No engagement data available</h2>
-            <p className="text-muted-foreground">Data will appear once users start interacting with the platform</p>
+            <p className="text-muted-foreground">
+              Data will appear once users start interacting with the platform
+            </p>
           </div>
         )}
       </div>

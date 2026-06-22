@@ -1,12 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  FlatList,
-  useColorScheme,
-} from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, FlatList, useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
@@ -78,7 +71,7 @@ export default function LibraryScreen() {
     return <ErrorState title="Failed to load library" description={error} onRetry={fetchData} />;
   }
 
-  const renderTab = (tab: typeof TABS[0]) => (
+  const renderTab = (tab: (typeof TABS)[0]) => (
     <TouchableOpacity
       key={tab.id}
       style={[styles.tab, activeTab === tab.id && styles.tabActive]}
@@ -93,7 +86,13 @@ export default function LibraryScreen() {
 
   const renderWatchlist = () => {
     if (!watchlist.length) {
-      return <EmptyState icon="📋" title="Your watchlist is empty" description="Start adding content to watch later" />;
+      return (
+        <EmptyState
+          icon="📋"
+          title="Your watchlist is empty"
+          description="Start adding content to watch later"
+        />
+      );
     }
     return (
       <FlatList
@@ -123,7 +122,13 @@ export default function LibraryScreen() {
 
   const renderHistory = () => {
     if (!history.length) {
-      return <EmptyState icon="🕐" title="No watch history" description="Content you watch will appear here" />;
+      return (
+        <EmptyState
+          icon="🕐"
+          title="No watch history"
+          description="Content you watch will appear here"
+        />
+      );
     }
     return (
       <FlatList
@@ -156,7 +161,11 @@ export default function LibraryScreen() {
   );
 
   const renderPurchases = () => (
-    <EmptyState icon="🛒" title="No purchases" description="Your purchased content will appear here" />
+    <EmptyState
+      icon="🛒"
+      title="No purchases"
+      description="Your purchased content will appear here"
+    />
   );
 
   return (
@@ -165,9 +174,7 @@ export default function LibraryScreen() {
         <Text style={styles.title}>Library</Text>
       </View>
 
-      <View style={styles.tabsContainer}>
-        {TABS.map(renderTab)}
-      </View>
+      <View style={styles.tabsContainer}>{TABS.map(renderTab)}</View>
 
       {activeTab === 'watchlist' && renderWatchlist()}
       {activeTab === 'history' && renderHistory()}

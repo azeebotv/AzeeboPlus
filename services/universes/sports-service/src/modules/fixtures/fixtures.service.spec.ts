@@ -72,7 +72,9 @@ describe('FixturesService', () => {
 
       await service.getFixtures(1, 20, 'football');
 
-      expect((prismaService.sportsEvent.findMany as jest.Mock).mock.calls[0][0].where.sport).toBe('football');
+      expect((prismaService.sportsEvent.findMany as jest.Mock).mock.calls[0][0].where.sport).toBe(
+        'football'
+      );
     });
 
     it('should filter by status', async () => {
@@ -81,7 +83,9 @@ describe('FixturesService', () => {
 
       await service.getFixtures(1, 20, undefined, 'scheduled');
 
-      expect((prismaService.sportsEvent.findMany as jest.Mock).mock.calls[0][0].where.status).toBe('scheduled');
+      expect((prismaService.sportsEvent.findMany as jest.Mock).mock.calls[0][0].where.status).toBe(
+        'scheduled'
+      );
     });
   });
 
@@ -119,7 +123,9 @@ describe('FixturesService', () => {
 
     it('should update existing metadata', async () => {
       (prismaService.sportsEvent.findUnique as jest.Mock).mockResolvedValue(mockEvent);
-      (prismaService.fixtureMetadata.findUnique as jest.Mock).mockResolvedValue({ id: 'metadata-1' });
+      (prismaService.fixtureMetadata.findUnique as jest.Mock).mockResolvedValue({
+        id: 'metadata-1',
+      });
       (prismaService.fixtureMetadata.update as jest.Mock).mockResolvedValue({ id: 'metadata-1' });
 
       const result = await service.createFixtureMetadata('event-1', {
@@ -132,7 +138,9 @@ describe('FixturesService', () => {
     it('should throw NotFoundException if event not found', async () => {
       (prismaService.sportsEvent.findUnique as jest.Mock).mockResolvedValue(null);
 
-      await expect(service.createFixtureMetadata('not-found', {})).rejects.toThrow(NotFoundException);
+      await expect(service.createFixtureMetadata('not-found', {})).rejects.toThrow(
+        NotFoundException
+      );
     });
   });
 });

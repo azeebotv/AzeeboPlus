@@ -93,7 +93,10 @@ export class AdminService {
     };
   }
 
-  async getTransactionsByWalletId(walletId: string, options?: { page?: number; limit?: number; type?: string }) {
+  async getTransactionsByWalletId(
+    walletId: string,
+    options?: { page?: number; limit?: number; type?: string }
+  ) {
     const page = options?.page || 1;
     const limit = options?.limit || 20;
     const skip = (page - 1) * limit;

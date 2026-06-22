@@ -20,10 +20,14 @@ export function KeyboardNavigationProvider({ children }: { children: React.React
 
         if (isInteractive) {
           event.preventDefault();
-          const container = target.closest('[role="tablist"], [role="listbox"], [role="menu"], .keyboard-navigable');
+          const container = target.closest(
+            '[role="tablist"], [role="listbox"], [role="menu"], .keyboard-navigable'
+          );
           if (container) {
             const items = Array.from(
-              container.querySelectorAll('button, a, [role="button"], [role="tab"], [role="option"], [role="menuitem"]')
+              container.querySelectorAll(
+                'button, a, [role="button"], [role="tab"], [role="option"], [role="menuitem"]'
+              )
             ) as HTMLElement[];
             const currentIndex = items.indexOf(target);
             const nextIndex =

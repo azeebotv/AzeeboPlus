@@ -18,7 +18,7 @@ async function bootstrap() {
     throw new Error('ALLOWED_ORIGINS environment variable must be set');
   }
   app.enableCors({
-    origin: process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim()),
+    origin: process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim()),
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
     credentials: true,
   });
@@ -28,7 +28,7 @@ async function bootstrap() {
       whitelist: true,
       transform: true,
       forbidNonWhitelisted: true,
-    }),
+    })
   );
 
   const config = new DocumentBuilder()

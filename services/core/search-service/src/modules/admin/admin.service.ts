@@ -14,10 +14,12 @@ export class AdminService {
       this.prisma.userSearch.count({
         where: { createdAt: { gte: todayStart } },
       }),
-      this.prisma.userSearch.groupBy({
-        by: ['userId'],
-        where: { createdAt: { gte: todayStart } },
-      }).then((groups) => groups.length),
+      this.prisma.userSearch
+        .groupBy({
+          by: ['userId'],
+          where: { createdAt: { gte: todayStart } },
+        })
+        .then((groups) => groups.length),
       this.prisma.searchQueryLog.findMany({
         orderBy: { count: 'desc' },
         take: 10,

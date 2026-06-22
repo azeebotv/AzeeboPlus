@@ -21,17 +21,13 @@ describe('API Gateway Contract Tests', () => {
 
   describe('Gateway Health Check', () => {
     it('should respond with 200 OK', () => {
-      return request(app.getHttpServer())
-        .get('/health')
-        .expect(200);
+      return request(app.getHttpServer()).get('/health').expect(200);
     });
   });
 
   describe('Route Validation', () => {
     it('should return 404 for unknown routes', () => {
-      return request(app.getHttpServer())
-        .get('/nonexistent-route-12345')
-        .expect(404);
+      return request(app.getHttpServer()).get('/nonexistent-route-12345').expect(404);
     });
   });
 

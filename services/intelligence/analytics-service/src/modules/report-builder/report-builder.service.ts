@@ -1,6 +1,13 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
-import { CreateReportDto, ExecuteReportDto, FilterConfig, MetricConfig, MetricType, DimensionConfig } from './dto/report-builder.dto';
+import {
+  CreateReportDto,
+  ExecuteReportDto,
+  FilterConfig,
+  MetricConfig,
+  MetricType,
+  DimensionConfig,
+} from './dto/report-builder.dto';
 
 interface ReportResult {
   success: boolean;
@@ -66,7 +73,9 @@ export class ReportBuilderService {
         data: report,
       };
     } catch (error) {
-      throw new BadRequestException(`Failed to create report: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new BadRequestException(
+        `Failed to create report: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
@@ -92,19 +101,22 @@ export class ReportBuilderService {
       if (error instanceof NotFoundException) {
         throw error;
       }
-      throw new BadRequestException(`Failed to get report: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new BadRequestException(
+        `Failed to get report: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
-  async listReports(userId: string, role: string, filters?: { category?: string; isPublic?: boolean }): Promise<ReportResult> {
+  async listReports(
+    userId: string,
+    role: string,
+    filters?: { category?: string; isPublic?: boolean }
+  ): Promise<ReportResult> {
     try {
       const where: Record<string, unknown> = {};
 
       if (!role.includes('admin')) {
-        where.OR = [
-          { createdBy: userId },
-          { isPublic: true },
-        ];
+        where.OR = [{ createdBy: userId }, { isPublic: true }];
       }
 
       if (filters?.category) {
@@ -125,7 +137,9 @@ export class ReportBuilderService {
         data: reports,
       };
     } catch (error) {
-      throw new BadRequestException(`Failed to list reports: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new BadRequestException(
+        `Failed to list reports: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
@@ -155,14 +169,14 @@ export class ReportBuilderService {
       const startDate = dto.startDate
         ? new Date(dto.startDate)
         : report.startDate
-        ? new Date(report.startDate)
-        : this.getDefaultStartDate(report.dateRange);
+          ? new Date(report.startDate)
+          : this.getDefaultStartDate(report.dateRange);
 
       const endDate = dto.endDate
         ? new Date(dto.endDate)
         : report.endDate
-        ? new Date(report.endDate)
-        : new Date();
+          ? new Date(report.endDate)
+          : new Date();
 
       const query = this.buildQuery(metrics, dimensions, allFilters, startDate, endDate, {
         groupBy: dto.groupBy,
@@ -195,7 +209,7 @@ export class ReportBuilderService {
         success: true,
         data: {
           results,
-          columns: [...dimensions.map(d => d.field || d.label), ...metrics.map(m => m.label)],
+          columns: [...dimensions.map((d) => d.field || d.label), ...metrics.map((m) => m.label)],
         },
         metadata: {
           totalRows: results.length,
@@ -224,7 +238,11 @@ export class ReportBuilderService {
     }
   }
 
-  async updateReport(reportId: string, userId: string, dto: Partial<CreateReportDto>): Promise<ReportResult> {
+  async updateReport(
+    reportId: string,
+    userId: string,
+    dto: Partial<CreateReportDto>
+  ): Promise<ReportResult> {
     try {
       const report = await this.prisma.customReport.findUnique({
         where: { id: reportId },
@@ -264,7 +282,9 @@ export class ReportBuilderService {
       if (error instanceof NotFoundException) {
         throw error;
       }
-      throw new BadRequestException(`Failed to update report: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new BadRequestException(
+        `Failed to update report: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
@@ -294,11 +314,17 @@ export class ReportBuilderService {
       if (error instanceof NotFoundException) {
         throw error;
       }
-      throw new BadRequestException(`Failed to delete report: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new BadRequestException(
+        `Failed to delete report: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
-  async getExecutionHistory(reportId: string, userId: string, limit: number = 20): Promise<ReportResult> {
+  async getExecutionHistory(
+    reportId: string,
+    userId: string,
+    limit: number = 20
+  ): Promise<ReportResult> {
     try {
       const report = await this.prisma.customReport.findUnique({
         where: { id: reportId },
@@ -326,7 +352,9 @@ export class ReportBuilderService {
       if (error instanceof NotFoundException) {
         throw error;
       }
-      throw new BadRequestException(`Failed to get execution history: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new BadRequestException(
+        `Failed to get execution history: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
@@ -357,11 +385,11 @@ export class ReportBuilderService {
       take: options.limit || 100,
     };
 
-    dimensions.forEach(dim => {
+    dimensions.forEach((dim) => {
       query.select[dim.field] = true;
     });
 
-    metrics.forEach(metric => {
+    metrics.forEach((metric) => {
       if (metric.type === MetricType.COUNT) {
         query._count = query._count || {};
         query._count[metric.field] = true;
@@ -380,7 +408,7 @@ export class ReportBuilderService {
       }
     });
 
-    filters.forEach(filter => {
+    filters.forEach((filter) => {
       switch (filter.operator) {
         case 'eq':
           query.where[filter.field] = filter.value;
@@ -422,61 +450,298 @@ export class ReportBuilderService {
     return query;
   }
 
+  // Field name mapping from snake_case (used in queries) to camelCase (Prisma model)
+  private readonly FIELD_MAPPING: Record<string, string> = {
+    event_name: 'eventName',
+    user_id: 'userId',
+    created_at: 'createdAt',
+    updated_at: 'updatedAt',
+  };
+
+  private mapFieldName(field: string): string {
+    return this.FIELD_MAPPING[field] || field;
+  }
+
   private async executeQuery(query: PrismaQuery): Promise<Record<string, unknown>[]> {
     try {
-      const results = await this.prisma.$queryRawUnsafe(
-        this.convertPrismaQueryToRawSQL(query)
-      );
+      // Build Prisma-compatible where clause from the query
+      const where = this.buildPrismaWhereClause(query.where);
+
+      // Build orderBy for Prisma (map field names)
+      const orderBy = this.buildPrismaOrderBy(query.orderBy);
+
+      // Build select clause for dimensions (map field names)
+      const select: Record<string, boolean> = {};
+      Object.keys(query.select || {}).forEach((field) => {
+        if (this.ALLOWED_FIELDS.has(field)) {
+          select[this.mapFieldName(field)] = true;
+        }
+      });
+
+      // Determine if we need aggregation
+      const hasAggregation = query._count || query._sum || query._avg || query._min || query._max;
+
+      if (hasAggregation) {
+        // Use groupBy for aggregations
+        const groupByFields = Object.keys(query.select || {})
+          .filter((f) => f !== 'id')
+          .map((f) => this.mapFieldName(f));
+
+        if (query._count) {
+          const countKeys = Object.keys(query._count);
+          const countField = this.mapFieldName(countKeys[0]);
+          const result = await this.prisma.productEvent.groupBy({
+            by: groupByFields.length > 0 ? (groupByFields as any) : undefined,
+            where,
+            _count: { [countField]: true } as any,
+            orderBy,
+            take: query.take,
+            skip: query.skip,
+          });
+
+          return result.map((row: any) => {
+            const transformed: Record<string, unknown> = {};
+            Object.keys(query.select || {})
+              .filter((f) => f !== 'id')
+              .forEach((f) => {
+                transformed[f] = row[this.mapFieldName(f)];
+              });
+            transformed[`${countKeys[0]}_count`] = row._count[countField];
+            return transformed;
+          });
+        }
+
+        if (query._sum) {
+          const sumKeys = Object.keys(query._sum);
+          const sumField = this.mapFieldName(sumKeys[0]);
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const result = await (this.prisma.productEvent.groupBy as any)({
+            by: groupByFields.length > 0 ? groupByFields : undefined,
+            where,
+            _sum: { [sumField]: true },
+            orderBy,
+            take: query.take,
+            skip: query.skip,
+          });
+
+          return result.map((row: any) => {
+            const transformed: Record<string, unknown> = {};
+            Object.keys(query.select || {})
+              .filter((f) => f !== 'id')
+              .forEach((f) => {
+                transformed[f] = row[this.mapFieldName(f)];
+              });
+            transformed[`${sumKeys[0]}_sum`] = row._sum[sumField];
+            return transformed;
+          });
+        }
+
+        if (query._avg) {
+          const avgKeys = Object.keys(query._avg);
+          const avgField = this.mapFieldName(avgKeys[0]);
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const result = await (this.prisma.productEvent.groupBy as any)({
+            by: groupByFields.length > 0 ? groupByFields : undefined,
+            where,
+            _avg: { [avgField]: true },
+            orderBy,
+            take: query.take,
+            skip: query.skip,
+          });
+
+          return result.map((row: any) => {
+            const transformed: Record<string, unknown> = {};
+            Object.keys(query.select || {})
+              .filter((f) => f !== 'id')
+              .forEach((f) => {
+                transformed[f] = row[this.mapFieldName(f)];
+              });
+            transformed[`${avgKeys[0]}_avg`] = row._avg[avgField];
+            return transformed;
+          });
+        }
+
+        if (query._min) {
+          const minKeys = Object.keys(query._min);
+          const minField = this.mapFieldName(minKeys[0]);
+          const result = await this.prisma.productEvent.groupBy({
+            by: groupByFields.length > 0 ? (groupByFields as any) : undefined,
+            where,
+            _min: { [minField]: true } as any,
+            orderBy,
+            take: query.take,
+            skip: query.skip,
+          });
+
+          return result.map((row: any) => {
+            const transformed: Record<string, unknown> = {};
+            Object.keys(query.select || {})
+              .filter((f) => f !== 'id')
+              .forEach((f) => {
+                transformed[f] = row[this.mapFieldName(f)];
+              });
+            transformed[`${minKeys[0]}_min`] = row._min[minField];
+            return transformed;
+          });
+        }
+
+        if (query._max) {
+          const maxKeys = Object.keys(query._max);
+          const maxField = this.mapFieldName(maxKeys[0]);
+          const result = await this.prisma.productEvent.groupBy({
+            by: groupByFields.length > 0 ? (groupByFields as any) : undefined,
+            where,
+            _max: { [maxField]: true } as any,
+            orderBy,
+            take: query.take,
+            skip: query.skip,
+          });
+
+          return result.map((row: any) => {
+            const transformed: Record<string, unknown> = {};
+            Object.keys(query.select || {})
+              .filter((f) => f !== 'id')
+              .forEach((f) => {
+                transformed[f] = row[this.mapFieldName(f)];
+              });
+            transformed[`${maxKeys[0]}_max`] = row._max[maxField];
+            return transformed;
+          });
+        }
+      }
+
+      // Regular findMany without aggregation
+      const results = await this.prisma.productEvent.findMany({
+        where,
+        select: Object.keys(select).length > 0 ? (select as any) : undefined,
+        orderBy,
+        take: query.take,
+        skip: query.skip,
+      });
+
       return results as Record<string, unknown>[];
     } catch (error) {
-      throw new BadRequestException(`Query execution failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new BadRequestException(
+        `Query execution failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
-  private convertPrismaQueryToRawSQL(query: PrismaQuery): string {
-    let sql = 'SELECT ';
+  // Allowlist of valid fields for analytics_events table
+  private readonly ALLOWED_FIELDS = new Set([
+    'id',
+    'event_name',
+    'user_id',
+    'universe',
+    'metadata',
+    'created_at',
+    'updated_at',
+  ]);
 
-    const selectFields = Object.keys(query.select || {});
-    if (selectFields.length > 0) {
-      sql += selectFields.join(', ');
-    } else {
-      sql += '*';
+  // Allowlist of valid order directions
+  private readonly ALLOWED_ORDER_DIRECTIONS = new Set(['asc', 'desc']);
+
+  private validateFieldName(field: string): void {
+    if (!this.ALLOWED_FIELDS.has(field)) {
+      throw new BadRequestException(`Invalid field name: ${field}`);
     }
+  }
 
-    sql += ' FROM analytics_events';
+  private buildPrismaWhereClause(where: Record<string, unknown>): Record<string, unknown> {
+    const prismaWhere: Record<string, unknown> = {};
 
-    if (query.where) {
-      const conditions: string[] = [];
-
-      if (query.where.createdAt) {
-        const createdAt = query.where.createdAt as any;
-        if (createdAt.gte) {
-          conditions.push(`created_at >= '${createdAt.gte.toISOString()}'`);
-        }
-        if (createdAt.lte) {
-          conditions.push(`created_at <= '${createdAt.lte.toISOString()}'`);
-        }
+    Object.keys(where).forEach((key) => {
+      if (!this.ALLOWED_FIELDS.has(key)) {
+        throw new BadRequestException(`Invalid field name: ${key}`);
       }
 
-      if (conditions.length > 0) {
-        sql += ' WHERE ' + conditions.join(' AND ');
+      // Map snake_case to camelCase for Prisma
+      const prismaKey = this.mapFieldName(key);
+      const value = where[key];
+
+      // Handle date operators - created_at maps to createdAt
+      if (key === 'created_at' && typeof value === 'object' && value !== null) {
+        const dateFilter = value as Record<string, unknown>;
+        if (dateFilter.gte)
+          prismaWhere.createdAt = {
+            ...((prismaWhere.createdAt as object) || {}),
+            gte: dateFilter.gte,
+          };
+        if (dateFilter.lte)
+          prismaWhere.createdAt = {
+            ...((prismaWhere.createdAt as object) || {}),
+            lte: dateFilter.lte,
+          };
+      } else if (typeof value === 'object' && value !== null) {
+        // Handle other operators like { not: x }, { in: [x,y] }, { gte: x }, etc.
+        const operatorObj = value as Record<string, unknown>;
+        const validOperators = [
+          'not',
+          'in',
+          'notIn',
+          'gt',
+          'gte',
+          'lt',
+          'lte',
+          'contains',
+          'startsWith',
+          'endsWith',
+        ];
+        const usedOperators = Object.keys(operatorObj).filter((op) => validOperators.includes(op));
+
+        if (usedOperators.length > 0) {
+          // Validate all operator values
+          usedOperators.forEach((op) => {
+            const opValue = operatorObj[op];
+            if (Array.isArray(opValue)) {
+              opValue.forEach((item) => this.validateScalarValue(item));
+            } else {
+              this.validateScalarValue(opValue);
+            }
+          });
+          prismaWhere[prismaKey] = operatorObj;
+        } else {
+          // Simple equality
+          prismaWhere[prismaKey] = value;
+        }
+      } else {
+        // Simple equality
+        this.validateScalarValue(value);
+        prismaWhere[prismaKey] = value;
+      }
+    });
+
+    return prismaWhere;
+  }
+
+  private validateScalarValue(value: unknown): void {
+    if (value === null || value === undefined) return;
+    if (typeof value === 'string') {
+      // Check for potential SQL injection patterns
+      const dangerousPatterns = [
+        /('|"|;|--|\/\*|\*\/|xp_|sp_|exec|execute|insert|update|delete|drop|alter|create|truncate)/i,
+      ];
+      if (dangerousPatterns.some((pattern) => pattern.test(value))) {
+        throw new BadRequestException(`Invalid value detected in query`);
       }
     }
+  }
 
-    if (query.orderBy && Object.keys(query.orderBy).length > 0) {
-      const orderByField = Object.keys(query.orderBy)[0];
-      const direction = query.orderBy[orderByField];
-      sql += ` ORDER BY ${orderByField} ${direction.toUpperCase()}`;
+  private buildPrismaOrderBy(orderBy: Record<string, string>): Record<string, string> | undefined {
+    if (!orderBy || Object.keys(orderBy).length === 0) {
+      return undefined;
     }
 
-    if (query.take) {
-      sql += ` LIMIT ${query.take}`;
+    const orderByField = Object.keys(orderBy)[0];
+    const direction = orderBy[orderByField];
+
+    this.validateFieldName(orderByField);
+
+    if (!this.ALLOWED_ORDER_DIRECTIONS.has(direction.toLowerCase())) {
+      throw new BadRequestException(`Invalid order direction: ${direction}`);
     }
 
-    if (query.skip) {
-      sql += ` OFFSET ${query.skip}`;
-    }
-
-    return sql;
+    // Map snake_case field name to camelCase for Prisma
+    return { [this.mapFieldName(orderByField)]: direction };
   }
 }

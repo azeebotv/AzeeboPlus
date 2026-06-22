@@ -1,0 +1,65 @@
+# CDN-Accelerated Ingress for Media Service
+# Uses Cloudflare CDN with origin pull from media service
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: media-cdn-ingress
+  namespace: azeebo
+  annotations:
+    # Cloudflare CDN configuration
+    nginx.ingress.kubernetes.io/enable-access-log: "true"
+    nginx.ingress.kubernetes.io/enable-retry: "true"
+    nginx.ingress.kubernetes.io/retry-attempts: "3"
+    nginx.ingress.kubernetes.io/upstream-hash-by: "$request_uri"
+    # Cache headers for static assets
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      if ($request_uri ~* \.(jpg|jpeg|png|gif|ico|webp|svg|mp4|webm|ogg|mp3|wav|pdf|zip|tar|gz)$) {
+        more_setheaders "Cache-Control: public, max-age=31536000, immutable";
+        more_setheaders "CDN-Cache-Control: public, max-age=31536000";
+      }
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - cdn.azeebo.com
+      secretName: azeebo-cdn-tls
+  rules:
+    - host: cdn.azeebo.com
+      http:
+        paths:
+          - path: /media
+            pathType: Prefix
+            backend:
+              service:
+                name: media-service
+                port:
+                  number: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: static-cdn-ingress
+  namespace: azeebo
+  annotations:
+    nginx.ingress.kubernetes.io/enable-access-log: "true"
+    # Short cache for dynamic content
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      more_setheaders "Cache-Control: public, max-age=300";
+      more_setheaders "CDN-Cache-Control: public, max-age=300";
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - static.azeebo.com
+      secretName: azeebo-static-tls
+  rules:
+    - host: static.azeebo.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: content-service
+                port:
+                  number: 80

@@ -1,0 +1,15 @@
+===== services/engagement/subscription-service/src/modules/subscription/subscription.controller.ts =====
+27:@Controller('v1/subscription')
+31:  @Get('plans')
+38:  @Get('plans/:id')
+46:  @Post('plans')
+47:  @UseGuards(AuthGuard('jwt'), RateLimitGuard)
+57:  @Post('subscribe')
+58:  @UseGuards(AuthGuard('jwt'), RateLimitGuard)
+72:  @Get('current')
+73:  @UseGuards(AuthGuard('jwt'))
+82:  @Delete(':id')
+83:  @UseGuards(AuthGuard('jwt'), RateLimitGuard)
+97:  @Get('history')
+98:  @UseGuards(AuthGuard('jwt'))
+

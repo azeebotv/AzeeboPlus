@@ -17,10 +17,7 @@ interface StrengthResult {
   }[];
 }
 
-export function PasswordStrengthMeter({
-  password,
-  onStrengthChange,
-}: PasswordStrengthMeterProps) {
+export function PasswordStrengthMeter({ password, onStrengthChange }: PasswordStrengthMeterProps) {
   const strength = useMemo((): StrengthResult => {
     const requirements = [
       { met: password.length >= 8, text: 'At least 8 characters' },
@@ -86,26 +83,14 @@ export function PasswordStrengthMeter({
           />
         ))}
       </View>
-      <Text style={[styles.label, { color: strength.color }]}>
-        {strength.label}
-      </Text>
+      <Text style={[styles.label, { color: strength.color }]}>{strength.label}</Text>
       <View style={styles.requirements}>
         {strength.requirements.map((req, index) => (
           <View key={index} style={styles.requirementItem}>
-            <Text
-              style={[
-                styles.requirementIcon,
-                req.met && styles.requirementMet,
-              ]}
-            >
+            <Text style={[styles.requirementIcon, req.met && styles.requirementMet]}>
               {req.met ? '✓' : '✗'}
             </Text>
-            <Text
-              style={[
-                styles.requirementText,
-                req.met && styles.requirementTextMet,
-              ]}
-            >
+            <Text style={[styles.requirementText, req.met && styles.requirementTextMet]}>
               {req.text}
             </Text>
           </View>

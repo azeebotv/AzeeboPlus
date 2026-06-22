@@ -76,9 +76,7 @@ describe('Movies Controller Contract Tests', () => {
     it('should return 404 for non-existent movie', () => {
       mockMoviesService.getMovie.mockRejectedValue(new Error('Movie not found'));
 
-      return request(app.getHttpServer())
-        .get('/v1/movies/nonexistent')
-        .expect(500);
+      return request(app.getHttpServer()).get('/v1/movies/nonexistent').expect(500);
     });
   });
 
@@ -99,9 +97,7 @@ describe('Movies Controller Contract Tests', () => {
     });
 
     it('should return 401 without authorization', () => {
-      return request(app.getHttpServer())
-        .post('/v1/movies/movie-1/rent')
-        .expect(401);
+      return request(app.getHttpServer()).post('/v1/movies/movie-1/rent').expect(401);
     });
   });
 
@@ -138,9 +134,7 @@ describe('Movies Controller Contract Tests', () => {
     });
 
     it('should return 401 without authorization', () => {
-      return request(app.getHttpServer())
-        .get('/v1/movies/watchlist')
-        .expect(401);
+      return request(app.getHttpServer()).get('/v1/movies/watchlist').expect(401);
     });
   });
 
@@ -198,9 +192,7 @@ describe('Movies Controller Contract Tests', () => {
 
   describe('error responses', () => {
     it('should return 401 for protected endpoints without token', () => {
-      return request(app.getHttpServer())
-        .post('/v1/movies/movie-1/rent')
-        .expect(401);
+      return request(app.getHttpServer()).post('/v1/movies/movie-1/rent').expect(401);
     });
   });
 });

@@ -15,7 +15,7 @@ export class AuditInterceptor implements NestInterceptor {
 
   constructor(
     private reflector: Reflector,
-    private auditService: AuditService,
+    private auditService: AuditService
   ) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
@@ -30,9 +30,14 @@ export class AuditInterceptor implements NestInterceptor {
     const actorType = request.user?.role === 'admin' ? 'admin' : 'user';
     const action = options.action || this.getActionFromRequest(request);
     const resourceType = options.resourceType || this.getResourceTypeFromRequest(request);
-    const resourceId = request.params?.['id'] || request.params?.['userId'] || request.params?.['transactionId'] || 'unknown';
+    const resourceId =
+      request.params?.['id'] ||
+      request.params?.['userId'] ||
+      request.params?.['transactionId'] ||
+      'unknown';
     const ipAddress = this.getClientIp(request);
-    const userAgent = request.headers['user-agent'];
+    const userAgent =
+      typeof request.headers['user-agent'] === 'string' ? request.headers['user-agent'] : undefined;
 
     return next.handle().pipe(
       tap({
@@ -43,9 +48,9 @@ export class AuditInterceptor implements NestInterceptor {
               actorType: actorType as 'user' | 'system' | 'admin',
               action,
               resourceType,
-              resourceId,
+              resourceId: String(resourceId),
               ipAddress,
-              userAgent,
+              userAgent: userAgent ?? '',
               status: 'success',
               newValue: typeof data === 'object' ? JSON.stringify(data) : undefined,
             });
@@ -60,9 +65,9 @@ export class AuditInterceptor implements NestInterceptor {
               actorType: actorType as 'user' | 'system' | 'admin',
               action,
               resourceType,
-              resourceId,
+              resourceId: String(resourceId),
               ipAddress,
-              userAgent,
+              userAgent: userAgent ?? '',
               status: 'failure',
               errorMessage: error.message,
             });
@@ -70,7 +75,7 @@ export class AuditInterceptor implements NestInterceptor {
             this.logger.error('Failed to log audit error entry:', logError);
           }
         },
-      }),
+      })
     );
   }
 

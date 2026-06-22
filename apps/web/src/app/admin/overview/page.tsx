@@ -142,27 +142,41 @@ export default function PlatformOverviewPage(): JSX.Element {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <div className="bg-card rounded-lg border border-border p-6">
-            <p className="text-3xl font-bold text-foreground">{formatNumber(overview.totalUsers)}</p>
+            <p className="text-3xl font-bold text-foreground">
+              {formatNumber(overview.totalUsers)}
+            </p>
             <p className="text-sm text-muted-foreground mt-1">Total Users</p>
-            <p className={`text-sm font-medium mt-2 ${overview.userGrowth >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+            <p
+              className={`text-sm font-medium mt-2 ${overview.userGrowth >= 0 ? 'text-green-500' : 'text-red-500'}`}
+            >
               {overview.userGrowth >= 0 ? '↑' : '↓'} {Math.abs(overview.userGrowth)}%
             </p>
           </div>
           <div className="bg-card rounded-lg border border-border p-6">
-            <p className="text-3xl font-bold text-foreground">{formatNumber(overview.activeUsers)}</p>
+            <p className="text-3xl font-bold text-foreground">
+              {formatNumber(overview.activeUsers)}
+            </p>
             <p className="text-sm text-muted-foreground mt-1">Active Users</p>
           </div>
           <div className="bg-card rounded-lg border border-border p-6">
-            <p className="text-3xl font-bold text-green-500">{formatCurrency(overview.totalRevenue)}</p>
+            <p className="text-3xl font-bold text-green-500">
+              {formatCurrency(overview.totalRevenue)}
+            </p>
             <p className="text-sm text-muted-foreground mt-1">Total Revenue</p>
-            <p className={`text-sm font-medium mt-2 ${overview.revenueGrowth >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+            <p
+              className={`text-sm font-medium mt-2 ${overview.revenueGrowth >= 0 ? 'text-green-500' : 'text-red-500'}`}
+            >
               {overview.revenueGrowth >= 0 ? '↑' : '↓'} {Math.abs(overview.revenueGrowth)}%
             </p>
           </div>
           <div className="bg-card rounded-lg border border-border p-6">
-            <p className="text-3xl font-bold text-foreground">{formatNumber(overview.totalContent)}</p>
+            <p className="text-3xl font-bold text-foreground">
+              {formatNumber(overview.totalContent)}
+            </p>
             <p className="text-sm text-muted-foreground mt-1">Total Content</p>
-            <p className={`text-sm font-medium mt-2 ${overview.contentGrowth >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+            <p
+              className={`text-sm font-medium mt-2 ${overview.contentGrowth >= 0 ? 'text-green-500' : 'text-red-500'}`}
+            >
               {overview.contentGrowth >= 0 ? '↑' : '↓'} {Math.abs(overview.contentGrowth)}%
             </p>
           </div>
@@ -175,7 +189,9 @@ export default function PlatformOverviewPage(): JSX.Element {
               <div>
                 <div className="flex justify-between mb-1">
                   <span className="text-sm text-foreground">API Uptime</span>
-                  <span className="text-sm font-medium text-foreground">{overview.systemHealth.apiUptime}%</span>
+                  <span className="text-sm font-medium text-foreground">
+                    {overview.systemHealth.apiUptime}%
+                  </span>
                 </div>
                 <div className="h-2 bg-muted rounded-full">
                   <div
@@ -187,7 +203,9 @@ export default function PlatformOverviewPage(): JSX.Element {
               <div>
                 <div className="flex justify-between mb-1">
                   <span className="text-sm text-foreground">Cache Hit Rate</span>
-                  <span className="text-sm font-medium text-foreground">{overview.systemHealth.cacheHitRate}%</span>
+                  <span className="text-sm font-medium text-foreground">
+                    {overview.systemHealth.cacheHitRate}%
+                  </span>
                 </div>
                 <div className="h-2 bg-muted rounded-full">
                   <div
@@ -199,13 +217,17 @@ export default function PlatformOverviewPage(): JSX.Element {
               <div>
                 <div className="flex justify-between mb-1">
                   <span className="text-sm text-foreground">Database Latency</span>
-                  <span className="text-sm font-medium text-foreground">{overview.systemHealth.databaseLatency}ms</span>
+                  <span className="text-sm font-medium text-foreground">
+                    {overview.systemHealth.databaseLatency}ms
+                  </span>
                 </div>
               </div>
               <div>
                 <div className="flex justify-between mb-1">
                   <span className="text-sm text-foreground">Error Rate</span>
-                  <span className={`text-sm font-medium ${overview.systemHealth.errorRate > 5 ? 'text-red-500' : 'text-green-500'}`}>
+                  <span
+                    className={`text-sm font-medium ${overview.systemHealth.errorRate > 5 ? 'text-red-500' : 'text-green-500'}`}
+                  >
                     {overview.systemHealth.errorRate}%
                   </span>
                 </div>
@@ -217,7 +239,10 @@ export default function PlatformOverviewPage(): JSX.Element {
             <h2 className="text-xl font-bold text-foreground mb-4">Recent Activity</h2>
             <div className="space-y-3 max-h-80 overflow-y-auto">
               {overview.recentActivity.slice(0, 8).map((activity) => (
-                <div key={activity.id} className="flex items-center gap-3 pb-3 border-b border-border">
+                <div
+                  key={activity.id}
+                  className="flex items-center gap-3 pb-3 border-b border-border"
+                >
                   <span className="text-xl">{getActivityIcon(activity.type)}</span>
                   <div className="flex-1">
                     <p className="text-sm text-foreground">{activity.description}</p>
@@ -253,15 +278,21 @@ export default function PlatformOverviewPage(): JSX.Element {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-card rounded-lg border border-border p-6">
-            <p className="text-2xl font-bold text-foreground">{formatNumber(overview.totalCreators)}</p>
+            <p className="text-2xl font-bold text-foreground">
+              {formatNumber(overview.totalCreators)}
+            </p>
             <p className="text-sm text-muted-foreground mt-1">Total Creators</p>
           </div>
           <div className="bg-card rounded-lg border border-border p-6">
-            <p className="text-2xl font-bold text-red-500">{formatCurrency(overview.totalPayouts)}</p>
+            <p className="text-2xl font-bold text-red-500">
+              {formatCurrency(overview.totalPayouts)}
+            </p>
             <p className="text-sm text-muted-foreground mt-1">Total Payouts</p>
           </div>
           <div className="bg-card rounded-lg border border-border p-6">
-            <p className="text-2xl font-bold text-yellow-500">{formatCurrency(overview.pendingPayouts)}</p>
+            <p className="text-2xl font-bold text-yellow-500">
+              {formatCurrency(overview.pendingPayouts)}
+            </p>
             <p className="text-sm text-muted-foreground mt-1">Pending Payouts</p>
           </div>
         </div>

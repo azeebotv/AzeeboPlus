@@ -12,16 +12,14 @@ export class CacheService {
   private readonly logger = new Logger(CacheService.name);
   private readonly defaultTtl: number;
 
-  constructor(
-    private readonly redisService: RedisService,
-  ) {
+  constructor(private readonly redisService: RedisService) {
     this.defaultTtl = parseInt(process.env.CACHE_DEFAULT_TTL || '300', 10);
   }
 
   /**
    * Retrieves a cached value by key.
    * Returns null if the key doesn't exist or has expired.
-   * 
+   *
    * @param key - The cache key
    * @returns The cached value as a parsed object, or null
    */
@@ -40,7 +38,7 @@ export class CacheService {
 
   /**
    * Stores a value in cache with optional TTL.
-   * 
+   *
    * @param key - The cache key
    * @param value - The value to cache (will be JSON stringified)
    * @param ttl - Time to live in seconds (defaults to 300s / 5min)
@@ -58,7 +56,7 @@ export class CacheService {
 
   /**
    * Removes a cached value by key.
-   * 
+   *
    * @param key - The cache key to delete
    */
   async delete(key: string): Promise<void> {
@@ -72,7 +70,7 @@ export class CacheService {
 
   /**
    * Removes multiple cached values by key pattern.
-   * 
+   *
    * @param pattern - The key pattern to match (e.g., 'user:*')
    */
   async deleteByPattern(pattern: string): Promise<void> {
@@ -84,13 +82,15 @@ export class CacheService {
         this.logger.debug(`Cache DELETE BY PATTERN: ${pattern} (${keys.length} keys)`);
       }
     } catch (error) {
-      this.logger.error(`Cache DELETE BY PATTERN error for ${pattern}: ${(error as Error).message}`);
+      this.logger.error(
+        `Cache DELETE BY PATTERN error for ${pattern}: ${(error as Error).message}`
+      );
     }
   }
 
   /**
    * Checks if a key exists in cache.
-   * 
+   *
    * @param key - The cache key
    * @returns True if the key exists, false otherwise
    */
@@ -107,7 +107,7 @@ export class CacheService {
   /**
    * Invalidates cache for a specific key pattern.
    * Useful for cache busting after data updates.
-   * 
+   *
    * @param pattern - The key pattern to invalidate
    */
   async invalidate(pattern: string): Promise<void> {

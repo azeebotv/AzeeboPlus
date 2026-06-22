@@ -1,5 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, TextInput } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Image,
+  TextInput,
+} from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import { contentApi, type ContentItem } from '../../src/api';
@@ -40,7 +48,9 @@ export default function ComedyPlayerScreen() {
         setError('No comedy clip available');
         return;
       }
-      const commentsRes = await apiClient.get<ClipComment[]>(`/content/comments/${featured.data[0].id}`).catch(() => []);
+      const commentsRes = await apiClient
+        .get<ClipComment[]>(`/content/comments/${featured.data[0].id}`)
+        .catch(() => []);
       setComments(Array.isArray(commentsRes) ? commentsRes : []);
     } catch (err: any) {
       logger.error('Failed to load clip:', err);
@@ -56,7 +66,12 @@ export default function ComedyPlayerScreen() {
 
   if (isLoading) {
     return (
-      <View style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' }]}>
+      <View
+        style={[
+          styles.container,
+          { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' },
+        ]}
+      >
         <LoadingState text="Loading clip..." />
       </View>
     );
@@ -64,7 +79,12 @@ export default function ComedyPlayerScreen() {
 
   if (error) {
     return (
-      <View style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' }]}>
+      <View
+        style={[
+          styles.container,
+          { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' },
+        ]}
+      >
         <ErrorState description={error} onRetry={fetchClip} />
       </View>
     );
@@ -72,21 +92,28 @@ export default function ComedyPlayerScreen() {
 
   if (!clip) {
     return (
-      <View style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' }]}>
+      <View
+        style={[
+          styles.container,
+          { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' },
+        ]}
+      >
         <EmptyState icon="😂" title="No Clip" description="No comedy clips available right now." />
       </View>
     );
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' }]}>
+    <View
+      style={[
+        styles.container,
+        { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' },
+      ]}
+    >
       <View style={styles.videoSection}>
         <Image source={{ uri: clip.thumbnail }} style={styles.videoPlayer} />
         <View style={styles.videoOverlay}>
-          <TouchableOpacity 
-            style={styles.playButton}
-            onPress={() => setIsPlaying(!isPlaying)}
-          >
+          <TouchableOpacity style={styles.playButton} onPress={() => setIsPlaying(!isPlaying)}>
             <Text style={styles.playIcon}>{isPlaying ? '⏸️' : '▶️'}</Text>
           </TouchableOpacity>
         </View>
@@ -96,7 +123,11 @@ export default function ComedyPlayerScreen() {
           </View>
           <View style={styles.timeDisplay}>
             <Text style={styles.currentTime}>{currentTime}</Text>
-            <Text style={styles.totalTime}>{clip.duration ? `${Math.floor(clip.duration / 60)}:${String(clip.duration % 60).padStart(2, '0')}` : '00:00'}</Text>
+            <Text style={styles.totalTime}>
+              {clip.duration
+                ? `${Math.floor(clip.duration / 60)}:${String(clip.duration % 60).padStart(2, '0')}`
+                : '00:00'}
+            </Text>
           </View>
         </View>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
@@ -107,7 +138,9 @@ export default function ComedyPlayerScreen() {
       <ScrollView style={styles.content}>
         <View style={styles.clipInfo}>
           <View style={styles.titleRow}>
-            <Text style={[styles.clipTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
+            <Text
+              style={[styles.clipTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}
+            >
               {clip.title}
             </Text>
             <TouchableOpacity style={styles.moreButton}>
@@ -127,13 +160,18 @@ export default function ComedyPlayerScreen() {
               <Text style={styles.comedianAvatarText}>😂</Text>
             </View>
             <View style={styles.comedianDetails}>
-              <Text style={[styles.comedianName, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
+              <Text
+                style={[
+                  styles.comedianName,
+                  { color: colorScheme === 'dark' ? '#ffffff' : '#000000' },
+                ]}
+              >
                 {clip.creator?.name || 'Unknown Creator'}
               </Text>
               <Text style={styles.comedianFollowers}>1.2M followers</Text>
             </View>
           </View>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[styles.followButton, isFollowed && styles.followButtonActive]}
             onPress={() => setIsFollowed(!isFollowed)}
           >
@@ -144,7 +182,7 @@ export default function ComedyPlayerScreen() {
         </View>
 
         <View style={styles.actionsSection}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[styles.actionButton, isLiked && styles.actionButtonActive]}
             onPress={() => setIsLiked(!isLiked)}
           >
@@ -166,12 +204,20 @@ export default function ComedyPlayerScreen() {
         </View>
 
         <View style={styles.commentsSection}>
-          <Text style={[styles.commentsTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
+          <Text
+            style={[
+              styles.commentsTitle,
+              { color: colorScheme === 'dark' ? '#ffffff' : '#000000' },
+            ]}
+          >
             Comments
           </Text>
           <View style={styles.commentInputContainer}>
             <TextInput
-              style={[styles.commentInput, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}
+              style={[
+                styles.commentInput,
+                { color: colorScheme === 'dark' ? '#ffffff' : '#000000' },
+              ]}
               placeholder="Add a comment..."
               placeholderTextColor="#666"
               value={commentInput}
@@ -183,7 +229,14 @@ export default function ComedyPlayerScreen() {
           </View>
           <View style={styles.commentsList}>
             {comments.length === 0 ? (
-              <Text style={[styles.commentEmptyText, { color: colorScheme === 'dark' ? '#666' : '#999' }]}>No comments yet</Text>
+              <Text
+                style={[
+                  styles.commentEmptyText,
+                  { color: colorScheme === 'dark' ? '#666' : '#999' },
+                ]}
+              >
+                No comments yet
+              </Text>
             ) : (
               comments.map((comment) => (
                 <View key={comment.id} style={styles.commentItem}>
@@ -192,12 +245,22 @@ export default function ComedyPlayerScreen() {
                   </View>
                   <View style={styles.commentContent}>
                     <View style={styles.commentHeader}>
-                      <Text style={[styles.commentUser, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
+                      <Text
+                        style={[
+                          styles.commentUser,
+                          { color: colorScheme === 'dark' ? '#ffffff' : '#000000' },
+                        ]}
+                      >
                         {comment.user}
                       </Text>
                       <Text style={styles.commentTime}>{comment.time}</Text>
                     </View>
-                    <Text style={[styles.commentText, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
+                    <Text
+                      style={[
+                        styles.commentText,
+                        { color: colorScheme === 'dark' ? '#ffffff' : '#000000' },
+                      ]}
+                    >
                       {comment.text}
                     </Text>
                     <TouchableOpacity style={styles.commentLike}>

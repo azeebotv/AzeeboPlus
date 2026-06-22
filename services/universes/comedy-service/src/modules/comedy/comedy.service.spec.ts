@@ -64,9 +64,7 @@ describe('ComedyService', () => {
 
   describe('getComedians', () => {
     it('should return list of comedians', async () => {
-      const mockComedians = [
-        { id: 'comedian-1', user: { id: 'user-1' } },
-      ];
+      const mockComedians = [{ id: 'comedian-1', user: { id: 'user-1' } }];
       (prismaService.comedianProfile.findMany as jest.Mock).mockResolvedValue(mockComedians);
 
       const result = await service.getComedians();
@@ -115,7 +113,9 @@ describe('ComedyService', () => {
       const mockExistingEntry = { id: 'existing-entry', userId, challengeId };
 
       (prismaService.comedyChallenge.findUnique as jest.Mock).mockResolvedValue(mockChallenge);
-      (prismaService.comedyChallengeEntry.findUnique as jest.Mock).mockResolvedValue(mockExistingEntry);
+      (prismaService.comedyChallengeEntry.findUnique as jest.Mock).mockResolvedValue(
+        mockExistingEntry
+      );
 
       await expect(service.submitChallenge(userId, body)).rejects.toThrow(BadRequestException);
     });
@@ -163,9 +163,7 @@ describe('ComedyService', () => {
 
   describe('getChallenges', () => {
     it('should return active challenges', async () => {
-      const mockChallenges = [
-        { id: 'challenge-1', status: 'active' },
-      ];
+      const mockChallenges = [{ id: 'challenge-1', status: 'active' }];
       (prismaService.comedyChallenge.findMany as jest.Mock).mockResolvedValue(mockChallenges);
 
       const result = await service.getChallenges();
@@ -177,9 +175,7 @@ describe('ComedyService', () => {
 
   describe('getSeries', () => {
     it('should return comedy series', async () => {
-      const mockSeries = [
-        { id: 'series-1', title: 'Series 1' },
-      ];
+      const mockSeries = [{ id: 'series-1', title: 'Series 1' }];
       (prismaService.comedySeries.findMany as jest.Mock).mockResolvedValue(mockSeries);
 
       const result = await service.getSeries();

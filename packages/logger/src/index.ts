@@ -1,8 +1,15 @@
 import { LoggerService, LogLevel } from '@nestjs/common';
+import { trace } from '@opentelemetry/api';
 export { LoggingInterceptor } from './logging.interceptor';
 export { ResponseWrapperInterceptor } from './response-wrapper.interceptor';
-export { ResponseSanitizationInterceptor, SanitizationConfig } from './response-sanitizer.interceptor';
-export { DistributedTracingInterceptor, createTraceHeaders } from './distributed-tracing.interceptor';
+export {
+  ResponseSanitizationInterceptor,
+  SanitizationConfig,
+} from './response-sanitizer.interceptor';
+export {
+  DistributedTracingInterceptor,
+  createTraceHeaders,
+} from './distributed-tracing.interceptor';
 export type { TraceContext } from './distributed-tracing.interceptor';
 
 export interface LogContext {
@@ -28,6 +35,16 @@ export interface StructuredLogEntry {
   duration?: number;
   error?: Error;
   [key: string]: unknown;
+}
+
+export function getTraceContext(): { traceId?: string; spanId?: string } {
+  const span = trace.getActiveSpan();
+  if (!span) return {};
+  const spanContext = span.spanContext();
+  return {
+    traceId: spanContext.traceId,
+    spanId: spanContext.spanId,
+  };
 }
 
 export class StructuredLogger implements LoggerService {
@@ -58,11 +75,13 @@ export class StructuredLogger implements LoggerService {
   }
 
   private write(level: LogLevel, message: string, context?: LogContext): void {
+    const traceContext = getTraceContext();
     const entry: StructuredLogEntry = {
       timestamp: new Date().toISOString(),
       level,
       message,
       service: this.serviceName,
+      ...traceContext,
       ...context,
     };
 

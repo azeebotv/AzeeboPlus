@@ -71,7 +71,12 @@ export class AdminService {
     return subscription;
   }
 
-  async updateSubscription(subscriptionId: string, updateData: Record<string, unknown>, actorId: string, actorRole: string) {
+  async updateSubscription(
+    subscriptionId: string,
+    updateData: Record<string, unknown>,
+    actorId: string,
+    actorRole: string
+  ) {
     const existing = await this.prisma.subscription.findUnique({ where: { id: subscriptionId } });
     if (!existing) {
       throw new NotFoundException('Subscription not found');
@@ -136,7 +141,12 @@ export class AdminService {
     return preferences;
   }
 
-  async updateUserPreferences(userId: string, preferences: Record<string, unknown>, actorId: string, actorRole: string) {
+  async updateUserPreferences(
+    userId: string,
+    preferences: Record<string, unknown>,
+    actorId: string,
+    actorRole: string
+  ) {
     const existing = await this.prisma.userPreferences.findUnique({ where: { userId } });
     if (!existing) {
       throw new NotFoundException('Preferences not found');
@@ -162,12 +172,13 @@ export class AdminService {
   }
 
   async getUserStats() {
-    const [totalSubscriptions, activeSubscriptions, totalWatchHistory, totalSavedItems] = await Promise.all([
-      this.prisma.subscription.count(),
-      this.prisma.subscription.count({ where: { status: 'active' } }),
-      this.prisma.watchHistory.count(),
-      this.prisma.savedItem.count(),
-    ]);
+    const [totalSubscriptions, activeSubscriptions, totalWatchHistory, totalSavedItems] =
+      await Promise.all([
+        this.prisma.subscription.count(),
+        this.prisma.subscription.count({ where: { status: 'active' } }),
+        this.prisma.watchHistory.count(),
+        this.prisma.savedItem.count(),
+      ]);
 
     const recentSubscriptions = await this.prisma.subscription.findMany({
       orderBy: { createdAt: 'desc' },
@@ -183,7 +194,12 @@ export class AdminService {
     };
   }
 
-  async deleteWatchHistory(userId: string, contentId: string | undefined, actorId: string, actorRole: string) {
+  async deleteWatchHistory(
+    userId: string,
+    contentId: string | undefined,
+    actorId: string,
+    actorRole: string
+  ) {
     if (contentId) {
       const existing = await this.prisma.watchHistory.findUnique({
         where: { userId_contentId: { userId, contentId } },
@@ -229,7 +245,12 @@ export class AdminService {
     return { message: 'Watch history deleted successfully' };
   }
 
-  async deleteSavedItems(userId: string, contentId: string | undefined, actorId: string, actorRole: string) {
+  async deleteSavedItems(
+    userId: string,
+    contentId: string | undefined,
+    actorId: string,
+    actorRole: string
+  ) {
     if (contentId) {
       const existing = await this.prisma.savedItem.findUnique({
         where: { userId_contentId: { userId, contentId } },
@@ -294,7 +315,12 @@ export class AdminService {
     };
   }
 
-  async updateUser(userId: string, updateData: Record<string, unknown>, actorId: string, actorRole: string) {
+  async updateUser(
+    userId: string,
+    updateData: Record<string, unknown>,
+    actorId: string,
+    actorRole: string
+  ) {
     const existing = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!existing) {
       throw new NotFoundException('User not found');
@@ -349,19 +375,31 @@ export class AdminService {
     return result;
   }
 
-  async moderateContent(contentId: string, action: string, reason: string, actorId: string, actorRole: string) {
+  async moderateContent(
+    contentId: string,
+    action: string,
+    reason: string,
+    actorId: string,
+    actorRole: string
+  ) {
     // Content moderation is handled by content-service and moderation-service
-    throw new NotFoundException('Content moderation is handled by content-service. Use the content-service admin API instead.');
+    throw new NotFoundException(
+      'Content moderation is handled by content-service. Use the content-service admin API instead.'
+    );
   }
 
   async getModerationReports(page = 1, limit = 20, status?: string) {
     // Moderation reports are handled by moderation-service
-    throw new NotFoundException('Moderation reports are handled by moderation-service. Use the moderation-service admin API instead.');
+    throw new NotFoundException(
+      'Moderation reports are handled by moderation-service. Use the moderation-service admin API instead.'
+    );
   }
 
   async resolveReport(reportId: string, resolution: string, actorId: string, actorRole: string) {
     // Report resolution is handled by moderation-service
-    throw new NotFoundException('Report resolution is handled by moderation-service. Use the moderation-service admin API instead.');
+    throw new NotFoundException(
+      'Report resolution is handled by moderation-service. Use the moderation-service admin API instead.'
+    );
   }
 
   async getAuditLogs(page = 1, limit = 20, userId?: string) {
@@ -391,11 +429,21 @@ export class AdminService {
 
   async getVerificationRequests(page = 1, limit = 20, status?: string) {
     // Creator verification is handled by creator-service
-    throw new NotFoundException('Creator verification is handled by creator-service. Use the creator-service admin API instead.');
+    throw new NotFoundException(
+      'Creator verification is handled by creator-service. Use the creator-service admin API instead.'
+    );
   }
 
-  async verifyCreator(creatorId: string, status: string, notes: string | undefined, actorId: string, actorRole: string) {
+  async verifyCreator(
+    creatorId: string,
+    status: string,
+    notes: string | undefined,
+    actorId: string,
+    actorRole: string
+  ) {
     // Creator verification is handled by creator-service
-    throw new NotFoundException('Creator verification is handled by creator-service. Use the creator-service admin API instead.');
+    throw new NotFoundException(
+      'Creator verification is handled by creator-service. Use the creator-service admin API instead.'
+    );
   }
 }

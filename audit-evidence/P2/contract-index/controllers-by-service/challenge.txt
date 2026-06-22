@@ -1,0 +1,11 @@
+===== services/universes/lifestyle-service/src/modules/challenges/challenge.controller.ts =====
+24:@Controller('challenges')
+28:  @Get()
+45:  @Get(':id')
+53:  @Post()
+54:  @UseGuards(AuthGuard('jwt'))
+66:  @Post(':id/submit')
+67:  @UseGuards(AuthGuard('jwt'))
+81:  @Post('submissions/:id/vote')
+82:  @UseGuards(AuthGuard('jwt'))
+

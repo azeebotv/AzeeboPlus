@@ -50,16 +50,16 @@ export default function PredictionScreen() {
     try {
       setLoading(true);
       setError(null);
-      
+
       const [predictionRes, walletRes] = await Promise.all([
         engagementApi.getPredictionResults(predictionId || 'default'),
         walletApi.getBalance(),
       ]);
-      
+
       if (predictionRes.success && predictionRes.data) {
         setPrediction(predictionRes.data);
       }
-      
+
       if (walletRes.success && walletRes.data) {
         setUserPoints(walletRes.data.balance);
       }
@@ -72,7 +72,12 @@ export default function PredictionScreen() {
   };
 
   const predictionOptions = prediction?.options || [];
-  const potentialWinnings = Math.floor(betAmount * parseFloat(predictionOptions.find(o => o.id === selectedOption)?.percentage?.toString() || '1'));
+  const potentialWinnings = Math.floor(
+    betAmount *
+      parseFloat(
+        predictionOptions.find((o) => o.id === selectedOption)?.percentage?.toString() || '1'
+      )
+  );
 
   const handlePlaceBet = () => {
     if (!selectedOption || userPoints < betAmount) return;
@@ -89,7 +94,7 @@ export default function PredictionScreen() {
       if (!response.success) {
         throw new Error(response.error?.message || 'Bet placement failed');
       }
-      setUserPoints(prev => prev - betAmount);
+      setUserPoints((prev) => prev - betAmount);
       setBetSuccess(true);
       setTimeout(() => {
         setShowConfirmation(false);
@@ -105,7 +110,13 @@ export default function PredictionScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView style={[styles.container, styles.centerContent, { backgroundColor: colorScheme === 'dark' ? colors.dark[900] : colors.light[50] }]}>
+      <SafeAreaView
+        style={[
+          styles.container,
+          styles.centerContent,
+          { backgroundColor: colorScheme === 'dark' ? colors.dark[900] : colors.light[50] },
+        ]}
+      >
         <LoadingState text="Loading..." />
       </SafeAreaView>
     );
@@ -113,7 +124,13 @@ export default function PredictionScreen() {
 
   if (error) {
     return (
-      <SafeAreaView style={[styles.container, styles.centerContent, { backgroundColor: colorScheme === 'dark' ? colors.dark[900] : colors.light[50] }]}>
+      <SafeAreaView
+        style={[
+          styles.container,
+          styles.centerContent,
+          { backgroundColor: colorScheme === 'dark' ? colors.dark[900] : colors.light[50] },
+        ]}
+      >
         <ErrorState title="Failed to load" description={error} onRetry={loadData} />
       </SafeAreaView>
     );
@@ -121,12 +138,22 @@ export default function PredictionScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView style={[styles.scrollView, { backgroundColor: colorScheme === 'dark' ? colors.dark[900] : colors.light[50] }]}>
+      <ScrollView
+        style={[
+          styles.scrollView,
+          { backgroundColor: colorScheme === 'dark' ? colors.dark[900] : colors.light[50] },
+        ]}
+      >
         <View style={styles.header}>
           <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
             <Text style={styles.backIcon}>←</Text>
           </TouchableOpacity>
-          <Text style={[styles.headerTitle, { color: colorScheme === 'dark' ? colors.text.primary : colors.dark[900] }]}>
+          <Text
+            style={[
+              styles.headerTitle,
+              { color: colorScheme === 'dark' ? colors.text.primary : colors.dark[900] },
+            ]}
+          >
             Predict & Win
           </Text>
           <View style={styles.pointsBadge}>
@@ -141,7 +168,12 @@ export default function PredictionScreen() {
               <Text style={styles.predictionIcon}>🎯</Text>
             </View>
             <View style={styles.predictionTitleContainer}>
-              <Text style={[styles.predictionTitle, { color: colorScheme === 'dark' ? colors.text.primary : colors.dark[900] }]}>
+              <Text
+                style={[
+                  styles.predictionTitle,
+                  { color: colorScheme === 'dark' ? colors.text.primary : colors.dark[900] },
+                ]}
+              >
                 Who will be evicted tonight?
               </Text>
               <Text style={styles.predictionMeta}>Ends in 2h 30m • Big Brother Naija</Text>
@@ -167,7 +199,12 @@ export default function PredictionScreen() {
                   <Text style={styles.optionAvatarText}>{option.avatar}</Text>
                 </View>
                 <View style={styles.optionInfo}>
-                  <Text style={[styles.optionLabel, { color: colorScheme === 'dark' ? colors.text.primary : colors.dark[900] }]}>
+                  <Text
+                    style={[
+                      styles.optionLabel,
+                      { color: colorScheme === 'dark' ? colors.text.primary : colors.dark[900] },
+                    ]}
+                  >
                     {option.label}
                   </Text>
                   <Text style={styles.optionOdds}>{option.odds}</Text>
@@ -182,7 +219,12 @@ export default function PredictionScreen() {
           </View>
 
           <View style={styles.betSection}>
-            <Text style={[styles.betLabel, { color: colorScheme === 'dark' ? colors.text.secondary : colors.dark[600] }]}>
+            <Text
+              style={[
+                styles.betLabel,
+                { color: colorScheme === 'dark' ? colors.text.secondary : colors.dark[600] },
+              ]}
+            >
               Your Bet
             </Text>
             <View style={styles.betAmountSelector}>
@@ -192,7 +234,12 @@ export default function PredictionScreen() {
               >
                 <Text style={styles.adjustButtonText}>-</Text>
               </TouchableOpacity>
-              <Text style={[styles.betAmountText, { color: colorScheme === 'dark' ? colors.text.primary : colors.dark[900] }]}>
+              <Text
+                style={[
+                  styles.betAmountText,
+                  { color: colorScheme === 'dark' ? colors.text.primary : colors.dark[900] },
+                ]}
+              >
                 {betAmount} pts
               </Text>
               <TouchableOpacity
@@ -212,10 +259,9 @@ export default function PredictionScreen() {
                   ]}
                   onPress={() => setBetAmount(amount)}
                 >
-                  <Text style={[
-                    styles.quickBetText,
-                    betAmount === amount && styles.quickBetTextActive,
-                  ]}>
+                  <Text
+                    style={[styles.quickBetText, betAmount === amount && styles.quickBetTextActive]}
+                  >
                     {amount}
                   </Text>
                 </TouchableOpacity>
@@ -247,24 +293,44 @@ export default function PredictionScreen() {
         </View>
 
         <View style={styles.rulesSection}>
-          <Text style={[styles.rulesTitle, { color: colorScheme === 'dark' ? colors.text.primary : colors.dark[900] }]}>
+          <Text
+            style={[
+              styles.rulesTitle,
+              { color: colorScheme === 'dark' ? colors.text.primary : colors.dark[900] },
+            ]}
+          >
             How It Works
           </Text>
           <View style={styles.ruleItem}>
             <Text style={styles.ruleNumber}>1</Text>
-            <Text style={[styles.ruleText, { color: colorScheme === 'dark' ? colors.text.secondary : colors.dark[600] }]}>
+            <Text
+              style={[
+                styles.ruleText,
+                { color: colorScheme === 'dark' ? colors.text.secondary : colors.dark[600] },
+              ]}
+            >
               Predict the outcome of live events
             </Text>
           </View>
           <View style={styles.ruleItem}>
             <Text style={styles.ruleNumber}>2</Text>
-            <Text style={[styles.ruleText, { color: colorScheme === 'dark' ? colors.text.secondary : colors.dark[600] }]}>
+            <Text
+              style={[
+                styles.ruleText,
+                { color: colorScheme === 'dark' ? colors.text.secondary : colors.dark[600] },
+              ]}
+            >
               Place your bet with points from your wallet
             </Text>
           </View>
           <View style={styles.ruleItem}>
             <Text style={styles.ruleNumber}>3</Text>
-            <Text style={[styles.ruleText, { color: colorScheme === 'dark' ? colors.text.secondary : colors.dark[600] }]}>
+            <Text
+              style={[
+                styles.ruleText,
+                { color: colorScheme === 'dark' ? colors.text.secondary : colors.dark[600] },
+              ]}
+            >
               Win multiplied points if your prediction is correct
             </Text>
           </View>
@@ -272,7 +338,12 @@ export default function PredictionScreen() {
 
         <View style={styles.leaderboardSection}>
           <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: colorScheme === 'dark' ? colors.text.primary : colors.dark[900] }]}>
+            <Text
+              style={[
+                styles.sectionTitle,
+                { color: colorScheme === 'dark' ? colors.text.primary : colors.dark[900] },
+              ]}
+            >
               Leaderboard
             </Text>
             <TouchableOpacity>
@@ -282,17 +353,30 @@ export default function PredictionScreen() {
           <View style={styles.leaderboard}>
             {leaderboardData.map((entry) => (
               <View key={entry.rank} style={styles.leaderboardItem}>
-                <View style={[
-                  styles.rank,
-                  entry.rank === 1 && styles.rankGold,
-                  entry.rank === 2 && styles.rankSilver,
-                  entry.rank === 3 && styles.rankBronze,
-                ]}>
-                  {entry.rank === 1 ? '🥇' : entry.rank === 2 ? '🥈' : entry.rank === 3 ? '🥉' : entry.rank}
+                <View
+                  style={[
+                    styles.rank,
+                    entry.rank === 1 && styles.rankGold,
+                    entry.rank === 2 && styles.rankSilver,
+                    entry.rank === 3 && styles.rankBronze,
+                  ]}
+                >
+                  {entry.rank === 1
+                    ? '🥇'
+                    : entry.rank === 2
+                      ? '🥈'
+                      : entry.rank === 3
+                        ? '🥉'
+                        : entry.rank}
                 </View>
                 <Text style={styles.leaderboardAvatar}>{entry.avatar}</Text>
                 <View style={styles.leaderboardInfo}>
-                  <Text style={[styles.leaderboardName, { color: colorScheme === 'dark' ? colors.text.primary : colors.dark[900] }]}>
+                  <Text
+                    style={[
+                      styles.leaderboardName,
+                      { color: colorScheme === 'dark' ? colors.text.primary : colors.dark[900] },
+                    ]}
+                  >
                     {entry.name}
                   </Text>
                 </View>
@@ -309,31 +393,71 @@ export default function PredictionScreen() {
             {betSuccess ? (
               <View style={styles.successContent}>
                 <Text style={styles.successIcon}>✅</Text>
-                <Text style={[styles.successTitle, { color: colorScheme === 'dark' ? colors.text.primary : colors.dark[900] }]}>
+                <Text
+                  style={[
+                    styles.successTitle,
+                    { color: colorScheme === 'dark' ? colors.text.primary : colors.dark[900] },
+                  ]}
+                >
                   Bet Placed!
                 </Text>
-                <Text style={[styles.successMessage, { color: colorScheme === 'dark' ? colors.text.secondary : colors.dark[600] }]}>
+                <Text
+                  style={[
+                    styles.successMessage,
+                    { color: colorScheme === 'dark' ? colors.text.secondary : colors.dark[600] },
+                  ]}
+                >
                   Good luck with your prediction!
                 </Text>
               </View>
             ) : (
               <>
-                <Text style={[styles.modalTitle, { color: colorScheme === 'dark' ? colors.text.primary : colors.dark[900] }]}>
+                <Text
+                  style={[
+                    styles.modalTitle,
+                    { color: colorScheme === 'dark' ? colors.text.primary : colors.dark[900] },
+                  ]}
+                >
                   Confirm Bet
                 </Text>
                 <View style={styles.modalDetails}>
-                  <Text style={[styles.modalDetailText, { color: colorScheme === 'dark' ? colors.text.secondary : colors.dark[600] }]}>
-                    Prediction: <Text style={styles.modalHighlight}>{predictionOptions.find(o => o.id === selectedOption)?.label}</Text>
+                  <Text
+                    style={[
+                      styles.modalDetailText,
+                      { color: colorScheme === 'dark' ? colors.text.secondary : colors.dark[600] },
+                    ]}
+                  >
+                    Prediction:{' '}
+                    <Text style={styles.modalHighlight}>
+                      {predictionOptions.find((o) => o.id === selectedOption)?.label}
+                    </Text>
                   </Text>
-                  <Text style={[styles.modalDetailText, { color: colorScheme === 'dark' ? colors.text.secondary : colors.dark[600] }]}>
-                    Bet Amount: <Text style={styles.modalHighlight}>{betAmount.toLocaleString()} pts</Text>
+                  <Text
+                    style={[
+                      styles.modalDetailText,
+                      { color: colorScheme === 'dark' ? colors.text.secondary : colors.dark[600] },
+                    ]}
+                  >
+                    Bet Amount:{' '}
+                    <Text style={styles.modalHighlight}>{betAmount.toLocaleString()} pts</Text>
                   </Text>
-                  <Text style={[styles.modalDetailText, { color: colorScheme === 'dark' ? colors.text.secondary : colors.dark[600] }]}>
-                    Potential Winnings: <Text style={styles.modalHighlight}>{potentialWinnings.toLocaleString()} pts</Text>
+                  <Text
+                    style={[
+                      styles.modalDetailText,
+                      { color: colorScheme === 'dark' ? colors.text.secondary : colors.dark[600] },
+                    ]}
+                  >
+                    Potential Winnings:{' '}
+                    <Text style={styles.modalHighlight}>
+                      {potentialWinnings.toLocaleString()} pts
+                    </Text>
                   </Text>
                 </View>
                 <View style={styles.modalButtons}>
-                  <TouchableOpacity style={styles.modalCancel} onPress={() => setShowConfirmation(false)}>
+                  <TouchableOpacity
+                    style={styles.modalCancel}
+                    onPress={() => setShowConfirmation(false)}
+                  >
                     <Text style={styles.modalCancelText}>Cancel</Text>
                   </TouchableOpacity>
                   <TouchableOpacity style={styles.modalConfirm} onPress={confirmBet}>

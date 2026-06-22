@@ -55,7 +55,10 @@ export function focusElement(selector: string): void {
   }
 }
 
-export function focusNextElement(currentElement: HTMLElement, direction: 'next' | 'previous' = 'next'): void {
+export function focusNextElement(
+  currentElement: HTMLElement,
+  direction: 'next' | 'previous' = 'next'
+): void {
   const focusableSelectors = [
     'a[href]',
     'button:not([disabled])',
@@ -158,7 +161,9 @@ export const DEFAULT_SHORTCUTS: KeyboardShortcut[] = [
   {
     key: '/',
     handler: () => {
-      const searchInput = document.querySelector<HTMLInputElement>('input[type="search"], input[placeholder*="search" i]');
+      const searchInput = document.querySelector<HTMLInputElement>(
+        'input[type="search"], input[placeholder*="search" i]'
+      );
       searchInput?.focus();
     },
     description: 'Focus search input',
@@ -236,20 +241,22 @@ export const DEFAULT_SHORTCUTS: KeyboardShortcut[] = [
             </button>
           </div>
           <div class="space-y-2">
-            ${DEFAULT_SHORTCUTS.filter(s => s.description).map(shortcut => {
-              const keys = [];
-              if (shortcut.ctrlKey) keys.push('Ctrl');
-              if (shortcut.altKey) keys.push('Alt');
-              if (shortcut.shiftKey) keys.push('Shift');
-              if (shortcut.metaKey) keys.push('Cmd');
-              keys.push(shortcut.key.toUpperCase());
-              return `
+            ${DEFAULT_SHORTCUTS.filter((s) => s.description)
+              .map((shortcut) => {
+                const keys = [];
+                if (shortcut.ctrlKey) keys.push('Ctrl');
+                if (shortcut.altKey) keys.push('Alt');
+                if (shortcut.shiftKey) keys.push('Shift');
+                if (shortcut.metaKey) keys.push('Cmd');
+                keys.push(shortcut.key.toUpperCase());
+                return `
                 <div class="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-700">
                   <span class="text-sm">${shortcut.description}</span>
                   <kbd class="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded text-xs font-mono">${keys.join(' + ')}</kbd>
                 </div>
               `;
-            }).join('')}
+              })
+              .join('')}
           </div>
         </div>
       `;

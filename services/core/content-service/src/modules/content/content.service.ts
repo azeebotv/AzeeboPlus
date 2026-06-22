@@ -1,5 +1,11 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
-import { Injectable, NotFoundException, BadRequestException, Logger, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  Logger,
+  ForbiddenException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
 import { Prisma } from '../../prisma/client';
@@ -10,6 +16,7 @@ import { UpdateMediaAssetDto } from './dto/update-media-asset.dto';
 import { MediaService } from '../media/media.service';
 import { TranscodingService } from '../media/transcoding.service';
 import { ContentRepository } from './content.repository';
+import { RedisService } from '../../cache/redis.service';
 import axios from 'axios';
 
 @Injectable()
@@ -17,24 +24,27 @@ export class ContentService {
   private readonly logger = new Logger(ContentService.name);
   private readonly moderationServiceUrl: string;
   private readonly safetyScanEnabled: boolean;
+  private readonly cacheTTL: number;
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly contentRepository: ContentRepository,
     private readonly mediaService: MediaService,
     private readonly transcodingService: TranscodingService,
-    private readonly configService: ConfigService
+    private readonly configService: ConfigService,
+    private readonly redisService: RedisService
   ) {
     this.moderationServiceUrl = this.configService.get<string>(
       'MODERATION_SERVICE_URL',
       'http://moderation-service:3022'
     );
-    this.safetyScanEnabled = this.configService.get<boolean>(
-      'SAFETY_SCAN_ENABLED',
-      true
-    );
+    this.safetyScanEnabled = this.configService.get<boolean>('SAFETY_SCAN_ENABLED', true);
+    this.cacheTTL = this.configService.get<number>('CONTENT_CACHE_TTL', 300);
   }
 
-  private async checkContentSafety(contentId: string): Promise<{ isSafe: boolean; issues: string[]; scanId?: string }> {
+  private async checkContentSafety(
+    contentId: string
+  ): Promise<{ isSafe: boolean; issues: string[]; scanId?: string }> {
     if (!this.safetyScanEnabled) {
       this.logger.warn('Safety scanning is disabled, skipping safety check');
       return { isSafe: true, issues: [] };
@@ -58,13 +68,13 @@ export class ContentService {
       });
 
       const result = response.data;
-      
+
       if (!result.success) {
         return { isSafe: false, issues: ['Safety scan failed'], scanId: result.data?.scanId };
       }
 
       const scanResult = result.data;
-      
+
       if (scanResult.result === 'blocked') {
         return {
           isSafe: false,
@@ -88,7 +98,10 @@ export class ContentService {
     }
   }
 
-  async scanContentForSafety(contentId: string): Promise<{ success: boolean; data: { scanId: string; result: string; threatLevel?: string; categories?: string[] } }> {
+  async scanContentForSafety(contentId: string): Promise<{
+    success: boolean;
+    data: { scanId: string; result: string; threatLevel?: string; categories?: string[] };
+  }> {
     const content = await this.prisma.contentItem.findUnique({
       where: { id: contentId },
       include: { mediaAsset: true },
@@ -132,6 +145,14 @@ export class ContentService {
   }
 
   async getHomeFeed(userId?: string) {
+    const cacheKey = `home-feed:${userId || 'anonymous'}`;
+
+    // Try to get from cache first
+    const cached = await this.redisService.get(cacheKey);
+    if (cached) {
+      return JSON.parse(cached);
+    }
+
     const contentSelect = {
       id: true,
       title: true,
@@ -184,7 +205,7 @@ export class ContentService {
       }),
     ]);
 
-    return {
+    const result = {
       success: true,
       data: {
         trending,
@@ -192,9 +213,13 @@ export class ContentService {
         latest,
       },
     };
+
+    // Cache for 5 minutes
+    await this.redisService.set(cacheKey, JSON.stringify(result), this.cacheTTL);
+
+    return result;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async getWatchFeed(_userId?: string) {
     const content = await this.prisma.contentItem.findMany({
       where: { status: 'published' },
@@ -401,7 +426,7 @@ export class ContentService {
     }
 
     const safetyResult = await this.checkContentSafety(id);
-    
+
     if (!safetyResult.isSafe) {
       throw new ForbiddenException({
         message: 'Content failed safety scan',
@@ -1287,7 +1312,6 @@ export class ContentService {
     };
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async checkContentAvailability(contentId: string, _userId?: string) {
     const content = await this.prisma.contentItem.findUnique({
       where: { id: contentId },

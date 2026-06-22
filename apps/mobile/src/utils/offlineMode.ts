@@ -47,14 +47,8 @@ export class OfflineModeService {
         type,
       };
 
-      await AsyncStorage.setItem(
-        `${CACHE_PREFIX}${key}`,
-        JSON.stringify(cached)
-      );
-      await AsyncStorage.setItem(
-        `${CACHE_EXPIRY_PREFIX}${key}`,
-        expiry.toString()
-      );
+      await AsyncStorage.setItem(`${CACHE_PREFIX}${key}`, JSON.stringify(cached));
+      await AsyncStorage.setItem(`${CACHE_EXPIRY_PREFIX}${key}`, expiry.toString());
     } catch (error) {
       logger.error('Failed to cache content', error);
     }
@@ -82,10 +76,7 @@ export class OfflineModeService {
   static async clearCache(key?: string): Promise<void> {
     try {
       if (key) {
-        await AsyncStorage.multiRemove([
-          `${CACHE_PREFIX}${key}`,
-          `${CACHE_EXPIRY_PREFIX}${key}`,
-        ]);
+        await AsyncStorage.multiRemove([`${CACHE_PREFIX}${key}`, `${CACHE_EXPIRY_PREFIX}${key}`]);
       } else {
         const keys = await AsyncStorage.getAllKeys();
         const cacheKeys = keys.filter(

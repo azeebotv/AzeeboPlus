@@ -52,9 +52,25 @@ export default function ContestantProfileScreen() {
   const loadContestant = async () => {
     try {
       const response = await contentApi.getContestant(contestantId);
-      
+
       if (response.success && response.data) {
-        setContestant(response.data);
+        // Map API Contestant to UI Contestant interface
+        setContestant({
+          id: response.data.id,
+          name: response.data.name,
+          age: 0,
+          location: '',
+          bio: response.data.description,
+          avatar: response.data.avatar,
+          coverImage: '',
+          socialLinks: {},
+          stats: {
+            votes: response.data.votes,
+            rank: response.data.rank,
+            episodes: 0,
+          },
+          isFavorite: false,
+        });
       }
     } catch (error) {
       logger.error('Failed to load contestant', error);
@@ -66,21 +82,17 @@ export default function ContestantProfileScreen() {
   const handleVote = async () => {
     if (!contestant) return;
 
-    Alert.alert(
-      'Vote for Contestant',
-      `Would you like to vote for ${contestant.name}?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Regular Vote',
-          onPress: () => submitVote(false),
-        },
-        {
-          text: 'Super Vote (2x)',
-          onPress: () => submitVote(true),
-        },
-      ]
-    );
+    Alert.alert('Vote for Contestant', `Would you like to vote for ${contestant.name}?`, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Regular Vote',
+        onPress: () => submitVote(false),
+      },
+      {
+        text: 'Super Vote (2x)',
+        onPress: () => submitVote(true),
+      },
+    ]);
   };
 
   const submitVote = async (isSuper: boolean) => {
@@ -91,7 +103,10 @@ export default function ContestantProfileScreen() {
         isSuperVote: isSuper,
       } as any);
 
-      Alert.alert('Success', `Your ${isSuper ? 'Super ' : ''}vote for ${contestant?.name} has been submitted!`);
+      Alert.alert(
+        'Success',
+        `Your ${isSuper ? 'Super ' : ''}vote for ${contestant?.name} has been submitted!`
+      );
       loadContestant();
     } catch (error: any) {
       Alert.alert('Error', error?.message || 'Failed to submit vote');
@@ -122,10 +137,7 @@ export default function ContestantProfileScreen() {
       <SafeAreaView style={styles.container} edges={['top']}>
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>Contestant not found</Text>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => router.back()}
-          >
+          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
             <Text style={styles.backButtonText}>Go Back</Text>
           </TouchableOpacity>
         </View>
@@ -137,23 +149,14 @@ export default function ContestantProfileScreen() {
     <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.coverContainer}>
-          <Image
-            source={{ uri: contestant.coverImage }}
-            style={styles.coverImage}
-          />
-          <TouchableOpacity
-            style={styles.backButtonAbsolute}
-            onPress={() => router.back()}
-          >
+          <Image source={{ uri: contestant.coverImage }} style={styles.coverImage} />
+          <TouchableOpacity style={styles.backButtonAbsolute} onPress={() => router.back()}>
             <Text style={styles.backButtonText}>←</Text>
           </TouchableOpacity>
         </View>
 
         <View style={styles.profileContainer}>
-          <Image
-            source={{ uri: contestant.avatar }}
-            style={styles.avatar}
-          />
+          <Image source={{ uri: contestant.avatar }} style={styles.avatar} />
 
           <View style={styles.header}>
             <Text style={styles.name}>{contestant.name}</Text>

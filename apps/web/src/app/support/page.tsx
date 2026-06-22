@@ -11,22 +11,26 @@ const faqData = [
   {
     id: '1',
     question: 'How do I reset my password?',
-    answer: 'Go to Settings > Security > Change Password. If you forgot your password, use the "Forgot Password" option on the login screen.',
+    answer:
+      'Go to Settings > Security > Change Password. If you forgot your password, use the "Forgot Password" option on the login screen.',
   },
   {
     id: '2',
     question: 'How do I cancel my subscription?',
-    answer: 'Go to Wallet > Subscriptions and select the subscription you want to cancel. Follow the on-screen instructions.',
+    answer:
+      'Go to Wallet > Subscriptions and select the subscription you want to cancel. Follow the on-screen instructions.',
   },
   {
     id: '3',
     question: 'How do I become a creator?',
-    answer: 'Go to Creators > Sign Up and fill out the application form. Our team will review your application within 48 hours.',
+    answer:
+      'Go to Creators > Sign Up and fill out the application form. Our team will review your application within 48 hours.',
   },
   {
     id: '4',
     question: 'How do I report a problem?',
-    answer: 'Use the "Contact Support" form below or email us at support@azeebo.com with details about the issue.',
+    answer:
+      'Use the "Contact Support" form below or email us at support@azeebo.com with details about the issue.',
   },
 ];
 
@@ -77,7 +81,9 @@ export default function SupportPage(): JSX.Element {
     }
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
@@ -87,17 +93,27 @@ export default function SupportPage(): JSX.Element {
       <header className="sticky top-0 z-50 backdrop-blur-xl bg-black/40 border-b border-gray-700/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl flex items-center justify-center" style={{ background: gradients.primary }}>
+            <div
+              className="h-10 w-10 rounded-xl flex items-center justify-center"
+              style={{ background: gradients.primary }}
+            >
               <span className="text-white font-bold text-xl leading-none">A</span>
             </div>
-            <h1 className="text-2xl font-bold hidden sm:block" style={{ color: colors.text.primary }}>Azeebo+</h1>
+            <h1
+              className="text-2xl font-bold hidden sm:block"
+              style={{ color: colors.text.primary }}
+            >
+              Azeebo+
+            </h1>
           </div>
 
           <nav className="hidden md:flex items-center gap-8">
             {['Home', 'Browse', 'Library', 'Creators', 'Support'].map((item) => (
               <Link
                 key={item}
-                href={item === 'Home' ? '/' : item === 'Support' ? '/support' : `/${item.toLowerCase()}`}
+                href={
+                  item === 'Home' ? '/' : item === 'Support' ? '/support' : `/${item.toLowerCase()}`
+                }
                 className="text-base font-medium transition-colors"
                 style={{ color: item === 'Support' ? colors.primary[500] : colors.text.secondary }}
               >
@@ -111,16 +127,22 @@ export default function SupportPage(): JSX.Element {
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
                   <Avatar size="md" fallback={user?.name?.charAt(0) || 'U'} />
-                  <span className="text-sm font-medium" style={{ color: colors.text.primary }}>{user?.name}</span>
+                  <span className="text-sm font-medium" style={{ color: colors.text.primary }}>
+                    {user?.name}
+                  </span>
                 </div>
               </div>
             ) : (
               <div className="flex items-center gap-2">
                 <Link href="/auth/login">
-                  <Button variant="ghost" size="sm">Sign In</Button>
+                  <Button variant="ghost" size="sm">
+                    Sign In
+                  </Button>
                 </Link>
                 <Link href="/auth/register">
-                  <Button variant="primary" size="sm">Get Started</Button>
+                  <Button variant="primary" size="sm">
+                    Get Started
+                  </Button>
                 </Link>
               </div>
             )}
@@ -147,10 +169,18 @@ export default function SupportPage(): JSX.Element {
             { icon: '📋', label: 'Submit Ticket', description: 'Report an issue' },
             { icon: '💬', label: 'Live Chat', description: 'Chat with us now' },
           ].map((item, idx) => (
-            <Card key={idx} padding="md" className="text-center cursor-pointer hover:shadow-lg transition-shadow">
+            <Card
+              key={idx}
+              padding="md"
+              className="text-center cursor-pointer hover:shadow-lg transition-shadow"
+            >
               <span className="text-4xl mb-3 block">{item.icon}</span>
-              <h4 className="font-bold mb-1" style={{ color: colors.text.primary }}>{item.label}</h4>
-              <p className="text-sm" style={{ color: colors.text.secondary }}>{item.description}</p>
+              <h4 className="font-bold mb-1" style={{ color: colors.text.primary }}>
+                {item.label}
+              </h4>
+              <p className="text-sm" style={{ color: colors.text.secondary }}>
+                {item.description}
+              </p>
             </Card>
           ))}
         </div>
@@ -163,12 +193,22 @@ export default function SupportPage(): JSX.Element {
           <div className="space-y-4">
             {faqData.map((faq) => (
               <Card key={faq.id} padding="md" className="cursor-pointer">
-                <div onClick={() => toggleFAQ(faq.id)} className="flex items-center justify-between">
-                  <h4 className="font-bold" style={{ color: colors.text.primary }}>{faq.question}</h4>
-                  <span className="text-2xl" style={{ color: colors.text.secondary }}>{expandedFAQ === faq.id ? '−' : '+'}</span>
+                <div
+                  onClick={() => toggleFAQ(faq.id)}
+                  className="flex items-center justify-between"
+                >
+                  <h4 className="font-bold" style={{ color: colors.text.primary }}>
+                    {faq.question}
+                  </h4>
+                  <span className="text-2xl" style={{ color: colors.text.secondary }}>
+                    {expandedFAQ === faq.id ? '−' : '+'}
+                  </span>
                 </div>
                 {expandedFAQ === faq.id && (
-                  <p className="mt-4 pt-4 border-t" style={{ borderColor: colors.border.light, color: colors.text.secondary }}>
+                  <p
+                    className="mt-4 pt-4 border-t"
+                    style={{ borderColor: colors.border.light, color: colors.text.secondary }}
+                  >
                     {faq.answer}
                   </p>
                 )}
@@ -200,13 +240,19 @@ export default function SupportPage(): JSX.Element {
               <form onSubmit={handleSubmit}>
                 <div className="space-y-6">
                   {formError && (
-                    <div className="p-4 rounded-lg" style={{ backgroundColor: 'rgba(239,68,68,0.1)', color: '#EF4444' }}>
+                    <div
+                      className="p-4 rounded-lg"
+                      style={{ backgroundColor: 'rgba(239,68,68,0.1)', color: '#EF4444' }}
+                    >
                       {formError}
                     </div>
                   )}
 
                   <div>
-                    <label className="block font-medium mb-2" style={{ color: colors.text.primary }}>
+                    <label
+                      className="block font-medium mb-2"
+                      style={{ color: colors.text.primary }}
+                    >
                       Subject
                     </label>
                     <input
@@ -216,13 +262,20 @@ export default function SupportPage(): JSX.Element {
                       onChange={handleInputChange}
                       placeholder="Brief description of your issue"
                       className="w-full px-4 py-3 rounded-lg border-2 focus:outline-none"
-                      style={{ backgroundColor: colors.bg.secondary, borderColor: colors.border.light, color: colors.text.primary }}
+                      style={{
+                        backgroundColor: colors.bg.secondary,
+                        borderColor: colors.border.light,
+                        color: colors.text.primary,
+                      }}
                       required
                     />
                   </div>
 
                   <div>
-                    <label className="block font-medium mb-2" style={{ color: colors.text.primary }}>
+                    <label
+                      className="block font-medium mb-2"
+                      style={{ color: colors.text.primary }}
+                    >
                       Category
                     </label>
                     <select
@@ -230,18 +283,27 @@ export default function SupportPage(): JSX.Element {
                       value={formData.category}
                       onChange={handleInputChange}
                       className="w-full px-4 py-3 rounded-lg border-2 focus:outline-none"
-                      style={{ backgroundColor: colors.bg.secondary, borderColor: colors.border.light, color: colors.text.primary }}
+                      style={{
+                        backgroundColor: colors.bg.secondary,
+                        borderColor: colors.border.light,
+                        color: colors.text.primary,
+                      }}
                       required
                     >
                       <option value="">Select a category</option>
                       {supportCategories.map((cat) => (
-                        <option key={cat} value={cat}>{cat}</option>
+                        <option key={cat} value={cat}>
+                          {cat}
+                        </option>
                       ))}
                     </select>
                   </div>
 
                   <div>
-                    <label className="block font-medium mb-2" style={{ color: colors.text.primary }}>
+                    <label
+                      className="block font-medium mb-2"
+                      style={{ color: colors.text.primary }}
+                    >
                       Message
                     </label>
                     <textarea
@@ -251,7 +313,11 @@ export default function SupportPage(): JSX.Element {
                       placeholder="Tell us more about your issue..."
                       rows={6}
                       className="w-full px-4 py-3 rounded-lg border-2 focus:outline-none"
-                      style={{ backgroundColor: colors.bg.secondary, borderColor: colors.border.light, color: colors.text.primary }}
+                      style={{
+                        backgroundColor: colors.bg.secondary,
+                        borderColor: colors.border.light,
+                        color: colors.text.primary,
+                      }}
                       required
                     />
                   </div>
@@ -267,51 +333,77 @@ export default function SupportPage(): JSX.Element {
       </section>
 
       {/* Footer */}
-      <footer className="border-t py-12" style={{ borderColor: colors.border.light, backgroundColor: colors.bg.secondary }}>
+      <footer
+        className="border-t py-12"
+        style={{ borderColor: colors.border.light, backgroundColor: colors.bg.secondary }}
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
             <div>
-              <h4 className="font-bold text-lg mb-4" style={{ color: colors.text.primary }}>Azeebo+</h4>
+              <h4 className="font-bold text-lg mb-4" style={{ color: colors.text.primary }}>
+                Azeebo+
+              </h4>
               <ul className="space-y-2" style={{ color: colors.text.secondary }}>
                 {['About', 'Careers', 'Press'].map((item) => (
-                  <li key={item} className="text-sm hover:text-gray-200 transition-colors cursor-pointer">
+                  <li
+                    key={item}
+                    className="text-sm hover:text-gray-200 transition-colors cursor-pointer"
+                  >
                     {item}
                   </li>
                 ))}
               </ul>
             </div>
             <div>
-              <h4 className="font-bold text-lg mb-4" style={{ color: colors.text.primary }}>Help</h4>
+              <h4 className="font-bold text-lg mb-4" style={{ color: colors.text.primary }}>
+                Help
+              </h4>
               <ul className="space-y-2" style={{ color: colors.text.secondary }}>
                 {['Support', 'FAQ', 'Contact'].map((item) => (
-                  <li key={item} className="text-sm hover:text-gray-200 transition-colors cursor-pointer">
+                  <li
+                    key={item}
+                    className="text-sm hover:text-gray-200 transition-colors cursor-pointer"
+                  >
                     {item}
                   </li>
                 ))}
               </ul>
             </div>
             <div>
-              <h4 className="font-bold text-lg mb-4" style={{ color: colors.text.primary }}>Legal</h4>
+              <h4 className="font-bold text-lg mb-4" style={{ color: colors.text.primary }}>
+                Legal
+              </h4>
               <ul className="space-y-2" style={{ color: colors.text.secondary }}>
                 {['Terms', 'Privacy', 'Cookies'].map((item) => (
-                  <li key={item} className="text-sm hover:text-gray-200 transition-colors cursor-pointer">
+                  <li
+                    key={item}
+                    className="text-sm hover:text-gray-200 transition-colors cursor-pointer"
+                  >
                     {item}
                   </li>
                 ))}
               </ul>
             </div>
             <div>
-              <h4 className="font-bold text-lg mb-4" style={{ color: colors.text.primary }}>Connect</h4>
+              <h4 className="font-bold text-lg mb-4" style={{ color: colors.text.primary }}>
+                Connect
+              </h4>
               <ul className="space-y-2" style={{ color: colors.text.secondary }}>
                 {['Twitter', 'Instagram', 'Facebook'].map((item) => (
-                  <li key={item} className="text-sm hover:text-gray-200 transition-colors cursor-pointer">
+                  <li
+                    key={item}
+                    className="text-sm hover:text-gray-200 transition-colors cursor-pointer"
+                  >
                     {item}
                   </li>
                 ))}
               </ul>
             </div>
           </div>
-          <div className="mt-12 pt-8 border-t text-center text-sm" style={{ borderColor: colors.border.light, color: colors.text.tertiary }}>
+          <div
+            className="mt-12 pt-8 border-t text-center text-sm"
+            style={{ borderColor: colors.border.light, color: colors.text.tertiary }}
+          >
             <p>© 2026 Azeebo+. All rights reserved.</p>
           </div>
         </div>

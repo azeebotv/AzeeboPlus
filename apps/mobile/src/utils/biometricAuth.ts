@@ -29,19 +29,19 @@ export class BiometricAuthService {
   static async getSupportedBiometricType(): Promise<BiometricType> {
     try {
       const supportedTypes = await LocalAuthentication.supportedAuthenticationTypesAsync();
-      
+
       if (supportedTypes.includes(LocalAuthentication.AuthenticationType.FACIAL_RECOGNITION)) {
         return 'face';
       }
-      
+
       if (supportedTypes.includes(LocalAuthentication.AuthenticationType.FINGERPRINT)) {
         return 'fingerprint';
       }
-      
+
       if (supportedTypes.includes(LocalAuthentication.AuthenticationType.IRIS)) {
         return 'iris';
       }
-      
+
       return 'none';
     } catch (error) {
       logger.error('Failed to get biometric type', error);
@@ -55,7 +55,7 @@ export class BiometricAuthService {
   ): Promise<BiometricResult> {
     try {
       const isAvailable = await this.isAvailable();
-      
+
       if (!isAvailable) {
         return {
           success: false,
@@ -95,14 +95,14 @@ export class BiometricAuthService {
   static async enableBiometrics(credentials: string): Promise<boolean> {
     try {
       const authResult = await this.authenticate('Enable biometric authentication');
-      
+
       if (!authResult.success) {
         return false;
       }
 
       await SecureStore.setItemAsync(BIOMETRIC_ENABLED_KEY, 'true');
       await SecureStore.setItemAsync(BIOMETRIC_CREDENTIALS_KEY, credentials);
-      
+
       return true;
     } catch (error) {
       logger.error('Failed to enable biometrics', error);
@@ -141,7 +141,7 @@ export class BiometricAuthService {
   static async authenticateWithStoredCredentials(): Promise<BiometricResult> {
     try {
       const isEnabled = await this.isBiometricEnabled();
-      
+
       if (!isEnabled) {
         return {
           success: false,
@@ -150,13 +150,13 @@ export class BiometricAuthService {
       }
 
       const authResult = await this.authenticate('Authenticate to access your account');
-      
+
       if (!authResult.success) {
         return authResult;
       }
 
       const credentials = await this.getStoredCredentials();
-      
+
       if (!credentials) {
         return {
           success: false,

@@ -74,7 +74,9 @@ export default function GameplayPage() {
   }
 
   if (!game) {
-    return <EmptyState icon="🎮" title="Game not found" description="This game could not be found" />;
+    return (
+      <EmptyState icon="🎮" title="Game not found" description="This game could not be found" />
+    );
   }
 
   if (isPlaying) {
@@ -97,13 +99,13 @@ export default function GameplayPage() {
             <View style={styles.scoreButtons}>
               <TouchableOpacity
                 style={styles.scoreButton}
-                onPress={() => setCurrentScore(prev => prev + 100)}
+                onPress={() => setCurrentScore((prev) => prev + 100)}
               >
                 <Text style={styles.scoreButtonText}>+100</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.scoreButton, styles.scoreButtonSpecial]}
-                onPress={() => setCurrentScore(prev => prev + 500)}
+                onPress={() => setCurrentScore((prev) => prev + 500)}
               >
                 <Text style={styles.scoreButtonText}>+500</Text>
               </TouchableOpacity>
@@ -173,7 +175,9 @@ export default function GameplayPage() {
             <View style={styles.scoreDivider} />
             <View style={styles.scoreItem}>
               <Text style={styles.scoreLabel}>Your Best</Text>
-              <Text style={[styles.scoreValue, styles.yourScore]}>{(game.yourBest || 0).toLocaleString()}</Text>
+              <Text style={[styles.scoreValue, styles.yourScore]}>
+                {(game.yourBest || 0).toLocaleString()}
+              </Text>
             </View>
           </View>
         </View>
@@ -186,10 +190,7 @@ export default function GameplayPage() {
             {levels.map((level) => (
               <TouchableOpacity
                 key={level.id}
-                style={[
-                  styles.levelCard,
-                  !level.unlocked && styles.levelLocked,
-                ]}
+                style={[styles.levelCard, !level.unlocked && styles.levelLocked]}
                 disabled={!level.unlocked}
               >
                 <View style={styles.levelInfo}>
@@ -218,21 +219,17 @@ export default function GameplayPage() {
             {leaderboard.map((player) => (
               <View
                 key={player.id}
-                style={[
-                  styles.leaderboardItem,
-                  player.isYou && styles.leaderboardItemYou,
-                ]}
+                style={[styles.leaderboardItem, player.isYou && styles.leaderboardItemYou]}
               >
-                <View style={[
-                  styles.rankBadge,
-                  player.rank <= 3 && styles.rankBadgeTop,
-                ]}>
-                  <Text style={[
-                    styles.rankText,
-                    player.rank === 1 && styles.rankGold,
-                    player.rank === 2 && styles.rankSilver,
-                    player.rank === 3 && styles.rankBronze,
-                  ]}>
+                <View style={[styles.rankBadge, player.rank <= 3 && styles.rankBadgeTop]}>
+                  <Text
+                    style={[
+                      styles.rankText,
+                      player.rank === 1 && styles.rankGold,
+                      player.rank === 2 && styles.rankSilver,
+                      player.rank === 3 && styles.rankBronze,
+                    ]}
+                  >
                     {player.rank}
                   </Text>
                 </View>
@@ -253,15 +250,14 @@ export default function GameplayPage() {
             {achievements.map((achievement) => (
               <View
                 key={achievement.id}
-                style={[
-                  styles.achievementCard,
-                  !achievement.earned && styles.achievementLocked,
-                ]}
+                style={[styles.achievementCard, !achievement.earned && styles.achievementLocked]}
               >
-                <View style={[
-                  styles.achievementIcon,
-                  !achievement.earned && styles.achievementIconLocked,
-                ]}>
+                <View
+                  style={[
+                    styles.achievementIcon,
+                    !achievement.earned && styles.achievementIconLocked,
+                  ]}
+                >
                   <Text style={styles.achievementEmoji}>
                     {achievement.earned ? achievement.emoji : '🔒'}
                   </Text>

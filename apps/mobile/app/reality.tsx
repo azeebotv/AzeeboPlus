@@ -6,15 +6,26 @@ import { LoadingState, EmptyState, ErrorState } from '../src/components/StateCon
 import { apiClient } from '../src/api/client';
 
 interface LiveShow {
-  id: string; title: string; subtitle: string; thumbnail: string; viewers: string; isLive: boolean;
+  id: string;
+  title: string;
+  subtitle: string;
+  thumbnail: string;
+  viewers: string;
+  isLive: boolean;
 }
 
 interface Contestant {
-  id: string; name: string; votes: number; image: string;
+  id: string;
+  name: string;
+  votes: number;
+  image: string;
 }
 
 interface FeaturedItem {
-  id: string; title: string; duration: string; thumbnail: string;
+  id: string;
+  title: string;
+  duration: string;
+  thumbnail: string;
 }
 
 export default function RealityUniverseHome() {
@@ -36,9 +47,9 @@ export default function RealityUniverseHome() {
         apiClient.get<any>('/v1/reality/contestants'),
         apiClient.get<any>('/v1/reality/featured'),
       ]);
-      setLiveShows(Array.isArray(showsRes) ? showsRes : showsRes?.data ?? []);
-      setContestants(Array.isArray(contestantsRes) ? contestantsRes : contestantsRes?.data ?? []);
-      setFeaturedContent(Array.isArray(featuredRes) ? featuredRes : featuredRes?.data ?? []);
+      setLiveShows(Array.isArray(showsRes) ? showsRes : (showsRes?.data ?? []));
+      setContestants(Array.isArray(contestantsRes) ? contestantsRes : (contestantsRes?.data ?? []));
+      setFeaturedContent(Array.isArray(featuredRes) ? featuredRes : (featuredRes?.data ?? []));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load');
     } finally {
@@ -46,12 +57,20 @@ export default function RealityUniverseHome() {
     }
   };
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   if (isLoading) return <LoadingState text="Loading reality shows..." />;
   if (error) return <ErrorState description={error} onRetry={fetchData} />;
   if (!liveShows.length && !contestants.length && !featuredContent.length) {
-    return <EmptyState icon="🎭" title="No shows available" description="Check back later for reality shows" />;
+    return (
+      <EmptyState
+        icon="🎭"
+        title="No shows available"
+        description="Check back later for reality shows"
+      />
+    );
   }
 
   const renderContestantCard = ({ item, index }: { item: Contestant; index: number }) => (
@@ -148,7 +167,11 @@ export default function RealityUniverseHome() {
             Featured Highlights
           </Text>
         </View>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.highlightsList}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.highlightsList}
+        >
           {featuredContent.map((item) => (
             <TouchableOpacity
               key={item.id}

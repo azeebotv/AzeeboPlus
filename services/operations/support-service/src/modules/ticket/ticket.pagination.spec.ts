@@ -223,9 +223,7 @@ describe('Support Service Pagination Tests', () => {
   describe('Pagination - GET /support/tickets/my', () => {
     it('should return paginated user tickets', async () => {
       mockTicketService.getUserTickets.mockResolvedValueOnce({
-        tickets: [
-          { id: 'ticket-1', subject: 'My Ticket', status: 'OPEN' },
-        ],
+        tickets: [{ id: 'ticket-1', subject: 'My Ticket', status: 'OPEN' }],
         meta: { page: 1, limit: 20, total: 25, totalPages: 2 },
       });
 

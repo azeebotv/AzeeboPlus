@@ -16,8 +16,19 @@ describe('MoviesService', () => {
           useValue: {
             movie: { findMany: jest.fn(), findUnique: jest.fn() },
             rental: { findUnique: jest.fn(), create: jest.fn(), findMany: jest.fn() },
-            watchlistItem: { findMany: jest.fn(), findUnique: jest.fn(), create: jest.fn(), delete: jest.fn() },
-            viewingWindow: { findMany: jest.fn(), findUnique: jest.fn(), create: jest.fn(), update: jest.fn(), findFirst: jest.fn() },
+            watchlistItem: {
+              findMany: jest.fn(),
+              findUnique: jest.fn(),
+              create: jest.fn(),
+              delete: jest.fn(),
+            },
+            viewingWindow: {
+              findMany: jest.fn(),
+              findUnique: jest.fn(),
+              create: jest.fn(),
+              update: jest.fn(),
+              findFirst: jest.fn(),
+            },
             premiere: { findMany: jest.fn() },
           },
         },
@@ -191,7 +202,9 @@ describe('MoviesService', () => {
     it('should throw NotFoundException when movie not found', async () => {
       (prismaService.movie.findUnique as jest.Mock).mockResolvedValue(null);
 
-      await expect(service.createViewingWindow(movieId, { startsAt: new Date(), type: 'premiere' })).rejects.toThrow(NotFoundException);
+      await expect(
+        service.createViewingWindow(movieId, { startsAt: new Date(), type: 'premiere' })
+      ).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -214,7 +227,9 @@ describe('MoviesService', () => {
     it('should throw NotFoundException when window not found', async () => {
       (prismaService.viewingWindow.findUnique as jest.Mock).mockResolvedValue(null);
 
-      await expect(service.updateViewingWindow(windowId, { isActive: false })).rejects.toThrow(NotFoundException);
+      await expect(service.updateViewingWindow(windowId, { isActive: false })).rejects.toThrow(
+        NotFoundException
+      );
     });
   });
 
@@ -222,9 +237,7 @@ describe('MoviesService', () => {
     const userId = 'user-123';
 
     it('should return user library with active rentals', async () => {
-      const mockRentals = [
-        { id: 'rental-1', userId, movieId: 'movie-1', status: 'active' },
-      ];
+      const mockRentals = [{ id: 'rental-1', userId, movieId: 'movie-1', status: 'active' }];
       (prismaService.rental.findMany as jest.Mock).mockResolvedValue(mockRentals);
 
       const result = await service.getLibrary(userId);
@@ -238,9 +251,7 @@ describe('MoviesService', () => {
     const userId = 'user-123';
 
     it('should return user watchlist', async () => {
-      const mockWatchlist = [
-        { id: 'watchlist-1', userId, movieId: 'movie-1' },
-      ];
+      const mockWatchlist = [{ id: 'watchlist-1', userId, movieId: 'movie-1' }];
       (prismaService.watchlistItem.findMany as jest.Mock).mockResolvedValue(mockWatchlist);
 
       const result = await service.getWatchlist(userId);

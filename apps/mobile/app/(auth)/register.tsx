@@ -11,7 +11,7 @@ import {
   Alert,
   ScrollView,
 } from 'react-native';
-import { useRouter, Link } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { useAuth } from '../../src/contexts/AuthContext';
 import { LoadingState, ErrorState } from '../../src/components/StateContainers';
 
@@ -119,9 +119,7 @@ export default function RegisterScreen() {
                   style={styles.showButton}
                   onPress={() => setShowPassword(!showPassword)}
                 >
-                  <Text style={styles.showButtonText}>
-                    {showPassword ? 'Hide' : 'Show'}
-                  </Text>
+                  <Text style={styles.showButtonText}>{showPassword ? 'Hide' : 'Show'}</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -168,11 +166,9 @@ export default function RegisterScreen() {
 
           <View style={styles.footer}>
             <Text style={styles.footerText}>Already have an account?</Text>
-            <Link href="/(auth)/login" asChild>
-              <TouchableOpacity>
-                <Text style={styles.signInLink}> Sign In</Text>
-              </TouchableOpacity>
-            </Link>
+            <TouchableOpacity onPress={() => router.push('/(auth)/login' as any)}>
+              <Text style={styles.signInLink}>Sign In</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </ScrollView>

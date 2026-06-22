@@ -65,30 +65,44 @@ export default function AnnouncementCenterPage(): JSX.Element {
 
   const getPriorityColor = (priority: string): string => {
     switch (priority) {
-      case 'low': return 'bg-gray-500/20 text-gray-500';
-      case 'medium': return 'bg-blue-500/20 text-blue-500';
-      case 'high': return 'bg-orange-500/20 text-orange-500';
-      case 'critical': return 'bg-red-500/20 text-red-500';
-      default: return 'bg-muted text-muted-foreground';
+      case 'low':
+        return 'bg-gray-500/20 text-gray-500';
+      case 'medium':
+        return 'bg-blue-500/20 text-blue-500';
+      case 'high':
+        return 'bg-orange-500/20 text-orange-500';
+      case 'critical':
+        return 'bg-red-500/20 text-red-500';
+      default:
+        return 'bg-muted text-muted-foreground';
     }
   };
 
   const getTypeIcon = (type: string): string => {
     switch (type) {
-      case 'info': return 'ℹ️';
-      case 'warning': return '⚠️';
-      case 'update': return '🔄';
-      case 'maintenance': return '🔧';
-      default: return '📢';
+      case 'info':
+        return 'ℹ️';
+      case 'warning':
+        return '⚠️';
+      case 'update':
+        return '🔄';
+      case 'maintenance':
+        return '🔧';
+      default:
+        return '📢';
     }
   };
 
   const getStatusColor = (status: string): string => {
     switch (status) {
-      case 'published': return 'text-green-500';
-      case 'draft': return 'text-yellow-500';
-      case 'archived': return 'text-gray-500';
-      default: return 'text-muted-foreground';
+      case 'published':
+        return 'text-green-500';
+      case 'draft':
+        return 'text-yellow-500';
+      case 'archived':
+        return 'text-gray-500';
+      default:
+        return 'text-muted-foreground';
     }
   };
 
@@ -109,7 +123,9 @@ export default function AnnouncementCenterPage(): JSX.Element {
         <div className="flex justify-between items-start mb-8">
           <div>
             <h1 className="text-3xl font-bold text-foreground mb-2">Announcement Center</h1>
-            <p className="text-muted-foreground">Manage platform-wide announcements and notifications</p>
+            <p className="text-muted-foreground">
+              Manage platform-wide announcements and notifications
+            </p>
           </div>
           <button
             onClick={() => setShowCreateModal(true)}
@@ -128,7 +144,9 @@ export default function AnnouncementCenterPage(): JSX.Element {
                   <div>
                     <div className="flex items-center gap-2 mb-1">
                       <h3 className="text-xl font-bold text-foreground">{announcement.title}</h3>
-                      <span className={`text-xs font-semibold px-2 py-1 rounded ${getPriorityColor(announcement.priority)}`}>
+                      <span
+                        className={`text-xs font-semibold px-2 py-1 rounded ${getPriorityColor(announcement.priority)}`}
+                      >
                         {announcement.priority.toUpperCase()}
                       </span>
                     </div>
@@ -136,7 +154,9 @@ export default function AnnouncementCenterPage(): JSX.Element {
                     <div className="flex items-center gap-4 text-xs text-muted-foreground">
                       <span>Created: {new Date(announcement.createdAt).toLocaleDateString()}</span>
                       {announcement.publishedAt && (
-                        <span>Published: {new Date(announcement.publishedAt).toLocaleDateString()}</span>
+                        <span>
+                          Published: {new Date(announcement.publishedAt).toLocaleDateString()}
+                        </span>
                       )}
                       <span>By: {announcement.createdBy}</span>
                       <span>Views: {announcement.views}</span>
@@ -172,7 +192,9 @@ export default function AnnouncementCenterPage(): JSX.Element {
                   <input
                     type="text"
                     value={newAnnouncement.title}
-                    onChange={(e) => setNewAnnouncement({ ...newAnnouncement, title: e.target.value })}
+                    onChange={(e) =>
+                      setNewAnnouncement({ ...newAnnouncement, title: e.target.value })
+                    }
                     className="w-full px-4 py-2 bg-muted border border-border rounded-lg text-foreground"
                     placeholder="Announcement title"
                   />
@@ -181,7 +203,9 @@ export default function AnnouncementCenterPage(): JSX.Element {
                   <label className="block text-sm font-medium text-foreground mb-2">Content</label>
                   <textarea
                     value={newAnnouncement.content}
-                    onChange={(e) => setNewAnnouncement({ ...newAnnouncement, content: e.target.value })}
+                    onChange={(e) =>
+                      setNewAnnouncement({ ...newAnnouncement, content: e.target.value })
+                    }
                     className="w-full px-4 py-2 bg-muted border border-border rounded-lg text-foreground"
                     rows={4}
                     placeholder="Announcement content"
@@ -192,7 +216,12 @@ export default function AnnouncementCenterPage(): JSX.Element {
                     <label className="block text-sm font-medium text-foreground mb-2">Type</label>
                     <select
                       value={newAnnouncement.type}
-                      onChange={(e) => setNewAnnouncement({ ...newAnnouncement, type: e.target.value as 'info' | 'warning' | 'update' | 'maintenance' })}
+                      onChange={(e) =>
+                        setNewAnnouncement({
+                          ...newAnnouncement,
+                          type: e.target.value as 'info' | 'warning' | 'update' | 'maintenance',
+                        })
+                      }
                       className="w-full px-4 py-2 bg-muted border border-border rounded-lg text-foreground"
                     >
                       <option value="info">Info</option>
@@ -202,10 +231,17 @@ export default function AnnouncementCenterPage(): JSX.Element {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">Priority</label>
+                    <label className="block text-sm font-medium text-foreground mb-2">
+                      Priority
+                    </label>
                     <select
                       value={newAnnouncement.priority}
-                      onChange={(e) => setNewAnnouncement({ ...newAnnouncement, priority: e.target.value as 'low' | 'medium' | 'high' | 'critical' })}
+                      onChange={(e) =>
+                        setNewAnnouncement({
+                          ...newAnnouncement,
+                          priority: e.target.value as 'low' | 'medium' | 'high' | 'critical',
+                        })
+                      }
                       className="w-full px-4 py-2 bg-muted border border-border rounded-lg text-foreground"
                     >
                       <option value="low">Low</option>
@@ -216,10 +252,14 @@ export default function AnnouncementCenterPage(): JSX.Element {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">Target Audience</label>
+                  <label className="block text-sm font-medium text-foreground mb-2">
+                    Target Audience
+                  </label>
                   <select
                     value={newAnnouncement.targetAudience}
-                    onChange={(e) => setNewAnnouncement({ ...newAnnouncement, targetAudience: e.target.value })}
+                    onChange={(e) =>
+                      setNewAnnouncement({ ...newAnnouncement, targetAudience: e.target.value })
+                    }
                     className="w-full px-4 py-2 bg-muted border border-border rounded-lg text-foreground"
                   >
                     <option value="all">All Users</option>

@@ -4,7 +4,10 @@ import { colors, gradients } from '@azeebo/design-tokens';
 
 export default function MaintenancePage() {
   return (
-    <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: colors.bg.primary }}>
+    <div
+      className="min-h-screen flex items-center justify-center"
+      style={{ backgroundColor: colors.bg.primary }}
+    >
       <div className="text-center px-4 max-w-md">
         <div className="mb-8">
           <span className="text-8xl">🛠️</span>

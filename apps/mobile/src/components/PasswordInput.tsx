@@ -1,11 +1,5 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-} from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { colors } from '@azeebo/design-tokens';
 
 interface PasswordInputProps {
@@ -47,9 +41,7 @@ export function PasswordInput({
           onPress={() => setShowPassword(!showPassword)}
           testID={testID ? `${testID}-toggle` : 'password-toggle'}
         >
-          <Text style={styles.showButtonText}>
-            {showPassword ? 'Hide' : 'Show'}
-          </Text>
+          <Text style={styles.showButtonText}>{showPassword ? 'Hide' : 'Show'}</Text>
         </TouchableOpacity>
       </View>
       {error && <Text style={styles.errorText}>{error}</Text>}

@@ -5,10 +5,34 @@ import { useRouter } from 'expo-router';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
 import { apiClient } from '../../src/api/client';
 
-interface CreatorData { id: string; name: string; followers: string; content: string; avatar: string; verified: boolean; }
-interface TrendingContentItem { id: string; title: string; views: string; creator: string; likes: string; thumbnail: string; }
-interface CategoryData { id: string; name: string; emoji: string; }
-interface CreatorCardData { id: string; title: string; description: string; emoji: string; action: string; }
+interface CreatorData {
+  id: string;
+  name: string;
+  followers: string;
+  content: string;
+  avatar: string;
+  verified: boolean;
+}
+interface TrendingContentItem {
+  id: string;
+  title: string;
+  views: string;
+  creator: string;
+  likes: string;
+  thumbnail: string;
+}
+interface CategoryData {
+  id: string;
+  name: string;
+  emoji: string;
+}
+interface CreatorCardData {
+  id: string;
+  title: string;
+  description: string;
+  emoji: string;
+  action: string;
+}
 
 export default function CreatorUniverseHome() {
   const colorScheme = useColorScheme();
@@ -31,10 +55,10 @@ export default function CreatorUniverseHome() {
         apiClient.get<any>('/v1/creators/categories'),
         apiClient.get<any>('/v1/creators/cards'),
       ]);
-      setFeaturedCreators(Array.isArray(creatorsRes) ? creatorsRes : creatorsRes?.data ?? []);
-      setTrendingContent(Array.isArray(contentRes) ? contentRes : contentRes?.data ?? []);
-      setCategories(Array.isArray(catsRes) ? catsRes : catsRes?.data ?? []);
-      setCreatorCards(Array.isArray(cardsRes) ? cardsRes : cardsRes?.data ?? []);
+      setFeaturedCreators(Array.isArray(creatorsRes) ? creatorsRes : (creatorsRes?.data ?? []));
+      setTrendingContent(Array.isArray(contentRes) ? contentRes : (contentRes?.data ?? []));
+      setCategories(Array.isArray(catsRes) ? catsRes : (catsRes?.data ?? []));
+      setCreatorCards(Array.isArray(cardsRes) ? cardsRes : (cardsRes?.data ?? []));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load');
     } finally {
@@ -42,12 +66,20 @@ export default function CreatorUniverseHome() {
     }
   };
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   if (isLoading) return <LoadingState text="Loading creators..." />;
   if (error) return <ErrorState description={error} onRetry={fetchData} />;
   if (!featuredCreators.length && !trendingContent.length) {
-    return <EmptyState icon="🎤" title="No creators available" description="Check back later for creator content" />;
+    return (
+      <EmptyState
+        icon="🎤"
+        title="No creators available"
+        description="Check back later for creator content"
+      />
+    );
   }
 
   return (
@@ -77,7 +109,11 @@ export default function CreatorUniverseHome() {
       </View>
 
       <View style={styles.categoriesSection}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoriesList}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.categoriesList}
+        >
           {categories.map((category) => (
             <TouchableOpacity key={category.id} style={styles.categoryButton}>
               <Text style={styles.categoryEmoji}>{category.emoji}</Text>
@@ -103,12 +139,16 @@ export default function CreatorUniverseHome() {
           contentContainerStyle={styles.creatorsList}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
-            <TouchableOpacity style={[styles.creatorCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}>
+            <TouchableOpacity
+              style={[styles.creatorCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
+            >
               <View style={styles.creatorAvatar}>
                 <Text style={styles.creatorAvatarEmoji}>{item.avatar}</Text>
                 {item.verified && <View style={styles.verifiedBadge} />}
               </View>
-              <Text style={[styles.creatorName, { color: isDark ? '#fff' : '#000' }]}>{item.name}</Text>
+              <Text style={[styles.creatorName, { color: isDark ? '#fff' : '#000' }]}>
+                {item.name}
+              </Text>
               <View style={styles.creatorStats}>
                 <Text style={styles.creatorStat}>{item.followers}</Text>
                 <Text style={styles.creatorStatSeparator}>•</Text>
@@ -128,7 +168,10 @@ export default function CreatorUniverseHome() {
         </Text>
         <View style={styles.contentGrid}>
           {trendingContent.map((item) => (
-            <TouchableOpacity key={item.id} style={[styles.contentCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}>
+            <TouchableOpacity
+              key={item.id}
+              style={[styles.contentCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
+            >
               <View style={styles.contentThumbnail}>
                 <Text style={styles.contentThumbnailEmoji}>{item.thumbnail}</Text>
                 <View style={styles.contentViews}>
@@ -137,7 +180,10 @@ export default function CreatorUniverseHome() {
                 </View>
               </View>
               <View style={styles.contentInfo}>
-                <Text style={[styles.contentTitle, { color: isDark ? '#fff' : '#000' }]} numberOfLines={2}>
+                <Text
+                  style={[styles.contentTitle, { color: isDark ? '#fff' : '#000' }]}
+                  numberOfLines={2}
+                >
                   {item.title}
                 </Text>
                 <View style={styles.contentMeta}>
@@ -153,9 +199,14 @@ export default function CreatorUniverseHome() {
       <View style={styles.cardsSection}>
         <View style={styles.cardsRow}>
           {creatorCards.map((card) => (
-            <TouchableOpacity key={card.id} style={[styles.infoCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}>
+            <TouchableOpacity
+              key={card.id}
+              style={[styles.infoCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
+            >
               <Text style={styles.cardEmoji}>{card.emoji}</Text>
-              <Text style={[styles.cardTitle, { color: isDark ? '#fff' : '#000' }]}>{card.title}</Text>
+              <Text style={[styles.cardTitle, { color: isDark ? '#fff' : '#000' }]}>
+                {card.title}
+              </Text>
               <Text style={styles.cardDesc}>{card.description}</Text>
               <TouchableOpacity style={styles.cardButton}>
                 <Text style={styles.cardButtonText}>{card.action}</Text>

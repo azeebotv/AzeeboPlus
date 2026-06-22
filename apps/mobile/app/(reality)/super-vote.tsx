@@ -191,10 +191,7 @@ export default function SuperVoteScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backButtonText}>←</Text>
         </TouchableOpacity>
         <View style={styles.headerContent}>
@@ -220,10 +217,7 @@ export default function SuperVoteScreen() {
                 ]}
                 onPress={() => setSelectedContestant(contestant.id)}
               >
-                <Image
-                  source={{ uri: contestant.avatar }}
-                  style={styles.contestantAvatar}
-                />
+                <Image source={{ uri: contestant.avatar }} style={styles.contestantAvatar} />
                 <Text style={styles.contestantName}>{contestant.name}</Text>
                 <Text style={styles.contestantRank}>
                   Rank #{contestant.rank} • {contestant.votes.toLocaleString()} votes
@@ -273,9 +267,7 @@ export default function SuperVoteScreen() {
             {isVoting ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text style={styles.voteButtonText}>
-                🗳 Submit Super Vote
-              </Text>
+              <Text style={styles.voteButtonText}>🗳 Submit Super Vote</Text>
             )}
           </TouchableOpacity>
         </View>

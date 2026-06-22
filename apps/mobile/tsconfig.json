@@ -1,24 +1,20 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "rootDir": ".",
     "outDir": "dist",
-    "baseUrl": "./",
+    "module": "ESNext",
+    "target": "ES2020",
+    "jsx": "react-native",
+    "moduleResolution": "bundler",
     "paths": {
-      "@azeebo/*": [
-        "../../packages/*/src"
-      ],
-      "@azeebo/design-tokens": [
-        "../../packages/design-tokens/src"
-      ],
-      "@auth/*": [
-        "./*"
-      ]
+      "@azeebo/*": ["../../packages/*/src"],
+      "@azeebo/design-tokens": ["../../packages/design-tokens/src"]
     }
   },
   "include": [
     "src/**/*",
     "app/**/*",
+    "types/**/*",
     ".expo/types/**/*.ts",
     "expo-env.d.ts"
   ],
@@ -28,6 +24,7 @@
     "**/*.test.ts",
     "**/*.spec.ts",
     "detox.setup.ts",
-    "e2e"
+    "e2e",
+    "**/__tests__/**"
   ]
 }

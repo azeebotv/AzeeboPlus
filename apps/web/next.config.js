@@ -7,7 +7,9 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
   images: {
-    domains: ['localhost', 'api.azeebo.com'],
+    domains: process.env.IMAGE_DOMAINS
+      ? process.env.IMAGE_DOMAINS.split(',')
+      : ['localhost', 'api.azeebo.com'],
   },
   async headers() {
     return [
@@ -39,14 +41,15 @@ const nextConfig = {
     ]
   },
   async rewrites() {
+    const apiGatewayUrl = process.env.API_GATEWAY_URL || 'http://localhost:3013';
     return [
       {
         source: '/api/:path*',
-        destination: 'http://localhost:3013/api/:path*',
+        destination: `${apiGatewayUrl}/api/:path*`,
       },
       {
         source: '/auth/:path*',
-        destination: 'http://localhost:3013/api/v1/auth/:path*',
+        destination: `${apiGatewayUrl}/api/v1/auth/:path*`,
       },
     ]
   },

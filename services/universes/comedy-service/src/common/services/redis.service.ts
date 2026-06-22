@@ -12,11 +12,11 @@ export class RedisService implements OnModuleDestroy {
     }
     this.logger.log(`Connecting to Redis`);
     this.redis = new Redis(process.env.REDIS_URL);
-    
+
     this.redis.on('connect', () => {
       this.logger.log('Redis connected');
     });
-    
+
     this.redis.on('error', (err: Error) => {
       this.logger.error(`Redis error: ${err.message}`);
     });

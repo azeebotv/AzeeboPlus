@@ -1,8 +1,4 @@
-import {
-  Controller,
-  Get,
-  Logger,
-} from '@nestjs/common';
+import { Controller, Get, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 
 @Controller('public')

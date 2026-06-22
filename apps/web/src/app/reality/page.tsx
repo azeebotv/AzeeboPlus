@@ -63,7 +63,9 @@ export default function RealityPage(): JSX.Element {
     }
 
     fetchShows();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [isRealityEnabled]);
 
   useEffect(() => {
@@ -92,7 +94,9 @@ export default function RealityPage(): JSX.Element {
     }
 
     fetchContestants();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [selectedShow]);
 
   return (
@@ -101,17 +105,27 @@ export default function RealityPage(): JSX.Element {
       <header className="sticky top-0 z-50 backdrop-blur-xl bg-black/40 border-b border-gray-700/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl flex items-center justify-center" style={{ background: gradients.brand }}>
+            <div
+              className="h-10 w-10 rounded-xl flex items-center justify-center"
+              style={{ background: gradients.brand }}
+            >
               <span className="text-white font-bold text-xl leading-none">A</span>
             </div>
-            <h1 className="text-2xl font-bold hidden sm:block" style={{ color: colors.text.primary }}>{siteName}</h1>
+            <h1
+              className="text-2xl font-bold hidden sm:block"
+              style={{ color: colors.text.primary }}
+            >
+              {siteName}
+            </h1>
           </div>
 
           <nav className="hidden md:flex items-center gap-8">
             {['Home', 'Browse', 'Library', 'Creators', 'Reality'].map((item) => (
               <Link
                 key={item}
-                href={item === 'Home' ? '/' : item === 'Reality' ? '/reality' : `/${item.toLowerCase()}`}
+                href={
+                  item === 'Home' ? '/' : item === 'Reality' ? '/reality' : `/${item.toLowerCase()}`
+                }
                 className="text-base font-medium transition-colors"
                 style={{ color: item === 'Reality' ? colors.primary[500] : colors.text.secondary }}
               >
@@ -125,16 +139,22 @@ export default function RealityPage(): JSX.Element {
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
                   <Avatar size="md" fallback={user?.name?.charAt(0) || 'U'} />
-                  <span className="text-sm font-medium" style={{ color: colors.text.primary }}>{user?.name}</span>
+                  <span className="text-sm font-medium" style={{ color: colors.text.primary }}>
+                    {user?.name}
+                  </span>
                 </div>
               </div>
             ) : (
               <div className="flex items-center gap-2">
                 <Link href="/auth/login">
-                  <Button variant="ghost" size="sm">Sign In</Button>
+                  <Button variant="ghost" size="sm">
+                    Sign In
+                  </Button>
                 </Link>
                 <Link href="/auth/register">
-                  <Button variant="primary" size="sm">Get Started</Button>
+                  <Button variant="primary" size="sm">
+                    Get Started
+                  </Button>
                 </Link>
               </div>
             )}
@@ -185,7 +205,11 @@ export default function RealityPage(): JSX.Element {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {shows.map((show) => (
-            <Card key={show.id} padding="none" className="overflow-hidden cursor-pointer hover:shadow-xl transition-shadow">
+            <Card
+              key={show.id}
+              padding="none"
+              className="overflow-hidden cursor-pointer hover:shadow-xl transition-shadow"
+            >
               <div className="relative">
                 <img src={show.thumbnail} alt={show.title} className="w-full h-48 object-cover" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
@@ -198,7 +222,9 @@ export default function RealityPage(): JSX.Element {
                 <p className="text-sm text-gray-400 mb-3">{show.description}</p>
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-gray-400">🎬 {show.duration || 0} min</span>
-                  <span className="text-gray-400">📅 {new Date(show.createdAt).toLocaleDateString()}</span>
+                  <span className="text-gray-400">
+                    📅 {new Date(show.createdAt).toLocaleDateString()}
+                  </span>
                 </div>
                 <Button variant="primary" className="w-full mt-4">
                   Watch Now
@@ -233,14 +259,19 @@ export default function RealityPage(): JSX.Element {
                 {contestants.map((contestant, index) => (
                   <div key={contestant.id} className="flex items-center gap-4">
                     <div className="flex items-center gap-3">
-                      <span className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center text-sm font-bold" style={{ color: colors.text.primary }}>
+                      <span
+                        className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center text-sm font-bold"
+                        style={{ color: colors.text.primary }}
+                      >
                         {index + 1}
                       </span>
                       <Avatar size="md" fallback={contestant.avatar} />
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center justify-between mb-2">
-                        <span className="font-medium" style={{ color: colors.text.primary }}>{contestant.name}</span>
+                        <span className="font-medium" style={{ color: colors.text.primary }}>
+                          {contestant.name}
+                        </span>
                         <span className="text-sm" style={{ color: colors.text.secondary }}>
                           {contestant.votes.toLocaleString()} votes
                         </span>
@@ -250,14 +281,17 @@ export default function RealityPage(): JSX.Element {
                           className="h-full rounded-full transition-all"
                           style={{
                             width: `${(contestant.votes / (maxVotes || 1)) * 100}%`,
-                            backgroundColor: contestant.status === 'safe' ? colors.success[500] : contestant.status === 'danger' ? colors.error[500] : colors.text.tertiary,
+                            backgroundColor:
+                              contestant.status === 'safe'
+                                ? colors.success[500]
+                                : contestant.status === 'danger'
+                                  ? colors.error[500]
+                                  : colors.text.tertiary,
                           }}
                         />
                       </div>
                     </div>
-                    {contestant.status === 'danger' && (
-                      <Badge variant="error">Danger</Badge>
-                    )}
+                    {contestant.status === 'danger' && <Badge variant="error">Danger</Badge>}
                     {contestant.status === 'eliminated' && (
                       <Badge variant="secondary">Eliminated</Badge>
                     )}
@@ -273,16 +307,21 @@ export default function RealityPage(): JSX.Element {
               <div className="bg-gradient-to-br from-purple-600 to-indigo-600 rounded-xl p-6 text-white">
                 <h3 className="text-xl font-bold mb-2">Vote & Win Rewards!</h3>
                 <p className="text-white/80 mb-4">
-                  Every vote you cast earns you reward points that can be redeemed for exclusive content and prizes.
+                  Every vote you cast earns you reward points that can be redeemed for exclusive
+                  content and prizes.
                 </p>
                 <div className="flex items-center gap-4">
                   <div className="text-center">
-                    <p className="text-3xl font-bold">{selectedShow?.pointsEarned ?? 0}</p>
+                    <p className="text-3xl font-bold">
+                      {(selectedShow as unknown as { pointsEarned?: number })?.pointsEarned ?? 0}
+                    </p>
                     <p className="text-sm text-white/70">Points Earned</p>
                   </div>
                   <div className="w-px h-12 bg-white/30" />
                   <div className="text-center">
-                    <p className="text-3xl font-bold">{selectedShow?.votesToday ?? 0}</p>
+                    <p className="text-3xl font-bold">
+                      {(selectedShow as unknown as { votesToday?: number })?.votesToday ?? 0}
+                    </p>
                     <p className="text-sm text-white/70">Votes Today</p>
                   </div>
                 </div>
@@ -290,28 +329,42 @@ export default function RealityPage(): JSX.Element {
 
               <Card padding="none">
                 <div className="p-4 border-b border-gray-700">
-                  <h3 className="font-bold" style={{ color: colors.text.primary }}>Vote Tips</h3>
+                  <h3 className="font-bold" style={{ color: colors.text.primary }}>
+                    Vote Tips
+                  </h3>
                 </div>
                 <div className="p-4 space-y-3">
                   <div className="flex items-start gap-3">
                     <span className="text-lg">💡</span>
                     <div>
-                      <p className="font-medium text-sm" style={{ color: colors.text.primary }}>Supervote Power</p>
-                      <p className="text-xs" style={{ color: colors.text.secondary }}>Use supervotes to multiply your impact</p>
+                      <p className="font-medium text-sm" style={{ color: colors.text.primary }}>
+                        Supervote Power
+                      </p>
+                      <p className="text-xs" style={{ color: colors.text.secondary }}>
+                        Use supervotes to multiply your impact
+                      </p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
                     <span className="text-lg">🎁</span>
                     <div>
-                      <p className="font-medium text-sm" style={{ color: colors.text.primary }}>Daily Rewards</p>
-                      <p className="text-xs" style={{ color: colors.text.secondary }}>Vote daily to earn bonus points</p>
+                      <p className="font-medium text-sm" style={{ color: colors.text.primary }}>
+                        Daily Rewards
+                      </p>
+                      <p className="text-xs" style={{ color: colors.text.secondary }}>
+                        Vote daily to earn bonus points
+                      </p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
                     <span className="text-lg">🏆</span>
                     <div>
-                      <p className="font-medium text-sm" style={{ color: colors.text.primary }}>Leaderboard Bonus</p>
-                      <p className="text-xs" style={{ color: colors.text.secondary }}>Top voters get exclusive perks</p>
+                      <p className="font-medium text-sm" style={{ color: colors.text.primary }}>
+                        Leaderboard Bonus
+                      </p>
+                      <p className="text-xs" style={{ color: colors.text.secondary }}>
+                        Top voters get exclusive perks
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -322,51 +375,77 @@ export default function RealityPage(): JSX.Element {
       </section>
 
       {/* Footer */}
-      <footer className="border-t py-12" style={{ borderColor: colors.border.light, backgroundColor: colors.bg.secondary }}>
+      <footer
+        className="border-t py-12"
+        style={{ borderColor: colors.border.light, backgroundColor: colors.bg.secondary }}
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
             <div>
-              <h4 className="font-bold text-lg mb-4" style={{ color: colors.text.primary }}>{siteName}</h4>
+              <h4 className="font-bold text-lg mb-4" style={{ color: colors.text.primary }}>
+                {siteName}
+              </h4>
               <ul className="space-y-2" style={{ color: colors.text.secondary }}>
                 {['About', 'Careers', 'Press'].map((item) => (
-                  <li key={item} className="text-sm hover:text-gray-200 transition-colors cursor-pointer">
+                  <li
+                    key={item}
+                    className="text-sm hover:text-gray-200 transition-colors cursor-pointer"
+                  >
                     {item}
                   </li>
                 ))}
               </ul>
             </div>
             <div>
-              <h4 className="font-bold text-lg mb-4" style={{ color: colors.text.primary }}>Help</h4>
+              <h4 className="font-bold text-lg mb-4" style={{ color: colors.text.primary }}>
+                Help
+              </h4>
               <ul className="space-y-2" style={{ color: colors.text.secondary }}>
                 {['Support', 'FAQ', 'Contact'].map((item) => (
-                  <li key={item} className="text-sm hover:text-gray-200 transition-colors cursor-pointer">
+                  <li
+                    key={item}
+                    className="text-sm hover:text-gray-200 transition-colors cursor-pointer"
+                  >
                     {item}
                   </li>
                 ))}
               </ul>
             </div>
             <div>
-              <h4 className="font-bold text-lg mb-4" style={{ color: colors.text.primary }}>Legal</h4>
+              <h4 className="font-bold text-lg mb-4" style={{ color: colors.text.primary }}>
+                Legal
+              </h4>
               <ul className="space-y-2" style={{ color: colors.text.secondary }}>
                 {['Terms', 'Privacy', 'Cookies'].map((item) => (
-                  <li key={item} className="text-sm hover:text-gray-200 transition-colors cursor-pointer">
+                  <li
+                    key={item}
+                    className="text-sm hover:text-gray-200 transition-colors cursor-pointer"
+                  >
                     {item}
                   </li>
                 ))}
               </ul>
             </div>
             <div>
-              <h4 className="font-bold text-lg mb-4" style={{ color: colors.text.primary }}>Connect</h4>
+              <h4 className="font-bold text-lg mb-4" style={{ color: colors.text.primary }}>
+                Connect
+              </h4>
               <ul className="space-y-2" style={{ color: colors.text.secondary }}>
                 {['Twitter', 'Instagram', 'Facebook'].map((item) => (
-                  <li key={item} className="text-sm hover:text-gray-200 transition-colors cursor-pointer">
+                  <li
+                    key={item}
+                    className="text-sm hover:text-gray-200 transition-colors cursor-pointer"
+                  >
                     {item}
                   </li>
                 ))}
               </ul>
             </div>
           </div>
-          <div className="mt-12 pt-8 border-t text-center text-sm" style={{ borderColor: colors.border.light, color: colors.text.tertiary }}>
+          <div
+            className="mt-12 pt-8 border-t text-center text-sm"
+            style={{ borderColor: colors.border.light, color: colors.text.tertiary }}
+          >
             <p>© 2026 {siteName}. All rights reserved.</p>
           </div>
         </div>

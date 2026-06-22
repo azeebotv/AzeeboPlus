@@ -1,12 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  SafeAreaView,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { colors } from '@azeebo/design-tokens';
@@ -78,12 +71,19 @@ export default function CharacterLoreScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView style={[styles.scrollView, { backgroundColor: isDark ? colors.dark[900] : colors.light[50] }]}>
+      <ScrollView
+        style={[
+          styles.scrollView,
+          { backgroundColor: isDark ? colors.dark[900] : colors.light[50] },
+        ]}
+      >
         <View style={styles.header}>
           <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
             <Text style={styles.backIcon}>←</Text>
           </TouchableOpacity>
-          <Text style={[styles.headerTitle, { color: isDark ? colors.text.primary : colors.dark[900] }]}>
+          <Text
+            style={[styles.headerTitle, { color: isDark ? colors.text.primary : colors.dark[900] }]}
+          >
             Character Lore
           </Text>
           <View style={styles.shareButton}>
@@ -116,10 +116,20 @@ export default function CharacterLoreScreen() {
         {activeTab === 'story' && (
           <View style={styles.storySection}>
             <View style={styles.storyCard}>
-              <Text style={[styles.sectionTitle, { color: isDark ? colors.text.primary : colors.dark[900] }]}>
+              <Text
+                style={[
+                  styles.sectionTitle,
+                  { color: isDark ? colors.text.primary : colors.dark[900] },
+                ]}
+              >
                 Story
               </Text>
-              <Text style={[styles.storyText, { color: isDark ? colors.text.secondary : colors.dark[600] }]}>
+              <Text
+                style={[
+                  styles.storyText,
+                  { color: isDark ? colors.text.secondary : colors.dark[600] },
+                ]}
+              >
                 {character.description}
               </Text>
             </View>
@@ -129,23 +139,41 @@ export default function CharacterLoreScreen() {
         {activeTab === 'stats' && (
           <View style={styles.statsSection}>
             <View style={styles.statsCard}>
-              <Text style={[styles.sectionTitle, { color: isDark ? colors.text.primary : colors.dark[900] }]}>
+              <Text
+                style={[
+                  styles.sectionTitle,
+                  { color: isDark ? colors.text.primary : colors.dark[900] },
+                ]}
+              >
                 Attributes
               </Text>
               <View style={styles.statsList}>
                 {character.stats.map((stat, index) => (
                   <View key={index} style={styles.statItem}>
                     <View style={styles.statHeader}>
-                      <Text style={[styles.statLabel, { color: isDark ? colors.text.secondary : colors.dark[600] }]}>
+                      <Text
+                        style={[
+                          styles.statLabel,
+                          { color: isDark ? colors.text.secondary : colors.dark[600] },
+                        ]}
+                      >
                         {stat.label}
                       </Text>
-                      <Text style={[styles.statValue, { color: isDark ? colors.text.primary : colors.dark[900] }]}>
+                      <Text
+                        style={[
+                          styles.statValue,
+                          { color: isDark ? colors.text.primary : colors.dark[900] },
+                        ]}
+                      >
                         {stat.value}
                       </Text>
                     </View>
                     <View style={styles.statBar}>
                       <View
-                        style={[styles.statBarFill, { width: `${stat.value}%`, backgroundColor: character.background }]}
+                        style={[
+                          styles.statBarFill,
+                          { width: `${stat.value}%`, backgroundColor: character.background },
+                        ]}
                       />
                     </View>
                   </View>
@@ -158,7 +186,12 @@ export default function CharacterLoreScreen() {
         {activeTab === 'relationships' && (
           <View style={styles.relationshipsSection}>
             <View style={styles.relationshipsCard}>
-              <Text style={[styles.sectionTitle, { color: isDark ? colors.text.primary : colors.dark[900] }]}>
+              <Text
+                style={[
+                  styles.sectionTitle,
+                  { color: isDark ? colors.text.primary : colors.dark[900] },
+                ]}
+              >
                 Relationships
               </Text>
               <View style={styles.relationshipsList}>
@@ -168,7 +201,12 @@ export default function CharacterLoreScreen() {
                       <Text style={styles.relAvatarText}>{rel.avatar}</Text>
                     </View>
                     <View style={styles.relInfo}>
-                      <Text style={[styles.relName, { color: isDark ? colors.text.primary : colors.dark[900] }]}>
+                      <Text
+                        style={[
+                          styles.relName,
+                          { color: isDark ? colors.text.primary : colors.dark[900] },
+                        ]}
+                      >
                         {rel.name}
                       </Text>
                       <Text style={styles.relType}>{rel.type}</Text>
@@ -184,35 +222,41 @@ export default function CharacterLoreScreen() {
         {activeTab === 'lore' && (
           <View style={styles.loreSection}>
             <View style={styles.loreCard}>
-              <Text style={[styles.sectionTitle, { color: isDark ? colors.text.primary : colors.dark[900] }]}>
+              <Text
+                style={[
+                  styles.sectionTitle,
+                  { color: isDark ? colors.text.primary : colors.dark[900] },
+                ]}
+              >
                 Lore Chapters
               </Text>
               <View style={styles.loreList}>
                 {loreChapters.map((chapter) => (
                   <TouchableOpacity
                     key={chapter.id}
-                    style={[
-                      styles.loreItem,
-                      !chapter.unlocked && styles.loreItemLocked,
-                    ]}
+                    style={[styles.loreItem, !chapter.unlocked && styles.loreItemLocked]}
                     disabled={!chapter.unlocked}
                   >
                     <View style={styles.loreIconContainer}>
                       <Text style={styles.loreIcon}>{chapter.unlocked ? '📖' : '🔒'}</Text>
                     </View>
                     <View style={styles.loreInfo}>
-                      <Text style={[
-                        styles.loreTitle,
-                        { color: isDark ? colors.text.primary : colors.dark[900] },
-                        !chapter.unlocked && styles.loreTextLocked,
-                      ]}>
+                      <Text
+                        style={[
+                          styles.loreTitle,
+                          { color: isDark ? colors.text.primary : colors.dark[900] },
+                          !chapter.unlocked && styles.loreTextLocked,
+                        ]}
+                      >
                         {chapter.title}
                       </Text>
-                      <Text style={[
-                        styles.loreSummary,
-                        { color: isDark ? colors.text.secondary : colors.dark[600] },
-                        !chapter.unlocked && styles.loreTextLocked,
-                      ]}>
+                      <Text
+                        style={[
+                          styles.loreSummary,
+                          { color: isDark ? colors.text.secondary : colors.dark[600] },
+                          !chapter.unlocked && styles.loreTextLocked,
+                        ]}
+                      >
                         {chapter.summary}
                       </Text>
                     </View>

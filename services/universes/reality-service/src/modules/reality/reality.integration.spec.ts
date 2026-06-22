@@ -130,7 +130,7 @@ describe('RealityService Integration - Cross-Service Communication', () => {
         expect.objectContaining({
           amount: 10,
           description: expect.stringContaining(contestantId),
-        }),
+        })
       );
     });
 
@@ -142,7 +142,7 @@ describe('RealityService Integration - Cross-Service Communication', () => {
         service.submitSupervote('user-1', {
           contestantId: 'contestant-1',
           showId: 'show-1',
-        }),
+        })
       ).rejects.toThrow(NotFoundException);
     });
 
@@ -158,7 +158,7 @@ describe('RealityService Integration - Cross-Service Communication', () => {
         service.submitSupervote('user-1', {
           contestantId: 'contestant-1',
           showId: 'show-1',
-        }),
+        })
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -176,7 +176,7 @@ describe('RealityService Integration - Cross-Service Communication', () => {
         service.submitSupervote('user-1', {
           contestantId: 'contestant-1',
           showId: 'show-1',
-        }),
+        })
       ).rejects.toThrow(ConflictException);
     });
 
@@ -202,14 +202,14 @@ describe('RealityService Integration - Cross-Service Communication', () => {
         service.submitSupervote('user-1', {
           contestantId: 'contestant-1',
           showId: 'show-1',
-        }),
+        })
       ).rejects.toThrow(ConflictException);
 
       expect(mockedAxios.post).toHaveBeenCalledWith(
         expect.stringContaining('/wallet/credit'),
         expect.objectContaining({
           description: expect.stringContaining('Compensation'),
-        }),
+        })
       );
     });
 
@@ -224,7 +224,7 @@ describe('RealityService Integration - Cross-Service Communication', () => {
         service.submitSupervote('user-1', {
           contestantId: 'contestant-1',
           showId: 'show-1',
-        }),
+        })
       ).rejects.toThrow(ConflictException);
     });
   });
@@ -253,7 +253,7 @@ describe('RealityService Integration - Cross-Service Communication', () => {
           eventName: 'vote_submitted',
           userId: 'user-1',
           universe: 'reality',
-        }),
+        })
       );
     });
 
@@ -268,7 +268,7 @@ describe('RealityService Integration - Cross-Service Communication', () => {
         service.submitVote('user-1', {
           contestantId: 'contestant-1',
           showId: 'show-1',
-        }),
+        })
       ).rejects.toThrow(ConflictException);
     });
   });
@@ -294,7 +294,7 @@ describe('RealityService Integration - Cross-Service Communication', () => {
         expect.objectContaining({
           eventName: 'prediction_submitted',
           userId: 'user-1',
-        }),
+        })
       );
     });
   });

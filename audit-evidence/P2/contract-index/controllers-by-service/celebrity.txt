@@ -1,0 +1,11 @@
+===== services/universes/lifestyle-service/src/modules/celebrity/celebrity.controller.ts =====
+38:@Controller('v1/lifestyle/celebrities')
+42:  @Get()
+62:  @Get('featured')
+69:  @Get(':slug')
+76:  @Get(':celebrityId/news')
+87:  @Post()
+94:  @Post('news')
+101:  @Patch(':id')
+111:  @Delete(':id')
+

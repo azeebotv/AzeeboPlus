@@ -1,0 +1,15 @@
+===== services/universes/lifestyle-service/src/modules/events/events.controller.ts =====
+53:@Controller('v1/lifestyle/events')
+57:  @Get()
+69:  @Get('categories')
+76:  @Get('upcoming')
+83:  @Get(':slug')
+90:  @Post()
+91:  @UseGuards(AuthGuard('jwt'), RolesGuard)
+99:  @Patch(':id')
+100:  @UseGuards(AuthGuard('jwt'), RolesGuard)
+108:  @Delete(':id')
+109:  @UseGuards(AuthGuard('jwt'), RolesGuard)
+117:  @Post(':id/rsvp')
+124:  @Delete(':id/rsvp')
+

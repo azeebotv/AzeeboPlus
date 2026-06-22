@@ -1,41 +1,36 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { createHmac, timingSafeEqual } from 'crypto';
 import { RedisService } from '../../common/services/redis.service';
 
 @Injectable()
 export class WebhookSecurityService {
   private readonly logger = new Logger(WebhookSecurityService.name);
-  private readonly idempotencyTTL = 86400;
-  private readonly maxAge = 300;
+  private readonly idempotencyTTL: number;
+  private readonly maxAge: number;
   private readonly idempotencyPrefix = 'webhook_processed:';
   private readonly replayPrefix = 'webhook_replay:';
 
-  constructor(private readonly redisService: RedisService) {}
+  constructor(
+    private readonly redisService: RedisService,
+    private readonly configService: ConfigService
+  ) {
+    this.idempotencyTTL = this.configService.get<number>('WEBHOOK_IDEMPOTENCY_TTL', 86400);
+    this.maxAge = this.configService.get<number>('WEBHOOK_MAX_AGE', 300);
+  }
 
-  verifyPaystackSignature(
-    rawBody: string,
-    signature: string,
-    secret: string,
-  ): boolean {
+  verifyPaystackSignature(rawBody: string, signature: string, secret: string): boolean {
     if (!signature || !secret) return false;
 
-    const expectedSignature = createHmac('sha512', secret)
-      .update(rawBody)
-      .digest('hex');
+    const expectedSignature = createHmac('sha512', secret).update(rawBody).digest('hex');
 
     return this.constantTimeCompare(signature, expectedSignature);
   }
 
-  verifyFlutterwaveSignature(
-    rawBody: string,
-    signature: string,
-    secret: string,
-  ): boolean {
+  verifyFlutterwaveSignature(rawBody: string, signature: string, secret: string): boolean {
     if (!signature || !secret) return false;
 
-    const expectedSignature = createHmac('sha256', secret)
-      .update(rawBody)
-      .digest('hex');
+    const expectedSignature = createHmac('sha256', secret).update(rawBody).digest('hex');
 
     return this.constantTimeCompare(signature, expectedSignature);
   }
@@ -54,9 +49,7 @@ export class WebhookSecurityService {
   async isReplay(reference: string, timestamp: number): Promise<boolean> {
     const now = Math.floor(Date.now() / 1000);
     if (now - timestamp > this.maxAge) {
-      this.logger.warn(
-        `Webhook event too old: ${reference} (age: ${now - timestamp}s)`,
-      );
+      this.logger.warn(`Webhook event too old: ${reference} (age: ${now - timestamp}s)`);
       return true;
     }
 

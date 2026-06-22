@@ -53,7 +53,7 @@ export function Tabs({
       setActiveTabState(id);
       onChange?.(id);
     },
-    [onChange],
+    [onChange]
   );
 
   return (
@@ -78,15 +78,7 @@ export function Tabs({
   );
 }
 
-function TabButton({
-  tab,
-  variant,
-  fullWidth,
-}: {
-  tab: Tab;
-  variant: string;
-  fullWidth: boolean;
-}) {
+function TabButton({ tab, variant, fullWidth }: { tab: Tab; variant: string; fullWidth: boolean }) {
   const { activeTab, setActiveTab } = useTabsContext();
   const isActive = activeTab === tab.id;
 
@@ -130,10 +122,12 @@ function TabButton({
       {tab.icon && getIcon(tab.icon)}
       {tab.label}
       {tab.badge !== undefined && (
-        <span className={`
+        <span
+          className={`
           ml-1 px-2 py-0.5 text-xs rounded-full
           ${isActive ? 'bg-primary-400/20 text-primary-300' : 'bg-bg-hover text-text-tertiary'}
-        `}>
+        `}
+        >
           {String(tab.badge)}
         </span>
       )}
@@ -289,7 +283,14 @@ export function Pagination({
           className="p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-bg-tertiary transition-colors"
           aria-label="Go to first page"
         >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
             <path d="M18 15l-6-6-6 6" />
             <path d="M6 9h12" />
           </svg>
@@ -302,7 +303,14 @@ export function Pagination({
         className="p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-bg-tertiary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         aria-label="Go to previous page"
       >
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+        >
           <path d="M15 18l-6-6 6-6" />
         </svg>
       </button>
@@ -318,16 +326,17 @@ export function Pagination({
             onClick={() => onPageChange(page as number)}
             className={`
               min-w-[40px] h-10 px-3 rounded-lg text-sm font-medium transition-colors
-              ${page === currentPage
-                ? 'bg-primary-500 text-white'
-                : 'text-text-secondary hover:text-text-primary hover:bg-bg-tertiary'
+              ${
+                page === currentPage
+                  ? 'bg-primary-500 text-white'
+                  : 'text-text-secondary hover:text-text-primary hover:bg-bg-tertiary'
               }
             `}
             aria-current={page === currentPage ? 'page' : undefined}
           >
             {page}
           </button>
-        ),
+        )
       )}
 
       <button
@@ -336,7 +345,14 @@ export function Pagination({
         className="p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-bg-tertiary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         aria-label="Go to next page"
       >
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+        >
           <path d="M9 18l6-6-6-6" />
         </svg>
       </button>
@@ -347,7 +363,14 @@ export function Pagination({
           className="p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-bg-tertiary transition-colors"
           aria-label="Go to last page"
         >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
             <path d="M6 15l6-6 6 6" />
             <path d="M6 9h12" />
           </svg>
@@ -360,7 +383,7 @@ export function Pagination({
 function generatePagination(
   currentPage: number,
   totalPages: number,
-  siblingCount: number,
+  siblingCount: number
 ): (number | '...')[] {
   const totalNumbers = siblingCount * 2 + 3;
   const totalBlocks = totalNumbers + 2;
@@ -385,7 +408,7 @@ function generatePagination(
     const rightItemCount = 3 + 2 * siblingCount;
     const rightRange = Array.from(
       { length: rightItemCount },
-      (_, i) => totalPages - rightItemCount + i + 1,
+      (_, i) => totalPages - rightItemCount + i + 1
     );
     return [1, '...', ...rightRange];
   }
@@ -393,7 +416,7 @@ function generatePagination(
   if (shouldShowLeftDots && shouldShowRightDots) {
     const middleRange = Array.from(
       { length: rightSiblingIndex - leftSiblingIndex + 1 },
-      (_, i) => leftSiblingIndex + i,
+      (_, i) => leftSiblingIndex + i
     );
     return [1, '...', ...middleRange, '...', totalPages];
   }
@@ -446,22 +469,18 @@ export function BottomNavigation({
               className={`
                 relative flex flex-col items-center gap-1 px-4 py-2 rounded-xl
                 transition-all duration-200
-                ${isActive
-                  ? 'text-primary-400'
-                  : 'text-text-tertiary hover:text-text-secondary'
-                }
+                ${isActive ? 'text-primary-400' : 'text-text-tertiary hover:text-text-secondary'}
               `}
               aria-current={isActive ? 'page' : undefined}
               aria-label={item.label}
             >
               {item.badge !== undefined && (
-                <span className={`
+                <span
+                  className={`
                   absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1.5 rounded-full text-xs font-medium flex items-center justify-center
-                  ${isActive
-                    ? 'bg-primary-500 text-white'
-                    : 'bg-error-500 text-white'
-                  }
-                `}>
+                  ${isActive ? 'bg-primary-500 text-white' : 'bg-error-500 text-white'}
+                `}
+                >
                   {item.badge}
                 </span>
               )}
@@ -560,9 +579,10 @@ export function Dropdown({ trigger, items, className = '', align = 'left' }: Dro
                 className={`
                   w-full flex items-center gap-3 px-4 py-2.5 text-sm
                   transition-colors duration-150
-                  ${item.disabled
-                    ? 'opacity-50 cursor-not-allowed text-text-tertiary'
-                    : 'text-text-secondary hover:text-text-primary hover:bg-bg-tertiary'
+                  ${
+                    item.disabled
+                      ? 'opacity-50 cursor-not-allowed text-text-tertiary'
+                      : 'text-text-secondary hover:text-text-primary hover:bg-bg-tertiary'
                   }
                 `}
                 role="menuitem"

@@ -66,7 +66,12 @@ export default function SportsPredictionScreen() {
 
   const handleBet = () => {
     if (selectedMatch && selectedBet && betAmount) {
-      apiClient.post('/sports/predictions', { matchId: selectedMatch, selection: selectedBet, amount: parseFloat(betAmount) })
+      apiClient
+        .post('/sports/predictions', {
+          matchId: selectedMatch,
+          selection: selectedBet,
+          amount: parseFloat(betAmount),
+        })
         .then(() => {
           alert(`Bet placed: ${selectedBet} with ₦${betAmount}`);
           setSelectedMatch(null);
@@ -77,13 +82,18 @@ export default function SportsPredictionScreen() {
     }
   };
 
-  const upcomingMatches = matches.filter(m => m.status === 'upcoming');
-  const inProgressMatches = matches.filter(m => m.status === 'live');
-  const pastMatches = matches.filter(m => m.status === 'completed');
+  const upcomingMatches = matches.filter((m) => m.status === 'upcoming');
+  const inProgressMatches = matches.filter((m) => m.status === 'live');
+  const pastMatches = matches.filter((m) => m.status === 'completed');
 
   if (isLoading) {
     return (
-      <View style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' }]}>
+      <View
+        style={[
+          styles.container,
+          { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' },
+        ]}
+      >
         <LoadingState text="Loading sports..." />
       </View>
     );
@@ -91,7 +101,12 @@ export default function SportsPredictionScreen() {
 
   if (error) {
     return (
-      <View style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' }]}>
+      <View
+        style={[
+          styles.container,
+          { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' },
+        ]}
+      >
         <ErrorState description={error} onRetry={fetchData} />
       </View>
     );
@@ -99,16 +114,32 @@ export default function SportsPredictionScreen() {
 
   if (matches.length === 0) {
     return (
-      <View style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' }]}>
-        <EmptyState icon="⚽" title="No Matches" description="No sports matches available right now." />
+      <View
+        style={[
+          styles.container,
+          { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' },
+        ]}
+      >
+        <EmptyState
+          icon="⚽"
+          title="No Matches"
+          description="No sports matches available right now."
+        />
       </View>
     );
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' }]}>
+    <View
+      style={[
+        styles.container,
+        { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' },
+      ]}
+    >
       <View style={styles.header}>
-        <Text style={[styles.headerTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
+        <Text
+          style={[styles.headerTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}
+        >
           Sports Predictions ⚽
         </Text>
         <View style={styles.balanceBadge}>
@@ -118,7 +149,11 @@ export default function SportsPredictionScreen() {
       </View>
 
       <View style={styles.tabsContainer}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabs}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.tabs}
+        >
           {tabs.map((tab) => (
             <TouchableOpacity
               key={tab.id}
@@ -144,20 +179,24 @@ export default function SportsPredictionScreen() {
             {upcomingMatches.map((match) => (
               <TouchableOpacity
                 key={match.id}
-                style={[
-                  styles.matchCard,
-                  selectedMatch === match.id && styles.matchCardSelected,
-                ]}
+                style={[styles.matchCard, selectedMatch === match.id && styles.matchCardSelected]}
                 onPress={() => setSelectedMatch(selectedMatch === match.id ? null : match.id)}
               >
                 <View style={styles.matchHeader}>
                   <Text style={styles.league}>{match.league}</Text>
-                  <Text style={styles.matchTime}>{match.date} • {match.time}</Text>
+                  <Text style={styles.matchTime}>
+                    {match.date} • {match.time}
+                  </Text>
                 </View>
                 <View style={styles.matchTeams}>
                   <View style={styles.team}>
                     <Text style={styles.teamLogo}>{match.homeTeam.logo}</Text>
-                    <Text style={[styles.teamName, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
+                    <Text
+                      style={[
+                        styles.teamName,
+                        { color: colorScheme === 'dark' ? '#ffffff' : '#000000' },
+                      ]}
+                    >
                       {match.homeTeam.name}
                     </Text>
                   </View>
@@ -166,7 +205,12 @@ export default function SportsPredictionScreen() {
                   </View>
                   <View style={styles.team}>
                     <Text style={styles.teamLogo}>{match.awayTeam.logo}</Text>
-                    <Text style={[styles.teamName, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
+                    <Text
+                      style={[
+                        styles.teamName,
+                        { color: colorScheme === 'dark' ? '#ffffff' : '#000000' },
+                      ]}
+                    >
                       {match.awayTeam.name}
                     </Text>
                   </View>
@@ -176,21 +220,30 @@ export default function SportsPredictionScreen() {
                     <Text style={styles.bettingTitle}>Place Your Bet</Text>
                     <View style={styles.betOptions}>
                       <TouchableOpacity
-                        style={[styles.betOption, selectedBet === 'home' && styles.betOptionSelected]}
+                        style={[
+                          styles.betOption,
+                          selectedBet === 'home' && styles.betOptionSelected,
+                        ]}
                         onPress={() => setSelectedBet('home')}
                       >
                         <Text style={styles.betTeam}>{match.homeTeam.name}</Text>
                         <Text style={styles.betOdds}>@{match.odds.home}</Text>
                       </TouchableOpacity>
                       <TouchableOpacity
-                        style={[styles.betOption, selectedBet === 'draw' && styles.betOptionSelected]}
+                        style={[
+                          styles.betOption,
+                          selectedBet === 'draw' && styles.betOptionSelected,
+                        ]}
                         onPress={() => setSelectedBet('draw')}
                       >
                         <Text style={styles.betTeam}>Draw</Text>
                         <Text style={styles.betOdds}>@{match.odds.draw}</Text>
                       </TouchableOpacity>
                       <TouchableOpacity
-                        style={[styles.betOption, selectedBet === 'away' && styles.betOptionSelected]}
+                        style={[
+                          styles.betOption,
+                          selectedBet === 'away' && styles.betOptionSelected,
+                        ]}
                         onPress={() => setSelectedBet('away')}
                       >
                         <Text style={styles.betTeam}>{match.awayTeam.name}</Text>
@@ -200,7 +253,10 @@ export default function SportsPredictionScreen() {
                     <View style={styles.betInputContainer}>
                       <Text style={styles.betInputLabel}>Stake Amount</Text>
                       <TextInput
-                        style={[styles.betInput, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}
+                        style={[
+                          styles.betInput,
+                          { color: colorScheme === 'dark' ? '#ffffff' : '#000000' },
+                        ]}
                         placeholder="₦0.00"
                         placeholderTextColor="#666"
                         value={betAmount}
@@ -212,14 +268,19 @@ export default function SportsPredictionScreen() {
                       <View style={styles.potentialWin}>
                         <Text style={styles.potentialWinLabel}>Potential Win:</Text>
                         <Text style={styles.potentialWinAmount}>
-                          ₦{parseFloat(betAmount) * parseFloat(selectedBet === 'home' ? match.odds.home : selectedBet === 'draw' ? match.odds.draw : match.odds.away).toFixed(2)}
+                          ₦
+                          {parseFloat(betAmount) *
+                            parseFloat(
+                              selectedBet === 'home'
+                                ? match.odds.home
+                                : selectedBet === 'draw'
+                                  ? match.odds.draw
+                                  : match.odds.away
+                            ).toFixed(2)}
                         </Text>
                       </View>
                     )}
-                    <TouchableOpacity 
-                      style={styles.placeBetButton}
-                      onPress={handleBet}
-                    >
+                    <TouchableOpacity style={styles.placeBetButton} onPress={handleBet}>
                       <Text style={styles.placeBetButtonText}>Place Bet</Text>
                     </TouchableOpacity>
                   </View>
@@ -243,7 +304,12 @@ export default function SportsPredictionScreen() {
                 <View style={styles.matchTeams}>
                   <View style={styles.team}>
                     <Text style={styles.teamLogo}>{match.homeTeam.logo}</Text>
-                    <Text style={[styles.teamName, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
+                    <Text
+                      style={[
+                        styles.teamName,
+                        { color: colorScheme === 'dark' ? '#ffffff' : '#000000' },
+                      ]}
+                    >
                       {match.homeTeam.name}
                     </Text>
                     <Text style={styles.teamScore}>{match.homeTeam.score}</Text>
@@ -253,7 +319,12 @@ export default function SportsPredictionScreen() {
                   </View>
                   <View style={styles.team}>
                     <Text style={styles.teamLogo}>{match.awayTeam.logo}</Text>
-                    <Text style={[styles.teamName, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
+                    <Text
+                      style={[
+                        styles.teamName,
+                        { color: colorScheme === 'dark' ? '#ffffff' : '#000000' },
+                      ]}
+                    >
                       {match.awayTeam.name}
                     </Text>
                     <Text style={styles.teamScore}>{match.awayTeam.score}</Text>
@@ -270,22 +341,36 @@ export default function SportsPredictionScreen() {
               <View key={match.id} style={styles.matchCard}>
                 <View style={styles.matchHeader}>
                   <Text style={styles.league}>{match.league}</Text>
-                  <Text style={styles.matchTime}>{match.date} • {match.time}</Text>
+                  <Text style={styles.matchTime}>
+                    {match.date} • {match.time}
+                  </Text>
                 </View>
                 <View style={styles.matchTeams}>
                   <View style={styles.team}>
                     <Text style={styles.teamLogo}>{match.homeTeam.logo}</Text>
-                    <Text style={[styles.teamName, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
+                    <Text
+                      style={[
+                        styles.teamName,
+                        { color: colorScheme === 'dark' ? '#ffffff' : '#000000' },
+                      ]}
+                    >
                       {match.homeTeam.name}
                     </Text>
                     <Text style={styles.teamScore}>{match.homeTeam.score}</Text>
                   </View>
                   <View style={styles.scoreVs}>
-                    <Text style={styles.scoreText}>{match.homeTeam.score} - {match.awayTeam.score}</Text>
+                    <Text style={styles.scoreText}>
+                      {match.homeTeam.score} - {match.awayTeam.score}
+                    </Text>
                   </View>
                   <View style={styles.team}>
                     <Text style={styles.teamLogo}>{match.awayTeam.logo}</Text>
-                    <Text style={[styles.teamName, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
+                    <Text
+                      style={[
+                        styles.teamName,
+                        { color: colorScheme === 'dark' ? '#ffffff' : '#000000' },
+                      ]}
+                    >
                       {match.awayTeam.name}
                     </Text>
                     <Text style={styles.teamScore}>{match.awayTeam.score}</Text>
@@ -299,15 +384,27 @@ export default function SportsPredictionScreen() {
         {activeTab === 'my-bets' && (
           <View style={styles.betsList}>
             {bets.length === 0 ? (
-              <Text style={{ color: '#888', textAlign: 'center', padding: 20 }}>No bets placed yet</Text>
+              <Text style={{ color: '#888', textAlign: 'center', padding: 20 }}>
+                No bets placed yet
+              </Text>
             ) : (
               bets.map((prediction) => (
                 <View key={prediction.id} style={styles.betCard}>
                   <View style={styles.betHeader}>
-                    <Text style={[styles.betMatch, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
+                    <Text
+                      style={[
+                        styles.betMatch,
+                        { color: colorScheme === 'dark' ? '#ffffff' : '#000000' },
+                      ]}
+                    >
                       {prediction.match}
                     </Text>
-                    <View style={[styles.betStatus, prediction.status === 'pending' && styles.statusPending]}>
+                    <View
+                      style={[
+                        styles.betStatus,
+                        prediction.status === 'pending' && styles.statusPending,
+                      ]}
+                    >
                       <Text style={styles.betStatusText}>{prediction.status.toUpperCase()}</Text>
                     </View>
                   </View>

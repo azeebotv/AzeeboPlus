@@ -95,10 +95,7 @@ export class InfluencerController {
   @Patch(':id')
   @ApiOperation({ summary: 'Update influencer entry' })
   @ApiResponse({ status: 200, description: 'Entry updated' })
-  async updateEntry(
-    @Param('id') id: string,
-    @Body() body: UpdateInfluencerData
-  ): Promise<unknown> {
+  async updateEntry(@Param('id') id: string, @Body() body: UpdateInfluencerData): Promise<unknown> {
     return this.influencerService.updateEntry(id, body);
   }
 

@@ -1,6 +1,6 @@
 generator client {
   provider = "prisma-client-js"
-  output   = "../src/prisma/client"
+  output = "../generated/prisma/client"
 }
 
 datasource db {
@@ -111,4 +111,30 @@ model Refund {
   @@index([paymentIntentId])
   @@index([status])
   @@index([idempotencyKey])
+}
+
+// Category A migration: tokenized payment methods stored locally for
+// user-facing card management. Sensitive card data stays at the provider;
+// this table stores only the token, brand, last4, and expiry for display.
+model PaymentMethod {
+  id              String   @id @default(cuid())
+  userId          String
+  provider        String   // paystack, flutterwave
+  providerToken   String   // provider-side tokenization reference
+  type            String   // card, bank_account, ussd
+  brand           String?  // visa, mastercard, verve
+  last4           String?
+  expiryMonth     Int?
+  expiryYear      Int?
+  isDefault       Boolean  @default(false)
+  isActive        Boolean  @default(true)
+  metadata        Json?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("payment_methods")
+  @@index([userId])
+  @@index([provider])
+  @@index([isDefault])
+  @@unique([userId, provider, providerToken])
 }

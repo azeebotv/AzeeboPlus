@@ -1,12 +1,24 @@
 import { Controller, Get, HttpCode, HttpStatus } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
-import { HealthCheckResult, ComponentStatus, ExternalService } from './interfaces/health.interfaces';
+import {
+  HealthCheckResult,
+  ComponentStatus,
+  ExternalService,
+} from './interfaces/health.interfaces';
 
 @Controller('health')
 export class HealthController {
   private readonly externalServices: ExternalService[] = [
-    { name: 'payment_gateway_paystack', url: process.env.PAYSTACK_API_URL || 'https://api.paystack.co', timeout: 5000 },
-    { name: 'payment_gateway_flutterwave', url: process.env.FLUTTERWAVE_API_URL || 'https://api.flutterwave.co', timeout: 5000 },
+    {
+      name: 'payment_gateway_paystack',
+      url: process.env.PAYSTACK_API_URL || 'https://api.paystack.co',
+      timeout: 5000,
+    },
+    {
+      name: 'payment_gateway_flutterwave',
+      url: process.env.FLUTTERWAVE_API_URL || 'https://api.flutterwave.co',
+      timeout: 5000,
+    },
   ];
 
   constructor(private readonly prismaService: PrismaService) {}
@@ -21,7 +33,8 @@ export class HealthController {
       this.checkExternalServices(),
     ]);
 
-    const allHealthy = database.status === 'healthy' &&
+    const allHealthy =
+      database.status === 'healthy' &&
       memory.status === 'healthy' &&
       disk.status === 'healthy' &&
       external.every((s) => s.status === 'healthy');
@@ -75,10 +88,13 @@ export class HealthController {
       checks: {
         database: database.status === 'healthy',
         memory: memory.status === 'healthy',
-        external: external.reduce((acc, svc) => {
-          acc[svc.name] = svc.status === 'healthy';
-          return acc;
-        }, {} as Record<string, boolean>),
+        external: external.reduce(
+          (acc, svc) => {
+            acc[svc.name] = svc.status === 'healthy';
+            return acc;
+          },
+          {} as Record<string, boolean>
+        ),
       },
     };
   }
@@ -180,7 +196,11 @@ export class HealthController {
             status: response.ok ? 'healthy' : 'unhealthy',
             latency,
             message: response.ok ? 'Service reachable' : `HTTP ${response.status}`,
-          } as ExternalService & { status: 'healthy' | 'unhealthy'; latency: number; message: string };
+          } as ExternalService & {
+            status: 'healthy' | 'unhealthy';
+            latency: number;
+            message: string;
+          };
         } catch (error) {
           return {
             ...service,

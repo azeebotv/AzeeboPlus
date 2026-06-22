@@ -1,0 +1,9 @@
+===== services/universes/vertical-service/src/modules/characters/characters.controller.ts =====
+6:@Controller('characters')
+10:  @Get()
+21:  @Get(':slug')
+28:  @Get(':slug/relationships')
+35:  @Post()
+51:  @Patch(':id')
+61:  @Post(':id/relationships')
+

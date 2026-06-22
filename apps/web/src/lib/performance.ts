@@ -34,11 +34,12 @@ class PerformanceMonitor {
       try {
         const clsObserver = new PerformanceObserver((list) => {
           for (const entry of list.getEntries()) {
-            if (!(entry as Record<string, unknown>).hadRecentInput) {
+            const e = entry as unknown as Record<string, unknown>;
+            if (!e.hadRecentInput) {
               this.recordMetric({
                 name: 'CLS',
-                value: (entry as Record<string, unknown>).value as number,
-                rating: this.getCLSRating((entry as Record<string, unknown>).value as number),
+                value: e.value as number,
+                rating: this.getCLSRating(e.value as number),
               });
             }
           }
@@ -56,10 +57,11 @@ class PerformanceMonitor {
       try {
         const fidObserver = new PerformanceObserver((list) => {
           for (const entry of list.getEntries()) {
+            const e = entry as unknown as Record<string, unknown>;
             this.recordMetric({
               name: 'FID',
-              value: (entry as Record<string, unknown>).duration as number,
-              rating: this.getFIDRating((entry as Record<string, unknown>).duration as number),
+              value: e.duration as number,
+              rating: this.getFIDRating(e.duration as number),
             });
           }
         });
@@ -77,7 +79,7 @@ class PerformanceMonitor {
         const lcpObserver = new PerformanceObserver((list) => {
           const entries = list.getEntries();
           const lastEntry = entries[entries.length - 1];
-          const entryRecord = lastEntry as Record<string, unknown>;
+          const entryRecord = lastEntry as unknown as Record<string, unknown>;
           const value = (entryRecord.renderTime as number) || (entryRecord.loadTime as number);
           this.recordMetric({
             name: 'LCP',
@@ -98,10 +100,11 @@ class PerformanceMonitor {
       try {
         const ttfbObserver = new PerformanceObserver((list) => {
           for (const entry of list.getEntries()) {
+            const e = entry as unknown as Record<string, unknown>;
             this.recordMetric({
               name: 'TTFB',
-              value: (entry as Record<string, unknown>).responseStart as number,
-              rating: this.getTTFBRating((entry as Record<string, unknown>).responseStart as number),
+              value: e.responseStart as number,
+              rating: this.getTTFBRating(e.responseStart as number),
             });
           }
         });
@@ -118,7 +121,7 @@ class PerformanceMonitor {
       try {
         const resourceObserver = new PerformanceObserver((list) => {
           for (const entry of list.getEntries()) {
-            const entryRecord = entry as Record<string, unknown>;
+            const entryRecord = entry as unknown as Record<string, unknown>;
             const resource: ResourceTiming = {
               name: entry.name,
               duration: entry.duration,
@@ -163,7 +166,9 @@ class PerformanceMonitor {
   private recordMetric(metric: PerformanceMetrics): void {
     this.metrics.push(metric);
     if (process.env.NODE_ENV === 'development') {
-      webLogger.debug(`[Performance] ${metric.name}: ${metric.value.toFixed(2)} (${metric.rating})`);
+      webLogger.debug(
+        `[Performance] ${metric.name}: ${metric.value.toFixed(2)} (${metric.rating})`
+      );
     }
   }
 

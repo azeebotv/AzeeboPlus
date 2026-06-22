@@ -1,12 +1,12 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 
-interface PollOptionInput {
+export interface PollOptionInput {
   text: string;
   imageUrl?: string;
 }
 
-interface CreatePollInput {
+export interface CreatePollInput {
   title: string;
   description?: string;
   coverImage?: string;
@@ -64,7 +64,10 @@ export class PollService {
   }
 
   async createPoll(userId: string, data: CreatePollInput) {
-    const slug = data.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    const slug = data.title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '');
 
     const poll = await this.prisma.poll.create({
       data: {

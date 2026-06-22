@@ -22,8 +22,8 @@ export const useThemeStore = create<ThemeState>()(
     {
       name: 'theme-storage',
       storage: createJSONStorage(() => localStorage),
-    },
-  ),
+    }
+  )
 );
 
 interface UIState {
@@ -44,9 +44,7 @@ export const useUIStore = create<UIState>()((set) => ({
   notifications: [],
   markNotificationRead: (id) =>
     set((state) => ({
-      notifications: state.notifications.map((n) =>
-        n.id === id ? { ...n, read: true } : n,
-      ),
+      notifications: state.notifications.map((n) => (n.id === id ? { ...n, read: true } : n)),
     })),
   markAllNotificationsRead: () =>
     set((state) => ({
@@ -76,6 +74,6 @@ export const usePreferencesStore = create<UserPreferences>()(
     {
       name: 'user-preferences',
       storage: createJSONStorage(() => localStorage),
-    },
-  ),
+    }
+  )
 );

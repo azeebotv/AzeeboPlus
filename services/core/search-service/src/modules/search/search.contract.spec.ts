@@ -73,7 +73,9 @@ describe('Search Controller Contract Tests', () => {
     });
 
     it('should return validation error for missing query', async () => {
-      searchService.search.mockRejectedValue(new BadRequestException('Search query must be at least 2 characters'));
+      searchService.search.mockRejectedValue(
+        new BadRequestException('Search query must be at least 2 characters')
+      );
 
       const response = await request(app.getHttpServer()).get('/search');
 

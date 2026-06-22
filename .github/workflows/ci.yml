@@ -393,6 +393,11 @@ jobs:
             echo "Potential secrets found - review above output"
           fi
 
+      - name: Run secret verification script
+        run: |
+          chmod +x ./ci/scripts/secret-verification.sh
+          ./ci/scripts/secret-verification.sh || true
+
   migration-check:
     name: Database Migration Check
     runs-on: ubuntu-latest
@@ -666,6 +671,19 @@ jobs:
           echo "RTO (Recovery Time Objective): < 5 minutes (observed)"
           echo "✅ RPO/RTO acceptance criteria met"
 
+  analytics-validation:
+    name: Analytics Event Validation
+    runs-on: ubuntu-latest
+    needs: install-and-prisma
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Validate analytics event naming conventions
+        run: |
+          chmod +x ./ci/scripts/validate-analytics-events.sh
+          ./ci/scripts/validate-analytics-events.sh
+
   all-gates-passed:
     name: All CI Gates Passed
     runs-on: ubuntu-latest
@@ -680,6 +698,7 @@ jobs:
       - web-build
       - mobile-build
       - backup-restore-verification
+      - analytics-validation
     steps:
       - name: CI Complete
         run: echo "All CI gates passed successfully"

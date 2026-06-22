@@ -139,9 +139,7 @@ describe('PaymentsService', () => {
       const userId = 'user-123';
       const dto = { amount: 99, currency: 'NGN', description: 'Test payment' };
 
-      await expect(service.initializePayment(userId, dto)).rejects.toThrow(
-        BadRequestException
-      );
+      await expect(service.initializePayment(userId, dto)).rejects.toThrow(BadRequestException);
     });
 
     it('should allow payment with minimum amount (100 NGN)', async () => {
@@ -268,7 +266,11 @@ describe('PaymentsService', () => {
       });
 
       prisma.wallet.update.mockResolvedValue({});
-      prisma.wallet.findUnique.mockResolvedValue({ id: 'wallet-123', userId, balance: new Decimal(10000) });
+      prisma.wallet.findUnique.mockResolvedValue({
+        id: 'wallet-123',
+        userId,
+        balance: new Decimal(10000),
+      });
       prisma.walletTransaction.create.mockResolvedValue({});
       prisma.paymentIntent.update.mockResolvedValue({
         id: transactionId,
@@ -323,7 +325,11 @@ describe('PaymentsService', () => {
       });
 
       prisma.wallet.update.mockResolvedValue({});
-      prisma.wallet.findUnique.mockResolvedValue({ id: 'wallet-123', userId, balance: new Decimal(10000) });
+      prisma.wallet.findUnique.mockResolvedValue({
+        id: 'wallet-123',
+        userId,
+        balance: new Decimal(10000),
+      });
       prisma.walletTransaction.create.mockResolvedValue({});
       prisma.paymentIntent.update.mockResolvedValue({
         id: transactionId,
@@ -341,14 +347,14 @@ describe('PaymentsService', () => {
       });
 
       // Simulate 3 concurrent verify requests
-      const promises = Array.from({ length: 3 }, () => 
+      const promises = Array.from({ length: 3 }, () =>
         service.verifyPayment(userId, transactionId)
       );
 
       const results = await Promise.all(promises);
-      
+
       // Verify that at least one succeeded
-      expect(results.some(r => r.success)).toBe(true);
+      expect(results.some((r) => r.success)).toBe(true);
     });
   });
 

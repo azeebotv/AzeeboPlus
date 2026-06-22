@@ -40,13 +40,11 @@ describe('Analytics Controller Contract Tests', () => {
 
       jest.spyOn(analyticsService, 'trackEvent').mockResolvedValue({ success: true });
 
-      const response = await request(app.getHttpServer())
-        .post('/analytics/track')
-        .send({
-          type: 'content_view',
-          userId: 'user-123',
-          contentId: 'content-1',
-        });
+      const response = await request(app.getHttpServer()).post('/analytics/track').send({
+        type: 'content_view',
+        userId: 'user-123',
+        contentId: 'content-1',
+      });
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual({

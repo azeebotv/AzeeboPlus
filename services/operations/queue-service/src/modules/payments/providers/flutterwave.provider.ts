@@ -46,7 +46,8 @@ export class FlutterwaveProvider {
           tx_ref: `tx_${Date.now()}_${userId}`,
           amount,
           currency: currency || 'NGN',
-          redirect_url: process.env.FLUTTERWAVE_CALLBACK_URL || 'https://api.azeebo.plus/payments/webhook',
+          redirect_url:
+            process.env.FLUTTERWAVE_CALLBACK_URL || 'https://api.azeebo.plus/payments/webhook',
           customer: {
             email: `user-${userId}@azeebo.plus`,
             name: `User ${userId}`,
@@ -61,7 +62,7 @@ export class FlutterwaveProvider {
             Authorization: `Bearer ${this.apiKey}`,
             'Content-Type': 'application/json',
           },
-        },
+        }
       );
 
       if (response.data.status !== 'success') {
@@ -87,7 +88,7 @@ export class FlutterwaveProvider {
             Authorization: `Bearer ${this.apiKey}`,
             'Content-Type': 'application/json',
           },
-        },
+        }
       );
 
       if (response.data.status !== 'success') {
@@ -120,7 +121,7 @@ export class FlutterwaveProvider {
             Authorization: `Bearer ${this.apiKey}`,
             'Content-Type': 'application/json',
           },
-        },
+        }
       );
 
       if (response.data.status !== 'success') {
@@ -139,14 +140,19 @@ export class FlutterwaveProvider {
   }
 
   async processPayout(amount: number, recipient: string, reference: string) {
-    this.logger.log(`Processing Flutterwave payout of ${amount} to ${recipient}, reference: ${reference}`);
-    throw new Error('Flutterwave payout is not implemented. Please use wallet-service direct transfer for payouts.');
+    this.logger.log(
+      `Processing Flutterwave payout of ${amount} to ${recipient}, reference: ${reference}`
+    );
+    throw new Error(
+      'Flutterwave payout is not implemented. Please use wallet-service direct transfer for payouts.'
+    );
   }
 
-  async verifyWebhookSignature(payload: Record<string, unknown>, signature: string): Promise<boolean> {
-    const hash = createHmac('sha256', this.apiKey)
-      .update(JSON.stringify(payload))
-      .digest('hex');
+  async verifyWebhookSignature(
+    payload: Record<string, unknown>,
+    signature: string
+  ): Promise<boolean> {
+    const hash = createHmac('sha256', this.apiKey).update(JSON.stringify(payload)).digest('hex');
 
     return hash === signature;
   }

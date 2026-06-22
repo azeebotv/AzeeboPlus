@@ -5,17 +5,25 @@ describe('Idempotency', () => {
     it('should generate a unique idempotency key', () => {
       const key1 = generateIdempotencyKey();
       const key2 = generateIdempotencyKey();
-      
+
       expect(key1).toBeDefined();
       expect(key2).toBeDefined();
       expect(key1).not.toBe(key2);
-      expect(key1).toHaveLength(36);
+      // Key format: idemp-{timestamp}-{uuid}
+      expect(key1).toMatch(
+        /^idemp-\d+-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
+      );
     });
 
-    it('should generate keys in UUID format', () => {
+    it('should generate keys with timestamp prefix and UUID suffix', () => {
       const key = generateIdempotencyKey();
+      const parts = key.split('-');
+      expect(parts[0]).toBe('idemp');
+      expect(parts.length).toBe(7);
+      // Last 5 parts should form a UUID
+      const uuidPart = parts.slice(2).join('-');
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-      expect(key).toMatch(uuidRegex);
+      expect(uuidPart).toMatch(uuidRegex);
     });
   });
 
@@ -46,7 +54,7 @@ describe('Idempotency', () => {
 describe('Retry Logic', () => {
   it('should calculate correct retry delays with exponential backoff', () => {
     const delays = [1000, 2000, 4000]; // initial delay * (backoffFactor ^ attempt)
-    
+
     expect(delays[0]).toBe(1000);
     expect(delays[1]).toBe(2000);
     expect(delays[2]).toBe(4000);
@@ -60,9 +68,9 @@ describe('Retry Logic', () => {
     // Attempt 2: 4000
     // Attempt 3: 8000
     // Attempt 4: 10000 (capped at max)
-    
+
     const expectedDelays = [1000, 2000, 4000, 8000, 10000];
-    
+
     expectedDelays.forEach((delay, index) => {
       const calculatedDelay = Math.min(1000 * Math.pow(2, index), maxDelay);
       expect(calculatedDelay).toBe(delay);

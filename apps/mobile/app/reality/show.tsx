@@ -1,5 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, FlatList, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  TextInput,
+  FlatList,
+  ActivityIndicator,
+} from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import { realityApi } from '../../src/api';
@@ -162,7 +171,10 @@ export default function RealityShowPage() {
             <Text style={styles.fullVoteIcon}>🗳️</Text>
             <Text style={styles.fullVoteText}>Full Voting</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.predictionButton} onPress={() => router.push('/prediction')}>
+          <TouchableOpacity
+            style={styles.predictionButton}
+            onPress={() => router.push('/prediction')}
+          >
             <Text style={styles.predictionIcon}>🔮</Text>
             <Text style={styles.predictionText}>Predictions</Text>
           </TouchableOpacity>
@@ -223,9 +235,7 @@ export default function RealityShowPage() {
                 >
                   <Text style={styles.packageVotes}>{pkg.votes.toLocaleString()} votes</Text>
                   <Text style={styles.packagePrice}>₦{pkg.price.toLocaleString()}</Text>
-                  {pkg.bonus > 0 && (
-                    <Text style={styles.packageBonus}>+{pkg.bonus} bonus</Text>
-                  )}
+                  {pkg.bonus > 0 && <Text style={styles.packageBonus}>+{pkg.bonus} bonus</Text>}
                 </TouchableOpacity>
               ))}
             </View>

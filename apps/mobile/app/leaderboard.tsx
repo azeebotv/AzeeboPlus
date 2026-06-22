@@ -1,7 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView,
-  RefreshControl, TouchableOpacity, Image,
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  RefreshControl,
+  TouchableOpacity,
+  Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { engagementApi } from '../src/api';
@@ -61,19 +66,27 @@ export default function LeaderboardScreen() {
 
   const getRankIcon = (rank: number): string => {
     switch (rank) {
-      case 1: return '🥇';
-      case 2: return '🥈';
-      case 3: return '🥉';
-      default: return `#${rank}`;
+      case 1:
+        return '🥇';
+      case 2:
+        return '🥈';
+      case 3:
+        return '🥉';
+      default:
+        return `#${rank}`;
     }
   };
 
   const getRankColor = (rank: number): string => {
     switch (rank) {
-      case 1: return '#FFD700';
-      case 2: return '#C0C0C0';
-      case 3: return '#CD7F32';
-      default: return '#9CA3AF';
+      case 1:
+        return '#FFD700';
+      case 2:
+        return '#C0C0C0';
+      case 3:
+        return '#CD7F32';
+      default:
+        return '#9CA3AF';
     }
   };
 
@@ -115,7 +128,9 @@ export default function LeaderboardScreen() {
               onPress={() => setTimePeriod(period)}
             >
               <Text style={[styles.filterText, timePeriod === period && styles.filterTextActive]}>
-                {period === 'alltime' ? 'All Time' : period.charAt(0).toUpperCase() + period.slice(1)}
+                {period === 'alltime'
+                  ? 'All Time'
+                  : period.charAt(0).toUpperCase() + period.slice(1)}
               </Text>
             </TouchableOpacity>
           ))}
@@ -159,10 +174,7 @@ export default function LeaderboardScreen() {
         {entries.slice(3).map((entry) => (
           <TouchableOpacity
             key={entry.userId}
-            style={[
-              styles.listItem,
-              entry.isCurrentUser && styles.listItemCurrentUser,
-            ]}
+            style={[styles.listItem, entry.isCurrentUser && styles.listItemCurrentUser]}
             onPress={() => router.push(`/profile/${entry.userId}` as any)}
           >
             <Text style={[styles.rankText, { color: getRankColor(entry.rank) }]}>

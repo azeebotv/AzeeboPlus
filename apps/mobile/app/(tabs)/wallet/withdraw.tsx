@@ -125,10 +125,7 @@ export default function WithdrawFundsScreen() {
                 { text: 'OK', onPress: () => router.back() },
               ]);
             } catch (error: any) {
-              Alert.alert(
-                'Error',
-                error?.message || 'Failed to withdraw funds. Please try again.'
-              );
+              Alert.alert('Error', error?.message || 'Failed to withdraw funds. Please try again.');
             } finally {
               setIsLoading(false);
             }
@@ -150,20 +147,20 @@ export default function WithdrawFundsScreen() {
   }
 
   if (balanceError) {
-    return <ErrorState title="Failed to load balance" description={balanceError} onRetry={fetchBalance} />;
+    return (
+      <ErrorState
+        title="Failed to load balance"
+        description={balanceError}
+        onRetry={fetchBalance}
+      />
+    );
   }
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => router.back()}
-          >
+          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
             <Text style={styles.backButtonText}>←</Text>
           </TouchableOpacity>
           <Text style={styles.title}>Withdraw Funds</Text>
@@ -228,9 +225,7 @@ export default function WithdrawFundsScreen() {
                 }
               }}
             />
-            {errors.bankName && (
-              <Text style={styles.errorText}>{errors.bankName}</Text>
-            )}
+            {errors.bankName && <Text style={styles.errorText}>{errors.bankName}</Text>}
           </View>
 
           <View style={styles.inputGroup}>
@@ -270,35 +265,24 @@ export default function WithdrawFundsScreen() {
                 )}
               </TouchableOpacity>
             </View>
-            {errors.accountNumber && (
-              <Text style={styles.errorText}>{errors.accountNumber}</Text>
-            )}
+            {errors.accountNumber && <Text style={styles.errorText}>{errors.accountNumber}</Text>}
           </View>
 
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Account Name</Text>
             <TextInput
-              style={[
-                styles.input,
-                styles.readOnlyInput,
-                errors.accountName && styles.inputError,
-              ]}
+              style={[styles.input, styles.readOnlyInput, errors.accountName && styles.inputError]}
               placeholder="Account name will appear here"
               placeholderTextColor="#666"
               value={accountName}
               onChangeText={setAccountName}
               editable={false}
             />
-            {errors.accountName && (
-              <Text style={styles.errorText}>{errors.accountName}</Text>
-            )}
+            {errors.accountName && <Text style={styles.errorText}>{errors.accountName}</Text>}
           </View>
 
           <TouchableOpacity
-            style={[
-              styles.withdrawButton,
-              isLoading && styles.withdrawButtonDisabled,
-            ]}
+            style={[styles.withdrawButton, isLoading && styles.withdrawButtonDisabled]}
             onPress={handleWithdraw}
             disabled={isLoading}
           >
@@ -314,10 +298,8 @@ export default function WithdrawFundsScreen() {
           <View style={styles.infoCard}>
             <Text style={styles.infoTitle}>ℹ️ Information</Text>
             <Text style={styles.infoText}>
-              • Minimum withdrawal: ₦500{'\n'}
-              • Processing time: 1-3 business days{'\n'}
-              • Withdrawal fees may apply{'\n'}
-              • Ensure account details are correct
+              • Minimum withdrawal: ₦500{'\n'}• Processing time: 1-3 business days{'\n'}• Withdrawal
+              fees may apply{'\n'}• Ensure account details are correct
             </Text>
           </View>
         </View>

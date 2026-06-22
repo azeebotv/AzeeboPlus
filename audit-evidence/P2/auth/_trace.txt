@@ -1,0 +1,281 @@
+=== captured at ===
+2026-06-22T12:00:32Z
+
+=== web AuthContext (head) ===
+'use client';
+
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+  ReactNode,
+} from 'react';
+import { api, User, AuthResponse } from '../lib/api';
+import { webLogger } from '@/lib/logger';
+
+interface AuthContextType {
+  user: User | null;
+  token: string | null;
+  refreshToken: string | null;
+  isLoading: boolean;
+  isAuthenticated: boolean;
+  login: (email: string, password: string) => Promise<{ success: boolean; message?: string }>;
+  register: (
+    name: string,
+    email: string,
+    password: string
+  ) => Promise<{ success: boolean; message?: string }>;
+  logout: () => Promise<void>;
+  updateUser: (user: User) => void;
+  refreshUser: () => Promise<void>;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export const useAuth = (): AuthContextType => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
+
+interface AuthProviderProps {
+  children: ReactNode;
+}
+
+const TOKEN_REFRESH_INTERVAL = 14 * 60 * 1000;
+
+export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+  const [user, setUser] = useState<User | null>(null);
+  const [token, setToken] = useState<string | null>(null);
+  const [refreshToken, setRefreshToken] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  const handleAuthResponse = useCallback((response: AuthResponse) => {
+    const { access_token, refresh_token, user: userData } = response;
+    setToken(access_token);
+    setRefreshToken(refresh_token);
+    setUser(userData);
+    api.setToken(access_token);
+    localStorage.setItem('user', JSON.stringify(userData));
+    localStorage.setItem('refreshToken', refresh_token);
+    localStorage.setItem('accessToken', access_token);
+  }, []);
+
+  const refreshAccessToken = useCallback(async () => {
+    const currentRefreshToken = localStorage.getItem('refreshToken') || refreshToken;
+    if (!currentRefreshToken) {
+      return false;
+    }
+
+    try {
+      const response = await api.auth.refreshToken(currentRefreshToken);
+      if (response.success && response.data) {
+        const newToken = response.data.access_token;
+        const newRefreshToken = response.data.refresh_token;
+        setToken(newToken);
+        setRefreshToken(newRefreshToken);
+        api.setToken(newToken);
+        localStorage.setItem('accessToken', newToken);
+        localStorage.setItem('refreshToken', newRefreshToken);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      return false;
+    }
+  }, [refreshToken]);
+
+  useEffect(() => {
+    const loadUser = async (): Promise<void> => {
+      try {
+        const storedUser = localStorage.getItem('user');
+        const storedRefreshToken = localStorage.getItem('refreshToken');
+        const storedAccessToken = localStorage.getItem('accessToken');
+
+        if (storedUser) {
+          setUser(JSON.parse(storedUser));
+        }
+        if (storedRefreshToken) {
+          setRefreshToken(storedRefreshToken);
+        }
+
+=== mobile AuthContext (head) ===
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { authApi, userApi, apiClient, type User, type ApiResponse } from '../api';
+import { useStorage } from '../hooks/useStorage';
+import { logger } from '../utils/logger';
+
+interface AuthContextType {
+  user: User | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  login: (email: string, password: string) => Promise<{ success: boolean; message?: string }>;
+  register: (
+    email: string,
+    password: string,
+    displayName: string,
+    phone: string
+  ) => Promise<{ success: boolean; message?: string }>;
+  logout: () => Promise<void>;
+  forgotPassword: (email: string) => Promise<void>;
+  verifyOTP: (code: string) => Promise<{ success: boolean; message?: string }>;
+  resendOTP: () => Promise<void>;
+  refreshUser: () => Promise<void>;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const { getItem, setItem, removeItem } = useStorage();
+
+  useEffect(() => {
+    checkAuth();
+  }, []);
+
+  const checkAuth = async () => {
+    try {
+      const token = await getItem('accessToken');
+      const userData = await getItem('user');
+
+      if (token && userData) {
+        setUser(JSON.parse(userData));
+        apiClient.setToken(token);
+      }
+    } catch (error) {
+      logger.error('Auth check failed', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleAuthResponse = async (
+    response: ApiResponse<{ access_token: string; refresh_token: string; user: User }>
+  ) => {
+    if (response.success && response.data) {
+      const { access_token, refresh_token, user: userData } = response.data;
+      await setItem('accessToken', access_token);
+      await setItem('refreshToken', refresh_token);
+      await setItem('user', JSON.stringify(userData));
+      apiClient.setToken(access_token);
+      setUser(userData);
+    }
+  };
+
+  const login = async (email: string, password: string) => {
+    try {
+      const response = await authApi.login(email, password);
+      if (response.success && response.data) {
+        await handleAuthResponse(
+          response as ApiResponse<{ access_token: string; refresh_token: string; user: User }>
+        );
+        return { success: true };
+      }
+      return { success: false, message: response.message || 'Login failed' };
+    } catch (error: any) {
+      logger.error('Login error', error);
+      return { success: false, message: error.message || 'An error occurred during login' };
+    }
+  };
+
+  const register = async (email: string, password: string, displayName: string, phone: string) => {
+    try {
+      const response = await authApi.register({ email, password, name: displayName, phone });
+      if (response.success && response.data) {
+        await handleAuthResponse(
+          response as ApiResponse<{ access_token: string; refresh_token: string; user: User }>
+        );
+        return { success: true };
+      }
+      return { success: false, message: response.message || 'Registration failed' };
+    } catch (error: any) {
+      logger.error('Register error', error);
+      return { success: false, message: error.message || 'An error occurred during registration' };
+    }
+  };
+
+  const logout = async () => {
+    try {
+      await authApi.logout();
+    } catch (error) {
+      logger.error('Logout error', error);
+
+=== packages/auth ===
+       6 packages/auth/src/index.ts
+       6 packages/auth/src/index.ts
+      12 total
+
+=== auth-service controllers + DTOs ===
+services/core/auth-service/src/common/guards/rate-limit.guard.ts
+services/core/auth-service/src/common/guards/roles.guard.integration.spec.ts
+services/core/auth-service/src/common/guards/roles.guard.spec.ts
+services/core/auth-service/src/common/guards/roles.guard.ts
+services/core/auth-service/src/common/services/redis.service.ts
+services/core/auth-service/src/modules/admin/admin.controller.ts
+services/core/auth-service/src/modules/admin/admin.service.ts
+services/core/auth-service/src/modules/audit/audit.service.ts
+services/core/auth-service/src/modules/auth/auth.controller.ts
+services/core/auth-service/src/modules/auth/auth.service.ts
+services/core/auth-service/src/modules/auth/device/device.controller.ts
+services/core/auth-service/src/modules/auth/device/device.service.ts
+services/core/auth-service/src/modules/auth/dto/create-user.dto.ts
+services/core/auth-service/src/modules/auth/dto/device.dto.ts
+services/core/auth-service/src/modules/auth/dto/enable-mfa.dto.ts
+services/core/auth-service/src/modules/auth/dto/login.dto.ts
+services/core/auth-service/src/modules/auth/dto/password-reset.dto.ts
+services/core/auth-service/src/modules/auth/dto/refresh-token.dto.ts
+services/core/auth-service/src/modules/auth/dto/register.dto.ts
+services/core/auth-service/src/modules/auth/dto/request-otp.dto.ts
+services/core/auth-service/src/modules/auth/dto/select-role.dto.ts
+services/core/auth-service/src/modules/auth/dto/verify-otp.dto.ts
+services/core/auth-service/src/modules/auth/mfa/mfa.controller.ts
+services/core/auth-service/src/modules/auth/mfa/mfa.service.ts
+services/core/auth-service/src/modules/auth/otp/otp.controller.ts
+services/core/auth-service/src/modules/auth/otp/otp.service.ts
+services/core/auth-service/src/modules/auth/social/social.controller.ts
+services/core/auth-service/src/modules/auth/social/social.service.ts
+services/core/auth-service/src/modules/auth/strategies/jwt-refresh.strategy.ts
+services/core/auth-service/src/modules/auth/strategies/jwt.strategy.ts
+services/core/auth-service/src/modules/database/prisma.service.ts
+services/core/auth-service/src/modules/health/health.controller.ts
+services/core/auth-service/src/modules/metrics/metrics.controller.ts
+services/core/auth-service/src/modules/metrics/metrics.service.ts
+
+=== refresh / token / jwt across services ===
+services/core/auth-service/dist/packages/logger/src/response-sanitizer.interceptor.js
+services/core/auth-service/dist/packages/security/src/guards/admin.guard.js
+services/core/auth-service/dist/services/core/auth-service/src/modules/auth/dto/refresh-token.dto.js
+services/core/auth-service/dist/services/core/auth-service/src/modules/auth/strategies/jwt-refresh.strategy.js
+services/core/auth-service/dist/services/core/auth-service/src/modules/auth/strategies/jwt-refresh.strategy.js.map
+services/core/auth-service/dist/services/core/auth-service/src/modules/auth/auth.repository.js
+services/core/auth-service/dist/services/core/auth-service/src/modules/auth/auth.module.js
+services/core/auth-service/dist/services/core/auth-service/src/modules/auth/social/social.service.js
+services/core/auth-service/dist/services/core/auth-service/src/modules/auth/social/social.controller.js
+services/core/auth-service/dist/services/core/auth-service/src/modules/auth/auth.service.js
+services/core/auth-service/dist/services/core/auth-service/src/modules/auth/auth.controller.js
+services/core/auth-service/prisma/migrations/20260522171937_init/migration.sql
+services/core/auth-service/prisma/schema.prisma
+services/core/auth-service/package.json
+services/core/auth-service/.env.example
+services/core/auth-service/src/prisma/client/schema.prisma
+services/core/auth-service/src/prisma/client/index.js
+services/core/auth-service/src/prisma/client/edge.js
+services/core/auth-service/src/prisma/client/index-browser.js
+services/core/auth-service/src/prisma/client/wasm.js
+services/core/auth-service/src/prisma/client/index.d.ts
+services/core/auth-service/src/modules/auth/dto/refresh-token.dto.ts
+services/core/auth-service/src/modules/auth/auth.controller.ts
+services/core/auth-service/src/modules/auth/auth.service.ts
+services/core/auth-service/src/modules/auth/strategies/jwt-refresh.strategy.ts
+services/core/auth-service/src/modules/auth/auth.contract.spec.ts
+services/core/auth-service/src/modules/auth/auth.integration.spec.ts
+services/core/auth-service/src/modules/auth/social/social.controller.ts
+services/core/auth-service/src/modules/auth/social/social.service.ts
+services/core/auth-service/src/modules/auth/auth.service.spec.ts
+
+=== OAuth / social providers ===

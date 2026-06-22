@@ -105,8 +105,20 @@ export function PullToRefreshFlatList<T>({
 
 interface PullToRefreshSectionListProps<T, SectionT> {
   sections: SectionListData<T, SectionT>[];
-  renderItem: ({ item, index, section }: { item: T; index: number; section: SectionListData<T, SectionT> }) => React.ReactElement;
-  renderSectionHeader?: ({ section }: { section: SectionListData<T, SectionT> }) => React.ReactElement | null;
+  renderItem: ({
+    item,
+    index,
+    section,
+  }: {
+    item: T;
+    index: number;
+    section: SectionListData<T, SectionT>;
+  }) => React.ReactElement;
+  renderSectionHeader?: ({
+    section,
+  }: {
+    section: SectionListData<T, SectionT>;
+  }) => React.ReactElement | null;
   keyExtractor: (item: T, index: number) => string;
   refreshing: boolean;
   onRefresh: () => void;

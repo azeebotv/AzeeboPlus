@@ -1,0 +1,14 @@
+===== services/core/payment-service/src/modules/payments/payments.controller.ts =====
+42:@Controller('v1/payments')
+46:  @Post('initialize')
+47:  @UseGuards(AuthGuard('jwt'), RateLimitGuard)
+128:  @Post('verify')
+129:  @UseGuards(AuthGuard('jwt'), RateLimitGuard)
+190:  @Get('history')
+191:  @UseGuards(AuthGuard('jwt'))
+242:  @Get(':id')
+243:  @UseGuards(AuthGuard('jwt'))
+282:  @Post('webhook')
+303:  @Post('refund-request')
+304:  @UseGuards(AuthGuard('jwt'), RateLimitGuard)
+

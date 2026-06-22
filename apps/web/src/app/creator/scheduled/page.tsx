@@ -93,7 +93,12 @@ export default function ScheduledPostsPage(): JSX.Element {
               className="text-muted-foreground hover:text-foreground mb-2 flex items-center gap-2"
             >
               <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 19l-7-7 7-7"
+                />
               </svg>
               Back
             </button>
@@ -105,9 +110,7 @@ export default function ScheduledPostsPage(): JSX.Element {
           <div className="text-center py-20">
             <div className="text-6xl mb-4">📅</div>
             <h2 className="text-2xl font-bold text-foreground mb-2">No scheduled posts</h2>
-            <p className="text-muted-foreground">
-              Your scheduled posts will appear here
-            </p>
+            <p className="text-muted-foreground">Your scheduled posts will appear here</p>
           </div>
         ) : (
           <div className="space-y-4">
@@ -117,11 +120,7 @@ export default function ScheduledPostsPage(): JSX.Element {
                 onClick={() => router.push(`/creator/content-detail?id=${post.id}`)}
                 className="bg-card rounded-lg border border-border overflow-hidden flex cursor-pointer hover:shadow-lg transition-shadow"
               >
-                <img
-                  src={post.thumbnail}
-                  alt={post.title}
-                  className="w-40 h-40 object-cover"
-                />
+                <img src={post.thumbnail} alt={post.title} className="w-40 h-40 object-cover" />
                 <div className="flex-1 p-4">
                   <div className="flex items-start justify-between mb-2">
                     <div>
@@ -134,7 +133,9 @@ export default function ScheduledPostsPage(): JSX.Element {
                   </div>
                   <div className="mb-4">
                     <p className="text-sm text-muted-foreground">Scheduled for:</p>
-                    <p className="text-sm font-medium text-foreground">{formatDateTime(post.scheduledFor)}</p>
+                    <p className="text-sm font-medium text-foreground">
+                      {formatDateTime(post.scheduledFor)}
+                    </p>
                   </div>
                 </div>
               </div>

@@ -12,7 +12,7 @@ async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule);
 
   app.useGlobalFilters(new GlobalExceptionFilter());
-  
+
   app.useGlobalInterceptors(new LoggingInterceptor());
 
   // Security headers
@@ -44,7 +44,7 @@ async function bootstrap(): Promise<void> {
     throw new Error('ALLOWED_ORIGINS environment variable must be set');
   }
   app.enableCors({
-    origin: process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim()),
+    origin: process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim()),
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
   });

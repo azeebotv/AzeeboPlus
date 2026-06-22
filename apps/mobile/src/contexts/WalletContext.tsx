@@ -9,9 +9,21 @@ interface WalletContextType {
   error: string | null;
   getWallet: () => Promise<void>;
   getTransactions: () => Promise<void>;
-  fundWallet: (amount: number, provider: 'paystack' | 'flutterwave', email: string) => Promise<{ success: boolean; authorizationUrl?: string; message?: string }>;
-  withdraw: (amount: number, bankCode: string, accountNumber: string) => Promise<{ success: boolean; message?: string }>;
-  transfer: (amount: number, recipientId: string, description: string) => Promise<{ success: boolean; message?: string }>;
+  fundWallet: (
+    amount: number,
+    provider: 'paystack' | 'flutterwave',
+    email: string
+  ) => Promise<{ success: boolean; authorizationUrl?: string; message?: string }>;
+  withdraw: (
+    amount: number,
+    bankCode: string,
+    accountNumber: string
+  ) => Promise<{ success: boolean; message?: string }>;
+  transfer: (
+    amount: number,
+    recipientId: string,
+    description: string
+  ) => Promise<{ success: boolean; message?: string }>;
 }
 
 const WalletContext = createContext<WalletContextType | undefined>(undefined);
@@ -60,7 +72,11 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const fundWallet = async (amount: number, provider: 'paystack' | 'flutterwave', email: string) => {
+  const fundWallet = async (
+    amount: number,
+    provider: 'paystack' | 'flutterwave',
+    email: string
+  ) => {
     setIsLoading(true);
     setError(null);
     try {
@@ -100,7 +116,11 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await apiClient.post('/wallet/transfer', { amount, recipientId, description });
+      const response = await apiClient.post('/wallet/transfer', {
+        amount,
+        recipientId,
+        description,
+      });
       if (response && typeof response === 'object' && 'success' in response) {
         await getWallet();
         await getTransactions();

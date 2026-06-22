@@ -50,7 +50,7 @@ export function usePWA() {
     // Listen for install prompt
     window.addEventListener('beforeinstallprompt', (e: Event) => {
       e.preventDefault();
-      setState((prev) => ({ ...prev, deferredPrompt: e }));
+      setState((prev) => ({ ...prev, deferredPrompt: e as BeforeInstallPromptEvent }));
     });
 
     // Check if already installed
@@ -74,7 +74,7 @@ export function usePWA() {
 
     state.deferredPrompt.prompt();
     const { outcome } = await state.deferredPrompt.userChoice;
-    
+
     if (outcome === 'accepted') {
       setState((prev) => ({ ...prev, isInstalled: true, deferredPrompt: null }));
     }

@@ -32,9 +32,15 @@ spec:
             - name: PORT
               value: "3000"
             - name: DATABASE_URL
-              value: postgresql://postgres:postgres@postgres.azeebo-infra.svc.cluster.local:5432/azeebo_plus_dev
+              valueFrom:
+                secretKeyRef:
+                  name: azeebo-secrets
+                  key: database-url
             - name: REDIS_URL
-              value: redis://redis.azeebo-infra.svc.cluster.local:6379
+              valueFrom:
+                secretKeyRef:
+                  name: azeebo-secrets
+                  key: redis-url
             - name: JWT_SECRET
               valueFrom:
                 secretKeyRef:

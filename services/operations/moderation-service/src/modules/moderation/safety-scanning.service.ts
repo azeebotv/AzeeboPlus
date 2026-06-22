@@ -28,7 +28,7 @@ export class SafetyScanningService {
   private readonly logger = new Logger(SafetyScanningService.name);
   private readonly scanningEnabled: boolean;
   private readonly useMockScanning: boolean;
-  
+
   private readonly malwareApiConfig: SafetyApiConfig;
   private readonly contentSafetyApiConfig: SafetyApiConfig;
   private readonly copyrightApiConfig: SafetyApiConfig;
@@ -42,24 +42,35 @@ export class SafetyScanningService {
 
     const isProduction = this.configService.get<string>('NODE_ENV') === 'production';
     if (isProduction && this.useMockScanning) {
-      throw new Error('USE_MOCK_SCANNING cannot be enabled in production - set NODE_ENV != production or disable USE_MOCK_SCANNING');
+      throw new Error(
+        'USE_MOCK_SCANNING cannot be enabled in production - set NODE_ENV != production or disable USE_MOCK_SCANNING'
+      );
     }
 
     this.malwareApiConfig = {
       apiKey: this.configService.getOrThrow<string>('MALWARE_SCAN_API_KEY'),
-      endpoint: this.configService.get<string>('MALWARE_SCAN_API_ENDPOINT', 'https://api.virustotal.com/v3/files'),
+      endpoint: this.configService.get<string>(
+        'MALWARE_SCAN_API_ENDPOINT',
+        'https://api.virustotal.com/v3/files'
+      ),
       timeout: this.configService.get<number>('MALWARE_SCAN_TIMEOUT', 30000),
     };
 
     this.contentSafetyApiConfig = {
       apiKey: this.configService.getOrThrow<string>('CONTENT_SAFETY_API_KEY'),
-      endpoint: this.configService.get<string>('CONTENT_SAFETY_API_ENDPOINT', 'https://vision.googleapis.com/v1/images:annotate'),
+      endpoint: this.configService.get<string>(
+        'CONTENT_SAFETY_API_ENDPOINT',
+        'https://vision.googleapis.com/v1/images:annotate'
+      ),
       timeout: this.configService.get<number>('CONTENT_SAFETY_TIMEOUT', 30000),
     };
 
     this.copyrightApiConfig = {
       apiKey: this.configService.getOrThrow<string>('COPYRIGHT_API_KEY'),
-      endpoint: this.configService.get<string>('COPYRIGHT_API_ENDPOINT', 'https://api.copyright.com/v1/search'),
+      endpoint: this.configService.get<string>(
+        'COPYRIGHT_API_ENDPOINT',
+        'https://api.copyright.com/v1/search'
+      ),
       timeout: this.configService.get<number>('COPYRIGHT_TIMEOUT', 30000),
     };
 
@@ -220,7 +231,7 @@ export class SafetyScanningService {
       );
 
       const data = response.data;
-      
+
       if (data.data.attributes.last_analysis_stats.malicious > 0) {
         return {
           result: 'blocked',
@@ -268,9 +279,7 @@ export class SafetyScanningService {
           requests: [
             {
               image: { source: { imageUri: mediaUrl } },
-              features: [
-                { type: 'SAFE_SEARCH_DETECTION' },
-              ],
+              features: [{ type: 'SAFE_SEARCH_DETECTION' }],
             },
           ],
         },
@@ -305,9 +314,12 @@ export class SafetyScanningService {
       }
 
       if (categories.length > 0) {
-        const maxThreatLevel = threatLevels.includes('high') ? 'high' : 
-                              threatLevels.includes('medium') ? 'medium' : 'low';
-        
+        const maxThreatLevel = threatLevels.includes('high')
+          ? 'high'
+          : threatLevels.includes('medium')
+            ? 'medium'
+            : 'low';
+
         if (maxThreatLevel === 'high') {
           return {
             result: 'blocked',
@@ -315,7 +327,9 @@ export class SafetyScanningService {
             categories,
             details: {
               model: 'google-safe-search',
-              confidence: Math.max(...Object.values(annotations).filter((v) => typeof v === 'number') as number[]),
+              confidence: Math.max(
+                ...(Object.values(annotations).filter((v) => typeof v === 'number') as number[])
+              ),
             },
           };
         }
@@ -364,7 +378,8 @@ export class SafetyScanningService {
           categories: ['copyright_infringement'],
           details: {
             matchCount: matches.length,
-            highConfidenceMatches: matches.filter((m: { confidence: number }) => m.confidence > 0.9).length,
+            highConfidenceMatches: matches.filter((m: { confidence: number }) => m.confidence > 0.9)
+              .length,
             matchType: 'fingerprint',
           },
         };
@@ -377,7 +392,9 @@ export class SafetyScanningService {
           categories: ['potential_copyright'],
           details: {
             matchCount: matches.length,
-            confidence: matches.reduce((acc: number, m: { confidence: number }) => acc + m.confidence, 0) / matches.length,
+            confidence:
+              matches.reduce((acc: number, m: { confidence: number }) => acc + m.confidence, 0) /
+              matches.length,
           },
         };
       }

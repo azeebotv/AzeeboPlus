@@ -2,12 +2,6 @@
   "extends": "../../../tsconfig.json",
   "compilerOptions": {
     "outDir": "dist",
-    "baseUrl": "./",
-    "noImplicitAny": false,
-    "noUnusedParameters": false,
-    "noUnusedLocals": false,
-    "experimentalDecorators": true,
-    "emitDecoratorMetadata": true,
     "paths": {
       "@azeebo/*": ["../../../packages/*/src"],
       "@moderation/*": ["./*"]

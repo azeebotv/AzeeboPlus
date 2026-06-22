@@ -7,7 +7,12 @@ export default function UnauthorizedScreen() {
   const router = useRouter();
 
   return (
-    <View style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#000000' : '#ffffff' }]}>
+    <View
+      style={[
+        styles.container,
+        { backgroundColor: colorScheme === 'dark' ? '#000000' : '#ffffff' },
+      ]}
+    >
       <View style={styles.content}>
         <Text style={styles.icon}>🔒</Text>
         <Text style={[styles.title, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
@@ -19,10 +24,7 @@ export default function UnauthorizedScreen() {
       </View>
 
       <View style={styles.actions}>
-        <TouchableOpacity
-          onPress={() => router.push('/(auth)/login')}
-          style={styles.primaryButton}
-        >
+        <TouchableOpacity onPress={() => router.push('/(auth)/login')} style={styles.primaryButton}>
           <Text style={styles.primaryButtonText}>Sign In</Text>
         </TouchableOpacity>
         <TouchableOpacity

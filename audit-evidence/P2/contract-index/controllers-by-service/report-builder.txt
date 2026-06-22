@@ -1,0 +1,11 @@
+===== services/intelligence/analytics-service/src/modules/report-builder/report-builder.controller.ts =====
+30:@Controller('v1/reports')
+31:@UseGuards(AuthGuard('jwt'))
+35:  @Post()
+43:  @Get()
+57:  @Get(':id')
+64:  @Put(':id')
+75:  @Delete(':id')
+82:  @Post('execute')
+90:  @Get(':id/executions')
+

@@ -22,7 +22,9 @@ export default function CreatorManagementPage(): JSX.Element {
   const router = useRouter();
   const [creators, setCreators] = useState<Creator[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [filter, setFilter] = useState<'all' | 'active' | 'suspended' | 'pending' | 'banned'>('all');
+  const [filter, setFilter] = useState<'all' | 'active' | 'suspended' | 'pending' | 'banned'>(
+    'all'
+  );
   const [searchQuery, setSearchQuery] = useState<string>('');
 
   useEffect(() => {
@@ -93,9 +95,8 @@ export default function CreatorManagementPage(): JSX.Element {
     return num.toString();
   };
 
-  const filteredCreators = filter === 'all'
-    ? creators
-    : creators.filter((c) => c.status === filter);
+  const filteredCreators =
+    filter === 'all' ? creators : creators.filter((c) => c.status === filter);
 
   const searchedCreators = searchQuery
     ? filteredCreators.filter(
@@ -127,7 +128,12 @@ export default function CreatorManagementPage(): JSX.Element {
               className="text-muted-foreground hover:text-foreground mb-2 flex items-center gap-2"
             >
               <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 19l-7-7 7-7"
+                />
               </svg>
               Back
             </button>
@@ -164,12 +170,24 @@ export default function CreatorManagementPage(): JSX.Element {
           <table className="w-full">
             <thead className="bg-muted">
               <tr>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Creator</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Status</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Content</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Followers</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Earnings</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Actions</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">
+                  Creator
+                </th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">
+                  Status
+                </th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">
+                  Content
+                </th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">
+                  Followers
+                </th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">
+                  Earnings
+                </th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -196,9 +214,15 @@ export default function CreatorManagementPage(): JSX.Element {
                       {creator.status}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-foreground">{formatNumber(creator.totalContent)}</td>
-                  <td className="px-6 py-4 text-foreground">{formatNumber(creator.totalFollowers)}</td>
-                  <td className="px-6 py-4 text-foreground">₦{formatNumber(creator.totalEarnings)}</td>
+                  <td className="px-6 py-4 text-foreground">
+                    {formatNumber(creator.totalContent)}
+                  </td>
+                  <td className="px-6 py-4 text-foreground">
+                    {formatNumber(creator.totalFollowers)}
+                  </td>
+                  <td className="px-6 py-4 text-foreground">
+                    ₦{formatNumber(creator.totalEarnings)}
+                  </td>
                   <td className="px-6 py-4">
                     <div className="flex gap-2">
                       {!creator.isVerified && (

@@ -157,7 +157,6 @@ export class DashboardService {
       .sort((a, b) => b.totalViews - a.totalViews);
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async getRecentActivity(_limit = 20): Promise<unknown> {
     const [recentUsers, recentContent, recentReports] = await Promise.all([
       this.prisma.user.findMany({

@@ -73,7 +73,9 @@ describe('MusicService', () => {
 
       await service.getEntries(1, 20, 'single');
 
-      expect((prismaService.musicEntry.findMany as jest.Mock).mock.calls[0][0].where.type).toBe('single');
+      expect((prismaService.musicEntry.findMany as jest.Mock).mock.calls[0][0].where.type).toBe(
+        'single'
+      );
     });
 
     it('should filter by genre', async () => {
@@ -82,7 +84,9 @@ describe('MusicService', () => {
 
       await service.getEntries(1, 20, undefined, 'pop');
 
-      expect((prismaService.musicEntry.findMany as jest.Mock).mock.calls[0][0].where.genre).toBe('pop');
+      expect((prismaService.musicEntry.findMany as jest.Mock).mock.calls[0][0].where.genre).toBe(
+        'pop'
+      );
     });
   });
 
@@ -149,7 +153,9 @@ describe('MusicService', () => {
     it('should throw NotFoundException if music not found', async () => {
       (prismaService.musicEntry.findUnique as jest.Mock).mockResolvedValue(null);
 
-      await expect(service.updateEntry('not-found', { title: 'Updated' })).rejects.toThrow(NotFoundException);
+      await expect(service.updateEntry('not-found', { title: 'Updated' })).rejects.toThrow(
+        NotFoundException
+      );
     });
   });
 

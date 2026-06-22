@@ -13,7 +13,15 @@ describe('Web App API Client', () => {
   describe('Auth API', () => {
     it('login should call POST /auth/login', async () => {
       const mockResponse = {
-        json: () => Promise.resolve({ success: true, data: { access_token: 'mock-token', refresh_token: 'mock-refresh', user: { id: '1', email: 'test@example.com', name: 'Test', role: 'user' } } }),
+        json: () =>
+          Promise.resolve({
+            success: true,
+            data: {
+              access_token: 'mock-token',
+              refresh_token: 'mock-refresh',
+              user: { id: '1', email: 'test@example.com', name: 'Test', role: 'user' },
+            },
+          }),
         ok: true,
       };
       mockFetch.mockResolvedValue(mockResponse);
@@ -28,12 +36,24 @@ describe('Web App API Client', () => {
 
     it('register should call POST /auth/signup', async () => {
       const mockResponse = {
-        json: () => Promise.resolve({ success: true, data: { access_token: 'mock-token', refresh_token: 'mock-refresh', user: { id: '1', email: 'test@example.com', name: 'Test', role: 'user' } } }),
+        json: () =>
+          Promise.resolve({
+            success: true,
+            data: {
+              access_token: 'mock-token',
+              refresh_token: 'mock-refresh',
+              user: { id: '1', email: 'test@example.com', name: 'Test', role: 'user' },
+            },
+          }),
         ok: true,
       };
       mockFetch.mockResolvedValue(mockResponse);
 
-      await api.auth.register({ name: 'Test', email: 'test@example.com', password: 'mock-password' });
+      await api.auth.register({
+        name: 'Test',
+        email: 'test@example.com',
+        password: 'mock-password',
+      });
 
       expect(mockFetch).toHaveBeenCalledWith(
         expect.stringContaining('/auth/signup'),
@@ -86,12 +106,19 @@ describe('Web App API Client', () => {
         expect.stringContaining('/wallet'),
         expect.objectContaining({ method: 'GET' })
       );
-      expect(mockFetch).not.toHaveBeenCalledWith(expect.stringContaining('/v1/wallet'), expect.anything());
+      expect(mockFetch).not.toHaveBeenCalledWith(
+        expect.stringContaining('/v1/wallet'),
+        expect.anything()
+      );
     });
 
     it('getTransactions should call GET /wallet/transactions with pagination', async () => {
       const mockResponse = {
-        json: () => Promise.resolve({ success: true, data: { items: [], total: 0, page: 1, limit: 20, hasMore: false } }),
+        json: () =>
+          Promise.resolve({
+            success: true,
+            data: { items: [], total: 0, page: 1, limit: 20, hasMore: false },
+          }),
         ok: true,
       };
       mockFetch.mockResolvedValue(mockResponse);
@@ -138,7 +165,11 @@ describe('Web App API Client', () => {
   describe('Payment API', () => {
     it('initialize should call POST /payments/initialize', async () => {
       const mockResponse = {
-        json: () => Promise.resolve({ success: true, data: { reference: 'mock-ref123', authorizationUrl: 'https://payment.com' } }),
+        json: () =>
+          Promise.resolve({
+            success: true,
+            data: { reference: 'mock-ref123', authorizationUrl: 'https://payment.com' },
+          }),
         ok: true,
       };
       mockFetch.mockResolvedValue(mockResponse);
@@ -149,12 +180,19 @@ describe('Web App API Client', () => {
         expect.stringContaining('/payments/initialize'),
         expect.objectContaining({ method: 'POST' })
       );
-      expect(mockFetch).not.toHaveBeenCalledWith(expect.stringContaining('/v1/payments/initialize'), expect.anything());
+      expect(mockFetch).not.toHaveBeenCalledWith(
+        expect.stringContaining('/v1/payments/initialize'),
+        expect.anything()
+      );
     });
 
     it('verify should call GET /payments/verify', async () => {
       const mockResponse = {
-        json: () => Promise.resolve({ success: true, data: { status: 'success', amount: 1000, currency: 'NGN', reference: 'mock-ref123' } }),
+        json: () =>
+          Promise.resolve({
+            success: true,
+            data: { status: 'success', amount: 1000, currency: 'NGN', reference: 'mock-ref123' },
+          }),
         ok: true,
       };
       mockFetch.mockResolvedValue(mockResponse);
@@ -171,7 +209,11 @@ describe('Web App API Client', () => {
   describe('User API', () => {
     it('getProfile should call GET /users/me', async () => {
       const mockResponse = {
-        json: () => Promise.resolve({ success: true, data: { id: '1', email: 'test@example.com', name: 'Test', role: 'user' } }),
+        json: () =>
+          Promise.resolve({
+            success: true,
+            data: { id: '1', email: 'test@example.com', name: 'Test', role: 'user' },
+          }),
         ok: true,
       };
       mockFetch.mockResolvedValue(mockResponse);
@@ -186,7 +228,11 @@ describe('Web App API Client', () => {
 
     it('getWatchHistory should call GET /users/me/history', async () => {
       const mockResponse = {
-        json: () => Promise.resolve({ success: true, data: { items: [], total: 0, page: 1, limit: 20, hasMore: false } }),
+        json: () =>
+          Promise.resolve({
+            success: true,
+            data: { items: [], total: 0, page: 1, limit: 20, hasMore: false },
+          }),
         ok: true,
       };
       mockFetch.mockResolvedValue(mockResponse);
@@ -220,7 +266,15 @@ describe('Web App API Client', () => {
 
     it('should not include Authorization header when token is null', async () => {
       const mockResponse = {
-        json: () => Promise.resolve({ success: true, data: { access_token: 'token', refresh_token: 'refresh', user: { id: '1', email: 'test@example.com', name: 'Test', role: 'user' } } }),
+        json: () =>
+          Promise.resolve({
+            success: true,
+            data: {
+              access_token: 'token',
+              refresh_token: 'refresh',
+              user: { id: '1', email: 'test@example.com', name: 'Test', role: 'user' },
+            },
+          }),
         ok: true,
       };
       mockFetch.mockResolvedValue(mockResponse);
@@ -236,7 +290,13 @@ describe('Web App API Client', () => {
   describe('Error Handling', () => {
     it('should return error response for non-ok status', async () => {
       const mockResponse = {
-        json: () => Promise.resolve({ success: false, message: 'Unauthorized', error: 'UNAUTHORIZED', statusCode: 401 }),
+        json: () =>
+          Promise.resolve({
+            success: false,
+            message: 'Unauthorized',
+            error: 'UNAUTHORIZED',
+            statusCode: 401,
+          }),
         ok: false,
         status: 401,
       };

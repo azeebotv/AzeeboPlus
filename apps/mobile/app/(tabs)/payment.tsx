@@ -143,16 +143,16 @@ export default function PaymentScreen(): JSX.Element {
 
   if (!isAuthenticated) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#000' : '#fff' }]} edges={['top']}>
+      <SafeAreaView
+        style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#000' : '#fff' }]}
+        edges={['top']}
+      >
         <View style={styles.unauthenticatedContainer}>
           <Text style={styles.lockIcon}>💳</Text>
           <Text style={[styles.lockText, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
             Please log in to make payments
           </Text>
-          <TouchableOpacity
-            style={styles.loginButton}
-            onPress={() => router.push('/(auth)/login')}
-          >
+          <TouchableOpacity style={styles.loginButton} onPress={() => router.push('/(auth)/login')}>
             <Text style={styles.loginButtonText}>Log In</Text>
           </TouchableOpacity>
         </View>
@@ -165,13 +165,22 @@ export default function PaymentScreen(): JSX.Element {
   }
 
   if (providersError) {
-    return <ErrorState title="Failed to load payment methods" description={providersError} onRetry={fetchProviders} />;
+    return (
+      <ErrorState
+        title="Failed to load payment methods"
+        description={providersError}
+        onRetry={fetchProviders}
+      />
+    );
   }
 
   const displayAmount = showCustomAmount && customAmount ? customAmount : selectedAmount.toString();
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#000' : '#fff' }]} edges={['top']}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#000' : '#fff' }]}
+      edges={['top']}
+    >
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <Text style={[styles.title, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
@@ -197,8 +206,8 @@ export default function PaymentScreen(): JSX.Element {
                       !showCustomAmount && selectedAmount === item.value
                         ? '#8B5CF6'
                         : colorScheme === 'dark'
-                        ? '#1a1a1a'
-                        : '#f5f5f5',
+                          ? '#1a1a1a'
+                          : '#f5f5f5',
                   },
                 ]}
                 onPress={() => handleAmountSelect(item.value)}
@@ -208,7 +217,11 @@ export default function PaymentScreen(): JSX.Element {
                     styles.amountText,
                     {
                       color:
-                        !showCustomAmount && selectedAmount === item.value ? '#fff' : colorScheme === 'dark' ? '#fff' : '#000',
+                        !showCustomAmount && selectedAmount === item.value
+                          ? '#fff'
+                          : colorScheme === 'dark'
+                            ? '#fff'
+                            : '#000',
                     },
                   ]}
                 >
@@ -222,8 +235,17 @@ export default function PaymentScreen(): JSX.Element {
             <Text style={[styles.customLabel, { color: colorScheme === 'dark' ? '#888' : '#666' }]}>
               Or enter custom amount
             </Text>
-            <View style={[styles.customInputContainer, { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' }]}>
-              <Text style={[styles.currencySymbol, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>$</Text>
+            <View
+              style={[
+                styles.customInputContainer,
+                { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' },
+              ]}
+            >
+              <Text
+                style={[styles.currencySymbol, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}
+              >
+                $
+              </Text>
               <TextInput
                 style={[styles.customInput, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}
                 placeholder="Enter amount"
@@ -257,7 +279,12 @@ export default function PaymentScreen(): JSX.Element {
                 ]}
               >
                 <View style={styles.providerInfo}>
-                  <Text style={[styles.providerName, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
+                  <Text
+                    style={[
+                      styles.providerName,
+                      { color: colorScheme === 'dark' ? '#fff' : '#000' },
+                    ]}
+                  >
                     {provider.name}
                   </Text>
                   <Text style={styles.providerDescription}>{meta.description || ''}</Text>
@@ -274,29 +301,49 @@ export default function PaymentScreen(): JSX.Element {
           <Text style={[styles.sectionTitle, { color: colorScheme === 'dark' ? '#888' : '#666' }]}>
             Summary
           </Text>
-          <View style={[styles.summaryCard, { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' }]}>
+          <View
+            style={[
+              styles.summaryCard,
+              { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' },
+            ]}
+          >
             <View style={styles.summaryRow}>
-              <Text style={[styles.summaryLabel, { color: colorScheme === 'dark' ? '#888' : '#666' }]}>
+              <Text
+                style={[styles.summaryLabel, { color: colorScheme === 'dark' ? '#888' : '#666' }]}
+              >
                 Amount
               </Text>
-              <Text style={[styles.summaryValue, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
+              <Text
+                style={[styles.summaryValue, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}
+              >
                 ${displayAmount}
               </Text>
             </View>
             <View style={styles.summaryRow}>
-              <Text style={[styles.summaryLabel, { color: colorScheme === 'dark' ? '#888' : '#666' }]}>
+              <Text
+                style={[styles.summaryLabel, { color: colorScheme === 'dark' ? '#888' : '#666' }]}
+              >
                 Provider
               </Text>
-              <Text style={[styles.summaryValue, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
+              <Text
+                style={[styles.summaryValue, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}
+              >
                 Paystack
               </Text>
             </View>
             <View style={styles.summaryDivider} />
             <View style={styles.summaryRow}>
-              <Text style={[styles.summaryLabel, { color: colorScheme === 'dark' ? '#fff' : '#000', fontWeight: '600' }]}>
+              <Text
+                style={[
+                  styles.summaryLabel,
+                  { color: colorScheme === 'dark' ? '#fff' : '#000', fontWeight: '600' },
+                ]}
+              >
                 Total
               </Text>
-              <Text style={[styles.summaryValue, { color: '#8B5CF6', fontWeight: '700', fontSize: 18 }]}>
+              <Text
+                style={[styles.summaryValue, { color: '#8B5CF6', fontWeight: '700', fontSize: 18 }]}
+              >
                 ${displayAmount}
               </Text>
             </View>
@@ -311,17 +358,13 @@ export default function PaymentScreen(): JSX.Element {
           {isLoading ? (
             <ActivityIndicator color="#fff" size="small" />
           ) : (
-            <Text style={styles.payButtonText}>
-              Pay ${displayAmount}
-            </Text>
+            <Text style={styles.payButtonText}>Pay ${displayAmount}</Text>
           )}
         </TouchableOpacity>
 
         <View style={styles.secureNote}>
           <Text style={styles.secureIcon}>🔒</Text>
-          <Text style={styles.secureText}>
-            Your payment is secured by Paystack
-          </Text>
+          <Text style={styles.secureText}>Your payment is secured by Paystack</Text>
         </View>
 
         <View style={styles.bottomPadding} />

@@ -88,8 +88,8 @@ export default function RankingsPage(): JSX.Element {
                     index === 0
                       ? 'border-yellow-500'
                       : index === 1
-                      ? 'border-gray-400'
-                      : 'border-orange-600'
+                        ? 'border-gray-400'
+                        : 'border-orange-600'
                   }`}
                 >
                   <div className="text-5xl mb-4">
@@ -103,7 +103,9 @@ export default function RankingsPage(): JSX.Element {
                   <h3 className="text-xl font-bold text-foreground mb-2">{entry.displayName}</h3>
                   <p className="text-3xl font-bold text-primary">{entry.score.toLocaleString()}</p>
                   {entry.change !== 0 && (
-                    <p className={`text-sm mt-2 font-semibold ${entry.change > 0 ? 'text-green-500' : 'text-red-500'}`}>
+                    <p
+                      className={`text-sm mt-2 font-semibold ${entry.change > 0 ? 'text-green-500' : 'text-red-500'}`}
+                    >
                       {entry.change > 0 ? '↑' : '↓'} {Math.abs(entry.change)} positions
                     </p>
                   )}
@@ -115,26 +117,44 @@ export default function RankingsPage(): JSX.Element {
               <table className="w-full">
                 <thead className="bg-muted">
                   <tr>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-muted-foreground">Rank</th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-muted-foreground">User</th>
-                    <th className="px-6 py-4 text-right text-sm font-semibold text-muted-foreground">Score</th>
-                    <th className="px-6 py-4 text-center text-sm font-semibold text-muted-foreground">Change</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-muted-foreground">
+                      Rank
+                    </th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-muted-foreground">
+                      User
+                    </th>
+                    <th className="px-6 py-4 text-right text-sm font-semibold text-muted-foreground">
+                      Score
+                    </th>
+                    <th className="px-6 py-4 text-center text-sm font-semibold text-muted-foreground">
+                      Change
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
                   {selectedData.entries.slice(3).map((entry) => (
                     <tr key={entry.userId} className="border-t border-border hover:bg-accent/50">
-                      <td className="px-6 py-4 text-lg font-bold text-muted-foreground">#{entry.rank}</td>
+                      <td className="px-6 py-4 text-lg font-bold text-muted-foreground">
+                        #{entry.rank}
+                      </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
-                          <img src={entry.avatar} alt={entry.displayName} className="w-10 h-10 rounded-full" />
+                          <img
+                            src={entry.avatar}
+                            alt={entry.displayName}
+                            className="w-10 h-10 rounded-full"
+                          />
                           <span className="font-semibold text-foreground">{entry.displayName}</span>
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-right text-lg font-bold text-primary">{entry.score.toLocaleString()}</td>
+                      <td className="px-6 py-4 text-right text-lg font-bold text-primary">
+                        {entry.score.toLocaleString()}
+                      </td>
                       <td className="px-6 py-4 text-center">
                         {entry.change !== 0 && (
-                          <span className={`font-semibold ${entry.change > 0 ? 'text-green-500' : 'text-red-500'}`}>
+                          <span
+                            className={`font-semibold ${entry.change > 0 ? 'text-green-500' : 'text-red-500'}`}
+                          >
                             {entry.change > 0 ? '↑' : '↓'} {Math.abs(entry.change)}
                           </span>
                         )}

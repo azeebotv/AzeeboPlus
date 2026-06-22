@@ -1,0 +1,10 @@
+===== services/universes/movie-service/src/modules/filmmaker/filmmaker.controller.ts =====
+6:@Controller('v1/movies/filmmakers')
+10:  @Get('projects')
+22:  @Get('projects/:id')
+29:  @Post('projects')
+46:  @Patch('projects/:id')
+65:  @Post('projects/:id/updates')
+75:  @Post('back')
+84:  @Get('projects/:id/backers')
+

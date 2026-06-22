@@ -233,7 +233,10 @@ describe('UsersService', () => {
   describe('updateProfile', () => {
     it('should update user profile', async () => {
       (prismaService.user.findUnique as jest.Mock).mockResolvedValue(mockUser);
-      (prismaService.user.update as jest.Mock).mockResolvedValue({ ...mockUser, displayName: 'Updated Name' });
+      (prismaService.user.update as jest.Mock).mockResolvedValue({
+        ...mockUser,
+        displayName: 'Updated Name',
+      });
 
       const result = await service.updateProfile('user-123', { displayName: 'Updated Name' });
 
@@ -244,7 +247,9 @@ describe('UsersService', () => {
     it('should throw NotFoundException if user not found', async () => {
       (prismaService.user.findUnique as jest.Mock).mockResolvedValue(null);
 
-      await expect(service.updateProfile('user-123', { displayName: 'New Name' })).rejects.toThrow(NotFoundException);
+      await expect(service.updateProfile('user-123', { displayName: 'New Name' })).rejects.toThrow(
+        NotFoundException
+      );
     });
   });
 

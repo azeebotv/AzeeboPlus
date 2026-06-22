@@ -1,0 +1,53 @@
+# Observability & SLO Scan — captured 2026-06-22
+# SHA: fc01c8c
+
+## OTel SDK (`packages/opentelemetry/src/index.ts`)
+
+```
+$ wc -l packages/opentelemetry/src/index.ts
+→ 1 line (placeholder stub)
+```
+
+→ **The `@azeebo/opentelemetry` package is an empty stub.** No SDK initialization, no tracer/meter setup, no OTLP exporter. The service code imports `from '@azeebo/opentelemetry'` expecting an SDK; this is a Critical observability gap.
+
+## Observability package (`packages/observability/src/index.ts`)
+
+```
+$ ls packages/observability/src/
+anomaly-detection.service.ts
+error-budget.service.ts
+health-check.service.ts
+index.ts
+metrics.service.ts
+observability.module.ts
+tracing.service.ts
+```
+
+→ Service-level module exists; metrics, tracing, health-check services are defined.
+
+## Logger posture (`packages/logger/src/index.ts`)
+
+→ Exports `LoggingInterceptor`, `DistributedTracingInterceptor`, `ResponseSanitizerInterceptor`, `ResponseWrapperInterceptor`. Structured JSON logs via Pino (assumed; verify in code).
+
+## Prometheus rules (`infra/k8s/monitoring/`)
+
+| File | Lines | Rules count (approx) |
+|------|-------|----------------------|
+| `prometheus-alerts.yaml` | 300+ | ~40 (system, app, db, redis, infra, auth, rate-limit, business, payments, wallet, signups, content, premium, rewards, subscription, webhooks, external, backup, cache, circuit breaker) |
+| `error-rate.yml` | 47 | 5 (high error, very high, elevated, high latency, service down) |
+| `rate-limit-alerts.yml` | 47 | 5 (high violations, spike, single-IP abuse, config error, redis failure) |
+| `payment-alerts.yml` | 47 | 5 (high failure, spike, processing delay, webhook failure, low volume) |
+
+## SLO definitions
+
+→ **No SLO definitions exist** in the repo. There is no `infra/k8s/monitoring/slo.yaml` and no `slo:`-prefixed Prometheus rules. Per-service SLO targets (latency p50/p95/p99, error rate, availability) are **undefined**.
+
+## Burn-rate alerts
+
+→ **No multi-window burn-rate alerts.** The existing alerts are simple threshold checks; they lack the 1h/6h burn-rate structure required by Google SRE workbook.
+
+## Grafana posture
+
+→ `infra/k8s/monitoring/grafana.yaml` + `grafana-secrets.yaml` exist. Dashboards provisioned via `grafana-dashboard-*` ConfigMaps are **not present**.
+
+## Findings → see P3-NNN-observability-findings.md

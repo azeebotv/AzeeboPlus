@@ -39,7 +39,14 @@ const cities: City[] = [
   { id: '1', name: 'Lagos', country: 'Nigeria', icon: '🌍', events: 24, color: '#FF6B6B' },
   { id: '2', name: 'Nairobi', country: 'Kenya', icon: '🌍', events: 18, color: '#4ECDC4' },
   { id: '3', name: 'Accra', country: 'Ghana', icon: '🌍', events: 12, color: '#45B7D1' },
-  { id: '4', name: 'Johannesburg', country: 'South Africa', icon: '🌍', events: 21, color: '#96CEB4' },
+  {
+    id: '4',
+    name: 'Johannesburg',
+    country: 'South Africa',
+    icon: '🌍',
+    events: 21,
+    color: '#96CEB4',
+  },
 ];
 
 const events: Event[] = [
@@ -88,12 +95,22 @@ export default function CityGuideScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView style={[styles.scrollView, { backgroundColor: colorScheme === 'dark' ? colors.dark[900] : colors.light[50] }]}>
+      <ScrollView
+        style={[
+          styles.scrollView,
+          { backgroundColor: colorScheme === 'dark' ? colors.dark[900] : colors.light[50] },
+        ]}
+      >
         <View style={styles.header}>
           <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
             <Text style={styles.backIcon}>←</Text>
           </TouchableOpacity>
-          <Text style={[styles.headerTitle, { color: colorScheme === 'dark' ? colors.text.primary : colors.dark[900] }]}>
+          <Text
+            style={[
+              styles.headerTitle,
+              { color: colorScheme === 'dark' ? colors.text.primary : colors.dark[900] },
+            ]}
+          >
             City Guide
           </Text>
           <TouchableOpacity style={styles.searchButton}>
@@ -102,7 +119,11 @@ export default function CityGuideScreen() {
         </View>
 
         <View style={styles.citySelector}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.cityScroll}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.cityScroll}
+          >
             {cities.map((city) => (
               <TouchableOpacity
                 key={city.id}
@@ -125,7 +146,11 @@ export default function CityGuideScreen() {
         </View>
 
         <View style={styles.categorySelector}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoryScroll}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.categoryScroll}
+          >
             {categories.map((category) => (
               <TouchableOpacity
                 key={category}
@@ -135,10 +160,12 @@ export default function CityGuideScreen() {
                   selectedCategory === category && styles.categoryButtonActive,
                 ]}
               >
-                <Text style={[
-                  styles.categoryText,
-                  selectedCategory === category && styles.categoryTextActive,
-                ]}>
+                <Text
+                  style={[
+                    styles.categoryText,
+                    selectedCategory === category && styles.categoryTextActive,
+                  ]}
+                >
                   {category}
                 </Text>
               </TouchableOpacity>
@@ -148,14 +175,23 @@ export default function CityGuideScreen() {
 
         <View style={styles.featuredSection}>
           <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: colorScheme === 'dark' ? colors.text.primary : colors.dark[900] }]}>
+            <Text
+              style={[
+                styles.sectionTitle,
+                { color: colorScheme === 'dark' ? colors.text.primary : colors.dark[900] },
+              ]}
+            >
               Featured Events
             </Text>
             <TouchableOpacity>
               <Text style={styles.seeAllText}>See All</Text>
             </TouchableOpacity>
           </View>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.featuredScroll}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.featuredScroll}
+          >
             {events.map((event) => (
               <TouchableOpacity key={event.id} style={styles.featuredCard}>
                 <Image source={{ uri: PLACEHOLDER_IMAGE }} style={styles.featuredImage} />
@@ -165,7 +201,12 @@ export default function CityGuideScreen() {
                   </View>
                 </View>
                 <View style={styles.featuredInfo}>
-                  <Text style={[styles.featuredTitle, { color: colorScheme === 'dark' ? colors.text.primary : colors.dark[900] }]}>
+                  <Text
+                    style={[
+                      styles.featuredTitle,
+                      { color: colorScheme === 'dark' ? colors.text.primary : colors.dark[900] },
+                    ]}
+                  >
                     {event.title}
                   </Text>
                   <Text style={styles.featuredSubtitle}>{event.subtitle}</Text>
@@ -193,7 +234,12 @@ export default function CityGuideScreen() {
         </View>
 
         <View style={styles.upcomingSection}>
-          <Text style={[styles.sectionTitle, { color: colorScheme === 'dark' ? colors.text.primary : colors.dark[900] }]}>
+          <Text
+            style={[
+              styles.sectionTitle,
+              { color: colorScheme === 'dark' ? colors.text.primary : colors.dark[900] },
+            ]}
+          >
             Upcoming Events
           </Text>
           <View style={styles.eventsList}>
@@ -202,7 +248,12 @@ export default function CityGuideScreen() {
                 <Image source={{ uri: PLACEHOLDER_IMAGE }} style={styles.eventImage} />
                 <View style={styles.eventInfo}>
                   <View style={styles.eventHeader}>
-                    <Text style={[styles.eventTitle, { color: colorScheme === 'dark' ? colors.text.primary : colors.dark[900] }]}>
+                    <Text
+                      style={[
+                        styles.eventTitle,
+                        { color: colorScheme === 'dark' ? colors.text.primary : colors.dark[900] },
+                      ]}
+                    >
                       {event.title}
                     </Text>
                     <View style={styles.eventCategory}>
@@ -213,7 +264,9 @@ export default function CityGuideScreen() {
                   <View style={styles.eventMeta}>
                     <View style={styles.metaItem}>
                       <Text style={styles.metaIcon}>📅</Text>
-                      <Text style={styles.metaText}>{event.date} • {event.time}</Text>
+                      <Text style={styles.metaText}>
+                        {event.date} • {event.time}
+                      </Text>
                     </View>
                     <View style={styles.metaItem}>
                       <Text style={styles.metaIcon}>📍</Text>

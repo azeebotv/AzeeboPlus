@@ -1,0 +1,8 @@
+===== services/engagement/engagement-service/src/modules/engagement/engagement.controller.ts =====
+15:@Controller('v1/engagement')
+16:@UseGuards(AuthGuard('jwt'), RateLimitGuard)
+20:  @Get('leaderboard')
+32:  @Get('rankings')
+40:  @Get('predictions/:contentId/results')
+48:  @Post('predictions')
+

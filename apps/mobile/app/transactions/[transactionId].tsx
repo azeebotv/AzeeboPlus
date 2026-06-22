@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView,
-  ActivityIndicator, TouchableOpacity,
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  ActivityIndicator,
+  TouchableOpacity,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { walletApi } from '../../src/api';
@@ -54,20 +58,29 @@ export default function TransactionDetailScreen() {
 
   const getStatusColor = (status: string): string => {
     switch (status) {
-      case 'completed': return '#10B981';
-      case 'pending': return '#F59E0B';
-      case 'failed': return '#EF4444';
-      case 'cancelled': return '#6B7280';
-      default: return '#9CA3AF';
+      case 'completed':
+        return '#10B981';
+      case 'pending':
+        return '#F59E0B';
+      case 'failed':
+        return '#EF4444';
+      case 'cancelled':
+        return '#6B7280';
+      default:
+        return '#9CA3AF';
     }
   };
 
   const getTypeIcon = (type: string): string => {
     switch (type) {
-      case 'credit': return '↓';
-      case 'debit': return '↑';
-      case 'refund': return '↩';
-      default: return '•';
+      case 'credit':
+        return '↓';
+      case 'debit':
+        return '↑';
+      case 'refund':
+        return '↩';
+      default:
+        return '•';
     }
   };
 
@@ -111,7 +124,8 @@ export default function TransactionDetailScreen() {
             </Text>
           </View>
           <Text style={styles.amountText}>
-            {transaction.type === 'debit' ? '-' : '+'}{transaction.currency} {transaction.amount.toLocaleString()}
+            {transaction.type === 'debit' ? '-' : '+'}
+            {transaction.currency} {transaction.amount.toLocaleString()}
           </Text>
         </View>
       </View>
@@ -132,11 +146,15 @@ export default function TransactionDetailScreen() {
         </View>
         <View style={styles.infoRow}>
           <Text style={styles.label}>Balance Before</Text>
-          <Text style={styles.value}>{transaction.currency} {transaction.balanceBefore.toLocaleString()}</Text>
+          <Text style={styles.value}>
+            {transaction.currency} {transaction.balanceBefore.toLocaleString()}
+          </Text>
         </View>
         <View style={styles.infoRow}>
           <Text style={styles.label}>Balance After</Text>
-          <Text style={styles.value}>{transaction.currency} {transaction.balanceAfter.toLocaleString()}</Text>
+          <Text style={styles.value}>
+            {transaction.currency} {transaction.balanceAfter.toLocaleString()}
+          </Text>
         </View>
       </View>
 
@@ -158,7 +176,9 @@ export default function TransactionDetailScreen() {
           {transaction.metadata.fee !== undefined && (
             <View style={styles.infoRow}>
               <Text style={styles.label}>Fee</Text>
-              <Text style={styles.value}>{transaction.currency} {transaction.metadata.fee}</Text>
+              <Text style={styles.value}>
+                {transaction.currency} {transaction.metadata.fee}
+              </Text>
             </View>
           )}
         </View>

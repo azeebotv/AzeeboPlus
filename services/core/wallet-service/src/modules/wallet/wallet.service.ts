@@ -40,7 +40,11 @@ export class WalletService {
         balance: toNumber(wallet.balance.toString()),
         bonusBalance: toNumber(wallet.bonusBalance.toString()),
         promoBalance: toNumber(wallet.promoBalance.toString()),
-        totalBalance: addDecimals(toNumber(wallet.balance.toString()) + toNumber(wallet.bonusBalance.toString()) + toNumber(wallet.promoBalance.toString())),
+        totalBalance: addDecimals(
+          toNumber(wallet.balance.toString()) +
+            toNumber(wallet.bonusBalance.toString()) +
+            toNumber(wallet.promoBalance.toString())
+        ),
         currency: wallet.currency,
       },
     };
@@ -148,7 +152,11 @@ export class WalletService {
         balance: toNumber(wallet.balance.toString()),
         bonusBalance: toNumber(wallet.bonusBalance.toString()),
         promoBalance: toNumber(wallet.promoBalance.toString()),
-        totalBalance: addDecimals(toNumber(wallet.balance.toString()) + toNumber(wallet.bonusBalance.toString()) + toNumber(wallet.promoBalance.toString())),
+        totalBalance: addDecimals(
+          toNumber(wallet.balance.toString()) +
+            toNumber(wallet.bonusBalance.toString()) +
+            toNumber(wallet.promoBalance.toString())
+        ),
         currency: wallet.currency,
         recentTransactions: recentTransactions.map((t) => ({
           id: t.id,
@@ -251,22 +259,23 @@ export class WalletService {
    * @throws BadRequestException if insufficient balance
    */
   async withdraw(userId: string, withdrawDto: WithdrawWalletDto): Promise<WalletResponse> {
-    const wallet = await this.prisma.wallet.findUnique({
-      where: { userId },
-    });
-
-    if (!wallet) {
-      throw new NotFoundException(`Wallet not found for user ${userId}`);
-    }
-
-    if (toNumber(wallet.balance.toString()) < withdrawDto.amount) {
-      throw new BadRequestException('Insufficient balance');
-    }
-
     const reference = `WD-${randomUUID()}`;
     const idempotencyKey = `withdraw-${userId}-${withdrawDto.amount}-${Date.now()}`;
 
     const updatedWallet = await this.prisma.$transaction(async (tx) => {
+      // Lock the wallet row and check balance atomically
+      const wallet = await tx.wallet.findUnique({
+        where: { userId },
+      });
+
+      if (!wallet) {
+        throw new NotFoundException(`Wallet not found for user ${userId}`);
+      }
+
+      if (toNumber(wallet.balance.toString()) < withdrawDto.amount) {
+        throw new BadRequestException('Insufficient balance');
+      }
+
       await tx.wallet.update({
         where: { id: wallet.id },
         data: { balance: { decrement: withdrawDto.amount } },
@@ -319,31 +328,33 @@ export class WalletService {
       throw new BadRequestException('Cannot transfer to yourself');
     }
 
-    const senderWallet = await this.prisma.wallet.findUnique({
-      where: { userId: senderId },
-    });
-
-    if (!senderWallet) {
-      throw new NotFoundException(`Wallet not found for user ${senderId}`);
-    }
-
-    if (toNumber(senderWallet.balance.toString()) < transferDto.amount) {
-      throw new BadRequestException('Insufficient balance');
-    }
-
-    const recipientWallet = await this.prisma.wallet.findUnique({
-      where: { userId: transferDto.recipientId },
-    });
-
-    if (!recipientWallet) {
-      throw new NotFoundException(`Wallet not found for user ${transferDto.recipientId}`);
-    }
-
     const senderReference = `TRF-OUT-${randomUUID()}`;
     const recipientReference = `TRF-IN-${randomUUID()}`;
     const idempotencyKey = `transfer-${senderId}-${transferDto.recipientId}-${transferDto.amount}-${Date.now()}`;
 
-    await this.prisma.$transaction(async (tx) => {
+    const updatedSenderWallet = await this.prisma.$transaction(async (tx) => {
+      // Lock sender wallet and check balance atomically
+      const senderWallet = await tx.wallet.findUnique({
+        where: { userId: senderId },
+      });
+
+      if (!senderWallet) {
+        throw new NotFoundException(`Wallet not found for user ${senderId}`);
+      }
+
+      if (toNumber(senderWallet.balance.toString()) < transferDto.amount) {
+        throw new BadRequestException('Insufficient balance');
+      }
+
+      // Lock recipient wallet
+      const recipientWallet = await tx.wallet.findUnique({
+        where: { userId: transferDto.recipientId },
+      });
+
+      if (!recipientWallet) {
+        throw new NotFoundException(`Wallet not found for user ${transferDto.recipientId}`);
+      }
+
       await tx.wallet.update({
         where: { id: senderWallet.id },
         data: { balance: { decrement: transferDto.amount } },
@@ -382,10 +393,8 @@ export class WalletService {
           },
         },
       });
-    });
 
-    const updatedSenderWallet = await this.prisma.wallet.findUnique({
-      where: { id: senderWallet.id },
+      return tx.wallet.findUnique({ where: { id: senderWallet.id } });
     });
 
     return {

@@ -1,0 +1,15 @@
+===== apps/admin/src/modules/system-settings/system-settings.controller.ts =====
+20:@Controller('admin/settings')
+21:@UseGuards(JwtAuthGuard, RolesGuard)
+28:  @Get()
+33:  @Get('public')
+38:  @Get('map')
+43:  @Get('category/:category')
+48:  @Get('value/:key')
+54:  @Get(':key')
+59:  @Post()
+65:  @Post('bulk')
+71:  @Put('bulk')
+77:  @Put(':key')
+83:  @Delete(':key')
+

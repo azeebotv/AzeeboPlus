@@ -8,6 +8,7 @@ import { HealthModule } from './modules/health/health.module';
 import { PublicModule } from './modules/public/public.module';
 import { ResponseWrapperInterceptor, ResponseSanitizationInterceptor } from '@azeebo/logger';
 import { RateLimiterModule } from '@azeebo/security';
+import { CacheModule } from './cache/cache.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { RateLimiterModule } from '@azeebo/security';
       },
     ]),
     DatabaseModule,
+    CacheModule,
     ContentModule,
     HealthModule,
     PublicModule,

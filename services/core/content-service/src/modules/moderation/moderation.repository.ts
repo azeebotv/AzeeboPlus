@@ -88,8 +88,9 @@ export class ModerationRepository {
   private trustScores: Map<string, TrustScore> = new Map();
   private policyCategories: Map<string, PolicyCategory> = new Map();
 
-
-  async createScan(data: Omit<ModerationScan, 'id' | 'createdAt' | 'updatedAt'>): Promise<ModerationScan> {
+  async createScan(
+    data: Omit<ModerationScan, 'id' | 'createdAt' | 'updatedAt'>
+  ): Promise<ModerationScan> {
     const id = `scan-${Date.now()}`;
     const scan: ModerationScan = {
       ...data,
@@ -106,7 +107,7 @@ export class ModerationRepository {
   }
 
   async getScansByContentId(contentId: string): Promise<ModerationScan[]> {
-    return Array.from(this.moderationScans.values()).filter(scan => scan.contentId === contentId);
+    return Array.from(this.moderationScans.values()).filter((scan) => scan.contentId === contentId);
   }
 
   async updateScan(id: string, data: Partial<ModerationScan>): Promise<ModerationScan | null> {
@@ -117,7 +118,9 @@ export class ModerationRepository {
     return updated;
   }
 
-  async createCase(data: Omit<ModerationCase, 'id' | 'createdAt' | 'updatedAt'>): Promise<ModerationCase> {
+  async createCase(
+    data: Omit<ModerationCase, 'id' | 'createdAt' | 'updatedAt'>
+  ): Promise<ModerationCase> {
     const id = `case-${Date.now()}`;
     const moderationCase: ModerationCase = {
       ...data,
@@ -136,10 +139,10 @@ export class ModerationRepository {
   async getCases(filters?: { status?: string; type?: string }): Promise<ModerationCase[]> {
     let cases = Array.from(this.moderationCases.values());
     if (filters?.status) {
-      cases = cases.filter(c => c.status === filters.status);
+      cases = cases.filter((c) => c.status === filters.status);
     }
     if (filters?.type) {
-      cases = cases.filter(c => c.type === filters.type);
+      cases = cases.filter((c) => c.type === filters.type);
     }
     return cases;
   }
@@ -164,7 +167,7 @@ export class ModerationRepository {
   }
 
   async getSafetyActionsByCaseId(caseId: string): Promise<SafetyAction[]> {
-    return Array.from(this.safetyActions.values()).filter(action => action.caseId === caseId);
+    return Array.from(this.safetyActions.values()).filter((action) => action.caseId === caseId);
   }
 
   async createAppeal(data: Omit<Appeal, 'id' | 'createdAt' | 'updatedAt'>): Promise<Appeal> {
@@ -184,7 +187,7 @@ export class ModerationRepository {
   }
 
   async getAppealsByCaseId(caseId: string): Promise<Appeal[]> {
-    return Array.from(this.appeals.values()).filter(appeal => appeal.caseId === caseId);
+    return Array.from(this.appeals.values()).filter((appeal) => appeal.caseId === caseId);
   }
 
   async updateAppeal(id: string, data: Partial<Appeal>): Promise<Appeal | null> {
@@ -199,7 +202,11 @@ export class ModerationRepository {
     return this.trustScores.get(userId) || null;
   }
 
-  async updateTrustScore(userId: string, score: number, factors: Record<string, unknown>): Promise<TrustScore> {
+  async updateTrustScore(
+    userId: string,
+    score: number,
+    factors: Record<string, unknown>
+  ): Promise<TrustScore> {
     const existing = this.trustScores.get(userId);
     const trustScore: TrustScore = {
       id: existing?.id || `trust-${Date.now()}`,
@@ -217,7 +224,9 @@ export class ModerationRepository {
     return Array.from(this.policyCategories.values());
   }
 
-  async createPolicyCategory(data: Omit<PolicyCategory, 'id' | 'createdAt' | 'updatedAt'>): Promise<PolicyCategory> {
+  async createPolicyCategory(
+    data: Omit<PolicyCategory, 'id' | 'createdAt' | 'updatedAt'>
+  ): Promise<PolicyCategory> {
     const id = `policy-${Date.now()}`;
     const category: PolicyCategory = {
       ...data,
@@ -229,8 +238,18 @@ export class ModerationRepository {
     return category;
   }
 
-  async logAudit(data: { action: string; targetType: string; targetId?: string; details?: Record<string, unknown> }): Promise<void> {
+  async logAudit(data: {
+    action: string;
+    targetType: string;
+    targetId?: string;
+    details?: Record<string, unknown>;
+  }): Promise<void> {
     // Audit logging is handled by user-service
-    this.logger.log('Audit', { action: data.action, targetType: data.targetType, targetId: data.targetId, details: data.details });
+    this.logger.log('Audit', {
+      action: data.action,
+      targetType: data.targetType,
+      targetId: data.targetId,
+      details: data.details,
+    });
   }
 }

@@ -13,7 +13,7 @@ import * as bodyParser from 'body-parser';
 async function bootstrap(): Promise<void> {
   // Validate JWT secrets before starting
   const requiredJwtSecrets = ['JWT_ACCESS_SECRET', 'JWT_REFRESH_SECRET'];
-  const missingSecrets = requiredJwtSecrets.filter(secret => !process.env[secret]);
+  const missingSecrets = requiredJwtSecrets.filter((secret) => !process.env[secret]);
 
   if (missingSecrets.length > 0) {
     Logger.error(`Missing required JWT environment variables: ${missingSecrets.join(', ')}`);
@@ -81,7 +81,7 @@ async function bootstrap(): Promise<void> {
   );
 
   // CORS configuration
-  const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',').map(o => o.trim()) ?? [];
+  const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',').map((o) => o.trim()) ?? [];
   if (allowedOrigins.length === 0) {
     throw new Error('ALLOWED_ORIGINS environment variable must be set');
   }

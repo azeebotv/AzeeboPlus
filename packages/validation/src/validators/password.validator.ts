@@ -7,7 +7,8 @@ export function IsStrongPassword(validationOptions?: ValidationOptions) {
       target: object.constructor,
       propertyName,
       options: {
-        message: 'Password must contain at least 8 characters, 1 uppercase, 1 lowercase, 1 number, and 1 special character',
+        message:
+          'Password must contain at least 8 characters, 1 uppercase, 1 lowercase, 1 number, and 1 special character',
         ...validationOptions,
       },
       validator: {

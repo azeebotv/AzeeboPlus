@@ -1,0 +1,12 @@
+=== captured at ===
+2026-06-22T10:57:01Z
+
+=== root ESLint configs ===
+ls: .eslintrc.js: No such file or directory
+-rw-r--r--  1 deprof  staff   380 Jun 19 12:33 .eslintrc.json
+-rw-r--r--@ 1 deprof  staff  4139 Jun 17 00:02 eslint.config.js
+
+=== per-package ESLint configs ===
+
+=== .prettierrc presence ===
+.prettierrc                              exists (       1 lines)

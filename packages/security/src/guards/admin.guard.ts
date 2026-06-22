@@ -1,4 +1,10 @@
-import { Injectable, CanActivate, ExecutionContext, ForbiddenException, Optional } from '@nestjs/common';
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  ForbiddenException,
+  Optional,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 
 export interface AdminGuardOptions {
@@ -11,7 +17,7 @@ export class AdminGuard implements CanActivate {
 
   constructor(
     private jwtService: JwtService,
-    @Optional() private options?: AdminGuardOptions,
+    @Optional() private options?: AdminGuardOptions
   ) {
     this.allowedRoles = this.options?.allowedRoles ?? ['ADMIN'];
   }

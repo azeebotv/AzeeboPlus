@@ -57,29 +57,24 @@ export class CronTasksService {
     try {
       const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
-      const [
-        totalPayments,
-        successfulPayments,
-        failedPayments,
-        totalIntents,
-        pendingIntents,
-      ] = await Promise.all([
-        this.prisma.payment.count({
-          where: { createdAt: { gte: weekAgo } },
-        }),
-        this.prisma.payment.count({
-          where: { createdAt: { gte: weekAgo }, status: 'completed' },
-        }),
-        this.prisma.payment.count({
-          where: { createdAt: { gte: weekAgo }, status: 'failed' },
-        }),
-        this.prisma.paymentIntent.count({
-          where: { createdAt: { gte: weekAgo } },
-        }),
-        this.prisma.paymentIntent.count({
-          where: { createdAt: { gte: weekAgo }, status: 'pending' },
-        }),
-      ]);
+      const [totalPayments, successfulPayments, failedPayments, totalIntents, pendingIntents] =
+        await Promise.all([
+          this.prisma.payment.count({
+            where: { createdAt: { gte: weekAgo } },
+          }),
+          this.prisma.payment.count({
+            where: { createdAt: { gte: weekAgo }, status: 'completed' },
+          }),
+          this.prisma.payment.count({
+            where: { createdAt: { gte: weekAgo }, status: 'failed' },
+          }),
+          this.prisma.paymentIntent.count({
+            where: { createdAt: { gte: weekAgo } },
+          }),
+          this.prisma.paymentIntent.count({
+            where: { createdAt: { gte: weekAgo }, status: 'pending' },
+          }),
+        ]);
 
       const totalRevenue = await this.prisma.payment.aggregate({
         where: { createdAt: { gte: weekAgo }, status: 'completed' },

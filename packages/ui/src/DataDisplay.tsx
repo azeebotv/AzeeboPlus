@@ -43,7 +43,9 @@ export function Table<T>({
   emptyState,
   getRowKey,
 }: TableProps<T>) {
-  const [sortConfig, setSortConfig] = useState<{ key: keyof T; direction: 'asc' | 'desc' } | null>(null);
+  const [sortConfig, setSortConfig] = useState<{ key: keyof T; direction: 'asc' | 'desc' } | null>(
+    null
+  );
 
   const handleSort = (key: keyof T) => {
     if (sortConfig?.key === key) {
@@ -56,7 +58,7 @@ export function Table<T>({
   const sortedData = React.useMemo(() => {
     if (!data || data.length === 0) return [];
     if (!sortConfig) return data;
-    
+
     return [...data].sort((a, b) => {
       const aVal = a[sortConfig.key];
       const bVal = b[sortConfig.key];
@@ -70,7 +72,11 @@ export function Table<T>({
   const getSortIcon = (column: TableColumn<T>) => {
     if (!column.sortable) return null;
     if (sortConfig?.key === column.key) {
-      return sortConfig.direction === 'asc' ? <Icon name="ChevronUp" size="sm" /> : <Icon name="ChevronDown" size="sm" />;
+      return sortConfig.direction === 'asc' ? (
+        <Icon name="ChevronUp" size="sm" />
+      ) : (
+        <Icon name="ChevronDown" size="sm" />
+      );
     }
     return <Icon name="ChevronsUpDown" size="sm" />;
   };
@@ -96,7 +102,9 @@ export function Table<T>({
   }
 
   return (
-    <div className={`bg-bg-secondary rounded-xl border border-border-default overflow-hidden ${className}`}>
+    <div
+      className={`bg-bg-secondary rounded-xl border border-border-default overflow-hidden ${className}`}
+    >
       <div className="overflow-x-auto">
         <table className={`w-full ${compact ? 'text-sm' : ''}`}>
           <thead>
@@ -152,7 +160,9 @@ export function Table<T>({
                           ${column.width ? column.width : ''}
                         `}
                       >
-                        {column.render ? column.render(cellValue, row) : (cellValue as React.ReactNode ?? '-')}
+                        {column.render
+                          ? column.render(cellValue, row)
+                          : ((cellValue as React.ReactNode) ?? '-')}
                       </td>
                     );
                   })}
@@ -215,18 +225,18 @@ export function ListItem({
       `}
     >
       {icon && (
-        <div className={`
+        <div
+          className={`
           flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center
           ${active ? 'bg-primary-500/20' : 'bg-bg-tertiary'}
-        `}>
+        `}
+        >
           {getIcon(icon)}
         </div>
       )}
       <div className="flex-1 min-w-0">
         <p className="font-medium truncate">{title}</p>
-        {description && (
-          <p className="text-sm text-text-tertiary truncate">{description}</p>
-        )}
+        {description && <p className="text-sm text-text-tertiary truncate">{description}</p>}
       </div>
       {actions}
     </button>
@@ -300,9 +310,7 @@ export function CardListItem({
             <p className="text-sm text-text-secondary mt-1 line-clamp-2">{description}</p>
           )}
           {meta && (
-            <div className="mt-2 flex items-center gap-2 text-xs text-text-tertiary">
-              {meta}
-            </div>
+            <div className="mt-2 flex items-center gap-2 text-xs text-text-tertiary">{meta}</div>
           )}
         </div>
         <Icon name="ChevronRight" size="md" className="text-text-tertiary flex-shrink-0" />
@@ -481,8 +489,14 @@ export function StatCard({ title, value, icon, trend, className = '' }: StatCard
           <p className="text-sm font-medium text-text-secondary">{title}</p>
           <p className="text-2xl font-bold text-text-primary mt-1">{value ?? '-'}</p>
           {hasTrend && (
-            <div className={`flex items-center gap-1 mt-2 text-sm ${trend?.positive ? 'text-success-400' : 'text-error-400'}`}>
-              {trend?.positive ? <Icon name="TrendingUp" size="sm" /> : <Icon name="TrendingDown" size="sm" />}
+            <div
+              className={`flex items-center gap-1 mt-2 text-sm ${trend?.positive ? 'text-success-400' : 'text-error-400'}`}
+            >
+              {trend?.positive ? (
+                <Icon name="TrendingUp" size="sm" />
+              ) : (
+                <Icon name="TrendingDown" size="sm" />
+              )}
               <span>{trend?.value}%</span>
               <span className="text-text-tertiary">{trend?.label}</span>
             </div>
@@ -552,7 +566,9 @@ export function Timeline({ items, className = '', reversed = false }: TimelinePr
 
   return (
     <div className={`relative ${className}`}>
-      <div className={`absolute ${reversed ? 'right-4' : 'left-4'} top-0 bottom-0 w-px bg-border-default`} />
+      <div
+        className={`absolute ${reversed ? 'right-4' : 'left-4'} top-0 bottom-0 w-px bg-border-default`}
+      />
       <div className={`space-y-4 ${reversed ? 'pr-12' : 'pl-12'}`}>
         {displayItems.map((item, index) => {
           const getIcon = (icon: IconName | React.ReactNode) => {

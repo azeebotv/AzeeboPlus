@@ -82,11 +82,7 @@ export class AppleGooglePayService {
 
       const amountInCents = Math.round(amount * 100);
 
-      const paymentIntent = await this.createPaymentIntent(
-        amountInCents,
-        currency,
-        description
-      );
+      const paymentIntent = await this.createPaymentIntent(amountInCents, currency, description);
 
       if (!paymentIntent) {
         return {
@@ -113,7 +109,7 @@ export class AppleGooglePayService {
     description: string
   ): Promise<string | null> {
     try {
-      const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/payments/intent`, {
+      const response = await fetch(`${process.env.EXPO_PUBLIC_API_BASE_URL}/payments/intent`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -146,7 +142,8 @@ export class AppleGooglePayService {
       // For now, we return an error directing to use the hook-based approach.
       return {
         success: false,
-        error: 'Payment confirmation requires the Stripe hook. Use confirmPaymentFromComponent() instead.',
+        error:
+          'Payment confirmation requires the Stripe hook. Use confirmPaymentFromComponent() instead.',
       };
     } catch (error) {
       logger.error('Payment confirmation failed', error);
@@ -160,8 +157,8 @@ export class AppleGooglePayService {
   private async getAuthToken(): Promise<string> {
     try {
       // Use consistent key 'accessToken' matching AuthContext storage
-      const token = await import('@react-native-async-storage/async-storage').then(
-        (storage) => storage.default.getItem('accessToken')
+      const token = await import('@react-native-async-storage/async-storage').then((storage) =>
+        storage.default.getItem('accessToken')
       );
       return token || '';
     } catch (error) {

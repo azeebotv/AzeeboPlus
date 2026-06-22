@@ -2,19 +2,19 @@ FROM node:20.11.1-alpine3.19 AS builder
 WORKDIR /app
 
 RUN apk add --no-cache curl && \
-    npm install -g pnpm@9.15.0
+    for i in 1 2 3 4 5; do npm install -g pnpm@9.15.0 @nestjs/cli prisma@5.22.0 && break || (echo "Retry $i/5..." && sleep 10); done
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.json ./
 COPY packages ./packages
 COPY services/engagement/subscription-service/package.json ./services/engagement/subscription-service/
 
-RUN pnpm install --frozen-lockfile
+RUN for i in 1 2 3 4 5; do pnpm install --frozen-lockfile && break || (echo "Retry $i/5..." && sleep 10); done
 
 COPY services/engagement/subscription-service/src ./services/engagement/subscription-service/src
 COPY services/engagement/subscription-service/tsconfig*.json ./services/engagement/subscription-service/
 COPY services/engagement/subscription-service/prisma ./services/engagement/subscription-service/prisma
 
-RUN pnpm --filter @azeebo/subscription-service build
+RUN pnpm --filter @azeebo/subscription-service run build
 
 FROM node:20.11.1-alpine3.19 AS runner
 WORKDIR /app
@@ -24,14 +24,17 @@ LABEL org.opencontainers.image.description="Azeebo+ Subscription Service"
 LABEL org.opencontainers.image.licenses="Proprietary"
 
 RUN apk add --no-cache curl && \
-    npm install -g pnpm@9.15.0 && \
+    for i in 1 2 3 4 5; do npm install -g pnpm@9.15.0 @nestjs/cli prisma@5.22.0 && break || (echo "Retry $i/5..." && sleep 10); done && \
     addgroup -g 1001 -S nodejs && \
     adduser -S nodejs -u 1001
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY services/engagement/subscription-service/package.json ./services/engagement/subscription-service/
+# Copy workspace packages so @azeebo/shared-types, @azeebo/security,
+# @azeebo/logger, etc. are resolvable at runtime.
+COPY packages ./packages
 
-RUN pnpm install --prod --frozen-lockfile
+RUN for i in 1 2 3 4 5; do pnpm install --prod --frozen-lockfile && break || (echo "Retry $i/5..." && sleep 10); done
 
 COPY --from=builder /app/services/engagement/subscription-service/dist ./services/engagement/subscription-service/dist
 COPY --from=builder /app/services/engagement/subscription-service/prisma ./services/engagement/subscription-service/prisma
@@ -40,9 +43,9 @@ RUN chown -R nodejs:nodejs /app
 
 USER nodejs
 
-EXPOSE 3000
+EXPOSE 3026
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1
+    CMD wget --no-verbose --tries=1 --spider http://localhost:3026/health || exit 1
 
 CMD ["node", "services/engagement/subscription-service/dist/services/engagement/subscription-service/src/main.js"]

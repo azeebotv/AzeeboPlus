@@ -2,12 +2,20 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '@/lib/api';
 import { webLogger } from '@/lib/logger';
-import { Button, Card, Skeleton, Badge, Chip, Input, Select, Switch, RadioGroup, Radio } from '@azeebo/ui';
+import { Button, Card, Skeleton, Badge, Chip, Input, Select, Switch } from '@azeebo/ui';
 import { colors } from '@azeebo/design-tokens';
 import Link from 'next/link';
 
 export default function SettingsPage(): JSX.Element {
-  const [settings, setSettings] = useState(null);
+  const [settings, setSettings] = useState<{
+    emailNotifications: boolean;
+    pushNotifications: boolean;
+    smsNotifications: boolean;
+    marketingNotifications: boolean;
+    profileVisibility: string;
+    showEarnings: boolean;
+    allowMessages: boolean;
+  } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [notifications, setNotifications] = useState({
@@ -35,19 +43,21 @@ export default function SettingsPage(): JSX.Element {
         if (cancelled) return;
 
         if (response.success) {
-          setSettings(response.data);
-          // Update local state with fetched settings
-          setNotifications({
-            email: response.data.emailNotifications ?? true,
-            push: response.data.pushNotifications ?? true,
-            sms: response.data.smsNotifications ?? false,
-            marketing: response.data.marketingNotifications ?? false,
-          });
-          setPrivacy({
-            profileVisibility: response.data.profileVisibility ?? 'public',
-            showEarnings: response.data.showEarnings ?? false,
-            allowMessages: response.data.allowMessages ?? true,
-          });
+          if (response.data) {
+            setSettings(response.data);
+            // Update local state with fetched settings
+            setNotifications({
+              email: response.data.emailNotifications ?? true,
+              push: response.data.pushNotifications ?? true,
+              sms: response.data.smsNotifications ?? false,
+              marketing: response.data.marketingNotifications ?? false,
+            });
+            setPrivacy({
+              profileVisibility: response.data.profileVisibility ?? 'public',
+              showEarnings: response.data.showEarnings ?? false,
+              allowMessages: response.data.allowMessages ?? true,
+            });
+          }
         } else {
           setError(response.message || 'Failed to load settings');
           webLogger.error('Failed to load creator settings', { error: response.message });
@@ -63,7 +73,9 @@ export default function SettingsPage(): JSX.Element {
     }
 
     fetchSettings();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const handleSaveSettings = async () => {
@@ -86,7 +98,7 @@ export default function SettingsPage(): JSX.Element {
       });
 
       if (response.success) {
-        webLogger.info('Creator settings updated successfully');
+        webLogger.log('Creator settings updated successfully');
         // Optionally show a success toast or message
       } else {
         setError(response.message || 'Failed to update settings');
@@ -174,41 +186,43 @@ export default function SettingsPage(): JSX.Element {
             <div className="flex items-center">
               <Switch
                 checked={notifications.email}
-                onChange={checked => setNotifications(prev => ({ ...prev, email: checked }))}
-                checkedIcon={<svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/></svg>}
-                uncheckedIcon={<svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7"/></svg>}
+                onChange={(checked) => setNotifications((prev) => ({ ...prev, email: checked }))}
               />
-              <span className="ml-3 text-sm" style={{ color: colors.text.primary }}>Email notifications</span>
+              <span className="ml-3 text-sm" style={{ color: colors.text.primary }}>
+                Email notifications
+              </span>
             </div>
 
             <div className="flex items-center">
               <Switch
                 checked={notifications.push}
-                onChange={checked => setNotifications(prev => ({ ...prev, push: checked }))}
-                checkedIcon={<svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/></svg>}
-                uncheckedIcon={<svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7"/></svg>}
+                onChange={(checked) => setNotifications((prev) => ({ ...prev, push: checked }))}
               />
-              <span className="ml-3 text-sm" style={{ color: colors.text.primary }}>Push notifications</span>
+              <span className="ml-3 text-sm" style={{ color: colors.text.primary }}>
+                Push notifications
+              </span>
             </div>
 
             <div className="flex items-center">
               <Switch
                 checked={notifications.sms}
-                onChange={checked => setNotifications(prev => ({ ...prev, sms: checked }))}
-                checkedIcon={<svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/></svg>}
-                uncheckedIcon={<svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7"/></svg>}
+                onChange={(checked) => setNotifications((prev) => ({ ...prev, sms: checked }))}
               />
-              <span className="ml-3 text-sm" style={{ color: colors.text.primary }}>SMS notifications</span>
+              <span className="ml-3 text-sm" style={{ color: colors.text.primary }}>
+                SMS notifications
+              </span>
             </div>
 
             <div className="flex items-center">
               <Switch
                 checked={notifications.marketing}
-                onChange={checked => setNotifications(prev => ({ ...prev, marketing: checked }))}
-                checkedIcon={<svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/></svg>}
-                uncheckedIcon={<svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7"/></svg>}
+                onChange={(checked) =>
+                  setNotifications((prev) => ({ ...prev, marketing: checked }))
+                }
               />
-              <span className="ml-3 text-sm" style={{ color: colors.text.primary }}>Marketing and promotions</span>
+              <span className="ml-3 text-sm" style={{ color: colors.text.primary }}>
+                Marketing and promotions
+              </span>
             </div>
           </div>
         </div>
@@ -222,32 +236,59 @@ export default function SettingsPage(): JSX.Element {
           </h3>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium mb-2" style={{ color: colors.text.primary }}>
+              <label
+                className="block text-sm font-medium mb-2"
+                style={{ color: colors.text.primary }}
+              >
                 Profile Visibility
               </label>
-              <RadioGroup
-                value={privacy.profileVisibility}
-                onValueChange={value => setPrivacy(prev => ({ ...prev, profileVisibility: value }))}
-                className="flex space-x-4"
-              >
-                <Radio value="public">
-                  Public (visible to everyone)
-                </Radio>
-                <Radio value="followers">
-                  Followers only
-                </Radio>
-                <Radio value="private">
-                  Private (only you)
-                </Radio>
-              </RadioGroup>
+              <div className="flex flex-col space-y-2">
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    name="profileVisibility"
+                    value="public"
+                    checked={privacy.profileVisibility === 'public'}
+                    onChange={(e) =>
+                      setPrivacy((prev) => ({ ...prev, profileVisibility: e.target.value }))
+                    }
+                    className="form-radio"
+                  />
+                  <span className="text-sm">Public (visible to everyone)</span>
+                </label>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    name="profileVisibility"
+                    value="followers"
+                    checked={privacy.profileVisibility === 'followers'}
+                    onChange={(e) =>
+                      setPrivacy((prev) => ({ ...prev, profileVisibility: e.target.value }))
+                    }
+                    className="form-radio"
+                  />
+                  <span className="text-sm">Followers only</span>
+                </label>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    name="profileVisibility"
+                    value="private"
+                    checked={privacy.profileVisibility === 'private'}
+                    onChange={(e) =>
+                      setPrivacy((prev) => ({ ...prev, profileVisibility: e.target.value }))
+                    }
+                    className="form-radio"
+                  />
+                  <span className="text-sm">Private (only you)</span>
+                </label>
+              </div>
             </div>
 
             <div className="flex items-center">
               <Switch
                 checked={privacy.showEarnings}
-                onChange={checked => setPrivacy(prev => ({ ...prev, showEarnings: checked }))}
-                checkedIcon={<svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/></svg>}
-                uncheckedIcon={<svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7"/></svg>}
+                onChange={(checked) => setPrivacy((prev) => ({ ...prev, showEarnings: checked }))}
               />
               <span className="ml-3 text-sm" style={{ color: colors.text.primary }}>
                 Show earnings on profile
@@ -257,9 +298,7 @@ export default function SettingsPage(): JSX.Element {
             <div className="flex items-center">
               <Switch
                 checked={privacy.allowMessages}
-                onChange={checked => setPrivacy(prev => ({ ...prev, allowMessages: checked }))}
-                checkedIcon={<svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/></svg>}
-                uncheckedIcon={<svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7"/></svg>}
+                onChange={(checked) => setPrivacy((prev) => ({ ...prev, allowMessages: checked }))}
               />
               <span className="ml-3 text-sm" style={{ color: colors.text.primary }}>
                 Allow messages from fans

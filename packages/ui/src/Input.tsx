@@ -24,7 +24,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
       id,
       ...props
     },
-    ref,
+    ref
   ) => {
     const generatedId = useId();
     const inputId = id || generatedId;
@@ -34,10 +34,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     return (
       <div className={`${fullWidth ? 'w-full' : ''}`}>
         {label && (
-          <label
-            htmlFor={inputId}
-            className="block text-sm font-medium text-text-secondary mb-1.5"
-          >
+          <label htmlFor={inputId} className="block text-sm font-medium text-text-secondary mb-1.5">
             {label}
           </label>
         )}
@@ -58,14 +55,18 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
               disabled:opacity-50 disabled:cursor-not-allowed
               ${leftIcon ? 'pl-10' : ''}
               ${rightIcon ? 'pr-10' : ''}
-              ${error
-                ? 'border-error-500 focus:border-error-500 focus:ring-error-500/20'
-                : 'border-border-default focus:border-primary-500 focus:ring-primary-500/20'
+              ${
+                error
+                  ? 'border-error-500 focus:border-error-500 focus:ring-error-500/20'
+                  : 'border-border-default focus:border-primary-500 focus:ring-primary-500/20'
               }
               ${className}
             `}
             aria-invalid={!!error}
-            aria-describedby={[error ? errorId : null, helperText ? helperId : null].filter(Boolean).join(' ') || undefined}
+            aria-describedby={
+              [error ? errorId : null, helperText ? helperId : null].filter(Boolean).join(' ') ||
+              undefined
+            }
             {...props}
           />
           {rightIcon && (
@@ -86,7 +87,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         )}
       </div>
     );
-  },
+  }
 );
 
 Input.displayName = 'Input';
@@ -99,18 +100,7 @@ export interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextArea
 }
 
 export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
-  (
-    {
-      label,
-      error,
-      helperText,
-      fullWidth = false,
-      className = '',
-      id,
-      ...props
-    },
-    ref,
-  ) => {
+  ({ label, error, helperText, fullWidth = false, className = '', id, ...props }, ref) => {
     const generatedId = useId();
     const inputId = id || generatedId;
     const errorId = `${inputId}-error`;
@@ -119,10 +109,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
     return (
       <div className={`${fullWidth ? 'w-full' : ''}`}>
         {label && (
-          <label
-            htmlFor={inputId}
-            className="block text-sm font-medium text-text-secondary mb-1.5"
-          >
+          <label htmlFor={inputId} className="block text-sm font-medium text-text-secondary mb-1.5">
             {label}
           </label>
         )}
@@ -136,14 +123,18 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
             focus:outline-none focus:ring-2 focus:ring-offset-0
             disabled:opacity-50 disabled:cursor-not-allowed
             resize-y min-h-[80px]
-            ${error
-              ? 'border-error-500 focus:border-error-500 focus:ring-error-500/20'
-              : 'border-border-default focus:border-primary-500 focus:ring-primary-500/20'
+            ${
+              error
+                ? 'border-error-500 focus:border-error-500 focus:ring-error-500/20'
+                : 'border-border-default focus:border-primary-500 focus:ring-primary-500/20'
             }
             ${className}
           `}
           aria-invalid={!!error}
-          aria-describedby={[error ? errorId : null, helperText ? helperId : null].filter(Boolean).join(' ') || undefined}
+          aria-describedby={
+            [error ? errorId : null, helperText ? helperId : null].filter(Boolean).join(' ') ||
+            undefined
+          }
           {...props}
         />
         {error && (
@@ -158,7 +149,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
         )}
       </div>
     );
-  },
+  }
 );
 
 Textarea.displayName = 'Textarea';
@@ -185,7 +176,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
       id,
       ...props
     },
-    ref,
+    ref
   ) => {
     const generatedId = useId();
     const inputId = id || generatedId;
@@ -195,10 +186,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
     return (
       <div className={`${fullWidth ? 'w-full' : ''}`}>
         {label && (
-          <label
-            htmlFor={inputId}
-            className="block text-sm font-medium text-text-secondary mb-1.5"
-          >
+          <label htmlFor={inputId} className="block text-sm font-medium text-text-secondary mb-1.5">
             {label}
           </label>
         )}
@@ -211,25 +199,25 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
             focus:outline-none focus:ring-2 focus:ring-offset-0
             disabled:opacity-50 disabled:cursor-not-allowed
             appearance-none cursor-pointer
-            ${error
-              ? 'border-error-500 focus:border-error-500 focus:ring-error-500/20'
-              : 'border-border-default focus:border-primary-500 focus:ring-primary-500/20'
+            ${
+              error
+                ? 'border-error-500 focus:border-error-500 focus:ring-error-500/20'
+                : 'border-border-default focus:border-primary-500 focus:ring-primary-500/20'
             }
             ${className}
           `}
           aria-invalid={!!error}
-          aria-describedby={[error ? errorId : null, helperText ? helperId : null].filter(Boolean).join(' ') || undefined}
+          aria-describedby={
+            [error ? errorId : null, helperText ? helperId : null].filter(Boolean).join(' ') ||
+            undefined
+          }
           {...props}
         >
           <option value="" disabled>
             {placeholder}
           </option>
           {options.map((option) => (
-            <option
-              key={option.value}
-              value={option.value}
-              disabled={option.disabled}
-            >
+            <option key={option.value} value={option.value} disabled={option.disabled}>
               {option.label}
             </option>
           ))}
@@ -246,7 +234,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
         )}
       </div>
     );
-  },
+  }
 );
 
 Select.displayName = 'Select';
@@ -292,7 +280,7 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
         )}
       </div>
     );
-  },
+  }
 );
 
 Checkbox.displayName = 'Checkbox';
@@ -329,7 +317,7 @@ export const Radio = forwardRef<HTMLInputElement, RadioProps>(
         <span className="text-sm">{label}</span>
       </label>
     );
-  },
+  }
 );
 
 Radio.displayName = 'Radio';

@@ -1,5 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, TextInput, FlatList } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Image,
+  TextInput,
+  FlatList,
+} from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import { contentApi, type ContentItem } from '../../src/api';
@@ -86,41 +95,48 @@ export default function SearchScreen() {
           <Text style={[{ fontSize: 16, color: '#888' }]}>No results found</Text>
         </View>
       ) : (
-      <>
-      <Text style={[styles.sectionTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
-        Results ({searchResults.length})
-      </Text>
-      <FlatList
-        data={searchResults}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <TouchableOpacity 
-            style={styles.resultItem}
-            onPress={() => router.push(`/watch/${item.id}`)}
+        <>
+          <Text
+            style={[styles.sectionTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}
           >
-            <Image source={{ uri: item.thumbnail }} style={styles.resultThumbnail} />
-            <View style={styles.resultInfo}>
-              <Text style={[styles.resultTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
-                {item.title}
-              </Text>
-              <View style={styles.resultMeta}>
-                <Text style={styles.resultType}>{item.contentType || 'Content'}</Text>
-                <Text style={styles.resultUniverse}>
-                  {item.universe?.name || ''}
-                </Text>
-              </View>
-            </View>
-          </TouchableOpacity>
-        )}
-      />
-      </>
+            Results ({searchResults.length})
+          </Text>
+          <FlatList
+            data={searchResults}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={styles.resultItem}
+                onPress={() => router.push(`/watch/${item.id}`)}
+              >
+                <Image source={{ uri: item.thumbnail }} style={styles.resultThumbnail} />
+                <View style={styles.resultInfo}>
+                  <Text
+                    style={[
+                      styles.resultTitle,
+                      { color: colorScheme === 'dark' ? '#ffffff' : '#000000' },
+                    ]}
+                  >
+                    {item.title}
+                  </Text>
+                  <View style={styles.resultMeta}>
+                    <Text style={styles.resultType}>{item.contentType || 'Content'}</Text>
+                    <Text style={styles.resultUniverse}>{item.universe?.name || ''}</Text>
+                  </View>
+                </View>
+              </TouchableOpacity>
+            )}
+          />
+        </>
       )}
     </View>
   );
 
   const renderTrending = () => (
     <View style={styles.trendingSection}>
-      <Text style={[styles.sectionTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
+      <Text
+        style={[styles.sectionTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}
+      >
         Trending Searches
       </Text>
       <View style={styles.trendingList}>
@@ -131,7 +147,12 @@ export default function SearchScreen() {
             onPress={() => handleSearch(search)}
           >
             <Text style={styles.trendingNumber}>{index + 1}</Text>
-            <Text style={[styles.trendingText, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
+            <Text
+              style={[
+                styles.trendingText,
+                { color: colorScheme === 'dark' ? '#ffffff' : '#000000' },
+              ]}
+            >
               {search}
             </Text>
           </TouchableOpacity>
@@ -141,7 +162,12 @@ export default function SearchScreen() {
   );
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' }]}>
+    <ScrollView
+      style={[
+        styles.container,
+        { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' },
+      ]}
+    >
       <View style={styles.searchHeader}>
         <View style={styles.searchBar}>
           <Text style={styles.searchIcon}>🔍</Text>
@@ -161,7 +187,11 @@ export default function SearchScreen() {
         </View>
       </View>
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.universeScroll}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.universeScroll}
+      >
         {universes.map((universe) => (
           <TouchableOpacity
             key={universe.id}
@@ -172,7 +202,12 @@ export default function SearchScreen() {
             ]}
           >
             <Text style={styles.universeIcon}>{universe.icon}</Text>
-            <Text style={[styles.universeName, selectedUniverse === universe.id && { color: '#ffffff' }]}>
+            <Text
+              style={[
+                styles.universeName,
+                selectedUniverse === universe.id && { color: '#ffffff' },
+              ]}
+            >
               {universe.name}
             </Text>
           </TouchableOpacity>

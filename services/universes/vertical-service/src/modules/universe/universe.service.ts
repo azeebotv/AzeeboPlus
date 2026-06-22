@@ -335,14 +335,52 @@ export class UniverseService {
     };
   }
 
-  async getCategories(): Promise<ListResponse<{ id: string; name: string; slug: string; description: string; icon?: string }>> {
+  async getCategories(): Promise<
+    ListResponse<{ id: string; name: string; slug: string; description: string; icon?: string }>
+  > {
     const categories = [
-      { id: 'sports', name: 'Sports', slug: 'sports', description: 'Sports content and events', icon: '⚽' },
-      { id: 'games', name: 'Games', slug: 'games', description: 'Interactive games and tournaments', icon: '🎮' },
-      { id: 'comedy', name: 'Comedy', slug: 'comedy', description: 'Comedy shows and specials', icon: '😂' },
-      { id: 'movie', name: 'Movies', slug: 'movie', description: 'Movies and filmmaker content', icon: '🎬' },
-      { id: 'lifestyle', name: 'Lifestyle', slug: 'lifestyle', description: 'Lifestyle and culture content', icon: '🌟' },
-      { id: 'reality', name: 'Reality', slug: 'reality', description: 'Reality shows and voting', icon: '📺' },
+      {
+        id: 'sports',
+        name: 'Sports',
+        slug: 'sports',
+        description: 'Sports content and events',
+        icon: '⚽',
+      },
+      {
+        id: 'games',
+        name: 'Games',
+        slug: 'games',
+        description: 'Interactive games and tournaments',
+        icon: '🎮',
+      },
+      {
+        id: 'comedy',
+        name: 'Comedy',
+        slug: 'comedy',
+        description: 'Comedy shows and specials',
+        icon: '😂',
+      },
+      {
+        id: 'movie',
+        name: 'Movies',
+        slug: 'movie',
+        description: 'Movies and filmmaker content',
+        icon: '🎬',
+      },
+      {
+        id: 'lifestyle',
+        name: 'Lifestyle',
+        slug: 'lifestyle',
+        description: 'Lifestyle and culture content',
+        icon: '🌟',
+      },
+      {
+        id: 'reality',
+        name: 'Reality',
+        slug: 'reality',
+        description: 'Reality shows and voting',
+        icon: '📺',
+      },
     ];
 
     return {

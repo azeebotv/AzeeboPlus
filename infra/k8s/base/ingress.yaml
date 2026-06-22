@@ -165,7 +165,7 @@ spec:
               service:
                 name: web-app
                 port:
-                  number: 8080
+                  number: 3000
     - host: admin.azeebo.com
       http:
         paths:
@@ -175,4 +175,4 @@ spec:
               service:
                 name: admin-app
                 port:
-                  number: 8080
+                  number: 3016

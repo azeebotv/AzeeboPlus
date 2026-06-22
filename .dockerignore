@@ -2,11 +2,18 @@
 node_modules
 **/node_modules
 
-# Build outputs
+# Build outputs (exclude service dist, but keep packages/*/dist for runtime)
 dist
 build
 .next
 *.log
+
+# But keep packages' built outputs - they're required at runtime
+!packages/
+!packages/**/dist
+!packages/**/dist/**
+!packages/**/node_modules
+!packages/**/node_modules/**
 
 # Git
 .git

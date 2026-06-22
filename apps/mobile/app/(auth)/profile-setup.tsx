@@ -50,9 +50,7 @@ export default function ProfileSetupScreen() {
 
   const toggleInterest = (interest: string) => {
     setSelectedInterests((prev) =>
-      prev.includes(interest)
-        ? prev.filter((i) => i !== interest)
-        : [...prev, interest]
+      prev.includes(interest) ? prev.filter((i) => i !== interest) : [...prev, interest]
     );
   };
 
@@ -91,10 +89,7 @@ export default function ProfileSetupScreen() {
         },
       ]);
     } catch (error: any) {
-      Alert.alert(
-        'Error',
-        error?.message || 'Failed to complete profile setup. Please try again.'
-      );
+      Alert.alert('Error', error?.message || 'Failed to complete profile setup. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -137,9 +132,7 @@ export default function ProfileSetupScreen() {
                 }}
                 autoCapitalize="words"
               />
-              {errors.displayName && (
-                <Text style={styles.errorText}>{errors.displayName}</Text>
-              )}
+              {errors.displayName && <Text style={styles.errorText}>{errors.displayName}</Text>}
             </View>
 
             <View style={styles.inputGroup}>
@@ -173,17 +166,11 @@ export default function ProfileSetupScreen() {
                     return (
                       <TouchableOpacity
                         key={interest}
-                        style={[
-                          styles.interestChip,
-                          isSelected && styles.interestChipSelected,
-                        ]}
+                        style={[styles.interestChip, isSelected && styles.interestChipSelected]}
                         onPress={() => toggleInterest(interest)}
                       >
                         <Text
-                          style={[
-                            styles.interestText,
-                            isSelected && styles.interestTextSelected,
-                          ]}
+                          style={[styles.interestText, isSelected && styles.interestTextSelected]}
                         >
                           {interest}
                         </Text>
@@ -195,26 +182,18 @@ export default function ProfileSetupScreen() {
             </View>
 
             <TouchableOpacity
-              style={[
-                styles.completeButton,
-                isLoading && styles.completeButtonDisabled,
-              ]}
+              style={[styles.completeButton, isLoading && styles.completeButtonDisabled]}
               onPress={handleCompleteProfile}
               disabled={isLoading}
             >
               {isLoading ? (
                 <ActivityIndicator color="#fff" />
               ) : (
-                <Text style={styles.completeButtonText}>
-                  Complete Setup
-                </Text>
+                <Text style={styles.completeButtonText}>Complete Setup</Text>
               )}
             </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.skipButton}
-              onPress={handleSkip}
-            >
+            <TouchableOpacity style={styles.skipButton} onPress={handleSkip}>
               <Text style={styles.skipButtonText}>Skip for now</Text>
             </TouchableOpacity>
           </View>

@@ -203,9 +203,9 @@ describe('Reality Controller Contract Tests', () => {
     });
 
     it('should return error for non-existent show', async () => {
-      jest.spyOn(realityService, 'getShow').mockRejectedValue(
-        new (require('@nestjs/common').NotFoundException)('Show not found')
-      );
+      jest
+        .spyOn(realityService, 'getShow')
+        .mockRejectedValue(new (require('@nestjs/common').NotFoundException)('Show not found'));
 
       const response = await request(app.getHttpServer()).get('/v1/reality/shows/nonexistent');
 
@@ -321,7 +321,9 @@ describe('Reality Controller Contract Tests', () => {
         },
       });
 
-      const response = await request(app.getHttpServer()).get('/v1/reality/shows/show-1/leaderboard');
+      const response = await request(app.getHttpServer()).get(
+        '/v1/reality/shows/show-1/leaderboard'
+      );
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual({

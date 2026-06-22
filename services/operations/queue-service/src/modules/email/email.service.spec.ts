@@ -41,12 +41,9 @@ describe('EmailService', () => {
     it('should send email successfully (happy path)', async () => {
       mockedSgMail.send.mockResolvedValue([{ statusCode: 202 }]);
 
-      const result = await service.sendEmail(
-        'test@example.com',
-        'Test Subject',
-        'welcome',
-        { displayName: 'Test User' }
-      );
+      const result = await service.sendEmail('test@example.com', 'Test Subject', 'welcome', {
+        displayName: 'Test User',
+      });
 
       expect(result).toBe(true);
       expect(mockedSgMail.send).toHaveBeenCalled();
@@ -58,21 +55,13 @@ describe('EmailService', () => {
       };
 
       const module: TestingModule = await Test.createTestingModule({
-        providers: [
-          EmailService,
-          { provide: ConfigService, useValue: mockConfigService },
-        ],
+        providers: [EmailService, { provide: ConfigService, useValue: mockConfigService }],
       }).compile();
 
       const disabledService = module.get<EmailService>(EmailService);
       await disabledService.onModuleInit();
 
-      const result = await disabledService.sendEmail(
-        'test@example.com',
-        'Test',
-        'welcome',
-        {}
-      );
+      const result = await disabledService.sendEmail('test@example.com', 'Test', 'welcome', {});
 
       expect(result).toBe(false);
     });
@@ -93,12 +82,9 @@ describe('EmailService', () => {
         throw new CircuitBreakerOpenError('Circuit breaker is open');
       });
 
-      const result = await service.sendEmail(
-        'test@example.com',
-        'Test',
-        'welcome',
-        { displayName: 'Test' }
-      );
+      const result = await service.sendEmail('test@example.com', 'Test', 'welcome', {
+        displayName: 'Test',
+      });
 
       expect(result).toBe(false);
     });
@@ -106,12 +92,9 @@ describe('EmailService', () => {
     it('should handle send error gracefully', async () => {
       mockedSgMail.send.mockRejectedValue(new Error('Send failed'));
 
-      const result = await service.sendEmail(
-        'test@example.com',
-        'Test',
-        'welcome',
-        { displayName: 'Test' }
-      );
+      const result = await service.sendEmail('test@example.com', 'Test', 'welcome', {
+        displayName: 'Test',
+      });
 
       expect(result).toBe(false);
     });
@@ -137,10 +120,7 @@ describe('EmailService', () => {
       };
 
       const module: TestingModule = await Test.createTestingModule({
-        providers: [
-          EmailService,
-          { provide: ConfigService, useValue: mockConfigService },
-        ],
+        providers: [EmailService, { provide: ConfigService, useValue: mockConfigService }],
       }).compile();
 
       const disabledService = module.get<EmailService>(EmailService);
@@ -160,12 +140,9 @@ describe('EmailService', () => {
     it('should add a new template', () => {
       service.addTemplate('test-template', '<p>Hello {{name}}</p>');
 
-      const result = service.sendEmail(
-        'test@example.com',
-        'Test',
-        'test-template',
-        { name: 'World' }
-      );
+      const result = service.sendEmail('test@example.com', 'Test', 'test-template', {
+        name: 'World',
+      });
 
       expect(result).resolves.toBe(true);
     });

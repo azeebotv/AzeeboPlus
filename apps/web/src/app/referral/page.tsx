@@ -105,13 +105,13 @@ export default function ReferralPage(): JSX.Element {
         <div className="bg-card rounded-lg border border-border p-8 mb-8 text-center">
           <h2 className="text-xl font-bold text-foreground mb-4">Your Referral Code</h2>
           <div className="flex items-center justify-center gap-4 mb-6">
-            <span className="text-4xl font-bold text-primary tracking-widest">{stats.referralCode}</span>
+            <span className="text-4xl font-bold text-primary tracking-widest">
+              {stats.referralCode}
+            </span>
             <button
               onClick={copyReferralLink}
               className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                copied
-                  ? 'bg-green-500 text-white'
-                  : 'bg-primary text-white hover:bg-primary/90'
+                copied ? 'bg-green-500 text-white' : 'bg-primary text-white hover:bg-primary/90'
               }`}
             >
               {copied ? 'Copied!' : 'Copy'}
@@ -143,7 +143,9 @@ export default function ReferralPage(): JSX.Element {
             <p className="text-sm text-muted-foreground mt-1">Commission</p>
           </div>
           <div className="bg-card rounded-lg border border-border p-6 text-center">
-            <p className="text-3xl font-bold text-green-500">₦{stats.totalEarnings.toLocaleString()}</p>
+            <p className="text-3xl font-bold text-green-500">
+              ₦{stats.totalEarnings.toLocaleString()}
+            </p>
             <p className="text-sm text-muted-foreground mt-1">Total Earnings</p>
           </div>
         </div>
@@ -159,7 +161,10 @@ export default function ReferralPage(): JSX.Element {
           ) : (
             <div className="space-y-4">
               {referrals.map((referral) => (
-                <div key={referral.id} className="flex items-center justify-between p-4 bg-muted rounded-lg">
+                <div
+                  key={referral.id}
+                  className="flex items-center justify-between p-4 bg-muted rounded-lg"
+                >
                   <div className="flex items-center gap-4">
                     <img
                       src={referral.avatar}
@@ -174,13 +179,15 @@ export default function ReferralPage(): JSX.Element {
                     </div>
                   </div>
                   <div className="flex items-center gap-4">
-                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                      referral.status === 'rewarded'
-                        ? 'bg-green-500/20 text-green-500'
-                        : referral.status === 'active'
-                        ? 'bg-primary/20 text-primary'
-                        : 'bg-yellow-500/20 text-yellow-500'
-                    }`}>
+                    <span
+                      className={`px-3 py-1 rounded-full text-sm font-medium ${
+                        referral.status === 'rewarded'
+                          ? 'bg-green-500/20 text-green-500'
+                          : referral.status === 'active'
+                            ? 'bg-primary/20 text-primary'
+                            : 'bg-yellow-500/20 text-yellow-500'
+                      }`}
+                    >
                       {referral.status.charAt(0).toUpperCase() + referral.status.slice(1)}
                     </span>
                     {referral.earningsGenerated > 0 && (

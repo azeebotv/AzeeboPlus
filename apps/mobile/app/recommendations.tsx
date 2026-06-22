@@ -1,9 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  View, Text, StyleSheet, FlatList,
-  TouchableOpacity,
-  RefreshControl,
-} from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
 import { contentApi } from '../src/api';
 import { logger } from '../src/utils/logger';
@@ -67,7 +63,9 @@ export default function RecommendationsScreen() {
         <Text style={styles.typeBadge}>{item.type.toUpperCase()}</Text>
       </View>
       <View style={styles.cardContent}>
-        <Text style={styles.cardTitle} numberOfLines={2}>{item.title}</Text>
+        <Text style={styles.cardTitle} numberOfLines={2}>
+          {item.title}
+        </Text>
         <Text style={styles.reason}>{item.reason}</Text>
         <View style={styles.scoreContainer}>
           <View style={styles.scoreBar}>
@@ -125,7 +123,11 @@ export default function RecommendationsScreen() {
           <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} colors={['#8B5CF6']} />
         }
         ListEmptyComponent={
-          <EmptyState icon="🎯" title="No recommendations yet" description="Interact with more content to get personalized suggestions" />
+          <EmptyState
+            icon="🎯"
+            title="No recommendations yet"
+            description="Interact with more content to get personalized suggestions"
+          />
         }
       />
     </View>

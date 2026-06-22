@@ -57,7 +57,7 @@ export default function EpisodePlayerPage(): JSX.Element {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
     const secs = Math.floor(seconds % 60);
-    
+
     if (hours > 0) {
       return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     }
@@ -151,7 +151,12 @@ export default function EpisodePlayerPage(): JSX.Element {
             className="text-muted-foreground hover:text-foreground flex items-center gap-2"
           >
             <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 19l-7-7 7-7"
+              />
             </svg>
             Back
           </button>
@@ -168,8 +173,14 @@ export default function EpisodePlayerPage(): JSX.Element {
               {isPlaying ? (
                 <div className="flex items-end gap-1 h-10 mt-4">
                   <div className="w-1 bg-primary animate-pulse h-5"></div>
-                  <div className="w-1 bg-primary animate-pulse h-8" style={{ animationDelay: '0.2s' }}></div>
-                  <div className="w-1 bg-primary animate-pulse h-6" style={{ animationDelay: '0.4s' }}></div>
+                  <div
+                    className="w-1 bg-primary animate-pulse h-8"
+                    style={{ animationDelay: '0.2s' }}
+                  ></div>
+                  <div
+                    className="w-1 bg-primary animate-pulse h-6"
+                    style={{ animationDelay: '0.4s' }}
+                  ></div>
                 </div>
               ) : (
                 <button
@@ -263,7 +274,9 @@ export default function EpisodePlayerPage(): JSX.Element {
                   setShowSubtitles(false);
                 }}
                 className={`w-full p-3 rounded-md text-left ${
-                  !selectedSubtitle ? 'bg-primary text-white' : 'bg-muted text-foreground hover:bg-accent'
+                  !selectedSubtitle
+                    ? 'bg-primary text-white'
+                    : 'bg-muted text-foreground hover:bg-accent'
                 }`}
               >
                 Off
@@ -294,9 +307,7 @@ export default function EpisodePlayerPage(): JSX.Element {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-card rounded-lg p-6 max-w-md w-full">
             <h3 className="text-xl font-semibold text-foreground mb-2">Vote for Contestant</h3>
-            <p className="text-muted-foreground mb-6">
-              Choose your voting option:
-            </p>
+            <p className="text-muted-foreground mb-6">Choose your voting option:</p>
             <div className="space-y-3">
               <button
                 onClick={() => handleVote(false)}

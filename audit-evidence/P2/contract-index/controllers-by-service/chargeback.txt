@@ -1,0 +1,13 @@
+===== services/operations/support-service/src/modules/chargeback/chargeback.controller.ts =====
+33:@Controller('support/chargebacks')
+34:@UseGuards(AuthGuard)
+39:  @Post()
+52:  @Get('pending')
+54:  @UseGuards(AdminGuard)
+65:  @Get('my')
+77:  @Get(':id')
+79:  @UseGuards(AdminGuard)
+85:  @Post(':id/evidence')
+92:  @Patch(':id/resolve')
+94:  @UseGuards(AdminGuard)
+

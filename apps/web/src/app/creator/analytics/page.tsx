@@ -98,7 +98,12 @@ export default function CreatorAnalyticsPage(): JSX.Element {
               className="text-muted-foreground hover:text-foreground mb-2 flex items-center gap-2"
             >
               <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 19l-7-7 7-7"
+                />
               </svg>
               Back
             </button>
@@ -117,35 +122,55 @@ export default function CreatorAnalyticsPage(): JSX.Element {
                   : 'bg-card border border-border text-foreground hover:bg-accent'
               }`}
             >
-              {range === '7d' ? '7 Days' : range === '30d' ? '30 Days' : range === '90d' ? '90 Days' : 'All Time'}
+              {range === '7d'
+                ? '7 Days'
+                : range === '30d'
+                  ? '30 Days'
+                  : range === '90d'
+                    ? '90 Days'
+                    : 'All Time'}
             </button>
           ))}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <div className="bg-card rounded-lg border border-border p-6">
-            <p className="text-3xl font-bold text-foreground">{formatNumber(analytics.totalViews)}</p>
+            <p className="text-3xl font-bold text-foreground">
+              {formatNumber(analytics.totalViews)}
+            </p>
             <p className="text-sm text-muted-foreground mt-1">Total Views</p>
-            <p className={`text-sm font-medium mt-2 ${analytics.viewsGrowth >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+            <p
+              className={`text-sm font-medium mt-2 ${analytics.viewsGrowth >= 0 ? 'text-green-500' : 'text-red-500'}`}
+            >
               {analytics.viewsGrowth >= 0 ? '↑' : '↓'} {Math.abs(analytics.viewsGrowth)}%
             </p>
           </div>
           <div className="bg-card rounded-lg border border-border p-6">
-            <p className="text-3xl font-bold text-foreground">{formatNumber(analytics.totalFollowers)}</p>
+            <p className="text-3xl font-bold text-foreground">
+              {formatNumber(analytics.totalFollowers)}
+            </p>
             <p className="text-sm text-muted-foreground mt-1">Followers</p>
-            <p className={`text-sm font-medium mt-2 ${analytics.followersGrowth >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+            <p
+              className={`text-sm font-medium mt-2 ${analytics.followersGrowth >= 0 ? 'text-green-500' : 'text-red-500'}`}
+            >
               {analytics.followersGrowth >= 0 ? '↑' : '↓'} {Math.abs(analytics.followersGrowth)}%
             </p>
           </div>
           <div className="bg-card rounded-lg border border-border p-6">
-            <p className="text-3xl font-bold text-foreground">₦{formatNumber(analytics.totalEarnings)}</p>
+            <p className="text-3xl font-bold text-foreground">
+              ₦{formatNumber(analytics.totalEarnings)}
+            </p>
             <p className="text-sm text-muted-foreground mt-1">Earnings</p>
-            <p className={`text-sm font-medium mt-2 ${analytics.earningsGrowth >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+            <p
+              className={`text-sm font-medium mt-2 ${analytics.earningsGrowth >= 0 ? 'text-green-500' : 'text-red-500'}`}
+            >
               {analytics.earningsGrowth >= 0 ? '↑' : '↓'} {Math.abs(analytics.earningsGrowth)}%
             </p>
           </div>
           <div className="bg-card rounded-lg border border-border p-6">
-            <p className="text-3xl font-bold text-foreground">{formatNumber(analytics.totalLikes)}</p>
+            <p className="text-3xl font-bold text-foreground">
+              {formatNumber(analytics.totalLikes)}
+            </p>
             <p className="text-sm text-muted-foreground mt-1">Likes</p>
           </div>
         </div>
@@ -155,19 +180,27 @@ export default function CreatorAnalyticsPage(): JSX.Element {
             <h2 className="text-xl font-bold text-foreground mb-4">Engagement Metrics</h2>
             <div className="grid grid-cols-2 gap-4">
               <div className="text-center">
-                <p className="text-2xl font-bold text-primary">{analytics.engagementMetrics.avgWatchTime}m</p>
+                <p className="text-2xl font-bold text-primary">
+                  {analytics.engagementMetrics.avgWatchTime}m
+                </p>
                 <p className="text-sm text-muted-foreground">Avg Watch Time</p>
               </div>
               <div className="text-center">
-                <p className="text-2xl font-bold text-primary">{analytics.engagementMetrics.completionRate}%</p>
+                <p className="text-2xl font-bold text-primary">
+                  {analytics.engagementMetrics.completionRate}%
+                </p>
                 <p className="text-sm text-muted-foreground">Completion Rate</p>
               </div>
               <div className="text-center">
-                <p className="text-2xl font-bold text-primary">{analytics.engagementMetrics.shareRate}%</p>
+                <p className="text-2xl font-bold text-primary">
+                  {analytics.engagementMetrics.shareRate}%
+                </p>
                 <p className="text-sm text-muted-foreground">Share Rate</p>
               </div>
               <div className="text-center">
-                <p className="text-2xl font-bold text-primary">{analytics.engagementMetrics.commentRate}%</p>
+                <p className="text-2xl font-bold text-primary">
+                  {analytics.engagementMetrics.commentRate}%
+                </p>
                 <p className="text-sm text-muted-foreground">Comment Rate</p>
               </div>
             </div>
@@ -181,7 +214,9 @@ export default function CreatorAnalyticsPage(): JSX.Element {
                   <span className="text-lg font-bold text-primary w-8">#{index + 1}</span>
                   <div className="flex-1">
                     <p className="font-medium text-foreground truncate">{content.title}</p>
-                    <p className="text-sm text-muted-foreground">{formatNumber(content.views)} views</p>
+                    <p className="text-sm text-muted-foreground">
+                      {formatNumber(content.views)} views
+                    </p>
                   </div>
                 </div>
               ))}
@@ -204,7 +239,9 @@ export default function CreatorAnalyticsPage(): JSX.Element {
                         style={{ width: `${age.percentage}%` }}
                       ></div>
                     </div>
-                    <span className="text-sm text-foreground w-12 text-right">{age.percentage}%</span>
+                    <span className="text-sm text-foreground w-12 text-right">
+                      {age.percentage}%
+                    </span>
                   </div>
                 ))}
               </div>
@@ -222,7 +259,9 @@ export default function CreatorAnalyticsPage(): JSX.Element {
                         style={{ width: `${country.percentage}%` }}
                       ></div>
                     </div>
-                    <span className="text-sm text-foreground w-12 text-right">{country.percentage}%</span>
+                    <span className="text-sm text-foreground w-12 text-right">
+                      {country.percentage}%
+                    </span>
                   </div>
                 ))}
               </div>

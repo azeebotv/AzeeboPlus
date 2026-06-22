@@ -2,19 +2,19 @@ FROM node:20.11.1-alpine3.19 AS builder
 WORKDIR /app
 
 RUN apk add --no-cache curl && \
-    npm install -g pnpm@9.15.0
+    for i in 1 2 3 4 5; do npm install -g pnpm@9.15.0 @nestjs/cli prisma@5.22.0 && break || (echo "Retry $i/5..." && sleep 10); done
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.json ./
 COPY packages ./packages
 COPY services/engagement/referral-service/package.json ./services/engagement/referral-service/
 
-RUN pnpm install --frozen-lockfile
+RUN for i in 1 2 3 4 5; do pnpm install --frozen-lockfile && break || (echo "Retry $i/5..." && sleep 10); done
 
 COPY services/engagement/referral-service/src ./services/engagement/referral-service/src
 COPY services/engagement/referral-service/tsconfig*.json ./services/engagement/referral-service/
 COPY services/engagement/referral-service/prisma ./services/engagement/referral-service/prisma
 
-RUN pnpm --filter @azeebo/referral-service build
+RUN pnpm --filter @azeebo/referral-service run build
 
 FROM node:20.11.1-alpine3.19 AS runner
 WORKDIR /app
@@ -24,14 +24,16 @@ LABEL org.opencontainers.image.description="Azeebo+ Referral Service"
 LABEL org.opencontainers.image.licenses="Proprietary"
 
 RUN apk add --no-cache curl && \
-    npm install -g pnpm@9.15.0 && \
+    for i in 1 2 3 4 5; do npm install -g pnpm@9.15.0 @nestjs/cli prisma@5.22.0 && break || (echo "Retry $i/5..." && sleep 10); done && \
     addgroup -g 1001 -S nodejs && \
     adduser -S nodejs -u 1001
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY services/engagement/referral-service/package.json ./services/engagement/referral-service/
 
-RUN pnpm install --prod --frozen-lockfile
+COPY packages ./packages
+
+RUN for i in 1 2 3 4 5; do pnpm install --prod --frozen-lockfile && break || (echo "Retry $i/5..." && sleep 10); done
 
 COPY --from=builder /app/services/engagement/referral-service/dist ./services/engagement/referral-service/dist
 COPY --from=builder /app/services/engagement/referral-service/prisma ./services/engagement/referral-service/prisma

@@ -71,9 +71,7 @@ describe('Games Controller Contract Tests', () => {
     });
 
     it('should return 401 without authorization', () => {
-      return request(app.getHttpServer())
-        .get('/v1/games/daily-challenge')
-        .expect(401);
+      return request(app.getHttpServer()).get('/v1/games/daily-challenge').expect(401);
     });
   });
 

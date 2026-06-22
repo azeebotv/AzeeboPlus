@@ -1,5 +1,5 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 
 interface RetryConfig {
   maxRetries: number;
@@ -71,12 +71,13 @@ export class ServiceClient {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
-  public async get<T = unknown>(
-    url: string,
-    config?: AxiosRequestConfig
-  ): Promise<T> {
+  public async get<T = unknown>(url: string, config?: AxiosRequestConfig): Promise<T> {
     const request = () => this.axiosInstance.get<T>(url, config);
-    const response = await this.retryRequest(request, this.retryConfig.maxRetries, this.retryConfig.delay);
+    const response = await this.retryRequest(
+      request,
+      this.retryConfig.maxRetries,
+      this.retryConfig.delay
+    );
     return response.data;
   }
 
@@ -85,14 +86,19 @@ export class ServiceClient {
     data?: unknown,
     config?: AxiosRequestConfig
   ): Promise<T> {
-    const request = () => this.axiosInstance.post<T>(url, data, {
-      ...config,
-      headers: {
-        'Idempotency-Key': config?.headers?.['Idempotency-Key'] || uuidv4(),
-        ...config?.headers,
-      },
-    });
-    const response = await this.retryRequest(request, this.retryConfig.maxRetries, this.retryConfig.delay);
+    const request = () =>
+      this.axiosInstance.post<T>(url, data, {
+        ...config,
+        headers: {
+          'Idempotency-Key': config?.headers?.['Idempotency-Key'] || randomUUID(),
+          ...config?.headers,
+        },
+      });
+    const response = await this.retryRequest(
+      request,
+      this.retryConfig.maxRetries,
+      this.retryConfig.delay
+    );
     return response.data;
   }
 
@@ -101,14 +107,19 @@ export class ServiceClient {
     data?: unknown,
     config?: AxiosRequestConfig
   ): Promise<T> {
-    const request = () => this.axiosInstance.put<T>(url, data, {
-      ...config,
-      headers: {
-        'Idempotency-Key': config?.headers?.['Idempotency-Key'] || uuidv4(),
-        ...config?.headers,
-      },
-    });
-    const response = await this.retryRequest(request, this.retryConfig.maxRetries, this.retryConfig.delay);
+    const request = () =>
+      this.axiosInstance.put<T>(url, data, {
+        ...config,
+        headers: {
+          'Idempotency-Key': config?.headers?.['Idempotency-Key'] || randomUUID(),
+          ...config?.headers,
+        },
+      });
+    const response = await this.retryRequest(
+      request,
+      this.retryConfig.maxRetries,
+      this.retryConfig.delay
+    );
     return response.data;
   }
 
@@ -117,23 +128,29 @@ export class ServiceClient {
     data?: unknown,
     config?: AxiosRequestConfig
   ): Promise<T> {
-    const request = () => this.axiosInstance.patch<T>(url, data, {
-      ...config,
-      headers: {
-        'Idempotency-Key': config?.headers?.['Idempotency-Key'] || uuidv4(),
-        ...config?.headers,
-      },
-    });
-    const response = await this.retryRequest(request, this.retryConfig.maxRetries, this.retryConfig.delay);
+    const request = () =>
+      this.axiosInstance.patch<T>(url, data, {
+        ...config,
+        headers: {
+          'Idempotency-Key': config?.headers?.['Idempotency-Key'] || randomUUID(),
+          ...config?.headers,
+        },
+      });
+    const response = await this.retryRequest(
+      request,
+      this.retryConfig.maxRetries,
+      this.retryConfig.delay
+    );
     return response.data;
   }
 
-  public async delete<T = unknown>(
-    url: string,
-    config?: AxiosRequestConfig
-  ): Promise<T> {
+  public async delete<T = unknown>(url: string, config?: AxiosRequestConfig): Promise<T> {
     const request = () => this.axiosInstance.delete<T>(url, config);
-    const response = await this.retryRequest(request, this.retryConfig.maxRetries, this.retryConfig.delay);
+    const response = await this.retryRequest(
+      request,
+      this.retryConfig.maxRetries,
+      this.retryConfig.delay
+    );
     return response.data;
   }
 }
@@ -163,15 +180,27 @@ export class WalletServiceClient extends ServiceClient {
     });
   }
 
-  async debitWallet(walletId: string, amount: number, description: string, idempotencyKey: string): Promise<{ balance: string }> {
+  async debitWallet(
+    walletId: string,
+    amount: number,
+    description: string,
+    idempotencyKey: string
+  ): Promise<{ balance: string }> {
     return this.post('/wallet/debit', { walletId, amount, description, idempotencyKey });
   }
 
-  async creditWallet(walletId: string, amount: number, description: string, reference?: string): Promise<{ balance: string }> {
+  async creditWallet(
+    walletId: string,
+    amount: number,
+    description: string,
+    reference?: string
+  ): Promise<{ balance: string }> {
     return this.post('/wallet/credit', { walletId, amount, description, reference });
   }
 
-  async getWallet(userId: string): Promise<{ id: string; userId: string; balance: string; currency: string }> {
+  async getWallet(
+    userId: string
+  ): Promise<{ id: string; userId: string; balance: string; currency: string }> {
     return this.get(`/wallet/user/${userId}`);
   }
 }
@@ -183,15 +212,24 @@ export class PaymentServiceClient extends ServiceClient {
     });
   }
 
-  async createTransaction(userId: string, amount: number, provider: string): Promise<{ id: string; status: string; checkoutUrl?: string }> {
+  async createTransaction(
+    userId: string,
+    amount: number,
+    provider: string
+  ): Promise<{ id: string; status: string; checkoutUrl?: string }> {
     return this.post('/payments/initiate', { userId, amount, provider });
   }
 
-  async verifyTransaction(transactionId: string): Promise<{ id: string; status: string; amount: number }> {
+  async verifyTransaction(
+    transactionId: string
+  ): Promise<{ id: string; status: string; amount: number }> {
     return this.get(`/payments/verify/${transactionId}`);
   }
 
-  async createRefund(transactionId: string, amount: number): Promise<{ id: string; status: string }> {
+  async createRefund(
+    transactionId: string,
+    amount: number
+  ): Promise<{ id: string; status: string }> {
     return this.post('/payments/refund', { transactionId, amount });
   }
 }
@@ -203,7 +241,12 @@ export class AnalyticsServiceClient extends ServiceClient {
     });
   }
 
-  async trackEvent(eventName: string, userId: string, universe: string, metadata: Record<string, unknown>): Promise<void> {
+  async trackEvent(
+    eventName: string,
+    userId: string,
+    universe: string,
+    metadata: Record<string, unknown>
+  ): Promise<void> {
     await this.post('/analytics/track', {
       eventName,
       userId,
@@ -213,7 +256,14 @@ export class AnalyticsServiceClient extends ServiceClient {
     });
   }
 
-  async trackBatch(events: Array<{ eventName: string; userId: string; universe: string; metadata: Record<string, unknown> }>): Promise<void> {
+  async trackBatch(
+    events: Array<{
+      eventName: string;
+      userId: string;
+      universe: string;
+      metadata: Record<string, unknown>;
+    }>
+  ): Promise<void> {
     await this.post('/analytics/track-batch', { events });
   }
 }
@@ -225,11 +275,19 @@ export class NotificationServiceClient extends ServiceClient {
     });
   }
 
-  async sendNotification(userId: string, type: string, payload: Record<string, unknown>): Promise<{ id: string }> {
+  async sendNotification(
+    userId: string,
+    type: string,
+    payload: Record<string, unknown>
+  ): Promise<{ id: string }> {
     return this.post('/notifications/send', { userId, type, payload });
   }
 
-  async sendBulkNotification(userIds: string[], type: string, payload: Record<string, unknown>): Promise<void> {
+  async sendBulkNotification(
+    userIds: string[],
+    type: string,
+    payload: Record<string, unknown>
+  ): Promise<void> {
     await this.post('/notifications/bulk', { userIds, type, payload });
   }
 }
@@ -241,13 +299,18 @@ export class ContentServiceClient extends ServiceClient {
     });
   }
 
-  async checkAccess(userId: string, contentId: string): Promise<{ access: boolean; reason?: string }> {
+  async checkAccess(
+    userId: string,
+    contentId: string
+  ): Promise<{ access: boolean; reason?: string }> {
     return this.get(`/content/access/${contentId}`, {
       headers: { 'X-User-Id': userId },
     });
   }
 
-  async getContent(contentId: string): Promise<{ id: string; title: string; type: string; accessType: string }> {
+  async getContent(
+    contentId: string
+  ): Promise<{ id: string; title: string; type: string; accessType: string }> {
     return this.get(`/content/${contentId}`);
   }
 }
@@ -259,11 +322,16 @@ export class UserServiceClient extends ServiceClient {
     });
   }
 
-  async getUser(userId: string): Promise<{ id: string; displayName: string; email: string; roles: string[] }> {
+  async getUser(
+    userId: string
+  ): Promise<{ id: string; displayName: string; email: string; roles: string[] }> {
     return this.get(`/users/${userId}`);
   }
 
-  async updateUser(userId: string, data: Partial<{ displayName: string; avatar: string }>): Promise<{ id: string }> {
+  async updateUser(
+    userId: string,
+    data: Partial<{ displayName: string; avatar: string }>
+  ): Promise<{ id: string }> {
     return this.put(`/users/${userId}`, data);
   }
 

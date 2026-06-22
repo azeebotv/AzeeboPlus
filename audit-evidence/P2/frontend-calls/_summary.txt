@@ -1,0 +1,62 @@
+=== captured at ===
+2026-06-22T11:34:11Z
+
+=== mobile API modules (16) ===
+-rw-r--r--@ 1 deprof  staff  3398 Jun 19 12:28 apps/mobile/src/api/auth.ts
+-rw-r--r--@ 1 deprof  staff  3219 Jun 19 12:28 apps/mobile/src/api/client.ts
+-rw-r--r--@ 1 deprof  staff  9766 Jun 21 07:02 apps/mobile/src/api/content.ts
+-rw-r--r--@ 1 deprof  staff  3401 Jun 19 12:28 apps/mobile/src/api/creator.ts
+-rw-r--r--@ 1 deprof  staff  3653 Jun 19 12:28 apps/mobile/src/api/engagement.ts
+-rw-r--r--@ 1 deprof  staff  1406 Jun 20 23:36 apps/mobile/src/api/index.ts
+-rw-r--r--@ 1 deprof  staff  3039 Jun  3 18:27 apps/mobile/src/api/media.ts
+-rw-r--r--@ 1 deprof  staff  2872 Jun 19 12:28 apps/mobile/src/api/messaging.ts
+-rw-r--r--@ 1 deprof  staff  2230 May  6 13:27 apps/mobile/src/api/notification.ts
+-rw-r--r--@ 1 deprof  staff  1892 May  6 13:27 apps/mobile/src/api/payment.ts
+-rw-r--r--@ 1 deprof  staff   171 Jun 20 23:37 apps/mobile/src/api/recommendation.ts
+-rw-r--r--@ 1 deprof  staff  1348 Jun 19 12:28 apps/mobile/src/api/referral.ts
+-rw-r--r--@ 1 deprof  staff  2379 Jun 19 12:28 apps/mobile/src/api/subscription.ts
+-rw-r--r--@ 1 deprof  staff  1779 Jun 19 12:28 apps/mobile/src/api/support.ts
+-rw-r--r--@ 1 deprof  staff   804 May  6 13:27 apps/mobile/src/api/universe.ts
+-rw-r--r--@ 1 deprof  staff  3794 Jun 19 12:28 apps/mobile/src/api/user.ts
+-rw-r--r--@ 1 deprof  staff  3289 Jun 19 12:28 apps/mobile/src/api/wallet.ts
+
+=== web api + contexts + hooks (line counts) ===
+apps/web/src/lib/api.ts                                       1408 lines
+apps/web/src/lib/apiError.ts                                   143 lines
+apps/web/src/lib/admin-types.ts                                176 lines
+apps/web/src/hooks/useApi.ts                                   203 lines
+apps/web/src/context/AuthContext.tsx                           222 lines
+apps/web/src/context/ThemeContext.tsx                           94 lines
+apps/web/src/context/WalletContext.tsx                         130 lines
+apps/web/src/providers/QueryProvider.tsx                        26 lines
+
+=== apps/admin NestJS controllers + service files ===
+apps/admin/src/audit/audit.service.ts
+apps/admin/src/database/prisma.service.ts
+apps/admin/src/modules/audit/audit.controller.ts
+apps/admin/src/modules/audit/audit.service.ts
+apps/admin/src/modules/content-management/content-management.controller.ts
+apps/admin/src/modules/content-management/content-management.service.ts
+apps/admin/src/modules/dashboard/dashboard.controller.ts
+apps/admin/src/modules/dashboard/dashboard.service.ts
+apps/admin/src/modules/moderation/moderation.controller.ts
+apps/admin/src/modules/moderation/moderation.service.ts
+apps/admin/src/modules/system-settings/system-settings.controller.ts
+apps/admin/src/modules/system-settings/system-settings.service.ts
+apps/admin/src/modules/universe-management/universe-management.controller.ts
+apps/admin/src/modules/universe-management/universe-management.service.ts
+apps/admin/src/modules/user-management/user-management.controller.ts
+apps/admin/src/modules/user-management/user-management.service.ts
+
+=== apps/creator-portal NestJS controllers + service files ===
+apps/creator-portal/src/api/clients/analytics-client.service.ts
+apps/creator-portal/src/api/clients/content-client.service.ts
+apps/creator-portal/src/api/clients/wallet-client.service.ts
+apps/creator-portal/src/creator/creator.controller.ts
+apps/creator-portal/src/creator/creator.service.ts
+apps/creator-portal/src/database/prisma.service.ts
+
+=== shared api-client + internal-clients ===
+     260 packages/api-client/src/index.ts
+     353 packages/internal-clients/src/index.ts
+     613 total

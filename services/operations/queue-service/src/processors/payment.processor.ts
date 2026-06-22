@@ -24,7 +24,7 @@ export class PaymentProcessor extends WorkerHost {
 
   constructor(
     private readonly paystackProvider: PaystackProvider,
-    private readonly flutterwaveProvider: FlutterwaveProvider,
+    private readonly flutterwaveProvider: FlutterwaveProvider
   ) {
     super();
   }
@@ -66,10 +66,11 @@ export class PaymentProcessor extends WorkerHost {
     amount: number,
     currency: string,
     provider: string,
-    metadata?: Record<string, string>,
+    metadata?: Record<string, string>
   ): Promise<void> {
     this.logger.debug(`Processing charge ${transactionId} for ${userId}: ${amount} ${currency}`);
-    const paymentProvider = provider === 'paystack' ? this.paystackProvider : this.flutterwaveProvider;
+    const paymentProvider =
+      provider === 'paystack' ? this.paystackProvider : this.flutterwaveProvider;
     // For charge, we typically just verify the payment
     await paymentProvider.verifyPayment(transactionId);
   }
@@ -80,10 +81,11 @@ export class PaymentProcessor extends WorkerHost {
     amount: number,
     currency: string,
     provider: string,
-    metadata?: Record<string, string>,
+    metadata?: Record<string, string>
   ): Promise<void> {
     this.logger.debug(`Processing refund ${transactionId} for ${userId}: ${amount} ${currency}`);
-    const paymentProvider = provider === 'paystack' ? this.paystackProvider : this.flutterwaveProvider;
+    const paymentProvider =
+      provider === 'paystack' ? this.paystackProvider : this.flutterwaveProvider;
     const reason = metadata?.reason || 'Refund requested';
     await paymentProvider.processRefund(transactionId, reason);
   }
@@ -94,10 +96,11 @@ export class PaymentProcessor extends WorkerHost {
     amount: number,
     currency: string,
     provider: string,
-    metadata?: Record<string, string>,
+    metadata?: Record<string, string>
   ): Promise<void> {
     this.logger.debug(`Processing payout ${transactionId} for ${userId}: ${amount} ${currency}`);
-    const paymentProvider = provider === 'paystack' ? this.paystackProvider : this.flutterwaveProvider;
+    const paymentProvider =
+      provider === 'paystack' ? this.paystackProvider : this.flutterwaveProvider;
     const recipient = metadata?.recipient || userId;
     await paymentProvider.processPayout(amount, recipient, transactionId);
   }
@@ -109,14 +112,21 @@ export class PaymentProcessor extends WorkerHost {
 
   @OnWorkerEvent('completed')
   onCompleted(job: Job) {
-    this.logger.log(`Payment job ${job.id} completed successfully (attempts: ${job.attemptsMade + 1})`);
+    this.logger.log(
+      `Payment job ${job.id} completed successfully (attempts: ${job.attemptsMade + 1})`
+    );
   }
 
   @OnWorkerEvent('failed')
   onFailed(job: Job, error: Error) {
     this.logger.error(
       `Payment job ${job.id} failed after ${job.attemptsMade + 1} attempts: ${error.message}`,
-      { jobId: job.id, transactionId: job.data.transactionId, error: error.stack, attemptsMade: job.attemptsMade }
+      {
+        jobId: job.id,
+        transactionId: job.data.transactionId,
+        error: error.stack,
+        attemptsMade: job.attemptsMade,
+      }
     );
   }
 
@@ -137,6 +147,8 @@ export class PaymentProcessor extends WorkerHost {
 
   @OnWorkerEvent('error')
   onError(error: Error) {
-    this.logger.error(`Payment worker encountered an error: ${error.message}`, { stack: error.stack });
+    this.logger.error(`Payment worker encountered an error: ${error.message}`, {
+      stack: error.stack,
+    });
   }
 }

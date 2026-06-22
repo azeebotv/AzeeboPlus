@@ -1,0 +1,7 @@
+===== services/core/user-service/src/modules/user/user-deletion.controller.ts =====
+12:@Controller('privacy')
+18:  @Post('deletion-request')
+36:  @Delete('data/:userId')
+51:  @Get('data/:userId/export')
+66:  @Get('deletion-status/:userId')
+

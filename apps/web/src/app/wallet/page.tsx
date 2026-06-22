@@ -51,17 +51,27 @@ export default function WalletPage(): JSX.Element {
       <header className="sticky top-0 z-50 backdrop-blur-xl bg-black/40 border-b border-gray-700/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl flex items-center justify-center" style={{ background: gradients.primary }}>
+            <div
+              className="h-10 w-10 rounded-xl flex items-center justify-center"
+              style={{ background: gradients.primary }}
+            >
               <span className="text-white font-bold text-xl leading-none">A</span>
             </div>
-            <h1 className="text-2xl font-bold hidden sm:block" style={{ color: colors.text.primary }}>Azeebo+</h1>
+            <h1
+              className="text-2xl font-bold hidden sm:block"
+              style={{ color: colors.text.primary }}
+            >
+              Azeebo+
+            </h1>
           </div>
 
           <nav className="hidden md:flex items-center gap-8">
             {['Home', 'Browse', 'Library', 'Creators', 'Wallet'].map((item) => (
               <Link
                 key={item}
-                href={item === 'Home' ? '/' : item === 'Wallet' ? '/wallet' : `/${item.toLowerCase()}`}
+                href={
+                  item === 'Home' ? '/' : item === 'Wallet' ? '/wallet' : `/${item.toLowerCase()}`
+                }
                 className="text-base font-medium transition-colors"
                 style={{ color: item === 'Wallet' ? colors.primary[500] : colors.text.secondary }}
               >
@@ -75,16 +85,22 @@ export default function WalletPage(): JSX.Element {
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
                   <Avatar size="md" fallback={user?.name?.charAt(0) || 'U'} />
-                  <span className="text-sm font-medium" style={{ color: colors.text.primary }}>{user?.name}</span>
+                  <span className="text-sm font-medium" style={{ color: colors.text.primary }}>
+                    {user?.name}
+                  </span>
                 </div>
               </div>
             ) : (
               <div className="flex items-center gap-2">
                 <Link href="/auth/login">
-                  <Button variant="ghost" size="sm">Sign In</Button>
+                  <Button variant="ghost" size="sm">
+                    Sign In
+                  </Button>
                 </Link>
                 <Link href="/auth/register">
-                  <Button variant="primary" size="sm">Get Started</Button>
+                  <Button variant="primary" size="sm">
+                    Get Started
+                  </Button>
                 </Link>
               </div>
             )}
@@ -100,7 +116,9 @@ export default function WalletPage(): JSX.Element {
           ) : error ? (
             <div className="text-center">
               <p className="text-white/80 mb-4">{error}</p>
-              <Button variant="secondary" onClick={() => window.location.reload()}>Retry</Button>
+              <Button variant="secondary" onClick={() => window.location.reload()}>
+                Retry
+              </Button>
             </div>
           ) : (
             <div className="text-center">
@@ -108,12 +126,19 @@ export default function WalletPage(): JSX.Element {
               <h2 className="text-6xl font-bold text-white mb-6">₦{balance.toLocaleString()}</h2>
               <div className="flex items-center justify-center gap-4">
                 <Link href="/wallet/add-funds">
-                  <Button size="lg" style={{ backgroundColor: 'white', color: colors.primary[600] }}>
+                  <Button
+                    size="lg"
+                    style={{ backgroundColor: 'white', color: colors.primary[600] }}
+                  >
                     Deposit
                   </Button>
                 </Link>
                 <Link href="/wallet/withdraw">
-                  <Button size="lg" variant="outline" style={{ borderColor: 'white', color: 'white' }}>
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    style={{ borderColor: 'white', color: 'white' }}
+                  >
                     Withdraw
                   </Button>
                 </Link>
@@ -143,28 +168,62 @@ export default function WalletPage(): JSX.Element {
           <Card padding="md">
             {isLoading ? (
               <div className="space-y-4">
-                {[1, 2, 3].map(i => (
+                {[1, 2, 3].map((i) => (
                   <Skeleton key={i} height="60px" className="w-full" />
                 ))}
               </div>
             ) : transactions.length > 0 ? (
               <div className="space-y-4">
                 {transactions.slice(0, 5).map((transaction) => (
-                  <div key={transaction.id} className="flex items-center justify-between py-4 border-b border-gray-700 last:border-0">
+                  <div
+                    key={transaction.id}
+                    className="flex items-center justify-between py-4 border-b border-gray-700 last:border-0"
+                  >
                     <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: transaction.type === 'credit' ? `${colors.success[500]}20` : `${colors.primary[500]}20` }}>
-                        <span className="text-2xl">{transaction.type === 'credit' ? '⬆️' : '⬇️'}</span>
+                      <div
+                        className="w-12 h-12 rounded-full flex items-center justify-center"
+                        style={{
+                          backgroundColor:
+                            transaction.type === 'credit'
+                              ? `${colors.success[500]}20`
+                              : `${colors.primary[500]}20`,
+                        }}
+                      >
+                        <span className="text-2xl">
+                          {transaction.type === 'credit' ? '⬆️' : '⬇️'}
+                        </span>
                       </div>
                       <div>
-                        <p className="font-medium" style={{ color: colors.text.primary }}>{transaction.description || 'Transaction'}</p>
-                        <p className="text-sm" style={{ color: colors.text.secondary }}>{new Date(transaction.createdAt).toLocaleDateString()}</p>
+                        <p className="font-medium" style={{ color: colors.text.primary }}>
+                          {transaction.description || 'Transaction'}
+                        </p>
+                        <p className="text-sm" style={{ color: colors.text.secondary }}>
+                          {new Date(transaction.createdAt).toLocaleDateString()}
+                        </p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="font-bold text-lg" style={{ color: transaction.type === 'credit' ? colors.success[500] : colors.text.primary }}>
-                        {transaction.type === 'credit' ? '+' : '-'}{' '}₦{transaction.amount.toLocaleString()}
+                      <p
+                        className="font-bold text-lg"
+                        style={{
+                          color:
+                            transaction.type === 'credit'
+                              ? colors.success[500]
+                              : colors.text.primary,
+                        }}
+                      >
+                        {transaction.type === 'credit' ? '+' : '-'} ₦
+                        {transaction.amount.toLocaleString()}
                       </p>
-                      <Badge variant={transaction.status === 'completed' ? 'success' : transaction.status === 'pending' ? 'warning' : 'error'}>
+                      <Badge
+                        variant={
+                          transaction.status === 'completed'
+                            ? 'success'
+                            : transaction.status === 'pending'
+                              ? 'warning'
+                              : 'error'
+                        }
+                      >
                         {transaction.status}
                       </Badge>
                     </div>
@@ -181,51 +240,77 @@ export default function WalletPage(): JSX.Element {
       </section>
 
       {/* Footer */}
-      <footer className="border-t py-12" style={{ borderColor: colors.border.light, backgroundColor: colors.bg.secondary }}>
+      <footer
+        className="border-t py-12"
+        style={{ borderColor: colors.border.light, backgroundColor: colors.bg.secondary }}
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
             <div>
-              <h4 className="font-bold text-lg mb-4" style={{ color: colors.text.primary }}>Azeebo+</h4>
+              <h4 className="font-bold text-lg mb-4" style={{ color: colors.text.primary }}>
+                Azeebo+
+              </h4>
               <ul className="space-y-2" style={{ color: colors.text.secondary }}>
                 {['About', 'Careers', 'Press'].map((item) => (
-                  <li key={item} className="text-sm hover:text-gray-200 transition-colors cursor-pointer">
+                  <li
+                    key={item}
+                    className="text-sm hover:text-gray-200 transition-colors cursor-pointer"
+                  >
                     {item}
                   </li>
                 ))}
               </ul>
             </div>
             <div>
-              <h4 className="font-bold text-lg mb-4" style={{ color: colors.text.primary }}>Help</h4>
+              <h4 className="font-bold text-lg mb-4" style={{ color: colors.text.primary }}>
+                Help
+              </h4>
               <ul className="space-y-2" style={{ color: colors.text.secondary }}>
                 {['Support', 'FAQ', 'Contact'].map((item) => (
-                  <li key={item} className="text-sm hover:text-gray-200 transition-colors cursor-pointer">
+                  <li
+                    key={item}
+                    className="text-sm hover:text-gray-200 transition-colors cursor-pointer"
+                  >
                     {item}
                   </li>
                 ))}
               </ul>
             </div>
             <div>
-              <h4 className="font-bold text-lg mb-4" style={{ color: colors.text.primary }}>Legal</h4>
+              <h4 className="font-bold text-lg mb-4" style={{ color: colors.text.primary }}>
+                Legal
+              </h4>
               <ul className="space-y-2" style={{ color: colors.text.secondary }}>
                 {['Terms', 'Privacy', 'Cookies'].map((item) => (
-                  <li key={item} className="text-sm hover:text-gray-200 transition-colors cursor-pointer">
+                  <li
+                    key={item}
+                    className="text-sm hover:text-gray-200 transition-colors cursor-pointer"
+                  >
                     {item}
                   </li>
                 ))}
               </ul>
             </div>
             <div>
-              <h4 className="font-bold text-lg mb-4" style={{ color: colors.text.primary }}>Connect</h4>
+              <h4 className="font-bold text-lg mb-4" style={{ color: colors.text.primary }}>
+                Connect
+              </h4>
               <ul className="space-y-2" style={{ color: colors.text.secondary }}>
                 {['Twitter', 'Instagram', 'Facebook'].map((item) => (
-                  <li key={item} className="text-sm hover:text-gray-200 transition-colors cursor-pointer">
+                  <li
+                    key={item}
+                    className="text-sm hover:text-gray-200 transition-colors cursor-pointer"
+                  >
                     {item}
                   </li>
                 ))}
               </ul>
             </div>
           </div>
-          <div className="mt-12 pt-8 border-t text-center text-sm" style={{ borderColor: colors.border.light, color: colors.text.tertiary }}>
+          <div
+            className="mt-12 pt-8 border-t text-center text-sm"
+            style={{ borderColor: colors.border.light, color: colors.text.tertiary }}
+          >
             <p>© 2026 Azeebo+. All rights reserved.</p>
           </div>
         </div>

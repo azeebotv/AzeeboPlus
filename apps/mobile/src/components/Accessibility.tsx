@@ -91,11 +91,7 @@ export const AccessibleCard: React.FC<AccessibleCardProps> = ({
   }
 
   return (
-    <View
-      style={[styles.card, style]}
-      accessibilityRole="none"
-      {...accessibilityProps}
-    >
+    <View style={[styles.card, style]} accessibilityRole="none" {...accessibilityProps}>
       {children}
     </View>
   );
@@ -113,11 +109,7 @@ export const AccessibleListItem: React.FC<AccessibleListItemProps> = ({
   onPress,
   ...accessibilityProps
 }) => {
-  const content = (
-    <View style={[styles.listItem, style]}>
-      {children}
-    </View>
-  );
+  const content = <View style={[styles.listItem, style]}>{children}</View>;
 
   if (onPress) {
     return (
@@ -134,10 +126,7 @@ export const AccessibleListItem: React.FC<AccessibleListItemProps> = ({
   }
 
   return (
-    <View
-      accessibilityRole="none"
-      {...accessibilityProps}
-    >
+    <View accessibilityRole="none" {...accessibilityProps}>
       {content}
     </View>
   );
@@ -160,10 +149,7 @@ export const VisuallyHiddenText: React.FC<VisuallyHiddenTextProps> = ({
   text,
   accessibilityLabel,
 }) => (
-  <Text
-    style={styles.srOnly}
-    accessibilityLabel={accessibilityLabel || text}
-  >
+  <Text style={styles.srOnly} accessibilityLabel={accessibilityLabel || text}>
     {text}
   </Text>
 );

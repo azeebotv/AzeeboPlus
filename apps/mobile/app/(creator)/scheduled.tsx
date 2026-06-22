@@ -39,7 +39,20 @@ export default function ScheduledPostsScreen() {
       setError(null);
       const response = await contentApi.getScheduledPosts();
       if (response.success && response.data) {
-        setPosts(response.data);
+        // Map CreatorContent[] to ScheduledPost[]
+        setPosts(
+          response.data.map((item) => ({
+            id: item.id,
+            title: item.title,
+            thumbnail: item.thumbnail ?? '',
+            scheduledFor: item.scheduledAt ?? item.createdAt,
+            type: (item.contentType?.toLowerCase() || 'video') as 'video' | 'image' | 'audio',
+            status: (item.status === 'scheduled' ? 'scheduled' : 'processing') as
+              | 'scheduled'
+              | 'processing'
+              | 'failed',
+          }))
+        );
       }
     } catch (err) {
       logger.error('Failed to load scheduled posts', err);
@@ -94,7 +107,9 @@ export default function ScheduledPostsScreen() {
       <Image source={{ uri: item.thumbnail }} style={styles.thumbnail} />
       <View style={styles.content}>
         <View style={styles.cardHeader}>
-          <Text style={styles.cardTitle} numberOfLines={1}>{item.title}</Text>
+          <Text style={styles.cardTitle} numberOfLines={1}>
+            {item.title}
+          </Text>
           <Text style={styles.type}>{getTypeIcon(item.type)}</Text>
         </View>
         <View style={styles.scheduleInfo}>
@@ -129,10 +144,7 @@ export default function ScheduledPostsScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backButtonText}>←</Text>
         </TouchableOpacity>
         <Text style={styles.title}>Scheduled Posts</Text>

@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 
-export type EventName = 
+export type EventName =
   | `${string}_viewed`
   | `${string}_submitted`
   | `${string}_completed`
@@ -28,7 +28,7 @@ export const AnalyticsEvents = {
   AUTH_LOGIN_SUBMITTED: 'auth_login_submitted' as EventName,
   AUTH_LOGIN_COMPLETED: 'auth_login_completed' as EventName,
   AUTH_LOGIN_FAILED: 'auth_login_failed' as EventName,
-  
+
   AUTH_REGISTER_VIEWED: 'auth_register_viewed' as EventName,
   AUTH_REGISTER_SUBMITTED: 'auth_register_submitted' as EventName,
   AUTH_REGISTER_COMPLETED: 'auth_register_completed' as EventName,
@@ -91,14 +91,14 @@ export class AnalyticsService {
 
   track(event: AnalyticsEvent): void {
     this.validateEventName(event.name);
-    
+
     const eventData = {
       ...event,
       timestamp: event.timestamp.toISOString(),
     };
 
     this.logger.debug(`Tracking analytics event: ${event.name}`, eventData);
-    
+
     this.sendToAnalytics(eventData);
   }
 
@@ -143,9 +143,11 @@ export class AnalyticsService {
 
   private validateEventName(name: string): void {
     const snakeCaseRegex = /^[a-z][a-z0-9_]*$/;
-    
+
     if (!snakeCaseRegex.test(name)) {
-      this.logger.warn(`Event name "${name}" is not in snake_case format. Please use lowercase letters, numbers, and underscores only.`);
+      this.logger.warn(
+        `Event name "${name}" is not in snake_case format. Please use lowercase letters, numbers, and underscores only.`
+      );
     }
 
     const maxLength = 100;

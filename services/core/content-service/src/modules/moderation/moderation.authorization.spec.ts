@@ -21,13 +21,19 @@ describe('Moderation Authorization Tests', () => {
 
   beforeEach(async () => {
     mockModerationService = {
-      scanContent: jest.fn().mockResolvedValue({ success: true, data: { contentId: 'content-1', status: 'scanning' } }),
+      scanContent: jest
+        .fn()
+        .mockResolvedValue({ success: true, data: { contentId: 'content-1', status: 'scanning' } }),
       assessContentRisk: jest.fn().mockResolvedValue({ success: true, data: { riskScore: 0.2 } }),
       getContentScans: jest.fn().mockResolvedValue({ success: true, data: [] }),
-      createModerationCase: jest.fn().mockResolvedValue({ success: true, data: { caseId: 'case-1' } }),
+      createModerationCase: jest
+        .fn()
+        .mockResolvedValue({ success: true, data: { caseId: 'case-1' } }),
       getCases: jest.fn().mockResolvedValue({ success: true, data: [], pagination: {} }),
       getCase: jest.fn().mockResolvedValue({ success: true, data: { id: 'case-1' } }),
-      resolveCase: jest.fn().mockResolvedValue({ success: true, data: { caseId: 'case-1', status: 'resolved' } }),
+      resolveCase: jest
+        .fn()
+        .mockResolvedValue({ success: true, data: { caseId: 'case-1', status: 'resolved' } }),
       assignCase: jest.fn().mockResolvedValue({ success: true, data: { caseId: 'case-1' } }),
       getModerationStats: jest.fn().mockResolvedValue({ success: true, data: {} }),
     };

@@ -119,9 +119,7 @@ describe('ModerationService', () => {
         userId: 'user-1',
       };
 
-      await expect(service.createCase(request)).rejects.toThrow(
-        'Report not found',
-      );
+      await expect(service.createCase(request)).rejects.toThrow('Report not found');
     });
 
     it('should create an audit event when case is created', async () => {
@@ -211,9 +209,7 @@ describe('ModerationService', () => {
     });
 
     it('should filter cases by status', async () => {
-      const mockCases = [
-        { id: 'case-1', status: 'pending' },
-      ];
+      const mockCases = [{ id: 'case-1', status: 'pending' }];
 
       mockPrismaService.moderationCase.findMany.mockResolvedValue(mockCases);
 
@@ -226,9 +222,7 @@ describe('ModerationService', () => {
     });
 
     it('should filter cases by userId', async () => {
-      const mockCases = [
-        { id: 'case-1', userId: 'user-1' },
-      ];
+      const mockCases = [{ id: 'case-1', userId: 'user-1' }];
 
       mockPrismaService.moderationCase.findMany.mockResolvedValue(mockCases);
 

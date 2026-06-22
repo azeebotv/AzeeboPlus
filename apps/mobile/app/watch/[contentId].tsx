@@ -28,15 +28,18 @@ export default function WatchScreen() {
   const [error, setError] = useState<string | null>(null);
   const [relatedContent, setRelatedContent] = useState<ContentItem[]>([]);
 
-  const handleProgressUpdate = useCallback(async (_progress: number) => {
-    if (contentId) {
-      try {
-        await contentApi.addToWatchHistory(contentId);
-      } catch (err) {
-        logger.error('Failed to update watch progress', err);
+  const handleProgressUpdate = useCallback(
+    async (_progress: number) => {
+      if (contentId) {
+        try {
+          await contentApi.addToWatchHistory(contentId);
+        } catch (err) {
+          logger.error('Failed to update watch progress', err);
+        }
       }
-    }
-  }, [contentId]);
+    },
+    [contentId]
+  );
 
   const handleComplete = useCallback(() => {
     Alert.alert('Video Complete', 'Thanks for watching!');
@@ -77,7 +80,7 @@ export default function WatchScreen() {
 
       const relatedResponse = await contentApi.getTrendingContent(5);
       if (relatedResponse.success && relatedResponse.data) {
-        setRelatedContent(relatedResponse.data.filter(item => item.id !== contentId));
+        setRelatedContent(relatedResponse.data.filter((item) => item.id !== contentId));
       }
     } catch (err: any) {
       setError(err.message || 'Failed to load content');
@@ -101,7 +104,9 @@ export default function WatchScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#000' : '#fff' }]}>
+      <SafeAreaView
+        style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#000' : '#fff' }]}
+      >
         <LoadingState text="Loading content..." />
       </SafeAreaView>
     );
@@ -109,7 +114,9 @@ export default function WatchScreen() {
 
   if (error) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#000' : '#fff' }]}>
+      <SafeAreaView
+        style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#000' : '#fff' }]}
+      >
         <ErrorState description={error} onRetry={fetchContent} />
       </SafeAreaView>
     );
@@ -117,8 +124,14 @@ export default function WatchScreen() {
 
   if (!content) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#000' : '#fff' }]}>
-        <EmptyState icon="📺" title="Content not found" description="The content you're looking for doesn't exist or has been removed." />
+      <SafeAreaView
+        style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#000' : '#fff' }]}
+      >
+        <EmptyState
+          icon="📺"
+          title="Content not found"
+          description="The content you're looking for doesn't exist or has been removed."
+        />
       </SafeAreaView>
     );
   }
@@ -131,11 +144,10 @@ export default function WatchScreen() {
       style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#000' : '#fff' }]}
       edges={['top']}
     >
-      <TouchableOpacity
-        style={styles.backButton}
-        onPress={() => router.back()}
-      >
-        <Text style={[styles.backText, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>← Back</Text>
+      <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <Text style={[styles.backText, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
+          ← Back
+        </Text>
       </TouchableOpacity>
 
       <View style={[styles.videoContainer, isFullscreen && styles.videoContainerFullscreen]}>
@@ -167,19 +179,13 @@ export default function WatchScreen() {
               </View>
 
               <View style={styles.centerControls}>
-                <TouchableOpacity
-                  style={styles.seekButton}
-                  onPress={() => seekBackward(10)}
-                >
+                <TouchableOpacity style={styles.seekButton} onPress={() => seekBackward(10)}>
                   <Text style={styles.seekText}>-10s</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.mainPlayButton} onPress={togglePlay}>
                   <Text style={styles.mainPlayIcon}>{isPlaying ? '⏸️' : '▶️'}</Text>
                 </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.seekButton}
-                  onPress={() => seekForward(10)}
-                >
+                <TouchableOpacity style={styles.seekButton} onPress={() => seekForward(10)}>
                   <Text style={styles.seekText}>+10s</Text>
                 </TouchableOpacity>
               </View>
@@ -212,13 +218,9 @@ export default function WatchScreen() {
         </Text>
 
         <View style={styles.metaRow}>
-          {content.universe && (
-            <Text style={styles.metaText}>📺 {content.universe.name}</Text>
-          )}
+          {content.universe && <Text style={styles.metaText}>📺 {content.universe.name}</Text>}
           <Text style={styles.metaText}>📅 {new Date(content.createdAt).toLocaleDateString()}</Text>
-          {content.isPremium && (
-            <Text style={styles.metaText}>💎 Premium</Text>
-          )}
+          {content.isPremium && <Text style={styles.metaText}>💎 Premium</Text>}
         </View>
 
         <View style={styles.actionRow}>
@@ -240,7 +242,12 @@ export default function WatchScreen() {
           </TouchableOpacity>
         </View>
 
-        <View style={[styles.descriptionSection, { borderColor: colorScheme === 'dark' ? '#333' : '#eee' }]}>
+        <View
+          style={[
+            styles.descriptionSection,
+            { borderColor: colorScheme === 'dark' ? '#333' : '#eee' },
+          ]}
+        >
           <Text style={[styles.description, { color: colorScheme === 'dark' ? '#ccc' : '#666' }]}>
             {content.description}
           </Text>
@@ -248,9 +255,7 @@ export default function WatchScreen() {
 
         <View style={styles.creatorSection}>
           <View style={[styles.creatorAvatar, { backgroundColor: '#8B5CF6' }]}>
-            <Text style={styles.creatorInitial}>
-              {content.creator?.name?.charAt(0) || 'A'}
-            </Text>
+            <Text style={styles.creatorInitial}>{content.creator?.name?.charAt(0) || 'A'}</Text>
           </View>
           <View style={styles.creatorInfo}>
             <Text style={[styles.creatorName, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
@@ -265,7 +270,9 @@ export default function WatchScreen() {
 
         {relatedContent.length > 0 && (
           <View style={styles.episodesSection}>
-            <Text style={[styles.sectionTitle, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
+            <Text
+              style={[styles.sectionTitle, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}
+            >
               More to Explore
             </Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
@@ -279,13 +286,17 @@ export default function WatchScreen() {
                     <Text style={styles.episodeEmoji}>📺</Text>
                     {item.duration && (
                       <View style={styles.durationBadge}>
-                        <Text style={styles.durationText}>
-                          {formatTime(item.duration)}
-                        </Text>
+                        <Text style={styles.durationText}>{formatTime(item.duration)}</Text>
                       </View>
                     )}
                   </View>
-                  <Text style={[styles.episodeTitle, { color: colorScheme === 'dark' ? '#fff' : '#000' }]} numberOfLines={2}>
+                  <Text
+                    style={[
+                      styles.episodeTitle,
+                      { color: colorScheme === 'dark' ? '#fff' : '#000' },
+                    ]}
+                    numberOfLines={2}
+                  >
                     {item.title}
                   </Text>
                 </TouchableOpacity>

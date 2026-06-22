@@ -1,4 +1,0 @@
-src/prisma/
-src/**/*.spec.ts
-src/**/*.test.ts
-vertical-service/

@@ -47,7 +47,13 @@ export class AuditService {
     }
   }
 
-  async logRefund(userId: string, transactionId: string, amount: number, status: 'success' | 'failure', errorMessage?: string): Promise<void> {
+  async logRefund(
+    userId: string,
+    transactionId: string,
+    amount: number,
+    status: 'success' | 'failure',
+    errorMessage?: string
+  ): Promise<void> {
     await this.log({
       actorId: userId,
       actorType: 'user',
@@ -72,7 +78,12 @@ export class AuditService {
     });
   }
 
-  async logUserSuspension(adminId: string, userId: string, reason: string, duration?: string): Promise<void> {
+  async logUserSuspension(
+    adminId: string,
+    userId: string,
+    reason: string,
+    duration?: string
+  ): Promise<void> {
     await this.log({
       actorId: adminId,
       actorType: 'admin',
@@ -84,7 +95,12 @@ export class AuditService {
     });
   }
 
-  async logRoleChange(adminId: string, userId: string, oldRole: string, newRole: string): Promise<void> {
+  async logRoleChange(
+    adminId: string,
+    userId: string,
+    oldRole: string,
+    newRole: string
+  ): Promise<void> {
     await this.log({
       actorId: adminId,
       actorType: 'admin',
@@ -97,7 +113,12 @@ export class AuditService {
     });
   }
 
-  async logLargeTransaction(userId: string, transactionId: string, amount: number, type: 'credit' | 'debit'): Promise<void> {
+  async logLargeTransaction(
+    userId: string,
+    transactionId: string,
+    amount: number,
+    type: 'credit' | 'debit'
+  ): Promise<void> {
     await this.log({
       actorId: userId,
       actorType: 'user',
@@ -109,7 +130,12 @@ export class AuditService {
     });
   }
 
-  async logAdminOverride(adminId: string, action: string, resourceType: string, resourceId: string): Promise<void> {
+  async logAdminOverride(
+    adminId: string,
+    action: string,
+    resourceType: string,
+    resourceId: string
+  ): Promise<void> {
     await this.log({
       actorId: adminId,
       actorType: 'admin',
@@ -130,7 +156,11 @@ export class AuditService {
     return logs.map(this.mapToAuditEntry);
   }
 
-  async getAuditLogsByResource(resourceType: string, resourceId: string, limit = 100): Promise<AuditEntry[]> {
+  async getAuditLogsByResource(
+    resourceType: string,
+    resourceId: string,
+    limit = 100
+  ): Promise<AuditEntry[]> {
     const logs = await this.prisma.auditLog.findMany({
       where: { resourceType, resourceId },
       orderBy: { createdAt: 'desc' },
@@ -180,7 +210,10 @@ export class AuditService {
       timestamp: log.createdAt,
       status: log.status as 'success' | 'failure',
       errorMessage: log.errorMessage ?? undefined,
-      metadata: typeof log.metadata === 'string' ? JSON.parse(log.metadata) : (log.metadata as Record<string, unknown> | undefined),
+      metadata:
+        typeof log.metadata === 'string'
+          ? JSON.parse(log.metadata)
+          : (log.metadata as Record<string, unknown> | undefined),
     };
   }
 }

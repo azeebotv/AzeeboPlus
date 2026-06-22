@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import {
-  View, Text, StyleSheet, FlatList,
-  TouchableOpacity, ActivityIndicator,
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+  ActivityIndicator,
   RefreshControl,
 } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -82,23 +86,35 @@ export default function TransactionsScreen() {
 
   const getTypeIcon = (type: string): string => {
     switch (type) {
-      case 'deposit': return '💰';
-      case 'withdrawal': return '💸';
-      case 'payment': return '🛒';
-      case 'refund': return '↩️';
-      case 'reward': return '🎁';
-      case 'tip': return '💝';
-      default: return '💳';
+      case 'deposit':
+        return '💰';
+      case 'withdrawal':
+        return '💸';
+      case 'payment':
+        return '🛒';
+      case 'refund':
+        return '↩️';
+      case 'reward':
+        return '🎁';
+      case 'tip':
+        return '💝';
+      default:
+        return '💳';
     }
   };
 
   const getStatusColor = (status: string): string => {
     switch (status) {
-      case 'completed': return '#10B981';
-      case 'pending': return '#F59E0B';
-      case 'failed': return '#EF4444';
-      case 'cancelled': return '#6B7280';
-      default: return '#9CA3AF';
+      case 'completed':
+        return '#10B981';
+      case 'pending':
+        return '#F59E0B';
+      case 'failed':
+        return '#EF4444';
+      case 'cancelled':
+        return '#6B7280';
+      default:
+        return '#9CA3AF';
     }
   };
 
@@ -138,7 +154,10 @@ export default function TransactionsScreen() {
             styles.amount,
             {
               color:
-                item.type === 'deposit' || item.type === 'refund' || item.type === 'reward' || item.type === 'tip'
+                item.type === 'deposit' ||
+                item.type === 'refund' ||
+                item.type === 'reward' ||
+                item.type === 'tip'
                   ? '#10B981'
                   : '#EF4444',
             },
@@ -155,9 +174,7 @@ export default function TransactionsScreen() {
         </View>
         <Text style={styles.reference}>Ref: {item.reference}</Text>
       </View>
-      {item.metadata?.provider && (
-        <Text style={styles.provider}>via {item.metadata.provider}</Text>
-      )}
+      {item.metadata?.provider && <Text style={styles.provider}>via {item.metadata.provider}</Text>}
     </TouchableOpacity>
   );
 

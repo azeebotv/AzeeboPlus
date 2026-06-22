@@ -64,7 +64,7 @@ export class SubscriptionController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async subscribe(
     @Request() req: AuthenticatedRequest,
-    @Body() dto: SubscribeToPlanDto,
+    @Body() dto: SubscribeToPlanDto
   ): Promise<any> {
     return this.subscriptionService.subscribe(req.user.sub, dto);
   }
@@ -89,7 +89,7 @@ export class SubscriptionController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async cancelSubscription(
     @Request() req: AuthenticatedRequest,
-    @Param('id') id: string,
+    @Param('id') id: string
   ): Promise<any> {
     return this.subscriptionService.cancelSubscription(req.user.sub, id);
   }
@@ -103,8 +103,12 @@ export class SubscriptionController {
   async getSubscriptionHistory(
     @Request() req: AuthenticatedRequest,
     @Query('page') page = 1,
-    @Query('limit') limit = 20,
+    @Query('limit') limit = 20
   ): Promise<any> {
-    return this.subscriptionService.getSubscriptionHistory(req.user.sub, Number(page), Number(limit));
+    return this.subscriptionService.getSubscriptionHistory(
+      req.user.sub,
+      Number(page),
+      Number(limit)
+    );
   }
 }

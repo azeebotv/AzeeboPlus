@@ -103,7 +103,9 @@ describe('FanContestsService', () => {
     it('should throw NotFoundException if contest not found', async () => {
       (prismaService.contest.findUnique as jest.Mock).mockResolvedValue(null);
 
-      await expect(service.enterContest('user-123', 'contest-1', {})).rejects.toThrow(NotFoundException);
+      await expect(service.enterContest('user-123', 'contest-1', {})).rejects.toThrow(
+        NotFoundException
+      );
     });
 
     it('should throw BadRequestException if contest not active', async () => {
@@ -113,7 +115,9 @@ describe('FanContestsService', () => {
         startsAt: new Date(),
       });
 
-      await expect(service.enterContest('user-123', 'contest-1', {})).rejects.toThrow(BadRequestException);
+      await expect(service.enterContest('user-123', 'contest-1', {})).rejects.toThrow(
+        BadRequestException
+      );
     });
 
     it('should throw BadRequestException if already entered', async () => {
@@ -124,7 +128,9 @@ describe('FanContestsService', () => {
       });
       (prismaService.contestEntry.findUnique as jest.Mock).mockResolvedValue({ id: 'entry-1' });
 
-      await expect(service.enterContest('user-123', 'contest-1', {})).rejects.toThrow(BadRequestException);
+      await expect(service.enterContest('user-123', 'contest-1', {})).rejects.toThrow(
+        BadRequestException
+      );
     });
   });
 
@@ -176,7 +182,10 @@ describe('FanContestsService', () => {
 
   describe('endContest', () => {
     it('should end contest', async () => {
-      (prismaService.contest.update as jest.Mock).mockResolvedValue({ id: 'contest-1', status: 'completed' });
+      (prismaService.contest.update as jest.Mock).mockResolvedValue({
+        id: 'contest-1',
+        status: 'completed',
+      });
 
       const result = await service.endContest('contest-1');
 

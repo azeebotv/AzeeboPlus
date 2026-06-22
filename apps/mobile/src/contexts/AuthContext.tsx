@@ -8,7 +8,12 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; message?: string }>;
-  register: (email: string, password: string, displayName: string, phone: string) => Promise<{ success: boolean; message?: string }>;
+  register: (
+    email: string,
+    password: string,
+    displayName: string,
+    phone: string
+  ) => Promise<{ success: boolean; message?: string }>;
   logout: () => Promise<void>;
   forgotPassword: (email: string) => Promise<void>;
   verifyOTP: (code: string) => Promise<{ success: boolean; message?: string }>;
@@ -43,7 +48,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const handleAuthResponse = async (response: ApiResponse<{ access_token: string; refresh_token: string; user: User }>) => {
+  const handleAuthResponse = async (
+    response: ApiResponse<{ access_token: string; refresh_token: string; user: User }>
+  ) => {
     if (response.success && response.data) {
       const { access_token, refresh_token, user: userData } = response.data;
       await setItem('accessToken', access_token);
@@ -58,7 +65,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const response = await authApi.login(email, password);
       if (response.success && response.data) {
-        await handleAuthResponse(response as ApiResponse<{ access_token: string; refresh_token: string; user: User }>);
+        await handleAuthResponse(
+          response as ApiResponse<{ access_token: string; refresh_token: string; user: User }>
+        );
         return { success: true };
       }
       return { success: false, message: response.message || 'Login failed' };
@@ -72,7 +81,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const response = await authApi.register({ email, password, name: displayName, phone });
       if (response.success && response.data) {
-        await handleAuthResponse(response as ApiResponse<{ access_token: string; refresh_token: string; user: User }>);
+        await handleAuthResponse(
+          response as ApiResponse<{ access_token: string; refresh_token: string; user: User }>
+        );
         return { success: true };
       }
       return { success: false, message: response.message || 'Registration failed' };
@@ -104,13 +115,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const response = await authApi.verifyOTP(code);
       if (response.success && response.data) {
-        await handleAuthResponse(response as ApiResponse<{ access_token: string; refresh_token: string; user: User }>);
+        await handleAuthResponse(
+          response as ApiResponse<{ access_token: string; refresh_token: string; user: User }>
+        );
         return { success: true };
       }
       return { success: false, message: response.message || 'OTP verification failed' };
     } catch (error: any) {
       logger.error('OTP verification error', error);
-      return { success: false, message: error.message || 'An error occurred during OTP verification' };
+      return {
+        success: false,
+        message: error.message || 'An error occurred during OTP verification',
+      };
     }
   };
 

@@ -195,7 +195,7 @@ export class ModerationService {
     if (request.action === 'suspend' || request.action === 'ban') {
       await this.updateTrustScore({
         userId: moderationCase.userId,
-        newScore: Math.max(0, await this.getTrustScore(moderationCase.userId) - 50),
+        newScore: Math.max(0, (await this.getTrustScore(moderationCase.userId)) - 50),
         reason: `Moderation action: ${request.action}`,
         metadata: { caseId: request.caseId },
       });
@@ -243,7 +243,10 @@ export class ModerationService {
     return appeal;
   }
 
-  async submitAppeal(userId: string, body: { caseId: string; reason: string }): Promise<ModerationResponse> {
+  async submitAppeal(
+    userId: string,
+    body: { caseId: string; reason: string }
+  ): Promise<ModerationResponse> {
     try {
       const appeal = await this.createAppeal({
         caseId: body.caseId,
@@ -287,7 +290,7 @@ export class ModerationService {
 
       await this.updateTrustScore({
         userId: appeal.userId,
-        newScore: Math.min(100, await this.getTrustScore(appeal.userId) + 25),
+        newScore: Math.min(100, (await this.getTrustScore(appeal.userId)) + 25),
         reason: 'Appeal successful',
         metadata: { appealId: request.appealId },
       });
@@ -305,7 +308,10 @@ export class ModerationService {
     return updatedAppeal;
   }
 
-  async reportContent(userId: string, body: { type: string; contentId?: string; userId?: string; reason: string }): Promise<ModerationResponse> {
+  async reportContent(
+    userId: string,
+    body: { type: string; contentId?: string; userId?: string; reason: string }
+  ): Promise<ModerationResponse> {
     try {
       const report = await this.prisma.report.create({
         data: {
@@ -373,7 +379,16 @@ export class ModerationService {
     return safetyAction;
   }
 
-  async takeSafetyAction(moderatorId: string, body: { type: string; targetId: string; targetType: 'content' | 'user'; reason: string; duration?: number }): Promise<ModerationResponse> {
+  async takeSafetyAction(
+    moderatorId: string,
+    body: {
+      type: string;
+      targetId: string;
+      targetType: 'content' | 'user';
+      reason: string;
+      duration?: number;
+    }
+  ): Promise<ModerationResponse> {
     try {
       const safetyAction = await this.createSafetyAction({
         type: body.type,
@@ -406,14 +421,19 @@ export class ModerationService {
     });
   }
 
-  async getSafetyActions(moderatorId: string, filters: { targetType?: string; actionType?: string; startDate?: string; endDate?: string }): Promise<ModerationResponse> {
+  async getSafetyActions(
+    moderatorId: string,
+    filters: { targetType?: string; actionType?: string; startDate?: string; endDate?: string }
+  ): Promise<ModerationResponse> {
     const where: Record<string, unknown> = {};
     if (filters?.targetType) where.targetType = filters.targetType;
     if (filters?.actionType) where.type = filters.actionType;
     if (filters?.startDate || filters?.endDate) {
       where.createdAt = {};
-      if (filters?.startDate) (where.createdAt as Record<string, unknown>).gte = new Date(filters.startDate);
-      if (filters?.endDate) (where.createdAt as Record<string, unknown>).lte = new Date(filters.endDate);
+      if (filters?.startDate)
+        (where.createdAt as Record<string, unknown>).gte = new Date(filters.startDate);
+      if (filters?.endDate)
+        (where.createdAt as Record<string, unknown>).lte = new Date(filters.endDate);
     }
 
     const actions = await this.prisma.safetyAction.findMany({
@@ -625,9 +645,11 @@ export class ModerationService {
     return updatedReport;
   }
 
-  async scanContentMedia(request: ScanRequest): Promise<{ success: boolean; data: { scanId: string; result: ScanResult } }> {
+  async scanContentMedia(
+    request: ScanRequest
+  ): Promise<{ success: boolean; data: { scanId: string; result: ScanResult } }> {
     const { scanId, result } = await this.safetyScanningService.scanAndPersist(request);
-    
+
     return {
       success: true,
       data: { scanId, result },
@@ -659,7 +681,10 @@ export class ModerationService {
       });
 
       if (scans.length === 0) {
-        return { success: true, data: { isSafe: true, scans: [], message: 'No safety scans found for this content' } };
+        return {
+          success: true,
+          data: { isSafe: true, scans: [], message: 'No safety scans found for this content' },
+        };
       }
 
       const latestScan = scans[0];

@@ -1,13 +1,19 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { randomInt } from 'crypto';
 
 import { AuthRepository } from '../auth.repository';
 
 @Injectable()
 export class OtpService {
-  private readonly otpExpiry = 300; // 5 minutes
+  private readonly otpExpiry: number;
 
-  constructor(private readonly authRepository: AuthRepository) {}
+  constructor(
+    private readonly authRepository: AuthRepository,
+    private readonly configService: ConfigService
+  ) {
+    this.otpExpiry = this.configService.get<number>('OTP_EXPIRY', 300);
+  }
 
   async generateOtp(userId: string): Promise<{ otp: string; expiresAt: Date }> {
     const otp = randomInt(100000, 999999).toString();

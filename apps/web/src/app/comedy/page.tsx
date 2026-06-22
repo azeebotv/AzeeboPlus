@@ -39,17 +39,27 @@ export default function ComedyPage(): JSX.Element {
       <header className="sticky top-0 z-50 backdrop-blur-xl bg-black/40 border-b border-gray-700/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #F39C12 0%, #E67E22 100%)' }}>
+            <div
+              className="h-10 w-10 rounded-xl flex items-center justify-center"
+              style={{ background: 'linear-gradient(135deg, #F39C12 0%, #E67E22 100%)' }}
+            >
               <span className="text-white font-bold text-xl leading-none">A</span>
             </div>
-            <h1 className="text-2xl font-bold hidden sm:block" style={{ color: colors.text.primary }}>Azeebo+</h1>
+            <h1
+              className="text-2xl font-bold hidden sm:block"
+              style={{ color: colors.text.primary }}
+            >
+              Azeebo+
+            </h1>
           </div>
 
           <nav className="hidden md:flex items-center gap-8">
             {['Home', 'Browse', 'Library', 'Creators', 'Comedy'].map((item) => (
               <Link
                 key={item}
-                href={item === 'Home' ? '/' : item === 'Comedy' ? '/comedy' : `/${item.toLowerCase()}`}
+                href={
+                  item === 'Home' ? '/' : item === 'Comedy' ? '/comedy' : `/${item.toLowerCase()}`
+                }
                 className="text-base font-medium transition-colors"
                 style={{ color: item === 'Comedy' ? '#F39C12' : colors.text.secondary }}
               >
@@ -63,16 +73,22 @@ export default function ComedyPage(): JSX.Element {
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
                   <Avatar size="md" fallback={user?.name?.charAt(0) || 'U'} />
-                  <span className="text-sm font-medium" style={{ color: colors.text.primary }}>{user?.name}</span>
+                  <span className="text-sm font-medium" style={{ color: colors.text.primary }}>
+                    {user?.name}
+                  </span>
                 </div>
               </div>
             ) : (
               <div className="flex items-center gap-2">
                 <Link href="/auth/login">
-                  <Button variant="ghost" size="sm">Sign In</Button>
+                  <Button variant="ghost" size="sm">
+                    Sign In
+                  </Button>
                 </Link>
                 <Link href="/auth/register">
-                  <Button variant="primary" size="sm">Get Started</Button>
+                  <Button variant="primary" size="sm">
+                    Get Started
+                  </Button>
                 </Link>
               </div>
             )}
@@ -81,18 +97,26 @@ export default function ComedyPage(): JSX.Element {
       </header>
 
       {/* Hero Section */}
-      <section className="relative py-16" style={{ background: 'linear-gradient(135deg, #F39C12 0%, #E67E22 100%)' }}>
+      <section
+        className="relative py-16"
+        style={{ background: 'linear-gradient(135deg, #F39C12 0%, #E67E22 100%)' }}
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <h1 className="text-4xl sm:text-5xl font-bold text-white mb-4">😂 Comedy Universe</h1>
             <p className="text-xl text-white/80 mb-8 max-w-2xl mx-auto">
-              Laugh out loud with the best African comedy content. From hilarious skits to stand-up specials.
+              Laugh out loud with the best African comedy content. From hilarious skits to stand-up
+              specials.
             </p>
             <div className="flex flex-wrap justify-center gap-4">
               <Button size="lg" variant="secondary">
                 <span>🎬</span> Browse Comedy
               </Button>
-              <Button size="lg" variant="ghost" style={{ color: 'white', backgroundColor: 'rgba(255,255,255,0.2)' }}>
+              <Button
+                size="lg"
+                variant="ghost"
+                style={{ color: 'white', backgroundColor: 'rgba(255,255,255,0.2)' }}
+              >
                 <span>🎤</span> Submit Your Clip
               </Button>
             </div>
@@ -128,15 +152,27 @@ export default function ComedyPage(): JSX.Element {
           </div>
         ) : error ? (
           <div className="text-center py-12">
-            <p className="text-lg mb-4" style={{ color: colors.text.secondary }}>{error}</p>
-            <Button variant="primary" onClick={() => window.location.reload()}>Retry</Button>
+            <p className="text-lg mb-4" style={{ color: colors.text.secondary }}>
+              {error}
+            </p>
+            <Button variant="primary" onClick={() => window.location.reload()}>
+              Retry
+            </Button>
           </div>
         ) : clips.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {clips.map((clip) => (
-              <Card key={clip.id} padding="none" className="overflow-hidden cursor-pointer hover:shadow-xl transition-shadow group">
+              <Card
+                key={clip.id}
+                padding="none"
+                className="overflow-hidden cursor-pointer hover:shadow-xl transition-shadow group"
+              >
                 <div className="relative">
-                  <img src={clip.thumbnail} alt={clip.title} className="w-full h-40 object-cover group-hover:scale-105 transition-transform" />
+                  <img
+                    src={clip.thumbnail}
+                    alt={clip.title}
+                    className="w-full h-40 object-cover group-hover:scale-105 transition-transform"
+                  />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
                   <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                     <div className="w-14 h-14 rounded-full bg-white/90 flex items-center justify-center">
@@ -145,15 +181,24 @@ export default function ComedyPage(): JSX.Element {
                   </div>
                 </div>
                 <div className="p-4">
-                  <h3 className="font-bold text-sm mb-2 truncate" style={{ color: colors.text.primary }}>{clip.title}</h3>
-                  <p className="text-sm line-clamp-2" style={{ color: colors.text.secondary }}>{clip.description}</p>
+                  <h3
+                    className="font-bold text-sm mb-2 truncate"
+                    style={{ color: colors.text.primary }}
+                  >
+                    {clip.title}
+                  </h3>
+                  <p className="text-sm line-clamp-2" style={{ color: colors.text.secondary }}>
+                    {clip.description}
+                  </p>
                 </div>
               </Card>
             ))}
           </div>
         ) : (
           <div className="text-center py-12">
-            <p className="text-lg" style={{ color: colors.text.secondary }}>No comedy clips available yet</p>
+            <p className="text-lg" style={{ color: colors.text.secondary }}>
+              No comedy clips available yet
+            </p>
           </div>
         )}
       </section>
@@ -180,10 +225,16 @@ export default function ComedyPage(): JSX.Element {
             { name: 'Roasts', icon: '🔥' },
             { name: 'Comedy Series', icon: '📺' },
           ].map((category) => (
-            <Card key={category.name} className="text-center cursor-pointer hover:shadow-lg transition-shadow" padding="none">
+            <Card
+              key={category.name}
+              className="text-center cursor-pointer hover:shadow-lg transition-shadow"
+              padding="none"
+            >
               <div className="p-4">
                 <span className="text-3xl mb-2 block">{category.icon}</span>
-                <h4 className="font-medium text-sm" style={{ color: colors.text.primary }}>{category.name}</h4>
+                <h4 className="font-medium text-sm" style={{ color: colors.text.primary }}>
+                  {category.name}
+                </h4>
               </div>
             </Card>
           ))}
@@ -191,51 +242,77 @@ export default function ComedyPage(): JSX.Element {
       </section>
 
       {/* Footer */}
-      <footer className="border-t py-12" style={{ borderColor: colors.border.light, backgroundColor: colors.bg.secondary }}>
+      <footer
+        className="border-t py-12"
+        style={{ borderColor: colors.border.light, backgroundColor: colors.bg.secondary }}
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
             <div>
-              <h4 className="font-bold text-lg mb-4" style={{ color: colors.text.primary }}>Azeebo+</h4>
+              <h4 className="font-bold text-lg mb-4" style={{ color: colors.text.primary }}>
+                Azeebo+
+              </h4>
               <ul className="space-y-2" style={{ color: colors.text.secondary }}>
                 {['About', 'Careers', 'Press'].map((item) => (
-                  <li key={item} className="text-sm hover:text-gray-200 transition-colors cursor-pointer">
+                  <li
+                    key={item}
+                    className="text-sm hover:text-gray-200 transition-colors cursor-pointer"
+                  >
                     {item}
                   </li>
                 ))}
               </ul>
             </div>
             <div>
-              <h4 className="font-bold text-lg mb-4" style={{ color: colors.text.primary }}>Help</h4>
+              <h4 className="font-bold text-lg mb-4" style={{ color: colors.text.primary }}>
+                Help
+              </h4>
               <ul className="space-y-2" style={{ color: colors.text.secondary }}>
                 {['Support', 'FAQ', 'Contact'].map((item) => (
-                  <li key={item} className="text-sm hover:text-gray-200 transition-colors cursor-pointer">
+                  <li
+                    key={item}
+                    className="text-sm hover:text-gray-200 transition-colors cursor-pointer"
+                  >
                     {item}
                   </li>
                 ))}
               </ul>
             </div>
             <div>
-              <h4 className="font-bold text-lg mb-4" style={{ color: colors.text.primary }}>Legal</h4>
+              <h4 className="font-bold text-lg mb-4" style={{ color: colors.text.primary }}>
+                Legal
+              </h4>
               <ul className="space-y-2" style={{ color: colors.text.secondary }}>
                 {['Terms', 'Privacy', 'Cookies'].map((item) => (
-                  <li key={item} className="text-sm hover:text-gray-200 transition-colors cursor-pointer">
+                  <li
+                    key={item}
+                    className="text-sm hover:text-gray-200 transition-colors cursor-pointer"
+                  >
                     {item}
                   </li>
                 ))}
               </ul>
             </div>
             <div>
-              <h4 className="font-bold text-lg mb-4" style={{ color: colors.text.primary }}>Connect</h4>
+              <h4 className="font-bold text-lg mb-4" style={{ color: colors.text.primary }}>
+                Connect
+              </h4>
               <ul className="space-y-2" style={{ color: colors.text.secondary }}>
                 {['Twitter', 'Instagram', 'Facebook'].map((item) => (
-                  <li key={item} className="text-sm hover:text-gray-200 transition-colors cursor-pointer">
+                  <li
+                    key={item}
+                    className="text-sm hover:text-gray-200 transition-colors cursor-pointer"
+                  >
                     {item}
                   </li>
                 ))}
               </ul>
             </div>
           </div>
-          <div className="mt-12 pt-8 border-t text-center text-sm" style={{ borderColor: colors.border.light, color: colors.text.tertiary }}>
+          <div
+            className="mt-12 pt-8 border-t text-center text-sm"
+            style={{ borderColor: colors.border.light, color: colors.text.tertiary }}
+          >
             <p>© 2026 Azeebo+. All rights reserved.</p>
           </div>
         </div>

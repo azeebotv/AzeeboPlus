@@ -62,7 +62,9 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     try {
       const response = await notificationApi.markAsRead(notificationId);
       if (response.success) {
-        setNotifications(prev => prev.map(n => n.id === notificationId ? { ...n, read: true } : n));
+        setNotifications((prev) =>
+          prev.map((n) => (n.id === notificationId ? { ...n, read: true } : n))
+        );
       }
     } catch (error: any) {
       setError(error.message || 'Failed to mark notification as read');
@@ -78,7 +80,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     try {
       const response = await notificationApi.markAllAsRead();
       if (response.success) {
-        setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+        setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
       }
     } catch (error: any) {
       setError(error.message || 'Failed to mark all notifications as read');
@@ -94,7 +96,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     try {
       const response = await notificationApi.deleteNotification(notificationId);
       if (response.success) {
-        setNotifications(prev => prev.filter(n => n.id !== notificationId));
+        setNotifications((prev) => prev.filter((n) => n.id !== notificationId));
       }
     } catch (error: any) {
       setError(error.message || 'Failed to delete notification');
@@ -122,7 +124,8 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      const projectId = Constants.expoConfig?.extra?.eas?.projectId ?? Constants.easConfig?.projectId;
+      const projectId =
+        Constants.expoConfig?.extra?.eas?.projectId ?? Constants.easConfig?.projectId;
       if (!projectId) {
         logger.warn('Project ID not found, skipping push token registration');
         return;
@@ -138,7 +141,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const unreadCount = notifications.filter(n => !n.read).length;
+  const unreadCount = notifications.filter((n) => !n.read).length;
 
   return (
     <NotificationContext.Provider

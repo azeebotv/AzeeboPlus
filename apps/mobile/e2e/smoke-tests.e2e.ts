@@ -26,7 +26,12 @@ describe('Mobile App Smoke Tests', () => {
     });
 
     it('should have video player functionality', () => {
-      const playerControls = ['playPauseButton', 'volumeControl', 'progressBar', 'fullscreenButton'];
+      const playerControls = [
+        'playPauseButton',
+        'volumeControl',
+        'progressBar',
+        'fullscreenButton',
+      ];
       expect(playerControls.length).toBe(4);
     });
   });

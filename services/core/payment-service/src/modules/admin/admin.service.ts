@@ -104,13 +104,14 @@ export class AdminService {
   }
 
   async getPaymentStats() {
-    const [totalPayments, completedPayments, failedPayments, totalIntents, pendingIntents] = await Promise.all([
-      this.prisma.payment.count(),
-      this.prisma.payment.count({ where: { status: 'completed' } }),
-      this.prisma.payment.count({ where: { status: 'failed' } }),
-      this.prisma.paymentIntent.count(),
-      this.prisma.paymentIntent.count({ where: { status: 'pending' } }),
-    ]);
+    const [totalPayments, completedPayments, failedPayments, totalIntents, pendingIntents] =
+      await Promise.all([
+        this.prisma.payment.count(),
+        this.prisma.payment.count({ where: { status: 'completed' } }),
+        this.prisma.payment.count({ where: { status: 'failed' } }),
+        this.prisma.paymentIntent.count(),
+        this.prisma.paymentIntent.count({ where: { status: 'pending' } }),
+      ]);
 
     const totalRevenue = await this.prisma.payment.aggregate({
       where: { status: 'completed' },

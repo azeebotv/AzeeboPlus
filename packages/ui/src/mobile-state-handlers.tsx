@@ -1,6 +1,19 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, ViewStyle } from 'react-native';
-import { colors, spacingNative, borderRadius, fontSizeNative, fontWeightNative } from '@azeebo/design-tokens';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ActivityIndicator,
+  ViewStyle,
+} from 'react-native';
+import {
+  colors,
+  spacingNative,
+  borderRadius,
+  fontSizeNative,
+  fontWeightNative,
+} from '@azeebo/design-tokens';
 
 interface LoadingProps {
   size?: 'small' | 'medium' | 'large';
@@ -146,12 +159,7 @@ export function StateHandler<T>({
   }
 
   if (error) {
-    return (
-      <ErrorState
-        message={error}
-        onRetry={onRetry}
-      />
-    );
+    return <ErrorState message={error} onRetry={onRetry} />;
   }
 
   if (!data || (Array.isArray(data) && data.length === 0)) {
@@ -179,9 +187,7 @@ export const OfflineState: React.FC<OfflineStateProps> = ({ onRetry }) => {
         <Text style={styles.offlineIcon}>📡</Text>
       </View>
       <Text style={styles.offlineTitle}>No Internet Connection</Text>
-      <Text style={styles.offlineMessage}>
-        Please check your connection and try again.
-      </Text>
+      <Text style={styles.offlineMessage}>Please check your connection and try again.</Text>
       {onRetry && (
         <TouchableOpacity style={styles.retryButton} onPress={onRetry}>
           <Text style={styles.retryButtonText}>Retry</Text>
@@ -266,7 +272,7 @@ export const ModerationState: React.FC<ModerationStateProps> = ({
       <Text style={styles.moderationMessage}>{message || config.defaultMessage}</Text>
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {

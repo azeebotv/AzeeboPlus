@@ -1,14 +1,30 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { api } from '@/lib/api';
+import type { ContentItem } from '@/lib/api';
 import { webLogger } from '@/lib/logger';
 import { Button, Card, Skeleton, Badge, Chip } from '@azeebo/ui';
 import { colors } from '@azeebo/design-tokens';
 import Link from 'next/link';
 
 export default function OverviewPage(): JSX.Element {
-  const [stats, setStats] = useState(null);
-  const [recentContent, setRecentContent] = useState([]);
+  const [stats, setStats] = useState<{
+    totalViews: number;
+    totalLikes: number;
+    totalComments: number;
+    followerCount: number;
+    contentCount: number;
+    totalEarnings: number;
+    pendingEarnings: number;
+    viewsChangePercentage: number;
+    avgEngagementRate: number;
+    totalFollowers: number;
+    viewsChange: number;
+    likesChange: number;
+    commentsChange: number;
+    followersChange: number;
+  } | null>(null);
+  const [recentContent, setRecentContent] = useState<ContentItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -28,8 +44,8 @@ export default function OverviewPage(): JSX.Element {
         if (cancelled) return;
 
         if (statsResponse.success && contentResponse.success) {
-          setStats(statsResponse.data);
-          setRecentContent(contentResponse.data.items || []);
+          setStats(statsResponse.data ?? null);
+          setRecentContent(contentResponse.data?.items || []);
         } else {
           const msg = statsResponse.message || contentResponse.message || 'Failed to load overview';
           setError(msg);
@@ -49,7 +65,9 @@ export default function OverviewPage(): JSX.Element {
     }
 
     fetchOverview();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   if (isLoading) {
@@ -157,7 +175,10 @@ export default function OverviewPage(): JSX.Element {
             <h3 className="text-lg font-bold" style={{ color: colors.text.primary }}>
               Recent Content
             </h3>
-            <Link href="/creators/dashboard/content" className="text-sm text-primary-600 hover:underline">
+            <Link
+              href="/creators/dashboard/content"
+              className="text-sm text-primary-600 hover:underline"
+            >
               View All
             </Link>
           </div>
@@ -167,7 +188,7 @@ export default function OverviewPage(): JSX.Element {
               {recentContent.map((item) => (
                 <div key={item.id} className="flex items-start gap-4 p-4 bg-gray-50 rounded-lg">
                   <img
-                    src={item.thumbnail}
+                    src={(item as any).thumbnail}
                     alt={item.title}
                     className="w-16 h-16 object-cover rounded"
                   />
@@ -175,9 +196,7 @@ export default function OverviewPage(): JSX.Element {
                     <h4 className="font-medium" style={{ color: colors.text.primary }}>
                       {item.title}
                     </h4>
-                    <p className="text-sm text-gray-500 line-clamp-2">
-                      {item.description}
-                    </p>
+                    <p className="text-sm text-gray-500 line-clamp-2">{item.description}</p>
                     <div className="mt-2 flex items-center gap-3 text-xs">
                       <span className="flex items-center gap-1">
                         <svg
@@ -193,7 +212,7 @@ export default function OverviewPage(): JSX.Element {
                             d="M13 10V3L4 14h7v7l9-11h-7z"
                           />
                         </svg>
-                        {item.views?.toLocaleString() || '0'} views
+                        {(item as any).views?.toLocaleString() || '0'} views
                       </span>
                       <span className="flex items-center gap-1">
                         <svg
@@ -209,7 +228,7 @@ export default function OverviewPage(): JSX.Element {
                             d="M8 12h.01M12 12h.01M16 12h.01M12 16h.01M8 16h.01M16 16h.01"
                           />
                         </svg>
-                        {item.likes?.toLocaleString() || '0'} likes
+                        {(item as any).likes?.toLocaleString() || '0'} likes
                       </span>
                       <Badge variant="outline" className="text-xs">
                         {item.contentType || 'Video'}

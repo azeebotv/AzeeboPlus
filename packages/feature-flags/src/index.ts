@@ -34,7 +34,7 @@ export class FeatureFlagService {
 
   async isEnabled(key: string, userId?: string): Promise<boolean> {
     const flag = await this.getFlag(key);
-    
+
     if (!flag) {
       return this.defaultFlags[key] ?? false;
     }
@@ -52,7 +52,7 @@ export class FeatureFlagService {
         const hash = this.hashUserId(userId, key);
         return hash < flag.rolloutPercentage;
       }
-      const roll = randomBytes(1)[0] / 256 * 100;
+      const roll = (randomBytes(1)[0] / 256) * 100;
       return roll < flag.rolloutPercentage;
     }
 
@@ -106,7 +106,7 @@ export class FeatureFlagService {
   async listFlags(): Promise<FeatureFlag[]> {
     const keys = await this.redis.keys(`${this.prefix}*`);
     const flags: FeatureFlag[] = [];
-    
+
     for (const key of keys) {
       const data = await this.redis.get(key);
       if (data) {
@@ -117,14 +117,14 @@ export class FeatureFlagService {
         }
       }
     }
-    
+
     return flags;
   }
 
   async getAllFlagsWithDefaults(): Promise<FeatureFlag[]> {
     const storedFlags = await this.listFlags();
-    const storedKeys = new Set(storedFlags.map(f => f.key));
-    
+    const storedKeys = new Set(storedFlags.map((f) => f.key));
+
     for (const [key, enabled] of Object.entries(this.defaultFlags)) {
       if (!storedKeys.has(key)) {
         storedFlags.push({
@@ -134,7 +134,7 @@ export class FeatureFlagService {
         });
       }
     }
-    
+
     return storedFlags;
   }
 
@@ -143,7 +143,7 @@ export class FeatureFlagService {
     const str = `${userId}:${key}`;
     for (let i = 0; i < str.length; i++) {
       const char = str.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
+      hash = (hash << 5) - hash + char;
       hash = hash & hash;
     }
     return Math.abs(hash % 100);

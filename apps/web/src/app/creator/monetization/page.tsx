@@ -102,7 +102,12 @@ export default function MonetizationSettingsPage(): JSX.Element {
               className="text-muted-foreground hover:text-foreground mb-2 flex items-center gap-2"
             >
               <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 19l-7-7 7-7"
+                />
               </svg>
               Back
             </button>
@@ -116,13 +121,17 @@ export default function MonetizationSettingsPage(): JSX.Element {
             <div className="flex items-center justify-between">
               <div>
                 <p className="font-medium text-foreground">Enable Monetization</p>
-                <p className="text-sm text-muted-foreground">Turn on monetization for your content</p>
+                <p className="text-sm text-muted-foreground">
+                  Turn on monetization for your content
+                </p>
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
                 <input
                   type="checkbox"
                   checked={settings.isMonetizationEnabled}
-                  onChange={(e) => setSettings({ ...settings, isMonetizationEnabled: e.target.checked })}
+                  onChange={(e) =>
+                    setSettings({ ...settings, isMonetizationEnabled: e.target.checked })
+                  }
                   className="sr-only peer"
                 />
                 <div className="w-11 h-6 bg-muted peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
@@ -135,13 +144,17 @@ export default function MonetizationSettingsPage(): JSX.Element {
             <div className="flex items-center justify-between mb-4">
               <div>
                 <p className="font-medium text-foreground">Enable Subscriptions</p>
-                <p className="text-sm text-muted-foreground">Allow users to subscribe to your content</p>
+                <p className="text-sm text-muted-foreground">
+                  Allow users to subscribe to your content
+                </p>
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
                 <input
                   type="checkbox"
                   checked={settings.isSubscriptionEnabled}
-                  onChange={(e) => setSettings({ ...settings, isSubscriptionEnabled: e.target.checked })}
+                  onChange={(e) =>
+                    setSettings({ ...settings, isSubscriptionEnabled: e.target.checked })
+                  }
                   className="sr-only peer"
                 />
                 <div className="w-11 h-6 bg-muted peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
@@ -155,7 +168,9 @@ export default function MonetizationSettingsPage(): JSX.Element {
                 <input
                   type="number"
                   value={settings.subscriptionPrice}
-                  onChange={(e) => setSettings({ ...settings, subscriptionPrice: parseFloat(e.target.value) || 0 })}
+                  onChange={(e) =>
+                    setSettings({ ...settings, subscriptionPrice: parseFloat(e.target.value) || 0 })
+                  }
                   className="w-full px-4 py-2 bg-muted border border-border rounded-lg text-foreground"
                   placeholder="Enter price"
                 />
@@ -188,7 +203,9 @@ export default function MonetizationSettingsPage(): JSX.Element {
                 <input
                   type="number"
                   value={settings.minimumTip}
-                  onChange={(e) => setSettings({ ...settings, minimumTip: parseFloat(e.target.value) || 0 })}
+                  onChange={(e) =>
+                    setSettings({ ...settings, minimumTip: parseFloat(e.target.value) || 0 })
+                  }
                   className="w-full px-4 py-2 bg-muted border border-border rounded-lg text-foreground"
                   placeholder="Enter minimum tip"
                 />
@@ -221,7 +238,9 @@ export default function MonetizationSettingsPage(): JSX.Element {
                 <input
                   type="number"
                   value={settings.adRevenueShare}
-                  onChange={(e) => setSettings({ ...settings, adRevenueShare: parseFloat(e.target.value) || 0 })}
+                  onChange={(e) =>
+                    setSettings({ ...settings, adRevenueShare: parseFloat(e.target.value) || 0 })
+                  }
                   className="w-full px-4 py-2 bg-muted border border-border rounded-lg text-foreground"
                   placeholder="Enter revenue share"
                 />
@@ -233,9 +252,7 @@ export default function MonetizationSettingsPage(): JSX.Element {
             <h2 className="text-xl font-bold text-foreground mb-4">Payout Information</h2>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Bank Name
-                </label>
+                <label className="block text-sm font-medium text-foreground mb-2">Bank Name</label>
                 <input
                   type="text"
                   value={settings.bankName}

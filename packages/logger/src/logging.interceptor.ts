@@ -1,7 +1,7 @@
 import { Injectable, NestInterceptor, ExecutionContext, CallHandler, Logger } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 import { Request } from 'express';
 
 interface LoggingRequest extends Request {
@@ -18,8 +18,8 @@ export class LoggingInterceptor implements NestInterceptor {
     const request = context.switchToHttp().getRequest<LoggingRequest>();
     const response = context.switchToHttp().getResponse();
 
-    const traceId = (request.headers['x-request-id'] as string) || uuidv4();
-    const spanId = uuidv4().substring(0, 8);
+    const traceId = (request.headers['x-request-id'] as string) || randomUUID();
+    const spanId = randomUUID().substring(0, 8);
     const { method, url } = request;
     const startTime = Date.now();
 

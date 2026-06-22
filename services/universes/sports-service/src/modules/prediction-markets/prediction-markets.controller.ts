@@ -4,7 +4,11 @@ import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard, RateLimit } from '@azeebo/security';
 import { PredictionMarketsService } from './prediction-markets.service';
 import { RolesGuard, Roles } from '@azeebo/shared-services';
-import { CreatePredictionDto, SubmitPredictionDto, ResolvePredictionDto } from './dto/prediction.dto';
+import {
+  CreatePredictionDto,
+  SubmitPredictionDto,
+  ResolvePredictionDto,
+} from './dto/prediction.dto';
 
 @ApiTags('Prediction Markets')
 @ApiBearerAuth()
@@ -62,9 +66,7 @@ export class PredictionMarketsController {
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles('ADMIN', 'MODERATOR')
   @ApiOperation({ summary: 'Create prediction market (admin)' })
-  async createMarket(
-    @Body() body: CreatePredictionDto
-  ): Promise<unknown> {
+  async createMarket(@Body() body: CreatePredictionDto): Promise<unknown> {
     return this.predictionMarketsService.createPredictionMarket(
       body.fixtureId,
       body.selectedOption,

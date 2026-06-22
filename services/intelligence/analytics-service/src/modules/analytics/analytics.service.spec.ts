@@ -41,10 +41,7 @@ describe('AnalyticsService', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        AnalyticsService,
-        { provide: PrismaService, useValue: mockPrismaService },
-      ],
+      providers: [AnalyticsService, { provide: PrismaService, useValue: mockPrismaService }],
     }).compile();
 
     service = module.get<AnalyticsService>(AnalyticsService);
@@ -132,9 +129,7 @@ describe('AnalyticsService', () => {
 
   describe('getUserSummary', () => {
     it('should return user summary', async () => {
-      mockPrismaService.productEvent.count
-        .mockResolvedValueOnce(100)
-        .mockResolvedValueOnce(50);
+      mockPrismaService.productEvent.count.mockResolvedValueOnce(100).mockResolvedValueOnce(50);
       mockPrismaService.productEvent.findMany.mockResolvedValue([
         { id: 'e1', eventName: 'content_view' },
       ]);

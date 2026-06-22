@@ -4,7 +4,7 @@ import { ExecutionContext, CallHandler } from '@nestjs/common';
 
 describe('SanitizeInterceptor', () => {
   let interceptor: SanitizeInterceptor;
-  let mockCallHandler: CallHandler;
+  let mockCallHandler: jest.Mocked<CallHandler>;
 
   beforeEach(() => {
     interceptor = new SanitizeInterceptor();
@@ -108,11 +108,12 @@ describe('SanitizeInterceptor', () => {
       mockCallHandler.handle = jest.fn(() => of(mockData));
 
       interceptor.intercept({} as ExecutionContext, mockCallHandler).subscribe((result) => {
-        expect(result).toHaveProperty('profile');
-        expect(result.profile).toHaveProperty('name');
-        expect(result.profile).not.toHaveProperty('password');
-        expect(result.profile.settings).toHaveProperty('theme');
-        expect(result.profile.settings).not.toHaveProperty('secretKey');
+        const typedResult = result as typeof mockData;
+        expect(typedResult).toHaveProperty('profile');
+        expect(typedResult.profile).toHaveProperty('name');
+        expect(typedResult.profile).not.toHaveProperty('password');
+        expect(typedResult.profile.settings).toHaveProperty('theme');
+        expect(typedResult.profile.settings).not.toHaveProperty('secretKey');
         done();
       });
     });
@@ -128,11 +129,12 @@ describe('SanitizeInterceptor', () => {
       mockCallHandler.handle = jest.fn(() => of(mockData));
 
       interceptor.intercept({} as ExecutionContext, mockCallHandler).subscribe((result) => {
-        expect(result.users).toHaveLength(2);
-        expect(result.users[0]).not.toHaveProperty('password');
-        expect(result.users[1]).not.toHaveProperty('password');
-        expect(result.users[0]).toHaveProperty('id');
-        expect(result.users[1]).toHaveProperty('id');
+        const typedResult = result as typeof mockData;
+        expect(typedResult.users).toHaveLength(2);
+        expect(typedResult.users[0]).not.toHaveProperty('password');
+        expect(typedResult.users[1]).not.toHaveProperty('password');
+        expect(typedResult.users[0]).toHaveProperty('id');
+        expect(typedResult.users[1]).toHaveProperty('id');
         done();
       });
     });
@@ -212,7 +214,7 @@ describe('SENSITIVE_FIELDS', () => {
     expect(SENSITIVE_FIELDS).toContain('password');
     expect(SENSITIVE_FIELDS).toContain('token');
     expect(SENSITIVE_FIELDS).toContain('secret');
-    expect(SENSITIVE_FIELDS).toContain('apiKey');
-    expect(SENSITIVE_FIELDS).toContain('creditCard');
+    expect(SENSITIVE_FIELDS).toContain('apikey');
+    expect(SENSITIVE_FIELDS).toContain('creditcard');
   });
 });

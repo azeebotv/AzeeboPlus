@@ -1,7 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { AuthRepository } from '../auth/auth.repository';
 import { PrismaService } from '../database/prisma.service';
 import { ApiResponseWrapper } from '@azeebo/shared-types';
@@ -10,7 +7,7 @@ import { ApiResponseWrapper } from '@azeebo/shared-types';
 export class AdminService {
   constructor(
     private readonly authRepository: AuthRepository,
-    private readonly prisma: PrismaService,
+    private readonly prisma: PrismaService
   ) {}
 
   async getStats() {
@@ -30,12 +27,7 @@ export class AdminService {
     return ApiResponseWrapper.success({ totalUsers, activeUsersToday, signupsToday });
   }
 
-  async getUsers(options?: {
-    page?: number;
-    limit?: number;
-    role?: string;
-    status?: string;
-  }) {
+  async getUsers(options?: { page?: number; limit?: number; role?: string; status?: string }) {
     const page = options?.page || 1;
     const limit = options?.limit || 20;
     const skip = (page - 1) * limit;

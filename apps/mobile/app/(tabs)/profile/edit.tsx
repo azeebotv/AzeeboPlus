@@ -67,25 +67,18 @@ export default function EditProfileScreen() {
         { text: 'OK', onPress: () => router.back() },
       ]);
     } catch (error: any) {
-      Alert.alert(
-        'Error',
-        error?.message || 'Failed to update profile. Please try again.'
-      );
+      Alert.alert('Error', error?.message || 'Failed to update profile. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleChangeAvatar = () => {
-    Alert.alert(
-      'Change Avatar',
-      'Choose an option',
-      [
-        { text: 'Take Photo', onPress: () => {} },
-        { text: 'Choose from Library', onPress: () => {} },
-        { text: 'Cancel', style: 'cancel' },
-      ]
-    );
+    Alert.alert('Change Avatar', 'Choose an option', [
+      { text: 'Take Photo', onPress: () => {} },
+      { text: 'Choose from Library', onPress: () => {} },
+      { text: 'Cancel', style: 'cancel' },
+    ]);
   };
 
   return (
@@ -104,15 +97,9 @@ export default function EditProfileScreen() {
 
           <View style={styles.form}>
             <View style={styles.avatarSection}>
-              <TouchableOpacity
-                style={styles.avatarContainer}
-                onPress={handleChangeAvatar}
-              >
+              <TouchableOpacity style={styles.avatarContainer} onPress={handleChangeAvatar}>
                 {avatar ? (
-                  <Image
-                    source={{ uri: avatar }}
-                    style={styles.avatar}
-                  />
+                  <Image source={{ uri: avatar }} style={styles.avatar} />
                 ) : (
                   <View style={styles.avatarPlaceholder}>
                     <Text style={styles.avatarPlaceholderText}>
@@ -141,9 +128,7 @@ export default function EditProfileScreen() {
                 }}
                 autoCapitalize="words"
               />
-              {errors.displayName && (
-                <Text style={styles.errorText}>{errors.displayName}</Text>
-              )}
+              {errors.displayName && <Text style={styles.errorText}>{errors.displayName}</Text>}
             </View>
 
             <View style={styles.inputGroup}>
@@ -170,10 +155,7 @@ export default function EditProfileScreen() {
             </View>
 
             <TouchableOpacity
-              style={[
-                styles.saveButton,
-                isLoading && styles.saveButtonDisabled,
-              ]}
+              style={[styles.saveButton, isLoading && styles.saveButtonDisabled]}
               onPress={handleSave}
               disabled={isLoading}
             >
@@ -184,10 +166,7 @@ export default function EditProfileScreen() {
               )}
             </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.cancelButton}
-              onPress={() => router.back()}
-            >
+            <TouchableOpacity style={styles.cancelButton} onPress={() => router.back()}>
               <Text style={styles.cancelButtonText}>Cancel</Text>
             </TouchableOpacity>
           </View>

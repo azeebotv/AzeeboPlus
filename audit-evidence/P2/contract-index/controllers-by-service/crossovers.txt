@@ -1,0 +1,9 @@
+===== services/universes/vertical-service/src/modules/crossovers/crossovers.controller.ts =====
+7:@Controller('crossovers')
+11:  @Get()
+22:  @Get(':slug')
+29:  @Post()
+36:  @Get('recaps')
+47:  @Get('recaps/:id')
+54:  @Post('recaps')
+

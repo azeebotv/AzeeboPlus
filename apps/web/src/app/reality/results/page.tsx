@@ -78,7 +78,12 @@ export default function ResultsPage(): JSX.Element {
             className="text-muted-foreground hover:text-foreground mb-4 flex items-center gap-2"
           >
             <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 19l-7-7 7-7"
+              />
             </svg>
             Back
           </button>
@@ -127,9 +132,12 @@ export default function ResultsPage(): JSX.Element {
                     className="w-20 h-20 rounded-full object-cover"
                   />
                   <div>
-                    <h4 className="text-xl font-semibold text-foreground">{selectedResult.winner.name}</h4>
+                    <h4 className="text-xl font-semibold text-foreground">
+                      {selectedResult.winner.name}
+                    </h4>
                     <p className="text-muted-foreground">
-                      {selectedResult.winner.votes.toLocaleString()} votes ({selectedResult.winner.percentage}%)
+                      {selectedResult.winner.votes.toLocaleString()} votes (
+                      {selectedResult.winner.percentage}%)
                     </p>
                   </div>
                 </div>
@@ -146,9 +154,12 @@ export default function ResultsPage(): JSX.Element {
                     className="w-20 h-20 rounded-full object-cover"
                   />
                   <div>
-                    <h4 className="text-xl font-semibold text-foreground">{selectedResult.evicted.name}</h4>
+                    <h4 className="text-xl font-semibold text-foreground">
+                      {selectedResult.evicted.name}
+                    </h4>
                     <p className="text-muted-foreground">
-                      {selectedResult.evicted.votes.toLocaleString()} votes ({selectedResult.evicted.percentage}%)
+                      {selectedResult.evicted.votes.toLocaleString()} votes (
+                      {selectedResult.evicted.percentage}%)
                     </p>
                   </div>
                 </div>
@@ -167,8 +178,8 @@ export default function ResultsPage(): JSX.Element {
                         contestant.isWinner
                           ? 'border-yellow-500'
                           : contestant.isEvicted
-                          ? 'border-red-500 opacity-70'
-                          : 'border-border'
+                            ? 'border-red-500 opacity-70'
+                            : 'border-border'
                       }`}
                     >
                       <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">

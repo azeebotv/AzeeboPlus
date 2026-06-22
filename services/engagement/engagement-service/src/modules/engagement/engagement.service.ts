@@ -107,7 +107,10 @@ export class EngagementService {
       },
     });
 
-    const totalPoints = predictions.reduce((sum: number, p: PredictionData) => sum + (p.points || 0), 0);
+    const totalPoints = predictions.reduce(
+      (sum: number, p: PredictionData) => sum + (p.points || 0),
+      0
+    );
     const correctCount = predictions.filter((p: PredictionData) => p.isCorrect).length;
 
     return {
@@ -154,7 +157,14 @@ export class EngagementService {
     };
   }
 
-  async updateLeaderboard(userId: string, displayName: string, avatar: string | null, score: number, category: string, timePeriod: string) {
+  async updateLeaderboard(
+    userId: string,
+    displayName: string,
+    avatar: string | null,
+    score: number,
+    category: string,
+    timePeriod: string
+  ) {
     const existing = await this.prisma.leaderboardEntry.findUnique({
       where: {
         userId_category_timePeriod: {

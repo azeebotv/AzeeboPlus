@@ -44,20 +44,22 @@ export class EmailProcessor extends WorkerHost {
     to: string,
     subject: string,
     template: string,
-    context: Record<string, string>,
+    context: Record<string, string>
   ): Promise<void> {
-    this.logger.debug(`Sending email to ${to} using template ${template}`);
+    this.logger.info(`Sending email to ${to} using template ${template}`);
     await this.emailService.sendEmail(to, subject, template, context);
   }
 
   @OnWorkerEvent('active')
   onActive(job: Job) {
-    this.logger.debug(`Email job ${job.id} is now active and processing`);
+    this.logger.info(`Email job ${job.id} is now active and processing`);
   }
 
   @OnWorkerEvent('completed')
   onCompleted(job: Job) {
-    this.logger.log(`Email job ${job.id} completed successfully (attempts: ${job.attemptsMade + 1})`);
+    this.logger.log(
+      `Email job ${job.id} completed successfully (attempts: ${job.attemptsMade + 1})`
+    );
   }
 
   @OnWorkerEvent('failed')
@@ -75,7 +77,7 @@ export class EmailProcessor extends WorkerHost {
 
   @OnWorkerEvent('progress')
   onProgress(job: Job, progress: number | object) {
-    this.logger.debug(`Email job ${job.id} progress: ${JSON.stringify(progress)}`);
+    this.logger.info(`Email job ${job.id} progress: ${JSON.stringify(progress)}`);
   }
 
   @OnWorkerEvent('drained')
@@ -85,6 +87,8 @@ export class EmailProcessor extends WorkerHost {
 
   @OnWorkerEvent('error')
   onError(error: Error) {
-    this.logger.error(`Email worker encountered an error: ${error.message}`, { stack: error.stack });
+    this.logger.error(`Email worker encountered an error: ${error.message}`, {
+      stack: error.stack,
+    });
   }
 }

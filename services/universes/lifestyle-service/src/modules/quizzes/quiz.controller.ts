@@ -13,7 +13,7 @@ import {
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 
-import { QuizService } from './quiz.service';
+import { QuizService, CreateQuizInput } from './quiz.service';
 
 @ApiTags('Quizzes')
 @Controller('quizzes')
@@ -51,10 +51,7 @@ export class QuizController {
   @ApiOperation({ summary: 'Create a quiz' })
   @ApiResponse({ status: 201, description: 'Quiz created' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async createQuiz(
-    @Request() req: { user: { sub: string } },
-    @Body() data: Record<string, unknown>
-  ) {
+  async createQuiz(@Request() req: { user: { sub: string } }, @Body() data: CreateQuizInput) {
     return this.quizService.createQuiz(req.user.sub, data);
   }
 
@@ -65,10 +62,7 @@ export class QuizController {
   @ApiResponse({ status: 200, description: 'Quiz started' })
   @ApiResponse({ status: 400, description: 'Invalid request' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async startQuiz(
-    @Request() req: { user: { sub: string } },
-    @Param('id') quizId: string
-  ) {
+  async startQuiz(@Request() req: { user: { sub: string } }, @Param('id') quizId: string) {
     return this.quizService.startQuiz(quizId, req.user.sub);
   }
 
@@ -82,7 +76,7 @@ export class QuizController {
   async submitQuiz(
     @Request() req: { user: { sub: string } },
     @Param('attemptId') attemptId: string,
-    @Body() body: { answers: Record<string, number> }
+    @Body() body: { answers: Record<string, string> }
   ) {
     return this.quizService.submitQuiz(attemptId, body.answers);
   }
@@ -90,10 +84,7 @@ export class QuizController {
   @Get(':id/leaderboard')
   @ApiOperation({ summary: 'Get quiz leaderboard' })
   @ApiResponse({ status: 200, description: 'Quiz leaderboard' })
-  async getLeaderboard(
-    @Param('id') quizId: string,
-    @Query('limit') limit?: number
-  ) {
+  async getLeaderboard(@Param('id') quizId: string, @Query('limit') limit?: number) {
     return this.quizService.getLeaderboard(quizId, Number(limit) || 10);
   }
 }

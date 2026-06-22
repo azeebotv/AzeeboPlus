@@ -1,5 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  TextInput,
+  Alert,
+  ActivityIndicator,
+} from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import { creatorApi } from '../../src/api/creator';
@@ -21,7 +30,9 @@ export default function CreatorSignup() {
     goals: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [categories, setCategories] = useState<Array<{ id: string; label: string; emoji: string }>>([]);
+  const [categories, setCategories] = useState<Array<{ id: string; label: string; emoji: string }>>(
+    []
+  );
   const [contentTypes, setContentTypes] = useState<Array<{ id: string; label: string }>>([]);
   const [isLoadingOptions, setIsLoadingOptions] = useState(true);
   const [optionsError, setOptionsError] = useState<string | null>(null);
@@ -77,7 +88,7 @@ export default function CreatorSignup() {
       Alert.alert('Error', 'Please fill in all required fields');
       return;
     }
-    
+
     setIsSubmitting(true);
     try {
       const response = await creatorApi.onboard({
@@ -88,10 +99,10 @@ export default function CreatorSignup() {
         socialLink: formData.socialLink,
         goals: formData.goals,
       });
-      
+
       if (response.success) {
         Alert.alert('Success', 'Your creator application has been submitted!', [
-          { text: 'OK', onPress: () => router.push('/creators/dashboard') }
+          { text: 'OK', onPress: () => router.push('/creators/dashboard') },
         ]);
       } else {
         Alert.alert('Error', 'Failed to submit application. Please try again.');
@@ -140,7 +151,9 @@ export default function CreatorSignup() {
             <Text style={[styles.stepTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
               What's your category?
             </Text>
-            <Text style={styles.stepDesc}>Choose the category that best describes your content</Text>
+            <Text style={styles.stepDesc}>
+              Choose the category that best describes your content
+            </Text>
             <View style={styles.optionsGrid}>
               {categories.map((option) => (
                 <TouchableOpacity
@@ -200,7 +213,13 @@ export default function CreatorSignup() {
             <View style={styles.formGroup}>
               <Text style={[styles.label, { color: isDark ? '#fff' : '#000' }]}>Display Name</Text>
               <TextInput
-                style={[styles.input, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5', color: isDark ? '#fff' : '#000' }]}
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5',
+                    color: isDark ? '#fff' : '#000',
+                  },
+                ]}
                 placeholder="Enter your display name"
                 placeholderTextColor="#888"
                 value={formData.displayName}
@@ -211,7 +230,13 @@ export default function CreatorSignup() {
             <View style={styles.formGroup}>
               <Text style={[styles.label, { color: isDark ? '#fff' : '#000' }]}>Bio</Text>
               <TextInput
-                style={[styles.textArea, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5', color: isDark ? '#fff' : '#000' }]}
+                style={[
+                  styles.textArea,
+                  {
+                    backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5',
+                    color: isDark ? '#fff' : '#000',
+                  },
+                ]}
                 placeholder="Tell your audience about yourself"
                 placeholderTextColor="#888"
                 value={formData.bio}
@@ -222,9 +247,17 @@ export default function CreatorSignup() {
             </View>
 
             <View style={styles.formGroup}>
-              <Text style={[styles.label, { color: isDark ? '#fff' : '#000' }]}>Social Link (Optional)</Text>
+              <Text style={[styles.label, { color: isDark ? '#fff' : '#000' }]}>
+                Social Link (Optional)
+              </Text>
               <TextInput
-                style={[styles.input, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5', color: isDark ? '#fff' : '#000' }]}
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5',
+                    color: isDark ? '#fff' : '#000',
+                  },
+                ]}
                 placeholder="Add your social media link"
                 placeholderTextColor="#888"
                 value={formData.socialLink}
@@ -234,9 +267,17 @@ export default function CreatorSignup() {
             </View>
 
             <View style={styles.formGroup}>
-              <Text style={[styles.label, { color: isDark ? '#fff' : '#000' }]}>Goals (Optional)</Text>
+              <Text style={[styles.label, { color: isDark ? '#fff' : '#000' }]}>
+                Goals (Optional)
+              </Text>
               <TextInput
-                style={[styles.textArea, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5', color: isDark ? '#fff' : '#000' }]}
+                style={[
+                  styles.textArea,
+                  {
+                    backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5',
+                    color: isDark ? '#fff' : '#000',
+                  },
+                ]}
                 placeholder="What do you want to achieve as a creator?"
                 placeholderTextColor="#888"
                 value={formData.goals}
@@ -250,18 +291,12 @@ export default function CreatorSignup() {
 
         <View style={styles.buttonBar}>
           {step > 1 && (
-            <TouchableOpacity
-              style={styles.backButtonMain}
-              onPress={handleBack}
-            >
+            <TouchableOpacity style={styles.backButtonMain} onPress={handleBack}>
               <Text style={styles.backButtonMainText}>Back</Text>
             </TouchableOpacity>
           )}
           <TouchableOpacity
-            style={[
-              styles.nextButton,
-              { flex: step > 1 ? 1 : 1 },
-            ]}
+            style={[styles.nextButton, { flex: step > 1 ? 1 : 1 }]}
             onPress={step === 3 ? handleSubmit : handleNext}
             disabled={isSubmitting}
           >

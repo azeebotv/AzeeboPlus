@@ -1,8 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView,
-  TouchableOpacity, ActivityIndicator,
-  Share, Alert,
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  ActivityIndicator,
+  Share,
+  Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { referralApi } from '../../src/api';
@@ -161,12 +166,16 @@ export default function ReferralScreen() {
                     Joined {new Date(referral.joinedAt).toLocaleDateString()}
                   </Text>
                 </View>
-                <View style={[
-                  styles.statusBadge,
-                  referral.status === 'rewarded' ? styles.statusBadgeSuccess :
-                  referral.status === 'active' ? styles.statusBadgeActive :
-                  styles.statusBadgePending,
-                ]}>
+                <View
+                  style={[
+                    styles.statusBadge,
+                    referral.status === 'rewarded'
+                      ? styles.statusBadgeSuccess
+                      : referral.status === 'active'
+                        ? styles.statusBadgeActive
+                        : styles.statusBadgePending,
+                  ]}
+                >
                   <Text style={styles.statusText}>
                     {referral.status.charAt(0).toUpperCase() + referral.status.slice(1)}
                   </Text>

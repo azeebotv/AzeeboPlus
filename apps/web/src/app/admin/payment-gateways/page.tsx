@@ -108,7 +108,12 @@ export default function PaymentGatewaySettingsPage(): JSX.Element {
               className="text-muted-foreground hover:text-foreground mb-2 flex items-center gap-2"
             >
               <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 19l-7-7 7-7"
+                />
               </svg>
               Back
             </button>
@@ -168,7 +173,9 @@ export default function PaymentGatewaySettingsPage(): JSX.Element {
                 </div>
                 <div className="bg-muted rounded-lg p-4">
                   <p className="text-sm text-muted-foreground">Transaction Fee</p>
-                  <p className="text-lg font-bold text-foreground mt-2">{gateway.transactionFee}%</p>
+                  <p className="text-lg font-bold text-foreground mt-2">
+                    {gateway.transactionFee}%
+                  </p>
                 </div>
                 <div className="bg-muted rounded-lg p-4">
                   <p className="text-sm text-muted-foreground">Success Rate</p>
@@ -179,11 +186,15 @@ export default function PaymentGatewaySettingsPage(): JSX.Element {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="bg-muted rounded-lg p-4">
                   <p className="text-sm text-muted-foreground">Total Processed</p>
-                  <p className="text-lg font-bold text-foreground mt-2">₦{gateway.totalProcessed.toLocaleString()}</p>
+                  <p className="text-lg font-bold text-foreground mt-2">
+                    ₦{gateway.totalProcessed.toLocaleString()}
+                  </p>
                 </div>
                 <div className="bg-muted rounded-lg p-4">
                   <p className="text-sm text-muted-foreground">Supported Currencies</p>
-                  <p className="text-lg font-bold text-foreground mt-2">{gateway.settings.supportedCurrencies.join(', ')}</p>
+                  <p className="text-lg font-bold text-foreground mt-2">
+                    {gateway.settings.supportedCurrencies.join(', ')}
+                  </p>
                 </div>
               </div>
 

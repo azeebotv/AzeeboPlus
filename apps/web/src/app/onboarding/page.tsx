@@ -51,7 +51,8 @@ export default function OnboardingPage() {
 
           <h1 className="text-5xl font-bold text-white mb-4">Welcome to Azeebo+</h1>
           <p className="text-xl text-gray-300 mb-12 max-w-lg mx-auto">
-            Discover endless entertainment across {universes.length} amazing universes. Reality shows, creators, movies, games, and more!
+            Discover endless entertainment across {universes.length} amazing universes. Reality
+            shows, creators, movies, games, and more!
           </p>
 
           <div className="grid grid-cols-4 gap-6 mb-12">

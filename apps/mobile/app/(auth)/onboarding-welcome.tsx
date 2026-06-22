@@ -17,7 +17,12 @@ export default function OnboardingWelcomeScreen() {
   }, [fadeAnim]);
 
   return (
-    <Animated.View style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#000000' : '#ffffff', opacity: fadeAnim }]}>
+    <Animated.View
+      style={[
+        styles.container,
+        { backgroundColor: colorScheme === 'dark' ? '#000000' : '#ffffff', opacity: fadeAnim },
+      ]}
+    >
       <View style={styles.content}>
         <View style={styles.animationContainer}>
           <View style={styles.ring1} />
@@ -31,7 +36,8 @@ export default function OnboardingWelcomeScreen() {
         </Text>
 
         <Text style={styles.description}>
-          Discover endless entertainment across 8 amazing universes. Reality shows, creators, movies, games, and more!
+          Discover endless entertainment across 8 amazing universes. Reality shows, creators,
+          movies, games, and more!
         </Text>
 
         <View style={styles.features}>
@@ -43,7 +49,12 @@ export default function OnboardingWelcomeScreen() {
           ].map((feature, index) => (
             <View key={index} style={styles.featureItem}>
               <Text style={styles.featureIcon}>{feature.icon}</Text>
-              <Text style={[styles.featureLabel, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
+              <Text
+                style={[
+                  styles.featureLabel,
+                  { color: colorScheme === 'dark' ? '#ffffff' : '#000000' },
+                ]}
+              >
                 {feature.label}
               </Text>
             </View>

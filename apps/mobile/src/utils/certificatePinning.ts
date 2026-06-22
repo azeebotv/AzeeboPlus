@@ -1,5 +1,6 @@
 import { Platform } from 'react-native';
 import { logger } from './logger';
+import Constants from 'expo-constants';
 
 export interface CertificatePin {
   hostname: string;
@@ -14,20 +15,59 @@ export interface PinValidationResult {
   pinnedHost: string;
 }
 
-const DEFAULT_PINS: CertificatePin[] = [
-  {
-    hostname: 'api.azeebo.com',
-    sha256Fingerprint: 'PLACEHOLDER_PRODUCTION_PIN',
-    backupPin: 'PLACEHOLDER_BACKUP_PIN',
-    expiresAt: '2027-12-31T23:59:59Z',
-  },
-  {
-    hostname: 'staging-api.azeebo.com',
-    sha256Fingerprint: 'PLACEHOLDER_STAGING_PIN',
-    backupPin: 'PLACEHOLDER_STAGING_BACKUP_PIN',
-    expiresAt: '2027-12-31T23:59:59Z',
-  },
-];
+// Load pins from environment configuration
+const loadPinsFromConfig = (): CertificatePin[] => {
+  const pins: CertificatePin[] = [];
+  const extras = Constants.expoConfig?.extra || {};
+
+  // Production pins
+  const prodPin = extras.CERT_PIN_PRODUCTION;
+  const prodBackup = extras.CERT_PIN_PRODUCTION_BACKUP;
+  if (prodPin && !prodPin.includes('PLACEHOLDER')) {
+    pins.push({
+      hostname: 'api.azeebo.com',
+      sha256Fingerprint: prodPin,
+      backupPin: prodBackup,
+      expiresAt: extras.CERT_PIN_EXPIRY || '2027-12-31T23:59:59Z',
+    });
+  }
+
+  // Staging pins
+  const stagingPin = extras.CERT_PIN_STAGING;
+  const stagingBackup = extras.CERT_PIN_STAGING_BACKUP;
+  if (stagingPin && !stagingPin.includes('PLACEHOLDER')) {
+    pins.push({
+      hostname: 'staging-api.azeebo.com',
+      sha256Fingerprint: stagingPin,
+      backupPin: stagingBackup,
+      expiresAt: extras.CERT_PIN_EXPIRY || '2027-12-31T23:59:59Z',
+    });
+  }
+
+  return pins;
+};
+
+const DEFAULT_PINS: CertificatePin[] = loadPinsFromConfig();
+
+// Validate that we have real pins in production
+const validatePins = (pins: CertificatePin[]): void => {
+  if (!__DEV__ && pins.length === 0) {
+    logger.error('CRITICAL: No valid certificate pins configured for production!');
+    throw new Error('Certificate pinning not properly configured');
+  }
+
+  pins.forEach((pin) => {
+    if (pin.sha256Fingerprint.includes('PLACEHOLDER')) {
+      logger.error(`CRITICAL: Placeholder certificate pin detected for ${pin.hostname}`);
+      if (!__DEV__) {
+        throw new Error(`Invalid certificate pin for ${pin.hostname}`);
+      }
+    }
+  });
+};
+
+// Validate pins on initialization
+validatePins(DEFAULT_PINS);
 
 class CertificatePinningService {
   private static instance: CertificatePinningService;
@@ -62,7 +102,10 @@ class CertificatePinningService {
     return this.pins.find((pin) => pin.hostname === hostname);
   }
 
-  async validateCertificate(hostname: string, certificateFingerprint: string): Promise<PinValidationResult> {
+  async validateCertificate(
+    hostname: string,
+    certificateFingerprint: string
+  ): Promise<PinValidationResult> {
     if (!this.isEnabled) {
       return { isValid: true, pinnedHost: hostname };
     }
@@ -140,10 +183,7 @@ class CertificatePinningService {
     };
   }
 
-  async fetchWithPinning(
-    url: string,
-    options: RequestInit = {}
-  ): Promise<Response> {
+  async fetchWithPinning(url: string, options: RequestInit = {}): Promise<Response> {
     if (!this.isEnabled) {
       return fetch(url, options);
     }
@@ -151,9 +191,7 @@ class CertificatePinningService {
     const validation = await this.validateUrl(url, 'pending');
 
     if (!validation.isValid) {
-      throw new Error(
-        `Certificate pinning validation failed for ${url}: ${validation.error}`
-      );
+      throw new Error(`Certificate pinning validation failed for ${url}: ${validation.error}`);
     }
 
     try {
@@ -168,9 +206,7 @@ class CertificatePinningService {
       return response;
     } catch (error) {
       if (error instanceof Error && error.message.includes('certificate')) {
-        throw new Error(
-          `Certificate validation failed for ${url}: ${error.message}`
-        );
+        throw new Error(`Certificate validation failed for ${url}: ${error.message}`);
       }
       throw error;
     }

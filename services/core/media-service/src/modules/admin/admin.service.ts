@@ -8,7 +8,7 @@ export class AdminService {
   constructor(
     private readonly uploadService: UploadService,
     private readonly s3Service: S3Service,
-    private readonly redisService: RedisService,
+    private readonly redisService: RedisService
   ) {}
 
   async getStats() {

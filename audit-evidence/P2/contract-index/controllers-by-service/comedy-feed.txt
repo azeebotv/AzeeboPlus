@@ -1,0 +1,13 @@
+===== services/universes/comedy-service/src/modules/comedy-feed/comedy-feed.controller.ts =====
+6:@Controller('v1/comedy')
+10:  @Get()
+21:  @Get('trending')
+31:  @Get('specials')
+42:  @Get('specials/:id')
+49:  @Post('specials/:id/like')
+56:  @Get('clips/:id')
+63:  @Post('clips/:id/like')
+70:  @Post('clips/:id/comment')
+80:  @Post('trends/record')
+87:  // @Post('specials/:id/rate')
+

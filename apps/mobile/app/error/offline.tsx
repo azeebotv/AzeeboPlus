@@ -7,15 +7,18 @@ export default function OfflineScreen() {
   const router = useRouter();
 
   return (
-    <View style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#000000' : '#ffffff' }]}>
+    <View
+      style={[
+        styles.container,
+        { backgroundColor: colorScheme === 'dark' ? '#000000' : '#ffffff' },
+      ]}
+    >
       <View style={styles.content}>
         <Text style={styles.icon}>📡</Text>
         <Text style={[styles.title, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
           No Internet Connection
         </Text>
-        <Text style={styles.description}>
-          Please check your network settings and try again.
-        </Text>
+        <Text style={styles.description}>Please check your network settings and try again.</Text>
       </View>
 
       <View style={styles.actions}>

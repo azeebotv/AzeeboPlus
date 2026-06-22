@@ -73,7 +73,9 @@ export default function NotificationManagementPage(): JSX.Element {
 
   const toggleTemplate = async (id: string, isActive: boolean): Promise<void> => {
     try {
-      await api.admin.updateNotificationTemplate(id, { isActive: !isActive } as unknown as Partial<NotificationTemplate>);
+      await api.admin.updateNotificationTemplate(id, {
+        isActive: !isActive,
+      } as unknown as Partial<NotificationTemplate>);
       loadData();
     } catch (error) {
       webLogger.error('Failed to toggle template:', error);
@@ -82,11 +84,16 @@ export default function NotificationManagementPage(): JSX.Element {
 
   const getTypeIcon = (type: string): string => {
     switch (type) {
-      case 'email': return '📧';
-      case 'push': return '🔔';
-      case 'sms': return '📱';
-      case 'in-app': return '💬';
-      default: return '📢';
+      case 'email':
+        return '📧';
+      case 'push':
+        return '🔔';
+      case 'sms':
+        return '📱';
+      case 'in-app':
+        return '💬';
+      default:
+        return '📢';
     }
   };
 
@@ -107,7 +114,9 @@ export default function NotificationManagementPage(): JSX.Element {
         <div className="flex justify-between items-start mb-8">
           <div>
             <h1 className="text-3xl font-bold text-foreground mb-2">Notification Management</h1>
-            <p className="text-muted-foreground">Manage notification templates and monitor delivery stats</p>
+            <p className="text-muted-foreground">
+              Manage notification templates and monitor delivery stats
+            </p>
           </div>
           <button
             onClick={() => setShowCreateModal(true)}
@@ -121,11 +130,15 @@ export default function NotificationManagementPage(): JSX.Element {
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
             <div className="bg-card rounded-lg border border-border p-4">
               <p className="text-sm text-muted-foreground mb-1">Total Sent</p>
-              <p className="text-2xl font-bold text-foreground">{stats.totalSent.toLocaleString()}</p>
+              <p className="text-2xl font-bold text-foreground">
+                {stats.totalSent.toLocaleString()}
+              </p>
             </div>
             <div className="bg-card rounded-lg border border-border p-4">
               <p className="text-sm text-muted-foreground mb-1">Delivered</p>
-              <p className="text-2xl font-bold text-green-500">{stats.delivered.toLocaleString()}</p>
+              <p className="text-2xl font-bold text-green-500">
+                {stats.delivered.toLocaleString()}
+              </p>
             </div>
             <div className="bg-card rounded-lg border border-border p-4">
               <p className="text-sm text-muted-foreground mb-1">Opened</p>
@@ -155,9 +168,13 @@ export default function NotificationManagementPage(): JSX.Element {
                     <div>
                       <div className="flex items-center gap-2 mb-1">
                         <h3 className="text-lg font-bold text-foreground">{template.name}</h3>
-                        <span className={`text-xs font-semibold px-2 py-1 rounded ${
-                          template.isActive ? 'bg-green-500/20 text-green-500' : 'bg-gray-500/20 text-gray-500'
-                        }`}>
+                        <span
+                          className={`text-xs font-semibold px-2 py-1 rounded ${
+                            template.isActive
+                              ? 'bg-green-500/20 text-green-500'
+                              : 'bg-gray-500/20 text-gray-500'
+                          }`}
+                        >
                           {template.isActive ? 'Active' : 'Inactive'}
                         </span>
                       </div>
@@ -170,7 +187,10 @@ export default function NotificationManagementPage(): JSX.Element {
                       {template.variables.length > 0 && (
                         <div className="flex gap-2 mt-2">
                           {template.variables.map((v) => (
-                            <span key={v} className="bg-muted text-muted-foreground text-xs px-2 py-1 rounded">
+                            <span
+                              key={v}
+                              className="bg-muted text-muted-foreground text-xs px-2 py-1 rounded"
+                            >
                               {v}
                             </span>
                           ))}
@@ -205,7 +225,9 @@ export default function NotificationManagementPage(): JSX.Element {
         {showCreateModal && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
             <div className="bg-card rounded-xl border border-border p-6 w-full max-w-2xl">
-              <h2 className="text-2xl font-bold text-foreground mb-6">Create Notification Template</h2>
+              <h2 className="text-2xl font-bold text-foreground mb-6">
+                Create Notification Template
+              </h2>
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-2">Name</label>
@@ -221,7 +243,12 @@ export default function NotificationManagementPage(): JSX.Element {
                   <label className="block text-sm font-medium text-foreground mb-2">Type</label>
                   <select
                     value={newTemplate.type}
-                    onChange={(e) => setNewTemplate({ ...newTemplate, type: e.target.value as NotificationTemplate['type'] })}
+                    onChange={(e) =>
+                      setNewTemplate({
+                        ...newTemplate,
+                        type: e.target.value as NotificationTemplate['type'],
+                      })
+                    }
                     className="w-full px-4 py-2 bg-muted border border-border rounded-lg text-foreground"
                   >
                     <option value="email">Email</option>

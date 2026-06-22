@@ -1,0 +1,6 @@
+===== services/universes/lifestyle-service/src/modules/feed/feed.controller.ts =====
+7:@Controller('v1/lifestyle/feed')
+11:  @Get()
+12:  @UseGuards(RateLimitGuard)
+24:  @Get('trending')
+

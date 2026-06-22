@@ -59,7 +59,11 @@ describe('WalletService Integration', () => {
             $transaction: jest.fn((callback) => {
               const mockTx = {
                 walletTransaction: { create: jest.fn().mockResolvedValue(mockTransaction) },
-                wallet: { update: jest.fn().mockResolvedValue({ ...mockWallet, bonusBalance: new Prisma.Decimal(200) }) },
+                wallet: {
+                  update: jest
+                    .fn()
+                    .mockResolvedValue({ ...mockWallet, bonusBalance: new Prisma.Decimal(200) }),
+                },
               };
               return callback(mockTx);
             }),

@@ -11,7 +11,7 @@ export class SuspensionService {
 
   constructor(
     private prisma: PrismaService,
-    private configService: ConfigService,
+    private configService: ConfigService
   ) {
     this.notificationServiceClient = createApiClient({
       baseUrl: this.configService.getOrThrow<string>('NOTIFICATION_SERVICE_URL'),

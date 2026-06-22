@@ -103,8 +103,8 @@ export class AdminService {
               message,
               type: type || 'system',
             },
-          }),
-        ),
+          })
+        )
       );
 
       this.logger.log(`Sent system notification to ${notifications.length} users`);
@@ -129,8 +129,8 @@ export class AdminService {
               message,
               type: type || 'system',
             },
-          }),
-        ),
+          })
+        )
       );
       sentCount += batch.length;
     }

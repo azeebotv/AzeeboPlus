@@ -18,7 +18,11 @@ import { logger } from '../../src/utils/logger';
 import { useBiometric } from '../../src/hooks/useBiometric';
 import Constants from 'expo-constants';
 
-export default function SettingsScreen(): JSX.Element {
+// Type declaration for expo-constants
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const safeConstants = (Constants as any) as { expoConfig?: { version?: string; name?: string } };
+
+export default function SettingsScreen() {
   const colorScheme = useColorScheme();
   const { user, isAuthenticated } = useAuth();
   const {
@@ -66,13 +70,11 @@ export default function SettingsScreen(): JSX.Element {
     }
   };
 
-  const handleTogglePreference = async (
-    key: keyof NotificationPreferences,
-    value?: boolean
-  ) => {
+  const handleTogglePreference = async (key: keyof NotificationPreferences, value?: boolean) => {
     if (key === 'types') return;
 
-    const newValue = value !== undefined ? value : !preferences[key as keyof NotificationPreferences];
+    const newValue =
+      value !== undefined ? value : !preferences[key as keyof NotificationPreferences];
     const updatedPreferences = {
       ...preferences,
       [key]: newValue,
@@ -112,10 +114,7 @@ export default function SettingsScreen(): JSX.Element {
 
   const handleBiometricToggle = async (value: boolean) => {
     if (!isAvailable) {
-      Alert.alert(
-        'Not Available',
-        'Biometric authentication is not available on this device'
-      );
+      Alert.alert('Not Available', 'Biometric authentication is not available on this device');
       return;
     }
 
@@ -139,7 +138,11 @@ export default function SettingsScreen(): JSX.Element {
           Alert.alert(
             'Success',
             `Biometric authentication has been enabled${
-              biometricType === 'face' ? ' (Face ID)' : biometricType === 'fingerprint' ? ' (Fingerprint)' : ''
+              biometricType === 'face'
+                ? ' (Face ID)'
+                : biometricType === 'fingerprint'
+                  ? ' (Fingerprint)'
+                  : ''
             }`
           );
         } else {
@@ -171,7 +174,10 @@ export default function SettingsScreen(): JSX.Element {
 
   if (!isAuthenticated) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#000' : '#fff' }]} edges={['top']}>
+      <SafeAreaView
+        style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#000' : '#fff' }]}
+        edges={['top']}
+      >
         <View style={styles.unauthenticatedContainer}>
           <Text style={styles.lockIcon}>🔒</Text>
           <Text style={[styles.lockText, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
@@ -183,10 +189,15 @@ export default function SettingsScreen(): JSX.Element {
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#000' : '#fff' }]} edges={['top']}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#000' : '#fff' }]}
+      edges={['top']}
+    >
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <Text style={[styles.title, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>Settings</Text>
+          <Text style={[styles.title, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
+            Settings
+          </Text>
         </View>
 
         {isSaving && (
@@ -201,11 +212,18 @@ export default function SettingsScreen(): JSX.Element {
             Notification Channels
           </Text>
 
-          <View style={[styles.settingItem, { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' }]}>
+          <View
+            style={[
+              styles.settingItem,
+              { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' },
+            ]}
+          >
             <View style={styles.settingInfo}>
               <Text style={styles.settingIcon}>🔔</Text>
               <View>
-                <Text style={[styles.settingLabel, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
+                <Text
+                  style={[styles.settingLabel, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}
+                >
                   Push Notifications
                 </Text>
                 <Text style={styles.settingDescription}>Receive alerts on your device</Text>
@@ -219,11 +237,18 @@ export default function SettingsScreen(): JSX.Element {
             />
           </View>
 
-          <View style={[styles.settingItem, { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' }]}>
+          <View
+            style={[
+              styles.settingItem,
+              { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' },
+            ]}
+          >
             <View style={styles.settingInfo}>
               <Text style={styles.settingIcon}>📧</Text>
               <View>
-                <Text style={[styles.settingLabel, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
+                <Text
+                  style={[styles.settingLabel, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}
+                >
                   Email Notifications
                 </Text>
                 <Text style={styles.settingDescription}>Receive updates via email</Text>
@@ -237,11 +262,18 @@ export default function SettingsScreen(): JSX.Element {
             />
           </View>
 
-          <View style={[styles.settingItem, { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' }]}>
+          <View
+            style={[
+              styles.settingItem,
+              { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' },
+            ]}
+          >
             <View style={styles.settingInfo}>
               <Text style={styles.settingIcon}>📱</Text>
               <View>
-                <Text style={[styles.settingLabel, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
+                <Text
+                  style={[styles.settingLabel, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}
+                >
                   SMS Notifications
                 </Text>
                 <Text style={styles.settingDescription}>Receive text messages</Text>
@@ -261,13 +293,20 @@ export default function SettingsScreen(): JSX.Element {
             Security
           </Text>
 
-          <View style={[styles.settingItem, { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' }]}>
+          <View
+            style={[
+              styles.settingItem,
+              { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' },
+            ]}
+          >
             <View style={styles.settingInfo}>
               <Text style={styles.settingIcon}>
                 {biometricType === 'face' ? '👤' : biometricType === 'fingerprint' ? '👆' : '🔐'}
               </Text>
               <View>
-                <Text style={[styles.settingLabel, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
+                <Text
+                  style={[styles.settingLabel, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}
+                >
                   {getBiometricLabel()}
                 </Text>
                 <Text style={styles.settingDescription}>
@@ -296,10 +335,17 @@ export default function SettingsScreen(): JSX.Element {
             Notification Types
           </Text>
 
-          <View style={[styles.settingItem, { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' }]}>
+          <View
+            style={[
+              styles.settingItem,
+              { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' },
+            ]}
+          >
             <View style={styles.settingInfo}>
               <Text style={styles.settingIcon}>📺</Text>
-              <Text style={[styles.settingLabel, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
+              <Text
+                style={[styles.settingLabel, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}
+              >
                 New Content
               </Text>
             </View>
@@ -311,10 +357,17 @@ export default function SettingsScreen(): JSX.Element {
             />
           </View>
 
-          <View style={[styles.settingItem, { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' }]}>
+          <View
+            style={[
+              styles.settingItem,
+              { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' },
+            ]}
+          >
             <View style={styles.settingInfo}>
               <Text style={styles.settingIcon}>💬</Text>
-              <Text style={[styles.settingLabel, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
+              <Text
+                style={[styles.settingLabel, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}
+              >
                 Comments
               </Text>
             </View>
@@ -326,10 +379,17 @@ export default function SettingsScreen(): JSX.Element {
             />
           </View>
 
-          <View style={[styles.settingItem, { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' }]}>
+          <View
+            style={[
+              styles.settingItem,
+              { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' },
+            ]}
+          >
             <View style={styles.settingInfo}>
               <Text style={styles.settingIcon}>👍</Text>
-              <Text style={[styles.settingLabel, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
+              <Text
+                style={[styles.settingLabel, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}
+              >
                 Likes
               </Text>
             </View>
@@ -341,10 +401,17 @@ export default function SettingsScreen(): JSX.Element {
             />
           </View>
 
-          <View style={[styles.settingItem, { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' }]}>
+          <View
+            style={[
+              styles.settingItem,
+              { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' },
+            ]}
+          >
             <View style={styles.settingInfo}>
               <Text style={styles.settingIcon}>👥</Text>
-              <Text style={[styles.settingLabel, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
+              <Text
+                style={[styles.settingLabel, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}
+              >
                 Followers
               </Text>
             </View>
@@ -356,10 +423,17 @@ export default function SettingsScreen(): JSX.Element {
             />
           </View>
 
-          <View style={[styles.settingItem, { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' }]}>
+          <View
+            style={[
+              styles.settingItem,
+              { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' },
+            ]}
+          >
             <View style={styles.settingInfo}>
               <Text style={styles.settingIcon}>⚙️</Text>
-              <Text style={[styles.settingLabel, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
+              <Text
+                style={[styles.settingLabel, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}
+              >
                 System Updates
               </Text>
             </View>
@@ -371,10 +445,17 @@ export default function SettingsScreen(): JSX.Element {
             />
           </View>
 
-          <View style={[styles.settingItem, { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' }]}>
+          <View
+            style={[
+              styles.settingItem,
+              { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' },
+            ]}
+          >
             <View style={styles.settingInfo}>
               <Text style={styles.settingIcon}>💰</Text>
-              <Text style={[styles.settingLabel, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
+              <Text
+                style={[styles.settingLabel, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}
+              >
                 Payments
               </Text>
             </View>
@@ -392,35 +473,57 @@ export default function SettingsScreen(): JSX.Element {
             About
           </Text>
 
-          <View style={[styles.settingItem, { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' }]}>
-            <Text style={[styles.settingLabel, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
+          <View
+            style={[
+              styles.settingItem,
+              { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' },
+            ]}
+          >
+            <Text
+              style={[styles.settingLabel, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}
+            >
               Version
             </Text>
-            <Text style={styles.settingValue}>{Constants.expoConfig?.version ?? '1.0.0'}</Text>
+            <Text style={styles.settingValue}>{safeConstants.expoConfig?.version ?? '1.0.0'}</Text>
           </View>
 
           <TouchableOpacity
-            style={[styles.settingItem, { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' }]}
+            style={[
+              styles.settingItem,
+              { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' },
+            ]}
           >
-            <Text style={[styles.settingLabel, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
+            <Text
+              style={[styles.settingLabel, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}
+            >
               Terms of Service
             </Text>
             <Text style={styles.menuArrow}>›</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.settingItem, { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' }]}
+            style={[
+              styles.settingItem,
+              { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' },
+            ]}
           >
-            <Text style={[styles.settingLabel, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
+            <Text
+              style={[styles.settingLabel, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}
+            >
               Privacy Policy
             </Text>
             <Text style={styles.menuArrow}>›</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.settingItem, { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' }]}
+            style={[
+              styles.settingItem,
+              { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' },
+            ]}
           >
-            <Text style={[styles.settingLabel, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
+            <Text
+              style={[styles.settingLabel, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}
+            >
               Licenses
             </Text>
             <Text style={styles.menuArrow}>›</Text>

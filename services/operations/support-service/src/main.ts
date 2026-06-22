@@ -15,7 +15,7 @@ async function bootstrap() {
   const configService = app.get(ConfigService);
 
   app.useGlobalFilters(new GlobalExceptionFilter());
-  
+
   app.useGlobalInterceptors(new LoggingInterceptor());
 
   app.use(
@@ -50,7 +50,10 @@ async function bootstrap() {
     })
   );
 
-  const allowedOrigins = configService.get<string>('ALLOWED_ORIGINS')?.split(',').map(o => o.trim());
+  const allowedOrigins = configService
+    .get<string>('ALLOWED_ORIGINS')
+    ?.split(',')
+    .map((o) => o.trim());
   if (!allowedOrigins || allowedOrigins.length === 0) {
     throw new Error('ALLOWED_ORIGINS environment variable must be set');
   }

@@ -10,6 +10,7 @@ import {
   Logger,
   Request,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { WebhookService, WebhookPayload } from './webhook.service';
 import { WebhookSecurityService } from './webhook-security.service';
 import { PaystackWebhookGuard } from './guards/paystack-webhook.guard';
@@ -19,12 +20,15 @@ import { ApiResponseWrapper } from '@azeebo/shared-types';
 @Controller('webhooks')
 export class WebhookController {
   private readonly logger = new Logger(WebhookController.name);
-  private readonly webhookTimeout = 30000;
+  private readonly webhookTimeout: number;
 
   constructor(
     private webhookService: WebhookService,
     private webhookSecurity: WebhookSecurityService,
-  ) {}
+    private configService: ConfigService
+  ) {
+    this.webhookTimeout = this.configService.get<number>('WEBHOOK_TIMEOUT', 30000);
+  }
 
   @Post('paystack')
   @UseGuards(PaystackWebhookGuard)
@@ -32,10 +36,9 @@ export class WebhookController {
   async handlePaystackWebhook(
     @Body() payload: WebhookPayload,
     @Headers('x-paystack-signature') signature: string,
-    @Request() req: { rawBody?: string },
+    @Request() req: { rawBody?: string }
   ) {
-    const reference =
-      (payload.data as Record<string, unknown>)?.reference as string;
+    const reference = (payload.data as Record<string, unknown>)?.reference as string;
 
     if (!reference) {
       throw new BadRequestException('Missing reference in webhook payload');
@@ -57,11 +60,7 @@ export class WebhookController {
       throw new BadRequestException('Paystack webhook secret not configured');
     }
 
-    const isValid = this.webhookSecurity.verifyPaystackSignature(
-      rawBody,
-      signature,
-      secret,
-    );
+    const isValid = this.webhookSecurity.verifyPaystackSignature(rawBody, signature, secret);
 
     if (!isValid) {
       this.logger.error(`Invalid Paystack webhook signature: ${reference}`);
@@ -70,9 +69,7 @@ export class WebhookController {
 
     const timestamp = (payload.data as Record<string, unknown>)?.created_at
       ? Math.floor(
-          new Date(
-            (payload.data as Record<string, unknown>).created_at as string,
-          ).getTime() / 1000,
+          new Date((payload.data as Record<string, unknown>).created_at as string).getTime() / 1000
         )
       : Math.floor(Date.now() / 1000);
 
@@ -86,10 +83,7 @@ export class WebhookController {
       await Promise.race([
         this.webhookService.handlePaystackWebhook(payload),
         new Promise((_, reject) =>
-          setTimeout(
-            () => reject(new Error('Webhook processing timeout')),
-            this.webhookTimeout,
-          ),
+          setTimeout(() => reject(new Error('Webhook processing timeout')), this.webhookTimeout)
         ),
       ]);
 
@@ -101,7 +95,7 @@ export class WebhookController {
     } catch (error) {
       this.logger.error(
         `Paystack webhook processing failed: ${reference}`,
-        error instanceof Error ? error.stack : undefined,
+        error instanceof Error ? error.stack : undefined
       );
       throw error;
     }
@@ -113,7 +107,7 @@ export class WebhookController {
   async handleFlutterwaveWebhook(
     @Body() payload: WebhookPayload,
     @Headers('verif-hash') signature: string,
-    @Request() req: { rawBody?: string },
+    @Request() req: { rawBody?: string }
   ) {
     const reference =
       ((payload.data as Record<string, unknown>)?.txRef as string) ||
@@ -136,16 +130,10 @@ export class WebhookController {
     const secret = process.env.FLUTTERWAVE_WEBHOOK_SECRET;
 
     if (!secret) {
-      throw new BadRequestException(
-        'Flutterwave webhook secret not configured',
-      );
+      throw new BadRequestException('Flutterwave webhook secret not configured');
     }
 
-    const isValid = this.webhookSecurity.verifyFlutterwaveSignature(
-      rawBody,
-      signature,
-      secret,
-    );
+    const isValid = this.webhookSecurity.verifyFlutterwaveSignature(rawBody, signature, secret);
 
     if (!isValid) {
       this.logger.error(`Invalid Flutterwave webhook signature: ${reference}`);
@@ -154,9 +142,7 @@ export class WebhookController {
 
     const timestamp = (payload.data as Record<string, unknown>)?.created_at
       ? Math.floor(
-          new Date(
-            (payload.data as Record<string, unknown>).created_at as string,
-          ).getTime() / 1000,
+          new Date((payload.data as Record<string, unknown>).created_at as string).getTime() / 1000
         )
       : Math.floor(Date.now() / 1000);
 
@@ -170,24 +156,19 @@ export class WebhookController {
       await Promise.race([
         this.webhookService.handleFlutterwaveWebhook(payload),
         new Promise((_, reject) =>
-          setTimeout(
-            () => reject(new Error('Webhook processing timeout')),
-            this.webhookTimeout,
-          ),
+          setTimeout(() => reject(new Error('Webhook processing timeout')), this.webhookTimeout)
         ),
       ]);
 
       await this.webhookSecurity.markAsProcessed(reference);
       await this.webhookSecurity.recordInReplayWindow(reference);
 
-      this.logger.log(
-        `Flutterwave webhook processed successfully: ${reference}`,
-      );
+      this.logger.log(`Flutterwave webhook processed successfully: ${reference}`);
       return ApiResponseWrapper.success({ received: true });
     } catch (error) {
       this.logger.error(
         `Flutterwave webhook processing failed: ${reference}`,
-        error instanceof Error ? error.stack : undefined,
+        error instanceof Error ? error.stack : undefined
       );
       throw error;
     }

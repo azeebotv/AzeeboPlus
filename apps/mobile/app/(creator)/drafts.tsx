@@ -41,7 +41,18 @@ export default function DraftsScreen() {
       setError(null);
       const response = await contentApi.getDrafts();
       if (response.success && response.data) {
-        setDrafts(response.data);
+        // Map CreatorContent[] to Draft[] interface
+        setDrafts(
+          response.data.map((item) => ({
+            id: item.id,
+            title: item.title,
+            description: item.description,
+            thumbnail: item.thumbnail ?? '',
+            lastSaved: item.updatedAt ?? item.createdAt ?? '',
+            type: (item.contentType?.toLowerCase() || 'video') as 'video' | 'image' | 'audio',
+            progress: item.status === 'draft' ? 50 : 100,
+          }))
+        );
       }
     } catch (err) {
       logger.error('Failed to load drafts', err);
@@ -52,25 +63,21 @@ export default function DraftsScreen() {
   };
 
   const handleDelete = (id: string) => {
-    Alert.alert(
-      'Delete Draft',
-      'Are you sure you want to delete this draft?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await contentApi.deleteDraft(id);
-              loadDrafts();
-            } catch (error: any) {
-              Alert.alert('Error', error?.message || 'Failed to delete draft');
-            }
-          },
+    Alert.alert('Delete Draft', 'Are you sure you want to delete this draft?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await contentApi.deleteDraft(id);
+            loadDrafts();
+          } catch (error: any) {
+            Alert.alert('Error', error?.message || 'Failed to delete draft');
+          }
         },
-      ]
-    );
+      },
+    ]);
   };
 
   const getTypeIcon = (type: string) => {
@@ -91,7 +98,7 @@ export default function DraftsScreen() {
     const now = new Date();
     const diff = now.getTime() - date.getTime();
     const hours = Math.floor(diff / (1000 * 60 * 60));
-    
+
     if (hours < 1) return 'Just now';
     if (hours < 24) return `${hours}h ago`;
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -105,10 +112,14 @@ export default function DraftsScreen() {
       <Image source={{ uri: item.thumbnail }} style={styles.thumbnail} />
       <View style={styles.draftContent}>
         <View style={styles.draftHeader}>
-          <Text style={styles.draftTitle} numberOfLines={1}>{item.title}</Text>
+          <Text style={styles.draftTitle} numberOfLines={1}>
+            {item.title}
+          </Text>
           <Text style={styles.draftType}>{getTypeIcon(item.type)}</Text>
         </View>
-        <Text style={styles.draftDescription} numberOfLines={2}>{item.description}</Text>
+        <Text style={styles.draftDescription} numberOfLines={2}>
+          {item.description}
+        </Text>
         <View style={styles.draftFooter}>
           <View style={styles.progressContainer}>
             <View style={styles.progressTrack}>
@@ -118,10 +129,7 @@ export default function DraftsScreen() {
           </View>
           <View style={styles.draftActions}>
             <Text style={styles.lastSaved}>Saved {formatDate(item.lastSaved)}</Text>
-            <TouchableOpacity
-              style={styles.deleteButton}
-              onPress={() => handleDelete(item.id)}
-            >
+            <TouchableOpacity style={styles.deleteButton} onPress={() => handleDelete(item.id)}>
               <Text style={styles.deleteButtonText}>🗑</Text>
             </TouchableOpacity>
           </View>
@@ -149,10 +157,7 @@ export default function DraftsScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backButtonText}>←</Text>
         </TouchableOpacity>
         <Text style={styles.title}>Drafts</Text>

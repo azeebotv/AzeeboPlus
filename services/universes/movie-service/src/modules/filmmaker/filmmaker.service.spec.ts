@@ -128,13 +128,17 @@ describe('FilmmakerService', () => {
     it('should throw NotFoundException if project not found', async () => {
       (prismaService.filmmakerProject.findUnique as jest.Mock).mockResolvedValue(null);
 
-      await expect(service.updateProject('not-found', 'filmmaker-1', {})).rejects.toThrow(NotFoundException);
+      await expect(service.updateProject('not-found', 'filmmaker-1', {})).rejects.toThrow(
+        NotFoundException
+      );
     });
 
     it('should throw BadRequestException if not authorized', async () => {
       (prismaService.filmmakerProject.findUnique as jest.Mock).mockResolvedValue(mockProject);
 
-      await expect(service.updateProject('project-1', 'wrong-user', {})).rejects.toThrow(BadRequestException);
+      await expect(service.updateProject('project-1', 'wrong-user', {})).rejects.toThrow(
+        BadRequestException
+      );
     });
   });
 
@@ -143,7 +147,10 @@ describe('FilmmakerService', () => {
       (prismaService.filmmakerProject.findUnique as jest.Mock).mockResolvedValue(mockProject);
       (prismaService.filmmakerBacker.findUnique as jest.Mock).mockResolvedValue(null);
       (prismaService.filmmakerBacker.create as jest.Mock).mockResolvedValue({ id: 'backer-1' });
-      (prismaService.filmmakerProject.update as jest.Mock).mockResolvedValue({ ...mockProject, fundingRaised: 100 });
+      (prismaService.filmmakerProject.update as jest.Mock).mockResolvedValue({
+        ...mockProject,
+        fundingRaised: 100,
+      });
       (prismaService.filmmakerBacker.count as jest.Mock).mockResolvedValue(1);
 
       const result = await service.backProject('user-1', 'project-1', 100);
@@ -154,9 +161,18 @@ describe('FilmmakerService', () => {
 
     it('should update existing backing', async () => {
       (prismaService.filmmakerProject.findUnique as jest.Mock).mockResolvedValue(mockProject);
-      (prismaService.filmmakerBacker.findUnique as jest.Mock).mockResolvedValue({ id: 'backer-1', amount: 100 });
-      (prismaService.filmmakerBacker.update as jest.Mock).mockResolvedValue({ id: 'backer-1', amount: 200 });
-      (prismaService.filmmakerProject.update as jest.Mock).mockResolvedValue({ ...mockProject, fundingRaised: 200 });
+      (prismaService.filmmakerBacker.findUnique as jest.Mock).mockResolvedValue({
+        id: 'backer-1',
+        amount: 100,
+      });
+      (prismaService.filmmakerBacker.update as jest.Mock).mockResolvedValue({
+        id: 'backer-1',
+        amount: 200,
+      });
+      (prismaService.filmmakerProject.update as jest.Mock).mockResolvedValue({
+        ...mockProject,
+        fundingRaised: 200,
+      });
 
       const result = await service.backProject('user-1', 'project-1', 100);
 

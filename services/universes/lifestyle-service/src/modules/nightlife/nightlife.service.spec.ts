@@ -76,7 +76,9 @@ describe('NightlifeService', () => {
 
       await service.getEntries(1, 20, undefined, 'New York');
 
-      expect((prismaService.nightlifeEntry.findMany as jest.Mock).mock.calls[0][0].where.city).toBe('New York');
+      expect((prismaService.nightlifeEntry.findMany as jest.Mock).mock.calls[0][0].where.city).toBe(
+        'New York'
+      );
     });
 
     it('should filter by type', async () => {
@@ -85,7 +87,9 @@ describe('NightlifeService', () => {
 
       await service.getEntries(1, 20, 'club');
 
-      expect((prismaService.nightlifeEntry.findMany as jest.Mock).mock.calls[0][0].where.type).toBe('club');
+      expect((prismaService.nightlifeEntry.findMany as jest.Mock).mock.calls[0][0].where.type).toBe(
+        'club'
+      );
     });
   });
 
@@ -154,7 +158,9 @@ describe('NightlifeService', () => {
     it('should throw NotFoundException if entry not found', async () => {
       (prismaService.nightlifeEntry.findUnique as jest.Mock).mockResolvedValue(null);
 
-      await expect(service.updateEntry('not-found', { name: 'Updated' })).rejects.toThrow(NotFoundException);
+      await expect(service.updateEntry('not-found', { name: 'Updated' })).rejects.toThrow(
+        NotFoundException
+      );
     });
   });
 

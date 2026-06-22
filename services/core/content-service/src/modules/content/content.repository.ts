@@ -30,9 +30,13 @@ interface PaginatedResult<T> {
 export class ContentRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll(filters?: { universe?: string }, page: number = 1, limit: number = 20): Promise<PaginatedResult<unknown>> {
+  async findAll(
+    filters?: { universe?: string },
+    page: number = 1,
+    limit: number = 20
+  ): Promise<PaginatedResult<unknown>> {
     const where: Record<string, unknown> = { status: 'published' };
-    
+
     if (filters?.universe) {
       where.universeId = filters.universe;
     }
@@ -73,7 +77,10 @@ export class ContentRepository {
     });
   }
 
-  async update(id: string, data: Partial<Record<string, unknown>>): Promise<Record<string, unknown>> {
+  async update(
+    id: string,
+    data: Partial<Record<string, unknown>>
+  ): Promise<Record<string, unknown>> {
     return this.prisma.contentItem.update({
       where: { id },
       data: {
@@ -92,7 +99,11 @@ export class ContentRepository {
     return result ? 1 : 0;
   }
 
-  async getComments(contentId: string, page: number = 1, limit: number = 20): Promise<PaginatedResult<CommentEntity>> {
+  async getComments(
+    contentId: string,
+    page: number = 1,
+    limit: number = 20
+  ): Promise<PaginatedResult<CommentEntity>> {
     const [data, total] = await Promise.all([
       this.prisma.comment.findMany({
         where: { contentId },
@@ -138,12 +149,13 @@ export class ContentRepository {
     };
   }
 
-  async search(query: string, page: number = 1, limit: number = 20): Promise<PaginatedResult<unknown>> {
+  async search(
+    query: string,
+    page: number = 1,
+    limit: number = 20
+  ): Promise<PaginatedResult<unknown>> {
     const where: Record<string, unknown> = {
-      OR: [
-        { title: { contains: query } },
-        { description: { contains: query } },
-      ],
+      OR: [{ title: { contains: query } }, { description: { contains: query } }],
       status: 'published',
     };
 

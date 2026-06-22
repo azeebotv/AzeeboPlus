@@ -88,4 +88,46 @@ export const walletApi = {
   }): Promise<ApiResponse<{ message: string }>> => {
     return apiClient.post<ApiResponse<{ message: string }>>('/wallet/withdraw', data);
   },
+
+  getSummary: async (): Promise<
+    ApiResponse<{
+      balance: number;
+      currency: string;
+      pendingBalance: number;
+      totalFunded: number;
+      totalSpent: number;
+      totalWithdrawn: number;
+    }>
+  > => {
+    return apiClient.get<
+      ApiResponse<{
+        balance: number;
+        currency: string;
+        pendingBalance: number;
+        totalFunded: number;
+        totalSpent: number;
+        totalWithdrawn: number;
+      }>
+    >('/wallet/summary');
+  },
+
+  redeemReward: async (data: {
+    points: number;
+  }): Promise<ApiResponse<{ message: string; creditedAmount: number }>> => {
+    return apiClient.post<ApiResponse<{ message: string; creditedAmount: number }>>(
+      '/wallet/redeem-reward',
+      data
+    );
+  },
+
+  transfer: async (data: {
+    recipientId: string;
+    amount: number;
+    description?: string;
+  }): Promise<ApiResponse<{ message: string; transactionId: string }>> => {
+    return apiClient.post<ApiResponse<{ message: string; transactionId: string }>>(
+      '/wallet/transfer',
+      data
+    );
+  },
 };

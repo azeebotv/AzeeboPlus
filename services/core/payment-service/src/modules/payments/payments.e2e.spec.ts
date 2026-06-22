@@ -20,7 +20,7 @@ describe('PaymentsService E2E Tests', () => {
   const mockPaymentIntent = {
     id: 'pi-123',
     userId: 'user-123',
-    amount: new (require('@prisma/client').Prisma).Decimal(1000),
+    amount: new (require('@prisma/client').Prisma.Decimal)(1000),
     currency: 'NGN',
     status: 'pending',
     description: 'Test payment',
@@ -151,7 +151,9 @@ describe('PaymentsService E2E Tests', () => {
       const result = await service.handleWebhook(body, 'valid-signature', 'paystack');
 
       expect(result.success).toBe(true);
-      expect((result.data as { message: string }).message).toBe('Event evt-paystack-1 already processed');
+      expect((result.data as { message: string }).message).toBe(
+        'Event evt-paystack-1 already processed'
+      );
       expect(prisma.paymentIntent.update).not.toHaveBeenCalled();
     });
 
@@ -193,7 +195,9 @@ describe('PaymentsService E2E Tests', () => {
       const result = await service.handleWebhook(body, 'valid-signature', 'flutterwave');
 
       expect(result.success).toBe(true);
-      expect((result.data as { message: string }).message).toBe('Event evt-flutterwave-1 already processed');
+      expect((result.data as { message: string }).message).toBe(
+        'Event evt-flutterwave-1 already processed'
+      );
     });
   });
 
@@ -210,9 +214,7 @@ describe('PaymentsService E2E Tests', () => {
         data: { reference: 'paystack-ref-1' },
       };
 
-      await expect(
-        service.handleWebhook(body, 'valid-signature', 'paystack')
-      ).rejects.toThrow();
+      await expect(service.handleWebhook(body, 'valid-signature', 'paystack')).rejects.toThrow();
 
       expect(webhookRetryService.scheduleRetry).toHaveBeenCalled();
       expect(prisma.webhookEvent.create).toHaveBeenCalledWith(
@@ -303,12 +305,15 @@ describe('PaymentsService E2E Tests', () => {
 
       (prisma.paymentIntent.findUnique as jest.Mock).mockResolvedValue(mockPaymentIntent);
 
-      const result = await service.createPaymentIntent({
-        userId: 'user-123',
-        amount: 1000,
-        currency: 'NGN',
-        description: 'Test',
-      }, idempotencyKey);
+      const result = await service.createPaymentIntent(
+        {
+          userId: 'user-123',
+          amount: 1000,
+          currency: 'NGN',
+          description: 'Test',
+        },
+        idempotencyKey
+      );
 
       expect(result.success).toBe(true);
       expect(result.data?.paymentId).toBe('pi-123');
@@ -321,12 +326,15 @@ describe('PaymentsService E2E Tests', () => {
       (prisma.paymentIntent.findUnique as jest.Mock).mockResolvedValue(null);
       (prisma.paymentIntent.create as jest.Mock).mockResolvedValue(mockPaymentIntent);
 
-      const result = await service.createPaymentIntent({
-        userId: 'user-123',
-        amount: 1000,
-        currency: 'NGN',
-        description: 'Test',
-      }, idempotencyKey);
+      const result = await service.createPaymentIntent(
+        {
+          userId: 'user-123',
+          amount: 1000,
+          currency: 'NGN',
+          description: 'Test',
+        },
+        idempotencyKey
+      );
 
       expect(result.success).toBe(true);
       expect(prisma.paymentIntent.create).toHaveBeenCalled();
@@ -361,7 +369,7 @@ describe('PaymentsService E2E Tests', () => {
       const refund = {
         id: 'refund-123',
         paymentIntentId: 'pi-123',
-        amount: new (require('@prisma/client').Prisma).Decimal(500),
+        amount: new (require('@prisma/client').Prisma.Decimal)(500),
         status: 'pending',
         providerReference: null,
         createdAt: new Date(),
@@ -394,7 +402,7 @@ describe('PaymentsService E2E Tests', () => {
       const mockRefund = {
         id: 'refund-123',
         paymentIntentId: 'pi-123',
-        amount: new (require('@prisma/client').Prisma).Decimal(500),
+        amount: new (require('@prisma/client').Prisma.Decimal)(500),
         status: 'pending',
         providerReference: 'refund-ref-2',
         createdAt: new Date(),
@@ -412,9 +420,7 @@ describe('PaymentsService E2E Tests', () => {
         data: { reference: 'refund-ref-2', transaction: 'paystack-ref-1' },
       };
 
-      await expect(
-        service.handleWebhook(body, 'valid-signature', 'paystack')
-      ).rejects.toThrow();
+      await expect(service.handleWebhook(body, 'valid-signature', 'paystack')).rejects.toThrow();
 
       expect(webhookRetryService.scheduleRetry).toHaveBeenCalled();
     });

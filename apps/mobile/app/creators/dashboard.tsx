@@ -52,33 +52,60 @@ export default function CreatorDashboard() {
   }
 
   const stats = [
-    { id: '1', label: 'Total Views', value: formatNumber(dashboardData?.totalViews ?? 0), change: '', emoji: '👁️' },
-    { id: '2', label: 'Followers', value: formatNumber(dashboardData?.totalFollowers ?? 0), change: '', emoji: '👥' },
-    { id: '3', label: 'Total Content', value: String(dashboardData?.totalContent ?? 0), change: '', emoji: '📹' },
-    { id: '4', label: 'Total Likes', value: formatNumber(dashboardData?.totalLikes ?? 0), change: '', emoji: '❤️' },
+    {
+      id: '1',
+      label: 'Total Views',
+      value: formatNumber(dashboardData?.totalViews ?? 0),
+      change: '',
+      emoji: '👁️',
+    },
+    {
+      id: '2',
+      label: 'Followers',
+      value: formatNumber(dashboardData?.totalFollowers ?? 0),
+      change: '',
+      emoji: '👥',
+    },
+    {
+      id: '3',
+      label: 'Total Content',
+      value: String(dashboardData?.totalContent ?? 0),
+      change: '',
+      emoji: '📹',
+    },
+    {
+      id: '4',
+      label: 'Total Likes',
+      value: formatNumber(dashboardData?.totalLikes ?? 0),
+      change: '',
+      emoji: '❤️',
+    },
   ];
 
-  const recentContent = dashboardData?.topContent?.map((item) => ({
-    id: item.id,
-    title: item.title,
-    views: formatNumber(item.views),
-    likes: formatNumber(item.likes),
-    comments: '0',
-    time: '',
-    emoji: '🎬',
-  })) ?? [];
+  const recentContent =
+    dashboardData?.topContent?.map((item) => ({
+      id: item.id,
+      title: item.title,
+      views: formatNumber(item.views),
+      likes: formatNumber(item.likes),
+      comments: '0',
+      time: '',
+      emoji: '🎬',
+    })) ?? [];
 
-  const recentActivity = dashboardData?.recentActivity?.map((item, idx) => ({
-    id: String(idx),
-    message: item.description,
-    time: item.timestamp ? new Date(item.timestamp).toLocaleDateString() : '',
-    type: item.type === 'earnings' ? 'earning' : item.type === 'content' ? 'trending' : 'comment',
-  })) ?? [];
+  const recentActivity =
+    dashboardData?.recentActivity?.map((item, idx) => ({
+      id: String(idx),
+      message: item.description,
+      time: item.timestamp ? new Date(item.timestamp).toLocaleDateString() : '',
+      type: item.type === 'earnings' ? 'earning' : item.type === 'content' ? 'trending' : 'comment',
+    })) ?? [];
 
-  const weeklyViews = analyticsData?.viewsOverTime?.slice(-7).map((item) => ({
-    day: new Date(item.date).toLocaleDateString('en', { weekday: 'short' }),
-    views: item.views,
-  })) ?? [];
+  const weeklyViews =
+    analyticsData?.viewsOverTime?.slice(-7).map((item) => ({
+      day: new Date(item.date).toLocaleDateString('en', { weekday: 'short' }),
+      views: item.views,
+    })) ?? [];
 
   const maxViews = Math.max(...weeklyViews.map((w) => w.views), 1);
 
@@ -101,7 +128,9 @@ export default function CreatorDashboard() {
             <Text style={styles.avatarEmoji}>👤</Text>
           </View>
           <View style={styles.creatorDetails}>
-            <Text style={[styles.creatorName, { color: isDark ? '#fff' : '#000' }]}>Your Channel</Text>
+            <Text style={[styles.creatorName, { color: isDark ? '#fff' : '#000' }]}>
+              Your Channel
+            </Text>
             <Text style={styles.creatorCategory}>Creator</Text>
           </View>
           <TouchableOpacity style={styles.editButton}>
@@ -112,9 +141,14 @@ export default function CreatorDashboard() {
 
       <View style={styles.statsGrid}>
         {stats.map((stat) => (
-          <View key={stat.id} style={[styles.statCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}>
+          <View
+            key={stat.id}
+            style={[styles.statCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
+          >
             <Text style={styles.statEmoji}>{stat.emoji}</Text>
-            <Text style={[styles.statValue, { color: isDark ? '#fff' : '#000' }]}>{stat.value}</Text>
+            <Text style={[styles.statValue, { color: isDark ? '#fff' : '#000' }]}>
+              {stat.value}
+            </Text>
             <Text style={styles.statLabel}>{stat.label}</Text>
             <View style={styles.statChange}>
               <Text style={styles.changeText}>{stat.change || '-'}</Text>
@@ -134,18 +168,17 @@ export default function CreatorDashboard() {
         </View>
         <View style={styles.chartContainer}>
           <View style={styles.chartPlaceholder}>
-            {weeklyViews.length > 0 ? weeklyViews.map((item, index) => (
-              <View key={index} style={styles.chartBar}>
-                <View
-                  style={[
-                    styles.bar,
-                    { height: (item.views / maxViews) * 100 },
-                  ]}
-                />
-                <Text style={styles.chartLabel}>{item.day}</Text>
-              </View>
-            )) : (
-              <Text style={{ color: '#888', textAlign: 'center', width: '100%' }}>No data available</Text>
+            {weeklyViews.length > 0 ? (
+              weeklyViews.map((item, index) => (
+                <View key={index} style={styles.chartBar}>
+                  <View style={[styles.bar, { height: (item.views / maxViews) * 100 }]} />
+                  <Text style={styles.chartLabel}>{item.day}</Text>
+                </View>
+              ))
+            ) : (
+              <Text style={{ color: '#888', textAlign: 'center', width: '100%' }}>
+                No data available
+              </Text>
             )}
           </View>
         </View>
@@ -161,27 +194,35 @@ export default function CreatorDashboard() {
           </TouchableOpacity>
         </View>
         <View style={styles.contentList}>
-          {recentContent.length > 0 ? recentContent.map((item) => (
-            <TouchableOpacity key={item.id} style={[styles.contentItem, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}>
-              <View style={styles.contentThumbnail}>
-                <Text style={styles.contentEmoji}>{item.emoji}</Text>
-              </View>
-              <View style={styles.contentInfo}>
-                <Text style={[styles.contentTitle, { color: isDark ? '#fff' : '#000' }]} numberOfLines={1}>
-                  {item.title}
-                </Text>
-                <View style={styles.contentMeta}>
-                  <Text style={styles.metaText}>👁️ {item.views}</Text>
-                  <Text style={styles.metaText}>❤️ {item.likes}</Text>
-                  <Text style={styles.metaText}>💬 {item.comments}</Text>
+          {recentContent.length > 0 ? (
+            recentContent.map((item) => (
+              <TouchableOpacity
+                key={item.id}
+                style={[styles.contentItem, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
+              >
+                <View style={styles.contentThumbnail}>
+                  <Text style={styles.contentEmoji}>{item.emoji}</Text>
                 </View>
-                <Text style={styles.timeText}>{item.time}</Text>
-              </View>
-              <TouchableOpacity style={styles.moreButton}>
-                <Text style={styles.moreIcon}>⋮</Text>
+                <View style={styles.contentInfo}>
+                  <Text
+                    style={[styles.contentTitle, { color: isDark ? '#fff' : '#000' }]}
+                    numberOfLines={1}
+                  >
+                    {item.title}
+                  </Text>
+                  <View style={styles.contentMeta}>
+                    <Text style={styles.metaText}>👁️ {item.views}</Text>
+                    <Text style={styles.metaText}>❤️ {item.likes}</Text>
+                    <Text style={styles.metaText}>💬 {item.comments}</Text>
+                  </View>
+                  <Text style={styles.timeText}>{item.time}</Text>
+                </View>
+                <TouchableOpacity style={styles.moreButton}>
+                  <Text style={styles.moreIcon}>⋮</Text>
+                </TouchableOpacity>
               </TouchableOpacity>
-            </TouchableOpacity>
-          )) : (
+            ))
+          ) : (
             <Text style={{ color: '#888', textAlign: 'center', padding: 20 }}>No content yet</Text>
           )}
         </View>
@@ -194,23 +235,35 @@ export default function CreatorDashboard() {
           </Text>
         </View>
         <View style={styles.notificationsList}>
-          {recentActivity.length > 0 ? recentActivity.map((notification) => (
-            <View key={notification.id} style={[styles.notificationItem, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}>
-              <View style={[
-                styles.notificationDot,
-                notification.type === 'earning' && styles.earningDot,
-                notification.type === 'comment' && styles.commentDot,
-                notification.type === 'trending' && styles.trendingDot,
-              ]} />
-              <View style={styles.notificationContent}>
-                <Text style={[styles.notificationMessage, { color: isDark ? '#fff' : '#000' }]}>
-                  {notification.message}
-                </Text>
-                <Text style={styles.notificationTime}>{notification.time}</Text>
+          {recentActivity.length > 0 ? (
+            recentActivity.map((notification) => (
+              <View
+                key={notification.id}
+                style={[
+                  styles.notificationItem,
+                  { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' },
+                ]}
+              >
+                <View
+                  style={[
+                    styles.notificationDot,
+                    notification.type === 'earning' && styles.earningDot,
+                    notification.type === 'comment' && styles.commentDot,
+                    notification.type === 'trending' && styles.trendingDot,
+                  ]}
+                />
+                <View style={styles.notificationContent}>
+                  <Text style={[styles.notificationMessage, { color: isDark ? '#fff' : '#000' }]}>
+                    {notification.message}
+                  </Text>
+                  <Text style={styles.notificationTime}>{notification.time}</Text>
+                </View>
               </View>
-            </View>
-          )) : (
-            <Text style={{ color: '#888', textAlign: 'center', padding: 20 }}>No recent activity</Text>
+            ))
+          ) : (
+            <Text style={{ color: '#888', textAlign: 'center', padding: 20 }}>
+              No recent activity
+            </Text>
           )}
         </View>
       </View>

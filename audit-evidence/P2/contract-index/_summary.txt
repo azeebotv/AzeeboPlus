@@ -1,0 +1,166 @@
+=== captured at ===
+2026-06-22T11:28:19Z
+
+=== service directory listing ===
+apps/admin/src/modules/audit/audit.controller.ts
+apps/admin/src/modules/content-management/content-management.controller.ts
+apps/admin/src/modules/dashboard/dashboard.controller.ts
+apps/admin/src/modules/moderation/moderation.controller.ts
+apps/admin/src/modules/system-settings/system-settings.controller.ts
+apps/admin/src/modules/universe-management/universe-management.controller.ts
+apps/admin/src/modules/user-management/user-management.controller.ts
+apps/creator-portal/src/creator/creator.controller.ts
+services/core/auth-service/src/modules/admin/admin.controller.ts
+services/core/auth-service/src/modules/auth/auth.controller.ts
+services/core/auth-service/src/modules/auth/device/device.controller.ts
+services/core/auth-service/src/modules/auth/mfa/mfa.controller.ts
+services/core/auth-service/src/modules/auth/otp/otp.controller.ts
+services/core/auth-service/src/modules/auth/social/social.controller.ts
+services/core/auth-service/src/modules/health/health.controller.ts
+services/core/auth-service/src/modules/metrics/metrics.controller.ts
+services/core/content-service/src/modules/admin/admin.controller.ts
+services/core/content-service/src/modules/content/content.controller.ts
+services/core/content-service/src/modules/health/health.controller.ts
+services/core/content-service/src/modules/moderation/moderation.controller.ts
+services/core/content-service/src/modules/public/public.controller.ts
+services/core/media-service/src/modules/admin/admin.controller.ts
+services/core/media-service/src/modules/health/health.controller.ts
+services/core/media-service/src/modules/upload/upload.controller.ts
+services/core/payment-service/src/modules/admin/admin.controller.ts
+services/core/payment-service/src/modules/health/health.controller.ts
+services/core/payment-service/src/modules/metrics/metrics.controller.ts
+services/core/payment-service/src/modules/payments/payments.controller.ts
+services/core/payment-service/src/modules/webhooks/webhook.controller.ts
+services/core/search-service/src/modules/admin/admin.controller.ts
+services/core/search-service/src/modules/health/health.controller.ts
+services/core/search-service/src/modules/search/search.controller.ts
+services/core/user-service/src/modules/admin/admin.controller.ts
+services/core/user-service/src/modules/health/health.controller.ts
+services/core/user-service/src/modules/user/user-deletion.controller.ts
+services/core/user-service/src/modules/users/users.controller.ts
+services/core/wallet-service/src/modules/admin/admin.controller.ts
+services/core/wallet-service/src/modules/health/health.controller.ts
+services/core/wallet-service/src/modules/metrics/metrics.controller.ts
+services/core/wallet-service/src/modules/wallet/wallet.controller.ts
+services/engagement/engagement-service/src/modules/engagement/engagement.controller.ts
+services/engagement/engagement-service/src/modules/health/health.controller.ts
+services/engagement/messaging-service/src/modules/health/health.controller.ts
+services/engagement/messaging-service/src/modules/messaging/messaging.controller.ts
+services/engagement/notification-service/src/modules/admin/admin.controller.ts
+services/engagement/notification-service/src/modules/health/health.controller.ts
+services/engagement/notification-service/src/modules/notifications/notifications.controller.ts
+services/engagement/referral-service/src/modules/health/health.controller.ts
+services/engagement/referral-service/src/modules/referral/referral.controller.ts
+services/engagement/reward-service/src/modules/admin/admin.controller.ts
+services/engagement/reward-service/src/modules/health/health.controller.ts
+services/engagement/reward-service/src/modules/rewards/rewards.controller.ts
+services/engagement/subscription-service/src/modules/health/health.controller.ts
+services/engagement/subscription-service/src/modules/subscription/subscription.controller.ts
+services/gateway/api-gateway/src/modules/health/circuit-breaker.controller.ts
+services/gateway/api-gateway/src/modules/health/health.controller.ts
+services/gateway/api-gateway/src/modules/proxy/proxy.controller.ts
+services/intelligence/analytics-service/src/modules/admin/admin.controller.ts
+services/intelligence/analytics-service/src/modules/analytics-instrumentation/analytics-instrumentation.controller.ts
+services/intelligence/analytics-service/src/modules/analytics/analytics.controller.ts
+services/intelligence/analytics-service/src/modules/health/health.controller.ts
+services/intelligence/analytics-service/src/modules/intelligence/intelligence.controller.ts
+services/intelligence/analytics-service/src/modules/metrics/metrics.controller.ts
+services/intelligence/analytics-service/src/modules/report-builder/report-builder.controller.ts
+services/intelligence/recommendation-service/src/modules/admin/admin.controller.ts
+services/intelligence/recommendation-service/src/modules/health/health.controller.ts
+services/intelligence/recommendation-service/src/modules/recommendation/recommendation.controller.ts
+services/operations/moderation-service/src/modules/health/health.controller.ts
+services/operations/moderation-service/src/modules/moderation/moderation.controller.ts
+services/operations/queue-service/src/modules/health/health.controller.ts
+services/operations/support-service/src/modules/appeal/appeal.controller.ts
+services/operations/support-service/src/modules/chargeback/chargeback.controller.ts
+services/operations/support-service/src/modules/dashboard/support-dashboard.controller.ts
+services/operations/support-service/src/modules/dispute/dispute.controller.ts
+services/operations/support-service/src/modules/health/health.controller.ts
+services/operations/support-service/src/modules/refund/refund.controller.ts
+services/operations/support-service/src/modules/support/support.controller.ts
+services/operations/support-service/src/modules/suspension/suspension.controller.ts
+services/operations/support-service/src/modules/takedown/takedown.controller.ts
+services/operations/support-service/src/modules/ticket/ticket.controller.ts
+services/universes/comedy-service/src/modules/admin/admin.controller.ts
+services/universes/comedy-service/src/modules/comedy-feed/comedy-feed.controller.ts
+services/universes/comedy-service/src/modules/comedy/comedy.controller.ts
+services/universes/comedy-service/src/modules/health/health.controller.ts
+services/universes/creator-service/src/modules/admin/admin.controller.ts
+services/universes/creator-service/src/modules/creators/creators.controller.ts
+services/universes/creator-service/src/modules/health/health.controller.ts
+services/universes/games-service/src/modules/admin/admin.controller.ts
+services/universes/games-service/src/modules/game-catalog/game-catalog.controller.ts
+services/universes/games-service/src/modules/games/games.controller.ts
+services/universes/games-service/src/modules/health/health.controller.ts
+services/universes/games-service/src/modules/tournament/tournament.controller.ts
+services/universes/lifestyle-service/src/modules/admin/admin.controller.ts
+services/universes/lifestyle-service/src/modules/celebrity/celebrity.controller.ts
+services/universes/lifestyle-service/src/modules/challenges/challenge.controller.ts
+services/universes/lifestyle-service/src/modules/city-guide/city-guide.controller.ts
+services/universes/lifestyle-service/src/modules/events/events.controller.ts
+services/universes/lifestyle-service/src/modules/feed/feed.controller.ts
+services/universes/lifestyle-service/src/modules/health/health.controller.ts
+services/universes/lifestyle-service/src/modules/influencer/influencer.controller.ts
+services/universes/lifestyle-service/src/modules/music/music.controller.ts
+services/universes/lifestyle-service/src/modules/nightlife/nightlife.controller.ts
+services/universes/lifestyle-service/src/modules/polls/poll.controller.ts
+services/universes/lifestyle-service/src/modules/quizzes/quiz.controller.ts
+services/universes/lifestyle-service/src/modules/social/social.controller.ts
+services/universes/lifestyle-service/src/modules/stories/stories.controller.ts
+services/universes/movie-service/src/modules/admin/admin.controller.ts
+services/universes/movie-service/src/modules/cinema-pass/cinema-pass.controller.ts
+services/universes/movie-service/src/modules/filmmaker/filmmaker.controller.ts
+services/universes/movie-service/src/modules/health/health.controller.ts
+services/universes/movie-service/src/modules/movies/movies.controller.ts
+services/universes/reality-service/src/modules/admin/admin.controller.ts
+services/universes/reality-service/src/modules/health/health.controller.ts
+services/universes/reality-service/src/modules/reality/reality.controller.ts
+services/universes/sports-service/src/modules/admin/admin.controller.ts
+services/universes/sports-service/src/modules/fan-contests/fan-contests.controller.ts
+services/universes/sports-service/src/modules/fixtures/fixtures.controller.ts
+services/universes/sports-service/src/modules/health/health.controller.ts
+services/universes/sports-service/src/modules/prediction-markets/prediction-markets.controller.ts
+services/universes/sports-service/src/modules/sports/sports.controller.ts
+services/universes/vertical-service/src/modules/admin/admin.controller.ts
+services/universes/vertical-service/src/modules/characters/characters.controller.ts
+services/universes/vertical-service/src/modules/crossovers/crossovers.controller.ts
+services/universes/vertical-service/src/modules/health/health.controller.ts
+services/universes/vertical-service/src/modules/lore/lore.controller.ts
+services/universes/vertical-service/src/modules/timeline/timeline.controller.ts
+services/universes/vertical-service/src/modules/titles/titles.controller.ts
+services/universes/vertical-service/src/modules/universe/universe.controller.ts
+
+=== count of controller files ===
+128
+
+=== count of controllers per service ===
+services/core/auth-service                         controllers=8 endpoints=34
+services/core/content-service                      controllers=5 endpoints=81
+services/core/media-service                        controllers=3 endpoints=27
+services/core/payment-service                      controllers=5 endpoints=18
+services/core/search-service                       controllers=3 endpoints=11
+services/core/user-service                         controllers=4 endpoints=42
+services/core/wallet-service                       controllers=4 endpoints=22
+services/gateway/api-gateway                       controllers=3 endpoints=17
+services/engagement/engagement-service             controllers=2 endpoints=7
+services/engagement/messaging-service              controllers=2 endpoints=9
+services/engagement/notification-service           controllers=3 endpoints=15
+services/engagement/referral-service               controllers=2 endpoints=9
+services/engagement/reward-service                 controllers=3 endpoints=18
+services/engagement/subscription-service           controllers=2 endpoints=10
+services/intelligence/analytics-service            controllers=7 endpoints=51
+services/intelligence/recommendation-service       controllers=3 endpoints=15
+services/operations/moderation-service             controllers=2 endpoints=14
+services/operations/queue-service                  controllers=1 endpoints=3
+services/operations/support-service                controllers=10 endpoints=54
+services/universes/comedy-service                  controllers=4 endpoints=23
+services/universes/creator-service                 controllers=3 endpoints=38
+services/universes/games-service                   controllers=5 endpoints=28
+services/universes/lifestyle-service               controllers=14 endpoints=82
+services/universes/movie-service                   controllers=5 endpoints=32
+services/universes/reality-service                 controllers=3 endpoints=39
+services/universes/sports-service                  controllers=6 endpoints=35
+services/universes/vertical-service                controllers=8 endpoints=43
+apps/admin                                         controllers=7 endpoints=53
+apps/creator-portal                                controllers=1 endpoints=9

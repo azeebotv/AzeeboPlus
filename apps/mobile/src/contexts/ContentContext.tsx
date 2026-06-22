@@ -94,7 +94,7 @@ export function ContentProvider({ children }: { children: ReactNode }) {
     try {
       const response = await contentApi.getContentByCategory(categoryId, 1, 20);
       if (response.success && response.data) {
-        setContentByCategory(prev => ({
+        setContentByCategory((prev) => ({
           ...prev,
           [categoryId]: response.data!.items,
         }));

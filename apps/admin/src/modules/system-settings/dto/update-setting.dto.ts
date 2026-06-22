@@ -2,7 +2,10 @@ import { IsString, IsOptional, IsBoolean, IsObject } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class UpdateSettingDto {
-  @ApiProperty({ description: 'Setting value (can be any JSON-serializable value)', required: false })
+  @ApiProperty({
+    description: 'Setting value (can be any JSON-serializable value)',
+    required: false,
+  })
   @IsOptional()
   @IsObject()
   value?: any;

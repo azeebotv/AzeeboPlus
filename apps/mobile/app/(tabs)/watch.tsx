@@ -47,7 +47,10 @@ export default function WatchScreen() {
       if (trendingRes.success && trendingRes.data) {
         setTrendingContent(trendingRes.data);
       }
-      const allContent = [...(featuredRes.success && featuredRes.data ? featuredRes.data : []), ...(trendingRes.success && trendingRes.data ? trendingRes.data : [])];
+      const allContent = [
+        ...(featuredRes.success && featuredRes.data ? featuredRes.data : []),
+        ...(trendingRes.success && trendingRes.data ? trendingRes.data : []),
+      ];
       await cacheContent('watch_content', allContent, 'content');
     } catch (err: any) {
       setError(err.message || 'Failed to load content');
@@ -110,7 +113,13 @@ export default function WatchScreen() {
   }
 
   if (!featuredContent.length && !trendingContent.length) {
-    return <EmptyState icon="📺" title="No content available" description="Check back later for new content" />;
+    return (
+      <EmptyState
+        icon="📺"
+        title="No content available"
+        description="Check back later for new content"
+      />
+    );
   }
 
   return (
@@ -121,148 +130,208 @@ export default function WatchScreen() {
         onRefresh={handleRefresh}
         tintColor={colorScheme === 'dark' ? '#ffffff' : '#000000'}
         titleColor={colorScheme === 'dark' ? '#ffffff' : '#000000'}
-        style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' }]}
+        style={[
+          styles.container,
+          { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' },
+        ]}
       >
-      <View style={styles.header}>
-        <Text style={[styles.headerTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>Watch</Text>
-        <TouchableOpacity style={styles.searchButton}>
-          <Text style={styles.searchIcon}>🔍</Text>
-        </TouchableOpacity>
-      </View>
+        <View style={styles.header}>
+          <Text
+            style={[styles.headerTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}
+          >
+            Watch
+          </Text>
+          <TouchableOpacity style={styles.searchButton}>
+            <Text style={styles.searchIcon}>🔍</Text>
+          </TouchableOpacity>
+        </View>
 
-      <View style={styles.universeSwitcher}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.universeScroll}>
-          {universes.map((universe: any) => (
-            <TouchableOpacity
-              key={universe.id}
-              onPress={() => {
-                handleUniverseSelect(universe.id);
-                router.push(`/watch/${universe.slug || universe.id}`);
-              }}
-              style={[
-                styles.universeButton,
-                selectedUniverse === universe.id && { backgroundColor: '#8B5CF6' },
-              ]}
-            >
-              <Text style={styles.universeIcon}>{universe.icon || '🌐'}</Text>
-              <Text style={[styles.universeName, selectedUniverse === universe.id && { color: '#ffffff' }]}>
-                {universe.name}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </View>
-
-      <View style={styles.rewardsStrip}>
-        <TouchableOpacity style={styles.rewardItem} onPress={() => router.push('/(tabs)/rewards')}>
-          <Text style={styles.rewardIcon}>⭐</Text>
-          <View style={styles.rewardInfo}>
-            <Text style={styles.rewardValue}>{rewardsPreview.points.toLocaleString()}</Text>
-            <Text style={styles.rewardLabel}>Points</Text>
-          </View>
-        </TouchableOpacity>
-        <View style={styles.rewardDivider} />
-        <TouchableOpacity style={styles.rewardItem} onPress={() => router.push('/(tabs)/rewards')}>
-          <Text style={styles.rewardIcon}>🔥</Text>
-          <View style={styles.rewardInfo}>
-            <Text style={styles.rewardValue}>{rewardsPreview.streak}</Text>
-            <Text style={styles.rewardLabel}>Day Streak</Text>
-          </View>
-        </TouchableOpacity>
-        <View style={styles.rewardDivider} />
-        <TouchableOpacity style={styles.rewardItem} onPress={() => router.push('/(tabs)/rewards')}>
-          <Text style={styles.rewardIcon}>🎯</Text>
-          <View style={styles.rewardInfo}>
-            <Text style={styles.rewardValue}>{rewardsPreview.dailyGoal}/5</Text>
-            <Text style={styles.rewardLabel}>Daily Goal</Text>
-          </View>
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.featuredSection}>
-        <Text style={[styles.sectionTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
-          Featured
-        </Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.featuredScroll}>
-          {featuredContent.map((content: any) => (
-            <TouchableOpacity key={content.id} style={styles.featuredCard} activeOpacity={0.9}>
-              <Image source={{ uri: content.thumbnail }} style={styles.featuredThumbnail} />
-              <View style={styles.featuredOverlay}>
-                {content.live && (
-                  <View style={styles.liveBadge}>
-                    <Text style={styles.liveText}>🔴 LIVE</Text>
-                    <Text style={styles.viewersText}>{content.viewers} watching</Text>
-                  </View>
-                )}
-                <TouchableOpacity
-                  style={styles.shareButton}
-                  onPress={() => handleShareContent(content.title, content.universe || '', content.id)}
-                  disabled={isSharing}
-                  activeOpacity={0.7}
+        <View style={styles.universeSwitcher}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.universeScroll}
+          >
+            {universes.map((universe: any) => (
+              <TouchableOpacity
+                key={universe.id}
+                onPress={() => {
+                  handleUniverseSelect(universe.id);
+                  router.push(`/watch/${universe.slug || universe.id}`);
+                }}
+                style={[
+                  styles.universeButton,
+                  selectedUniverse === universe.id && { backgroundColor: '#8B5CF6' },
+                ]}
+              >
+                <Text style={styles.universeIcon}>{universe.icon || '🌐'}</Text>
+                <Text
+                  style={[
+                    styles.universeName,
+                    selectedUniverse === universe.id && { color: '#ffffff' },
+                  ]}
                 >
-                  <Text style={styles.shareIcon}>📤</Text>
-                </TouchableOpacity>
-              </View>
-              <Text style={[styles.featuredTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
-                {content.title}
-              </Text>
-              {!content.live && (
-                <Text style={styles.featuredDuration}>{content.duration || ''}</Text>
-              )}
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </View>
-
-      <View style={styles.continueSection}>
-        <Text style={[styles.sectionTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
-          Continue Watching
-        </Text>
-        <View style={styles.continueList}>
-          {[1, 2, 3].map((i) => (
-            <TouchableOpacity key={i} style={styles.continueItem}>
-              <Image source={{ uri: PLACEHOLDER_IMAGE }} style={styles.continueThumbnail} />
-              <View style={styles.continueInfo}>
-                <Text style={[styles.continueTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
-                  Content Title {i}
+                  {universe.name}
                 </Text>
-                <Text style={styles.continueProgress}>Watched 45%</Text>
-              </View>
-              <View style={styles.continueProgressBar}>
-                <View style={[styles.continueProgressFill, { width: '45%' }]} />
-              </View>
-            </TouchableOpacity>
-          ))}
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
         </View>
-      </View>
 
-      <View style={styles.popularSection}>
-        <Text style={[styles.sectionTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
-          Trending Now
-        </Text>
-        <View style={styles.popularGrid}>
-          {trendingContent.map((content: any) => (
-            <TouchableOpacity key={content.id} style={styles.popularItem} activeOpacity={0.9}>
-              <Image source={{ uri: content.thumbnail }} style={styles.popularThumbnail} />
-              <View style={styles.popularOverlay}>
-                <Text style={styles.popularUniverse}>{content.universe?.name || content.universe || ''}</Text>
-                <TouchableOpacity
-                  style={styles.popularShareButton}
-                  onPress={() => handleShareContent(content.title, content.universe?.name || content.universe || '', content.id)}
-                  disabled={isSharing}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.popularShareIcon}>📤</Text>
-                </TouchableOpacity>
-              </View>
-              <Text style={[styles.popularTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
-                {content.title}
-              </Text>
-              <Text style={styles.popularViewers}>{content.viewers} watching</Text>
-            </TouchableOpacity>
-          ))}
+        <View style={styles.rewardsStrip}>
+          <TouchableOpacity
+            style={styles.rewardItem}
+            onPress={() => router.push('/(tabs)/rewards')}
+          >
+            <Text style={styles.rewardIcon}>⭐</Text>
+            <View style={styles.rewardInfo}>
+              <Text style={styles.rewardValue}>{rewardsPreview.points.toLocaleString()}</Text>
+              <Text style={styles.rewardLabel}>Points</Text>
+            </View>
+          </TouchableOpacity>
+          <View style={styles.rewardDivider} />
+          <TouchableOpacity
+            style={styles.rewardItem}
+            onPress={() => router.push('/(tabs)/rewards')}
+          >
+            <Text style={styles.rewardIcon}>🔥</Text>
+            <View style={styles.rewardInfo}>
+              <Text style={styles.rewardValue}>{rewardsPreview.streak}</Text>
+              <Text style={styles.rewardLabel}>Day Streak</Text>
+            </View>
+          </TouchableOpacity>
+          <View style={styles.rewardDivider} />
+          <TouchableOpacity
+            style={styles.rewardItem}
+            onPress={() => router.push('/(tabs)/rewards')}
+          >
+            <Text style={styles.rewardIcon}>🎯</Text>
+            <View style={styles.rewardInfo}>
+              <Text style={styles.rewardValue}>{rewardsPreview.dailyGoal}/5</Text>
+              <Text style={styles.rewardLabel}>Daily Goal</Text>
+            </View>
+          </TouchableOpacity>
         </View>
-      </View>
+
+        <View style={styles.featuredSection}>
+          <Text
+            style={[styles.sectionTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}
+          >
+            Featured
+          </Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.featuredScroll}
+          >
+            {featuredContent.map((content: any) => (
+              <TouchableOpacity key={content.id} style={styles.featuredCard} activeOpacity={0.9}>
+                <Image source={{ uri: content.thumbnail }} style={styles.featuredThumbnail} />
+                <View style={styles.featuredOverlay}>
+                  {content.live && (
+                    <View style={styles.liveBadge}>
+                      <Text style={styles.liveText}>🔴 LIVE</Text>
+                      <Text style={styles.viewersText}>{content.viewers} watching</Text>
+                    </View>
+                  )}
+                  <TouchableOpacity
+                    style={styles.shareButton}
+                    onPress={() =>
+                      handleShareContent(content.title, content.universe || '', content.id)
+                    }
+                    disabled={isSharing}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.shareIcon}>📤</Text>
+                  </TouchableOpacity>
+                </View>
+                <Text
+                  style={[
+                    styles.featuredTitle,
+                    { color: colorScheme === 'dark' ? '#ffffff' : '#000000' },
+                  ]}
+                >
+                  {content.title}
+                </Text>
+                {!content.live && (
+                  <Text style={styles.featuredDuration}>{content.duration || ''}</Text>
+                )}
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+
+        <View style={styles.continueSection}>
+          <Text
+            style={[styles.sectionTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}
+          >
+            Continue Watching
+          </Text>
+          <View style={styles.continueList}>
+            {[1, 2, 3].map((i) => (
+              <TouchableOpacity key={i} style={styles.continueItem}>
+                <Image source={{ uri: PLACEHOLDER_IMAGE }} style={styles.continueThumbnail} />
+                <View style={styles.continueInfo}>
+                  <Text
+                    style={[
+                      styles.continueTitle,
+                      { color: colorScheme === 'dark' ? '#ffffff' : '#000000' },
+                    ]}
+                  >
+                    Content Title {i}
+                  </Text>
+                  <Text style={styles.continueProgress}>Watched 45%</Text>
+                </View>
+                <View style={styles.continueProgressBar}>
+                  <View style={[styles.continueProgressFill, { width: '45%' }]} />
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
+        <View style={styles.popularSection}>
+          <Text
+            style={[styles.sectionTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}
+          >
+            Trending Now
+          </Text>
+          <View style={styles.popularGrid}>
+            {trendingContent.map((content: any) => (
+              <TouchableOpacity key={content.id} style={styles.popularItem} activeOpacity={0.9}>
+                <Image source={{ uri: content.thumbnail }} style={styles.popularThumbnail} />
+                <View style={styles.popularOverlay}>
+                  <Text style={styles.popularUniverse}>
+                    {content.universe?.name || content.universe || ''}
+                  </Text>
+                  <TouchableOpacity
+                    style={styles.popularShareButton}
+                    onPress={() =>
+                      handleShareContent(
+                        content.title,
+                        content.universe?.name || content.universe || '',
+                        content.id
+                      )
+                    }
+                    disabled={isSharing}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.popularShareIcon}>📤</Text>
+                  </TouchableOpacity>
+                </View>
+                <Text
+                  style={[
+                    styles.popularTitle,
+                    { color: colorScheme === 'dark' ? '#ffffff' : '#000000' },
+                  ]}
+                >
+                  {content.title}
+                </Text>
+                <Text style={styles.popularViewers}>{content.viewers} watching</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
       </PullToRefreshScrollView>
     </View>
   );

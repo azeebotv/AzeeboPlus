@@ -325,7 +325,9 @@ describe('NotificationsService', () => {
       mockPrismaService.pushToken.findMany.mockResolvedValue(tokens);
       mockFirebaseService.sendMulticastNotification.mockResolvedValue(true);
 
-      const result = await service.sendPushNotification('user-1', 'Title', 'Body', { key: 'value' });
+      const result = await service.sendPushNotification('user-1', 'Title', 'Body', {
+        key: 'value',
+      });
 
       expect(result).toBe(true);
       expect(mockFirebaseService.sendMulticastNotification).toHaveBeenCalledWith(
@@ -420,7 +422,7 @@ describe('NotificationsService', () => {
         const result = await service.sendPaymentConfirmationEmail(
           'user-1',
           'txn-123',
-          50.00,
+          50.0,
           'USD',
           'Subscription payment'
         );
@@ -432,7 +434,7 @@ describe('NotificationsService', () => {
           'payment-confirmation',
           expect.objectContaining({
             transactionId: 'txn-123',
-            amount: 50.00,
+            amount: 50.0,
             currency: 'USD',
           })
         );
@@ -487,11 +489,9 @@ describe('NotificationsService', () => {
         const result = await service.sendWelcomeSms('user-1');
 
         expect(result).toBe(true);
-        expect(mockSmsService.sendSmsWithTemplate).toHaveBeenCalledWith(
-          '+1234567890',
-          'welcome',
-          { displayName: 'Test User' }
-        );
+        expect(mockSmsService.sendSmsWithTemplate).toHaveBeenCalledWith('+1234567890', 'welcome', {
+          displayName: 'Test User',
+        });
       });
     });
 

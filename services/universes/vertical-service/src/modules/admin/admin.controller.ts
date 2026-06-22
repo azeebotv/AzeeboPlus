@@ -19,20 +19,14 @@ export class AdminController {
   @Get('titles')
   @ApiOperation({ summary: 'Get paginated titles (admin)' })
   @ApiResponse({ status: 200, description: 'Paginated title list' })
-  async getTitles(
-    @Query('page') page?: number,
-    @Query('limit') limit?: number,
-  ) {
+  async getTitles(@Query('page') page?: number, @Query('limit') limit?: number) {
     return this.adminService.getTitles({ page, limit });
   }
 
   @Get('characters')
   @ApiOperation({ summary: 'Get paginated characters (admin)' })
   @ApiResponse({ status: 200, description: 'Paginated character list' })
-  async getCharacters(
-    @Query('page') page?: number,
-    @Query('limit') limit?: number,
-  ) {
+  async getCharacters(@Query('page') page?: number, @Query('limit') limit?: number) {
     return this.adminService.getCharacters({ page, limit });
   }
 }

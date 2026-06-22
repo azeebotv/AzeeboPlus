@@ -121,7 +121,9 @@ describe('ComedyFeedService', () => {
 
       await service.getSpecials(1, 20, 'comedian-1');
 
-      expect((prismaService.comedySpecial.findMany as jest.Mock).mock.calls[0][0].where.comedianId).toBe('comedian-1');
+      expect(
+        (prismaService.comedySpecial.findMany as jest.Mock).mock.calls[0][0].where.comedianId
+      ).toBe('comedian-1');
     });
   });
 
@@ -146,7 +148,10 @@ describe('ComedyFeedService', () => {
     it('should like a special', async () => {
       (prismaService.specialLike.findUnique as jest.Mock).mockResolvedValue(null);
       (prismaService.specialLike.create as jest.Mock).mockResolvedValue({ id: 'like-1' });
-      (prismaService.comedySpecial.update as jest.Mock).mockResolvedValue({ ...mockSpecial, likeCount: 51 });
+      (prismaService.comedySpecial.update as jest.Mock).mockResolvedValue({
+        ...mockSpecial,
+        likeCount: 51,
+      });
 
       const result = await service.likeSpecial('user-1', 'special-1');
 
@@ -157,7 +162,10 @@ describe('ComedyFeedService', () => {
     it('should unlike a special if already liked', async () => {
       (prismaService.specialLike.findUnique as jest.Mock).mockResolvedValue({ id: 'like-1' });
       (prismaService.specialLike.delete as jest.Mock).mockResolvedValue({ id: 'like-1' });
-      (prismaService.comedySpecial.update as jest.Mock).mockResolvedValue({ ...mockSpecial, likeCount: 49 });
+      (prismaService.comedySpecial.update as jest.Mock).mockResolvedValue({
+        ...mockSpecial,
+        likeCount: 49,
+      });
 
       const result = await service.likeSpecial('user-1', 'special-1');
 

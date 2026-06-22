@@ -54,7 +54,12 @@ export default function SplashScreen() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#000000' : '#ffffff' }]}>
+    <View
+      style={[
+        styles.container,
+        { backgroundColor: colorScheme === 'dark' ? '#000000' : '#ffffff' },
+      ]}
+    >
       <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideUpAnim }] }}>
         <View style={styles.logoContainer}>
           <View style={styles.logoRing}>
@@ -97,10 +102,7 @@ export default function SplashScreen() {
           <Text style={styles.progressText}>{progress}%</Text>
         </View>
 
-        <TouchableOpacity
-          onPress={handleGetStarted}
-          style={styles.getStartedButton}
-        >
+        <TouchableOpacity onPress={handleGetStarted} style={styles.getStartedButton}>
           <Text style={styles.getStartedText}>Get Started</Text>
         </TouchableOpacity>
 

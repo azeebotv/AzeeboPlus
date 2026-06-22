@@ -4,28 +4,26 @@ import { map } from 'rxjs/operators';
 
 export const SENSITIVE_FIELDS = [
   'password',
-  'passwordHash',
-  'hashedPassword',
+  'passwordhash',
+  'hashedpassword',
   'token',
-  'accessToken',
-  'refreshToken',
+  'accesstoken',
+  'refreshtoken',
   'secret',
-  'secretKey',
-  'apiKey',
-  'privateKey',
-  'creditCard',
-  'cardNumber',
+  'secretkey',
+  'apikey',
+  'privatekey',
+  'creditcard',
+  'cardnumber',
   'cvv',
   'ssn',
-  'socialSecurityNumber',
+  'socialsecuritynumber',
 ];
 
 @Injectable()
 export class SanitizeInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
-    return next.handle().pipe(
-      map((data) => this.sanitizeResponse(data))
-    );
+    return next.handle().pipe(map((data) => this.sanitizeResponse(data)));
   }
 
   private sanitizeResponse(data: unknown): unknown {
@@ -51,7 +49,7 @@ export class SanitizeInterceptor implements NestInterceptor {
       if (SENSITIVE_FIELDS.includes(key.toLowerCase())) {
         delete sanitized[key];
       } else if (typeof sanitized[key] === 'object' && sanitized[key] !== null) {
-        sanitized[key] = this.sanitizeObject(sanitized[key] as Record<string, unknown>);
+        sanitized[key] = this.sanitizeResponse(sanitized[key]);
       }
     }
 

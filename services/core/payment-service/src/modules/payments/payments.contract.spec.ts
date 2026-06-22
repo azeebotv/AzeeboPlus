@@ -163,7 +163,10 @@ describe('Payments Controller Contract Tests', () => {
     it('should return available payment providers', () => {
       mockPaymentsService.getProviders.mockResolvedValue({
         success: true,
-        data: [{ id: 'paystack', name: 'Paystack' }, { id: 'flutterwave', name: 'Flutterwave' }],
+        data: [
+          { id: 'paystack', name: 'Paystack' },
+          { id: 'flutterwave', name: 'Flutterwave' },
+        ],
       });
 
       return request(app.getHttpServer())
@@ -211,9 +214,7 @@ describe('Payments Controller Contract Tests', () => {
 
   describe('error responses', () => {
     it('should return 401 for protected endpoints without token', () => {
-      return request(app.getHttpServer())
-        .get('/payments/history')
-        .expect(401);
+      return request(app.getHttpServer()).get('/payments/history').expect(401);
     });
 
     it('should return 400 for invalid request body', () => {

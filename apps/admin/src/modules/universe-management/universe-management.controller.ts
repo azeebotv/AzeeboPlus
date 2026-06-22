@@ -46,7 +46,10 @@ export class UniverseManagementController {
     @Param('universeName') universeName: string,
     @Param('featureKey') featureKey: string
   ) {
-    const isEnabled = await this.universeManagementService.checkFeatureFlag(universeName, featureKey);
+    const isEnabled = await this.universeManagementService.checkFeatureFlag(
+      universeName,
+      featureKey
+    );
     return { universeName, featureKey, isEnabled };
   }
 

@@ -1,4 +1,5 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { randomUUID } from 'crypto';
@@ -35,12 +36,15 @@ interface SocialLoginResponse {
 
 @Injectable()
 export class SocialAuthService {
-  private readonly saltRounds = 10;
+  private readonly saltRounds: number;
 
   constructor(
     private readonly authRepository: AuthRepository,
-    private readonly jwtService: JwtService
-  ) {}
+    private readonly jwtService: JwtService,
+    private readonly configService: ConfigService
+  ) {
+    this.saltRounds = this.configService.get<number>('SALT_ROUNDS', 10);
+  }
 
   async socialLogin(socialUser: SocialUser): Promise<SocialLoginResponse> {
     let user = await this.authRepository.findByEmail(socialUser.email);

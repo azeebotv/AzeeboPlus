@@ -1,6 +1,6 @@
 generator client {
   provider = "prisma-client-js"
-  output   = "../src/prisma/client"
+  output = "../generated/prisma/client"
 }
 
 datasource db {
@@ -602,4 +602,90 @@ model ReportExecution {
   @@index([executedBy])
   @@index([executedAt])
   @@map("report_executions")
+}
+
+// Category A migration: registry of allowed events with schema validation.
+// Replaces code-only validation in the analytics SDK + CI lint.
+model EventSchema {
+  id          String   @id @default(uuid())
+  name        String   @unique // e.g. screen_view, content_impression
+  description String?
+  properties  Json     // JSON schema for event properties
+  required    Json     // array of required property names
+  version     Int      @default(1)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("event_schemas")
+  @@index([name])
+  @@index([isActive])
+}
+
+// Category A migration: A/B experiment assignment + outcome tracking.
+// Replaces the Json experimentFlags field on ProductEvent for structured
+// experiment analysis.
+model ExperimentEvent {
+  id            String   @id @default(uuid())
+  experimentKey String   // e.g. feed_ranking_v2
+  userId        String?
+  variant       String   // control, treatment_a, treatment_b
+  assignmentAt  DateTime @default(now())
+  outcome       String?  // converted, dropped, no_outcome
+  outcomeAt     DateTime?
+  metadata      Json?
+  createdAt     DateTime @default(now())
+
+  @@map("experiment_events")
+  @@index([experimentKey])
+  @@index([userId])
+  @@index([variant])
+  @@index([assignmentAt])
+  @@index([outcome])
+}
+
+// Category A migration: named conversion definitions for funnel tracking.
+// Replaces ad-hoc funnel definitions with admin-managed conversion metrics.
+model ConversionMetric {
+  id            String   @id @default(uuid())
+  name          String   @unique
+  description   String?
+  funnelId      String?  // optional link to Funnel
+  triggerEvent  String   // the event that marks conversion
+  conditions    Json     // additional property conditions
+  windowMinutes Int?     // attribution window
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("conversion_metrics")
+  @@index([name])
+  @@index([triggerEvent])
+  @@index([isActive])
+}
+
+// Category A migration: materialized per-session rollups.
+// Replaces on-read computation from ProductEvent.sessionId groupings.
+model SessionSummary {
+  id              String   @id @default(uuid())
+  sessionId       String   @unique
+  userId          String?
+  platform        String?
+  universe        String?
+  startedAt       DateTime
+  endedAt         DateTime?
+  durationSeconds Int      @default(0)
+  screenViews     Int      @default(0)
+  eventsCount     Int      @default(0)
+  conversions     Int      @default(0)
+  metadata        Json?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("session_summaries")
+  @@index([sessionId])
+  @@index([userId])
+  @@index([platform])
+  @@index([universe])
+  @@index([startedAt])
 }

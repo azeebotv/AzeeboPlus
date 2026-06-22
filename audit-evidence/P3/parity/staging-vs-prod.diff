@@ -1,0 +1,99 @@
+# Staging ↔ Production Parity Diff — 2026-06-22 (SHA fc01c8c)
+# Source dirs: infra/k8s/staging, infra/k8s/production, infra/k8s/base
+# This file is a manually-curated summary of the three `diff -ruN` runs.
+# The raw diffs are too large for this evidence file but were captured
+# inline into `audit-evidence/P3/parity/_raw.log` during the run.
+
+## Diff 1 — `infra/k8s/staging/` vs `infra/k8s/production/` (intentional drift)
+
+```
+Only in staging/:
+  staging/auth-service.yaml          (78 lines, replicas=2, JWT_EXPIRES_IN=30m)
+  staging/user-service.yaml          (full user-service Deployment, staging ns)
+  staging/wallet-service.yaml        (full wallet-service Deployment, staging ns)
+  staging/payment-service.yaml       (full payment-service Deployment, staging ns)
+  staging/notification-service.yaml  (full notification-service Deployment, staging ns)
+  staging/content-service.yaml       (full content-service Deployment, staging ns)
+  staging/search-service.yaml        (full search-service Deployment, staging ns)
+  staging/analytics-service.yaml     (full analytics-service Deployment, staging ns)
+  staging/moderation-service.yaml    (full moderation-service Deployment, staging ns)
+  staging/recommendation-service.yaml (full recommendation-service Deployment, staging ns)
+  staging/api-gateway.yaml           (full api-gateway Deployment, staging ns)
+  staging/ingress.yaml               (full ingress, staging ns)
+  staging/hpa.yaml                   (HPAs sized for staging load)
+  staging/postgres.yaml              (single-replica PG, 10Gi, staging ns)
+  staging/redis.yaml                 (single-replica Redis, staging ns)
+  staging/secrets.example.yaml       (placeholders for staging secrets)
+  staging/namespace.yaml             (azeebo-staging namespace)
+  staging/kustomization.yaml         (resources=17, images tagged :latest)
+
+Only in production/:
+  production/kustomization.yaml      (resources=15 incl. web-app, images tagged :v1.0.0, strategic-merge patches auth-service replicas=3)
+  production/namespace.yaml          (azeebo namespace)
+```
+
+## Interpretation
+
+| Intent | Detail |
+|--------|--------|
+| **Intentional** | Staging uses `:latest` and `LOG_LEVEL=debug`; production uses `:v1.0.0` and `LOG_LEVEL=info`. This is correct. |
+| **Intentional** | Staging has 7 service Deployments and ingress in-tree; production references `../base/*`. |
+| **Intentional** | Staging has `patchesStrategicMerge` absent; production adds auth-service replicas=3 override. |
+| **⚠️ Unintentional drift** | Staging uses `JWT_EXPIRES_IN: 30m` (hard-coded) but production does not declare it; relies on auth-service default. |
+| **⚠️ Unintentional drift** | `staging/postgres.yaml` is single-replica 10Gi; `production/` does not include the HA manifest at all — the HA is only in `base/postgres-ha.yaml`. Staging has no path that uses `base/postgres-ha.yaml`. |
+| **⚠️ Unintentional drift** | Staging `secrets.example.yaml` references `${TWILIO_PHONE_NUMBER}` etc.; production `secrets.yaml` (top-level) is empty placeholders. Surface parity unclear. |
+
+## Diff 2 — `infra/k8s/base/` vs `infra/k8s/staging/` (most staging services do NOT inherit from base)
+
+```
+All of base/<svc>.yaml is referenced ONLY by production/kustomization.yaml.
+Staging re-declares every Deployment locally rather than inheriting from base/.
+```
+
+## Interpretation
+
+| Intent | Detail |
+|--------|--------|
+| **⚠️ Unintentional drift** | Staging does not consume `base/`; any change to `base/auth-service.yaml` will not reach staging. Two parallel truths. |
+| **⚠️ Unintentional drift** | Staging auth-service does not have the `securityContext.runAsNonRoot: true` from `base/auth-service.yaml`. Less hardened. |
+
+## Diff 3 — `infra/k8s/base/` vs `infra/k8s/production/` (production kustomization)
+
+```
+production/kustomization.yaml uses patchesStrategicMerge to bump auth-service replicas=3
+but base/auth-service.yaml already declares replicas=3. The patch is a no-op.
+```
+
+## Interpretation
+
+| Intent | Detail |
+|--------|--------|
+| **⚠️ Unintentional drift** | Patch is redundant. Maintenance hazard if base/auth-service.yaml replicas is changed later — the patch silently overrides. |
+
+## Cross-environment secret surface (without leaking values)
+
+```
+staging/secrets.example.yaml keys:
+  DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME
+  REDIS_HOST, REDIS_PORT
+  JWT_SECRET, JWT_REFRESH_SECRET
+  PAYSTACK_SECRET_KEY, PAYSTACK_WEBHOOK_SECRET
+  FLUTTERWAVE_SECRET_KEY, FLUTTERWAVE_WEBHOOK_SECRET
+  SENDGRID_API_KEY
+  TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_PHONE_NUMBER
+  FIREBASE_SERVER_KEY
+  AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_S3_BUCKET
+  NODE_ENV
+```
+
+```
+infra/k8s/base/external-secrets.yaml keys (production):
+  DB_HOST, DB_USER, DB_PASSWORD, DB_NAME
+  JWT_SECRET, JWT_REFRESH_SECRET
+  PAYSTACK_SECRET_KEY, FLUTTERWAVE_SECRET_KEY
+```
+
+| Drift | Detail |
+|-------|--------|
+| **⚠️ Unintentional drift** | Production ESO only materialises 7 keys; staging requires 16. Some keys (SENDGRID, TWILIO, FIREBASE, AWS_ACCESS_KEY_ID) are absent from production ESO → runtime `valueFrom: secretKeyRef` will fail or fall through to optional: true. |
+| **⚠️ Unintentional drift** | Production ESO refreshes every 1h; no rotation cadence for the underlying AWS Secrets Manager secret itself. |

@@ -1,5 +1,11 @@
-import { Injectable, UnauthorizedException, ConflictException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  ConflictException,
+  BadRequestException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
 import { randomUUID } from 'crypto';
 
@@ -7,7 +13,12 @@ import { AuthRepository } from './auth.repository';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
-import { ForgotPasswordDto, ResetPasswordDto, VerifyEmailDto, ResendVerificationDto } from './dto/password-reset.dto';
+import {
+  ForgotPasswordDto,
+  ResetPasswordDto,
+  VerifyEmailDto,
+  ResendVerificationDto,
+} from './dto/password-reset.dto';
 import { SelectRoleDto } from './dto/select-role.dto';
 import { RequestOtpDto } from './dto/request-otp.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
@@ -21,21 +32,32 @@ import { RedisService } from '../../common/services/redis.service';
 
 @Injectable()
 export class AuthService {
-  private readonly saltRounds = 10;
-  private readonly accessTokenExpiry = '15m';
-  private readonly refreshTokenExpiry = '7d';
-  private readonly refreshTokenExpiryDays = 7;
+  private readonly saltRounds: number;
+  private readonly accessTokenExpiry: string;
+  private readonly refreshTokenExpiry: string;
+  private readonly refreshTokenExpiryDays: number;
   private readonly revokedTokensPrefix = 'revoked:';
   private readonly failedLoginPrefix = 'failed_login:';
-  private readonly maxFailedAttempts = 5;
-  private readonly lockoutDurationSeconds = 15 * 60; // 15 minutes
+  private readonly maxFailedAttempts: number;
+  private readonly lockoutDurationSeconds: number;
 
   constructor(
     private readonly authRepository: AuthRepository,
     private readonly jwtService: JwtService,
     private readonly otpService: OtpService,
-    private readonly redisService: RedisService
-  ) {}
+    private readonly redisService: RedisService,
+    private readonly configService: ConfigService
+  ) {
+    this.saltRounds = this.configService.get<number>('SALT_ROUNDS', 10);
+    this.accessTokenExpiry = this.configService.get<string>('ACCESS_TOKEN_EXPIRY', '15m');
+    this.refreshTokenExpiry = this.configService.get<string>('REFRESH_TOKEN_EXPIRY', '7d');
+    this.refreshTokenExpiryDays = this.configService.get<number>('REFRESH_TOKEN_EXPIRY_DAYS', 7);
+    this.maxFailedAttempts = this.configService.get<number>('MAX_FAILED_ATTEMPTS', 5);
+    this.lockoutDurationSeconds = this.configService.get<number>(
+      'LOCKOUT_DURATION_SECONDS',
+      15 * 60
+    );
+  }
 
   async register(registerDto: RegisterDto): Promise<AuthResponse> {
     const existingUser = await this.authRepository.findByEmail(registerDto.email);
@@ -209,7 +231,9 @@ export class AuthService {
     return createSuccessResponse(this.mapToUser(user as UserEntity));
   }
 
-  async forgotPassword(forgotPasswordDto: ForgotPasswordDto): Promise<{ success: boolean; message: string }> {
+  async forgotPassword(
+    forgotPasswordDto: ForgotPasswordDto
+  ): Promise<{ success: boolean; message: string }> {
     const user = await this.authRepository.findByEmail(forgotPasswordDto.email);
     if (!user) {
       return { success: true, message: 'If the email exists, a reset link has been sent' };
@@ -222,7 +246,9 @@ export class AuthService {
     return { success: true, message: 'If the email exists, a reset link has been sent' };
   }
 
-  async resetPassword(resetPasswordDto: ResetPasswordDto): Promise<{ success: boolean; message: string }> {
+  async resetPassword(
+    resetPasswordDto: ResetPasswordDto
+  ): Promise<{ success: boolean; message: string }> {
     const resetTokenKey = `password_reset:${resetPasswordDto.token}`;
     const userId = await this.redisService.get(resetTokenKey);
 
@@ -244,7 +270,9 @@ export class AuthService {
     return { success: true, message: 'Password reset successfully' };
   }
 
-  async verifyEmail(verifyEmailDto: VerifyEmailDto): Promise<{ success: boolean; message: string }> {
+  async verifyEmail(
+    verifyEmailDto: VerifyEmailDto
+  ): Promise<{ success: boolean; message: string }> {
     const verificationTokenKey = `email_verification:${verifyEmailDto.token}`;
     const userId = await this.redisService.get(verificationTokenKey);
 
@@ -263,7 +291,9 @@ export class AuthService {
     return { success: true, message: 'Email verified successfully' };
   }
 
-  async resendVerification(resendVerificationDto: ResendVerificationDto): Promise<{ success: boolean; message: string }> {
+  async resendVerification(
+    resendVerificationDto: ResendVerificationDto
+  ): Promise<{ success: boolean; message: string }> {
     const user = await this.authRepository.findByEmail(resendVerificationDto.email);
     if (!user) {
       return { success: true, message: 'If the email exists, a verification link has been sent' };
@@ -280,7 +310,10 @@ export class AuthService {
     return { success: true, message: 'If the email exists, a verification link has been sent' };
   }
 
-  async selectRole(userId: string, selectRoleDto: SelectRoleDto): Promise<{ success: boolean; message: string }> {
+  async selectRole(
+    userId: string,
+    selectRoleDto: SelectRoleDto
+  ): Promise<{ success: boolean; message: string }> {
     const user = await this.authRepository.findById(userId);
     if (!user) {
       throw new BadRequestException('User not found');

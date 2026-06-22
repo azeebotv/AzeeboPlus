@@ -21,7 +21,12 @@ describe('SportsService', () => {
             highlight: { findMany: jest.fn() },
             sportsEvent: { findMany: jest.fn(), findUnique: jest.fn(), update: jest.fn() },
             predictionMarket: { findMany: jest.fn() },
-            predictionEntry: { findFirst: jest.fn(), create: jest.fn(), findMany: jest.fn(), update: jest.fn() },
+            predictionEntry: {
+              findFirst: jest.fn(),
+              create: jest.fn(),
+              findMany: jest.fn(),
+              update: jest.fn(),
+            },
             wallet: { findUnique: jest.fn() },
             contest: { findUnique: jest.fn(), findMany: jest.fn() },
             contestEntry: { findUnique: jest.fn(), create: jest.fn() },
@@ -53,7 +58,11 @@ describe('SportsService', () => {
       const result = await service.getHome();
 
       expect(result.success).toBe(true);
-      expect(result.data).toEqual({ highlights: mockHighlights, events: mockEvents, predictions: mockPredictions });
+      expect(result.data).toEqual({
+        highlights: mockHighlights,
+        events: mockEvents,
+        predictions: mockPredictions,
+      });
     });
   });
 
@@ -84,14 +93,18 @@ describe('SportsService', () => {
     it('should throw NotFoundException when event not found', async () => {
       (prismaService.sportsEvent.findUnique as jest.Mock).mockResolvedValue(null);
 
-      await expect(service.submitPrediction(userId, predictionBody)).rejects.toThrow(NotFoundException);
+      await expect(service.submitPrediction(userId, predictionBody)).rejects.toThrow(
+        NotFoundException
+      );
     });
 
     it('should throw BadRequestException when event is not upcoming', async () => {
       const mockEvent = { id: eventId, status: 'completed' };
       (prismaService.sportsEvent.findUnique as jest.Mock).mockResolvedValue(mockEvent);
 
-      await expect(service.submitPrediction(userId, predictionBody)).rejects.toThrow(BadRequestException);
+      await expect(service.submitPrediction(userId, predictionBody)).rejects.toThrow(
+        BadRequestException
+      );
     });
 
     it('should return idempotent response when prediction already exists', async () => {
@@ -116,7 +129,9 @@ describe('SportsService', () => {
       (prismaService.predictionEntry.findFirst as jest.Mock).mockResolvedValue(null);
       (prismaService.wallet.findUnique as jest.Mock).mockResolvedValue(mockWallet);
 
-      await expect(service.submitPrediction(userId, predictionBody)).rejects.toThrow(BadRequestException);
+      await expect(service.submitPrediction(userId, predictionBody)).rejects.toThrow(
+        BadRequestException
+      );
     });
 
     it('should compensate wallet if prediction creation fails', async () => {
@@ -131,7 +146,9 @@ describe('SportsService', () => {
         .mockRejectedValueOnce(new Error('DB error'));
       (prismaService.predictionEntry.create as jest.Mock).mockRejectedValue(new Error('DB error'));
 
-      await expect(service.submitPrediction(userId, predictionBody)).rejects.toThrow(BadRequestException);
+      await expect(service.submitPrediction(userId, predictionBody)).rejects.toThrow(
+        BadRequestException
+      );
 
       expect(mockedAxios.post).toHaveBeenCalledTimes(2);
     });

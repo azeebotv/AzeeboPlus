@@ -27,11 +27,7 @@ export interface ProtectedAuthProviderProps {
 }
 
 export function ProtectedAuthProvider({ children, value }: ProtectedAuthProviderProps) {
-  return (
-    <ProtectedAuthContext.Provider value={value}>
-      {children}
-    </ProtectedAuthContext.Provider>
-  );
+  return <ProtectedAuthContext.Provider value={value}>{children}</ProtectedAuthContext.Provider>;
 }
 
 export interface ProtectedRouteProps {
@@ -69,7 +65,16 @@ export function ProtectedRoute({
       router.push('/unauthorized');
       return;
     }
-  }, [isLoading, isAuthenticated, user, requireAuth, requireAdmin, requireCreator, redirectTo, router]);
+  }, [
+    isLoading,
+    isAuthenticated,
+    user,
+    requireAuth,
+    requireAdmin,
+    requireCreator,
+    redirectTo,
+    router,
+  ]);
 
   if (isLoading) {
     return <LoadingState title="Checking authorization..." />;

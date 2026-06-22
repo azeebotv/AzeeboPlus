@@ -21,7 +21,12 @@ interface TournamentResponse {
     | Tournament[]
     | { items: Tournament[]; total: number; page: number; limit: number; totalPages: number }
     | { id: string; rank: number; score: number; prize?: number; message: string }
-    | { leaderboard: unknown[]; userRank?: number; totalParticipants: number; activeParticipants?: unknown }
+    | {
+        leaderboard: unknown[];
+        userRank?: number;
+        totalParticipants: number;
+        activeParticipants?: unknown;
+      }
     | { message: string; finalLeaderboard: unknown[] }
     | { message: string };
   error?: { code: string; message: string };

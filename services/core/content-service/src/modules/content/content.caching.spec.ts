@@ -163,15 +163,13 @@ describe('Content Service Caching Tests', () => {
 
   describe('Cache Invalidation', () => {
     it('should not cache POST requests', async () => {
-      const response = await request(app.getHttpServer())
-        .post('/content')
-        .send({
-          title: 'New Content',
-          description: 'Test',
-          thumbnail: 'https://example.com/thumb.jpg',
-          universeId: 'universe-1',
-          creatorId: 'creator-1',
-        });
+      const response = await request(app.getHttpServer()).post('/content').send({
+        title: 'New Content',
+        description: 'Test',
+        thumbnail: 'https://example.com/thumb.jpg',
+        universeId: 'universe-1',
+        creatorId: 'creator-1',
+      });
 
       expect([201, 400]).toContain(response.status);
     });

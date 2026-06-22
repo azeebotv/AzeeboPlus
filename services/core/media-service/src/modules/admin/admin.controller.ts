@@ -1,11 +1,4 @@
-import {
-  Controller,
-  Get,
-  Delete,
-  Param,
-  Query,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Get, Delete, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { AdminService } from './admin.service';
 import { AdminGuard } from '@azeebo/security';
@@ -32,10 +25,7 @@ export class AdminController {
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiResponse({ status: 200, description: 'Paginated uploads' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
-  async getUploads(
-    @Query('page') page?: number,
-    @Query('limit') limit?: number,
-  ) {
+  async getUploads(@Query('page') page?: number, @Query('limit') limit?: number) {
     return this.adminService.getUploads({ page, limit });
   }
 

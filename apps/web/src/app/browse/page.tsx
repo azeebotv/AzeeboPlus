@@ -165,7 +165,9 @@ export default function BrowsePage(): JSX.Element {
 
         if (response.success && response.data) {
           const data = response.data;
-          let items: ContentItem[] = Array.isArray(data) ? data : (data as ContentResponse).items || [];
+          let items: ContentItem[] = Array.isArray(data)
+            ? data
+            : (data as ContentResponse).items || [];
 
           if (searchQuery) {
             const query = searchQuery.toLowerCase();
@@ -210,7 +212,16 @@ export default function BrowsePage(): JSX.Element {
     };
 
     fetchContent();
-  }, [selectedCategory, selectedUniverse, searchQuery, minRating, maxDuration, selectedLanguage, selectedYear, sortBy]);
+  }, [
+    selectedCategory,
+    selectedUniverse,
+    searchQuery,
+    minRating,
+    maxDuration,
+    selectedLanguage,
+    selectedYear,
+    sortBy,
+  ]);
 
   const clearFilters = () => {
     setSearchQuery('');
@@ -279,8 +290,18 @@ export default function BrowsePage(): JSX.Element {
                   className="w-full px-4 py-2 pl-10 border border-border rounded-lg bg-card text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                   aria-label="Search content"
                 />
-                <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                <svg
+                  className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
                 </svg>
               </div>
             </div>
@@ -304,15 +325,26 @@ export default function BrowsePage(): JSX.Element {
                   viewBox="0 0 24 24"
                   stroke="currentColor"
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 9l-7 7-7-7"
+                  />
                 </svg>
               </div>
             </button>
 
             {showFilters && (
-              <div id="advanced-filters" className="bg-card rounded-lg border border-border p-4 mb-6 space-y-4">
+              <div
+                id="advanced-filters"
+                className="bg-card rounded-lg border border-border p-4 mb-6 space-y-4"
+              >
                 <div>
-                  <label htmlFor="rating-filter" className="block text-sm font-medium text-foreground mb-2">
+                  <label
+                    htmlFor="rating-filter"
+                    className="block text-sm font-medium text-foreground mb-2"
+                  >
                     Minimum Rating: {minRating > 0 ? `${minRating}+ stars` : 'Any'}
                   </label>
                   <input
@@ -332,7 +364,10 @@ export default function BrowsePage(): JSX.Element {
                 </div>
 
                 <div>
-                  <label htmlFor="duration-filter" className="block text-sm font-medium text-foreground mb-2">
+                  <label
+                    htmlFor="duration-filter"
+                    className="block text-sm font-medium text-foreground mb-2"
+                  >
                     Max Duration: {maxDuration < 300 ? `${maxDuration} min` : 'Any'}
                   </label>
                   <input
@@ -352,7 +387,10 @@ export default function BrowsePage(): JSX.Element {
                 </div>
 
                 <div>
-                  <label htmlFor="language-filter" className="block text-sm font-medium text-foreground mb-2">
+                  <label
+                    htmlFor="language-filter"
+                    className="block text-sm font-medium text-foreground mb-2"
+                  >
                     Language
                   </label>
                   <select
@@ -371,7 +409,10 @@ export default function BrowsePage(): JSX.Element {
                 </div>
 
                 <div>
-                  <label htmlFor="year-filter" className="block text-sm font-medium text-foreground mb-2">
+                  <label
+                    htmlFor="year-filter"
+                    className="block text-sm font-medium text-foreground mb-2"
+                  >
                     Year
                   </label>
                   <select
@@ -402,8 +443,16 @@ export default function BrowsePage(): JSX.Element {
             )}
 
             <div className="bg-card rounded-lg p-4 mb-6">
-              <h3 id="categories-heading" className="font-bold text-lg mb-4">Categories</h3>
-              <ul ref={categoryListRef} role="listbox" aria-label="Content categories" aria-labelledby="categories-heading" className="space-y-2 keyboard-navigable">
+              <h3 id="categories-heading" className="font-bold text-lg mb-4">
+                Categories
+              </h3>
+              <ul
+                ref={categoryListRef}
+                role="listbox"
+                aria-label="Content categories"
+                aria-labelledby="categories-heading"
+                className="space-y-2 keyboard-navigable"
+              >
                 <li>
                   <button
                     onClick={() => setSelectedCategory(null)}
@@ -436,8 +485,16 @@ export default function BrowsePage(): JSX.Element {
             </div>
 
             <div className="bg-card rounded-lg p-4">
-              <h3 id="universes-heading" className="font-bold text-lg mb-4">Universes</h3>
-              <ul ref={universeListRef} role="listbox" aria-label="Content universes" aria-labelledby="universes-heading" className="space-y-2 keyboard-navigable">
+              <h3 id="universes-heading" className="font-bold text-lg mb-4">
+                Universes
+              </h3>
+              <ul
+                ref={universeListRef}
+                role="listbox"
+                aria-label="Content universes"
+                aria-labelledby="universes-heading"
+                className="space-y-2 keyboard-navigable"
+              >
                 <li>
                   <button
                     onClick={() => setSelectedUniverse(null)}
@@ -483,11 +540,17 @@ export default function BrowsePage(): JSX.Element {
                 </h3>
                 <p className="text-sm text-muted-foreground">
                   {content.length} result{content.length !== 1 ? 's' : ''}
-                  {activeFilterCount > 0 && ` • ${activeFilterCount} filter${activeFilterCount !== 1 ? 's' : ''} active`}
+                  {activeFilterCount > 0 &&
+                    ` • ${activeFilterCount} filter${activeFilterCount !== 1 ? 's' : ''} active`}
                 </p>
               </div>
               <div className="flex items-center gap-3 w-full sm:w-auto">
-                <label htmlFor="sort-select" className="text-sm text-muted-foreground whitespace-nowrap">Sort by:</label>
+                <label
+                  htmlFor="sort-select"
+                  className="text-sm text-muted-foreground whitespace-nowrap"
+                >
+                  Sort by:
+                </label>
                 <select
                   id="sort-select"
                   value={sortBy}
@@ -519,7 +582,12 @@ export default function BrowsePage(): JSX.Element {
                 ))}
               </div>
             ) : (
-              <div ref={contentGridRef} role="grid" aria-label="Content results" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 keyboard-navigable">
+              <div
+                ref={contentGridRef}
+                role="grid"
+                aria-label="Content results"
+                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 keyboard-navigable"
+              >
                 {content.map((item, index) => (
                   <div
                     key={item.id}

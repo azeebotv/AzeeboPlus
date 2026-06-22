@@ -26,9 +26,7 @@ export function Container({
   };
 
   return (
-    <Component
-      className={`${sizeStyles[size]} mx-auto px-4 sm:px-6 lg:px-8 w-full ${className}`}
-    >
+    <Component className={`${sizeStyles[size]} mx-auto px-4 sm:px-6 lg:px-8 w-full ${className}`}>
       {children}
     </Component>
   );
@@ -65,11 +63,7 @@ export function Grid({
     xl:gap-${gap.xl ?? gap.lg ?? gap.md ?? gap.sm ?? gap.base}
   `;
 
-  return (
-    <Component className={`grid ${colsClass} ${gapClass} ${className}`}>
-      {children}
-    </Component>
-  );
+  return <Component className={`grid ${colsClass} ${gapClass} ${className}`}>{children}</Component>;
 }
 
 export interface GridItemProps {
@@ -78,11 +72,7 @@ export interface GridItemProps {
   className?: string;
 }
 
-export function GridItem({
-  children,
-  span,
-  className = '',
-}: GridItemProps) {
+export function GridItem({ children, span, className = '' }: GridItemProps) {
   const spanClass = span
     ? `
       ${span.base ? `col-span-${span.base}` : ''}
@@ -93,11 +83,7 @@ export function GridItem({
     `
     : '';
 
-  return (
-    <div className={`${spanClass} ${className}`}>
-      {children}
-    </div>
-  );
+  return <div className={`${spanClass} ${className}`}>{children}</div>;
 }
 
 export interface StackProps {
@@ -180,24 +166,22 @@ export function Responsive({
     };
     visibilityClass = hideClasses[showOnlyOn] || '';
   } else if (hideOn) {
-    const hideClasses = hideOn.map((bp) => {
-      const map: Record<string, string> = {
-        sm: 'sm:hidden',
-        md: 'md:hidden',
-        lg: 'lg:hidden',
-        xl: 'xl:hidden',
-        '2xl': '2xl:hidden',
-      };
-      return map[bp];
-    }).join(' ');
+    const hideClasses = hideOn
+      .map((bp) => {
+        const map: Record<string, string> = {
+          sm: 'sm:hidden',
+          md: 'md:hidden',
+          lg: 'lg:hidden',
+          xl: 'xl:hidden',
+          '2xl': '2xl:hidden',
+        };
+        return map[bp];
+      })
+      .join(' ');
     visibilityClass = hideClasses;
   }
 
-  return (
-    <Component className={`${visibilityClass} ${className}`}>
-      {children}
-    </Component>
-  );
+  return <Component className={`${visibilityClass} ${className}`}>{children}</Component>;
 }
 
 export interface AspectRatioProps {
@@ -206,11 +190,7 @@ export interface AspectRatioProps {
   className?: string;
 }
 
-export function AspectRatio({
-  children,
-  ratio = 'video',
-  className = '',
-}: AspectRatioProps) {
+export function AspectRatio({ children, ratio = 'video', className = '' }: AspectRatioProps) {
   const ratios = {
     square: 'aspect-square',
     video: 'aspect-video',
@@ -220,11 +200,7 @@ export function AspectRatio({
     ultrawide: 'aspect-[32/9]',
   };
 
-  return (
-    <div className={`${ratios[ratio]} ${className}`}>
-      {children}
-    </div>
-  );
+  return <div className={`${ratios[ratio]} ${className}`}>{children}</div>;
 }
 
 export interface SplitProps {
@@ -302,9 +278,7 @@ export function DashboardLayout({
                 <Icon name={sidebarCollapsed ? 'ChevronRight' : 'ChevronLeft'} size="md" />
               </button>
             </div>
-            <nav className="flex-1 p-4 overflow-y-auto">
-              {sidebar}
-            </nav>
+            <nav className="flex-1 p-4 overflow-y-auto">{sidebar}</nav>
           </div>
         </aside>
         <main
@@ -318,9 +292,7 @@ export function DashboardLayout({
               {header}
             </header>
           )}
-          <div className={`p-6 ${className}`}>
-            {children}
-          </div>
+          <div className={`p-6 ${className}`}>{children}</div>
           {footer && (
             <footer className="bg-bg-secondary border-t border-border-default py-4 px-6">
               {footer}
@@ -339,28 +311,15 @@ export interface AuthLayoutProps {
   className?: string;
 }
 
-export function AuthLayout({
-  children,
-  logo,
-  footer,
-  className = '',
-}: AuthLayoutProps) {
+export function AuthLayout({ children, logo, footer, className = '' }: AuthLayoutProps) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-bg-primary to-bg-secondary flex items-center justify-center p-4">
       <div className={`w-full max-w-md ${className}`}>
-        {logo && (
-          <div className="flex justify-center mb-8">
-            {logo}
-          </div>
-        )}
+        {logo && <div className="flex justify-center mb-8">{logo}</div>}
         <div className="bg-bg-secondary rounded-2xl shadow-xl border border-border-default p-8">
           {children}
         </div>
-        {footer && (
-          <div className="mt-6 text-center text-sm text-text-tertiary">
-            {footer}
-          </div>
-        )}
+        {footer && <div className="mt-6 text-center text-sm text-text-tertiary">{footer}</div>}
       </div>
     </div>
   );
@@ -391,15 +350,11 @@ export function ContentLayout({
       <div className="flex">
         {sidebar && (
           <aside className="hidden lg:block w-64 flex-shrink-0 bg-bg-secondary border-r border-border-default">
-            <div className="p-4">
-              {sidebar}
-            </div>
+            <div className="p-4">{sidebar}</div>
           </aside>
         )}
         <main className={`flex-1 min-h-screen ${sidebar ? 'lg:ml-64' : ''}`}>
-          <div className={`p-6 ${className}`}>
-            {children}
-          </div>
+          <div className={`p-6 ${className}`}>{children}</div>
         </main>
       </div>
       {footer && (
@@ -447,9 +402,10 @@ export function SettingsLayout({
                 onClick={() => onNavItemClick(item.id)}
                 className={`
                   w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors
-                  ${activeItem === item.id
-                    ? 'bg-primary-500/10 text-primary-400'
-                    : 'text-text-secondary hover:text-text-primary hover:bg-bg-tertiary'
+                  ${
+                    activeItem === item.id
+                      ? 'bg-primary-500/10 text-primary-400'
+                      : 'text-text-secondary hover:text-text-primary hover:bg-bg-tertiary'
                   }
                 `}
                 aria-current={activeItem === item.id ? 'page' : undefined}
@@ -461,9 +417,7 @@ export function SettingsLayout({
           </nav>
         </aside>
         <main className="flex-1 min-h-screen lg:ml-72">
-          <div className={`p-6 ${className}`}>
-            {children}
-          </div>
+          <div className={`p-6 ${className}`}>{children}</div>
         </main>
       </div>
     </div>
@@ -477,12 +431,7 @@ export interface PageHeaderProps {
   className?: string;
 }
 
-export function PageHeader({
-  title,
-  subtitle,
-  actions,
-  className = '',
-}: PageHeaderProps) {
+export function PageHeader({ title, subtitle, actions, className = '' }: PageHeaderProps) {
   return (
     <header className={`mb-6 ${className}`}>
       <div className="flex items-start justify-between">

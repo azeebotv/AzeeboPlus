@@ -58,14 +58,31 @@ export const subscriptionApi = {
   },
 
   async cancelSubscription(subscriptionId: string): Promise<ApiResponse<{ message: string }>> {
-    const response = await apiClient.delete<{ message: string }>(`/v1/subscription/${subscriptionId}`);
+    const response = await apiClient.delete<{ message: string }>(
+      `/v1/subscription/${subscriptionId}`
+    );
     return { success: true, data: response };
   },
 
-  async getSubscriptionHistory(page = 1, limit = 20): Promise<ApiResponse<{ items: Subscription[]; total: number; page: number; limit: number; totalPages: number }>> {
-    const response = await apiClient.get<{ items: Subscription[]; total: number; page: number; limit: number; totalPages: number }>(
-      `/v1/subscription/history?page=${page}&limit=${limit}`
-    );
+  async getSubscriptionHistory(
+    page = 1,
+    limit = 20
+  ): Promise<
+    ApiResponse<{
+      items: Subscription[];
+      total: number;
+      page: number;
+      limit: number;
+      totalPages: number;
+    }>
+  > {
+    const response = await apiClient.get<{
+      items: Subscription[];
+      total: number;
+      page: number;
+      limit: number;
+      totalPages: number;
+    }>(`/v1/subscription/history?page=${page}&limit=${limit}`);
     return { success: true, data: response };
   },
 };

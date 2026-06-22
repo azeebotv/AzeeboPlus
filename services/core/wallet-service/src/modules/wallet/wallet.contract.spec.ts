@@ -139,9 +139,11 @@ describe('Wallet Controller Contract Tests', () => {
         .set('Authorization', 'Bearer valid-token');
 
       expect(response.status).toBe(200);
-      expect(response.body).toEqual(expect.objectContaining({
-        success: true,
-      }));
+      expect(response.body).toEqual(
+        expect.objectContaining({
+          success: true,
+        })
+      );
     });
   });
 
@@ -152,9 +154,11 @@ describe('Wallet Controller Contract Tests', () => {
         .set('Authorization', 'Bearer valid-token');
 
       expect(response.status).toBe(200);
-      expect(response.body).toEqual(expect.objectContaining({
-        success: true,
-      }));
+      expect(response.body).toEqual(
+        expect.objectContaining({
+          success: true,
+        })
+      );
     });
   });
 
@@ -166,9 +170,11 @@ describe('Wallet Controller Contract Tests', () => {
         .send({ amount: 50000, reference: 'pay-ref-123' });
 
       expect(response.status).toBe(201);
-      expect(response.body).toEqual(expect.objectContaining({
-        success: true,
-      }));
+      expect(response.body).toEqual(
+        expect.objectContaining({
+          success: true,
+        })
+      );
     });
   });
 
@@ -179,9 +185,11 @@ describe('Wallet Controller Contract Tests', () => {
         .set('Authorization', 'Bearer valid-token');
 
       expect(response.status).toBe(200);
-      expect(response.body).toEqual(expect.objectContaining({
-        success: true,
-      }));
+      expect(response.body).toEqual(
+        expect.objectContaining({
+          success: true,
+        })
+      );
     });
   });
 
@@ -192,10 +200,11 @@ describe('Wallet Controller Contract Tests', () => {
         .set('Authorization', 'Bearer valid-token');
 
       expect(response.status).toBe(200);
-      expect(response.body).toEqual(expect.objectContaining({
-        success: true,
-      }));
+      expect(response.body).toEqual(
+        expect.objectContaining({
+          success: true,
+        })
+      );
     });
   });
 });
-

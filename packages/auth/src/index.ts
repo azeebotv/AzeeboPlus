@@ -1,8 +1,4 @@
-export {
-  ProtectedRoute,
-  ProtectedAuthProvider,
-  useProtectedAuth,
-} from './web/ProtectedRoute';
+export { ProtectedRoute, ProtectedAuthProvider, useProtectedAuth } from './web/ProtectedRoute';
 export type {
   AuthState,
   ProtectedAuthProviderProps,

@@ -5,10 +5,19 @@ import { webLogger } from '@/lib/logger';
 import { Button, Card, Skeleton, Badge, Chip } from '@azeebo/ui';
 import { colors } from '@azeebo/design-tokens';
 import Link from 'next/link';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from 'recharts';
 
 export default function AnalyticsPage(): JSX.Element {
-  const [analytics, setAnalytics] = useState<unknown | null>(null);
+  const [analytics, setAnalytics] = useState<Record<string, unknown> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d'>('30d');
@@ -26,7 +35,7 @@ export default function AnalyticsPage(): JSX.Element {
         if (cancelled) return;
 
         if (response.success) {
-          setAnalytics(response.data);
+          setAnalytics(response.data as Record<string, unknown>);
         } else {
           setError(response.message || 'Failed to load analytics');
           webLogger.error('Failed to load creator analytics', { error: response.message });
@@ -42,7 +51,9 @@ export default function AnalyticsPage(): JSX.Element {
     }
 
     fetchAnalytics();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [timeRange]);
 
   if (isLoading) {
@@ -53,13 +64,28 @@ export default function AnalyticsPage(): JSX.Element {
             Analytics
           </h2>
           <div className="flex items-center gap-3">
-            <Button variant="outline" size="sm" onClick={() => setTimeRange('7d')} disabled={timeRange === '7d'}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setTimeRange('7d')}
+              disabled={timeRange === '7d'}
+            >
               7 Days
             </Button>
-            <Button variant="outline" size="sm" onClick={() => setTimeRange('30d')} disabled={timeRange === '30d'}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setTimeRange('30d')}
+              disabled={timeRange === '30d'}
+            >
               30 Days
             </Button>
-            <Button variant="outline" size="sm" onClick={() => setTimeRange('90d')} disabled={timeRange === '90d'}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setTimeRange('90d')}
+              disabled={timeRange === '90d'}
+            >
               90 Days
             </Button>
           </div>
@@ -92,13 +118,28 @@ export default function AnalyticsPage(): JSX.Element {
             Analytics
           </h2>
           <div className="flex items-center gap-3">
-            <Button variant="outline" size="sm" onClick={() => setTimeRange('7d')} disabled={timeRange === '7d'}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setTimeRange('7d')}
+              disabled={timeRange === '7d'}
+            >
               7 Days
             </Button>
-            <Button variant="outline" size="sm" onClick={() => setTimeRange('30d')} disabled={timeRange === '30d'}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setTimeRange('30d')}
+              disabled={timeRange === '30d'}
+            >
               30 Days
             </Button>
-            <Button variant="outline" size="sm" onClick={() => setTimeRange('90d')} disabled={timeRange === '90d'}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setTimeRange('90d')}
+              disabled={timeRange === '90d'}
+            >
               90 Days
             </Button>
           </div>
@@ -124,13 +165,28 @@ export default function AnalyticsPage(): JSX.Element {
           Analytics
         </h2>
         <div className="flex items-center gap-3">
-          <Button variant="outline" size="sm" onClick={() => setTimeRange('7d')} disabled={timeRange === '7d'}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setTimeRange('7d')}
+            disabled={timeRange === '7d'}
+          >
             7 Days
           </Button>
-          <Button variant="outline" size="sm" onClick={() => setTimeRange('30d')} disabled={timeRange === '30d'}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setTimeRange('30d')}
+            disabled={timeRange === '30d'}
+          >
             30 Days
           </Button>
-          <Button variant="outline" size="sm" onClick={() => setTimeRange('90d')} disabled={timeRange === '90d'}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setTimeRange('90d')}
+            disabled={timeRange === '90d'}
+          >
             90 Days
           </Button>
         </div>
@@ -153,7 +209,10 @@ export default function AnalyticsPage(): JSX.Element {
                 {analytics?.totalViews?.toLocaleString() || '0'}
               </p>
               <p className="text-sm text-gray-500">
-                {analytics?.viewsChangePercentage?.toFixed(1) || 0}% vs previous period
+                {typeof analytics?.viewsChangePercentage === 'number'
+                  ? analytics.viewsChangePercentage.toFixed(1)
+                  : 0}
+                % vs previous period
               </p>
             </div>
           </Card>
@@ -172,7 +231,10 @@ export default function AnalyticsPage(): JSX.Element {
                 {analytics?.totalWatchTime?.toLocaleString() || '0'}
               </p>
               <p className="text-sm text-gray-500">
-                {analytics?.watchTimeChangePercentage?.toFixed(1) || 0}% vs previous period
+                {typeof analytics?.watchTimeChangePercentage === 'number'
+                  ? analytics.watchTimeChangePercentage.toFixed(1)
+                  : 0}
+                % vs previous period
               </p>
             </div>
           </Card>
@@ -188,10 +250,16 @@ export default function AnalyticsPage(): JSX.Element {
                 </Badge>
               </div>
               <p className="text-3xl font-bold" style={{ color: colors.text.primary }}>
-                {analytics?.avgEngagementRate?.toFixed(1)}%
+                {typeof analytics?.avgEngagementRate === 'number'
+                  ? analytics.avgEngagementRate.toFixed(1)
+                  : 0}
+                %
               </p>
               <p className="text-sm text-gray-500">
-                {analytics?.engagementRateChangePercentage?.toFixed(1) || 0}% vs previous period
+                {typeof analytics?.engagementRateChangePercentage === 'number'
+                  ? analytics.engagementRateChangePercentage.toFixed(1)
+                  : 0}
+                % vs previous period
               </p>
             </div>
           </Card>
@@ -210,7 +278,10 @@ export default function AnalyticsPage(): JSX.Element {
                 {analytics?.newFollowers?.toLocaleString() || '0'}
               </p>
               <p className="text-sm text-gray-500">
-                {analytics?.followersChangePercentage?.toFixed(1) || 0}% vs previous period
+                {typeof analytics?.followersChangePercentage === 'number'
+                  ? analytics.followersChangePercentage.toFixed(1)
+                  : 0}
+                % vs previous period
               </p>
             </div>
           </Card>
@@ -226,13 +297,13 @@ export default function AnalyticsPage(): JSX.Element {
                 Views Trend
               </h3>
               <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={analytics?.viewsTrend || []}>
+                <BarChart data={Array.isArray(analytics?.viewsTrend) ? analytics.viewsTrend : []}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="date" />
                   <YAxis />
                   <Tooltip />
                   <Legend />
-                  <Bar dataKey="views" fillColor="#8884d8" />
+                  <Bar dataKey="views" fill="#8884d8" />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -246,13 +317,15 @@ export default function AnalyticsPage(): JSX.Element {
                 Engagement Trend
               </h3>
               <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={analytics?.engagementTrend || []}>
+                <BarChart
+                  data={Array.isArray(analytics?.engagementTrend) ? analytics.engagementTrend : []}
+                >
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="date" />
                   <YAxis />
                   <Tooltip />
                   <Legend />
-                  <Bar dataKey="rate" fillColor="#82ca9d" />
+                  <Bar dataKey="rate" fill="#82ca9d" />
                 </BarChart>
               </ResponsiveContainer>
             </div>

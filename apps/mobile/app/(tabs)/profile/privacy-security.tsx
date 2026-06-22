@@ -1,13 +1,5 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  ScrollView,
-  Switch,
-  Alert,
-} from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Switch, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LoadingState, EmptyState, ErrorState } from '../../../src/components/StateContainers';
@@ -56,7 +48,7 @@ const PRIVACY_OPTIONS = [
   {
     id: 'activity-status',
     title: 'Activity Status',
-    description: 'Show when you\'re active',
+    description: "Show when you're active",
     icon: '🟢',
   },
   {
@@ -114,7 +106,7 @@ export default function PrivacySecurityScreen() {
     }
   };
 
-  const handlePrivacyOption = (option: typeof PRIVACY_OPTIONS[0]) => {
+  const handlePrivacyOption = (option: (typeof PRIVACY_OPTIONS)[0]) => {
     switch (option.id) {
       case 'profile-visibility':
         setProfileVisibility(profileVisibility === 'public' ? 'private' : 'public');
@@ -135,15 +127,9 @@ export default function PrivacySecurityScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => router.back()}
-          >
+          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
             <Text style={styles.backButtonText}>←</Text>
           </TouchableOpacity>
           <Text style={styles.title}>Privacy & Security</Text>
@@ -228,9 +214,7 @@ export default function PrivacySecurityScreen() {
                     thumbColor={dataSharingEnabled ? '#fff' : '#666'}
                   />
                 )}
-                {option.id === 'blocked-users' && (
-                  <Text style={styles.arrowText}>›</Text>
-                )}
+                {option.id === 'blocked-users' && <Text style={styles.arrowText}>›</Text>}
               </View>
             </TouchableOpacity>
           ))}
@@ -256,18 +240,14 @@ export default function PrivacySecurityScreen() {
           <TouchableOpacity
             style={[styles.optionCard, styles.dangerCard]}
             onPress={() =>
-              Alert.alert(
-                'Delete Account',
-                'This action cannot be undone. Are you sure?',
-                [
-                  { text: 'Cancel', style: 'cancel' },
-                  {
-                    text: 'Delete',
-                    style: 'destructive',
-                    onPress: () => {},
-                  },
-                ]
-              )
+              Alert.alert('Delete Account', 'This action cannot be undone. Are you sure?', [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                  text: 'Delete',
+                  style: 'destructive',
+                  onPress: () => {},
+                },
+              ])
             }
           >
             <View style={styles.optionIcon}>

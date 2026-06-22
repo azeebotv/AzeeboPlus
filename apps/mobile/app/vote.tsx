@@ -60,16 +60,16 @@ export default function VoteScreen() {
     try {
       setLoading(true);
       setError(null);
-      
+
       const [contestantsRes, walletRes] = await Promise.all([
         realityApi.getContestants(showId || 'default'),
         walletApi.getBalance(),
       ]);
-      
+
       if (contestantsRes.success && contestantsRes.data) {
         setContestants(contestantsRes.data);
       }
-      
+
       if (walletRes.success && walletRes.data) {
         setWalletBalance(walletRes.data.balance);
       }
@@ -81,7 +81,9 @@ export default function VoteScreen() {
     }
   };
 
-  const totalVotes = selectedPackage.votes * quantity + (selectedPackage.bonus ? selectedPackage.bonus * quantity : 0);
+  const totalVotes =
+    selectedPackage.votes * quantity +
+    (selectedPackage.bonus ? selectedPackage.bonus * quantity : 0);
   const totalPrice = selectedPackage.price * quantity;
   const canAfford = walletBalance >= totalPrice;
 
@@ -111,7 +113,13 @@ export default function VoteScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView style={[styles.container, styles.centerContent, { backgroundColor: isDark ? colors.dark[900] : colors.light[50] }]}>
+      <SafeAreaView
+        style={[
+          styles.container,
+          styles.centerContent,
+          { backgroundColor: isDark ? colors.dark[900] : colors.light[50] },
+        ]}
+      >
         <LoadingState text="Loading..." />
       </SafeAreaView>
     );
@@ -119,20 +127,30 @@ export default function VoteScreen() {
 
   if (error) {
     return (
-      <SafeAreaView style={[styles.container, styles.centerContent, { backgroundColor: isDark ? colors.dark[900] : colors.light[50] }]}>
+      <SafeAreaView
+        style={[
+          styles.container,
+          styles.centerContent,
+          { backgroundColor: isDark ? colors.dark[900] : colors.light[50] },
+        ]}
+      >
         <ErrorState title="Failed to load" description={error} onRetry={loadData} />
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? colors.dark[900] : colors.light[50] }]}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: isDark ? colors.dark[900] : colors.light[50] }]}
+    >
       <ScrollView style={styles.scrollView}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
             <Text style={styles.backIcon}>←</Text>
           </TouchableOpacity>
-          <Text style={[styles.headerTitle, { color: isDark ? colors.text.primary : colors.dark[900] }]}>
+          <Text
+            style={[styles.headerTitle, { color: isDark ? colors.text.primary : colors.dark[900] }]}
+          >
             Vote
           </Text>
           <View style={styles.walletBadge}>
@@ -142,14 +160,21 @@ export default function VoteScreen() {
         </View>
 
         <View style={styles.showInfo}>
-          <Text style={[styles.showTitle, { color: isDark ? colors.text.primary : colors.dark[900] }]}>
+          <Text
+            style={[styles.showTitle, { color: isDark ? colors.text.primary : colors.dark[900] }]}
+          >
             Big Brother Naija Season 9
           </Text>
           <Text style={styles.votingEnds}>Voting ends in 2 days</Text>
         </View>
 
         <View style={styles.contestantsSection}>
-          <Text style={[styles.sectionTitle, { color: isDark ? colors.text.primary : colors.dark[900] }]}>
+          <Text
+            style={[
+              styles.sectionTitle,
+              { color: isDark ? colors.text.primary : colors.dark[900] },
+            ]}
+          >
             Choose Your Contestant
           </Text>
           <View style={styles.contestantsList}>
@@ -170,11 +195,18 @@ export default function VoteScreen() {
                 </View>
                 <Text style={styles.contestantAvatar}>{contestant.avatar}</Text>
                 <View style={styles.contestantInfo}>
-                  <Text style={[styles.contestantName, { color: isDark ? colors.text.primary : colors.dark[900] }]}>
+                  <Text
+                    style={[
+                      styles.contestantName,
+                      { color: isDark ? colors.text.primary : colors.dark[900] },
+                    ]}
+                  >
                     {contestant.name}
                   </Text>
                   <Text style={styles.contestantDescription}>{contestant.description}</Text>
-                  <Text style={styles.contestantVotes}>{contestant.votes.toLocaleString()} votes</Text>
+                  <Text style={styles.contestantVotes}>
+                    {contestant.votes.toLocaleString()} votes
+                  </Text>
                 </View>
                 {selectedContestant?.id === contestant.id && (
                   <View style={styles.selectedIndicator}>
@@ -193,7 +225,12 @@ export default function VoteScreen() {
 
         {selectedContestant && (
           <View style={styles.voteSection}>
-            <Text style={[styles.sectionTitle, { color: isDark ? colors.text.primary : colors.dark[900] }]}>
+            <Text
+              style={[
+                styles.sectionTitle,
+                { color: isDark ? colors.text.primary : colors.dark[900] },
+              ]}
+            >
               Select Vote Package
             </Text>
             <View style={styles.packagesGrid}>
@@ -207,7 +244,12 @@ export default function VoteScreen() {
                   ]}
                   onPress={() => setSelectedPackage(pkg)}
                 >
-                  <Text style={[styles.packageVotes, { color: isDark ? colors.text.primary : colors.dark[900] }]}>
+                  <Text
+                    style={[
+                      styles.packageVotes,
+                      { color: isDark ? colors.text.primary : colors.dark[900] },
+                    ]}
+                  >
                     {pkg.votes} Votes
                   </Text>
                   {pkg.bonus && (
@@ -222,7 +264,12 @@ export default function VoteScreen() {
             </View>
 
             <View style={styles.quantitySection}>
-              <Text style={[styles.quantityLabel, { color: isDark ? colors.text.primary : colors.dark[900] }]}>
+              <Text
+                style={[
+                  styles.quantityLabel,
+                  { color: isDark ? colors.text.primary : colors.dark[900] },
+                ]}
+              >
                 Quantity
               </Text>
               <View style={styles.quantityControls}>
@@ -232,7 +279,12 @@ export default function VoteScreen() {
                 >
                   <Text style={styles.quantityButtonText}>−</Text>
                 </TouchableOpacity>
-                <Text style={[styles.quantityValue, { color: isDark ? colors.text.primary : colors.dark[900] }]}>
+                <Text
+                  style={[
+                    styles.quantityValue,
+                    { color: isDark ? colors.text.primary : colors.dark[900] },
+                  ]}
+                >
                   {quantity}
                 </Text>
                 <TouchableOpacity
@@ -244,10 +296,20 @@ export default function VoteScreen() {
               </View>
             </View>
 
-            <View style={[styles.summaryCard, { backgroundColor: isDark ? colors.dark[800] : colors.light[100] }]}>
+            <View
+              style={[
+                styles.summaryCard,
+                { backgroundColor: isDark ? colors.dark[800] : colors.light[100] },
+              ]}
+            >
               <View style={styles.summaryRow}>
                 <Text style={styles.summaryLabel}>Total Votes</Text>
-                <Text style={[styles.summaryValue, { color: isDark ? colors.text.primary : colors.dark[900] }]}>
+                <Text
+                  style={[
+                    styles.summaryValue,
+                    { color: isDark ? colors.text.primary : colors.dark[900] },
+                  ]}
+                >
                   {totalVotes.toLocaleString()}
                 </Text>
               </View>
@@ -257,7 +319,12 @@ export default function VoteScreen() {
               </View>
               <View style={styles.summaryDivider} />
               <View style={styles.summaryRow}>
-                <Text style={[styles.summaryTotalLabel, { color: isDark ? colors.text.primary : colors.dark[900] }]}>
+                <Text
+                  style={[
+                    styles.summaryTotalLabel,
+                    { color: isDark ? colors.text.primary : colors.dark[900] },
+                  ]}
+                >
                   Total
                 </Text>
                 <Text style={styles.summaryTotal}>₦{totalPrice.toLocaleString()}</Text>
@@ -297,21 +364,41 @@ export default function VoteScreen() {
 
       <Modal visible={showConfirmation} transparent animationType="slide">
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: isDark ? colors.dark[800] : '#ffffff' }]}>
-            <Text style={[styles.modalTitle, { color: isDark ? colors.text.primary : colors.dark[900] }]}>
+          <View
+            style={[
+              styles.modalContent,
+              { backgroundColor: isDark ? colors.dark[800] : '#ffffff' },
+            ]}
+          >
+            <Text
+              style={[
+                styles.modalTitle,
+                { color: isDark ? colors.text.primary : colors.dark[900] },
+              ]}
+            >
               Confirm Your Vote
             </Text>
 
             <View style={styles.confirmDetails}>
               <View style={styles.confirmRow}>
                 <Text style={styles.confirmLabel}>Contestant</Text>
-                <Text style={[styles.confirmValue, { color: isDark ? colors.text.primary : colors.dark[900] }]}>
+                <Text
+                  style={[
+                    styles.confirmValue,
+                    { color: isDark ? colors.text.primary : colors.dark[900] },
+                  ]}
+                >
                   {selectedContestant?.name}
                 </Text>
               </View>
               <View style={styles.confirmRow}>
                 <Text style={styles.confirmLabel}>Votes</Text>
-                <Text style={[styles.confirmValue, { color: isDark ? colors.text.primary : colors.dark[900] }]}>
+                <Text
+                  style={[
+                    styles.confirmValue,
+                    { color: isDark ? colors.text.primary : colors.dark[900] },
+                  ]}
+                >
                   {totalVotes.toLocaleString()}
                 </Text>
               </View>

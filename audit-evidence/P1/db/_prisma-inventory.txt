@@ -1,0 +1,253 @@
+=== captured at ===
+2026-06-22T11:06:05Z
+
+=== schema.prisma files (56 total) ===
+./packages/shared-services/prisma/schema.prisma
+./packages/shared-services/src/prisma/client/schema.prisma
+./apps/admin/prisma/schema.prisma
+./apps/admin/src/generated/prisma/schema.prisma
+./apps/creator-portal/prisma/schema.prisma
+./apps/creator-portal/src/generated/prisma/schema.prisma
+./services/core/payment-service/prisma/schema.prisma
+./services/core/payment-service/src/prisma/client/schema.prisma
+./services/core/wallet-service/prisma/schema.prisma
+./services/core/wallet-service/src/prisma/client/schema.prisma
+./services/core/search-service/prisma/schema.prisma
+./services/core/search-service/src/prisma/client/schema.prisma
+./services/core/user-service/prisma/schema.prisma
+./services/core/user-service/src/prisma/client/schema.prisma
+./services/core/auth-service/prisma/schema.prisma
+./services/core/auth-service/src/prisma/client/schema.prisma
+./services/core/content-service/prisma/schema.prisma
+./services/core/content-service/src/prisma/client/schema.prisma
+./services/intelligence/recommendation-service/prisma/schema.prisma
+./services/intelligence/recommendation-service/src/prisma/client/schema.prisma
+./services/intelligence/analytics-service/prisma/schema.prisma
+./services/intelligence/analytics-service/src/prisma/client/schema.prisma
+./services/operations/support-service/prisma/schema.prisma
+./services/operations/support-service/src/prisma/client/schema.prisma
+./services/operations/moderation-service/prisma/schema.prisma
+./services/operations/moderation-service/src/prisma/client/schema.prisma
+./services/operations/queue-service/prisma/schema.prisma
+./services/operations/queue-service/src/prisma/client/schema.prisma
+./services/engagement/notification-service/prisma/schema.prisma
+./services/engagement/notification-service/src/prisma/client/schema.prisma
+./services/engagement/reward-service/prisma/schema.prisma
+./services/engagement/reward-service/src/prisma/client/schema.prisma
+./services/engagement/subscription-service/prisma/schema.prisma
+./services/engagement/subscription-service/src/prisma/client/schema.prisma
+./services/engagement/referral-service/prisma/schema.prisma
+./services/engagement/referral-service/src/prisma/client/schema.prisma
+./services/engagement/engagement-service/prisma/schema.prisma
+./services/engagement/engagement-service/src/prisma/client/schema.prisma
+./services/engagement/messaging-service/prisma/schema.prisma
+./services/engagement/messaging-service/src/prisma/client/schema.prisma
+./services/universes/creator-service/prisma/schema.prisma
+./services/universes/creator-service/src/prisma/client/schema.prisma
+./services/universes/comedy-service/prisma/schema.prisma
+./services/universes/comedy-service/src/prisma/client/schema.prisma
+./services/universes/reality-service/prisma/schema.prisma
+./services/universes/reality-service/src/prisma/client/schema.prisma
+./services/universes/games-service/prisma/schema.prisma
+./services/universes/games-service/src/prisma/client/schema.prisma
+./services/universes/lifestyle-service/prisma/schema.prisma
+./services/universes/lifestyle-service/src/prisma/client/schema.prisma
+./services/universes/movie-service/prisma/schema.prisma
+./services/universes/movie-service/src/prisma/client/schema.prisma
+./services/universes/vertical-service/prisma/schema.prisma
+./services/universes/vertical-service/src/prisma/client/schema.prisma
+./services/universes/sports-service/prisma/schema.prisma
+./services/universes/sports-service/src/prisma/client/schema.prisma
+
+=== prisma/migrations directories ===
+./apps/admin/prisma/migrations
+./apps/creator-portal/prisma/migrations
+./services/core/payment-service/prisma/migrations
+./services/core/wallet-service/prisma/migrations
+./services/core/search-service/prisma/migrations
+./services/core/user-service/prisma/migrations
+./services/core/auth-service/prisma/migrations
+./services/core/content-service/prisma/migrations
+./services/intelligence/recommendation-service/prisma/migrations
+./services/intelligence/analytics-service/prisma/migrations
+./services/operations/support-service/prisma/migrations
+./services/operations/moderation-service/prisma/migrations
+./services/operations/queue-service/prisma/migrations
+./services/engagement/notification-service/prisma/migrations
+./services/engagement/reward-service/prisma/migrations
+./services/universes/creator-service/prisma/migrations
+./services/universes/comedy-service/prisma/migrations
+./services/universes/reality-service/prisma/migrations
+./services/universes/games-service/prisma/migrations
+./services/universes/lifestyle-service/prisma/migrations
+./services/universes/movie-service/prisma/migrations
+./services/universes/vertical-service/prisma/migrations
+./services/universes/sports-service/prisma/migrations
+
+=== BigInt / Decimal / Json fields across all schemas (sample first schema) ===
+--- wallet-service schema.prisma (head) ---
+generator client {
+  provider = "prisma-client-js"
+  output = "../generated/prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Wallet {
+  id           String   @id @default(uuid())
+  userId       String   @unique
+  balance      Decimal  @default(0)
+  bonusBalance Decimal  @default(0)
+  promoBalance Decimal  @default(0)
+  currency     String   @default("NGN")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  transactions     WalletTransaction[]
+  balanceSnapshots BalanceSnapshot[]
+
+  @@map("wallets")
+}
+
+model WalletTransaction {
+  id              String   @id @default(uuid())
+  walletId        String
+  type            String   // credit, debit, bonus, promo, refund
+  amount          Decimal
+  status          String   // pending, completed, failed, reversed
+  description     String?
+  reference       String?
+  provider        String?  // paystack, flutterwave, internal
+  providerRef     String?  // Unique provider reference (e.g., Paystack transaction ID)
+  metadata        Json?
+  idempotencyKey  String?  @unique
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  wallet Wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  @@map("wallet_transactions")
+  @@index([walletId])
+  @@index([type])
+  @@index([status])
+  @@index([createdAt])
+  @@index([idempotencyKey])
+  @@index([provider])
+  @@unique([provider, providerRef])
+}
+
+// Category A migration: point-in-time balance snapshots for reporting.
+// Populated by a scheduled job; wallet-service remains the single source
+// of truth for the live balance fields on Wallet.
+model BalanceSnapshot {
+  id           String   @id @default(uuid())
+  walletId     String
+  balance      Decimal
+  bonusBalance Decimal
+  promoBalance Decimal
+  currency     String   @default("NGN")
+  capturedAt   DateTime @default(now())
+  createdAt    DateTime @default(now())
+
+  wallet Wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  @@index([walletId])
+  @@index([capturedAt])
+  @@map("balance_snapshots")
+}
+
+=== search-service schema.prisma ===
+generator client {
+  provider = "prisma-client-js"
+  output = "../generated/prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                    String   @id @default(uuid())
+  email                 String   @unique
+  password              String
+  displayName           String
+  avatar                String?
+  role                  String   @default("user")
+  preferences           Json?
+  notificationPreferences Json?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  watchHistory WatchHistory[]
+  savedItems   SavedItem[]
+  wallet       Wallet?
+  notifications Notification[]
+  contentItems ContentItem[]
+  creatorProfile CreatorProfile?
+  rewardAccount RewardAccount?
+  userSearches UserSearch[]
+  paymentIntents PaymentIntent[]
+  missionCompletions MissionCompletion[]
+  rewardRedemptions RewardRedemption[]
+  pointsLedgers PointsLedger[]
+
+  @@map("users")
+}
+
+model WatchHistory {
+  id          String   @id @default(uuid())
+  userId      String
+  contentId   String
+  contentType String
+  watchedAt   DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("watch_history")
+  @@unique([userId, contentId])
+}
+
+model SavedItem {
+  id        String   @id @default(uuid())
+  userId    String
+  contentId String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("saved_items")
+  @@unique([userId, contentId])
+}
+
+model Wallet {
+  id           String   @id @default(uuid())
+  userId       String   @unique
+  balance Decimal    @default(0)
+  bonusBalance Decimal    @default(0)
+  promoBalance Decimal    @default(0)
+  currency     String   @default("NGN")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions WalletTransaction[]
+
+  @@map("wallets")
+}
+
+
+=== seed files ===
+total 32
+drwxr-xr-x@ 5 deprof  staff   160 Jun  3 02:58 .
+drwxr-xr-x@ 3 deprof  staff    96 May  1 18:30 ..
+-rw-r--r--@ 1 deprof  staff  1957 May 12 11:08 admin.sql
+-rw-r--r--@ 1 deprof  staff  6010 Jun  3 02:58 universes-settings.sql
+-rw-r--r--@ 1 deprof  staff  1486 May  1 18:30 universes.sql
+
+=== migrations SQL (count) ===
+      28

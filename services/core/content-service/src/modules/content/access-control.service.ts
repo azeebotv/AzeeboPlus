@@ -14,10 +14,7 @@ export class AccessControlService {
 
   constructor(private readonly prisma: PrismaService) {}
 
-  async checkContentAccess(
-    userId: string,
-    contentId: string
-  ): Promise<AccessCheckResult> {
+  async checkContentAccess(userId: string, contentId: string): Promise<AccessCheckResult> {
     const content = await this.prisma.contentItem.findUnique({
       where: { id: contentId },
       include: { universe: true },
@@ -412,9 +409,7 @@ export class AccessControlService {
     });
 
     if (userPasses.length > 0) {
-      const universeIds = userPasses
-        .filter((p) => p.universeId)
-        .map((p) => p.universeId as string);
+      const universeIds = userPasses.filter((p) => p.universeId).map((p) => p.universeId as string);
 
       const passAccessibleContent = await this.prisma.contentItem.findMany({
         where: {

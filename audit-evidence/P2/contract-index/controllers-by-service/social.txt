@@ -1,0 +1,9 @@
+===== services/universes/lifestyle-service/src/modules/social/social.controller.ts =====
+6:@Controller('v1/lifestyle/social')
+10:  @Post('save')
+25:  @Delete('save')
+36:  @Get('saved')
+48:  @Get('saved/check')
+59:  @Post('share')
+74:  @Get('share/count')
+

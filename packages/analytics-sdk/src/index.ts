@@ -352,7 +352,6 @@ export class Analytics {
       },
     });
   }
-
 }
 
 // Default instance

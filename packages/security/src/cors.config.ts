@@ -6,21 +6,12 @@ export interface CorsOptions {
   maxAge?: number;
 }
 
-export function configureCors(
-  app: INestApplication,
-  options: CorsOptions,
-): void {
-  const {
-    allowedOrigins,
-    credentials = true,
-    maxAge = 3600,
-  } = options;
+export function configureCors(app: INestApplication, options: CorsOptions): void {
+  const { allowedOrigins, credentials = true, maxAge = 3600 } = options;
 
   const validatedOrigins = allowedOrigins.map((origin) => {
     if (origin === '*') {
-      throw new Error(
-        'CORS wildcard (*) is not allowed for security reasons',
-      );
+      throw new Error('CORS wildcard (*) is not allowed for security reasons');
     }
 
     try {
@@ -34,7 +25,7 @@ export function configureCors(
   app.enableCors({
     origin: (
       origin: string | undefined,
-      callback: (err: Error | null, allow?: boolean) => void,
+      callback: (err: Error | null, allow?: boolean) => void
     ) => {
       if (!origin) {
         callback(new Error('Not allowed by CORS - missing origin header'));
@@ -43,9 +34,7 @@ export function configureCors(
 
       const isAllowed = validatedOrigins.some((allowed) => {
         if (allowed.includes('*')) {
-          const pattern = new RegExp(
-            `^${allowed.replace(/\*/g, '[a-zA-Z0-9-]+')}$`,
-          );
+          const pattern = new RegExp(`^${allowed.replace(/\*/g, '[a-zA-Z0-9-]+')}$`);
           return pattern.test(origin);
         }
         return allowed === origin;

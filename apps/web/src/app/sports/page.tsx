@@ -39,19 +39,31 @@ export default function SportsPage(): JSX.Element {
       <header className="sticky top-0 z-50 backdrop-blur-xl bg-black/40 border-b border-gray-700/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: universeColors.sports.primary }}>
+            <div
+              className="h-10 w-10 rounded-xl flex items-center justify-center"
+              style={{ backgroundColor: universeColors.sports.primary }}
+            >
               <span className="text-white font-bold text-xl leading-none">A</span>
             </div>
-            <h1 className="text-2xl font-bold hidden sm:block" style={{ color: colors.text.primary }}>Azeebo+</h1>
+            <h1
+              className="text-2xl font-bold hidden sm:block"
+              style={{ color: colors.text.primary }}
+            >
+              Azeebo+
+            </h1>
           </div>
 
           <nav className="hidden md:flex items-center gap-8">
             {['Home', 'Browse', 'Library', 'Creators', 'Sports'].map((item) => (
               <Link
                 key={item}
-                href={item === 'Home' ? '/' : item === 'Sports' ? '/sports' : `/${item.toLowerCase()}`}
+                href={
+                  item === 'Home' ? '/' : item === 'Sports' ? '/sports' : `/${item.toLowerCase()}`
+                }
                 className="text-base font-medium transition-colors"
-                style={{ color: item === 'Sports' ? universeColors.sports.primary : colors.text.secondary }}
+                style={{
+                  color: item === 'Sports' ? universeColors.sports.primary : colors.text.secondary,
+                }}
               >
                 {item}
               </Link>
@@ -63,16 +75,22 @@ export default function SportsPage(): JSX.Element {
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
                   <Avatar size="md" fallback={user?.name?.charAt(0) || 'U'} />
-                  <span className="text-sm font-medium" style={{ color: colors.text.primary }}>{user?.name}</span>
+                  <span className="text-sm font-medium" style={{ color: colors.text.primary }}>
+                    {user?.name}
+                  </span>
                 </div>
               </div>
             ) : (
               <div className="flex items-center gap-2">
                 <Link href="/auth/login">
-                  <Button variant="ghost" size="sm">Sign In</Button>
+                  <Button variant="ghost" size="sm">
+                    Sign In
+                  </Button>
                 </Link>
                 <Link href="/auth/register">
-                  <Button variant="primary" size="sm">Get Started</Button>
+                  <Button variant="primary" size="sm">
+                    Get Started
+                  </Button>
                 </Link>
               </div>
             )}
@@ -87,12 +105,21 @@ export default function SportsPage(): JSX.Element {
         ) : error ? (
           <div className="h-[500px] flex items-center justify-center">
             <div className="text-center">
-              <p className="text-lg mb-4" style={{ color: colors.text.secondary }}>{error}</p>
-              <Button variant="primary" onClick={() => window.location.reload()}>Retry</Button>
+              <p className="text-lg mb-4" style={{ color: colors.text.secondary }}>
+                {error}
+              </p>
+              <Button variant="primary" onClick={() => window.location.reload()}>
+                Retry
+              </Button>
             </div>
           </div>
         ) : matches.length > 0 ? (
-          <div className="relative h-[500px]" style={{ background: `linear-gradient(135deg, ${universeColors.sports.primary}, ${universeColors.sports.secondary})` }}>
+          <div
+            className="relative h-[500px]"
+            style={{
+              background: `linear-gradient(135deg, ${universeColors.sports.primary}, ${universeColors.sports.secondary})`,
+            }}
+          >
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="text-center px-4">
                 <div className="w-24 h-24 rounded-full bg-white/20 flex items-center justify-center mx-auto mb-4">
@@ -104,7 +131,10 @@ export default function SportsPage(): JSX.Element {
                   <Button size="lg" variant="secondary">
                     <span>▶️</span> Watch Live
                   </Button>
-                  <Button size="lg" style={{ backgroundColor: 'white', color: universeColors.sports.primary }}>
+                  <Button
+                    size="lg"
+                    style={{ backgroundColor: 'white', color: universeColors.sports.primary }}
+                  >
                     <span>🎯</span> Make Prediction
                   </Button>
                 </div>
@@ -113,7 +143,9 @@ export default function SportsPage(): JSX.Element {
           </div>
         ) : (
           <div className="h-[500px] flex items-center justify-center">
-            <p className="text-lg" style={{ color: colors.text.secondary }}>No sports content available</p>
+            <p className="text-lg" style={{ color: colors.text.secondary }}>
+              No sports content available
+            </p>
           </div>
         )}
       </section>
@@ -146,18 +178,32 @@ export default function SportsPage(): JSX.Element {
         ) : matches.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {matches.map((match) => (
-              <Card key={match.id} padding="none" className="overflow-hidden cursor-pointer hover:shadow-xl transition-shadow">
+              <Card
+                key={match.id}
+                padding="none"
+                className="overflow-hidden cursor-pointer hover:shadow-xl transition-shadow"
+              >
                 <div className="relative">
-                  <img src={match.thumbnail} alt={match.title} className="w-full h-48 object-cover" />
+                  <img
+                    src={match.thumbnail}
+                    alt={match.title}
+                    className="w-full h-48 object-cover"
+                  />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
                   <div className="absolute bottom-4 left-4 right-4">
-                    <Badge variant="outline" className="mb-2">{match.contentType || 'Sport'}</Badge>
+                    <Badge variant="outline" className="mb-2">
+                      {match.contentType || 'Sport'}
+                    </Badge>
                     <h3 className="text-xl font-bold text-white">{match.title}</h3>
                   </div>
                 </div>
                 <div className="p-4">
                   <p className="text-sm text-gray-400 mb-3 line-clamp-2">{match.description}</p>
-                  <Button variant="primary" className="w-full" style={{ backgroundColor: universeColors.sports.primary }}>
+                  <Button
+                    variant="primary"
+                    className="w-full"
+                    style={{ backgroundColor: universeColors.sports.primary }}
+                  >
                     Watch Now
                   </Button>
                 </div>
@@ -166,57 +212,85 @@ export default function SportsPage(): JSX.Element {
           </div>
         ) : (
           <div className="text-center py-12">
-            <p className="text-lg" style={{ color: colors.text.secondary }}>No sports content available yet</p>
+            <p className="text-lg" style={{ color: colors.text.secondary }}>
+              No sports content available yet
+            </p>
           </div>
         )}
       </section>
 
       {/* Footer */}
-      <footer className="border-t py-12" style={{ borderColor: colors.border.light, backgroundColor: colors.bg.secondary }}>
+      <footer
+        className="border-t py-12"
+        style={{ borderColor: colors.border.light, backgroundColor: colors.bg.secondary }}
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
             <div>
-              <h4 className="font-bold text-lg mb-4" style={{ color: colors.text.primary }}>Azeebo+</h4>
+              <h4 className="font-bold text-lg mb-4" style={{ color: colors.text.primary }}>
+                Azeebo+
+              </h4>
               <ul className="space-y-2" style={{ color: colors.text.secondary }}>
                 {['About', 'Careers', 'Press'].map((item) => (
-                  <li key={item} className="text-sm hover:text-gray-200 transition-colors cursor-pointer">
+                  <li
+                    key={item}
+                    className="text-sm hover:text-gray-200 transition-colors cursor-pointer"
+                  >
                     {item}
                   </li>
                 ))}
               </ul>
             </div>
             <div>
-              <h4 className="font-bold text-lg mb-4" style={{ color: colors.text.primary }}>Help</h4>
+              <h4 className="font-bold text-lg mb-4" style={{ color: colors.text.primary }}>
+                Help
+              </h4>
               <ul className="space-y-2" style={{ color: colors.text.secondary }}>
                 {['Support', 'FAQ', 'Contact'].map((item) => (
-                  <li key={item} className="text-sm hover:text-gray-200 transition-colors cursor-pointer">
+                  <li
+                    key={item}
+                    className="text-sm hover:text-gray-200 transition-colors cursor-pointer"
+                  >
                     {item}
                   </li>
                 ))}
               </ul>
             </div>
             <div>
-              <h4 className="font-bold text-lg mb-4" style={{ color: colors.text.primary }}>Legal</h4>
+              <h4 className="font-bold text-lg mb-4" style={{ color: colors.text.primary }}>
+                Legal
+              </h4>
               <ul className="space-y-2" style={{ color: colors.text.secondary }}>
                 {['Terms', 'Privacy', 'Cookies'].map((item) => (
-                  <li key={item} className="text-sm hover:text-gray-200 transition-colors cursor-pointer">
+                  <li
+                    key={item}
+                    className="text-sm hover:text-gray-200 transition-colors cursor-pointer"
+                  >
                     {item}
                   </li>
                 ))}
               </ul>
             </div>
             <div>
-              <h4 className="font-bold text-lg mb-4" style={{ color: colors.text.primary }}>Connect</h4>
+              <h4 className="font-bold text-lg mb-4" style={{ color: colors.text.primary }}>
+                Connect
+              </h4>
               <ul className="space-y-2" style={{ color: colors.text.secondary }}>
                 {['Twitter', 'Instagram', 'Facebook'].map((item) => (
-                  <li key={item} className="text-sm hover:text-gray-200 transition-colors cursor-pointer">
+                  <li
+                    key={item}
+                    className="text-sm hover:text-gray-200 transition-colors cursor-pointer"
+                  >
                     {item}
                   </li>
                 ))}
               </ul>
             </div>
           </div>
-          <div className="mt-12 pt-8 border-t text-center text-sm" style={{ borderColor: colors.border.light, color: colors.text.tertiary }}>
+          <div
+            className="mt-12 pt-8 border-t text-center text-sm"
+            style={{ borderColor: colors.border.light, color: colors.text.tertiary }}
+          >
             <p>© 2026 Azeebo+. All rights reserved.</p>
           </div>
         </div>

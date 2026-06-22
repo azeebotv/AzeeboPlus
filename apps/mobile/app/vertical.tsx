@@ -5,9 +5,24 @@ import { useRouter } from 'expo-router';
 import { LoadingState, EmptyState, ErrorState } from '../src/components/StateContainers';
 import { apiClient } from '../src/api/client';
 
-interface FeaturedSeries { id: string; title: string; season: string; rating: string; emoji: string; }
-interface VerticalItem { id: string; title: string; episodes: number; emoji: string; }
-interface GenreItem { id: string; name: string; emoji: string; }
+interface FeaturedSeries {
+  id: string;
+  title: string;
+  season: string;
+  rating: string;
+  emoji: string;
+}
+interface VerticalItem {
+  id: string;
+  title: string;
+  episodes: number;
+  emoji: string;
+}
+interface GenreItem {
+  id: string;
+  name: string;
+  emoji: string;
+}
 
 export default function VerticalUniverseHome() {
   const colorScheme = useColorScheme();
@@ -28,9 +43,9 @@ export default function VerticalUniverseHome() {
         apiClient.get<any>('/v1/vertical/series'),
         apiClient.get<any>('/v1/vertical/genres'),
       ]);
-      setFeaturedSeries(Array.isArray(seriesRes) ? seriesRes : seriesRes?.data ?? []);
-      setVerticalContent(Array.isArray(contentRes) ? contentRes : contentRes?.data ?? []);
-      setGenres(Array.isArray(genresRes) ? genresRes : genresRes?.data ?? []);
+      setFeaturedSeries(Array.isArray(seriesRes) ? seriesRes : (seriesRes?.data ?? []));
+      setVerticalContent(Array.isArray(contentRes) ? contentRes : (contentRes?.data ?? []));
+      setGenres(Array.isArray(genresRes) ? genresRes : (genresRes?.data ?? []));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load');
     } finally {
@@ -38,12 +53,20 @@ export default function VerticalUniverseHome() {
     }
   };
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   if (isLoading) return <LoadingState text="Loading vertical series..." />;
   if (error) return <ErrorState description={error} onRetry={fetchData} />;
   if (!featuredSeries.length && !verticalContent.length) {
-    return <EmptyState icon="🏰" title="No series available" description="Check back later for vertical content" />;
+    return (
+      <EmptyState
+        icon="🏰"
+        title="No series available"
+        description="Check back later for vertical content"
+      />
+    );
   }
 
   return (
@@ -76,7 +99,9 @@ export default function VerticalUniverseHome() {
           contentContainerStyle={styles.featuredList}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
-            <TouchableOpacity style={[styles.featuredCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}>
+            <TouchableOpacity
+              style={[styles.featuredCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
+            >
               <View style={styles.featuredImagePlaceholder}>
                 <Text style={styles.featuredEmoji}>{item.emoji}</Text>
                 <View style={styles.ratingBadge}>
@@ -108,7 +133,10 @@ export default function VerticalUniverseHome() {
         </View>
         <View style={styles.verticalGrid}>
           {verticalContent.map((item) => (
-            <TouchableOpacity key={item.id} style={[styles.verticalCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}>
+            <TouchableOpacity
+              key={item.id}
+              style={[styles.verticalCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
+            >
               <View style={styles.verticalThumbnail}>
                 <Text style={styles.verticalEmoji}>{item.emoji}</Text>
                 <View style={styles.episodeBadge}>

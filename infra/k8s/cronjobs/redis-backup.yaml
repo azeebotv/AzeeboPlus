@@ -1,0 +1,58 @@
+# Redis Backup CronJob - Runs alongside PostgreSQL backups
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: redis-backup
+  namespace: azeebo
+spec:
+  schedule: "0 2 * * *"  # Daily at 2 AM
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 5
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: redis-backup
+              image: redis:7-alpine
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  # Backup Redis AOF to S3
+                  TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+                  BACKUP_FILE="/backup/dump_${TIMESTAMP}.rdb"
+                  
+                  # Create backup
+                  redis-cli -h redis.azeebo.svc.cluster.local SAVE
+                  cp /data/dump.rdb "$BACKUP_FILE"
+                  
+                  # Upload to S3
+                  aws s3 cp "$BACKUP_FILE" "s3://azeebo-backups-redis/${TIMESTAMP}.rdb"
+                  
+                  # Cleanup local backup
+                  rm -f "$BACKUP_FILE"
+              env:
+                - name: AWS_ACCESS_KEY_ID
+                  valueFrom:
+                    secretKeyRef:
+                      name: azeebo-secrets
+                      key: AWS_ACCESS_KEY_ID
+                - name: AWS_SECRET_ACCESS_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: azeebo-secrets
+                      key: AWS_SECRET_ACCESS_KEY
+              volumeMounts:
+                - name: redis-data
+                  mountPath: /data
+                - name: backup-storage
+                  mountPath: /backup
+          volumes:
+            - name: redis-data
+              persistentVolumeClaim:
+                claimName: redis-pvc
+            - name: backup-storage
+              emptyDir: {}
+          restartPolicy: OnFailure

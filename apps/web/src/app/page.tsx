@@ -81,18 +81,10 @@ export default function Home(): JSX.Element {
               <p className="text-sm text-muted-foreground">Get the app experience on your device</p>
             </div>
             <div className="flex gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowInstallPrompt(false)}
-              >
+              <Button variant="ghost" size="sm" onClick={() => setShowInstallPrompt(false)}>
                 Later
               </Button>
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={handleInstall}
-              >
+              <Button variant="primary" size="sm" onClick={handleInstall}>
                 Install
               </Button>
             </div>
@@ -306,8 +298,8 @@ export default function Home(): JSX.Element {
               Unlock Exclusive Rewards
             </h3>
             <p className="text-lg text-white/90 mb-8 max-w-xl mx-auto">
-              Join {siteName} today and get rewarded for every show you watch, every vote you cast, and
-              every share you make.
+              Join {siteName} today and get rewarded for every show you watch, every vote you cast,
+              and every share you make.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Button size="lg" variant="secondary" leftIcon={<span>🔥</span>}>

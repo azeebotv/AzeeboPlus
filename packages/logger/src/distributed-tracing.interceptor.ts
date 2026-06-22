@@ -1,7 +1,7 @@
 import { Injectable, NestInterceptor, ExecutionContext, CallHandler, Logger } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 
 interface TracingRequest {
   method?: string;
@@ -91,8 +91,8 @@ export class DistributedTracingInterceptor implements NestInterceptor {
     const existingSpanId = this.getHeaderValue(headers, 'x-span-id');
     const existingParentSpanId = this.getHeaderValue(headers, 'x-parent-span-id');
 
-    const traceId = existingTraceId || uuidv4();
-    const spanId = uuidv4().substring(0, 8);
+    const traceId = existingTraceId || randomUUID();
+    const spanId = randomUUID().substring(0, 8);
     const parentSpanId = existingSpanId || existingParentSpanId;
 
     const baggageHeader = this.getHeaderValue(headers, 'x-trace-baggage');
@@ -109,7 +109,10 @@ export class DistributedTracingInterceptor implements NestInterceptor {
     };
   }
 
-  private getHeaderValue(headers: Record<string, string | string[] | undefined>, key: string): string | undefined {
+  private getHeaderValue(
+    headers: Record<string, string | string[] | undefined>,
+    key: string
+  ): string | undefined {
     const value = headers[key];
     if (Array.isArray(value)) {
       return value[0];
@@ -119,13 +122,16 @@ export class DistributedTracingInterceptor implements NestInterceptor {
 
   private parseBaggage(baggageHeader: string): Record<string, string> {
     try {
-      return baggageHeader.split(',').reduce((acc, pair) => {
-        const [key, value] = pair.split('=');
-        if (key && value) {
-          acc[key.trim()] = decodeURIComponent(value.trim());
-        }
-        return acc;
-      }, {} as Record<string, string>);
+      return baggageHeader.split(',').reduce(
+        (acc, pair) => {
+          const [key, value] = pair.split('=');
+          if (key && value) {
+            acc[key.trim()] = decodeURIComponent(value.trim());
+          }
+          return acc;
+        },
+        {} as Record<string, string>
+      );
     } catch {
       return {};
     }

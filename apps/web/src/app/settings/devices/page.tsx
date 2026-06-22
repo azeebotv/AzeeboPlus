@@ -53,10 +53,14 @@ export default function DeviceManagementPage(): JSX.Element {
 
   const getDeviceIcon = (type: string): string => {
     switch (type) {
-      case 'mobile': return '📱';
-      case 'desktop': return '💻';
-      case 'tablet': return '📟';
-      default: return '🖥️';
+      case 'mobile':
+        return '📱';
+      case 'desktop':
+        return '💻';
+      case 'tablet':
+        return '📟';
+      default:
+        return '🖥️';
     }
   };
 
@@ -81,7 +85,8 @@ export default function DeviceManagementPage(): JSX.Element {
 
         <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4 mb-6">
           <p className="text-yellow-500 text-sm">
-            🔒 For your security, review all active devices regularly. Revoke access for any device you don't recognize.
+            🔒 For your security, review all active devices regularly. Revoke access for any device
+            you don't recognize.
           </p>
         </div>
 

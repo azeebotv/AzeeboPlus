@@ -106,7 +106,7 @@ describe('ModerationService Integration - Cross-Service Communication', () => {
         expect.objectContaining({
           eventName: 'moderation_case_created',
           userId: 'user-1',
-        }),
+        })
       );
     });
 
@@ -177,7 +177,7 @@ describe('ModerationService Integration - Cross-Service Communication', () => {
         expect.objectContaining({
           userId: 'user-1',
           type: 'moderation_action',
-        }),
+        })
       );
     });
 
@@ -241,7 +241,7 @@ describe('ModerationService Integration - Cross-Service Communication', () => {
         expect.objectContaining({
           contentId: 'content-1',
           status: 'removed',
-        }),
+        })
       );
     });
   });
@@ -276,11 +276,11 @@ describe('ModerationService Integration - Cross-Service Communication', () => {
       };
 
       mockSafetyScanningService.scanImage.mockRejectedValue(
-        new Error('Scanning service unavailable'),
+        new Error('Scanning service unavailable')
       );
 
       await expect(safetyScanningService.scanImage(scanRequest)).rejects.toThrow(
-        'Scanning service unavailable',
+        'Scanning service unavailable'
       );
     });
   });
@@ -309,7 +309,7 @@ describe('ModerationService Integration - Cross-Service Communication', () => {
         expect.objectContaining({
           userId: 'user-1',
           trustScore: 85,
-        }),
+        })
       );
     });
   });

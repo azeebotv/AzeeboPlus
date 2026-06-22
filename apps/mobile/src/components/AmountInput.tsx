@@ -1,12 +1,5 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  ScrollView,
-} from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { colors } from '@azeebo/design-tokens';
 
 interface AmountInputProps {
@@ -52,7 +45,7 @@ export function AmountInput({
   return (
     <View style={styles.container}>
       {label && <Text style={styles.label}>{label}</Text>}
-      
+
       <View style={[styles.inputContainer, error && styles.inputError]}>
         <Text style={styles.currencySymbol}>{currencySymbol}</Text>
         <TextInput
@@ -70,7 +63,8 @@ export function AmountInput({
 
       {value && (
         <Text style={styles.formattedAmount}>
-          {currencySymbol}{formatAmount(value)}
+          {currencySymbol}
+          {formatAmount(value)}
         </Text>
       )}
 
@@ -97,7 +91,8 @@ export function AmountInput({
                     value === amount.toString() && styles.presetTextActive,
                   ]}
                 >
-                  {currencySymbol}{amount.toLocaleString('en-NG')}
+                  {currencySymbol}
+                  {amount.toLocaleString('en-NG')}
                 </Text>
               </TouchableOpacity>
             ))}
@@ -107,10 +102,12 @@ export function AmountInput({
 
       <View style={styles.limitsContainer}>
         <Text style={styles.limitText}>
-          Min: {currencySymbol}{minimumAmount.toLocaleString('en-NG')}
+          Min: {currencySymbol}
+          {minimumAmount.toLocaleString('en-NG')}
         </Text>
         <Text style={styles.limitText}>
-          Max: {currencySymbol}{maximumAmount.toLocaleString('en-NG')}
+          Max: {currencySymbol}
+          {maximumAmount.toLocaleString('en-NG')}
         </Text>
       </View>
     </View>

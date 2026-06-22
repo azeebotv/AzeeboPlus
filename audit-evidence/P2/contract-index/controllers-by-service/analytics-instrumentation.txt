@@ -1,0 +1,13 @@
+===== services/intelligence/analytics-service/src/modules/analytics-instrumentation/analytics-instrumentation.controller.ts =====
+10:@Controller('instrumentation')
+14:  @Post('track')
+20:  @Post('track-batch')
+26:  @Post('screen-view')
+47:  @Post('content-impression')
+70:  @Post('payment')
+95:  @Post('reward')
+116:  @Post('game')
+137:  @Post('prediction')
+158:  @Post('share')
+179:  @Get('event-names')
+

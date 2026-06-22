@@ -110,9 +110,6 @@ export class RecommendationController {
     @Query('userId') userId: string,
     @Query('limit') limit?: string
   ): Promise<unknown> {
-    return this.recommendationService.getPersonalizedFeed(
-      userId,
-      limit ? parseInt(limit, 10) : 20
-    );
+    return this.recommendationService.getPersonalizedFeed(userId, limit ? parseInt(limit, 10) : 20);
   }
 }

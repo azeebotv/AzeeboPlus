@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
-import { SupportTicketPriority, SupportTicketStatus } from '@prisma/client';
+import { SupportTicketPriority, SupportTicketStatus } from '../../prisma/client';
 
 export interface CreateTicketDto {
   userId: string;

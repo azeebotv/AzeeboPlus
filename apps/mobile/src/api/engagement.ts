@@ -41,7 +41,10 @@ export interface PredictionResult {
 }
 
 export const engagementApi = {
-  async getLeaderboard(timePeriod = 'weekly', category = 'all'): Promise<ApiResponse<LeaderboardEntry[]>> {
+  async getLeaderboard(
+    timePeriod = 'weekly',
+    category = 'all'
+  ): Promise<ApiResponse<LeaderboardEntry[]>> {
     const response = await apiClient.get<LeaderboardEntry[]>(
       `/v1/engagement/leaderboard?timePeriod=${timePeriod}&category=${category}`
     );
@@ -54,7 +57,9 @@ export const engagementApi = {
   },
 
   async getPredictionResults(predictionId: string): Promise<ApiResponse<PredictionResult>> {
-    const response = await apiClient.get<PredictionResult>(`/v1/reality/predictions/${predictionId}/results`);
+    const response = await apiClient.get<PredictionResult>(
+      `/v1/reality/predictions/${predictionId}/results`
+    );
     return { success: true, data: response };
   },
 };
@@ -119,12 +124,16 @@ export const realityApi = {
   },
 
   async getContestants(showId: string): Promise<ApiResponse<RealityContestant[]>> {
-    const response = await apiClient.get<RealityContestant[]>(`/v1/reality/shows/${showId}/contestants`);
+    const response = await apiClient.get<RealityContestant[]>(
+      `/v1/reality/shows/${showId}/contestants`
+    );
     return { success: true, data: response };
   },
 
   async getPredictionResults(predictionId: string): Promise<ApiResponse<PredictionResult>> {
-    const response = await apiClient.get<PredictionResult>(`/v1/reality/predictions/${predictionId}/results`);
+    const response = await apiClient.get<PredictionResult>(
+      `/v1/reality/predictions/${predictionId}/results`
+    );
     return { success: true, data: response };
   },
 };

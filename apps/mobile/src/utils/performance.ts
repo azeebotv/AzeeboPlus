@@ -85,7 +85,8 @@ class PerformanceMonitor {
         value: measure.duration,
         delta: measure.duration,
         id: `${componentName}-${Date.now()}`,
-        rating: measure.duration < 100 ? 'good' : measure.duration < 300 ? 'needs-improvement' : 'poor',
+        rating:
+          measure.duration < 100 ? 'good' : measure.duration < 300 ? 'needs-improvement' : 'poor',
       });
     }
   }

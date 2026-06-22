@@ -1,0 +1,9 @@
+===== services/universes/lifestyle-service/src/modules/polls/poll.controller.ts =====
+19:@Controller('polls')
+23:  @Get()
+34:  @Get(':id')
+42:  @Post()
+43:  @UseGuards(AuthGuard('jwt'))
+52:  @Post(':id/vote')
+53:  @UseGuards(AuthGuard('jwt'))
+

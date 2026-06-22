@@ -1,0 +1,13 @@
+===== services/universes/lifestyle-service/src/modules/stories/stories.controller.ts =====
+34:@Controller('v1/lifestyle/stories')
+38:  @Get()
+49:  @Get('categories')
+56:  @Get(':slug')
+63:  @Post()
+64:  @UseGuards(AuthGuard('jwt'), RolesGuard)
+72:  @Patch(':id')
+73:  @UseGuards(AuthGuard('jwt'), RolesGuard)
+81:  @Delete(':id')
+82:  @UseGuards(AuthGuard('jwt'), RolesGuard)
+90:  @Post(':id/view')
+

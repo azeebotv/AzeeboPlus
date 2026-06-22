@@ -75,14 +75,7 @@ describe('Proxy Controller - Upstream Behavior Preservation', () => {
         send: jest.fn(),
       } as unknown as Response;
 
-      await controller.proxyRequest(
-        mockRequest,
-        mockResponseObj,
-        'auth',
-        '/test',
-        'GET',
-        {}
-      );
+      await controller.proxyRequest(mockRequest, mockResponseObj, 'auth', '/test', 'GET', {});
 
       expect(mockResponseObj.status).toHaveBeenCalledWith(200);
     });
@@ -115,14 +108,7 @@ describe('Proxy Controller - Upstream Behavior Preservation', () => {
         send: jest.fn(),
       } as unknown as Response;
 
-      await controller.proxyRequest(
-        mockRequest,
-        mockResponseObj,
-        'auth',
-        '/test',
-        'POST',
-        {}
-      );
+      await controller.proxyRequest(mockRequest, mockResponseObj, 'auth', '/test', 'POST', {});
 
       expect(mockResponseObj.status).toHaveBeenCalledWith(201);
     });
@@ -154,14 +140,7 @@ describe('Proxy Controller - Upstream Behavior Preservation', () => {
         send: jest.fn(),
       } as unknown as Response;
 
-      await controller.proxyRequest(
-        mockRequest,
-        mockResponseObj,
-        'auth',
-        '/test',
-        'DELETE',
-        {}
-      );
+      await controller.proxyRequest(mockRequest, mockResponseObj, 'auth', '/test', 'DELETE', {});
 
       expect(mockResponseObj.status).toHaveBeenCalledWith(204);
     });
@@ -193,14 +172,7 @@ describe('Proxy Controller - Upstream Behavior Preservation', () => {
         json: jest.fn(),
       } as unknown as Response;
 
-      await controller.proxyRequest(
-        mockRequest,
-        mockResponseObj,
-        'auth',
-        '/test',
-        'POST',
-        {}
-      );
+      await controller.proxyRequest(mockRequest, mockResponseObj, 'auth', '/test', 'POST', {});
 
       expect(mockResponseObj.status).toHaveBeenCalledWith(400);
     });
@@ -232,14 +204,7 @@ describe('Proxy Controller - Upstream Behavior Preservation', () => {
         json: jest.fn(),
       } as unknown as Response;
 
-      await controller.proxyRequest(
-        mockRequest,
-        mockResponseObj,
-        'auth',
-        '/test',
-        'GET',
-        {}
-      );
+      await controller.proxyRequest(mockRequest, mockResponseObj, 'auth', '/test', 'GET', {});
 
       expect(mockResponseObj.status).toHaveBeenCalledWith(401);
     });
@@ -310,14 +275,7 @@ describe('Proxy Controller - Upstream Behavior Preservation', () => {
         json: jest.fn(),
       } as unknown as Response;
 
-      await controller.proxyRequest(
-        mockRequest,
-        mockResponseObj,
-        'auth',
-        '/test',
-        'GET',
-        {}
-      );
+      await controller.proxyRequest(mockRequest, mockResponseObj, 'auth', '/test', 'GET', {});
 
       expect(mockResponseObj.status).toHaveBeenCalledWith(500);
     });
@@ -354,14 +312,7 @@ describe('Proxy Controller - Upstream Behavior Preservation', () => {
         json: jest.fn(),
       } as unknown as Response;
 
-      await controller.proxyRequest(
-        mockRequest,
-        mockResponseObj,
-        'auth',
-        '/test',
-        'GET',
-        {}
-      );
+      await controller.proxyRequest(mockRequest, mockResponseObj, 'auth', '/test', 'GET', {});
 
       expect(mockResponseObj.setHeader).toHaveBeenCalledWith('X-Request-ID', 'upstream-req-123');
     });
@@ -396,14 +347,7 @@ describe('Proxy Controller - Upstream Behavior Preservation', () => {
         json: jest.fn(),
       } as unknown as Response;
 
-      await controller.proxyRequest(
-        mockRequest,
-        mockResponseObj,
-        'auth',
-        '/test',
-        'GET',
-        {}
-      );
+      await controller.proxyRequest(mockRequest, mockResponseObj, 'auth', '/test', 'GET', {});
 
       expect(mockResponseObj.setHeader).toHaveBeenCalledWith('X-Trace-ID', 'upstream-trace-456');
     });
@@ -413,7 +357,7 @@ describe('Proxy Controller - Upstream Behavior Preservation', () => {
         status: 200,
         statusText: 'OK',
         headers: {
-          'authorization': 'Bearer new-token-xyz',
+          authorization: 'Bearer new-token-xyz',
           'content-type': 'application/json',
         },
         data: { token: 'new-token-xyz' },
@@ -438,16 +382,12 @@ describe('Proxy Controller - Upstream Behavior Preservation', () => {
         json: jest.fn(),
       } as unknown as Response;
 
-      await controller.proxyRequest(
-        mockRequest,
-        mockResponseObj,
-        'auth',
-        '/test',
-        'GET',
-        {}
-      );
+      await controller.proxyRequest(mockRequest, mockResponseObj, 'auth', '/test', 'GET', {});
 
-      expect(mockResponseObj.setHeader).toHaveBeenCalledWith('Authorization', 'Bearer new-token-xyz');
+      expect(mockResponseObj.setHeader).toHaveBeenCalledWith(
+        'Authorization',
+        'Bearer new-token-xyz'
+      );
     });
 
     it('should preserve Content-Type header from upstream', async () => {
@@ -479,16 +419,12 @@ describe('Proxy Controller - Upstream Behavior Preservation', () => {
         json: jest.fn(),
       } as unknown as Response;
 
-      await controller.proxyRequest(
-        mockRequest,
-        mockResponseObj,
-        'auth',
-        '/test',
-        'GET',
-        {}
-      );
+      await controller.proxyRequest(mockRequest, mockResponseObj, 'auth', '/test', 'GET', {});
 
-      expect(mockResponseObj.setHeader).toHaveBeenCalledWith('Content-Type', 'application/json; charset=utf-8');
+      expect(mockResponseObj.setHeader).toHaveBeenCalledWith(
+        'Content-Type',
+        'application/json; charset=utf-8'
+      );
     });
 
     it('should preserve custom upstream headers', async () => {
@@ -523,14 +459,7 @@ describe('Proxy Controller - Upstream Behavior Preservation', () => {
         json: jest.fn(),
       } as unknown as Response;
 
-      await controller.proxyRequest(
-        mockRequest,
-        mockResponseObj,
-        'auth',
-        '/test',
-        'GET',
-        {}
-      );
+      await controller.proxyRequest(mockRequest, mockResponseObj, 'auth', '/test', 'GET', {});
 
       expect(mockResponseObj.setHeader).toHaveBeenCalledWith('X-Custom-Header', 'custom-value');
       expect(mockResponseObj.setHeader).toHaveBeenCalledWith('X-Rate-Limit', '100');
@@ -569,14 +498,7 @@ describe('Proxy Controller - Upstream Behavior Preservation', () => {
         json: jest.fn(),
       } as unknown as Response;
 
-      await controller.proxyRequest(
-        mockRequest,
-        mockResponseObj,
-        'auth',
-        '/test',
-        'GET',
-        {}
-      );
+      await controller.proxyRequest(mockRequest, mockResponseObj, 'auth', '/test', 'GET', {});
 
       expect(mockResponseObj.setHeader).toHaveBeenCalledWith('Content-Type', 'text/plain');
       expect(mockResponseObj.send).toHaveBeenCalledWith('Plain text response');
@@ -612,14 +534,7 @@ describe('Proxy Controller - Upstream Behavior Preservation', () => {
         json: jest.fn(),
       } as unknown as Response;
 
-      await controller.proxyRequest(
-        mockRequest,
-        mockResponseObj,
-        'auth',
-        '/test',
-        'GET',
-        {}
-      );
+      await controller.proxyRequest(mockRequest, mockResponseObj, 'auth', '/test', 'GET', {});
 
       expect(mockResponseObj.setHeader).toHaveBeenCalledWith('Content-Type', 'application/xml');
       expect(mockResponseObj.send).toHaveBeenCalledWith('<xml>response</xml>');
@@ -654,14 +569,7 @@ describe('Proxy Controller - Upstream Behavior Preservation', () => {
         json: jest.fn(),
       } as unknown as Response;
 
-      await controller.proxyRequest(
-        mockRequest,
-        mockResponseObj,
-        'auth',
-        '/test',
-        'GET',
-        {}
-      );
+      await controller.proxyRequest(mockRequest, mockResponseObj, 'auth', '/test', 'GET', {});
 
       expect(mockResponseObj.status).toHaveBeenCalledWith(504);
     });
@@ -695,14 +603,7 @@ describe('Proxy Controller - Upstream Behavior Preservation', () => {
         json: jest.fn(),
       } as unknown as Response;
 
-      await controller.proxyRequest(
-        mockRequest,
-        mockResponseObj,
-        'auth',
-        '/test',
-        'GET',
-        {}
-      );
+      await controller.proxyRequest(mockRequest, mockResponseObj, 'auth', '/test', 'GET', {});
 
       expect(mockResponseObj.status).toHaveBeenCalledWith(502);
     });
@@ -734,14 +635,7 @@ describe('Proxy Controller - Upstream Behavior Preservation', () => {
         json: jest.fn(),
       } as unknown as Response;
 
-      await controller.proxyRequest(
-        mockRequest,
-        mockResponseObj,
-        'auth',
-        '/test',
-        'GET',
-        {}
-      );
+      await controller.proxyRequest(mockRequest, mockResponseObj, 'auth', '/test', 'GET', {});
 
       expect(mockResponseObj.status).toHaveBeenCalledWith(503);
     });

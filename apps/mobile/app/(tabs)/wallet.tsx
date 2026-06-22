@@ -137,7 +137,13 @@ export default function WalletScreen(): JSX.Element {
 
   if (!isAuthenticated) {
     return (
-      <SafeAreaView style={[styles.container, styles.centered, { backgroundColor: colorScheme === 'dark' ? '#000' : '#fff' }]}>
+      <SafeAreaView
+        style={[
+          styles.container,
+          styles.centered,
+          { backgroundColor: colorScheme === 'dark' ? '#000' : '#fff' },
+        ]}
+      >
         <Text style={styles.lockIcon}>🔒</Text>
         <Text style={[styles.lockText, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
           Please log in to view your wallet
@@ -147,7 +153,9 @@ export default function WalletScreen(): JSX.Element {
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#000' : '#fff' }]}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#000' : '#fff' }]}
+    >
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
@@ -184,17 +192,11 @@ export default function WalletScreen(): JSX.Element {
         </View>
 
         <View style={styles.actionButtons}>
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={() => setShowFundModal(true)}
-          >
+          <TouchableOpacity style={styles.actionButton} onPress={() => setShowFundModal(true)}>
             <Text style={styles.actionIcon}>💎</Text>
             <Text style={styles.actionLabel}>Fund Wallet</Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={() => setShowWithdrawModal(true)}
-          >
+          <TouchableOpacity style={styles.actionButton} onPress={() => setShowWithdrawModal(true)}>
             <Text style={styles.actionIcon}>🏦</Text>
             <Text style={styles.actionLabel}>Withdraw</Text>
           </TouchableOpacity>
@@ -213,7 +215,9 @@ export default function WalletScreen(): JSX.Element {
               <Text style={[styles.emptyText, { color: colorScheme === 'dark' ? '#666' : '#999' }]}>
                 No transactions yet
               </Text>
-              <Text style={[styles.emptySubtext, { color: colorScheme === 'dark' ? '#444' : '#ccc' }]}>
+              <Text
+                style={[styles.emptySubtext, { color: colorScheme === 'dark' ? '#444' : '#ccc' }]}
+              >
                 Your transaction history will appear here
               </Text>
             </View>
@@ -228,12 +232,22 @@ export default function WalletScreen(): JSX.Element {
                   ]}
                 >
                   <View style={styles.transactionLeft}>
-                    <Text style={styles.transactionIcon}>{getTransactionIcon(transaction.type)}</Text>
+                    <Text style={styles.transactionIcon}>
+                      {getTransactionIcon(transaction.type)}
+                    </Text>
                     <View style={styles.transactionInfo}>
-                      <Text style={[styles.transactionTitle, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
-                        {transaction.description || (transaction.type === 'credit' ? 'Credit' : 'Debit')}
+                      <Text
+                        style={[
+                          styles.transactionTitle,
+                          { color: colorScheme === 'dark' ? '#fff' : '#000' },
+                        ]}
+                      >
+                        {transaction.description ||
+                          (transaction.type === 'credit' ? 'Credit' : 'Debit')}
                       </Text>
-                      <Text style={styles.transactionDate}>{formatDate(transaction.createdAt)}</Text>
+                      <Text style={styles.transactionDate}>
+                        {formatDate(transaction.createdAt)}
+                      </Text>
                     </View>
                   </View>
                   <Text
@@ -259,7 +273,12 @@ export default function WalletScreen(): JSX.Element {
         onRequestClose={() => setShowFundModal(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#fff' }]}>
+          <View
+            style={[
+              styles.modalContent,
+              { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#fff' },
+            ]}
+          >
             <Text style={[styles.modalTitle, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
               Fund Wallet
             </Text>
@@ -267,7 +286,13 @@ export default function WalletScreen(): JSX.Element {
             <View style={styles.inputContainer}>
               <Text style={styles.inputLabel}>Amount (USD)</Text>
               <TextInput
-                style={[styles.input, { backgroundColor: colorScheme === 'dark' ? '#333' : '#f5f5f5', color: colorScheme === 'dark' ? '#fff' : '#000' }]}
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: colorScheme === 'dark' ? '#333' : '#f5f5f5',
+                    color: colorScheme === 'dark' ? '#fff' : '#000',
+                  },
+                ]}
                 placeholder="Enter amount"
                 placeholderTextColor="#666"
                 keyboardType="decimal-pad"
@@ -290,11 +315,19 @@ export default function WalletScreen(): JSX.Element {
 
             <View style={styles.modalButtons}>
               <TouchableOpacity
-                style={[styles.cancelButton, { borderColor: colorScheme === 'dark' ? '#333' : '#eee' }]}
+                style={[
+                  styles.cancelButton,
+                  { borderColor: colorScheme === 'dark' ? '#333' : '#eee' },
+                ]}
                 onPress={() => setShowFundModal(false)}
                 disabled={isProcessing}
               >
-                <Text style={[styles.cancelButtonText, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
+                <Text
+                  style={[
+                    styles.cancelButtonText,
+                    { color: colorScheme === 'dark' ? '#fff' : '#000' },
+                  ]}
+                >
                   Cancel
                 </Text>
               </TouchableOpacity>
@@ -321,7 +354,12 @@ export default function WalletScreen(): JSX.Element {
         onRequestClose={() => setShowWithdrawModal(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#fff' }]}>
+          <View
+            style={[
+              styles.modalContent,
+              { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#fff' },
+            ]}
+          >
             <Text style={[styles.modalTitle, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
               Withdraw Funds
             </Text>
@@ -329,7 +367,13 @@ export default function WalletScreen(): JSX.Element {
             <View style={styles.inputContainer}>
               <Text style={styles.inputLabel}>Amount (USD)</Text>
               <TextInput
-                style={[styles.input, { backgroundColor: colorScheme === 'dark' ? '#333' : '#f5f5f5', color: colorScheme === 'dark' ? '#fff' : '#000' }]}
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: colorScheme === 'dark' ? '#333' : '#f5f5f5',
+                    color: colorScheme === 'dark' ? '#fff' : '#000',
+                  },
+                ]}
                 placeholder="Enter amount"
                 placeholderTextColor="#666"
                 keyboardType="decimal-pad"
@@ -341,7 +385,13 @@ export default function WalletScreen(): JSX.Element {
             <View style={styles.inputContainer}>
               <Text style={styles.inputLabel}>Bank Code</Text>
               <TextInput
-                style={[styles.input, { backgroundColor: colorScheme === 'dark' ? '#333' : '#f5f5f5', color: colorScheme === 'dark' ? '#fff' : '#000' }]}
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: colorScheme === 'dark' ? '#333' : '#f5f5f5',
+                    color: colorScheme === 'dark' ? '#fff' : '#000',
+                  },
+                ]}
                 placeholder="e.g., 044"
                 placeholderTextColor="#666"
                 value={bankCode}
@@ -352,7 +402,13 @@ export default function WalletScreen(): JSX.Element {
             <View style={styles.inputContainer}>
               <Text style={styles.inputLabel}>Account Number</Text>
               <TextInput
-                style={[styles.input, { backgroundColor: colorScheme === 'dark' ? '#333' : '#f5f5f5', color: colorScheme === 'dark' ? '#fff' : '#000' }]}
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: colorScheme === 'dark' ? '#333' : '#f5f5f5',
+                    color: colorScheme === 'dark' ? '#fff' : '#000',
+                  },
+                ]}
                 placeholder="Enter account number"
                 placeholderTextColor="#666"
                 keyboardType="number-pad"
@@ -363,11 +419,19 @@ export default function WalletScreen(): JSX.Element {
 
             <View style={styles.modalButtons}>
               <TouchableOpacity
-                style={[styles.cancelButton, { borderColor: colorScheme === 'dark' ? '#333' : '#eee' }]}
+                style={[
+                  styles.cancelButton,
+                  { borderColor: colorScheme === 'dark' ? '#333' : '#eee' },
+                ]}
                 onPress={() => setShowWithdrawModal(false)}
                 disabled={isProcessing}
               >
-                <Text style={[styles.cancelButtonText, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
+                <Text
+                  style={[
+                    styles.cancelButtonText,
+                    { color: colorScheme === 'dark' ? '#fff' : '#000' },
+                  ]}
+                >
                   Cancel
                 </Text>
               </TouchableOpacity>

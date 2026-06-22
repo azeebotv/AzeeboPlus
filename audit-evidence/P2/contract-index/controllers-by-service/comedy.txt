@@ -1,0 +1,14 @@
+===== services/universes/comedy-service/src/modules/comedy/comedy.controller.ts =====
+10:@Controller('v1/comedy')
+14:  @Get('clips')
+15:  @UseGuards(RateLimitGuard)
+23:  @Get('comedians')
+30:  @Get('series')
+37:  @Post('challenges')
+38:  @UseGuards(AuthGuard('jwt'))
+49:  @Get('challenges')
+56:  @Post('clips/:clipId/share')
+57:  @UseGuards(AuthGuard('jwt'))
+68:  @Get('trending')
+69:  @UseGuards(RateLimitGuard)
+

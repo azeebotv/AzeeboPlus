@@ -120,7 +120,9 @@ export default function ReportBuilderPage(): JSX.Element {
 
   const handleCreateReport = async (): Promise<void> => {
     try {
-      const response = await api.admin.createCustomReport(newReport as unknown as Parameters<typeof api.admin.createCustomReport>[0]);
+      const response = await api.admin.createCustomReport(
+        newReport as unknown as Parameters<typeof api.admin.createCustomReport>[0]
+      );
       if (response.success) {
         setShowCreateForm(false);
         setNewReport({
@@ -231,7 +233,12 @@ export default function ReportBuilderPage(): JSX.Element {
               className="text-muted-foreground hover:text-foreground mb-2 flex items-center gap-2"
             >
               <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 19l-7-7 7-7"
+                />
               </svg>
               Back
             </button>
@@ -267,9 +274,7 @@ export default function ReportBuilderPage(): JSX.Element {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Category
-                </label>
+                <label className="block text-sm font-medium text-foreground mb-2">Category</label>
                 <select
                   value={newReport.category}
                   onChange={(e) => setNewReport((prev) => ({ ...prev, category: e.target.value }))}
@@ -285,9 +290,7 @@ export default function ReportBuilderPage(): JSX.Element {
             </div>
 
             <div className="mb-6">
-              <label className="block text-sm font-medium text-foreground mb-2">
-                Description
-              </label>
+              <label className="block text-sm font-medium text-foreground mb-2">Description</label>
               <textarea
                 value={newReport.description}
                 onChange={(e) => setNewReport((prev) => ({ ...prev, description: e.target.value }))}
@@ -381,9 +384,7 @@ export default function ReportBuilderPage(): JSX.Element {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Date Range
-                </label>
+                <label className="block text-sm font-medium text-foreground mb-2">Date Range</label>
                 <select
                   value={newReport.dateRange}
                   onChange={(e) => setNewReport((prev) => ({ ...prev, dateRange: e.target.value }))}
@@ -402,7 +403,9 @@ export default function ReportBuilderPage(): JSX.Element {
                   type="checkbox"
                   id="isPublic"
                   checked={newReport.isPublic}
-                  onChange={(e) => setNewReport((prev) => ({ ...prev, isPublic: e.target.checked }))}
+                  onChange={(e) =>
+                    setNewReport((prev) => ({ ...prev, isPublic: e.target.checked }))
+                  }
                   className="h-4 w-4 text-primary"
                 />
                 <label htmlFor="isPublic" className="text-sm text-foreground">
@@ -448,7 +451,8 @@ export default function ReportBuilderPage(): JSX.Element {
                       <div>
                         <h3 className="font-semibold text-foreground">{report.name}</h3>
                         <p className="text-sm text-muted-foreground mt-1">
-                          {report.category} • {report.metrics.length} metrics • {report.dimensions.length} dimensions
+                          {report.category} • {report.metrics.length} metrics •{' '}
+                          {report.dimensions.length} dimensions
                         </p>
                         <p className="text-xs text-muted-foreground mt-2">
                           Created {new Date(report.createdAt).toLocaleDateString()}
@@ -461,8 +465,18 @@ export default function ReportBuilderPage(): JSX.Element {
                         }}
                         className="text-red-500 hover:text-red-700 p-1"
                       >
-                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        <svg
+                          className="w-5 h-5"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                          />
                         </svg>
                       </button>
                     </div>
@@ -492,7 +506,10 @@ export default function ReportBuilderPage(): JSX.Element {
                       <div className="flex items-center gap-4 mb-4 text-sm text-muted-foreground">
                         <span>{executionResult.metadata?.totalRows} rows</span>
                         <span>{executionResult.metadata?.executionTime}ms</span>
-                        <span>Generated: {new Date(executionResult.metadata?.generatedAt || '').toLocaleString()}</span>
+                        <span>
+                          Generated:{' '}
+                          {new Date(executionResult.metadata?.generatedAt || '').toLocaleString()}
+                        </span>
                       </div>
 
                       <div className="overflow-x-auto">
@@ -510,17 +527,22 @@ export default function ReportBuilderPage(): JSX.Element {
                             </tr>
                           </thead>
                           <tbody>
-                            {executionResult.data?.results.slice(0, 50).map((row: any, index: number) => (
-                              <tr key={index} className="border-b border-border hover:bg-accent/50">
-                                {executionResult.data?.columns.map((column: string) => (
-                                  <td key={column} className="py-3 px-4 text-sm text-foreground">
-                                    {typeof row[column] === 'number'
-                                      ? formatNumber(row[column])
-                                      : row[column]?.toString() || '-'}
-                                  </td>
-                                ))}
-                              </tr>
-                            ))}
+                            {executionResult.data?.results
+                              .slice(0, 50)
+                              .map((row: any, index: number) => (
+                                <tr
+                                  key={index}
+                                  className="border-b border-border hover:bg-accent/50"
+                                >
+                                  {executionResult.data?.columns.map((column: string) => (
+                                    <td key={column} className="py-3 px-4 text-sm text-foreground">
+                                      {typeof row[column] === 'number'
+                                        ? formatNumber(row[column])
+                                        : row[column]?.toString() || '-'}
+                                    </td>
+                                  ))}
+                                </tr>
+                              ))}
                           </tbody>
                         </table>
                       </div>
@@ -563,9 +585,7 @@ export default function ReportBuilderPage(): JSX.Element {
                     d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                   />
                 </svg>
-                <h3 className="text-lg font-semibold text-foreground mb-2">
-                  Select a Report
-                </h3>
+                <h3 className="text-lg font-semibold text-foreground mb-2">Select a Report</h3>
                 <p className="text-muted-foreground">
                   Choose a report from the list to view and execute it
                 </p>

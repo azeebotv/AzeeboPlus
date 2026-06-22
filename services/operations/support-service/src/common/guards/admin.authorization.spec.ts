@@ -12,7 +12,8 @@ describe('Admin Authorization Tests', () => {
       providers: [
         {
           provide: AdminGuard,
-          useFactory: (jwtService: JwtService) => new AdminGuard(jwtService, { allowedRoles: ['ADMIN', 'SUPPORT_AGENT'] }),
+          useFactory: (jwtService: JwtService) =>
+            new AdminGuard(jwtService, { allowedRoles: ['ADMIN', 'SUPPORT_AGENT'] }),
           inject: [JwtService],
         },
         {

@@ -1,8 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import {
-  View, Text, StyleSheet, FlatList,
-  TouchableOpacity, ActivityIndicator,
-  Alert, RefreshControl,
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+  ActivityIndicator,
+  Alert,
+  RefreshControl,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { authApi } from '../../src/api';
@@ -50,33 +55,33 @@ export default function DeviceManagementScreen() {
   };
 
   const revokeDevice = (deviceId: string) => {
-    Alert.alert(
-      'Revoke Device',
-      'Are you sure you want to revoke access for this device?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Revoke',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await (authApi as any).revokeDevice(deviceId);
-              setDevices(devices.filter((d) => d.id !== deviceId));
-            } catch (error) {
-              Alert.alert('Error', 'Failed to revoke device');
-            }
-          },
+    Alert.alert('Revoke Device', 'Are you sure you want to revoke access for this device?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Revoke',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await (authApi as any).revokeDevice(deviceId);
+            setDevices(devices.filter((d) => d.id !== deviceId));
+          } catch (error) {
+            Alert.alert('Error', 'Failed to revoke device');
+          }
         },
-      ]
-    );
+      },
+    ]);
   };
 
   const getDeviceIcon = (type: string): string => {
     switch (type) {
-      case 'mobile': return '📱';
-      case 'desktop': return '💻';
-      case 'tablet': return '📟';
-      default: return '🖥️';
+      case 'mobile':
+        return '📱';
+      case 'desktop':
+        return '💻';
+      case 'tablet':
+        return '📟';
+      default:
+        return '🖥️';
     }
   };
 
@@ -94,16 +99,19 @@ export default function DeviceManagementScreen() {
                 </View>
               )}
             </View>
-            <Text style={styles.deviceMeta}>{item.os} • {item.browser}</Text>
-            <Text style={styles.deviceMeta}>Last active: {new Date(item.lastActive).toLocaleString()}</Text>
-            <Text style={styles.deviceMeta}>Location: {item.location} • IP: {item.ip}</Text>
+            <Text style={styles.deviceMeta}>
+              {item.os} • {item.browser}
+            </Text>
+            <Text style={styles.deviceMeta}>
+              Last active: {new Date(item.lastActive).toLocaleString()}
+            </Text>
+            <Text style={styles.deviceMeta}>
+              Location: {item.location} • IP: {item.ip}
+            </Text>
           </View>
         </View>
         {!item.isCurrent && (
-          <TouchableOpacity
-            style={styles.revokeButton}
-            onPress={() => revokeDevice(item.id)}
-          >
+          <TouchableOpacity style={styles.revokeButton} onPress={() => revokeDevice(item.id)}>
             <Text style={styles.revokeButtonText}>Revoke</Text>
           </TouchableOpacity>
         )}
@@ -129,7 +137,8 @@ export default function DeviceManagementScreen() {
 
       <View style={styles.warningBanner}>
         <Text style={styles.warningText}>
-          🔒 For your security, review all active devices regularly. Revoke access for any device you don't recognize.
+          🔒 For your security, review all active devices regularly. Revoke access for any device
+          you don't recognize.
         </Text>
       </View>
 

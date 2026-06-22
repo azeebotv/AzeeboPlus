@@ -1,0 +1,6 @@
+===== services/operations/support-service/src/modules/dashboard/support-dashboard.controller.ts =====
+6:@Controller('support/dashboard')
+9:  @Get('stats')
+23:  @Get('recent')
+29:  @Get('sla-metrics')
+

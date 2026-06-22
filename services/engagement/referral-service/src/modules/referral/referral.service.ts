@@ -1,17 +1,36 @@
-import { Injectable, NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ConflictException,
+} from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
-import { ReferralResponse, ReferralStats, PaginationData } from './interfaces/referral-response.interface';
+import {
+  ReferralResponse,
+  ReferralStats,
+  PaginationData,
+} from './interfaces/referral-response.interface';
 import { GenerateReferralCodeDto, ApplyReferralCodeDto } from './dto/referral.dto';
 import { randomBytes } from 'crypto';
 
 @Injectable()
 export class ReferralService {
-  private readonly defaultPaginationLimit = 20;
-  private readonly defaultReferralReward = 50;
+  private readonly defaultPaginationLimit: number;
+  private readonly defaultReferralReward: number;
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly configService: ConfigService
+  ) {
+    this.defaultPaginationLimit = this.configService.get<number>('DEFAULT_PAGINATION_LIMIT', 20);
+    this.defaultReferralReward = this.configService.get<number>('DEFAULT_REFERRAL_REWARD', 50);
+  }
 
-  async generateReferralCode(userId: string, dto: GenerateReferralCodeDto): Promise<ReferralResponse> {
+  async generateReferralCode(
+    userId: string,
+    dto: GenerateReferralCodeDto
+  ): Promise<ReferralResponse> {
     const existingCode = await this.prisma.referralCode.findFirst({
       where: { userId, isActive: true },
     });
@@ -62,7 +81,10 @@ export class ReferralService {
     };
   }
 
-  async applyReferralCode(referredId: string, dto: ApplyReferralCodeDto): Promise<ReferralResponse> {
+  async applyReferralCode(
+    referredId: string,
+    dto: ApplyReferralCodeDto
+  ): Promise<ReferralResponse> {
     const referralCode = await this.prisma.referralCode.findUnique({
       where: { code: dto.code },
     });
@@ -126,7 +148,11 @@ export class ReferralService {
     };
   }
 
-  async getReferrals(userId: string, page = 1, limit = this.defaultPaginationLimit): Promise<ReferralResponse> {
+  async getReferrals(
+    userId: string,
+    page = 1,
+    limit = this.defaultPaginationLimit
+  ): Promise<ReferralResponse> {
     const skip = (page - 1) * limit;
 
     const [referrals, total] = await Promise.all([

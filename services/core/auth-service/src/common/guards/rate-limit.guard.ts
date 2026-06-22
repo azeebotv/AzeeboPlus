@@ -7,6 +7,7 @@ import {
   SetMetadata,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import { ConfigService } from '@nestjs/config';
 import { Request, Response } from 'express';
 import { RedisService } from '../services/redis.service';
 
@@ -22,12 +23,15 @@ export interface RateLimitOptions {
 export class RateLimitGuard implements CanActivate {
   private readonly blockListPrefix = 'rate_limit:blocked:';
   private readonly violationPrefix = 'rate_limit:violations:';
-  private readonly blockDuration = 3600;
+  private readonly blockDuration: number;
 
   constructor(
     private reflector: Reflector,
-    private redisService: RedisService
-  ) {}
+    private redisService: RedisService,
+    private configService: ConfigService
+  ) {
+    this.blockDuration = this.configService.get<number>('RATE_LIMIT_BLOCK_DURATION', 3600);
+  }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<Request>();

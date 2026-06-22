@@ -153,7 +153,9 @@ export class InfluencerService {
     };
   }
 
-  async getEntryBySlug(slug: string): Promise<{ success: boolean; data: InfluencerEntryWithCollaborations }> {
+  async getEntryBySlug(
+    slug: string
+  ): Promise<{ success: boolean; data: InfluencerEntryWithCollaborations }> {
     const entry = await this.prisma.influencerEntry.findUnique({
       where: { slug },
       include: { collaborations: { where: { status: 'active' }, take: 10 } },

@@ -21,12 +21,12 @@ async function bootstrap() {
       transform: true,
     })
   );
-  
+
   if (!process.env.ALLOWED_ORIGINS) {
     throw new Error('ALLOWED_ORIGINS environment variable must be set');
   }
   app.enableCors({
-    origin: process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim()),
+    origin: process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim()),
     credentials: true,
   });
 

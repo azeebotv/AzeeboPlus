@@ -78,7 +78,14 @@ export const DEFAULT_PRICING = {
       price: 10000,
       currency: 'NGN',
       interval: 'monthly' as const,
-      features: ['4K Streaming', 'All Content', '5 Devices', 'Offline Download', 'Early Access', 'Exclusive Content'],
+      features: [
+        '4K Streaming',
+        'All Content',
+        '5 Devices',
+        'Offline Download',
+        'Early Access',
+        'Exclusive Content',
+      ],
     },
   ] as PricingPlan[],
 
@@ -114,14 +121,16 @@ export const DEFAULT_PRICING = {
 } as const;
 
 // Helper function to get pricing with environment variable override
-export function getPricing(env?: Record<string, string | undefined>) {
+export function getPricing(env?: Record<string, string | undefined>): typeof DEFAULT_PRICING {
   return {
     wallet: {
       ...DEFAULT_PRICING.wallet,
       fundMinimum: parseInt(env?.WALLET_FUND_MINIMUM || '') || DEFAULT_PRICING.wallet.fundMinimum,
       fundMaximum: parseInt(env?.WALLET_FUND_MAXIMUM || '') || DEFAULT_PRICING.wallet.fundMaximum,
-      withdrawMinimum: parseInt(env?.WALLET_WITHDRAW_MINIMUM || '') || DEFAULT_PRICING.wallet.withdrawMinimum,
-      withdrawMaximum: parseInt(env?.WALLET_WITHDRAW_MAXIMUM || '') || DEFAULT_PRICING.wallet.withdrawMaximum,
+      withdrawMinimum:
+        parseInt(env?.WALLET_WITHDRAW_MINIMUM || '') || DEFAULT_PRICING.wallet.withdrawMinimum,
+      withdrawMaximum:
+        parseInt(env?.WALLET_WITHDRAW_MAXIMUM || '') || DEFAULT_PRICING.wallet.withdrawMaximum,
     },
     content: DEFAULT_PRICING.content,
     subscriptionPlans: DEFAULT_PRICING.subscriptionPlans,

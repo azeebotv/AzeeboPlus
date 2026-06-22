@@ -32,15 +32,17 @@ export class RealityService {
   private readonly logger = new Logger(RealityService.name);
   private readonly walletServiceBaseUrl: string;
   private readonly analyticsServiceBaseUrl: string;
-  private readonly supervoteCost = 10;
-  private readonly voteCost = 1;
+  private readonly supervoteCost: number;
+  private readonly voteCost: number;
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly configService: ConfigService,
+    private readonly configService: ConfigService
   ) {
     this.walletServiceBaseUrl = this.configService.getOrThrow<string>('WALLET_SERVICE_URL');
     this.analyticsServiceBaseUrl = this.configService.getOrThrow<string>('ANALYTICS_SERVICE_URL');
+    this.supervoteCost = this.configService.get<number>('SUPERVOTE_COST', 10);
+    this.voteCost = this.configService.get<number>('VOTE_COST', 1);
   }
 
   private async trackAnalyticsEvent(
@@ -291,15 +293,17 @@ export class RealityService {
 
     const idempotencyKey = randomUUID();
 
-    const debitResult = await axios.post(`${this.walletServiceBaseUrl}/wallet/debit`, {
-      walletId: wallet.id,
-      amount: this.supervoteCost,
-      description: `Supervote for contestant ${contestantId} on show ${showId}`,
-      idempotencyKey,
-    }).catch((error: unknown) => {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to debit wallet';
-      throw new ConflictException(errorMessage);
-    });
+    const debitResult = await axios
+      .post(`${this.walletServiceBaseUrl}/wallet/debit`, {
+        walletId: wallet.id,
+        amount: this.supervoteCost,
+        description: `Supervote for contestant ${contestantId} on show ${showId}`,
+        idempotencyKey,
+      })
+      .catch((error: unknown) => {
+        const errorMessage = error instanceof Error ? error.message : 'Failed to debit wallet';
+        throw new ConflictException(errorMessage);
+      });
 
     try {
       const supervote = await this.prisma.$transaction(async (tx) => {
@@ -314,32 +318,37 @@ export class RealityService {
       });
 
       await this.trackAnalyticsEvent('supervote_submitted', userId, {
-          supervoteId: supervote.id,
-          contestantId,
-          showId,
-          amount: this.supervoteCost,
-        });
+        supervoteId: supervote.id,
+        contestantId,
+        showId,
+        amount: this.supervoteCost,
+      });
 
-        return {
-          success: true,
-          data: {
-            supervoteId: supervote.id,
-            balance: debitResult.data?.balance,
-            message: `Supervote submitted successfully. ${this.supervoteCost} NGN has been deducted from your wallet.`,
-          },
-        };
-      } catch (error: unknown) {
-        await axios.post(`${this.walletServiceBaseUrl}/wallet/credit`, {
+      return {
+        success: true,
+        data: {
+          supervoteId: supervote.id,
+          balance: debitResult.data?.balance,
+          message: `Supervote submitted successfully. ${this.supervoteCost} NGN has been deducted from your wallet.`,
+        },
+      };
+    } catch (error: unknown) {
+      await axios
+        .post(`${this.walletServiceBaseUrl}/wallet/credit`, {
           walletId: wallet.id,
           amount: this.supervoteCost,
           description: `Compensation for failed supervote: ${idempotencyKey}`,
           reference: `compensate:${idempotencyKey}`,
-        }).catch((compensateError: unknown) => {
-          this.logger.error('Failed to compensate wallet after supervote failure:', compensateError);
+        })
+        .catch((compensateError: unknown) => {
+          this.logger.error(
+            'Failed to compensate wallet after supervote failure:',
+            compensateError
+          );
         });
-        const errorMessage = error instanceof Error ? error.message : 'Failed to submit supervote';
-        throw new ConflictException(errorMessage);
-      }
+      const errorMessage = error instanceof Error ? error.message : 'Failed to submit supervote';
+      throw new ConflictException(errorMessage);
+    }
   }
 
   async submitPrediction(
@@ -444,15 +453,17 @@ export class RealityService {
 
     const idempotencyKey = randomUUID();
 
-    const debitResult = await axios.post(`${this.walletServiceBaseUrl}/wallet/debit`, {
-      walletId: wallet.id,
-      amount: totalCost,
-      description: `${quantity} votes for contestant ${contestantId}`,
-      idempotencyKey,
-    }).catch((error: unknown) => {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to debit wallet';
-      throw new ConflictException(errorMessage);
-    });
+    const debitResult = await axios
+      .post(`${this.walletServiceBaseUrl}/wallet/debit`, {
+        walletId: wallet.id,
+        amount: totalCost,
+        description: `${quantity} votes for contestant ${contestantId}`,
+        idempotencyKey,
+      })
+      .catch((error: unknown) => {
+        const errorMessage = error instanceof Error ? error.message : 'Failed to debit wallet';
+        throw new ConflictException(errorMessage);
+      });
 
     try {
       const votes = await this.prisma.$transaction(async (tx) => {
@@ -492,14 +503,16 @@ export class RealityService {
         },
       };
     } catch (error: unknown) {
-      await axios.post(`${this.walletServiceBaseUrl}/wallet/credit`, {
-        walletId: wallet.id,
-        amount: totalCost,
-        description: `Compensation for failed votes: ${idempotencyKey}`,
-        reference: `compensate:${idempotencyKey}`,
-      }).catch((compensateError: unknown) => {
-        this.logger.error('Failed to compensate wallet after votes failure:', compensateError);
-      });
+      await axios
+        .post(`${this.walletServiceBaseUrl}/wallet/credit`, {
+          walletId: wallet.id,
+          amount: totalCost,
+          description: `Compensation for failed votes: ${idempotencyKey}`,
+          reference: `compensate:${idempotencyKey}`,
+        })
+        .catch((compensateError: unknown) => {
+          this.logger.error('Failed to compensate wallet after votes failure:', compensateError);
+        });
       const errorMessage = error instanceof Error ? error.message : 'Failed to submit votes';
       throw new ConflictException(errorMessage);
     }
@@ -1042,7 +1055,7 @@ export class RealityService {
       contestantId: c.id,
       name: c.name,
       voteShare: totalVotes > 0 ? (c._count.votes / totalVotes) * 100 : 0,
-      isSuspicious: totalVotes > 10 && (c._count.votes / totalVotes) > 50,
+      isSuspicious: totalVotes > 10 && c._count.votes / totalVotes > 50,
     }));
 
     const fraudIndicators = {
@@ -1052,7 +1065,11 @@ export class RealityService {
       riskLevel: 'low' as 'low' | 'medium' | 'high' | 'critical',
     };
 
-    if (fraudIndicators.rapidVoters > 5 || fraudIndicators.ipConcentration > 3 || fraudIndicators.topContestantConcentration > 0) {
+    if (
+      fraudIndicators.rapidVoters > 5 ||
+      fraudIndicators.ipConcentration > 3 ||
+      fraudIndicators.topContestantConcentration > 0
+    ) {
       fraudIndicators.riskLevel = 'high';
     } else if (fraudIndicators.rapidVoters > 0 || fraudIndicators.ipConcentration > 0) {
       fraudIndicators.riskLevel = 'medium';
@@ -1101,7 +1118,8 @@ export class RealityService {
 
     const fraudIndicators = {
       bulkSupervoters: bulkSupervoters.length,
-      highValueConcentration: concentration.filter((c) => c.count > 5 && c.averageAmount > 15).length,
+      highValueConcentration: concentration.filter((c) => c.count > 5 && c.averageAmount > 15)
+        .length,
       riskLevel: 'low' as 'low' | 'medium' | 'high' | 'critical',
     };
 
@@ -1152,7 +1170,10 @@ export class RealityService {
 
     if (fraudIndicators.coordinatedPredictions > 5 || fraudIndicators.excessivePredictors > 3) {
       fraudIndicators.riskLevel = 'high';
-    } else if (fraudIndicators.coordinatedPredictions > 0 || fraudIndicators.excessivePredictors > 0) {
+    } else if (
+      fraudIndicators.coordinatedPredictions > 0 ||
+      fraudIndicators.excessivePredictors > 0
+    ) {
       fraudIndicators.riskLevel = 'medium';
     }
 
@@ -1175,19 +1196,26 @@ export class RealityService {
     const predictionFraud = await this.detectPredictionFraud(showId);
 
     const voteRisk = (voteFraud.data?.fraudIndicators as { riskLevel: string })?.riskLevel || 'low';
-    const supervoteRisk = (supervoteFraud.data?.fraudIndicators as { riskLevel: string })?.riskLevel || 'low';
-    const predictionRisk = (predictionFraud.data?.fraudIndicators as { riskLevel: string })?.riskLevel || 'low';
+    const supervoteRisk =
+      (supervoteFraud.data?.fraudIndicators as { riskLevel: string })?.riskLevel || 'low';
+    const predictionRisk =
+      (predictionFraud.data?.fraudIndicators as { riskLevel: string })?.riskLevel || 'low';
 
     const riskLevels = [voteRisk, supervoteRisk, predictionRisk];
-    const overallRisk: 'low' | 'medium' | 'high' | 'critical' =
-      riskLevels.includes('critical') ? 'critical' :
-      riskLevels.includes('high') ? 'high' :
-      riskLevels.includes('medium') ? 'medium' : 'low';
+    const overallRisk: 'low' | 'medium' | 'high' | 'critical' = riskLevels.includes('critical')
+      ? 'critical'
+      : riskLevels.includes('high')
+        ? 'high'
+        : riskLevels.includes('medium')
+          ? 'medium'
+          : 'low';
 
     const recommendations: string[] = [];
     if (voteRisk === 'high') recommendations.push('Consider implementing IP-based vote limits');
-    if (supervoteRisk === 'high') recommendations.push('Review bulk supervote patterns for refund eligibility');
-    if (predictionRisk === 'high') recommendations.push('Monitor prediction market for market manipulation');
+    if (supervoteRisk === 'high')
+      recommendations.push('Review bulk supervote patterns for refund eligibility');
+    if (predictionRisk === 'high')
+      recommendations.push('Monitor prediction market for market manipulation');
 
     return {
       success: true,

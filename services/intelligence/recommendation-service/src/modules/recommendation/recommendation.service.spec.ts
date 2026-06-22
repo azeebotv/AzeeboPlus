@@ -114,7 +114,10 @@ describe('RecommendationService', () => {
     });
 
     it('should return recommendations even without user preferences', async () => {
-      (prismaService.user.findUnique as jest.Mock).mockResolvedValue({ ...mockUser, preferences: {} });
+      (prismaService.user.findUnique as jest.Mock).mockResolvedValue({
+        ...mockUser,
+        preferences: {},
+      });
       (prismaService.contentItem.findMany as jest.Mock).mockResolvedValue([mockContentItem]);
 
       const result = await service.getCrossUniverseRecommendations('user-1', 10);

@@ -44,7 +44,20 @@ export default function MonetizationSettingsScreen() {
     try {
       const response = await contentApi.getMonetizationSettings();
       if (response.success && response.data) {
-        setSettings(response.data);
+        // Cast API response to UI interface
+        setSettings({
+          isMonetizationEnabled: response.data.isMonetizationEnabled ?? response.data.isMonetized ?? false,
+          isSubscriptionEnabled: response.data.isSubscriptionEnabled ?? false,
+          subscriptionPrice: 0,
+          isTipEnabled: response.data.isTipEnabled ?? false,
+          minimumTip: response.data.minimumTip ?? 0,
+          isAdEnabled: response.data.isAdEnabled ?? false,
+          adRevenueShare: response.data.adRevenueShare ?? response.data.adRevenueShare ?? 0,
+          payoutMethod: response.data.payoutMethod ?? '',
+          bankName: '',
+          accountNumber: '',
+          accountName: '',
+        });
       }
     } catch (error) {
       logger.error('Failed to load monetization settings', error);
@@ -78,7 +91,11 @@ export default function MonetizationSettingsScreen() {
   if (!settings) {
     return (
       <SafeAreaView style={styles.container} edges={['top']}>
-        <ErrorState title="Failed to load" description="Could not load monetization settings" onRetry={loadSettings} />
+        <ErrorState
+          title="Failed to load"
+          description="Could not load monetization settings"
+          onRetry={loadSettings}
+        />
       </SafeAreaView>
     );
   }
@@ -86,10 +103,7 @@ export default function MonetizationSettingsScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backButtonText}>←</Text>
         </TouchableOpacity>
         <Text style={styles.title}>Monetization Settings</Text>
@@ -106,7 +120,9 @@ export default function MonetizationSettingsScreen() {
               </View>
               <Switch
                 value={settings.isMonetizationEnabled}
-                onValueChange={(value) => setSettings({ ...settings, isMonetizationEnabled: value })}
+                onValueChange={(value) =>
+                  setSettings({ ...settings, isMonetizationEnabled: value })
+                }
                 trackColor={{ false: '#374151', true: '#8B5CF6' }}
                 thumbColor="#fff"
               />
@@ -120,11 +136,15 @@ export default function MonetizationSettingsScreen() {
             <View style={styles.settingRow}>
               <View style={styles.settingInfo}>
                 <Text style={styles.settingLabel}>Enable Subscriptions</Text>
-                <Text style={styles.settingDescription}>Allow users to subscribe to your content</Text>
+                <Text style={styles.settingDescription}>
+                  Allow users to subscribe to your content
+                </Text>
               </View>
               <Switch
                 value={settings.isSubscriptionEnabled}
-                onValueChange={(value) => setSettings({ ...settings, isSubscriptionEnabled: value })}
+                onValueChange={(value) =>
+                  setSettings({ ...settings, isSubscriptionEnabled: value })
+                }
                 trackColor={{ false: '#374151', true: '#8B5CF6' }}
                 thumbColor="#fff"
               />
@@ -135,7 +155,9 @@ export default function MonetizationSettingsScreen() {
                 <TextInput
                   style={styles.input}
                   value={String(settings.subscriptionPrice)}
-                  onChangeText={(value) => setSettings({ ...settings, subscriptionPrice: parseFloat(value) || 0 })}
+                  onChangeText={(value) =>
+                    setSettings({ ...settings, subscriptionPrice: parseFloat(value) || 0 })
+                  }
                   keyboardType="numeric"
                   placeholder="Enter price"
                   placeholderTextColor="#6B7280"
@@ -166,7 +188,9 @@ export default function MonetizationSettingsScreen() {
                 <TextInput
                   style={styles.input}
                   value={String(settings.minimumTip)}
-                  onChangeText={(value) => setSettings({ ...settings, minimumTip: parseFloat(value) || 0 })}
+                  onChangeText={(value) =>
+                    setSettings({ ...settings, minimumTip: parseFloat(value) || 0 })
+                  }
                   keyboardType="numeric"
                   placeholder="Enter minimum tip"
                   placeholderTextColor="#6B7280"
@@ -197,7 +221,9 @@ export default function MonetizationSettingsScreen() {
                 <TextInput
                   style={styles.input}
                   value={String(settings.adRevenueShare)}
-                  onChangeText={(value) => setSettings({ ...settings, adRevenueShare: parseFloat(value) || 0 })}
+                  onChangeText={(value) =>
+                    setSettings({ ...settings, adRevenueShare: parseFloat(value) || 0 })
+                  }
                   keyboardType="numeric"
                   placeholder="Enter revenue share"
                   placeholderTextColor="#6B7280"

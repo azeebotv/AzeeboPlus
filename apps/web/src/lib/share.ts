@@ -50,7 +50,7 @@ export class ShareService {
    */
   private static async copyToClipboard(data: ShareData): Promise<void> {
     const text = `${data.title}\n\n${data.text}\n\n${data.url}`;
-    
+
     if (typeof navigator !== 'undefined' && 'clipboard' in navigator) {
       await navigator.clipboard.writeText(text);
     } else {

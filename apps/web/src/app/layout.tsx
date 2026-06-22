@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
 import React from 'react';
-import { Inter } from 'next/font/google';
 import './globals.css';
 import { AuthProvider } from '../context/AuthContext';
 import { WalletProvider } from '../context/WalletContext';
@@ -10,7 +9,7 @@ import { QueryProvider } from '../providers/QueryProvider';
 import { ToastProvider } from '@azeebo/ui';
 import { KeyboardNavigationProvider } from '../components/KeyboardNavigationProvider';
 
-const inter = Inter({ subsets: ['latin'] });
+const inter = { className: '' };
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || 'https://azeeboplus.com'),

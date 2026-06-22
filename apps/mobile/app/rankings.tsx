@@ -1,8 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  View, Text, StyleSheet, ScrollView,
-  RefreshControl, TouchableOpacity,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { engagementApi } from '../src/api';
 import { logger } from '../src/utils/logger';
@@ -97,10 +94,12 @@ export default function RankingsScreen() {
             onPress={() => setSelectedCategory(category.id)}
           >
             <Text style={styles.categoryIcon}>{category.icon}</Text>
-            <Text style={[
-              styles.categoryText,
-              selectedCategory === category.id && styles.categoryTextActive,
-            ]}>
+            <Text
+              style={[
+                styles.categoryText,
+                selectedCategory === category.id && styles.categoryTextActive,
+              ]}
+            >
               {category.name}
             </Text>
           </TouchableOpacity>
@@ -126,7 +125,12 @@ export default function RankingsScreen() {
                 <Text style={styles.topName}>{entry.displayName}</Text>
                 <Text style={styles.topScore}>{entry.score.toLocaleString()}</Text>
                 {entry.change !== 0 && (
-                  <Text style={[styles.changeText, entry.change > 0 ? styles.changeUp : styles.changeDown]}>
+                  <Text
+                    style={[
+                      styles.changeText,
+                      entry.change > 0 ? styles.changeUp : styles.changeDown,
+                    ]}
+                  >
                     {entry.change > 0 ? '↑' : '↓'} {Math.abs(entry.change)}
                   </Text>
                 )}
@@ -144,7 +148,12 @@ export default function RankingsScreen() {
               <Text style={styles.listName}>{entry.displayName}</Text>
               <Text style={styles.listScore}>{entry.score.toLocaleString()}</Text>
               {entry.change !== 0 && (
-                <Text style={[styles.changeTextSmall, entry.change > 0 ? styles.changeUp : styles.changeDown]}>
+                <Text
+                  style={[
+                    styles.changeTextSmall,
+                    entry.change > 0 ? styles.changeUp : styles.changeDown,
+                  ]}
+                >
                   {entry.change > 0 ? '↑' : '↓'}
                 </Text>
               )}

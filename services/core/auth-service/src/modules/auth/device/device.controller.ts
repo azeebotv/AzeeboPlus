@@ -1,4 +1,14 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, UseGuards, Request } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Body,
+  Param,
+  UseGuards,
+  Request,
+} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 
@@ -74,9 +84,7 @@ export class DeviceController {
   @ApiOperation({ summary: 'Revoke all other device sessions' })
   @ApiResponse({ status: 200, description: 'All other devices revoked' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async revokeAllOtherDevices(
-    @Request() req: AuthRequest
-  ): Promise<unknown> {
+  async revokeAllOtherDevices(@Request() req: AuthRequest): Promise<unknown> {
     await this.deviceService.revokeAllOtherDevices(req.user.id);
     return ApiResponseWrapper.success({ message: 'All other device sessions revoked' });
   }

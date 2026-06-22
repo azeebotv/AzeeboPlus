@@ -371,7 +371,11 @@ export class UsersService {
     };
   }
 
-  async getFollowers(userId: string, page: number, limit: number): Promise<Record<string, unknown>> {
+  async getFollowers(
+    userId: string,
+    page: number,
+    limit: number
+  ): Promise<Record<string, unknown>> {
     const skip = (page - 1) * limit;
 
     const [followingRecords, total] = await this.prisma.$transaction([
@@ -386,20 +390,18 @@ export class UsersService {
       }),
     ]);
 
-    const followerIds = followingRecords.map(f => f.followerId);
+    const followerIds = followingRecords.map((f) => f.followerId);
     const users = await this.prisma.user.findMany({
       where: { id: { in: followerIds } },
       select: { id: true, displayName: true, avatar: true },
     });
 
-    const userMap = new Map(users.map(u => [u.id, u]));
+    const userMap = new Map(users.map((u) => [u.id, u]));
 
     return {
       success: true,
       data: {
-        followers: followingRecords
-          .map(f => userMap.get(f.followerId))
-          .filter(Boolean),
+        followers: followingRecords.map((f) => userMap.get(f.followerId)).filter(Boolean),
         pagination: {
           page,
           limit,
@@ -410,7 +412,11 @@ export class UsersService {
     };
   }
 
-  async getFollowing(userId: string, page: number, limit: number): Promise<Record<string, unknown>> {
+  async getFollowing(
+    userId: string,
+    page: number,
+    limit: number
+  ): Promise<Record<string, unknown>> {
     const skip = (page - 1) * limit;
 
     const [followingRecords, total] = await this.prisma.$transaction([
@@ -425,20 +431,18 @@ export class UsersService {
       }),
     ]);
 
-    const followingIds = followingRecords.map(f => f.followingId);
+    const followingIds = followingRecords.map((f) => f.followingId);
     const users = await this.prisma.user.findMany({
       where: { id: { in: followingIds } },
       select: { id: true, displayName: true, avatar: true },
     });
 
-    const userMap = new Map(users.map(u => [u.id, u]));
+    const userMap = new Map(users.map((u) => [u.id, u]));
 
     return {
       success: true,
       data: {
-        following: followingRecords
-          .map(f => userMap.get(f.followingId))
-          .filter(Boolean),
+        following: followingRecords.map((f) => userMap.get(f.followingId)).filter(Boolean),
         pagination: {
           page,
           limit,
@@ -449,7 +453,10 @@ export class UsersService {
     };
   }
 
-  async completeProfileSetup(userId: string, dto: CompleteProfileSetupDto): Promise<Record<string, unknown>> {
+  async completeProfileSetup(
+    userId: string,
+    dto: CompleteProfileSetupDto
+  ): Promise<Record<string, unknown>> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
     });

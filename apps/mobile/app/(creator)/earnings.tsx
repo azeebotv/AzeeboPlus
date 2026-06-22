@@ -45,7 +45,8 @@ export default function EarningsDashboardScreen() {
     try {
       const response = await contentApi.getEarnings();
       if (response.success && response.data) {
-        setEarnings(response.data);
+        // Cast CreatorEarnings to EarningsData since both have same structure
+        setEarnings(response.data as unknown as EarningsData);
       }
     } catch (error) {
       logger.error('Failed to load earnings', error);
@@ -82,7 +83,11 @@ export default function EarningsDashboardScreen() {
   if (!earnings) {
     return (
       <SafeAreaView style={styles.container} edges={['top']}>
-        <ErrorState title="Failed to load" description="Could not load earnings data" onRetry={loadEarnings} />
+        <ErrorState
+          title="Failed to load"
+          description="Could not load earnings data"
+          onRetry={loadEarnings}
+        />
       </SafeAreaView>
     );
   }
@@ -90,10 +95,7 @@ export default function EarningsDashboardScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backButtonText}>←</Text>
         </TouchableOpacity>
         <Text style={styles.title}>Earnings Dashboard</Text>
@@ -127,19 +129,27 @@ export default function EarningsDashboardScreen() {
           <View style={styles.revenueCard}>
             <View style={styles.revenueRow}>
               <Text style={styles.revenueLabel}>Subscriptions</Text>
-              <Text style={styles.revenueValue}>{formatCurrency(earnings.revenueBreakdown.subscriptions)}</Text>
+              <Text style={styles.revenueValue}>
+                {formatCurrency(earnings.revenueBreakdown.subscriptions)}
+              </Text>
             </View>
             <View style={styles.revenueRow}>
               <Text style={styles.revenueLabel}>Tips</Text>
-              <Text style={styles.revenueValue}>{formatCurrency(earnings.revenueBreakdown.tips)}</Text>
+              <Text style={styles.revenueValue}>
+                {formatCurrency(earnings.revenueBreakdown.tips)}
+              </Text>
             </View>
             <View style={styles.revenueRow}>
               <Text style={styles.revenueLabel}>Ads</Text>
-              <Text style={styles.revenueValue}>{formatCurrency(earnings.revenueBreakdown.ads)}</Text>
+              <Text style={styles.revenueValue}>
+                {formatCurrency(earnings.revenueBreakdown.ads)}
+              </Text>
             </View>
             <View style={styles.revenueRow}>
               <Text style={styles.revenueLabel}>Super Votes</Text>
-              <Text style={styles.revenueValue}>{formatCurrency(earnings.revenueBreakdown.superVotes)}</Text>
+              <Text style={styles.revenueValue}>
+                {formatCurrency(earnings.revenueBreakdown.superVotes)}
+              </Text>
             </View>
           </View>
         </View>
@@ -154,7 +164,9 @@ export default function EarningsDashboardScreen() {
               </View>
               <View style={styles.historyRight}>
                 <Text style={styles.historyAmount}>{formatCurrency(item.amount)}</Text>
-                <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) }]}>
+                <View
+                  style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) }]}
+                >
                   <Text style={styles.statusText}>{item.status}</Text>
                 </View>
               </View>

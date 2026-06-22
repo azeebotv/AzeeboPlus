@@ -107,7 +107,7 @@ export class UploadService {
     expiresIn = 3600
   ): Promise<PresignedUploadResponse> {
     this.fileValidationService.validatePresignedUpload(type, extension, contentType);
-    
+
     const folder = this.getFolderForType(type);
     const key = this.s3Service.generateKey(folder, fileId, extension);
     const result = await this.s3Service.getSignedUploadUrl(key, contentType, expiresIn);
@@ -140,7 +140,16 @@ export class UploadService {
   }
 
   async cleanupAllOrphanedFiles(): Promise<{ [prefix: string]: number }> {
-    const prefixes = ['uploads/', 'images/', 'videos/', 'audio/', 'documents/', 'thumbnails/', 'avatars/', 'banners/'];
+    const prefixes = [
+      'uploads/',
+      'images/',
+      'videos/',
+      'audio/',
+      'documents/',
+      'thumbnails/',
+      'avatars/',
+      'banners/',
+    ];
     const results: { [prefix: string]: number } = {};
 
     for (const prefix of prefixes) {
@@ -253,7 +262,9 @@ export class UploadService {
     return this.getTranscodingJob(jobId);
   }
 
-  async listTranscodingJobs(status?: 'pending' | 'processing' | 'completed' | 'failed'): Promise<TranscodingJob[]> {
+  async listTranscodingJobs(
+    status?: 'pending' | 'processing' | 'completed' | 'failed'
+  ): Promise<TranscodingJob[]> {
     const jobKeys = await this.redisService.keys(`${this.redisKeyPrefix}*`);
     const jobs: TranscodingJob[] = [];
 

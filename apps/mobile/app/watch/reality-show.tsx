@@ -1,5 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Modal, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Image,
+  Modal,
+  ActivityIndicator,
+} from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { realityApi } from '../../src/api/engagement';
@@ -30,17 +39,17 @@ export default function RealityShowScreen() {
     try {
       setLoading(true);
       setError(null);
-      
+
       const [contestantsRes, walletRes] = await Promise.all([
         realityApi.getContestants(showId || 'default'),
         walletApi.getBalance(),
       ]);
-      
+
       if (contestantsRes.success && contestantsRes.data) {
         setContestants(contestantsRes.data);
         setTotalVotes(contestantsRes.data.reduce((sum: number, c: any) => sum + (c.votes || 0), 0));
       }
-      
+
       if (walletRes.success && walletRes.data) {
         setWalletBalance(walletRes.data.balance);
       }
@@ -69,11 +78,11 @@ export default function RealityShowScreen() {
       if (!response.success) {
         throw new Error(response.error?.message || 'Vote submission failed');
       }
-      setWalletBalance(prev => prev - voteCost);
-      const contestant = contestants.find(c => c.id === selectedContestant);
+      setWalletBalance((prev) => prev - voteCost);
+      const contestant = contestants.find((c) => c.id === selectedContestant);
       if (contestant) {
         contestant.votes += voteAmount;
-        setTotalVotes(prev => prev + voteAmount);
+        setTotalVotes((prev) => prev + voteAmount);
       }
       setVoteSuccess(true);
       setTimeout(() => {
@@ -90,9 +99,17 @@ export default function RealityShowScreen() {
 
   if (loading) {
     return (
-      <View style={[styles.container, styles.centerContent, { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' }]}>
+      <View
+        style={[
+          styles.container,
+          styles.centerContent,
+          { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' },
+        ]}
+      >
         <ActivityIndicator size="large" color="#8B5CF6" />
-        <Text style={[styles.loadingText, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
+        <Text
+          style={[styles.loadingText, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}
+        >
           Loading...
         </Text>
       </View>
@@ -101,7 +118,13 @@ export default function RealityShowScreen() {
 
   if (error) {
     return (
-      <View style={[styles.container, styles.centerContent, { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' }]}>
+      <View
+        style={[
+          styles.container,
+          styles.centerContent,
+          { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' },
+        ]}
+      >
         <Text style={[styles.errorText, { color: '#ef4444' }]}>{error}</Text>
         <TouchableOpacity style={styles.retryButton} onPress={loadData}>
           <Text style={styles.retryButtonText}>Retry</Text>
@@ -111,12 +134,19 @@ export default function RealityShowScreen() {
   }
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' }]}>
+    <ScrollView
+      style={[
+        styles.container,
+        { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' },
+      ]}
+    >
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
+        <Text
+          style={[styles.headerTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}
+        >
           Big Brother Naija
         </Text>
         <View style={styles.liveBadge}>
@@ -148,21 +178,28 @@ export default function RealityShowScreen() {
       </View>
 
       <View style={styles.voteSection}>
-        <Text style={[styles.sectionTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
+        <Text
+          style={[styles.sectionTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}
+        >
           Vote to Save
         </Text>
-        
+
         <View style={styles.voteAmountSelector}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[styles.voteButton, voteAmount > 1 && { backgroundColor: '#8B5CF6' }]}
             onPress={() => setVoteAmount(Math.max(1, voteAmount - 1))}
           >
             <Text style={[styles.voteButtonText, voteAmount > 1 && { color: '#ffffff' }]}>-</Text>
           </TouchableOpacity>
-          <Text style={[styles.voteAmountText, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
+          <Text
+            style={[
+              styles.voteAmountText,
+              { color: colorScheme === 'dark' ? '#ffffff' : '#000000' },
+            ]}
+          >
             {voteAmount} Vote{voteAmount > 1 ? 's' : ''}
           </Text>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[styles.voteButton, { backgroundColor: '#8B5CF6' }]}
             onPress={() => setVoteAmount(voteAmount + 1)}
           >
@@ -171,7 +208,9 @@ export default function RealityShowScreen() {
         </View>
 
         <View style={styles.priceInfo}>
-          <Text style={styles.priceText}>Total: <Text style={styles.priceAmount}>₦{voteCost}</Text></Text>
+          <Text style={styles.priceText}>
+            Total: <Text style={styles.priceAmount}>₦{voteCost}</Text>
+          </Text>
           {walletBalance < voteCost && (
             <Text style={styles.insufficientFunds}>Insufficient funds</Text>
           )}
@@ -188,10 +227,20 @@ export default function RealityShowScreen() {
                 selectedContestant === contestant.id && { borderColor: '#8B5CF6', borderWidth: 2 },
               ]}
             >
-              <View style={[styles.contestantAvatar, contestant.status !== 'evicted' && { backgroundColor: '#8B5CF6' }]}>
+              <View
+                style={[
+                  styles.contestantAvatar,
+                  contestant.status !== 'evicted' && { backgroundColor: '#8B5CF6' },
+                ]}
+              >
                 <Text style={styles.avatarText}>{contestant.avatar}</Text>
               </View>
-              <Text style={[styles.contestantName, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
+              <Text
+                style={[
+                  styles.contestantName,
+                  { color: colorScheme === 'dark' ? '#ffffff' : '#000000' },
+                ]}
+              >
                 {contestant.name}
               </Text>
               {contestant.status === 'evicted' ? (
@@ -213,50 +262,77 @@ export default function RealityShowScreen() {
       </View>
 
       <View style={styles.leaderboardSection}>
-        <Text style={[styles.sectionTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
+        <Text
+          style={[styles.sectionTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}
+        >
           Vote Leaderboard
         </Text>
         <View style={styles.leaderboard}>
-          {contestants.filter(c => c.status === 'active').sort((a, b) => b.votes - a.votes).map((contestant, index) => (
-            <View key={contestant.id} style={styles.leaderboardItem}>
-              <View style={[styles.rank, index < 3 && styles.topRank]}>
-                {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : index + 1}
-              </View>
-              <Text style={styles.leaderboardAvatar}>{contestant.avatar}</Text>
-              <View style={styles.leaderboardInfo}>
-                <Text style={[styles.leaderboardName, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
-                  {contestant.name}
-                </Text>
-                <View style={styles.progressBar}>
-                  <View style={[styles.progressFill, { width: `${(contestant.votes / totalVotes) * 100}%` }]} />
+          {contestants
+            .filter((c) => c.status === 'active')
+            .sort((a, b) => b.votes - a.votes)
+            .map((contestant, index) => (
+              <View key={contestant.id} style={styles.leaderboardItem}>
+                <View style={[styles.rank, index < 3 && styles.topRank]}>
+                  {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : index + 1}
                 </View>
+                <Text style={styles.leaderboardAvatar}>{contestant.avatar}</Text>
+                <View style={styles.leaderboardInfo}>
+                  <Text
+                    style={[
+                      styles.leaderboardName,
+                      { color: colorScheme === 'dark' ? '#ffffff' : '#000000' },
+                    ]}
+                  >
+                    {contestant.name}
+                  </Text>
+                  <View style={styles.progressBar}>
+                    <View
+                      style={[
+                        styles.progressFill,
+                        { width: `${(contestant.votes / totalVotes) * 100}%` },
+                      ]}
+                    />
+                  </View>
+                </View>
+                <Text style={styles.leaderboardVotes}>{(contestant.votes / 1000).toFixed(0)}K</Text>
               </View>
-              <Text style={styles.leaderboardVotes}>{(contestant.votes / 1000).toFixed(0)}K</Text>
-            </View>
-          ))}
+            ))}
         </View>
       </View>
 
       <View style={styles.predictionSection}>
-        <Text style={[styles.sectionTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
+        <Text
+          style={[styles.sectionTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}
+        >
           Predictions
         </Text>
-        <TouchableOpacity 
-          style={styles.predictionCard}
-          onPress={() => router.push('/prediction')}
-        >
-          <Text style={[styles.predictionTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
+        <TouchableOpacity style={styles.predictionCard} onPress={() => router.push('/prediction')}>
+          <Text
+            style={[
+              styles.predictionTitle,
+              { color: colorScheme === 'dark' ? '#ffffff' : '#000000' },
+            ]}
+          >
             Who will be evicted tonight?
           </Text>
           <View style={styles.predictionOptions}>
-            {contestants.filter(c => c.status === 'active').slice(0, 4).map((contestant) => (
-              <TouchableOpacity key={contestant.id} style={styles.predictionOption}>
-                <Text style={styles.predictionAvatar}>{contestant.avatar}</Text>
-                <Text style={[styles.predictionName, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
-                  {contestant.name}
-                </Text>
-              </TouchableOpacity>
-            ))}
+            {contestants
+              .filter((c) => c.status === 'active')
+              .slice(0, 4)
+              .map((contestant) => (
+                <TouchableOpacity key={contestant.id} style={styles.predictionOption}>
+                  <Text style={styles.predictionAvatar}>{contestant.avatar}</Text>
+                  <Text
+                    style={[
+                      styles.predictionName,
+                      { color: colorScheme === 'dark' ? '#ffffff' : '#000000' },
+                    ]}
+                  >
+                    {contestant.name}
+                  </Text>
+                </TouchableOpacity>
+              ))}
           </View>
           <Text style={styles.predictionHint}>Tap to predict →</Text>
         </TouchableOpacity>
@@ -269,25 +345,40 @@ export default function RealityShowScreen() {
               <View style={styles.successContent}>
                 <Text style={styles.successIcon}>✅</Text>
                 <Text style={styles.successTitle}>Vote Successful!</Text>
-                <Text style={styles.successMessage}>Your {voteAmount} vote{voteAmount > 1 ? 's' : ''} for {contestants.find(c => c.id === selectedContestant)?.name} have been counted.</Text>
+                <Text style={styles.successMessage}>
+                  Your {voteAmount} vote{voteAmount > 1 ? 's' : ''} for{' '}
+                  {contestants.find((c) => c.id === selectedContestant)?.name} have been counted.
+                </Text>
               </View>
             ) : (
               <>
                 <Text style={styles.modalTitle}>Confirm Vote</Text>
                 <View style={styles.modalDetails}>
                   <Text style={styles.modalDetailText}>
-                    You are voting <Text style={styles.modalHighlight}>{voteAmount} time{voteAmount > 1 ? 's' : ''}</Text> for{' '}
-                    <Text style={styles.modalHighlight}>{contestants.find(c => c.id === selectedContestant)?.name}</Text>
+                    You are voting{' '}
+                    <Text style={styles.modalHighlight}>
+                      {voteAmount} time{voteAmount > 1 ? 's' : ''}
+                    </Text>{' '}
+                    for{' '}
+                    <Text style={styles.modalHighlight}>
+                      {contestants.find((c) => c.id === selectedContestant)?.name}
+                    </Text>
                   </Text>
                   <Text style={styles.modalDetailText}>
                     Total cost: <Text style={styles.modalHighlight}>₦{voteCost}</Text>
                   </Text>
                   <Text style={styles.modalDetailText}>
-                    Wallet balance after: <Text style={styles.modalHighlight}>₦{(walletBalance - voteCost).toLocaleString()}</Text>
+                    Wallet balance after:{' '}
+                    <Text style={styles.modalHighlight}>
+                      ₦{(walletBalance - voteCost).toLocaleString()}
+                    </Text>
                   </Text>
                 </View>
                 <View style={styles.modalButtons}>
-                  <TouchableOpacity style={styles.modalCancel} onPress={() => setShowConfirmation(false)}>
+                  <TouchableOpacity
+                    style={styles.modalCancel}
+                    onPress={() => setShowConfirmation(false)}
+                  >
                     <Text style={styles.modalCancelText}>Cancel</Text>
                   </TouchableOpacity>
                   <TouchableOpacity style={styles.modalConfirm} onPress={confirmVote}>

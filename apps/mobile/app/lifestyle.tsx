@@ -5,10 +5,31 @@ import { useRouter } from 'expo-router';
 import { LoadingState, EmptyState, ErrorState } from '../src/components/StateContainers';
 import { apiClient } from '../src/api/client';
 
-interface FeaturedItem { id: string; title: string; category: string; duration: string; emoji: string; }
-interface TrendingItem { id: string; title: string; views: string; emoji: string; }
-interface CategoryItem { id: string; name: string; emoji: string; count: number; }
-interface CreatorItem { id: string; name: string; followers: string; avatar: string; }
+interface FeaturedItem {
+  id: string;
+  title: string;
+  category: string;
+  duration: string;
+  emoji: string;
+}
+interface TrendingItem {
+  id: string;
+  title: string;
+  views: string;
+  emoji: string;
+}
+interface CategoryItem {
+  id: string;
+  name: string;
+  emoji: string;
+  count: number;
+}
+interface CreatorItem {
+  id: string;
+  name: string;
+  followers: string;
+  avatar: string;
+}
 
 export default function LifestyleUniverseHome() {
   const colorScheme = useColorScheme();
@@ -31,10 +52,10 @@ export default function LifestyleUniverseHome() {
         apiClient.get<any>('/v1/lifestyle/categories'),
         apiClient.get<any>('/v1/lifestyle/creators'),
       ]);
-      setFeaturedContent(Array.isArray(featuredRes) ? featuredRes : featuredRes?.data ?? []);
-      setTrendingNow(Array.isArray(trendingRes) ? trendingRes : trendingRes?.data ?? []);
-      setCategories(Array.isArray(catsRes) ? catsRes : catsRes?.data ?? []);
-      setCreatorsToFollow(Array.isArray(creatorsRes) ? creatorsRes : creatorsRes?.data ?? []);
+      setFeaturedContent(Array.isArray(featuredRes) ? featuredRes : (featuredRes?.data ?? []));
+      setTrendingNow(Array.isArray(trendingRes) ? trendingRes : (trendingRes?.data ?? []));
+      setCategories(Array.isArray(catsRes) ? catsRes : (catsRes?.data ?? []));
+      setCreatorsToFollow(Array.isArray(creatorsRes) ? creatorsRes : (creatorsRes?.data ?? []));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load');
     } finally {
@@ -42,12 +63,20 @@ export default function LifestyleUniverseHome() {
     }
   };
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   if (isLoading) return <LoadingState text="Loading lifestyle content..." />;
   if (error) return <ErrorState description={error} onRetry={fetchData} />;
   if (!featuredContent.length && !trendingNow.length) {
-    return <EmptyState icon="✨" title="No content available" description="Check back later for lifestyle stories" />;
+    return (
+      <EmptyState
+        icon="✨"
+        title="No content available"
+        description="Check back later for lifestyle stories"
+      />
+    );
   }
 
   return (
@@ -59,7 +88,11 @@ export default function LifestyleUniverseHome() {
         </Text>
       </View>
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoriesScroll}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.categoriesScroll}
+      >
         {categories.map((cat) => (
           <TouchableOpacity key={cat.id} style={styles.categoryChip}>
             <Text style={styles.categoryEmoji}>{cat.emoji}</Text>
@@ -82,7 +115,9 @@ export default function LifestyleUniverseHome() {
           contentContainerStyle={styles.featuredList}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
-            <TouchableOpacity style={[styles.featuredCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}>
+            <TouchableOpacity
+              style={[styles.featuredCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
+            >
               <View style={styles.featuredImagePlaceholder}>
                 <Text style={styles.featuredEmoji}>{item.emoji}</Text>
                 <View style={styles.durationBadge}>
@@ -91,7 +126,10 @@ export default function LifestyleUniverseHome() {
               </View>
               <View style={styles.featuredInfo}>
                 <Text style={styles.featuredCategory}>{item.category}</Text>
-                <Text style={[styles.featuredTitle, { color: isDark ? '#fff' : '#000' }]} numberOfLines={2}>
+                <Text
+                  style={[styles.featuredTitle, { color: isDark ? '#fff' : '#000' }]}
+                  numberOfLines={2}
+                >
                   {item.title}
                 </Text>
               </View>
@@ -111,7 +149,10 @@ export default function LifestyleUniverseHome() {
         </View>
         <View style={styles.trendingList}>
           {trendingNow.map((item, index) => (
-            <TouchableOpacity key={item.id} style={[styles.trendingItem, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}>
+            <TouchableOpacity
+              key={item.id}
+              style={[styles.trendingItem, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
+            >
               <View style={styles.trendingRank}>
                 <Text style={styles.rankNumber}>{index + 1}</Text>
               </View>
@@ -119,7 +160,10 @@ export default function LifestyleUniverseHome() {
                 <Text style={styles.trendingEmoji}>{item.emoji}</Text>
               </View>
               <View style={styles.trendingInfo}>
-                <Text style={[styles.trendingTitle, { color: isDark ? '#fff' : '#000' }]} numberOfLines={1}>
+                <Text
+                  style={[styles.trendingTitle, { color: isDark ? '#fff' : '#000' }]}
+                  numberOfLines={1}
+                >
                   {item.title}
                 </Text>
                 <Text style={styles.trendingViews}>👁️ {item.views}</Text>
@@ -142,11 +186,15 @@ export default function LifestyleUniverseHome() {
           contentContainerStyle={styles.creatorsList}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
-            <TouchableOpacity style={[styles.creatorCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}>
+            <TouchableOpacity
+              style={[styles.creatorCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
+            >
               <View style={styles.creatorAvatar}>
                 <Text style={styles.creatorAvatarEmoji}>{item.avatar}</Text>
               </View>
-              <Text style={[styles.creatorName, { color: isDark ? '#fff' : '#000' }]}>{item.name}</Text>
+              <Text style={[styles.creatorName, { color: isDark ? '#fff' : '#000' }]}>
+                {item.name}
+              </Text>
               <Text style={styles.creatorFollowers}>{item.followers}</Text>
               <TouchableOpacity style={styles.followButton}>
                 <Text style={styles.followButtonText}>Follow</Text>

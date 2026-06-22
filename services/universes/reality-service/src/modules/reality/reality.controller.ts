@@ -18,7 +18,15 @@ import { RealityService } from './reality.service';
 import { RealityResponse } from './interfaces/reality-response.interface';
 import { RolesGuard, Roles } from '@azeebo/shared-services';
 import { CastVoteDto, BuyVoteDto, MakePredictionDto } from './dto/vote.dto';
-import { CreateShowDto, UpdateShowDto, CreateEpisodeDto, UpdateEpisodeDto, CreateSeasonDto, CreateContestantDto, UpdateContestantDto } from './dto/show.dto';
+import {
+  CreateShowDto,
+  UpdateShowDto,
+  CreateEpisodeDto,
+  UpdateEpisodeDto,
+  CreateSeasonDto,
+  CreateContestantDto,
+  UpdateContestantDto,
+} from './dto/show.dto';
 
 @ApiTags('Reality')
 @ApiBearerAuth()
@@ -51,9 +59,7 @@ export class RealityController {
   @ApiOperation({ summary: 'Create reality show (admin)' })
   @ApiResponse({ status: 201, description: 'Show created' })
   @ApiResponse({ status: 400, description: 'Invalid input' })
-  async createShow(
-    @Body() body: CreateShowDto
-  ): Promise<RealityResponse> {
+  async createShow(@Body() body: CreateShowDto): Promise<RealityResponse> {
     return this.realityService.createShow(body);
   }
 

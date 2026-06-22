@@ -183,13 +183,17 @@ export const SplitComponent: StoryObj<typeof Split> = {
         left={
           <Card padding="lg">
             <h3 className="font-semibold mb-2">Left Content</h3>
-            <p className="text-sm text-text-secondary">This is the left section of the split layout.</p>
+            <p className="text-sm text-text-secondary">
+              This is the left section of the split layout.
+            </p>
           </Card>
         }
         right={
           <Card padding="lg">
             <h3 className="font-semibold mb-2">Right Content</h3>
-            <p className="text-sm text-text-secondary">This is the right section of the split layout.</p>
+            <p className="text-sm text-text-secondary">
+              This is the right section of the split layout.
+            </p>
           </Card>
         }
       />

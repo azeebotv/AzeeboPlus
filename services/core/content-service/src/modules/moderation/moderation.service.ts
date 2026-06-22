@@ -1,5 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { ModerationRepository, ModerationScan, ModerationCase, SafetyAction, Appeal, TrustScore } from './moderation.repository';
+import {
+  ModerationRepository,
+  ModerationScan,
+  ModerationCase,
+  SafetyAction,
+  Appeal,
+  TrustScore,
+} from './moderation.repository';
 import { PrismaService } from '../database/prisma.service';
 
 export interface ScanResult {
@@ -61,7 +68,12 @@ export class ModerationService {
   private async performScan(
     content: { id: string; title: string; description?: string | null; mediaUrl?: string | null },
     type: string
-  ): Promise<{ riskScore: number; provider: string; providerResponse: Record<string, unknown>; flaggedLabels: string[] }> {
+  ): Promise<{
+    riskScore: number;
+    provider: string;
+    providerResponse: Record<string, unknown>;
+    flaggedLabels: string[];
+  }> {
     const flaggedLabels: string[] = [];
     let riskScore = 0;
 
@@ -100,16 +112,15 @@ export class ModerationService {
 
   async getRiskAssessment(contentId: string): Promise<RiskAssessment> {
     const scans = await this.moderationRepository.getScansByContentId(contentId);
-    
-    const contributingFactors = scans.map(scan => ({
+
+    const contributingFactors = scans.map((scan) => ({
       factor: scan.type,
       weight: scan.riskScore,
       score: scan.riskScore,
     }));
 
-    const avgRiskScore = scans.length > 0 
-      ? scans.reduce((sum, scan) => sum + scan.riskScore, 0) / scans.length 
-      : 0;
+    const avgRiskScore =
+      scans.length > 0 ? scans.reduce((sum, scan) => sum + scan.riskScore, 0) / scans.length : 0;
 
     const recommendations: string[] = [];
     if (avgRiskScore > 50) recommendations.push('Manual review recommended');
@@ -220,11 +231,7 @@ export class ModerationService {
     return action;
   }
 
-  async submitAppeal(data: {
-    caseId: string;
-    userId: string;
-    reason: string;
-  }): Promise<Appeal> {
+  async submitAppeal(data: { caseId: string; userId: string; reason: string }): Promise<Appeal> {
     return this.moderationRepository.createAppeal({
       caseId: data.caseId,
       userId: data.userId,
@@ -294,13 +301,13 @@ export class ModerationService {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const openCases = cases.filter(c => c.status === 'open').length;
-    const underReviewCases = cases.filter(c => c.status === 'under_review').length;
-    const resolvedToday = cases.filter(c => 
-      c.status === 'resolved' && c.resolvedAt && c.resolvedAt >= today
+    const openCases = cases.filter((c) => c.status === 'open').length;
+    const underReviewCases = cases.filter((c) => c.status === 'under_review').length;
+    const resolvedToday = cases.filter(
+      (c) => c.status === 'resolved' && c.resolvedAt && c.resolvedAt >= today
     ).length;
 
-    const resolvedCases = cases.filter(c => c.resolvedAt);
+    const resolvedCases = cases.filter((c) => c.resolvedAt);
     const totalResolutionTime = resolvedCases.reduce((sum, c) => {
       if (c.resolvedAt) {
         return sum + (c.resolvedAt.getTime() - c.createdAt.getTime());
@@ -309,7 +316,7 @@ export class ModerationService {
     }, 0);
 
     const categoryCounts: Record<string, number> = {};
-    cases.forEach(c => {
+    cases.forEach((c) => {
       categoryCounts[c.policyCategory] = (categoryCounts[c.policyCategory] || 0) + 1;
     });
 
@@ -322,9 +329,10 @@ export class ModerationService {
       openCases,
       underReviewCases,
       resolvedToday,
-      averageResolutionTime: resolvedCases.length > 0 
-        ? totalResolutionTime / resolvedCases.length / (1000 * 60 * 60) 
-        : 0,
+      averageResolutionTime:
+        resolvedCases.length > 0
+          ? totalResolutionTime / resolvedCases.length / (1000 * 60 * 60)
+          : 0,
       topPolicyCategories,
     };
   }

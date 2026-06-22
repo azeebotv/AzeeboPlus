@@ -3,13 +3,7 @@ import { logger } from './logger';
 
 const PREFIX = Linking.createURL('/');
 
-export type DeepLinkType =
-  | 'content'
-  | 'universe'
-  | 'creator'
-  | 'referral'
-  | 'payment'
-  | 'wallet';
+export type DeepLinkType = 'content' | 'universe' | 'creator' | 'referral' | 'payment' | 'wallet';
 
 export interface DeepLinkData {
   type: DeepLinkType;

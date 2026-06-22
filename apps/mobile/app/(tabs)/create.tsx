@@ -1,6 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Alert, TextInput } from 'react-native';
-import { useColorScheme } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Image,
+  Alert,
+  TextInput,
+  useColorScheme,
+} from 'react-native';
 import { mediaApi } from '../../src/api/media';
 import { contentApi } from '../../src/api/content';
 import { universeApi } from '../../src/api';
@@ -24,7 +33,9 @@ export default function CreateScreen() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [isUploading, setIsUploading] = useState(false);
-  const [universeOptions, setUniverseOptions] = useState<{ id: string; name: string; icon: string }[]>([]);
+  const [universeOptions, setUniverseOptions] = useState<
+    { id: string; name: string; icon: string }[]
+  >([]);
   const [isLoadingUniverses, setIsLoadingUniverses] = useState(true);
   const [universesError, setUniversesError] = useState<string | null>(null);
 
@@ -62,10 +73,13 @@ export default function CreateScreen() {
       Alert.alert('Error', 'Please enter a title');
       return;
     }
-    
+
     setIsUploading(true);
     try {
-      Alert.alert('Coming Soon', 'File upload will be available in the next update. Please use the web app to upload content.');
+      Alert.alert(
+        'Coming Soon',
+        'File upload will be available in the next update. Please use the web app to upload content.'
+      );
       return;
     } catch (err) {
       logger.error('Failed to upload content:', err);
@@ -80,17 +94,34 @@ export default function CreateScreen() {
   }
 
   if (universesError) {
-    return <ErrorState title="Failed to load content options" description={universesError} onRetry={fetchUniverses} />;
+    return (
+      <ErrorState
+        title="Failed to load content options"
+        description={universesError}
+        onRetry={fetchUniverses}
+      />
+    );
   }
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' }]}>
+    <ScrollView
+      style={[
+        styles.container,
+        { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' },
+      ]}
+    >
       <View style={styles.header}>
-        <Text style={[styles.headerTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>Create</Text>
+        <Text
+          style={[styles.headerTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}
+        >
+          Create
+        </Text>
       </View>
 
       <View style={styles.uploadTypeSection}>
-        <Text style={[styles.sectionLabel, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
+        <Text
+          style={[styles.sectionLabel, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}
+        >
           Select Type
         </Text>
         <View style={styles.uploadOptionsGrid}>
@@ -100,11 +131,19 @@ export default function CreateScreen() {
               onPress={() => setSelectedType(option.id)}
               style={[
                 styles.uploadOption,
-                selectedType === option.id && { borderColor: option.color, backgroundColor: `${option.color}20` },
+                selectedType === option.id && {
+                  borderColor: option.color,
+                  backgroundColor: `${option.color}20`,
+                },
               ]}
             >
               <Text style={styles.uploadIcon}>{option.icon}</Text>
-              <Text style={[styles.uploadName, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
+              <Text
+                style={[
+                  styles.uploadName,
+                  { color: colorScheme === 'dark' ? '#ffffff' : '#000000' },
+                ]}
+              >
                 {option.name}
               </Text>
             </TouchableOpacity>
@@ -115,20 +154,37 @@ export default function CreateScreen() {
       <View style={styles.uploadArea}>
         <TouchableOpacity style={styles.uploadButton}>
           <Text style={styles.uploadIconLarge}>📤</Text>
-          <Text style={[styles.uploadText, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
-            Upload {selectedType === 'video' ? 'Video' : selectedType === 'image' ? 'Image' : 'Content'}
+          <Text
+            style={[styles.uploadText, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}
+          >
+            Upload{' '}
+            {selectedType === 'video' ? 'Video' : selectedType === 'image' ? 'Image' : 'Content'}
           </Text>
           <Text style={styles.uploadHint}>
-            {selectedType === 'video' ? 'MP4, MOV, AVI - up to 500MB' : selectedType === 'image' ? 'JPG, PNG, GIF - up to 50MB' : 'Choose file'}
+            {selectedType === 'video'
+              ? 'MP4, MOV, AVI - up to 500MB'
+              : selectedType === 'image'
+                ? 'JPG, PNG, GIF - up to 50MB'
+                : 'Choose file'}
           </Text>
         </TouchableOpacity>
       </View>
 
       <View style={styles.formSection}>
         <View style={styles.formGroup}>
-          <Text style={[styles.formLabel, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>Title</Text>
+          <Text
+            style={[styles.formLabel, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}
+          >
+            Title
+          </Text>
           <TextInput
-            style={[styles.formInput, { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5', color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}
+            style={[
+              styles.formInput,
+              {
+                backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5',
+                color: colorScheme === 'dark' ? '#ffffff' : '#000000',
+              },
+            ]}
             placeholder="Enter title..."
             placeholderTextColor="#888"
             value={title}
@@ -137,9 +193,19 @@ export default function CreateScreen() {
         </View>
 
         <View style={styles.formGroup}>
-          <Text style={[styles.formLabel, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>Description</Text>
+          <Text
+            style={[styles.formLabel, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}
+          >
+            Description
+          </Text>
           <TextInput
-            style={[styles.formInput, { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5', color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}
+            style={[
+              styles.formInput,
+              {
+                backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5',
+                color: colorScheme === 'dark' ? '#ffffff' : '#000000',
+              },
+            ]}
             placeholder="Add description..."
             placeholderTextColor="#888"
             value={description}
@@ -150,19 +216,34 @@ export default function CreateScreen() {
         </View>
 
         <View style={styles.formGroup}>
-          <Text style={[styles.formLabel, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>Universe</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.universeScroll}>
+          <Text
+            style={[styles.formLabel, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}
+          >
+            Universe
+          </Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.universeScroll}
+          >
             {universeOptions.map((universe) => (
               <TouchableOpacity
                 key={universe.id}
-                onPress={() => setSelectedUniverse(selectedUniverse === universe.id ? null : universe.id)}
+                onPress={() =>
+                  setSelectedUniverse(selectedUniverse === universe.id ? null : universe.id)
+                }
                 style={[
                   styles.universeButton,
                   selectedUniverse === universe.id && { backgroundColor: '#8B5CF6' },
                 ]}
               >
                 <Text style={styles.universeIcon}>{universe.icon}</Text>
-                <Text style={[styles.universeName, selectedUniverse === universe.id && { color: '#ffffff' }]}>
+                <Text
+                  style={[
+                    styles.universeName,
+                    selectedUniverse === universe.id && { color: '#ffffff' },
+                  ]}
+                >
                   {universe.name}
                 </Text>
               </TouchableOpacity>
@@ -172,7 +253,9 @@ export default function CreateScreen() {
       </View>
 
       <View style={styles.privacySection}>
-        <Text style={[styles.sectionLabel, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
+        <Text
+          style={[styles.sectionLabel, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}
+        >
           Privacy Settings
         </Text>
         <View style={styles.privacyOptions}>
@@ -181,7 +264,9 @@ export default function CreateScreen() {
               key={option}
               style={[styles.privacyButton, option === 'Public' && { backgroundColor: '#8B5CF6' }]}
             >
-              <Text style={[styles.privacyText, option === 'Public' && { color: '#ffffff' }]}>{option}</Text>
+              <Text style={[styles.privacyText, option === 'Public' && { color: '#ffffff' }]}>
+                {option}
+              </Text>
             </TouchableOpacity>
           ))}
         </View>
@@ -190,18 +275,15 @@ export default function CreateScreen() {
       <TouchableOpacity
         onPress={handleUpload}
         disabled={isUploading}
-        style={[
-          styles.submitButton,
-          isUploading && { backgroundColor: '#ccc' },
-        ]}
+        style={[styles.submitButton, isUploading && { backgroundColor: '#ccc' }]}
       >
-        <Text style={styles.submitButtonText}>
-          {isUploading ? 'Uploading...' : 'Publish'}
-        </Text>
+        <Text style={styles.submitButtonText}>{isUploading ? 'Uploading...' : 'Publish'}</Text>
       </TouchableOpacity>
 
       <View style={styles.tipsSection}>
-        <Text style={[styles.tipsTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>💡 Tips for Creators</Text>
+        <Text style={[styles.tipsTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
+          💡 Tips for Creators
+        </Text>
         <View style={styles.tipsList}>
           <Text style={styles.tipItem}>• Use high-quality video for better engagement</Text>
           <Text style={styles.tipItem}>• Add relevant tags to reach more viewers</Text>
@@ -370,6 +452,3 @@ const styles = StyleSheet.create({
     lineHeight: 1.5,
   },
 });
-
-// Add TextInput import
-import { TextInput } from 'react-native';

@@ -243,9 +243,7 @@ describe('User Service Pagination Tests', () => {
     it('should return paginated saved items with default values', async () => {
       mockUsersService.getSavedItems.mockResolvedValueOnce({
         success: true,
-        data: [
-          { id: 'saved-1', contentId: 'content-1', createdAt: new Date() },
-        ],
+        data: [{ id: 'saved-1', contentId: 'content-1', createdAt: new Date() }],
         pagination: {
           total: 25,
           page: 1,

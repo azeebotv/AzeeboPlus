@@ -1,5 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, useColorScheme, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  TextInput,
+  useColorScheme,
+  Alert,
+} from 'react-native';
 import { supportApi } from '../src/api/support';
 import { apiClient } from '../src/api';
 import { logger } from '../src/utils/logger';
@@ -9,7 +18,9 @@ const categories = ['Account', 'Payment', 'Content', 'Technical', 'Creator'];
 
 export default function SupportScreen() {
   const colorScheme = useColorScheme();
-  const [faqData, setFaqData] = useState<Array<{ id: string; question: string; answer: string }>>([]);
+  const [faqData, setFaqData] = useState<Array<{ id: string; question: string; answer: string }>>(
+    []
+  );
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expandedFAQ, setExpandedFAQ] = useState<string | null>(null);
@@ -25,7 +36,10 @@ export default function SupportScreen() {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await apiClient.get<Array<{ id: string; question: string; answer: string }>>('/support/faq');
+      const data =
+        await apiClient.get<Array<{ id: string; question: string; answer: string }>>(
+          '/support/faq'
+        );
       setFaqData(Array.isArray(data) ? data : []);
     } catch (err: any) {
       logger.error('Failed to load FAQ:', err);
@@ -41,7 +55,12 @@ export default function SupportScreen() {
 
   if (isLoading) {
     return (
-      <View style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#000000' : '#ffffff' }]}>
+      <View
+        style={[
+          styles.container,
+          { backgroundColor: colorScheme === 'dark' ? '#000000' : '#ffffff' },
+        ]}
+      >
         <LoadingState text="Loading support..." />
       </View>
     );
@@ -49,7 +68,12 @@ export default function SupportScreen() {
 
   if (error) {
     return (
-      <View style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#000000' : '#ffffff' }]}>
+      <View
+        style={[
+          styles.container,
+          { backgroundColor: colorScheme === 'dark' ? '#000000' : '#ffffff' },
+        ]}
+      >
         <ErrorState description={error} onRetry={fetchFAQ} />
       </View>
     );
@@ -64,7 +88,7 @@ export default function SupportScreen() {
       Alert.alert('Error', 'Please fill in all fields');
       return;
     }
-    
+
     setIsSubmitting(true);
     try {
       const response = await supportApi.createTicket({
@@ -73,10 +97,13 @@ export default function SupportScreen() {
         message: formData.message,
         priority: 'medium',
       });
-      
+
       if (response.success) {
         setFormSubmitted(true);
-        Alert.alert('Success', 'Your support ticket has been submitted. We will get back to you soon!');
+        Alert.alert(
+          'Success',
+          'Your support ticket has been submitted. We will get back to you soon!'
+        );
       } else {
         Alert.alert('Error', 'Failed to submit ticket. Please try again.');
       }
@@ -93,7 +120,12 @@ export default function SupportScreen() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#000000' : '#ffffff' }]}>
+    <View
+      style={[
+        styles.container,
+        { backgroundColor: colorScheme === 'dark' ? '#000000' : '#ffffff' },
+      ]}
+    >
       <ScrollView style={styles.scrollView}>
         <View style={styles.header}>
           <Text style={[styles.title, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
@@ -113,10 +145,18 @@ export default function SupportScreen() {
           ].map((item, index) => (
             <TouchableOpacity
               key={index}
-              style={[styles.quickLinkCard, { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' }]}
+              style={[
+                styles.quickLinkCard,
+                { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' },
+              ]}
             >
               <Text style={styles.quickLinkIcon}>{item.icon}</Text>
-              <Text style={[styles.quickLinkLabel, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
+              <Text
+                style={[
+                  styles.quickLinkLabel,
+                  { color: colorScheme === 'dark' ? '#ffffff' : '#000000' },
+                ]}
+              >
                 {item.label}
               </Text>
             </TouchableOpacity>
@@ -124,42 +164,60 @@ export default function SupportScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
+          <Text
+            style={[styles.sectionTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}
+          >
             Frequently Asked Questions
           </Text>
           {faqData.map((faq) => (
             <TouchableOpacity
               key={faq.id}
-              style={[styles.faqCard, { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' }]}
+              style={[
+                styles.faqCard,
+                { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' },
+              ]}
               onPress={() => toggleFAQ(faq.id)}
             >
               <View style={styles.faqHeader}>
-                <Text style={[styles.faqQuestion, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
+                <Text
+                  style={[
+                    styles.faqQuestion,
+                    { color: colorScheme === 'dark' ? '#ffffff' : '#000000' },
+                  ]}
+                >
                   {faq.question}
                 </Text>
                 <Text style={styles.faqToggle}>{expandedFAQ === faq.id ? '−' : '+'}</Text>
               </View>
-              {expandedFAQ === faq.id && (
-                <Text style={styles.faqAnswer}>{faq.answer}</Text>
-              )}
+              {expandedFAQ === faq.id && <Text style={styles.faqAnswer}>{faq.answer}</Text>}
             </TouchableOpacity>
           ))}
         </View>
 
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
+          <Text
+            style={[styles.sectionTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}
+          >
             Contact Support
           </Text>
 
           {formSubmitted ? (
-            <View style={[styles.successCard, { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' }]}>
+            <View
+              style={[
+                styles.successCard,
+                { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' },
+              ]}
+            >
               <Text style={styles.successIcon}>✅</Text>
-              <Text style={[styles.successTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
+              <Text
+                style={[
+                  styles.successTitle,
+                  { color: colorScheme === 'dark' ? '#ffffff' : '#000000' },
+                ]}
+              >
                 Ticket Submitted!
               </Text>
-              <Text style={styles.successSubtitle}>
-                We'll get back to you within 24 hours.
-              </Text>
+              <Text style={styles.successSubtitle}>We'll get back to you within 24 hours.</Text>
               <TouchableOpacity
                 onPress={() => setFormSubmitted(false)}
                 style={styles.resubmitButton}
@@ -170,11 +228,19 @@ export default function SupportScreen() {
           ) : (
             <View style={styles.form}>
               <View style={styles.formGroup}>
-                <Text style={[styles.label, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
+                <Text
+                  style={[styles.label, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}
+                >
                   Subject
                 </Text>
                 <TextInput
-                  style={[styles.input, { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5', color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}
+                  style={[
+                    styles.input,
+                    {
+                      backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5',
+                      color: colorScheme === 'dark' ? '#ffffff' : '#000000',
+                    },
+                  ]}
                   value={formData.subject}
                   onChangeText={(value) => handleInputChange('subject', value)}
                   placeholder="Brief description of your issue"
@@ -183,7 +249,9 @@ export default function SupportScreen() {
               </View>
 
               <View style={styles.formGroup}>
-                <Text style={[styles.label, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
+                <Text
+                  style={[styles.label, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}
+                >
                   Category
                 </Text>
                 <View style={styles.categoryGrid}>
@@ -210,11 +278,19 @@ export default function SupportScreen() {
               </View>
 
               <View style={styles.formGroup}>
-                <Text style={[styles.label, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
+                <Text
+                  style={[styles.label, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}
+                >
                   Message
                 </Text>
                 <TextInput
-                  style={[styles.textArea, { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5', color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}
+                  style={[
+                    styles.textArea,
+                    {
+                      backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5',
+                      color: colorScheme === 'dark' ? '#ffffff' : '#000000',
+                    },
+                  ]}
                   value={formData.message}
                   onChangeText={(value) => handleInputChange('message', value)}
                   placeholder="Tell us more about your issue..."
@@ -225,10 +301,7 @@ export default function SupportScreen() {
                 />
               </View>
 
-              <TouchableOpacity
-                onPress={handleSubmit}
-                style={styles.submitButton}
-              >
+              <TouchableOpacity onPress={handleSubmit} style={styles.submitButton}>
                 <Text style={styles.submitButtonText}>📤 Submit Ticket</Text>
               </TouchableOpacity>
             </View>

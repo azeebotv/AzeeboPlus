@@ -72,15 +72,13 @@ export function Field<T extends FieldValues>({
         };
 
         if (children) {
-          return React.cloneElement(children as React.ReactElement, {
+          return React.cloneElement(children as React.ReactElement<any>, {
             ...inputProps,
             className,
           });
         }
 
-        return (
-          <Input {...inputProps} label={label} className={className} />
-        );
+        return <Input {...inputProps} label={label} className={className} />;
       }}
     />
   );
@@ -96,11 +94,7 @@ export interface FormFieldProps {
 export function FormField({ label, error, className = '', children }: FormFieldProps) {
   return (
     <div className={`space-y-1.5 ${className}`}>
-      {label && (
-        <label className="block text-sm font-medium text-text-secondary">
-          {label}
-        </label>
-      )}
+      {label && <label className="block text-sm font-medium text-text-secondary">{label}</label>}
       {children}
       {error && (
         <p className="text-sm text-error-400" role="alert">
@@ -125,12 +119,7 @@ export function FormButton({
   ...props
 }: FormButtonProps) {
   return (
-    <Button
-      type={type}
-      isLoading={isSubmitting}
-      disabled={disabled || isSubmitting}
-      {...props}
-    >
+    <Button type={type} isLoading={isSubmitting} disabled={disabled || isSubmitting} {...props}>
       {children}
     </Button>
   );

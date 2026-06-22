@@ -43,7 +43,7 @@ export default function CreatorProfileScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const creatorId = params.creatorId as string;
-  
+
   const [profile, setProfile] = useState<CreatorProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -55,7 +55,21 @@ export default function CreatorProfileScreen() {
     try {
       const response = await contentApi.getCreatorProfile(creatorId);
       if (response.success && response.data) {
-        setProfile(response.data);
+        // Map API CreatorProfile to UI CreatorProfile interface
+        setProfile({
+          id: response.data.id,
+          username: response.data.displayName?.toLowerCase().replace(/\s+/g, '') ?? '',
+          displayName: response.data.displayName,
+          avatar: response.data.avatar ?? '',
+          bio: response.data.bio ?? '',
+          followers: response.data.followers,
+          following: response.data.following,
+          totalContent: response.data.totalContent,
+          totalViews: 0,
+          isFollowing: false,
+          socialLinks: (response.data.socialLinks as unknown as Record<string, string>) ?? {},
+          recentContent: [],
+        });
       }
     } catch (error) {
       logger.error('Failed to load creator profile', error);
@@ -108,10 +122,7 @@ export default function CreatorProfileScreen() {
       <SafeAreaView style={styles.container} edges={['top']}>
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>Failed to load profile</Text>
-          <TouchableOpacity
-            style={styles.retryButton}
-            onPress={loadProfile}
-          >
+          <TouchableOpacity style={styles.retryButton} onPress={loadProfile}>
             <Text style={styles.retryButtonText}>Retry</Text>
           </TouchableOpacity>
         </View>
@@ -122,10 +133,7 @@ export default function CreatorProfileScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backButtonText}>←</Text>
         </TouchableOpacity>
         <Text style={styles.title}>Creator Profile</Text>
@@ -162,7 +170,9 @@ export default function CreatorProfileScreen() {
               style={[styles.followButton, profile.isFollowing && styles.followingButton]}
               onPress={handleFollow}
             >
-              <Text style={[styles.followButtonText, profile.isFollowing && styles.followingButtonText]}>
+              <Text
+                style={[styles.followButtonText, profile.isFollowing && styles.followingButtonText]}
+              >
                 {profile.isFollowing ? 'Following' : 'Follow'}
               </Text>
             </TouchableOpacity>
@@ -211,7 +221,9 @@ export default function CreatorProfileScreen() {
             >
               <Image source={{ uri: content.thumbnail }} style={styles.contentThumbnail} />
               <View style={styles.contentInfo}>
-                <Text style={styles.contentTitle} numberOfLines={1}>{content.title}</Text>
+                <Text style={styles.contentTitle} numberOfLines={1}>
+                  {content.title}
+                </Text>
                 <View style={styles.contentMeta}>
                   <Text style={styles.contentType}>{getTypeIcon(content.type)}</Text>
                   <Text style={styles.contentViews}>{formatNumber(content.views)} views</Text>

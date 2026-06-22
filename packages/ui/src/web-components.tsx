@@ -45,9 +45,12 @@ export function Button({
 
   const variantStyles = {
     primary: 'bg-primary-500 text-white hover:bg-primary-600 focus:ring-primary-500 rounded-lg',
-    secondary: 'bg-bg-tertiary text-text-primary hover:bg-bg-hover focus:ring-bg-tertiary rounded-lg',
-    ghost: 'bg-transparent text-text-secondary hover:text-text-primary hover:bg-bg-tertiary focus:ring-bg-tertiary rounded-lg',
-    outline: 'border-2 border-border-default text-text-primary hover:border-primary-500 hover:text-primary-400 focus:ring-primary-500 rounded-lg',
+    secondary:
+      'bg-bg-tertiary text-text-primary hover:bg-bg-hover focus:ring-bg-tertiary rounded-lg',
+    ghost:
+      'bg-transparent text-text-secondary hover:text-text-primary hover:bg-bg-tertiary focus:ring-bg-tertiary rounded-lg',
+    outline:
+      'border-2 border-border-default text-text-primary hover:border-primary-500 hover:text-primary-400 focus:ring-primary-500 rounded-lg',
     danger: 'bg-error-500 text-white hover:bg-error-600 focus:ring-error-500 rounded-lg',
     success: 'bg-success-500 text-white hover:bg-success-600 focus:ring-success-500 rounded-lg',
     warning: 'bg-warning-500 text-dark-900 hover:bg-warning-600 focus:ring-warning-500 rounded-lg',
@@ -73,8 +76,20 @@ export function Button({
       {isLoading ? (
         <>
           <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" role="status">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+            <circle
+              className="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              strokeWidth="4"
+              fill="none"
+            />
+            <path
+              className="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+            />
           </svg>
           {loadingText}
         </>
@@ -213,11 +228,7 @@ export function HeroCard({
   return (
     <div className="relative rounded-2xl overflow-hidden" role="region" aria-label={title}>
       <div className="aspect-video relative">
-        <img
-          src={thumbnail}
-          alt={title}
-          className="w-full h-full object-cover"
-        />
+        <img src={thumbnail} alt={title} className="w-full h-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
         <div className="absolute inset-0 flex items-center justify-center">
           <button
@@ -225,7 +236,11 @@ export function HeroCard({
             className="w-20 h-20 rounded-full bg-primary-500/90 flex items-center justify-center hover:scale-110 transition-transform duration-200 group"
             aria-label={`Play ${title}`}
           >
-            <svg className="w-10 h-10 text-white ml-1 transition-transform group-hover:scale-110" fill="currentColor" viewBox="0 0 24 24">
+            <svg
+              className="w-10 h-10 text-white ml-1 transition-transform group-hover:scale-110"
+              fill="currentColor"
+              viewBox="0 0 24 24"
+            >
               <path d="M8 5v14l11-7z" />
             </svg>
           </button>
@@ -235,7 +250,11 @@ export function HeroCard({
         <div className="flex items-center gap-2 mb-2">
           {isLive && (
             <Badge variant="error">
-              <span className="w-2 h-2 rounded-full bg-error-400 mr-1.5 animate-pulse" role="status" aria-label="Live" />
+              <span
+                className="w-2 h-2 rounded-full bg-error-400 mr-1.5 animate-pulse"
+                role="status"
+                aria-label="Live"
+              />
               Live
             </Badge>
           )}
@@ -292,7 +311,12 @@ export interface DividerProps {
   'aria-orientation'?: 'horizontal' | 'vertical';
 }
 
-export function Divider({ className = '', orientation = 'horizontal', role = 'separator', 'aria-orientation': ariaOrientation }: DividerProps): React.ReactElement {
+export function Divider({
+  className = '',
+  orientation = 'horizontal',
+  role = 'separator',
+  'aria-orientation': ariaOrientation,
+}: DividerProps): React.ReactElement {
   return (
     <div
       className={`border-0 ${orientation === 'horizontal' ? 'h-px w-full' : 'w-px h-full'} bg-border-default ${className}`}
@@ -344,7 +368,15 @@ export function Badge({
     );
   }
 
-  return <span className={`${baseStyles} ${variantStyles[variant]} ${className}`} role={role} aria-label={ariaLabel}>{children}</span>;
+  return (
+    <span
+      className={`${baseStyles} ${variantStyles[variant]} ${className}`}
+      role={role}
+      aria-label={ariaLabel}
+    >
+      {children}
+    </span>
+  );
 }
 
 // Avatar Component
@@ -377,7 +409,16 @@ export function Avatar({
     xl: 'w-16 h-16 text-xl',
   };
 
-  const statusSize = size === 'xs' ? 'w-1.5 h-1.5' : size === 'sm' ? 'w-2 h-2' : size === 'md' ? 'w-2.5 h-2.5' : size === 'lg' ? 'w-3 h-3' : 'w-4 h-4';
+  const statusSize =
+    size === 'xs'
+      ? 'w-1.5 h-1.5'
+      : size === 'sm'
+        ? 'w-2 h-2'
+        : size === 'md'
+          ? 'w-2.5 h-2.5'
+          : size === 'lg'
+            ? 'w-3 h-3'
+            : 'w-4 h-4';
 
   const statusStyles = {
     online: 'bg-success-500',
@@ -401,7 +442,11 @@ export function Avatar({
   };
 
   return (
-    <div className={`relative ${sizeStyles[size]} rounded-full bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center font-semibold text-white ${className}`} role="img" aria-label={alt || fallback}>
+    <div
+      className={`relative ${sizeStyles[size]} rounded-full bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center font-semibold text-white ${className}`}
+      role="img"
+      aria-label={alt || fallback}
+    >
       {src ? (
         <img
           src={src}
@@ -463,7 +508,8 @@ export function Tooltip({
 
   const arrowStyles = {
     top: 'top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-bg-tertiary',
-    bottom: 'bottom-full left-1/2 -translate-x-1/2 border-8 border-transparent border-b-bg-tertiary',
+    bottom:
+      'bottom-full left-1/2 -translate-x-1/2 border-8 border-transparent border-b-bg-tertiary',
     left: 'right-full top-1/2 -translate-y-1/2 border-8 border-transparent border-l-bg-tertiary',
     right: 'left-full top-1/2 -translate-y-1/2 border-8 border-transparent border-r-bg-tertiary',
   };
@@ -472,7 +518,11 @@ export function Tooltip({
   const hasAriaLabel = child.props['aria-label'] || child.props['aria-labelledby'];
 
   return (
-    <div className="relative inline-block" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+    <div
+      className="relative inline-block"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
       {React.cloneElement(child, {
         'aria-describedby': hasAriaLabel ? undefined : 'tooltip',
       })}
@@ -482,7 +532,9 @@ export function Tooltip({
         role="tooltip"
         aria-hidden={!isVisible}
       >
-        <div className={`px-3 py-2 bg-bg-tertiary text-text-primary text-sm rounded-lg shadow-lg ${className}`}>
+        <div
+          className={`px-3 py-2 bg-bg-tertiary text-text-primary text-sm rounded-lg shadow-lg ${className}`}
+        >
           {content}
         </div>
         <div className={`absolute ${arrowStyles[position]}`} />
@@ -531,14 +583,23 @@ export function ProgressBar({
       {label && (
         <label className="text-sm font-medium text-text-secondary mb-1.5 block">{label}</label>
       )}
-      <div className={`w-full ${sizeStyles[size]} bg-dark-600 rounded-full overflow-hidden ${className}`} role="progressbar" aria-label={label} aria-valuenow={value} aria-valuemin={0} aria-valuemax={max}>
+      <div
+        className={`w-full ${sizeStyles[size]} bg-dark-600 rounded-full overflow-hidden ${className}`}
+        role="progressbar"
+        aria-label={label}
+        aria-valuenow={value}
+        aria-valuemin={0}
+        aria-valuemax={max}
+      >
         <div
           className={`h-full ${variantStyles[variant]} rounded-full transition-all duration-500 ease-out`}
           style={{ width: `${percentage}%` }}
         />
       </div>
       {showLabel && (
-        <span className="text-xs text-text-tertiary mt-1 block" aria-hidden="true">{Math.round(percentage)}%</span>
+        <span className="text-xs text-text-tertiary mt-1 block" aria-hidden="true">
+          {Math.round(percentage)}%
+        </span>
       )}
     </div>
   );
@@ -561,8 +622,18 @@ export function ErrorState({
   return (
     <div className="flex flex-col items-center justify-center py-12 text-center">
       <div className="w-16 h-16 rounded-full bg-error-500/20 flex items-center justify-center mb-4">
-        <svg className="w-8 h-8 text-error-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        <svg
+          className="w-8 h-8 text-error-500"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+          />
         </svg>
       </div>
       <h3 className="text-lg font-semibold text-text-primary mb-2">{title}</h3>
@@ -588,7 +659,13 @@ export interface ChipProps {
   className?: string;
 }
 
-export function Chip({ label, variant = 'default', size = 'md', onRemove, className = '' }: ChipProps): React.ReactElement {
+export function Chip({
+  label,
+  variant = 'default',
+  size = 'md',
+  onRemove,
+  className = '',
+}: ChipProps): React.ReactElement {
   const variantClasses: Record<string, string> = {
     default: 'bg-gray-100 text-gray-800',
     primary: 'bg-purple-100 text-purple-800',
@@ -598,7 +675,9 @@ export function Chip({ label, variant = 'default', size = 'md', onRemove, classN
   };
   const sizeClasses = size === 'sm' ? 'px-2 py-0.5 text-xs' : 'px-3 py-1 text-sm';
   return (
-    <span className={`inline-flex items-center gap-1 rounded-full font-medium ${sizeClasses} ${variantClasses[variant]} ${className}`}>
+    <span
+      className={`inline-flex items-center gap-1 rounded-full font-medium ${sizeClasses} ${variantClasses[variant]} ${className}`}
+    >
       {label}
       {onRemove && (
         <button onClick={onRemove} className="ml-1 hover:opacity-70" aria-label={`Remove ${label}`}>
@@ -629,29 +708,69 @@ export function Spinner({ size = 'md', color, className = '' }: SpinnerProps): R
       aria-label="Loading"
     >
       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+      <path
+        className="opacity-75"
+        fill="currentColor"
+        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+      />
     </svg>
   );
 }
 
 // Table HTML wrapper components
-export function Tbody({ children, className = '' }: { children?: React.ReactNode; className?: string }): React.ReactElement {
+export function Tbody({
+  children,
+  className = '',
+}: {
+  children?: React.ReactNode;
+  className?: string;
+}): React.ReactElement {
   return <tbody className={className}>{children}</tbody>;
 }
 
-export function Thead({ children, className = '' }: { children?: React.ReactNode; className?: string }): React.ReactElement {
+export function Thead({
+  children,
+  className = '',
+}: {
+  children?: React.ReactNode;
+  className?: string;
+}): React.ReactElement {
   return <thead className={className}>{children}</thead>;
 }
 
-export function Tr({ children, className = '' }: { children?: React.ReactNode; className?: string }): React.ReactElement {
+export function Tr({
+  children,
+  className = '',
+}: {
+  children?: React.ReactNode;
+  className?: string;
+}): React.ReactElement {
   return <tr className={className}>{children}</tr>;
 }
 
-export function Th({ children, className = '' }: { children?: React.ReactNode; className?: string }): React.ReactElement {
-  return <th className={`px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider ${className}`}>{children}</th>;
+export function Th({
+  children,
+  className = '',
+}: {
+  children?: React.ReactNode;
+  className?: string;
+}): React.ReactElement {
+  return (
+    <th
+      className={`px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider ${className}`}
+    >
+      {children}
+    </th>
+  );
 }
 
-export function Td({ children, className = '' }: { children?: React.ReactNode; className?: string }): React.ReactElement {
+export function Td({
+  children,
+  className = '',
+}: {
+  children?: React.ReactNode;
+  className?: string;
+}): React.ReactElement {
   return <td className={`px-4 py-3 ${className}`}>{children}</td>;
 }
 
@@ -664,7 +783,13 @@ export interface RadioGroupProps {
   name?: string;
 }
 
-export function RadioGroup({ value, onValueChange, children, className = '', name }: RadioGroupProps): React.ReactElement {
+export function RadioGroup({
+  value,
+  onValueChange,
+  children,
+  className = '',
+  name,
+}: RadioGroupProps): React.ReactElement {
   return (
     <div className={className} role="radiogroup">
       {React.Children.map(children, (child) => {

@@ -6,10 +6,11 @@ describe('Analytics SDK', () => {
 
   beforeEach(() => {
     trackedEvents = [];
-    analytics = new Analytics({ enabled: true, debug: true });
+    analytics = new Analytics({ enabled: true, debug: true, flushBatchSize: 1 });
 
-    // Override processQueue to capture events
-    (analytics as any).processQueue = async function(this: Analytics) {
+    // Override flush to capture events without sending them
+    (analytics as any).flush = async function (this: Analytics) {
+      if (this.queue.length === 0) return;
       trackedEvents.push(...this.queue);
       this.queue = [];
     };

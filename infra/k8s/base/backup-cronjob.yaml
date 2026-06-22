@@ -38,7 +38,7 @@ spec:
 
                   echo "Starting backup at $(date)"
 
-                  pg_dump -h postgres.azeebo.svc.cluster.local -U ${POSTGRES_USER} -d ${POSTGRES_DB} | gzip | \
+                  pg_dump -h postgres.azeebo-infra.svc.cluster.local -U ${POSTGRES_USER} -d ${POSTGRES_DB} | gzip | \
                     gpg --batch --yes --encrypt --recipient ${GPG_RECIPIENT} -o "${ENCRYPTED_FILE}"
 
                   if [ $? -eq 0 ]; then
@@ -149,7 +149,7 @@ spec:
 
                   echo "Starting Redis backup at $(date)"
 
-                  redis-cli -h redis.azeebo.svc.cluster.local SAVE
+                  redis-cli -h redis.azeebo.svc.cluster.local -a "$REDIS_PASSWORD" SAVE
 
                   if [ $? -eq 0 ]; then
                     gzip -c /data/dump.rdb | gpg --batch --yes --encrypt --recipient ${GPG_RECIPIENT} -o "${ENCRYPTED_FILE}"
@@ -164,6 +164,11 @@ spec:
                     exit 1
                   fi
               env:
+                - name: REDIS_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: azeebo-secrets
+                      key: REDIS_PASSWORD
                 - name: GPG_RECIPIENT
                   valueFrom:
                     secretKeyRef:
@@ -172,7 +177,7 @@ spec:
                 - name: AWS_S3_BACKUP_BUCKET
                   valueFrom:
                     configMapKeyRef:
-                      name:azeebo-config
+                      name: azeebo-config
                       key: aws-s3-backup-bucket
                 - name: AWS_ACCESS_KEY_ID
                   valueFrom:
@@ -199,7 +204,7 @@ spec:
           volumes:
             - name: redis-backup-dir
               persistentVolumeClaim:
-                claimName: redis-data-pvc
+                claimName: redis-pvc
             - name: backup-tmp
               emptyDir:
                 sizeLimit: 500Mi

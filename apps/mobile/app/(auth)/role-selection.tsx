@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, Button, StyleSheet, Image, Pressable } from 'react-native';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
-import { authApi } from '@/src/api/auth';
+// import { authApi } from '@/src/api/auth';
 
 export default function RoleSelectionScreen() {
   const [isLoading, setIsLoading] = useState(false);
@@ -19,9 +19,9 @@ export default function RoleSelectionScreen() {
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       // Navigate to profile setup
-      router.replace('/(auth)/profile-setup');
-    } catch (err: any) {
-      setError(err.message || 'Failed to select role');
+      router.replace('/(auth)/profile-setup' as never);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to select role');
     } finally {
       setIsLoading(false);
     }
@@ -45,51 +45,45 @@ export default function RoleSelectionScreen() {
       </View>
 
       <View style={styles.options}>
-        <Pressable 
-          style={[styles.optionButton, styles.userButton]} 
+        <Pressable
+          style={[styles.optionButton, styles.userButton]}
           onPress={() => handleRoleSelection('user')}
           disabled={isLoading}
         >
           <View style={styles.optionIcon}>
-            <Text style={styles.iconText>👀</Text>
+            <Text style={styles.iconText}>👀</Text>
           </View>
           <View style={styles.optionText}>
             <Text style={styles.optionTitle}>Viewer</Text>
-            <Text style={styles.optionDescription}>
-              Watch shows, vote, and enjoy content
-            </Text>
+            <Text style={styles.optionDescription}>Watch shows, vote, and enjoy content</Text>
           </View>
         </Pressable>
 
-        <Pressable 
-          style={[styles.optionButton, styles.creatorButton]} 
+        <Pressable
+          style={[styles.optionButton, styles.creatorButton]}
           onPress={() => handleRoleSelection('creator')}
           disabled={isLoading}
         >
           <View style={styles.optionIcon}>
-            <Text style={styles.iconText>🎥</Text>
+            <Text style={styles.iconText}>🎥</Text>
           </View>
           <View style={styles.optionText}>
             <Text style={styles.optionTitle}>Creator</Text>
-            <Text style={styles.optionDescription}>
-              Upload content, engage with fans, and earn
-            </Text>
+            <Text style={styles.optionDescription}>Upload content, engage with fans, and earn</Text>
           </View>
         </Pressable>
 
-        <Pressable 
-          style={[styles.optionButton, styles.bothButton]} 
+        <Pressable
+          style={[styles.optionButton, styles.bothButton]}
           onPress={() => handleRoleSelection('both')}
           disabled={isLoading}
         >
           <View style={styles.optionIcon}>
-            <Text style={styles.iconText>👀🎥</Text>
+            <Text style={styles.iconText}>👀🎥</Text>
           </View>
           <View style={styles.optionText}>
             <Text style={styles.optionTitle}>Both</Text>
-            <Text style={styles.optionDescription}>
-              Watch and create content
-            </Text>
+            <Text style={styles.optionDescription}>Watch and create content</Text>
           </View>
         </Pressable>
       </View>
@@ -122,6 +116,11 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 16,
+    color: '#6b7280',
+    textAlign: 'center',
+  },
+  loadingText: {
+    fontSize: 18,
     color: '#6b7280',
     textAlign: 'center',
   },

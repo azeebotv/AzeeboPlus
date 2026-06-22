@@ -32,17 +32,18 @@ export class PaymentsService {
   private readonly logger = new Logger(PaymentsService.name);
   private readonly analyticsServiceBaseUrl: string;
   private readonly walletServiceBaseUrl: string;
-  private readonly MIN_PAYMENT_AMOUNT_NGN = 100;
+  private readonly MIN_PAYMENT_AMOUNT_NGN: number;
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly paystackProvider: PaystackProvider,
     private readonly flutterwaveProvider: FlutterwaveProvider,
     private readonly webhookRetryService: WebhookRetryService,
-    private readonly configService: ConfigService,
+    private readonly configService: ConfigService
   ) {
     this.analyticsServiceBaseUrl = this.configService.getOrThrow<string>('ANALYTICS_SERVICE_URL');
     this.walletServiceBaseUrl = this.configService.getOrThrow<string>('WALLET_SERVICE_URL');
+    this.MIN_PAYMENT_AMOUNT_NGN = this.configService.get<number>('MIN_PAYMENT_AMOUNT_NGN', 100);
   }
 
   private getProvider(provider: PaymentProvider) {
@@ -67,7 +68,13 @@ export class PaymentsService {
     }
   }
 
-  private async creditWallet(userId: string, amount: number, description: string, reference: string, provider: PaymentProvider = 'paystack'): Promise<void> {
+  private async creditWallet(
+    userId: string,
+    amount: number,
+    description: string,
+    reference: string,
+    provider: PaymentProvider = 'paystack'
+  ): Promise<void> {
     try {
       await axios.post(`${this.walletServiceBaseUrl}/wallet/credit`, {
         userId,
@@ -83,7 +90,13 @@ export class PaymentsService {
     }
   }
 
-  private async debitWallet(userId: string, amount: number, description: string, reference: string, provider: PaymentProvider = 'paystack'): Promise<void> {
+  private async debitWallet(
+    userId: string,
+    amount: number,
+    description: string,
+    reference: string,
+    provider: PaymentProvider = 'paystack'
+  ): Promise<void> {
     try {
       await axios.post(`${this.walletServiceBaseUrl}/wallet/debit`, {
         userId,
@@ -110,7 +123,9 @@ export class PaymentsService {
     }
 
     if (currency === 'NGN' && amount < this.MIN_PAYMENT_AMOUNT_NGN) {
-      throw new BadRequestException(`Minimum payment amount for NGN is ${this.MIN_PAYMENT_AMOUNT_NGN}`);
+      throw new BadRequestException(
+        `Minimum payment amount for NGN is ${this.MIN_PAYMENT_AMOUNT_NGN}`
+      );
     }
 
     if (idempotencyKey) {
@@ -118,7 +133,8 @@ export class PaymentsService {
         where: { idempotencyKey },
       });
       if (existingPayment) {
-        const existingStatus = existingPayment.status === 'processing' ? 'pending' : existingPayment.status;
+        const existingStatus =
+          existingPayment.status === 'processing' ? 'pending' : existingPayment.status;
         return {
           success: true,
           data: {
@@ -350,15 +366,17 @@ export class PaymentsService {
       throw new BadRequestException('Invalid webhook signature');
     }
 
-    const eventId = body.eventId as string || body.id as string;
-    const event = body.event as string || body.type as string;
+    const eventId = (body.eventId as string) || (body.id as string);
+    const event = (body.event as string) || (body.type as string);
 
     if (eventId) {
       const existingEvent = await this.prisma.webhookEvent.findUnique({
         where: { eventId },
       });
       if (existingEvent) {
-        this.logger.log(`Webhook event ${eventId} already processed with result: ${existingEvent.result}`);
+        this.logger.log(
+          `Webhook event ${eventId} already processed with result: ${existingEvent.result}`
+        );
         return {
           success: true,
           data: { message: `Event ${eventId} already processed`, result: existingEvent.result },
@@ -396,11 +414,11 @@ export class PaymentsService {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       this.logger.error(`Failed to process webhook event ${event}:`, error);
       await this.saveWebhookEvent(eventId, provider, event, body, 'failed', errorMessage);
-      
+
       if (error instanceof Error) {
         await this.webhookRetryService.scheduleRetry(eventId!, provider, event, body, error);
       }
-      
+
       throw error;
     }
   }
@@ -464,7 +482,10 @@ export class PaymentsService {
             refundId: existingRefund.id,
             amount: toNumber(existingRefund.amount.toString()),
             status: existingRefund.status,
-            message: existingRefund.status === 'completed' ? 'Refund already processed' : 'Refund in progress',
+            message:
+              existingRefund.status === 'completed'
+                ? 'Refund already processed'
+                : 'Refund in progress',
           },
         };
       }
@@ -652,7 +673,9 @@ export class PaymentsService {
     }
 
     if (currency === 'NGN' && amount < this.MIN_PAYMENT_AMOUNT_NGN) {
-      throw new BadRequestException(`Minimum payment amount for NGN is ${this.MIN_PAYMENT_AMOUNT_NGN}`);
+      throw new BadRequestException(
+        `Minimum payment amount for NGN is ${this.MIN_PAYMENT_AMOUNT_NGN}`
+      );
     }
 
     if (idempotencyKey) {
@@ -660,7 +683,8 @@ export class PaymentsService {
         where: { idempotencyKey },
       });
       if (existingPayment) {
-        const existingStatus = existingPayment.status === 'processing' ? 'pending' : existingPayment.status;
+        const existingStatus =
+          existingPayment.status === 'processing' ? 'pending' : existingPayment.status;
         return {
           success: true,
           data: {

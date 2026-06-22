@@ -113,7 +113,9 @@ describe('EventsService', () => {
 
       await service.getEvents(1, 20, 'music');
 
-      expect((prismaService.event.findMany as jest.Mock).mock.calls[0][0].where.category).toEqual({ slug: 'music' });
+      expect((prismaService.event.findMany as jest.Mock).mock.calls[0][0].where.category).toEqual({
+        slug: 'music',
+      });
     });
   });
 
@@ -180,7 +182,9 @@ describe('EventsService', () => {
     it('should throw NotFoundException if event not found', async () => {
       (prismaService.event.findUnique as jest.Mock).mockResolvedValue(null);
 
-      await expect(service.updateEvent('not-found', { title: 'Updated' })).rejects.toThrow(NotFoundException);
+      await expect(service.updateEvent('not-found', { title: 'Updated' })).rejects.toThrow(
+        NotFoundException
+      );
     });
   });
 
@@ -218,7 +222,9 @@ describe('EventsService', () => {
       (prismaService.event.findUnique as jest.Mock).mockResolvedValue(mockEvent);
       (prismaService.eventRsvp.findUnique as jest.Mock).mockResolvedValue(mockRsvp);
 
-      await expect(service.rsvpEvent('event-1', 'user-456', { status: 'attending' })).rejects.toThrow(BadRequestException);
+      await expect(
+        service.rsvpEvent('event-1', 'user-456', { status: 'attending' })
+      ).rejects.toThrow(BadRequestException);
     });
   });
 

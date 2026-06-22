@@ -25,12 +25,15 @@ describe('Auth API Client', () => {
           user: { id: '1', email: 'test@example.com', name: 'Test User', role: 'user' },
         },
       };
-      
+
       (apiClient.post as jest.Mock).mockResolvedValue(mockResponse);
 
       const result = await authApi.login('test@example.com', 'password123');
 
-      expect(apiClient.post).toHaveBeenCalledWith('/auth/login', { email: 'test@example.com', password: 'password123' });
+      expect(apiClient.post).toHaveBeenCalledWith('/auth/login', {
+        email: 'test@example.com',
+        password: 'password123',
+      });
       expect(result).toEqual(mockResponse);
     });
   });
@@ -45,12 +48,20 @@ describe('Auth API Client', () => {
           user: { id: '1', email: 'test@example.com', name: 'Test User', role: 'user' },
         },
       };
-      
+
       (apiClient.post as jest.Mock).mockResolvedValue(mockResponse);
 
-      const result = await authApi.register({ email: 'test@example.com', password: 'password123', name: 'Test User' });
+      const result = await authApi.register({
+        email: 'test@example.com',
+        password: 'password123',
+        name: 'Test User',
+      });
 
-      expect(apiClient.post).toHaveBeenCalledWith('/auth/signup', { email: 'test@example.com', password: 'password123', name: 'Test User' });
+      expect(apiClient.post).toHaveBeenCalledWith('/auth/signup', {
+        email: 'test@example.com',
+        password: 'password123',
+        name: 'Test User',
+      });
       expect(result).toEqual(mockResponse);
     });
   });
@@ -58,12 +69,14 @@ describe('Auth API Client', () => {
   describe('forgotPassword', () => {
     it('should call POST /auth/forgot-password with email', async () => {
       const mockResponse = { success: true, message: 'Password reset email sent' };
-      
+
       (apiClient.post as jest.Mock).mockResolvedValue(mockResponse);
 
       const result = await authApi.forgotPassword('test@example.com');
 
-      expect(apiClient.post).toHaveBeenCalledWith('/auth/forgot-password', { email: 'test@example.com' });
+      expect(apiClient.post).toHaveBeenCalledWith('/auth/forgot-password', {
+        email: 'test@example.com',
+      });
       expect(result).toEqual(mockResponse);
     });
   });
@@ -71,12 +84,15 @@ describe('Auth API Client', () => {
   describe('resetPassword', () => {
     it('should call POST /auth/reset-password with token and new password', async () => {
       const mockResponse = { success: true, message: 'Password reset successfully' };
-      
+
       (apiClient.post as jest.Mock).mockResolvedValue(mockResponse);
 
       const result = await authApi.resetPassword('test-token', 'newPassword123');
 
-      expect(apiClient.post).toHaveBeenCalledWith('/auth/reset-password', { token: 'test-token', newPassword: 'newPassword123' });
+      expect(apiClient.post).toHaveBeenCalledWith('/auth/reset-password', {
+        token: 'test-token',
+        newPassword: 'newPassword123',
+      });
       expect(result).toEqual(mockResponse);
     });
   });
@@ -84,7 +100,7 @@ describe('Auth API Client', () => {
   describe('verifyEmail', () => {
     it('should call POST /auth/verify-email with token', async () => {
       const mockResponse = { success: true, message: 'Email verified successfully' };
-      
+
       (apiClient.post as jest.Mock).mockResolvedValue(mockResponse);
 
       const result = await authApi.verifyEmail('test-token');
@@ -97,12 +113,14 @@ describe('Auth API Client', () => {
   describe('resendVerification', () => {
     it('should call POST /auth/resend-verification with email', async () => {
       const mockResponse = { success: true, message: 'Verification email sent' };
-      
+
       (apiClient.post as jest.Mock).mockResolvedValue(mockResponse);
 
       const result = await authApi.resendVerification('test@example.com');
 
-      expect(apiClient.post).toHaveBeenCalledWith('/auth/resend-verification', { email: 'test@example.com' });
+      expect(apiClient.post).toHaveBeenCalledWith('/auth/resend-verification', {
+        email: 'test@example.com',
+      });
       expect(result).toEqual(mockResponse);
     });
   });
@@ -113,7 +131,7 @@ describe('Auth API Client', () => {
         success: true,
         data: { id: '1', email: 'test@example.com', name: 'Test User', role: 'user' },
       };
-      
+
       (apiClient.get as jest.Mock).mockResolvedValue(mockResponse);
 
       const result = await authApi.getProfile();
@@ -133,7 +151,7 @@ describe('Auth API Client', () => {
           user: { id: '1', email: 'test@example.com', name: 'Test User', role: 'user' },
         },
       };
-      
+
       (apiClient.post as jest.Mock).mockResolvedValue(mockResponse);
 
       const result = await authApi.verifyOTP('123456');
@@ -146,7 +164,7 @@ describe('Auth API Client', () => {
   describe('resendOTP', () => {
     it('should call POST /auth/otp/send', async () => {
       const mockResponse = { success: true, message: 'OTP sent' };
-      
+
       (apiClient.post as jest.Mock).mockResolvedValue(mockResponse);
 
       const result = await authApi.resendOTP();

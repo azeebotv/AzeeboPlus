@@ -1,6 +1,6 @@
 generator client {
   provider = "prisma-client-js"
-  output   = "../src/prisma/client"
+  output = "../generated/prisma/client"
 }
 
 datasource db {
@@ -27,6 +27,8 @@ model User {
   notifications Notification[]
   pushTokens   PushToken[]
   paymentIntents PaymentIntent[]
+  notificationPreference NotificationPreference?
+  campaignTriggers CampaignTrigger[]
 
   @@map("users")
 }
@@ -100,6 +102,7 @@ model Notification {
   createdAt   DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deliveryAttempts DeliveryAttempt[]
 
   @@map("notifications")
   @@index([userId])
@@ -153,4 +156,110 @@ model PushToken {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("push_tokens")
+}
+
+// Category A migration: template registry replacing hardcoded per-type
+// notification copy. Variables use {{var}} interpolation.
+model NotificationTemplate {
+  id          String   @id @default(uuid())
+  key         String   @unique // e.g. payment.success, reward.redeemed
+  channel     String   // push, email, sms, in_app
+  subject     String?
+  body        String
+  variables   Json     // array of { name, required, defaultValue }
+  isActive    Boolean  @default(true)
+  version     Int      @default(1)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("notification_templates")
+  @@index([key])
+  @@index([channel])
+  @@index([isActive])
+}
+
+// Category A migration: per-notification delivery audit trail.
+model DeliveryAttempt {
+  id              String   @id @default(uuid())
+  notificationId  String
+  channel         String   // push, email, sms, in_app
+  provider        String?  // fcm, sendgrid, twilio
+  status          String   // pending, sent, delivered, failed, bounced
+  providerResponse Json?
+  error           String?
+  attemptedAt     DateTime @default(now())
+  deliveredAt     DateTime?
+  createdAt       DateTime @default(now())
+
+  notification Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+
+  @@map("delivery_attempts")
+  @@index([notificationId])
+  @@index([channel])
+  @@index([status])
+  @@index([attemptedAt])
+}
+
+// Category A migration: per-channel opt-in preferences. The legacy
+// User.notificationPreferences Json field is kept for backward compatibility;
+// this table is the canonical source going forward.
+model NotificationPreference {
+  id              String   @id @default(uuid())
+  userId          String   @unique
+  pushEnabled     Boolean  @default(true)
+  emailEnabled    Boolean  @default(true)
+  smsEnabled      Boolean  @default(false)
+  inAppEnabled    Boolean  @default(true)
+  quietHoursStart String?  // "22:00"
+  quietHoursEnd   String?  // "07:00"
+  timezone        String?  // "Africa/Lagos"
+  categoryOverrides Json?  // { "payment": false, "social": true }
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notification_preferences")
+}
+
+// Category A migration: campaign definitions for batched/marketing sends.
+model Campaign {
+  id          String   @id @default(uuid())
+  name        String
+  templateKey String
+  channel     String   // push, email, sms, in_app
+  audience    Json     // segment criteria
+  status      String   @default("draft") // draft, scheduled, running, completed, cancelled
+  scheduledAt DateTime?
+  startedAt   DateTime?
+  completedAt DateTime?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  triggers CampaignTrigger[]
+
+  @@map("campaigns")
+  @@index([templateKey])
+  @@index([channel])
+  @@index([status])
+}
+
+// Category A migration: per-user campaign delivery tracking.
+model CampaignTrigger {
+  id           String   @id @default(uuid())
+  campaignId   String
+  userId       String
+  status       String   @default("pending") // pending, sent, failed, skipped
+  sentAt       DateTime?
+  error        String?
+  createdAt    DateTime @default(now())
+
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("campaign_triggers")
+  @@index([campaignId])
+  @@index([userId])
+  @@index([status])
 }

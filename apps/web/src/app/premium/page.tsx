@@ -34,20 +34,34 @@ export default function PremiumAccessPage(): JSX.Element {
   const loadPremiumData = async (): Promise<void> => {
     try {
       const [plansResult, statusResult] = await Promise.all([
-        apiFetch<Array<{ id: string; name: string; description: string; price: number; duration: number; features: string[]; tier: string }>>('/v1/subscription/plans'),
-        apiFetch<{ status: string; plan?: { name: string }; endDate: string; autoRenew: boolean }>('/v1/subscription/current'),
+        apiFetch<
+          Array<{
+            id: string;
+            name: string;
+            description: string;
+            price: number;
+            duration: number;
+            features: string[];
+            tier: string;
+          }>
+        >('/v1/subscription/plans'),
+        apiFetch<{ status: string; plan?: { name: string }; endDate: string; autoRenew: boolean }>(
+          '/v1/subscription/current'
+        ),
       ]);
 
       if (plansResult.success && plansResult.data) {
-        setPlans(plansResult.data.map((plan) => ({
-          id: plan.id,
-          name: plan.name,
-          description: plan.description,
-          price: plan.price,
-          duration: plan.duration === 7 ? 'weekly' : plan.duration === 30 ? 'monthly' : 'yearly',
-          features: plan.features,
-          isPopular: plan.tier === 'premium',
-        })));
+        setPlans(
+          plansResult.data.map((plan) => ({
+            id: plan.id,
+            name: plan.name,
+            description: plan.description,
+            price: plan.price,
+            duration: plan.duration === 7 ? 'weekly' : plan.duration === 30 ? 'monthly' : 'yearly',
+            features: plan.features,
+            isPopular: plan.tier === 'premium',
+          }))
+        );
       }
 
       if (statusResult.success && statusResult.data) {
@@ -104,10 +118,14 @@ export default function PremiumAccessPage(): JSX.Element {
 
   const getDurationLabel = (duration: string): string => {
     switch (duration) {
-      case 'weekly': return '/week';
-      case 'monthly': return '/month';
-      case 'yearly': return '/year';
-      default: return '';
+      case 'weekly':
+        return '/week';
+      case 'monthly':
+        return '/month';
+      case 'yearly':
+        return '/year';
+      default:
+        return '';
     }
   };
 
@@ -144,7 +162,9 @@ export default function PremiumAccessPage(): JSX.Element {
             </p>
             <div className="flex items-center justify-between mb-4">
               <span className="text-muted-foreground">Auto-renew</span>
-              <span className={`font-semibold ${status.autoRenew ? 'text-green-500' : 'text-red-500'}`}>
+              <span
+                className={`font-semibold ${status.autoRenew ? 'text-green-500' : 'text-red-500'}`}
+              >
                 {status.autoRenew ? 'On' : 'Off'}
               </span>
             </div>
@@ -176,7 +196,9 @@ export default function PremiumAccessPage(): JSX.Element {
               )}
               <h3 className="text-xl font-bold text-foreground mb-2">{plan.name}</h3>
               <div className="flex items-baseline gap-1 mb-4">
-                <span className="text-3xl font-bold text-primary">₦{plan.price.toLocaleString()}</span>
+                <span className="text-3xl font-bold text-primary">
+                  ₦{plan.price.toLocaleString()}
+                </span>
                 <span className="text-muted-foreground">{getDurationLabel(plan.duration)}</span>
               </div>
               <p className="text-muted-foreground mb-6">{plan.description}</p>

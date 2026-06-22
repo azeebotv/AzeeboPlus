@@ -67,7 +67,12 @@ export default function RewardsScreen() {
 
   if (isLoading) {
     return (
-      <ScrollView style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' }]}>
+      <ScrollView
+        style={[
+          styles.container,
+          { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' },
+        ]}
+      >
         <LoadingState text="Loading rewards..." />
       </ScrollView>
     );
@@ -75,7 +80,12 @@ export default function RewardsScreen() {
 
   if (error) {
     return (
-      <ScrollView style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' }]}>
+      <ScrollView
+        style={[
+          styles.container,
+          { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' },
+        ]}
+      >
         <ErrorState description={error} onRetry={fetchRewards} />
       </ScrollView>
     );
@@ -112,7 +122,10 @@ export default function RewardsScreen() {
         </Text>
         <View style={styles.rewardsList}>
           {rewards.map((reward) => (
-            <View key={reward.id} style={[styles.rewardItem, { backgroundColor: isDark ? '#1a1a1a' : '#f8f9fa' }]}>
+            <View
+              key={reward.id}
+              style={[styles.rewardItem, { backgroundColor: isDark ? '#1a1a1a' : '#f8f9fa' }]}
+            >
               <View style={[styles.rewardIcon, { backgroundColor: `${reward.color}20` }]}>
                 <Text style={styles.rewardIconText}>{reward.icon}</Text>
               </View>
@@ -122,9 +135,19 @@ export default function RewardsScreen() {
                 </Text>
                 <Text style={styles.rewardDescription}>{reward.description}</Text>
                 <View style={styles.rewardProgressBar}>
-                  <View style={[styles.rewardProgressFill, { width: `${(reward.progress / reward.total) * 100}%`, backgroundColor: reward.color }]} />
+                  <View
+                    style={[
+                      styles.rewardProgressFill,
+                      {
+                        width: `${(reward.progress / reward.total) * 100}%`,
+                        backgroundColor: reward.color,
+                      },
+                    ]}
+                  />
                 </View>
-                <Text style={styles.rewardProgressText}>{reward.progress}/{reward.total} completed</Text>
+                <Text style={styles.rewardProgressText}>
+                  {reward.progress}/{reward.total} completed
+                </Text>
               </View>
             </View>
           ))}
@@ -150,7 +173,12 @@ export default function RewardsScreen() {
               <Text style={[styles.redeemName, { color: isDark ? '#ffffff' : '#000000' }]}>
                 {option.name}
               </Text>
-              <View style={[styles.redeemPoints, currentPoints < option.points && { backgroundColor: '#ccc' }]}>
+              <View
+                style={[
+                  styles.redeemPoints,
+                  currentPoints < option.points && { backgroundColor: '#ccc' },
+                ]}
+              >
                 <Text style={styles.redeemPointsText}>{option.points} pts</Text>
               </View>
             </TouchableOpacity>
@@ -164,10 +192,15 @@ export default function RewardsScreen() {
         </Text>
         <View style={styles.historyList}>
           {history.length === 0 ? (
-            <Text style={{ color: '#888', textAlign: 'center', padding: 20 }}>No recent activity</Text>
+            <Text style={{ color: '#888', textAlign: 'center', padding: 20 }}>
+              No recent activity
+            </Text>
           ) : (
             history.map((item) => (
-              <View key={item.id} style={[styles.historyItem, { backgroundColor: isDark ? '#1a1a1a' : '#f8f9fa' }]}>
+              <View
+                key={item.id}
+                style={[styles.historyItem, { backgroundColor: isDark ? '#1a1a1a' : '#f8f9fa' }]}
+              >
                 <View style={styles.historyIconView}>
                   <Text style={styles.historyIconText}>{item.icon}</Text>
                 </View>

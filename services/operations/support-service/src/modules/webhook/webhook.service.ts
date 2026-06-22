@@ -49,7 +49,7 @@ export class WebhookService {
       data: {
         id: event.id,
         type: event.type,
-        payload: event.payload as unknown as Record<string, unknown>,
+        payload: event.payload as any,
         provider: event.provider,
         processedAt: new Date(),
       },

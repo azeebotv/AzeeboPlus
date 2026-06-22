@@ -1,0 +1,95 @@
+=== pages with 'export const metadata' OR 'export async function generateMetadata' ===
+apps/web/src/app/layout.tsx
+apps/web/src/app/watch/[id]/page.tsx
+
+=== app/layout.tsx ===
+     100 apps/web/src/app/layout.tsx
+
+=== top of layout.tsx ===
+import type { Metadata } from 'next';
+import React from 'react';
+import './globals.css';
+import { AuthProvider } from '../context/AuthContext';
+import { WalletProvider } from '../context/WalletContext';
+import { ThemeProvider } from '../context/ThemeContext';
+import { ErrorBoundary } from '../components/ErrorBoundary';
+import { QueryProvider } from '../providers/QueryProvider';
+import { ToastProvider } from '@azeebo/ui';
+import { KeyboardNavigationProvider } from '../components/KeyboardNavigationProvider';
+
+const inter = { className: '' };
+
+export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || 'https://azeeboplus.com'),
+  title: {
+    default: 'Azeebo+ - Premium Content Streaming',
+    template: '%s | Azeebo+',
+  },
+  description:
+    'Discover and stream premium content from top creators. Movies, shows, and exclusive content from your favorite universes.',
+  keywords: ['streaming', 'premium content', 'movies', 'shows', 'creators', 'entertainment'],
+  authors: [{ name: 'Azeebo+ Team' }],
+  creator: 'Azeebo+',
+  publisher: 'Azeebo+',
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
+
+=== top of middleware.ts ===
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+
+/**
+ * Security headers middleware
+ * Implements OWASP recommended security headers
+ */
+export function middleware(request: NextRequest) {
+  const response = NextResponse.next();
+
+  // Content Security Policy
+  response.headers.set(
+    'Content-Security-Policy',
+    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data: https:; font-src 'self' data:; connect-src 'self' https:; media-src 'self' blob:; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self';"
+  );
+
+  // Strict Transport Security (HSTS) - 1 year
+  response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+
+  // Prevent MIME type sniffing
+  response.headers.set('X-Content-Type-Options', 'nosniff');
+
+  // Prevent clickjacking
+  response.headers.set('X-Frame-Options', 'DENY');
+
+  // XSS Protection
+  response.headers.set('X-XSS-Protection', '1; mode=block');
+
+  // Referrer Policy
+  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+
+  // Permissions Policy
+  response.headers.set(
+    'Permissions-Policy',
+    'camera=(), microphone=(), geolocation=(), payment=(self)'
+  );
+
+  // Remove server header
+  response.headers.delete('x-powered-by');
+
+  return response;
+}
+
+export const config = {
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api (API routes)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     */
+    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+  ],
+};

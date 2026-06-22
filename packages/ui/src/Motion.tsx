@@ -2,15 +2,15 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 
-export type AnimationType = 
-  | 'fadeIn' 
-  | 'fadeOut' 
-  | 'slideUp' 
-  | 'slideDown' 
-  | 'slideLeft' 
-  | 'slideRight' 
-  | 'scaleIn' 
-  | 'scaleOut' 
+export type AnimationType =
+  | 'fadeIn'
+  | 'fadeOut'
+  | 'slideUp'
+  | 'slideDown'
+  | 'slideLeft'
+  | 'slideRight'
+  | 'scaleIn'
+  | 'scaleOut'
   | 'bounceIn';
 
 export type AnimationDirection = 'in' | 'out';
@@ -25,23 +25,23 @@ export interface MotionProps {
   onAnimationComplete?: () => void;
 }
 
-export function Motion({ 
-  children, 
-  animate = 'fadeIn', 
-  initial = true, 
-  delay = 0, 
+export function Motion({
+  children,
+  animate = 'fadeIn',
+  initial = true,
+  delay = 0,
   duration = 300,
   className = '',
-  onAnimationComplete 
+  onAnimationComplete,
 }: MotionProps): React.ReactElement {
   const [isAnimating, setIsAnimating] = useState(initial);
-  
+
   useEffect(() => {
     if (!initial) {
       setIsAnimating(false);
       return;
     }
-    
+
     const timer = setTimeout(() => {
       setIsAnimating(true);
     }, delay);
@@ -82,12 +82,11 @@ export interface AnimatePresenceProps {
   mode?: 'wait' | 'popLayout' | 'popRemove';
 }
 
-export function AnimatePresence({ children, mode = 'popRemove' }: AnimatePresenceProps): React.ReactElement {
-  return (
-    <div className={`animate-presence-${mode}`}>
-      {children}
-    </div>
-  );
+export function AnimatePresence({
+  children,
+  mode = 'popRemove',
+}: AnimatePresenceProps): React.ReactElement {
+  return <div className={`animate-presence-${mode}`}>{children}</div>;
 }
 
 export interface FadeProps {
@@ -97,7 +96,12 @@ export interface FadeProps {
   className?: string;
 }
 
-export function Fade({ children, in: isIn, timeout = 300, className = '' }: FadeProps): React.ReactElement {
+export function Fade({
+  children,
+  in: isIn,
+  timeout = 300,
+  className = '',
+}: FadeProps): React.ReactElement {
   return (
     <Motion
       animate={isIn ? 'fadeIn' : 'fadeOut'}
@@ -118,12 +122,12 @@ export interface SlideProps {
   className?: string;
 }
 
-export function Slide({ 
-  children, 
-  in: isIn, 
-  direction = 'up', 
+export function Slide({
+  children,
+  in: isIn,
+  direction = 'up',
   timeout = 300,
-  className = '' 
+  className = '',
 }: SlideProps): React.ReactElement {
   const animationMap: Record<string, AnimationType> = {
     up: isIn ? 'slideUp' : 'slideDown',
@@ -151,7 +155,12 @@ export interface ScaleProps {
   className?: string;
 }
 
-export function Scale({ children, in: isIn, timeout = 300, className = '' }: ScaleProps): React.ReactElement {
+export function Scale({
+  children,
+  in: isIn,
+  timeout = 300,
+  className = '',
+}: ScaleProps): React.ReactElement {
   return (
     <Motion
       animate={isIn ? 'scaleIn' : 'scaleOut'}
@@ -171,7 +180,12 @@ export interface BounceProps {
   className?: string;
 }
 
-export function Bounce({ children, in: isIn, timeout = 500, className = '' }: BounceProps): React.ReactElement {
+export function Bounce({
+  children,
+  in: isIn,
+  timeout = 500,
+  className = '',
+}: BounceProps): React.ReactElement {
   return (
     <Motion
       animate={isIn ? 'bounceIn' : 'fadeOut'}
@@ -191,11 +205,11 @@ export interface useAnimatedNumberProps {
   easing?: (t: number) => number;
 }
 
-export function useAnimatedNumber({ 
-  from, 
-  to, 
-  duration = 500, 
-  easing = easeOutCubic 
+export function useAnimatedNumber({
+  from,
+  to,
+  duration = 500,
+  easing = easeOutCubic,
 }: useAnimatedNumberProps): number {
   const [value, setValue] = useState(from);
   const animationRef = useRef<number | null>(null);
@@ -213,7 +227,7 @@ export function useAnimatedNumber({
       const elapsed = timestamp - startTimeRef.current;
       const progress = Math.min(elapsed / duration, 1);
       const easedProgress = easing(progress);
-      
+
       const currentValue = from + (to - from) * easedProgress;
       setValue(currentValue);
 

@@ -73,23 +73,35 @@ export default function TransactionsPage(): JSX.Element {
 
   const getTypeIcon = (type: string): string => {
     switch (type) {
-      case 'deposit': return '💰';
-      case 'withdrawal': return '💸';
-      case 'payment': return '🛒';
-      case 'refund': return '↩️';
-      case 'reward': return '🎁';
-      case 'tip': return '💝';
-      default: return '💳';
+      case 'deposit':
+        return '💰';
+      case 'withdrawal':
+        return '💸';
+      case 'payment':
+        return '🛒';
+      case 'refund':
+        return '↩️';
+      case 'reward':
+        return '🎁';
+      case 'tip':
+        return '💝';
+      default:
+        return '💳';
     }
   };
 
   const getStatusColor = (status: string): string => {
     switch (status) {
-      case 'completed': return 'text-green-500';
-      case 'pending': return 'text-yellow-500';
-      case 'failed': return 'text-red-500';
-      case 'cancelled': return 'text-gray-500';
-      default: return 'text-muted-foreground';
+      case 'completed':
+        return 'text-green-500';
+      case 'pending':
+        return 'text-yellow-500';
+      case 'failed':
+        return 'text-red-500';
+      case 'cancelled':
+        return 'text-gray-500';
+      default:
+        return 'text-muted-foreground';
     }
   };
 
@@ -131,7 +143,9 @@ export default function TransactionsPage(): JSX.Element {
         <div className="mb-8 print:mb-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-foreground mb-2 print:text-2xl">Transaction History</h1>
+              <h1 className="text-3xl font-bold text-foreground mb-2 print:text-2xl">
+                Transaction History
+              </h1>
               <p className="text-muted-foreground print:hidden">Your transaction history</p>
               <p className="text-sm text-muted-foreground print:block hidden">
                 Generated on {new Date().toLocaleDateString()} at {new Date().toLocaleTimeString()}
@@ -142,8 +156,18 @@ export default function TransactionsPage(): JSX.Element {
               className="print:hidden px-4 py-2 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
               aria-label="Print transaction history"
             >
-              <svg className="w-5 h-5 inline mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+              <svg
+                className="w-5 h-5 inline mr-2"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
+                />
               </svg>
               Print
             </button>
@@ -154,7 +178,10 @@ export default function TransactionsPage(): JSX.Element {
           {(['all', 'deposit', 'withdrawal', 'payment', 'reward'] as FilterType[]).map((f) => (
             <button
               key={f}
-              onClick={() => { setFilter(f); setPage(1); }}
+              onClick={() => {
+                setFilter(f);
+                setPage(1);
+              }}
               className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
                 filter === f
                   ? 'bg-primary text-white'
@@ -171,10 +198,16 @@ export default function TransactionsPage(): JSX.Element {
             <thead className="bg-muted">
               <tr>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Type</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Description</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">
+                  Description
+                </th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Date</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Status</th>
-                <th className="px-6 py-4 text-right text-sm font-semibold text-foreground">Amount</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">
+                  Status
+                </th>
+                <th className="px-6 py-4 text-right text-sm font-semibold text-foreground">
+                  Amount
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -197,11 +230,16 @@ export default function TransactionsPage(): JSX.Element {
                       {tx.status.charAt(0).toUpperCase() + tx.status.slice(1)}
                     </span>
                   </td>
-                  <td className={`px-6 py-4 text-right font-bold ${
-                    tx.type === 'deposit' || tx.type === 'refund' || tx.type === 'reward' || tx.type === 'tip'
-                      ? 'text-green-500'
-                      : 'text-red-500'
-                  }`}>
+                  <td
+                    className={`px-6 py-4 text-right font-bold ${
+                      tx.type === 'deposit' ||
+                      tx.type === 'refund' ||
+                      tx.type === 'reward' ||
+                      tx.type === 'tip'
+                        ? 'text-green-500'
+                        : 'text-red-500'
+                    }`}
+                  >
                     {formatAmount(tx.amount, tx.type)}
                   </td>
                 </tr>

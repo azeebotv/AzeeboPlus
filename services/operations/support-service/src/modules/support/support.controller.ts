@@ -27,10 +27,7 @@ export class SupportController {
   @Post('tickets')
   @UseGuards(AuthGuard, RateLimitGuard)
   @RateLimit(5, 60000)
-  async createTicket(
-    @Request() req: AuthRequest,
-    @Body() body: CreateTicketDto
-  ) {
+  async createTicket(@Request() req: AuthRequest, @Body() body: CreateTicketDto) {
     const userId = req.user.sub;
     const ticket = await this.supportService.createTicket(userId, body);
     return ApiResponseWrapper.success(ticket);
@@ -66,11 +63,7 @@ export class SupportController {
 
   @Post('tickets/:id/reply')
   @UseGuards(AuthGuard)
-  async addReply(
-    @Request() req: AuthRequest,
-    @Param('id') id: string,
-    @Body() body: ReplyDto
-  ) {
+  async addReply(@Request() req: AuthRequest, @Param('id') id: string, @Body() body: ReplyDto) {
     const userId = req.user.sub;
     const reply = await this.supportService.addReply(userId, id, body.message);
     return ApiResponseWrapper.success(reply);

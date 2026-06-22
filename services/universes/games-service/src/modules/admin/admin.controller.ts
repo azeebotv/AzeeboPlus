@@ -19,20 +19,14 @@ export class AdminController {
   @Get('games')
   @ApiOperation({ summary: 'Get paginated games (admin)' })
   @ApiResponse({ status: 200, description: 'Paginated game list' })
-  async getGames(
-    @Query('page') page?: number,
-    @Query('limit') limit?: number,
-  ) {
+  async getGames(@Query('page') page?: number, @Query('limit') limit?: number) {
     return this.adminService.getGames({ page, limit });
   }
 
   @Get('tournaments')
   @ApiOperation({ summary: 'Get paginated tournaments (admin)' })
   @ApiResponse({ status: 200, description: 'Paginated tournament list' })
-  async getTournaments(
-    @Query('page') page?: number,
-    @Query('limit') limit?: number,
-  ) {
+  async getTournaments(@Query('page') page?: number, @Query('limit') limit?: number) {
     return this.adminService.getTournaments({ page, limit });
   }
 }

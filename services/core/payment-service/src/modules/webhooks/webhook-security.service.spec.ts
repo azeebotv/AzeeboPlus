@@ -18,10 +18,7 @@ describe('WebhookSecurityService', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        WebhookSecurityService,
-        { provide: RedisService, useValue: mockRedisService },
-      ],
+      providers: [WebhookSecurityService, { provide: RedisService, useValue: mockRedisService }],
     }).compile();
 
     service = module.get<WebhookSecurityService>(WebhookSecurityService);
@@ -35,25 +32,15 @@ describe('WebhookSecurityService', () => {
   describe('verifyPaystackSignature', () => {
     const secret = 'test_paystack_secret';
     const payload = JSON.stringify({ data: { reference: 'test-ref' } });
-    const validSignature = createHmac('sha512', secret)
-      .update(payload)
-      .digest('hex');
+    const validSignature = createHmac('sha512', secret).update(payload).digest('hex');
 
     it('should return true for valid signature', () => {
-      const result = service.verifyPaystackSignature(
-        payload,
-        validSignature,
-        secret,
-      );
+      const result = service.verifyPaystackSignature(payload, validSignature, secret);
       expect(result).toBe(true);
     });
 
     it('should return false for invalid signature', () => {
-      const result = service.verifyPaystackSignature(
-        payload,
-        'invalid-signature',
-        secret,
-      );
+      const result = service.verifyPaystackSignature(payload, 'invalid-signature', secret);
       expect(result).toBe(false);
     });
 
@@ -71,25 +58,15 @@ describe('WebhookSecurityService', () => {
   describe('verifyFlutterwaveSignature', () => {
     const secret = 'test_flutterwave_secret';
     const payload = JSON.stringify({ data: { tx_ref: 'test-ref' } });
-    const validSignature = createHmac('sha256', secret)
-      .update(payload)
-      .digest('hex');
+    const validSignature = createHmac('sha256', secret).update(payload).digest('hex');
 
     it('should return true for valid signature', () => {
-      const result = service.verifyFlutterwaveSignature(
-        payload,
-        validSignature,
-        secret,
-      );
+      const result = service.verifyFlutterwaveSignature(payload, validSignature, secret);
       expect(result).toBe(true);
     });
 
     it('should return false for invalid signature', () => {
-      const result = service.verifyFlutterwaveSignature(
-        payload,
-        'invalid-signature',
-        secret,
-      );
+      const result = service.verifyFlutterwaveSignature(payload, 'invalid-signature', secret);
       expect(result).toBe(false);
     });
 
@@ -99,11 +76,7 @@ describe('WebhookSecurityService', () => {
     });
 
     it('should return false when secret is missing', () => {
-      const result = service.verifyFlutterwaveSignature(
-        payload,
-        validSignature,
-        '',
-      );
+      const result = service.verifyFlutterwaveSignature(payload, validSignature, '');
       expect(result).toBe(false);
     });
   });
@@ -115,9 +88,7 @@ describe('WebhookSecurityService', () => {
       const result = await service.isDuplicate('test-ref');
 
       expect(result).toBe(true);
-      expect(redisService.exists).toHaveBeenCalledWith(
-        'webhook_processed:test-ref',
-      );
+      expect(redisService.exists).toHaveBeenCalledWith('webhook_processed:test-ref');
     });
 
     it('should return false when reference does not exist in Redis', async () => {
@@ -133,11 +104,7 @@ describe('WebhookSecurityService', () => {
     it('should store reference in Redis with TTL', async () => {
       await service.markAsProcessed('test-ref');
 
-      expect(redisService.set).toHaveBeenCalledWith(
-        'webhook_processed:test-ref',
-        '1',
-        86400,
-      );
+      expect(redisService.set).toHaveBeenCalledWith('webhook_processed:test-ref', '1', 86400);
     });
   });
 
@@ -157,9 +124,7 @@ describe('WebhookSecurityService', () => {
       const result = await service.isReplay('test-ref', recentTimestamp);
 
       expect(result).toBe(true);
-      expect(redisService.exists).toHaveBeenCalledWith(
-        'webhook_replay:test-ref',
-      );
+      expect(redisService.exists).toHaveBeenCalledWith('webhook_replay:test-ref');
     });
 
     it('should return false when reference is not in replay window', async () => {
@@ -176,11 +141,7 @@ describe('WebhookSecurityService', () => {
     it('should store reference in replay window with TTL', async () => {
       await service.recordInReplayWindow('test-ref');
 
-      expect(redisService.set).toHaveBeenCalledWith(
-        'webhook_replay:test-ref',
-        '1',
-        300,
-      );
+      expect(redisService.set).toHaveBeenCalledWith('webhook_replay:test-ref', '1', 300);
     });
   });
 });

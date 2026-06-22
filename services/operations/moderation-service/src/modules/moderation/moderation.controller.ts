@@ -59,7 +59,9 @@ export class ModerationController {
   @ApiResponse({ status: 200, description: 'Trust score' })
   @ApiResponse({ status: 404, description: 'User not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getTrustScore(@Param('userId') userId: string): Promise<{ success: boolean; data: { userId: string; trustScore: number } }> {
+  async getTrustScore(
+    @Param('userId') userId: string
+  ): Promise<{ success: boolean; data: { userId: string; trustScore: number } }> {
     const trustScore = await this.moderationService.getTrustScore(userId);
     return { success: true, data: { userId, trustScore } };
   }
@@ -120,9 +122,7 @@ export class ModerationController {
   @ApiResponse({ status: 200, description: 'Scan result' })
   @ApiResponse({ status: 400, description: 'Invalid input' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async scanContentMedia(
-    @Body() body: ScanContentDto
-  ): Promise<unknown> {
+  async scanContentMedia(@Body() body: ScanContentDto): Promise<unknown> {
     return this.moderationService.scanContentMedia({
       contentId: body.contentId,
       mediaUrl: body.mediaUrl,

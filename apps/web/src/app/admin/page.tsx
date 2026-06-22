@@ -71,7 +71,10 @@ const StatCard = ({
     <p className="text-3xl font-bold mb-1" style={{ color: colors.text.primary }}>
       {typeof value === 'number' ? value.toLocaleString() : value}
     </p>
-    <p className="text-sm" style={{ color: trend === 'up' ? colors.success[500] : colors.error[500] }}>
+    <p
+      className="text-sm"
+      style={{ color: trend === 'up' ? colors.success[500] : colors.error[500] }}
+    >
       {subtitle}
     </p>
   </Card>

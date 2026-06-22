@@ -32,7 +32,7 @@ configMapGenerator:
     literals:
       - ENVIRONMENT=staging
       - LOG_LEVEL=debug
-      - API_GATEWAY_URL=http://api-gateway.azeebo-staging.svc.cluster.local:3000
+      - API_GATEWAY_URL=http://api-gateway.azeebo-staging.svc.cluster.local:3013
 
 images:
   - name: azeebo/auth-service

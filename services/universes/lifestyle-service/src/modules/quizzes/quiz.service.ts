@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 
-interface QuizQuestionInput {
+export interface QuizQuestionInput {
   question: string;
   options: string[];
   correctAnswer: string;
@@ -9,7 +9,7 @@ interface QuizQuestionInput {
   points?: number;
 }
 
-interface CreateQuizInput {
+export interface CreateQuizInput {
   title: string;
   description?: string;
   coverImage?: string;
@@ -80,7 +80,10 @@ export class QuizService {
   }
 
   async createQuiz(userId: string, data: CreateQuizInput) {
-    const slug = data.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    const slug = data.title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '');
 
     const quiz = await this.prisma.quiz.create({
       data: {
@@ -97,7 +100,7 @@ export class QuizService {
           create: data.questions.map((q: QuizQuestionInput, index: number) => ({
             question: q.question,
             options: q.options,
-            correctAnswer: q.correctAnswer,
+            correctAnswer: parseInt(q.correctAnswer),
             explanation: q.explanation,
             points: q.points || 10,
             order: index,
@@ -167,7 +170,7 @@ export class QuizService {
     let score = 0;
     const questionResults = attempt.quiz.questions.map((q) => {
       const userAnswer = answers[q.id];
-      const isCorrect = userAnswer === q.correctAnswer;
+      const isCorrect = userAnswer === String(q.correctAnswer);
       if (isCorrect) {
         score += q.points;
       }

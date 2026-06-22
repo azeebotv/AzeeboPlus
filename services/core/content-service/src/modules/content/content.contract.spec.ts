@@ -49,9 +49,7 @@ describe('Content Controller Contract Tests', () => {
       .overrideProvider(ContentRepository)
       .useValue({
         findAll: jest.fn().mockResolvedValue({
-          data: [
-            { id: 'content-1', title: 'Test Content', universe: 'reality', type: 'video' },
-          ],
+          data: [{ id: 'content-1', title: 'Test Content', universe: 'reality', type: 'video' }],
           page: 1,
           limit: 20,
           total: 1,
@@ -110,9 +108,7 @@ describe('Content Controller Contract Tests', () => {
           watchTime: 3600,
         }),
         search: jest.fn().mockResolvedValue({
-          data: [
-            { id: 'content-1', title: 'Test Content', universe: 'reality', type: 'video' },
-          ],
+          data: [{ id: 'content-1', title: 'Test Content', universe: 'reality', type: 'video' }],
           page: 1,
           limit: 20,
           total: 1,
@@ -174,14 +170,12 @@ describe('Content Controller Contract Tests', () => {
 
   describe('POST /content', () => {
     it('should create content', async () => {
-      const response = await request(app.getHttpServer())
-        .post('/content')
-        .send({
-          title: 'New Content',
-          description: 'Test description',
-          type: 'video',
-          universeId: 'universe-1',
-        });
+      const response = await request(app.getHttpServer()).post('/content').send({
+        title: 'New Content',
+        description: 'Test description',
+        type: 'video',
+        universeId: 'universe-1',
+      });
 
       expect(response.status).toBe(201);
       expect(response.body).toEqual({

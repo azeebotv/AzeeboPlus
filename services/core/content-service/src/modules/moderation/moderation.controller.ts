@@ -1,4 +1,14 @@
-import { Controller, Get, Post, Patch, Param, Query, Body, UseGuards, Request } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Param,
+  Query,
+  Body,
+  UseGuards,
+  Request,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { ModerationService } from './moderation.service';
@@ -20,7 +30,15 @@ export class ModerationController {
   @ApiResponse({ status: 404, description: 'Content not found' })
   async scanContent(
     @Param('contentId') contentId: string,
-    @Body('type') type: 'malware' | 'nsfw' | 'hate_speech' | 'violence' | 'copyright' | 'spam' | 'misinformation' = 'malware'
+    @Body('type')
+    type:
+      | 'malware'
+      | 'nsfw'
+      | 'hate_speech'
+      | 'violence'
+      | 'copyright'
+      | 'spam'
+      | 'misinformation' = 'malware'
   ): Promise<unknown> {
     return this.moderationService.scanContent(contentId, type);
   }
@@ -49,15 +67,18 @@ export class ModerationController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Create moderation case' })
   @ApiResponse({ status: 201, description: 'Case created' })
-  async createCase(@Body() data: {
-    contentId: string;
-    type: 'content' | 'user' | 'comment' | 'message';
-    severity: 'low' | 'medium' | 'high' | 'critical';
-    priority: 'low' | 'medium' | 'high';
-    policyCategory: string;
-    description: string;
-    evidence?: Record<string, unknown>;
-  }): Promise<unknown> {
+  async createCase(
+    @Body()
+    data: {
+      contentId: string;
+      type: 'content' | 'user' | 'comment' | 'message';
+      severity: 'low' | 'medium' | 'high' | 'critical';
+      priority: 'low' | 'medium' | 'high';
+      policyCategory: string;
+      description: string;
+      evidence?: Record<string, unknown>;
+    }
+  ): Promise<unknown> {
     return this.moderationService.createCase(data);
   }
 
@@ -127,9 +148,16 @@ export class ModerationController {
   @ApiOperation({ summary: 'Execute safety action' })
   @ApiResponse({ status: 201, description: 'Action executed' })
   async executeSafetyAction(
-    @Body() data: {
+    @Body()
+    data: {
       caseId: string;
-      type: 'warning' | 'content_removal' | 'account_suspension' | 'account_ban' | 'content_aging' | 'visibility_reduction';
+      type:
+        | 'warning'
+        | 'content_removal'
+        | 'account_suspension'
+        | 'account_ban'
+        | 'content_aging'
+        | 'visibility_reduction';
       targetId: string;
       targetType: 'user' | 'content' | 'comment';
       reason: string;
@@ -158,12 +186,16 @@ export class ModerationController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Submit appeal' })
   @ApiResponse({ status: 201, description: 'Appeal submitted' })
-  async submitAppeal(@Body() data: {
-    caseId: string;
-    actionId: string;
-    reason: string;
-    evidence?: Record<string, unknown>;
-  }, @Request() req: { user: { userId: string } }): Promise<unknown> {
+  async submitAppeal(
+    @Body()
+    data: {
+      caseId: string;
+      actionId: string;
+      reason: string;
+      evidence?: Record<string, unknown>;
+    },
+    @Request() req: { user: { userId: string } }
+  ): Promise<unknown> {
     return this.moderationService.submitAppeal({
       caseId: data.caseId,
       userId: req.user.userId,
@@ -182,7 +214,12 @@ export class ModerationController {
     @Body() body: ModerationDecisionDto,
     @Request() req: { user: { userId: string } }
   ): Promise<unknown> {
-    return this.moderationService.reviewAppeal(appealId, req.user.userId, body.decision as 'successful' | 'rejected', body.notes);
+    return this.moderationService.reviewAppeal(
+      appealId,
+      req.user.userId,
+      body.decision as 'successful' | 'rejected',
+      body.notes
+    );
   }
 
   @Get('trust/:userId')

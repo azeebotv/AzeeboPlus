@@ -66,7 +66,7 @@ interface WalletBalance {
   pendingBalance?: number;
 }
 
-interface Transaction {
+export interface Transaction {
   id: string;
   type: 'credit' | 'debit';
   amount: number;
@@ -227,6 +227,14 @@ interface AnalyticsRevenue {
   date: string;
   amount: number;
   currency: string;
+}
+
+interface Contestant {
+  id: string;
+  name: string;
+  avatar: string;
+  votes: number;
+  status: 'safe' | 'danger' | 'eliminated';
 }
 
 interface AnalyticsOverview {
@@ -522,7 +530,9 @@ class ApiClient {
       if (filters.page) params.append('page', filters.page.toString());
       if (filters.limit) params.append('limit', filters.limit.toString());
 
-      return this.request<PaginatedResponse<ContentItem>>(`/api/v1/content/search?${params.toString()}`);
+      return this.request<PaginatedResponse<ContentItem>>(
+        `/api/v1/content/search?${params.toString()}`
+      );
     },
 
     getSignedUrl: async (
@@ -531,6 +541,54 @@ class ApiClient {
       return this.request<{ url: string; expiresIn: number }>(
         `/api/v1/content/${contentId}/media/signed-url`
       );
+    },
+
+    createContent: async (data: FormData): Promise<ApiResponse<ContentItem>> => {
+      // Convert FormData to appropriate format for API
+      const formData = new FormData();
+      const dataObj = data as unknown as Record<string, unknown>;
+      Object.keys(dataObj).forEach((key) => {
+        if (dataObj[key] !== undefined && dataObj[key] !== null) {
+          if (typeof dataObj[key] === 'object' && !(dataObj[key] instanceof File)) {
+            formData.append(key, JSON.stringify(dataObj[key]));
+          } else {
+            formData.append(key, dataObj[key] as string | Blob);
+          }
+        }
+      });
+
+      return this.request<ContentItem>('/api/v1/content', {
+        method: 'POST',
+        body: formData,
+        // Don't set Content-Type for FormData, let browser set it
+      });
+    },
+
+    updateContent: async (contentId: string, data: FormData): Promise<ApiResponse<ContentItem>> => {
+      // Convert FormData to appropriate format for API
+      const formData = new FormData();
+      const dataObj = data as unknown as Record<string, unknown>;
+      Object.keys(dataObj).forEach((key) => {
+        if (dataObj[key] !== undefined && dataObj[key] !== null) {
+          if (typeof dataObj[key] === 'object' && !(dataObj[key] instanceof File)) {
+            formData.append(key, JSON.stringify(dataObj[key]));
+          } else {
+            formData.append(key, dataObj[key] as string | Blob);
+          }
+        }
+      });
+
+      return this.request<ContentItem>(`/api/v1/content/${contentId}`, {
+        method: 'PUT',
+        body: formData,
+        // Don't set Content-Type for FormData, let browser set it
+      });
+    },
+
+    deleteContent: async (contentId: string): Promise<ApiResponse<{ message: string }>> => {
+      return this.request<{ message: string }>(`/api/v1/content/${contentId}`, {
+        method: 'DELETE',
+      });
     },
 
     getCategories: async (): Promise<ApiResponse<Category[]>> => {
@@ -553,6 +611,33 @@ class ApiClient {
       limit = 3
     ): Promise<ApiResponse<ContentItem[]>> => {
       return this.request<ContentItem[]>(`/api/v1/content/creator/${creatorId}?limit=${limit}`);
+    },
+
+    getMyContent: async (
+      params: {
+        limit?: number;
+        offset?: number;
+        contentType?: string;
+        status?: string;
+        sort?: 'newest' | 'oldest' | 'popular' | 'trending';
+      } = {}
+    ): Promise<ApiResponse<PaginatedResponse<ContentItem>>> => {
+      const searchParams = new URLSearchParams();
+      if (params.limit) searchParams.append('limit', params.limit.toString());
+      if (params.offset) searchParams.append('offset', params.offset.toString());
+      if (params.contentType) searchParams.append('contentType', params.contentType);
+      if (params.status) searchParams.append('status', params.status);
+      if (params.sort) searchParams.append('sort', params.sort);
+
+      return this.request<PaginatedResponse<ContentItem>>(
+        `/api/v1/content/me?${searchParams.toString()}`
+      );
+    },
+  };
+
+  reality = {
+    getContestants: async (showId: string): Promise<ApiResponse<Contestant[]>> => {
+      return this.request<Contestant[]>(`/api/v1/reality/shows/${showId}/contestants`);
     },
   };
 
@@ -603,6 +688,30 @@ class ApiClient {
     getTransaction: async (transactionId: string): Promise<ApiResponse<Transaction>> => {
       return this.request<Transaction>(`/api/v1/wallet/transactions/${transactionId}`);
     },
+
+    getEarnings: async (params: {
+      range: string;
+    }): Promise<
+      ApiResponse<{
+        totalEarnings: number;
+        pendingEarnings: number;
+        withdrawableBalance: number;
+        withdrawableChangePercentage: number;
+        avgEarningPerContent: number;
+        avgEarningChangePercentage: number;
+        earningsTrend: { date: string; amount: number }[];
+      }>
+    > => {
+      return this.request<{
+        totalEarnings: number;
+        pendingEarnings: number;
+        withdrawableBalance: number;
+        withdrawableChangePercentage: number;
+        avgEarningPerContent: number;
+        avgEarningChangePercentage: number;
+        earningsTrend: { date: string; amount: number }[];
+      }>(`/api/v1/wallet/earnings?range=${params.range}`);
+    },
   };
 
   payment = {
@@ -649,7 +758,9 @@ class ApiClient {
     },
 
     getCrossUniverse: async (limit = 10): Promise<ApiResponse<RecommendationItem[]>> => {
-      return this.request<RecommendationItem[]>(`/api/v1/recommendation/cross-universe?limit=${limit}`);
+      return this.request<RecommendationItem[]>(
+        `/api/v1/recommendation/cross-universe?limit=${limit}`
+      );
     },
   };
 
@@ -698,6 +809,74 @@ class ApiClient {
       if (params?.range) searchParams.append('range', params.range);
       return this.request<unknown>(`/api/v1/creators/analytics?${searchParams.toString()}`);
     },
+
+    getSettings: async (): Promise<
+      ApiResponse<{
+        emailNotifications: boolean;
+        pushNotifications: boolean;
+        smsNotifications: boolean;
+        marketingNotifications: boolean;
+        profileVisibility: string;
+        showEarnings: boolean;
+        allowMessages: boolean;
+      }>
+    > => {
+      return this.request<{
+        emailNotifications: boolean;
+        pushNotifications: boolean;
+        smsNotifications: boolean;
+        marketingNotifications: boolean;
+        profileVisibility: string;
+        showEarnings: boolean;
+        allowMessages: boolean;
+      }>('/api/v1/creators/settings');
+    },
+
+    updateSettings: async (data: {
+      notifications?: { email?: boolean; push?: boolean; sms?: boolean; marketing?: boolean };
+      privacy?: { profileVisibility?: string; showEarnings?: boolean; allowMessages?: boolean };
+    }): Promise<ApiResponse<unknown>> => {
+      return this.request<unknown>('/api/v1/creators/settings', {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      });
+    },
+
+    getStats: async (): Promise<
+      ApiResponse<{
+        totalViews: number;
+        totalLikes: number;
+        totalComments: number;
+        followerCount: number;
+        contentCount: number;
+        totalEarnings: number;
+        pendingEarnings: number;
+        viewsChangePercentage: number;
+        avgEngagementRate: number;
+        totalFollowers: number;
+        viewsChange: number;
+        likesChange: number;
+        commentsChange: number;
+        followersChange: number;
+      }>
+    > => {
+      return this.request<{
+        totalViews: number;
+        totalLikes: number;
+        totalComments: number;
+        followerCount: number;
+        contentCount: number;
+        totalEarnings: number;
+        pendingEarnings: number;
+        viewsChangePercentage: number;
+        avgEngagementRate: number;
+        totalFollowers: number;
+        viewsChange: number;
+        likesChange: number;
+        commentsChange: number;
+        followersChange: number;
+      }>('/api/v1/creators/stats');
+    },
   };
 
   moderation = {
@@ -743,7 +922,9 @@ class ApiClient {
     },
 
     getUsers: async (page = 1, limit = 20): Promise<ApiResponse<PaginatedResponse<User>>> => {
-      return this.request<PaginatedResponse<User>>(`/api/v1/admin/users?page=${page}&limit=${limit}`);
+      return this.request<PaginatedResponse<User>>(
+        `/api/v1/admin/users?page=${page}&limit=${limit}`
+      );
     },
 
     getContent: async (
@@ -771,11 +952,19 @@ class ApiClient {
     },
 
     // Wallet Management
-    getWallets: async (page = 1, limit = 20): Promise<ApiResponse<PaginatedResponse<AdminWallet>>> => {
-      return this.request<PaginatedResponse<AdminWallet>>(`/api/v1/admin/wallets?page=${page}&limit=${limit}`);
+    getWallets: async (
+      page = 1,
+      limit = 20
+    ): Promise<ApiResponse<PaginatedResponse<AdminWallet>>> => {
+      return this.request<PaginatedResponse<AdminWallet>>(
+        `/api/v1/admin/wallets?page=${page}&limit=${limit}`
+      );
     },
 
-    updateWalletStatus: async (walletId: string, status: string): Promise<ApiResponse<{ message: string }>> => {
+    updateWalletStatus: async (
+      walletId: string,
+      status: string
+    ): Promise<ApiResponse<{ message: string }>> => {
       return this.request<{ message: string }>(`/api/v1/admin/wallets/${walletId}/status`, {
         method: 'PUT',
         body: JSON.stringify({ status }),
@@ -783,11 +972,19 @@ class ApiClient {
     },
 
     // Creator Management
-    getCreators: async (page = 1, limit = 20): Promise<ApiResponse<PaginatedResponse<AdminCreator>>> => {
-      return this.request<PaginatedResponse<AdminCreator>>(`/api/v1/admin/creators?page=${page}&limit=${limit}`);
+    getCreators: async (
+      page = 1,
+      limit = 20
+    ): Promise<ApiResponse<PaginatedResponse<AdminCreator>>> => {
+      return this.request<PaginatedResponse<AdminCreator>>(
+        `/api/v1/admin/creators?page=${page}&limit=${limit}`
+      );
     },
 
-    updateCreatorStatus: async (creatorId: string, status: string): Promise<ApiResponse<{ message: string }>> => {
+    updateCreatorStatus: async (
+      creatorId: string,
+      status: string
+    ): Promise<ApiResponse<{ message: string }>> => {
       return this.request<{ message: string }>(`/api/v1/admin/creators/${creatorId}/status`, {
         method: 'PUT',
         body: JSON.stringify({ status }),
@@ -805,14 +1002,23 @@ class ApiClient {
       return this.request<PaymentGateway[]>('/api/v1/admin/payment-gateways');
     },
 
-    togglePaymentGateway: async (gatewayId: string, isEnabled: boolean): Promise<ApiResponse<{ message: string }>> => {
-      return this.request<{ message: string }>(`/api/v1/admin/payment-gateways/${gatewayId}/toggle`, {
-        method: 'PUT',
-        body: JSON.stringify({ isEnabled }),
-      });
+    togglePaymentGateway: async (
+      gatewayId: string,
+      isEnabled: boolean
+    ): Promise<ApiResponse<{ message: string }>> => {
+      return this.request<{ message: string }>(
+        `/api/v1/admin/payment-gateways/${gatewayId}/toggle`,
+        {
+          method: 'PUT',
+          body: JSON.stringify({ isEnabled }),
+        }
+      );
     },
 
-    updatePaymentGatewayMode: async (gatewayId: string, mode: 'live' | 'test'): Promise<ApiResponse<{ message: string }>> => {
+    updatePaymentGatewayMode: async (
+      gatewayId: string,
+      mode: 'live' | 'test'
+    ): Promise<ApiResponse<{ message: string }>> => {
       return this.request<{ message: string }>(`/api/v1/admin/payment-gateways/${gatewayId}/mode`, {
         method: 'PUT',
         body: JSON.stringify({ mode }),
@@ -820,11 +1026,19 @@ class ApiClient {
     },
 
     // Reality Shows Management
-    getRealityShows: async (page = 1, limit = 20): Promise<ApiResponse<PaginatedResponse<RealityShow>>> => {
-      return this.request<PaginatedResponse<RealityShow>>(`/api/v1/admin/reality-shows?page=${page}&limit=${limit}`);
+    getRealityShows: async (
+      page = 1,
+      limit = 20
+    ): Promise<ApiResponse<PaginatedResponse<RealityShow>>> => {
+      return this.request<PaginatedResponse<RealityShow>>(
+        `/api/v1/admin/reality-shows?page=${page}&limit=${limit}`
+      );
     },
 
-    updateRealityShowStatus: async (showId: string, status: string): Promise<ApiResponse<{ message: string }>> => {
+    updateRealityShowStatus: async (
+      showId: string,
+      status: string
+    ): Promise<ApiResponse<{ message: string }>> => {
       return this.request<{ message: string }>(`/api/v1/admin/reality-shows/${showId}/status`, {
         method: 'PUT',
         body: JSON.stringify({ status }),
@@ -832,17 +1046,28 @@ class ApiClient {
     },
 
     // Content Review
-    getContentReviewQueue: async (page = 1, limit = 20): Promise<ApiResponse<PaginatedResponse<ContentReviewItem>>> => {
-      return this.request<PaginatedResponse<ContentReviewItem>>(`/api/v1/admin/content-review?page=${page}&limit=${limit}`);
+    getContentReviewQueue: async (
+      page = 1,
+      limit = 20
+    ): Promise<ApiResponse<PaginatedResponse<ContentReviewItem>>> => {
+      return this.request<PaginatedResponse<ContentReviewItem>>(
+        `/api/v1/admin/content-review?page=${page}&limit=${limit}`
+      );
     },
 
     approveContent: async (contentId: string): Promise<ApiResponse<{ message: string }>> => {
-      return this.request<{ message: string }>(`/api/v1/admin/content-review/${contentId}/approve`, {
-        method: 'POST',
-      });
+      return this.request<{ message: string }>(
+        `/api/v1/admin/content-review/${contentId}/approve`,
+        {
+          method: 'POST',
+        }
+      );
     },
 
-    rejectContent: async (contentId: string, reason: string): Promise<ApiResponse<{ message: string }>> => {
+    rejectContent: async (
+      contentId: string,
+      reason: string
+    ): Promise<ApiResponse<{ message: string }>> => {
       return this.request<{ message: string }>(`/api/v1/admin/content-review/${contentId}/reject`, {
         method: 'POST',
         body: JSON.stringify({ reason }),
@@ -854,7 +1079,9 @@ class ApiClient {
       return this.request<EngagementMetrics>('/api/v1/admin/engagement/metrics');
     },
 
-    getEngagementTrends: async (range: '7d' | '30d' | '90d' = '30d'): Promise<ApiResponse<EngagementTrend[]>> => {
+    getEngagementTrends: async (
+      range: '7d' | '30d' | '90d' = '30d'
+    ): Promise<ApiResponse<EngagementTrend[]>> => {
       return this.request<EngagementTrend[]>(`/api/v1/admin/engagement/trends?range=${range}`);
     },
 
@@ -879,15 +1106,23 @@ class ApiClient {
       });
     },
 
-    updateNotificationTemplate: async (templateId: string, template: Partial<NotificationTemplate>): Promise<ApiResponse<NotificationTemplate>> => {
-      return this.request<NotificationTemplate>(`/api/v1/admin/notification-templates/${templateId}`, {
-        method: 'PUT',
-        body: JSON.stringify(template),
-      });
+    updateNotificationTemplate: async (
+      templateId: string,
+      template: Partial<NotificationTemplate>
+    ): Promise<ApiResponse<NotificationTemplate>> => {
+      return this.request<NotificationTemplate>(
+        `/api/v1/admin/notification-templates/${templateId}`,
+        {
+          method: 'PUT',
+          body: JSON.stringify(template),
+        }
+      );
     },
 
     // Reports
-    getReports: async (range: '7d' | '30d' | '90d' | 'all' = '30d'): Promise<ApiResponse<AdminReport[]>> => {
+    getReports: async (
+      range: '7d' | '30d' | '90d' | 'all' = '30d'
+    ): Promise<ApiResponse<AdminReport[]>> => {
       return this.request<AdminReport[]>(`/api/v1/admin/reports?range=${range}`);
     },
 
@@ -955,15 +1190,18 @@ class ApiClient {
       });
     },
 
-    updateUniverse: async (id: string, universe: {
-      displayName?: string;
-      description?: string;
-      icon?: string;
-      color?: string;
-      isEnabled?: boolean;
-      sortOrder?: number;
-      metadata?: Record<string, unknown>;
-    }): Promise<ApiResponse<AdminUniverse>> => {
+    updateUniverse: async (
+      id: string,
+      universe: {
+        displayName?: string;
+        description?: string;
+        icon?: string;
+        color?: string;
+        isEnabled?: boolean;
+        sortOrder?: number;
+        metadata?: Record<string, unknown>;
+      }
+    ): Promise<ApiResponse<AdminUniverse>> => {
       return this.request<AdminUniverse>(`/api/v1/admin/universes/${id}`, {
         method: 'PUT',
         body: JSON.stringify(universe),
@@ -983,25 +1221,39 @@ class ApiClient {
       });
     },
 
-    updateFeatureFlag: async (universeId: string, featureFlag: {
-      featureKey: string;
-      isEnabled: boolean;
-      metadata?: Record<string, unknown>;
-    }): Promise<ApiResponse<FeatureFlag>> => {
+    updateFeatureFlag: async (
+      universeId: string,
+      featureFlag: {
+        featureKey: string;
+        isEnabled: boolean;
+        metadata?: Record<string, unknown>;
+      }
+    ): Promise<ApiResponse<FeatureFlag>> => {
       return this.request<FeatureFlag>(`/api/v1/admin/universes/${universeId}/feature-flags`, {
         method: 'PUT',
         body: JSON.stringify(featureFlag),
       });
     },
 
-    deleteFeatureFlag: async (universeId: string, featureKey: string): Promise<ApiResponse<{ message: string }>> => {
-      return this.request<{ message: string }>(`/api/v1/admin/universes/${universeId}/feature-flags/${featureKey}`, {
-        method: 'DELETE',
-      });
+    deleteFeatureFlag: async (
+      universeId: string,
+      featureKey: string
+    ): Promise<ApiResponse<{ message: string }>> => {
+      return this.request<{ message: string }>(
+        `/api/v1/admin/universes/${universeId}/feature-flags/${featureKey}`,
+        {
+          method: 'DELETE',
+        }
+      );
     },
 
-    checkFeatureFlag: async (universeName: string, featureKey: string): Promise<ApiResponse<{ universeName: string; featureKey: string; isEnabled: boolean }>> => {
-      return this.request<{ universeName: string; featureKey: string; isEnabled: boolean }>(`/api/v1/admin/universes/check/${universeName}/${featureKey}`);
+    checkFeatureFlag: async (
+      universeName: string,
+      featureKey: string
+    ): Promise<ApiResponse<{ universeName: string; featureKey: string; isEnabled: boolean }>> => {
+      return this.request<{ universeName: string; featureKey: string; isEnabled: boolean }>(
+        `/api/v1/admin/universes/check/${universeName}/${featureKey}`
+      );
     },
 
     // System Settings Management
@@ -1042,12 +1294,15 @@ class ApiClient {
       });
     },
 
-    updateSetting: async (key: string, setting: {
-      value?: unknown;
-      category?: string;
-      description?: string;
-      isPublic?: boolean;
-    }): Promise<ApiResponse<SystemSetting>> => {
+    updateSetting: async (
+      key: string,
+      setting: {
+        value?: unknown;
+        category?: string;
+        description?: string;
+        isPublic?: boolean;
+      }
+    ): Promise<ApiResponse<SystemSetting>> => {
       return this.request<SystemSetting>(`/api/v1/admin/settings/${key}`, {
         method: 'PUT',
         body: JSON.stringify(setting),
@@ -1060,14 +1315,18 @@ class ApiClient {
       });
     },
 
-    bulkCreateSettings: async (settings: Partial<SystemSetting>[]): Promise<ApiResponse<SystemSetting[]>> => {
+    bulkCreateSettings: async (
+      settings: Partial<SystemSetting>[]
+    ): Promise<ApiResponse<SystemSetting[]>> => {
       return this.request<SystemSetting[]>('/api/v1/admin/settings/bulk', {
         method: 'POST',
         body: JSON.stringify(settings),
       });
     },
 
-    bulkUpdateSettings: async (settings: { key: string; value: unknown }[]): Promise<ApiResponse<SystemSetting[]>> => {
+    bulkUpdateSettings: async (
+      settings: { key: string; value: unknown }[]
+    ): Promise<ApiResponse<SystemSetting[]>> => {
       return this.request<SystemSetting[]>('/api/v1/admin/settings/bulk', {
         method: 'PUT',
         body: JSON.stringify(settings),
@@ -1132,7 +1391,6 @@ export type {
   ApiError,
   User,
   WalletBalance,
-  Transaction,
   Wallet,
   ContentItem,
   AuthResponse,

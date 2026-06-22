@@ -1,8 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  View, Text, StyleSheet, FlatList,
-  TextInput, TouchableOpacity, KeyboardAvoidingView,
-  Platform, ActivityIndicator,
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TextInput,
+  TouchableOpacity,
+  KeyboardAvoidingView,
+  Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { realityApi, chatApi } from '../../../src/api';
@@ -88,9 +94,7 @@ export default function LiveChatScreen() {
   const renderMessage = ({ item }: { item: ChatMessage }) => (
     <View style={styles.messageContainer}>
       <View style={styles.messageHeader}>
-        <Text style={styles.username}>
-          {item.displayName}
-        </Text>
+        <Text style={styles.username}>{item.displayName}</Text>
         {item.isModerator && (
           <View style={styles.badge}>
             <Text style={styles.badgeText}>MOD</Text>
@@ -160,7 +164,10 @@ export default function LiveChatScreen() {
           maxLength={500}
         />
         <TouchableOpacity
-          style={[styles.sendButton, (!newMessage.trim() || isSending) && styles.sendButtonDisabled]}
+          style={[
+            styles.sendButton,
+            (!newMessage.trim() || isSending) && styles.sendButtonDisabled,
+          ]}
           onPress={sendMessage}
           disabled={!newMessage.trim() || isSending}
         >

@@ -80,7 +80,12 @@ export default function PublishedContentPage(): JSX.Element {
               className="text-muted-foreground hover:text-foreground mb-2 flex items-center gap-2"
             >
               <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 19l-7-7 7-7"
+                />
               </svg>
               Back
             </button>
@@ -92,9 +97,7 @@ export default function PublishedContentPage(): JSX.Element {
           <div className="text-center py-20">
             <div className="text-6xl mb-4">📢</div>
             <h2 className="text-2xl font-bold text-foreground mb-2">No published content</h2>
-            <p className="text-muted-foreground">
-              Your published content will appear here
-            </p>
+            <p className="text-muted-foreground">Your published content will appear here</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -105,11 +108,7 @@ export default function PublishedContentPage(): JSX.Element {
                 className="bg-card rounded-lg border border-border overflow-hidden cursor-pointer hover:shadow-lg transition-shadow"
               >
                 <div className="relative">
-                  <img
-                    src={item.thumbnail}
-                    alt={item.title}
-                    className="w-full h-40 object-cover"
-                  />
+                  <img src={item.thumbnail} alt={item.title} className="w-full h-40 object-cover" />
                   <div className="absolute top-2 right-2 bg-black/50 rounded-full w-8 h-8 flex items-center justify-center">
                     <span>{getTypeIcon(item.type)}</span>
                   </div>

@@ -49,12 +49,7 @@ export const TableComponent: StoryObj<typeof Table> = {
     ];
     return (
       <div className="p-4">
-        <Table
-          columns={columns}
-          data={data}
-          striped
-          hoverable
-        />
+        <Table columns={columns} data={data} striped hoverable />
       </div>
     );
   },
@@ -76,7 +71,11 @@ export const ListComponent: StoryObj<typeof List> = {
         <ListItem title="Profile" description="View and edit your profile" icon="User" />
         <ListItem title="Settings" description="Manage account settings" icon="Settings" active />
         <ListItem title="Notifications" description="Update notification preferences" icon="Bell" />
-        <ListItem title="Help & Support" description="Get help from our support team" icon="HelpCircle" />
+        <ListItem
+          title="Help & Support"
+          description="Get help from our support team"
+          icon="HelpCircle"
+        />
       </List>
     </div>
   ),
@@ -115,11 +114,21 @@ export const BadgeComponent: StoryObj<typeof DisplayBadge> = {
   render: (args) => (
     <div className="p-4 flex gap-2">
       <DisplayBadge {...args}>Default</DisplayBadge>
-      <DisplayBadge {...args} variant="primary">Primary</DisplayBadge>
-      <DisplayBadge {...args} variant="success">Success</DisplayBadge>
-      <DisplayBadge {...args} variant="warning">Warning</DisplayBadge>
-      <DisplayBadge {...args} variant="error">Error</DisplayBadge>
-      <DisplayBadge {...args} variant="info">Info</DisplayBadge>
+      <DisplayBadge {...args} variant="primary">
+        Primary
+      </DisplayBadge>
+      <DisplayBadge {...args} variant="success">
+        Success
+      </DisplayBadge>
+      <DisplayBadge {...args} variant="warning">
+        Warning
+      </DisplayBadge>
+      <DisplayBadge {...args} variant="error">
+        Error
+      </DisplayBadge>
+      <DisplayBadge {...args} variant="info">
+        Info
+      </DisplayBadge>
     </div>
   ),
 };
@@ -142,10 +151,18 @@ export const TagComponent: StoryObj<typeof Tag> = {
   render: (args) => (
     <div className="p-4 flex flex-wrap gap-2">
       <Tag {...args}>React</Tag>
-      <Tag {...args} variant="primary">TypeScript</Tag>
-      <Tag {...args} variant="success">Node.js</Tag>
-      <Tag {...args} variant="warning">Express</Tag>
-      <Tag {...args} variant="error">Deprecated</Tag>
+      <Tag {...args} variant="primary">
+        TypeScript
+      </Tag>
+      <Tag {...args} variant="success">
+        Node.js
+      </Tag>
+      <Tag {...args} variant="warning">
+        Express
+      </Tag>
+      <Tag {...args} variant="error">
+        Deprecated
+      </Tag>
     </div>
   ),
 };
@@ -211,7 +228,12 @@ export const TimelineComponent: StoryObj<typeof Timeline> = {
     items: [
       { title: 'Account created', description: 'Welcome to Azeebo+', time: '2 hours ago' },
       { title: 'Profile updated', icon: 'User', time: '1 hour ago' },
-      { title: 'Subscription activated', icon: 'CreditCard', dotColor: 'success', time: '30 minutes ago' },
+      {
+        title: 'Subscription activated',
+        icon: 'CreditCard',
+        dotColor: 'success',
+        time: '30 minutes ago',
+      },
       { title: 'Payment received', icon: 'Check', dotColor: 'success', time: '15 minutes ago' },
     ],
   },

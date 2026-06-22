@@ -15,15 +15,17 @@ export class SportsService {
   private readonly logger = new Logger(SportsService.name);
   private readonly analyticsServiceBaseUrl: string;
   private readonly walletServiceBaseUrl: string;
-  private readonly predictionFee = 10;
-  private readonly contestEntryFee = 50;
+  private readonly predictionFee: number;
+  private readonly contestEntryFee: number;
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly configService: ConfigService,
+    private readonly configService: ConfigService
   ) {
     this.analyticsServiceBaseUrl = this.configService.getOrThrow<string>('ANALYTICS_SERVICE_URL');
     this.walletServiceBaseUrl = this.configService.getOrThrow<string>('WALLET_SERVICE_URL');
+    this.predictionFee = this.configService.get<number>('PREDICTION_FEE', 10);
+    this.contestEntryFee = this.configService.get<number>('CONTEST_ENTRY_FEE', 50);
   }
 
   private async trackAnalyticsEvent(
@@ -164,22 +166,27 @@ export class SportsService {
 
     const idempotencyKey = randomUUID();
 
-    const debitResult = await axios.post(`${this.walletServiceBaseUrl}/wallet/debit`, {
-      walletId: wallet.id,
-      amount: this.predictionFee,
-      description: `Prediction fee for event ${body.eventId}`,
-      idempotencyKey,
-    }).catch((error: unknown) => {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to debit wallet';
-      throw new BadRequestException(errorMessage);
-    });
+    const debitResult = await axios
+      .post(`${this.walletServiceBaseUrl}/wallet/debit`, {
+        walletId: wallet.id,
+        amount: this.predictionFee,
+        description: `Prediction fee for event ${body.eventId}`,
+        idempotencyKey,
+      })
+      .catch((error: unknown) => {
+        const errorMessage = error instanceof Error ? error.message : 'Failed to debit wallet';
+        throw new BadRequestException(errorMessage);
+      });
 
     try {
       const prediction = await this.prisma.predictionEntry.create({
         data: {
           userId,
           eventId: body.eventId,
-          prediction: body.prediction as unknown as Record<string, string | number | boolean | null>,
+          prediction: body.prediction as unknown as Record<
+            string,
+            string | number | boolean | null
+          >,
         },
       });
 
@@ -200,14 +207,19 @@ export class SportsService {
         },
       };
     } catch (error: unknown) {
-      await axios.post(`${this.walletServiceBaseUrl}/wallet/credit`, {
-        walletId: wallet.id,
-        amount: this.predictionFee,
-        description: `Compensation for failed prediction: ${idempotencyKey}`,
-        reference: `compensate:${idempotencyKey}`,
-      }).catch((compensateError: unknown) => {
-        this.logger.error('Failed to compensate wallet after prediction failure:', compensateError);
-      });
+      await axios
+        .post(`${this.walletServiceBaseUrl}/wallet/credit`, {
+          walletId: wallet.id,
+          amount: this.predictionFee,
+          description: `Compensation for failed prediction: ${idempotencyKey}`,
+          reference: `compensate:${idempotencyKey}`,
+        })
+        .catch((compensateError: unknown) => {
+          this.logger.error(
+            'Failed to compensate wallet after prediction failure:',
+            compensateError
+          );
+        });
       const errorMessage = error instanceof Error ? error.message : 'Failed to submit prediction';
       throw new BadRequestException(errorMessage);
     }
@@ -317,15 +329,17 @@ export class SportsService {
 
     const idempotencyKey = randomUUID();
 
-    const debitResult = await axios.post(`${this.walletServiceBaseUrl}/wallet/debit`, {
-      walletId: wallet.id,
-      amount: this.contestEntryFee,
-      description: `Contest entry fee for contest ${contestId}`,
-      idempotencyKey,
-    }).catch((error: unknown) => {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to debit wallet';
-      throw new BadRequestException(errorMessage);
-    });
+    const debitResult = await axios
+      .post(`${this.walletServiceBaseUrl}/wallet/debit`, {
+        walletId: wallet.id,
+        amount: this.contestEntryFee,
+        description: `Contest entry fee for contest ${contestId}`,
+        idempotencyKey,
+      })
+      .catch((error: unknown) => {
+        const errorMessage = error instanceof Error ? error.message : 'Failed to debit wallet';
+        throw new BadRequestException(errorMessage);
+      });
 
     try {
       const entry = await this.prisma.contestEntry.create({
@@ -353,20 +367,25 @@ export class SportsService {
         },
       };
     } catch (error: unknown) {
-      await axios.post(`${this.walletServiceBaseUrl}/wallet/credit`, {
-        walletId: wallet.id,
-        amount: this.contestEntryFee,
-        description: `Compensation for failed contest entry: ${idempotencyKey}`,
-        reference: `compensate:${idempotencyKey}`,
-      }).catch((compensateError: unknown) => {
-        this.logger.error('Failed to compensate wallet:', compensateError);
-      });
+      await axios
+        .post(`${this.walletServiceBaseUrl}/wallet/credit`, {
+          walletId: wallet.id,
+          amount: this.contestEntryFee,
+          description: `Compensation for failed contest entry: ${idempotencyKey}`,
+          reference: `compensate:${idempotencyKey}`,
+        })
+        .catch((compensateError: unknown) => {
+          this.logger.error('Failed to compensate wallet:', compensateError);
+        });
       const errorMessage = error instanceof Error ? error.message : 'Failed to enter contest';
       throw new BadRequestException(errorMessage);
     }
   }
 
-  async resolveEventPredictions(eventId: string, correctPrediction: Record<string, unknown>): Promise<SportsResponse> {
+  async resolveEventPredictions(
+    eventId: string,
+    correctPrediction: Record<string, unknown>
+  ): Promise<SportsResponse> {
     const event = await this.prisma.sportsEvent.findUnique({
       where: { id: eventId },
     });
@@ -398,16 +417,20 @@ export class SportsService {
 
       if (isCorrect) {
         correctCount++;
-        const wallet = await this.prisma.wallet.findUnique({ where: { userId: prediction.userId } });
+        const wallet = await this.prisma.wallet.findUnique({
+          where: { userId: prediction.userId },
+        });
         if (wallet) {
           const rewardAmount = 100;
-          await axios.post(`${this.walletServiceBaseUrl}/wallet/credit`, {
-            walletId: wallet.id,
-            amount: rewardAmount,
-            description: `Correct prediction reward for event ${eventId}`,
-          }).catch((error: unknown) => {
-            this.logger.error(`Failed to credit reward to user ${prediction.userId}:`, error);
-          });
+          await axios
+            .post(`${this.walletServiceBaseUrl}/wallet/credit`, {
+              walletId: wallet.id,
+              amount: rewardAmount,
+              description: `Correct prediction reward for event ${eventId}`,
+            })
+            .catch((error: unknown) => {
+              this.logger.error(`Failed to credit reward to user ${prediction.userId}:`, error);
+            });
         }
 
         await this.trackAnalyticsEvent('prediction_correct', prediction.userId, {

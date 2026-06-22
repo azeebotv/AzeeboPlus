@@ -118,12 +118,24 @@ export default function AuditLogsPage(): JSX.Element {
             <table className="w-full">
               <thead className="bg-muted">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground">Timestamp</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground">Actor</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground">Action</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground">Resource</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground">Result</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground">IP Address</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground">
+                    Timestamp
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground">
+                    Actor
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground">
+                    Action
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground">
+                    Resource
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground">
+                    Result
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground">
+                    IP Address
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -150,7 +162,9 @@ export default function AuditLogsPage(): JSX.Element {
                         {log.result.charAt(0).toUpperCase() + log.result.slice(1)}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-sm font-mono text-muted-foreground">{log.ipAddress}</td>
+                    <td className="px-4 py-3 text-sm font-mono text-muted-foreground">
+                      {log.ipAddress}
+                    </td>
                   </tr>
                 ))}
               </tbody>

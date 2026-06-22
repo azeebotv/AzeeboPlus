@@ -40,10 +40,7 @@ describe('RewardsService', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        RewardsService,
-        { provide: PrismaService, useValue: mockPrismaService },
-      ],
+      providers: [RewardsService, { provide: PrismaService, useValue: mockPrismaService }],
     }).compile();
 
     service = module.get<RewardsService>(RewardsService);
@@ -418,7 +415,13 @@ describe('RewardsService', () => {
     it('should return paginated history', async () => {
       const mockLedger = [
         { id: 'pl-1', points: 10, type: 'credit', reason: 'Daily check-in', createdAt: new Date() },
-        { id: 'pl-2', points: 50, type: 'debit', reason: 'Reward redemption', createdAt: new Date() },
+        {
+          id: 'pl-2',
+          points: 50,
+          type: 'debit',
+          reason: 'Reward redemption',
+          createdAt: new Date(),
+        },
       ];
 
       mockPrismaService.pointsLedger.findMany.mockResolvedValue(mockLedger);

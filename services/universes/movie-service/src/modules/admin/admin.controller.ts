@@ -22,7 +22,7 @@ export class AdminController {
   async getMovies(
     @Query('page') page?: number,
     @Query('limit') limit?: number,
-    @Query('status') status?: string,
+    @Query('status') status?: string
   ) {
     return this.adminService.getMovies({ page, limit, status });
   }

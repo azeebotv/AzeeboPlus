@@ -1,0 +1,48 @@
+# Helm values for External Secrets Operator
+# Install with: helm install external-secrets external-secrets/external-secrets -f values.yaml -n external-secrets
+
+installCRDs: true
+
+leaderElect:
+  enabled: true
+
+webhook:
+  certManager:
+    enabled: true
+
+controller:
+  webhook:
+    certManager:
+      enabled: true
+
+prometheus:
+  enabled: true
+  servicemonitor:
+    enabled: true
+
+# AWS configuration
+aws:
+  auth:
+    jwt:
+      serviceAccount: true
+      podIdentity:
+        enabled: false
+    mountPath: /var/run/secrets/amazon
+
+# Service account configuration
+serviceAccount:
+  create: true
+  name: external-secrets-sa
+
+# Resource limits
+resources:
+  limits:
+    cpu: 200m
+    memory: 256Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+# Node selector for high availability
+nodeSelector:
+  kubernetes.io/os: linux

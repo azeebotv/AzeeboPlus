@@ -21,7 +21,12 @@ describe('GamesService', () => {
             challenge: { findFirst: jest.fn() },
             tournament: { findMany: jest.fn(), findUnique: jest.fn() },
             scoreEntry: { findMany: jest.fn(), upsert: jest.fn() },
-            gameSession: { findFirst: jest.fn(), findUnique: jest.fn(), create: jest.fn(), update: jest.fn() },
+            gameSession: {
+              findFirst: jest.fn(),
+              findUnique: jest.fn(),
+              create: jest.fn(),
+              update: jest.fn(),
+            },
             question: { findUnique: jest.fn() },
             tournamentEntry: { findUnique: jest.fn(), create: jest.fn() },
           },
@@ -106,7 +111,13 @@ describe('GamesService', () => {
     const answer = 'correct-answer';
 
     it('should submit correct answer and update score (happy path)', async () => {
-      const mockSession = { id: sessionId, userId, challengeId: 'challenge-1', status: 'active', questionId: 'question-1' };
+      const mockSession = {
+        id: sessionId,
+        userId,
+        challengeId: 'challenge-1',
+        status: 'active',
+        questionId: 'question-1',
+      };
       const mockQuestion = { id: 'question-1', answer: 'correct-answer', points: 100 };
 
       (prismaService.gameSession.findUnique as jest.Mock).mockResolvedValue(mockSession);
@@ -124,7 +135,13 @@ describe('GamesService', () => {
     });
 
     it('should handle incorrect answer', async () => {
-      const mockSession = { id: sessionId, userId, challengeId: 'challenge-1', status: 'active', questionId: 'question-1' };
+      const mockSession = {
+        id: sessionId,
+        userId,
+        challengeId: 'challenge-1',
+        status: 'active',
+        questionId: 'question-1',
+      };
       const mockQuestion = { id: 'question-1', answer: 'different-answer', points: 100 };
 
       (prismaService.gameSession.findUnique as jest.Mock).mockResolvedValue(mockSession);
@@ -142,21 +159,37 @@ describe('GamesService', () => {
     it('should throw NotFoundException when session not found', async () => {
       (prismaService.gameSession.findUnique as jest.Mock).mockResolvedValue(null);
 
-      await expect(service.submitAnswer(userId, sessionId, answer)).rejects.toThrow(NotFoundException);
+      await expect(service.submitAnswer(userId, sessionId, answer)).rejects.toThrow(
+        NotFoundException
+      );
     });
 
     it('should throw BadRequestException when session does not belong to user', async () => {
-      const mockSession = { id: sessionId, userId: 'other-user', challengeId: 'challenge-1', status: 'active' };
+      const mockSession = {
+        id: sessionId,
+        userId: 'other-user',
+        challengeId: 'challenge-1',
+        status: 'active',
+      };
       (prismaService.gameSession.findUnique as jest.Mock).mockResolvedValue(mockSession);
 
-      await expect(service.submitAnswer(userId, sessionId, answer)).rejects.toThrow(BadRequestException);
+      await expect(service.submitAnswer(userId, sessionId, answer)).rejects.toThrow(
+        BadRequestException
+      );
     });
 
     it('should throw BadRequestException when session is not active', async () => {
-      const mockSession = { id: sessionId, userId, challengeId: 'challenge-1', status: 'completed' };
+      const mockSession = {
+        id: sessionId,
+        userId,
+        challengeId: 'challenge-1',
+        status: 'completed',
+      };
       (prismaService.gameSession.findUnique as jest.Mock).mockResolvedValue(mockSession);
 
-      await expect(service.submitAnswer(userId, sessionId, answer)).rejects.toThrow(BadRequestException);
+      await expect(service.submitAnswer(userId, sessionId, answer)).rejects.toThrow(
+        BadRequestException
+      );
     });
   });
 
@@ -208,7 +241,9 @@ describe('GamesService', () => {
       const mockExistingEntry = { id: 'entry-1', userId, tournamentId };
       (prismaService.tournamentEntry.findUnique as jest.Mock).mockResolvedValue(mockExistingEntry);
 
-      await expect(service.enterTournament(userId, tournamentId)).rejects.toThrow(BadRequestException);
+      await expect(service.enterTournament(userId, tournamentId)).rejects.toThrow(
+        BadRequestException
+      );
     });
   });
 });

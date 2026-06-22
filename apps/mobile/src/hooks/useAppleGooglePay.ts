@@ -26,11 +26,7 @@ export function useAppleGooglePay() {
     ): Promise<PaymentResult> => {
       setState((prev) => ({ ...prev, isLoading: true, error: null }));
 
-      const result = await appleGooglePayService.processPayment(
-        amount,
-        currency,
-        description
-      );
+      const result = await appleGooglePayService.processPayment(amount, currency, description);
 
       setState((prev) => ({
         ...prev,

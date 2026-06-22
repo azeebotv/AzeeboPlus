@@ -36,7 +36,9 @@ export interface Episode {
   episodeNumber: number;
   seasonNumber: number;
   duration: number;
-  thumbnail: string;
+  videoUrl?: string;
+  thumbnail?: string;
+  subtitles?: Array<{ language: string; url: string }>;
   releaseDate: string;
   isLocked: boolean;
   contentId: string;
@@ -68,11 +70,12 @@ export interface Vote {
 }
 
 export interface VoteResult {
+  id?: string;
   contestantId: string;
-  contestantName: string;
-  totalVotes: number;
-  percentage: number;
-  rank: number;
+  contestantName?: string;
+  totalVotes?: number;
+  percentage?: number;
+  rank?: number;
 }
 
 export interface CreatorContent {
@@ -113,12 +116,21 @@ export interface CreatorEarnings {
 }
 
 export interface MonetizationSettings {
-  isMonetized: boolean;
-  monetizationTier: string;
-  adRevenueShare: number;
-  subscriptionRevenueShare: number;
-  minimumPayout: number;
-  payoutMethod: string;
+  isMonetizationEnabled?: boolean;
+  isSubscriptionEnabled?: boolean;
+  subscriptionPrice?: number;
+  isTipEnabled?: boolean;
+  minimumTip?: number;
+  isAdEnabled?: boolean;
+  adRevenueShare?: number;
+  payoutMethod?: string;
+  bankName?: string;
+  accountNumber?: string;
+  accountName?: string;
+  isMonetized?: boolean;
+  monetizationTier?: string;
+  subscriptionRevenueShare?: number;
+  minimumPayout?: number;
   payoutAccount?: string;
 }
 
@@ -225,7 +237,11 @@ export const contentApi = {
     return apiClient.get<ApiResponse<Episode>>(`/content/episodes/${episodeId}`);
   },
 
-  vote: async (data: { episodeId?: string; contestantId?: string; isSuperVote: boolean }): Promise<ApiResponse<Vote>> => {
+  vote: async (data: {
+    episodeId?: string;
+    contestantId?: string;
+    isSuperVote: boolean;
+  }): Promise<ApiResponse<Vote>> => {
     return apiClient.post<ApiResponse<Vote>>('/content/vote', data);
   },
 
@@ -262,7 +278,9 @@ export const contentApi = {
   },
 
   publishContent: async (contentId: string): Promise<ApiResponse<{ message: string }>> => {
-    return apiClient.post<ApiResponse<{ message: string }>>(`/creator/content/${contentId}/publish`);
+    return apiClient.post<ApiResponse<{ message: string }>>(
+      `/creator/content/${contentId}/publish`
+    );
   },
 
   getDrafts: async (): Promise<ApiResponse<CreatorContent[]>> => {
@@ -293,7 +311,9 @@ export const contentApi = {
     return apiClient.get<ApiResponse<MonetizationSettings>>('/creator/monetization');
   },
 
-  updateMonetizationSettings: async (data: Partial<MonetizationSettings>): Promise<ApiResponse<MonetizationSettings>> => {
+  updateMonetizationSettings: async (
+    data: Partial<MonetizationSettings>
+  ): Promise<ApiResponse<MonetizationSettings>> => {
     return apiClient.put<ApiResponse<MonetizationSettings>>('/creator/monetization', data);
   },
 

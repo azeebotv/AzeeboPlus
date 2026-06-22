@@ -68,8 +68,14 @@ export const authApi = {
     return apiClient.patch<ApiResponse<User>>('/auth/me', data);
   },
 
-  resetPassword: async (token: string, newPassword: string): Promise<ApiResponse<{ message: string }>> => {
-    return apiClient.post<ApiResponse<{ message: string }>>('/auth/reset-password', { token, newPassword });
+  resetPassword: async (
+    token: string,
+    newPassword: string
+  ): Promise<ApiResponse<{ message: string }>> => {
+    return apiClient.post<ApiResponse<{ message: string }>>('/auth/reset-password', {
+      token,
+      newPassword,
+    });
   },
 
   verifyEmail: async (token: string): Promise<ApiResponse<{ message: string }>> => {
@@ -80,8 +86,16 @@ export const authApi = {
     return apiClient.post<ApiResponse<{ message: string }>>('/auth/resend-verification', { email });
   },
 
-  getDevices: async (): Promise<ApiResponse<Array<{ id: string; name: string; type: string; lastActive: string; isCurrent: boolean }>>> => {
-    return apiClient.get<ApiResponse<Array<{ id: string; name: string; type: string; lastActive: string; isCurrent: boolean }>>>('/auth/devices');
+  getDevices: async (): Promise<
+    ApiResponse<
+      Array<{ id: string; name: string; type: string; lastActive: string; isCurrent: boolean }>
+    >
+  > => {
+    return apiClient.get<
+      ApiResponse<
+        Array<{ id: string; name: string; type: string; lastActive: string; isCurrent: boolean }>
+      >
+    >('/auth/devices');
   },
 
   revokeDevice: async (deviceId: string): Promise<ApiResponse<{ message: string }>> => {

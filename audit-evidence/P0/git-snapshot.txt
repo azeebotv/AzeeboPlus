@@ -1,0 +1,956 @@
+=== git rev-parse HEAD ===
+fc01c8cb54db43001e9c336d8eb874647c7dd4f8
+
+=== git branch --show-current ===
+main
+
+=== git status --porcelain ===
+ M .dockerignore
+ M .eslintrc.json
+ M .github/workflows/ci.yml
+ M .github/workflows/pr-checks.yml
+ M .github/workflows/security-scan.yml
+ D .qoder/plans/comprehensive-code-quality-remediation.md
+ D .qoder/plans/comprehensive-codebase-analysis-and-fixes.md
+ D .qoder/plans/production-readiness-remediation.md
+ D .trae/rules/CLAUDE.md
+ D .trae/rules/DATABASE_BACKUP_STRATEGY.md
+ D .trae/rules/DATA_RETENTION_POLICY.md
+ D .trae/rules/DNS_SSL_SETUP.md
+ D .trae/rules/FINAL_SECURITY_AUDIT.md
+ D .trae/rules/IMPLEMENTATION_SUMMARY.md
+ D .trae/rules/ONBOARDING.md
+ D .trae/rules/PERFORMANCE_OPTIMIZATION.md
+ D .trae/rules/PHASE1_STATUS.md
+ D .trae/rules/PRODUCTION_GO_NO_GO.md
+ D .trae/rules/PRODUCTION_SMOKE_TESTS.md
+ D .trae/rules/QA_TESTING_PLAN.md
+ D .trae/rules/README.md
+ D .trae/rules/UAT_TEST_SCRIPT.md
+ D .trae/rules/admin/admin.md
+ D .trae/rules/apps/mobile/mobile.md
+ D .trae/rules/apps/web/web.md
+ D .trae/rules/backend/analytics.md
+ D .trae/rules/backend/api-design.md
+ D .trae/rules/backend/api-gateway.md
+ D .trae/rules/backend/backend.md
+ D .trae/rules/backend/coding-standards.md
+ D .trae/rules/backend/database.md
+ D .trae/rules/backend/error-handling.md
+ D .trae/rules/backend/monitoring.md
+ D .trae/rules/backend/observability.md
+ D .trae/rules/backend/security.md
+ D .trae/rules/backend/testing.md
+ D .trae/rules/code-review.md
+ D .trae/rules/deployment-runbooks.md
+ D .trae/rules/design.md
+ D .trae/rules/developer-onboarding.md
+ D .trae/rules/index.md
+ D .trae/rules/infrastructure/README.md
+ D .trae/rules/infrastructure/cicd.md
+ D .trae/rules/infrastructure/docker.md
+ D .trae/rules/infrastructure/infrastructure.md
+ D .trae/rules/infrastructure/kubernetes.md
+ D .trae/rules/infrastructure/monitoring.md
+ D .trae/rules/infrastructure/networking.md
+ D .trae/rules/infrastructure/storage.md
+ D .trae/rules/infrastructure/terraform.md
+ D .trae/rules/shared.md
+ D Dockerfile
+ D apps/admin/.eslintignore
+ M apps/admin/Dockerfile
+ M apps/admin/package.json
+ M apps/admin/src/main.ts
+ M apps/admin/src/modules/dashboard/dashboard.service.ts
+ M apps/admin/src/modules/system-settings/dto/update-setting.dto.ts
+ M apps/admin/src/modules/system-settings/system-settings.service.ts
+ M apps/admin/src/modules/universe-management/universe-management.controller.ts
+ M apps/admin/src/modules/universe-management/universe-management.service.ts
+ M apps/admin/tsconfig.json
+ D apps/creator-portal/.eslintignore
+ M apps/creator-portal/Dockerfile
+ M apps/creator-portal/package.json
+ M apps/creator-portal/src/creator/creator.controller.ts
+ M apps/creator-portal/src/creator/creator.service.ts
+ M apps/creator-portal/tsconfig.json
+ M apps/mobile/app.json
+ M apps/mobile/app/(auth)/_layout.tsx
+ M apps/mobile/app/(auth)/biometric.tsx
+ M apps/mobile/app/(auth)/forgot-password.tsx
+ M apps/mobile/app/(auth)/login.tsx
+ M apps/mobile/app/(auth)/onboarding-interests.tsx
+ M apps/mobile/app/(auth)/onboarding-welcome.tsx
+ M apps/mobile/app/(auth)/otp-verification.tsx
+ M apps/mobile/app/(auth)/profile-setup.tsx
+ M apps/mobile/app/(auth)/register.tsx
+ M apps/mobile/app/(auth)/reset-password.tsx
+ M apps/mobile/app/(auth)/role-selection.tsx
+ M apps/mobile/app/(creator)/analytics.tsx
+ M apps/mobile/app/(creator)/content-manager.tsx
+ M apps/mobile/app/(creator)/drafts.tsx
+ M apps/mobile/app/(creator)/earnings.tsx
+ M apps/mobile/app/(creator)/monetization.tsx
+ M apps/mobile/app/(creator)/profile.tsx
+ M apps/mobile/app/(creator)/published.tsx
+ M apps/mobile/app/(creator)/scheduled.tsx
+ M apps/mobile/app/(reality)/contestant.tsx
+ M apps/mobile/app/(reality)/episode.tsx
+ M apps/mobile/app/(reality)/episodes.tsx
+ M apps/mobile/app/(reality)/results.tsx
+ M apps/mobile/app/(reality)/super-vote.tsx
+ M apps/mobile/app/(tabs)/_layout.tsx
+ M apps/mobile/app/(tabs)/create.tsx
+ M apps/mobile/app/(tabs)/home.tsx
+ M apps/mobile/app/(tabs)/library.tsx
+ M apps/mobile/app/(tabs)/payment.tsx
+ M apps/mobile/app/(tabs)/profile.tsx
+ M apps/mobile/app/(tabs)/profile/edit.tsx
+ M apps/mobile/app/(tabs)/profile/privacy-security.tsx
+ M apps/mobile/app/(tabs)/referral.tsx
+ M apps/mobile/app/(tabs)/rewards.tsx
+ M apps/mobile/app/(tabs)/search.tsx
+ M apps/mobile/app/(tabs)/settings.tsx
+ M apps/mobile/app/(tabs)/transactions.tsx
+ M apps/mobile/app/(tabs)/wallet.tsx
+ M apps/mobile/app/(tabs)/wallet/add-funds.tsx
+ M apps/mobile/app/(tabs)/wallet/subscription-plans.tsx
+ M apps/mobile/app/(tabs)/wallet/withdraw.tsx
+ M apps/mobile/app/(tabs)/watch.tsx
+ M apps/mobile/app/_layout.tsx
+ M apps/mobile/app/character-lore.tsx
+ M apps/mobile/app/city-guide.tsx
+ M apps/mobile/app/comedy-player.tsx
+ M apps/mobile/app/comedy.tsx
+ M apps/mobile/app/comedy/player.tsx
+ M apps/mobile/app/creator-dashboard.tsx
+ M apps/mobile/app/creators/dashboard.tsx
+ M apps/mobile/app/creators/index.tsx
+ M apps/mobile/app/creators/signup.tsx
+ M apps/mobile/app/error/index.tsx
+ M apps/mobile/app/error/maintenance.tsx
+ M apps/mobile/app/error/not-found.tsx
+ M apps/mobile/app/error/offline.tsx
+ M apps/mobile/app/error/unauthorized.tsx
+ M apps/mobile/app/games/[id].tsx
+ M apps/mobile/app/games/index.tsx
+ M apps/mobile/app/index.tsx
+ M apps/mobile/app/leaderboard.tsx
+ M apps/mobile/app/legal/[type].tsx
+ M apps/mobile/app/lifestyle.tsx
+ M apps/mobile/app/messages.tsx
+ M apps/mobile/app/movies/[id].tsx
+ M apps/mobile/app/movies/index.tsx
+ M apps/mobile/app/notifications.tsx
+ M apps/mobile/app/prediction.tsx
+ M apps/mobile/app/predictions/[predictionId]/results.tsx
+ M apps/mobile/app/premium.tsx
+ M apps/mobile/app/rankings.tsx
+ M apps/mobile/app/reality.tsx
+ M apps/mobile/app/reality/[showId]/live-chat.tsx
+ M apps/mobile/app/reality/show.tsx
+ M apps/mobile/app/recommendations.tsx
+ M apps/mobile/app/settings/devices.tsx
+ M apps/mobile/app/sports-prediction.tsx
+ M apps/mobile/app/sports.tsx
+ M apps/mobile/app/sports/prediction.tsx
+ M apps/mobile/app/support.tsx
+ M apps/mobile/app/transactions/[transactionId].tsx
+ M apps/mobile/app/vertical-title.tsx
+ M apps/mobile/app/vertical.tsx
+ M apps/mobile/app/vote.tsx
+ M apps/mobile/app/watch/[contentId].tsx
+ M apps/mobile/app/watch/[id].tsx
+ M apps/mobile/app/watch/gameplay.tsx
+ M apps/mobile/app/watch/movie-detail.tsx
+ M apps/mobile/app/watch/reality-show.tsx
+ M apps/mobile/e2e/accessibility.e2e.ts
+ M apps/mobile/e2e/smoke-tests.e2e.ts
+ M apps/mobile/package.json
+ M apps/mobile/src/api/auth.api.spec.ts
+ M apps/mobile/src/api/auth.ts
+ M apps/mobile/src/api/client.ts
+ M apps/mobile/src/api/content.ts
+ M apps/mobile/src/api/creator.ts
+ M apps/mobile/src/api/engagement.ts
+ M apps/mobile/src/api/index.ts
+ M apps/mobile/src/api/messaging.ts
+ M apps/mobile/src/api/referral.ts
+ M apps/mobile/src/api/subscription.ts
+ M apps/mobile/src/api/support.ts
+ M apps/mobile/src/api/user.ts
+ M apps/mobile/src/api/wallet.api.spec.ts
+ M apps/mobile/src/api/wallet.ts
+ M apps/mobile/src/components/Accessibility.tsx
+ M apps/mobile/src/components/AmountInput.tsx
+ M apps/mobile/src/components/OfflineBanner.tsx
+ M apps/mobile/src/components/PasswordInput.tsx
+ M apps/mobile/src/components/PasswordStrengthMeter.tsx
+ M apps/mobile/src/components/PullToRefresh.tsx
+ M apps/mobile/src/components/StateContainers.tsx
+ M apps/mobile/src/contexts/AuthContext.tsx
+ M apps/mobile/src/contexts/ContentContext.tsx
+ M apps/mobile/src/contexts/NotificationContext.tsx
+ M apps/mobile/src/contexts/SettingsContext.tsx
+ M apps/mobile/src/contexts/WalletContext.tsx
+ M apps/mobile/src/hooks/useAppleGooglePay.ts
+ M apps/mobile/src/hooks/useOffline.ts
+ M apps/mobile/src/utils/appleGooglePay.ts
+ M apps/mobile/src/utils/biometricAuth.ts
+ M apps/mobile/src/utils/certificatePinning.ts
+ M apps/mobile/src/utils/deepLinking.ts
+ M apps/mobile/src/utils/offlineMode.ts
+ M apps/mobile/src/utils/performance.ts
+ M apps/mobile/tsconfig.json
+ M apps/web/Dockerfile
+ M apps/web/e2e/accessibility.spec.ts
+ M apps/web/e2e/auth.spec.ts
+ M apps/web/next.config.js
+ M apps/web/package.json
+ M apps/web/src/app/admin/announcements/page.tsx
+ M apps/web/src/app/admin/audit-logs/page.tsx
+ M apps/web/src/app/admin/content-review/page.tsx
+ M apps/web/src/app/admin/creators/page.tsx
+ M apps/web/src/app/admin/engagement/page.tsx
+ M apps/web/src/app/admin/financial/page.tsx
+ M apps/web/src/app/admin/notifications/page.tsx
+ M apps/web/src/app/admin/overview/page.tsx
+ M apps/web/src/app/admin/page.tsx
+ M apps/web/src/app/admin/payment-gateways/page.tsx
+ M apps/web/src/app/admin/reality/page.tsx
+ M apps/web/src/app/admin/reports/builder/page.tsx
+ M apps/web/src/app/admin/reports/page.tsx
+ M apps/web/src/app/admin/universes/page.tsx
+ M apps/web/src/app/admin/wallets/page.tsx
+ M apps/web/src/app/auth/profile-setup/page.tsx
+ M apps/web/src/app/auth/reset-password/page.tsx
+ M apps/web/src/app/auth/role-selection/page.tsx
+ M apps/web/src/app/browse/page.tsx
+ M apps/web/src/app/comedy/page.tsx
+ M apps/web/src/app/creator/analytics/page.tsx
+ M apps/web/src/app/creator/content-manager/page.tsx
+ M apps/web/src/app/creator/drafts/page.tsx
+ M apps/web/src/app/creator/earnings/page.tsx
+ M apps/web/src/app/creator/monetization/page.tsx
+ M apps/web/src/app/creator/profile/page.tsx
+ M apps/web/src/app/creator/published/page.tsx
+ M apps/web/src/app/creator/scheduled/page.tsx
+ M apps/web/src/app/creators/dashboard/analytics/page.tsx
+ M apps/web/src/app/creators/dashboard/content/page.tsx
+ M apps/web/src/app/creators/dashboard/earnings/page.tsx
+ M apps/web/src/app/creators/dashboard/overview/page.tsx
+ M apps/web/src/app/creators/dashboard/page.tsx
+ M apps/web/src/app/creators/dashboard/settings/page.tsx
+ M apps/web/src/app/creators/page.tsx
+ M apps/web/src/app/expired-session/page.tsx
+ M apps/web/src/app/forbidden/page.tsx
+ M apps/web/src/app/games/page.tsx
+ M apps/web/src/app/layout.tsx
+ M apps/web/src/app/leaderboard/page.tsx
+ M apps/web/src/app/lifestyle/page.tsx
+ M apps/web/src/app/maintenance/page.tsx
+ M apps/web/src/app/messages/page.tsx
+ M apps/web/src/app/movies/page.tsx
+ M apps/web/src/app/notifications/page.tsx
+ M apps/web/src/app/onboarding/page.tsx
+ M apps/web/src/app/page.tsx
+ M apps/web/src/app/predictions/[predictionId]/results/page.tsx
+ M apps/web/src/app/premium/page.tsx
+ M apps/web/src/app/profile/edit/page.tsx
+ M apps/web/src/app/profile/privacy-security/page.tsx
+ M apps/web/src/app/rankings/page.tsx
+ M apps/web/src/app/reality/contestant/page.tsx
+ M apps/web/src/app/reality/episode/page.tsx
+ M apps/web/src/app/reality/episodes/page.tsx
+ M apps/web/src/app/reality/page.tsx
+ M apps/web/src/app/reality/results/page.tsx
+ M apps/web/src/app/reality/super-vote/page.tsx
+ M apps/web/src/app/recommendations/page.tsx
+ M apps/web/src/app/referral/page.tsx
+ M apps/web/src/app/rewards/page.tsx
+ M apps/web/src/app/search/page.tsx
+ M apps/web/src/app/settings/devices/page.tsx
+ M apps/web/src/app/sports/page.tsx
+ M apps/web/src/app/support/page.tsx
+ M apps/web/src/app/unauthorized/page.tsx
+ M apps/web/src/app/vertical/page.tsx
+ M apps/web/src/app/wallet/add-funds/page.tsx
+ M apps/web/src/app/wallet/page.tsx
+ M apps/web/src/app/wallet/subscription-plans/page.tsx
+ M apps/web/src/app/wallet/transactions/[transactionId]/page.tsx
+ M apps/web/src/app/wallet/transactions/page.tsx
+ M apps/web/src/app/wallet/withdraw/page.tsx
+ M apps/web/src/app/watch/[id]/WatchPageClient.tsx
+ M apps/web/src/app/watch/[id]/page.tsx
+ M apps/web/src/components/ErrorBoundary.tsx
+ M apps/web/src/components/KeyboardNavigationProvider.tsx
+ M apps/web/src/components/SeoMeta.tsx
+ M apps/web/src/hooks/useApi.ts
+ M apps/web/src/hooks/useKeyboardNavigation.ts
+ M apps/web/src/hooks/usePWA.ts
+ M apps/web/src/hooks/usePushNotifications.ts
+ M apps/web/src/lib/analytics.ts
+ M apps/web/src/lib/api.spec.ts
+ M apps/web/src/lib/api.ts
+ M apps/web/src/lib/keyboard.ts
+ M apps/web/src/lib/performance.ts
+ M apps/web/src/lib/pushNotifications.ts
+ M apps/web/src/lib/share.ts
+ M apps/web/src/middleware.ts
+ M apps/web/src/providers/QueryProvider.tsx
+ M docker-compose.services.yml
+ M docker-compose.yml
+ D docs/CLAUDE.md
+ M docs/README.md
+ D docs/qa/chaos-test-specifications.md
+ D docs/qa/e2e-test-specifications.md
+ D docs/qa/load-test-specifications.md
+ M infra/config/pgbouncer.ini
+ M infra/config/pgbouncer_userlist.txt
+ M infra/k8s/auth-service.yaml
+ M infra/k8s/base/backup-cronjob.yaml
+ M infra/k8s/base/hpa.yaml
+ M infra/k8s/base/ingress.yaml
+ M infra/k8s/base/kustomization.yaml
+ M infra/k8s/base/network-policies.yaml
+ M infra/k8s/ingress.yaml
+ M infra/k8s/monitoring/grafana.yaml
+ M infra/k8s/monitoring/prometheus-alerts.yaml
+ M infra/k8s/postgres.yaml
+ M infra/k8s/production/kustomization.yaml
+ M infra/k8s/queue-service.yaml
+ M infra/k8s/rbac.yaml
+ M infra/k8s/redis.yaml
+ M infra/k8s/secrets.yaml
+ M infra/k8s/service-template.yaml
+ M infra/k8s/staging/kustomization.yaml
+ M infra/k8s/staging/postgres.yaml
+ M infra/k8s/staging/redis.yaml
+ M infra/k8s/staging/secrets.example.yaml
+ M package.json
+ M packages/analytics-sdk/package.json
+ M packages/analytics-sdk/src/analytics.spec.ts
+ M packages/analytics-sdk/src/index.ts
+ M packages/analytics-sdk/tsconfig.json
+ M packages/api-client/package.json
+ M packages/api-client/src/idempotency.spec.ts
+ M packages/api-client/src/index.ts
+ M packages/api-client/tsconfig.json
+ M packages/auth/package.json
+ M packages/auth/src/index.ts
+ M packages/auth/src/web/ProtectedRoute.tsx
+ M packages/design-tokens/package.json
+ M packages/design-tokens/src/animations.ts
+ M packages/design-tokens/tsconfig.json
+ M packages/error-handling/package.json
+ M packages/error-handling/src/global-exception.filter.ts
+ M packages/error-handling/src/types.ts
+ M packages/error-handling/tsconfig.json
+ M packages/feature-flags/package.json
+ M packages/feature-flags/src/index.ts
+ M packages/feature-flags/tsconfig.json
+ M packages/internal-clients/package.json
+ M packages/internal-clients/src/index.ts
+ M packages/internal-clients/tsconfig.json
+ M packages/logger/package.json
+ M packages/logger/src/distributed-tracing.interceptor.ts
+ M packages/logger/src/index.ts
+ M packages/logger/src/logging.interceptor.ts
+ M packages/logger/src/response-sanitizer.interceptor.ts
+ M packages/logger/src/response-wrapper.interceptor.ts
+ M packages/logger/tsconfig.json
+ M packages/observability/package.json
+ M packages/observability/src/anomaly-detection.service.ts
+ M packages/observability/src/health-check.service.ts
+ M packages/observability/src/index.ts
+ M packages/observability/src/metrics.service.ts
+ M packages/observability/src/observability.module.ts
+ M packages/observability/src/tracing.service.ts
+ M packages/observability/tsconfig.json
+ M packages/security/package.json
+ M packages/security/src/cors.config.ts
+ M packages/security/src/decorators/permissions.decorator.ts
+ M packages/security/src/guards/admin.guard.ts
+ M packages/security/src/guards/permissions.guard.ts
+ M packages/security/src/index.ts
+ M packages/security/src/request-id.middleware.ts
+ M packages/security/tsconfig.json
+ M packages/shared-services/package.json
+ M packages/shared-services/prisma/schema.prisma
+ M packages/shared-services/queue/package.json
+ M packages/shared-services/queue/tsconfig.json
+ M packages/shared-services/src/analytics/analytics.service.ts
+ M packages/shared-services/src/api-versioning/api-version.decorator.ts
+ M packages/shared-services/src/audit/audit.interceptor.ts
+ M packages/shared-services/src/audit/audit.service.ts
+ M packages/shared-services/src/cache/cache.decorator.ts
+ M packages/shared-services/src/cache/cache.interceptor.ts
+ M packages/shared-services/src/cache/cache.service.spec.ts
+ M packages/shared-services/src/cache/cache.service.ts
+ M packages/shared-services/src/pagination/pagination.decorator.ts
+ D packages/shared-services/src/rate-limit/rate-limit.decorators.ts
+ D packages/shared-services/src/rate-limit/rate-limit.interceptor.ts
+ D packages/shared-services/src/rate-limit/rate-limit.module.ts
+ D packages/shared-services/src/rate-limit/rate-limit.service.ts
+ M packages/shared-services/src/redis/redis.module.ts
+ M packages/shared-services/src/redis/redis.service.ts
+ M packages/shared-services/src/sanitize/sanitize.interceptor.spec.ts
+ M packages/shared-services/src/sanitize/sanitize.interceptor.ts
+ D packages/shared-services/src/validation/validation.decorators.ts
+ D packages/shared-services/src/validation/validation.module.ts
+ D packages/shared-services/src/validation/validation.pipe.ts
+ M packages/shared-services/tsconfig.json
+ M packages/shared-types/package.json
+ M packages/shared-types/src/env-validation.ts
+ M packages/shared-types/src/index.ts
+ M packages/shared-types/src/pricing.ts
+ M packages/shared-types/src/secret-validation.ts
+ M packages/shared-types/tsconfig.json
+ M packages/test-utils/package.json
+ M packages/test-utils/src/index.ts
+ M packages/test-utils/src/integration-test-utils.ts
+ M packages/test-utils/tsconfig.json
+ M packages/ui/package.json
+ M packages/ui/src/Button.stories.tsx
+ M packages/ui/src/DataDisplay.stories.tsx
+ M packages/ui/src/DataDisplay.tsx
+ M packages/ui/src/Form.stories.tsx
+ M packages/ui/src/Form.tsx
+ M packages/ui/src/Header.tsx
+ M packages/ui/src/Icon.stories.tsx
+ M packages/ui/src/Icon.tsx
+ M packages/ui/src/Input.stories.tsx
+ M packages/ui/src/Input.tsx
+ M packages/ui/src/Layout.stories.tsx
+ M packages/ui/src/Layout.tsx
+ M packages/ui/src/Modal.stories.tsx
+ M packages/ui/src/Modal.tsx
+ M packages/ui/src/Motion.tsx
+ M packages/ui/src/Navigation.stories.tsx
+ M packages/ui/src/Navigation.tsx
+ M packages/ui/src/Switch.tsx
+ M packages/ui/src/Toast.tsx
+ M packages/ui/src/components.tsx
+ M packages/ui/src/hooks.ts
+ M packages/ui/src/mobile-state-handlers.tsx
+ M packages/ui/src/state-handlers.tsx
+ M packages/ui/src/web-components.tsx
+ M packages/ui/tsconfig.json
+ M packages/utils/package.json
+ M packages/utils/src/type-utils.ts
+ M packages/utils/tsconfig.json
+ M packages/validation/package.json
+ M packages/validation/src/pipes/sanitize-output.interceptor.ts
+ M packages/validation/src/validators/password.validator.ts
+ M packages/validation/tsconfig.json
+ M packages/validation/tsconfig.tsbuildinfo
+ M pnpm-lock.yaml
+ M pnpm-workspace.yaml
+ D services/core/auth-service/.eslintignore
+ M services/core/auth-service/Dockerfile
+ M services/core/auth-service/package.json
+ M services/core/auth-service/prisma/schema.prisma
+ M services/core/auth-service/src/common/common.module.ts
+ M services/core/auth-service/src/common/guards/authorization.spec.ts
+ M services/core/auth-service/src/common/guards/rate-limit.guard.ts
+ M services/core/auth-service/src/main.ts
+ M services/core/auth-service/src/modules/admin/admin.controller.ts
+ M services/core/auth-service/src/modules/admin/admin.service.ts
+ M services/core/auth-service/src/modules/auth/auth.contract.spec.ts
+ M services/core/auth-service/src/modules/auth/auth.controller.ts
+ M services/core/auth-service/src/modules/auth/auth.integration.spec.ts
+ M services/core/auth-service/src/modules/auth/auth.module.ts
+ M services/core/auth-service/src/modules/auth/auth.service.ts
+ M services/core/auth-service/src/modules/auth/device/device.controller.ts
+ M services/core/auth-service/src/modules/auth/otp/otp.service.ts
+ M services/core/auth-service/src/modules/auth/social/social.service.ts
+ M services/core/auth-service/src/modules/database/prisma.service.ts
+ M services/core/auth-service/src/modules/health/health.controller.ts
+ M services/core/auth-service/tsconfig.json
+ D services/core/content-service/.eslintignore
+ M services/core/content-service/Dockerfile
+ M services/core/content-service/package.json
+ M services/core/content-service/prisma/schema.prisma
+ M services/core/content-service/src/app.module.ts
+ M services/core/content-service/src/main.ts
+ M services/core/content-service/src/modules/admin/admin.controller.ts
+ M services/core/content-service/src/modules/admin/admin.service.ts
+ M services/core/content-service/src/modules/content/access-control.service.ts
+ M services/core/content-service/src/modules/content/content.caching.spec.ts
+ M services/core/content-service/src/modules/content/content.contract.spec.ts
+ M services/core/content-service/src/modules/content/content.controller.ts
+ M services/core/content-service/src/modules/content/content.module.ts
+ M services/core/content-service/src/modules/content/content.repository.ts
+ M services/core/content-service/src/modules/content/content.service.ts
+ M services/core/content-service/src/modules/database/prisma.service.ts
+ M services/core/content-service/src/modules/moderation/moderation.authorization.spec.ts
+ M services/core/content-service/src/modules/moderation/moderation.controller.ts
+ M services/core/content-service/src/modules/moderation/moderation.module.ts
+ M services/core/content-service/src/modules/moderation/moderation.repository.ts
+ M services/core/content-service/src/modules/moderation/moderation.service.ts
+ M services/core/content-service/src/modules/moderation/moderation.validation.spec.ts
+ M services/core/content-service/src/modules/public/public.controller.ts
+ M services/core/content-service/tsconfig.json
+ M services/core/media-service/Dockerfile
+ M services/core/media-service/package.json
+ M services/core/media-service/src/common/services/file-validation.service.ts
+ M services/core/media-service/src/main.ts
+ M services/core/media-service/src/modules/admin/admin.controller.ts
+ M services/core/media-service/src/modules/admin/admin.module.ts
+ M services/core/media-service/src/modules/admin/admin.service.ts
+ M services/core/media-service/src/modules/media/media.contract.spec.ts
+ M services/core/media-service/src/modules/upload/premium-content.service.ts
+ M services/core/media-service/src/modules/upload/s3.service.ts
+ M services/core/media-service/src/modules/upload/upload.controller.ts
+ M services/core/media-service/src/modules/upload/upload.module.ts
+ M services/core/media-service/src/modules/upload/upload.service.ts
+ M services/core/media-service/tsconfig.json
+ D services/core/payment-service/.eslintignore
+ M services/core/payment-service/Dockerfile
+ M services/core/payment-service/package.json
+ M services/core/payment-service/prisma/schema.prisma
+ M services/core/payment-service/src/main.ts
+ M services/core/payment-service/src/modules/admin/admin.controller.ts
+ M services/core/payment-service/src/modules/admin/admin.service.ts
+ M services/core/payment-service/src/modules/database/prisma.service.ts
+ M services/core/payment-service/src/modules/health/health.controller.ts
+ M services/core/payment-service/src/modules/health/interfaces/health.interfaces.ts
+ M services/core/payment-service/src/modules/payments/payments.authorization.spec.ts
+ M services/core/payment-service/src/modules/payments/payments.contract.spec.ts
+ M services/core/payment-service/src/modules/payments/payments.controller.ts
+ M services/core/payment-service/src/modules/payments/payments.e2e.spec.ts
+ M services/core/payment-service/src/modules/payments/payments.service.spec.ts
+ M services/core/payment-service/src/modules/payments/payments.service.ts
+ M services/core/payment-service/src/modules/payments/webhook-retry.service.ts
+ M services/core/payment-service/src/modules/scheduled-tasks/cron-tasks.service.ts
+ M services/core/payment-service/src/modules/scheduled-tasks/scheduled-tasks.module.ts
+ M services/core/payment-service/src/modules/webhooks/webhook-security.service.spec.ts
+ M services/core/payment-service/src/modules/webhooks/webhook-security.service.ts
+ M services/core/payment-service/src/modules/webhooks/webhook.controller.spec.ts
+ M services/core/payment-service/src/modules/webhooks/webhook.controller.ts
+ M services/core/payment-service/tsconfig.json
+ D services/core/search-service/.eslintignore
+ M services/core/search-service/Dockerfile
+ M services/core/search-service/package.json
+ M services/core/search-service/prisma/schema.prisma
+ M services/core/search-service/src/main.ts
+ M services/core/search-service/src/modules/admin/admin.controller.ts
+ M services/core/search-service/src/modules/admin/admin.service.ts
+ M services/core/search-service/src/modules/search/search.contract.spec.ts
+ M services/core/search-service/src/modules/search/search.integration.spec.ts
+ M services/core/search-service/src/modules/search/search.module.ts
+ M services/core/search-service/src/modules/search/search.repository.ts
+ M services/core/search-service/src/modules/search/search.service.ts
+ M services/core/search-service/tsconfig.json
+ D services/core/user-service/.eslintignore
+ M services/core/user-service/Dockerfile
+ M services/core/user-service/package.json
+ M services/core/user-service/prisma/schema.prisma
+ M services/core/user-service/src/main.ts
+ M services/core/user-service/src/modules/admin/admin.controller.ts
+ M services/core/user-service/src/modules/admin/admin.module.ts
+ M services/core/user-service/src/modules/admin/admin.service.spec.ts
+ M services/core/user-service/src/modules/admin/admin.service.ts
+ M services/core/user-service/src/modules/admin/dto/update-user-admin.dto.ts
+ M services/core/user-service/src/modules/database/prisma.service.ts
+ M services/core/user-service/src/modules/users/users.contract.spec.ts
+ M services/core/user-service/src/modules/users/users.controller.ts
+ M services/core/user-service/src/modules/users/users.integration.spec.ts
+ M services/core/user-service/src/modules/users/users.module.ts
+ M services/core/user-service/src/modules/users/users.pagination.spec.ts
+ M services/core/user-service/src/modules/users/users.service.spec.ts
+ M services/core/user-service/src/modules/users/users.service.ts
+ M services/core/user-service/tsconfig.json
+ D services/core/wallet-service/.eslintignore
+ M services/core/wallet-service/Dockerfile
+ M services/core/wallet-service/package.json
+ M services/core/wallet-service/prisma/schema.prisma
+ M services/core/wallet-service/src/app.module.ts
+ M services/core/wallet-service/src/main.ts
+ M services/core/wallet-service/src/modules/admin/admin.controller.ts
+ M services/core/wallet-service/src/modules/admin/admin.service.ts
+ M services/core/wallet-service/src/modules/database/prisma.service.ts
+ M services/core/wallet-service/src/modules/metrics/metrics.service.ts
+ M services/core/wallet-service/src/modules/wallet/interfaces/wallet-response.interface.ts
+ M services/core/wallet-service/src/modules/wallet/wallet-e2e.spec.ts
+ M services/core/wallet-service/src/modules/wallet/wallet.authorization.spec.ts
+ M services/core/wallet-service/src/modules/wallet/wallet.contract.spec.ts
+ M services/core/wallet-service/src/modules/wallet/wallet.e2e.spec.ts
+ M services/core/wallet-service/src/modules/wallet/wallet.integration.spec.ts
+ M services/core/wallet-service/src/modules/wallet/wallet.module.ts
+ M services/core/wallet-service/src/modules/wallet/wallet.repository.ts
+ M services/core/wallet-service/src/modules/wallet/wallet.service.spec.ts
+ M services/core/wallet-service/src/modules/wallet/wallet.service.ts
+ M services/core/wallet-service/tsconfig.json
+ M services/engagement/engagement-service/Dockerfile
+ M services/engagement/engagement-service/package.json
+ M services/engagement/engagement-service/prisma/schema.prisma
+ M services/engagement/engagement-service/src/main.ts
+ M services/engagement/engagement-service/src/modules/database/prisma.service.ts
+ M services/engagement/engagement-service/src/modules/engagement/engagement.controller.ts
+ M services/engagement/engagement-service/src/modules/engagement/engagement.service.ts
+ M services/engagement/engagement-service/tsconfig.json
+ M services/engagement/messaging-service/Dockerfile
+ M services/engagement/messaging-service/package.json
+ M services/engagement/messaging-service/prisma/schema.prisma
+ M services/engagement/messaging-service/src/main.ts
+ M services/engagement/messaging-service/src/modules/messaging/messaging.controller.ts
+ M services/engagement/messaging-service/tsconfig.json
+ D services/engagement/notification-service/.eslintignore
+ M services/engagement/notification-service/Dockerfile
+ M services/engagement/notification-service/package.json
+ M services/engagement/notification-service/prisma/schema.prisma
+ M services/engagement/notification-service/src/main.ts
+ M services/engagement/notification-service/src/modules/admin/admin.controller.ts
+ M services/engagement/notification-service/src/modules/admin/admin.module.ts
+ M services/engagement/notification-service/src/modules/admin/admin.service.ts
+ M services/engagement/notification-service/src/modules/notifications/notifications.authorization.spec.ts
+ M services/engagement/notification-service/src/modules/notifications/notifications.contract.spec.ts
+ M services/engagement/notification-service/src/modules/notifications/notifications.module.ts
+ M services/engagement/notification-service/src/modules/notifications/notifications.service.spec.ts
+ M services/engagement/notification-service/tsconfig.json
+ M services/engagement/referral-service/Dockerfile
+ M services/engagement/referral-service/package.json
+ M services/engagement/referral-service/prisma/schema.prisma
+ M services/engagement/referral-service/src/main.ts
+ M services/engagement/referral-service/src/modules/referral/referral.module.ts
+ M services/engagement/referral-service/src/modules/referral/referral.service.ts
+ M services/engagement/referral-service/tsconfig.json
+ D services/engagement/reward-service/.eslintignore
+ M services/engagement/reward-service/Dockerfile
+ M services/engagement/reward-service/package.json
+ M services/engagement/reward-service/prisma/schema.prisma
+ M services/engagement/reward-service/src/main.ts
+ M services/engagement/reward-service/src/modules/admin/admin.controller.ts
+ M services/engagement/reward-service/src/modules/admin/admin.service.ts
+ M services/engagement/reward-service/src/modules/rewards/rewards.contract.spec.ts
+ M services/engagement/reward-service/src/modules/rewards/rewards.module.ts
+ M services/engagement/reward-service/src/modules/rewards/rewards.service.spec.ts
+ M services/engagement/reward-service/src/modules/rewards/rewards.service.ts
+ M services/engagement/reward-service/tsconfig.json
+ M services/engagement/subscription-service/Dockerfile
+ M services/engagement/subscription-service/package.json
+ M services/engagement/subscription-service/prisma/schema.prisma
+ M services/engagement/subscription-service/src/main.ts
+ M services/engagement/subscription-service/src/modules/subscription/subscription.controller.ts
+ M services/engagement/subscription-service/tsconfig.json
+ M services/gateway/api-gateway/Dockerfile
+ M services/gateway/api-gateway/package.json
+ M services/gateway/api-gateway/src/app.e2e-spec.ts
+ M services/gateway/api-gateway/src/app.module.ts
+ M services/gateway/api-gateway/src/modules/health/health.module.ts
+ M services/gateway/api-gateway/src/modules/proxy/proxy.controller.spec.ts
+ M services/gateway/api-gateway/src/modules/proxy/proxy.controller.ts
+ M services/gateway/api-gateway/src/modules/proxy/upstream-preservation.spec.ts
+ M services/gateway/api-gateway/tsconfig.json
+ D services/intelligence/analytics-service/.eslintignore
+ M services/intelligence/analytics-service/Dockerfile
+ M services/intelligence/analytics-service/package.json
+ M services/intelligence/analytics-service/prisma/schema.prisma
+ M services/intelligence/analytics-service/src/main.ts
+ M services/intelligence/analytics-service/src/modules/admin/admin.controller.ts
+ M services/intelligence/analytics-service/src/modules/admin/admin.module.ts
+ M services/intelligence/analytics-service/src/modules/admin/admin.service.ts
+ M services/intelligence/analytics-service/src/modules/analytics-instrumentation/analytics-instrumentation.service.ts
+ M services/intelligence/analytics-service/src/modules/analytics/analytics.contract.spec.ts
+ M services/intelligence/analytics-service/src/modules/analytics/analytics.controller.ts
+ M services/intelligence/analytics-service/src/modules/analytics/analytics.integration.spec.ts
+ M services/intelligence/analytics-service/src/modules/analytics/analytics.module.ts
+ M services/intelligence/analytics-service/src/modules/analytics/analytics.service.spec.ts
+ M services/intelligence/analytics-service/src/modules/analytics/analytics.service.ts
+ M services/intelligence/analytics-service/src/modules/intelligence/intelligence.service.ts
+ M services/intelligence/analytics-service/src/modules/report-builder/dto/report-builder.dto.ts
+ M services/intelligence/analytics-service/src/modules/report-builder/report-builder.service.ts
+ M services/intelligence/analytics-service/tsconfig.json
+ D services/intelligence/recommendation-service/.eslintignore
+ M services/intelligence/recommendation-service/Dockerfile
+ M services/intelligence/recommendation-service/package.json
+ M services/intelligence/recommendation-service/prisma/schema.prisma
+ M services/intelligence/recommendation-service/src/main.ts
+ M services/intelligence/recommendation-service/src/modules/admin/admin.controller.ts
+ M services/intelligence/recommendation-service/src/modules/recommendation/recommendation.controller.ts
+ M services/intelligence/recommendation-service/src/modules/recommendation/recommendation.integration.spec.ts
+ M services/intelligence/recommendation-service/src/modules/recommendation/recommendation.service.spec.ts
+ M services/intelligence/recommendation-service/src/modules/recommendation/recommendation.service.ts
+ M services/intelligence/recommendation-service/tsconfig.json
+ D services/operations/creator-service/.eslintignore
+ D services/operations/creator-service/.gitignore
+ D services/operations/creator-service/Dockerfile
+ D services/operations/creator-service/README.md
+ D services/operations/creator-service/jest.config.js
+ D services/operations/creator-service/package.json
+ D services/operations/creator-service/prisma/migrations/20240101000000_init/migration.sql
+ D services/operations/creator-service/prisma/migrations/migration_lock.toml
+ D services/operations/creator-service/prisma/schema.prisma
+ D services/operations/creator-service/src/app.module.ts
+ D services/operations/creator-service/src/common/decorators/roles.decorator.ts
+ D services/operations/creator-service/src/common/guards/roles.guard.ts
+ D services/operations/creator-service/src/main.ts
+ D services/operations/creator-service/src/modules/admin/admin.controller.ts
+ D services/operations/creator-service/src/modules/admin/admin.service.ts
+ D services/operations/creator-service/src/modules/creators/creators.contract.spec.ts
+ D services/operations/creator-service/src/modules/creators/creators.controller.ts
+ D services/operations/creator-service/src/modules/creators/creators.integration.spec.ts
+ D services/operations/creator-service/src/modules/creators/creators.module.ts
+ D services/operations/creator-service/src/modules/creators/creators.service.spec.ts
+ D services/operations/creator-service/src/modules/creators/creators.service.ts
+ D services/operations/creator-service/src/modules/creators/dto/creator.dto.ts
+ D services/operations/creator-service/src/modules/creators/interfaces/creator-response.interface.ts
+ D services/operations/creator-service/src/modules/database/database.module.ts
+ D services/operations/creator-service/src/modules/database/prisma.service.ts
+ D services/operations/creator-service/src/modules/health/health.controller.ts
+ D services/operations/creator-service/src/modules/health/health.module.ts
+ D services/operations/creator-service/tsconfig.build.json
+ D services/operations/creator-service/tsconfig.json
+ D services/operations/moderation-service/.eslintignore
+ M services/operations/moderation-service/Dockerfile
+ M services/operations/moderation-service/package.json
+ M services/operations/moderation-service/prisma/schema.prisma
+ M services/operations/moderation-service/src/main.ts
+ M services/operations/moderation-service/src/modules/moderation/interfaces/moderation-response.interface.ts
+ M services/operations/moderation-service/src/modules/moderation/moderation.controller.ts
+ M services/operations/moderation-service/src/modules/moderation/moderation.integration.spec.ts
+ M services/operations/moderation-service/src/modules/moderation/moderation.module.ts
+ M services/operations/moderation-service/src/modules/moderation/moderation.service.spec.ts
+ M services/operations/moderation-service/src/modules/moderation/moderation.service.ts
+ M services/operations/moderation-service/src/modules/moderation/safety-scanning.service.ts
+ M services/operations/moderation-service/tsconfig.json
+ M services/operations/queue-service/Dockerfile
+ M services/operations/queue-service/package.json
+ M services/operations/queue-service/prisma/schema.prisma
+ M services/operations/queue-service/src/main.ts
+ M services/operations/queue-service/src/modules/database/prisma.service.ts
+ M services/operations/queue-service/src/modules/email/email.service.spec.ts
+ M services/operations/queue-service/src/modules/payments/providers/flutterwave.provider.ts
+ M services/operations/queue-service/src/modules/payments/providers/payment-provider.interface.ts
+ M services/operations/queue-service/src/modules/payments/providers/paystack.provider.ts
+ M services/operations/queue-service/src/processors/email.processor.ts
+ M services/operations/queue-service/src/processors/notification.processor.ts
+ M services/operations/queue-service/src/processors/payment.processor.ts
+ M services/operations/queue-service/tsconfig.json
+ D services/operations/support-service/.eslintignore
+ M services/operations/support-service/Dockerfile
+ M services/operations/support-service/package.json
+ M services/operations/support-service/prisma/schema.prisma
+ M services/operations/support-service/src/app.module.ts
+ M services/operations/support-service/src/common/common.module.ts
+ M services/operations/support-service/src/common/guards/admin.authorization.spec.ts
+ M services/operations/support-service/src/common/guards/guards.spec.ts
+ M services/operations/support-service/src/main.ts
+ M services/operations/support-service/src/modules/appeal/appeal.service.ts
+ M services/operations/support-service/src/modules/chargeback/chargeback.service.ts
+ M services/operations/support-service/src/modules/refund/refund.service.ts
+ M services/operations/support-service/src/modules/support/support.controller.ts
+ M services/operations/support-service/src/modules/support/support.module.ts
+ M services/operations/support-service/src/modules/support/support.repository.ts
+ M services/operations/support-service/src/modules/support/support.workflow.integration.spec.ts
+ M services/operations/support-service/src/modules/suspension/suspension.service.ts
+ M services/operations/support-service/src/modules/takedown/takedown.service.ts
+ M services/operations/support-service/src/modules/ticket/ticket.pagination.spec.ts
+ M services/operations/support-service/src/modules/webhook/webhook.service.ts
+ M services/operations/support-service/tsconfig.json
+ D services/universes/comedy-service/.eslintignore
+ M services/universes/comedy-service/Dockerfile
+ M services/universes/comedy-service/package.json
+ M services/universes/comedy-service/prisma/schema.prisma
+ M services/universes/comedy-service/src/common/services/redis.service.ts
+ M services/universes/comedy-service/src/main.ts
+ M services/universes/comedy-service/src/modules/admin/admin.controller.ts
+ M services/universes/comedy-service/src/modules/comedy-feed/comedy-feed.service.spec.ts
+ M services/universes/comedy-service/src/modules/comedy/comedy.module.ts
+ M services/universes/comedy-service/src/modules/comedy/comedy.service.spec.ts
+ M services/universes/comedy-service/src/modules/comedy/comedy.service.ts
+ M services/universes/comedy-service/tsconfig.json
+ D services/universes/games-service/.eslintignore
+ M services/universes/games-service/Dockerfile
+ M services/universes/games-service/package.json
+ M services/universes/games-service/prisma/schema.prisma
+ M services/universes/games-service/src/main.ts
+ M services/universes/games-service/src/modules/admin/admin.controller.ts
+ M services/universes/games-service/src/modules/admin/admin.service.ts
+ M services/universes/games-service/src/modules/game-catalog/game-catalog.service.ts
+ M services/universes/games-service/src/modules/games/games.contract.spec.ts
+ M services/universes/games-service/src/modules/games/games.integration.spec.ts
+ M services/universes/games-service/src/modules/games/games.module.ts
+ M services/universes/games-service/src/modules/games/games.service.spec.ts
+ M services/universes/games-service/src/modules/games/games.service.ts
+ M services/universes/games-service/src/modules/tournament/tournament.service.spec.ts
+ M services/universes/games-service/src/modules/tournament/tournament.service.ts
+ M services/universes/games-service/tsconfig.json
+ D services/universes/lifestyle-service/.eslintignore
+ M services/universes/lifestyle-service/Dockerfile
+ M services/universes/lifestyle-service/package.json
+ M services/universes/lifestyle-service/prisma/schema.prisma
+ M services/universes/lifestyle-service/src/main.ts
+ M services/universes/lifestyle-service/src/modules/admin/admin.controller.ts
+ M services/universes/lifestyle-service/src/modules/admin/admin.service.ts
+ M services/universes/lifestyle-service/src/modules/celebrity/celebrity.service.spec.ts
+ M services/universes/lifestyle-service/src/modules/challenges/challenge.controller.ts
+ M services/universes/lifestyle-service/src/modules/challenges/challenge.module.ts
+ M services/universes/lifestyle-service/src/modules/challenges/challenge.service.ts
+ M services/universes/lifestyle-service/src/modules/city-guide/city-guide.service.spec.ts
+ M services/universes/lifestyle-service/src/modules/events/events.controller.ts
+ M services/universes/lifestyle-service/src/modules/events/events.service.spec.ts
+ M services/universes/lifestyle-service/src/modules/feed/feed.service.spec.ts
+ M services/universes/lifestyle-service/src/modules/feed/feed.service.ts
+ M services/universes/lifestyle-service/src/modules/influencer/influencer.controller.ts
+ M services/universes/lifestyle-service/src/modules/influencer/influencer.service.spec.ts
+ M services/universes/lifestyle-service/src/modules/influencer/influencer.service.ts
+ M services/universes/lifestyle-service/src/modules/music/music.service.spec.ts
+ M services/universes/lifestyle-service/src/modules/nightlife/nightlife.service.spec.ts
+ M services/universes/lifestyle-service/src/modules/polls/poll.controller.ts
+ M services/universes/lifestyle-service/src/modules/polls/poll.module.ts
+ M services/universes/lifestyle-service/src/modules/polls/poll.service.ts
+ M services/universes/lifestyle-service/src/modules/quizzes/quiz.controller.ts
+ M services/universes/lifestyle-service/src/modules/quizzes/quiz.module.ts
+ M services/universes/lifestyle-service/src/modules/quizzes/quiz.service.ts
+ M services/universes/lifestyle-service/src/modules/stories/stories.controller.ts
+ M services/universes/lifestyle-service/tsconfig.json
+ D services/universes/movie-service/.eslintignore
+ M services/universes/movie-service/Dockerfile
+ M services/universes/movie-service/package.json
+ M services/universes/movie-service/prisma/schema.prisma
+ M services/universes/movie-service/src/main.ts
+ M services/universes/movie-service/src/modules/admin/admin.controller.ts
+ M services/universes/movie-service/src/modules/admin/admin.service.ts
+ M services/universes/movie-service/src/modules/filmmaker/filmmaker.service.spec.ts
+ M services/universes/movie-service/src/modules/movies/movies.contract.spec.ts
+ M services/universes/movie-service/src/modules/movies/movies.module.ts
+ M services/universes/movie-service/src/modules/movies/movies.service.spec.ts
+ M services/universes/movie-service/tsconfig.json
+ D services/universes/reality-service/.eslintignore
+ M services/universes/reality-service/Dockerfile
+ M services/universes/reality-service/package.json
+ M services/universes/reality-service/prisma/schema.prisma
+ M services/universes/reality-service/src/common/services/redis.service.ts
+ M services/universes/reality-service/src/main.ts
+ M services/universes/reality-service/src/modules/admin/admin.controller.ts
+ M services/universes/reality-service/src/modules/admin/admin.service.ts
+ M services/universes/reality-service/src/modules/health/health.controller.ts
+ M services/universes/reality-service/src/modules/reality/reality.contract.spec.ts
+ M services/universes/reality-service/src/modules/reality/reality.controller.ts
+ M services/universes/reality-service/src/modules/reality/reality.integration.spec.ts
+ M services/universes/reality-service/src/modules/reality/reality.module.ts
+ M services/universes/reality-service/src/modules/reality/reality.service.spec.ts
+ M services/universes/reality-service/src/modules/reality/reality.service.ts
+ M services/universes/reality-service/src/modules/reality/reality.validation.spec.ts
+ M services/universes/reality-service/tsconfig.json
+ D services/universes/sports-service/.eslintignore
+ M services/universes/sports-service/Dockerfile
+ M services/universes/sports-service/package.json
+ M services/universes/sports-service/prisma/schema.prisma
+ M services/universes/sports-service/src/main.ts
+ M services/universes/sports-service/src/modules/admin/admin.controller.ts
+ M services/universes/sports-service/src/modules/admin/admin.service.ts
+ M services/universes/sports-service/src/modules/fan-contests/fan-contests.contract.spec.ts
+ M services/universes/sports-service/src/modules/fan-contests/fan-contests.service.spec.ts
+ M services/universes/sports-service/src/modules/fan-contests/fan-contests.validation.spec.ts
+ M services/universes/sports-service/src/modules/fixtures/fixtures.service.spec.ts
+ M services/universes/sports-service/src/modules/prediction-markets/prediction-markets.contract.spec.ts
+ M services/universes/sports-service/src/modules/prediction-markets/prediction-markets.controller.ts
+ M services/universes/sports-service/src/modules/prediction-markets/prediction-markets.validation.spec.ts
+ M services/universes/sports-service/src/modules/sports/sports.module.ts
+ M services/universes/sports-service/src/modules/sports/sports.service.spec.ts
+ M services/universes/sports-service/src/modules/sports/sports.service.ts
+ M services/universes/sports-service/tsconfig.json
+ D services/universes/vertical-service/.eslintignore
+ M services/universes/vertical-service/Dockerfile
+ M services/universes/vertical-service/package.json
+ M services/universes/vertical-service/prisma/schema.prisma
+ M services/universes/vertical-service/src/main.ts
+ M services/universes/vertical-service/src/modules/admin/admin.controller.ts
+ M services/universes/vertical-service/src/modules/admin/admin.service.ts
+ M services/universes/vertical-service/src/modules/lore/lore.service.spec.ts
+ M services/universes/vertical-service/src/modules/titles/titles.service.spec.ts
+ M services/universes/vertical-service/src/modules/universe/universe.service.spec.ts
+ M services/universes/vertical-service/src/modules/universe/universe.service.ts
+ M services/universes/vertical-service/tsconfig.json
+ M tsconfig.json
+?? .github/scripts/
+?? .github/workflows/terraform.yml
+?? .npmrc
+?? .qoder/specs/
+?? CLAUDE.md
+?? COMPREHENSIVE_AUDIT_PROMPT.md
+?? CONTRIBUTING.md
+?? LICENSE
+?? README.md
+?? apps/mobile/.expo/web/
+?? apps/mobile/assets/
+?? apps/mobile/src/api/recommendation.ts
+?? apps/mobile/types/
+?? audit-evidence/
+?? ci/scripts/secret-verification.sh
+?? ci/scripts/validate-analytics-events.sh
+?? docs-sync.config.json
+?? eslint.config.js
+?? infra/config/redis.conf
+?? infra/helm/
+?? infra/k8s/audit-policy.yaml
+?? infra/k8s/base/cdn-ingress.yaml
+?? infra/k8s/base/external-secrets.yaml
+?? infra/k8s/base/node-exporter.yaml
+?? infra/k8s/base/pgbouncer.yaml
+?? infra/k8s/base/postgres-ha.yaml
+?? infra/k8s/base/postgres-operator-rbac.yaml
+?? infra/k8s/cronjobs/
+?? infra/k8s/monitoring/grafana-secrets.yaml
+?? infra/k8s/rbac-namespaced.yaml
+?? infra/terraform/
+?? packages/api-client/jest.config.js
+?? packages/opentelemetry/
+?? packages/shared-services/jest.config.js
+?? packages/shared-types/src/data-classification.ts
+?? packages/shared-types/src/privacy-policy.ts
+?? scripts/apply-indexes.sh
+?? scripts/coverage-analyzer.ts
+?? scripts/data-retention-enforcement.ts
+?? scripts/docs-sync.ts
+?? scripts/install-operators.sh
+?? scripts/restore-pitr.sh
+?? scripts/test-creator-service-manual.js
+?? services/core/auth-service/prisma/migrations/20260617000001_auth_rbac/
+?? services/core/content-service/src/cache/cache.module.ts
+?? services/core/content-service/src/cache/redis.service.ts
+?? services/core/payment-service/prisma/migrations/
+?? services/core/search-service/prisma/migrations/20260617000004_search_suggestions_ranking/
+?? services/core/user-service/src/modules/user/
+?? services/core/wallet-service/prisma/migrations/
+?? services/engagement/engagement-service/README.md
+?? services/engagement/messaging-service/README.md
+?? services/engagement/notification-service/prisma/migrations/20260617000006_notification_category_a/
+?? services/engagement/subscription-service/README.md
+?? services/engagement/subscription-service/src/modules/subscription/subscription.contract.spec.ts
+?? services/engagement/subscription-service/src/modules/subscription/subscription.service.spec.ts
+?? services/gateway/api-gateway/src/common/
+?? services/gateway/api-gateway/src/modules/health/circuit-breaker.controller.ts
+?? services/intelligence/analytics-service/prisma/migrations/20260617000007_analytics_category_a/
+?? services/operations/queue-service/prisma/migrations/20260617000000_queue_job_ledger/
+?? services/operations/queue-service/prisma/migrations/20260617000005_queue_media_persistence/
+?? services/universes/creator-service/
+?? services/universes/lifestyle-service/src/common/
+?? todo.md
+?? tsconfig.scripts.json
+
+=== git log --oneline -n 20 ===
+fc01c8c refactor(task-2): deduplicate shared auth infrastructure
+411de33 chore: git & infrastructure cleanup
+b00492d new update
+1419e5b Add docs/ to .gitignore
+896d1e4 Add ioredis dependency and normalize tsconfigs
+d36c298 Reorganize monorepo structure and extract shared package
+33c194f Add generated Prisma clients for core services
+7a64423 Standardize Dockerfiles and add subscription-service
+d0d2fad New Upgrades
+90d1b53 feat: implement all 33 tasks across 7 phases from todo.md
+07d0200 Bump actions/cache to v5 in CI workflow
+eee01a8 Update GitHub workflows, remove recommendations
+5af4ce2 Add Coolify docs; update CI, scans & dependabot
+18f9962 Monorepo: add services, packages, k8s & docs
+d083879 Reorganize monorepo: add services & apps
+5ea9feb Add initial monorepo scaffold and services
+
+=== git rev-list --count HEAD ===
+16
+
+=== captured at ===
+2026-06-22T10:42:21Z

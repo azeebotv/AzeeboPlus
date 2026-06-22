@@ -24,7 +24,7 @@ import { RateLimiterModule, AdminGuard } from '@azeebo/security';
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       useFactory: (configService: ConfigService) => ({
-        secret: configService.getOrThrow<string>('JWT_SECRET'),
+        secret: configService.getOrThrow<string>('JWT_ACCESS_SECRET'),
         signOptions: { expiresIn: '1h' },
       }),
       inject: [ConfigService],
@@ -46,7 +46,8 @@ import { RateLimiterModule, AdminGuard } from '@azeebo/security';
     AuthGuard,
     {
       provide: AdminGuard,
-      useFactory: (jwtService: JwtService) => new AdminGuard(jwtService, { allowedRoles: ['ADMIN', 'SUPPORT_AGENT'] }),
+      useFactory: (jwtService: JwtService) =>
+        new AdminGuard(jwtService, { allowedRoles: ['ADMIN', 'SUPPORT_AGENT'] }),
       inject: [JwtService],
     },
   ],

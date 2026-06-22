@@ -4,10 +4,7 @@ import { CronTasksService } from './cron-tasks.service';
 import { DatabaseModule } from '../database/database.module';
 
 @Module({
-  imports: [
-    ScheduleModule.forRoot(),
-    DatabaseModule,
-  ],
+  imports: [ScheduleModule.forRoot(), DatabaseModule],
   providers: [CronTasksService],
   exports: [CronTasksService],
 })

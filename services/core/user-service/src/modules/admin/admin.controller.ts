@@ -79,7 +79,10 @@ export class AdminController {
   @ApiResponse({ status: 200, description: 'Subscription deleted' })
   @ApiResponse({ status: 404, description: 'Subscription not found' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
-  async deleteSubscription(@Param('subscriptionId') subscriptionId: string, @Req() req: AuthenticatedRequest) {
+  async deleteSubscription(
+    @Param('subscriptionId') subscriptionId: string,
+    @Req() req: AuthenticatedRequest
+  ) {
     const actorId = req.user?.id || 'admin';
     const actorRole = req.user?.role || 'admin';
     return this.adminService.deleteSubscription(subscriptionId, actorId, actorRole);
@@ -249,7 +252,11 @@ export class AdminController {
     @Query('limit') limit?: number,
     @Query('status') status?: string
   ) {
-    return this.adminService.getVerificationRequests(Number(page) || 1, Number(limit) || 20, status);
+    return this.adminService.getVerificationRequests(
+      Number(page) || 1,
+      Number(limit) || 20,
+      status
+    );
   }
 
   @Patch('creators/:id/verify')

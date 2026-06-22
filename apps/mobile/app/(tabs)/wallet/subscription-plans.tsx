@@ -87,10 +87,7 @@ export default function SubscriptionPlansScreen() {
                 { text: 'OK', onPress: () => loadData() },
               ]);
             } catch (error: any) {
-              Alert.alert(
-                'Error',
-                error?.message || 'Failed to subscribe. Please try again.'
-              );
+              Alert.alert('Error', error?.message || 'Failed to subscribe. Please try again.');
             } finally {
               setIsSubscribing(null);
             }
@@ -151,15 +148,9 @@ export default function SubscriptionPlansScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => router.back()}
-          >
+          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
             <Text style={styles.backButtonText}>←</Text>
           </TouchableOpacity>
           <Text style={styles.title}>Subscription Plans</Text>
@@ -177,21 +168,14 @@ export default function SubscriptionPlansScreen() {
                     : styles.statusBadgeInactive,
                 ]}
               >
-                <Text style={styles.statusText}>
-                  {currentSubscription.status}
-                </Text>
+                <Text style={styles.statusText}>{currentSubscription.status}</Text>
               </View>
             </View>
-            <Text style={styles.currentPlanName}>
-              {currentSubscription.plan?.name || 'N/A'}
-            </Text>
+            <Text style={styles.currentPlanName}>{currentSubscription.plan?.name || 'N/A'}</Text>
             <Text style={styles.currentPlanExpiry}>
               Expires: {new Date(currentSubscription.endDate).toLocaleDateString()}
             </Text>
-            <TouchableOpacity
-              style={styles.cancelButton}
-              onPress={handleCancelSubscription}
-            >
+            <TouchableOpacity style={styles.cancelButton} onPress={handleCancelSubscription}>
               <Text style={styles.cancelButtonText}>Cancel Subscription</Text>
             </TouchableOpacity>
           </View>
@@ -219,12 +203,7 @@ export default function SubscriptionPlansScreen() {
               )}
 
               <View style={styles.planHeader}>
-                <View
-                  style={[
-                    styles.tierBadge,
-                    { backgroundColor: getTierColor(plan.tier) },
-                  ]}
-                >
+                <View style={[styles.tierBadge, { backgroundColor: getTierColor(plan.tier) }]}>
                   <Text style={styles.tierBadgeText}>
                     {plan.tier.charAt(0).toUpperCase() + plan.tier.slice(1)}
                   </Text>

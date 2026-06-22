@@ -7,7 +7,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
  */
 export function useAsync<T>(
   asyncFn: () => Promise<T>,
-  deps: any[] = []
+  deps: unknown[] = []
 ): {
   data: T | null;
   loading: boolean;
@@ -71,7 +71,7 @@ export function useDebounce<T>(value: T, delay: number): T {
 
 /**
  * Hook to use localStorage with React state
- * WARNING: Do NOT use this hook for storing auth tokens, payment data, PII, 
+ * WARNING: Do NOT use this hook for storing auth tokens, payment data, PII,
  * or analytics identifiers. Use secure storage strategies instead.
  */
 const SENSITIVE_KEY_PATTERNS = [
@@ -239,7 +239,7 @@ export function useTimeout(callback: () => void, delay: number | null): void {
 }
 
 export function usePrevious<T>(value: T): T | undefined {
-  const ref = useRef<T>();
+  const ref = useRef<T | undefined>(undefined);
   useEffect(() => {
     ref.current = value;
   }, [value]);

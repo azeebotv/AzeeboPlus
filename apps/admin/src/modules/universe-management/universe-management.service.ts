@@ -255,7 +255,10 @@ export class UniverseManagementService {
       this.logger.log(`Deleted feature flag ${featureKey} for universe ${universeId}`);
       return { message: 'Feature flag deleted successfully' };
     } catch (error) {
-      this.logger.error(`Failed to delete feature flag ${featureKey} for universe ${universeId}`, error);
+      this.logger.error(
+        `Failed to delete feature flag ${featureKey} for universe ${universeId}`,
+        error
+      );
       throw error;
     }
   }
@@ -299,7 +302,10 @@ export class UniverseManagementService {
       const flag = universe.featureFlags[0];
       return flag ? flag.isEnabled : false;
     } catch (error) {
-      this.logger.error(`Failed to check feature flag ${featureKey} for universe ${universeName}`, error);
+      this.logger.error(
+        `Failed to check feature flag ${featureKey} for universe ${universeName}`,
+        error
+      );
       return false;
     }
   }

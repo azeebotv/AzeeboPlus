@@ -9,10 +9,11 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { contentApi } from '../../src/api';
+import { creatorApi } from '../../src/api';
 import { logger } from '../../src/utils/logger';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
 
+// Analytics data interface for UI
 interface AnalyticsData {
   totalViews: number;
   totalLikes: number;
@@ -52,9 +53,11 @@ export default function CreatorAnalyticsScreen() {
 
   const loadAnalytics = async () => {
     try {
-      const response = await contentApi.getCreatorAnalytics();
+      const response = await creatorApi.getAnalytics();
       if (response.success && response.data) {
-        setAnalytics(response.data);
+        // Cast to AnalyticsData since UI expects this format
+        // Backend should return consistent type
+        setAnalytics(response.data as unknown as AnalyticsData);
       }
     } catch (error) {
       logger.error('Failed to load analytics', error);
@@ -80,7 +83,11 @@ export default function CreatorAnalyticsScreen() {
   if (!analytics) {
     return (
       <SafeAreaView style={styles.container} edges={['top']}>
-        <ErrorState title="Failed to load" description="Could not load analytics data" onRetry={loadAnalytics} />
+        <ErrorState
+          title="Failed to load"
+          description="Could not load analytics data"
+          onRetry={loadAnalytics}
+        />
       </SafeAreaView>
     );
   }
@@ -88,10 +95,7 @@ export default function CreatorAnalyticsScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backButtonText}>←</Text>
         </TouchableOpacity>
         <Text style={styles.title}>Creator Analytics</Text>
@@ -101,19 +105,17 @@ export default function CreatorAnalyticsScreen() {
         {(['7d', '30d', '90d', 'all'] as const).map((range) => (
           <TouchableOpacity
             key={range}
-            style={[
-              styles.timeRangeButton,
-              timeRange === range && styles.timeRangeButtonActive,
-            ]}
+            style={[styles.timeRangeButton, timeRange === range && styles.timeRangeButtonActive]}
             onPress={() => setTimeRange(range)}
           >
-            <Text
-              style={[
-                styles.timeRangeText,
-                timeRange === range && styles.timeRangeTextActive,
-              ]}
-            >
-              {range === '7d' ? '7 Days' : range === '30d' ? '30 Days' : range === '90d' ? '90 Days' : 'All Time'}
+            <Text style={[styles.timeRangeText, timeRange === range && styles.timeRangeTextActive]}>
+              {range === '7d'
+                ? '7 Days'
+                : range === '30d'
+                  ? '30 Days'
+                  : range === '90d'
+                    ? '90 Days'
+                    : 'All Time'}
             </Text>
           </TouchableOpacity>
         ))}
@@ -124,21 +126,36 @@ export default function CreatorAnalyticsScreen() {
           <View style={styles.statCard}>
             <Text style={styles.statValue}>{formatNumber(analytics.totalViews)}</Text>
             <Text style={styles.statLabel}>Total Views</Text>
-            <Text style={[styles.growthText, analytics.viewsGrowth >= 0 ? styles.growthPositive : styles.growthNegative]}>
+            <Text
+              style={[
+                styles.growthText,
+                analytics.viewsGrowth >= 0 ? styles.growthPositive : styles.growthNegative,
+              ]}
+            >
               {analytics.viewsGrowth >= 0 ? '↑' : '↓'} {Math.abs(analytics.viewsGrowth)}%
             </Text>
           </View>
           <View style={styles.statCard}>
             <Text style={styles.statValue}>{formatNumber(analytics.totalFollowers)}</Text>
             <Text style={styles.statLabel}>Followers</Text>
-            <Text style={[styles.growthText, analytics.followersGrowth >= 0 ? styles.growthPositive : styles.growthNegative]}>
+            <Text
+              style={[
+                styles.growthText,
+                analytics.followersGrowth >= 0 ? styles.growthPositive : styles.growthNegative,
+              ]}
+            >
               {analytics.followersGrowth >= 0 ? '↑' : '↓'} {Math.abs(analytics.followersGrowth)}%
             </Text>
           </View>
           <View style={styles.statCard}>
             <Text style={styles.statValue}>₦{formatNumber(analytics.totalEarnings)}</Text>
             <Text style={styles.statLabel}>Earnings</Text>
-            <Text style={[styles.growthText, analytics.earningsGrowth >= 0 ? styles.growthPositive : styles.growthNegative]}>
+            <Text
+              style={[
+                styles.growthText,
+                analytics.earningsGrowth >= 0 ? styles.growthPositive : styles.growthNegative,
+              ]}
+            >
               {analytics.earningsGrowth >= 0 ? '↑' : '↓'} {Math.abs(analytics.earningsGrowth)}%
             </Text>
           </View>
@@ -176,7 +193,9 @@ export default function CreatorAnalyticsScreen() {
             <View key={content.id} style={styles.topContentItem}>
               <Text style={styles.rankText}>#{index + 1}</Text>
               <View style={styles.topContentInfo}>
-                <Text style={styles.topContentTitle} numberOfLines={1}>{content.title}</Text>
+                <Text style={styles.topContentTitle} numberOfLines={1}>
+                  {content.title}
+                </Text>
                 <Text style={styles.topContentViews}>{formatNumber(content.views)} views</Text>
               </View>
             </View>

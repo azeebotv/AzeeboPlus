@@ -152,9 +152,7 @@ describe('Search Service Integration Tests', () => {
       mockPrismaService.contentItem.findMany.mockResolvedValue([]);
       mockPrismaService.contentItem.count.mockResolvedValue(0);
 
-      await request(app.getHttpServer())
-        .get('/search?q=test')
-        .query({ sort: 'popular' });
+      await request(app.getHttpServer()).get('/search?q=test').query({ sort: 'popular' });
 
       expect(mockPrismaService.contentItem.findMany).toHaveBeenCalledWith(
         expect.objectContaining({

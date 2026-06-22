@@ -31,7 +31,7 @@ export function Modal({
         onClose();
       }
     },
-    [onClose, closeOnEscape],
+    [onClose, closeOnEscape]
   );
 
   useEffect(() => {
@@ -82,18 +82,12 @@ export function Modal({
         {(title || description) && (
           <div className="px-6 pt-6 pb-4">
             {title && (
-              <h2
-                id="modal-title"
-                className="text-xl font-semibold text-text-primary"
-              >
+              <h2 id="modal-title" className="text-xl font-semibold text-text-primary">
                 {title}
               </h2>
             )}
             {description && (
-              <p
-                id="modal-description"
-                className="mt-1 text-sm text-text-secondary"
-              >
+              <p id="modal-description" className="mt-1 text-sm text-text-secondary">
                 {description}
               </p>
             )}
@@ -106,7 +100,14 @@ export function Modal({
           className="absolute top-4 right-4 p-1.5 rounded-lg text-text-tertiary hover:text-text-primary hover:bg-bg-tertiary transition-colors duration-200"
           aria-label="Close modal"
         >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
             <path d="M18 6L6 18M6 6l12 12" />
           </svg>
         </button>
@@ -170,9 +171,10 @@ export function ConfirmDialog({
             onClick={handleConfirm}
             className={`
               px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors duration-200
-              ${variant === 'danger'
-                ? 'bg-error-500 hover:bg-error-600'
-                : 'bg-primary-500 hover:bg-primary-600'
+              ${
+                variant === 'danger'
+                  ? 'bg-error-500 hover:bg-error-600'
+                  : 'bg-primary-500 hover:bg-primary-600'
               }
             `}
           >
