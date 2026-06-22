@@ -254,7 +254,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Configure kubectl for staging
-        uses: azure/k8s-set-context@v4
+        uses: azure/k8s-set-context@v5
         with:
           kubeconfig: ${{ secrets.STAGING_KUBE_CONFIG }}
 
@@ -458,7 +458,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Configure kubectl for production
-        uses: azure/k8s-set-context@v4
+        uses: azure/k8s-set-context@v5
         with:
           kubeconfig: ${{ secrets.PRODUCTION_KUBE_CONFIG }}
 
@@ -558,7 +558,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Configure kubectl
-        uses: azure/k8s-set-context@v4
+        uses: azure/k8s-set-context@v5
         with:
           kubeconfig: ${{ secrets.PRODUCTION_KUBE_CONFIG }}
 
