@@ -11,8 +11,10 @@ services:
     env_file:
       - .env
     environment:
+      - PORT=3000
       - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public
       - REDIS_URL=redis://redis:6379
+      - ALLOWED_ORIGINS=${CORS_ORIGIN}
     depends_on:
       - postgres
       - redis
@@ -29,8 +31,10 @@ services:
     env_file:
       - .env
     environment:
+      - PORT=3000
       - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public
       - REDIS_URL=redis://redis:6379
+      - ALLOWED_ORIGINS=${CORS_ORIGIN}
     depends_on:
       - postgres
       - redis
@@ -47,8 +51,10 @@ services:
     env_file:
       - .env
     environment:
+      - PORT=3000
       - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public
       - REDIS_URL=redis://redis:6379
+      - ALLOWED_ORIGINS=${CORS_ORIGIN}
     depends_on:
       - postgres
       - redis
@@ -65,8 +71,10 @@ services:
     env_file:
       - .env
     environment:
+      - PORT=3000
       - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public
       - REDIS_URL=redis://redis:6379
+      - ALLOWED_ORIGINS=${CORS_ORIGIN}
     depends_on:
       - postgres
       - redis
@@ -99,6 +107,8 @@ services:
       - "3005:3000"
     env_file:
       - .env
+    environment:
+      - PORT=3000
     depends_on:
       - auth-service
       - engagement-service

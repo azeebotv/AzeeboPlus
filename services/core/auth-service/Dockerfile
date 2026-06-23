@@ -17,6 +17,7 @@ COPY services/core/auth-service/src ./services/core/auth-service/src
 COPY services/core/auth-service/tsconfig*.json ./services/core/auth-service/
 COPY services/core/auth-service/prisma ./services/core/auth-service/prisma
 
+RUN pnpm --filter @azeebo/auth-service prisma:generate
 RUN pnpm --filter @azeebo/auth-service run build
 
 # T-C12: Pin runner stage to same digest as builder

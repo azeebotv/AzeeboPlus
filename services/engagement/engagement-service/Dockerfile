@@ -12,6 +12,9 @@ RUN for i in 1 2 3 4 5; do pnpm install --frozen-lockfile && break || (echo "Ret
 
 COPY services/engagement/engagement-service/src ./services/engagement/engagement-service/src
 COPY services/engagement/engagement-service/tsconfig*.json ./services/engagement/engagement-service/
+COPY services/engagement/engagement-service/prisma ./services/engagement/engagement-service/prisma
+
+RUN pnpm --filter @azeebo/engagement-service prisma:generate
 
 WORKDIR /app/services/engagement/engagement-service
 RUN nest build
@@ -39,6 +42,8 @@ COPY packages ./packages
 RUN for i in 1 2 3 4 5; do pnpm install --prod --frozen-lockfile && break || (echo "Retry $i/5..." && sleep 10); done
 
 COPY --from=builder /app/services/engagement/engagement-service/dist ./services/engagement/engagement-service/dist
+COPY services/engagement/engagement-service/prisma ./services/engagement/engagement-service/prisma
+RUN pnpm --filter @azeebo/engagement-service prisma:generate
 
 RUN chown -R nodejs:nodejs /app
 

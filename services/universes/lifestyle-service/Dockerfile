@@ -14,6 +14,7 @@ COPY services/universes/lifestyle-service/src ./services/universes/lifestyle-ser
 COPY services/universes/lifestyle-service/tsconfig*.json ./services/universes/lifestyle-service/
 COPY services/universes/lifestyle-service/prisma ./services/universes/lifestyle-service/prisma
 
+RUN pnpm --filter @azeebo/lifestyle-service prisma:generate
 RUN pnpm --filter @azeebo/lifestyle-service run build
 
 FROM node:22-alpine AS runner
@@ -37,7 +38,8 @@ COPY packages ./packages
 RUN for i in 1 2 3 4 5; do pnpm install --prod --frozen-lockfile && break || (echo "Retry $i/5..." && sleep 10); done
 
 COPY --from=builder /app/services/universes/lifestyle-service/dist ./services/universes/lifestyle-service/dist
-COPY --from=builder /app/services/universes/lifestyle-service/prisma ./services/universes/lifestyle-service/prisma
+COPY services/universes/lifestyle-service/prisma ./services/universes/lifestyle-service/prisma
+RUN pnpm --filter @azeebo/lifestyle-service prisma:generate
 
 RUN chown -R nodejs:nodejs /app
 
