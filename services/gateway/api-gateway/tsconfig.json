@@ -2,6 +2,7 @@
   "extends": "../../../tsconfig.json",
   "compilerOptions": {
     "module": "Node16",
+    "types": ["jest", "node", "supertest"],
     "declaration": true,
     "removeComments": true,
     "allowSyntheticDefaultImports": true,

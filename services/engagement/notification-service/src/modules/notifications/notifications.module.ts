@@ -22,7 +22,7 @@ import { SmsModule } from '../sms/sms.module';
       useFactory: async (configService: ConfigService) => ({
         secret: configService.get<string>('JWT_ACCESS_SECRET'),
         signOptions: {
-          expiresIn: configService.get<string>('JWT_EXPIRES_IN', '30m') as const,
+          expiresIn: configService.get('JWT_EXPIRES_IN', '30m') as any,
         },
       }),
       inject: [ConfigService],

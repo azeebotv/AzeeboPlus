@@ -3,7 +3,6 @@ import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { CacheModule } from '@nestjs/cache-manager';
 import { ThrottlerModule } from '@nestjs/throttler';
-import { ThrottlerStorageRedisService } from 'nestjs-throttler-storage-redis';
 import { HealthModule } from './modules/health/health.module';
 import { ProxyModule } from './modules/proxy/proxy.module';
 import { GatewayAuthGuard } from './guards/gateway-auth.guard';
@@ -34,12 +33,6 @@ import { LegacyRedirectMiddleware } from './common/legacy-redirect.middleware';
           limit: 100,
         },
       ],
-      storage: new ThrottlerStorageRedisService(
-        process.env.REDIS_URL ??
-          (() => {
-            throw new Error('REDIS_URL environment variable must be set');
-          })()
-      ),
     }),
     HealthModule,
     ProxyModule,

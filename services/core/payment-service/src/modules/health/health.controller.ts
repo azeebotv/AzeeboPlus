@@ -147,8 +147,9 @@ export class HealthController {
 
   private async checkDisk(): Promise<ComponentStatus> {
     try {
-      const check = await import('check-disk-space').then((m) => m.default);
-      const diskSpace = await check('/');
+      const checkDiskSpaceModule = await import('check-disk-space');
+      const checkDiskSpace = (checkDiskSpaceModule as any).default as (path: string) => Promise<{ size: number; free: number }>;
+      const diskSpace = await checkDiskSpace('/');
 
       const used = diskSpace.size - diskSpace.free;
       const usedPercent = (used / diskSpace.size) * 100;

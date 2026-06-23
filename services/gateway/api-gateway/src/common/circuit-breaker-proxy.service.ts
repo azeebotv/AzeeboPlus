@@ -1,6 +1,14 @@
 import { Injectable, Logger, HttpStatus } from '@nestjs/common';
 import { CircuitBreaker, CircuitState, CircuitBreakerStats } from '@azeebo/shared-types';
-import { Span, SpanStatusCode, trace } from '@opentelemetry/api';
+// OpenTelemetry tracing - optional dependency
+let trace: any;
+try {
+  trace = require('@opentelemetry/api').trace;
+} catch {
+  // OpenTelemetry not available
+}
+type Span = any;
+const SpanStatusCode: any = { OK: 0, ERROR: 2 };
 
 interface ProxyRequestOptions {
   method: string;

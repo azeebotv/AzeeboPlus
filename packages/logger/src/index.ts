@@ -58,6 +58,10 @@ export class StructuredLogger implements LoggerService {
     this.write('log', message, context);
   }
 
+  info(message: string, context?: LogContext): void {
+    this.write('log', message, context);
+  }
+
   error(message: string, trace?: string, context?: LogContext): void {
     this.write('error', message, { ...context, trace });
   }

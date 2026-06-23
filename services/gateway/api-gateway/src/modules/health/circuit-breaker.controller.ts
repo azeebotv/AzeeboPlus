@@ -1,6 +1,6 @@
 import { Controller, Get, Param, Post } from '@nestjs/common';
 import { Public } from '@azeebo/security';
-import { CircuitBreakerProxyService } from '../../../common/circuit-breaker-proxy.service';
+import { CircuitBreakerProxyService } from '../../common/circuit-breaker-proxy.service';
 
 @Public()
 @Controller('health')

@@ -21,7 +21,7 @@ import { MediaModule } from '../media/media.module';
       useFactory: async (configService: ConfigService) => ({
         secret: configService.getOrThrow<string>('JWT_ACCESS_SECRET'),
         signOptions: {
-          expiresIn: configService.get<string>('JWT_EXPIRES_IN', '30m'),
+          expiresIn: configService.get('JWT_EXPIRES_IN', '30m') as any,
         },
       }),
       inject: [ConfigService],

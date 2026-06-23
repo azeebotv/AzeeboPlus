@@ -128,22 +128,24 @@ export class ContentService {
     }
   }
 
-  async listContent(filters?: { universe?: string }, page?: number, limit?: number): Promise<{ success: boolean; data: Record<string, unknown> }> {
+  async listContent(filters?: { universe?: string }, page?: number, limit?: number): Promise<{ success: boolean; data: any }> {
     const result = await this.contentRepository.findAll(filters, page || 1, limit || 20);
 
     return {
       success: true,
-      data: result.data,
-      pagination: {
-        page: result.page,
-        limit: result.limit,
-        total: result.total,
-        totalPages: result.totalPages,
+      data: {
+        items: result.data,
+        pagination: {
+          page: result.page,
+          limit: result.limit,
+          total: result.total,
+          totalPages: result.totalPages,
+        },
       },
     };
   }
 
-  async getHomeFeed(userId?: string): Promise<{ success: boolean; data: Record<string, unknown> }> {
+  async getHomeFeed(userId?: string): Promise<{ success: boolean; data: any }> {
     const cacheKey = `home-feed:${userId || 'anonymous'}`;
 
     // Try to get from cache first
@@ -219,7 +221,7 @@ export class ContentService {
     return result;
   }
 
-  async getWatchFeed(_userId?: string): Promise<{ success: boolean; data: Record<string, unknown> }> {
+  async getWatchFeed(_userId?: string): Promise<{ success: boolean; data: any }> {
     const content = await this.prisma.contentItem.findMany({
       where: { status: 'published' },
       select: {
@@ -248,7 +250,7 @@ export class ContentService {
     };
   }
 
-  async getContent(id: string): Promise<{ success: boolean; data: Record<string, unknown> }> {
+  async getContent(id: string): Promise<{ success: boolean; data: any }> {
     const content = await this.contentRepository.findById(id);
 
     if (!content) {
@@ -267,7 +269,7 @@ export class ContentService {
     };
   }
 
-  async searchContent(query: string): Promise<{ success: boolean; data: Record<string, unknown> }> {
+  async searchContent(query: string): Promise<{ success: boolean; data: any }> {
     const result = await this.contentRepository.search(query);
 
     return {
@@ -276,22 +278,24 @@ export class ContentService {
     };
   }
 
-  async getContentComments(contentId: string, page?: number, limit?: number): Promise<{ success: boolean; data: Record<string, unknown> }> {
+  async getContentComments(contentId: string, page?: number, limit?: number): Promise<{ success: boolean; data: any }> {
     const result = await this.contentRepository.getComments(contentId, page || 1, limit || 20);
 
     return {
       success: true,
-      data: result.data,
-      pagination: {
-        page: result.page,
-        limit: result.limit,
-        total: result.total,
-        totalPages: result.totalPages,
+      data: {
+        items: result.data,
+        pagination: {
+          page: result.page,
+          limit: result.limit,
+          total: result.total,
+          totalPages: result.totalPages,
+        },
       },
     };
   }
 
-  async addCommentToContent(userId: string, contentId: string, text: string): Promise<{ success: boolean; data: Record<string, unknown> }> {
+  async addCommentToContent(userId: string, contentId: string, text: string): Promise<{ success: boolean; data: any }> {
     const comment = await this.contentRepository.addComment(contentId, userId, text);
 
     return {
@@ -300,7 +304,7 @@ export class ContentService {
     };
   }
 
-  async getContentAnalytics(contentId: string): Promise<{ success: boolean; data: Record<string, unknown> }> {
+  async getContentAnalytics(contentId: string): Promise<{ success: boolean; data: any }> {
     const analytics = await this.contentRepository.getAnalytics(contentId);
 
     return {
@@ -309,7 +313,7 @@ export class ContentService {
     };
   }
 
-  async getTrending(): Promise<{ success: boolean; data: Record<string, unknown> }> {
+  async getTrending(): Promise<{ success: boolean; data: any }> {
     const content = await this.prisma.contentItem.findMany({
       where: { status: 'published' },
       orderBy: { viewCount: 'desc' },
@@ -323,7 +327,7 @@ export class ContentService {
     };
   }
 
-  async getRecommended(userId: string): Promise<{ success: boolean; data: Record<string, unknown> }> {
+  async getRecommended(userId: string): Promise<{ success: boolean; data: any }> {
     // Get user's watched content IDs and their universe
     const watchedContent = await this.prisma.watchHistory.findMany({
       where: { userId },
@@ -358,7 +362,7 @@ export class ContentService {
     };
   }
 
-  async createContent(userId: string, createContentDto: CreateContentDto): Promise<{ success: boolean; data: Record<string, unknown> }> {
+  async createContent(userId: string, createContentDto: CreateContentDto): Promise<{ success: boolean; data: any }> {
     const content = await this.contentRepository.create({
       ...createContentDto,
       creatorId: userId,
@@ -370,7 +374,7 @@ export class ContentService {
     };
   }
 
-  async updateContent(userId: string, id: string, updateContentDto: UpdateContentDto): Promise<{ success: boolean; data: Record<string, unknown> }> {
+  async updateContent(userId: string, id: string, updateContentDto: UpdateContentDto): Promise<{ success: boolean; data: any }> {
     const content = await this.contentRepository.findById(id);
 
     if (!content) {
@@ -389,7 +393,7 @@ export class ContentService {
     };
   }
 
-  async deleteContent(userId: string, id: string): Promise<{ success: boolean; data: Record<string, unknown> }> {
+  async deleteContent(userId: string, id: string): Promise<{ success: boolean; data: any }> {
     const content = await this.contentRepository.findById(id);
 
     if (!content) {
@@ -407,7 +411,7 @@ export class ContentService {
     };
   }
 
-  async publishContent(userId: string, id: string): Promise<{ success: boolean; data: Record<string, unknown> }> {
+  async publishContent(userId: string, id: string): Promise<{ success: boolean; data: any }> {
     const content = await this.prisma.contentItem.findUnique({
       where: { id },
     });
@@ -450,7 +454,7 @@ export class ContentService {
     };
   }
 
-  async unpublishContent(userId: string, id: string): Promise<{ success: boolean; data: Record<string, unknown> }> {
+  async unpublishContent(userId: string, id: string): Promise<{ success: boolean; data: any }> {
     const content = await this.prisma.contentItem.findUnique({
       where: { id },
     });
@@ -487,7 +491,7 @@ export class ContentService {
     userId: string,
     contentId: string,
     createMediaAssetDto: CreateMediaAssetDto
-  ): Promise<{ success: boolean; data: Record<string, unknown> }> {
+  ): Promise<{ success: boolean; data: any }> {
     const content = await this.prisma.contentItem.findUnique({
       where: { id: contentId },
     });
@@ -512,7 +516,7 @@ export class ContentService {
       data: {
         ...createMediaAssetDto,
         contentItemId: contentId,
-      } as Prisma.MediaAssetCreateInput,
+      } as any,
       include: { contentItem: true },
     });
 
@@ -526,7 +530,7 @@ export class ContentService {
     userId: string,
     contentId: string,
     updateMediaAssetDto: UpdateMediaAssetDto
-  ): Promise<{ success: boolean; data: Record<string, unknown> }> {
+  ): Promise<{ success: boolean; data: any }> {
     const content = await this.prisma.contentItem.findUnique({
       where: { id: contentId },
     });
@@ -562,7 +566,7 @@ export class ContentService {
     };
   }
 
-  async deleteMediaAsset(userId: string, contentId: string): Promise<{ success: boolean; data: Record<string, unknown> }> {
+  async deleteMediaAsset(userId: string, contentId: string): Promise<{ success: boolean; data: any }> {
     const content = await this.prisma.contentItem.findUnique({
       where: { id: contentId },
     });
@@ -593,7 +597,7 @@ export class ContentService {
     };
   }
 
-  async getMediaAsset(contentId: string): Promise<{ success: boolean; data: Record<string, unknown> }> {
+  async getMediaAsset(contentId: string): Promise<{ success: boolean; data: any }> {
     const mediaAsset = await this.prisma.mediaAsset.findUnique({
       where: { contentItemId: contentId },
       include: { contentItem: true },
@@ -619,7 +623,7 @@ export class ContentService {
     };
   }
 
-  async getSignedMediaUrl(userId: string, contentId: string, expiresIn: number = 3600): Promise<{ success: boolean; data: Record<string, unknown> }> {
+  async getSignedMediaUrl(userId: string, contentId: string, expiresIn: number = 3600): Promise<{ success: boolean; data: any }> {
     const mediaAsset = await this.prisma.mediaAsset.findUnique({
       where: { contentItemId: contentId },
     });
@@ -647,7 +651,7 @@ export class ContentService {
       height?: number;
       quality?: number;
     }
-  ): Promise<{ success: boolean; data: Record<string, unknown> }> {
+  ): Promise<{ success: boolean; data: any }> {
     const mediaAsset = await this.prisma.mediaAsset.findUnique({
       where: { contentItemId: contentId },
     });
@@ -686,7 +690,7 @@ export class ContentService {
       type: string;
       reason: string;
     }
-  ): Promise<{ success: boolean; data: Record<string, unknown> }> {
+  ): Promise<{ success: boolean; data: any }> {
     const content = await this.prisma.contentItem.findUnique({
       where: { id: contentId },
     });
@@ -729,7 +733,7 @@ export class ContentService {
     }
   }
 
-  async getContentModerationStatus(contentId: string): Promise<{ success: boolean; data: Record<string, unknown> }> {
+  async getContentModerationStatus(contentId: string): Promise<{ success: boolean; data: any }> {
     try {
       const response = await fetch(
         `${this.moderationServiceUrl}/moderation/content/${contentId}/status`,
@@ -779,7 +783,7 @@ export class ContentService {
     description?: string,
     icon?: string,
     color?: string
-  ): Promise<{ success: boolean; data: Record<string, unknown> }> {
+  ): Promise<{ success: boolean; data: any }> {
     const category = await this.prisma.category.create({
       data: {
         name,
@@ -803,7 +807,7 @@ export class ContentService {
     description?: string,
     icon?: string,
     color?: string
-  ): Promise<{ success: boolean; data: Record<string, unknown> }> {
+  ): Promise<{ success: boolean; data: any }> {
     const category = await this.prisma.category.findUnique({
       where: { id },
     });
@@ -830,7 +834,7 @@ export class ContentService {
     };
   }
 
-  async deleteCategory(id: string): Promise<{ success: boolean; data: Record<string, unknown> }> {
+  async deleteCategory(id: string): Promise<{ success: boolean; data: any }> {
     const category = await this.prisma.category.findUnique({
       where: { id },
     });
@@ -849,7 +853,7 @@ export class ContentService {
     };
   }
 
-  async getCategories(): Promise<{ success: boolean; data: Record<string, unknown> }> {
+  async getCategories(): Promise<{ success: boolean; data: any }> {
     const categories = await this.prisma.category.findMany();
 
     return {
@@ -859,7 +863,7 @@ export class ContentService {
   }
 
   // Tag management
-  async createTag(name: string, description?: string): Promise<{ success: boolean; data: Record<string, unknown> }> {
+  async createTag(name: string, description?: string): Promise<{ success: boolean; data: any }> {
     const tag = await this.prisma.tag.create({
       data: {
         name,
@@ -873,7 +877,7 @@ export class ContentService {
     };
   }
 
-  async updateTag(id: string, name?: string, description?: string): Promise<{ success: boolean; data: Record<string, unknown> }> {
+  async updateTag(id: string, name?: string, description?: string): Promise<{ success: boolean; data: any }> {
     const tag = await this.prisma.tag.findUnique({
       where: { id },
     });
@@ -897,7 +901,7 @@ export class ContentService {
     };
   }
 
-  async deleteTag(id: string): Promise<{ success: boolean; data: Record<string, unknown> }> {
+  async deleteTag(id: string): Promise<{ success: boolean; data: any }> {
     const tag = await this.prisma.tag.findUnique({
       where: { id },
     });
@@ -916,7 +920,7 @@ export class ContentService {
     };
   }
 
-  async getTags(): Promise<{ success: boolean; data: Record<string, unknown> }> {
+  async getTags(): Promise<{ success: boolean; data: any }> {
     const tags = await this.prisma.tag.findMany();
 
     return {
@@ -926,7 +930,7 @@ export class ContentService {
   }
 
   // Content categorization
-  async addCategoryToContent(userId: string, contentId: string, categoryId: string): Promise<{ success: boolean; data: Record<string, unknown> }> {
+  async addCategoryToContent(userId: string, contentId: string, categoryId: string): Promise<{ success: boolean; data: any }> {
     const content = await this.prisma.contentItem.findUnique({
       where: { id: contentId },
     });
@@ -962,7 +966,7 @@ export class ContentService {
     };
   }
 
-  async removeCategoryFromContent(userId: string, contentId: string, categoryId: string): Promise<{ success: boolean; data: Record<string, unknown> }> {
+  async removeCategoryFromContent(userId: string, contentId: string, categoryId: string): Promise<{ success: boolean; data: any }> {
     const content = await this.prisma.contentItem.findUnique({
       where: { id: contentId },
     });
@@ -990,7 +994,7 @@ export class ContentService {
     };
   }
 
-  async addTagToContent(userId: string, contentId: string, tagId: string): Promise<{ success: boolean; data: Record<string, unknown> }> {
+  async addTagToContent(userId: string, contentId: string, tagId: string): Promise<{ success: boolean; data: any }> {
     const content = await this.prisma.contentItem.findUnique({
       where: { id: contentId },
     });
@@ -1026,7 +1030,7 @@ export class ContentService {
     };
   }
 
-  async removeTagFromContent(userId: string, contentId: string, tagId: string): Promise<{ success: boolean; data: Record<string, unknown> }> {
+  async removeTagFromContent(userId: string, contentId: string, tagId: string): Promise<{ success: boolean; data: any }> {
     const content = await this.prisma.contentItem.findUnique({
       where: { id: contentId },
     });
@@ -1055,7 +1059,7 @@ export class ContentService {
   }
 
   // Get content by category or tag
-  async getContentByCategory(categoryId: string): Promise<{ success: boolean; data: Record<string, unknown> }> {
+  async getContentByCategory(categoryId: string): Promise<{ success: boolean; data: any }> {
     const content = await this.prisma.contentItem.findMany({
       where: {
         status: 'published',
@@ -1074,7 +1078,7 @@ export class ContentService {
     };
   }
 
-  async getContentByTag(tagId: string): Promise<{ success: boolean; data: Record<string, unknown> }> {
+  async getContentByTag(tagId: string): Promise<{ success: boolean; data: any }> {
     const content = await this.prisma.contentItem.findMany({
       where: {
         status: 'published',
@@ -1099,7 +1103,7 @@ export class ContentService {
     contentId: string,
     relatedContentId: string,
     relationshipType: string
-  ): Promise<{ success: boolean; data: Record<string, unknown> }> {
+  ): Promise<{ success: boolean; data: any }> {
     const content = await this.prisma.contentItem.findUnique({
       where: { id: contentId },
     });
@@ -1146,7 +1150,7 @@ export class ContentService {
     };
   }
 
-  async removeContentRelationship(userId: string, contentId: string, relatedContentId: string): Promise<{ success: boolean; data: Record<string, unknown> }> {
+  async removeContentRelationship(userId: string, contentId: string, relatedContentId: string): Promise<{ success: boolean; data: any }> {
     const content = await this.prisma.contentItem.findUnique({
       where: { id: contentId },
     });
@@ -1177,7 +1181,7 @@ export class ContentService {
     };
   }
 
-  async getContentRelationships(contentId: string): Promise<{ success: boolean; data: Record<string, unknown> }> {
+  async getContentRelationships(contentId: string): Promise<{ success: boolean; data: any }> {
     const relationships = await this.prisma.contentRelationship.findMany({
       where: {
         contentId,
@@ -1197,7 +1201,7 @@ export class ContentService {
     };
   }
 
-  async getContentByRelationship(contentId: string, relationshipType?: string): Promise<{ success: boolean; data: Record<string, unknown> }> {
+  async getContentByRelationship(contentId: string, relationshipType?: string): Promise<{ success: boolean; data: any }> {
     const where: Prisma.ContentRelationshipWhereInput = {
       contentId,
     };
@@ -1234,7 +1238,7 @@ export class ContentService {
       resolutions?: string[];
       bitrates?: number[];
     }
-  ): Promise<{ success: boolean; data: Record<string, unknown> }> {
+  ): Promise<{ success: boolean; data: any }> {
     const mediaAsset = await this.prisma.mediaAsset.findUnique({
       where: { contentItemId: contentId },
     });
@@ -1261,7 +1265,7 @@ export class ContentService {
     };
   }
 
-  async getTranscodingStatus(contentId: string, jobId: string): Promise<{ success: boolean; data: Record<string, unknown> }> {
+  async getTranscodingStatus(contentId: string, jobId: string): Promise<{ success: boolean; data: any }> {
     const mediaAsset = await this.prisma.mediaAsset.findUnique({
       where: { contentItemId: contentId },
     });
@@ -1284,7 +1288,7 @@ export class ContentService {
     format: string,
     resolution: string,
     expiresIn: number = 3600
-  ): Promise<{ success: boolean; data: Record<string, unknown> }> {
+  ): Promise<{ success: boolean; data: any }> {
     const mediaAsset = await this.prisma.mediaAsset.findUnique({
       where: { contentItemId: contentId },
     });
@@ -1311,7 +1315,7 @@ export class ContentService {
     };
   }
 
-  async checkContentAvailability(contentId: string, _userId?: string): Promise<{ success: boolean; data: Record<string, unknown> }> {
+  async checkContentAvailability(contentId: string, _userId?: string): Promise<{ success: boolean; data: any }> {
     const content = await this.prisma.contentItem.findUnique({
       where: { id: contentId },
       include: { universe: true },
@@ -1361,7 +1365,7 @@ export class ContentService {
     return { success: true, data: availability };
   }
 
-  async getContentByWindow(windowType?: string, includeExpired = false): Promise<{ success: boolean; data: Record<string, unknown> }> {
+  async getContentByWindow(windowType?: string, includeExpired = false): Promise<{ success: boolean; data: any }> {
     const now = new Date();
 
     const where: Prisma.ContentItemWhereInput = {
@@ -1395,7 +1399,7 @@ export class ContentService {
     };
   }
 
-  async getPremieres(): Promise<{ success: boolean; data: Record<string, unknown> }> {
+  async getPremieres(): Promise<{ success: boolean; data: any }> {
     const now = new Date();
 
     const content = await this.prisma.contentItem.findMany({
@@ -1414,7 +1418,7 @@ export class ContentService {
     };
   }
 
-  async getExclusiveContent(): Promise<{ success: boolean; data: Record<string, unknown> }> {
+  async getExclusiveContent(): Promise<{ success: boolean; data: any }> {
     const now = new Date();
 
     const content = await this.prisma.contentItem.findMany({
@@ -1445,7 +1449,7 @@ export class ContentService {
       isExclusive?: boolean;
       isPremiere?: boolean;
     }
-  ): Promise<{ success: boolean; data: Record<string, unknown> }> {
+  ): Promise<{ success: boolean; data: any }> {
     const content = await this.prisma.contentItem.findUnique({
       where: { id: contentId },
     });
@@ -1476,7 +1480,7 @@ export class ContentService {
     userId: string,
     createContentDto: CreateContentDto,
     options?: { isExclusive?: boolean; windowType?: 'basic' | 'standard' | 'premium' }
-  ): Promise<{ success: boolean; data: Record<string, unknown> }> {
+  ): Promise<{ success: boolean; data: any }> {
     const content = await this.prisma.contentItem.create({
       data: {
         ...createContentDto,
@@ -1502,7 +1506,7 @@ export class ContentService {
     userId: string,
     createContentDto: CreateContentDto,
     options?: { isPremiere?: boolean; windowType?: 'standard' | 'premium' }
-  ): Promise<{ success: boolean; data: Record<string, unknown> }> {
+  ): Promise<{ success: boolean; data: any }> {
     const content = await this.prisma.contentItem.create({
       data: {
         ...createContentDto,
@@ -1530,7 +1534,7 @@ export class ContentService {
     parentContentId: string,
     clipStartTime: number,
     clipEndTime: number
-  ): Promise<{ success: boolean; data: Record<string, unknown> }> {
+  ): Promise<{ success: boolean; data: any }> {
     const parentContent = await this.prisma.contentItem.findUnique({
       where: { id: parentContentId },
     });
@@ -1568,7 +1572,7 @@ export class ContentService {
     seasonNumber: number,
     episodeNumber: number,
     seriesId?: string
-  ): Promise<{ success: boolean; data: Record<string, unknown> }> {
+  ): Promise<{ success: boolean; data: any }> {
     const content = await this.prisma.contentItem.create({
       data: {
         ...createContentDto,
@@ -1595,7 +1599,7 @@ export class ContentService {
     userId: string,
     createContentDto: CreateContentDto,
     options?: { isPremiere?: boolean; isExclusive?: boolean; windowType?: 'standard' | 'premium' }
-  ): Promise<{ success: boolean; data: Record<string, unknown> }> {
+  ): Promise<{ success: boolean; data: any }> {
     const content = await this.prisma.contentItem.create({
       data: {
         ...createContentDto,
@@ -1622,7 +1626,7 @@ export class ContentService {
     userId: string,
     createContentDto: CreateContentDto,
     options?: { difficulty?: 'easy' | 'medium' | 'hard'; gameType?: string }
-  ): Promise<{ success: boolean; data: Record<string, unknown> }> {
+  ): Promise<{ success: boolean; data: any }> {
     const content = await this.prisma.contentItem.create({
       data: {
         ...createContentDto,
@@ -1650,7 +1654,7 @@ export class ContentService {
     gameDate: Date,
     teams: string[],
     highlightType: string
-  ): Promise<{ success: boolean; data: Record<string, unknown> }> {
+  ): Promise<{ success: boolean; data: any }> {
     const content = await this.prisma.contentItem.create({
       data: {
         ...createContentDto,
@@ -1678,7 +1682,7 @@ export class ContentService {
     userId: string,
     createContentDto: CreateContentDto,
     options?: { contentSubtype?: 'video' | 'audio' | 'image' | 'article' }
-  ): Promise<{ success: boolean; data: Record<string, unknown> }> {
+  ): Promise<{ success: boolean; data: any }> {
     const content = await this.prisma.contentItem.create({
       data: {
         ...createContentDto,

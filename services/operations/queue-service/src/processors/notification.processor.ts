@@ -76,7 +76,7 @@ export class NotificationProcessor extends WorkerHost {
     message: string,
     data?: Record<string, string>
   ): Promise<void> {
-    this.logger.info(`Sending push notification to ${userId}: ${title}`);
+    this.logger.log(`Sending push notification to ${userId}: ${title}`);
     const pushTokens = this.currentJobData?.pushTokens ?? [];
     for (const token of pushTokens) {
       await this.firebaseService.sendPushNotification(token, title, message, data);
@@ -89,7 +89,7 @@ export class NotificationProcessor extends WorkerHost {
     body: string,
     data?: Record<string, string>
   ): Promise<void> {
-    this.logger.info(`Sending email to ${userId}: ${subject}`);
+    this.logger.log(`Sending email to ${userId}: ${subject}`);
     const email = this.currentJobData?.email;
     if (email) {
       await this.emailService.sendCustomEmail(email, subject, `<p>${body}</p>`);
@@ -103,7 +103,7 @@ export class NotificationProcessor extends WorkerHost {
     message: string,
     data?: Record<string, string>
   ): Promise<void> {
-    this.logger.info(`Sending SMS to ${userId}`);
+    this.logger.log(`Sending SMS to ${userId}`);
     const phone = this.currentJobData?.phone;
     if (phone) {
       await this.smsService.sendSms(phone, message);
@@ -118,7 +118,7 @@ export class NotificationProcessor extends WorkerHost {
 
   @OnWorkerEvent('active')
   onActive(job: Job) {
-    this.logger.info(`Job ${job.id} is now active and processing`);
+    this.logger.log(`Job ${job.id} is now active and processing`);
   }
 
   @OnWorkerEvent('completed')
@@ -141,7 +141,7 @@ export class NotificationProcessor extends WorkerHost {
 
   @OnWorkerEvent('progress')
   onProgress(job: Job, progress: number | object) {
-    this.logger.info(`Job ${job.id} progress: ${JSON.stringify(progress)}`);
+    this.logger.log(`Job ${job.id} progress: ${JSON.stringify(progress)}`);
   }
 
   @OnWorkerEvent('drained')

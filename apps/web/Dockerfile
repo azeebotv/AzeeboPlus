@@ -1,10 +1,10 @@
 # Build stage
-FROM node:20.11.1-alpine3.19 AS builder
+FROM node:22-alpine AS builder
 WORKDIR /app
 
 # Install pnpm
 RUN apk add --no-cache curl && \
-    for i in 1 2 3 4 5; do npm install -g pnpm@9.15.0 @nestjs/cli prisma@5.22.0 && break || (echo "Retry $i/5..." && sleep 10); done
+    for i in 1 2 3 4 5; do npm install -g pnpm@10.33.2 @nestjs/cli prisma@7.8.0 && break || (echo "Retry $i/5..." && sleep 10); done
 
 # Copy all workspace files for pnpm to resolve dependencies
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.json ./
@@ -30,7 +30,7 @@ ENV NEXT_PUBLIC_API_BASE_URL=$NEXT_PUBLIC_API_URL
 RUN pnpm --filter @azeebo/web run build
 
 # Production stage
-FROM node:20.11.1-alpine3.19 AS runner
+FROM node:22-alpine AS runner
 WORKDIR /app
 
 LABEL org.opencontainers.image.source="https://github.com/azeebo/azeebo-plus"

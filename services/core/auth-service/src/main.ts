@@ -8,6 +8,7 @@ import { SanitizeOutputInterceptor } from '@azeebo/validation';
 import helmet from 'helmet';
 import { validateEnvironment } from '@azeebo/shared-types';
 import { configureCors } from '@azeebo/security';
+// @ts-ignore - body-parser is a transitive dependency of Express
 import * as bodyParser from 'body-parser';
 
 async function bootstrap(): Promise<void> {

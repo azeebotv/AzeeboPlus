@@ -11,7 +11,7 @@ import {
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { randomUUID } from 'crypto';
 import { CircuitBreaker, CircuitBreakerOpenError, CircuitBreakerStats } from '@azeebo/shared-types';
-import * as fileType from 'file-type';
+
 
 interface FileMetadata {
   contentType: string | undefined;
@@ -164,7 +164,8 @@ export class S3Service {
 
   private async sniffMimeType(buffer: Buffer): Promise<string | undefined> {
     try {
-      const result = await fileType.fromBuffer(buffer);
+      const { fileTypeFromBuffer } = await import('file-type');
+      const result = await fileTypeFromBuffer(buffer);
       return result?.mime;
     } catch (error) {
       this.logger.warn(`Failed to sniff MIME type: ${(error as Error).message}`);

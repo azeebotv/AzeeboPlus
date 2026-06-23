@@ -1,13 +1,13 @@
-# Azeebo+ Application Services
-# Usage: docker compose -f docker-compose.yml -f docker-compose.services.yml up -d
-# With profiles: docker compose -f docker-compose.yml -f docker-compose.services.yml --profile core up -d
-# All profiles: docker compose -f docker-compose.yml -f docker-compose.services.yml --profile all up -d
+# Azeebo+ Local Development - Full Stack
+# Usage: docker compose -f docker-compose.services.yml up -d
+# Build only: docker compose -f docker-compose.services.yml build
+# Logs: docker compose -f docker-compose.services.yml logs -f [service]
 
 x-common-env: &common-env
-  NODE_ENV: ${NODE_ENV:-development}
+  NODE_ENV: development
   REDIS_URL: redis://redis:6379
-  POSTGRES_HOST: pgbouncer
-  POSTGRES_PORT: "6432"
+  POSTGRES_HOST: postgres
+  POSTGRES_PORT: "5432"
 
 x-nestjs-service: &nestjs-service
   restart: unless-stopped
@@ -16,12 +16,48 @@ x-nestjs-service: &nestjs-service
   depends_on:
     postgres:
       condition: service_healthy
-    pgbouncer:
-      condition: service_healthy
     redis:
       condition: service_healthy
 
 services:
+  # ============================================================
+  # INFRASTRUCTURE
+  # ============================================================
+  postgres:
+    image: postgres:15-alpine
+    container_name: azeebo_postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-azeebo}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-azeebo_dev_2024}
+      POSTGRES_DB: ${POSTGRES_DB:-azeebo_plus_dev}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./scripts/docker-init-databases.sh:/docker-entrypoint-initdb.d/01-init-databases.sh
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-azeebo} -d ${POSTGRES_DB:-azeebo_plus_dev}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - azeebo_network
+
+  redis:
+    image: redis:7-alpine
+    container_name: azeebo_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - azeebo_network
+
   # ============================================================
   # CORE DOMAIN
   # ============================================================
@@ -36,7 +72,7 @@ services:
     environment:
       <<: *common-env
       PORT: "3000"
-      DATABASE_URL: postgresql://auth_user:${AUTH_DB_PASSWORD}@pgbouncer:6432/auth_db?schema=public
+      DATABASE_URL: postgresql://azeebo:${AUTH_DB_PASSWORD:-azeebo_dev_2024}@postgres:5432/auth_db?schema=public
       JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-1d}
@@ -56,7 +92,7 @@ services:
     environment:
       <<: *common-env
       PORT: "3001"
-      DATABASE_URL: postgresql://user_user:${USER_DB_PASSWORD}@pgbouncer:6432/user_db?schema=public
+      DATABASE_URL: postgresql://azeebo:${USER_DB_PASSWORD:-azeebo_dev_2024}@postgres:5432/user_db?schema=public
     profiles:
       - core
       - all
@@ -72,7 +108,7 @@ services:
     environment:
       <<: *common-env
       PORT: "3002"
-      DATABASE_URL: postgresql://wallet_user:${WALLET_DB_PASSWORD}@pgbouncer:6432/wallet_db?schema=public
+      DATABASE_URL: postgresql://azeebo:${WALLET_DB_PASSWORD:-azeebo_dev_2024}@postgres:5432/wallet_db?schema=public
     profiles:
       - core
       - all
@@ -88,9 +124,9 @@ services:
     environment:
       <<: *common-env
       PORT: "3003"
-      DATABASE_URL: postgresql://payment_user:${PAYMENT_DB_PASSWORD}@pgbouncer:6432/payment_db?schema=public
-      PAYSTACK_SECRET_KEY: ${PAYSTACK_SECRET_KEY}
-      FLW_SECRET_KEY: ${FLW_SECRET_KEY}
+      DATABASE_URL: postgresql://azeebo:${PAYMENT_DB_PASSWORD:-azeebo_dev_2024}@postgres:5432/payment_db?schema=public
+      PAYSTACK_SECRET_KEY: ${PAYSTACK_SECRET_KEY:-sk_test_placeholder}
+      FLW_SECRET_KEY: ${FLW_SECRET_KEY:-FLWSECK_TEST_placeholder}
     profiles:
       - core
       - all
@@ -106,7 +142,7 @@ services:
     environment:
       <<: *common-env
       PORT: "3004"
-      DATABASE_URL: postgresql://content_user:${CONTENT_DB_PASSWORD}@pgbouncer:6432/content_db?schema=public
+      DATABASE_URL: postgresql://azeebo:${CONTENT_DB_PASSWORD:-azeebo_dev_2024}@postgres:5432/content_db?schema=public
     profiles:
       - core
       - all
@@ -122,7 +158,7 @@ services:
     environment:
       <<: *common-env
       PORT: "3005"
-      DATABASE_URL: postgresql://search_user:${SEARCH_DB_PASSWORD}@pgbouncer:6432/search_db?schema=public
+      DATABASE_URL: postgresql://azeebo:${SEARCH_DB_PASSWORD:-azeebo_dev_2024}@postgres:5432/search_db?schema=public
     profiles:
       - core
       - all
@@ -138,11 +174,11 @@ services:
     environment:
       <<: *common-env
       PORT: "3019"
-      DATABASE_URL: postgresql://media_user:${MEDIA_DB_PASSWORD}@pgbouncer:6432/media_db?schema=public
+      DATABASE_URL: postgresql://azeebo:${MEDIA_DB_PASSWORD:-azeebo_dev_2024}@postgres:5432/media_db?schema=public
       AWS_REGION: ${AWS_REGION:-us-east-1}
-      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
-      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
-      AWS_S3_BUCKET: ${AWS_S3_BUCKET:-azeebo-media}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-placeholder}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-placeholder}
+      AWS_S3_BUCKET: ${AWS_S3_BUCKET:-azeebo-media-dev}
     profiles:
       - core
       - all
@@ -161,11 +197,11 @@ services:
     environment:
       <<: *common-env
       PORT: "3006"
-      DATABASE_URL: postgresql://notification_user:${NOTIFICATION_DB_PASSWORD}@pgbouncer:6432/notification_db?schema=public
-      SMTP_HOST: ${SMTP_HOST}
-      SMTP_PORT: ${SMTP_PORT:-587}
-      SMTP_USER: ${SMTP_USER}
-      SMTP_PASS: ${SMTP_PASS}
+      DATABASE_URL: postgresql://azeebo:${NOTIFICATION_DB_PASSWORD:-azeebo_dev_2024}@postgres:5432/notification_db?schema=public
+      SMTP_HOST: ${SMTP_HOST:-mailhog}
+      SMTP_PORT: ${SMTP_PORT:-1025}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
     profiles:
       - engagement
       - all
@@ -181,7 +217,7 @@ services:
     environment:
       <<: *common-env
       PORT: "3007"
-      DATABASE_URL: postgresql://reward_user:${REWARD_DB_PASSWORD}@pgbouncer:6432/reward_db?schema=public
+      DATABASE_URL: postgresql://azeebo:${REWARD_DB_PASSWORD:-azeebo_dev_2024}@postgres:5432/reward_db?schema=public
     profiles:
       - engagement
       - all
@@ -197,7 +233,7 @@ services:
     environment:
       <<: *common-env
       PORT: "3023"
-      DATABASE_URL: postgresql://engagement_user:${ENGAGEMENT_DB_PASSWORD}@pgbouncer:6432/engagement_db?schema=public
+      DATABASE_URL: postgresql://azeebo:${ENGAGEMENT_DB_PASSWORD:-azeebo_dev_2024}@postgres:5432/engagement_db?schema=public
     profiles:
       - engagement
       - all
@@ -213,7 +249,7 @@ services:
     environment:
       <<: *common-env
       PORT: "3024"
-      DATABASE_URL: postgresql://messaging_user:${MESSAGING_DB_PASSWORD}@pgbouncer:6432/messaging_db?schema=public
+      DATABASE_URL: postgresql://azeebo:${MESSAGING_DB_PASSWORD:-azeebo_dev_2024}@postgres:5432/messaging_db?schema=public
     profiles:
       - engagement
       - all
@@ -229,7 +265,7 @@ services:
     environment:
       <<: *common-env
       PORT: "3025"
-      DATABASE_URL: postgresql://referral_user:${REFERRAL_DB_PASSWORD}@pgbouncer:6432/referral_db?schema=public
+      DATABASE_URL: postgresql://azeebo:${REFERRAL_DB_PASSWORD:-azeebo_dev_2024}@postgres:5432/referral_db?schema=public
     profiles:
       - engagement
       - all
@@ -245,7 +281,7 @@ services:
     environment:
       <<: *common-env
       PORT: "3026"
-      DATABASE_URL: postgresql://subscription_user:${SUBSCRIPTION_DB_PASSWORD}@pgbouncer:6432/subscription_db?schema=public
+      DATABASE_URL: postgresql://azeebo:${SUBSCRIPTION_DB_PASSWORD:-azeebo_dev_2024}@postgres:5432/subscription_db?schema=public
     profiles:
       - engagement
       - all
@@ -264,7 +300,7 @@ services:
     environment:
       <<: *common-env
       PORT: "3008"
-      DATABASE_URL: postgresql://analytics_user:${ANALYTICS_DB_PASSWORD}@pgbouncer:6432/analytics_db?schema=public
+      DATABASE_URL: postgresql://azeebo:${ANALYTICS_DB_PASSWORD:-azeebo_dev_2024}@postgres:5432/analytics_db?schema=public
     profiles:
       - intelligence
       - all
@@ -280,7 +316,7 @@ services:
     environment:
       <<: *common-env
       PORT: "3009"
-      DATABASE_URL: postgresql://recommendation_user:${RECOMMENDATION_DB_PASSWORD}@pgbouncer:6432/recommendation_db?schema=public
+      DATABASE_URL: postgresql://azeebo:${RECOMMENDATION_DB_PASSWORD:-azeebo_dev_2024}@postgres:5432/recommendation_db?schema=public
     profiles:
       - intelligence
       - all
@@ -299,7 +335,7 @@ services:
     environment:
       <<: *common-env
       PORT: "3010"
-      DATABASE_URL: postgresql://reality_user:${REALITY_DB_PASSWORD}@pgbouncer:6432/reality_db?schema=public
+      DATABASE_URL: postgresql://azeebo:${REALITY_DB_PASSWORD:-azeebo_dev_2024}@postgres:5432/reality_db?schema=public
     profiles:
       - universes
       - all
@@ -315,7 +351,7 @@ services:
     environment:
       <<: *common-env
       PORT: "3011"
-      DATABASE_URL: postgresql://movie_user:${MOVIE_DB_PASSWORD}@pgbouncer:6432/movie_db?schema=public
+      DATABASE_URL: postgresql://azeebo:${MOVIE_DB_PASSWORD:-azeebo_dev_2024}@postgres:5432/movie_db?schema=public
     profiles:
       - universes
       - all
@@ -331,7 +367,7 @@ services:
     environment:
       <<: *common-env
       PORT: "3012"
-      DATABASE_URL: postgresql://comedy_user:${COMEDY_DB_PASSWORD}@pgbouncer:6432/comedy_db?schema=public
+      DATABASE_URL: postgresql://azeebo:${COMEDY_DB_PASSWORD:-azeebo_dev_2024}@postgres:5432/comedy_db?schema=public
     profiles:
       - universes
       - all
@@ -347,7 +383,7 @@ services:
     environment:
       <<: *common-env
       PORT: "3014"
-      DATABASE_URL: postgresql://games_user:${GAMES_DB_PASSWORD}@pgbouncer:6432/games_db?schema=public
+      DATABASE_URL: postgresql://azeebo:${GAMES_DB_PASSWORD:-azeebo_dev_2024}@postgres:5432/games_db?schema=public
     profiles:
       - universes
       - all
@@ -363,7 +399,7 @@ services:
     environment:
       <<: *common-env
       PORT: "3021"
-      DATABASE_URL: postgresql://sports_user:${SPORTS_DB_PASSWORD}@pgbouncer:6432/sports_db?schema=public
+      DATABASE_URL: postgresql://azeebo:${SPORTS_DB_PASSWORD:-azeebo_dev_2024}@postgres:5432/sports_db?schema=public
     profiles:
       - universes
       - all
@@ -379,7 +415,7 @@ services:
     environment:
       <<: *common-env
       PORT: "3016"
-      DATABASE_URL: postgresql://lifestyle_user:${LIFESTYLE_DB_PASSWORD}@pgbouncer:6432/lifestyle_db?schema=public
+      DATABASE_URL: postgresql://azeebo:${LIFESTYLE_DB_PASSWORD:-azeebo_dev_2024}@postgres:5432/lifestyle_db?schema=public
     profiles:
       - universes
       - all
@@ -395,7 +431,7 @@ services:
     environment:
       <<: *common-env
       PORT: "3017"
-      DATABASE_URL: postgresql://vertical_user:${VERTICAL_DB_PASSWORD}@pgbouncer:6432/vertical_db?schema=public
+      DATABASE_URL: postgresql://azeebo:${VERTICAL_DB_PASSWORD:-azeebo_dev_2024}@postgres:5432/vertical_db?schema=public
     profiles:
       - universes
       - all
@@ -414,7 +450,7 @@ services:
     environment:
       <<: *common-env
       PORT: "3015"
-      DATABASE_URL: postgresql://queue_user:${QUEUE_DB_PASSWORD}@pgbouncer:6432/queue_db?schema=public
+      DATABASE_URL: postgresql://azeebo:${QUEUE_DB_PASSWORD:-azeebo_dev_2024}@postgres:5432/queue_db?schema=public
     profiles:
       - operations
       - all
@@ -423,14 +459,14 @@ services:
     <<: *nestjs-service
     build:
       context: .
-      dockerfile: services/operations/creator-service/Dockerfile
+      dockerfile: services/universes/creator-service/Dockerfile
     container_name: azeebo_creator_service
     ports:
       - "3018:3018"
     environment:
       <<: *common-env
       PORT: "3018"
-      DATABASE_URL: postgresql://creator_user:${CREATOR_DB_PASSWORD}@pgbouncer:6432/creator_db?schema=public
+      DATABASE_URL: postgresql://azeebo:${CREATOR_DB_PASSWORD:-azeebo_dev_2024}@postgres:5432/creator_db?schema=public
     profiles:
       - operations
       - all
@@ -446,7 +482,7 @@ services:
     environment:
       <<: *common-env
       PORT: "3020"
-      DATABASE_URL: postgresql://support_user:${SUPPORT_DB_PASSWORD}@pgbouncer:6432/support_db?schema=public
+      DATABASE_URL: postgresql://azeebo:${SUPPORT_DB_PASSWORD:-azeebo_dev_2024}@postgres:5432/support_db?schema=public
     profiles:
       - operations
       - all
@@ -462,7 +498,7 @@ services:
     environment:
       <<: *common-env
       PORT: "3022"
-      DATABASE_URL: postgresql://moderation_user:${MODERATION_DB_PASSWORD}@pgbouncer:6432/moderation_db?schema=public
+      DATABASE_URL: postgresql://azeebo:${MODERATION_DB_PASSWORD:-azeebo_dev_2024}@postgres:5432/moderation_db?schema=public
     profiles:
       - operations
       - all
@@ -509,7 +545,7 @@ services:
       SUBSCRIPTION_SERVICE_URL: http://subscription-service:3026
       RATE_LIMIT_TTL: ${RATE_LIMIT_TTL:-60}
       RATE_LIMIT_MAX: ${RATE_LIMIT_MAX:-100}
-      CORS_ORIGIN: ${CORS_ORIGIN:?CORS_ORIGIN must be set}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:4000,http://localhost:3000}
     profiles:
       - gateway
       - all
@@ -547,13 +583,11 @@ services:
     environment:
       <<: *common-env
       PORT: "3016"
-      DATABASE_URL: postgresql://admin_user:${ADMIN_DB_PASSWORD}@pgbouncer:6432/admin_db?schema=public
+      DATABASE_URL: postgresql://azeebo:${ADMIN_DB_PASSWORD:-azeebo_dev_2024}@postgres:5432/admin_db?schema=public
     networks:
       - azeebo_network
     depends_on:
       postgres:
-        condition: service_healthy
-      pgbouncer:
         condition: service_healthy
     restart: unless-stopped
     profiles:
@@ -570,15 +604,27 @@ services:
     environment:
       <<: *common-env
       PORT: "3014"
-      DATABASE_URL: postgresql://creator_portal_user:${CREATOR_PORTAL_DB_PASSWORD}@pgbouncer:6432/creator_portal_db?schema=public
+      DATABASE_URL: postgresql://azeebo:${CREATOR_PORTAL_DB_PASSWORD:-azeebo_dev_2024}@postgres:5432/creator_portal_db?schema=public
     networks:
       - azeebo_network
     depends_on:
       postgres:
         condition: service_healthy
-      pgbouncer:
-        condition: service_healthy
     restart: unless-stopped
     profiles:
       - frontend
       - all
+
+# ============================================================
+# NETWORKS
+# ============================================================
+networks:
+  azeebo_network:
+    driver: bridge
+
+# ============================================================
+# VOLUMES
+# ============================================================
+volumes:
+  postgres-data:
+  redis-data:

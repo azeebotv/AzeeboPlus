@@ -46,13 +46,13 @@ export class EmailProcessor extends WorkerHost {
     template: string,
     context: Record<string, string>
   ): Promise<void> {
-    this.logger.info(`Sending email to ${to} using template ${template}`);
+    this.logger.log(`Sending email to ${to} using template ${template}`);
     await this.emailService.sendEmail(to, subject, template, context);
   }
 
   @OnWorkerEvent('active')
   onActive(job: Job) {
-    this.logger.info(`Email job ${job.id} is now active and processing`);
+    this.logger.log(`Email job ${job.id} is now active and processing`);
   }
 
   @OnWorkerEvent('completed')
@@ -77,7 +77,7 @@ export class EmailProcessor extends WorkerHost {
 
   @OnWorkerEvent('progress')
   onProgress(job: Job, progress: number | object) {
-    this.logger.info(`Email job ${job.id} progress: ${JSON.stringify(progress)}`);
+    this.logger.log(`Email job ${job.id} progress: ${JSON.stringify(progress)}`);
   }
 
   @OnWorkerEvent('drained')

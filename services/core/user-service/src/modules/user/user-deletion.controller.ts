@@ -1,27 +1,21 @@
 import { Controller, Delete, Get, Param, Post, Body, Req, UseGuards, ForbiddenException } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { Throttle } from '@nestjs/throttler';
-import { UserService } from './user.service';
+import { UsersService } from '../users/users.service';
 import { Request } from 'express';
-import { z } from 'zod';
 import { createLogger } from '@azeebo/logger';
-
-const DeletionRequestSchema = z.object({
-  userId: z.string().uuid(),
-  reason: z.string().optional(),
-});
 
 @Controller('privacy')
 @UseGuards(AuthGuard('jwt'))
 export class UserDeletionController {
   private readonly logger = createLogger('user-deletion');
 
-  constructor(private readonly userService: UserService) {}
+  constructor(private readonly userService: UsersService) {}
 
   @Post('deletion-request')
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   async requestDataDeletion(@Body() body: { userId: string; reason?: string }, @Req() req: Request & { user: { id: string; role: string } }) {
-    const validated = DeletionRequestSchema.parse(body);
+    const validated = { userId: body.userId, reason: body.reason };
 
     if (req.user.id !== validated.userId && req.user.role !== 'admin') {
       throw new ForbiddenException('You can only request deletion for your own account');

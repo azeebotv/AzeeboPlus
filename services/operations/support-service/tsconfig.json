@@ -16,7 +16,7 @@
     "noFallthroughCasesInSwitch": true,
     "types": ["jest", "node", "supertest"],
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["./src/*"]
     }
   },
   "include": ["src/**/*"],

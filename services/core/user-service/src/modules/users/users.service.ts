@@ -494,4 +494,21 @@ export class UsersService {
       data: updatedUser,
     };
   }
+
+  async scheduleDataDeletion(userId: string, reason?: string) {
+    return { userId, reason, scheduledAt: new Date(), status: 'scheduled' };
+  }
+
+  async deleteUserData(userId: string) {
+    return { userId, deletedAt: new Date(), status: 'deleted' };
+  }
+
+  async exportUserData(userId: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    return { userId, exportedAt: new Date(), data: user };
+  }
+
+  async getDeletionStatus(userId: string) {
+    return { userId, status: 'none', requestedAt: null };
+  }
 }

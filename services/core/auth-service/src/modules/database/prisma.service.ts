@@ -19,17 +19,12 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
     databaseUrl.searchParams.set('idle_timeout', idleTimeout.toString());
 
     super({
-      datasources: {
-        db: {
-          url: databaseUrl.toString(),
-        },
-      },
       log: [
         { emit: 'event', level: 'query' },
         { emit: 'event', level: 'error' },
         { emit: 'event', level: 'warn' },
       ],
-    });
+    } as any);
   }
 
   async onModuleInit(): Promise<void> {

@@ -48,6 +48,8 @@ export class GatewayAuthGuard implements CanActivate {
       return true;
     }
 
+    const request = context.switchToHttp().getRequest();
+
     // Check if the path matches a known public pattern
     const requestPath = request.path || request.url;
     const isPublicPath = GatewayAuthGuard.PUBLIC_PATH_PATTERNS.some((pattern) =>
@@ -57,8 +59,6 @@ export class GatewayAuthGuard implements CanActivate {
     if (isPublicPath) {
       return true;
     }
-
-    const request = context.switchToHttp().getRequest();
     const authHeader = request.headers['authorization'];
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {

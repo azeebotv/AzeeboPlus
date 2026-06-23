@@ -13,6 +13,10 @@ export class CacheInterceptor implements NestInterceptor {
   ) {}
 
   async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<unknown>> {
+    if (context.getType() !== 'http') {
+      return next.handle();
+    }
+
     const request = context.switchToHttp().getRequest();
 
     if (request.method !== 'GET') {
@@ -50,7 +54,7 @@ export class CacheInterceptor implements NestInterceptor {
     if (paramMatches) {
       for (const match of paramMatches) {
         const paramName = match.replace(/[{}]/g, '');
-        const paramValue = request.params[paramName] || request.query[paramName];
+        const paramValue = request.params?.[paramName] || request.query?.[paramName];
         if (paramValue) {
           key = key.replace(match, paramValue);
         }

@@ -379,9 +379,9 @@ export class AuthService {
         role: user.role,
         type: 'access',
         iat: now,
-      },
+      } as any,
       {
-        expiresIn: this.accessTokenExpiry,
+        expiresIn: this.accessTokenExpiry as any,
         secret: jwtAccessSecret,
       }
     );
@@ -397,9 +397,9 @@ export class AuthService {
         sub: user.id,
         type: 'refresh',
         iat: now,
-      },
+      } as any,
       {
-        expiresIn: this.refreshTokenExpiry,
+        expiresIn: this.refreshTokenExpiry as any,
         secret: jwtRefreshSecret,
       }
     );

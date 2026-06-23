@@ -55,5 +55,7 @@ docker-compose*.yml
 .prettierrc
 prettier.config.*
 jest.config.*
-tsconfig*.json
 stryker.config.*
+
+# Keep tsconfig files (needed by Dockerfiles for building)
+# tsconfig.build.json is required by service build scripts (tsc -p tsconfig.build.json)

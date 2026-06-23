@@ -31,7 +31,7 @@ import { RedisService } from '../../common/services/redis.service';
       useFactory: async (configService: ConfigService) => ({
         secret: configService.getOrThrow<string>('JWT_ACCESS_SECRET'),
         signOptions: {
-          expiresIn: configService.get<string>('JWT_EXPIRES_IN', '30m') as const,
+          expiresIn: configService.get<string>('JWT_EXPIRES_IN', '30m') as any,
         },
       }),
       inject: [ConfigService],

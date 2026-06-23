@@ -1,12 +1,13 @@
 import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
-import * as admin from 'firebase-admin';
+import { initializeApp, cert, getApps, getApp, deleteApp, type ServiceAccount } from 'firebase-admin/app';
+import { getMessaging, type Messaging } from 'firebase-admin/messaging';
 import { ConfigService } from '@nestjs/config';
 import { CircuitBreaker, CircuitBreakerOpenError, CircuitBreakerStats } from '@azeebo/shared-types';
 
 @Injectable()
 export class FirebaseService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(FirebaseService.name);
-  private messaging!: admin.messaging.Messaging;
+  private messaging!: Messaging;
   private firebaseEnabled: boolean = false;
   private readonly circuitBreaker: CircuitBreaker;
 
@@ -29,11 +30,11 @@ export class FirebaseService implements OnModuleInit, OnModuleDestroy {
     }
 
     try {
-      admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount as admin.ServiceAccount),
-      });
+      const app = getApps().length === 0
+        ? initializeApp({ credential: cert(serviceAccount as ServiceAccount) })
+        : getApp();
 
-      this.messaging = admin.messaging();
+      this.messaging = getMessaging(app);
       this.firebaseEnabled = true;
       this.logger.log('Firebase initialized successfully');
     } catch (error) {
@@ -44,7 +45,9 @@ export class FirebaseService implements OnModuleInit, OnModuleDestroy {
   async onModuleDestroy(): Promise<void> {
     if (this.firebaseEnabled) {
       try {
-        admin.app().delete();
+        if (getApps().length > 0) {
+          await deleteApp(getApp());
+        }
         this.logger.log('Firebase app cleaned up successfully');
       } catch (error) {
         this.logger.error(`Error cleaning up Firebase: ${(error as Error).message}`);
@@ -111,7 +114,7 @@ export class FirebaseService implements OnModuleInit, OnModuleDestroy {
       };
 
       await this.circuitBreaker.execute(async () => {
-        await this.messaging.sendMulticast(message);
+        await this.messaging.sendEachForMulticast(message);
       });
 
       this.logger.log(`Multicast push notification sent to ${tokens.length} tokens`);

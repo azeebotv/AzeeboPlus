@@ -73,7 +73,7 @@ export class ContentRepository {
       data: {
         ...data,
         status: 'draft',
-      } as Prisma.ContentItemCreateInput,
+      } as any,
       include: { universe: true },
     });
   }
