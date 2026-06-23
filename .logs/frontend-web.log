@@ -1,0 +1,291 @@
+
+> @azeebo/web@0.1.0 dev /Users/deprof/www/azeebo+/apps/web
+> next dev
+
+   ▲ Next.js 15.5.19
+   - Local:        http://localhost:4000
+   - Network:      http://192.168.1.104:4000
+   - Environments: .env
+
+ ✓ Starting...
+ ✓ Ready in 3s
+ ✓ Compiled /middleware in 285ms (158 modules)
+ ○ Compiling / ...
+ ✓ Compiled / in 5.4s (4478 modules)
+(node:17193) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ GET / 200 in 2542ms
+ GET / 200 in 593ms
+ ○ Compiling /browse ...
+ ✓ Compiled /browse in 2.2s (4485 modules)
+ GET /browse 200 in 3044ms
+ ○ Compiling /library ...
+ ✓ Compiled /library in 1567ms (4494 modules)
+ GET /library 200 in 2681ms
+ GET /browse 200 in 98ms
+ ○ Compiling /auth/login ...
+ ✓ Compiled /auth/login in 1043ms (4501 modules)
+ GET /auth/login?next=%2Fcreators 200 in 1547ms
+ GET /browse 200 in 109ms
+ GET / 200 in 1341ms
+ GET / 200 in 93ms
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 3.5s (4501 modules)
+ GET /health 404 in 3985ms
+ GET /auth/login?next=%2Fadmin 200 in 112ms
+ GET / 200 in 666ms
+ GET /auth/login?next=%2Fcreator 200 in 81ms
+ GET / 200 in 142ms
+ ○ Compiling /reality ...
+ ✓ Compiled /reality in 1749ms (4503 modules)
+ GET /reality 200 in 2741ms
+ ○ Compiling /vertical ...
+ ✓ Compiled /vertical in 930ms (4510 modules)
+ GET /vertical 200 in 1687ms
+ GET / 200 in 149ms
+ ✓ Compiled in 2.7s (2320 modules)
+ GET / 200 in 91ms
+ ✓ Compiled in 1896ms (2320 modules)
+ GET / 200 in 128ms
+ ○ Compiling /site.webmanifest ...
+ ✓ Compiled /site.webmanifest in 2.9s (4509 modules)
+ GET /site.webmanifest 200 in 3931ms
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 1779ms (4514 modules)
+ GET /icon-192x192.png 404 in 2170ms
+ ✓ Compiled in 1312ms (4528 modules)
+ GET / 200 in 759ms
+ GET /icon-192x192.png 404 in 484ms
+ GET / 200 in 1484ms
+ GET / 200 in 126ms
+ ✓ Compiled in 2.7s (2321 modules)
+ GET / 200 in 209ms
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 1779ms (4495 modules)
+ GET /icon-192x192.png 404 in 2837ms
+ GET / 200 in 601ms
+ GET / 200 in 112ms
+ GET / 200 in 188ms
+ ○ Compiling /vertical ...
+ ✓ Compiled /vertical in 1655ms (2346 modules)
+ GET /vertical 200 in 2764ms
+ ✓ Compiled /reality in 342ms (2351 modules)
+ GET /reality 200 in 926ms
+ ○ Compiling /movies ...
+ ✓ Compiled /movies in 1564ms (4507 modules)
+ GET /movies 200 in 2484ms
+ ○ Compiling /comedy ...
+ ✓ Compiled /comedy in 1940ms (4514 modules)
+ GET /comedy 200 in 3223ms
+ ○ Compiling /games ...
+ ✓ Compiled /games in 1988ms (4521 modules)
+ GET /games 200 in 2964ms
+ ○ Compiling /lifestyle ...
+ ✓ Compiled /lifestyle in 1788ms (4521 modules)
+ GET /lifestyle 200 in 2990ms
+ ○ Compiling /sports ...
+ ✓ Compiled /sports in 6.4s (4523 modules)
+ GET /sports 200 in 9485ms
+ ○ Compiling /auth/login ...
+ ✓ Compiled /auth/login in 11.3s (4543 modules)
+ GET /auth/login?next=%2Fcreator 200 in 7513ms
+ GET /sports 200 in 82ms
+ ○ Compiling / ...
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ✓ Compiled / in 7.5s (4545 modules)
+ GET / 200 in 9210ms
+ GET /auth/login?next=%2Fcreator 200 in 185ms
+ ✓ Compiled in 4.2s (4545 modules)
+ GET / 200 in 4659ms
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ✓ Compiled in 22s (4540 modules)
+ GET / 200 in 4232ms
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ✓ Compiled in 3.4s (4535 modules)
+ GET / 200 in 3058ms
+ GET / 200 in 4690ms
+ ✓ Compiled in 2.6s (4535 modules)
+ ✓ Compiled in 2.3s (4535 modules)
+ GET / 200 in 1117ms
+ GET / 200 in 327ms
+ GET / 200 in 147ms
+ ○ Compiling /browse ...
+ ✓ Compiled /browse in 2.3s (2367 modules)
+ GET /browse 200 in 2590ms
+ ○ Compiling /_not-found ...
+ GET / 200 in 9268ms
+ ✓ Compiled /_not-found in 15s (4526 modules)
+ GET / 200 in 1161ms
+ GET / 200 in 144ms
+ GET / 200 in 414ms
+ GET / 200 in 101ms
+ GET / 200 in 450ms
+ GET / 200 in 160ms
+ GET / 200 in 481ms
+ GET / 200 in 139ms
+ GET / 200 in 446ms
+ GET / 200 in 106ms
+ GET / 200 in 152ms
+ GET / 200 in 139ms
+ GET / 200 in 711ms
+ GET / 200 in 388ms
+ GET / 200 in 172ms
+ GET / 200 in 523ms
+ GET / 200 in 119ms
+ ○ Compiling /library ...
+ ✓ Compiled /library in 2.4s (2367 modules)
+ GET /library 200 in 2599ms
+ GET /auth/login 200 in 180ms
+ GET /auth/login 200 in 252ms
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 3.5s (4531 modules)
+ GET /icon-192x192.png 404 in 3869ms
+ GET /icon-192x192.png 404 in 53ms
+ GET /auth/login 200 in 310ms
+ GET /icon-192x192.png 404 in 315ms
+ GET /auth/login 200 in 105ms
+ GET /icon-192x192.png 404 in 72ms
+ GET /auth/login 200 in 153ms
+ GET / 200 in 620ms
+ GET / 200 in 139ms
+ ✓ Compiled in 6.3s (4535 modules)
+ GET / 200 in 453ms
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 1724ms (4526 modules)
+ GET /icon-192x192.png 404 in 2262ms
+ ✓ Compiled in 15.6s (4535 modules)
+ GET / 200 in 291ms
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 1247ms (4526 modules)
+ GET /icon-192x192.png 404 in 1472ms
+ GET / 200 in 1320ms
+ GET / 200 in 181ms
+ GET /browse 200 in 81ms
+ GET /icon-192x192.png 404 in 277ms
+ GET /icon-192x192.png 404 in 77ms
+ GET /browse 200 in 379ms
+ GET /icon-192x192.png 404 in 159ms
+ GET /icon-192x192.png 404 in 123ms
+ GET / 200 in 113ms
+ ✓ Compiled in 5.9s (4535 modules)
+ GET / 200 in 401ms
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 1771ms (4526 modules)
+ GET /icon-192x192.png 404 in 2123ms
+ GET / 200 in 823ms
+ GET /icon-192x192.png 404 in 198ms
+ ✓ Compiled in 2.5s (4540 modules)
+ GET / 200 in 1184ms
+ GET /icon-192x192.png 404 in 288ms
+ ✓ Compiled in 13.4s (4561 modules)
+ GET / 200 in 14652ms
+ ✓ Compiled in 5.1s (4543 modules)
+ ✓ Compiled in 7.2s (2179 modules)
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ GET / 200 in 1306ms
+ ✓ Compiled in 3.2s (2179 modules)
+ GET / 200 in 193ms
+ GET /icon-192x192.png 404 in 239ms
+ ✓ Compiled in 11.6s (2179 modules)
+ GET / 200 in 982ms
+ GET /icon-192x192.png 404 in 213ms
+ ✓ Compiled in 2.2s (2179 modules)
+ GET / 200 in 129ms
+ GET /icon-192x192.png 404 in 84ms
+ ✓ Compiled in 5.1s (4549 modules)
+ GET / 200 in 2954ms
+ GET /icon-192x192.png 404 in 307ms
+ ✓ Compiled in 1391ms (2182 modules)
+ GET / 200 in 133ms
+ GET /icon-192x192.png 404 in 201ms
+ GET / 200 in 433ms
+ ✓ Compiled in 7.5s (4693 modules)
+ ✓ Compiled in 1204ms (2182 modules)
+ ✓ Compiled in 1247ms (2178 modules)
+ ✓ Compiled in 1454ms (2178 modules)
+ ✓ Compiled in 773ms (2178 modules)
+ GET / 200 in 1291ms
+ GET /auth/login 200 in 301ms
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 5.6s (4535 modules)
+ GET /icon-192x192.png 404 in 5957ms
+ ○ Compiling /auth/register ...
+ ✓ Compiled /auth/register in 4.8s (4542 modules)
+ GET /auth/register 200 in 5458ms
+ ✓ Compiled in 6.7s (4551 modules)
+ GET /auth/register 200 in 721ms
+ GET /icon-192x192.png 404 in 237ms
+ ✓ Compiled in 923ms (2184 modules)
+ GET /auth/register 200 in 429ms
+ GET /icon-192x192.png 404 in 597ms
+ ✓ Compiled in 1123ms (2184 modules)
+ GET /auth/register 200 in 332ms
+ GET /icon-192x192.png 404 in 149ms
+ ✓ Compiled in 1918ms (2184 modules)
+ GET /auth/register 200 in 2287ms
+ GET / 200 in 2693ms
+ GET / 200 in 946ms
+ ✓ Compiled in 11.5s (4544 modules)
+ GET / 200 in 2882ms
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 4.6s (4535 modules)
+ GET /icon-192x192.png 404 in 5156ms
+ GET / 200 in 168ms
+ GET /icon-192x192.png 404 in 104ms
+ ✓ Compiled in 5.5s (4549 modules)
+ GET / 200 in 22616ms
+ ✓ Compiled in 26.9s (4549 modules)
+ ✓ Compiled in 8.5s (4544 modules)
+ GET /auth/login 200 in 543ms
+ GET / 200 in 446ms
+ ✓ Compiled in 12.9s (4544 modules)
+ GET / 200 in 1160ms
+ GET /browse 200 in 203ms
+ ○ Compiling /_not-found ...
+ ✓ Compiled /watch/[id] in 11.2s (4556 modules)
+ GET /icon-192x192.png 404 in 12060ms
+ GET /browse 200 in 130ms
+ GET /icon-192x192.png 404 in 167ms
+Error: Route "/watch/[id]" used `params.id`. `params` should be awaited before using its properties. Learn more: https://nextjs.org/docs/messages/sync-dynamic-apis
+    at WatchPage (src/app/watch/[id]/page.tsx:50:38)
+  48 |
+  49 | export default function WatchPage({ params }: Props): JSX.Element {
+> 50 |   return <WatchPageClient id={params.id} />;
+     |                                      ^
+  51 | }
+  52 |
+Error: Route "/watch/[id]" used `params.id`. `params` should be awaited before using its properties. Learn more: https://nextjs.org/docs/messages/sync-dynamic-apis
+    at Module.generateMetadata (src/app/watch/[id]/page.tsx:14:65)
+  12 | export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  13 |   try {
+> 14 |     const contentResponse = await api.content.getContent(params.id);
+     |                                                                 ^
+  15 |
+  16 |     if (!contentResponse.success || !contentResponse.data) {
+  17 |       return {
+ GET /watch/cnt00001-0000-0000-0000-000000000029 200 in 8616ms
+ GET /browse 200 in 265ms
+ GET / 200 in 54ms
+ GET /icon-192x192.png 404 in 151ms
+ GET / 200 in 659ms
+ GET / 200 in 151ms
+ GET / 200 in 246ms
+ GET /auth/login 200 in 84ms
+ GET /icon-192x192.png 404 in 223ms
+ GET /icon-192x192.png 404 in 107ms
+ GET /browse 200 in 39ms
+ GET /icon-192x192.png 404 in 65ms
+ ✓ Compiled in 3.5s (2182 modules)
+ GET /browse 200 in 536ms
+ ✓ Compiled in 4.1s (2182 modules)
+ GET /browse 200 in 291ms
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 4.6s (4551 modules)
+ GET /icon-192x192.png 404 in 5332ms
+ GET /icon-192x192.png 404 in 330ms
+ GET /browse 200 in 366ms
+ GET /icon-192x192.png 404 in 140ms
+ ✓ Compiled in 7.7s (4555 modules)
+ GET /browse 200 in 286ms
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ GET /browse 200 in 1243ms

@@ -41,6 +41,15 @@ export class ResponseSanitizationInterceptor implements NestInterceptor {
   }
 
   private sanitizeObject(obj: Record<string, unknown>): Record<string, unknown> {
+    // Handle arrays: sanitize each element and return as-is
+    if (Array.isArray(obj)) {
+      return obj.map((item) =>
+        typeof item === 'object' && item !== null
+          ? this.sanitizeObject(item as Record<string, unknown>)
+          : item
+      ) as unknown as Record<string, unknown>;
+    }
+
     const sanitized = { ...obj };
 
     for (const key of Object.keys(sanitized)) {

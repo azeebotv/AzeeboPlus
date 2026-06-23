@@ -2,7 +2,7 @@ FROM node:22-alpine AS builder
 WORKDIR /app
 
 RUN apk add --no-cache curl && \
-    for i in 1 2 3 4 5; do npm install -g pnpm@10.33.2 @nestjs/cli prisma@7.8.0 && break || (echo "Retry $i/5..." && sleep 10); done
+    for i in 1 2 3 4 5; do npm install -g pnpm@10.33.2 @nestjs/cli prisma@6.19.0 && break || (echo "Retry $i/5..." && sleep 10); done
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.json ./
 COPY packages ./packages
@@ -14,7 +14,7 @@ COPY services/universes/lifestyle-service/src ./services/universes/lifestyle-ser
 COPY services/universes/lifestyle-service/tsconfig*.json ./services/universes/lifestyle-service/
 COPY services/universes/lifestyle-service/prisma ./services/universes/lifestyle-service/prisma
 
-RUN pnpm --filter @azeebo/lifestyle-service prisma:generate
+RUN for i in 1 2 3 4 5; do pnpm --filter @azeebo/lifestyle-service prisma:generate && break || (echo "Retry prisma generate $i/5..." && sleep 15); done
 RUN pnpm --filter @azeebo/lifestyle-service run build
 
 FROM node:22-alpine AS runner
@@ -25,7 +25,7 @@ LABEL org.opencontainers.image.description="Azeebo+ Lifestyle Service"
 LABEL org.opencontainers.image.licenses="Proprietary"
 
 RUN apk add --no-cache curl && \
-    for i in 1 2 3 4 5; do npm install -g pnpm@10.33.2 @nestjs/cli prisma@7.8.0 && break || (echo "Retry $i/5..." && sleep 10); done && \
+    for i in 1 2 3 4 5; do npm install -g pnpm@10.33.2 @nestjs/cli prisma@6.19.0 && break || (echo "Retry $i/5..." && sleep 10); done && \
     addgroup -g 65532 -S nodejs && \
     apk add --no-cache tini && \
     adduser -S nodejs -u 65532
@@ -39,7 +39,7 @@ RUN for i in 1 2 3 4 5; do pnpm install --prod --frozen-lockfile && break || (ec
 
 COPY --from=builder /app/services/universes/lifestyle-service/dist ./services/universes/lifestyle-service/dist
 COPY services/universes/lifestyle-service/prisma ./services/universes/lifestyle-service/prisma
-RUN pnpm --filter @azeebo/lifestyle-service prisma:generate
+RUN for i in 1 2 3 4 5; do pnpm --filter @azeebo/lifestyle-service prisma:generate && break || (echo "Retry prisma generate $i/5..." && sleep 15); done
 
 RUN chown -R nodejs:nodejs /app
 

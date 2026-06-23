@@ -21,11 +21,16 @@ interface PWAState {
 export function usePWA() {
   const [state, setState] = useState<PWAState>({
     isInstalled: false,
-    isOnline: typeof navigator !== 'undefined' ? navigator.onLine : true,
+    // Always default to true to avoid SSR hydration mismatch
+    // (navigator.onLine is false during SSR but true on client)
+    isOnline: true,
     deferredPrompt: null,
   });
 
   useEffect(() => {
+    // Sync actual online status after hydration
+    setState((prev) => ({ ...prev, isOnline: navigator.onLine }));
+
     // Register service worker
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {

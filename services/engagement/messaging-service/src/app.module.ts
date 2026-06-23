@@ -5,7 +5,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { MessagingModule } from './modules/messaging/messaging.module';
 import { DatabaseModule } from './modules/database/database.module';
 import { HealthModule } from './modules/health/health.module';
-import { ServiceAuthGuard } from '@azeebo/security';
+import { RateLimiterModule, ServiceAuthGuard } from '@azeebo/security';
 
 @Module({
   imports: [
@@ -19,6 +19,7 @@ import { ServiceAuthGuard } from '@azeebo/security';
         limit: 100,
       },
     ]),
+    RateLimiterModule.forRoot(),
     DatabaseModule,
     MessagingModule,
     HealthModule,

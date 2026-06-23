@@ -1,7 +1,0 @@
-===== services/universes/vertical-service/src/modules/timeline/timeline.controller.ts =====
-6:@Controller('timeline')
-10:  @Get()
-22:  @Get('event/:id')
-29:  @Get('upcoming')
-36:  @Post()
-

@@ -16,7 +16,7 @@ import { RateLimiterModule, RateLimitGuard } from '@azeebo/security';
       isGlobal: true,
     }),
     DatabaseModule,
-    RateLimiterModule,
+    RateLimiterModule.forRoot(),
     ComedyModule,
     ComedyFeedModule,
     HealthModule,

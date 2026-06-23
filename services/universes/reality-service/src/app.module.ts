@@ -12,7 +12,7 @@ import { ServiceAuthGuard } from '@azeebo/security';
     ConfigModule.forRoot({
       isGlobal: true,
     }),
-    RateLimiterModule,
+    RateLimiterModule.forRoot(),
     DatabaseModule,
     RealityModule,
     HealthModule,

@@ -1,20 +1,43 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
-/* Azeebo+ Design System Tokens */
+/* ============================================================
+   Azeebo+ Brand Design System (v2 — Nigerian Entertainment)
+   ============================================================ */
 :root {
-  /* Primary Brand */
-  --color-primary-50: #f5f3ff;
-  --color-primary-100: #ede9fe;
-  --color-primary-200: #ddd6fe;
-  --color-primary-300: #c4b5fd;
-  --color-primary-400: #a78bfa;
-  --color-primary-500: #8b5cf6;
-  --color-primary-600: #7c3aed;
-  --color-primary-700: #6d28d9;
-  --color-primary-800: #5b21b6;
-  --color-primary-900: #4c1d95;
+  /* Brand Core */
+  --brand-orange: #E8420A;      /* Azeebo Orange — primary CTA, logo accent, highlights */
+  --brand-red: #CC1C1C;         /* Deep Red — buttons, active states, glow */
+  --brand-near-black: #1A0A0A;  /* Near-Black — auth/utility backgrounds */
+  --brand-forest: #0D3B2E;      /* Forest Dark Green — marketing/hero background */
+  --brand-white: #FFFFFF;       /* White — primary text */
+  --brand-surface: #2A2A2A;     /* Surface Dark — card backgrounds, inputs */
+  --brand-surface-input: #1E1E1E; /* Input field fill */
+
+  /* Glass panel */
+  --glass-bg: rgba(15, 5, 5, 0.85);
+  --glass-border: rgba(255, 255, 255, 0.2);
+  --glass-blur: 18px;
+  --glass-glow: 0 0 30px rgba(255, 255, 255, 0.15), 0 0 60px rgba(200, 20, 20, 0.1);
+  --glass-glow-strong: 0 0 20px rgba(255, 255, 255, 0.3);
+
+  /* Ambient glow */
+  --glow-red: 0 4px 20px rgba(204, 28, 28, 0.5);
+  --glow-red-ambient: radial-gradient(circle at 50% 100%, rgba(204, 28, 28, 0.35), transparent 70%);
+
+  /* Typography */
+  --font-display: var(--font-display-base), 'Montserrat', var(--font-sans), sans-serif;
+
+  /* Legacy Primary Brand (kept for non-auth surfaces) */
+  --color-primary-50: #fff7ed;
+  --color-primary-100: #ffedd5;
+  --color-primary-200: #fed7aa;
+  --color-primary-300: #fdba74;
+  --color-primary-400: #fb923c;
+  --color-primary-500: #E8420A;
+  --color-primary-600: #c2410c;
+  --color-primary-700: #9a3412;
+  --color-primary-800: #7c2d12;
+  --color-primary-900: #631f0a;
 
   /* Secondary Brand */
   --color-secondary-50: #eff6ff;
@@ -280,8 +303,156 @@ body {
 
 /* Focus Visible - Accessibility */
 :focus-visible {
-  outline: 2px solid var(--color-primary-500);
+  outline: 2px solid var(--brand-orange);
   outline-offset: 2px;
+}
+
+/* ============================================================
+   Azeebo+ Brand UI Utilities
+   ============================================================ */
+
+/* Frosted glass card panel — the signature unifying UI motif */
+.az-glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  box-shadow: var(--glass-glow);
+}
+
+/* Stronger luminous border glow variant */
+.az-glass--glow {
+  box-shadow: var(--glass-glow-strong), var(--glass-glow);
+}
+
+/* Brand primary button — pill, deep red, white bold, hover glow */
+.az-btn-primary {
+  background: var(--brand-red);
+  color: var(--brand-white);
+  font-weight: 700;
+  border-radius: 999px;
+  border: none;
+  width: 100%;
+  padding: 0.85rem 1.25rem;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: box-shadow var(--transition-fast), transform var(--transition-fast), background var(--transition-fast);
+}
+.az-btn-primary:hover:not(:disabled) {
+  box-shadow: var(--glow-red);
+  background: #b91818;
+}
+.az-btn-primary:active:not(:disabled) {
+  transform: translateY(1px);
+}
+.az-btn-primary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* Brand social button — rounded rectangle */
+.az-btn-social {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--transition-fast), border-color var(--transition-fast);
+}
+.az-btn-social--light {
+  background: var(--brand-white);
+  color: #1a1a1a;
+  border: 1px solid rgba(0,0,0,0.08);
+}
+.az-btn-social--light:hover { background: #f3f3f3; }
+.az-btn-social--dark {
+  background: var(--brand-surface);
+  color: var(--brand-white);
+  border: 1px solid var(--glass-border);
+}
+.az-btn-social--dark:hover { background: #383838; }
+
+/* Brand input field */
+.az-input {
+  width: 100%;
+  background: var(--brand-surface-input);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 10px;
+  padding: 0.8rem 1rem;
+  color: var(--brand-white);
+  font-size: 0.95rem;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+.az-input::placeholder { color: rgba(255,255,255,0.4); }
+.az-input:focus {
+  outline: none;
+  border-color: var(--brand-red);
+  box-shadow: -3px 0 0 0 var(--brand-red);
+}
+
+/* Brand label — small caps, grey, letter-spaced */
+.az-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255,255,255,0.55);
+  margin-bottom: 0.4rem;
+}
+
+/* Brand divider */
+.az-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: rgba(255,255,255,0.4);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.az-divider::before,
+.az-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(255,255,255,0.15);
+}
+
+/* Ambient red glow layer (atmospheric depth) */
+.az-ambient-red {
+  position: absolute;
+  pointer-events: none;
+  background: radial-gradient(circle, rgba(204,28,28,0.4) 0%, transparent 70%);
+  filter: blur(40px);
+  z-index: 0;
+}
+
+/* Brand wordmark */
+.az-wordmark {
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.az-wordmark__plus {
+  color: var(--brand-orange);
+  font-size: 0.6em;
+  vertical-align: super;
+  margin-left: 1px;
+}
+
+/* Marketing headline */
+.az-headline {
+  font-family: var(--font-display);
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
 }
 
 /* Skip Link - Accessibility */

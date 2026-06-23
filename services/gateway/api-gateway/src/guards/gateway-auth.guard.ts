@@ -27,11 +27,13 @@ export class GatewayAuthGuard implements CanActivate {
    * These are auth endpoints where the user doesn't have a token yet.
    */
   private static readonly PUBLIC_PATH_PATTERNS: RegExp[] = [
-    /^\/(v\d+\/)?auth\/(login|signup|register|refresh|forgot-password|reset-password|verify-email|resend-verification|social\/(google|apple)(\/authorize)?|social\/callback|otp\/(send|verify))$/,
-    /^\/(v\d+\/)?auth\/health$/,
+    /^\/(api\/)?(v\d+\/)?auth\/(login|signup|register|refresh|forgot-password|reset-password|verify-email|resend-verification|social\/(google|apple)(\/authorize)?|social\/callback|otp\/(send|verify))$/,
+    /^\/(api\/)?(v\d+\/)?auth\/health$/,
     /^\/(health|ready|live)$/,
     /^\/docs(\/.*)?$/,  // Swagger UI
     /^\/routes$/,       // Route listing
+    /^\/api\/v\d+\/public\//,   // Public settings/universes (content-service)
+    /^\/api\/v\d+\/content\/(featured|trending)$/,  // Public content endpoints
   ];
 
   constructor(

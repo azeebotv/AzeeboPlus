@@ -10,6 +10,6 @@ import { RedisModule } from '../../common/redis.module';
   imports: [DatabaseModule, RedisModule],
   controllers: [WebhookController],
   providers: [WebhookService, WebhookSecurityService, WebhookRetryService],
-  exports: [WebhookSecurityService],
+  exports: [WebhookSecurityService, WebhookRetryService],
 })
 export class WebhookModule {}

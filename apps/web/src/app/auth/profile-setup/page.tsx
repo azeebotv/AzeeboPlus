@@ -3,6 +3,8 @@ import React, { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/api';
+import BrandLogo from '@/components/auth/BrandLogo';
+import { Alert, Spinner } from '@/components/auth/FormBits';
 
 const INTERESTS = [
   'Comedy',
@@ -17,11 +19,20 @@ const INTERESTS = [
   'Technology',
 ];
 
+const GENDERS = ['Male', 'Female', 'Non-binary', 'Prefer not to say'];
+
 export default function ProfileSetupPage(): JSX.Element {
   const router = useRouter();
   const { user, refreshUser } = useAuth();
 
-  const [displayName, setDisplayName] = useState<string>(user?.displayName || user?.name || '');
+  const [fullName, setFullName] = useState<string>(user?.displayName || user?.name || '');
+  const [username, setUsername] = useState<string>('');
+  const [displayName, setDisplayName] = useState<string>('');
+  const [email, setEmail] = useState<string>(user?.email || '');
+  const [phone, setPhone] = useState<string>('');
+  const [location, setLocation] = useState<string>('');
+  const [dob, setDob] = useState<string>('');
+  const [gender, setGender] = useState<string>('');
   const [bio, setBio] = useState<string>('');
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -38,23 +49,24 @@ export default function ProfileSetupPage(): JSX.Element {
     e.preventDefault();
     setError(null);
 
-    if (!displayName.trim()) {
-      setError('Display name is required');
-      return;
-    }
-
-    if (displayName.length < 2) {
-      setError('Display name must be at least 2 characters');
+    if (!fullName.trim() || fullName.trim().length < 2) {
+      setError('Full name is required (min 2 characters)');
       return;
     }
 
     setIsLoading(true);
-
     try {
       const result = await apiFetch('/v1/users/me/complete-profile', {
         method: 'POST',
         body: JSON.stringify({
-          displayName: displayName.trim(),
+          displayName: displayName.trim() || fullName.trim(),
+          fullName: fullName.trim(),
+          username: username.trim() || undefined,
+          email,
+          phone: phone || undefined,
+          location: location || undefined,
+          dob: dob || undefined,
+          gender: gender || undefined,
           bio: bio.trim() || undefined,
           interests: selectedInterests,
         }),
@@ -66,10 +78,7 @@ export default function ProfileSetupPage(): JSX.Element {
 
       await refreshUser?.();
       setSuccess(true);
-
-      setTimeout(() => {
-        router.push('/');
-      }, 2000);
+      setTimeout(() => router.push('/'), 2000);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'An error occurred during profile setup';
       setError(message);
@@ -78,17 +87,24 @@ export default function ProfileSetupPage(): JSX.Element {
     }
   };
 
-  const handleSkip = (): void => {
-    router.push('/');
-  };
-
   if (success) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-md w-full space-y-8 text-center">
-          <div className="mx-auto h-16 w-16 bg-green-500 rounded-full flex items-center justify-center">
+      <div
+        className="min-h-screen flex items-center justify-center p-6"
+        style={{ backgroundColor: '#1A0A0A' }}
+      >
+        <div className="text-center max-w-md">
+          <div
+            className="mx-auto mb-6 rounded-full flex items-center justify-center"
+            style={{
+              width: 72,
+              height: 72,
+              background: 'linear-gradient(135deg, #E8420A, #CC1C1C)',
+              boxShadow: '0 0 30px rgba(204,28,28,0.5)',
+            }}
+          >
             <svg
-              className="h-8 w-8 text-white"
+              className="h-9 w-9 text-white"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -96,168 +112,242 @@ export default function ProfileSetupPage(): JSX.Element {
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                strokeWidth={2}
+                strokeWidth={2.5}
                 d="M5 13l4 4L19 7"
               />
             </svg>
           </div>
-          <h2 className="text-2xl font-bold text-foreground">Profile Setup Complete!</h2>
-          <p className="text-muted-foreground">Redirecting you to the home page...</p>
+          <h2 className="az-headline text-white text-2xl mb-2">Profile Setup Complete!</h2>
+          <p className="text-white/55">Redirecting you to the home page...</p>
         </div>
       </div>
     );
   }
 
+  const profileInitial = (fullName || 'Y').charAt(0).toUpperCase();
+
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-2xl w-full space-y-8">
-        <div>
-          <div className="flex items-center justify-center mb-6">
-            <div className="h-12 w-12 bg-primary rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-2xl">A</span>
-            </div>
-          </div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-foreground">
-            Complete Your Profile
-          </h2>
-          <p className="mt-2 text-center text-sm text-muted-foreground">
-            Tell us more about yourself to personalize your experience
-          </p>
+    <div className="min-h-screen w-full p-6 sm:p-10" style={{ backgroundColor: '#1A0A0A' }}>
+      <div className="max-w-6xl mx-auto">
+        <div className="mb-8">
+          <BrandLogo variant="light" />
         </div>
 
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {error && (
-            <div className="bg-destructive/10 border border-destructive rounded-md p-4">
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  <svg className="h-5 w-5 text-destructive" fill="currentColor" viewBox="0 0 20 20">
-                    <path
-                      fillRule="evenodd"
-                      d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </div>
-                <div className="ml-3">
-                  <h3 className="text-sm font-medium text-destructive">Error</h3>
-                  <div className="mt-2 text-sm text-destructive">
-                    <p>{error}</p>
-                  </div>
-                </div>
+        <header className="mb-10">
+          <h1 className="az-headline text-white text-4xl mb-2">Profile Setup</h1>
+          <p className="text-white/55 text-sm max-w-xl">
+            Your curated home for Nigerian contents, community and creation.
+          </p>
+        </header>
+
+        {error && (
+          <div className="mb-6 max-w-xl">
+            <Alert>{error}</Alert>
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 lg:grid-cols-[30%_1fr] gap-8">
+          {/* Left: profile preview card */}
+          <div className="az-glass p-6 flex flex-col items-center text-center h-fit">
+            <div className="relative mb-4">
+              <div
+                className="rounded-full flex items-center justify-center font-bold text-white"
+                style={{
+                  width: 120,
+                  height: 120,
+                  fontSize: 48,
+                  background: 'linear-gradient(135deg, #0D3B2E, #1A0A0A)',
+                  border: '2px solid rgba(255,255,255,0.2)',
+                }}
+              >
+                {profileInitial}
+              </div>
+              <span
+                className="absolute bottom-1 left-1/2 -translate-x-1/2 text-xs font-bold text-white whitespace-nowrap px-3 py-1"
+                style={{ background: '#CC1C1C', borderRadius: 999 }}
+              >
+                Change profile picture
+              </span>
+            </div>
+            <p className="az-headline text-white text-lg">
+              {fullName.trim() || 'Yetunde Williams'}
+            </p>
+            <p className="text-white/50 text-sm">@{username.trim() || 'YetyWilly'}</p>
+          </div>
+
+          {/* Right: form grid */}
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <div>
+                <label htmlFor="fullName" className="az-label">
+                  Full Name
+                </label>
+                <input
+                  id="fullName"
+                  className="az-input"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  placeholder="Yetunde Williams"
+                />
+              </div>
+              <div>
+                <label htmlFor="username" className="az-label">
+                  Username
+                </label>
+                <input
+                  id="username"
+                  className="az-input"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="YetyWilly"
+                />
+              </div>
+              <div>
+                <label htmlFor="displayName" className="az-label">
+                  Display Name
+                </label>
+                <input
+                  id="displayName"
+                  className="az-input"
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  placeholder="Yetty"
+                />
+              </div>
+              <div>
+                <label htmlFor="email" className="az-label">
+                  Email
+                </label>
+                <input
+                  id="email"
+                  type="email"
+                  className="az-input"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@example.com"
+                />
+              </div>
+              <div>
+                <label htmlFor="phone" className="az-label">
+                  Phone Number
+                </label>
+                <input
+                  id="phone"
+                  type="tel"
+                  className="az-input"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="+234 801 234 5678"
+                />
+              </div>
+              <div>
+                <label htmlFor="location" className="az-label">
+                  Location
+                </label>
+                <input
+                  id="location"
+                  className="az-input"
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  placeholder="Lagos, Nigeria"
+                />
+              </div>
+              <div>
+                <label htmlFor="dob" className="az-label">
+                  Date of Birth
+                </label>
+                <input
+                  id="dob"
+                  type="date"
+                  className="az-input"
+                  value={dob}
+                  onChange={(e) => setDob(e.target.value)}
+                  style={{ colorScheme: 'dark' }}
+                />
+              </div>
+              <div>
+                <label htmlFor="gender" className="az-label">
+                  Gender
+                </label>
+                <select
+                  id="gender"
+                  className="az-input"
+                  value={gender}
+                  onChange={(e) => setGender(e.target.value)}
+                  style={{ color: gender ? '#fff' : 'rgba(255,255,255,0.4)' }}
+                >
+                  <option value="">Select gender</option>
+                  {GENDERS.map((g) => (
+                    <option key={g} value={g} style={{ color: '#000' }}>
+                      {g}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
-          )}
-
-          <div className="space-y-4">
-            <div>
-              <label
-                htmlFor="displayName"
-                className="block text-sm font-medium text-foreground mb-1"
-              >
-                Display Name *
-              </label>
-              <input
-                id="displayName"
-                name="displayName"
-                type="text"
-                required
-                value={displayName}
-                onChange={(e) => {
-                  setDisplayName(e.target.value);
-                  if (error) setError(null);
-                }}
-                className="appearance-none block w-full px-3 py-2 border border-border placeholder-muted-foreground text-foreground rounded-md focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
-                placeholder="Enter your display name"
-              />
-            </div>
 
             <div>
-              <label htmlFor="bio" className="block text-sm font-medium text-foreground mb-1">
-                Bio (Optional)
+              <label htmlFor="bio" className="az-label">
+                Bio
               </label>
               <textarea
                 id="bio"
-                name="bio"
                 rows={3}
+                className="az-input"
+                style={{ resize: 'vertical' }}
                 value={bio}
                 onChange={(e) => setBio(e.target.value)}
-                className="appearance-none block w-full px-3 py-2 border border-border placeholder-muted-foreground text-foreground rounded-md focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
                 placeholder="Tell us about yourself..."
                 maxLength={200}
               />
-              <p className="mt-1 text-xs text-muted-foreground text-right">{bio.length}/200</p>
+              <p className="text-right text-white/40 text-xs mt-1">{bio.length}/200</p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
-                Select Your Interests
-              </label>
-              <p className="text-xs text-muted-foreground mb-3">
-                Choose at least 3 to get personalized recommendations
-              </p>
+              <span className="az-label">Select Your Interests</span>
               <div className="flex flex-wrap gap-2">
-                {INTERESTS.map((interest) => (
-                  <button
-                    key={interest}
-                    type="button"
-                    onClick={() => toggleInterest(interest)}
-                    className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                      selectedInterests.includes(interest)
-                        ? 'bg-primary text-white'
-                        : 'bg-card border border-border text-foreground hover:bg-accent'
-                    }`}
-                  >
-                    {interest}
-                  </button>
-                ))}
+                {INTERESTS.map((interest) => {
+                  const selected = selectedInterests.includes(interest);
+                  return (
+                    <button
+                      key={interest}
+                      type="button"
+                      onClick={() => toggleInterest(interest)}
+                      className="px-4 py-2 rounded-full text-sm font-medium transition-all"
+                      style={{
+                        background: selected ? 'rgba(204,28,28,0.25)' : 'rgba(255,255,255,0.06)',
+                        border: selected ? '1px solid #CC1C1C' : '1px solid rgba(255,255,255,0.12)',
+                        color: selected ? '#fff' : 'rgba(255,255,255,0.75)',
+                      }}
+                    >
+                      {interest}
+                    </button>
+                  );
+                })}
               </div>
             </div>
-          </div>
 
-          <div className="flex gap-4">
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="flex-1 flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isLoading ? (
-                <div className="flex items-center">
-                  <svg
-                    className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    ></circle>
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    ></path>
-                  </svg>
-                  Setting up...
-                </div>
-              ) : (
-                'Complete Setup'
-              )}
-            </button>
-
-            <button
-              type="button"
-              onClick={handleSkip}
-              className="flex-1 flex justify-center py-2 px-4 border border-border text-sm font-medium rounded-md text-muted-foreground hover:text-foreground hover:bg-accent focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
-            >
-              Skip for now
-            </button>
-          </div>
-        </form>
+            <div className="flex gap-3">
+              <button type="submit" className="az-btn-primary" disabled={isLoading}>
+                {isLoading ? (
+                  <span className="inline-flex items-center gap-2">
+                    <Spinner /> Setting up...
+                  </span>
+                ) : (
+                  'Continue to Interests'
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => router.push('/')}
+                className="px-6 rounded-full text-sm font-medium text-white/55 hover:text-white transition-colors"
+                style={{ border: '1px solid rgba(255,255,255,0.15)' }}
+              >
+                Skip for now
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );

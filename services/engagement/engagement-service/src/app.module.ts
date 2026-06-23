@@ -5,12 +5,13 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { EngagementModule } from './modules/engagement/engagement.module';
 import { DatabaseModule } from './modules/database/database.module';
 import { HealthModule } from './modules/health/health.module';
-import { ServiceAuthGuard } from '@azeebo/security';
+import { RateLimiterModule, ServiceAuthGuard } from '@azeebo/security';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true, envFilePath: ['.env', '../../.env'] }),
     ThrottlerModule.forRoot([{ ttl: 60000, limit: 100 }]),
+    RateLimiterModule.forRoot(),
     DatabaseModule,
     EngagementModule,
     HealthModule,

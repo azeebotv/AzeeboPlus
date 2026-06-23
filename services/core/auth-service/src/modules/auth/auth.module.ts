@@ -25,7 +25,7 @@ import { RedisService } from '../../common/services/redis.service';
     DatabaseModule,
     PassportModule,
     ConfigModule.forRoot(),
-    RateLimiterModule,
+    RateLimiterModule.forRoot(),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
@@ -59,6 +59,7 @@ import { RedisService } from '../../common/services/redis.service';
     AuthService,
     AuthRepository,
     DatabaseModule,
+    JwtModule,
     MfaService,
     OtpService,
     SocialAuthService,

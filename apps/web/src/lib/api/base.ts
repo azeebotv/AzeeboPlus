@@ -326,6 +326,12 @@ export interface RequestClient {
 // Standalone apiFetch helper (auth via HttpOnly cookies)
 // ---------------------------------------------------------------------------
 
+// Ensure endpoint routes through the gateway's /api prefix
+export function gatewayPath(endpoint: string): string {
+  if (endpoint.startsWith('/api/')) return endpoint;
+  return `/api${endpoint}`;
+}
+
 export async function apiFetch<T>(
   endpoint: string,
   options: RequestInit = {},
@@ -336,7 +342,7 @@ export async function apiFetch<T>(
   };
 
   try {
-    const response = await fetch(`${resolvedApiUrl}${endpoint}`, {
+    const response = await fetch(`${resolvedApiUrl}${gatewayPath(endpoint)}`, {
       ...options,
       headers,
       credentials: 'include',

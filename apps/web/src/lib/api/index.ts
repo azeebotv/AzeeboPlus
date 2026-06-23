@@ -1,7 +1,7 @@
 // ApiClient – assembled from domain-specific modules
 // Re-exports everything for backward compatibility with `import { api, apiFetch, ... } from '../lib/api'`
 
-import { resolvedApiUrl, RETRY_CONFIG } from './base';
+import { resolvedApiUrl, RETRY_CONFIG, gatewayPath } from './base';
 import type { RetryOptions } from './base';
 import { createAuthMethods } from './auth';
 import { createUserMethods } from './user';
@@ -85,7 +85,7 @@ class ApiClient {
     retryOptions?: RetryOptions,
     attempt = 0,
   ): Promise<ApiResponse<T>> {
-    const url = `${this.baseUrl}${endpoint}`;
+    const url = `${this.baseUrl}${gatewayPath(endpoint)}`;
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       ...(options.headers as Record<string, string>),

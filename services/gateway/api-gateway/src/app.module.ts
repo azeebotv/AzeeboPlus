@@ -29,10 +29,10 @@ import { CsrfMiddleware } from './common/csrf.middleware';
     }),
     ThrottlerModule.forRoot({
       throttlers: [
-        // Global rate limit: 100 requests per minute
+        // Global rate limit: 1000 requests per minute in dev, 100 in prod
         {
           ttl: 60000,
-          limit: 100,
+          limit: process.env.NODE_ENV === 'production' ? 100 : 1000,
         },
         // Stricter limit for auth endpoints: 10 requests per minute
         {

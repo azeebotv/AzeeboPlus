@@ -1,0 +1,112 @@
+
+> @azeebo/reward-service@0.1.0 start:dev /Users/deprof/www/azeebo+/services/engagement/reward-service
+> ts-node-dev --respawn --transpile-only src/main.ts
+
+[INFO] 16:54:59 ts-node-dev ver. 2.0.0 (using ts-node ver. 10.9.2, typescript ver. 5.9.3)
+[32m[Nest] 93392  - [39m06/23/2026, 4:55:06 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
+[32m[Nest] 93392  - [39m06/23/2026, 4:55:06 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDatabaseModule dependencies initialized[39m[38;5;3m +28ms[39m
+[32m[Nest] 93392  - [39m06/23/2026, 4:55:06 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPassportModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 93392  - [39m06/23/2026, 4:55:07 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +931ms[39m
+[32m[Nest] 93392  - [39m06/23/2026, 4:55:07 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 93392  - [39m06/23/2026, 4:55:07 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 93392  - [39m06/23/2026, 4:55:07 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 93392  - [39m06/23/2026, 4:55:07 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 93392  - [39m06/23/2026, 4:55:07 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 93392  - [39m06/23/2026, 4:55:07 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 93392  - [39m06/23/2026, 4:55:07 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAdminModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 93392  - [39m06/23/2026, 4:55:07 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRewardsModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 93392  - [39m06/23/2026, 4:55:07 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mRewardsController {/v1/rewards} (version: 1):[39m[38;5;3m +11ms[39m
+[32m[Nest] 93392  - [39m06/23/2026, 4:55:07 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/rewards, GET} (version: 1) route[39m[38;5;3m +2ms[39m
+[32m[Nest] 93392  - [39m06/23/2026, 4:55:07 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/rewards/missions, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 93392  - [39m06/23/2026, 4:55:07 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/rewards/badges, GET} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 93392  - [39m06/23/2026, 4:55:07 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/rewards/streak, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 93392  - [39m06/23/2026, 4:55:07 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/rewards/redeem, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 93392  - [39m06/23/2026, 4:55:07 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/rewards/level, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 93392  - [39m06/23/2026, 4:55:07 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/rewards/earn, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 93392  - [39m06/23/2026, 4:55:07 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/rewards/balance, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 93392  - [39m06/23/2026, 4:55:07 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/rewards/history, GET} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 93392  - [39m06/23/2026, 4:55:07 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAdminController {/admin} (version: 1):[39m[38;5;3m +0ms[39m
+[32m[Nest] 93392  - [39m06/23/2026, 4:55:07 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/stats, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 93392  - [39m06/23/2026, 4:55:07 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/rewards, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 93392  - [39m06/23/2026, 4:55:07 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/rewards/:id/transactions, GET} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 93392  - [39m06/23/2026, 4:55:07 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/missions, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 93392  - [39m06/23/2026, 4:55:07 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/missions, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 93392  - [39m06/23/2026, 4:55:07 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/missions/:id, PUT} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 93392  - [39m06/23/2026, 4:55:07 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHealthController {/health} (version: 1):[39m[38;5;3m +0ms[39m
+[32m[Nest] 93392  - [39m06/23/2026, 4:55:07 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health, GET} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 93392  - [39m06/23/2026, 4:55:07 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/live, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 93392  - [39m06/23/2026, 4:55:07 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/ready, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 93392  - [39m06/23/2026, 4:55:07 PM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +9ms[39m
+[32m[Nest] 93392  - [39m06/23/2026, 4:55:07 PM [32m    LOG[39m [38;5;3m[Content Service] [39m[32mContent Service running on port 3007[39m
+[INFO] 18:53:07 Restarting: /Users/deprof/www/azeebo+/packages/logger/dist/distributed-tracing.interceptor.js has been modified
+[32m[Nest] 10582  - [39m06/23/2026, 6:53:47 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
+[32m[Nest] 10582  - [39m06/23/2026, 6:53:48 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDatabaseModule dependencies initialized[39m[38;5;3m +800ms[39m
+[32m[Nest] 10582  - [39m06/23/2026, 6:53:48 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPassportModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 10582  - [39m06/23/2026, 6:53:48 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +120ms[39m
+[32m[Nest] 10582  - [39m06/23/2026, 6:53:48 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 10582  - [39m06/23/2026, 6:53:48 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 10582  - [39m06/23/2026, 6:53:48 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +2ms[39m
+[32m[Nest] 10582  - [39m06/23/2026, 6:53:48 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 10582  - [39m06/23/2026, 6:53:48 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 10582  - [39m06/23/2026, 6:53:48 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 10582  - [39m06/23/2026, 6:53:48 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAdminModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 10582  - [39m06/23/2026, 6:53:48 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRewardsModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 10582  - [39m06/23/2026, 6:53:49 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mRewardsController {/v1/rewards} (version: 1):[39m[38;5;3m +840ms[39m
+[32m[Nest] 10582  - [39m06/23/2026, 6:53:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/rewards, GET} (version: 1) route[39m[38;5;3m +5ms[39m
+[32m[Nest] 10582  - [39m06/23/2026, 6:53:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/rewards/missions, GET} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 10582  - [39m06/23/2026, 6:53:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/rewards/badges, GET} (version: 1) route[39m[38;5;3m +83ms[39m
+[32m[Nest] 10582  - [39m06/23/2026, 6:53:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/rewards/streak, GET} (version: 1) route[39m[38;5;3m +44ms[39m
+[32m[Nest] 10582  - [39m06/23/2026, 6:53:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/rewards/redeem, POST} (version: 1) route[39m[38;5;3m +9ms[39m
+[32m[Nest] 10582  - [39m06/23/2026, 6:53:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/rewards/level, GET} (version: 1) route[39m[38;5;3m +10ms[39m
+[32m[Nest] 10582  - [39m06/23/2026, 6:53:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/rewards/earn, POST} (version: 1) route[39m[38;5;3m +12ms[39m
+[32m[Nest] 10582  - [39m06/23/2026, 6:53:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/rewards/balance, GET} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 10582  - [39m06/23/2026, 6:53:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/rewards/history, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 10582  - [39m06/23/2026, 6:53:49 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAdminController {/admin} (version: 1):[39m[38;5;3m +0ms[39m
+[32m[Nest] 10582  - [39m06/23/2026, 6:53:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/stats, GET} (version: 1) route[39m[38;5;3m +15ms[39m
+[32m[Nest] 10582  - [39m06/23/2026, 6:53:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/rewards, GET} (version: 1) route[39m[38;5;3m +11ms[39m
+[32m[Nest] 10582  - [39m06/23/2026, 6:53:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/rewards/:id/transactions, GET} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 10582  - [39m06/23/2026, 6:53:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/missions, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 10582  - [39m06/23/2026, 6:53:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/missions, POST} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 10582  - [39m06/23/2026, 6:53:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/missions/:id, PUT} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 10582  - [39m06/23/2026, 6:53:49 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHealthController {/health} (version: 1):[39m[38;5;3m +0ms[39m
+[32m[Nest] 10582  - [39m06/23/2026, 6:53:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 10582  - [39m06/23/2026, 6:53:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/live, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 10582  - [39m06/23/2026, 6:53:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/ready, GET} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 10582  - [39m06/23/2026, 6:53:49 PM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +309ms[39m
+[32m[Nest] 10582  - [39m06/23/2026, 6:53:49 PM [32m    LOG[39m [38;5;3m[Content Service] [39m[32mContent Service running on port 3007[39m
+[INFO] 18:54:21 Restarting: /Users/deprof/www/azeebo+/packages/logger/dist/response-sanitizer.interceptor.js has been modified
+[32m[Nest] 12214  - [39m06/23/2026, 6:55:04 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
+[32m[Nest] 12214  - [39m06/23/2026, 6:55:04 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDatabaseModule dependencies initialized[39m[38;5;3m +221ms[39m
+[32m[Nest] 12214  - [39m06/23/2026, 6:55:04 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPassportModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 12214  - [39m06/23/2026, 6:55:05 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +797ms[39m
+[32m[Nest] 12214  - [39m06/23/2026, 6:55:05 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 12214  - [39m06/23/2026, 6:55:05 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +2ms[39m
+[32m[Nest] 12214  - [39m06/23/2026, 6:55:05 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +21ms[39m
+[32m[Nest] 12214  - [39m06/23/2026, 6:55:05 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +15ms[39m
+[32m[Nest] 12214  - [39m06/23/2026, 6:55:05 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +46ms[39m
+[32m[Nest] 12214  - [39m06/23/2026, 6:55:05 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 12214  - [39m06/23/2026, 6:55:05 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAdminModule dependencies initialized[39m[38;5;3m +123ms[39m
+[32m[Nest] 12214  - [39m06/23/2026, 6:55:05 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRewardsModule dependencies initialized[39m[38;5;3m +114ms[39m
+[32m[Nest] 12214  - [39m06/23/2026, 6:55:06 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mRewardsController {/v1/rewards} (version: 1):[39m[38;5;3m +1310ms[39m
+[32m[Nest] 12214  - [39m06/23/2026, 6:55:07 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/rewards, GET} (version: 1) route[39m[38;5;3m +292ms[39m
+[32m[Nest] 12214  - [39m06/23/2026, 6:55:07 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/rewards/missions, GET} (version: 1) route[39m[38;5;3m +8ms[39m
+[32m[Nest] 12214  - [39m06/23/2026, 6:55:07 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/rewards/badges, GET} (version: 1) route[39m[38;5;3m +11ms[39m
+[32m[Nest] 12214  - [39m06/23/2026, 6:55:07 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/rewards/streak, GET} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 12214  - [39m06/23/2026, 6:55:07 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/rewards/redeem, POST} (version: 1) route[39m[38;5;3m +90ms[39m
+[32m[Nest] 12214  - [39m06/23/2026, 6:55:07 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/rewards/level, GET} (version: 1) route[39m[38;5;3m +8ms[39m
+[32m[Nest] 12214  - [39m06/23/2026, 6:55:07 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/rewards/earn, POST} (version: 1) route[39m[38;5;3m +2ms[39m
+[32m[Nest] 12214  - [39m06/23/2026, 6:55:07 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/rewards/balance, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 12214  - [39m06/23/2026, 6:55:07 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/rewards/history, GET} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 12214  - [39m06/23/2026, 6:55:07 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAdminController {/admin} (version: 1):[39m[38;5;3m +0ms[39m
+[32m[Nest] 12214  - [39m06/23/2026, 6:55:07 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/stats, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 12214  - [39m06/23/2026, 6:55:07 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/rewards, GET} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 12214  - [39m06/23/2026, 6:55:07 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/rewards/:id/transactions, GET} (version: 1) route[39m[38;5;3m +13ms[39m
+[32m[Nest] 12214  - [39m06/23/2026, 6:55:07 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/missions, GET} (version: 1) route[39m[38;5;3m +29ms[39m
+[32m[Nest] 12214  - [39m06/23/2026, 6:55:07 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/missions, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 12214  - [39m06/23/2026, 6:55:07 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/missions/:id, PUT} (version: 1) route[39m[38;5;3m +20ms[39m
+[32m[Nest] 12214  - [39m06/23/2026, 6:55:07 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHealthController {/health} (version: 1):[39m[38;5;3m +0ms[39m
+[32m[Nest] 12214  - [39m06/23/2026, 6:55:07 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health, GET} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 12214  - [39m06/23/2026, 6:55:07 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/live, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 12214  - [39m06/23/2026, 6:55:07 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/ready, GET} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 12214  - [39m06/23/2026, 6:55:07 PM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +248ms[39m
+[32m[Nest] 12214  - [39m06/23/2026, 6:55:07 PM [32m    LOG[39m [38;5;3m[Content Service] [39m[32mContent Service running on port 3007[39m

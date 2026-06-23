@@ -1,10 +1,10 @@
 'use client';
-import React from 'react';
-
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { webLogger } from '@/lib/logger';
+import BrandLogo from '@/components/auth/BrandLogo';
+import { Alert, Spinner } from '@/components/auth/FormBits';
 
 const FORGOT_PASSWORD_TIMEOUT_MS = parseInt(process.env.FORGOT_PASSWORD_TIMEOUT_MS || '3000', 10);
 
@@ -20,20 +20,17 @@ export default function ForgotPasswordPage(): JSX.Element {
     setError(null);
     setSuccess(null);
     setIsLoading(true);
-
     try {
       const response = await api.auth.requestPasswordReset(email);
       if (response.success) {
         setSuccess('Password reset email sent successfully');
         setEmail('');
-        setTimeout(() => {
-          router.push('/auth/login');
-        }, FORGOT_PASSWORD_TIMEOUT_MS);
+        setTimeout(() => router.push('/auth/login'), FORGOT_PASSWORD_TIMEOUT_MS);
       } else {
         setError(response.message || 'Failed to send reset email. Please try again.');
       }
-    } catch (error) {
-      webLogger.error('Forgot password request failed', error);
+    } catch (err) {
+      webLogger.error('Forgot password request failed', err);
       setError('An error occurred. Please try again.');
     } finally {
       setIsLoading(false);
@@ -41,128 +38,164 @@ export default function ForgotPasswordPage(): JSX.Element {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <div className="flex items-center justify-center mb-6">
-            <div className="h-12 w-12 bg-primary rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-2xl">A</span>
-            </div>
+    <div
+      className="relative min-h-screen w-full flex overflow-hidden"
+      style={{ backgroundColor: '#1A0A0A' }}
+    >
+      {/* Logo top-left */}
+      <div className="absolute top-0 left-0 p-8 z-20">
+        <BrandLogo variant="light" />
+      </div>
+
+      {/* Left: glowing padlock illustration section (~55%) */}
+      <div className="relative hidden lg:flex w-[55%] items-center justify-center">
+        {/* Circuit / glow backdrop */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              'radial-gradient(circle at 50% 45%, rgba(232,66,10,0.18), transparent 55%), radial-gradient(circle at 50% 80%, rgba(204,28,28,0.25), transparent 60%)',
+          }}
+        />
+        {/* 3D padlock visual (CSS) */}
+        <div className="relative" style={{ width: 220, height: 280 }}>
+          {/* Electric arc glow */}
+          <div
+            className="absolute inset-0"
+            style={{
+              filter: 'blur(50px)',
+              background: 'radial-gradient(circle, rgba(204,28,28,0.6), transparent 70%)',
+            }}
+          />
+          {/* Shackle */}
+          <div
+            className="absolute left-1/2 -translate-x-1/2"
+            style={{
+              top: 0,
+              width: 110,
+              height: 110,
+              borderRadius: '55px 55px 0 0',
+              border: '18px solid',
+              borderColor: '#E8420A transparent transparent transparent',
+              boxShadow: '0 0 25px rgba(232,66,10,0.6)',
+            }}
+          />
+          {/* Lock body */}
+          <div
+            className="absolute left-1/2 -translate-x-1/2 rounded-2xl flex items-center justify-center"
+            style={{
+              top: 95,
+              width: 180,
+              height: 160,
+              background: 'linear-gradient(160deg, #3a1a0a, #1A0A0A)',
+              border: '2px solid rgba(232,66,10,0.5)',
+              boxShadow: '0 0 40px rgba(204,28,28,0.4)',
+            }}
+          >
+            {/* Keyhole */}
+            <div
+              className="rounded-full"
+              style={{
+                width: 28,
+                height: 28,
+                background: 'radial-gradient(circle, #fbbf24, #E8420A)',
+                boxShadow: '0 0 20px rgba(251,191,36,0.8)',
+              }}
+            />
           </div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-foreground">
-            Forgot your password?
-          </h2>
-          <p className="mt-2 text-center text-sm text-muted-foreground">
-            Enter your email address and we'll send you a link to reset your password
-          </p>
         </div>
 
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+        <div className="absolute bottom-0 left-0 p-10 xl:p-14">
+          <h1 className="az-headline text-white text-5xl xl:text-6xl">
+            <span className="block">Password</span>
+            <span className="block">Recovery</span>
+          </h1>
+        </div>
+      </div>
+
+      {/* Right: glass card (~45%) */}
+      <div className="relative flex-1 flex items-center justify-center p-6 sm:p-10">
+        {/* Ambient red glow bottom-right */}
+        <div
+          className="az-ambient-red"
+          style={{ width: 400, height: 400, bottom: -120, right: -120 }}
+        />
+
+        <div className="az-glass az-glass--glow relative z-10 w-full max-w-md p-8 text-center">
+          {/* Shield/lock icon badge */}
+          <div
+            className="mx-auto mb-6 flex items-center justify-center"
+            style={{
+              width: 64,
+              height: 64,
+              borderRadius: 16,
+              background: 'rgba(204,28,28,0.15)',
+              border: '1px solid rgba(204,28,28,0.4)',
+            }}
+          >
+            <svg className="h-8 w-8" fill="none" stroke="#fff" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+              />
+            </svg>
+          </div>
+
+          <p className="text-white text-sm leading-relaxed mb-6">
+            Enter your email and we will send you a link to reset your password
+          </p>
+
           {error && (
-            <div className="bg-destructive/10 border border-destructive rounded-md p-4">
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  <svg className="h-5 w-5 text-destructive" fill="currentColor" viewBox="0 0 20 20">
-                    <path
-                      fillRule="evenodd"
-                      d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </div>
-                <div className="ml-3">
-                  <h3 className="text-sm font-medium text-destructive">Error</h3>
-                  <div className="mt-2 text-sm text-destructive">
-                    <p>{error}</p>
-                  </div>
-                </div>
-              </div>
+            <div className="mb-5 text-left">
+              <Alert>{error}</Alert>
             </div>
           )}
-
           {success && (
-            <div className="bg-success/10 border border-success rounded-md p-4">
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  <svg className="h-5 w-5 text-success" fill="currentColor" viewBox="0 0 20 20">
-                    <path
-                      fillRule="evenodd"
-                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </div>
-                <div className="ml-3">
-                  <h3 className="text-sm font-medium text-success">Success</h3>
-                  <div className="mt-2 text-sm text-success">
-                    <p>{success}</p>
-                  </div>
-                </div>
-              </div>
+            <div className="mb-5 text-left">
+              <Alert variant="success">{success}</Alert>
             </div>
           )}
 
-          <div className="rounded-md -space-y-px">
+          <form onSubmit={handleSubmit} className="space-y-5 text-left">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-foreground mb-1">
-                Email address
+              <label htmlFor="email" className="az-label">
+                Registered Email / Username
               </label>
               <input
                 id="email"
-                name="email"
                 type="email"
                 autoComplete="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-border placeholder-muted-foreground text-foreground rounded-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm"
-                placeholder="Enter your email"
+                className="az-input"
+                placeholder="e.g. williams@azeebo.com"
               />
             </div>
-          </div>
 
-          <div>
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"
-            >
+            <button type="submit" className="az-btn-primary" disabled={isLoading}>
               {isLoading ? (
-                <div className="flex items-center">
-                  <svg
-                    className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    ></circle>
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    ></path>
-                  </svg>
-                  Sending email...
-                </div>
+                <span className="inline-flex items-center gap-2">
+                  <Spinner /> Sending...
+                </span>
               ) : (
-                'Send reset link'
+                'Send Recovery Link'
               )}
             </button>
-          </div>
+          </form>
 
-          <div className="text-center">
-            <a href="/auth/login" className="font-medium text-primary hover:text-primary/80">
-              Back to sign in
+          <div className="mt-6 flex items-center justify-center gap-3 text-white/50 text-sm">
+            <a href="/auth/login" className="hover:text-white transition-colors">
+              Back to login
+            </a>
+            <span>·</span>
+            <a href="#" className="hover:text-white transition-colors">
+              Need Support?
             </a>
           </div>
-        </form>
+        </div>
       </div>
     </div>
   );

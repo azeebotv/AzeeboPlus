@@ -21,9 +21,9 @@ async function bootstrap(): Promise<void> {
 
   const app = await NestFactory.create(AppModule);
 
-  app.use('/webhooks/*', bodyParser.raw({ type: 'application/json' }));
+  app.use('/webhooks', bodyParser.raw({ type: 'application/json' }));
 
-  app.use('/webhooks/*', (req: { body: Buffer | object }, _res: unknown, next: () => void) => {
+  app.use('/webhooks', (req: { body: Buffer | object }, _res: unknown, next: () => void) => {
     if (req.body && Buffer.isBuffer(req.body)) {
       try {
         (req as unknown as { rawBody: string }).rawBody = req.body.toString('utf8');

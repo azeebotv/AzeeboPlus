@@ -4,7 +4,7 @@ WORKDIR /app
 
 # Install pnpm
 RUN apk add --no-cache curl && \
-    for i in 1 2 3 4 5; do npm install -g pnpm@10.33.2 @nestjs/cli prisma@7.8.0 && break || (echo "Retry $i/5..." && sleep 10); done
+    for i in 1 2 3 4 5; do npm install -g pnpm@10.33.2 @nestjs/cli prisma@6.19.0 && break || (echo "Retry $i/5..." && sleep 10); done
 
 # Copy all workspace files for pnpm to resolve dependencies
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.json ./

@@ -62,7 +62,7 @@ export function ContentProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await contentApi.getTrendingContent(10);
+      const response = await contentApi.getTrendingContent(8);
       if (response.success && response.data) {
         setTrendingContent(response.data);
       }

@@ -17,7 +17,7 @@ import { CacheModule } from './cache/cache.module';
       isGlobal: true,
       envFilePath: ['.env', '../../.env'],
     }),
-    RateLimiterModule,
+    RateLimiterModule.forRoot(),
     ThrottlerModule.forRoot([
       {
         ttl: 60000,

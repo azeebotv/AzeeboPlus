@@ -1,9 +1,0 @@
-===== services/universes/movie-service/src/modules/cinema-pass/cinema-pass.controller.ts =====
-6:@Controller('v1/movies/passes')
-10:  @Get()
-17:  @Get(':id')
-24:  @Get('user/subscriptions')
-31:  @Post('subscribe')
-40:  @Delete('cancel')
-50:  @Get('access/:movieId')
-

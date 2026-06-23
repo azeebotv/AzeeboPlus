@@ -9,12 +9,14 @@ import { ContentRepository } from './content.repository';
 import { AccessControlService } from './access-control.service';
 import { DatabaseModule } from '../database/database.module';
 import { MediaModule } from '../media/media.module';
+import { CacheModule } from '../../cache/cache.module';
 
 @Module({
   imports: [
     ConfigModule,
     DatabaseModule,
     MediaModule,
+    CacheModule,
     PassportModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],

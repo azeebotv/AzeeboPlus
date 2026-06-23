@@ -1,8 +1,0 @@
-===== services/core/auth-service/src/modules/auth/device/device.controller.ts =====
-38:@Controller('auth/devices')
-39:@UseGuards(AuthGuard('jwt'), RateLimitGuard)
-43:  @Get()
-53:  @Delete(':deviceId')
-67:  @Patch(':deviceId')
-82:  @Post('revoke-all')
-

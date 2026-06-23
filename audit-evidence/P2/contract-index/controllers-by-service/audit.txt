@@ -1,7 +1,0 @@
-===== apps/admin/src/modules/audit/audit.controller.ts =====
-8:@Controller('admin/audit')
-9:@UseGuards(JwtAuthGuard, RolesGuard)
-14:  @Get()
-39:  @Get('target/:targetType/:targetId')
-49:  @Get('actor/:actorId')
-

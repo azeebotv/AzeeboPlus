@@ -1,0 +1,85 @@
+
+> @azeebo/support-service@0.1.0 start:dev /Users/deprof/www/azeebo+/services/operations/support-service
+> ts-node-dev --respawn --transpile-only src/main.ts
+
+[INFO] 16:55:33 ts-node-dev ver. 2.0.0 (using ts-node ver. 10.9.2, typescript ver. 5.9.3)
+[32m[Nest] 94935  - [39m06/23/2026, 4:55:35 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
+[32m[Nest] 94935  - [39m06/23/2026, 4:55:35 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRateLimiterModule dependencies initialized[39m[38;5;3m +25ms[39m
+[32m[Nest] 94935  - [39m06/23/2026, 4:55:35 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPassportModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 94935  - [39m06/23/2026, 4:55:35 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDatabaseModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 94935  - [39m06/23/2026, 4:55:35 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAnalyticsModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 94935  - [39m06/23/2026, 4:55:36 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +1146ms[39m
+[32m[Nest] 94935  - [39m06/23/2026, 4:55:36 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDashboardModule dependencies initialized[39m[38;5;3m +0ms[39m
+ApiClient: Using localStorage for token storage is not secure for production.
+ApiClient: Using localStorage for token storage is not secure for production.
+ApiClient: Using localStorage for token storage is not secure for production.
+ApiClient: Using localStorage for token storage is not secure for production.
+[32m[Nest] 94935  - [39m06/23/2026, 4:55:36 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +3ms[39m
+[32m[Nest] 94935  - [39m06/23/2026, 4:55:36 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 94935  - [39m06/23/2026, 4:55:36 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTerminusModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 94935  - [39m06/23/2026, 4:55:36 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +0ms[39m
+[31m[Nest] 94935  - [39m06/23/2026, 4:55:36 PM [31m  ERROR[39m [38;5;3m[ExceptionHandler] [39mTypeError: Configuration key "PAYMENT_SERVICE_URL" does not exist
+    at ConfigService.getOrThrow (/Users/deprof/www/azeebo+/node_modules/[4m.pnpm[24m/@nestjs+config@4.0.4_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_e7937e4bcdef86ba74c21e57a80cf8b4/node_modules/[4m@nestjs/config[24m/dist/config.service.js:132:19)
+    at new RefundService [90m(/Users/deprof/www/azeebo+/services/operations/support-service/[39msrc/modules/refund/refund.service.ts:33:35[90m)[39m
+    at Injector.instantiateClass (/Users/deprof/www/azeebo+/node_modules/[4m.pnpm[24m/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/[4m@nestjs/core[24m/injector/injector.js:430:19)
+    at callback (/Users/deprof/www/azeebo+/node_modules/[4m.pnpm[24m/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/[4m@nestjs/core[24m/injector/injector.js:72:45)
+[90m    at processTicksAndRejections (node:internal/process/task_queues:104:5)[39m
+    at Injector.resolveConstructorParams (/Users/deprof/www/azeebo+/node_modules/[4m.pnpm[24m/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/[4m@nestjs/core[24m/injector/injector.js:180:24)
+    at Injector.loadInstance (/Users/deprof/www/azeebo+/node_modules/[4m.pnpm[24m/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/[4m@nestjs/core[24m/injector/injector.js:77:13)
+    at Injector.loadProvider (/Users/deprof/www/azeebo+/node_modules/[4m.pnpm[24m/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/[4m@nestjs/core[24m/injector/injector.js:111:9)
+    at /Users/deprof/www/azeebo+/node_modules/[4m.pnpm[24m/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/[4m@nestjs/core[24m/injector/instance-loader.js:56:13
+    at async Promise.all (index 3)
+[INFO] 18:53:07 Restarting: /Users/deprof/www/azeebo+/packages/logger/dist/distributed-tracing.interceptor.js has been modified
+[32m[Nest] 10557  - [39m06/23/2026, 6:53:50 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
+[32m[Nest] 10557  - [39m06/23/2026, 6:53:50 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRateLimiterModule dependencies initialized[39m[38;5;3m +636ms[39m
+[32m[Nest] 10557  - [39m06/23/2026, 6:53:50 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPassportModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 10557  - [39m06/23/2026, 6:53:50 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDatabaseModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 10557  - [39m06/23/2026, 6:53:50 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAnalyticsModule dependencies initialized[39m[38;5;3m +2ms[39m
+[32m[Nest] 10557  - [39m06/23/2026, 6:53:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +368ms[39m
+[32m[Nest] 10557  - [39m06/23/2026, 6:53:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDashboardModule dependencies initialized[39m[38;5;3m +0ms[39m
+ApiClient: Using localStorage for token storage is not secure for production.
+ApiClient: Using localStorage for token storage is not secure for production.
+ApiClient: Using localStorage for token storage is not secure for production.
+ApiClient: Using localStorage for token storage is not secure for production.
+[32m[Nest] 10557  - [39m06/23/2026, 6:53:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +7ms[39m
+[32m[Nest] 10557  - [39m06/23/2026, 6:53:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 10557  - [39m06/23/2026, 6:53:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTerminusModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 10557  - [39m06/23/2026, 6:53:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +0ms[39m
+[31m[Nest] 10557  - [39m06/23/2026, 6:53:51 PM [31m  ERROR[39m [38;5;3m[ExceptionHandler] [39mTypeError: Configuration key "PAYMENT_SERVICE_URL" does not exist
+    at ConfigService.getOrThrow (/Users/deprof/www/azeebo+/node_modules/[4m.pnpm[24m/@nestjs+config@4.0.4_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_e7937e4bcdef86ba74c21e57a80cf8b4/node_modules/[4m@nestjs/config[24m/dist/config.service.js:132:19)
+    at new RefundService [90m(/Users/deprof/www/azeebo+/services/operations/support-service/[39msrc/modules/refund/refund.service.ts:33:35[90m)[39m
+    at Injector.instantiateClass (/Users/deprof/www/azeebo+/node_modules/[4m.pnpm[24m/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/[4m@nestjs/core[24m/injector/injector.js:430:19)
+    at callback (/Users/deprof/www/azeebo+/node_modules/[4m.pnpm[24m/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/[4m@nestjs/core[24m/injector/injector.js:72:45)
+[90m    at processTicksAndRejections (node:internal/process/task_queues:104:5)[39m
+    at Injector.resolveConstructorParams (/Users/deprof/www/azeebo+/node_modules/[4m.pnpm[24m/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/[4m@nestjs/core[24m/injector/injector.js:180:24)
+    at Injector.loadInstance (/Users/deprof/www/azeebo+/node_modules/[4m.pnpm[24m/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/[4m@nestjs/core[24m/injector/injector.js:77:13)
+    at Injector.loadProvider (/Users/deprof/www/azeebo+/node_modules/[4m.pnpm[24m/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/[4m@nestjs/core[24m/injector/injector.js:111:9)
+    at /Users/deprof/www/azeebo+/node_modules/[4m.pnpm[24m/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/[4m@nestjs/core[24m/injector/instance-loader.js:56:13
+    at async Promise.all (index 3)
+[INFO] 18:54:21 Restarting: /Users/deprof/www/azeebo+/packages/logger/dist/response-sanitizer.interceptor.js has been modified
+[32m[Nest] 12195  - [39m06/23/2026, 6:55:06 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
+[32m[Nest] 12195  - [39m06/23/2026, 6:55:07 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRateLimiterModule dependencies initialized[39m[38;5;3m +959ms[39m
+[32m[Nest] 12195  - [39m06/23/2026, 6:55:07 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPassportModule dependencies initialized[39m[38;5;3m +13ms[39m
+[32m[Nest] 12195  - [39m06/23/2026, 6:55:07 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDatabaseModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 12195  - [39m06/23/2026, 6:55:07 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAnalyticsModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 12195  - [39m06/23/2026, 6:55:07 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +344ms[39m
+[32m[Nest] 12195  - [39m06/23/2026, 6:55:07 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDashboardModule dependencies initialized[39m[38;5;3m +1ms[39m
+ApiClient: Using localStorage for token storage is not secure for production.
+ApiClient: Using localStorage for token storage is not secure for production.
+ApiClient: Using localStorage for token storage is not secure for production.
+ApiClient: Using localStorage for token storage is not secure for production.
+[32m[Nest] 12195  - [39m06/23/2026, 6:55:07 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +73ms[39m
+[32m[Nest] 12195  - [39m06/23/2026, 6:55:07 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 12195  - [39m06/23/2026, 6:55:07 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTerminusModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 12195  - [39m06/23/2026, 6:55:07 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +1ms[39m
+[31m[Nest] 12195  - [39m06/23/2026, 6:55:07 PM [31m  ERROR[39m [38;5;3m[ExceptionHandler] [39mTypeError: Configuration key "PAYMENT_SERVICE_URL" does not exist
+    at ConfigService.getOrThrow (/Users/deprof/www/azeebo+/node_modules/[4m.pnpm[24m/@nestjs+config@4.0.4_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_e7937e4bcdef86ba74c21e57a80cf8b4/node_modules/[4m@nestjs/config[24m/dist/config.service.js:132:19)
+    at new RefundService [90m(/Users/deprof/www/azeebo+/services/operations/support-service/[39msrc/modules/refund/refund.service.ts:33:35[90m)[39m
+    at Injector.instantiateClass (/Users/deprof/www/azeebo+/node_modules/[4m.pnpm[24m/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/[4m@nestjs/core[24m/injector/injector.js:430:19)
+    at callback (/Users/deprof/www/azeebo+/node_modules/[4m.pnpm[24m/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/[4m@nestjs/core[24m/injector/injector.js:72:45)
+[90m    at processTicksAndRejections (node:internal/process/task_queues:104:5)[39m
+    at Injector.resolveConstructorParams (/Users/deprof/www/azeebo+/node_modules/[4m.pnpm[24m/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/[4m@nestjs/core[24m/injector/injector.js:180:24)
+    at Injector.loadInstance (/Users/deprof/www/azeebo+/node_modules/[4m.pnpm[24m/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/[4m@nestjs/core[24m/injector/injector.js:77:13)
+    at Injector.loadProvider (/Users/deprof/www/azeebo+/node_modules/[4m.pnpm[24m/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/[4m@nestjs/core[24m/injector/injector.js:111:9)
+    at /Users/deprof/www/azeebo+/node_modules/[4m.pnpm[24m/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/[4m@nestjs/core[24m/injector/instance-loader.js:56:13
+    at async Promise.all (index 3)

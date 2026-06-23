@@ -9,8 +9,13 @@ import { QueryProvider } from '../providers/QueryProvider';
 import { ToastProvider } from '@azeebo/ui';
 import { KeyboardNavigationProvider } from '../components/KeyboardNavigationProvider';
 
-import { Inter } from 'next/font/google';
-const inter = Inter({ subsets: ['latin'] });
+import { Inter, Montserrat } from 'next/font/google';
+const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
+const montserrat = Montserrat({
+  subsets: ['latin'],
+  weight: ['600', '700', '800', '900'],
+  variable: '--font-display-base',
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || 'https://azeeboplus.com'),
@@ -74,7 +79,7 @@ export const dynamic = 'force-dynamic';
 export default function RootLayout({ children }: { children: React.ReactNode }): JSX.Element {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>
+      <body className={`${inter.variable} ${montserrat.variable}`}>
         <a href="#main-content" className="skip-link">
           Skip to main content
         </a>

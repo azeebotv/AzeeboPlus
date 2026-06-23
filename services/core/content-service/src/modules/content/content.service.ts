@@ -313,18 +313,57 @@ export class ContentService {
     };
   }
 
-  async getTrending(): Promise<{ success: boolean; data: any }> {
-    const content = await this.prisma.contentItem.findMany({
-      where: { status: 'published' },
-      orderBy: { viewCount: 'desc' },
-      take: 20,
-      include: { universe: true },
-    });
+  async getFeatured(): Promise<{ success: boolean; data: any }> {
+    try {
+      const content = await this.prisma.contentItem.findMany({
+        where: {
+          status: 'published',
+          OR: [
+            { isExclusive: true },
+            { isPremiere: true },
+          ],
+        },
+        orderBy: { viewCount: 'desc' },
+        take: 20,
+        include: { universe: true },
+      });
 
-    return {
-      success: true,
-      data: content,
-    };
+      // If no exclusive/premiere content, fall back to top viewed
+      if (content.length === 0) {
+        const fallback = await this.prisma.contentItem.findMany({
+          where: { status: 'published' },
+          orderBy: { viewCount: 'desc' },
+          take: 6,
+          include: { universe: true },
+        });
+        return { success: true, data: fallback };
+      }
+
+      return { success: true, data: content };
+    } catch {
+      return { success: true, data: [] };
+    }
+  }
+
+  async getTrending(): Promise<{ success: boolean; data: any }> {
+    try {
+      const content = await this.prisma.contentItem.findMany({
+        where: { status: 'published' },
+        orderBy: { viewCount: 'desc' },
+        take: 20,
+        include: { universe: true },
+      });
+
+      return {
+        success: true,
+        data: content,
+      };
+    } catch {
+      return {
+        success: true,
+        data: [],
+      };
+    }
   }
 
   async getRecommended(userId: string): Promise<{ success: boolean; data: any }> {

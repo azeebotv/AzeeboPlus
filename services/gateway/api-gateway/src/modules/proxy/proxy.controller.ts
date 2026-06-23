@@ -43,6 +43,7 @@ interface ServiceRouteConfig {
   // - 'no-prefix': service has no global prefix (for rewards)
   // - 'auth-service-strategy': auth service has /v{version} as global prefix, and controller at /auth
   pathStrategy?: 'default' | 'includes-prefix' | 'no-prefix' | 'auth-service-strategy';
+  pathRewrite?: Record<string, string>;
 }
 
 interface ServiceRoute {
@@ -52,6 +53,7 @@ interface ServiceRoute {
   defaultVersion: string;
   endpoints?: Endpoint[];
   pathStrategy?: 'default' | 'includes-prefix' | 'no-prefix' | 'auth-service-strategy';
+  pathRewrite?: Record<string, string>;
 }
 
 export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
@@ -160,12 +162,26 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
     ],
   },
   {
+    path: '/public',
+    envKey: 'CONTENT_SERVICE_URL',
+    fallbackUrl: 'http://content-service:3004',
+    supportedVersions: ['1'],
+    defaultVersion: '1',
+    pathStrategy: 'default',
+    endpoints: [
+      { method: 'GET', path: '/public/settings', description: 'Get public settings' },
+      { method: 'GET', path: '/public/settings/:key', description: 'Get a public setting' },
+      { method: 'GET', path: '/public/universes', description: 'Get enabled universes' },
+      { method: 'GET', path: '/public/universes/:name/features', description: 'Get universe features' },
+    ],
+  },
+  {
     path: '/content',
     envKey: 'CONTENT_SERVICE_URL',
     fallbackUrl: 'http://content-service:3004',
     supportedVersions: ['1'],
     defaultVersion: '1',
-    pathStrategy: 'no-prefix',
+    pathStrategy: 'default',
     endpoints: [
       { method: 'GET', path: '/', description: 'List content (with filters)' },
       { method: 'GET', path: '/home', description: 'Get home feed' },
@@ -280,6 +296,66 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
       { method: 'GET', path: '/monetization-insights', description: 'Get monetization insights' },
       { method: 'GET', path: '/fraud-risk', description: 'Assess fraud risk' },
       { method: 'GET', path: '/personalized-feed', description: 'Get personalized feed' },
+    ],
+  },
+  {
+    path: '/admin',
+    envKey: 'ADMIN_SERVICE_URL',
+    fallbackUrl: 'http://localhost:4016',
+    supportedVersions: ['1'],
+    defaultVersion: '1',
+    pathStrategy: 'no-prefix',
+    pathRewrite: { '^/v1': '' },
+    endpoints: [
+      { method: 'GET', path: '/dashboard/stats', description: 'Get admin dashboard stats' },
+      { method: 'GET', path: '/dashboard/revenue', description: 'Get revenue data' },
+      { method: 'GET', path: '/dashboard/content', description: 'Get content metrics' },
+      { method: 'GET', path: '/dashboard/engagement', description: 'Get engagement metrics' },
+      { method: 'GET', path: '/dashboard/growth', description: 'Get growth metrics' },
+      { method: 'GET', path: '/dashboard/financial', description: 'Get financial metrics' },
+      { method: 'GET', path: '/users', description: 'List users' },
+      { method: 'GET', path: '/users/:id', description: 'Get user details' },
+      { method: 'PATCH', path: '/users/:id/status', description: 'Update user status' },
+      { method: 'GET', path: '/content', description: 'List content for moderation' },
+      { method: 'GET', path: '/content/:id', description: 'Get content details' },
+      { method: 'PATCH', path: '/content/:id/status', description: 'Update content status' },
+      { method: 'GET', path: '/analytics/overview', description: 'Get analytics overview' },
+      { method: 'GET', path: '/analytics/revenue', description: 'Get revenue analytics' },
+      { method: 'GET', path: '/analytics/users', description: 'Get user analytics' },
+      { method: 'GET', path: '/config', description: 'Get platform config' },
+      { method: 'PATCH', path: '/config', description: 'Update platform config' },
+      { method: 'GET', path: '/audit-logs', description: 'Get audit logs' },
+      { method: 'GET', path: '/notifications', description: 'Get admin notifications' },
+      { method: 'GET', path: '/moderation/queue', description: 'Get moderation queue' },
+      { method: 'PATCH', path: '/moderation/:id', description: 'Update moderation status' },
+      { method: 'GET', path: '/support/tickets', description: 'Get support tickets' },
+      { method: 'PATCH', path: '/support/tickets/:id', description: 'Update ticket' },
+    ],
+  },
+  {
+    path: '/creator',
+    envKey: 'CREATOR_PORTAL_SERVICE_URL',
+    fallbackUrl: 'http://localhost:4014',
+    supportedVersions: ['1'],
+    defaultVersion: '1',
+    pathStrategy: 'no-prefix',
+    pathRewrite: { '^/v1': '' },
+    endpoints: [
+      { method: 'GET', path: '/dashboard', description: 'Get creator dashboard' },
+      { method: 'GET', path: '/dashboard/analytics', description: 'Get creator analytics' },
+      { method: 'GET', path: '/dashboard/earnings', description: 'Get creator earnings' },
+      { method: 'GET', path: '/dashboard/content', description: 'Get creator content' },
+      { method: 'POST', path: '/upload', description: 'Upload content' },
+      { method: 'GET', path: '/uploads', description: 'List uploads' },
+      { method: 'PATCH', path: '/uploads/:id', description: 'Update upload' },
+      { method: 'DELETE', path: '/uploads/:id', description: 'Delete upload' },
+      { method: 'GET', path: '/profile', description: 'Get creator profile' },
+      { method: 'PATCH', path: '/profile', description: 'Update creator profile' },
+      { method: 'GET', path: '/monetization', description: 'Get monetization settings' },
+      { method: 'PATCH', path: '/monetization', description: 'Update monetization settings' },
+      { method: 'GET', path: '/payouts', description: 'Get payout history' },
+      { method: 'POST', path: '/payouts/request', description: 'Request payout' },
+      { method: 'GET', path: '/subscribers', description: 'Get subscribers' },
     ],
   },
   {
@@ -593,7 +669,7 @@ export class ProxyController {
     this.UPSTREAM_TIMEOUT = this.configService.get<number>('UPSTREAM_TIMEOUT', 30000);
   }
 
-  @Get(':version/:service/*')
+  @Get(':version/:service/*path')
   @HttpCode(HttpStatus.OK)
   async proxyVersionedGet(
     @Param('version') version: string,
@@ -646,7 +722,7 @@ export class ProxyController {
     }
   }
 
-  @Post(':version/:service/*')
+  @Post(':version/:service/*path')
   @HttpCode(HttpStatus.CREATED)
   async proxyVersionedPost(
     @Param('version') version: string,
@@ -678,7 +754,7 @@ export class ProxyController {
     await this.forwardRequest(req, res, route.targetUrl, version, requestId, route);
   }
 
-  @Put(':version/:service/*')
+  @Put(':version/:service/*path')
   @HttpCode(HttpStatus.OK)
   async proxyVersionedPut(
     @Param('version') version: string,
@@ -710,7 +786,7 @@ export class ProxyController {
     await this.forwardRequest(req, res, route.targetUrl, version, requestId, route);
   }
 
-  @Patch(':version/:service/*')
+  @Patch(':version/:service/*path')
   @HttpCode(HttpStatus.OK)
   async proxyVersionedPatch(
     @Param('version') version: string,
@@ -742,7 +818,7 @@ export class ProxyController {
     await this.forwardRequest(req, res, route.targetUrl, version, requestId, route);
   }
 
-  @Delete(':version/:service/*')
+  @Delete(':version/:service/*path')
   @HttpCode(HttpStatus.NO_CONTENT)
   async proxyVersionedDelete(
     @Param('version') version: string,
@@ -774,7 +850,7 @@ export class ProxyController {
     await this.forwardRequest(req, res, route.targetUrl, version, requestId, route);
   }
 
-  @Get(':service/*')
+  @Get(':service/*path')
   @HttpCode(HttpStatus.OK)
   async proxyGet(
     @Param('service') service: string,
@@ -821,7 +897,7 @@ export class ProxyController {
     }
   }
 
-  @Post(':service/*')
+  @Post(':service/*path')
   @HttpCode(HttpStatus.CREATED)
   async proxyPost(
     @Param('service') service: string,
@@ -847,7 +923,7 @@ export class ProxyController {
     await this.forwardRequest(req, res, route.targetUrl, validatedVersion, requestId, route);
   }
 
-  @Put(':service/*')
+  @Put(':service/*path')
   @HttpCode(HttpStatus.OK)
   async proxyPut(
     @Param('service') service: string,
@@ -873,7 +949,7 @@ export class ProxyController {
     await this.forwardRequest(req, res, route.targetUrl, validatedVersion, requestId, route);
   }
 
-  @Patch(':service/*')
+  @Patch(':service/*path')
   @HttpCode(HttpStatus.OK)
   async proxyPatch(
     @Param('service') service: string,
@@ -899,7 +975,7 @@ export class ProxyController {
     await this.forwardRequest(req, res, route.targetUrl, validatedVersion, requestId, route);
   }
 
-  @Delete(':service/*')
+  @Delete(':service/*path')
   @HttpCode(HttpStatus.NO_CONTENT)
   async proxyDelete(
     @Param('service') service: string,
@@ -957,17 +1033,21 @@ export class ProxyController {
       ...config,
       targetUrl: this.configService.get<string>(config.envKey) || config.fallbackUrl,
       pathStrategy: config.pathStrategy || 'default',
+      pathRewrite: config.pathRewrite,
     };
   }
 
   private validateVersion(version: string, route: ServiceRoute): boolean {
-    return route.supportedVersions.includes(version);
+    // Strip 'v' prefix from version (e.g., 'v1' -> '1')
+    const normalizedVersion = version.startsWith('v') ? version.substring(1) : version;
+    return route.supportedVersions.includes(normalizedVersion);
   }
 
   private buildCacheKey(req: Request, version: string): string {
     const authHeader = req.headers.authorization || '';
     const userId = this.extractUserIdFromAuth(authHeader);
-    const cacheKeyBase = `proxy:${req.method}:${req.url}:v${version}`;
+    const normalizedVersion = version.startsWith('v') ? version.substring(1) : version;
+    const cacheKeyBase = `proxy:${req.method}:${req.url}:v${normalizedVersion}`;
 
     if (userId && this.isUserSpecificEndpoint(req.path)) {
       return `${cacheKeyBase}:user:${userId}`;
@@ -1030,22 +1110,29 @@ export class ProxyController {
     route: ServiceRoute
   ): Promise<unknown> {
     const service = req.params['service'];
-    const path = req.params[0] ? `/${req.params[0]}` : '';
+    const rawPathParam = req.params['path'] || req.params[0] || '';
+    const rawPath = Array.isArray(rawPathParam) ? rawPathParam[0] : rawPathParam;
+    // Strip query string from path (captured by *path wildcard)
+    const cleanPath = rawPath.split('?')[0];
+    const path = cleanPath ? `/${cleanPath}` : '';
     const queryString = req.url.includes('?') ? req.url.split('?')[1] : '';
+
+    // Normalize version: strip 'v' prefix (e.g., 'v1' -> '1')
+    const normalizedVersion = version.startsWith('v') ? version.substring(1) : version;
 
     let targetPath: string;
     switch (route.pathStrategy) {
       case 'auth-service-strategy':
         // Auth service has /v{version} as global prefix, and controllers are at /auth, /health, etc.
         if (path.startsWith('/health') || path.startsWith('/live') || path.startsWith('/ready')) {
-          targetPath = `/v${version}${path}${queryString ? `?${queryString}` : ''}`;
+          targetPath = `/v${normalizedVersion}${path}${queryString ? `?${queryString}` : ''}`;
         } else {
-          targetPath = `/v${version}/${service}${path}${queryString ? `?${queryString}` : ''}`;
+          targetPath = `/v${normalizedVersion}/${service}${path}${queryString ? `?${queryString}` : ''}`;
         }
         break;
       case 'includes-prefix':
         // Service already has /v{version}/{service} as global prefix
-        targetPath = `/v${version}/${service}${path}${queryString ? `?${queryString}` : ''}`;
+        targetPath = `/v${normalizedVersion}/${service}${path}${queryString ? `?${queryString}` : ''}`;
         break;
       case 'no-prefix':
         // Service has no global prefix, just use /{service}{path}
@@ -1054,8 +1141,15 @@ export class ProxyController {
       case 'default':
       default:
         // Default strategy: /v{version}/{service}{path}
-        targetPath = `/v${version}/${service}${path}${queryString ? `?${queryString}` : ''}`;
+        targetPath = `/v${normalizedVersion}/${service}${path}${queryString ? `?${queryString}` : ''}`;
         break;
+    }
+
+    // Apply pathRewrite if configured (strip prefix like '/v1' for services without version prefix)
+    if (route.pathRewrite) {
+      for (const [pattern, replacement] of Object.entries(route.pathRewrite)) {
+        targetPath = targetPath.replace(new RegExp(pattern), replacement);
+      }
     }
 
     const target = `${targetUrl}${targetPath}`;
@@ -1070,6 +1164,8 @@ export class ProxyController {
         'host',
         'connection',
         'content-length',
+        'origin',
+        'referer',
         API_VERSION_HEADER.toLowerCase(),
         this.REQUEST_ID_HEADER.toLowerCase(),
       ];

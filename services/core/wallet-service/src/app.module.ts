@@ -12,6 +12,7 @@ import { ResponseWrapperInterceptor, ResponseSanitizationInterceptor } from '@az
 import { MetricsModule } from './modules/metrics/metrics.module';
 import { RateLimiterModule } from '@azeebo/security';
 import { ServiceAuthGuard } from '@azeebo/security';
+import { CacheModule } from './cache';
 
 @Module({
   imports: [
@@ -19,7 +20,8 @@ import { ServiceAuthGuard } from '@azeebo/security';
       isGlobal: true,
       envFilePath: ['.env', '../../.env'],
     }),
-    RateLimiterModule,
+    RateLimiterModule.forRoot(),
+    CacheModule,
     ThrottlerModule.forRoot([
       {
         ttl: 60000,

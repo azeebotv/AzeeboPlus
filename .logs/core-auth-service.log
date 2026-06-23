@@ -1,0 +1,613 @@
+
+> @azeebo/auth-service@0.1.0 start:dev /Users/deprof/www/azeebo+/services/core/auth-service
+> ts-node-dev --respawn --transpile-only src/main.ts
+
+[INFO] 15:50:06 ts-node-dev ver. 2.0.0 (using ts-node ver. 10.9.2, typescript ver. 5.9.3)
+[32m[Nest] 45374  - [39m06/23/2026, 3:50:09 PM [32m    LOG[39m [32mJWT secrets validated successfully[39m
+[32m[Nest] 45374  - [39m06/23/2026, 3:50:09 PM [32m    LOG[39m [32mEnvironment variables validated successfully[39m
+[32m[Nest] 45374  - [39m06/23/2026, 3:50:10 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m[38;5;3m +151ms[39m
+[32m[Nest] 45374  - [39m06/23/2026, 3:50:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDatabaseModule dependencies initialized[39m[38;5;3m +51ms[39m
+[32m[Nest] 45374  - [39m06/23/2026, 3:50:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPassportModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 45374  - [39m06/23/2026, 3:50:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 45374  - [39m06/23/2026, 3:50:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +30ms[39m
+[32m[Nest] 45374  - [39m06/23/2026, 3:50:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisCoreModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 45374  - [39m06/23/2026, 3:50:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAuditModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 45374  - [39m06/23/2026, 3:50:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCommonModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 45374  - [39m06/23/2026, 3:50:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mMetricsModule dependencies initialized[39m[38;5;3m +3ms[39m
+[32m[Nest] 45374  - [39m06/23/2026, 3:50:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 45374  - [39m06/23/2026, 3:50:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 45374  - [39m06/23/2026, 3:50:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 45374  - [39m06/23/2026, 3:50:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTerminusModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 45374  - [39m06/23/2026, 3:50:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 45374  - [39m06/23/2026, 3:50:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 45374  - [39m06/23/2026, 3:50:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRateLimiterModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 45374  - [39m06/23/2026, 3:50:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 45374  - [39m06/23/2026, 3:50:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAdminModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 45374  - [39m06/23/2026, 3:50:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAuthModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 45374  - [39m06/23/2026, 3:50:10 PM [32m    LOG[39m [32mSwagger documentation enabled at /docs[39m
+[32m[Nest] 45374  - [39m06/23/2026, 3:50:10 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAuthController {/auth} (version: 1):[39m[38;5;3m +4ms[39m
+[32m[Nest] 45374  - [39m06/23/2026, 3:50:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/signup, POST} (version: 1) route[39m[38;5;3m +5ms[39m
+[32m[Nest] 45374  - [39m06/23/2026, 3:50:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/login, POST} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 45374  - [39m06/23/2026, 3:50:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/refresh, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 45374  - [39m06/23/2026, 3:50:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/logout, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 45374  - [39m06/23/2026, 3:50:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/me, GET} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 45374  - [39m06/23/2026, 3:50:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/forgot-password, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 45374  - [39m06/23/2026, 3:50:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/reset-password, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 45374  - [39m06/23/2026, 3:50:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/verify-email, POST} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 45374  - [39m06/23/2026, 3:50:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/resend-verification, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 45374  - [39m06/23/2026, 3:50:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/select-role, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 45374  - [39m06/23/2026, 3:50:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/request-otp, POST} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 45374  - [39m06/23/2026, 3:50:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/verify-otp, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 45374  - [39m06/23/2026, 3:50:10 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mMfaController {/mfa} (version: 1):[39m[38;5;3m +0ms[39m
+[32m[Nest] 45374  - [39m06/23/2026, 3:50:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/mfa/setup, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 45374  - [39m06/23/2026, 3:50:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/mfa/verify, POST} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 45374  - [39m06/23/2026, 3:50:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/mfa/enable, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 45374  - [39m06/23/2026, 3:50:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/mfa/disable, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 45374  - [39m06/23/2026, 3:50:10 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mOtpController {/otp} (version: 1):[39m[38;5;3m +0ms[39m
+[32m[Nest] 45374  - [39m06/23/2026, 3:50:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/otp/send, POST} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 45374  - [39m06/23/2026, 3:50:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/otp/verify, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 45374  - [39m06/23/2026, 3:50:10 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mSocialAuthController {/auth/social} (version: 1):[39m[38;5;3m +0ms[39m
+[32m[Nest] 45374  - [39m06/23/2026, 3:50:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/social/google/authorize, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 45374  - [39m06/23/2026, 3:50:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/social/apple/authorize, GET} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 45374  - [39m06/23/2026, 3:50:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/social/callback, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 45374  - [39m06/23/2026, 3:50:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/social/google, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 45374  - [39m06/23/2026, 3:50:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/social/apple, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 45374  - [39m06/23/2026, 3:50:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/social/unlink, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 45374  - [39m06/23/2026, 3:50:10 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mDeviceController {/auth/devices} (version: 1):[39m[38;5;3m +0ms[39m
+[32m[Nest] 45374  - [39m06/23/2026, 3:50:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/devices, GET} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 45374  - [39m06/23/2026, 3:50:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/devices/:deviceId, DELETE} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 45374  - [39m06/23/2026, 3:50:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/devices/:deviceId, PATCH} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 45374  - [39m06/23/2026, 3:50:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/devices/revoke-all, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 45374  - [39m06/23/2026, 3:50:10 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAdminController {/admin} (version: 1):[39m[38;5;3m +0ms[39m
+[32m[Nest] 45374  - [39m06/23/2026, 3:50:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/stats, GET} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 45374  - [39m06/23/2026, 3:50:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/users, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 45374  - [39m06/23/2026, 3:50:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/users/:id, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 45374  - [39m06/23/2026, 3:50:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/users/:id/suspend, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 45374  - [39m06/23/2026, 3:50:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/users/:id/activate, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 45374  - [39m06/23/2026, 3:50:10 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mMetricsController {/metrics} (version: 1):[39m[38;5;3m +0ms[39m
+[32m[Nest] 45374  - [39m06/23/2026, 3:50:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/metrics, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 45374  - [39m06/23/2026, 3:50:10 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHealthController {/health} (version: 1):[39m[38;5;3m +1ms[39m
+[32m[Nest] 45374  - [39m06/23/2026, 3:50:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 45374  - [39m06/23/2026, 3:50:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/live, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 45374  - [39m06/23/2026, 3:50:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/ready, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 45374  - [39m06/23/2026, 3:50:10 PM [32m    LOG[39m [38;5;3m[PrismaService] [39m[32mDatabase connection established[39m
+[32m[Nest] 45374  - [39m06/23/2026, 3:50:10 PM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +3ms[39m
+[32m[Nest] 45374  - [39m06/23/2026, 3:50:10 PM [32m    LOG[39m [32mAuth Service is running on port 3000[39m
+[32m[Nest] 45374  - [39m06/23/2026, 3:57:35 PM [32m    LOG[39m [38;5;3m[PrismaService] [39m[32mDatabase connection closed[39m
+
+> @azeebo/auth-service@0.1.0 start:dev /Users/deprof/www/azeebo+/services/core/auth-service
+> ts-node-dev --respawn --transpile-only src/main.ts
+
+[INFO] 16:54:43 ts-node-dev ver. 2.0.0 (using ts-node ver. 10.9.2, typescript ver. 5.9.3)
+[32m[Nest] 92740  - [39m06/23/2026, 4:54:45 PM [32m    LOG[39m [32mJWT secrets validated successfully[39m
+[32m[Nest] 92740  - [39m06/23/2026, 4:54:45 PM [32m    LOG[39m [32mEnvironment variables validated successfully[39m
+[32m[Nest] 92740  - [39m06/23/2026, 4:54:45 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m[38;5;3m +87ms[39m
+[32m[Nest] 92740  - [39m06/23/2026, 4:54:45 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDatabaseModule dependencies initialized[39m[38;5;3m +21ms[39m
+[32m[Nest] 92740  - [39m06/23/2026, 4:54:45 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPassportModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 92740  - [39m06/23/2026, 4:54:45 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 92740  - [39m06/23/2026, 4:54:45 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +28ms[39m
+[32m[Nest] 92740  - [39m06/23/2026, 4:54:45 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisCoreModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 92740  - [39m06/23/2026, 4:54:45 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAuditModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 92740  - [39m06/23/2026, 4:54:45 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCommonModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 92740  - [39m06/23/2026, 4:54:45 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mMetricsModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 92740  - [39m06/23/2026, 4:54:45 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 92740  - [39m06/23/2026, 4:54:45 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 92740  - [39m06/23/2026, 4:54:45 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 92740  - [39m06/23/2026, 4:54:45 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTerminusModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 92740  - [39m06/23/2026, 4:54:45 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 92740  - [39m06/23/2026, 4:54:45 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 92740  - [39m06/23/2026, 4:54:45 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRateLimiterModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 92740  - [39m06/23/2026, 4:54:45 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 92740  - [39m06/23/2026, 4:54:45 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAdminModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 92740  - [39m06/23/2026, 4:54:45 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAuthModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 92740  - [39m06/23/2026, 4:54:45 PM [32m    LOG[39m [32mSwagger documentation enabled at /docs[39m
+[32m[Nest] 92740  - [39m06/23/2026, 4:54:45 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAuthController {/auth} (version: 1):[39m[38;5;3m +2ms[39m
+[32m[Nest] 92740  - [39m06/23/2026, 4:54:45 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/signup, POST} (version: 1) route[39m[38;5;3m +3ms[39m
+[32m[Nest] 92740  - [39m06/23/2026, 4:54:45 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/login, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 92740  - [39m06/23/2026, 4:54:45 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/refresh, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 92740  - [39m06/23/2026, 4:54:45 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/logout, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 92740  - [39m06/23/2026, 4:54:45 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/me, GET} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 92740  - [39m06/23/2026, 4:54:45 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/forgot-password, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 92740  - [39m06/23/2026, 4:54:45 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/reset-password, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 92740  - [39m06/23/2026, 4:54:45 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/verify-email, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 92740  - [39m06/23/2026, 4:54:45 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/resend-verification, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 92740  - [39m06/23/2026, 4:54:45 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/select-role, POST} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 92740  - [39m06/23/2026, 4:54:45 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/request-otp, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 92740  - [39m06/23/2026, 4:54:45 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/verify-otp, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 92740  - [39m06/23/2026, 4:54:45 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mMfaController {/mfa} (version: 1):[39m[38;5;3m +0ms[39m
+[32m[Nest] 92740  - [39m06/23/2026, 4:54:45 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/mfa/setup, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 92740  - [39m06/23/2026, 4:54:45 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/mfa/verify, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 92740  - [39m06/23/2026, 4:54:45 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/mfa/enable, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 92740  - [39m06/23/2026, 4:54:45 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/mfa/disable, POST} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 92740  - [39m06/23/2026, 4:54:45 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mOtpController {/otp} (version: 1):[39m[38;5;3m +0ms[39m
+[32m[Nest] 92740  - [39m06/23/2026, 4:54:45 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/otp/send, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 92740  - [39m06/23/2026, 4:54:45 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/otp/verify, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 92740  - [39m06/23/2026, 4:54:45 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mSocialAuthController {/auth/social} (version: 1):[39m[38;5;3m +0ms[39m
+[32m[Nest] 92740  - [39m06/23/2026, 4:54:45 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/social/google/authorize, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 92740  - [39m06/23/2026, 4:54:45 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/social/apple/authorize, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 92740  - [39m06/23/2026, 4:54:45 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/social/callback, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 92740  - [39m06/23/2026, 4:54:45 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/social/google, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 92740  - [39m06/23/2026, 4:54:45 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/social/apple, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 92740  - [39m06/23/2026, 4:54:45 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/social/unlink, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 92740  - [39m06/23/2026, 4:54:45 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mDeviceController {/auth/devices} (version: 1):[39m[38;5;3m +0ms[39m
+[32m[Nest] 92740  - [39m06/23/2026, 4:54:45 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/devices, GET} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 92740  - [39m06/23/2026, 4:54:45 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/devices/:deviceId, DELETE} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 92740  - [39m06/23/2026, 4:54:45 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/devices/:deviceId, PATCH} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 92740  - [39m06/23/2026, 4:54:45 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/devices/revoke-all, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 92740  - [39m06/23/2026, 4:54:45 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAdminController {/admin} (version: 1):[39m[38;5;3m +0ms[39m
+[32m[Nest] 92740  - [39m06/23/2026, 4:54:45 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/stats, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 92740  - [39m06/23/2026, 4:54:45 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/users, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 92740  - [39m06/23/2026, 4:54:45 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/users/:id, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 92740  - [39m06/23/2026, 4:54:45 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/users/:id/suspend, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 92740  - [39m06/23/2026, 4:54:45 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/users/:id/activate, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 92740  - [39m06/23/2026, 4:54:45 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mMetricsController {/metrics} (version: 1):[39m[38;5;3m +0ms[39m
+[32m[Nest] 92740  - [39m06/23/2026, 4:54:45 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/metrics, GET} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 92740  - [39m06/23/2026, 4:54:45 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHealthController {/health} (version: 1):[39m[38;5;3m +0ms[39m
+[32m[Nest] 92740  - [39m06/23/2026, 4:54:45 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 92740  - [39m06/23/2026, 4:54:45 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/live, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 92740  - [39m06/23/2026, 4:54:45 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/ready, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 92740  - [39m06/23/2026, 4:54:45 PM [32m    LOG[39m [38;5;3m[PrismaService] [39m[32mDatabase connection established[39m
+[32m[Nest] 92740  - [39m06/23/2026, 4:54:45 PM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +1ms[39m
+[32m[Nest] 92740  - [39m06/23/2026, 4:54:45 PM [32m    LOG[39m [32mAuth Service is running on port 3000[39m
+[31m[Nest] 92740  - [39m06/23/2026, 6:45:19 PM [31m  ERROR[39m [38;5;3m[ExceptionFilter] [39m[31mUnhandled exception: Not allowed by CORS - missing origin header[39m
+Error: Not allowed by CORS - missing origin header
+    at origin (/Users/deprof/www/azeebo+/packages/security/src/cors.config.ts:31:18)
+    at /Users/deprof/www/azeebo+/node_modules/.pnpm/cors@2.8.6/node_modules/cors/lib/index.js:219:13
+    at optionsCallback (/Users/deprof/www/azeebo+/node_modules/.pnpm/cors@2.8.6/node_modules/cors/lib/index.js:199:9)
+    at corsMiddleware (/Users/deprof/www/azeebo+/node_modules/.pnpm/cors@2.8.6/node_modules/cors/lib/index.js:204:7)
+    at Layer.handleRequest (/Users/deprof/www/azeebo+/node_modules/.pnpm/router@2.2.0/node_modules/router/lib/layer.js:152:17)
+    at trimPrefix (/Users/deprof/www/azeebo+/node_modules/.pnpm/router@2.2.0/node_modules/router/index.js:342:13)
+    at /Users/deprof/www/azeebo+/node_modules/.pnpm/router@2.2.0/node_modules/router/index.js:297:9
+    at processParams (/Users/deprof/www/azeebo+/node_modules/.pnpm/router@2.2.0/node_modules/router/index.js:582:12)
+    at next (/Users/deprof/www/azeebo+/node_modules/.pnpm/router@2.2.0/node_modules/router/index.js:291:5)
+    at internalNext (/Users/deprof/www/azeebo+/node_modules/.pnpm/helmet@8.2.0/node_modules/helmet/index.cjs:531:6)
+[31m[Nest] 92740  - [39m06/23/2026, 6:45:24 PM [31m  ERROR[39m [38;5;3m[ExceptionFilter] [39m[31mUnhandled exception: Not allowed by CORS - missing origin header[39m
+Error: Not allowed by CORS - missing origin header
+    at origin (/Users/deprof/www/azeebo+/packages/security/src/cors.config.ts:31:18)
+    at /Users/deprof/www/azeebo+/node_modules/.pnpm/cors@2.8.6/node_modules/cors/lib/index.js:219:13
+    at optionsCallback (/Users/deprof/www/azeebo+/node_modules/.pnpm/cors@2.8.6/node_modules/cors/lib/index.js:199:9)
+    at corsMiddleware (/Users/deprof/www/azeebo+/node_modules/.pnpm/cors@2.8.6/node_modules/cors/lib/index.js:204:7)
+    at Layer.handleRequest (/Users/deprof/www/azeebo+/node_modules/.pnpm/router@2.2.0/node_modules/router/lib/layer.js:152:17)
+    at trimPrefix (/Users/deprof/www/azeebo+/node_modules/.pnpm/router@2.2.0/node_modules/router/index.js:342:13)
+    at /Users/deprof/www/azeebo+/node_modules/.pnpm/router@2.2.0/node_modules/router/index.js:297:9
+    at processParams (/Users/deprof/www/azeebo+/node_modules/.pnpm/router@2.2.0/node_modules/router/index.js:582:12)
+    at next (/Users/deprof/www/azeebo+/node_modules/.pnpm/router@2.2.0/node_modules/router/index.js:291:5)
+    at internalNext (/Users/deprof/www/azeebo+/node_modules/.pnpm/helmet@8.2.0/node_modules/helmet/index.cjs:531:6)
+[31m[Nest] 92740  - [39m06/23/2026, 6:45:24 PM [31m  ERROR[39m [38;5;3m[ExceptionFilter] [39m[31mUnhandled exception: Not allowed by CORS - missing origin header[39m
+Error: Not allowed by CORS - missing origin header
+    at origin (/Users/deprof/www/azeebo+/packages/security/src/cors.config.ts:31:18)
+    at /Users/deprof/www/azeebo+/node_modules/.pnpm/cors@2.8.6/node_modules/cors/lib/index.js:219:13
+    at optionsCallback (/Users/deprof/www/azeebo+/node_modules/.pnpm/cors@2.8.6/node_modules/cors/lib/index.js:199:9)
+    at corsMiddleware (/Users/deprof/www/azeebo+/node_modules/.pnpm/cors@2.8.6/node_modules/cors/lib/index.js:204:7)
+    at Layer.handleRequest (/Users/deprof/www/azeebo+/node_modules/.pnpm/router@2.2.0/node_modules/router/lib/layer.js:152:17)
+    at trimPrefix (/Users/deprof/www/azeebo+/node_modules/.pnpm/router@2.2.0/node_modules/router/index.js:342:13)
+    at /Users/deprof/www/azeebo+/node_modules/.pnpm/router@2.2.0/node_modules/router/index.js:297:9
+    at processParams (/Users/deprof/www/azeebo+/node_modules/.pnpm/router@2.2.0/node_modules/router/index.js:582:12)
+    at next (/Users/deprof/www/azeebo+/node_modules/.pnpm/router@2.2.0/node_modules/router/index.js:291:5)
+    at internalNext (/Users/deprof/www/azeebo+/node_modules/.pnpm/helmet@8.2.0/node_modules/helmet/index.cjs:531:6)
+[31m[Nest] 92740  - [39m06/23/2026, 6:45:24 PM [31m  ERROR[39m [38;5;3m[ExceptionFilter] [39m[31mUnhandled exception: Not allowed by CORS - missing origin header[39m
+Error: Not allowed by CORS - missing origin header
+    at origin (/Users/deprof/www/azeebo+/packages/security/src/cors.config.ts:31:18)
+    at /Users/deprof/www/azeebo+/node_modules/.pnpm/cors@2.8.6/node_modules/cors/lib/index.js:219:13
+    at optionsCallback (/Users/deprof/www/azeebo+/node_modules/.pnpm/cors@2.8.6/node_modules/cors/lib/index.js:199:9)
+    at corsMiddleware (/Users/deprof/www/azeebo+/node_modules/.pnpm/cors@2.8.6/node_modules/cors/lib/index.js:204:7)
+    at Layer.handleRequest (/Users/deprof/www/azeebo+/node_modules/.pnpm/router@2.2.0/node_modules/router/lib/layer.js:152:17)
+    at trimPrefix (/Users/deprof/www/azeebo+/node_modules/.pnpm/router@2.2.0/node_modules/router/index.js:342:13)
+    at /Users/deprof/www/azeebo+/node_modules/.pnpm/router@2.2.0/node_modules/router/index.js:297:9
+    at processParams (/Users/deprof/www/azeebo+/node_modules/.pnpm/router@2.2.0/node_modules/router/index.js:582:12)
+    at next (/Users/deprof/www/azeebo+/node_modules/.pnpm/router@2.2.0/node_modules/router/index.js:291:5)
+    at internalNext (/Users/deprof/www/azeebo+/node_modules/.pnpm/helmet@8.2.0/node_modules/helmet/index.cjs:531:6)
+[31m[Nest] 92740  - [39m06/23/2026, 6:45:25 PM [31m  ERROR[39m [38;5;3m[ExceptionFilter] [39m[31mUnhandled exception: Not allowed by CORS - missing origin header[39m
+Error: Not allowed by CORS - missing origin header
+    at origin (/Users/deprof/www/azeebo+/packages/security/src/cors.config.ts:31:18)
+    at /Users/deprof/www/azeebo+/node_modules/.pnpm/cors@2.8.6/node_modules/cors/lib/index.js:219:13
+    at optionsCallback (/Users/deprof/www/azeebo+/node_modules/.pnpm/cors@2.8.6/node_modules/cors/lib/index.js:199:9)
+    at corsMiddleware (/Users/deprof/www/azeebo+/node_modules/.pnpm/cors@2.8.6/node_modules/cors/lib/index.js:204:7)
+    at Layer.handleRequest (/Users/deprof/www/azeebo+/node_modules/.pnpm/router@2.2.0/node_modules/router/lib/layer.js:152:17)
+    at trimPrefix (/Users/deprof/www/azeebo+/node_modules/.pnpm/router@2.2.0/node_modules/router/index.js:342:13)
+    at /Users/deprof/www/azeebo+/node_modules/.pnpm/router@2.2.0/node_modules/router/index.js:297:9
+    at processParams (/Users/deprof/www/azeebo+/node_modules/.pnpm/router@2.2.0/node_modules/router/index.js:582:12)
+    at next (/Users/deprof/www/azeebo+/node_modules/.pnpm/router@2.2.0/node_modules/router/index.js:291:5)
+    at internalNext (/Users/deprof/www/azeebo+/node_modules/.pnpm/helmet@8.2.0/node_modules/helmet/index.cjs:531:6)
+[31m[Nest] 92740  - [39m06/23/2026, 6:46:29 PM [31m  ERROR[39m [38;5;3m[ExceptionFilter] [39m[31mUnhandled exception: Not allowed by CORS - missing origin header[39m
+Error: Not allowed by CORS - missing origin header
+    at origin (/Users/deprof/www/azeebo+/packages/security/src/cors.config.ts:31:18)
+    at /Users/deprof/www/azeebo+/node_modules/.pnpm/cors@2.8.6/node_modules/cors/lib/index.js:219:13
+    at optionsCallback (/Users/deprof/www/azeebo+/node_modules/.pnpm/cors@2.8.6/node_modules/cors/lib/index.js:199:9)
+    at corsMiddleware (/Users/deprof/www/azeebo+/node_modules/.pnpm/cors@2.8.6/node_modules/cors/lib/index.js:204:7)
+    at Layer.handleRequest (/Users/deprof/www/azeebo+/node_modules/.pnpm/router@2.2.0/node_modules/router/lib/layer.js:152:17)
+    at trimPrefix (/Users/deprof/www/azeebo+/node_modules/.pnpm/router@2.2.0/node_modules/router/index.js:342:13)
+    at /Users/deprof/www/azeebo+/node_modules/.pnpm/router@2.2.0/node_modules/router/index.js:297:9
+    at processParams (/Users/deprof/www/azeebo+/node_modules/.pnpm/router@2.2.0/node_modules/router/index.js:582:12)
+    at next (/Users/deprof/www/azeebo+/node_modules/.pnpm/router@2.2.0/node_modules/router/index.js:291:5)
+    at internalNext (/Users/deprof/www/azeebo+/node_modules/.pnpm/helmet@8.2.0/node_modules/helmet/index.cjs:531:6)
+[31m[Nest] 92740  - [39m06/23/2026, 6:46:32 PM [31m  ERROR[39m [38;5;3m[ExceptionFilter] [39m[31mUnhandled exception: Not allowed by CORS - missing origin header[39m
+Error: Not allowed by CORS - missing origin header
+    at origin (/Users/deprof/www/azeebo+/packages/security/src/cors.config.ts:31:18)
+    at /Users/deprof/www/azeebo+/node_modules/.pnpm/cors@2.8.6/node_modules/cors/lib/index.js:219:13
+    at optionsCallback (/Users/deprof/www/azeebo+/node_modules/.pnpm/cors@2.8.6/node_modules/cors/lib/index.js:199:9)
+    at corsMiddleware (/Users/deprof/www/azeebo+/node_modules/.pnpm/cors@2.8.6/node_modules/cors/lib/index.js:204:7)
+    at Layer.handleRequest (/Users/deprof/www/azeebo+/node_modules/.pnpm/router@2.2.0/node_modules/router/lib/layer.js:152:17)
+    at trimPrefix (/Users/deprof/www/azeebo+/node_modules/.pnpm/router@2.2.0/node_modules/router/index.js:342:13)
+    at /Users/deprof/www/azeebo+/node_modules/.pnpm/router@2.2.0/node_modules/router/index.js:297:9
+    at processParams (/Users/deprof/www/azeebo+/node_modules/.pnpm/router@2.2.0/node_modules/router/index.js:582:12)
+    at next (/Users/deprof/www/azeebo+/node_modules/.pnpm/router@2.2.0/node_modules/router/index.js:291:5)
+    at internalNext (/Users/deprof/www/azeebo+/node_modules/.pnpm/helmet@8.2.0/node_modules/helmet/index.cjs:531:6)
+[31m[Nest] 92740  - [39m06/23/2026, 6:47:20 PM [31m  ERROR[39m [38;5;3m[ExceptionFilter] [39m[31mUnhandled exception: Not allowed by CORS - missing origin header[39m
+Error: Not allowed by CORS - missing origin header
+    at origin (/Users/deprof/www/azeebo+/packages/security/src/cors.config.ts:31:18)
+    at /Users/deprof/www/azeebo+/node_modules/.pnpm/cors@2.8.6/node_modules/cors/lib/index.js:219:13
+    at optionsCallback (/Users/deprof/www/azeebo+/node_modules/.pnpm/cors@2.8.6/node_modules/cors/lib/index.js:199:9)
+    at corsMiddleware (/Users/deprof/www/azeebo+/node_modules/.pnpm/cors@2.8.6/node_modules/cors/lib/index.js:204:7)
+    at Layer.handleRequest (/Users/deprof/www/azeebo+/node_modules/.pnpm/router@2.2.0/node_modules/router/lib/layer.js:152:17)
+    at trimPrefix (/Users/deprof/www/azeebo+/node_modules/.pnpm/router@2.2.0/node_modules/router/index.js:342:13)
+    at /Users/deprof/www/azeebo+/node_modules/.pnpm/router@2.2.0/node_modules/router/index.js:297:9
+    at processParams (/Users/deprof/www/azeebo+/node_modules/.pnpm/router@2.2.0/node_modules/router/index.js:582:12)
+    at next (/Users/deprof/www/azeebo+/node_modules/.pnpm/router@2.2.0/node_modules/router/index.js:291:5)
+    at internalNext (/Users/deprof/www/azeebo+/node_modules/.pnpm/helmet@8.2.0/node_modules/helmet/index.cjs:531:6)
+[31m[Nest] 92740  - [39m06/23/2026, 6:47:20 PM [31m  ERROR[39m [38;5;3m[ExceptionFilter] [39m[31mUnhandled exception: Not allowed by CORS - missing origin header[39m
+Error: Not allowed by CORS - missing origin header
+    at origin (/Users/deprof/www/azeebo+/packages/security/src/cors.config.ts:31:18)
+    at /Users/deprof/www/azeebo+/node_modules/.pnpm/cors@2.8.6/node_modules/cors/lib/index.js:219:13
+    at optionsCallback (/Users/deprof/www/azeebo+/node_modules/.pnpm/cors@2.8.6/node_modules/cors/lib/index.js:199:9)
+    at corsMiddleware (/Users/deprof/www/azeebo+/node_modules/.pnpm/cors@2.8.6/node_modules/cors/lib/index.js:204:7)
+    at Layer.handleRequest (/Users/deprof/www/azeebo+/node_modules/.pnpm/router@2.2.0/node_modules/router/lib/layer.js:152:17)
+    at trimPrefix (/Users/deprof/www/azeebo+/node_modules/.pnpm/router@2.2.0/node_modules/router/index.js:342:13)
+    at /Users/deprof/www/azeebo+/node_modules/.pnpm/router@2.2.0/node_modules/router/index.js:297:9
+    at processParams (/Users/deprof/www/azeebo+/node_modules/.pnpm/router@2.2.0/node_modules/router/index.js:582:12)
+    at next (/Users/deprof/www/azeebo+/node_modules/.pnpm/router@2.2.0/node_modules/router/index.js:291:5)
+    at internalNext (/Users/deprof/www/azeebo+/node_modules/.pnpm/helmet@8.2.0/node_modules/helmet/index.cjs:531:6)
+[31m[Nest] 92740  - [39m06/23/2026, 6:47:21 PM [31m  ERROR[39m [38;5;3m[ExceptionFilter] [39m[31mUnhandled exception: Not allowed by CORS - missing origin header[39m
+Error: Not allowed by CORS - missing origin header
+    at origin (/Users/deprof/www/azeebo+/packages/security/src/cors.config.ts:31:18)
+    at /Users/deprof/www/azeebo+/node_modules/.pnpm/cors@2.8.6/node_modules/cors/lib/index.js:219:13
+    at optionsCallback (/Users/deprof/www/azeebo+/node_modules/.pnpm/cors@2.8.6/node_modules/cors/lib/index.js:199:9)
+    at corsMiddleware (/Users/deprof/www/azeebo+/node_modules/.pnpm/cors@2.8.6/node_modules/cors/lib/index.js:204:7)
+    at Layer.handleRequest (/Users/deprof/www/azeebo+/node_modules/.pnpm/router@2.2.0/node_modules/router/lib/layer.js:152:17)
+    at trimPrefix (/Users/deprof/www/azeebo+/node_modules/.pnpm/router@2.2.0/node_modules/router/index.js:342:13)
+    at /Users/deprof/www/azeebo+/node_modules/.pnpm/router@2.2.0/node_modules/router/index.js:297:9
+    at processParams (/Users/deprof/www/azeebo+/node_modules/.pnpm/router@2.2.0/node_modules/router/index.js:582:12)
+    at next (/Users/deprof/www/azeebo+/node_modules/.pnpm/router@2.2.0/node_modules/router/index.js:291:5)
+    at internalNext (/Users/deprof/www/azeebo+/node_modules/.pnpm/helmet@8.2.0/node_modules/helmet/index.cjs:531:6)
+[INFO] 18:53:07 Restarting: /Users/deprof/www/azeebo+/packages/logger/dist/distributed-tracing.interceptor.js has been modified
+[INFO] 18:53:07 Restarting: /Users/deprof/www/azeebo+/packages/logger/dist/distributed-tracing.interceptor.js has been modified
+[32m[Nest] 92740  - [39m06/23/2026, 6:53:08 PM [32m    LOG[39m [38;5;3m[PrismaService] [39m[32mDatabase connection closed[39m
+[32m[Nest] 10578  - [39m06/23/2026, 6:53:49 PM [32m    LOG[39m [32mJWT secrets validated successfully[39m
+[32m[Nest] 10578  - [39m06/23/2026, 6:53:49 PM [32m    LOG[39m [32mEnvironment variables validated successfully[39m
+[32m[Nest] 10606  - [39m06/23/2026, 6:53:50 PM [32m    LOG[39m [32mJWT secrets validated successfully[39m
+[32m[Nest] 10606  - [39m06/23/2026, 6:53:50 PM [32m    LOG[39m [32mEnvironment variables validated successfully[39m
+[32m[Nest] 10578  - [39m06/23/2026, 6:53:50 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m[38;5;3m +978ms[39m
+[32m[Nest] 10578  - [39m06/23/2026, 6:53:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDatabaseModule dependencies initialized[39m[38;5;3m +517ms[39m
+[32m[Nest] 10578  - [39m06/23/2026, 6:53:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPassportModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 10578  - [39m06/23/2026, 6:53:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 10606  - [39m06/23/2026, 6:53:51 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m[38;5;3m +775ms[39m
+[32m[Nest] 10578  - [39m06/23/2026, 6:53:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +297ms[39m
+[32m[Nest] 10578  - [39m06/23/2026, 6:53:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisCoreModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 10578  - [39m06/23/2026, 6:53:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAuditModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 10578  - [39m06/23/2026, 6:53:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCommonModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 10578  - [39m06/23/2026, 6:53:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mMetricsModule dependencies initialized[39m[38;5;3m +3ms[39m
+[32m[Nest] 10578  - [39m06/23/2026, 6:53:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 10578  - [39m06/23/2026, 6:53:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 10578  - [39m06/23/2026, 6:53:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 10578  - [39m06/23/2026, 6:53:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTerminusModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 10578  - [39m06/23/2026, 6:53:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +4ms[39m
+[32m[Nest] 10578  - [39m06/23/2026, 6:53:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 10578  - [39m06/23/2026, 6:53:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRateLimiterModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 10578  - [39m06/23/2026, 6:53:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 10578  - [39m06/23/2026, 6:53:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAdminModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 10578  - [39m06/23/2026, 6:53:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAuthModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 10606  - [39m06/23/2026, 6:53:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDatabaseModule dependencies initialized[39m[38;5;3m +661ms[39m
+[32m[Nest] 10606  - [39m06/23/2026, 6:53:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPassportModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 10606  - [39m06/23/2026, 6:53:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 10606  - [39m06/23/2026, 6:53:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +48ms[39m
+[32m[Nest] 10606  - [39m06/23/2026, 6:53:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisCoreModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 10606  - [39m06/23/2026, 6:53:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAuditModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 10606  - [39m06/23/2026, 6:53:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCommonModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 10606  - [39m06/23/2026, 6:53:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mMetricsModule dependencies initialized[39m[38;5;3m +3ms[39m
+[32m[Nest] 10606  - [39m06/23/2026, 6:53:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 10606  - [39m06/23/2026, 6:53:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 10606  - [39m06/23/2026, 6:53:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 10606  - [39m06/23/2026, 6:53:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTerminusModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 10606  - [39m06/23/2026, 6:53:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 10606  - [39m06/23/2026, 6:53:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 10606  - [39m06/23/2026, 6:53:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRateLimiterModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 10606  - [39m06/23/2026, 6:53:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 10606  - [39m06/23/2026, 6:53:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAdminModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 10606  - [39m06/23/2026, 6:53:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAuthModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 10578  - [39m06/23/2026, 6:53:51 PM [32m    LOG[39m [32mSwagger documentation enabled at /docs[39m
+[32m[Nest] 10578  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAuthController {/auth} (version: 1):[39m[38;5;3m +115ms[39m
+[32m[Nest] 10578  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/signup, POST} (version: 1) route[39m[38;5;3m +55ms[39m
+[32m[Nest] 10578  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/login, POST} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 10578  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/refresh, POST} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 10578  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/logout, POST} (version: 1) route[39m[38;5;3m +2ms[39m
+[32m[Nest] 10578  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/me, GET} (version: 1) route[39m[38;5;3m +6ms[39m
+[32m[Nest] 10578  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/forgot-password, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 10578  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/reset-password, POST} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 10578  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/verify-email, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 10578  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/resend-verification, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 10578  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/select-role, POST} (version: 1) route[39m[38;5;3m +2ms[39m
+[32m[Nest] 10578  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/request-otp, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 10578  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/verify-otp, POST} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 10578  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mMfaController {/mfa} (version: 1):[39m[38;5;3m +0ms[39m
+[32m[Nest] 10578  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/mfa/setup, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 10578  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/mfa/verify, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 10578  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/mfa/enable, POST} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 10578  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/mfa/disable, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 10578  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mOtpController {/otp} (version: 1):[39m[38;5;3m +0ms[39m
+[32m[Nest] 10578  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/otp/send, POST} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 10578  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/otp/verify, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 10578  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mSocialAuthController {/auth/social} (version: 1):[39m[38;5;3m +1ms[39m
+[32m[Nest] 10578  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/social/google/authorize, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 10578  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/social/apple/authorize, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 10578  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/social/callback, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 10578  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/social/google, POST} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 10578  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/social/apple, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 10578  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/social/unlink, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 10578  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mDeviceController {/auth/devices} (version: 1):[39m[38;5;3m +0ms[39m
+[32m[Nest] 10578  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/devices, GET} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 10578  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/devices/:deviceId, DELETE} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 10578  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/devices/:deviceId, PATCH} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 10578  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/devices/revoke-all, POST} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 10578  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAdminController {/admin} (version: 1):[39m[38;5;3m +0ms[39m
+[32m[Nest] 10578  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/stats, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 10578  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/users, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 10578  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/users/:id, GET} (version: 1) route[39m[38;5;3m +9ms[39m
+[32m[Nest] 10578  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/users/:id/suspend, POST} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 10578  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/users/:id/activate, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 10578  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mMetricsController {/metrics} (version: 1):[39m[38;5;3m +0ms[39m
+[32m[Nest] 10578  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/metrics, GET} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 10578  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHealthController {/health} (version: 1):[39m[38;5;3m +0ms[39m
+[32m[Nest] 10578  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 10578  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/live, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 10578  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/ready, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 10606  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [32mSwagger documentation enabled at /docs[39m
+[32m[Nest] 10606  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAuthController {/auth} (version: 1):[39m[38;5;3m +11ms[39m
+[32m[Nest] 10606  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/signup, POST} (version: 1) route[39m[38;5;3m +6ms[39m
+[32m[Nest] 10606  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/login, POST} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 10606  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/refresh, POST} (version: 1) route[39m[38;5;3m +3ms[39m
+[32m[Nest] 10606  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/logout, POST} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 10606  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/me, GET} (version: 1) route[39m[38;5;3m +10ms[39m
+[32m[Nest] 10606  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/forgot-password, POST} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 10606  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/reset-password, POST} (version: 1) route[39m[38;5;3m +33ms[39m
+[32m[Nest] 10578  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[PrismaService] [39m[32mDatabase connection established[39m
+[32m[Nest] 10606  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/verify-email, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 10606  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/resend-verification, POST} (version: 1) route[39m[38;5;3m +12ms[39m
+[32m[Nest] 10578  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +20ms[39m
+[32m[Nest] 10606  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/select-role, POST} (version: 1) route[39m[38;5;3m +15ms[39m
+[32m[Nest] 10606  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/request-otp, POST} (version: 1) route[39m[38;5;3m +2ms[39m
+[31m[Nest] 10578  - [39m06/23/2026, 6:53:52 PM [31m  ERROR[39m [38;5;3m[NestApplication] [39m[31mError: listen EADDRINUSE: address already in use :::3000[39m[38;5;3m +9ms[39m
+[32m[Nest] 10606  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/verify-otp, POST} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 10606  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mMfaController {/mfa} (version: 1):[39m[38;5;3m +0ms[39m
+[32m[Nest] 10606  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/mfa/setup, GET} (version: 1) route[39m[38;5;3m +5ms[39m
+[32m[Nest] 10606  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/mfa/verify, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 10606  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/mfa/enable, POST} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 10606  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/mfa/disable, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 10606  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mOtpController {/otp} (version: 1):[39m[38;5;3m +0ms[39m
+[32m[Nest] 10606  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/otp/send, POST} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 10606  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/otp/verify, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 10606  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mSocialAuthController {/auth/social} (version: 1):[39m[38;5;3m +0ms[39m
+[32m[Nest] 10606  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/social/google/authorize, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 10606  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/social/apple/authorize, GET} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 10606  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/social/callback, POST} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 10606  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/social/google, POST} (version: 1) route[39m[38;5;3m +3ms[39m
+[32m[Nest] 10606  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/social/apple, POST} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 10606  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/social/unlink, POST} (version: 1) route[39m[38;5;3m +4ms[39m
+[32m[Nest] 10606  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mDeviceController {/auth/devices} (version: 1):[39m[38;5;3m +0ms[39m
+[32m[Nest] 10606  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/devices, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 10606  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/devices/:deviceId, DELETE} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 10606  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/devices/:deviceId, PATCH} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 10606  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/devices/revoke-all, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 10606  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAdminController {/admin} (version: 1):[39m[38;5;3m +0ms[39m
+[32m[Nest] 10606  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/stats, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 10606  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/users, GET} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 10606  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/users/:id, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 10606  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/users/:id/suspend, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 10606  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/users/:id/activate, POST} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 10606  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mMetricsController {/metrics} (version: 1):[39m[38;5;3m +0ms[39m
+[32m[Nest] 10606  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/metrics, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 10606  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHealthController {/health} (version: 1):[39m[38;5;3m +0ms[39m
+[32m[Nest] 10606  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 10606  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/live, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 10606  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/ready, GET} (version: 1) route[39m[38;5;3m +1ms[39m
+Error: listen EADDRINUSE: address already in use :::3000
+    at Server.setupListenHandle [as _listen2] (node:net:2008:16)
+    at listenInCluster (node:net:2065:12)
+    at Server.listen (node:net:2170:7)
+    at ExpressAdapter.listen (/Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+platform-express@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-v_6278f7c733229edabd2decf6bc28c361/node_modules/@nestjs/platform-express/adapters/express-adapter.js:115:32)
+    at /Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/@nestjs/core/nest-application.js:190:30
+    at new Promise (<anonymous>)
+    at NestApplication.listen (/Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/@nestjs/core/nest-application.js:180:16)
+    at bootstrap (/Users/deprof/www/azeebo+/services/core/auth-service/src/main.ts:109:3)
+[ERROR] 18:53:52 Error: listen EADDRINUSE: address already in use :::3000
+[32m[Nest] 10606  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[PrismaService] [39m[32mDatabase connection established[39m
+[32m[Nest] 10606  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +3ms[39m
+[31m[Nest] 10606  - [39m06/23/2026, 6:53:52 PM [31m  ERROR[39m [38;5;3m[NestApplication] [39m[31mError: listen EADDRINUSE: address already in use :::3000[39m[38;5;3m +18ms[39m
+[32m[Nest] 10578  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[PrismaService] [39m[32mDatabase connection closed[39m
+Error: listen EADDRINUSE: address already in use :::3000
+    at Server.setupListenHandle [as _listen2] (node:net:2008:16)
+    at listenInCluster (node:net:2065:12)
+    at Server.listen (node:net:2170:7)
+    at ExpressAdapter.listen (/Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+platform-express@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-v_6278f7c733229edabd2decf6bc28c361/node_modules/@nestjs/platform-express/adapters/express-adapter.js:115:32)
+    at /Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/@nestjs/core/nest-application.js:190:30
+    at new Promise (<anonymous>)
+    at NestApplication.listen (/Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/@nestjs/core/nest-application.js:180:16)
+    at bootstrap (/Users/deprof/www/azeebo+/services/core/auth-service/src/main.ts:109:3)
+[ERROR] 18:53:52 Error: listen EADDRINUSE: address already in use :::3000
+[32m[Nest] 10606  - [39m06/23/2026, 6:53:52 PM [32m    LOG[39m [38;5;3m[PrismaService] [39m[32mDatabase connection closed[39m
+[INFO] 18:54:21 Restarting: /Users/deprof/www/azeebo+/packages/logger/dist/response-sanitizer.interceptor.js has been modified
+[INFO] 18:54:21 Restarting: /Users/deprof/www/azeebo+/packages/logger/dist/response-sanitizer.interceptor.js has been modified
+[32m[Nest] 12169  - [39m06/23/2026, 6:55:04 PM [32m    LOG[39m [32mJWT secrets validated successfully[39m
+[32m[Nest] 12169  - [39m06/23/2026, 6:55:04 PM [32m    LOG[39m [32mEnvironment variables validated successfully[39m
+[32m[Nest] 12169  - [39m06/23/2026, 6:55:07 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m[38;5;3m +3139ms[39m
+[32m[Nest] 12169  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDatabaseModule dependencies initialized[39m[38;5;3m +898ms[39m
+[32m[Nest] 12169  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPassportModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 12169  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 12169  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +173ms[39m
+[32m[Nest] 12169  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisCoreModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 12169  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAuditModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 12169  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCommonModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 12169  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mMetricsModule dependencies initialized[39m[38;5;3m +11ms[39m
+[32m[Nest] 12169  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 12169  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 12169  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 12169  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTerminusModule dependencies initialized[39m[38;5;3m +8ms[39m
+[32m[Nest] 12169  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 12169  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 12169  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRateLimiterModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 12169  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 12169  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAdminModule dependencies initialized[39m[38;5;3m +11ms[39m
+[32m[Nest] 12169  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAuthModule dependencies initialized[39m[38;5;3m +2ms[39m
+[32m[Nest] 12182  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [32mJWT secrets validated successfully[39m
+[32m[Nest] 12182  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [32mEnvironment variables validated successfully[39m
+[32m[Nest] 12169  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [32mSwagger documentation enabled at /docs[39m
+[32m[Nest] 12169  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAuthController {/auth} (version: 1):[39m[38;5;3m +95ms[39m
+[32m[Nest] 12169  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/signup, POST} (version: 1) route[39m[38;5;3m +115ms[39m
+[32m[Nest] 12169  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/login, POST} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 12169  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/refresh, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 12169  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/logout, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 12169  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/me, GET} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 12169  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/forgot-password, POST} (version: 1) route[39m[38;5;3m +22ms[39m
+[32m[Nest] 12169  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/reset-password, POST} (version: 1) route[39m[38;5;3m +5ms[39m
+[32m[Nest] 12169  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/verify-email, POST} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 12169  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/resend-verification, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 12169  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/select-role, POST} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 12169  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/request-otp, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 12169  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/verify-otp, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 12169  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mMfaController {/mfa} (version: 1):[39m[38;5;3m +0ms[39m
+[32m[Nest] 12169  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/mfa/setup, GET} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 12169  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/mfa/verify, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 12169  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/mfa/enable, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 12169  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/mfa/disable, POST} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 12169  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mOtpController {/otp} (version: 1):[39m[38;5;3m +0ms[39m
+[32m[Nest] 12169  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/otp/send, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 12169  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/otp/verify, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 12169  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mSocialAuthController {/auth/social} (version: 1):[39m[38;5;3m +0ms[39m
+[32m[Nest] 12169  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/social/google/authorize, GET} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 12169  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/social/apple/authorize, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 12169  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/social/callback, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 12169  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/social/google, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 12169  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/social/apple, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 12169  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/social/unlink, POST} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 12169  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mDeviceController {/auth/devices} (version: 1):[39m[38;5;3m +0ms[39m
+[32m[Nest] 12169  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/devices, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 12169  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/devices/:deviceId, DELETE} (version: 1) route[39m[38;5;3m +4ms[39m
+[32m[Nest] 12169  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/devices/:deviceId, PATCH} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 12169  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/devices/revoke-all, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 12169  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAdminController {/admin} (version: 1):[39m[38;5;3m +1ms[39m
+[32m[Nest] 12169  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/stats, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 12169  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/users, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 12169  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/users/:id, GET} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 12169  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/users/:id/suspend, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 12169  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/users/:id/activate, POST} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 12169  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mMetricsController {/metrics} (version: 1):[39m[38;5;3m +0ms[39m
+[32m[Nest] 12169  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/metrics, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 12169  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHealthController {/health} (version: 1):[39m[38;5;3m +0ms[39m
+[32m[Nest] 12169  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health, GET} (version: 1) route[39m[38;5;3m +7ms[39m
+[32m[Nest] 12169  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/live, GET} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 12169  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/ready, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 12182  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m[38;5;3m +786ms[39m
+[32m[Nest] 12169  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[PrismaService] [39m[32mDatabase connection established[39m
+[32m[Nest] 12169  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +4ms[39m
+[32m[Nest] 12169  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [32mAuth Service is running on port 3000[39m
+[32m[Nest] 12182  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDatabaseModule dependencies initialized[39m[38;5;3m +318ms[39m
+[32m[Nest] 12182  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPassportModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 12182  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 12182  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +143ms[39m
+[32m[Nest] 12182  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisCoreModule dependencies initialized[39m[38;5;3m +3ms[39m
+[32m[Nest] 12182  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAuditModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 12182  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCommonModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 12182  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mMetricsModule dependencies initialized[39m[38;5;3m +8ms[39m
+[32m[Nest] 12182  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 12182  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 12182  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 12182  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTerminusModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 12182  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 12182  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 12182  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRateLimiterModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 12182  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 12182  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAdminModule dependencies initialized[39m[38;5;3m +4ms[39m
+[32m[Nest] 12182  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAuthModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 12182  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [32mSwagger documentation enabled at /docs[39m
+[32m[Nest] 12182  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAuthController {/auth} (version: 1):[39m[38;5;3m +14ms[39m
+[32m[Nest] 12182  - [39m06/23/2026, 6:55:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/signup, POST} (version: 1) route[39m[38;5;3m +163ms[39m
+[32m[Nest] 12182  - [39m06/23/2026, 6:55:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/login, POST} (version: 1) route[39m[38;5;3m +35ms[39m
+[32m[Nest] 12182  - [39m06/23/2026, 6:55:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/refresh, POST} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 12182  - [39m06/23/2026, 6:55:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/logout, POST} (version: 1) route[39m[38;5;3m +3ms[39m
+[32m[Nest] 12182  - [39m06/23/2026, 6:55:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/me, GET} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 12182  - [39m06/23/2026, 6:55:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/forgot-password, POST} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 12182  - [39m06/23/2026, 6:55:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/reset-password, POST} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 12182  - [39m06/23/2026, 6:55:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/verify-email, POST} (version: 1) route[39m[38;5;3m +2ms[39m
+[32m[Nest] 12182  - [39m06/23/2026, 6:55:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/resend-verification, POST} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 12182  - [39m06/23/2026, 6:55:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/select-role, POST} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 12182  - [39m06/23/2026, 6:55:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/request-otp, POST} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 12182  - [39m06/23/2026, 6:55:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/verify-otp, POST} (version: 1) route[39m[38;5;3m +3ms[39m
+[32m[Nest] 12182  - [39m06/23/2026, 6:55:10 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mMfaController {/mfa} (version: 1):[39m[38;5;3m +2ms[39m
+[32m[Nest] 12182  - [39m06/23/2026, 6:55:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/mfa/setup, GET} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 12182  - [39m06/23/2026, 6:55:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/mfa/verify, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 12182  - [39m06/23/2026, 6:55:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/mfa/enable, POST} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 12182  - [39m06/23/2026, 6:55:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/mfa/disable, POST} (version: 1) route[39m[38;5;3m +7ms[39m
+[32m[Nest] 12182  - [39m06/23/2026, 6:55:10 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mOtpController {/otp} (version: 1):[39m[38;5;3m +0ms[39m
+[32m[Nest] 12182  - [39m06/23/2026, 6:55:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/otp/send, POST} (version: 1) route[39m[38;5;3m +5ms[39m
+[32m[Nest] 12182  - [39m06/23/2026, 6:55:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/otp/verify, POST} (version: 1) route[39m[38;5;3m +8ms[39m
+[32m[Nest] 12182  - [39m06/23/2026, 6:55:10 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mSocialAuthController {/auth/social} (version: 1):[39m[38;5;3m +0ms[39m
+[32m[Nest] 12182  - [39m06/23/2026, 6:55:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/social/google/authorize, GET} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 12182  - [39m06/23/2026, 6:55:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/social/apple/authorize, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 12182  - [39m06/23/2026, 6:55:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/social/callback, POST} (version: 1) route[39m[38;5;3m +2ms[39m
+[32m[Nest] 12182  - [39m06/23/2026, 6:55:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/social/google, POST} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 12182  - [39m06/23/2026, 6:55:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/social/apple, POST} (version: 1) route[39m[38;5;3m +38ms[39m
+[32m[Nest] 12182  - [39m06/23/2026, 6:55:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/social/unlink, POST} (version: 1) route[39m[38;5;3m +13ms[39m
+[32m[Nest] 12182  - [39m06/23/2026, 6:55:10 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mDeviceController {/auth/devices} (version: 1):[39m[38;5;3m +0ms[39m
+[32m[Nest] 12182  - [39m06/23/2026, 6:55:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/devices, GET} (version: 1) route[39m[38;5;3m +38ms[39m
+[32m[Nest] 12182  - [39m06/23/2026, 6:55:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/devices/:deviceId, DELETE} (version: 1) route[39m[38;5;3m +6ms[39m
+[32m[Nest] 12182  - [39m06/23/2026, 6:55:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/devices/:deviceId, PATCH} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 12182  - [39m06/23/2026, 6:55:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/auth/devices/revoke-all, POST} (version: 1) route[39m[38;5;3m +2ms[39m
+[32m[Nest] 12182  - [39m06/23/2026, 6:55:10 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAdminController {/admin} (version: 1):[39m[38;5;3m +0ms[39m
+[32m[Nest] 12182  - [39m06/23/2026, 6:55:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/stats, GET} (version: 1) route[39m[38;5;3m +3ms[39m
+[32m[Nest] 12182  - [39m06/23/2026, 6:55:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/users, GET} (version: 1) route[39m[38;5;3m +2ms[39m
+[32m[Nest] 12182  - [39m06/23/2026, 6:55:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/users/:id, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 12182  - [39m06/23/2026, 6:55:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/users/:id/suspend, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 12182  - [39m06/23/2026, 6:55:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/users/:id/activate, POST} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 12182  - [39m06/23/2026, 6:55:10 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mMetricsController {/metrics} (version: 1):[39m[38;5;3m +0ms[39m
+[32m[Nest] 12182  - [39m06/23/2026, 6:55:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/metrics, GET} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 12182  - [39m06/23/2026, 6:55:10 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHealthController {/health} (version: 1):[39m[38;5;3m +0ms[39m
+[32m[Nest] 12182  - [39m06/23/2026, 6:55:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health, GET} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 12182  - [39m06/23/2026, 6:55:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/live, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 12182  - [39m06/23/2026, 6:55:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/ready, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 12182  - [39m06/23/2026, 6:55:10 PM [32m    LOG[39m [38;5;3m[PrismaService] [39m[32mDatabase connection established[39m
+[32m[Nest] 12182  - [39m06/23/2026, 6:55:10 PM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +5ms[39m
+[31m[Nest] 12182  - [39m06/23/2026, 6:55:10 PM [31m  ERROR[39m [38;5;3m[NestApplication] [39m[31mError: listen EADDRINUSE: address already in use :::3000[39m[38;5;3m +10ms[39m
+Error: listen EADDRINUSE: address already in use :::3000
+    at Server.setupListenHandle [as _listen2] (node:net:2008:16)
+    at listenInCluster (node:net:2065:12)
+    at Server.listen (node:net:2170:7)
+    at ExpressAdapter.listen (/Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+platform-express@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-v_6278f7c733229edabd2decf6bc28c361/node_modules/@nestjs/platform-express/adapters/express-adapter.js:115:32)
+    at /Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/@nestjs/core/nest-application.js:190:30
+    at new Promise (<anonymous>)
+    at NestApplication.listen (/Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/@nestjs/core/nest-application.js:180:16)
+    at bootstrap (/Users/deprof/www/azeebo+/services/core/auth-service/src/main.ts:109:3)
+[ERROR] 18:55:10 Error: listen EADDRINUSE: address already in use :::3000
+[32m[Nest] 12182  - [39m06/23/2026, 6:55:10 PM [32m    LOG[39m [38;5;3m[PrismaService] [39m[32mDatabase connection closed[39m
+[31m[Nest] 12169  - [39m06/23/2026, 7:28:05 PM [31m  ERROR[39m [38;5;3m[ExceptionFilter] [39m[31mUnhandled exception: Not allowed by CORS - missing origin header[39m
+Error: Not allowed by CORS - missing origin header
+    at origin (/Users/deprof/www/azeebo+/packages/security/src/cors.config.ts:31:18)
+    at /Users/deprof/www/azeebo+/node_modules/.pnpm/cors@2.8.6/node_modules/cors/lib/index.js:219:13
+    at optionsCallback (/Users/deprof/www/azeebo+/node_modules/.pnpm/cors@2.8.6/node_modules/cors/lib/index.js:199:9)
+    at corsMiddleware (/Users/deprof/www/azeebo+/node_modules/.pnpm/cors@2.8.6/node_modules/cors/lib/index.js:204:7)
+    at Layer.handleRequest (/Users/deprof/www/azeebo+/node_modules/.pnpm/router@2.2.0/node_modules/router/lib/layer.js:152:17)
+    at trimPrefix (/Users/deprof/www/azeebo+/node_modules/.pnpm/router@2.2.0/node_modules/router/index.js:342:13)
+    at /Users/deprof/www/azeebo+/node_modules/.pnpm/router@2.2.0/node_modules/router/index.js:297:9
+    at processParams (/Users/deprof/www/azeebo+/node_modules/.pnpm/router@2.2.0/node_modules/router/index.js:582:12)
+    at next (/Users/deprof/www/azeebo+/node_modules/.pnpm/router@2.2.0/node_modules/router/index.js:291:5)
+    at internalNext (/Users/deprof/www/azeebo+/node_modules/.pnpm/helmet@8.2.0/node_modules/helmet/index.cjs:531:6)
+[31m[Nest] 12169  - [39m06/23/2026, 7:28:06 PM [31m  ERROR[39m [38;5;3m[ExceptionFilter] [39m[31mUnhandled exception: Not allowed by CORS - missing origin header[39m
+Error: Not allowed by CORS - missing origin header
+    at origin (/Users/deprof/www/azeebo+/packages/security/src/cors.config.ts:31:18)
+    at /Users/deprof/www/azeebo+/node_modules/.pnpm/cors@2.8.6/node_modules/cors/lib/index.js:219:13
+    at optionsCallback (/Users/deprof/www/azeebo+/node_modules/.pnpm/cors@2.8.6/node_modules/cors/lib/index.js:199:9)
+    at corsMiddleware (/Users/deprof/www/azeebo+/node_modules/.pnpm/cors@2.8.6/node_modules/cors/lib/index.js:204:7)
+    at Layer.handleRequest (/Users/deprof/www/azeebo+/node_modules/.pnpm/router@2.2.0/node_modules/router/lib/layer.js:152:17)
+    at trimPrefix (/Users/deprof/www/azeebo+/node_modules/.pnpm/router@2.2.0/node_modules/router/index.js:342:13)
+    at /Users/deprof/www/azeebo+/node_modules/.pnpm/router@2.2.0/node_modules/router/index.js:297:9
+    at processParams (/Users/deprof/www/azeebo+/node_modules/.pnpm/router@2.2.0/node_modules/router/index.js:582:12)
+    at next (/Users/deprof/www/azeebo+/node_modules/.pnpm/router@2.2.0/node_modules/router/index.js:291:5)
+    at internalNext (/Users/deprof/www/azeebo+/node_modules/.pnpm/helmet@8.2.0/node_modules/helmet/index.cjs:531:6)

@@ -16,6 +16,7 @@ import { ChallengeModule } from './modules/challenges/challenge.module';
 import { PollModule } from './modules/polls/poll.module';
 import { QuizModule } from './modules/quizzes/quiz.module';
 import { AdminModule } from './modules/admin/admin.module';
+import { CommonModule } from './common/common.module';
 import { RateLimiterModule } from '@azeebo/security';
 import { ServiceAuthGuard } from '@azeebo/security';
 
@@ -24,7 +25,8 @@ import { ServiceAuthGuard } from '@azeebo/security';
     ConfigModule.forRoot({
       isGlobal: true,
     }),
-    RateLimiterModule,
+    CommonModule,
+    RateLimiterModule.forRoot(),
     DatabaseModule,
     HealthModule,
     StoriesModule,

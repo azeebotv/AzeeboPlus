@@ -24,7 +24,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
         { emit: 'event', level: 'error' },
         { emit: 'event', level: 'warn' },
       ],
-    } as any);
+    });
   }
 
   async onModuleInit(): Promise<void> {

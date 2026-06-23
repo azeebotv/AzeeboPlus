@@ -1,7 +1,0 @@
-===== services/core/content-service/src/modules/public/public.controller.ts =====
-4:@Controller('public')
-10:  @Get('universes')
-55:  @Get('settings')
-81:  @Get('settings/:key')
-115:  @Get('universes/:name/features')
-

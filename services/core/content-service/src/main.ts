@@ -43,8 +43,16 @@ async function bootstrap(): Promise<void> {
   if (!process.env.ALLOWED_ORIGINS) {
     throw new Error('ALLOWED_ORIGINS environment variable must be set');
   }
+  const allowedOrigins = process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim());
   app.enableCors({
-    origin: process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim()),
+    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+      // Allow requests with no origin (server-to-server, curl, mobile apps)
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
   });
@@ -61,8 +69,8 @@ async function bootstrap(): Promise<void> {
     Logger.log('Swagger documentation enabled at /docs');
   }
 
-  // API versioning
-  app.enableVersioning({ type: VersioningType.URI, prefix: 'v', defaultVersion: '1' });
+  // Versioning disabled: controllers already prefix routes with 'v1/' manually
+  // e.g. @Controller('v1/content'), @Controller('v1/public')
 
   const port = process.env.PORT || 3004;
   await app.listen(port);

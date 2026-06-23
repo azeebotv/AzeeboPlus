@@ -1,7 +1,0 @@
-===== services/core/auth-service/src/modules/auth/otp/otp.controller.ts =====
-16:@Controller('otp')
-20:  @Post('send')
-21:  @UseGuards(RateLimitGuard)
-36:  @Post('verify')
-37:  @UseGuards(RateLimitGuard)
-

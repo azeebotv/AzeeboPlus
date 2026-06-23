@@ -28,25 +28,46 @@ export function middleware(request: NextRequest) {
     path: '/',
   });
 
-  // Content Security Policy (nonce-based, strict-dynamic)
-  // Remove 'unsafe-inline' and 'unsafe-eval'; use nonce + strict-dynamic
-  const cspDirectives = [
-    `default-src 'self'`,
-    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`,
-    `style-src 'self' 'nonce-${nonce}'`,
-    `img-src 'self' blob: data: https:`,
-    `font-src 'self' data:`,
-    `connect-src 'self' https:`,
-    `media-src 'self' blob:`,
-    `object-src 'none'`,
-    `frame-ancestors 'none'`,
-    `base-uri 'self'`,
-    `form-action 'self'`,
-    `upgrade-insecure-requests`,
-  ].join('; ');
+  // Content Security Policy
+  // Development: permissive policy to allow Next.js dev server features
+  //   (React Refresh uses eval(), Tailwind v4 injects styles dynamically without nonce)
+  // Production: strict nonce-based CSP with no unsafe-inline/eval
+  const isDev = process.env.NODE_ENV !== 'production';
 
-  // Enforce Content-Security-Policy
-  response.headers.set('Content-Security-Policy', cspDirectives);
+  if (isDev) {
+    // Dev-only: use Report-Only so violations are logged but not enforced
+    const devCsp = [
+      `default-src 'self'`,
+      `script-src 'self' 'unsafe-inline' 'unsafe-eval'`,
+      `style-src 'self' 'unsafe-inline'`,
+      `img-src 'self' blob: data: https:`,
+      `font-src 'self' data:`,
+      `connect-src 'self' http: https: ws: wss:`,
+      `media-src 'self' blob:`,
+      `object-src 'none'`,
+      `frame-ancestors 'none'`,
+      `base-uri 'self'`,
+      `form-action 'self'`,
+    ].join('; ');
+    response.headers.set('Content-Security-Policy-Report-Only', devCsp);
+  } else {
+    // Production: strict nonce-based CSP
+    const prodCsp = [
+      `default-src 'self'`,
+      `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`,
+      `style-src 'self' 'nonce-${nonce}'`,
+      `img-src 'self' blob: data: https:`,
+      `font-src 'self' data:`,
+      `connect-src 'self' https:`,
+      `media-src 'self' blob:`,
+      `object-src 'none'`,
+      `frame-ancestors 'none'`,
+      `base-uri 'self'`,
+      `form-action 'self'`,
+      `upgrade-insecure-requests`,
+    ].join('; ');
+    response.headers.set('Content-Security-Policy', prodCsp);
+  }
 
   // Strict Transport Security (HSTS) - 1 year
   response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
