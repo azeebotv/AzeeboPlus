@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { usePWA } from '../hooks/usePWA';
 import { api, ContentItem } from '../lib/api';
-import { Skeleton } from '@azeebo/ui';
+import { Skeleton } from '@/components/Skeleton';
 import Link from 'next/link';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { useSettings } from '@/hooks/useDatabase';

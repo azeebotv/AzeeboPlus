@@ -1,292 +1,177 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { Button, Card, Skeleton } from '@azeebo/ui';
-import { colors, gradients } from '@azeebo/design-tokens';
-import Link from 'next/link';
-import { apiFetch } from '@/lib/api';
-import { webLogger } from '@/lib/logger';
-import { Avatar } from '@azeebo/ui';
+import { apiFetch } from '../../lib/api';
+import AppHeader from '../../components/layout/AppHeader';
+import AppFooter from '../../components/layout/AppFooter';
+import { Skeleton } from '@/components/Skeleton';
 
 interface Notification {
   id: string;
   type: string;
   title: string;
-  description: string;
-  date: string;
+  message: string;
+  timestamp: string;
   read: boolean;
+  metadata?: Record<string, unknown>;
 }
 
-export default function NotificationsPage(): JSX.Element {
-  const { user, isAuthenticated } = useAuth();
+export default function NotificationsPage(): React.JSX.Element {
+  const { user } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'all' | 'unread' | 'mentions'>('all');
 
   useEffect(() => {
-    const fetchNotifications = async () => {
+    const fetchNotifications = async (): Promise<void> => {
       try {
         setIsLoading(true);
-        const result = await apiFetch<Notification[]>('/v1/notifications');
-
-        if (result.success && result.data) {
-          setNotifications(result.data);
+        setError(null);
+        const response = await apiFetch<any>('/notifications');
+        if (response.success && response.data) {
+          const notificationsData = Array.isArray(response.data) ? response.data : [];
+          setNotifications(notificationsData.map((n: any) => ({
+            id: String(n.id), type: String(n.type || 'system'), title: String(n.title || ''),
+            message: String(n.message || ''), timestamp: String(n.timestamp || n.createdAt || ''),
+            read: Boolean(n.read), metadata: n.metadata,
+          })));
         }
       } catch (err) {
-        webLogger.error('Failed to fetch notifications', err);
-        setError('Failed to load notifications. Please try again.');
-      } finally {
-        setIsLoading(false);
-      }
+        setError('Failed to load notifications');
+      } finally { setIsLoading(false); }
     };
-
     fetchNotifications();
   }, []);
 
-  const markAsRead = async (id: string) => {
+  const markAsRead = useCallback(async (notificationId: string) => {
     try {
-      await apiFetch(`/v1/notifications/${id}/read`, { method: 'PUT' });
-      setNotifications(notifications.map((n) => (n.id === id ? { ...n, read: true } : n)));
-    } catch (err) {
-      webLogger.error('Failed to mark notification as read', err);
+      await apiFetch<any>(`/notifications/${notificationId}/read`, { method: 'PUT' });
+      setNotifications((prev) => prev.map((n) => n.id === notificationId ? { ...n, read: true } : n));
+    } catch (err) { /* intentionally minimal */ }
+  }, []);
+
+  const markAllAsRead = useCallback(async () => {
+    try {
+      await apiFetch<any>('/notifications/read-all', { method: 'PUT' });
+      setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    } catch (err) { /* intentionally minimal */ }
+  }, []);
+
+  const getNotificationIcon = (type: string) => {
+    switch (type) {
+      case 'like': return { icon: '&#x1F44D;', color: '#4CAF50' };
+      case 'comment': return { icon: '&#x1F4AC;', color: '#2196F3' };
+      case 'follow': return { icon: '&#x1F464;', color: '#FF9800' };
+      case 'mention': return { icon: '&#x2026;', color: '#9C27B0' };
+      case 'system': return { icon: '&#x2699;&#xFE0F;', color: '#607D8B' };
+      default: return { icon: '&#x1F514;', color: '#757575' };
     }
   };
 
-  const markAllAsRead = async () => {
-    try {
-      await apiFetch('/v1/notifications/read-all', { method: 'PUT' });
-      setNotifications(notifications.map((n) => ({ ...n, read: true })));
-    } catch (err) {
-      webLogger.error('Failed to mark all notifications as read', err);
-    }
-  };
+  const filteredNotifications = notifications.filter((n) => {
+    if (activeTab === 'unread') return !n.read;
+    if (activeTab === 'mentions') return n.type === 'mention';
+    return true;
+  });
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: colors.bg.primary }}>
-      {/* Header */}
-      <header className="sticky top-0 z-50 backdrop-blur-xl bg-black/40 border-b border-gray-700/50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div
-              className="h-10 w-10 rounded-xl flex items-center justify-center"
-              style={{ background: gradients.primary }}
-            >
-              <span className="text-white font-bold text-xl leading-none">A</span>
-            </div>
-            <h1
-              className="text-2xl font-bold hidden sm:block"
-              style={{ color: colors.text.primary }}
-            >
-              Azeebo+
-            </h1>
-          </div>
-
-          <nav className="hidden md:flex items-center gap-8">
-            {['Home', 'Browse', 'Library', 'Creators', 'Notifications'].map((item) => (
-              <Link
-                key={item}
-                href={
-                  item === 'Home'
-                    ? '/'
-                    : item === 'Notifications'
-                      ? '/notifications'
-                      : `/${item.toLowerCase()}`
-                }
-                className="text-base font-medium transition-colors"
-                style={{
-                  color: item === 'Notifications' ? colors.primary[500] : colors.text.secondary,
-                }}
-              >
-                {item}
-              </Link>
-            ))}
-          </nav>
-
-          <div className="flex items-center gap-4">
-            {isAuthenticated ? (
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <Avatar size="md" fallback={user?.name?.charAt(0) || 'U'} />
-                  <span className="text-sm font-medium" style={{ color: colors.text.primary }}>
-                    {user?.name}
-                  </span>
-                </div>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2">
-                <Link href="/auth/login">
-                  <Button variant="ghost" size="sm">
-                    Sign In
-                  </Button>
-                </Link>
-                <Link href="/auth/register">
-                  <Button variant="primary" size="sm">
-                    Get Started
-                  </Button>
-                </Link>
-              </div>
-            )}
-          </div>
-        </div>
-      </header>
-
-      {/* Notifications Header */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+      <AppHeader />
+      <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h2 className="text-2xl sm:text-3xl font-bold" style={{ color: colors.text.primary }}>
-              Notifications
-            </h2>
-            <p className="text-base mt-1" style={{ color: colors.text.secondary }}>
-              You have {unreadCount} unread notification{unreadCount !== 1 ? 's' : ''}
-            </p>
+            <h1 className="az-headline text-white text-3xl sm:text-4xl">Notifications</h1>
+            <p className="text-white/50 text-sm mt-1">{unreadCount > 0 ? `${unreadCount} unread notification${unreadCount !== 1 ? 's' : ''}` : 'All caught up!'}</p>
           </div>
           {unreadCount > 0 && (
-            <Button variant="outline" onClick={markAllAsRead}>
-              Mark all as read
-            </Button>
+            <button onClick={markAllAsRead} className="az-btn-primary" style={{ width: 'auto', paddingInline: '1.25rem', fontSize: '0.8rem' }}>Mark all read</button>
           )}
+        </div>
+
+        {/* Tabs */}
+        <div className="flex gap-4 mb-6" role="tablist" aria-label="Notification filters">
+          {(['all', 'unread', 'mentions'] as const).map((tab) => (
+            <button
+              key={tab}
+              role="tab"
+              aria-selected={activeTab === tab}
+              onClick={() => setActiveTab(tab)}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors capitalize ${
+                activeTab === tab ? 'text-white' : 'text-white/60 hover:text-white'
+              }`}
+              style={activeTab === tab ? { background: 'linear-gradient(135deg, #E8420A, #CC1C1C)' } : { border: '1px solid rgba(255,255,255,0.15)' }}
+            >
+              {tab} {tab === 'unread' && unreadCount > 0 && `(${unreadCount})`}
+            </button>
+          ))}
         </div>
 
         {/* Notifications List */}
         {isLoading ? (
-          <div className="space-y-4">
-            {[1, 2, 3, 4].map((i) => (
-              <Skeleton key={i} height="80px" className="w-full" />
-            ))}
-          </div>
-        ) : error ? (
-          <div className="text-center py-12">
-            <p className="text-lg mb-4" style={{ color: colors.text.secondary }}>
-              {error}
-            </p>
-            <Button variant="primary" onClick={() => window.location.reload()}>
-              Retry
-            </Button>
-          </div>
-        ) : notifications.length > 0 ? (
-          <div className="space-y-4">
-            {notifications.map((notification) => (
-              <div
-                key={notification.id}
-                className={`cursor-pointer transition-all border-l-4 ${!notification.read ? 'border-l-primary-500' : 'border-l-transparent'} p-4 bg-white rounded-lg shadow-sm`}
-                onClick={() => markAsRead(notification.id)}
-              >
-                <div className="flex items-start gap-4">
-                  <div
-                    className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${notification.type === 'reward' ? 'bg-success-500/20' : notification.type === 'content' ? 'bg-primary-500/20' : notification.type === 'reminder' ? 'bg-warning-500/20' : 'bg-blue-500/20'}`}
-                  >
-                    <span className="text-2xl">
-                      {notification.type === 'reward'
-                        ? '🎁'
-                        : notification.type === 'content'
-                          ? '🎬'
-                          : notification.type === 'reminder'
-                            ? '⏰'
-                            : '💰'}
-                    </span>
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-start justify-between mb-2">
-                      <h3 className="font-bold text-gray-900">{notification.title}</h3>
-                      {!notification.read && (
-                        <span className="w-3 h-3 rounded-full flex-shrink-0 bg-primary-500"></span>
-                      )}
-                    </div>
-                    <p className="text-sm mb-2 text-gray-600">{notification.description}</p>
-                    <p className="text-xs text-gray-400">{notification.date}</p>
+          <div className="space-y-3">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="az-glass p-4">
+                <div className="flex items-start gap-3">
+                  <Skeleton width="40px" height="40px" borderRadius="50%" />
+                  <div className="flex-1 space-y-2">
+                    <Skeleton width="60%" height="16px" />
+                    <Skeleton width="80%" height="14px" />
+                    <Skeleton width="30%" height="12px" />
                   </div>
                 </div>
               </div>
             ))}
           </div>
-        ) : (
-          <div className="text-center py-12">
-            <p className="text-lg" style={{ color: colors.text.secondary }}>
-              No notifications yet
+        ) : error ? (
+          <div className="az-glass p-8 text-center">
+            <span className="text-4xl mb-4 block">&#x26A0;&#xFE0F;</span>
+            <h3 className="text-lg font-bold text-white mb-2">Error</h3>
+            <p className="text-white/50 text-sm">{error}</p>
+            <button onClick={() => window.location.reload()} className="az-btn-primary mt-4" style={{ width: 'auto', paddingInline: '1.5rem' }}>Try Again</button>
+          </div>
+        ) : filteredNotifications.length === 0 ? (
+          <div className="az-glass p-12 text-center">
+            <span className="text-5xl mb-4 block">&#x1F514;</span>
+            <h3 className="text-lg font-bold text-white mb-2">No notifications</h3>
+            <p className="text-white/50 text-sm">
+              {activeTab === 'unread' ? "You're all caught up!" : activeTab === 'mentions' ? 'No mentions yet' : 'No notifications to show'}
             </p>
           </div>
+        ) : (
+          <div className="space-y-2" role="list" aria-label="Notifications">
+            {filteredNotifications.map((notification) => {
+              const { icon, color } = getNotificationIcon(notification.type);
+              return (
+                <div
+                  key={notification.id}
+                  role="listitem"
+                  onClick={() => markAsRead(notification.id)}
+                  className={`az-glass p-4 flex items-start gap-3 cursor-pointer hover:bg-white/5 transition-colors ${!notification.read ? 'border-l-2' : ''}`}
+                  style={!notification.read ? { borderLeftColor: color } : {}}
+                >
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: `${color}20` }}>
+                    <span className="text-lg" dangerouslySetInnerHTML={{ __html: icon }} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h4 className={`text-sm font-medium ${!notification.read ? 'text-white' : 'text-white/70'}`}>{notification.title}</h4>
+                    <p className="text-xs text-white/50 mt-0.5 line-clamp-2">{notification.message}</p>
+                    <p className="text-xs text-white/30 mt-1">{new Date(notification.timestamp).toLocaleString()}</p>
+                  </div>
+                  {!notification.read && (
+                    <div className="w-2 h-2 rounded-full mt-2 flex-shrink-0" style={{ background: '#E8420A' }} />
+                  )}
+                </div>
+              );
+            })}
+          </div>
         )}
-      </section>
-
-      {/* Footer */}
-      <footer
-        className="border-t py-12"
-        style={{ borderColor: colors.border.light, backgroundColor: colors.bg.secondary }}
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
-            <div>
-              <h4 className="font-bold text-lg mb-4" style={{ color: colors.text.primary }}>
-                Azeebo+
-              </h4>
-              <ul className="space-y-2" style={{ color: colors.text.secondary }}>
-                {['About', 'Careers', 'Press'].map((item) => (
-                  <li
-                    key={item}
-                    className="text-sm hover:text-gray-200 transition-colors cursor-pointer"
-                  >
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-bold text-lg mb-4" style={{ color: colors.text.primary }}>
-                Help
-              </h4>
-              <ul className="space-y-2" style={{ color: colors.text.secondary }}>
-                {['Support', 'FAQ', 'Contact'].map((item) => (
-                  <li
-                    key={item}
-                    className="text-sm hover:text-gray-200 transition-colors cursor-pointer"
-                  >
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-bold text-lg mb-4" style={{ color: colors.text.primary }}>
-                Legal
-              </h4>
-              <ul className="space-y-2" style={{ color: colors.text.secondary }}>
-                {['Terms', 'Privacy', 'Cookies'].map((item) => (
-                  <li
-                    key={item}
-                    className="text-sm hover:text-gray-200 transition-colors cursor-pointer"
-                  >
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-bold text-lg mb-4" style={{ color: colors.text.primary }}>
-                Connect
-              </h4>
-              <ul className="space-y-2" style={{ color: colors.text.secondary }}>
-                {['Twitter', 'Instagram', 'Facebook'].map((item) => (
-                  <li
-                    key={item}
-                    className="text-sm hover:text-gray-200 transition-colors cursor-pointer"
-                  >
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-          <div
-            className="mt-12 pt-8 border-t text-center text-sm"
-            style={{ borderColor: colors.border.light, color: colors.text.tertiary }}
-          >
-            <p>© 2026 Azeebo+. All rights reserved.</p>
-          </div>
-        </div>
-      </footer>
+      </main>
+      <AppFooter />
     </div>
   );
 }

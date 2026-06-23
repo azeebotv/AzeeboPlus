@@ -1,183 +1,106 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { apiFetch } from '@/lib/api';
-import { webLogger } from '@/lib/logger';
+import { useAuth } from '@/context/AuthContext';
+import { api } from '@/lib/api';
+import AppHeader from '@/components/layout/AppHeader';
+import AppFooter from '@/components/layout/AppFooter';
 
-interface Draft {
+interface DraftContent {
   id: string;
   title: string;
-  description: string;
+  description?: string;
   thumbnail: string;
-  lastSaved: string;
-  type: 'video' | 'image' | 'audio';
-  progress: number;
+  type: string;
+  duration?: number;
+  lastEdited: string;
+  status: string;
 }
 
-export default function DraftsPage(): JSX.Element {
+export default function DraftsPage(): React.JSX.Element {
+  const { isAuthenticated, user } = useAuth();
   const router = useRouter();
-  const [drafts, setDrafts] = useState<Draft[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [drafts, setDrafts] = useState<DraftContent[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    if (!isAuthenticated || !user) { router.push('/auth/login'); return; }
     loadDrafts();
-  }, []);
+  }, [isAuthenticated, user, router]);
 
-  const loadDrafts = async (): Promise<void> => {
+  const loadDrafts = async () => {
     try {
-      const result = await apiFetch<Draft[]>('/v1/creator/drafts');
-
-      if (result.success && result.data) {
-        setDrafts(result.data);
+      const response = await api.content.getMyContent({ status: 'draft' });
+      if (response.success && response.data) {
+        const items = Array.isArray(response.data) ? response.data : (response.data as any).items || [];
+        setDrafts(items as DraftContent[]);
       }
-    } catch (error) {
-      webLogger.error('Failed to load drafts', error);
-    } finally {
-      setIsLoading(false);
-    }
+    } catch { /* ignore */ } finally { setIsLoading(false); }
   };
 
-  const handleDelete = async (id: string): Promise<void> => {
-    if (!confirm('Are you sure you want to delete this draft?')) {
-      return;
-    }
-
+  const handleDelete = async (id: string) => {
+    if (!confirm('Delete this draft?')) return;
     try {
-      await apiFetch(`/v1/creator/drafts/${id}`, { method: 'DELETE' });
-      loadDrafts();
-    } catch (error) {
-      alert('Failed to delete draft');
-    }
+      await api.content.deleteContent(id);
+      setDrafts(drafts.filter(d => d.id !== id));
+    } catch { /* ignore */ }
   };
 
-  const getTypeIcon = (type: string): string => {
-    switch (type) {
-      case 'video':
-        return '🎥';
-      case 'image':
-        return '📷';
-      case 'audio':
-        return '🎵';
-      default:
-        return '📄';
-    }
-  };
-
-  const formatDate = (dateString: string): string => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diff = now.getTime() - date.getTime();
-    const hours = Math.floor(diff / (1000 * 60 * 60));
-
-    if (hours < 1) return 'Just now';
-    if (hours < 24) return `${hours}h ago`;
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  };
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">Loading drafts...</p>
-        </div>
-      </div>
-    );
-  }
+  if (!isAuthenticated || !user) return <></>;
 
   return (
-    <div className="min-h-screen bg-background py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-5xl mx-auto">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <button
-              onClick={() => router.back()}
-              className="text-muted-foreground hover:text-foreground mb-2 flex items-center gap-2"
-            >
-              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 19l-7-7 7-7"
-                />
-              </svg>
-              Back
-            </button>
-            <h1 className="text-3xl font-bold text-foreground">Drafts</h1>
-          </div>
-          <button
-            onClick={() => router.push('/creator/upload')}
-            className="px-6 py-3 bg-primary text-white rounded-lg font-semibold hover:bg-primary/90"
-          >
-            + Create Content
+    <div style={{ backgroundColor: '#1A0A0A', minHeight: '100vh', color: '#F5F0EB' }}>
+      <AppHeader />
+      <main style={{ paddingTop: 100, paddingBottom: 60, maxWidth: 1000, margin: '0 auto', padding: '100px 24px 60px' }}>
+        <div style={{ marginBottom: 32 }}>
+          <button onClick={() => router.back()} style={{ background: 'none', border: 'none', color: '#9A8A7A', cursor: 'pointer', fontSize: 14, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span>←</span> Back
           </button>
+          <h1 style={{ fontSize: 28, fontWeight: 700 }}>Drafts</h1>
+          <p style={{ color: '#9A8A7A', marginTop: 4 }}>Continue editing your unpublished content</p>
         </div>
 
-        {drafts.length === 0 ? (
-          <div className="text-center py-20">
-            <div className="text-6xl mb-4">📝</div>
-            <h2 className="text-2xl font-bold text-foreground mb-2">No drafts yet</h2>
-            <p className="text-muted-foreground mb-6">Your saved drafts will appear here</p>
-            <button
-              onClick={() => router.push('/creator/upload')}
-              className="px-6 py-3 bg-primary text-white rounded-lg font-semibold hover:bg-primary/90"
-            >
+        {isLoading ? (
+          <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}>
+            <div style={{ width: 40, height: 40, border: '3px solid #2A1A1A', borderTopColor: '#E8420A', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+          </div>
+        ) : drafts.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '60px 0' }}>
+            <div style={{ fontSize: 48, marginBottom: 16 }}>📝</div>
+            <h3 style={{ fontSize: 18, marginBottom: 8 }}>No drafts yet</h3>
+            <p style={{ color: '#9A8A7A', marginBottom: 24 }}>Start creating content to see your drafts here</p>
+            <a href="/creator/content-manager" style={{ display: 'inline-block', padding: '12px 32px', background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)', borderRadius: 999, color: '#fff', fontWeight: 600, textDecoration: 'none' }}>
               Create Content
-            </button>
+            </a>
           </div>
         ) : (
-          <div className="space-y-4">
-            {drafts.map((draft) => (
-              <div
-                key={draft.id}
-                className="bg-card rounded-lg border border-border overflow-hidden flex"
-              >
-                <img src={draft.thumbnail} alt={draft.title} className="w-40 h-40 object-cover" />
-                <div className="flex-1 p-4">
-                  <div className="flex items-start justify-between mb-2">
-                    <div>
-                      <h3 className="text-lg font-semibold text-foreground">{draft.title}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {getTypeIcon(draft.type)} • Last saved {formatDate(draft.lastSaved)}
-                      </p>
-                    </div>
-                  </div>
-                  <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
-                    {draft.description}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {drafts.map(draft => (
+              <div key={draft.id} className="az-glass" style={{ display: 'flex', alignItems: 'center', gap: 16, padding: 16, borderRadius: 16 }}>
+                {draft.thumbnail && (
+                  <img src={draft.thumbnail} alt="" style={{ width: 120, height: 68, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }} />
+                )}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <h3 style={{ fontWeight: 600, fontSize: 16, marginBottom: 4 }}>{draft.title}</h3>
+                  <p style={{ color: '#9A8A7A', fontSize: 13 }}>
+                    Last edited {new Date(draft.lastEdited).toLocaleDateString()}
+                    {draft.duration ? ` · ${Math.floor(draft.duration / 60)}m` : ''}
                   </p>
-                  <div className="mb-4">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs text-muted-foreground">Progress</span>
-                      <span className="text-xs text-muted-foreground">{draft.progress}%</span>
-                    </div>
-                    <div className="h-2 bg-muted rounded-full">
-                      <div
-                        className="h-full bg-primary rounded-full transition-all"
-                        style={{ width: `${draft.progress}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => router.push(`/creator/upload?id=${draft.id}`)}
-                      className="px-4 py-2 bg-primary text-white rounded-md text-sm font-medium hover:bg-primary/90"
-                    >
-                      Continue Editing
-                    </button>
-                    <button
-                      onClick={() => handleDelete(draft.id)}
-                      className="px-3 py-2 bg-red-500 text-white rounded-md text-sm hover:bg-red-600"
-                    >
-                      🗑 Delete
-                    </button>
-                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+                  <a href={`/creator/upload?edit=${draft.id}`} style={{ padding: '8px 20px', borderRadius: 999, background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)', color: '#fff', fontWeight: 600, fontSize: 14, textDecoration: 'none' }}>
+                    Edit
+                  </a>
+                  <button onClick={() => handleDelete(draft.id)} style={{ padding: '8px 16px', borderRadius: 999, border: '1px solid #CC1C1C', background: 'transparent', color: '#CC1C1C', fontWeight: 500, fontSize: 14, cursor: 'pointer' }}>
+                    Delete
+                  </button>
                 </div>
               </div>
             ))}
           </div>
         )}
-      </div>
+      </main>
+      <AppFooter />
     </div>
   );
 }

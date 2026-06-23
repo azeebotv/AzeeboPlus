@@ -1,253 +1,118 @@
 'use client';
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
 import { api } from '@/lib/api';
-import type { ContentItem } from '@/lib/api';
-import { webLogger } from '@/lib/logger';
-import { Button, Card, Skeleton, Badge, Chip } from '@azeebo/ui';
-import { colors } from '@azeebo/design-tokens';
-import Link from 'next/link';
+import AppHeader from '@/components/layout/AppHeader';
+import AppFooter from '@/components/layout/AppFooter';
 
-export default function OverviewPage(): JSX.Element {
-  const [stats, setStats] = useState<{
-    totalViews: number;
-    totalLikes: number;
-    totalComments: number;
-    followerCount: number;
-    contentCount: number;
-    totalEarnings: number;
-    pendingEarnings: number;
-    viewsChangePercentage: number;
-    avgEngagementRate: number;
-    totalFollowers: number;
-    viewsChange: number;
-    likesChange: number;
-    commentsChange: number;
-    followersChange: number;
-  } | null>(null);
-  const [recentContent, setRecentContent] = useState<ContentItem[]>([]);
+export default function DashboardOverviewPage(): React.JSX.Element {
+  const { isAuthenticated, user } = useAuth();
+  const router = useRouter();
+  const [stats, setStats] = useState({ totalViews: 0, totalSubscribers: 0, totalEarnings: 0, contentCount: 0 });
+  const [recentContent, setRecentContent] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    let cancelled = false;
+    if (!isAuthenticated || !user) { router.push('/auth/login'); return; }
+    loadDashboard();
+  }, [isAuthenticated, user, router]);
 
-    async function fetchOverview() {
-      try {
-        setIsLoading(true);
-        setError(null);
-
-        // Fetch creator stats
-        const statsResponse = await api.creator.getStats();
-        // Fetch recent content
-        const contentResponse = await api.content.getMyContent({ limit: 5 });
-
-        if (cancelled) return;
-
-        if (statsResponse.success && contentResponse.success) {
-          setStats(statsResponse.data ?? null);
-          setRecentContent(contentResponse.data?.items || []);
-        } else {
-          const msg = statsResponse.message || contentResponse.message || 'Failed to load overview';
-          setError(msg);
-          webLogger.error('Failed to load creator overview', {
-            statsError: statsResponse.message,
-            contentError: contentResponse.message,
-          });
-        }
-      } catch (err) {
-        if (cancelled) return;
-        const message = err instanceof Error ? err.message : 'An unexpected error occurred';
-        setError(message);
-        webLogger.error('Failed to load creator overview', { error: message });
-      } finally {
-        if (!cancelled) setIsLoading(false);
+  const loadDashboard = async () => {
+    try {
+      const [statsRes, contentRes] = await Promise.all([
+        api.creator.getStats(),
+        api.content.getMyContent()
+      ]);
+      if (statsRes.success && statsRes.data) {
+        const d = statsRes.data as any;
+        setStats({ totalViews: d.totalViews || 0, totalSubscribers: d.followerCount || 0, totalEarnings: d.totalEarnings || 0, contentCount: d.contentCount || 0 });
       }
-    }
+      if (contentRes.success && contentRes.data) {
+        const items = Array.isArray(contentRes.data) ? contentRes.data : (contentRes.data as any).items || [];
+        setRecentContent(items.slice(0, 5));
+      }
+    } catch { /* ignore */ } finally { setIsLoading(false); }
+  };
 
-    fetchOverview();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  if (!isAuthenticated || !user) return <></>;
 
-  if (isLoading) {
-    return (
-      <div className="grid gap-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <Card key={i} padding="none">
-              <Skeleton height="120px" />
-            </Card>
-          ))}
-        </div>
-
-        <div className="space-y-4">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <Card key={i} padding="none">
-              <Skeleton height="80px" />
-              <Skeleton width="60%" height="20px" className="mt-3" />
-            </Card>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-lg" style={{ color: colors.text.secondary }}>
-          {error}
-        </p>
-        <Button variant="primary" onClick={() => window.location.reload()}>
-          Retry
-        </Button>
-      </div>
-    );
-  }
+  const statCards = [
+    { label: 'Total Views', value: stats.totalViews.toLocaleString(), icon: '👁️', color: '#E8420A' },
+    { label: 'Subscribers', value: stats.totalSubscribers.toLocaleString(), icon: '👥', color: '#0D3B2E' },
+    { label: 'Earnings', value: `₦${stats.totalEarnings.toLocaleString()}`, icon: '💰', color: '#F59E0B' },
+    { label: 'Content', value: stats.contentCount.toString(), icon: '🎬', color: '#CC1C1C' },
+  ];
 
   return (
-    <div className="grid gap-6">
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card padding="none">
-          <div className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-medium" style={{ color: colors.text.primary }}>
-                Total Earnings
-              </h3>
-              <Badge variant="outline" className="text-xs">
-                Today
-              </Badge>
-            </div>
-            <p className="text-3xl font-bold" style={{ color: colors.text.primary }}>
-              ₦{stats?.totalEarnings?.toLocaleString() || '0'}
-            </p>
-            <p className="text-sm text-gray-500">
-              {stats?.pendingEarnings?.toLocaleString() || '0'} pending
-            </p>
-          </div>
-        </Card>
+    <div style={{ backgroundColor: '#1A0A0A', minHeight: '100vh', color: '#F5F0EB' }}>
+      <AppHeader />
+      <main style={{ paddingTop: 100, paddingBottom: 60, maxWidth: 1000, margin: '0 auto', padding: '100px 24px 60px' }}>
+        <div style={{ marginBottom: 32 }}>
+          <h1 style={{ fontSize: 28, fontWeight: 700 }}>Creator Dashboard</h1>
+          <p style={{ color: '#9A8A7A', marginTop: 4 }}>Welcome back, {user.name}</p>
+        </div>
 
-        <Card padding="none">
-          <div className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-medium" style={{ color: colors.text.primary }}>
-                Content Views
-              </h3>
-              <Badge variant="outline" className="text-xs">
-                Last 7 days
-              </Badge>
-            </div>
-            <p className="text-3xl font-bold" style={{ color: colors.text.primary }}>
-              {stats?.totalViews?.toLocaleString() || '0'}
-            </p>
-            <p className="text-sm text-gray-500">
-              {stats?.viewsChangePercentage || 0}% vs last week
-            </p>
+        {isLoading ? (
+          <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}>
+            <div style={{ width: 40, height: 40, border: '3px solid #2A1A1A', borderTopColor: '#E8420A', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
           </div>
-        </Card>
-
-        <Card padding="none">
-          <div className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-medium" style={{ color: colors.text.primary }}>
-                Fan Engagement
-              </h3>
-              <Badge variant="outline" className="text-xs">
-                Average
-              </Badge>
-            </div>
-            <p className="text-3xl font-bold" style={{ color: colors.text.primary }}>
-              {stats?.avgEngagementRate?.toFixed(1)}%
-            </p>
-            <p className="text-sm text-gray-500">
-              {stats?.totalFollowers?.toLocaleString() || '0'} followers
-            </p>
-          </div>
-        </Card>
-      </div>
-
-      {/* Recent Content */}
-      <Card padding="none">
-        <div className="p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-bold" style={{ color: colors.text.primary }}>
-              Recent Content
-            </h3>
-            <Link
-              href="/creators/dashboard/content"
-              className="text-sm text-primary-600 hover:underline"
-            >
-              View All
-            </Link>
-          </div>
-
-          {recentContent.length > 0 ? (
-            <div className="space-y-4">
-              {recentContent.map((item) => (
-                <div key={item.id} className="flex items-start gap-4 p-4 bg-gray-50 rounded-lg">
-                  <img
-                    src={item.thumbnail}
-                    alt={item.title}
-                    className="w-16 h-16 object-cover rounded"
-                  />
-                  <div className="flex-1">
-                    <h4 className="font-medium" style={{ color: colors.text.primary }}>
-                      {item.title}
-                    </h4>
-                    <p className="text-sm text-gray-500 line-clamp-2">{item.description}</p>
-                    <div className="mt-2 flex items-center gap-3 text-xs">
-                      <span className="flex items-center gap-1">
-                        <svg
-                          className="h-3 w-3"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M13 10V3L4 14h7v7l9-11h-7z"
-                          />
-                        </svg>
-                        {item.views?.toLocaleString() || '0'} views
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <svg
-                          className="h-3 w-3"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M8 12h.01M12 12h.01M16 12h.01M12 16h.01M8 16h.01M16 16h.01"
-                          />
-                        </svg>
-                        {item.likes?.toLocaleString() || '0'} likes
-                      </span>
-                      <Badge variant="outline" className="text-xs">
-                        {item.contentType || 'Video'}
-                      </Badge>
-                    </div>
+        ) : (
+          <>
+            {/* Stats grid */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 16, marginBottom: 32 }}>
+              {statCards.map((stat, i) => (
+                <div key={i} className="az-glass" style={{ padding: 20, borderRadius: 16 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                    <span style={{ fontSize: 24 }}>{stat.icon}</span>
+                    <span style={{ fontSize: 13, color: '#9A8A7A' }}>{stat.label}</span>
                   </div>
+                  <p style={{ fontSize: 24, fontWeight: 700, color: stat.color }}>{stat.value}</p>
                 </div>
               ))}
             </div>
-          ) : (
-            <div className="text-center py-8">
-              <p className="text-gray-500">No content yet</p>
-              <Link href="/creators/content/upload" className="text-primary-600 hover:underline">
-                Upload your first content
-              </Link>
+
+            {/* Quick actions */}
+            <div style={{ display: 'flex', gap: 12, marginBottom: 32 }}>
+              {[
+                { href: '/creator/upload', label: 'Upload Content', primary: true },
+                { href: '/creator/content-manager', label: 'Manage Content', primary: false },
+                { href: '/creator/analytics', label: 'View Analytics', primary: false },
+              ].map(action => (
+                <a key={action.href} href={action.href} style={{
+                  padding: '12px 24px', borderRadius: 999, textDecoration: 'none', fontWeight: 600, fontSize: 14,
+                  background: action.primary ? 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)' : 'transparent',
+                  border: action.primary ? 'none' : '1px solid #2A1A1A',
+                  color: action.primary ? '#fff' : '#9A8A7A',
+                }}>
+                  {action.label}
+                </a>
+              ))}
             </div>
-          )}
-        </div>
-      </Card>
+
+            {/* Recent content */}
+            <div className="az-glass" style={{ padding: 24, borderRadius: 20 }}>
+              <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16 }}>Recent Content</h2>
+              {recentContent.length === 0 ? (
+                <p style={{ color: '#9A8A7A', textAlign: 'center', padding: 20 }}>No content yet. Start creating!</p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {recentContent.map((item: any) => (
+                    <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: '1px solid #2A1A1A' }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ fontWeight: 600, fontSize: 14, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.title}</p>
+                        <p style={{ color: '#9A8A7A', fontSize: 12 }}>{item.status || 'draft'}</p>
+                      </div>
+                      <span style={{ fontSize: 12, color: '#6B5A4A' }}>{item.views || 0} views</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </>
+        )}
+      </main>
+      <AppFooter />
     </div>
   );
 }

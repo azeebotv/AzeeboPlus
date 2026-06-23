@@ -1,301 +1,95 @@
 'use client';
 import React, { useState, useEffect } from 'react';
+import { useAuth } from '@/context/AuthContext';
 import { api } from '@/lib/api';
-import { webLogger } from '@/lib/logger';
+import AdminLayout from '@/components/layout/AdminLayout';
 
-interface NotificationTemplate {
-  id: string;
-  name: string;
-  type: 'email' | 'push' | 'sms' | 'in-app';
-  subject: string;
-  content: string;
-  variables: string[];
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface NotificationStats {
-  totalSent: number;
-  delivered: number;
-  opened: number;
-  clicked: number;
-  failed: number;
-}
-
-export default function NotificationManagementPage(): JSX.Element {
-  const [templates, setTemplates] = useState<NotificationTemplate[]>([]);
-  const [stats, setStats] = useState<NotificationStats | null>(null);
+export default function AdminNotificationsPage(): React.JSX.Element {
+  const { isAuthenticated, user } = useAuth();
+  const [notifications, setNotifications] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [newTemplate, setNewTemplate] = useState({
-    name: '',
-    type: 'email' as 'email' | 'push' | 'sms' | 'in-app',
-    subject: '',
-    content: '',
-  });
+  const [showSend, setShowSend] = useState(false);
+  const [form, setForm] = useState({ name: '', subject: '', content: '', type: 'in-app' as 'email' | 'push' | 'sms' | 'in-app' });
 
   useEffect(() => {
-    loadData();
-  }, []);
+    if (!isAuthenticated || !user || user.role !== 'admin') return;
+    loadNotifications();
+  }, [isAuthenticated, user]);
 
-  const loadData = async (): Promise<void> => {
+  const loadNotifications = async () => {
     try {
-      const [templatesRes, statsRes] = await Promise.all([
-        api.admin.getNotificationTemplates(),
-        api.admin.getNotificationStats(),
-      ]);
-
-      if (templatesRes.success && templatesRes.data) {
-        setTemplates(templatesRes.data as unknown as NotificationTemplate[]);
+      const response = await api.admin.getNotificationTemplates();
+      if (response.success && response.data) {
+        const data = response.data as any;
+        setNotifications(Array.isArray(data) ? data : data.items || []);
       }
-      if (statsRes.success && statsRes.data) {
-        setStats(statsRes.data as unknown as NotificationStats);
-      }
-    } catch (error) {
-      webLogger.error('Failed to load notification data:', error);
-    } finally {
-      setIsLoading(false);
-    }
+    } catch { /* ignore */ } finally { setIsLoading(false); }
   };
 
-  const createTemplate = async (): Promise<void> => {
+  const handleSend = async () => {
     try {
-      const response = await api.admin.createNotificationTemplate(newTemplate);
-      if (response.success) {
-        setShowCreateModal(false);
-        loadData();
-      }
-    } catch (error) {
-      webLogger.error('Failed to create template:', error);
-    }
+      await api.admin.createNotificationTemplate(form);
+      setShowSend(false);
+      setForm({ name: '', subject: '', content: '', type: 'in-app' });
+      loadNotifications();
+    } catch { /* ignore */ }
   };
-
-  const toggleTemplate = async (id: string, isActive: boolean): Promise<void> => {
-    try {
-      await api.admin.updateNotificationTemplate(id, {
-        isActive: !isActive,
-      } as unknown as Partial<NotificationTemplate>);
-      loadData();
-    } catch (error) {
-      webLogger.error('Failed to toggle template:', error);
-    }
-  };
-
-  const getTypeIcon = (type: string): string => {
-    switch (type) {
-      case 'email':
-        return '📧';
-      case 'push':
-        return '🔔';
-      case 'sms':
-        return '📱';
-      case 'in-app':
-        return '💬';
-      default:
-        return '📢';
-    }
-  };
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">Loading notifications...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
-    <div className="min-h-screen bg-background py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-start mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground mb-2">Notification Management</h1>
-            <p className="text-muted-foreground">
-              Manage notification templates and monitor delivery stats
-            </p>
-          </div>
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="px-6 py-3 bg-primary text-white rounded-lg font-semibold hover:bg-primary/90"
-          >
-            Create Template
-          </button>
+    <AdminLayout>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+        <div>
+          <h1 style={{ fontSize: 28, fontWeight: 700 }}>Notifications</h1>
+          <p style={{ color: '#9A8A7A', marginTop: 4 }}>Send and manage platform notifications</p>
         </div>
-
-        {stats && (
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
-            <div className="bg-card rounded-lg border border-border p-4">
-              <p className="text-sm text-muted-foreground mb-1">Total Sent</p>
-              <p className="text-2xl font-bold text-foreground">
-                {stats.totalSent.toLocaleString()}
-              </p>
-            </div>
-            <div className="bg-card rounded-lg border border-border p-4">
-              <p className="text-sm text-muted-foreground mb-1">Delivered</p>
-              <p className="text-2xl font-bold text-green-500">
-                {stats.delivered.toLocaleString()}
-              </p>
-            </div>
-            <div className="bg-card rounded-lg border border-border p-4">
-              <p className="text-sm text-muted-foreground mb-1">Opened</p>
-              <p className="text-2xl font-bold text-blue-500">{stats.opened.toLocaleString()}</p>
-            </div>
-            <div className="bg-card rounded-lg border border-border p-4">
-              <p className="text-sm text-muted-foreground mb-1">Clicked</p>
-              <p className="text-2xl font-bold text-purple-500">{stats.clicked.toLocaleString()}</p>
-            </div>
-            <div className="bg-card rounded-lg border border-border p-4">
-              <p className="text-sm text-muted-foreground mb-1">Failed</p>
-              <p className="text-2xl font-bold text-red-500">{stats.failed.toLocaleString()}</p>
-            </div>
-          </div>
-        )}
-
-        <div className="bg-card rounded-xl border border-border overflow-hidden">
-          <div className="p-6 border-b border-border">
-            <h2 className="text-xl font-bold text-foreground">Notification Templates</h2>
-          </div>
-          <div className="divide-y divide-border">
-            {templates.map((template) => (
-              <div key={template.id} className="p-6 hover:bg-accent/50">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start gap-4">
-                    <span className="text-3xl">{getTypeIcon(template.type)}</span>
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="text-lg font-bold text-foreground">{template.name}</h3>
-                        <span
-                          className={`text-xs font-semibold px-2 py-1 rounded ${
-                            template.isActive
-                              ? 'bg-green-500/20 text-green-500'
-                              : 'bg-gray-500/20 text-gray-500'
-                          }`}
-                        >
-                          {template.isActive ? 'Active' : 'Inactive'}
-                        </span>
-                      </div>
-                      <p className="text-sm text-muted-foreground mb-2">{template.subject}</p>
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <span>Type: {template.type}</span>
-                        <span>•</span>
-                        <span>Updated: {new Date(template.updatedAt).toLocaleDateString()}</span>
-                      </div>
-                      {template.variables.length > 0 && (
-                        <div className="flex gap-2 mt-2">
-                          {template.variables.map((v) => (
-                            <span
-                              key={v}
-                              className="bg-muted text-muted-foreground text-xs px-2 py-1 rounded"
-                            >
-                              {v}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => toggleTemplate(template.id, template.isActive)}
-                    className={`px-4 py-2 rounded-lg font-semibold ${
-                      template.isActive
-                        ? 'bg-red-500/20 text-red-500 hover:bg-red-500/30'
-                        : 'bg-green-500/20 text-green-500 hover:bg-green-500/30'
-                    }`}
-                  >
-                    {template.isActive ? 'Deactivate' : 'Activate'}
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {templates.length === 0 && (
-          <div className="text-center py-20">
-            <div className="text-6xl mb-4">📧</div>
-            <h2 className="text-xl font-bold text-foreground mb-2">No templates yet</h2>
-            <p className="text-muted-foreground">Create your first notification template</p>
-          </div>
-        )}
-
-        {showCreateModal && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-card rounded-xl border border-border p-6 w-full max-w-2xl">
-              <h2 className="text-2xl font-bold text-foreground mb-6">
-                Create Notification Template
-              </h2>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">Name</label>
-                  <input
-                    type="text"
-                    value={newTemplate.name}
-                    onChange={(e) => setNewTemplate({ ...newTemplate, name: e.target.value })}
-                    className="w-full px-4 py-2 bg-muted border border-border rounded-lg text-foreground"
-                    placeholder="Template name"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">Type</label>
-                  <select
-                    value={newTemplate.type}
-                    onChange={(e) =>
-                      setNewTemplate({
-                        ...newTemplate,
-                        type: e.target.value as NotificationTemplate['type'],
-                      })
-                    }
-                    className="w-full px-4 py-2 bg-muted border border-border rounded-lg text-foreground"
-                  >
-                    <option value="email">Email</option>
-                    <option value="push">Push Notification</option>
-                    <option value="sms">SMS</option>
-                    <option value="in-app">In-App</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">Subject</label>
-                  <input
-                    type="text"
-                    value={newTemplate.subject}
-                    onChange={(e) => setNewTemplate({ ...newTemplate, subject: e.target.value })}
-                    className="w-full px-4 py-2 bg-muted border border-border rounded-lg text-foreground"
-                    placeholder="Email subject or notification title"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">Content</label>
-                  <textarea
-                    value={newTemplate.content}
-                    onChange={(e) => setNewTemplate({ ...newTemplate, content: e.target.value })}
-                    className="w-full px-4 py-2 bg-muted border border-border rounded-lg text-foreground"
-                    rows={6}
-                    placeholder="Use {{variable}} for dynamic content"
-                  />
-                </div>
-              </div>
-              <div className="flex gap-4 mt-6">
-                <button
-                  onClick={() => setShowCreateModal(false)}
-                  className="flex-1 px-4 py-3 bg-muted text-foreground rounded-lg font-semibold"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={createTemplate}
-                  className="flex-1 px-4 py-3 bg-primary text-white rounded-lg font-semibold hover:bg-primary/90"
-                >
-                  Create
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        <button onClick={() => setShowSend(!showSend)} className="az-btn-primary" style={{ padding: '10px 24px', borderRadius: 999, border: 'none', background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)', color: '#fff', fontWeight: 600, fontSize: 14, cursor: 'pointer' }}>
+          {showSend ? 'Cancel' : '+ Send Notification'}
+        </button>
       </div>
-    </div>
+
+      {showSend && (
+        <div className="az-glass" style={{ padding: 24, borderRadius: 20, marginBottom: 24 }}>
+          <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16 }}>Send Notification</h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Template Name" style={{ padding: '12px 16px', borderRadius: 12, border: '1px solid #2A1A1A', backgroundColor: '#0D0505', color: '#F5F0EB', fontSize: 14 }} />
+            <input value={form.subject} onChange={e => setForm({ ...form, subject: e.target.value })} placeholder="Subject" style={{ padding: '12px 16px', borderRadius: 12, border: '1px solid #2A1A1A', backgroundColor: '#0D0505', color: '#F5F0EB', fontSize: 14 }} />
+            <textarea value={form.content} onChange={e => setForm({ ...form, content: e.target.value })} placeholder="Content" rows={3} style={{ padding: '12px 16px', borderRadius: 12, border: '1px solid #2A1A1A', backgroundColor: '#0D0505', color: '#F5F0EB', fontSize: 14, resize: 'vertical' }} />
+            <select value={form.type} onChange={e => setForm({ ...form, type: e.target.value as any })} style={{ padding: '12px 16px', borderRadius: 12, border: '1px solid #2A1A1A', backgroundColor: '#0D0505', color: '#F5F0EB', fontSize: 14 }}>
+              <option value="in-app">In-App</option>
+              <option value="email">Email</option>
+              <option value="push">Push</option>
+              <option value="sms">SMS</option>
+            </select>
+            <button onClick={handleSend} disabled={!form.name || !form.content} className="az-btn-primary" style={{ padding: '12px 0', borderRadius: 999, border: 'none', background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)', color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer', opacity: !form.name || !form.content ? 0.5 : 1 }}>
+              Send
+            </button>
+          </div>
+        </div>
+      )}
+
+      {isLoading ? (
+        <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}>
+          <div style={{ width: 40, height: 40, border: '3px solid #2A1A1A', borderTopColor: '#E8420A', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {notifications.map((n: any, i: number) => (
+            <div key={i} className="az-glass" style={{ padding: 16, borderRadius: 16 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
+                <div>
+                  <h3 style={{ fontWeight: 600, fontSize: 15, marginBottom: 4 }}>{n.name || n.title}</h3>
+                  <p style={{ color: '#9A8A7A', fontSize: 13 }}>{n.content || n.message}</p>
+                </div>
+                <span style={{ fontSize: 12, color: '#6B5A4A', flexShrink: 0 }}>{new Date(n.createdAt).toLocaleDateString()}</span>
+              </div>
+              <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                <span style={{ padding: '2px 8px', borderRadius: 999, fontSize: 11, backgroundColor: 'rgba(232,66,10,0.1)', color: '#E8420A' }}>{n.type || 'in-app'}</span>
+              </div>
+            </div>
+          ))}
+          {notifications.length === 0 && <p style={{ textAlign: 'center', padding: 40, color: '#9A8A7A' }}>No notifications sent yet</p>}
+        </div>
+      )}
+    </AdminLayout>
   );
 }

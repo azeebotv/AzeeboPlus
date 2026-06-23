@@ -13,7 +13,7 @@ type BrandLogoProps = {
 export default function BrandLogo({
   variant = 'light',
   className = '',
-}: BrandLogoProps): JSX.Element {
+}: BrandLogoProps): React.JSX.Element {
   const wordmarkColor = variant === 'orange' ? '#E8420A' : '#FFFFFF';
 
   return (

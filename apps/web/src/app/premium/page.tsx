@@ -2,6 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { apiFetch } from '@/lib/api';
 import { webLogger } from '@/lib/logger';
+import AppHeader from '@/components/layout/AppHeader';
+import AppFooter from '@/components/layout/AppFooter';
 
 interface PremiumPlan {
   id: string;
@@ -21,7 +23,7 @@ interface PremiumStatus {
   autoRenew: boolean;
 }
 
-export default function PremiumAccessPage(): JSX.Element {
+export default function PremiumAccessPage(): React.JSX.Element {
   const [plans, setPlans] = useState<PremiumPlan[]>([]);
   const [status, setStatus] = useState<PremiumStatus | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -131,47 +133,61 @@ export default function PremiumAccessPage(): JSX.Element {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">Loading premium plans...</p>
+      <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+        <AppHeader />
+        <div className="flex items-center justify-center" style={{ minHeight: 'calc(100vh - 200px)' }}>
+          <div className="text-center">
+            <div
+              className="animate-spin rounded-full h-12 w-12 mx-auto"
+              style={{ border: '3px solid rgba(255,255,255,0.1)', borderTopColor: '#E8420A' }}
+            />
+            <p className="mt-4 text-white/60">Loading premium plans...</p>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-5xl mx-auto">
+    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+      <AppHeader />
+
+      <div className="max-w-5xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
         <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Premium Access</h1>
-          <p className="text-muted-foreground">Unlock exclusive content and features</p>
+          <h1 className="text-3xl font-bold text-white mb-2">Premium Access</h1>
+          <p className="text-white/50">Unlock exclusive content and features</p>
         </div>
 
         {status?.isPremium && (
-          <div className="bg-card rounded-lg border-2 border-yellow-500 p-6 mb-8">
+          <div
+            className="az-glass p-6 mb-8"
+            style={{ border: '2px solid rgba(234,179,8,0.5)' }}
+          >
             <div className="flex items-center gap-4 mb-4">
               <span className="text-4xl">👑</span>
               <div>
-                <h2 className="text-xl font-bold text-yellow-500">Premium Active</h2>
-                <p className="text-muted-foreground">{status.planName}</p>
+                <h2 className="text-xl font-bold" style={{ color: '#EAB308' }}>Premium Active</h2>
+                <p className="text-white/50">{status.planName}</p>
               </div>
             </div>
-            <p className="text-foreground mb-2">
+            <p className="text-white mb-2">
               Expires: {status.expiresAt ? new Date(status.expiresAt).toLocaleDateString() : 'N/A'}
             </p>
             <div className="flex items-center justify-between mb-4">
-              <span className="text-muted-foreground">Auto-renew</span>
+              <span className="text-white/50">Auto-renew</span>
               <span
-                className={`font-semibold ${status.autoRenew ? 'text-green-500' : 'text-red-500'}`}
+                className="font-semibold"
+                style={{ color: status.autoRenew ? '#22C55E' : '#EF4444' }}
               >
                 {status.autoRenew ? 'On' : 'Off'}
               </span>
             </div>
             {status.autoRenew && (
               <button
+                type="button"
                 onClick={handleCancel}
-                className="w-full px-4 py-3 bg-red-500/20 text-red-500 rounded-lg font-semibold hover:bg-red-500/30"
+                className="w-full px-4 py-3 rounded-full font-semibold transition-colors"
+                style={{ backgroundColor: 'rgba(239,68,68,0.2)', color: '#EF4444' }}
               >
                 Cancel Subscription
               </button>
@@ -179,45 +195,57 @@ export default function PremiumAccessPage(): JSX.Element {
           </div>
         )}
 
-        <h2 className="text-xl font-bold text-foreground mb-6">Choose Your Plan</h2>
+        <h2 className="text-xl font-bold text-white mb-6">Choose Your Plan</h2>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           {plans.map((plan) => (
             <div
               key={plan.id}
-              className={`bg-card rounded-lg border-2 p-6 relative ${
-                plan.isPopular ? 'border-primary' : 'border-border'
+              className={`az-glass p-6 relative ${
+                plan.isPopular ? 'ring-2 ring-[#E8420A]' : ''
               }`}
+              style={plan.isPopular ? { boxShadow: '0 0 30px rgba(232,66,10,0.2)' } : undefined}
             >
               {plan.isPopular && (
-                <span className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-primary text-white px-4 py-1 rounded-full text-sm font-medium">
+                <span
+                  className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 px-4 py-1 rounded-full text-sm font-medium text-white"
+                  style={{ backgroundColor: '#E8420A' }}
+                >
                   Most Popular
                 </span>
               )}
-              <h3 className="text-xl font-bold text-foreground mb-2">{plan.name}</h3>
+              <h3 className="text-xl font-bold text-white mb-2">{plan.name}</h3>
               <div className="flex items-baseline gap-1 mb-4">
-                <span className="text-3xl font-bold text-primary">
+                <span className="text-3xl font-bold" style={{ color: '#E8420A' }}>
                   ₦{plan.price.toLocaleString()}
                 </span>
-                <span className="text-muted-foreground">{getDurationLabel(plan.duration)}</span>
+                <span className="text-white/50">{getDurationLabel(plan.duration)}</span>
               </div>
-              <p className="text-muted-foreground mb-6">{plan.description}</p>
+              <p className="text-white/50 mb-6">{plan.description}</p>
               <ul className="space-y-3 mb-6">
                 {plan.features.map((feature, index) => (
                   <li key={index} className="flex items-center gap-2">
-                    <span className="text-green-500 font-bold">✓</span>
-                    <span className="text-foreground text-sm">{feature}</span>
+                    <span className="font-bold" style={{ color: '#22C55E' }}>✓</span>
+                    <span className="text-white text-sm">{feature}</span>
                   </li>
                 ))}
               </ul>
               <button
+                type="button"
                 onClick={() => handleSubscribe(plan.id)}
                 disabled={isPurchasing}
-                className={`w-full py-3 rounded-lg font-semibold transition-colors ${
-                  plan.isPopular
-                    ? 'bg-primary text-white hover:bg-primary/90'
-                    : 'bg-muted text-foreground hover:bg-accent'
+                className={`w-full py-3 rounded-full font-semibold transition-all ${
+                  plan.isPopular ? 'az-btn-primary' : ''
                 }`}
+                style={
+                  plan.isPopular
+                    ? undefined
+                    : {
+                        border: '1px solid rgba(255,255,255,0.2)',
+                        backgroundColor: 'rgba(255,255,255,0.08)',
+                        color: '#fff',
+                      }
+                }
               >
                 {isPurchasing ? 'Processing...' : 'Subscribe Now'}
               </button>
@@ -225,6 +253,8 @@ export default function PremiumAccessPage(): JSX.Element {
           ))}
         </div>
       </div>
+
+      <AppFooter />
     </div>
   );
 }

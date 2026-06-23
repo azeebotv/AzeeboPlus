@@ -1,271 +1,82 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { apiFetch } from '@/lib/api';
-import { webLogger } from '@/lib/logger';
+import { useAuth } from '@/context/AuthContext';
+import { api } from '@/lib/api';
+import AdminLayout from '@/components/layout/AdminLayout';
 
-interface FinancialMetrics {
-  totalRevenue: number;
-  totalPayouts: number;
-  pendingPayouts: number;
-  platformFees: number;
-  revenueGrowth: number;
-  payoutGrowth: number;
-  transactions: Array<{
-    id: string;
-    type: 'payment' | 'payout' | 'refund' | 'fee';
-    amount: number;
-    userId: string;
-    userName: string;
-    status: 'completed' | 'pending' | 'failed';
-    createdAt: string;
-  }>;
-  revenueBySource: {
-    subscriptions: number;
-    superVotes: number;
-    tips: number;
-    ads: number;
-    contentSales: number;
-  };
-}
-
-export default function FinancialMonitoringPage(): JSX.Element {
-  const router = useRouter();
-  const [metrics, setMetrics] = useState<FinancialMetrics | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d' | 'all'>('30d');
+export default function AdminFinancialPage(): React.JSX.Element {
+  const { isAuthenticated, user } = useAuth();
+  const [financial, setFinancial] = useState({ totalRevenue: 0, monthlyRevenue: 0, pendingPayouts: 0, totalPayouts: 0, recentTransactions: [] as any[] });
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    loadMetrics();
-  }, [timeRange]);
+    if (!isAuthenticated || !user || user.role !== 'admin') return;
+    loadFinancial();
+  }, [isAuthenticated, user]);
 
-  const loadMetrics = async (): Promise<void> => {
+  const loadFinancial = async () => {
     try {
-      const result = await apiFetch<FinancialMetrics>(
-        `/api/v1/admin/financial-metrics?range=${timeRange}`
-      );
-
-      if (result.success && result.data) {
-        setMetrics(result.data as unknown as FinancialMetrics);
+      const [dashRes, walletRes] = await Promise.all([
+        api.admin.getDashboard(),
+        api.admin.getWallets(1, 10),
+      ]);
+      if (dashRes.success && dashRes.data) {
+        const d = dashRes.data as any;
+        setFinancial(prev => ({ ...prev, totalRevenue: d.totalRevenue || 0, monthlyRevenue: d.totalRevenue || 0 }));
       }
-    } catch (error) {
-      webLogger.error('Failed to load financial metrics', error);
-    } finally {
-      setIsLoading(false);
-    }
+      if (walletRes.success && walletRes.data) {
+        const w = walletRes.data as any;
+        const items = w.items || w || [];
+        setFinancial(prev => ({ ...prev, recentTransactions: Array.isArray(items) ? items : [] }));
+      }
+    } catch { /* ignore */ } finally { setIsLoading(false); }
   };
-
-  const formatCurrency = (amount: number): string => {
-    return `₦${amount.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  };
-
-  const formatNumber = (num: number): string => {
-    if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
-    if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
-    return num.toString();
-  };
-
-  const getStatusColor = (status: string): string => {
-    switch (status) {
-      case 'completed':
-        return 'text-green-500';
-      case 'pending':
-        return 'text-yellow-500';
-      case 'failed':
-        return 'text-red-500';
-      default:
-        return 'text-gray-500';
-    }
-  };
-
-  const getTypeIcon = (type: string): string => {
-    switch (type) {
-      case 'payment':
-        return '💰';
-      case 'payout':
-        return '💸';
-      case 'refund':
-        return '↩️';
-      case 'fee':
-        return '📊';
-      default:
-        return '💵';
-    }
-  };
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">Loading financial data...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!metrics) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-foreground mb-4">Failed to load financial data</p>
-          <button
-            onClick={loadMetrics}
-            className="px-6 py-3 bg-primary text-white rounded-lg font-semibold hover:bg-primary/90"
-          >
-            Retry
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   return (
-    <div className="min-h-screen bg-background py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <button
-              onClick={() => router.back()}
-              className="text-muted-foreground hover:text-foreground mb-2 flex items-center gap-2"
-            >
-              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 19l-7-7 7-7"
-                />
-              </svg>
-              Back
-            </button>
-            <h1 className="text-3xl font-bold text-foreground">Financial Monitoring</h1>
-          </div>
+    <AdminLayout>
+      <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Financial Overview</h1>
+      <p style={{ color: '#9A8A7A', marginBottom: 32 }}>Revenue, payouts, and financial metrics</p>
+
+      {isLoading ? (
+        <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}>
+          <div style={{ width: 40, height: 40, border: '3px solid #2A1A1A', borderTopColor: '#E8420A', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
         </div>
-
-        <div className="flex gap-2 mb-8">
-          {(['7d', '30d', '90d', 'all'] as const).map((range) => (
-            <button
-              key={range}
-              onClick={() => setTimeRange(range)}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                timeRange === range
-                  ? 'bg-primary text-white'
-                  : 'bg-card border border-border text-foreground hover:bg-accent'
-              }`}
-            >
-              {range === '7d'
-                ? '7 Days'
-                : range === '30d'
-                  ? '30 Days'
-                  : range === '90d'
-                    ? '90 Days'
-                    : 'All Time'}
-            </button>
-          ))}
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-card rounded-lg border border-border p-6">
-            <p className="text-3xl font-bold text-green-500">
-              {formatCurrency(metrics.totalRevenue)}
-            </p>
-            <p className="text-sm text-muted-foreground mt-1">Total Revenue</p>
-            <p
-              className={`text-sm font-medium mt-2 ${metrics.revenueGrowth >= 0 ? 'text-green-500' : 'text-red-500'}`}
-            >
-              {metrics.revenueGrowth >= 0 ? '↑' : '↓'} {Math.abs(metrics.revenueGrowth)}%
-            </p>
-          </div>
-          <div className="bg-card rounded-lg border border-border p-6">
-            <p className="text-3xl font-bold text-red-500">
-              {formatCurrency(metrics.totalPayouts)}
-            </p>
-            <p className="text-sm text-muted-foreground mt-1">Total Payouts</p>
-            <p
-              className={`text-sm font-medium mt-2 ${metrics.payoutGrowth >= 0 ? 'text-green-500' : 'text-red-500'}`}
-            >
-              {metrics.payoutGrowth >= 0 ? '↑' : '↓'} {Math.abs(metrics.payoutGrowth)}%
-            </p>
-          </div>
-          <div className="bg-card rounded-lg border border-border p-6">
-            <p className="text-3xl font-bold text-yellow-500">
-              {formatCurrency(metrics.pendingPayouts)}
-            </p>
-            <p className="text-sm text-muted-foreground mt-1">Pending Payouts</p>
-          </div>
-          <div className="bg-card rounded-lg border border-border p-6">
-            <p className="text-3xl font-bold text-blue-500">
-              {formatCurrency(metrics.platformFees)}
-            </p>
-            <p className="text-sm text-muted-foreground mt-1">Platform Fees</p>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          <div className="bg-card rounded-lg border border-border p-6">
-            <h2 className="text-xl font-bold text-foreground mb-4">Revenue by Source</h2>
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span className="text-foreground">Subscriptions</span>
-                <span className="font-semibold text-foreground">
-                  {formatCurrency(metrics.revenueBySource.subscriptions)}
-                </span>
+      ) : (
+        <>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 16, marginBottom: 32 }}>
+            {[
+              { label: 'Total Revenue', value: `₦${financial.totalRevenue.toLocaleString()}`, color: '#0D3B2E' },
+              { label: 'Monthly Revenue', value: `₦${financial.monthlyRevenue.toLocaleString()}`, color: '#E8420A' },
+              { label: 'Pending Payouts', value: `₦${financial.pendingPayouts.toLocaleString()}`, color: '#F59E0B' },
+              { label: 'Total Paid Out', value: `₦${financial.totalPayouts.toLocaleString()}`, color: '#9A8A7A' },
+            ].map((stat, i) => (
+              <div key={i} className="az-glass" style={{ padding: 20, borderRadius: 16 }}>
+                <p style={{ fontSize: 12, color: '#9A8A7A', marginBottom: 8 }}>{stat.label}</p>
+                <p style={{ fontSize: 22, fontWeight: 700, color: stat.color }}>{stat.value}</p>
               </div>
-              <div className="flex justify-between items-center">
-                <span className="text-foreground">Super Votes</span>
-                <span className="font-semibold text-foreground">
-                  {formatCurrency(metrics.revenueBySource.superVotes)}
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-foreground">Tips</span>
-                <span className="font-semibold text-foreground">
-                  {formatCurrency(metrics.revenueBySource.tips)}
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-foreground">Ads</span>
-                <span className="font-semibold text-foreground">
-                  {formatCurrency(metrics.revenueBySource.ads)}
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-foreground">Content Sales</span>
-                <span className="font-semibold text-foreground">
-                  {formatCurrency(metrics.revenueBySource.contentSales)}
-                </span>
-              </div>
-            </div>
+            ))}
           </div>
 
-          <div className="bg-card rounded-lg border border-border p-6">
-            <h2 className="text-xl font-bold text-foreground mb-4">Recent Transactions</h2>
-            <div className="space-y-3 max-h-80 overflow-y-auto">
-              {metrics.transactions.slice(0, 10).map((tx) => (
-                <div
-                  key={tx.id}
-                  className="flex justify-between items-center pb-3 border-b border-border"
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="text-xl">{getTypeIcon(tx.type)}</span>
+          {financial.recentTransactions.length > 0 && (
+            <div className="az-glass" style={{ padding: 24, borderRadius: 20 }}>
+              <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16 }}>Recent Transactions</h2>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {financial.recentTransactions.map((tx: any, i: number) => (
+                  <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid #2A1A1A' }}>
                     <div>
-                      <p className="font-medium text-foreground">{tx.userName}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {new Date(tx.createdAt).toLocaleDateString()}
-                      </p>
+                      <p style={{ fontWeight: 600, fontSize: 14 }}>{tx.description || tx.type}</p>
+                      <p style={{ color: '#9A8A7A', fontSize: 12 }}>{new Date(tx.createdAt).toLocaleDateString()}</p>
                     </div>
+                    <span style={{ fontWeight: 700, color: tx.type === 'deposit' || tx.type === 'subscription' ? '#0D3B2E' : '#CC1C1C' }}>
+                      {tx.type === 'deposit' || tx.type === 'subscription' ? '+' : '-'}₦{(tx.amount || 0).toLocaleString()}
+                    </span>
                   </div>
-                  <div className="text-right">
-                    <p className="font-semibold text-foreground">{formatCurrency(tx.amount)}</p>
-                    <p className={`text-sm ${getStatusColor(tx.status)}`}>{tx.status}</p>
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
-        </div>
-      </div>
-    </div>
+          )}
+        </>
+      )}
+    </AdminLayout>
   );
 }

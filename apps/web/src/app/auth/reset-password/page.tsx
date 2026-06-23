@@ -5,7 +5,7 @@ import { apiFetch } from '@/lib/api';
 import AuthShell from '@/components/auth/AuthShell';
 import { Alert, Spinner } from '@/components/auth/FormBits';
 
-export default function ResetPasswordPage(): JSX.Element {
+export default function ResetPasswordPage(): React.JSX.Element {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get('token');

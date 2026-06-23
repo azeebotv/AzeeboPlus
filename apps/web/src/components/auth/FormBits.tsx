@@ -6,7 +6,7 @@ type AlertProps = {
 };
 
 /** Dark-glass-themed inline alert for auth forms. */
-export function Alert({ variant = 'error', children }: AlertProps): JSX.Element {
+export function Alert({ variant = 'error', children }: AlertProps): React.JSX.Element {
   const color = variant === 'success' ? '#22c55e' : '#CC1C1C';
   return (
     <div
@@ -26,7 +26,7 @@ export function Alert({ variant = 'error', children }: AlertProps): JSX.Element 
 type SpinnerProps = { className?: string };
 
 /** Small white spinner for inline button loading states. */
-export function Spinner({ className = '' }: SpinnerProps): JSX.Element {
+export function Spinner({ className = '' }: SpinnerProps): React.JSX.Element {
   return (
     <svg
       className={`animate-spin ${className}`}
@@ -57,7 +57,7 @@ export function SubmitButton({
   isLoading,
   children,
   loadingLabel,
-}: SubmitButtonProps): JSX.Element {
+}: SubmitButtonProps): React.JSX.Element {
   return (
     <button type="submit" className="az-btn-primary" disabled={isLoading}>
       {isLoading ? (

@@ -1,281 +1,146 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { apiFetch } from '@/lib/api';
+import { webLogger } from '@/lib/logger';
+import AppHeader from '@/components/layout/AppHeader';
+import AppFooter from '@/components/layout/AppFooter';
 
-const PRESET_AMOUNTS = [500, 1000, 2000, 5000, 10000, 20000];
+interface PaymentMethod {
+  id: string;
+  name: string;
+  icon: string;
+  description: string;
+  processingFee: string;
+  isActive: boolean;
+}
 
-const PAYMENT_METHODS = [
-  { id: 'card', name: 'Debit Card', icon: '💳', description: 'Visa, Mastercard' },
-  { id: 'bank', name: 'Bank Transfer', icon: '🏦', description: 'Direct bank transfer' },
-  { id: 'ussd', name: 'USSD', icon: '📱', description: 'Dial code to pay' },
-  { id: 'mobile', name: 'Mobile Money', icon: '💰', description: 'MTN, Airtel, etc.' },
-];
+interface Pricing {
+  minAmount: number;
+  maxAmount: number;
+  currency: string;
+  processingFee: string;
+}
 
-export default function AddFundsPage(): JSX.Element {
+export default function AddFundsPage(): React.JSX.Element {
   const router = useRouter();
-
   const [amount, setAmount] = useState<string>('');
-  const [selectedMethod, setSelectedMethod] = useState<string>('card');
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [success, setSuccess] = useState<string | null>(null);
+  const [selectedMethod, setSelectedMethod] = useState<string>('');
+  const [pricing, setPricing] = useState<Pricing | null>(null);
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const validateForm = (): boolean => {
-    const numAmount = parseFloat(amount);
+  useEffect(() => {
+    const loadData = async (): Promise<void> => {
+      try {
+        const [pricingResult, methodsResult] = await Promise.all([
+          apiFetch<Pricing>('/v1/wallet/pricing'),
+          apiFetch<PaymentMethod[]>('/v1/wallet/payment-methods'),
+        ]);
+        if (pricingResult.success && pricingResult.data) setPricing(pricingResult.data);
+        if (methodsResult.success && methodsResult.data) setPaymentMethods(methodsResult.data);
+      } catch (error) { webLogger.error('Failed to load data', error); }
+      finally { setIsLoading(false); }
+    };
+    loadData();
+  }, []);
 
-    if (!amount || isNaN(numAmount)) {
-      setError('Please enter a valid amount');
-      return false;
-    }
-
-    if (numAmount < 100) {
-      setError('Minimum amount is ₦100');
-      return false;
-    }
-
-    if (numAmount > 1000000) {
-      setError('Maximum amount is ₦1,000,000');
-      return false;
-    }
-
-    return true;
-  };
+  const quickAmounts = [500, 1000, 2000, 5000];
 
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
-    setError(null);
-    setSuccess(null);
-
-    if (!validateForm()) {
-      return;
-    }
-
-    setIsLoading(true);
-
+    const numAmount = parseFloat(amount);
+    if (isNaN(numAmount) || numAmount < (pricing?.minAmount || 100)) return;
+    if (!selectedMethod) return;
+    setIsProcessing(true);
     try {
-      const result = await apiFetch<{ authorizationUrl?: string }>('/v1/wallet/fund', {
-        method: 'POST',
-        body: JSON.stringify({
-          amount: parseFloat(amount),
-          paymentMethod: selectedMethod,
-        }),
-      });
-
-      if (!result.success) {
-        throw new Error(result.message || 'Failed to add funds');
-      }
-
-      if (result.data?.authorizationUrl) {
-        window.location.href = result.data.authorizationUrl;
-      } else {
-        setSuccess('Wallet funded successfully!');
-        setTimeout(() => {
-          router.push('/wallet');
-        }, 2000);
-      }
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'An error occurred while adding funds';
-      setError(message);
-    } finally {
-      setIsLoading(false);
-    }
+      const result = await apiFetch('/v1/wallet/deposit', { method: 'POST', body: JSON.stringify({ amount: numAmount, paymentMethodId: selectedMethod }) });
+      if (!result.success) throw new Error(result.message || 'Failed to process deposit');
+      alert('Deposit initiated successfully!');
+      router.push('/wallet/transactions');
+    } catch (error: unknown) { alert(error instanceof Error ? error.message : 'Failed to process deposit'); }
+    finally { setIsProcessing(false); }
   };
 
-  const handlePresetAmount = (preset: number): void => {
-    setAmount(preset.toString());
-    if (error) setError(null);
-  };
+  if (isLoading) {
+    return (
+      <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+        <AppHeader />
+        <div className="flex items-center justify-center" style={{ minHeight: 'calc(100vh - 200px)' }}>
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 mx-auto" style={{ border: '3px solid rgba(255,255,255,0.1)', borderTopColor: '#E8420A' }} />
+            <p className="mt-4 text-white/60">Loading payment methods...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-background py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-2xl mx-auto">
+    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+      <AppHeader />
+      <div className="max-w-2xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
-          <button
-            onClick={() => router.back()}
-            className="text-muted-foreground hover:text-foreground mb-4 flex items-center gap-2"
-          >
-            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 19l-7-7 7-7"
-              />
-            </svg>
-            Back
+          <button onClick={() => router.back()} className="text-white/50 hover:text-white mb-4 flex items-center gap-2 transition-colors">
+            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg> Back
           </button>
-          <h1 className="text-3xl font-bold text-foreground">Add Funds</h1>
+          <h1 className="text-3xl font-bold text-white mb-2">Add Funds</h1>
+          <p className="text-white/50">Top up your wallet to enjoy premium features</p>
         </div>
 
-        <form
-          onSubmit={handleSubmit}
-          className="space-y-6 bg-card p-6 rounded-lg border border-border"
-        >
-          {error && (
-            <div className="bg-destructive/10 border border-destructive rounded-md p-4">
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  <svg className="h-5 w-5 text-destructive" fill="currentColor" viewBox="0 0 20 20">
-                    <path
-                      fillRule="evenodd"
-                      d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </div>
-                <div className="ml-3">
-                  <p className="text-sm text-destructive">{error}</p>
-                </div>
-              </div>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="az-glass p-6">
+            <label className="az-label block mb-3">Enter Amount</label>
+            <div className="az-input flex items-center gap-3">
+              <span className="text-xl font-bold" style={{ color: '#E8420A' }}>₦</span>
+              <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" className="flex-1 bg-transparent outline-none text-2xl font-bold text-white placeholder:text-white/30" min={pricing?.minAmount || 100} max={pricing?.maxAmount || 100000} step="0.01" required />
             </div>
-          )}
-
-          {success && (
-            <div className="bg-green-500/10 border border-green-500 rounded-md p-4">
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  <svg className="h-5 w-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                    <path
-                      fillRule="evenodd"
-                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </div>
-                <div className="ml-3">
-                  <p className="text-sm text-green-500">{success}</p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          <div>
-            <label htmlFor="amount" className="block text-sm font-medium text-foreground mb-1">
-              Amount (NGN)
-            </label>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                ₦
-              </span>
-              <input
-                id="amount"
-                name="amount"
-                type="number"
-                value={amount}
-                onChange={(e) => {
-                  setAmount(e.target.value);
-                  if (error) setError(null);
-                }}
-                className="appearance-none block w-full pl-8 pr-3 py-2 border border-border placeholder-muted-foreground text-foreground rounded-md focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
-                placeholder="0.00"
-                min="100"
-                max="1000000"
-                step="0.01"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-2">Quick Select</label>
-            <div className="grid grid-cols-3 gap-2">
-              {PRESET_AMOUNTS.map((preset) => (
-                <button
-                  key={preset}
-                  type="button"
-                  onClick={() => handlePresetAmount(preset)}
-                  className={`py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-                    amount === preset.toString()
-                      ? 'bg-primary text-white'
-                      : 'bg-card border border-border text-foreground hover:bg-accent'
-                  }`}
-                >
-                  ₦{preset.toLocaleString()}
-                </button>
+            <div className="flex gap-2 mt-3" role="listbox" aria-label="Quick amount selection">
+              {quickAmounts.map((quick) => (
+                <button key={quick} type="button" onClick={() => setAmount(quick.toString())} role="option" aria-selected={amount === quick.toString()}
+                  className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${amount === quick.toString() ? 'az-btn-primary' : ''}`}
+                  style={amount !== quick.toString() ? { border: '1px solid rgba(255,255,255,0.2)', backgroundColor: 'rgba(255,255,255,0.08)', color: '#fff' } : undefined}
+                >₦{quick.toLocaleString()}</button>
               ))}
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-2">Payment Method</label>
-            <div className="space-y-2">
-              {PAYMENT_METHODS.map((method) => (
-                <button
-                  key={method.id}
-                  type="button"
-                  onClick={() => setSelectedMethod(method.id)}
-                  className={`w-full flex items-center gap-3 p-4 rounded-lg border transition-colors ${
-                    selectedMethod === method.id
-                      ? 'border-primary bg-primary/10'
-                      : 'border-border bg-card hover:bg-accent'
-                  }`}
+          <div className="az-glass p-6">
+            <h3 className="font-semibold text-white mb-4">Select Payment Method</h3>
+            <div className="space-y-3" role="radiogroup" aria-label="Payment method">
+              {paymentMethods.filter((m) => m.isActive).map((method) => (
+                <button key={method.id} type="button" onClick={() => setSelectedMethod(method.id)} role="radio" aria-checked={selectedMethod === method.id}
+                  className={`w-full az-glass p-4 flex items-center gap-4 transition-all ${selectedMethod === method.id ? 'ring-2' : ''}`}
+                  style={selectedMethod === method.id ? { boxShadow: '0 0 20px rgba(232,66,10,0.2)' } : undefined}
                 >
-                  <div className="h-10 w-10 bg-accent rounded-lg flex items-center justify-center">
-                    <span className="text-xl">{method.icon}</span>
-                  </div>
+                  <span className="text-3xl">{method.icon}</span>
                   <div className="flex-1 text-left">
-                    <h3 className="font-medium text-foreground">{method.name}</h3>
-                    <p className="text-sm text-muted-foreground">{method.description}</p>
+                    <p className="font-semibold text-white">{method.name}</p>
+                    <p className="text-sm text-white/50">{method.description}</p>
                   </div>
-                  <div
-                    className={`h-5 w-5 rounded-full border-2 flex items-center justify-center ${
-                      selectedMethod === method.id ? 'border-primary' : 'border-border'
-                    }`}
-                  >
-                    {selectedMethod === method.id && (
-                      <div className="h-3 w-3 rounded-full bg-primary" />
-                    )}
+                  <div className={`w-6 h-6 rounded-full flex items-center justify-center`} style={{ border: selectedMethod === method.id ? '2px solid #E8420A' : '2px solid rgba(255,255,255,0.2)', backgroundColor: selectedMethod === method.id ? '#E8420A' : 'transparent' }}>
+                    {selectedMethod === method.id && <div className="w-2 h-2 rounded-full bg-white" />}
                   </div>
                 </button>
               ))}
             </div>
           </div>
 
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isLoading ? (
-              <div className="flex items-center">
-                <svg
-                  className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  ></circle>
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  ></path>
-                </svg>
-                Processing...
-              </div>
-            ) : (
-              `Add ₦${parseFloat(amount || '0').toLocaleString()}`
-            )}
-          </button>
+          {amount && parseFloat(amount) > 0 && pricing && (
+            <div className="az-glass p-4">
+              <div className="flex justify-between text-sm"><span className="text-white/50">Amount</span><span className="text-white">₦{parseFloat(amount).toLocaleString()}</span></div>
+              <div className="flex justify-between text-sm mt-2"><span className="text-white/50">Processing Fee</span><span className="text-white">₦{pricing.processingFee}</span></div>
+              <div className="flex justify-between text-sm mt-2 pt-2" style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }}><span className="font-semibold text-white">Total</span><span className="font-bold" style={{ color: '#E8420A' }}>₦{(parseFloat(amount) + parseFloat(pricing.processingFee)).toLocaleString()}</span></div>
+            </div>
+          )}
 
-          <div className="bg-accent p-4 rounded-lg">
-            <h3 className="text-sm font-medium text-foreground mb-2">ℹ️ Information</h3>
-            <ul className="text-xs text-muted-foreground space-y-1">
-              <li>• Minimum deposit: ₦100</li>
-              <li>• Maximum deposit: ₦1,000,000</li>
-              <li>• Funds are added instantly</li>
-              <li>• Transaction fees may apply</li>
-            </ul>
-          </div>
+          <button type="submit" disabled={isProcessing || !amount || !selectedMethod} className="w-full py-4 rounded-full font-semibold text-lg transition-all az-btn-primary disabled:opacity-50 disabled:cursor-not-allowed">
+            {isProcessing ? 'Processing...' : `Add ₦${amount || '0'} to Wallet`}
+          </button>
         </form>
       </div>
+      <AppFooter />
     </div>
   );
 }

@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import AuthShell from '@/components/auth/AuthShell';
 import { Alert, Spinner } from '@/components/auth/FormBits';
 
-export default function LoginPage(): JSX.Element {
+export default function LoginPage(): React.JSX.Element {
   const [phone, setPhone] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [showPassword, setShowPassword] = useState<boolean>(false);

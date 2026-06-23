@@ -8,7 +8,7 @@ import { Alert, Spinner } from '@/components/auth/FormBits';
 const OTP_LENGTH = 6;
 const RESEND_SECONDS = 60;
 
-export default function OTPVerificationPage(): JSX.Element {
+export default function OTPVerificationPage(): React.JSX.Element {
   const router = useRouter();
   const [digits, setDigits] = useState<string[]>(Array(OTP_LENGTH).fill(''));
   const [error, setError] = useState<string | null>(null);

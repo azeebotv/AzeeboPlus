@@ -1,431 +1,164 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { apiFetch } from '@/lib/api';
+import { webLogger } from '@/lib/logger';
+import AppHeader from '@/components/layout/AppHeader';
+import AppFooter from '@/components/layout/AppFooter';
 
-const PRESET_AMOUNTS = [500, 1000, 2000, 5000, 10000];
+interface BankAccount {
+  id: string;
+  bankName: string;
+  accountNumber: string;
+  accountName: string;
+  bankLogo: string;
+}
 
-export default function WithdrawFundsPage(): JSX.Element {
+interface WithdrawalMethods {
+  bankTransfer: boolean;
+  mobileMoney: boolean;
+  cryptoWallet: boolean;
+}
+
+interface Pricing {
+  minAmount: number;
+  maxAmount: number;
+  processingFee: string;
+}
+
+export default function WithdrawPage(): React.JSX.Element {
   const router = useRouter();
-
   const [amount, setAmount] = useState<string>('');
-  const [bankName, setBankName] = useState<string>('');
-  const [accountNumber, setAccountNumber] = useState<string>('');
-  const [accountName, setAccountName] = useState<string>('');
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [isVerifying, setIsVerifying] = useState<boolean>(false);
-  const [success, setSuccess] = useState<string | null>(null);
-  const [showConfirm, setShowConfirm] = useState<boolean>(false);
+  const [selectedAccount, setSelectedAccount] = useState<string>('');
+  const [selectedMethod, setSelectedMethod] = useState<string>('bank_transfer');
+  const [accounts, setAccounts] = useState<BankAccount[]>([]);
+  const [methods, setMethods] = useState<WithdrawalMethods | null>(null);
+  const [pricing, setPricing] = useState<Pricing | null>(null);
+  const [walletBalance, setWalletBalance] = useState(0);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const validateForm = (): boolean => {
-    const numAmount = parseFloat(amount);
-
-    if (!amount || isNaN(numAmount)) {
-      setError('Please enter a valid amount');
-      return false;
-    }
-
-    if (numAmount < 500) {
-      setError('Minimum withdrawal is ₦500');
-      return false;
-    }
-
-    if (!bankName.trim()) {
-      setError('Bank name is required');
-      return false;
-    }
-
-    if (!accountNumber.trim()) {
-      setError('Account number is required');
-      return false;
-    }
-
-    if (accountNumber.length !== 10) {
-      setError('Account number must be 10 digits');
-      return false;
-    }
-
-    if (!accountName.trim()) {
-      setError('Please verify account first');
-      return false;
-    }
-
-    return true;
-  };
-
-  const handleVerifyAccount = async (): Promise<void> => {
-    if (accountNumber.length !== 10) {
-      setError('Account number must be 10 digits');
-      return;
-    }
-
-    setIsVerifying(true);
-    setError(null);
-
-    try {
-      const result = await apiFetch<{ accountName?: string }>(
-        `/v1/banks/verify?accountNumber=${accountNumber}&bankCode=${bankName}`
-      );
-
-      if (!result.success) {
-        throw new Error(result.message || 'Failed to verify account');
-      }
-
-      setAccountName(result.data?.accountName || 'Verified Account');
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to verify account');
-    } finally {
-      setIsVerifying(false);
-    }
-  };
+  useEffect(() => {
+    const loadData = async (): Promise<void> => {
+      try {
+        const [accountsRes, methodsRes, pricingRes, balanceRes] = await Promise.all([
+          apiFetch<BankAccount[]>('/v1/wallet/accounts'),
+          apiFetch<WithdrawalMethods>('/v1/wallet/withdrawal-methods'),
+          apiFetch<Pricing>('/v1/wallet/withdrawal-pricing'),
+          apiFetch<{ balance: number }>('/v1/wallet/balance'),
+        ]);
+        if (accountsRes.success && accountsRes.data) setAccounts(accountsRes.data);
+        if (methodsRes.success && methodsRes.data) setMethods(methodsRes.data);
+        if (pricingRes.success && pricingRes.data) setPricing(pricingRes.data);
+        if (balanceRes.success && balanceRes.data) setWalletBalance(balanceRes.data.balance);
+      } catch (error) { webLogger.error('Failed to load data', error); }
+      finally { setIsLoading(false); }
+    };
+    loadData();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
-    setError(null);
-    setSuccess(null);
-
-    if (!validateForm()) {
-      return;
-    }
-
-    setShowConfirm(true);
-  };
-
-  const handleConfirmWithdraw = async (): Promise<void> => {
-    setShowConfirm(false);
-    setIsLoading(true);
-
+    const numAmount = parseFloat(amount);
+    if (isNaN(numAmount) || numAmount <= 0) return;
+    if (!selectedAccount && selectedMethod === 'bank_transfer') return;
+    if (numAmount > walletBalance) return;
+    setIsProcessing(true);
     try {
-      const result = await apiFetch('/v1/wallet/withdraw', {
-        method: 'POST',
-        body: JSON.stringify({
-          amount: parseFloat(amount),
-          bankCode: bankName,
-          accountNumber,
-        }),
-      });
-
-      if (!result.success) {
-        throw new Error(result.message || 'Failed to withdraw funds');
-      }
-
-      setSuccess('Withdrawal request submitted successfully!');
-      setTimeout(() => {
-        router.push('/wallet');
-      }, 2000);
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'An error occurred while withdrawing funds');
-    } finally {
-      setIsLoading(false);
-    }
+      const result = await apiFetch('/v1/wallet/withdraw', { method: 'POST', body: JSON.stringify({ amount: numAmount, bankAccountId: selectedMethod === 'bank_transfer' ? selectedAccount : undefined, method: selectedMethod }) });
+      if (!result.success) throw new Error(result.message || 'Failed to process withdrawal');
+      alert('Withdrawal request submitted successfully!');
+      router.push('/wallet/transactions');
+    } catch (error: unknown) { alert(error instanceof Error ? error.message : 'Failed to process withdrawal'); }
+    finally { setIsProcessing(false); }
   };
 
-  const handlePresetAmount = (preset: number): void => {
-    setAmount(preset.toString());
-    if (error) setError(null);
-  };
+  const quickAmounts = [1000, 5000, 10000, 20000];
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+        <AppHeader />
+        <div className="flex items-center justify-center" style={{ minHeight: 'calc(100vh - 200px)' }}>
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 mx-auto" style={{ border: '3px solid rgba(255,255,255,0.1)', borderTopColor: '#E8420A' }} />
+            <p className="mt-4 text-white/60">Loading withdrawal options...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-background py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-2xl mx-auto">
+    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+      <AppHeader />
+      <div className="max-w-2xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
-          <button
-            onClick={() => router.back()}
-            className="text-muted-foreground hover:text-foreground mb-4 flex items-center gap-2"
-          >
-            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 19l-7-7 7-7"
-              />
-            </svg>
-            Back
+          <button onClick={() => router.back()} className="text-white/50 hover:text-white mb-4 flex items-center gap-2 transition-colors">
+            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg> Back
           </button>
-          <h1 className="text-3xl font-bold text-foreground">Withdraw Funds</h1>
+          <h1 className="text-3xl font-bold text-white mb-2">Withdraw Funds</h1>
+          <p className="text-white/50">Transfer funds to your bank account</p>
+          <p className="text-lg font-semibold mt-2" style={{ color: '#E8420A' }}>Balance: ₦{walletBalance.toLocaleString()}</p>
         </div>
 
-        <form
-          onSubmit={handleSubmit}
-          className="space-y-6 bg-card p-6 rounded-lg border border-border"
-        >
-          {error && (
-            <div className="bg-destructive/10 border border-destructive rounded-md p-4">
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  <svg className="h-5 w-5 text-destructive" fill="currentColor" viewBox="0 0 20 20">
-                    <path
-                      fillRule="evenodd"
-                      d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </div>
-                <div className="ml-3">
-                  <p className="text-sm text-destructive">{error}</p>
-                </div>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {selectedMethod === 'bank_transfer' && accounts.length > 0 && (
+            <div className="az-glass p-6">
+              <h3 className="font-semibold text-white mb-4">Select Bank Account</h3>
+              <div className="space-y-3" role="radiogroup" aria-label="Bank account">
+                {accounts.map((account) => (
+                  <button key={account.id} type="button" onClick={() => setSelectedAccount(account.id)} role="radio" aria-selected={selectedAccount === account.id}
+                    className={`w-full az-glass p-4 flex items-center gap-4 transition-all ${selectedAccount === account.id ? 'ring-2' : ''}`}
+                    style={selectedAccount === account.id ? { boxShadow: '0 0 20px rgba(232,66,10,0.2)' } : undefined}
+                  >
+                    <img src={account.bankLogo} alt={account.bankName} className="w-10 h-10 rounded-lg object-cover" />
+                    <div className="flex-1 text-left">
+                      <p className="font-semibold text-white">{account.bankName}</p>
+                      <p className="text-sm text-white/50">{account.accountNumber} • {account.accountName}</p>
+                    </div>
+                    <div className="w-5 h-5 rounded-full flex items-center justify-center" style={{ border: selectedAccount === account.id ? '2px solid #E8420A' : '2px solid rgba(255,255,255,0.2)' }}>
+                      {selectedAccount === account.id && <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#E8420A' }} />}
+                    </div>
+                  </button>
+                ))}
               </div>
+              <button type="button" className="w-full mt-3 py-3 rounded-xl text-sm font-medium transition-colors" style={{ border: '1px dashed rgba(255,255,255,0.3)', backgroundColor: 'rgba(255,255,255,0.05)', color: '#fff' }}>
+                + Add New Account
+              </button>
             </div>
           )}
 
-          {success && (
-            <div className="bg-green-500/10 border border-green-500 rounded-md p-4">
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  <svg className="h-5 w-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                    <path
-                      fillRule="evenodd"
-                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </div>
-                <div className="ml-3">
-                  <p className="text-sm text-green-500">{success}</p>
-                </div>
-              </div>
+          <div className="az-glass p-6">
+            <label className="az-label block mb-3">Withdrawal Amount</label>
+            <div className="az-input flex items-center gap-3">
+              <span className="text-xl font-bold" style={{ color: '#E8420A' }}>₦</span>
+              <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" className="flex-1 bg-transparent outline-none text-2xl font-bold text-white placeholder:text-white/30" min={pricing?.minAmount || 100} max={pricing?.maxAmount || 100000} step="0.01" required />
             </div>
-          )}
-
-          <div>
-            <label htmlFor="amount" className="block text-sm font-medium text-foreground mb-1">
-              Amount (NGN)
-            </label>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                ₦
-              </span>
-              <input
-                id="amount"
-                name="amount"
-                type="number"
-                value={amount}
-                onChange={(e) => {
-                  setAmount(e.target.value);
-                  if (error) setError(null);
-                }}
-                className="appearance-none block w-full pl-8 pr-3 py-2 border border-border placeholder-muted-foreground text-foreground rounded-md focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
-                placeholder="0.00"
-                min="500"
-                step="0.01"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-2">Quick Select</label>
-            <div className="grid grid-cols-3 gap-2">
-              {PRESET_AMOUNTS.map((preset) => (
-                <button
-                  key={preset}
-                  type="button"
-                  onClick={() => handlePresetAmount(preset)}
-                  className={`py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-                    amount === preset.toString()
-                      ? 'bg-primary text-white'
-                      : 'bg-card border border-border text-foreground hover:bg-accent'
-                  }`}
-                >
-                  ₦{preset.toLocaleString()}
-                </button>
+            <div className="flex gap-2 mt-3" role="listbox" aria-label="Quick amount selection">
+              {quickAmounts.map((quick) => (
+                <button key={quick} type="button" onClick={() => setAmount(quick.toString())} role="option" aria-selected={amount === quick.toString()}
+                  className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${amount === quick.toString() ? 'az-btn-primary' : ''}`}
+                  style={amount !== quick.toString() ? { border: '1px solid rgba(255,255,255,0.2)', backgroundColor: 'rgba(255,255,255,0.08)', color: '#fff' } : undefined}
+                >₦{quick.toLocaleString()}</button>
               ))}
             </div>
           </div>
 
-          <div>
-            <label htmlFor="bankName" className="block text-sm font-medium text-foreground mb-1">
-              Bank Name
-            </label>
-            <select
-              id="bankName"
-              name="bankName"
-              value={bankName}
-              onChange={(e) => {
-                setBankName(e.target.value);
-                if (error) setError(null);
-              }}
-              className="appearance-none block w-full px-3 py-2 border border-border placeholder-muted-foreground text-foreground rounded-md focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
-            >
-              <option value="">Select your bank</option>
-              <option value="044">Access Bank</option>
-              <option value="023">Citibank</option>
-              <option value="050">Ecobank</option>
-              <option value="070">Fidelity Bank</option>
-              <option value="011">First Bank</option>
-              <option value="214">First City Monument Bank</option>
-              <option value="058">Guaranty Trust Bank</option>
-              <option value="030">Heritage Bank</option>
-              <option value="082">Kuda Bank</option>
-              <option value="014">MainStreet Bank</option>
-              <option value="076">Polaris Bank</option>
-              <option value="100">Providus Bank</option>
-              <option value="221">Stanbic IBTC</option>
-              <option value="068">Standard Chartered</option>
-              <option value="032">Sterling Bank</option>
-              <option value="102">Titan Trust Bank</option>
-              <option value="033">Union Bank</option>
-              <option value="039">United Bank for Africa</option>
-              <option value="215">Unity Bank</option>
-              <option value="035">Wema Bank</option>
-              <option value="057">Zenith Bank</option>
-            </select>
-          </div>
-
-          <div>
-            <label
-              htmlFor="accountNumber"
-              className="block text-sm font-medium text-foreground mb-1"
-            >
-              Account Number
-            </label>
-            <div className="flex gap-2">
-              <input
-                id="accountNumber"
-                name="accountNumber"
-                type="text"
-                value={accountNumber}
-                onChange={(e) => {
-                  const cleaned = e.target.value.replace(/\D/g, '').slice(0, 10);
-                  setAccountNumber(cleaned);
-                  if (error) setError(null);
-                  if (accountName) setAccountName('');
-                }}
-                className="appearance-none block flex-1 px-3 py-2 border border-border placeholder-muted-foreground text-foreground rounded-md focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
-                placeholder="0123456789"
-                maxLength={10}
-              />
-              <button
-                type="button"
-                onClick={handleVerifyAccount}
-                disabled={accountNumber.length !== 10 || isVerifying}
-                className="px-4 py-2 bg-primary text-white rounded-md text-sm font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isVerifying ? (
-                  <svg
-                    className="animate-spin h-4 w-4"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    ></circle>
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    ></path>
-                  </svg>
-                ) : (
-                  'Verify'
-                )}
-              </button>
+          {amount && parseFloat(amount) > 0 && pricing && (
+            <div className="az-glass p-4">
+              <div className="flex justify-between text-sm"><span className="text-white/50">Amount</span><span className="text-white">₦{parseFloat(amount).toLocaleString()}</span></div>
+              <div className="flex justify-between text-sm mt-2"><span className="text-white/50">Processing Fee</span><span className="text-white">₦{pricing.processingFee}</span></div>
+              <div className="flex justify-between text-sm mt-2 pt-2" style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }}><span className="font-semibold text-white">You&apos;ll Receive</span><span className="font-bold" style={{ color: '#E8420A' }}>₦{(parseFloat(amount) - parseFloat(pricing.processingFee)).toLocaleString()}</span></div>
             </div>
-          </div>
+          )}
 
-          <div>
-            <label htmlFor="accountName" className="block text-sm font-medium text-foreground mb-1">
-              Account Name
-            </label>
-            <input
-              id="accountName"
-              name="accountName"
-              type="text"
-              value={accountName}
-              onChange={(e) => setAccountName(e.target.value)}
-              className="appearance-none block w-full px-3 py-2 border border-border bg-muted text-foreground rounded-md sm:text-sm"
-              placeholder="Account name will appear after verification"
-              readOnly
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isLoading ? (
-              <div className="flex items-center">
-                <svg
-                  className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  ></circle>
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  ></path>
-                </svg>
-                Processing...
-              </div>
-            ) : (
-              `Withdraw ₦${parseFloat(amount || '0').toLocaleString()}`
-            )}
+          <button type="submit" disabled={isProcessing || !amount || (selectedMethod === 'bank_transfer' && !selectedAccount)} className="w-full py-4 rounded-full font-semibold text-lg transition-all az-btn-primary disabled:opacity-50 disabled:cursor-not-allowed">
+            {isProcessing ? 'Processing...' : `Withdraw ₦${amount || '0'}`}
           </button>
-
-          <div className="bg-accent p-4 rounded-lg">
-            <h3 className="text-sm font-medium text-foreground mb-2">ℹ️ Information</h3>
-            <ul className="text-xs text-muted-foreground space-y-1">
-              <li>• Minimum withdrawal: ₦500</li>
-              <li>• Processing time: 1-3 business days</li>
-              <li>• Withdrawal fees may apply</li>
-              <li>• Ensure account details are correct</li>
-            </ul>
-          </div>
         </form>
       </div>
-
-      {showConfirm && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-card rounded-lg p-6 max-w-md w-full">
-            <h3 className="text-xl font-semibold text-foreground mb-2">Confirm Withdrawal</h3>
-            <p className="text-muted-foreground mb-4">
-              You are about to withdraw{' '}
-              <span className="font-semibold text-foreground">
-                ₦{parseFloat(amount).toLocaleString()}
-              </span>{' '}
-              to:
-            </p>
-            <div className="bg-accent p-4 rounded-lg mb-6">
-              <p className="text-sm text-foreground font-medium">{accountName}</p>
-              <p className="text-sm text-muted-foreground">
-                {bankName} • {accountNumber}
-              </p>
-            </div>
-            <div className="flex gap-4">
-              <button
-                onClick={() => setShowConfirm(false)}
-                className="flex-1 py-2 px-4 border border-border text-sm font-medium rounded-md text-muted-foreground hover:text-foreground hover:bg-accent"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleConfirmWithdraw}
-                className="flex-1 py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary hover:bg-primary/90"
-              >
-                Confirm
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <AppFooter />
     </div>
   );
 }

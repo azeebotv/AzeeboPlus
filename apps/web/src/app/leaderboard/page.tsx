@@ -1,211 +1,91 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { apiFetch } from '@/lib/api';
-import { webLogger } from '@/lib/logger';
+import AppHeader from '@/components/layout/AppHeader';
+import AppFooter from '@/components/layout/AppFooter';
 
-interface LeaderboardEntry {
-  rank: number;
-  userId: string;
-  username: string;
-  displayName: string;
-  avatar: string;
-  points: number;
-  level: number;
-  streak: number;
-  predictionsCorrect: number;
-  badges: string[];
-  isCurrentUser: boolean;
-}
+interface LeaderboardEntry { rank: number; userId: string; username: string; avatar?: string; score: number; level: number; badges: string[]; }
 
-type TimePeriod = 'daily' | 'weekly' | 'monthly' | 'alltime';
-type Category = 'overall' | 'predictions' | 'voting' | 'engagement';
-
-export default function LeaderboardPage(): JSX.Element {
-  const router = useRouter();
+export default function LeaderboardPage(): React.JSX.Element {
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [timePeriod, setTimePeriod] = useState<TimePeriod>('weekly');
-  const [category, setCategory] = useState<Category>('overall');
+  const [timeframe, setTimeframe] = useState<'weekly' | 'monthly' | 'allTime'>('weekly');
 
-  useEffect(() => {
-    loadLeaderboard();
-  }, [timePeriod, category]);
+  useEffect(() => { loadLeaderboard(); }, [timeframe]);
 
-  const loadLeaderboard = async (): Promise<void> => {
+  const loadLeaderboard = async () => {
+    setIsLoading(true);
     try {
-      const result = await apiFetch<LeaderboardEntry[]>(
-        `/v1/engagement/leaderboard?timePeriod=${timePeriod}&category=${category}`
-      );
-
-      if (result.success && result.data) {
-        setEntries(result.data);
+      const response = await apiFetch<any>(`/engagement/leaderboard?timeframe=${timeframe}`);
+      if (response.success && response.data) {
+        const data = response.data as any;
+        setEntries(Array.isArray(data) ? data : data.items || []);
       }
-    } catch (error) {
-      webLogger.error('Failed to load leaderboard', error);
-    } finally {
-      setIsLoading(false);
-    }
+    } catch { /* ignore */ } finally { setIsLoading(false); }
   };
 
-  const getRankIcon = (rank: number): string => {
-    switch (rank) {
-      case 1:
-        return '🥇';
-      case 2:
-        return '🥈';
-      case 3:
-        return '🥉';
-      default:
-        return `#${rank}`;
-    }
+  const getRankStyle = (rank: number): { bg: string; color: string } => {
+    if (rank === 1) return { bg: 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)', color: '#1A0A0A' };
+    if (rank === 2) return { bg: 'linear-gradient(135deg, #C0C0C0 0%, #A0A0A0 100%)', color: '#1A0A0A' };
+    if (rank === 3) return { bg: 'linear-gradient(135deg, #CD7F32 0%, #A0522D 100%)', color: '#fff' };
+    return { bg: '#2A1A1A', color: '#9A8A7A' };
   };
-
-  const getRankColor = (rank: number): string => {
-    switch (rank) {
-      case 1:
-        return 'text-yellow-500';
-      case 2:
-        return 'text-gray-400';
-      case 3:
-        return 'text-orange-600';
-      default:
-        return 'text-muted-foreground';
-    }
-  };
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">Loading leaderboard...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
-    <div className="min-h-screen bg-background py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-5xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Leaderboard</h1>
-          <p className="text-muted-foreground">
-            Top performers this {timePeriod === 'alltime' ? 'all time' : timePeriod}
-          </p>
+    <div style={{ backgroundColor: '#1A0A0A', minHeight: '100vh', color: '#F5F0EB' }}>
+      <AppHeader />
+      <main style={{ paddingTop: 100, paddingBottom: 60, maxWidth: 800, margin: '0 auto', padding: '100px 24px 60px' }}>
+        <div style={{ textAlign: 'center', marginBottom: 32 }}>
+          <h1 style={{ fontSize: 28, fontWeight: 700 }}>Leaderboard</h1>
+          <p style={{ color: '#9A8A7A', marginTop: 4 }}>Top contributors on Azeebo+</p>
         </div>
 
-        <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
-          {(['daily', 'weekly', 'monthly', 'alltime'] as TimePeriod[]).map((period) => (
-            <button
-              key={period}
-              onClick={() => setTimePeriod(period)}
-              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-                timePeriod === period
-                  ? 'bg-primary text-white'
-                  : 'bg-card border border-border text-foreground hover:bg-accent'
-              }`}
-            >
-              {period === 'alltime' ? 'All Time' : period.charAt(0).toUpperCase() + period.slice(1)}
+        {/* Timeframe selector */}
+        <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginBottom: 32 }}>
+          {([['weekly', 'This Week'], ['monthly', 'This Month'], ['allTime', 'All Time']] as const).map(([key, label]) => (
+            <button key={key} onClick={() => setTimeframe(key)} style={{ padding: '10px 24px', borderRadius: 999, border: timeframe === key ? 'none' : '1px solid #2A1A1A', background: timeframe === key ? 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)' : 'transparent', color: timeframe === key ? '#fff' : '#9A8A7A', fontWeight: 600, fontSize: 14, cursor: 'pointer' }}>
+              {label}
             </button>
           ))}
         </div>
 
-        <div className="flex gap-2 mb-6">
-          {(['overall', 'predictions', 'voting', 'engagement'] as Category[]).map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setCategory(cat)}
-              className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                category === cat
-                  ? 'bg-primary text-white'
-                  : 'bg-card border border-border text-foreground hover:bg-accent'
-              }`}
-            >
-              {cat.charAt(0).toUpperCase() + cat.slice(1)}
-            </button>
-          ))}
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          {entries.slice(0, 3).map((entry) => (
-            <div
-              key={entry.userId}
-              className={`bg-card rounded-xl border-2 p-6 text-center ${
-                entry.rank === 1
-                  ? 'border-yellow-500'
-                  : entry.rank === 2
-                    ? 'border-gray-400'
-                    : 'border-orange-600'
-              }`}
-            >
-              <span className="text-4xl">{getRankIcon(entry.rank)}</span>
-              <img
-                src={entry.avatar}
-                alt={entry.displayName}
-                className="w-20 h-20 rounded-full mx-auto my-4 border-4 border-primary"
-              />
-              <h3 className="text-lg font-semibold text-foreground mb-1">{entry.displayName}</h3>
-              <p className="text-xl font-bold text-primary">{entry.points.toLocaleString()} pts</p>
-              <p className="text-sm text-muted-foreground mt-2">
-                Lvl {entry.level} • {entry.streak}🔥 • {entry.predictionsCorrect}✓
-              </p>
-            </div>
-          ))}
-        </div>
-
-        <div className="bg-card rounded-lg border border-border overflow-hidden">
-          <table className="w-full">
-            <thead className="bg-muted">
-              <tr>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Rank</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">User</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Level</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">
-                  Streak
-                </th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">
-                  Correct
-                </th>
-                <th className="px-6 py-4 text-right text-sm font-semibold text-foreground">
-                  Points
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {entries.slice(3).map((entry) => (
-                <tr
-                  key={entry.userId}
-                  className={`hover:bg-accent/50 cursor-pointer ${
-                    entry.isCurrentUser ? 'bg-primary/10 border-l-4 border-l-primary' : ''
-                  }`}
-                  onClick={() => router.push(`/profile/${entry.userId}`)}
-                >
-                  <td className={`px-6 py-4 font-bold ${getRankColor(entry.rank)}`}>
-                    {getRankIcon(entry.rank)}
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <img
-                        src={entry.avatar}
-                        alt={entry.displayName}
-                        className="w-10 h-10 rounded-full"
-                      />
-                      <span className="font-medium text-foreground">{entry.displayName}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-foreground">Lvl {entry.level}</td>
-                  <td className="px-6 py-4 text-foreground">{entry.streak}🔥</td>
-                  <td className="px-6 py-4 text-foreground">{entry.predictionsCorrect}✓</td>
-                  <td className="px-6 py-4 text-right font-bold text-primary">
-                    {entry.points.toLocaleString()}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+        {isLoading ? (
+          <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}>
+            <div style={{ width: 40, height: 40, border: '3px solid #2A1A1A', borderTopColor: '#E8420A', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+          </div>
+        ) : entries.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '60px 0' }}>
+            <div style={{ fontSize: 48, marginBottom: 16 }}>🏆</div>
+            <h3 style={{ fontSize: 18 }}>No leaderboard data yet</h3>
+            <p style={{ color: '#9A8A7A', marginTop: 8 }}>Start engaging to climb the ranks!</p>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {entries.map(entry => {
+              const rankStyle = getRankStyle(entry.rank);
+              return (
+                <div key={entry.userId} className="az-glass" style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '16px 20px', borderRadius: 16 }}>
+                  <div style={{ width: 40, height: 40, borderRadius: '50%', background: rankStyle.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 16, color: rankStyle.color, flexShrink: 0 }}>
+                    {entry.rank}
+                  </div>
+                  <div style={{ width: 44, height: 44, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, border: entry.rank <= 3 ? '2px solid #E8420A' : '2px solid #2A1A1A' }}>
+                    {entry.avatar ? <img src={entry.avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ width: '100%', height: '100%', backgroundColor: '#2A1A1A', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>{entry.username.charAt(0).toUpperCase()}</div>}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <h3 style={{ fontWeight: 600, fontSize: 15 }}>{entry.username}</h3>
+                    <p style={{ color: '#9A8A7A', fontSize: 12 }}>Level {entry.level}</p>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <p style={{ fontWeight: 700, fontSize: 18, color: '#E8420A' }}>{entry.score.toLocaleString()}</p>
+                    <p style={{ color: '#9A8A7A', fontSize: 11 }}>pts</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </main>
+      <AppFooter />
     </div>
   );
 }

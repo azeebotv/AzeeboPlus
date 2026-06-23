@@ -1,270 +1,65 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
 import { api } from '@/lib/api';
-import { webLogger } from '@/lib/logger';
+import AdminLayout from '@/components/layout/AdminLayout';
 
-interface Creator {
-  id: string;
-  username: string;
-  displayName: string;
-  avatar: string;
-  email: string;
-  status: 'active' | 'suspended' | 'pending' | 'banned';
-  totalContent: number;
-  totalFollowers: number;
-  totalEarnings: number;
-  joinedAt: string;
-  isVerified: boolean;
-}
-
-export default function CreatorManagementPage(): JSX.Element {
-  const router = useRouter();
-  const [creators, setCreators] = useState<Creator[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [filter, setFilter] = useState<'all' | 'active' | 'suspended' | 'pending' | 'banned'>(
-    'all'
-  );
-  const [searchQuery, setSearchQuery] = useState<string>('');
+export default function AdminCreatorsPage(): React.JSX.Element {
+  const { isAuthenticated, user } = useAuth();
+  const [creators, setCreators] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    if (!isAuthenticated || !user || user.role !== 'admin') return;
     loadCreators();
-  }, []);
+  }, [isAuthenticated, user]);
 
-  const loadCreators = async (): Promise<void> => {
+  const loadCreators = async () => {
     try {
       const response = await api.admin.getCreators();
       if (response.success && response.data) {
-        setCreators((response.data.items || []) as unknown as Creator[]);
+        const data = response.data as any;
+        setCreators(Array.isArray(data) ? data : data.items || []);
       }
-    } catch (error) {
-      webLogger.error('Failed to load creators:', error);
-    } finally {
-      setIsLoading(false);
-    }
+    } catch { /* ignore */ } finally { setIsLoading(false); }
   };
-
-  const handleStatusChange = async (creatorId: string, newStatus: string): Promise<void> => {
-    try {
-      const response = await api.admin.updateCreatorStatus(creatorId, newStatus);
-      if (response.success) {
-        loadCreators();
-        alert(`Creator status updated to ${newStatus}`);
-      } else {
-        alert(response.message || 'Failed to update creator status');
-      }
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to update creator status';
-      alert(message);
-    }
-  };
-
-  const handleVerify = async (creatorId: string): Promise<void> => {
-    try {
-      const response = await api.admin.verifyCreator(creatorId);
-      if (response.success) {
-        loadCreators();
-        alert('Creator verified successfully');
-      } else {
-        alert(response.message || 'Failed to verify creator');
-      }
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to verify creator';
-      alert(message);
-    }
-  };
-
-  const getStatusColor = (status: string): string => {
-    switch (status) {
-      case 'active':
-        return 'text-green-500';
-      case 'suspended':
-        return 'text-yellow-500';
-      case 'pending':
-        return 'text-blue-500';
-      case 'banned':
-        return 'text-red-500';
-      default:
-        return 'text-gray-500';
-    }
-  };
-
-  const formatNumber = (num: number): string => {
-    if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
-    if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
-    return num.toString();
-  };
-
-  const filteredCreators =
-    filter === 'all' ? creators : creators.filter((c) => c.status === filter);
-
-  const searchedCreators = searchQuery
-    ? filteredCreators.filter(
-        (c) =>
-          c.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          c.displayName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          c.email.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : filteredCreators;
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">Loading creators...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
-    <div className="min-h-screen bg-background py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <button
-              onClick={() => router.back()}
-              className="text-muted-foreground hover:text-foreground mb-2 flex items-center gap-2"
-            >
-              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 19l-7-7 7-7"
-                />
-              </svg>
-              Back
-            </button>
-            <h1 className="text-3xl font-bold text-foreground">Creator Management</h1>
-          </div>
-        </div>
+    <AdminLayout>
+      <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Creators</h1>
+      <p style={{ color: '#9A8A7A', marginBottom: 24 }}>{creators.length} registered creators</p>
 
-        <div className="flex flex-col md:flex-row gap-4 mb-6">
-          <input
-            type="text"
-            placeholder="Search creators..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="flex-1 px-4 py-2 bg-card border border-border rounded-lg text-foreground placeholder:text-muted-foreground"
-          />
-          <div className="flex gap-2">
-            {(['all', 'active', 'pending', 'suspended', 'banned'] as const).map((f) => (
-              <button
-                key={f}
-                onClick={() => setFilter(f)}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                  filter === f
-                    ? 'bg-primary text-white'
-                    : 'bg-card border border-border text-foreground hover:bg-accent'
-                }`}
-              >
-                {f.charAt(0).toUpperCase() + f.slice(1)}
-              </button>
-            ))}
-          </div>
+      {isLoading ? (
+        <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}>
+          <div style={{ width: 40, height: 40, border: '3px solid #2A1A1A', borderTopColor: '#E8420A', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
         </div>
-
-        <div className="bg-card rounded-lg border border-border overflow-hidden">
-          <table className="w-full">
-            <thead className="bg-muted">
-              <tr>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">
-                  Creator
-                </th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">
-                  Status
-                </th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">
-                  Content
-                </th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">
-                  Followers
-                </th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">
-                  Earnings
-                </th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {searchedCreators.map((creator) => (
-                <tr key={creator.id} className="hover:bg-accent/50">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <img
-                        src={creator.avatar}
-                        alt={creator.displayName}
-                        className="w-10 h-10 rounded-full object-cover"
-                      />
-                      <div>
-                        <p className="font-medium text-foreground">
-                          {creator.displayName}
-                          {creator.isVerified && <span className="ml-1 text-blue-500">✓</span>}
-                        </p>
-                        <p className="text-sm text-muted-foreground">@{creator.username}</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className={`text-sm font-medium ${getStatusColor(creator.status)}`}>
-                      {creator.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-foreground">
-                    {formatNumber(creator.totalContent)}
-                  </td>
-                  <td className="px-6 py-4 text-foreground">
-                    {formatNumber(creator.totalFollowers)}
-                  </td>
-                  <td className="px-6 py-4 text-foreground">
-                    ₦{formatNumber(creator.totalEarnings)}
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex gap-2">
-                      {!creator.isVerified && (
-                        <button
-                          onClick={() => handleVerify(creator.id)}
-                          className="px-3 py-1 bg-blue-500 text-white rounded text-sm hover:bg-blue-600"
-                        >
-                          Verify
-                        </button>
-                      )}
-                      {creator.status === 'active' && (
-                        <button
-                          onClick={() => handleStatusChange(creator.id, 'suspended')}
-                          className="px-3 py-1 bg-yellow-500 text-white rounded text-sm hover:bg-yellow-600"
-                        >
-                          Suspend
-                        </button>
-                      )}
-                      {creator.status === 'suspended' && (
-                        <button
-                          onClick={() => handleStatusChange(creator.id, 'active')}
-                          className="px-3 py-1 bg-green-500 text-white rounded text-sm hover:bg-green-600"
-                        >
-                          Activate
-                        </button>
-                      )}
-                      {creator.status !== 'banned' && (
-                        <button
-                          onClick={() => handleStatusChange(creator.id, 'banned')}
-                          className="px-3 py-1 bg-red-500 text-white rounded text-sm hover:bg-red-600"
-                        >
-                          Ban
-                        </button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16 }}>
+          {creators.map(creator => (
+            <div key={creator.id} className="az-glass" style={{ padding: 20, borderRadius: 16 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+                <div style={{ width: 48, height: 48, borderRadius: '50%', overflow: 'hidden', border: '2px solid #E8420A' }}>
+                  {creator.avatar ? <img src={creator.avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ width: '100%', height: '100%', backgroundColor: '#2A1A1A', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 700, color: '#E8420A' }}>{creator.username?.charAt(0).toUpperCase()}</div>}
+                </div>
+                <div>
+                  <p style={{ fontWeight: 600, fontSize: 15 }}>{creator.username}</p>
+                  <p style={{ color: '#9A8A7A', fontSize: 12 }}>{creator.email}</p>
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: 16, fontSize: 13, color: '#9A8A7A' }}>
+                <span>{creator.contentCount || 0} videos</span>
+                <span>{creator.subscriberCount || 0} subs</span>
+              </div>
+              <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+                <span style={{ padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 600, backgroundColor: creator.isApproved ? 'rgba(13,59,46,0.2)' : 'rgba(245,158,11,0.2)', color: creator.isApproved ? '#0D3B2E' : '#F59E0B' }}>
+                  {creator.isApproved ? 'Approved' : 'Pending'}
+                </span>
+              </div>
+            </div>
+          ))}
+          {creators.length === 0 && <p style={{ textAlign: 'center', padding: 40, color: '#9A8A7A', gridColumn: '1/-1' }}>No creators found</p>}
         </div>
-      </div>
-    </div>
+      )}
+    </AdminLayout>
   );
 }

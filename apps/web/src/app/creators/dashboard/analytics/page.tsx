@@ -1,337 +1,94 @@
 'use client';
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
 import { api } from '@/lib/api';
-import { webLogger } from '@/lib/logger';
-import { Button, Card, Skeleton, Badge, Chip } from '@azeebo/ui';
-import { colors } from '@azeebo/design-tokens';
-import Link from 'next/link';
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from 'recharts';
+import AppHeader from '@/components/layout/AppHeader';
+import AppFooter from '@/components/layout/AppFooter';
 
-export default function AnalyticsPage(): JSX.Element {
-  const [analytics, setAnalytics] = useState<Record<string, unknown> | null>(null);
+export default function DashboardAnalyticsPage(): React.JSX.Element {
+  const { isAuthenticated, user } = useAuth();
+  const router = useRouter();
+  const [analytics, setAnalytics] = useState({ totalViews: 0, totalWatchTime: 0, averageViewDuration: 0, subscriberGrowth: 0, topContent: [] as any[], demographics: { ageGroups: [] as any[], regions: [] as any[] } });
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d'>('30d');
+  const [period, setPeriod] = useState<'7d' | '30d' | '90d'>('30d');
 
   useEffect(() => {
-    let cancelled = false;
+    if (!isAuthenticated || !user) { router.push('/auth/login'); return; }
+    loadAnalytics();
+  }, [isAuthenticated, user, router, period]);
 
-    async function fetchAnalytics() {
-      try {
-        setIsLoading(true);
-        setError(null);
+  const loadAnalytics = async () => {
+    setIsLoading(true);
+    try {
+      const response = await api.creator.getAnalytics({ range: period });
+      if (response.success && response.data) setAnalytics(response.data as typeof analytics);
+    } catch { /* ignore */ } finally { setIsLoading(false); }
+  };
 
-        const response = await api.creator.getAnalytics({ range: timeRange });
-
-        if (cancelled) return;
-
-        if (response.success) {
-          setAnalytics(response.data as Record<string, unknown>);
-        } else {
-          setError(response.message || 'Failed to load analytics');
-          webLogger.error('Failed to load creator analytics', { error: response.message });
-        }
-      } catch (err) {
-        if (cancelled) return;
-        const message = err instanceof Error ? err.message : 'An unexpected error occurred';
-        setError(message);
-        webLogger.error('Failed to load creator analytics', { error: message });
-      } finally {
-        if (!cancelled) setIsLoading(false);
-      }
-    }
-
-    fetchAnalytics();
-    return () => {
-      cancelled = true;
-    };
-  }, [timeRange]);
-
-  if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold" style={{ color: colors.text.primary }}>
-            Analytics
-          </h2>
-          <div className="flex items-center gap-3">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setTimeRange('7d')}
-              disabled={timeRange === '7d'}
-            >
-              7 Days
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setTimeRange('30d')}
-              disabled={timeRange === '30d'}
-            >
-              30 Days
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setTimeRange('90d')}
-              disabled={timeRange === '90d'}
-            >
-              90 Days
-            </Button>
-          </div>
-        </div>
-
-        <div className="grid gap-4">
-          <div className="grid grid-cols-1 md:grid-cols-2">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <Card key={i} padding="none">
-                <Skeleton height="120px" />
-              </Card>
-            ))}
-          </div>
-
-          <div className="h-96">
-            <Card padding="none">
-              <Skeleton height="90%" />
-            </Card>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold" style={{ color: colors.text.primary }}>
-            Analytics
-          </h2>
-          <div className="flex items-center gap-3">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setTimeRange('7d')}
-              disabled={timeRange === '7d'}
-            >
-              7 Days
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setTimeRange('30d')}
-              disabled={timeRange === '30d'}
-            >
-              30 Days
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setTimeRange('90d')}
-              disabled={timeRange === '90d'}
-            >
-              90 Days
-            </Button>
-          </div>
-        </div>
-
-        <div className="text-center py-8">
-          <p className="text-lg" style={{ color: colors.text.secondary }}>
-            {error}
-          </p>
-          <Button variant="primary" onClick={() => window.location.reload()}>
-            Retry
-          </Button>
-        </div>
-      </div>
-    );
-  }
+  if (!isAuthenticated || !user) return <></>;
 
   return (
-    <div className="space-y-6">
-      {/* Header with time range selector */}
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-bold" style={{ color: colors.text.primary }}>
-          Analytics
-        </h2>
-        <div className="flex items-center gap-3">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setTimeRange('7d')}
-            disabled={timeRange === '7d'}
-          >
-            7 Days
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setTimeRange('30d')}
-            disabled={timeRange === '30d'}
-          >
-            30 Days
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setTimeRange('90d')}
-            disabled={timeRange === '90d'}
-          >
-            90 Days
-          </Button>
-        </div>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid gap-4">
-        <div className="grid grid-cols-1 md:grid-cols-2">
-          <Card padding="none">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-medium" style={{ color: colors.text.primary }}>
-                  Total Views
-                </h3>
-                <Badge variant="outline" className="text-xs">
-                  {timeRange === '7d' ? 'Weekly' : timeRange === '30d' ? 'Monthly' : 'Quarterly'}
-                </Badge>
-              </div>
-              <p className="text-3xl font-bold" style={{ color: colors.text.primary }}>
-                {analytics?.totalViews?.toLocaleString() || '0'}
-              </p>
-              <p className="text-sm text-gray-500">
-                {typeof analytics?.viewsChangePercentage === 'number'
-                  ? analytics.viewsChangePercentage.toFixed(1)
-                  : 0}
-                % vs previous period
-              </p>
-            </div>
-          </Card>
-
-          <Card padding="none">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-medium" style={{ color: colors.text.primary }}>
-                  Total Watch Time (hrs)
-                </h3>
-                <Badge variant="outline" className="text-xs">
-                  {timeRange === '7d' ? 'Weekly' : timeRange === '30d' ? 'Monthly' : 'Quarterly'}
-                </Badge>
-              </div>
-              <p className="text-3xl font-bold" style={{ color: colors.text.primary }}>
-                {analytics?.totalWatchTime?.toLocaleString() || '0'}
-              </p>
-              <p className="text-sm text-gray-500">
-                {typeof analytics?.watchTimeChangePercentage === 'number'
-                  ? analytics.watchTimeChangePercentage.toFixed(1)
-                  : 0}
-                % vs previous period
-              </p>
-            </div>
-          </Card>
-
-          <Card padding="none">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-medium" style={{ color: colors.text.primary }}>
-                  Engagement Rate
-                </h3>
-                <Badge variant="outline" className="text-xs">
-                  {timeRange === '7d' ? 'Weekly' : timeRange === '30d' ? 'Monthly' : 'Quarterly'}
-                </Badge>
-              </div>
-              <p className="text-3xl font-bold" style={{ color: colors.text.primary }}>
-                {typeof analytics?.avgEngagementRate === 'number'
-                  ? analytics.avgEngagementRate.toFixed(1)
-                  : 0}
-                %
-              </p>
-              <p className="text-sm text-gray-500">
-                {typeof analytics?.engagementRateChangePercentage === 'number'
-                  ? analytics.engagementRateChangePercentage.toFixed(1)
-                  : 0}
-                % vs previous period
-              </p>
-            </div>
-          </Card>
-
-          <Card padding="none">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-medium" style={{ color: colors.text.primary }}>
-                  New Followers
-                </h3>
-                <Badge variant="outline" className="text-xs">
-                  {timeRange === '7d' ? 'Weekly' : timeRange === '30d' ? 'Monthly' : 'Quarterly'}
-                </Badge>
-              </div>
-              <p className="text-3xl font-bold" style={{ color: colors.text.primary }}>
-                {analytics?.newFollowers?.toLocaleString() || '0'}
-              </p>
-              <p className="text-sm text-gray-500">
-                {typeof analytics?.followersChangePercentage === 'number'
-                  ? analytics.followersChangePercentage.toFixed(1)
-                  : 0}
-                % vs previous period
-              </p>
-            </div>
-          </Card>
-        </div>
-      </div>
-
-      {/* Charts */}
-      <div className="grid gap-6">
-        <div className="w-full">
-          <Card padding="none">
-            <div className="p-6">
-              <h3 className="text-lg font-bold mb-4" style={{ color: colors.text.primary }}>
-                Views Trend
-              </h3>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={Array.isArray(analytics?.viewsTrend) ? analytics.viewsTrend : []}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="views" fill="#8884d8" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </Card>
+    <div style={{ backgroundColor: '#1A0A0A', minHeight: '100vh', color: '#F5F0EB' }}>
+      <AppHeader />
+      <main style={{ paddingTop: 100, paddingBottom: 60, maxWidth: 1000, margin: '0 auto', padding: '100px 24px 60px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 }}>
+          <div>
+            <h1 style={{ fontSize: 28, fontWeight: 700 }}>Analytics</h1>
+            <p style={{ color: '#9A8A7A', marginTop: 4 }}>Track your content performance</p>
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            {([['7d', '7 Days'], ['30d', '30 Days'], ['90d', '90 Days']] as const).map(([key, label]) => (
+              <button key={key} onClick={() => setPeriod(key)} style={{ padding: '8px 16px', borderRadius: 999, border: period === key ? 'none' : '1px solid #2A1A1A', background: period === key ? 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)' : 'transparent', color: period === key ? '#fff' : '#9A8A7A', fontWeight: 500, fontSize: 13, cursor: 'pointer' }}>
+                {label}
+              </button>
+            ))}
+          </div>
         </div>
 
-        <div className="w-full">
-          <Card padding="none">
-            <div className="p-6">
-              <h3 className="text-lg font-bold mb-4" style={{ color: colors.text.primary }}>
-                Engagement Trend
-              </h3>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart
-                  data={Array.isArray(analytics?.engagementTrend) ? analytics.engagementTrend : []}
-                >
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="rate" fill="#82ca9d" />
-                </BarChart>
-              </ResponsiveContainer>
+        {isLoading ? (
+          <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}>
+            <div style={{ width: 40, height: 40, border: '3px solid #2A1A1A', borderTopColor: '#E8420A', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+          </div>
+        ) : (
+          <>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 16, marginBottom: 32 }}>
+              {[
+                { label: 'Total Views', value: analytics.totalViews.toLocaleString(), icon: '👁️', color: '#E8420A' },
+                { label: 'Watch Time', value: `${Math.floor(analytics.totalWatchTime / 60)}h`, icon: '⏱️', color: '#0D3B2E' },
+                { label: 'Avg Duration', value: `${Math.floor(analytics.averageViewDuration / 60)}m`, icon: '📊', color: '#F59E0B' },
+                { label: 'Subscriber Growth', value: `+${analytics.subscriberGrowth}`, icon: '📈', color: '#CC1C1C' },
+              ].map((stat, i) => (
+                <div key={i} className="az-glass" style={{ padding: 20, borderRadius: 16 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                    <span style={{ fontSize: 20 }}>{stat.icon}</span>
+                    <span style={{ fontSize: 13, color: '#9A8A7A' }}>{stat.label}</span>
+                  </div>
+                  <p style={{ fontSize: 24, fontWeight: 700, color: stat.color }}>{stat.value}</p>
+                </div>
+              ))}
             </div>
-          </Card>
-        </div>
-      </div>
+
+            {analytics.topContent.length > 0 && (
+              <div className="az-glass" style={{ padding: 24, borderRadius: 20 }}>
+                <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16 }}>Top Content</h2>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {analytics.topContent.map((item: any, i: number) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: i < analytics.topContent.length - 1 ? '1px solid #2A1A1A' : 'none' }}>
+                      <span style={{ width: 28, height: 28, borderRadius: '50%', backgroundColor: '#2A1A1A', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, flexShrink: 0 }}>{i + 1}</span>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ fontWeight: 600, fontSize: 14, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.title}</p>
+                      </div>
+                      <span style={{ fontSize: 13, color: '#E8420A', fontWeight: 600 }}>{(item.views || 0).toLocaleString()} views</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
+        )}
+      </main>
+      <AppFooter />
     </div>
   );
 }

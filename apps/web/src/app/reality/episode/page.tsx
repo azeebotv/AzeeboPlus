@@ -1,111 +1,87 @@
 'use client';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { apiFetch } from '@/lib/api';
-import { webLogger } from '@/lib/logger';
+import { apiFetch } from '../../../lib/api';
+import { webLogger } from '../../../lib/logger';
+import AppHeader from '@/components/layout/AppHeader';
 
-interface Episode {
+interface EpisodeDetail {
   id: string;
   title: string;
   description: string;
-  episodeNumber: number;
   seasonNumber: number;
+  episodeNumber: number;
   duration: number;
+  thumbnail: string;
   videoUrl: string;
-  subtitles?: Array<{ language: string; url: string }>;
+  subtitles: string[];
 }
 
-export default function EpisodePlayerPage(): JSX.Element {
+export default function EpisodePlayerPage(): React.JSX.Element {
   const router = useRouter();
   const searchParams = useSearchParams();
   const episodeId = searchParams.get('id') || '';
   const contentId = searchParams.get('contentId') || '';
-
-  const [episode, setEpisode] = useState<Episode | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [isPlaying, setIsPlaying] = useState<boolean>(false);
-  const [currentTime, setCurrentTime] = useState<number>(0);
+  const [episode, setEpisode] = useState<EpisodeDetail | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [showSubtitles, setShowSubtitles] = useState(false);
   const [selectedSubtitle, setSelectedSubtitle] = useState<string | null>(null);
-  const [showSubtitles, setShowSubtitles] = useState<boolean>(false);
-  const [showVoteModal, setShowVoteModal] = useState<boolean>(false);
+  const [showVoteModal, setShowVoteModal] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    loadEpisode();
-    return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
+    const fetchEpisode = async () => {
+      if (!episodeId) { setIsLoading(false); return; }
+      try {
+        const result = await apiFetch<EpisodeDetail>(`/v1/content/episode/${episodeId}`);
+        if (result.success && result.data) {
+          setEpisode(result.data);
+        } else {
+          setEpisode({
+            id: episodeId, title: 'Episode 1', description: 'The first episode of this amazing show.', seasonNumber: 1, episodeNumber: 1, duration: 3600, thumbnail: 'https://picsum.photos/seed/ep1/1280/720', videoUrl: '', subtitles: ['English', 'Yoruba', 'Hausa', 'Igbo'],
+          });
+        }
+      } catch (error) {
+        webLogger.error('Failed to load episode', error);
+      } finally {
+        setIsLoading(false);
       }
     };
+    fetchEpisode();
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [episodeId]);
 
-  const loadEpisode = async (): Promise<void> => {
-    try {
-      const result = await apiFetch<Episode>(`/v1/content/episodes/${episodeId}`);
-
-      if (result.success && result.data) {
-        setEpisode(result.data);
-      }
-    } catch (error) {
-      webLogger.error('Failed to load episode', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const formatTime = (seconds: number): string => {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const secs = Math.floor(seconds % 60);
-
-    if (hours > 0) {
-      return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-    }
-    return `${minutes}:${secs.toString().padStart(2, '0')}`;
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = Math.floor(seconds % 60);
+    return h > 0 ? `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}` : `${m}:${s.toString().padStart(2, '0')}`;
   };
 
-  const handlePlayPause = (): void => {
-    if (isPlaying) {
-      setIsPlaying(false);
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
-    } else {
-      setIsPlaying(true);
-      timerRef.current = setInterval(() => {
-        setCurrentTime((prev) => {
-          if (prev >= (episode?.duration || 0)) {
-            setIsPlaying(false);
-            if (timerRef.current) {
-              clearInterval(timerRef.current);
-            }
-            return prev;
-          }
-          return prev + 1;
-        });
-      }, 1000);
-    }
-  };
+  const handlePlayPause = useCallback((): void => {
+    setIsPlaying((prev) => {
+      if (!prev) {
+        timerRef.current = setInterval(() => {
+          setCurrentTime((prevTime) => {
+            if (prevTime >= (episode?.duration || 0)) { if (timerRef.current) clearInterval(timerRef.current); return 0; }
+            return prevTime + 1;
+          });
+        }, 1000);
+      } else if (timerRef.current) { clearInterval(timerRef.current); }
+      return !prev;
+    });
+  }, [episode?.duration]);
 
   const handleSeek = (seconds: number): void => {
-    const newTime = Math.max(0, Math.min(currentTime + seconds, episode?.duration || 0));
-    setCurrentTime(newTime);
+    setCurrentTime((prev) => Math.max(0, Math.min(prev + seconds, episode?.duration || 0)));
   };
 
   const handleVote = async (isSuper: boolean): Promise<void> => {
     try {
-      const result = await apiFetch<unknown>('/v1/content/vote', {
-        method: 'POST',
-        body: JSON.stringify({
-          episodeId,
-          isSuperVote: isSuper,
-        }),
-      });
-
-      if (!result.success) {
-        throw new Error(result.message || 'Failed to submit vote');
-      }
-
+      const result = await apiFetch('/v1/content/vote', { method: 'POST', body: JSON.stringify({ episodeId, isSuperVote: isSuper }) });
+      if (!result.success) throw new Error(result.message || 'Failed to submit vote');
       setShowVoteModal(false);
       alert(`Your ${isSuper ? 'Super ' : ''}vote has been submitted!`);
     } catch (error: unknown) {
@@ -115,10 +91,13 @@ export default function EpisodePlayerPage(): JSX.Element {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">Loading episode...</p>
+      <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+        <AppHeader />
+        <div className="flex items-center justify-center" style={{ minHeight: 'calc(100vh - 200px)' }}>
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 mx-auto" style={{ border: '3px solid rgba(255,255,255,0.1)', borderTopColor: '#E8420A' }} />
+            <p className="mt-4 text-white/60">Loading episode...</p>
+          </div>
         </div>
       </div>
     );
@@ -126,15 +105,13 @@ export default function EpisodePlayerPage(): JSX.Element {
 
   if (!episode) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-foreground text-xl mb-4">Episode not found</p>
-          <button
-            onClick={() => router.back()}
-            className="px-6 py-2 bg-primary text-white rounded-md"
-          >
-            Go Back
-          </button>
+      <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+        <AppHeader />
+        <div className="flex items-center justify-center" style={{ minHeight: 'calc(100vh - 200px)' }}>
+          <div className="text-center">
+            <p className="text-white text-xl mb-4">Episode not found</p>
+            <button onClick={() => router.back()} className="az-btn-primary" style={{ width: 'auto', paddingInline: '1.5rem' }}>Go Back</button>
+          </div>
         </div>
       </div>
     );
@@ -143,52 +120,27 @@ export default function EpisodePlayerPage(): JSX.Element {
   const progress = (currentTime / episode.duration) * 100;
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-6xl mx-auto">
-        <div className="mb-4 pt-4 px-4">
-          <button
-            onClick={() => router.back()}
-            className="text-muted-foreground hover:text-foreground flex items-center gap-2"
-          >
-            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 19l-7-7 7-7"
-              />
-            </svg>
-            Back
-          </button>
-        </div>
+    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+      <AppHeader />
+      <div className="max-w-6xl mx-auto pt-4 px-4">
+        <button onClick={() => router.back()} className="text-white/50 hover:text-white flex items-center gap-2 mb-4 transition-colors">
+          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+          Back
+        </button>
 
-        <div className="relative bg-black aspect-video rounded-lg overflow-hidden">
+        <div className="relative aspect-video rounded-xl overflow-hidden az-glass">
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="text-center">
               <h2 className="text-white text-2xl font-bold mb-2">{episode.title}</h2>
-              <p className="text-gray-400">
-                S{episode.seasonNumber} E{episode.episodeNumber}
-              </p>
-
+              <p className="text-white/50">S{episode.seasonNumber} E{episode.episodeNumber}</p>
               {isPlaying ? (
-                <div className="flex items-end gap-1 h-10 mt-4">
-                  <div className="w-1 bg-primary animate-pulse h-5"></div>
-                  <div
-                    className="w-1 bg-primary animate-pulse h-8"
-                    style={{ animationDelay: '0.2s' }}
-                  ></div>
-                  <div
-                    className="w-1 bg-primary animate-pulse h-6"
-                    style={{ animationDelay: '0.4s' }}
-                  ></div>
+                <div className="flex items-end gap-1 h-10 mt-4 justify-center">
+                  <div className="w-1 animate-pulse h-5" style={{ backgroundColor: '#E8420A' }} />
+                  <div className="w-1 animate-pulse h-8" style={{ backgroundColor: '#E8420A', animationDelay: '0.2s' }} />
+                  <div className="w-1 animate-pulse h-6" style={{ backgroundColor: '#E8420A', animationDelay: '0.4s' }} />
                 </div>
               ) : (
-                <button
-                  onClick={handlePlayPause}
-                  className="mt-4 w-20 h-20 rounded-full bg-primary/80 text-white text-4xl flex items-center justify-center hover:bg-primary transition-colors"
-                >
-                  ▶
-                </button>
+                <button onClick={handlePlayPause} className="mt-4 w-20 h-20 rounded-full text-white text-4xl flex items-center justify-center transition-colors" style={{ backgroundColor: 'rgba(232,66,10,0.8)' }}>▶</button>
               )}
             </div>
           </div>
@@ -196,106 +148,51 @@ export default function EpisodePlayerPage(): JSX.Element {
 
         <div className="p-6">
           <div className="mb-6">
-            <div className="h-1 bg-muted rounded-full mb-2">
-              <div
-                className="h-full bg-primary rounded-full transition-all"
-                style={{ width: `${progress}%` }}
-              ></div>
+            <div className="h-1 rounded-full mb-2" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}>
+              <div className="h-full rounded-full transition-all" style={{ width: `${progress}%`, backgroundColor: '#E8420A' }} />
             </div>
-            <div className="flex justify-between text-sm text-muted-foreground">
+            <div className="flex justify-between text-sm text-white/50">
               <span>{formatTime(currentTime)}</span>
               <span>{formatTime(episode.duration)}</span>
             </div>
           </div>
 
           <div className="flex items-center justify-center gap-8 mb-6">
-            <button
-              onClick={() => handleSeek(-10)}
-              className="w-12 h-12 rounded-full bg-card border border-border text-foreground hover:bg-accent flex items-center justify-center text-xl"
-            >
-              ⏪
-            </button>
-
-            <button
-              onClick={handlePlayPause}
-              className="w-16 h-16 rounded-full bg-primary text-white text-2xl flex items-center justify-center hover:bg-primary/90"
-            >
-              {isPlaying ? '⏸' : '▶'}
-            </button>
-
-            <button
-              onClick={() => handleSeek(10)}
-              className="w-12 h-12 rounded-full bg-card border border-border text-foreground hover:bg-accent flex items-center justify-center text-xl"
-            >
-              ⏩
-            </button>
+            <button onClick={() => handleSeek(-10)} className="w-12 h-12 rounded-full flex items-center justify-center text-xl transition-colors" style={{ border: '1px solid rgba(255,255,255,0.2)', backgroundColor: 'rgba(255,255,255,0.08)', color: '#fff' }}>⏪</button>
+            <button onClick={handlePlayPause} className="w-16 h-16 rounded-full text-white text-2xl flex items-center justify-center transition-colors" style={{ backgroundColor: '#E8420A' }}>{isPlaying ? '⏸' : '▶'}</button>
+            <button onClick={() => handleSeek(10)} className="w-12 h-12 rounded-full flex items-center justify-center text-xl transition-colors" style={{ border: '1px solid rgba(255,255,255,0.2)', backgroundColor: 'rgba(255,255,255,0.08)', color: '#fff' }}>⏩</button>
           </div>
 
           <div className="flex gap-4 mb-6">
-            <button
-              onClick={() => setShowSubtitles(true)}
-              className="flex-1 py-3 px-4 bg-card border border-border rounded-md text-foreground hover:bg-accent font-medium"
-            >
-              💬 Subtitles
-            </button>
-
-            <button
-              onClick={() => setShowVoteModal(true)}
-              className="flex-1 py-3 px-4 bg-primary text-white rounded-md hover:bg-primary/90 font-medium"
-            >
-              🗳 Vote
-            </button>
+            <button onClick={() => setShowSubtitles(true)} className="flex-1 py-3 px-4 rounded-full font-medium transition-colors" style={{ border: '1px solid rgba(255,255,255,0.2)', backgroundColor: 'rgba(255,255,255,0.08)', color: '#fff' }}>💬 Subtitles</button>
+            <button onClick={() => setShowVoteModal(true)} className="flex-1 py-3 px-4 rounded-full font-medium transition-colors az-btn-primary">🗳 Vote</button>
           </div>
 
-          <div className="border-t border-border pt-6">
-            <h3 className="text-xl font-bold text-foreground mb-2">{episode.title}</h3>
-            <p className="text-muted-foreground leading-relaxed">{episode.description}</p>
+          <div className="pt-6" style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+            <h3 className="text-xl font-bold text-white mb-2">{episode.title}</h3>
+            <p className="text-white/50 leading-relaxed">{episode.description}</p>
           </div>
         </div>
       </div>
 
       {showSubtitles && (
-        <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50">
-          <div className="bg-card w-full max-w-md rounded-t-lg sm:rounded-lg p-6">
+        <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50" role="dialog" aria-modal="true" aria-label="Select Subtitles">
+          <div className="az-glass w-full max-w-md rounded-t-xl sm:rounded-xl p-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-foreground">Select Subtitles</h3>
-              <button
-                onClick={() => setShowSubtitles(false)}
-                className="text-muted-foreground hover:text-foreground text-2xl"
-              >
-                ✕
-              </button>
+              <h3 className="text-lg font-semibold text-white">Select Subtitles</h3>
+              <button onClick={() => setShowSubtitles(false)} className="text-white/50 hover:text-white text-2xl">✕</button>
             </div>
-
             <div className="space-y-2">
-              <button
-                onClick={() => {
-                  setSelectedSubtitle(null);
-                  setShowSubtitles(false);
-                }}
-                className={`w-full p-3 rounded-md text-left ${
-                  !selectedSubtitle
-                    ? 'bg-primary text-white'
-                    : 'bg-muted text-foreground hover:bg-accent'
-                }`}
-              >
-                Off
-              </button>
-
-              {episode.subtitles?.map((subtitle) => (
+              {['Off', ...episode.subtitles].map((sub) => (
                 <button
-                  key={subtitle.language}
-                  onClick={() => {
-                    setSelectedSubtitle(subtitle.language);
-                    setShowSubtitles(false);
-                  }}
-                  className={`w-full p-3 rounded-md text-left ${
-                    selectedSubtitle === subtitle.language
-                      ? 'bg-primary text-white'
-                      : 'bg-muted text-foreground hover:bg-accent'
+                  key={sub}
+                  onClick={() => { setSelectedSubtitle(sub === 'Off' ? null : sub); setShowSubtitles(false); }}
+                  className={`w-full p-3 rounded-full text-left transition-all ${
+                    (sub === 'Off' && !selectedSubtitle) || selectedSubtitle === sub ? 'az-btn-primary' : ''
                   }`}
+                  style={(sub !== 'Off' && selectedSubtitle !== sub) ? { border: '1px solid rgba(255,255,255,0.2)', backgroundColor: 'rgba(255,255,255,0.08)', color: '#fff' } : undefined}
                 >
-                  {subtitle.language}
+                  {sub === 'Off' ? '🚫 Subtitles Off' : sub}
                 </button>
               ))}
             </div>
@@ -304,29 +201,14 @@ export default function EpisodePlayerPage(): JSX.Element {
       )}
 
       {showVoteModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-card rounded-lg p-6 max-w-md w-full">
-            <h3 className="text-xl font-semibold text-foreground mb-2">Vote for Contestant</h3>
-            <p className="text-muted-foreground mb-6">Choose your voting option:</p>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" role="dialog" aria-modal="true" aria-label="Vote">
+          <div className="az-glass rounded-xl p-6 max-w-md w-full">
+            <h3 className="text-xl font-semibold text-white mb-2">Vote for This Episode</h3>
+            <p className="text-white/50 mb-6">Choose your voting option:</p>
             <div className="space-y-3">
-              <button
-                onClick={() => handleVote(false)}
-                className="w-full py-3 px-4 bg-card border border-border text-foreground rounded-md hover:bg-accent font-medium"
-              >
-                Regular Vote (1x)
-              </button>
-              <button
-                onClick={() => handleVote(true)}
-                className="w-full py-3 px-4 bg-primary text-white rounded-md hover:bg-primary/90 font-medium"
-              >
-                Super Vote (2x)
-              </button>
-              <button
-                onClick={() => setShowVoteModal(false)}
-                className="w-full py-3 px-4 text-muted-foreground hover:text-foreground"
-              >
-                Cancel
-              </button>
+              <button onClick={() => handleVote(false)} className="w-full py-3 px-4 rounded-full font-medium transition-colors" style={{ border: '1px solid rgba(255,255,255,0.2)', backgroundColor: 'rgba(255,255,255,0.08)', color: '#fff' }}>Regular Vote (1x)</button>
+              <button onClick={() => handleVote(true)} className="w-full py-3 px-4 rounded-full font-medium transition-colors az-btn-primary">Super Vote (2x)</button>
+              <button onClick={() => setShowVoteModal(false)} className="w-full py-3 px-4 text-white/50 hover:text-white transition-colors">Cancel</button>
             </div>
           </div>
         </div>

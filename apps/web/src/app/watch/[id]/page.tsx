@@ -1,17 +1,18 @@
 import React from 'react';
 import { Metadata } from 'next';
-import { api } from '../../../lib/api';
+import { apiFetch } from '../../../lib/api';
 import WatchPageClient from './WatchPageClient';
 
 interface Props {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { id } = await params;
   try {
-    const contentResponse = await api.content.getContent(params.id);
+    const contentResponse = await apiFetch<any>(`/content/${id}`);
 
     if (!contentResponse.success || !contentResponse.data) {
       return {
@@ -46,6 +47,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
-export default function WatchPage({ params }: Props): JSX.Element {
-  return <WatchPageClient id={params.id} />;
+export default async function WatchPage({ params }: Props): Promise<React.JSX.Element> {
+  const { id } = await params;
+  return <WatchPageClient id={id} />;
 }

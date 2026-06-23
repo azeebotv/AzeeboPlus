@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 
-export function PushNotificationSettings(): JSX.Element {
+export function PushNotificationSettings(): React.JSX.Element {
   const { isSupported, permission, isSubscribed, isLoading, error, subscribe, unsubscribe } =
     usePushNotifications();
   const [isProcessing, setIsProcessing] = useState(false);

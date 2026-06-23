@@ -1,236 +1,85 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
-import { apiFetch } from '@/lib/api';
-import { webLogger } from '@/lib/logger';
+import { useParams, useRouter } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
+import { api } from '@/lib/api';
+import AppHeader from '@/components/layout/AppHeader';
+import AppFooter from '@/components/layout/AppFooter';
 
-interface TransactionDetail {
-  id: string;
-  type: string;
-  amount: number;
-  currency: string;
-  status: string;
-  description: string;
-  createdAt: string;
-  updatedAt: string;
-  reference: string;
-  metadata: {
-    source?: string;
-    method?: string;
-    fee?: number;
-    relatedTransactionId?: string;
-  };
-  balanceBefore: number;
-  balanceAfter: number;
-}
-
-export default function TransactionDetailPage(): JSX.Element {
-  const params = useParams();
-  const transactionId = params.transactionId as string;
-  const [transaction, setTransaction] = useState<TransactionDetail | null>(null);
+export default function TransactionDetailPage(): React.JSX.Element {
+  const { transactionId } = useParams();
+  const { isAuthenticated, user } = useAuth();
+  const router = useRouter();
+  const [transaction, setTransaction] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (transactionId) {
-      loadTransaction(transactionId);
-    }
-  }, [transactionId]);
+    if (!isAuthenticated || !user) { router.push('/auth/login'); return; }
+    loadTransaction();
+  }, [isAuthenticated, user, router, transactionId]);
 
-  const loadTransaction = async (id: string): Promise<void> => {
+  const loadTransaction = async () => {
     try {
-      const result = await apiFetch<TransactionDetail>(`/v1/wallet/transactions/${id}`);
-
-      if (result.success && result.data) {
-        setTransaction(result.data);
-      }
-    } catch (error) {
-      webLogger.error('Failed to load transaction', error);
-    } finally {
-      setIsLoading(false);
-    }
+      const response = await api.wallet.getTransaction(transactionId as string);
+      if (response.success && response.data) setTransaction(response.data);
+    } catch { /* ignore */ } finally { setIsLoading(false); }
   };
 
-  const getStatusColor = (status: string): string => {
-    switch (status) {
-      case 'completed':
-        return 'text-green-500';
-      case 'pending':
-        return 'text-yellow-500';
-      case 'failed':
-        return 'text-red-500';
-      case 'cancelled':
-        return 'text-gray-500';
-      default:
-        return 'text-muted-foreground';
-    }
-  };
-
-  const getTypeIcon = (type: string): string => {
-    switch (type) {
-      case 'credit':
-        return '↓';
-      case 'debit':
-        return '↑';
-      case 'refund':
-        return '↩';
-      default:
-        return '•';
-    }
-  };
-
-  const handlePrint = () => {
-    window.print();
-  };
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">Loading transaction...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!transaction) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-6xl mb-4">⚠️</div>
-          <h2 className="text-xl font-bold text-foreground mb-2">Transaction not found</h2>
-          <a href="/wallet/transactions" className="text-primary hover:underline">
-            Back to Transactions
-          </a>
-        </div>
-      </div>
-    );
-  }
+  if (!isAuthenticated || !user) return <></>;
 
   return (
-    <div className="min-h-screen bg-background py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-3xl mx-auto">
-        <a href="/wallet/transactions" className="text-primary hover:underline mb-6 inline-block">
-          ← Back to Transactions
-        </a>
+    <div style={{ backgroundColor: '#1A0A0A', minHeight: '100vh', color: '#F5F0EB' }}>
+      <AppHeader />
+      <main style={{ paddingTop: 100, paddingBottom: 60, maxWidth: 600, margin: '0 auto', padding: '100px 24px 60px' }}>
+        <div style={{ marginBottom: 32 }}>
+          <button onClick={() => router.back()} style={{ background: 'none', border: 'none', color: '#9A8A7A', cursor: 'pointer', fontSize: 14, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span>←</span> Back to Transactions
+          </button>
+          <h1 style={{ fontSize: 28, fontWeight: 700 }}>Transaction Details</h1>
+        </div>
 
-        <div className="mb-8 print:mb-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-foreground mb-2 print:text-2xl">
-                Transaction Receipt
-              </h1>
-              <p className="text-sm text-muted-foreground print:hidden">
-                Generated on {new Date().toLocaleDateString()} at {new Date().toLocaleTimeString()}
+        {isLoading ? (
+          <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}>
+            <div style={{ width: 40, height: 40, border: '3px solid #2A1A1A', borderTopColor: '#E8420A', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+          </div>
+        ) : !transaction ? (
+          <div className="az-glass" style={{ padding: 40, borderRadius: 20, textAlign: 'center' }}>
+            <div style={{ fontSize: 48, marginBottom: 16 }}>🔍</div>
+            <h3 style={{ fontSize: 18, marginBottom: 8 }}>Transaction not found</h3>
+            <a href="/wallet/transactions" style={{ color: '#E8420A', textDecoration: 'none', fontWeight: 600 }}>View all transactions</a>
+          </div>
+        ) : (
+          <div className="az-glass" style={{ padding: 28, borderRadius: 20 }}>
+            {/* Amount */}
+            <div style={{ textAlign: 'center', marginBottom: 28 }}>
+              <p style={{ fontSize: 36, fontWeight: 700, color: transaction.type === 'deposit' || transaction.type === 'earning' ? '#0D3B2E' : '#CC1C1C' }}>
+                {transaction.type === 'deposit' || transaction.type === 'earning' ? '+' : '-'}₦{(transaction.amount || 0).toLocaleString()}
               </p>
-            </div>
-            <button
-              onClick={handlePrint}
-              className="print:hidden px-4 py-2 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-              aria-label="Print this receipt"
-            >
-              <svg
-                className="w-5 h-5 inline mr-2"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
-                />
-              </svg>
-              Print Receipt
-            </button>
-          </div>
-        </div>
-
-        <div className="bg-card rounded-xl border border-border p-6 mb-6">
-          <div className="flex items-center gap-4 mb-6">
-            <span className="text-4xl">{getTypeIcon(transaction.type)}</span>
-            <div className="flex-1">
-              <h2 className="text-xl font-bold text-foreground">
-                {transaction.type.toUpperCase()}
-              </h2>
-              <p className={`font-semibold ${getStatusColor(transaction.status)}`}>
-                {transaction.status.charAt(0).toUpperCase() + transaction.status.slice(1)}
-              </p>
-            </div>
-            <span
-              className={`text-2xl font-bold ${transaction.type === 'debit' ? 'text-red-500' : 'text-green-500'}`}
-            >
-              {transaction.type === 'debit' ? '-' : '+'}
-              {transaction.currency} {transaction.amount.toLocaleString()}
-            </span>
-          </div>
-        </div>
-
-        <div className="bg-card rounded-xl border border-border overflow-hidden mb-6">
-          <div className="p-6 border-b border-border">
-            <h3 className="text-lg font-bold text-foreground">Transaction Info</h3>
-          </div>
-          <div className="divide-y divide-border">
-            <div className="px-6 py-4 flex justify-between">
-              <span className="text-muted-foreground">Reference</span>
-              <span className="text-foreground font-mono">{transaction.reference}</span>
-            </div>
-            <div className="px-6 py-4 flex justify-between">
-              <span className="text-muted-foreground">Description</span>
-              <span className="text-foreground">{transaction.description}</span>
-            </div>
-            <div className="px-6 py-4 flex justify-between">
-              <span className="text-muted-foreground">Date</span>
-              <span className="text-foreground">
-                {new Date(transaction.createdAt).toLocaleString()}
+              <span style={{ display: 'inline-block', marginTop: 8, padding: '4px 14px', borderRadius: 999, fontSize: 12, fontWeight: 600, backgroundColor: transaction.status === 'completed' ? 'rgba(13,59,46,0.2)' : transaction.status === 'pending' ? 'rgba(245,158,11,0.2)' : 'rgba(204,28,28,0.2)', color: transaction.status === 'completed' ? '#0D3B2E' : transaction.status === 'pending' ? '#F59E0B' : '#CC1C1C' }}>
+                {transaction.status}
               </span>
             </div>
-            <div className="px-6 py-4 flex justify-between">
-              <span className="text-muted-foreground">Balance Before</span>
-              <span className="text-foreground">
-                {transaction.currency} {transaction.balanceBefore.toLocaleString()}
-              </span>
-            </div>
-            <div className="px-6 py-4 flex justify-between">
-              <span className="text-muted-foreground">Balance After</span>
-              <span className="text-foreground">
-                {transaction.currency} {transaction.balanceAfter.toLocaleString()}
-              </span>
-            </div>
-          </div>
-        </div>
 
-        {transaction.metadata && (
-          <div className="bg-card rounded-xl border border-border overflow-hidden">
-            <div className="p-6 border-b border-border">
-              <h3 className="text-lg font-bold text-foreground">Additional Details</h3>
-            </div>
-            <div className="divide-y divide-border">
-              {transaction.metadata.source && (
-                <div className="px-6 py-4 flex justify-between">
-                  <span className="text-muted-foreground">Source</span>
-                  <span className="text-foreground">{transaction.metadata.source}</span>
+            {/* Details */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {[
+                { label: 'Transaction ID', value: transaction.id },
+                { label: 'Type', value: transaction.type },
+                { label: 'Date', value: new Date(transaction.createdAt).toLocaleString() },
+                { label: 'Description', value: transaction.description || 'N/A' },
+                { label: 'Payment Method', value: transaction.paymentMethod || 'N/A' },
+                transaction.fee ? { label: 'Fee', value: `₦${transaction.fee.toLocaleString()}` } : null,
+              ].filter(Boolean).map((item, i) => (
+                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #2A1A1A' }}>
+                  <span style={{ color: '#9A8A7A', fontSize: 14 }}>{item!.label}</span>
+                  <span style={{ fontWeight: 600, fontSize: 14, textTransform: 'capitalize' }}>{item!.value}</span>
                 </div>
-              )}
-              {transaction.metadata.method && (
-                <div className="px-6 py-4 flex justify-between">
-                  <span className="text-muted-foreground">Method</span>
-                  <span className="text-foreground">{transaction.metadata.method}</span>
-                </div>
-              )}
-              {transaction.metadata.fee !== undefined && (
-                <div className="px-6 py-4 flex justify-between">
-                  <span className="text-muted-foreground">Fee</span>
-                  <span className="text-foreground">
-                    {transaction.currency} {transaction.metadata.fee}
-                  </span>
-                </div>
-              )}
+              ))}
             </div>
           </div>
         )}
-      </div>
+      </main>
+      <AppFooter />
     </div>
   );
 }

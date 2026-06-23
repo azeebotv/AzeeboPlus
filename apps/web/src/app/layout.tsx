@@ -6,7 +6,7 @@ import { WalletProvider } from '../context/WalletContext';
 import { ThemeProvider } from '../context/ThemeContext';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { QueryProvider } from '../providers/QueryProvider';
-import { ToastProvider } from '@azeebo/ui';
+import { ToastProvider } from '@/components/ToastProvider';
 import { KeyboardNavigationProvider } from '../components/KeyboardNavigationProvider';
 
 import { Inter, Montserrat } from 'next/font/google';
@@ -76,7 +76,7 @@ export const metadata: Metadata = {
 
 export const dynamic = 'force-dynamic';
 
-export default function RootLayout({ children }: { children: React.ReactNode }): JSX.Element {
+export default function RootLayout({ children }: { children: React.ReactNode }): React.JSX.Element {
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} ${montserrat.variable}`}>

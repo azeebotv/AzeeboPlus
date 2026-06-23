@@ -1,21 +1,35 @@
+'use client';
 import React from 'react';
 
 interface SkeletonProps {
+  width?: string;
+  height?: string;
+  borderRadius?: string;
   className?: string;
+  style?: React.CSSProperties;
 }
 
-export function Skeleton({ className = '' }: SkeletonProps): React.ReactElement {
-  return <div className={`animate-pulse bg-muted rounded ${className}`} />;
+export function Skeleton({ width, height, borderRadius, className = '', style }: SkeletonProps): React.ReactElement {
+  const skeletonStyle: React.CSSProperties = {
+    backgroundColor: '#2A1A1A',
+    animation: 'pulse 1.5s ease-in-out infinite',
+    ...style,
+  };
+  if (width) skeletonStyle.width = width;
+  if (height) skeletonStyle.height = height;
+  if (borderRadius) skeletonStyle.borderRadius = borderRadius;
+
+  return <div className={className} style={skeletonStyle} />;
 }
 
 export function CardSkeleton(): React.ReactElement {
   return (
-    <div className="bg-card rounded-lg overflow-hidden shadow-sm">
-      <Skeleton className="h-48 w-full rounded-none" />
-      <div className="p-4 space-y-3">
-        <Skeleton className="h-4 w-3/4" />
-        <Skeleton className="h-3 w-1/2" />
-        <Skeleton className="h-3 w-1/4" />
+    <div style={{ backgroundColor: '#1A1A1A', borderRadius: 12, overflow: 'hidden' }}>
+      <Skeleton width="100%" height="192px" borderRadius="0" />
+      <div style={{ padding: 16 }}>
+        <Skeleton width="75%" height="16px" borderRadius="4px" />
+        <div style={{ height: 12 }} />
+        <Skeleton width="50%" height="12px" borderRadius="4px" />
       </div>
     </div>
   );
@@ -23,7 +37,7 @@ export function CardSkeleton(): React.ReactElement {
 
 export function ContentGridSkeleton({ count = 6 }: { count?: number }): React.ReactElement {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 24 }}>
       {Array.from({ length: count }).map((_, i) => (
         <CardSkeleton key={i} />
       ))}
@@ -33,11 +47,12 @@ export function ContentGridSkeleton({ count = 6 }: { count?: number }): React.Re
 
 export function ProfileSkeleton(): React.ReactElement {
   return (
-    <div className="flex items-center space-x-4">
-      <Skeleton className="h-12 w-12 rounded-full" />
-      <div className="space-y-2">
-        <Skeleton className="h-4 w-32" />
-        <Skeleton className="h-3 w-24" />
+    <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+      <Skeleton width="48px" height="48px" borderRadius="50%" />
+      <div>
+        <Skeleton width="128px" height="16px" borderRadius="4px" />
+        <div style={{ height: 8 }} />
+        <Skeleton width="96px" height="12px" borderRadius="4px" />
       </div>
     </div>
   );
@@ -45,24 +60,26 @@ export function ProfileSkeleton(): React.ReactElement {
 
 export function StatCardSkeleton(): React.ReactElement {
   return (
-    <div className="bg-card rounded-lg p-6">
-      <div className="flex items-center justify-between mb-4">
-        <Skeleton className="h-4 w-24" />
-        <Skeleton className="h-10 w-10 rounded-full" />
+    <div className="az-glass" style={{ padding: 24, borderRadius: 16 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
+        <Skeleton width="96px" height="16px" borderRadius="4px" />
+        <Skeleton width="40px" height="40px" borderRadius="50%" />
       </div>
-      <Skeleton className="h-8 w-20 mb-2" />
-      <Skeleton className="h-3 w-16" />
+      <Skeleton width="80px" height="32px" borderRadius="4px" />
+      <div style={{ height: 8 }} />
+      <Skeleton width="64px" height="12px" borderRadius="4px" />
     </div>
   );
 }
 
 export function ListItemSkeleton(): React.ReactElement {
   return (
-    <div className="flex items-start space-x-4 p-4">
-      <Skeleton className="h-10 w-10 rounded-full" />
-      <div className="flex-1 space-y-2">
-        <Skeleton className="h-4 w-3/4" />
-        <Skeleton className="h-3 w-1/2" />
+    <div style={{ display: 'flex', alignItems: 'center', gap: 16, padding: 16 }}>
+      <Skeleton width="40px" height="40px" borderRadius="50%" />
+      <div style={{ flex: 1 }}>
+        <Skeleton width="75%" height="16px" borderRadius="4px" />
+        <div style={{ height: 8 }} />
+        <Skeleton width="50%" height="12px" borderRadius="4px" />
       </div>
     </div>
   );
@@ -70,12 +87,9 @@ export function ListItemSkeleton(): React.ReactElement {
 
 export function VideoPlayerSkeleton(): React.ReactElement {
   return (
-    <div className="bg-black rounded-lg overflow-hidden mb-6">
-      <div className="aspect-video flex items-center justify-center bg-black">
-        <div className="text-center text-white">
-          <Skeleton className="h-16 w-16 rounded-full mx-auto mb-4" />
-          <Skeleton className="h-4 w-32 mx-auto" />
-        </div>
+    <div style={{ backgroundColor: '#000', borderRadius: 12, overflow: 'hidden', marginBottom: 24 }}>
+      <div style={{ aspectRatio: '16/9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Skeleton width="64px" height="64px" borderRadius="50%" />
       </div>
     </div>
   );

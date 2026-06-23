@@ -1,303 +1,88 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
+import { apiFetch } from '@/lib/api';
+import AppHeader from '@/components/layout/AppHeader';
+import AppFooter from '@/components/layout/AppFooter';
 
-export default function PrivacySecurityPage(): JSX.Element {
+export default function PrivacySecurityPage(): React.JSX.Element {
+  const { isAuthenticated, user } = useAuth();
   const router = useRouter();
+  const [settings, setSettings] = useState({ isPrivate: false, showActivity: true, allowMessages: true, twoFactorEnabled: false });
+  const [isSaving, setIsSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
 
-  const [twoFactorEnabled, setTwoFactorEnabled] = useState<boolean>(false);
-  const [loginAlertsEnabled, setLoginAlertsEnabled] = useState<boolean>(true);
-  const [profileVisibility, setProfileVisibility] = useState<'public' | 'private'>('public');
-  const [activityStatusEnabled, setActivityStatusEnabled] = useState<boolean>(true);
-  const [dataSharingEnabled, setDataSharingEnabled] = useState<boolean>(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState<boolean>(false);
+  useEffect(() => {
+    if (!isAuthenticated || !user) { router.push('/auth/login'); return; }
+    loadSettings();
+  }, [isAuthenticated, user, router]);
 
-  const handleToggleTwoFactor = (): void => {
-    setTwoFactorEnabled(!twoFactorEnabled);
+  const loadSettings = async () => {
+    try {
+      const response = await apiFetch<any>('/users/privacy-settings');
+      if (response.success && response.data) setSettings(response.data as typeof settings);
+    } catch { /* ignore */ }
   };
 
-  const handleToggleLoginAlerts = (): void => {
-    setLoginAlertsEnabled(!loginAlertsEnabled);
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      await apiFetch<any>('/users/privacy-settings', { method: 'PUT', body: JSON.stringify(settings) });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch { /* ignore */ }
+    setIsSaving(false);
   };
 
-  const handleToggleProfileVisibility = (): void => {
-    setProfileVisibility(profileVisibility === 'public' ? 'private' : 'public');
-  };
+  if (!isAuthenticated || !user) return <></>;
 
-  const handleToggleActivityStatus = (): void => {
-    setActivityStatusEnabled(!activityStatusEnabled);
-  };
-
-  const handleToggleDataSharing = (): void => {
-    setDataSharingEnabled(!dataSharingEnabled);
-  };
+  const toggleItems = [
+    { key: 'isPrivate', label: 'Private Account', desc: 'Only approved followers can see your content' },
+    { key: 'showActivity', label: 'Show Activity', desc: 'Let others see your viewing activity' },
+    { key: 'allowMessages', label: 'Direct Messages', desc: 'Allow anyone to send you messages' },
+    { key: 'twoFactorEnabled', label: 'Two-Factor Authentication', desc: 'Add an extra layer of security' },
+  ];
 
   return (
-    <div className="min-h-screen bg-background py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-3xl mx-auto">
-        <div className="mb-8">
-          <button
-            onClick={() => router.back()}
-            className="text-muted-foreground hover:text-foreground mb-4 flex items-center gap-2"
-          >
-            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 19l-7-7 7-7"
-              />
-            </svg>
-            Back
+    <div style={{ backgroundColor: '#1A0A0A', minHeight: '100vh', color: '#F5F0EB' }}>
+      <AppHeader />
+      <main style={{ paddingTop: 100, paddingBottom: 60, maxWidth: 600, margin: '0 auto', padding: '100px 24px 60px' }}>
+        <div style={{ marginBottom: 32 }}>
+          <button onClick={() => router.back()} style={{ background: 'none', border: 'none', color: '#9A8A7A', cursor: 'pointer', fontSize: 14, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span>←</span> Back
           </button>
-          <h1 className="text-3xl font-bold text-foreground">Privacy & Security</h1>
+          <h1 style={{ fontSize: 28, fontWeight: 700 }}>Privacy & Security</h1>
         </div>
 
-        <div className="space-y-8">
-          <div className="bg-card p-6 rounded-lg border border-border">
-            <h2 className="text-xl font-semibold text-foreground mb-4">Security</h2>
-
-            <div className="space-y-4">
-              <div className="flex items-center justify-between py-3 border-b border-border">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 bg-accent rounded-lg flex items-center justify-center">
-                    <span className="text-xl">🔐</span>
-                  </div>
-                  <div>
-                    <h3 className="font-medium text-foreground">Two-Factor Authentication</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Add an extra layer of security to your account
-                    </p>
-                  </div>
+        <div className="az-glass" style={{ padding: 24, borderRadius: 20, marginBottom: 20 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {toggleItems.map(item => (
+              <div key={item.key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid #2A1A1A' }}>
+                <div>
+                  <p style={{ fontWeight: 600, fontSize: 15 }}>{item.label}</p>
+                  <p style={{ color: '#9A8A7A', fontSize: 13, marginTop: 2 }}>{item.desc}</p>
                 </div>
-                <button
-                  onClick={handleToggleTwoFactor}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    twoFactorEnabled ? 'bg-primary' : 'bg-muted'
-                  }`}
-                >
-                  <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                      twoFactorEnabled ? 'translate-x-6' : 'translate-x-1'
-                    }`}
-                  />
+                <button onClick={() => setSettings({ ...settings, [item.key]: !settings[item.key as keyof typeof settings] })} style={{ width: 48, height: 28, borderRadius: 14, border: 'none', cursor: 'pointer', position: 'relative', backgroundColor: settings[item.key as keyof typeof settings] ? '#E8420A' : '#2A1A1A', transition: 'background-color 0.2s', flexShrink: 0 }}>
+                  <span style={{ position: 'absolute', top: 3, left: settings[item.key as keyof typeof settings] ? 23 : 3, width: 22, height: 22, borderRadius: '50%', backgroundColor: '#fff', transition: 'left 0.2s' }} />
                 </button>
               </div>
-
-              <div className="flex items-center justify-between py-3 border-b border-border">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 bg-accent rounded-lg flex items-center justify-center">
-                    <span className="text-xl">🔑</span>
-                  </div>
-                  <div>
-                    <h3 className="font-medium text-foreground">Change Password</h3>
-                    <p className="text-sm text-muted-foreground">Update your account password</p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => router.push('/auth/reset-password')}
-                  className="text-primary hover:text-primary/90 text-sm font-medium"
-                >
-                  Change
-                </button>
-              </div>
-
-              <div className="flex items-center justify-between py-3 border-b border-border">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 bg-accent rounded-lg flex items-center justify-center">
-                    <span className="text-xl">📱</span>
-                  </div>
-                  <div>
-                    <h3 className="font-medium text-foreground">Active Sessions</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Manage your active login sessions
-                    </p>
-                  </div>
-                </div>
-                <button className="text-primary hover:text-primary/90 text-sm font-medium">
-                  Manage
-                </button>
-              </div>
-
-              <div className="flex items-center justify-between py-3">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 bg-accent rounded-lg flex items-center justify-center">
-                    <span className="text-xl">🔔</span>
-                  </div>
-                  <div>
-                    <h3 className="font-medium text-foreground">Login Alerts</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Get notified of suspicious login attempts
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={handleToggleLoginAlerts}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    loginAlertsEnabled ? 'bg-primary' : 'bg-muted'
-                  }`}
-                >
-                  <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                      loginAlertsEnabled ? 'translate-x-6' : 'translate-x-1'
-                    }`}
-                  />
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-card p-6 rounded-lg border border-border">
-            <h2 className="text-xl font-semibold text-foreground mb-4">Privacy</h2>
-
-            <div className="space-y-4">
-              <div className="flex items-center justify-between py-3 border-b border-border">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 bg-accent rounded-lg flex items-center justify-center">
-                    <span className="text-xl">👁️</span>
-                  </div>
-                  <div>
-                    <h3 className="font-medium text-foreground">Profile Visibility</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Control who can see your profile
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={handleToggleProfileVisibility}
-                  className="text-primary hover:text-primary/90 text-sm font-medium"
-                >
-                  {profileVisibility === 'public' ? 'Public' : 'Private'}
-                </button>
-              </div>
-
-              <div className="flex items-center justify-between py-3 border-b border-border">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 bg-accent rounded-lg flex items-center justify-center">
-                    <span className="text-xl">🟢</span>
-                  </div>
-                  <div>
-                    <h3 className="font-medium text-foreground">Activity Status</h3>
-                    <p className="text-sm text-muted-foreground">Show when you're active</p>
-                  </div>
-                </div>
-                <button
-                  onClick={handleToggleActivityStatus}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    activityStatusEnabled ? 'bg-primary' : 'bg-muted'
-                  }`}
-                >
-                  <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                      activityStatusEnabled ? 'translate-x-6' : 'translate-x-1'
-                    }`}
-                  />
-                </button>
-              </div>
-
-              <div className="flex items-center justify-between py-3 border-b border-border">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 bg-accent rounded-lg flex items-center justify-center">
-                    <span className="text-xl">📊</span>
-                  </div>
-                  <div>
-                    <h3 className="font-medium text-foreground">Data Sharing</h3>
-                    <p className="text-sm text-muted-foreground">Control how your data is used</p>
-                  </div>
-                </div>
-                <button
-                  onClick={handleToggleDataSharing}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    dataSharingEnabled ? 'bg-primary' : 'bg-muted'
-                  }`}
-                >
-                  <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                      dataSharingEnabled ? 'translate-x-6' : 'translate-x-1'
-                    }`}
-                  />
-                </button>
-              </div>
-
-              <div className="flex items-center justify-between py-3">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 bg-accent rounded-lg flex items-center justify-center">
-                    <span className="text-xl">🚫</span>
-                  </div>
-                  <div>
-                    <h3 className="font-medium text-foreground">Blocked Users</h3>
-                    <p className="text-sm text-muted-foreground">Manage blocked accounts</p>
-                  </div>
-                </div>
-                <button className="text-primary hover:text-primary/90 text-sm font-medium">
-                  Manage
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-card p-6 rounded-lg border border-border">
-            <h2 className="text-xl font-semibold text-foreground mb-4">Data & Privacy</h2>
-
-            <div className="space-y-4">
-              <div className="flex items-center justify-between py-3 border-b border-border">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 bg-accent rounded-lg flex items-center justify-center">
-                    <span className="text-xl">📥</span>
-                  </div>
-                  <div>
-                    <h3 className="font-medium text-foreground">Download My Data</h3>
-                    <p className="text-sm text-muted-foreground">Export all your data</p>
-                  </div>
-                </div>
-                <button className="text-primary hover:text-primary/90 text-sm font-medium">
-                  Download
-                </button>
-              </div>
-
-              <div className="flex items-center justify-between py-3">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 bg-destructive/10 rounded-lg flex items-center justify-center">
-                    <span className="text-xl">🗑️</span>
-                  </div>
-                  <div>
-                    <h3 className="font-medium text-destructive">Delete Account</h3>
-                    <p className="text-sm text-muted-foreground">Permanently delete your account</p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setShowDeleteConfirm(true)}
-                  className="text-destructive hover:text-destructive/90 text-sm font-medium"
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
 
-        {showDeleteConfirm && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-card rounded-lg p-6 max-w-md w-full">
-              <h3 className="text-xl font-semibold text-foreground mb-2">Delete Account</h3>
-              <p className="text-muted-foreground mb-6">
-                This action cannot be undone. All your data will be permanently deleted.
-              </p>
-              <div className="flex gap-4">
-                <button
-                  onClick={() => setShowDeleteConfirm(false)}
-                  className="flex-1 py-2 px-4 border border-border text-sm font-medium rounded-md text-muted-foreground hover:text-foreground hover:bg-accent"
-                >
-                  Cancel
-                </button>
-                <button className="flex-1 py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-destructive hover:bg-destructive/90">
-                  Delete Account
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
+        <button onClick={handleSave} disabled={isSaving} className="az-btn-primary" style={{ width: '100%', padding: '14px 0', borderRadius: 999, border: 'none', background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)', color: '#fff', fontWeight: 700, fontSize: 16, cursor: 'pointer', opacity: isSaving ? 0.6 : 1 }}>
+          {saved ? '✓ Saved!' : isSaving ? 'Saving...' : 'Save Settings'}
+        </button>
+
+        {/* Danger zone */}
+        <div className="az-glass" style={{ padding: 24, borderRadius: 20, marginTop: 24, border: '1px solid rgba(204,28,28,0.3)' }}>
+          <h2 style={{ fontSize: 18, fontWeight: 700, color: '#CC1C1C', marginBottom: 12 }}>Danger Zone</h2>
+          <p style={{ color: '#9A8A7A', fontSize: 14, marginBottom: 16 }}>Once you delete your account, there is no going back.</p>
+          <button style={{ padding: '10px 24px', borderRadius: 999, border: '1px solid #CC1C1C', background: 'transparent', color: '#CC1C1C', fontWeight: 600, fontSize: 14, cursor: 'pointer' }}>Delete Account</button>
+        </div>
+      </main>
+      <AppFooter />
     </div>
   );
 }

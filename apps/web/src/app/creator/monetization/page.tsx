@@ -1,302 +1,108 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { apiFetch } from '@/lib/api';
-import { webLogger } from '@/lib/logger';
+import { useAuth } from '@/context/AuthContext';
+import { api } from '@/lib/api';
+import AppHeader from '@/components/layout/AppHeader';
+import AppFooter from '@/components/layout/AppFooter';
 
-interface MonetizationSettings {
-  isMonetizationEnabled: boolean;
-  isSubscriptionEnabled: boolean;
-  subscriptionPrice: number;
-  isTipEnabled: boolean;
-  minimumTip: number;
-  isAdEnabled: boolean;
-  adRevenueShare: number;
-  payoutMethod: string;
-  bankName: string;
-  accountNumber: string;
-  accountName: string;
-}
-
-export default function MonetizationSettingsPage(): JSX.Element {
+export default function MonetizationPage(): React.JSX.Element {
+  const { isAuthenticated, user } = useAuth();
   const router = useRouter();
-  const [settings, setSettings] = useState<MonetizationSettings | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [isSaving, setIsSaving] = useState<boolean>(false);
+  const [monetization, setMonetization] = useState({ eligibility: { isEligible: false, requirements: [] as string[] }, earnings: { totalEarned: 0, pendingPayout: 0, paidOut: 0 }, settings: { enableSuperTips: false, enableSponsoredContent: false, minPayoutAmount: 5000 } });
 
   useEffect(() => {
-    loadSettings();
-  }, []);
+    if (!isAuthenticated || !user) { router.push('/auth/login'); return; }
+    loadMonetization();
+  }, [isAuthenticated, user, router]);
 
-  const loadSettings = async (): Promise<void> => {
+  const loadMonetization = async () => {
     try {
-      const result = await apiFetch<MonetizationSettings>('/v1/creator/monetization');
-
-      if (result.success && result.data) {
-        setSettings(result.data);
+      const response = await api.creator.getStats();
+      if (response.success && response.data) {
+        const d = response.data as any;
+        setMonetization({
+          eligibility: { isEligible: d.totalEarnings > 0, requirements: d.totalViews < 1000 ? ['Reach 1,000 views'] : [] },
+          earnings: { totalEarned: d.totalEarnings || 0, pendingPayout: d.pendingEarnings || 0, paidOut: 0 },
+          settings: { enableSuperTips: true, enableSponsoredContent: false, minPayoutAmount: 5000 },
+        });
       }
-    } catch (error) {
-      webLogger.error('Failed to load monetization settings', error);
-    } finally {
-      setIsLoading(false);
-    }
+    } catch { /* ignore */ }
   };
 
-  const handleSave = async (): Promise<void> => {
-    if (!settings) return;
-
-    setIsSaving(true);
-    try {
-      const result = await apiFetch('/v1/creator/monetization', {
-        method: 'PUT',
-        body: JSON.stringify(settings),
-      });
-
-      if (!result.success) {
-        throw new Error(result.message || 'Failed to update settings');
-      }
-
-      alert('Monetization settings updated successfully');
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to update settings';
-      alert(message);
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">Loading settings...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!settings) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-foreground mb-4">Failed to load settings</p>
-          <button
-            onClick={loadSettings}
-            className="px-6 py-3 bg-primary text-white rounded-lg font-semibold hover:bg-primary/90"
-          >
-            Retry
-          </button>
-        </div>
-      </div>
-    );
-  }
+  if (!isAuthenticated || !user) return <></>;
 
   return (
-    <div className="min-h-screen bg-background py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-3xl mx-auto">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <button
-              onClick={() => router.back()}
-              className="text-muted-foreground hover:text-foreground mb-2 flex items-center gap-2"
-            >
-              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 19l-7-7 7-7"
-                />
-              </svg>
-              Back
-            </button>
-            <h1 className="text-3xl font-bold text-foreground">Monetization Settings</h1>
-          </div>
-        </div>
-
-        <div className="space-y-8">
-          <div className="bg-card rounded-lg border border-border p-6">
-            <h2 className="text-xl font-bold text-foreground mb-4">General</h2>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium text-foreground">Enable Monetization</p>
-                <p className="text-sm text-muted-foreground">
-                  Turn on monetization for your content
-                </p>
-              </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={settings.isMonetizationEnabled}
-                  onChange={(e) =>
-                    setSettings({ ...settings, isMonetizationEnabled: e.target.checked })
-                  }
-                  className="sr-only peer"
-                />
-                <div className="w-11 h-6 bg-muted peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
-              </label>
-            </div>
-          </div>
-
-          <div className="bg-card rounded-lg border border-border p-6">
-            <h2 className="text-xl font-bold text-foreground mb-4">Subscriptions</h2>
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <p className="font-medium text-foreground">Enable Subscriptions</p>
-                <p className="text-sm text-muted-foreground">
-                  Allow users to subscribe to your content
-                </p>
-              </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={settings.isSubscriptionEnabled}
-                  onChange={(e) =>
-                    setSettings({ ...settings, isSubscriptionEnabled: e.target.checked })
-                  }
-                  className="sr-only peer"
-                />
-                <div className="w-11 h-6 bg-muted peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
-              </label>
-            </div>
-            {settings.isSubscriptionEnabled && (
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Subscription Price (₦)
-                </label>
-                <input
-                  type="number"
-                  value={settings.subscriptionPrice}
-                  onChange={(e) =>
-                    setSettings({ ...settings, subscriptionPrice: parseFloat(e.target.value) || 0 })
-                  }
-                  className="w-full px-4 py-2 bg-muted border border-border rounded-lg text-foreground"
-                  placeholder="Enter price"
-                />
-              </div>
-            )}
-          </div>
-
-          <div className="bg-card rounded-lg border border-border p-6">
-            <h2 className="text-xl font-bold text-foreground mb-4">Tips</h2>
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <p className="font-medium text-foreground">Enable Tips</p>
-                <p className="text-sm text-muted-foreground">Allow users to tip your content</p>
-              </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={settings.isTipEnabled}
-                  onChange={(e) => setSettings({ ...settings, isTipEnabled: e.target.checked })}
-                  className="sr-only peer"
-                />
-                <div className="w-11 h-6 bg-muted peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
-              </label>
-            </div>
-            {settings.isTipEnabled && (
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Minimum Tip (₦)
-                </label>
-                <input
-                  type="number"
-                  value={settings.minimumTip}
-                  onChange={(e) =>
-                    setSettings({ ...settings, minimumTip: parseFloat(e.target.value) || 0 })
-                  }
-                  className="w-full px-4 py-2 bg-muted border border-border rounded-lg text-foreground"
-                  placeholder="Enter minimum tip"
-                />
-              </div>
-            )}
-          </div>
-
-          <div className="bg-card rounded-lg border border-border p-6">
-            <h2 className="text-xl font-bold text-foreground mb-4">Ads</h2>
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <p className="font-medium text-foreground">Enable Ads</p>
-                <p className="text-sm text-muted-foreground">Show ads on your content</p>
-              </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={settings.isAdEnabled}
-                  onChange={(e) => setSettings({ ...settings, isAdEnabled: e.target.checked })}
-                  className="sr-only peer"
-                />
-                <div className="w-11 h-6 bg-muted peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
-              </label>
-            </div>
-            {settings.isAdEnabled && (
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Revenue Share (%)
-                </label>
-                <input
-                  type="number"
-                  value={settings.adRevenueShare}
-                  onChange={(e) =>
-                    setSettings({ ...settings, adRevenueShare: parseFloat(e.target.value) || 0 })
-                  }
-                  className="w-full px-4 py-2 bg-muted border border-border rounded-lg text-foreground"
-                  placeholder="Enter revenue share"
-                />
-              </div>
-            )}
-          </div>
-
-          <div className="bg-card rounded-lg border border-border p-6">
-            <h2 className="text-xl font-bold text-foreground mb-4">Payout Information</h2>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">Bank Name</label>
-                <input
-                  type="text"
-                  value={settings.bankName}
-                  onChange={(e) => setSettings({ ...settings, bankName: e.target.value })}
-                  className="w-full px-4 py-2 bg-muted border border-border rounded-lg text-foreground"
-                  placeholder="Enter bank name"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Account Number
-                </label>
-                <input
-                  type="text"
-                  value={settings.accountNumber}
-                  onChange={(e) => setSettings({ ...settings, accountNumber: e.target.value })}
-                  className="w-full px-4 py-2 bg-muted border border-border rounded-lg text-foreground"
-                  placeholder="Enter account number"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Account Name
-                </label>
-                <input
-                  type="text"
-                  value={settings.accountName}
-                  onChange={(e) => setSettings({ ...settings, accountName: e.target.value })}
-                  className="w-full px-4 py-2 bg-muted border border-border rounded-lg text-foreground"
-                  placeholder="Enter account name"
-                />
-              </div>
-            </div>
-          </div>
-
-          <button
-            onClick={handleSave}
-            disabled={isSaving}
-            className="w-full py-3 bg-primary text-white rounded-lg font-semibold hover:bg-primary/90 disabled:opacity-50"
-          >
-            {isSaving ? 'Saving...' : 'Save Settings'}
+    <div style={{ backgroundColor: '#1A0A0A', minHeight: '100vh', color: '#F5F0EB' }}>
+      <AppHeader />
+      <main style={{ paddingTop: 100, paddingBottom: 60, maxWidth: 800, margin: '0 auto', padding: '100px 24px 60px' }}>
+        <div style={{ marginBottom: 32 }}>
+          <button onClick={() => router.back()} style={{ background: 'none', border: 'none', color: '#9A8A7A', cursor: 'pointer', fontSize: 14, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span>←</span> Back
           </button>
+          <h1 style={{ fontSize: 28, fontWeight: 700 }}>Monetization</h1>
+          <p style={{ color: '#9A8A7A', marginTop: 4 }}>Manage your earnings and monetization settings</p>
         </div>
-      </div>
+
+        {/* Eligibility */}
+        <div className="az-glass" style={{ padding: 24, borderRadius: 20, marginBottom: 20 }}>
+          <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16 }}>Eligibility Status</h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+            <div style={{ width: 48, height: 48, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: monetization.eligibility.isEligible ? 'rgba(13,59,46,0.3)' : 'rgba(204,28,28,0.2)' }}>
+              {monetization.eligibility.isEligible ? '✅' : '⏳'}
+            </div>
+            <div>
+              <h3 style={{ fontWeight: 600 }}>{monetization.eligibility.isEligible ? 'Eligible for Monetization' : 'Not Yet Eligible'}</h3>
+              <p style={{ color: '#9A8A7A', fontSize: 13 }}>Meet all requirements to unlock earning features</p>
+            </div>
+          </div>
+          {monetization.eligibility.requirements.length > 0 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {monetization.eligibility.requirements.map((req, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, color: '#9A8A7A' }}>
+                  <span style={{ color: '#CC1C1C' }}>○</span> {req}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Earnings Overview */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 20 }}>
+          {[
+            { label: 'Total Earned', value: `₦${monetization.earnings.totalEarned.toLocaleString()}`, color: '#E8420A' },
+            { label: 'Pending Payout', value: `₦${monetization.earnings.pendingPayout.toLocaleString()}`, color: '#F59E0B' },
+            { label: 'Paid Out', value: `₦${monetization.earnings.paidOut.toLocaleString()}`, color: '#0D3B2E' },
+          ].map((item, i) => (
+            <div key={i} className="az-glass" style={{ padding: 20, borderRadius: 16, textAlign: 'center' }}>
+              <p style={{ fontSize: 13, color: '#9A8A7A', marginBottom: 8 }}>{item.label}</p>
+              <p style={{ fontSize: 22, fontWeight: 700, color: item.color }}>{item.value}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Settings */}
+        <div className="az-glass" style={{ padding: 24, borderRadius: 20 }}>
+          <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16 }}>Monetization Settings</h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {[
+              { key: 'enableSuperTips', label: 'Super Tips', desc: 'Allow viewers to send paid tips on your content' },
+              { key: 'enableSponsoredContent', label: 'Sponsored Content', desc: 'Allow brands to sponsor your content' },
+            ].map(setting => (
+              <div key={setting.key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: '1px solid #2A1A1A' }}>
+                <div>
+                  <h4 style={{ fontWeight: 600, fontSize: 15 }}>{setting.label}</h4>
+                  <p style={{ color: '#9A8A7A', fontSize: 13, marginTop: 2 }}>{setting.desc}</p>
+                </div>
+                <button onClick={() => setMonetization({ ...monetization, settings: { ...monetization.settings, [setting.key]: !monetization.settings[setting.key as keyof typeof monetization.settings] } })} style={{ width: 48, height: 28, borderRadius: 14, border: 'none', cursor: 'pointer', position: 'relative', backgroundColor: monetization.settings[setting.key as keyof typeof monetization.settings] ? '#E8420A' : '#2A1A1A', transition: 'background-color 0.2s' }}>
+                  <span style={{ position: 'absolute', top: 3, left: monetization.settings[setting.key as keyof typeof monetization.settings] ? 23 : 3, width: 22, height: 22, borderRadius: '50%', backgroundColor: '#fff', transition: 'left 0.2s' }} />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      </main>
+      <AppFooter />
     </div>
   );
 }

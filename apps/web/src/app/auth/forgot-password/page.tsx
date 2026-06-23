@@ -8,7 +8,7 @@ import { Alert, Spinner } from '@/components/auth/FormBits';
 
 const FORGOT_PASSWORD_TIMEOUT_MS = parseInt(process.env.FORGOT_PASSWORD_TIMEOUT_MS || '3000', 10);
 
-export default function ForgotPasswordPage(): JSX.Element {
+export default function ForgotPasswordPage(): React.JSX.Element {
   const [email, setEmail] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);

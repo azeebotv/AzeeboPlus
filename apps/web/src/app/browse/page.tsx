@@ -6,7 +6,7 @@ import { api } from '../../lib/api';
 import { focusNextElement, announceToScreenReader } from '../../lib/keyboard';
 import AppHeader from '../../components/layout/AppHeader';
 import AppFooter from '../../components/layout/AppFooter';
-import { Skeleton } from '@azeebo/ui';
+import { Skeleton } from '@/components/Skeleton';
 
 interface ContentItem {
   id: string;

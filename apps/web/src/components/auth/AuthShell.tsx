@@ -30,7 +30,7 @@ export default function AuthShell({
   children,
   showLogo = true,
   logoVariant = 'light',
-}: AuthShellProps): JSX.Element {
+}: AuthShellProps): React.JSX.Element {
   return (
     <div className="min-h-screen w-full flex flex-col lg:flex-row">
       {/* Left cinematic panel */}

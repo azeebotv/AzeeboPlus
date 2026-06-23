@@ -1,9 +1,9 @@
 'use client';
-import React from 'react';
-
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { api, User, ContentItem } from '../../lib/api';
 import { webLogger } from '@/lib/logger';
+import AppHeader from '@/components/layout/AppHeader';
+import AppFooter from '@/components/layout/AppFooter';
 
 interface CreatorProfile extends User {
   contentCount: number;
@@ -11,7 +11,7 @@ interface CreatorProfile extends User {
   bio?: string;
 }
 
-export default function CreatorsPage(): JSX.Element {
+export default function CreatorsPage(): React.JSX.Element {
   const [creators, setCreators] = useState<CreatorProfile[]>([]);
   const [selectedCreator, setSelectedCreator] = useState<CreatorProfile | null>(null);
   const [creatorContent, setCreatorContent] = useState<ContentItem[]>([]);
@@ -21,7 +21,6 @@ export default function CreatorsPage(): JSX.Element {
     const fetchCreators = async (): Promise<void> => {
       try {
         setIsLoading(true);
-
         const response = await api.creator.getCreators(1, 20);
         if (response.success && response.data) {
           setCreators(response.data.items);
@@ -32,14 +31,12 @@ export default function CreatorsPage(): JSX.Element {
         setIsLoading(false);
       }
     };
-
     fetchCreators();
   }, []);
 
   useEffect(() => {
     const fetchCreatorContent = async (): Promise<void> => {
       if (!selectedCreator) return;
-
       try {
         const response = await api.creator.getCreatorContent(selectedCreator.id, 1, 10);
         if (response.success && response.data) {
@@ -49,252 +46,96 @@ export default function CreatorsPage(): JSX.Element {
         webLogger.error('Failed to load creator content', error);
       }
     };
-
     fetchCreatorContent();
   }, [selectedCreator]);
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <header className="bg-white border-b border-border sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="flex items-center space-x-2">
-            <div className="h-10 w-10 bg-primary rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-xl">A</span>
-            </div>
-            <h1 className="text-2xl font-bold">Azeebo+</h1>
-          </div>
-          <nav className="hidden md:flex items-center space-x-8">
-            <a href="/" className="font-medium hover:text-primary transition-colors">
-              Home
-            </a>
-            <a href="/browse" className="font-medium hover:text-primary transition-colors">
-              Browse
-            </a>
-            <a href="/library" className="font-medium hover:text-primary transition-colors">
-              Library
-            </a>
-            <a href="/creators" className="font-medium text-primary border-b-2 border-primary pb-1">
-              Creators
-            </a>
-          </nav>
-          <div className="flex items-center space-x-4">
-            <button className="bg-primary text-white px-6 py-2 rounded-lg font-medium hover:bg-primary/90 transition-colors">
-              Sign In
-            </button>
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+      <AppHeader active="Creators" />
 
-      <main className="container mx-auto px-4 py-8">
-        <h2 className="text-3xl font-bold mb-8">Top Creators</h2>
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="mb-10 text-center">
+          <h1 className="text-3xl sm:text-4xl font-bold text-white mb-3">Top Creators</h1>
+          <p className="text-white/50 text-lg">Discover amazing African content creators</p>
+        </div>
 
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[1, 2, 3].map((item) => (
-              <div
-                key={item}
-                className="bg-card rounded-lg overflow-hidden shadow-sm animate-pulse"
-              >
-                <div className="p-6 flex flex-col items-center">
-                  <div className="h-24 w-24 rounded-full bg-muted mb-4"></div>
-                  <div className="h-4 bg-muted rounded w-3/4 mb-2"></div>
-                  <div className="h-3 bg-muted rounded w-1/2 mb-4"></div>
-                  <div className="h-8 bg-muted rounded w-full"></div>
-                </div>
+              <div key={item} className="az-glass p-6 flex flex-col items-center animate-pulse">
+                <div className="w-24 h-24 rounded-full mb-4" style={{ backgroundColor: '#2A2A2A' }} />
+                <div className="h-4 w-3/4 rounded mb-2" style={{ backgroundColor: '#2A2A2A' }} />
+                <div className="h-3 w-1/2 rounded mb-4" style={{ backgroundColor: '#2A2A2A' }} />
+                <div className="h-10 w-full rounded-full" style={{ backgroundColor: '#2A2A2A' }} />
               </div>
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {creators.map((creator) => (
-              <div
-                key={creator.id}
-                className="bg-card rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-                onClick={() => setSelectedCreator(creator)}
-              >
-                <div className="p-6 flex flex-col items-center">
-                  <div className="h-24 w-24 rounded-full overflow-hidden mb-4">
-                    <img
-                      src={creator.avatar}
-                      alt={creator.name}
-                      className="w-full h-full object-cover"
-                    />
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12" role="listbox" aria-label="Creators">
+              {creators.map((creator) => (
+                <div
+                  key={creator.id}
+                  onClick={() => setSelectedCreator(creator)}
+                  role="option"
+                  aria-selected={selectedCreator?.id === creator.id}
+                  className={`az-glass p-6 cursor-pointer transition-all hover:scale-[1.02] text-center ${
+                    selectedCreator?.id === creator.id ? 'ring-2' : ''
+                  }`}
+                  style={selectedCreator?.id === creator.id ? { boxShadow: '0 0 20px rgba(232,66,10,0.2)' } : undefined}
+                >
+                  <div
+                    className="w-24 h-24 rounded-full mx-auto mb-4 flex items-center justify-center text-3xl font-bold text-white"
+                    style={{ background: 'linear-gradient(135deg, #E8420A, #CC1C1C)' }}
+                  >
+                    {creator.name?.charAt(0) || 'C'}
                   </div>
-                  <h3 className="font-bold text-lg mb-1">{creator.name}</h3>
-                  <p className="text-muted-foreground text-sm mb-4 text-center">{creator.bio}</p>
-                  <div className="w-full flex justify-between items-center bg-muted rounded-lg p-3">
-                    <span className="text-sm font-medium">
-                      {creator.subscriberCount.toLocaleString()} followers
-                    </span>
-                    <button className="bg-primary text-white px-4 py-1 rounded-md text-sm font-medium hover:bg-primary/90 transition-colors">
-                      Follow
-                    </button>
+                  <h3 className="text-lg font-bold text-white">{creator.name}</h3>
+                  <p className="text-sm text-white/50 mb-1">{creator.email}</p>
+                  <div className="flex items-center justify-center gap-4 mt-3 text-sm">
+                    <span className="text-white/60">{creator.contentCount} videos</span>
+                    <span className="text-white/60">{creator.subscriberCount} subscribers</span>
                   </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {selectedCreator && (
-          <div className="mt-12 bg-card rounded-lg p-6">
-            <div className="flex items-start space-x-6">
-              <div className="h-20 w-20 rounded-full overflow-hidden">
-                <img
-                  src={selectedCreator.avatar}
-                  alt={selectedCreator.name}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="font-bold text-2xl">{selectedCreator.name}</h3>
-                  <button className="bg-primary text-white px-6 py-2 rounded-lg font-medium hover:bg-primary/90 transition-colors">
-                    Follow
+                  {creator.bio && (
+                    <p className="text-sm text-white/40 mt-3 line-clamp-2">{creator.bio}</p>
+                  )}
+                  <button
+                    type="button"
+                    className="w-full mt-4 py-2 rounded-full text-sm font-semibold transition-all az-btn-primary"
+                  >
+                    View Profile
                   </button>
                 </div>
-                <p className="text-muted-foreground mb-4">{selectedCreator.bio}</p>
-                <div className="flex space-x-6">
-                  <span className="text-sm font-medium">
-                    {selectedCreator.subscriberCount.toLocaleString()} followers
-                  </span>
-                  <span className="text-sm font-medium">{selectedCreator.contentCount} videos</span>
-                </div>
-              </div>
-              <button
-                onClick={() => setSelectedCreator(null)}
-                className="text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
+              ))}
             </div>
 
-            <div className="mt-8">
-              <h4 className="font-bold text-xl mb-6">Creator Content</h4>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {creatorContent.map((item: ContentItem) => (
-                  <div
-                    key={item.id}
-                    className="bg-muted rounded-lg overflow-hidden hover:shadow-md transition-shadow"
-                  >
-                    <div className="aspect-video overflow-hidden">
+            {selectedCreator && creatorContent.length > 0 && (
+              <section>
+                <h2 className="text-2xl font-bold text-white mb-6">
+                  {selectedCreator.name}&apos;s Content
+                </h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {creatorContent.map((content) => (
+                    <div key={content.id} className="az-glass overflow-hidden">
                       <img
-                        src={item.thumbnail}
-                        alt={item.title}
-                        className="w-full h-full object-cover"
+                        src={content.thumbnail}
+                        alt={content.title}
+                        className="w-full h-48 object-cover"
                       />
-                    </div>
-                    <div className="p-4">
-                      <h5 className="font-semibold mb-2">{item.title}</h5>
-                      <div className="flex items-center justify-between text-sm text-muted-foreground">
-                        <span>{item.views?.toLocaleString() || '0'} views</span>
-                        <span>{new Date(item.createdAt).toLocaleDateString()}</span>
+                      <div className="p-4">
+                        <h3 className="font-bold text-white truncate">{content.title}</h3>
+                        <p className="text-sm text-white/50 mt-1 line-clamp-2">{content.description}</p>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
+                  ))}
+                </div>
+              </section>
+            )}
+          </>
         )}
       </main>
 
-      <footer className="bg-muted border-t border-border py-12">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div>
-              <h4 className="font-bold mb-4">Azeebo+</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>
-                  <a href="#" className="hover:text-primary transition-colors">
-                    About
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-primary transition-colors">
-                    Careers
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-primary transition-colors">
-                    Press
-                  </a>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-bold mb-4">Help</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>
-                  <a href="#" className="hover:text-primary transition-colors">
-                    Support
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-primary transition-colors">
-                    FAQ
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-primary transition-colors">
-                    Contact
-                  </a>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-bold mb-4">Legal</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>
-                  <a href="#" className="hover:text-primary transition-colors">
-                    Terms
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-primary transition-colors">
-                    Privacy
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-primary transition-colors">
-                    Cookies
-                  </a>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-bold mb-4">Connect</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>
-                  <a href="#" className="hover:text-primary transition-colors">
-                    Twitter
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-primary transition-colors">
-                    Instagram
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-primary transition-colors">
-                    Facebook
-                  </a>
-                </li>
-              </ul>
-            </div>
-          </div>
-          <div className="mt-8 pt-8 border-t border-border text-center text-sm text-muted-foreground">
-            <p>© 2026 Azeebo+. All rights reserved.</p>
-          </div>
-        </div>
-      </footer>
+      <AppFooter />
     </div>
   );
 }

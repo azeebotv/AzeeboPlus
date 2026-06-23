@@ -21,7 +21,7 @@ const INTERESTS = [
 
 const GENDERS = ['Male', 'Female', 'Non-binary', 'Prefer not to say'];
 
-export default function ProfileSetupPage(): JSX.Element {
+export default function ProfileSetupPage(): React.JSX.Element {
   const router = useRouter();
   const { user, refreshUser } = useAuth();
 

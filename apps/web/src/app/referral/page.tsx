@@ -1,207 +1,123 @@
 'use client';
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/api';
-import { webLogger } from '@/lib/logger';
+import AppHeader from '@/components/layout/AppHeader';
+import AppFooter from '@/components/layout/AppFooter';
 
-interface ReferralStats {
-  referralCode: string;
-  totalReferrals: number;
-  successfulReferrals: number;
-  pendingReferrals: number;
-  totalEarnings: number;
-  commissionRate: number;
-  referralLink: string;
-}
-
-interface Referral {
-  id: string;
-  userId: string;
-  username: string;
-  displayName: string;
-  avatar: string;
-  joinedAt: string;
-  status: 'pending' | 'active' | 'rewarded';
-  earningsGenerated: number;
-}
-
-export default function ReferralPage(): JSX.Element {
-  const [stats, setStats] = useState<ReferralStats | null>(null);
-  const [referrals, setReferrals] = useState<Referral[]>([]);
+export default function ReferralPage(): React.JSX.Element {
+  const { isAuthenticated, user } = useAuth();
+  const router = useRouter();
+  const [referralData, setReferralData] = useState({ code: '', link: '', totalReferrals: 0, successfulReferrals: 0, pendingReferrals: 0, totalEarned: 0, referrals: [] as any[] });
   const [isLoading, setIsLoading] = useState(true);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
+    if (!isAuthenticated || !user) { router.push('/auth/login'); return; }
     loadReferralData();
-  }, []);
+  }, [isAuthenticated, user, router]);
 
-  const loadReferralData = async (): Promise<void> => {
+  const loadReferralData = async () => {
     try {
-      const [statsResult, referralsResult] = await Promise.all([
-        apiFetch<ReferralStats>('/v1/referral/stats'),
-        apiFetch<Referral[]>('/v1/referral/referrals'),
-      ]);
-
-      if (statsResult.success && statsResult.data) {
-        setStats(statsResult.data);
-      }
-
-      if (referralsResult.success && referralsResult.data) {
-        setReferrals(referralsResult.data);
-      }
-    } catch (error) {
-      webLogger.error('Failed to load referral data', error);
-    } finally {
-      setIsLoading(false);
-    }
+      const response = await apiFetch<any>(`/users/${user!.id}/referral`);
+      if (response.success && response.data) setReferralData(response.data as typeof referralData);
+    } catch { /* ignore */ } finally { setIsLoading(false); }
   };
 
-  const copyReferralLink = async (): Promise<void> => {
-    if (!stats) return;
-
+  const copyToClipboard = async () => {
     try {
-      await navigator.clipboard.writeText(stats.referralLink);
+      await navigator.clipboard.writeText(referralData.link);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch (error) {
-      webLogger.error('Failed to copy', error);
-    }
+    } catch { /* ignore */ }
   };
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">Loading referral data...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!stats) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-foreground mb-4">Failed to load referral data</p>
-          <button
-            onClick={loadReferralData}
-            className="px-6 py-3 bg-primary text-white rounded-lg font-semibold hover:bg-primary/90"
-          >
-            Retry
-          </button>
-        </div>
-      </div>
-    );
-  }
+  if (!isAuthenticated || !user) return <></>;
 
   return (
-    <div className="min-h-screen bg-background py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-5xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Referral Program</h1>
-          <p className="text-muted-foreground">Invite friends and earn rewards</p>
+    <div style={{ backgroundColor: '#1A0A0A', minHeight: '100vh', color: '#F5F0EB' }}>
+      <AppHeader />
+      <main style={{ paddingTop: 100, paddingBottom: 60, maxWidth: 700, margin: '0 auto', padding: '100px 24px 60px' }}>
+        <div style={{ textAlign: 'center', marginBottom: 32 }}>
+          <h1 style={{ fontSize: 28, fontWeight: 700 }}>Refer & Earn</h1>
+          <p style={{ color: '#9A8A7A', marginTop: 4 }}>Invite friends and earn rewards</p>
         </div>
 
-        <div className="bg-card rounded-lg border border-border p-8 mb-8 text-center">
-          <h2 className="text-xl font-bold text-foreground mb-4">Your Referral Code</h2>
-          <div className="flex items-center justify-center gap-4 mb-6">
-            <span className="text-4xl font-bold text-primary tracking-widest">
-              {stats.referralCode}
-            </span>
-            <button
-              onClick={copyReferralLink}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                copied ? 'bg-green-500 text-white' : 'bg-primary text-white hover:bg-primary/90'
-              }`}
-            >
-              {copied ? 'Copied!' : 'Copy'}
-            </button>
+        {isLoading ? (
+          <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}>
+            <div style={{ width: 40, height: 40, border: '3px solid #2A1A1A', borderTopColor: '#E8420A', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
           </div>
-          <div className="bg-muted rounded-lg p-4 mb-4">
-            <p className="text-sm text-muted-foreground mb-2">Your referral link</p>
-            <p className="text-foreground font-mono text-sm break-all">{stats.referralLink}</p>
-          </div>
-          <button
-            onClick={copyReferralLink}
-            className="px-8 py-3 bg-primary text-white rounded-lg font-semibold hover:bg-primary/90"
-          >
-            Share Referral Link
-          </button>
-        </div>
-
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <div className="bg-card rounded-lg border border-border p-6 text-center">
-            <p className="text-3xl font-bold text-primary">{stats.totalReferrals}</p>
-            <p className="text-sm text-muted-foreground mt-1">Total Referrals</p>
-          </div>
-          <div className="bg-card rounded-lg border border-border p-6 text-center">
-            <p className="text-3xl font-bold text-primary">{stats.successfulReferrals}</p>
-            <p className="text-sm text-muted-foreground mt-1">Successful</p>
-          </div>
-          <div className="bg-card rounded-lg border border-border p-6 text-center">
-            <p className="text-3xl font-bold text-primary">{stats.commissionRate}%</p>
-            <p className="text-sm text-muted-foreground mt-1">Commission</p>
-          </div>
-          <div className="bg-card rounded-lg border border-border p-6 text-center">
-            <p className="text-3xl font-bold text-green-500">
-              ₦{stats.totalEarnings.toLocaleString()}
-            </p>
-            <p className="text-sm text-muted-foreground mt-1">Total Earnings</p>
-          </div>
-        </div>
-
-        <div className="bg-card rounded-lg border border-border p-6">
-          <h2 className="text-xl font-bold text-foreground mb-6">Your Referrals</h2>
-          {referrals.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="text-6xl mb-4">👥</div>
-              <h3 className="text-xl font-bold text-foreground mb-2">No referrals yet</h3>
-              <p className="text-muted-foreground">Share your code to start earning</p>
+        ) : (
+          <>
+            {/* Referral code card */}
+            <div className="az-glass" style={{ padding: 32, borderRadius: 20, textAlign: 'center', marginBottom: 24, background: 'linear-gradient(135deg, rgba(232,66,10,0.15) 0%, rgba(204,28,28,0.1) 100%)' }}>
+              <p style={{ color: '#9A8A7A', fontSize: 14, marginBottom: 8 }}>Your Referral Code</p>
+              <p style={{ fontSize: 32, fontWeight: 700, color: '#E8420A', letterSpacing: 4, marginBottom: 16 }}>{referralData.code}</p>
+              <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
+                <button onClick={copyToClipboard} className="az-btn-primary" style={{ padding: '12px 32px', borderRadius: 999, border: 'none', background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)', color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>
+                  {copied ? '✓ Copied!' : 'Copy Link'}
+                </button>
+                <button onClick={() => { if (navigator.share) navigator.share({ title: 'Join Azeebo+', url: referralData.link }); }} style={{ padding: '12px 32px', borderRadius: 999, border: '1px solid #2A1A1A', background: 'transparent', color: '#9A8A7A', fontWeight: 600, fontSize: 14, cursor: 'pointer' }}>
+                  Share
+                </button>
+              </div>
             </div>
-          ) : (
-            <div className="space-y-4">
-              {referrals.map((referral) => (
-                <div
-                  key={referral.id}
-                  className="flex items-center justify-between p-4 bg-muted rounded-lg"
-                >
-                  <div className="flex items-center gap-4">
-                    <img
-                      src={referral.avatar}
-                      alt={referral.displayName}
-                      className="w-12 h-12 rounded-full"
-                    />
-                    <div>
-                      <p className="font-semibold text-foreground">{referral.displayName}</p>
-                      <p className="text-sm text-muted-foreground">
-                        Joined {new Date(referral.joinedAt).toLocaleDateString()}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <span
-                      className={`px-3 py-1 rounded-full text-sm font-medium ${
-                        referral.status === 'rewarded'
-                          ? 'bg-green-500/20 text-green-500'
-                          : referral.status === 'active'
-                            ? 'bg-primary/20 text-primary'
-                            : 'bg-yellow-500/20 text-yellow-500'
-                      }`}
-                    >
-                      {referral.status.charAt(0).toUpperCase() + referral.status.slice(1)}
-                    </span>
-                    {referral.earningsGenerated > 0 && (
-                      <span className="text-green-500 font-semibold">
-                        ₦{referral.earningsGenerated.toLocaleString()}
-                      </span>
-                    )}
-                  </div>
+
+            {/* Stats */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 24 }}>
+              {[
+                { label: 'Total Referrals', value: referralData.totalReferrals.toString(), color: '#E8420A' },
+                { label: 'Successful', value: referralData.successfulReferrals.toString(), color: '#0D3B2E' },
+                { label: 'Earned', value: `₦${referralData.totalEarned.toLocaleString()}`, color: '#F59E0B' },
+              ].map((stat, i) => (
+                <div key={i} className="az-glass" style={{ padding: 20, borderRadius: 16, textAlign: 'center' }}>
+                  <p style={{ fontSize: 13, color: '#9A8A7A', marginBottom: 8 }}>{stat.label}</p>
+                  <p style={{ fontSize: 22, fontWeight: 700, color: stat.color }}>{stat.value}</p>
                 </div>
               ))}
             </div>
-          )}
-        </div>
-      </div>
+
+            {/* How it works */}
+            <div className="az-glass" style={{ padding: 24, borderRadius: 20, marginBottom: 24 }}>
+              <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16 }}>How It Works</h2>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                {[
+                  { step: '1', text: 'Share your referral link with friends' },
+                  { step: '2', text: 'They sign up using your link' },
+                  { step: '3', text: 'Both of you earn rewards when they subscribe' },
+                ].map(item => (
+                  <div key={item.step} style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                    <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 14, flexShrink: 0 }}>{item.step}</div>
+                    <p style={{ fontSize: 14, color: '#D4C8B8' }}>{item.text}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Referral list */}
+            {referralData.referrals.length > 0 && (
+              <div className="az-glass" style={{ padding: 24, borderRadius: 20 }}>
+                <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16 }}>Your Referrals</h2>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {referralData.referrals.map((ref: any, i: number) => (
+                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid #2A1A1A' }}>
+                      <div>
+                        <p style={{ fontWeight: 600, fontSize: 14 }}>{ref.username || ref.email}</p>
+                        <p style={{ color: '#9A8A7A', fontSize: 12 }}>{new Date(ref.joinedAt || ref.createdAt).toLocaleDateString()}</p>
+                      </div>
+                      <span style={{ padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 600, backgroundColor: ref.status === 'completed' ? 'rgba(13,59,46,0.2)' : 'rgba(245,158,11,0.2)', color: ref.status === 'completed' ? '#0D3B2E' : '#F59E0B' }}>
+                        {ref.status}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
+        )}
+      </main>
+      <AppFooter />
     </div>
   );
 }

@@ -1,138 +1,92 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { apiFetch } from '@/lib/api';
-import { webLogger } from '@/lib/logger';
+import { useAuth } from '@/context/AuthContext';
+import { api } from '@/lib/api';
+import AppHeader from '@/components/layout/AppHeader';
+import AppFooter from '@/components/layout/AppFooter';
 
-interface PublishedItem {
+interface PublishedContent {
   id: string;
   title: string;
+  description?: string;
   thumbnail: string;
+  type: string;
+  duration?: number;
   views: number;
   likes: number;
-  earnings: number;
   publishedAt: string;
-  type: 'video' | 'image' | 'audio';
+  status: string;
 }
 
-export default function PublishedContentPage(): JSX.Element {
+export default function PublishedPage(): React.JSX.Element {
+  const { isAuthenticated, user } = useAuth();
   const router = useRouter();
-  const [content, setContent] = useState<PublishedItem[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [content, setContent] = useState<PublishedContent[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    if (!isAuthenticated || !user) { router.push('/auth/login'); return; }
     loadContent();
-  }, []);
+  }, [isAuthenticated, user, router]);
 
-  const loadContent = async (): Promise<void> => {
+  const loadContent = async () => {
     try {
-      const result = await apiFetch<PublishedItem[]>('/v1/creator/published');
-
-      if (result.success && result.data) {
-        setContent(result.data);
+      const response = await api.content.getMyContent({ status: 'published' });
+      if (response.success && response.data) {
+        const items = Array.isArray(response.data) ? response.data : (response.data as any).items || [];
+        setContent(items as PublishedContent[]);
       }
-    } catch (error) {
-      webLogger.error('Failed to load published content', error);
-    } finally {
-      setIsLoading(false);
-    }
+    } catch { /* ignore */ } finally { setIsLoading(false); }
   };
 
-  const getTypeIcon = (type: string): string => {
-    switch (type) {
-      case 'video':
-        return '🎥';
-      case 'image':
-        return '📷';
-      case 'audio':
-        return '🎵';
-      default:
-        return '📄';
-    }
-  };
-
-  const formatDate = (dateString: string): string => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    });
-  };
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">Loading published content...</p>
-        </div>
-      </div>
-    );
-  }
+  if (!isAuthenticated || !user) return <></>;
 
   return (
-    <div className="min-h-screen bg-background py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <button
-              onClick={() => router.back()}
-              className="text-muted-foreground hover:text-foreground mb-2 flex items-center gap-2"
-            >
-              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 19l-7-7 7-7"
-                />
-              </svg>
-              Back
-            </button>
-            <h1 className="text-3xl font-bold text-foreground">Published Content</h1>
-          </div>
+    <div style={{ backgroundColor: '#1A0A0A', minHeight: '100vh', color: '#F5F0EB' }}>
+      <AppHeader />
+      <main style={{ paddingTop: 100, paddingBottom: 60, maxWidth: 1000, margin: '0 auto', padding: '100px 24px 60px' }}>
+        <div style={{ marginBottom: 32 }}>
+          <button onClick={() => router.back()} style={{ background: 'none', border: 'none', color: '#9A8A7A', cursor: 'pointer', fontSize: 14, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span>←</span> Back
+          </button>
+          <h1 style={{ fontSize: 28, fontWeight: 700 }}>Published Content</h1>
+          <p style={{ color: '#9A8A7A', marginTop: 4 }}>Manage your live content</p>
         </div>
 
-        {content.length === 0 ? (
-          <div className="text-center py-20">
-            <div className="text-6xl mb-4">📢</div>
-            <h2 className="text-2xl font-bold text-foreground mb-2">No published content</h2>
-            <p className="text-muted-foreground">Your published content will appear here</p>
+        {isLoading ? (
+          <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}>
+            <div style={{ width: 40, height: 40, border: '3px solid #2A1A1A', borderTopColor: '#E8420A', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+          </div>
+        ) : content.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '60px 0' }}>
+            <div style={{ fontSize: 48, marginBottom: 16 }}>🎬</div>
+            <h3 style={{ fontSize: 18, marginBottom: 8 }}>No published content</h3>
+            <p style={{ color: '#9A8A7A' }}>Your published videos will appear here</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {content.map((item) => (
-              <div
-                key={item.id}
-                onClick={() => router.push(`/creator/content-detail?id=${item.id}`)}
-                className="bg-card rounded-lg border border-border overflow-hidden cursor-pointer hover:shadow-lg transition-shadow"
-              >
-                <div className="relative">
-                  <img src={item.thumbnail} alt={item.title} className="w-full h-40 object-cover" />
-                  <div className="absolute top-2 right-2 bg-black/50 rounded-full w-8 h-8 flex items-center justify-center">
-                    <span>{getTypeIcon(item.type)}</span>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16 }}>
+            {content.map(item => (
+              <div key={item.id} className="az-glass" style={{ borderRadius: 16, overflow: 'hidden' }}>
+                {item.thumbnail && (
+                  <img src={item.thumbnail} alt="" style={{ width: '100%', height: 160, objectFit: 'cover' }} />
+                )}
+                <div style={{ padding: 16 }}>
+                  <h3 style={{ fontWeight: 600, fontSize: 15, marginBottom: 8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.title}</h3>
+                  <div style={{ display: 'flex', gap: 16, fontSize: 13, color: '#9A8A7A' }}>
+                    <span>{(item.views || 0).toLocaleString()} views</span>
+                    <span>{(item.likes || 0).toLocaleString()} likes</span>
                   </div>
-                </div>
-                <div className="p-4">
-                  <h3 className="font-semibold text-foreground mb-2 truncate">{item.title}</h3>
-                  <div className="flex items-center justify-between text-sm text-muted-foreground mb-2">
-                    <span>{item.views.toLocaleString()} views</span>
-                    <span>{item.likes.toLocaleString()} likes</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-green-500">
-                      ₦{item.earnings.toLocaleString()}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      {formatDate(item.publishedAt)}
-                    </span>
-                  </div>
+                  <p style={{ fontSize: 12, color: '#6B5A4A', marginTop: 8 }}>
+                    Published {new Date(item.publishedAt).toLocaleDateString()}
+                  </p>
                 </div>
               </div>
             ))}
           </div>
         )}
-      </div>
+      </main>
+      <AppFooter />
     </div>
   );
 }

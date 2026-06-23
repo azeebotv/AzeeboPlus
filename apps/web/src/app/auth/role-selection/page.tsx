@@ -37,7 +37,7 @@ const ROLES: {
   },
 ];
 
-export default function RoleSelectionPage(): JSX.Element {
+export default function RoleSelectionPage(): React.JSX.Element {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [active, setActive] = useState<Role | null>(null);

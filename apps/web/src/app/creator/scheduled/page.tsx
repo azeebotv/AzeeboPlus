@@ -1,148 +1,95 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { apiFetch } from '@/lib/api';
-import { webLogger } from '@/lib/logger';
+import { useAuth } from '@/context/AuthContext';
+import { api } from '@/lib/api';
+import AppHeader from '@/components/layout/AppHeader';
+import AppFooter from '@/components/layout/AppFooter';
 
-interface ScheduledPost {
+interface ScheduledContent {
   id: string;
   title: string;
   thumbnail: string;
-  scheduledFor: string;
-  type: 'video' | 'image' | 'audio';
-  status: 'scheduled' | 'processing' | 'failed';
+  type: string;
+  scheduledAt: string;
+  status: string;
 }
 
-export default function ScheduledPostsPage(): JSX.Element {
+export default function ScheduledPage(): React.JSX.Element {
+  const { isAuthenticated, user } = useAuth();
   const router = useRouter();
-  const [posts, setPosts] = useState<ScheduledPost[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [scheduled, setScheduled] = useState<ScheduledContent[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    loadPosts();
-  }, []);
+    if (!isAuthenticated || !user) { router.push('/auth/login'); return; }
+    loadScheduled();
+  }, [isAuthenticated, user, router]);
 
-  const loadPosts = async (): Promise<void> => {
+  const loadScheduled = async () => {
     try {
-      const result = await apiFetch<ScheduledPost[]>('/v1/creator/scheduled');
-
-      if (result.success && result.data) {
-        setPosts(result.data);
+      const response = await api.content.getMyContent({ status: 'scheduled' });
+      if (response.success && response.data) {
+        const items = Array.isArray(response.data) ? response.data : (response.data as any).items || [];
+        setScheduled(items as ScheduledContent[]);
       }
-    } catch (error) {
-      webLogger.error('Failed to load scheduled posts', error);
-    } finally {
-      setIsLoading(false);
-    }
+    } catch { /* ignore */ } finally { setIsLoading(false); }
   };
 
-  const getTypeIcon = (type: string): string => {
-    switch (type) {
-      case 'video':
-        return '🎥';
-      case 'image':
-        return '📷';
-      case 'audio':
-        return '🎵';
-      default:
-        return '📄';
-    }
+  const handleCancel = async (id: string) => {
+    if (!confirm('Cancel this scheduled content?')) return;
+    try {
+      await api.content.updateContent(id, { status: 'draft' } as any);
+      setScheduled(scheduled.filter(s => s.id !== id));
+    } catch { /* ignore */ }
   };
 
-  const getStatusColor = (status: string): string => {
-    switch (status) {
-      case 'scheduled':
-        return 'text-green-500';
-      case 'processing':
-        return 'text-yellow-500';
-      case 'failed':
-        return 'text-red-500';
-      default:
-        return 'text-gray-500';
-    }
-  };
-
-  const formatDateTime = (dateString: string): string => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">Loading scheduled posts...</p>
-        </div>
-      </div>
-    );
-  }
+  if (!isAuthenticated || !user) return <></>;
 
   return (
-    <div className="min-h-screen bg-background py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-5xl mx-auto">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <button
-              onClick={() => router.back()}
-              className="text-muted-foreground hover:text-foreground mb-2 flex items-center gap-2"
-            >
-              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 19l-7-7 7-7"
-                />
-              </svg>
-              Back
-            </button>
-            <h1 className="text-3xl font-bold text-foreground">Scheduled Posts</h1>
-          </div>
+    <div style={{ backgroundColor: '#1A0A0A', minHeight: '100vh', color: '#F5F0EB' }}>
+      <AppHeader />
+      <main style={{ paddingTop: 100, paddingBottom: 60, maxWidth: 1000, margin: '0 auto', padding: '100px 24px 60px' }}>
+        <div style={{ marginBottom: 32 }}>
+          <button onClick={() => router.back()} style={{ background: 'none', border: 'none', color: '#9A8A7A', cursor: 'pointer', fontSize: 14, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span>←</span> Back
+          </button>
+          <h1 style={{ fontSize: 28, fontWeight: 700 }}>Scheduled Content</h1>
+          <p style={{ color: '#9A8A7A', marginTop: 4 }}>Content queued for automatic publishing</p>
         </div>
 
-        {posts.length === 0 ? (
-          <div className="text-center py-20">
-            <div className="text-6xl mb-4">📅</div>
-            <h2 className="text-2xl font-bold text-foreground mb-2">No scheduled posts</h2>
-            <p className="text-muted-foreground">Your scheduled posts will appear here</p>
+        {isLoading ? (
+          <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}>
+            <div style={{ width: 40, height: 40, border: '3px solid #2A1A1A', borderTopColor: '#E8420A', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+          </div>
+        ) : scheduled.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '60px 0' }}>
+            <div style={{ fontSize: 48, marginBottom: 16 }}>⏰</div>
+            <h3 style={{ fontSize: 18, marginBottom: 8 }}>No scheduled content</h3>
+            <p style={{ color: '#9A8A7A' }}>Schedule content to have it go live automatically</p>
           </div>
         ) : (
-          <div className="space-y-4">
-            {posts.map((post) => (
-              <div
-                key={post.id}
-                onClick={() => router.push(`/creator/content-detail?id=${post.id}`)}
-                className="bg-card rounded-lg border border-border overflow-hidden flex cursor-pointer hover:shadow-lg transition-shadow"
-              >
-                <img src={post.thumbnail} alt={post.title} className="w-40 h-40 object-cover" />
-                <div className="flex-1 p-4">
-                  <div className="flex items-start justify-between mb-2">
-                    <div>
-                      <h3 className="text-lg font-semibold text-foreground">{post.title}</h3>
-                      <p className="text-sm text-muted-foreground">{getTypeIcon(post.type)}</p>
-                    </div>
-                    <span className={`text-sm font-medium ${getStatusColor(post.status)}`}>
-                      {post.status}
-                    </span>
-                  </div>
-                  <div className="mb-4">
-                    <p className="text-sm text-muted-foreground">Scheduled for:</p>
-                    <p className="text-sm font-medium text-foreground">
-                      {formatDateTime(post.scheduledFor)}
-                    </p>
-                  </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {scheduled.map(item => (
+              <div key={item.id} className="az-glass" style={{ display: 'flex', alignItems: 'center', gap: 16, padding: 16, borderRadius: 16 }}>
+                {item.thumbnail && (
+                  <img src={item.thumbnail} alt="" style={{ width: 120, height: 68, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }} />
+                )}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <h3 style={{ fontWeight: 600, fontSize: 16, marginBottom: 4 }}>{item.title}</h3>
+                  <p style={{ color: '#9A8A7A', fontSize: 13 }}>
+                    Scheduled for {new Date(item.scheduledAt).toLocaleString()}
+                  </p>
                 </div>
+                <button onClick={() => handleCancel(item.id)} style={{ padding: '8px 20px', borderRadius: 999, border: '1px solid #CC1C1C', background: 'transparent', color: '#CC1C1C', fontWeight: 500, fontSize: 14, cursor: 'pointer' }}>
+                  Cancel
+                </button>
               </div>
             ))}
           </div>
         )}
-      </div>
+      </main>
+      <AppFooter />
     </div>
   );
 }

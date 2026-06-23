@@ -1,442 +1,96 @@
 'use client';
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
 import { api } from '@/lib/api';
-import type { Transaction } from '@/lib/api';
-import { webLogger } from '@/lib/logger';
-import { Button, Card, Skeleton, Badge } from '@azeebo/ui';
-import { colors } from '@azeebo/design-tokens';
-import Link from 'next/link';
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from 'recharts';
+import AppHeader from '@/components/layout/AppHeader';
+import AppFooter from '@/components/layout/AppFooter';
 
-export default function EarningsPage(): JSX.Element {
-  const [earnings, setEarnings] = useState<{
-    totalEarnings: number;
-    pendingEarnings: number;
-    withdrawableBalance: number;
-    withdrawableChangePercentage: number;
-    avgEarningPerContent: number;
-    avgEarningChangePercentage: number;
-    earningsTrend: { date: string; amount: number }[];
-  } | null>(null);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
+export default function DashboardEarningsPage(): React.JSX.Element {
+  const { isAuthenticated, user } = useAuth();
+  const router = useRouter();
+  const [earnings, setEarnings] = useState({ balance: 0, totalEarned: 0, pendingPayout: 0, paidOut: 0, recentTransactions: [] as any[] });
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d' | 'all'>('30d');
 
   useEffect(() => {
-    let cancelled = false;
+    if (!isAuthenticated || !user) { router.push('/auth/login'); return; }
+    loadEarnings();
+  }, [isAuthenticated, user, router]);
 
-    async function fetchEarnings() {
-      try {
-        setIsLoading(true);
-        setError(null);
-
-        const [earningsResponse, transactionsResponse] = await Promise.all([
-          api.wallet.getEarnings({ range: timeRange }),
-          api.wallet.getTransactions(1, 20),
-        ]);
-
-        if (cancelled) return;
-
-        if (earningsResponse.success && transactionsResponse.success) {
-          setEarnings(earningsResponse.data ?? null);
-          setTransactions(transactionsResponse.data?.items || []);
-        } else {
-          const msg = !earningsResponse.success
-            ? earningsResponse.message
-            : transactionsResponse.message;
-          setError(msg || 'Failed to load earnings');
-          webLogger.error('Failed to load creator earnings', {
-            earningsError: earningsResponse.message,
-            transactionsError: transactionsResponse.message,
-          });
-        }
-      } catch (err) {
-        if (cancelled) return;
-        const message = err instanceof Error ? err.message : 'An unexpected error occurred';
-        setError(message);
-        webLogger.error('Failed to load creator earnings', { error: message });
-      } finally {
-        if (!cancelled) setIsLoading(false);
+  const loadEarnings = async () => {
+    try {
+      const response = await api.creator.getStats();
+      if (response.success && response.data) {
+        const d = response.data as any;
+        setEarnings({ balance: d.totalEarnings || 0, totalEarned: d.totalEarnings || 0, pendingPayout: d.pendingEarnings || 0, paidOut: 0, recentTransactions: [] });
       }
-    }
+    } catch { /* ignore */ } finally { setIsLoading(false); }
+  };
 
-    fetchEarnings();
-    return () => {
-      cancelled = true;
-    };
-  }, [timeRange]);
-
-  if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold" style={{ color: colors.text.primary }}>
-            Earnings
-          </h2>
-          <div className="flex items-center gap-3">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setTimeRange('7d')}
-              disabled={timeRange === '7d'}
-            >
-              7 Days
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setTimeRange('30d')}
-              disabled={timeRange === '30d'}
-            >
-              30 Days
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setTimeRange('90d')}
-              disabled={timeRange === '90d'}
-            >
-              90 Days
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setTimeRange('all')}
-              disabled={timeRange === 'all'}
-            >
-              All Time
-            </Button>
-          </div>
-        </div>
-
-        <div className="grid gap-4">
-          <div className="grid grid-cols-1 md:grid-cols-3">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <Card key={i} padding="none">
-                <Skeleton height="120px" />
-              </Card>
-            ))}
-          </div>
-
-          <div className="h-96">
-            <Card padding="none">
-              <Skeleton height="90%" />
-            </Card>
-          </div>
-
-          <div className="space-y-4">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <Card key={i} padding="none">
-                <Skeleton height="80px" />
-                <Skeleton width="60%" height="20px" className="mt-3" />
-              </Card>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold" style={{ color: colors.text.primary }}>
-            Earnings
-          </h2>
-          <div className="flex items-center gap-3">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setTimeRange('7d')}
-              disabled={timeRange === '7d'}
-            >
-              7 Days
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setTimeRange('30d')}
-              disabled={timeRange === '30d'}
-            >
-              30 Days
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setTimeRange('90d')}
-              disabled={timeRange === '90d'}
-            >
-              90 Days
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setTimeRange('all')}
-              disabled={timeRange === 'all'}
-            >
-              All Time
-            </Button>
-          </div>
-        </div>
-
-        <div className="text-center py-8">
-          <p className="text-lg" style={{ color: colors.text.secondary }}>
-            {error}
-          </p>
-          <Button variant="primary" onClick={() => window.location.reload()}>
-            Retry
-          </Button>
-        </div>
-      </div>
-    );
-  }
+  if (!isAuthenticated || !user) return <></>;
 
   return (
-    <div className="space-y-6">
-      {/* Header with time range selector */}
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-bold" style={{ color: colors.text.primary }}>
-          Earnings
-        </h2>
-        <div className="flex items-center gap-3">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setTimeRange('7d')}
-            disabled={timeRange === '7d'}
-          >
-            7 Days
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setTimeRange('30d')}
-            disabled={timeRange === '30d'}
-          >
-            30 Days
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setTimeRange('90d')}
-            disabled={timeRange === '90d'}
-          >
-            90 Days
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setTimeRange('all')}
-            disabled={timeRange === 'all'}
-          >
-            All Time
-          </Button>
+    <div style={{ backgroundColor: '#1A0A0A', minHeight: '100vh', color: '#F5F0EB' }}>
+      <AppHeader />
+      <main style={{ paddingTop: 100, paddingBottom: 60, maxWidth: 900, margin: '0 auto', padding: '100px 24px 60px' }}>
+        <div style={{ marginBottom: 32 }}>
+          <h1 style={{ fontSize: 28, fontWeight: 700 }}>Earnings</h1>
+          <p style={{ color: '#9A8A7A', marginTop: 4 }}>Track your revenue and payouts</p>
         </div>
-      </div>
 
-      {/* Stats Cards */}
-      <div className="grid gap-4">
-        <div className="grid grid-cols-1 md:grid-cols-3">
-          <Card padding="none">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-medium" style={{ color: colors.text.primary }}>
-                  Total Earnings
-                </h3>
-                <Badge variant="outline" className="text-xs">
-                  {timeRange === '7d'
-                    ? 'Weekly'
-                    : timeRange === '30d'
-                      ? 'Monthly'
-                      : timeRange === '90d'
-                        ? 'Quarterly'
-                        : 'All Time'}
-                </Badge>
-              </div>
-              <p className="text-3xl font-bold" style={{ color: colors.text.primary }}>
-                ₦{earnings?.totalEarnings?.toLocaleString() || '0'}
-              </p>
-              <p className="text-sm text-gray-500">
-                {earnings?.pendingEarnings?.toLocaleString() || '0'} pending withdrawal
-              </p>
-            </div>
-          </Card>
-
-          <Card padding="none">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-medium" style={{ color: colors.text.primary }}>
-                  Withdrawable Balance
-                </h3>
-                <Badge variant="outline" className="text-xs">
-                  {timeRange === '7d'
-                    ? 'Weekly'
-                    : timeRange === '30d'
-                      ? 'Monthly'
-                      : timeRange === '90d'
-                        ? 'Quarterly'
-                        : 'All Time'}
-                </Badge>
-              </div>
-              <p className="text-3xl font-bold" style={{ color: colors.text.primary }}>
-                ₦{earnings?.withdrawableBalance?.toLocaleString() || '0'}
-              </p>
-              <p className="text-sm text-gray-500">
-                {earnings?.withdrawableChangePercentage?.toFixed(1) || 0}% vs previous period
-              </p>
-            </div>
-          </Card>
-
-          <Card padding="none">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-medium" style={{ color: colors.text.primary }}>
-                  Average Earning per Content
-                </h3>
-                <Badge variant="outline" className="text-xs">
-                  {timeRange === '7d'
-                    ? 'Weekly'
-                    : timeRange === '30d'
-                      ? 'Monthly'
-                      : timeRange === '90d'
-                        ? 'Quarterly'
-                        : 'All Time'}
-                </Badge>
-              </div>
-              <p className="text-3xl font-bold" style={{ color: colors.text.primary }}>
-                ₦{earnings?.avgEarningPerContent?.toLocaleString() || '0'}
-              </p>
-              <p className="text-sm text-gray-500">
-                {earnings?.avgEarningChangePercentage?.toFixed(1) || 0}% vs previous period
-              </p>
-            </div>
-          </Card>
-        </div>
-      </div>
-
-      {/* Earnings Trend Chart */}
-      <Card padding="none">
-        <div className="p-6">
-          <h3 className="text-lg font-bold mb-4" style={{ color: colors.text.primary }}>
-            Earnings Trend
-          </h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={earnings?.earningsTrend || []}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="date" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Bar dataKey="amount" fill="#10b981" />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </Card>
-
-      {/* Recent Transactions */}
-      <Card padding="none">
-        <div className="p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-bold" style={{ color: colors.text.primary }}>
-              Recent Transactions
-            </h3>
-            <Link
-              href="/creators/wallet/transactions"
-              className="text-sm text-primary-600 hover:underline"
-            >
-              View All
-            </Link>
+        {isLoading ? (
+          <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}>
+            <div style={{ width: 40, height: 40, border: '3px solid #2A1A1A', borderTopColor: '#E8420A', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
           </div>
-
-          {transactions.length > 0 ? (
-            <table className="min-w-full">
-              <thead>
-                <tr>
-                  <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Date
-                  </th>
-                  <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Description
-                  </th>
-                  <th className="text-right py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Amount (₦)
-                  </th>
-                  <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {transactions.map((tx) => (
-                  <tr key={tx.id}>
-                    <td className="py-3 px-4 text-sm">
-                      {new Date(tx.createdAt).toLocaleDateString()}
-                    </td>
-                    <td className="py-3 px-4">
-                      <div className="flex items-center gap-2">
-                        <svg
-                          className={
-                            tx.type === 'credit' ? 'h-4 w-4 text-green-500' : 'h-4 w-4 text-red-500'
-                          }
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d={
-                              tx.type === 'credit'
-                                ? 'M12 8v4l3 3'
-                                : 'M12 16V8m0 0l-3-3m3 3-3-3m3 3V8'
-                            }
-                          />
-                        </svg>
-                        {tx.description}
-                      </div>
-                    </td>
-                    <td className="py-3 px-4 text-sm text-right font-medium">
-                      {tx.type === 'credit'
-                        ? `+${tx.amount?.toLocaleString() || '0'}`
-                        : `-${tx.amount?.toLocaleString() || '0'}`}
-                    </td>
-                    <td className="py-3 px-4 text-sm">
-                      <Badge
-                        variant={
-                          tx.status === 'completed'
-                            ? 'success'
-                            : tx.status === 'pending'
-                              ? 'warning'
-                              : 'error'
-                        }
-                        className="text-xs"
-                      >
-                        {tx.status}
-                      </Badge>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          ) : (
-            <div className="text-center py-8">
-              <p className="text-gray-500">No transactions yet</p>
+        ) : (
+          <>
+            {/* Balance card */}
+            <div className="az-glass" style={{ padding: 32, borderRadius: 20, marginBottom: 24, background: 'linear-gradient(135deg, rgba(232,66,10,0.15) 0%, rgba(204,28,28,0.1) 100%)' }}>
+              <p style={{ color: '#9A8A7A', fontSize: 14, marginBottom: 8 }}>Available Balance</p>
+              <p style={{ fontSize: 36, fontWeight: 700, color: '#E8420A' }}>₦{earnings.balance.toLocaleString()}</p>
+              <div style={{ display: 'flex', gap: 12, marginTop: 16 }}>
+                <a href="/wallet/withdraw" style={{ padding: '10px 24px', borderRadius: 999, background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)', color: '#fff', fontWeight: 600, fontSize: 14, textDecoration: 'none' }}>Withdraw</a>
+                <a href="/wallet" style={{ padding: '10px 24px', borderRadius: 999, border: '1px solid #2A1A1A', background: 'transparent', color: '#9A8A7A', fontWeight: 600, fontSize: 14, textDecoration: 'none' }}>View Wallet</a>
+              </div>
             </div>
-          )}
-        </div>
-      </Card>
+
+            {/* Stats */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 24 }}>
+              {[
+                { label: 'Total Earned', value: `₦${earnings.totalEarned.toLocaleString()}`, color: '#E8420A' },
+                { label: 'Pending', value: `₦${earnings.pendingPayout.toLocaleString()}`, color: '#F59E0B' },
+                { label: 'Paid Out', value: `₦${earnings.paidOut.toLocaleString()}`, color: '#0D3B2E' },
+              ].map((stat, i) => (
+                <div key={i} className="az-glass" style={{ padding: 20, borderRadius: 16, textAlign: 'center' }}>
+                  <p style={{ fontSize: 13, color: '#9A8A7A', marginBottom: 8 }}>{stat.label}</p>
+                  <p style={{ fontSize: 20, fontWeight: 700, color: stat.color }}>{stat.value}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Recent transactions */}
+            <div className="az-glass" style={{ padding: 24, borderRadius: 20 }}>
+              <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16 }}>Recent Transactions</h2>
+              {earnings.recentTransactions.length === 0 ? (
+                <p style={{ color: '#9A8A7A', textAlign: 'center', padding: 20 }}>No transactions yet</p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {earnings.recentTransactions.map((tx: any, i: number) => (
+                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: i < earnings.recentTransactions.length - 1 ? '1px solid #2A1A1A' : 'none' }}>
+                      <div>
+                        <p style={{ fontWeight: 600, fontSize: 14 }}>{tx.description || 'Earning'}</p>
+                        <p style={{ color: '#9A8A7A', fontSize: 12 }}>{new Date(tx.date || tx.createdAt).toLocaleDateString()}</p>
+                      </div>
+                      <span style={{ fontWeight: 700, color: '#0D3B2E' }}>+₦{(tx.amount || 0).toLocaleString()}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </>
+        )}
+      </main>
+      <AppFooter />
     </div>
   );
 }

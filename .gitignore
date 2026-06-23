@@ -19,6 +19,7 @@ logs/
 # IDE files
 .vscode/
 .idea/
+.logs/
 # Stale backups from the dockerfile fix
 *.bak
 Dockerfile.bak

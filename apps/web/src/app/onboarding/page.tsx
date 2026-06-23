@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useUniverses } from '@/hooks/useDatabase';
@@ -31,7 +31,7 @@ const CATEGORY_CARDS: CategoryCard[] = [
   { category: 'Creators', sub: 'Vloggers', descriptor: 'Live Stream', emoji: '📡', side: 'right' },
 ];
 
-export default function OnboardingPage(): JSX.Element {
+export default function OnboardingPage(): React.JSX.Element {
   const router = useRouter();
   const { universes, isLoading: universesLoading } = useUniverses();
   const [step, setStep] = useState<1 | 2>(1);
@@ -62,7 +62,7 @@ export default function OnboardingPage(): JSX.Element {
     const leftCards = CATEGORY_CARDS.filter((c) => c.side === 'left');
     const rightCards = CATEGORY_CARDS.filter((c) => c.side === 'right');
 
-    const renderCard = (c: CategoryCard, index: number): JSX.Element => (
+    const renderCard = (c: CategoryCard, index: number): React.JSX.Element => (
       <div
         key={c.category}
         className="az-glass flex items-center gap-3 px-3 py-3"

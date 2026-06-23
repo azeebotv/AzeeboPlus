@@ -1,196 +1,79 @@
 'use client';
 import React, { useState, useEffect } from 'react';
+import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/api';
-import { webLogger } from '@/lib/logger';
+import AdminLayout from '@/components/layout/AdminLayout';
 
-interface AuditLog {
-  id: string;
-  actor: string;
-  actorRole: string;
-  action: string;
-  resource: string;
-  resourceId: string;
-  timestamp: string;
-  result: 'success' | 'failure';
-  ipAddress: string;
-  userAgent: string;
-  details: string;
-}
-
-export default function AuditLogsPage(): JSX.Element {
-  const [logs, setLogs] = useState<AuditLog[]>([]);
+export default function AdminAuditLogsPage(): React.JSX.Element {
+  const { isAuthenticated, user } = useAuth();
+  const [logs, setLogs] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [filter, setFilter] = useState<string>('all');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
+  const [filter, setFilter] = useState('all');
 
   useEffect(() => {
+    if (!isAuthenticated || !user || user.role !== 'admin') return;
     loadLogs();
-  }, [filter, page]);
+  }, [isAuthenticated, user, filter]);
 
-  const loadLogs = async (): Promise<void> => {
+  const loadLogs = async () => {
+    setIsLoading(true);
     try {
-      const params = new URLSearchParams({
-        page: page.toString(),
-        limit: '50',
-        ...(filter !== 'all' && { action: filter }),
-        ...(searchQuery && { search: searchQuery }),
-      });
-
-      const result = await apiFetch<{ logs: AuditLog[]; hasMore: boolean }>(
-        `/api/v1/admin/audit-logs?${params}`
-      );
-
-      if (result.success && result.data) {
-        if (page === 1) {
-          setLogs(result.data.logs);
-        } else {
-          setLogs((prev) => [...prev, ...result.data!.logs]);
-        }
-        setHasMore(result.data.hasMore);
+      const params = new URLSearchParams();
+      if (filter !== 'all') params.set('category', filter);
+      const response = await apiFetch<any>(`/admin/audit-logs?${params.toString()}`);
+      if (response.success && response.data) {
+        const data = response.data as any;
+        setLogs(Array.isArray(data) ? data : data.items || []);
       }
-    } catch (error) {
-      webLogger.error('Failed to load audit logs', error);
-    } finally {
-      setIsLoading(false);
-    }
+    } catch { /* ignore */ } finally { setIsLoading(false); }
   };
-
-  const getResultColor = (result: string): string => {
-    return result === 'success' ? 'text-green-500' : 'text-red-500';
-  };
-
-  const getActionIcon = (action: string): string => {
-    if (action.includes('login')) return '🔐';
-    if (action.includes('payment')) return '💰';
-    if (action.includes('role')) return '👤';
-    if (action.includes('content')) return '📝';
-    if (action.includes('admin')) return '⚙️';
-    return '📋';
-  };
-
-  if (isLoading && page === 1) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">Loading audit logs...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
-    <div className="min-h-screen bg-background py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Audit Logs</h1>
-          <p className="text-muted-foreground">Track all platform activities and changes</p>
-        </div>
+    <AdminLayout>
+      <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Audit Logs</h1>
+      <p style={{ color: '#9A8A7A', marginBottom: 24 }}>System activity and security logs</p>
 
-        <div className="bg-card rounded-xl border border-border p-6 mb-6">
-          <div className="flex flex-col md:flex-row gap-4">
-            <input
-              type="text"
-              placeholder="Search logs..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="flex-1 px-4 py-2 bg-muted border border-border rounded-lg text-foreground placeholder:text-muted-foreground"
-            />
-            <select
-              value={filter}
-              onChange={(e) => setFilter(e.target.value)}
-              className="px-4 py-2 bg-muted border border-border rounded-lg text-foreground"
-            >
-              <option value="all">All Actions</option>
-              <option value="login">Authentication</option>
-              <option value="payment">Payments</option>
-              <option value="role">Role Changes</option>
-              <option value="content">Content</option>
-              <option value="admin">Admin Actions</option>
-            </select>
-          </div>
-        </div>
+      <div style={{ display: 'flex', gap: 6, marginBottom: 24 }}>
+        {['all', 'auth', 'content', 'wallet', 'admin'].map(f => (
+          <button key={f} onClick={() => setFilter(f)} style={{ padding: '8px 16px', borderRadius: 999, border: filter === f ? 'none' : '1px solid #2A1A1A', background: filter === f ? 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)' : 'transparent', color: filter === f ? '#fff' : '#9A8A7A', fontWeight: 500, fontSize: 13, cursor: 'pointer', textTransform: 'capitalize' }}>
+            {f}
+          </button>
+        ))}
+      </div>
 
-        <div className="bg-card rounded-xl border border-border overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-muted">
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground">
-                    Timestamp
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground">
-                    Actor
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground">
-                    Action
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground">
-                    Resource
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground">
-                    Result
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground">
-                    IP Address
-                  </th>
+      {isLoading ? (
+        <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}>
+          <div style={{ width: 40, height: 40, border: '3px solid #2A1A1A', borderTopColor: '#E8420A', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+        </div>
+      ) : (
+        <div className="az-glass" style={{ borderRadius: 16, overflow: 'hidden' }}>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid #2A1A1A' }}>
+                  {['Timestamp', 'User', 'Action', 'Details', 'IP'].map(h => (
+                    <th key={h} style={{ padding: '12px 16px', textAlign: 'left', color: '#9A8A7A', fontWeight: 600, fontSize: 11, textTransform: 'uppercase' }}>{h}</th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
-                {logs.map((log) => (
-                  <tr key={log.id} className="border-t border-border hover:bg-accent/50">
-                    <td className="px-4 py-3 text-sm text-muted-foreground whitespace-nowrap">
-                      {new Date(log.timestamp).toLocaleString()}
+                {logs.map((log: any, i: number) => (
+                  <tr key={i} style={{ borderBottom: '1px solid #1A0A0A' }}>
+                    <td style={{ padding: '10px 16px', color: '#6B5A4A', whiteSpace: 'nowrap' }}>{new Date(log.timestamp || log.createdAt).toLocaleString()}</td>
+                    <td style={{ padding: '10px 16px', fontWeight: 500 }}>{log.username || log.userId}</td>
+                    <td style={{ padding: '10px 16px' }}>
+                      <span style={{ padding: '2px 8px', borderRadius: 999, fontSize: 11, fontWeight: 600, backgroundColor: 'rgba(232,66,10,0.1)', color: '#E8420A' }}>{log.action}</span>
                     </td>
-                    <td className="px-4 py-3">
-                      <div>
-                        <p className="text-sm font-medium text-foreground">{log.actor}</p>
-                        <p className="text-xs text-muted-foreground">{log.actorRole}</p>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <span>{getActionIcon(log.action)}</span>
-                        <span className="text-sm text-foreground">{log.action}</span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-foreground">{log.resource}</td>
-                    <td className="px-4 py-3">
-                      <span className={`text-sm font-semibold ${getResultColor(log.result)}`}>
-                        {log.result.charAt(0).toUpperCase() + log.result.slice(1)}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-sm font-mono text-muted-foreground">
-                      {log.ipAddress}
-                    </td>
+                    <td style={{ padding: '10px 16px', color: '#9A8A7A', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{log.details || '-'}</td>
+                    <td style={{ padding: '10px 16px', color: '#6B5A4A', fontFamily: 'monospace', fontSize: 12 }}>{log.ipAddress || '-'}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-
-          {logs.length === 0 && (
-            <div className="text-center py-20">
-              <div className="text-6xl mb-4">📋</div>
-              <h2 className="text-xl font-bold text-foreground mb-2">No audit logs found</h2>
-              <p className="text-muted-foreground">Adjust your filters or search criteria</p>
-            </div>
-          )}
-
-          {hasMore && (
-            <div className="p-4 border-t border-border text-center">
-              <button
-                onClick={() => setPage(page + 1)}
-                className="px-6 py-2 bg-primary text-white rounded-lg font-medium hover:bg-primary/90"
-              >
-                Load More
-              </button>
-            </div>
-          )}
+          {logs.length === 0 && <p style={{ textAlign: 'center', padding: 40, color: '#9A8A7A' }}>No audit logs found</p>}
         </div>
-      </div>
-    </div>
+      )}
+    </AdminLayout>
   );
 }

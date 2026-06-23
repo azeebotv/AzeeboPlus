@@ -1,225 +1,70 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
 import { api } from '@/lib/api';
-import { webLogger } from '@/lib/logger';
+import AdminLayout from '@/components/layout/AdminLayout';
 
-interface Wallet {
-  id: string;
-  userId: string;
-  userName: string;
-  email: string;
-  balance: number;
-  totalDeposits: number;
-  totalWithdrawals: number;
-  status: 'active' | 'frozen' | 'suspended';
-  createdAt: string;
-}
-
-export default function WalletManagementPage(): JSX.Element {
-  const router = useRouter();
-  const [wallets, setWallets] = useState<Wallet[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [searchQuery, setSearchQuery] = useState<string>('');
-  const [filter, setFilter] = useState<'all' | 'active' | 'frozen' | 'suspended'>('all');
+export default function AdminWalletsPage(): React.JSX.Element {
+  const { isAuthenticated, user } = useAuth();
+  const [wallets, setWallets] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    if (!isAuthenticated || !user || user.role !== 'admin') return;
     loadWallets();
-  }, []);
+  }, [isAuthenticated, user]);
 
-  const loadWallets = async (): Promise<void> => {
+  const loadWallets = async () => {
     try {
       const response = await api.admin.getWallets();
       if (response.success && response.data) {
-        setWallets((response.data.items || []) as unknown as Wallet[]);
+        const data = response.data as any;
+        setWallets(Array.isArray(data) ? data : data.items || []);
       }
-    } catch (error) {
-      webLogger.error('Failed to load wallets:', error);
-    } finally {
-      setIsLoading(false);
-    }
+    } catch { /* ignore */ } finally { setIsLoading(false); }
   };
-
-  const handleStatusChange = async (walletId: string, newStatus: string): Promise<void> => {
-    try {
-      const response = await api.admin.updateWalletStatus(walletId, newStatus);
-      if (response.success) {
-        loadWallets();
-        alert(`Wallet status updated to ${newStatus}`);
-      } else {
-        alert(response.message || 'Failed to update wallet status');
-      }
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to update wallet status';
-      alert(message);
-    }
-  };
-
-  const formatCurrency = (amount: number): string => {
-    return `₦${amount.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  };
-
-  const getStatusColor = (status: string): string => {
-    switch (status) {
-      case 'active':
-        return 'text-green-500';
-      case 'frozen':
-        return 'text-yellow-500';
-      case 'suspended':
-        return 'text-red-500';
-      default:
-        return 'text-gray-500';
-    }
-  };
-
-  const filteredWallets = filter === 'all' ? wallets : wallets.filter((w) => w.status === filter);
-
-  const searchedWallets = searchQuery
-    ? filteredWallets.filter(
-        (w) =>
-          w.userName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          w.email.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : filteredWallets;
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">Loading wallets...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
-    <div className="min-h-screen bg-background py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <button
-              onClick={() => router.back()}
-              className="text-muted-foreground hover:text-foreground mb-2 flex items-center gap-2"
-            >
-              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 19l-7-7 7-7"
-                />
-              </svg>
-              Back
-            </button>
-            <h1 className="text-3xl font-bold text-foreground">Wallet Management</h1>
-          </div>
-        </div>
+    <AdminLayout>
+      <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>User Wallets</h1>
+      <p style={{ color: '#9A8A7A', marginBottom: 24 }}>{wallets.length} wallets</p>
 
-        <div className="flex flex-col md:flex-row gap-4 mb-6">
-          <input
-            type="text"
-            placeholder="Search wallets..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="flex-1 px-4 py-2 bg-card border border-border rounded-lg text-foreground placeholder:text-muted-foreground"
-          />
-          <div className="flex gap-2">
-            {(['all', 'active', 'frozen', 'suspended'] as const).map((f) => (
-              <button
-                key={f}
-                onClick={() => setFilter(f)}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                  filter === f
-                    ? 'bg-primary text-white'
-                    : 'bg-card border border-border text-foreground hover:bg-accent'
-                }`}
-              >
-                {f.charAt(0).toUpperCase() + f.slice(1)}
-              </button>
-            ))}
-          </div>
+      {isLoading ? (
+        <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}>
+          <div style={{ width: 40, height: 40, border: '3px solid #2A1A1A', borderTopColor: '#E8420A', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
         </div>
-
-        <div className="bg-card rounded-lg border border-border overflow-hidden">
-          <table className="w-full">
-            <thead className="bg-muted">
-              <tr>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">User</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">
-                  Balance
-                </th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">
-                  Deposits
-                </th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">
-                  Withdrawals
-                </th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">
-                  Status
-                </th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {searchedWallets.map((wallet) => (
-                <tr key={wallet.id} className="hover:bg-accent/50">
-                  <td className="px-6 py-4">
-                    <div>
-                      <p className="font-medium text-foreground">{wallet.userName}</p>
-                      <p className="text-sm text-muted-foreground">{wallet.email}</p>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 font-semibold text-foreground">
-                    {formatCurrency(wallet.balance)}
-                  </td>
-                  <td className="px-6 py-4 text-green-500">
-                    {formatCurrency(wallet.totalDeposits)}
-                  </td>
-                  <td className="px-6 py-4 text-red-500">
-                    {formatCurrency(wallet.totalWithdrawals)}
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className={`text-sm font-medium ${getStatusColor(wallet.status)}`}>
-                      {wallet.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex gap-2">
-                      {wallet.status === 'active' && (
-                        <button
-                          onClick={() => handleStatusChange(wallet.id, 'frozen')}
-                          className="px-3 py-1 bg-yellow-500 text-white rounded text-sm hover:bg-yellow-600"
-                        >
-                          Freeze
-                        </button>
-                      )}
-                      {wallet.status === 'frozen' && (
-                        <button
-                          onClick={() => handleStatusChange(wallet.id, 'active')}
-                          className="px-3 py-1 bg-green-500 text-white rounded text-sm hover:bg-green-600"
-                        >
-                          Unfreeze
-                        </button>
-                      )}
-                      {wallet.status !== 'suspended' && (
-                        <button
-                          onClick={() => handleStatusChange(wallet.id, 'suspended')}
-                          className="px-3 py-1 bg-red-500 text-white rounded text-sm hover:bg-red-600"
-                        >
-                          Suspend
-                        </button>
-                      )}
-                    </div>
-                  </td>
+      ) : (
+        <div className="az-glass" style={{ borderRadius: 16, overflow: 'hidden' }}>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid #2A1A1A' }}>
+                  {['User', 'Balance', 'Total Earned', 'Status'].map(h => (
+                    <th key={h} style={{ padding: '12px 16px', textAlign: 'left', color: '#9A8A7A', fontWeight: 600, fontSize: 12, textTransform: 'uppercase' }}>{h}</th>
+                  ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {wallets.map(w => (
+                  <tr key={w.id} style={{ borderBottom: '1px solid #1A0A0A' }}>
+                    <td style={{ padding: '12px 16px' }}>
+                      <p style={{ fontWeight: 600 }}>{w.username || w.userId}</p>
+                    </td>
+                    <td style={{ padding: '12px 16px', fontWeight: 700, color: '#E8420A' }}>₦{(w.balance || 0).toLocaleString()}</td>
+                    <td style={{ padding: '12px 16px', color: '#9A8A7A' }}>₦{(w.totalEarned || 0).toLocaleString()}</td>
+                    <td style={{ padding: '12px 16px' }}>
+                      <span style={{ padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 600, backgroundColor: w.isActive !== false ? 'rgba(13,59,46,0.2)' : 'rgba(204,28,28,0.2)', color: w.isActive !== false ? '#0D3B2E' : '#CC1C1C' }}>
+                        {w.isActive !== false ? 'Active' : 'Frozen'}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {wallets.length === 0 && <p style={{ textAlign: 'center', padding: 40, color: '#9A8A7A' }}>No wallets found</p>}
         </div>
-      </div>
-    </div>
+      )}
+    </AdminLayout>
   );
 }

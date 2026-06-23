@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { useSettings } from '../hooks/useDatabase';
 
@@ -11,7 +11,7 @@ interface SeoMetaProps {
   noIndex?: boolean;
 }
 
-export function SeoMeta({ title, description, image, noIndex = false }: SeoMetaProps): JSX.Element {
+export function SeoMeta({ title, description, image, noIndex = false }: SeoMetaProps): React.JSX.Element {
   const pathname = usePathname();
   const { getSetting } = useSettings();
   const siteName = getSetting('site_name', 'Azeebo+');
@@ -57,7 +57,7 @@ export function SeoMeta({ title, description, image, noIndex = false }: SeoMetaP
   return <></>;
 }
 
-export function DefaultSeoMeta(): JSX.Element {
+export function DefaultSeoMeta(): React.JSX.Element {
   const pathname = usePathname();
   const { getSetting } = useSettings();
   const siteName = getSetting('site_name', 'Azeebo+');

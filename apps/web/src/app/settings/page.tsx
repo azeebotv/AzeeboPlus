@@ -1,84 +1,94 @@
 'use client';
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
+import { api } from '@/lib/api';
+import AppHeader from '@/components/layout/AppHeader';
+import AppFooter from '@/components/layout/AppFooter';
 
-import React from 'react';
-import Link from 'next/link';
-import { PushNotificationSettings } from '../../components/PushNotificationSettings';
+export default function SettingsPage(): React.JSX.Element {
+  const { isAuthenticated, user } = useAuth();
+  const router = useRouter();
+  const [settings, setSettings] = useState({ language: 'en', autoplay: true, notifications: true, darkMode: true, dataSaver: false, downloadQuality: 'hd' });
+  const [saved, setSaved] = useState(false);
 
-export default function SettingsPage(): JSX.Element {
-  const settingsSections = [
-    {
-      title: 'Account',
-      items: [
-        { label: 'Profile', href: '/profile/edit', icon: '👤' },
-        { label: 'Privacy & Security', href: '/profile/privacy-security', icon: '🔒' },
-        { label: 'Devices', href: '/settings/devices', icon: '🖥️' },
-      ],
-    },
-    {
-      title: 'Preferences',
-      items: [
-        { label: 'Notifications', href: '/notifications', icon: '🔔' },
-        { label: 'Appearance', href: '#', icon: '🎨' },
-        { label: 'Language', href: '#', icon: '🌐' },
-      ],
-    },
-    {
-      title: 'Support',
-      items: [
-        { label: 'Help Center', href: '/support', icon: '❓' },
-        { label: 'Privacy Policy', href: '/privacy', icon: '📄' },
-        { label: 'Terms of Service', href: '/terms', icon: '📋' },
-      ],
-    },
+  useEffect(() => {
+    if (!isAuthenticated || !user) { router.push('/auth/login'); return; }
+  }, [isAuthenticated, user, router]);
+
+  const handleSave = async () => {
+    try {
+      await api.user.updatePreferences(settings);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch { /* ignore */ }
+  };
+
+  if (!isAuthenticated || !user) return <></>;
+
+  const toggleItems = [
+    { key: 'autoplay', label: 'Autoplay', desc: 'Automatically play next video' },
+    { key: 'notifications', label: 'Notifications', desc: 'Receive push notifications' },
+    { key: 'darkMode', label: 'Dark Mode', desc: 'Use dark theme' },
+    { key: 'dataSaver', label: 'Data Saver', desc: 'Reduce streaming quality on mobile' },
   ];
 
   return (
-    <div className="min-h-screen bg-background py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Settings</h1>
-          <p className="text-muted-foreground">Manage your account and preferences</p>
-        </div>
+    <div style={{ backgroundColor: '#1A0A0A', minHeight: '100vh', color: '#F5F0EB' }}>
+      <AppHeader />
+      <main style={{ paddingTop: 100, paddingBottom: 60, maxWidth: 600, margin: '0 auto', padding: '100px 24px 60px' }}>
+        <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 32 }}>Settings</h1>
 
-        <div className="mb-8">
-          <PushNotificationSettings />
-        </div>
-
-        <div className="space-y-8">
-          {settingsSections.map((section) => (
-            <div key={section.title}>
-              <h2 className="text-xl font-bold text-foreground mb-4">{section.title}</h2>
-              <div className="bg-card rounded-lg border border-border overflow-hidden">
-                {section.items.map((item, index) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={`flex items-center gap-4 p-4 hover:bg-muted transition-colors ${
-                      index !== section.items.length - 1 ? 'border-b border-border' : ''
-                    }`}
-                  >
-                    <span className="text-2xl">{item.icon}</span>
-                    <span className="font-medium text-foreground">{item.label}</span>
-                    <svg
-                      className="w-5 h-5 ml-auto text-muted-foreground"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 5l7 7-7 7"
-                      />
-                    </svg>
-                  </Link>
-                ))}
+        <div className="az-glass" style={{ padding: 24, borderRadius: 20, marginBottom: 20 }}>
+          <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16 }}>Preferences</h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {toggleItems.map(item => (
+              <div key={item.key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid #2A1A1A' }}>
+                <div>
+                  <p style={{ fontWeight: 600, fontSize: 15 }}>{item.label}</p>
+                  <p style={{ color: '#9A8A7A', fontSize: 13 }}>{item.desc}</p>
+                </div>
+                <button onClick={() => setSettings({ ...settings, [item.key]: !settings[item.key as keyof typeof settings] })} style={{ width: 48, height: 28, borderRadius: 14, border: 'none', cursor: 'pointer', position: 'relative', backgroundColor: settings[item.key as keyof typeof settings] ? '#E8420A' : '#2A1A1A', transition: 'background-color 0.2s' }}>
+                  <span style={{ position: 'absolute', top: 3, left: settings[item.key as keyof typeof settings] ? 23 : 3, width: 22, height: 22, borderRadius: '50%', backgroundColor: '#fff', transition: 'left 0.2s' }} />
+                </button>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
+
+        <div className="az-glass" style={{ padding: 24, borderRadius: 20, marginBottom: 20 }}>
+          <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16 }}>Download Quality</h2>
+          <div style={{ display: 'flex', gap: 8 }}>
+            {['sd', 'hd', 'fullhd'].map(q => (
+              <button key={q} onClick={() => setSettings({ ...settings, downloadQuality: q })} style={{ flex: 1, padding: '10px 0', borderRadius: 12, border: settings.downloadQuality === q ? 'none' : '1px solid #2A1A1A', background: settings.downloadQuality === q ? 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)' : 'transparent', color: settings.downloadQuality === q ? '#fff' : '#9A8A7A', fontWeight: 600, fontSize: 13, cursor: 'pointer', textTransform: 'uppercase' }}>
+                {q === 'fullhd' ? 'Full HD' : q.toUpperCase()}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="az-glass" style={{ padding: 24, borderRadius: 20, marginBottom: 20 }}>
+          <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16 }}>Account Links</h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {[
+              { href: '/profile/edit', label: 'Edit Profile' },
+              { href: '/profile/privacy-security', label: 'Privacy & Security' },
+              { href: '/settings/devices', label: 'Manage Devices' },
+              { href: '/wallet/subscription-plans', label: 'Subscription Plans' },
+            ].map(link => (
+              <a key={link.href} href={link.href} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: '1px solid #2A1A1A', textDecoration: 'none', color: '#F5F0EB' }}>
+                <span style={{ fontWeight: 500, fontSize: 15 }}>{link.label}</span>
+                <span style={{ color: '#9A8A7A' }}>→</span>
+              </a>
+            ))}
+          </div>
+        </div>
+
+        <button onClick={handleSave} className="az-btn-primary" style={{ width: '100%', padding: '14px 0', borderRadius: 999, border: 'none', background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)', color: '#fff', fontWeight: 700, fontSize: 16, cursor: 'pointer' }}>
+          {saved ? '✓ Saved!' : 'Save Settings'}
+        </button>
+      </main>
+      <AppFooter />
     </div>
   );
 }

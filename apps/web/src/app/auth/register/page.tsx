@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import AuthShell from '@/components/auth/AuthShell';
 import { Alert, Spinner } from '@/components/auth/FormBits';
 
-export default function RegisterPage(): JSX.Element {
+export default function RegisterPage(): React.JSX.Element {
   const [name, setName] = useState<string>('');
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
