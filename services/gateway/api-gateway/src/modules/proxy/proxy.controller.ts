@@ -15,7 +15,8 @@ import {
   Logger,
   UseGuards,
 } from '@nestjs/common';
-import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
+import { Throttle } from '@nestjs/throttler';
+import { AuthThrottlerGuard } from '../../guards/auth-throttler.guard';
 import { Request, Response } from 'express';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
@@ -579,7 +580,7 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
 ];
 
 @Controller('api')
-@UseGuards(ThrottlerGuard)
+@UseGuards(AuthThrottlerGuard)
 export class ProxyController {
   private readonly logger = new Logger(ProxyController.name);
   private readonly REQUEST_ID_HEADER = 'X-Request-ID';

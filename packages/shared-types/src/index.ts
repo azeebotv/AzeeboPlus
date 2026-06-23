@@ -1,3 +1,9 @@
+// Standard API Response Type (BE-005)
+// NOTE: ApiResponse<T> and ApiError are defined at the end of this file.
+// This comment documents the canonical shape for reference:
+// ApiResponse<T>: { success, data?, error?: ApiError, meta?: PaginationMeta }
+// ApiError: { code, message, details? }
+
 // Permission types
 export type Permission =
   | 'user:read'

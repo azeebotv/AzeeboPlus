@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import axios from 'axios';
-import { createHmac } from 'crypto';
+import { createHmac, timingSafeEqual } from 'crypto';
 import { CircuitBreaker, CircuitBreakerOpenError } from '@azeebo/shared-types';
 
 interface PaystackInitializeResponse {
@@ -53,7 +53,47 @@ export class PaystackProvider {
     this.logger.log('PaystackProvider initialized with circuit breaker');
   }
 
-  async initializePayment(amount: number, currency: string, userId: string) {
+  // PAY-003: In-memory idempotency store (production should use Redis/DB)
+  private readonly idempotencyStore = new Map<string, { result: Record<string, unknown>; timestamp: number }>();
+  private readonly IDEMPOTENCY_TTL = 3600_000; // 1 hour
+
+  private checkIdempotency(key: string | undefined): Record<string, unknown> | null {
+    if (!key) return null;
+    const entry = this.idempotencyStore.get(key);
+    if (entry && Date.now() - entry.timestamp < this.IDEMPOTENCY_TTL) {
+      return entry.result;
+    }
+    if (entry) this.idempotencyStore.delete(key);
+    return null;
+  }
+
+  private storeIdempotency(key: string | undefined, result: Record<string, unknown>): void {
+    if (!key) return;
+    if (this.idempotencyStore.size > 1000) {
+      const now = Date.now();
+      for (const [k, v] of this.idempotencyStore) {
+        if (now - v.timestamp >= this.IDEMPOTENCY_TTL) this.idempotencyStore.delete(k);
+      }
+    }
+    this.idempotencyStore.set(key, { result, timestamp: Date.now() });
+  }
+
+  async initializePayment(amount: number, currency: string, userId: string, idempotencyKey?: string) {
+    // SEC-007/PAY-002: Validate payment amount
+    if (typeof amount !== 'number' || amount <= 0 || !isFinite(amount)) {
+      throw new BadRequestException('Payment amount must be a positive number');
+    }
+    if (amount < 100) {
+      throw new BadRequestException('Minimum payment amount is 100');
+    }
+    if (amount > 10_000_000) {
+      throw new BadRequestException('Maximum payment amount is 10,000,000');
+    }
+
+    // PAY-003: Check idempotency key
+    const cached = this.checkIdempotency(idempotencyKey);
+    if (cached) return cached;
+
     try {
       const result = await this.circuitBreaker.execute(async () => {
         const response = await axios.post<PaystackInitializeResponse>(
@@ -87,6 +127,9 @@ export class PaystackProvider {
           accessCode: response.data.data.access_code,
         };
       });
+
+      // PAY-003: Store result for idempotency
+      this.storeIdempotency(idempotencyKey, result);
 
       return result;
     } catch (error) {
@@ -193,7 +236,11 @@ export class PaystackProvider {
       .update(JSON.stringify(payload))
       .digest('hex');
 
-    return hash === signature;
+    // Timing-safe comparison to prevent timing attacks
+    if (hash.length !== signature.length) {
+      return false;
+    }
+    return timingSafeEqual(Buffer.from(hash), Buffer.from(signature));
   }
 
   getCircuitBreakerStats() {

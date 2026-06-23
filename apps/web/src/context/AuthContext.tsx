@@ -55,10 +55,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setToken(access_token);
     setRefreshToken(refresh_token);
     setUser(userData);
+    // T-C01: Tokens are managed via HttpOnly cookies (set by auth-service).
+    // We keep the token in memory for client-side API calls during this session.
+    // The middleware checks the access_token cookie for route protection.
     api.setToken(access_token);
-    // T-C01: Only store non-sensitive user profile in localStorage.
-    // Tokens are kept in memory and sent via Authorization header.
-    // TODO: Switch to HttpOnly cookies when backend supports Set-Cookie.
     localStorage.setItem('user', JSON.stringify(userData));
   }, []);
 

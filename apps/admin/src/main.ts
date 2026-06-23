@@ -5,15 +5,15 @@ import helmet from 'helmet';
 import { AppModule } from './app.module';
 
 // Ensure required env vars are present early
-if (!process.env.JWT_SECRET) {
-  throw new Error('❌ JWT_SECRET environment variable is not set');
+if (!process.env.JWT_ACCESS_SECRET) {
+  throw new Error('❌ JWT_ACCESS_SECRET environment variable is not set');
 }
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const logger = new Logger('AdminApp');
 
-  // Security middlewares
+  // Security middlewares — aligned with @azeebo/security package
   app.use(
     helmet({
       contentSecurityPolicy: {
@@ -22,9 +22,17 @@ async function bootstrap() {
           styleSrc: ["'self'"],
           imgSrc: ["'self'", 'data:', 'https:'],
           scriptSrc: ["'self'"],
+          connectSrc: ["'self'"],
+          fontSrc: ["'self'", 'data:'],
+          objectSrc: ["'none'"],
+          frameAncestors: ["'none'"],
+          baseUri: ["'self'"],
+          formAction: ["'self'"],
         },
       },
       hsts: { maxAge: 31536000, includeSubDomains: true },
+      crossOriginEmbedderPolicy: false,
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
     })
   );
 
@@ -38,14 +46,24 @@ async function bootstrap() {
     })
   );
 
-  // CORS configuration (fallback to localhost)
-  const allowedOrigins = process.env.ADMIN_ALLOWED_ORIGINS?.split(',') || ['http://localhost:3016'];
+  // CORS configuration — aligned with shared security package
+  const allowedOrigins = process.env.ADMIN_ALLOWED_ORIGINS?.split(',') || [
+    'https://admin.azeebo.com',
+    'http://localhost:3016',
+  ];
+
   app.enableCors({
-    origin: allowedOrigins,
-    credentials: true,
+    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-    exposedHeaders: ['X-Total-Count', 'X-Page-Count'],
+    credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-Request-ID'],
+    exposedHeaders: ['X-Total-Count', 'X-Page-Count', 'X-Request-ID'],
     maxAge: 86400,
   });
 

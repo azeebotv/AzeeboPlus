@@ -1,6 +1,6 @@
 import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import axios from 'axios';
-import { createHmac } from 'crypto';
+import { createHmac, timingSafeEqual } from 'crypto';
 
 interface FlutterwaveInitializeResponse {
   status: string;
@@ -38,7 +38,48 @@ export class FlutterwaveProvider {
     this.logger.log('FlutterwaveProvider initialized');
   }
 
-  async initializePayment(amount: number, currency: string, userId: string) {
+  // PAY-003: In-memory idempotency store (production should use Redis/DB)
+  private readonly idempotencyStore = new Map<string, { result: Record<string, unknown>; timestamp: number }>();
+  private readonly IDEMPOTENCY_TTL = 3600_000; // 1 hour
+
+  private checkIdempotency(key: string | undefined): Record<string, unknown> | null {
+    if (!key) return null;
+    const entry = this.idempotencyStore.get(key);
+    if (entry && Date.now() - entry.timestamp < this.IDEMPOTENCY_TTL) {
+      return entry.result;
+    }
+    if (entry) this.idempotencyStore.delete(key);
+    return null;
+  }
+
+  private storeIdempotency(key: string | undefined, result: Record<string, unknown>): void {
+    if (!key) return;
+    // Cleanup expired entries periodically
+    if (this.idempotencyStore.size > 1000) {
+      const now = Date.now();
+      for (const [k, v] of this.idempotencyStore) {
+        if (now - v.timestamp >= this.IDEMPOTENCY_TTL) this.idempotencyStore.delete(k);
+      }
+    }
+    this.idempotencyStore.set(key, { result, timestamp: Date.now() });
+  }
+
+  async initializePayment(amount: number, currency: string, userId: string, idempotencyKey?: string) {
+    // SEC-007/PAY-002: Validate payment amount
+    if (typeof amount !== 'number' || amount <= 0 || !isFinite(amount)) {
+      throw new BadRequestException('Payment amount must be a positive number');
+    }
+    if (amount < 100) {
+      throw new BadRequestException('Minimum payment amount is 100 (NGN)');
+    }
+    if (amount > 10_000_000) {
+      throw new BadRequestException('Maximum payment amount is 10,000,000 (NGN)');
+    }
+
+    // PAY-003: Check idempotency key to prevent duplicate payments
+    const cached = this.checkIdempotency(idempotencyKey);
+    if (cached) return cached;
+
     try {
       const response = await axios.post<FlutterwaveInitializeResponse>(
         `${this.baseUrl}/payments`,
@@ -69,10 +110,15 @@ export class FlutterwaveProvider {
         throw new BadRequestException(response.data.message);
       }
 
-      return {
+      const result = {
         reference: response.data.data.reference,
         authorizationUrl: response.data.data.link,
       };
+
+      // PAY-003: Store result for idempotency
+      this.storeIdempotency(idempotencyKey, result);
+
+      return result;
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       throw new BadRequestException(`Flutterwave initialization failed: ${message}`);
@@ -154,6 +200,10 @@ export class FlutterwaveProvider {
   ): Promise<boolean> {
     const hash = createHmac('sha256', this.apiKey).update(JSON.stringify(payload)).digest('hex');
 
-    return hash === signature;
+    // Timing-safe comparison to prevent timing attacks
+    if (hash.length !== signature.length) {
+      return false;
+    }
+    return timingSafeEqual(Buffer.from(hash), Buffer.from(signature));
   }
 }

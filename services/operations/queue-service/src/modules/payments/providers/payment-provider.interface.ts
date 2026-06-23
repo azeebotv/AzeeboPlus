@@ -2,7 +2,8 @@ export interface PaymentProvider {
   initializePayment(
     amount: number,
     currency: string,
-    userId: string
+    userId: string,
+    idempotencyKey?: string
   ): Promise<Record<string, unknown>>;
   verifyPayment(reference: string): Promise<Record<string, unknown>>;
   processRefund(transactionReference: string, reason: string): Promise<Record<string, unknown>>;

@@ -10,7 +10,14 @@ import { GlobalExceptionFilter } from '@azeebo/error-handling';
 async function bootstrap(): Promise<void> {
   validateEnvironment(process.env);
 
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    bodyParser: true,
+  });
+
+  // Body size limits to prevent memory exhaustion attacks (SEC-010)
+  const bodyParser = require('body-parser');
+  app.use(bodyParser.json({ limit: '1mb' }));
+  app.use(bodyParser.urlencoded({ limit: '1mb', extended: true }));
 
   app.useGlobalFilters(new GlobalExceptionFilter());
 

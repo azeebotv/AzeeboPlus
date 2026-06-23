@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
+import * as jwt from 'jsonwebtoken';
 import { IS_PUBLIC_KEY } from '@azeebo/security';
 
 /**
@@ -14,8 +15,8 @@ import { IS_PUBLIC_KEY } from '@azeebo/security';
  * Registered as APP_GUARD to enforce auth on ALL routes by default.
  * Routes marked with @Public() or matching PUBLIC_PATH_PATTERNS are exempt.
  *
- * Validates JWT from Authorization header and forwards user context
- * to downstream services via x-user-* headers.
+ * Validates JWT signature and expiry from Authorization header,
+ * then forwards user context to downstream services via x-user-* headers.
  */
 @Injectable()
 export class GatewayAuthGuard implements CanActivate {
@@ -68,9 +69,7 @@ export class GatewayAuthGuard implements CanActivate {
     const token = authHeader.substring(7);
 
     try {
-      // In production, validate JWT against JWKS or shared secret
-      // For now, decode and verify the token structure
-      const payload = this.decodeAndValidateToken(token);
+      const payload = this.verifyToken(token);
 
       // Attach user to request for downstream use
       request.user = payload;
@@ -87,41 +86,45 @@ export class GatewayAuthGuard implements CanActivate {
     }
   }
 
-  private decodeAndValidateToken(token: string): {
+  /**
+   * Verifies JWT signature using the shared secret with auth-service.
+   * Uses JWT_ACCESS_SECRET to align with auth-service configuration.
+   */
+  private verifyToken(token: string): {
     sub: string;
     email: string;
     role?: string;
   } {
-    const jwtSecret = this.configService.get<string>('JWT_SECRET');
+    const jwtSecret = this.configService.get<string>('JWT_ACCESS_SECRET');
 
     if (!jwtSecret) {
-      throw new Error('JWT_SECRET environment variable is required');
+      throw new Error('JWT_ACCESS_SECRET environment variable is required');
     }
 
-    // Decode base64 JWT payload (middle segment)
-    const parts = token.split('.');
-    if (parts.length !== 3) {
-      throw new Error('Invalid token format');
+    try {
+      const payload = jwt.verify(token, jwtSecret) as {
+        sub: string;
+        email: string;
+        role?: string;
+      };
+
+      if (!payload.sub || !payload.email) {
+        throw new Error('Token missing required claims (sub, email)');
+      }
+
+      return {
+        sub: payload.sub,
+        email: payload.email,
+        role: payload.role,
+      };
+    } catch (error) {
+      if (error instanceof jwt.TokenExpiredError) {
+        throw new Error('Token expired');
+      }
+      if (error instanceof jwt.JsonWebTokenError) {
+        throw new Error(`Invalid token: ${error.message}`);
+      }
+      throw error;
     }
-
-    const payload = JSON.parse(
-      Buffer.from(parts[1], 'base64').toString('utf-8'),
-    );
-
-    // Verify token is not expired
-    if (payload.exp && payload.exp * 1000 < Date.now()) {
-      throw new Error('Token expired');
-    }
-
-    // Verify required claims
-    if (!payload.sub || !payload.email) {
-      throw new Error('Token missing required claims (sub, email)');
-    }
-
-    return {
-      sub: payload.sub,
-      email: payload.email,
-      role: payload.role,
-    };
   }
 }

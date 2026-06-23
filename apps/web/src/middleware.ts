@@ -18,7 +18,15 @@ export function middleware(request: NextRequest) {
   const nonce = crypto.randomUUID();
 
   // Expose nonce to server components and client via response header
+  // Next.js layout.tsx can read this via headers() and pass to <Script> components
   response.headers.set('x-csp-nonce', nonce);
+  // Also set as a cookie so client components can access it
+  response.cookies.set('csp-nonce', nonce, {
+    httpOnly: false,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+  });
 
   // Content Security Policy (nonce-based, strict-dynamic)
   // Remove 'unsafe-inline' and 'unsafe-eval'; use nonce + strict-dynamic

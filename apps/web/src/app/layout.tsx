@@ -9,7 +9,8 @@ import { QueryProvider } from '../providers/QueryProvider';
 import { ToastProvider } from '@azeebo/ui';
 import { KeyboardNavigationProvider } from '../components/KeyboardNavigationProvider';
 
-const inter = { className: '' };
+import { Inter } from 'next/font/google';
+const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || 'https://azeeboplus.com'),

@@ -20,6 +20,7 @@ terraform {
     key            = "production/terraform.tfstate"
     region         = "us-east-1"
     encrypt        = true
+    kms_key_id     = "alias/azeebo-terraform-state"
     dynamodb_table = "azeebo-terraform-locks"
   }
 }

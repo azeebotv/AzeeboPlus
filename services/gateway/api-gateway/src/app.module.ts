@@ -1,4 +1,4 @@
-import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
+import { Module, NestModule, MiddlewareConsumer, RequestMethod } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { CacheModule } from '@nestjs/cache-manager';
@@ -7,6 +7,7 @@ import { HealthModule } from './modules/health/health.module';
 import { ProxyModule } from './modules/proxy/proxy.module';
 import { GatewayAuthGuard } from './guards/gateway-auth.guard';
 import { LegacyRedirectMiddleware } from './common/legacy-redirect.middleware';
+import { CsrfMiddleware } from './common/csrf.middleware';
 
 @Module({
   imports: [
@@ -28,9 +29,16 @@ import { LegacyRedirectMiddleware } from './common/legacy-redirect.middleware';
     }),
     ThrottlerModule.forRoot({
       throttlers: [
+        // Global rate limit: 100 requests per minute
         {
           ttl: 60000,
           limit: 100,
+        },
+        // Stricter limit for auth endpoints: 10 requests per minute
+        {
+          ttl: 60000,
+          limit: 10,
+          name: 'auth',
         },
       ],
     }),
@@ -46,6 +54,14 @@ import { LegacyRedirectMiddleware } from './common/legacy-redirect.middleware';
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
+    // CSRF protection for state-changing requests (SEC-005)
+    consumer.apply(CsrfMiddleware).exclude(
+      { path: 'api/auth/(.*)', method: RequestMethod.ALL },
+      { path: 'api/health', method: RequestMethod.ALL },
+      { path: 'api/routes', method: RequestMethod.ALL },
+      { path: '(.*)', method: RequestMethod.GET },
+    ).forRoutes('api');
+
     // T-H21/T-H22/T-H24: redirect legacy unversioned paths to versioned
     consumer.apply(LegacyRedirectMiddleware).forRoutes('api');
   }

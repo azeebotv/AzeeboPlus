@@ -20,7 +20,7 @@ permissions:
 
 env:
   NODE_VERSION: '20.x'
-  PNPM_VERSION: '9'
+  PNPM_VERSION: '10.33.2'
 
 jobs:
   install-and-prisma:

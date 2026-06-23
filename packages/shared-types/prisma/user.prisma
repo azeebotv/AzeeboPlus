@@ -1,13 +1,88 @@
-/// Shared User model definition
-/// Auth-service owns the actual `users` table
-/// Universe services should reference users by userId: String (not re-define the model)
+// =============================================================================
+// Canonical User Model — Single Source of Truth
+// =============================================================================
+// This is the authoritative User model definition for the Azeebo+ platform.
+// All services that need a User table should reference this definition.
+// Last synced: 2026-06-23
+// =============================================================================
+
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  displayName String
-  avatar    String?
-  role      String   @default("user")
-  isVerified Boolean @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id            String    @id @default(uuid()) @db.Text
+  email         String    @unique @db.Text
+  phone         String?   @unique @db.Text
+  firstName     String    @db.Text
+  lastName      String    @db.Text
+  displayName   String?   @db.Text
+  role          UserRole  @default(VIEWER)
+  avatar        String?   @db.Text
+  bio           String?   @db.Text
+  profileImage  String?   @db.Text
+  isVerified    Boolean   @default(false)
+  isCreator     Boolean   @default(false)
+  isSuspended   Boolean   @default(false)
+  suspendedAt   DateTime?
+  suspendedUntil DateTime?
+  suspensionReason String? @db.Text
+  suspendedBy   String?   @db.Text
+  lastLoginAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  wallet            Wallet?
+  preferences       UserPreferences?
+  session           UserSession?
+  refreshTokens     RefreshToken[]
+  socialLinks       SocialLink[]
+  blockedUsers      UserBlock[]          @relation("blocker")
+  blockedByUsers    UserBlock[]          @relation("blocked")
+  // Following relations
+  following         UserFollow[]         @relation("follower")
+  followedBy        UserFollow[]         @relation("followed")
+  // Wallet
+  sentTransactions     WalletTransaction[]  @relation("sender")
+  receivedTransactions WalletTransaction[]  @relation("receiver")
+  // Content
+  ownedContent      Content[]
+  contentInteractions ContentInteraction[]
+  // Purchases
+  purchases         ContentPurchase[]
+  // Support
+  supportTickets    SupportTicket[]
+  // Moderation
+  moderationActions ModerationAction[]
+  moderationCases   ModerationCase[]      @relation("reporter")
+  moderatedCases    ModerationCase[]      @relation("moderator")
+  // Safety
+  safetyActions     SafetyAction[]
+  // Reports
+  contentReports    ContentReport[]
+  reportedContent   ContentReport[]       @relation("reportedContent")
+  // Referrals
+  referralsMade     Referral[]            @relation("referrer")
+  referralsReceived Referral[]            @relation("referred")
+  referralCodes     ReferralCode[]
+  // Creator
+  creatorStats      CreatorStats?
+  content           Content[]             @relation("ContentCreator")
+  // Verification
+  emailVerifications EmailVerification[]
+  phoneVerifications PhoneVerification[]
+  // Subscriptions
+  subscriptions     Subscription[]
+
+  @@index([email])
+  @@index([phone])
+  @@index([role])
+  @@index([isVerified])
+  @@index([isSuspended])
+  @@index([createdAt])
+}
+
+enum UserRole {
+  USER
+  CREATOR
+  ADMIN
+  VIEWER
+  MODERATOR
 }
