@@ -232,34 +232,59 @@ export const DEFAULT_SHORTCUTS: KeyboardShortcut[] = [
       const modal = document.createElement('div');
       modal.id = 'keyboard-shortcuts-help';
       modal.className = 'fixed inset-0 bg-black/50 flex items-center justify-center z-50';
-      modal.innerHTML = `
-        <div class="bg-white dark:bg-gray-900 rounded-lg p-6 max-w-md w-full mx-4 max-h-[80vh] overflow-y-auto" role="dialog" aria-modal="true" aria-label="Keyboard shortcuts">
-          <div class="flex justify-between items-center mb-4">
-            <h2 class="text-xl font-bold">Keyboard Shortcuts</h2>
-            <button id="close-shortcuts-help" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200" aria-label="Close">
-              ✕
-            </button>
-          </div>
-          <div class="space-y-2">
-            ${DEFAULT_SHORTCUTS.filter((s) => s.description)
-              .map((shortcut) => {
-                const keys = [];
-                if (shortcut.ctrlKey) keys.push('Ctrl');
-                if (shortcut.altKey) keys.push('Alt');
-                if (shortcut.shiftKey) keys.push('Shift');
-                if (shortcut.metaKey) keys.push('Cmd');
-                keys.push(shortcut.key.toUpperCase());
-                return `
-                <div class="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-700">
-                  <span class="text-sm">${shortcut.description}</span>
-                  <kbd class="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded text-xs font-mono">${keys.join(' + ')}</kbd>
-                </div>
-              `;
-              })
-              .join('')}
-          </div>
-        </div>
-      `;
+
+      const dialog = document.createElement('div');
+      dialog.className = 'bg-white dark:bg-gray-900 rounded-lg p-6 max-w-md w-full mx-4 max-h-[80vh] overflow-y-auto';
+      dialog.setAttribute('role', 'dialog');
+      dialog.setAttribute('aria-modal', 'true');
+      dialog.setAttribute('aria-label', 'Keyboard shortcuts');
+
+      const header = document.createElement('div');
+      header.className = 'flex justify-between items-center mb-4';
+
+      const title = document.createElement('h2');
+      title.className = 'text-xl font-bold';
+      title.textContent = 'Keyboard Shortcuts';
+
+      const closeBtn = document.createElement('button');
+      closeBtn.id = 'close-shortcuts-help';
+      closeBtn.className = 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200';
+      closeBtn.setAttribute('aria-label', 'Close');
+      closeBtn.textContent = '✕';
+
+      header.appendChild(title);
+      header.appendChild(closeBtn);
+
+      const shortcutsList = document.createElement('div');
+      shortcutsList.className = 'space-y-2';
+
+      DEFAULT_SHORTCUTS.filter((s) => s.description).forEach((shortcut) => {
+        const keys: string[] = [];
+        if (shortcut.ctrlKey) keys.push('Ctrl');
+        if (shortcut.altKey) keys.push('Alt');
+        if (shortcut.shiftKey) keys.push('Shift');
+        if (shortcut.metaKey) keys.push('Cmd');
+        keys.push(shortcut.key.toUpperCase());
+
+        const row = document.createElement('div');
+        row.className = 'flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-700';
+
+        const desc = document.createElement('span');
+        desc.className = 'text-sm';
+        desc.textContent = shortcut.description ?? '';
+
+        const kbd = document.createElement('kbd');
+        kbd.className = 'px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded text-xs font-mono';
+        kbd.textContent = keys.join(' + ');
+
+        row.appendChild(desc);
+        row.appendChild(kbd);
+        shortcutsList.appendChild(row);
+      });
+
+      dialog.appendChild(header);
+      dialog.appendChild(shortcutsList);
+      modal.appendChild(dialog);
 
       document.body.appendChild(modal);
 

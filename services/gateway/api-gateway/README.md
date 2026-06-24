@@ -51,7 +51,7 @@ pnpm start:dev
 
 ## Public API URL Pattern
 
-All services are exposed through the gateway at: `https://api.azeebo.com/api/v1/{service}/...`
+All services are exposed through the gateway at: `https://api.azeeboplus.com/api/v1/{service}/...`
 
 ## Health Check
 
@@ -60,5 +60,5 @@ All services are exposed through the gateway at: `https://api.azeebo.com/api/v1/
 ## Ownership
 
 - **Team**: Platform Engineering
-- **Maintainer**: platform-engineering@azeebo.com
+- **Maintainer**: platform-engineering@azeeboplus.com
 - **Last Updated**: 2026-05-11

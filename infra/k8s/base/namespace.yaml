@@ -3,7 +3,7 @@ kind: Namespace
 metadata:
   name: azeebo
   labels:
-    app.kubernetes.io/name: azeebo
+    app.kubernetes.io/name: azeebo-plus
     pod-security.kubernetes.io/enforce: restricted
     pod-security.kubernetes.io/enforce-version: latest
     pod-security.kubernetes.io/audit: restricted

@@ -32,7 +32,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: azeebo-secrets
-                  key: DATABASE_URL
+                  key: database-url
             - name: REDIS_URL
               value: redis://redis.azeebo-staging.svc.cluster.local:6379
           resources:

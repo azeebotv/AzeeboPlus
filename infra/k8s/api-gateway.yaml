@@ -88,6 +88,33 @@ spec:
               value: http://vertical-service.azeebo.svc.cluster.local:3017
             - name: SUPPORT_SERVICE_URL
               value: http://support-service.azeebo.svc.cluster.local:3020
+            - name: COMEDY_SERVICE_URL
+              value: http://comedy-service.azeebo.svc.cluster.local:3012
+            - name: GAMES_SERVICE_URL
+              value: http://games-service.azeebo.svc.cluster.local:3014
+            - name: MOVIE_SERVICE_URL
+              value: http://movie-service.azeebo.svc.cluster.local:3011
+            - name: SPORTS_SERVICE_URL
+              value: http://sports-service.azeebo.svc.cluster.local:3021
+            - name: MODERATION_SERVICE_URL
+              value: http://moderation-service.azeebo.svc.cluster.local:3022
+            - name: ENGAGEMENT_SERVICE_URL
+              value: http://engagement-service.azeebo.svc.cluster.local:3023
+            - name: MESSAGING_SERVICE_URL
+              value: http://messaging-service.azeebo.svc.cluster.local:3024
+            - name: REFERRAL_SERVICE_URL
+              value: http://referral-service.azeebo.svc.cluster.local:3025
+            - name: SUBSCRIPTION_SERVICE_URL
+              value: http://subscription-service.azeebo.svc.cluster.local:3026
+            - name: ADMIN_SERVICE_URL
+              value: http://admin-app.azeebo.svc.cluster.local:4016
+            - name: CREATOR_PORTAL_SERVICE_URL
+              value: http://creator-portal-app.azeebo.svc.cluster.local:4014
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: azeebo-secrets
+                  key: redis-url
           resources:
             requests:
               memory: "128Mi"

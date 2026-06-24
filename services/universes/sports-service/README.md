@@ -49,5 +49,5 @@ pnpm start:dev
 ## Ownership
 
 - **Team**: Sports Platform
-- **Maintainer**: sports-platform@azeebo.com
+- **Maintainer**: sports-platform@azeeboplus.com
 - **Last Updated**: 2026-05-14

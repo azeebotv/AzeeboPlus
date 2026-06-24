@@ -371,7 +371,7 @@ export class AuthService {
     const now = Math.floor(Date.now() / 1000);
     const accessToken = this.jwtService.sign(
       {
-        iss: process.env.JWT_ISSUER || 'azeebo-auth-service',
+        iss: process.env.JWT_ISSUER || 'azeebo-auth',
         aud: process.env.JWT_AUDIENCE || 'azeebo-api',
         jti: randomUUID(),
         sub: user.id,
@@ -391,7 +391,7 @@ export class AuthService {
 
     const refreshToken = this.jwtService.sign(
       {
-        iss: process.env.JWT_ISSUER || 'azeebo-auth-service',
+        iss: process.env.JWT_ISSUER || 'azeebo-auth',
         aud: process.env.JWT_AUDIENCE || 'azeebo-api',
         jti: randomUUID(),
         sub: user.id,

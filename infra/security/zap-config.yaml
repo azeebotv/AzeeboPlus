@@ -1,17 +1,17 @@
 version: "2"
 name: "Azeebo+ Security Scan"
 target:
-  url: "https://api.azeebo.com"
+  url: "https://api.azeeboplus.com"
 contexts:
   - name: "Azeebo+ API"
     urls:
-      - "https://api.azeebo.com"
+      - "https://api.azeeboplus.com"
     includePaths:
-      - "https://api.azeebo.com/.*"
+      - "https://api.azeeboplus.com/.*"
     excludePaths:
-      - "https://api.azeebo.com/health"
-      - "https://api.azeebo.com/ready"
-      - "https://api.azeebo.com/live"
+      - "https://api.azeeboplus.com/health"
+      - "https://api.azeeboplus.com/ready"
+      - "https://api.azeeboplus.com/live"
     authentication:
       method: "bearer"
       parameters:

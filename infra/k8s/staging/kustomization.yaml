@@ -23,7 +23,7 @@ resources:
   - hpa.yaml
 
 commonLabels:
-  app.kubernetes.io/name: azeebo
+  app.kubernetes.io/name: azeebo-plus
   app.kubernetes.io/environment: staging
   app.kubernetes.io/managed-by: kustomize
 

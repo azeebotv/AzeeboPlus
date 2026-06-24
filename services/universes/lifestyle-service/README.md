@@ -50,5 +50,5 @@ pnpm start:dev
 ## Ownership
 
 - **Team**: Lifestyle Universe
-- **Maintainer**: lifestyle-engineering@azeebo.com
+- **Maintainer**: lifestyle-engineering@azeeboplus.com
 - **Last Updated**: 2026-05-11

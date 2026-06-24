@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { colors, universeColors } from '@azeebo/design-tokens';
+import { colors, universeColors } from '../src/theme';
 import { realityApi } from '../src/api/engagement';
 import { walletApi } from '../src/api/wallet';
 import { logger } from '../src/utils/logger';
@@ -183,7 +183,7 @@ export default function VoteScreen() {
                 key={contestant.id}
                 style={[
                   styles.contestantCard,
-                  { backgroundColor: isDark ? colors.dark[800] : colors.light[100] },
+                  { backgroundColor: isDark ? colors.bg.tertiary : colors.light[100] },
                   selectedContestant?.id === contestant.id && styles.contestantCardSelected,
                   contestant.eliminated && styles.contestantCardEliminated,
                 ]}
@@ -239,7 +239,7 @@ export default function VoteScreen() {
                   key={pkg.id}
                   style={[
                     styles.packageCard,
-                    { backgroundColor: isDark ? colors.dark[800] : colors.light[100] },
+                    { backgroundColor: isDark ? colors.bg.tertiary : colors.light[100] },
                     selectedPackage.id === pkg.id && styles.packageCardSelected,
                   ]}
                   onPress={() => setSelectedPackage(pkg)}
@@ -299,7 +299,7 @@ export default function VoteScreen() {
             <View
               style={[
                 styles.summaryCard,
-                { backgroundColor: isDark ? colors.dark[800] : colors.light[100] },
+                { backgroundColor: isDark ? colors.bg.tertiary : colors.light[100] },
               ]}
             >
               <View style={styles.summaryRow}>
@@ -367,7 +367,7 @@ export default function VoteScreen() {
           <View
             style={[
               styles.modalContent,
-              { backgroundColor: isDark ? colors.dark[800] : '#ffffff' },
+              { backgroundColor: isDark ? colors.bg.tertiary : '#ffffff' },
             ]}
           >
             <Text

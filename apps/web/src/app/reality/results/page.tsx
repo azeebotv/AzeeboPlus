@@ -37,15 +37,21 @@ export default function ResultsPage(): React.JSX.Element {
 
   useEffect(() => {
     const fetchResults = async () => {
-      if (!contentId) { setIsLoading(false); return; }
+      if (!contentId) {
+        setIsLoading(false);
+        return;
+      }
       try {
         const result = await apiFetch<EpisodeResult[]>(`/v1/content/${contentId}/results`);
         if (result.success && result.data) {
           setResults(result.data);
           if (result.data.length > 0) setSelectedEpisode(result.data[0].id);
         }
-      } catch (error) { webLogger.error('Failed to load results', error); }
-      finally { setIsLoading(false); }
+      } catch (error) {
+        webLogger.error('Failed to load results', error);
+      } finally {
+        setIsLoading(false);
+      }
     };
     fetchResults();
   }, [contentId]);
@@ -56,9 +62,15 @@ export default function ResultsPage(): React.JSX.Element {
     return (
       <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
         <AppHeader />
-        <div className="flex items-center justify-center" style={{ minHeight: 'calc(100vh - 200px)' }}>
+        <div
+          className="flex items-center justify-center"
+          style={{ minHeight: 'calc(100vh - 200px)' }}
+        >
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 mx-auto" style={{ border: '3px solid rgba(255,255,255,0.1)', borderTopColor: '#E8420A' }} />
+            <div
+              className="animate-spin rounded-full h-12 w-12 mx-auto"
+              style={{ border: '3px solid rgba(255,255,255,0.1)', borderTopColor: '#E8420A' }}
+            />
             <p className="mt-4 text-white/60">Loading results...</p>
           </div>
         </div>
@@ -71,8 +83,18 @@ export default function ResultsPage(): React.JSX.Element {
       <AppHeader />
       <div className="max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
-          <button onClick={() => router.back()} className="text-white/50 hover:text-white mb-4 flex items-center gap-2 transition-colors">
-            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+          <button
+            onClick={() => router.back()}
+            className="text-white/50 hover:text-white mb-4 flex items-center gap-2 transition-colors"
+          >
+            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 19l-7-7 7-7"
+              />
+            </svg>
             Back
           </button>
           <h1 className="text-3xl font-bold text-white">Results</h1>
@@ -80,7 +102,11 @@ export default function ResultsPage(): React.JSX.Element {
         </div>
 
         <div className="mb-8">
-          <div className="flex gap-2 overflow-x-auto pb-2" role="listbox" aria-label="Episode selector">
+          <div
+            className="flex gap-2 overflow-x-auto pb-2"
+            role="listbox"
+            aria-label="Episode selector"
+          >
             {results.map((result) => (
               <button
                 key={result.id}
@@ -90,7 +116,15 @@ export default function ResultsPage(): React.JSX.Element {
                 className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
                   selectedEpisode === result.id ? 'az-btn-primary' : ''
                 }`}
-                style={selectedEpisode !== result.id ? { border: '1px solid rgba(255,255,255,0.2)', backgroundColor: 'rgba(255,255,255,0.08)', color: '#fff' } : undefined}
+                style={
+                  selectedEpisode !== result.id
+                    ? {
+                        border: '1px solid rgba(255,255,255,0.2)',
+                        backgroundColor: 'rgba(255,255,255,0.08)',
+                        color: '#fff',
+                      }
+                    : undefined
+                }
               >
                 E{result.episodeNumber}
               </button>
@@ -103,31 +137,61 @@ export default function ResultsPage(): React.JSX.Element {
             <div className="mb-6">
               <h2 className="text-xl font-semibold text-white">{selectedResult.title}</h2>
               <p className="text-white/50 mt-1">
-                {new Date(selectedResult.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                {new Date(selectedResult.date).toLocaleDateString('en-US', {
+                  month: 'long',
+                  day: 'numeric',
+                  year: 'numeric',
+                })}
               </p>
             </div>
 
             {selectedResult.winner && (
-              <div className="az-glass p-6 mb-6" style={{ border: '2px solid rgba(234,179,8,0.5)' }}>
-                <h3 className="text-lg font-bold mb-4" style={{ color: '#EAB308' }}>🏆 Winner</h3>
+              <div
+                className="az-glass p-6 mb-6"
+                style={{ border: '2px solid rgba(234,179,8,0.5)' }}
+              >
+                <h3 className="text-lg font-bold mb-4" style={{ color: '#EAB308' }}>
+                  🏆 Winner
+                </h3>
                 <div className="flex items-center gap-4">
-                  <img src={selectedResult.winner.avatar} alt={selectedResult.winner.name} className="w-20 h-20 rounded-full object-cover" />
+                  <img
+                    src={selectedResult.winner.avatar}
+                    alt={selectedResult.winner.name}
+                    className="w-20 h-20 rounded-full object-cover"
+                  />
                   <div>
-                    <h4 className="text-xl font-semibold text-white">{selectedResult.winner.name}</h4>
-                    <p className="text-white/50">{selectedResult.winner.votes.toLocaleString()} votes ({selectedResult.winner.percentage}%)</p>
+                    <h4 className="text-xl font-semibold text-white">
+                      {selectedResult.winner.name}
+                    </h4>
+                    <p className="text-white/50">
+                      {selectedResult.winner.votes.toLocaleString()} votes (
+                      {selectedResult.winner.percentage}%)
+                    </p>
                   </div>
                 </div>
               </div>
             )}
 
             {selectedResult.evicted && (
-              <div className="az-glass p-6 mb-6" style={{ border: '2px solid rgba(239,68,68,0.5)' }}>
+              <div
+                className="az-glass p-6 mb-6"
+                style={{ border: '2px solid rgba(239,68,68,0.5)' }}
+              >
                 <h3 className="text-lg font-bold text-red-500 mb-4">🚪 Evicted</h3>
                 <div className="flex items-center gap-4 opacity-70">
-                  <img src={selectedResult.evicted.avatar} alt={selectedResult.evicted.name} className="w-20 h-20 rounded-full object-cover" />
+                  <img
+                    src={selectedResult.evicted.avatar}
+                    alt={selectedResult.evicted.name}
+                    className="w-20 h-20 rounded-full object-cover"
+                  />
                   <div>
-                    <h4 className="text-xl font-semibold text-white">{selectedResult.evicted.name}</h4>
-                    <p className="text-white/50">{selectedResult.evicted.votes.toLocaleString()} votes ({selectedResult.evicted.percentage}%)</p>
+                    <h4 className="text-xl font-semibold text-white">
+                      {selectedResult.evicted.name}
+                    </h4>
+                    <p className="text-white/50">
+                      {selectedResult.evicted.votes.toLocaleString()} votes (
+                      {selectedResult.evicted.percentage}%)
+                    </p>
                   </div>
                 </div>
               </div>
@@ -136,25 +200,40 @@ export default function ResultsPage(): React.JSX.Element {
             <div>
               <h3 className="text-xl font-semibold text-white mb-4">Full Rankings</h3>
               <div className="space-y-3">
-                {selectedResult.contestants.sort((a, b) => a.rank - b.rank).map((contestant) => (
-                  <div
-                    key={contestant.id}
-                    className={`az-glass flex items-center gap-4 p-4 ${
-                      contestant.isWinner ? 'ring-2 ring-yellow-500' : contestant.isEvicted ? 'opacity-70' : ''
-                    }`}
-                  >
-                    <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}>
-                      <span className="text-white font-bold">#{contestant.rank}</span>
+                {selectedResult.contestants
+                  .sort((a, b) => a.rank - b.rank)
+                  .map((contestant) => (
+                    <div
+                      key={contestant.id}
+                      className={`az-glass flex items-center gap-4 p-4 ${
+                        contestant.isWinner
+                          ? 'ring-2 ring-yellow-500'
+                          : contestant.isEvicted
+                            ? 'opacity-70'
+                            : ''
+                      }`}
+                    >
+                      <div
+                        className="w-10 h-10 rounded-full flex items-center justify-center"
+                        style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}
+                      >
+                        <span className="text-white font-bold">#{contestant.rank}</span>
+                      </div>
+                      <img
+                        src={contestant.avatar}
+                        alt={contestant.name}
+                        className="w-14 h-14 rounded-full object-cover"
+                      />
+                      <div className="flex-1">
+                        <h4 className="text-lg font-semibold text-white">{contestant.name}</h4>
+                        <p className="text-sm text-white/50">
+                          {contestant.votes.toLocaleString()} votes ({contestant.percentage}%)
+                        </p>
+                      </div>
+                      {contestant.isWinner && <span className="text-3xl">🏆</span>}
+                      {contestant.isEvicted && <span className="text-3xl">🚪</span>}
                     </div>
-                    <img src={contestant.avatar} alt={contestant.name} className="w-14 h-14 rounded-full object-cover" />
-                    <div className="flex-1">
-                      <h4 className="text-lg font-semibold text-white">{contestant.name}</h4>
-                      <p className="text-sm text-white/50">{contestant.votes.toLocaleString()} votes ({contestant.percentage}%)</p>
-                    </div>
-                    {contestant.isWinner && <span className="text-3xl">🏆</span>}
-                    {contestant.isEvicted && <span className="text-3xl">🚪</span>}
-                  </div>
-                ))}
+                  ))}
               </div>
             </div>
           </>

@@ -21,12 +21,12 @@ spec:
         - name: web-app
           image: azeebo/web-app:latest
           ports:
-            - containerPort: 3000
+            - containerPort: 4000
           env:
             - name: NODE_ENV
               value: production
             - name: API_GATEWAY_URL
-              value: http://api-gateway.azeebo.svc.cluster.local:3000
+              value: http://api-gateway.azeebo.svc.cluster.local:3013
           resources:
             requests:
               memory: "64Mi"
@@ -37,13 +37,13 @@ spec:
           livenessProbe:
             httpGet:
               path: /
-              port: 3000
+              port: 4000
             initialDelaySeconds: 15
             periodSeconds: 10
           readinessProbe:
             httpGet:
               path: /
-              port: 3000
+              port: 4000
             initialDelaySeconds: 5
             periodSeconds: 5
 ---
@@ -58,6 +58,6 @@ spec:
   type: ClusterIP
   ports:
     - port: 80
-      targetPort: 3000
+      targetPort: 4000
   selector:
     app: web-app

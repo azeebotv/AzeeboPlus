@@ -4,8 +4,7 @@
 FROM node:22-alpine AS builder
 WORKDIR /app
 
-RUN apk add --no-cache curl && \
-    for i in 1 2 3 4 5; do npm install -g pnpm@10.33.2 @nestjs/cli prisma@6.19.0 && break || (echo "Retry $i/5..." && sleep 10); done
+RUN for i in 1 2 3 4 5; do npm install -g pnpm@10.33.2 && break || (echo "Retry $i/5..." && sleep 10); done
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.json ./
 COPY packages ./packages
@@ -28,11 +27,10 @@ LABEL org.opencontainers.image.source="https://github.com/azeebo/azeebo-plus"
 LABEL org.opencontainers.image.description="Azeebo+ Auth Service"
 LABEL org.opencontainers.image.licenses="Proprietary"
 
-RUN apk add --no-cache curl && \
-    for i in 1 2 3 4 5; do npm install -g pnpm@10.33.2 @nestjs/cli prisma@6.19.0 && break || (echo "Retry $i/5..." && sleep 10); done && \
+RUN apk add --no-cache tini && \
     addgroup -g 65532 -S nodejs && \
-    apk add --no-cache tini && \
-    adduser -S nodejs -u 65532
+    adduser -S nodejs -u 65532 && \
+    for i in 1 2 3 4 5; do npm install -g pnpm@10.33.2 && break || (echo "Retry $i/5..." && sleep 10); done
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY services/core/auth-service/package.json ./services/core/auth-service/
@@ -59,7 +57,7 @@ USER nodejs
 EXPOSE 3000
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:3000/live || exit 1
+    CMD node -e "fetch('http://localhost:3000/live').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 
 ENTRYPOINT ["/sbin/tini", "--"]
 CMD ["node", "services/core/auth-service/dist/services/core/auth-service/src/main.js"]

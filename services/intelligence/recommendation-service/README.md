@@ -36,5 +36,5 @@ pnpm start:dev
 ## Ownership
 
 - **Team**: Data Science
-- **Maintainer**: data-science@azeebo.com
+- **Maintainer**: data-science@azeeboplus.com
 - **Last Updated**: 2026-05-11

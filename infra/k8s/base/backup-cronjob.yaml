@@ -168,7 +168,7 @@ spec:
                   valueFrom:
                     secretKeyRef:
                       name: azeebo-secrets
-                      key: REDIS_PASSWORD
+                      key: redis-password
                 - name: GPG_RECIPIENT
                   valueFrom:
                     secretKeyRef:

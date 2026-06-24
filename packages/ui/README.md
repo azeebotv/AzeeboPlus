@@ -23,5 +23,5 @@ const { data, loading, error } = useApi('/api/data');
 ## Ownership
 
 - **Team**: Frontend Engineering
-- **Maintainer**: frontend@azeebo.com
+- **Maintainer**: frontend@azeeboplus.com
 - **Last Updated**: 2026-05-11

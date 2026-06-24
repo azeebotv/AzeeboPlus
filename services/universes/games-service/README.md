@@ -44,5 +44,5 @@ pnpm start:dev
 ## Ownership
 
 - **Team**: Gaming Platform
-- **Maintainer**: gaming-platform@azeebo.com
+- **Maintainer**: gaming-platform@azeeboplus.com
 - **Last Updated**: 2026-05-14

@@ -45,5 +45,5 @@ pnpm start:dev
 ## Ownership
 
 - **Team**: Entertainment
-- **Maintainer**: entertainment@azeebo.com
+- **Maintainer**: entertainment@azeeboplus.com
 - **Last Updated**: 2026-05-14

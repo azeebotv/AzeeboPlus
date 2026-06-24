@@ -20,7 +20,12 @@ interface AnalyticsData {
     topCountries: Array<{ country: string; percentage: number }>;
     genderSplit: { male: number; female: number; other: number };
   };
-  engagementMetrics: { avgWatchTime: number; completionRate: number; shareRate: number; commentRate: number };
+  engagementMetrics: {
+    avgWatchTime: number;
+    completionRate: number;
+    shareRate: number;
+    commentRate: number;
+  };
 }
 
 export default function CreatorAnalyticsPage(): React.JSX.Element {
@@ -29,14 +34,21 @@ export default function CreatorAnalyticsPage(): React.JSX.Element {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d' | 'all'>('30d');
 
-  useEffect(() => { loadAnalytics(); }, [timeRange]);
+  useEffect(() => {
+    loadAnalytics();
+  }, [timeRange]);
 
   const loadAnalytics = async (): Promise<void> => {
     try {
       const result = await apiFetch<AnalyticsData>('/v1/creator/analytics');
-      if (result.success && result.data) { setAnalytics(result.data); }
-    } catch (error) { webLogger.error('Failed to load analytics', error); }
-    finally { setIsLoading(false); }
+      if (result.success && result.data) {
+        setAnalytics(result.data);
+      }
+    } catch (error) {
+      webLogger.error('Failed to load analytics', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const formatNumber = (num: number): string => {
@@ -49,9 +61,15 @@ export default function CreatorAnalyticsPage(): React.JSX.Element {
     return (
       <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
         <AppHeader />
-        <div className="flex items-center justify-center" style={{ minHeight: 'calc(100vh - 200px)' }}>
+        <div
+          className="flex items-center justify-center"
+          style={{ minHeight: 'calc(100vh - 200px)' }}
+        >
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 mx-auto" style={{ border: '3px solid rgba(255,255,255,0.1)', borderTopColor: '#E8420A' }} />
+            <div
+              className="animate-spin rounded-full h-12 w-12 mx-auto"
+              style={{ border: '3px solid rgba(255,255,255,0.1)', borderTopColor: '#E8420A' }}
+            />
             <p className="mt-4 text-white/60">Loading analytics...</p>
           </div>
         </div>
@@ -63,10 +81,19 @@ export default function CreatorAnalyticsPage(): React.JSX.Element {
     return (
       <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
         <AppHeader />
-        <div className="flex items-center justify-center" style={{ minHeight: 'calc(100vh - 200px)' }}>
+        <div
+          className="flex items-center justify-center"
+          style={{ minHeight: 'calc(100vh - 200px)' }}
+        >
           <div className="text-center">
             <p className="text-white mb-4">Failed to load analytics</p>
-            <button onClick={loadAnalytics} className="az-btn-primary" style={{ width: 'auto', paddingInline: '1.5rem' }}>Retry</button>
+            <button
+              onClick={loadAnalytics}
+              className="az-btn-primary"
+              style={{ width: 'auto', paddingInline: '1.5rem' }}
+            >
+              Retry
+            </button>
           </div>
         </div>
       </div>
@@ -74,9 +101,21 @@ export default function CreatorAnalyticsPage(): React.JSX.Element {
   }
 
   const statCards = [
-    { label: 'Total Views', value: formatNumber(analytics.totalViews), growth: analytics.viewsGrowth },
-    { label: 'Followers', value: formatNumber(analytics.totalFollowers), growth: analytics.followersGrowth },
-    { label: 'Earnings', value: `₦${formatNumber(analytics.totalEarnings)}`, growth: analytics.earningsGrowth },
+    {
+      label: 'Total Views',
+      value: formatNumber(analytics.totalViews),
+      growth: analytics.viewsGrowth,
+    },
+    {
+      label: 'Followers',
+      value: formatNumber(analytics.totalFollowers),
+      growth: analytics.followersGrowth,
+    },
+    {
+      label: 'Earnings',
+      value: `₦${formatNumber(analytics.totalEarnings)}`,
+      growth: analytics.earningsGrowth,
+    },
     { label: 'Likes', value: formatNumber(analytics.totalLikes), growth: null },
   ];
 
@@ -85,18 +124,49 @@ export default function CreatorAnalyticsPage(): React.JSX.Element {
       <AppHeader />
       <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
-          <button onClick={() => router.back()} className="text-white/50 hover:text-white mb-2 flex items-center gap-2 transition-colors">
-            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg> Back
+          <button
+            onClick={() => router.back()}
+            className="text-white/50 hover:text-white mb-2 flex items-center gap-2 transition-colors"
+          >
+            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 19l-7-7 7-7"
+              />
+            </svg>{' '}
+            Back
           </button>
           <h1 className="text-3xl font-bold text-white">Creator Analytics</h1>
         </div>
 
         <div className="flex gap-2 mb-8" role="listbox" aria-label="Time range">
           {(['7d', '30d', '90d', 'all'] as const).map((range) => (
-            <button key={range} onClick={() => setTimeRange(range)} role="option" aria-selected={timeRange === range}
+            <button
+              key={range}
+              onClick={() => setTimeRange(range)}
+              role="option"
+              aria-selected={timeRange === range}
               className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${timeRange === range ? 'az-btn-primary' : ''}`}
-              style={timeRange !== range ? { border: '1px solid rgba(255,255,255,0.2)', backgroundColor: 'rgba(255,255,255,0.08)', color: '#fff' } : undefined}
-            >{range === '7d' ? '7 Days' : range === '30d' ? '30 Days' : range === '90d' ? '90 Days' : 'All Time'}</button>
+              style={
+                timeRange !== range
+                  ? {
+                      border: '1px solid rgba(255,255,255,0.2)',
+                      backgroundColor: 'rgba(255,255,255,0.08)',
+                      color: '#fff',
+                    }
+                  : undefined
+              }
+            >
+              {range === '7d'
+                ? '7 Days'
+                : range === '30d'
+                  ? '30 Days'
+                  : range === '90d'
+                    ? '90 Days'
+                    : 'All Time'}
+            </button>
           ))}
         </div>
 
@@ -106,7 +176,10 @@ export default function CreatorAnalyticsPage(): React.JSX.Element {
               <p className="text-3xl font-bold text-white">{stat.value}</p>
               <p className="text-sm text-white/50 mt-1">{stat.label}</p>
               {stat.growth !== null && (
-                <p className={`text-sm font-medium mt-2`} style={{ color: stat.growth >= 0 ? '#22C55E' : '#EF4444' }}>
+                <p
+                  className={`text-sm font-medium mt-2`}
+                  style={{ color: stat.growth >= 0 ? '#22C55E' : '#EF4444' }}
+                >
                   {stat.growth >= 0 ? '↑' : '↓'} {Math.abs(stat.growth)}%
                 </p>
               )}
@@ -120,12 +193,21 @@ export default function CreatorAnalyticsPage(): React.JSX.Element {
             <div className="grid grid-cols-2 gap-4">
               {[
                 { label: 'Avg Watch Time', value: `${analytics.engagementMetrics.avgWatchTime}m` },
-                { label: 'Completion Rate', value: `${analytics.engagementMetrics.completionRate}%` },
+                {
+                  label: 'Completion Rate',
+                  value: `${analytics.engagementMetrics.completionRate}%`,
+                },
                 { label: 'Share Rate', value: `${analytics.engagementMetrics.shareRate}%` },
                 { label: 'Comment Rate', value: `${analytics.engagementMetrics.commentRate}%` },
               ].map((metric) => (
-                <div key={metric.label} className="text-center p-4" style={{ backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '0.75rem' }}>
-                  <p className="text-2xl font-bold" style={{ color: '#E8420A' }}>{metric.value}</p>
+                <div
+                  key={metric.label}
+                  className="text-center p-4"
+                  style={{ backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '0.75rem' }}
+                >
+                  <p className="text-2xl font-bold" style={{ color: '#E8420A' }}>
+                    {metric.value}
+                  </p>
                   <p className="text-sm text-white/50 mt-1">{metric.label}</p>
                 </div>
               ))}
@@ -137,7 +219,9 @@ export default function CreatorAnalyticsPage(): React.JSX.Element {
             <div className="space-y-3">
               {analytics.topContent.slice(0, 5).map((content, index) => (
                 <div key={content.id} className="flex items-center gap-3">
-                  <span className="text-lg font-bold w-8" style={{ color: '#E8420A' }}>#{index + 1}</span>
+                  <span className="text-lg font-bold w-8" style={{ color: '#E8420A' }}>
+                    #{index + 1}
+                  </span>
                   <div className="flex-1">
                     <p className="font-medium text-white truncate">{content.title}</p>
                     <p className="text-sm text-white/50">{formatNumber(content.views)} views</p>
@@ -157,8 +241,14 @@ export default function CreatorAnalyticsPage(): React.JSX.Element {
                 {analytics.demographics.ageGroups.map((age) => (
                   <div key={age.range} className="flex items-center gap-3">
                     <span className="text-sm text-white w-16">{age.range}</span>
-                    <div className="flex-1 h-2 rounded-full" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}>
-                      <div className="h-full rounded-full" style={{ width: `${age.percentage}%`, backgroundColor: '#E8420A' }} />
+                    <div
+                      className="flex-1 h-2 rounded-full"
+                      style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}
+                    >
+                      <div
+                        className="h-full rounded-full"
+                        style={{ width: `${age.percentage}%`, backgroundColor: '#E8420A' }}
+                      />
                     </div>
                     <span className="text-sm text-white w-12 text-right">{age.percentage}%</span>
                   </div>
@@ -171,10 +261,18 @@ export default function CreatorAnalyticsPage(): React.JSX.Element {
                 {analytics.demographics.topCountries.map((country) => (
                   <div key={country.country} className="flex items-center gap-3">
                     <span className="text-sm text-white w-24">{country.country}</span>
-                    <div className="flex-1 h-2 rounded-full" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}>
-                      <div className="h-full rounded-full" style={{ width: `${country.percentage}%`, backgroundColor: '#0D3B2E' }} />
+                    <div
+                      className="flex-1 h-2 rounded-full"
+                      style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}
+                    >
+                      <div
+                        className="h-full rounded-full"
+                        style={{ width: `${country.percentage}%`, backgroundColor: '#0D3B2E' }}
+                      />
                     </div>
-                    <span className="text-sm text-white w-12 text-right">{country.percentage}%</span>
+                    <span className="text-sm text-white w-12 text-right">
+                      {country.percentage}%
+                    </span>
                   </div>
                 ))}
               </div>

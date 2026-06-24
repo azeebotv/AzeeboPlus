@@ -20,7 +20,10 @@ export class AuthGuard implements CanActivate {
     }
 
     try {
-      const payload = this.jwtService.verify(token);
+      const payload = this.jwtService.verify(token, {
+        audience: 'azeebo-api',
+        issuer: 'azeebo-auth',
+      });
       request.user = payload;
       return true;
     } catch {

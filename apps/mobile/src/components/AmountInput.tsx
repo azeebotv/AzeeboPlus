@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
-import { colors } from '@azeebo/design-tokens';
+import { colors } from '../theme';
 
 interface AmountInputProps {
   value: string;
@@ -133,7 +133,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   inputError: {
-    borderColor: colors.error[500],
+    borderColor: colors.error,
   },
   currencySymbol: {
     fontSize: 18,
@@ -149,7 +149,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   errorText: {
-    color: colors.error[500],
+    color: colors.error,
     fontSize: 12,
     marginTop: 4,
   },

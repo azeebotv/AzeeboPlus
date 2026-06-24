@@ -11,7 +11,7 @@ services:
       - NODE_ENV=development
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/azeebo_plus_dev
       - REDIS_URL=redis://redis:6379
-      - JWT_SECRET=your-secret-key
+      - JWT_ACCESS_SECRET=your-secret-key
     volumes:
       - .:/app
       - /app/node_modules

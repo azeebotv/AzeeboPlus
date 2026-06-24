@@ -21,7 +21,11 @@ export default function AdminRealityPage(): React.JSX.Element {
         const data = response.data as any;
         setShows(Array.isArray(data) ? data : data.items || []);
       }
-    } catch { /* ignore */ } finally { setIsLoading(false); }
+    } catch {
+      /* ignore */
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -31,23 +35,69 @@ export default function AdminRealityPage(): React.JSX.Element {
 
       {isLoading ? (
         <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}>
-          <div style={{ width: 40, height: 40, border: '3px solid #2A1A1A', borderTopColor: '#E8420A', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+          <div
+            style={{
+              width: 40,
+              height: 40,
+              border: '3px solid #2A1A1A',
+              borderTopColor: '#E8420A',
+              borderRadius: '50%',
+              animation: 'spin 0.8s linear infinite',
+            }}
+          />
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {shows.map(show => (
-            <div key={show.id} className="az-glass" style={{ display: 'flex', alignItems: 'center', gap: 16, padding: 16, borderRadius: 16 }}>
-              {show.thumbnail && <img src={show.thumbnail} alt="" style={{ width: 120, height: 68, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }} />}
+          {shows.map((show) => (
+            <div
+              key={show.id}
+              className="az-glass"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 16,
+                padding: 16,
+                borderRadius: 16,
+              }}
+            >
+              {show.thumbnail && (
+                <img
+                  src={show.thumbnail}
+                  alt=""
+                  style={{
+                    width: 120,
+                    height: 68,
+                    objectFit: 'cover',
+                    borderRadius: 8,
+                    flexShrink: 0,
+                  }}
+                />
+              )}
               <div style={{ flex: 1, minWidth: 0 }}>
                 <h3 style={{ fontWeight: 600, fontSize: 15, marginBottom: 4 }}>{show.title}</h3>
-                <p style={{ color: '#9A8A7A', fontSize: 13 }}>{show.contestantCount || 0} contestants · Season {show.season || 1}</p>
+                <p style={{ color: '#9A8A7A', fontSize: 13 }}>
+                  {show.contestantCount || 0} contestants · Season {show.season || 1}
+                </p>
               </div>
-              <span style={{ padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 600, backgroundColor: show.isActive ? 'rgba(13,59,46,0.2)' : 'rgba(154,138,122,0.2)', color: show.isActive ? '#0D3B2E' : '#9A8A7A' }}>
+              <span
+                style={{
+                  padding: '3px 10px',
+                  borderRadius: 999,
+                  fontSize: 11,
+                  fontWeight: 600,
+                  backgroundColor: show.isActive ? 'rgba(13,59,46,0.2)' : 'rgba(154,138,122,0.2)',
+                  color: show.isActive ? '#0D3B2E' : '#9A8A7A',
+                }}
+              >
                 {show.isActive ? 'Active' : 'Ended'}
               </span>
             </div>
           ))}
-          {shows.length === 0 && <p style={{ textAlign: 'center', padding: 40, color: '#9A8A7A' }}>No reality shows found</p>}
+          {shows.length === 0 && (
+            <p style={{ textAlign: 'center', padding: 40, color: '#9A8A7A' }}>
+              No reality shows found
+            </p>
+          )}
         </div>
       )}
     </AdminLayout>

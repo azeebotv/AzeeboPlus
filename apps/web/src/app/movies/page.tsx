@@ -1,11 +1,16 @@
 'use client';
 import React, { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
 import Link from 'next/link';
 import { apiFetch, ContentItem, Category } from '@/lib/api';
 import { webLogger } from '@/lib/logger';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
+import { AmbientGlow } from '@/components/motion/AmbientGlow';
+import { ScrollReveal } from '@/components/motion/ScrollReveal';
+import { StaggerGrid } from '@/components/motion/StaggerGrid';
+import { GlowCard } from '@/components/motion/GlowCard';
 
 export default function MoviesPage(): React.JSX.Element {
   const { isAuthenticated } = useAuth();
@@ -22,13 +27,8 @@ export default function MoviesPage(): React.JSX.Element {
           apiFetch<ContentItem[]>('/v1/content?universe=movies&limit=20'),
           apiFetch<Category[]>('/v1/content/categories'),
         ]);
-
-        if (moviesRes.success && moviesRes.data) {
-          setMovies(moviesRes.data);
-        }
-        if (categoriesRes.success && categoriesRes.data) {
-          setCategories(categoriesRes.data);
-        }
+        if (moviesRes.success && moviesRes.data) setMovies(moviesRes.data);
+        if (categoriesRes.success && categoriesRes.data) setCategories(categoriesRes.data);
       } catch (err) {
         webLogger.error('Failed to fetch movies', err);
         setError('Failed to load movies. Please try again.');
@@ -36,42 +36,61 @@ export default function MoviesPage(): React.JSX.Element {
         setIsLoading(false);
       }
     };
-
     fetchMovies();
   }, []);
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+    <div className="min-h-screen az-nollywood-bg">
       <AppHeader active="Movies" />
 
       {/* Hero Section */}
       <section className="relative">
         {isLoading ? (
-          <div className="h-[500px] animate-pulse" style={{ backgroundColor: '#2A2A2A' }} />
+          <div
+            className="h-[400px] sm:h-[500px] az-shimmer"
+            style={{ backgroundColor: '#2A2A2A' }}
+          />
         ) : error ? (
-          <div className="h-[500px] flex items-center justify-center">
-            <div className="text-center">
-              <p className="text-lg mb-4 text-white/60">{error}</p>
-              <button
+          <div className="h-[400px] sm:h-[500px] flex items-center justify-center">
+            <motion.div
+              className="text-center"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.4 }}
+            >
+              <p className="text-base sm:text-lg mb-4 text-white/60">{error}</p>
+              <motion.button
                 type="button"
                 onClick={() => window.location.reload()}
                 className="az-btn-primary"
                 style={{ width: 'auto', paddingInline: '1.5rem' }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
               >
                 Retry
-              </button>
-            </div>
+              </motion.button>
+            </motion.div>
           </div>
         ) : movies.length > 0 ? (
-          <div className="relative h-[500px]">
-            <img
+          <div className="relative h-[400px] sm:h-[500px]">
+            <motion.img
               src={movies[0].thumbnail}
               alt={movies[0].title}
               className="w-full h-full object-cover"
+              initial={{ scale: 1.1, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-[#1A0A0A] via-[#1A0A0A]/50 to-transparent" />
-            <div className="absolute bottom-0 left-0 right-0 p-8 max-w-7xl mx-auto">
-              <div className="flex items-center gap-2 mb-4">
+            <AmbientGlow color="rgba(245,158,11,0.25)" size={500} className="bottom-0 right-0" />
+
+            <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-8 max-w-7xl mx-auto">
+              <motion.div
+                className="flex items-center gap-2 mb-3 sm:mb-4"
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2, duration: 0.4 }}
+              >
                 <span
                   className="px-3 py-1 rounded-full text-xs font-semibold"
                   style={{ backgroundColor: '#E8420A', color: '#fff' }}
@@ -84,86 +103,140 @@ export default function MoviesPage(): React.JSX.Element {
                 >
                   {movies[0].contentType || 'Movie'}
                 </span>
-              </div>
-              <h2 className="text-4xl font-bold text-white mb-2">{movies[0].title}</h2>
-              <p className="text-white/60 text-lg mb-6 max-w-2xl">{movies[0].description}</p>
-              <div className="flex items-center gap-4">
+              </motion.div>
+              <motion.h2
+                className="text-3xl sm:text-4xl font-bold text-white mb-2"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.25, duration: 0.5 }}
+              >
+                {movies[0].title}
+              </motion.h2>
+              <motion.p
+                className="text-white/60 text-base sm:text-lg mb-5 sm:mb-6 max-w-2xl"
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.35, duration: 0.5 }}
+              >
+                {movies[0].description}
+              </motion.p>
+              <motion.div
+                className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4"
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.45, duration: 0.5 }}
+              >
                 <Link href={`/watch/${movies[0].id}`}>
-                  <button type="button" className="az-btn-primary" style={{ width: 'auto', paddingInline: '2rem' }}>
+                  <motion.button
+                    type="button"
+                    className="az-btn-primary"
+                    style={{ width: 'auto', paddingInline: '2rem' }}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
                     Play Now
-                  </button>
+                  </motion.button>
                 </Link>
-                <button
+                <motion.button
                   type="button"
                   className="px-6 py-3 rounded-full text-sm font-semibold text-white transition-all"
-                  style={{ border: '1px solid rgba(255,255,255,0.2)', backgroundColor: 'rgba(255,255,255,0.08)' }}
+                  style={{
+                    border: '1px solid rgba(255,255,255,0.2)',
+                    backgroundColor: 'rgba(255,255,255,0.08)',
+                  }}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                 >
                   Add to Library
-                </button>
-              </div>
+                </motion.button>
+              </motion.div>
             </div>
           </div>
         ) : (
-          <div className="h-[500px] flex items-center justify-center">
-            <p className="text-lg text-white/60">No movies available</p>
+          <div className="h-[400px] sm:h-[500px] flex items-center justify-center">
+            <p className="text-base sm:text-lg text-white/60">No movies available</p>
           </div>
         )}
       </section>
 
       {/* Categories */}
       {categories.length > 0 && (
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex items-center gap-3 overflow-x-auto pb-4" role="listbox" aria-label="Movie categories">
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+          <motion.div
+            className="flex items-center gap-2 sm:gap-3 overflow-x-auto pb-4 scrollbar-hide"
+            role="listbox"
+            aria-label="Movie categories"
+            initial="hidden"
+            animate="visible"
+            variants={{
+              hidden: {},
+              visible: { transition: { staggerChildren: 0.05 } },
+            }}
+          >
             {categories.map((category) => (
-              <button
+              <motion.button
                 key={category.id}
                 type="button"
                 role="option"
-                className="whitespace-nowrap px-4 py-2 rounded-full text-sm font-medium text-white/70 hover:text-white transition-colors"
-                style={{ border: '1px solid rgba(255,255,255,0.1)', backgroundColor: 'rgba(255,255,255,0.05)' }}
+                className="whitespace-nowrap px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium text-white/70 hover:text-white transition-colors flex-shrink-0"
+                style={{
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  backgroundColor: 'rgba(255,255,255,0.05)',
+                }}
+                variants={{
+                  hidden: { opacity: 0, scale: 0.9 },
+                  visible: { opacity: 1, scale: 1, transition: { duration: 0.3 } },
+                }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
               >
                 {category.name}
                 {category.contentCount != null ? ` (${category.contentCount})` : ''}
-              </button>
+              </motion.button>
             ))}
-          </div>
+          </motion.div>
         </section>
       )}
 
       {/* Movies Grid */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h2 className="text-2xl sm:text-3xl font-bold text-white">Featured Movies</h2>
-            <p className="text-base mt-1 text-white/50">Handpicked for you</p>
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        <ScrollReveal>
+          <div className="flex items-center justify-between mb-6 sm:mb-8">
+            <div>
+              <h2 className="text-2xl sm:text-3xl font-bold text-white">Featured Movies</h2>
+              <p className="text-sm sm:text-base mt-1 text-white/50">Handpicked for you</p>
+            </div>
           </div>
-        </div>
+        </ScrollReveal>
 
         {isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
             {Array.from({ length: 6 }).map((_, i) => (
               <div key={i} className="az-glass overflow-hidden">
-                <div className="h-60 animate-pulse" style={{ backgroundColor: '#2A2A2A' }} />
+                <div className="h-52 sm:h-60 az-shimmer" style={{ backgroundColor: '#2A2A2A' }} />
                 <div className="p-4 space-y-3">
-                  <div className="h-5 w-3/4 animate-pulse rounded" style={{ backgroundColor: '#2A2A2A' }} />
-                  <div className="h-4 w-1/2 animate-pulse rounded" style={{ backgroundColor: '#2A2A2A' }} />
+                  <div
+                    className="h-5 w-3/4 az-shimmer rounded"
+                    style={{ backgroundColor: '#2A2A2A' }}
+                  />
+                  <div
+                    className="h-4 w-1/2 az-shimmer rounded"
+                    style={{ backgroundColor: '#2A2A2A' }}
+                  />
                 </div>
               </div>
             ))}
           </div>
         ) : movies.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <StaggerGrid className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
             {movies.map((movie) => (
               <Link key={movie.id} href={`/watch/${movie.id}`}>
-                <article
-                  className="az-glass overflow-hidden cursor-pointer transition-all hover:scale-[1.02]"
-                  style={{ boxShadow: '0 0 20px rgba(255,255,255,0.05)' }}
-                >
+                <GlowCard universe="movies" className="overflow-hidden">
                   <div className="relative">
                     <img
                       src={movie.thumbnail}
                       alt={movie.title}
-                      className="w-full h-48 object-cover"
+                      className="w-full h-44 sm:h-48 object-cover"
                     />
                     <span
                       className="absolute top-2 right-2 px-2.5 py-0.5 rounded-full text-xs font-semibold"
@@ -179,25 +252,27 @@ export default function MoviesPage(): React.JSX.Element {
                       >
                         {movie.contentType || 'Movie'}
                       </span>
-                      <h3 className="text-xl font-bold text-white">{movie.title}</h3>
+                      <h3 className="text-lg sm:text-xl font-bold text-white">{movie.title}</h3>
                     </div>
                   </div>
                   <div className="p-4">
                     <p className="text-sm text-white/50 mb-3 line-clamp-2">{movie.description}</p>
-                    <button
+                    <motion.button
                       type="button"
                       className="az-btn-primary w-full"
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
                     >
                       Watch Now
-                    </button>
+                    </motion.button>
                   </div>
-                </article>
+                </GlowCard>
               </Link>
             ))}
-          </div>
+          </StaggerGrid>
         ) : (
-          <div className="text-center py-12">
-            <p className="text-lg text-white/50">No movies available yet</p>
+          <div className="text-center py-10 sm:py-12">
+            <p className="text-base sm:text-lg text-white/50">No movies available yet</p>
           </div>
         )}
       </section>

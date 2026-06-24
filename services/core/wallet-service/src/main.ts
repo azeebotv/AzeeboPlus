@@ -1,6 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { Logger, ValidationPipe, VersioningType } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
 import { GlobalExceptionFilter } from '@azeebo/error-handling';
@@ -63,9 +63,10 @@ async function bootstrap(): Promise<void> {
     Logger.log('Swagger documentation enabled at /docs');
   }
 
-  // API versioning
-  app.enableVersioning({ type: VersioningType.URI, prefix: 'v', defaultVersion: '1' });
+  // Versioning disabled: controllers already prefix routes with 'v1/' manually
+  // e.g. @Controller('v1/wallet') — enabling URI versioning would create /v1/v1/wallet
 
+  app.enableShutdownHooks();
   await app.listen(process.env.PORT || 3002);
   Logger.log('Wallet Service is running on port ' + (process.env.PORT || 3002));
 }

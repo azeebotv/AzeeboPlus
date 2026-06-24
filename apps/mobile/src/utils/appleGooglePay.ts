@@ -156,10 +156,7 @@ export class AppleGooglePayService {
 
   private async getAuthToken(): Promise<string> {
     try {
-      // Use consistent key 'accessToken' matching AuthContext storage
-      const token = await import('@react-native-async-storage/async-storage').then((storage) =>
-        storage.default.getItem('accessToken')
-      );
+      const token = await SecureStore.getItemAsync('accessToken');
       return token || '';
     } catch (error) {
       logger.error('Failed to get auth token', error);

@@ -10,7 +10,7 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-    - host: api.azeebo.com
+    - host: api.azeeboplus.com
       http:
         paths:
           - path: /
@@ -20,7 +20,7 @@ spec:
                 name: api-gateway
                 port:
                   number: 3013
-    - host: app.azeebo.com
+    - host: app.azeeboplus.com
       http:
         paths:
           - path: /
@@ -29,17 +29,27 @@ spec:
               service:
                 name: web-app
                 port:
-                  number: 3000
-    - host: creator.azeebo.com
+                  number: 4000
+    - host: admin.azeeboplus.com
       http:
         paths:
           - path: /
             pathType: Prefix
             backend:
               service:
-                name: creator-portal
+                name: admin-app
                 port:
-                  number: 3014
+                  number: 4016
+    - host: creator.azeeboplus.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: creator-portal-app
+                port:
+                  number: 4014
 ---
 apiVersion: networking.k8s.io/v1
 kind: IngressClass

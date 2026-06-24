@@ -26,5 +26,5 @@ const styles = {
 ## Ownership
 
 - **Team**: Design Engineering
-- **Maintainer**: design@azeebo.com
+- **Maintainer**: design@azeeboplus.com
 - **Last Updated**: 2026-05-11

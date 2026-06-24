@@ -20,6 +20,13 @@ import { useAuth } from '../../src/contexts/AuthContext';
 import { authApi } from '../../src/api';
 import { logger } from '../../src/utils/logger';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
+import { colors, typography, spacing, radius } from '../../src/theme';
+import {
+  PageTransition,
+  ScrollReveal,
+  StaggerGrid,
+  GlowCard,
+} from '../../src/components/motion';
 
 const MENU_ITEMS = [
   { id: 'subscriptions', label: 'Subscriptions', icon: '📺', action: 'navigate' },
@@ -153,165 +160,185 @@ export default function ProfileScreen() {
       edges={['top']}
     >
       <ScrollView showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <Text style={[styles.title, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
-            Profile
-          </Text>
-        </View>
+        <PageTransition>
+          <ScrollReveal direction="up">
+            <View style={styles.header}>
+              <Text style={[styles.title, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
+                Profile
+              </Text>
+            </View>
+          </ScrollReveal>
 
-        <View style={styles.profileSection}>
-          <View style={[styles.avatar, { backgroundColor: '#8B5CF6' }]}>
-            {user?.avatar ? (
-              <Text style={styles.avatarImage}>👤</Text>
-            ) : (
-              <Text style={styles.avatarText}>{avatarInitial}</Text>
-            )}
-          </View>
-          <View style={styles.profileInfo}>
-            <Text style={[styles.displayName, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
-              {displayName}
-            </Text>
-            <Text style={styles.email}>{user?.email || 'user@example.com'}</Text>
-            {user?.isVerified && (
-              <View style={styles.verifiedBadge}>
-                <Text style={styles.verifiedText}>✓ Verified</Text>
-              </View>
-            )}
-            <TouchableOpacity style={styles.editButton} onPress={() => setShowEditModal(true)}>
-              <Text style={styles.editButtonText}>Edit Profile</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        <View
-          style={[
-            styles.statsContainer,
-            { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' },
-          ]}
-        >
-          <View style={styles.statItem}>
-            <Text style={[styles.statValue, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
-              127
-            </Text>
-            <Text style={styles.statLabel}>Watched</Text>
-          </View>
-          <View
-            style={[
-              styles.statDivider,
-              { backgroundColor: colorScheme === 'dark' ? '#333' : '#e0e0e0' },
-            ]}
-          />
-          <View style={styles.statItem}>
-            <Text style={[styles.statValue, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
-              12
-            </Text>
-            <Text style={styles.statLabel}>Lists</Text>
-          </View>
-          <View
-            style={[
-              styles.statDivider,
-              { backgroundColor: colorScheme === 'dark' ? '#333' : '#e0e0e0' },
-            ]}
-          />
-          <View style={styles.statItem}>
-            <Text style={[styles.statValue, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
-              5
-            </Text>
-            <Text style={styles.statLabel}>Reviews</Text>
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colorScheme === 'dark' ? '#888' : '#666' }]}>
-            Preferences
-          </Text>
-          <View
-            style={[
-              styles.preferenceItem,
-              { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' },
-            ]}
-          >
-            <View style={styles.preferenceInfo}>
-              <Text style={styles.preferenceIcon}>🔔</Text>
-              <View>
-                <Text
-                  style={[
-                    styles.preferenceLabel,
-                    { color: colorScheme === 'dark' ? '#fff' : '#000' },
-                  ]}
-                >
-                  Push Notifications
+          <ScrollReveal direction="up" delay={60}>
+            <View style={styles.profileSection}>
+              <GlowCard variant="strong" padding={0} style={styles.avatar}>
+                <View style={[styles.avatarInner, { backgroundColor: '#8B5CF6' }]}>
+                  {user?.avatar ? (
+                    <Text style={styles.avatarImage}>👤</Text>
+                  ) : (
+                    <Text style={styles.avatarText}>{avatarInitial}</Text>
+                  )}
+                </View>
+              </GlowCard>
+              <View style={styles.profileInfo}>
+                <Text style={[styles.displayName, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
+                  {displayName}
                 </Text>
-                <Text style={styles.preferenceSubtitle}>Receive alerts on your device</Text>
+                <Text style={styles.email}>{user?.email || 'user@example.com'}</Text>
+                {user?.isVerified && (
+                  <View style={styles.verifiedBadge}>
+                    <Text style={styles.verifiedText}>✓ Verified</Text>
+                  </View>
+                )}
+                <TouchableOpacity style={styles.editButton} onPress={() => setShowEditModal(true)}>
+                  <Text style={styles.editButtonText}>Edit Profile</Text>
+                </TouchableOpacity>
               </View>
             </View>
-            <Switch
-              value={pushEnabled}
-              onValueChange={setPushEnabled}
-              trackColor={{ false: '#333', true: '#8B5CF6' }}
-              thumbColor="#fff"
-            />
-          </View>
-          <View
-            style={[
-              styles.preferenceItem,
-              { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' },
-            ]}
-          >
-            <View style={styles.preferenceInfo}>
-              <Text style={styles.preferenceIcon}>📧</Text>
-              <View>
-                <Text
-                  style={[
-                    styles.preferenceLabel,
-                    { color: colorScheme === 'dark' ? '#fff' : '#000' },
-                  ]}
-                >
-                  Email Notifications
-                </Text>
-                <Text style={styles.preferenceSubtitle}>Receive updates via email</Text>
-              </View>
-            </View>
-            <Switch
-              value={emailEnabled}
-              onValueChange={setEmailEnabled}
-              trackColor={{ false: '#333', true: '#8B5CF6' }}
-              thumbColor="#fff"
-            />
-          </View>
-        </View>
+          </ScrollReveal>
 
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colorScheme === 'dark' ? '#888' : '#666' }]}>
-            Account
-          </Text>
-          {MENU_ITEMS.map((item) => (
-            <TouchableOpacity
-              key={item.id}
+          <ScrollReveal direction="up" delay={120}>
+            <View
               style={[
-                styles.menuItem,
+                styles.statsContainer,
                 { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' },
               ]}
-              onPress={() => handleMenuPress(item)}
             >
-              <Text style={styles.menuIcon}>{item.icon}</Text>
-              <Text style={[styles.menuLabel, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
-                {item.label}
+              <View style={styles.statItem}>
+                <Text style={[styles.statValue, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
+                  127
+                </Text>
+                <Text style={styles.statLabel}>Watched</Text>
+              </View>
+              <View
+                style={[
+                  styles.statDivider,
+                  { backgroundColor: colorScheme === 'dark' ? '#333' : '#e0e0e0' },
+                ]}
+              />
+              <View style={styles.statItem}>
+                <Text style={[styles.statValue, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
+                  12
+                </Text>
+                <Text style={styles.statLabel}>Lists</Text>
+              </View>
+              <View
+                style={[
+                  styles.statDivider,
+                  { backgroundColor: colorScheme === 'dark' ? '#333' : '#e0e0e0' },
+                ]}
+              />
+              <View style={styles.statItem}>
+                <Text style={[styles.statValue, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
+                  5
+                </Text>
+                <Text style={styles.statLabel}>Reviews</Text>
+              </View>
+            </View>
+          </ScrollReveal>
+
+          <ScrollReveal direction="up" delay={180}>
+            <View style={styles.section}>
+              <Text style={[styles.sectionTitle, { color: colorScheme === 'dark' ? '#888' : '#666' }]}>
+                Preferences
               </Text>
-              <Text style={styles.menuArrow}>›</Text>
+              <GlowCard variant="subtle" padding={0}>
+                <View
+                  style={[
+                    styles.preferenceItem,
+                    { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' },
+                  ]}
+                >
+                  <View style={styles.preferenceInfo}>
+                    <Text style={styles.preferenceIcon}>🔔</Text>
+                    <View>
+                      <Text
+                        style={[
+                          styles.preferenceLabel,
+                          { color: colorScheme === 'dark' ? '#fff' : '#000' },
+                        ]}
+                      >
+                        Push Notifications
+                      </Text>
+                      <Text style={styles.preferenceSubtitle}>Receive alerts on your device</Text>
+                    </View>
+                  </View>
+                  <Switch
+                    value={pushEnabled}
+                    onValueChange={setPushEnabled}
+                    trackColor={{ false: '#333', true: '#8B5CF6' }}
+                    thumbColor="#fff"
+                  />
+                </View>
+                <View
+                  style={[
+                    styles.preferenceItem,
+                    { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' },
+                  ]}
+                >
+                  <View style={styles.preferenceInfo}>
+                    <Text style={styles.preferenceIcon}>📧</Text>
+                    <View>
+                      <Text
+                        style={[
+                          styles.preferenceLabel,
+                          { color: colorScheme === 'dark' ? '#fff' : '#000' },
+                        ]}
+                      >
+                        Email Notifications
+                      </Text>
+                      <Text style={styles.preferenceSubtitle}>Receive updates via email</Text>
+                    </View>
+                  </View>
+                  <Switch
+                    value={emailEnabled}
+                    onValueChange={setEmailEnabled}
+                    trackColor={{ false: '#333', true: '#8B5CF6' }}
+                    thumbColor="#fff"
+                  />
+                </View>
+              </GlowCard>
+            </View>
+          </ScrollReveal>
+
+          <ScrollReveal direction="up" delay={240}>
+            <View style={styles.section}>
+              <Text style={[styles.sectionTitle, { color: colorScheme === 'dark' ? '#888' : '#666' }]}>
+                Account
+              </Text>
+              <StaggerGrid staggerDelay={40}>
+                {MENU_ITEMS.map((item) => (
+                  <TouchableOpacity
+                    key={item.id}
+                    style={[
+                      styles.menuItem,
+                      { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' },
+                    ]}
+                    onPress={() => handleMenuPress(item)}
+                  >
+                    <Text style={styles.menuIcon}>{item.icon}</Text>
+                    <Text style={[styles.menuLabel, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
+                      {item.label}
+                    </Text>
+                    <Text style={styles.menuArrow}>›</Text>
+                  </TouchableOpacity>
+                ))}
+              </StaggerGrid>
+            </View>
+          </ScrollReveal>
+
+          <ScrollReveal direction="up" delay={300}>
+            <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+              <Text style={styles.logoutButtonText}>Logout</Text>
             </TouchableOpacity>
-          ))}
-        </View>
 
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-          <Text style={styles.logoutButtonText}>Logout</Text>
-        </TouchableOpacity>
+            <View style={styles.versionContainer}>
+              <Text style={styles.versionText}>Version 1.0.0</Text>
+            </View>
 
-        <View style={styles.versionContainer}>
-          <Text style={styles.versionText}>Version 1.0.0</Text>
-        </View>
-
-        <View style={styles.bottomPadding} />
+            <View style={styles.bottomPadding} />
+          </ScrollReveal>
+        </PageTransition>
       </ScrollView>
 
       <Modal
@@ -460,9 +487,15 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
+    marginRight: 16,
+    overflow: 'hidden',
+  },
+  avatarInner: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 40,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 16,
   },
   avatarText: {
     color: '#fff',
@@ -546,7 +579,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 16,
-    marginBottom: 1,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.06)',
   },
   preferenceInfo: {
     flexDirection: 'row',
@@ -569,7 +603,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 16,
-    marginBottom: 1,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.06)',
   },
   menuIcon: {
     fontSize: 20,

@@ -8,7 +8,7 @@ const nextConfig = {
   images: {
     domains: process.env.IMAGE_DOMAINS
       ? process.env.IMAGE_DOMAINS.split(',')
-      : ['localhost', 'api.azeebo.com'],
+      : ['localhost', 'api.azeeboplus.com'],
   },
   async headers() {
     return [
@@ -18,22 +18,6 @@ const nextConfig = {
           {
             key: 'X-DNS-Prefetch-Control',
             value: 'on',
-          },
-          {
-            key: 'X-Frame-Options',
-            value: 'SAMEORIGIN',
-          },
-          {
-            key: 'X-Content-Type-Options',
-            value: 'nosniff',
-          },
-          {
-            key: 'X-XSS-Protection',
-            value: '1; mode=block',
-          },
-          {
-            key: 'Referrer-Policy',
-            value: 'strict-origin-when-cross-origin',
           },
         ],
       },

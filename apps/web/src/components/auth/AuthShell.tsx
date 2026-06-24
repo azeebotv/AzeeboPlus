@@ -1,28 +1,18 @@
+'use client';
+
 import React from 'react';
+import { motion } from 'framer-motion';
 import BrandLogo from './BrandLogo';
 
 type AuthShellProps = {
-  /** Headline copy overlaid on the left photo panel (supports line breaks via array) */
   headlineLines: string[];
-  /** Background image URL for the left cinematic panel */
   backgroundImage?: string;
-  /** Solid fallback background color for the left panel (used when no image) */
   backgroundFallback?: string;
-  /** Right-panel glass card content */
   children: React.ReactNode;
-  /** Show the Azeebo logo top-left over the photo panel (default true) */
   showLogo?: boolean;
-  /** Logo variant on the photo panel */
   logoVariant?: 'light' | 'orange';
 };
 
-/**
- * Split-layout auth shell — full-bleed cinematic photo panel (60%) on the left
- * with a bold white marketing headline, and a frosted glass card (40%) on the
- * right containing the form. The signature Azeebo+ glass-panel motif.
- *
- * Collapses to a single dark column with the glass card on top on small screens.
- */
 export default function AuthShell({
   headlineLines,
   backgroundImage,
@@ -32,10 +22,13 @@ export default function AuthShell({
   logoVariant = 'light',
 }: AuthShellProps): React.JSX.Element {
   return (
-    <div className="min-h-screen w-full flex flex-col lg:flex-row">
-      {/* Left cinematic panel */}
-      <div
+    <div className="min-h-screen w-full flex flex-col lg:flex-row az-nollywood-bg">
+      {/* Left cinematic panel — hidden on mobile, parallax on desktop */}
+      <motion.div
         className="relative hidden lg:flex lg:w-3/5 items-end overflow-hidden"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.8 }}
         style={{
           backgroundColor: backgroundFallback,
           backgroundImage: backgroundImage ? `url(${backgroundImage})` : undefined,
@@ -43,7 +36,7 @@ export default function AuthShell({
           backgroundPosition: 'center',
         }}
       >
-        {/* Dark gradient scrim for headline legibility */}
+        {/* Dark gradient scrim */}
         <div
           className="absolute inset-0"
           style={{
@@ -52,44 +45,80 @@ export default function AuthShell({
           }}
         />
 
+        {/* Ambient glow — drifts slowly */}
+        <div
+          className="az-ambient-red az-glow-drift"
+          style={{ width: 500, height: 500, top: -150, left: -150, opacity: 0.5 }}
+        />
+
         {showLogo && (
-          <div className="absolute top-0 left-0 p-8 z-10">
+          <motion.div
+            className="absolute top-0 left-0 p-8 z-10"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.3, duration: 0.5 }}
+          >
             <BrandLogo variant={logoVariant} />
-          </div>
+          </motion.div>
         )}
 
         <div className="relative z-10 p-10 xl:p-14 max-w-2xl">
           <h1 className="az-headline text-white text-4xl xl:text-6xl">
             {headlineLines.map((line, i) => (
-              <span key={i} className="block">
+              <motion.span
+                key={i}
+                className="block"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{
+                  delay: 0.4 + i * 0.12,
+                  duration: 0.5,
+                  ease: [0.25, 0.46, 0.45, 0.94] as const,
+                }}
+              >
                 {line}
-              </span>
+              </motion.span>
             ))}
           </h1>
         </div>
-      </div>
+      </motion.div>
 
       {/* Right glass-card panel */}
       <div
-        className="relative flex-1 flex items-center justify-center p-6 sm:p-10"
+        className="relative flex-1 flex items-center justify-center p-5 sm:p-8 lg:p-10"
         style={{ backgroundColor: '#1A0A0A' }}
       >
-        {/* Logo on mobile (left panel hidden) */}
+        {/* Logo on mobile */}
         {showLogo && (
-          <div className="lg:hidden absolute top-0 left-0 p-6">
+          <motion.div
+            className="lg:hidden absolute top-0 left-0 p-5"
+            initial={{ opacity: 0, x: -15 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.2, duration: 0.4 }}
+          >
             <BrandLogo variant="light" />
-          </div>
+          </motion.div>
         )}
 
-        {/* Ambient red glow for atmospheric depth */}
+        {/* Ambient red glow */}
         <div
-          className="az-ambient-red"
-          style={{ width: 400, height: 400, bottom: -120, right: -120 }}
+          className="az-ambient-red az-glow-drift"
+          style={{ width: 350, height: 350, bottom: -100, right: -100 }}
         />
 
-        <div className="az-glass az-glass--glow relative z-10 w-full max-w-md p-7 sm:p-9">
+        {/* Glass card with entrance animation */}
+        <motion.div
+          className="az-glass az-glass--glow az-glass--breathing relative z-10 w-full max-w-md p-6 sm:p-8"
+          initial={{ opacity: 0, y: 30, scale: 0.96 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{
+            delay: 0.2,
+            duration: 0.6,
+            ease: [0.25, 0.46, 0.45, 0.94] as const,
+          }}
+        >
           {children}
-        </div>
+        </motion.div>
       </div>
     </div>
   );

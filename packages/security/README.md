@@ -23,5 +23,5 @@ export class MyController {}
 ## Ownership
 
 - **Team**: Security Engineering
-- **Maintainer**: security@azeebo.com
+- **Maintainer**: security@azeeboplus.com
 - **Last Updated**: 2026-05-11

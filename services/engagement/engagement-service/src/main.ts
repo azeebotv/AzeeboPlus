@@ -1,13 +1,15 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe, Logger, VersioningType } from '@nestjs/common';
+import { ValidationPipe, Logger } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { GlobalExceptionFilter } from '@azeebo/error-handling';
 import { LoggingInterceptor } from '@azeebo/logger';
 import { AppModule } from './app.module';
 import helmet from 'helmet';
+import { validateEnvironment } from '@azeebo/shared-types';
 
 async function bootstrap() {
-  const logger = new Logger('Bootstrap');
+  validateEnvironment(process.env);
+  const logger = new Logger('Engagement Service');
   const app = await NestFactory.create(AppModule);
 
   app.useGlobalFilters(new GlobalExceptionFilter());
@@ -34,12 +36,14 @@ async function bootstrap() {
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, document);
+  if (process.env.NODE_ENV !== 'production') {
+    SwaggerModule.setup('api', app, document);
+  }
 
-  // API versioning
-  app.enableVersioning({ type: VersioningType.URI, prefix: 'v', defaultVersion: '1' });
+  // Versioning disabled: controllers already prefix routes with 'v1/' manually
 
   const port = process.env.PORT || 3023;
+  app.enableShutdownHooks();
   await app.listen(port);
   logger.log(`Engagement service running on port ${port}`);
 }

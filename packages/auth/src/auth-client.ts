@@ -17,7 +17,7 @@ export interface TokenStorage {
 
 /** Auth configuration */
 export interface AuthClientConfig {
-  /** Base URL for the auth API (e.g., 'https://api.azeebo.com') */
+  /** Base URL for the auth API (e.g., 'https://api.azeeboplus.com') */
   baseUrl: string;
   /** Token storage adapter */
   storage: TokenStorage;

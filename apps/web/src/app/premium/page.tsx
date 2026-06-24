@@ -135,7 +135,10 @@ export default function PremiumAccessPage(): React.JSX.Element {
     return (
       <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
         <AppHeader />
-        <div className="flex items-center justify-center" style={{ minHeight: 'calc(100vh - 200px)' }}>
+        <div
+          className="flex items-center justify-center"
+          style={{ minHeight: 'calc(100vh - 200px)' }}
+        >
           <div className="text-center">
             <div
               className="animate-spin rounded-full h-12 w-12 mx-auto"
@@ -159,14 +162,13 @@ export default function PremiumAccessPage(): React.JSX.Element {
         </div>
 
         {status?.isPremium && (
-          <div
-            className="az-glass p-6 mb-8"
-            style={{ border: '2px solid rgba(234,179,8,0.5)' }}
-          >
+          <div className="az-glass p-6 mb-8" style={{ border: '2px solid rgba(234,179,8,0.5)' }}>
             <div className="flex items-center gap-4 mb-4">
               <span className="text-4xl">👑</span>
               <div>
-                <h2 className="text-xl font-bold" style={{ color: '#EAB308' }}>Premium Active</h2>
+                <h2 className="text-xl font-bold" style={{ color: '#EAB308' }}>
+                  Premium Active
+                </h2>
                 <p className="text-white/50">{status.planName}</p>
               </div>
             </div>
@@ -201,9 +203,7 @@ export default function PremiumAccessPage(): React.JSX.Element {
           {plans.map((plan) => (
             <div
               key={plan.id}
-              className={`az-glass p-6 relative ${
-                plan.isPopular ? 'ring-2 ring-[#E8420A]' : ''
-              }`}
+              className={`az-glass p-6 relative ${plan.isPopular ? 'ring-2 ring-[#E8420A]' : ''}`}
               style={plan.isPopular ? { boxShadow: '0 0 30px rgba(232,66,10,0.2)' } : undefined}
             >
               {plan.isPopular && (
@@ -225,7 +225,9 @@ export default function PremiumAccessPage(): React.JSX.Element {
               <ul className="space-y-3 mb-6">
                 {plan.features.map((feature, index) => (
                   <li key={index} className="flex items-center gap-2">
-                    <span className="font-bold" style={{ color: '#22C55E' }}>✓</span>
+                    <span className="font-bold" style={{ color: '#22C55E' }}>
+                      ✓
+                    </span>
                     <span className="text-white text-sm">{feature}</span>
                   </li>
                 ))}

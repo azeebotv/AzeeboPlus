@@ -47,5 +47,5 @@ pnpm start:dev
 ## Ownership
 
 - **Team**: Vertical Universe
-- **Maintainer**: vertical-engineering@azeebo.com
+- **Maintainer**: vertical-engineering@azeeboplus.com
 - **Last Updated**: 2026-05-11

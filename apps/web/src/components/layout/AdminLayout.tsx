@@ -24,7 +24,11 @@ const ADMIN_NAV = [
   { href: '/admin/settings', label: 'Settings', icon: '⚙️' },
 ];
 
-export default function AdminLayout({ children }: { children: React.ReactNode }): React.JSX.Element {
+export default function AdminLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}): React.JSX.Element {
   const { isAuthenticated, user } = useAuth();
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -48,10 +52,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           onClick={() => setSidebarOpen(!sidebarOpen)}
           aria-label="Toggle admin sidebar"
           style={{
-            position: 'fixed', bottom: 20, right: 20, zIndex: 50,
-            width: 48, height: 48, borderRadius: '50%',
+            position: 'fixed',
+            bottom: 20,
+            right: 20,
+            zIndex: 50,
+            width: 48,
+            height: 48,
+            borderRadius: '50%',
             background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
-            color: '#fff', border: 'none', fontSize: 20, cursor: 'pointer',
+            color: '#fff',
+            border: 'none',
+            fontSize: 20,
+            cursor: 'pointer',
             boxShadow: '0 4px 20px rgba(232,66,10,0.4)',
           }}
         >
@@ -62,17 +74,22 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <aside
           aria-label="Admin navigation"
           style={{
-            width: 260, flexShrink: 0,
+            width: 260,
+            flexShrink: 0,
             backgroundColor: '#140808',
             borderRight: '1px solid #2A1A1A',
-            position: 'sticky', top: 72,
+            position: 'sticky',
+            top: 72,
             height: 'calc(100vh - 72px)',
             overflowY: 'auto',
             padding: '16px 12px',
             ...(typeof window !== 'undefined' && window.innerWidth < 1024
               ? {
-                  position: 'fixed' as const, top: 72, left: sidebarOpen ? 0 : -280,
-                  zIndex: 40, transition: 'left 0.3s ease',
+                  position: 'fixed' as const,
+                  top: 72,
+                  left: sidebarOpen ? 0 : -280,
+                  zIndex: 40,
+                  transition: 'left 0.3s ease',
                   width: 280,
                 }
               : {}),
@@ -86,10 +103,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 aria-current={isActive(item.href) ? 'page' : undefined}
                 onClick={() => setSidebarOpen(false)}
                 style={{
-                  display: 'flex', alignItems: 'center', gap: 12,
-                  padding: '10px 14px', borderRadius: 10,
-                  marginBottom: 4, textDecoration: 'none',
-                  fontSize: 14, fontWeight: 500,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 12,
+                  padding: '10px 14px',
+                  borderRadius: 10,
+                  marginBottom: 4,
+                  textDecoration: 'none',
+                  fontSize: 14,
+                  fontWeight: 500,
                   color: isActive(item.href) ? '#E8420A' : '#9A8A7A',
                   backgroundColor: isActive(item.href) ? 'rgba(232,66,10,0.1)' : 'transparent',
                   transition: 'all 0.2s ease',
@@ -103,9 +125,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </aside>
 
         {/* Main content */}
-        <main style={{ flex: 1, padding: '32px 24px', minWidth: 0 }}>
-          {children}
-        </main>
+        <main style={{ flex: 1, padding: '32px 24px', minWidth: 0 }}>{children}</main>
       </div>
     </div>
   );

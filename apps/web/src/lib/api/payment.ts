@@ -20,15 +20,17 @@ export function createPaymentMethods(client: RequestClient) {
     },
 
     verify: async (reference: string): Promise<ApiResponse<PaymentVerifyResponse>> => {
-      return client.request<PaymentVerifyResponse>(`/api/v1/payments/verify?reference=${reference}`);
+      return client.request<PaymentVerifyResponse>(
+        `/api/v1/payments/verify?reference=${reference}`
+      );
     },
 
     getTransactions: async (
       page = 1,
-      limit = 20,
+      limit = 20
     ): Promise<ApiResponse<PaginatedResponse<Transaction>>> => {
       return client.request<PaginatedResponse<Transaction>>(
-        `/api/v1/payments/history?page=${page}&limit=${limit}`,
+        `/api/v1/payments/history?page=${page}&limit=${limit}`
       );
     },
 

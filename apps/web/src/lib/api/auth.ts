@@ -1,6 +1,12 @@
 // Auth domain methods
 
-import type { ApiResponse, AuthResponse, LoginRequest, RegisterRequest, RequestClient } from './base';
+import type {
+  ApiResponse,
+  AuthResponse,
+  LoginRequest,
+  RegisterRequest,
+  RequestClient,
+} from './base';
 
 export function createAuthMethods(client: RequestClient) {
   return {
@@ -27,7 +33,7 @@ export function createAuthMethods(client: RequestClient) {
     },
 
     refreshToken: async (
-      refreshToken: string,
+      refreshToken: string
     ): Promise<ApiResponse<{ access_token: string; refresh_token: string }>> => {
       // T-M15: Enable retryOn401 for clock-skew resilience on the refresh path.
       // Max 3 attempts with exponential backoff (1 s -> 2 s -> 4 s), respecting
@@ -38,7 +44,7 @@ export function createAuthMethods(client: RequestClient) {
           method: 'POST',
           body: JSON.stringify({ refreshToken }),
         },
-        { retryOn401: true },
+        { retryOn401: true }
       );
     },
 
@@ -58,7 +64,7 @@ export function createAuthMethods(client: RequestClient) {
 
     resetPassword: async (
       token: string,
-      newPassword: string,
+      newPassword: string
     ): Promise<ApiResponse<{ message: string }>> => {
       return client.request<{ message: string }>('/api/v1/auth/reset-password', {
         method: 'POST',

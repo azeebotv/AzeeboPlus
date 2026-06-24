@@ -104,7 +104,10 @@ export class GatewayAuthGuard implements CanActivate {
     }
 
     try {
-      const payload = jwt.verify(token, jwtSecret) as {
+      const payload = jwt.verify(token, jwtSecret, {
+        issuer: this.configService.get<string>('JWT_ISSUER'),
+        audience: this.configService.get<string>('JWT_AUDIENCE'),
+      }) as {
         sub: string;
         email: string;
         role?: string;

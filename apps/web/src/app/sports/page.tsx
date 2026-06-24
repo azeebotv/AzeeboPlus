@@ -75,7 +75,10 @@ export default function SportsPage(): React.JSX.Element {
                     <button
                       type="button"
                       className="px-6 py-3 rounded-full text-sm font-semibold text-white transition-all"
-                      style={{ backgroundColor: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.3)' }}
+                      style={{
+                        backgroundColor: 'rgba(255,255,255,0.2)',
+                        border: '1px solid rgba(255,255,255,0.3)',
+                      }}
                     >
                       Watch Live
                     </button>
@@ -113,8 +116,14 @@ export default function SportsPage(): React.JSX.Element {
               <div key={i} className="az-glass overflow-hidden">
                 <div className="h-60 animate-pulse" style={{ backgroundColor: '#2A2A2A' }} />
                 <div className="p-4 space-y-3">
-                  <div className="h-5 w-3/4 animate-pulse rounded" style={{ backgroundColor: '#2A2A2A' }} />
-                  <div className="h-4 w-1/2 animate-pulse rounded" style={{ backgroundColor: '#2A2A2A' }} />
+                  <div
+                    className="h-5 w-3/4 animate-pulse rounded"
+                    style={{ backgroundColor: '#2A2A2A' }}
+                  />
+                  <div
+                    className="h-4 w-1/2 animate-pulse rounded"
+                    style={{ backgroundColor: '#2A2A2A' }}
+                  />
                 </div>
               </div>
             ))}

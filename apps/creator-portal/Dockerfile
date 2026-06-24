@@ -1,8 +1,7 @@
 FROM node:22-alpine AS builder
 WORKDIR /app
 
-RUN apk add --no-cache curl && \
-    for i in 1 2 3 4 5; do npm install -g pnpm@10.33.2 @nestjs/cli prisma@6.19.0 && break || (echo "Retry $i/5..." && sleep 10); done
+RUN for i in 1 2 3 4 5; do npm install -g pnpm@10.33.2 && break || (echo "Retry $i/5..." && sleep 10); done
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.json ./
 COPY packages ./packages
@@ -24,10 +23,9 @@ LABEL org.opencontainers.image.source="https://github.com/azeebo/azeebo-plus"
 LABEL org.opencontainers.image.description="Azeebo+ Creator Portal"
 LABEL org.opencontainers.image.licenses="Proprietary"
 
-RUN apk add --no-cache curl && \
-    for i in 1 2 3 4 5; do npm install -g pnpm@10.33.2 @nestjs/cli prisma@6.19.0 && break || (echo "Retry $i/5..." && sleep 10); done && \
-    addgroup -g 65532 -S nodejs && \
-    adduser -S nestjs -u 65532
+RUN addgroup -g 65532 -S nodejs && \
+    adduser -S nestjs -u 65532 && \
+    for i in 1 2 3 4 5; do npm install -g pnpm@10.33.2 && break || (echo "Retry $i/5..." && sleep 10); done
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/creator-portal/package.json ./apps/creator-portal/
@@ -46,9 +44,9 @@ RUN chown -R nestjs:nodejs /app
 
 USER nestjs
 
-EXPOSE 3014
+EXPOSE 4014
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:3014/health || exit 1
+    CMD node -e "fetch('http://localhost:4014/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 
 CMD ["node", "apps/creator-portal/dist/main.js"]

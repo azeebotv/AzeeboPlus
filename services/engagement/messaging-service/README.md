@@ -47,5 +47,5 @@ pnpm start:dev
 ## Ownership
 
 - **Team**: Engagement Team
-- **Maintainer**: messaging@azeebo.com
+- **Maintainer**: messaging@azeeboplus.com
 - **Last Updated**: 2026-06-17

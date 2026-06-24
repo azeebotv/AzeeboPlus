@@ -63,7 +63,10 @@ export default function CreatorsPage(): React.JSX.Element {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[1, 2, 3].map((item) => (
               <div key={item} className="az-glass p-6 flex flex-col items-center animate-pulse">
-                <div className="w-24 h-24 rounded-full mb-4" style={{ backgroundColor: '#2A2A2A' }} />
+                <div
+                  className="w-24 h-24 rounded-full mb-4"
+                  style={{ backgroundColor: '#2A2A2A' }}
+                />
                 <div className="h-4 w-3/4 rounded mb-2" style={{ backgroundColor: '#2A2A2A' }} />
                 <div className="h-3 w-1/2 rounded mb-4" style={{ backgroundColor: '#2A2A2A' }} />
                 <div className="h-10 w-full rounded-full" style={{ backgroundColor: '#2A2A2A' }} />
@@ -72,7 +75,11 @@ export default function CreatorsPage(): React.JSX.Element {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12" role="listbox" aria-label="Creators">
+            <div
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12"
+              role="listbox"
+              aria-label="Creators"
+            >
               {creators.map((creator) => (
                 <div
                   key={creator.id}
@@ -82,7 +89,11 @@ export default function CreatorsPage(): React.JSX.Element {
                   className={`az-glass p-6 cursor-pointer transition-all hover:scale-[1.02] text-center ${
                     selectedCreator?.id === creator.id ? 'ring-2' : ''
                   }`}
-                  style={selectedCreator?.id === creator.id ? { boxShadow: '0 0 20px rgba(232,66,10,0.2)' } : undefined}
+                  style={
+                    selectedCreator?.id === creator.id
+                      ? { boxShadow: '0 0 20px rgba(232,66,10,0.2)' }
+                      : undefined
+                  }
                 >
                   <div
                     className="w-24 h-24 rounded-full mx-auto mb-4 flex items-center justify-center text-3xl font-bold text-white"
@@ -124,7 +135,9 @@ export default function CreatorsPage(): React.JSX.Element {
                       />
                       <div className="p-4">
                         <h3 className="font-bold text-white truncate">{content.title}</h3>
-                        <p className="text-sm text-white/50 mt-1 line-clamp-2">{content.description}</p>
+                        <p className="text-sm text-white/50 mt-1 line-clamp-2">
+                          {content.description}
+                        </p>
                       </div>
                     </div>
                   ))}

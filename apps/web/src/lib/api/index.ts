@@ -17,9 +17,21 @@ import { createAdminMethods } from './admin';
 
 import type { ApiResponse } from './base';
 
+const ACCESS_TOKEN_KEY = 'azeebo_access_token';
+const REFRESH_TOKEN_KEY = 'azeebo_refresh_token';
+const USER_KEY = 'azeebo_user';
+
+/** Set the middleware-readable auth cookie so protected routes don't redirect to login. */
+function setAuthCookie(value: string, maxAge: number = 7 * 24 * 60 * 60): void {
+  if (typeof document !== 'undefined') {
+    document.cookie = `auth=${encodeURIComponent(value)}; path=/; max-age=${maxAge}; SameSite=Lax`;
+  }
+}
+
 class ApiClient {
   private baseUrl: string;
   private token: string | null = null;
+  private refreshPromise: Promise<boolean> | null = null;
 
   auth: ReturnType<typeof createAuthMethods>;
   user: ReturnType<typeof createUserMethods>;
@@ -35,6 +47,15 @@ class ApiClient {
 
   constructor(baseUrl: string) {
     this.baseUrl = baseUrl;
+
+    // Restore token from localStorage immediately so requests work
+    // before AuthContext's useEffect runs (children effects fire first)
+    if (typeof window !== 'undefined') {
+      const storedToken = localStorage.getItem(ACCESS_TOKEN_KEY);
+      if (storedToken) {
+        this.token = storedToken;
+      }
+    }
 
     // Wire up each domain, passing `this` as the request client
     this.auth = createAuthMethods(this);
@@ -52,6 +73,52 @@ class ApiClient {
 
   setToken(token: string | null): void {
     this.token = token;
+    // Keep localStorage in sync
+    if (typeof window !== 'undefined') {
+      if (token) {
+        localStorage.setItem(ACCESS_TOKEN_KEY, token);
+      } else {
+        localStorage.removeItem(ACCESS_TOKEN_KEY);
+      }
+    }
+  }
+
+  /**
+   * Attempt to refresh the access token using the stored refresh token.
+   * Deduplicates concurrent refresh attempts.
+   */
+  private async attemptRefresh(): Promise<boolean> {
+    if (this.refreshPromise) {
+      return this.refreshPromise;
+    }
+
+    this.refreshPromise = (async (): Promise<boolean> => {
+      try {
+        const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
+        if (!refreshToken) return false;
+
+        const response = await this.auth.refreshToken(refreshToken);
+        if (response.success && response.data) {
+          this.token = response.data.access_token;
+          localStorage.setItem(ACCESS_TOKEN_KEY, response.data.access_token);
+          localStorage.setItem(REFRESH_TOKEN_KEY, response.data.refresh_token);
+
+          // Update the middleware auth cookie
+          const storedUser = localStorage.getItem(USER_KEY);
+          if (storedUser) {
+            setAuthCookie(JSON.parse(storedUser).id);
+          }
+          return true;
+        }
+        return false;
+      } catch {
+        return false;
+      } finally {
+        this.refreshPromise = null;
+      }
+    })();
+
+    return this.refreshPromise;
   }
 
   private calculateDelay(attempt: number, retryAfterHeader?: string | null): number {
@@ -83,11 +150,12 @@ class ApiClient {
     endpoint: string,
     options: RequestInit = {},
     retryOptions?: RetryOptions,
-    attempt = 0,
+    attempt = 0
   ): Promise<ApiResponse<T>> {
     const url = `${this.baseUrl}${gatewayPath(endpoint)}`;
+    const isFormData = options.body instanceof FormData;
     const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
+      ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
       ...(options.headers as Record<string, string>),
     };
 
@@ -111,11 +179,24 @@ class ApiClient {
       const data = await response.json();
 
       if (!response.ok) {
-        // T-M15: retry on standard retryable codes, AND on 401 when retryOn401 is set
-        // (refresh-token path needs clock-skew resilience)
-        const retryable =
-          this.isRetryableError(response.status) ||
-          (retryOptions?.retryOn401 === true && response.status === 401);
+        // T-CORE: On 401, attempt automatic token refresh and retry the request
+        if (response.status === 401 && !endpoint.includes('/auth/refresh') && !endpoint.includes('/auth/login')) {
+          const refreshed = await this.attemptRefresh();
+          if (refreshed) {
+            // Retry the original request with the new token
+            return this.request<T>(endpoint, options, retryOptions, attempt);
+          }
+          // Refresh failed — clear session
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem(ACCESS_TOKEN_KEY);
+            localStorage.removeItem(REFRESH_TOKEN_KEY);
+            localStorage.removeItem(USER_KEY);
+            document.cookie = 'auth=; path=/; max-age=0; SameSite=Lax';
+          }
+        }
+
+        // T-M15: retry on standard retryable codes
+        const retryable = this.isRetryableError(response.status);
 
         if (retryable && attempt < RETRY_CONFIG.maxRetries) {
           const retryAfter = response.headers.get('Retry-After');
@@ -134,13 +215,16 @@ class ApiClient {
           instance: data.instance,
           // Application-level fields
           code: data.code,
-          message: data.message || data.detail || 'An error occurred',
+          message: data.message
+            || (Array.isArray(data.error?.message) ? data.error.message.join(', ') : data.error?.message)
+            || data.detail
+            || 'An error occurred',
           error: data.error,
           statusCode: response.status,
           details: data.details,
           timestamp: data.timestamp,
           path: data.path,
-        };
+        } as any;
       }
 
       return {

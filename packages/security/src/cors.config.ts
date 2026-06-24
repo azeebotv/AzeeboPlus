@@ -28,7 +28,8 @@ export function configureCors(app: INestApplication, options: CorsOptions): void
       callback: (err: Error | null, allow?: boolean) => void
     ) => {
       if (!origin) {
-        callback(new Error('Not allowed by CORS - missing origin header'));
+        // Allow requests without origin (server-to-server, curl, etc.)
+        callback(null, true);
         return;
       }
 

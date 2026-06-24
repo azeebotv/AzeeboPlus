@@ -136,5 +136,5 @@ kubectl logs -n azeebo -l app=reality-service -f
 ## Ownership
 
 - **Team**: Entertainment Engineering
-- **Maintainer**: entertainment@azeebo.com
+- **Maintainer**: entertainment@azeeboplus.com
 - **Last Updated**: 2026-05-15

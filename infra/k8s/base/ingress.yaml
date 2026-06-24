@@ -14,7 +14,7 @@ metadata:
     nginx.ingress.kubernetes.io/proxy-send-timeout: "60"
     nginx.ingress.kubernetes.io/proxy-connect-timeout: "10"
     nginx.ingress.kubernetes.io/enable-cors: "true"
-    nginx.ingress.kubernetes.io/cors-allow-origin: "https://app.azeebo.com"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "https://app.azeeboplus.com,https://admin.azeeboplus.com,https://creator.azeeboplus.com"
     nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, PATCH, OPTIONS"
     nginx.ingress.kubernetes.io/cors-allow-headers: "Content-Type, Authorization, X-Request-ID, X-Forwarded-For"
     nginx.ingress.kubernetes.io/cors-max-age: "86400"
@@ -28,15 +28,16 @@ spec:
   ingressClassName: nginx
   tls:
     - hosts:
-        - api.azeebo.com
-        - app.azeebo.com
-        - admin.azeebo.com
-        - cdn.azeebo.com
+        - api.azeeboplus.com
+        - app.azeeboplus.com
+        - admin.azeeboplus.com
+        - creator.azeeboplus.com
+        - cdn.azeeboplus.com
       secretName: azeebo-tls
   rules:
     # All API traffic routes through the API gateway for centralized
     # authentication, rate limiting, request ID injection, and caching.
-    - host: api.azeebo.com
+    - host: api.azeeboplus.com
       http:
         paths:
           - path: /
@@ -46,7 +47,7 @@ spec:
                 name: api-gateway
                 port:
                   number: 3013
-    - host: app.azeebo.com
+    - host: app.azeeboplus.com
       http:
         paths:
           - path: /
@@ -56,7 +57,7 @@ spec:
                 name: web-app
                 port:
                   number: 3000
-    - host: admin.azeebo.com
+    - host: admin.azeeboplus.com
       http:
         paths:
           - path: /
@@ -65,4 +66,14 @@ spec:
               service:
                 name: admin-app
                 port:
-                  number: 3016
+                  number: 4016
+    - host: creator.azeeboplus.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: creator-portal-app
+                port:
+                  number: 4014

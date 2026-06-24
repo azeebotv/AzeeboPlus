@@ -6,8 +6,10 @@ import React, {
   useEffect,
   useState,
   useCallback,
+  useRef,
   ReactNode,
 } from 'react';
+// useRouter is not needed — auth redirects use window.location for full page reloads
 import { api, User, AuthResponse } from '../lib/api';
 import { webLogger } from '@/lib/logger';
 
@@ -17,12 +19,25 @@ interface AuthContextType {
   refreshToken: string | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<{ success: boolean; message?: string; code?: string; fieldErrors?: Record<string, string[]> }>;
+  login: (
+    email: string,
+    password: string
+  ) => Promise<{
+    success: boolean;
+    message?: string;
+    code?: string;
+    fieldErrors?: Record<string, string[]>;
+  }>;
   register: (
     name: string,
     email: string,
     password: string
-  ) => Promise<{ success: boolean; message?: string; code?: string; fieldErrors?: Record<string, string[]> }>;
+  ) => Promise<{
+    success: boolean;
+    message?: string;
+    code?: string;
+    fieldErrors?: Record<string, string[]>;
+  }>;
   logout: () => Promise<void>;
   updateUser: (user: User) => void;
   refreshUser: () => Promise<void>;
@@ -43,28 +58,61 @@ interface AuthProviderProps {
 }
 
 const TOKEN_REFRESH_INTERVAL = 14 * 60 * 1000;
+const ACCESS_TOKEN_KEY = 'azeebo_access_token';
+const REFRESH_TOKEN_KEY = 'azeebo_refresh_token';
+const USER_KEY = 'azeebo_user';
+
+/**
+ * Set a persistent cookie that the Next.js middleware can read.
+ * This cookie is set on login/logout to signal auth status to the middleware.
+ * It's NOT httpOnly because the middleware needs to read it in the Edge runtime.
+ */
+function setAuthCookie(value: string, maxAge: number = 7 * 24 * 60 * 60): void {
+  document.cookie = `auth=${encodeURIComponent(value)}; path=/; max-age=${maxAge}; SameSite=Lax`;
+}
+
+function clearAuthCookie(): void {
+  document.cookie = 'auth=; path=/; max-age=0; SameSite=Lax';
+}
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [refreshToken, setRefreshToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const refreshTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const handleAuthResponse = useCallback((response: AuthResponse) => {
-    const { access_token, refresh_token, user: userData } = response;
-    setToken(access_token);
-    setRefreshToken(refresh_token);
-    setUser(userData);
-    // T-C01: Tokens are managed via HttpOnly cookies (set by auth-service).
-    // We keep the token in memory for client-side API calls during this session.
-    // The middleware checks the access_token cookie for route protection.
-    api.setToken(access_token);
-    localStorage.setItem('user', JSON.stringify(userData));
+  const clearSession = useCallback(() => {
+    setToken(null);
+    setRefreshToken(null);
+    setUser(null);
+    api.setToken(null);
+    localStorage.removeItem(ACCESS_TOKEN_KEY);
+    localStorage.removeItem(REFRESH_TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
+    clearAuthCookie();
   }, []);
 
-  const refreshAccessToken = useCallback(async () => {
-    // T-C01: Use in-memory refreshToken, not localStorage
-    const currentRefreshToken = refreshToken;
+  const persistTokens = useCallback(
+    (
+      accessToken: string,
+      newRefreshToken: string,
+      userData: User
+    ) => {
+      setToken(accessToken);
+      setRefreshToken(newRefreshToken);
+      setUser(userData);
+      api.setToken(accessToken);
+      localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
+      localStorage.setItem(REFRESH_TOKEN_KEY, newRefreshToken);
+      localStorage.setItem(USER_KEY, JSON.stringify(userData));
+      setAuthCookie(userData.id);
+    },
+    []
+  );
+
+  const refreshAccessToken = useCallback(async (): Promise<boolean> => {
+    const currentRefreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
     if (!currentRefreshToken) {
       return false;
     }
@@ -72,66 +120,170 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       const response = await api.auth.refreshToken(currentRefreshToken);
       if (response.success && response.data) {
-        const newToken = response.data.access_token;
+        const newAccessToken = response.data.access_token;
         const newRefreshToken = response.data.refresh_token;
-        setToken(newToken);
+
+        // Update stored tokens
+        setToken(newAccessToken);
         setRefreshToken(newRefreshToken);
-        api.setToken(newToken);
+        api.setToken(newAccessToken);
+        localStorage.setItem(ACCESS_TOKEN_KEY, newAccessToken);
+        localStorage.setItem(REFRESH_TOKEN_KEY, newRefreshToken);
+
+        // Refresh token cookie
+        const storedUser = localStorage.getItem(USER_KEY);
+        if (storedUser) {
+          setAuthCookie(JSON.parse(storedUser).id);
+        }
+
         return true;
       }
+      // Refresh failed — clear session
+      clearSession();
       return false;
-    } catch (error) {
+    } catch {
       return false;
     }
-  }, [refreshToken]);
+  }, [clearSession]);
 
+  const handleAuthResponse = useCallback(
+    (response: AuthResponse) => {
+      const { access_token, refresh_token, user: userData } = response;
+      persistTokens(access_token, refresh_token, userData);
+    },
+    [persistTokens]
+  );
+
+  /**
+   * On mount, restore the session from localStorage.
+   * If the access token is missing but the refresh token exists, attempt a refresh.
+   * If the access token exists, validate it by fetching the user profile.
+   */
   useEffect(() => {
-    const loadUser = async (): Promise<void> => {
-      try {
-        // T-C01: Only restore non-sensitive user profile from localStorage.
-        // Tokens must be re-authenticated on page reload.
-        const storedUser = localStorage.getItem('user');
+    let cancelled = false;
 
-        if (storedUser) {
+    const loadSession = async (): Promise<void> => {
+      try {
+        const storedAccessToken = localStorage.getItem(ACCESS_TOKEN_KEY);
+        const storedRefreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
+        const storedUser = localStorage.getItem(USER_KEY);
+
+        // Immediately set stored user to avoid flash of unauthenticated content
+        if (storedUser && !cancelled) {
           setUser(JSON.parse(storedUser));
         }
-      } catch (error) {
+
+        // Set the API token so requests work immediately
+        if (storedAccessToken) {
+          api.setToken(storedAccessToken);
+          setToken(storedAccessToken);
+          setRefreshToken(storedRefreshToken);
+          setAuthCookie(storedUser ? JSON.parse(storedUser).id : '');
+        }
+
+        if (storedAccessToken) {
+          // Validate the access token by fetching the user profile
+          try {
+            const response = await api.user.getProfile();
+            if (cancelled) return;
+
+            if (response.success && response.data) {
+              const userData = response.data;
+              const userObj: User = {
+                id: userData.id,
+                email: userData.email,
+                name: userData.displayName || userData.name,
+                displayName: userData.displayName,
+                role: userData.role,
+                avatar: userData.avatar,
+                createdAt: userData.createdAt,
+                updatedAt: userData.updatedAt,
+              };
+              setUser(userObj);
+              localStorage.setItem(USER_KEY, JSON.stringify(userObj));
+              setAuthCookie(userObj.id);
+            } else {
+              // Token invalid — try refresh
+              const refreshed = await refreshAccessToken();
+              if (cancelled) return;
+              if (!refreshed) {
+                clearSession();
+              }
+            }
+          } catch {
+            // Network error — keep the stored session (offline support)
+            // Set the auth cookie so middleware doesn't redirect to login
+            if (storedUser && !cancelled) {
+              setAuthCookie(JSON.parse(storedUser).id);
+            }
+          }
+        } else if (storedRefreshToken) {
+          // No access token but refresh token exists — try to refresh
+          const refreshed = await refreshAccessToken();
+          if (cancelled) return;
+          if (!refreshed) {
+            clearSession();
+          }
+        }
+      } catch {
         // Error handling is intentionally minimal
       } finally {
-        setIsLoading(false);
+        if (!cancelled) {
+          setIsLoading(false);
+        }
       }
     };
 
-    loadUser();
-  }, []);
+    loadSession();
 
+    return () => {
+      cancelled = true;
+    };
+  }, [refreshAccessToken, clearSession]);
+
+  // Periodic token refresh
   useEffect(() => {
-    if (!refreshToken) return;
+    if (!refreshToken) {
+      if (refreshTimerRef.current) {
+        clearInterval(refreshTimerRef.current);
+        refreshTimerRef.current = null;
+      }
+      return;
+    }
 
-    const interval = setInterval(() => {
+    refreshTimerRef.current = setInterval(() => {
       refreshAccessToken();
     }, TOKEN_REFRESH_INTERVAL);
 
     return (): void => {
-      clearInterval(interval);
+      if (refreshTimerRef.current) {
+        clearInterval(refreshTimerRef.current);
+        refreshTimerRef.current = null;
+      }
     };
   }, [refreshToken, refreshAccessToken]);
 
   const login = async (
     email: string,
     password: string
-  ): Promise<{ success: boolean; message?: string; code?: string; fieldErrors?: Record<string, string[]> }> => {
+  ): Promise<{
+    success: boolean;
+    message?: string;
+    code?: string;
+    fieldErrors?: Record<string, string[]>;
+  }> => {
     try {
       const response = await api.auth.login({ email, password });
       if (response.success && response.data) {
         handleAuthResponse(response.data);
         return { success: true };
       } else {
+        const r = response as any;
         return {
           success: false,
           message: response.message,
-          code: response.code,
-          fieldErrors: response.details?.fieldErrors,
+          code: r.code,
+          fieldErrors: r.details?.fieldErrors,
         };
       }
     } catch (error) {
@@ -143,18 +295,28 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     name: string,
     email: string,
     password: string
-  ): Promise<{ success: boolean; message?: string; code?: string; fieldErrors?: Record<string, string[]> }> => {
+  ): Promise<{
+    success: boolean;
+    message?: string;
+    code?: string;
+    fieldErrors?: Record<string, string[]>;
+  }> => {
     try {
-      const response = await api.auth.register({ name, email, password });
+      const response = await api.auth.register({
+        displayName: name.trim(),
+        email: email.trim(),
+        password,
+      });
       if (response.success && response.data) {
         handleAuthResponse(response.data);
         return { success: true };
       } else {
+        const r = response as any;
         return {
           success: false,
           message: response.message,
-          code: response.code,
-          fieldErrors: response.details?.fieldErrors,
+          code: r.code,
+          fieldErrors: r.details?.fieldErrors,
         };
       }
     } catch (error) {
@@ -170,20 +332,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } catch (error) {
       // Error handling is intentionally minimal
     } finally {
-      setToken(null);
-      setRefreshToken(null);
-      setUser(null);
-      api.setToken(null);
-      // T-C01: Clear all auth-related localStorage entries
-      localStorage.removeItem('user');
-      localStorage.removeItem('refreshToken');
-      localStorage.removeItem('accessToken');
+      clearSession();
     }
   };
 
   const updateUser = (updatedUser: User): void => {
     setUser(updatedUser);
-    localStorage.setItem('user', JSON.stringify(updatedUser));
+    localStorage.setItem(USER_KEY, JSON.stringify(updatedUser));
   };
 
   const refreshUser = async (): Promise<void> => {
@@ -202,7 +357,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           updatedAt: userData.updatedAt,
         };
         setUser(userObj);
-        localStorage.setItem('user', JSON.stringify(userObj));
+        localStorage.setItem(USER_KEY, JSON.stringify(userObj));
       }
     } catch (error) {
       webLogger.error('Failed to refresh user', error);

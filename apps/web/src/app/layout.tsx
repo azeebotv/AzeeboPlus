@@ -68,7 +68,7 @@ export const metadata: Metadata = {
     },
   },
   icons: {
-    icon: '/favicon.ico',
+    icon: '/favicon.svg',
     apple: '/apple-touch-icon.png',
   },
   manifest: '/site.webmanifest',
@@ -78,7 +78,7 @@ export const dynamic = 'force-dynamic';
 
 export default function RootLayout({ children }: { children: React.ReactNode }): React.JSX.Element {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning data-scroll-behavior="smooth">
       <body className={`${inter.variable} ${montserrat.variable}`}>
         <a href="#main-content" className="skip-link">
           Skip to main content

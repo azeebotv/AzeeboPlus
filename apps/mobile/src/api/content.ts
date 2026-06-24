@@ -208,12 +208,12 @@ export const contentApi = {
     limit = 20
   ): Promise<ApiResponse<PaginatedResponse<ContentItem>>> => {
     return apiClient.get<ApiResponse<PaginatedResponse<ContentItem>>>(
-      `/user/watch-history?page=${page}&limit=${limit}`
+      `/users/me/history?page=${page}&limit=${limit}`
     );
   },
 
   addToWatchHistory: async (contentId: string): Promise<ApiResponse<{ message: string }>> => {
-    return apiClient.post<ApiResponse<{ message: string }>>('/user/watch-history', { contentId });
+    return apiClient.post<ApiResponse<{ message: string }>>('/users/me/history', { contentId });
   },
 
   getSavedContent: async (
@@ -221,16 +221,16 @@ export const contentApi = {
     limit = 20
   ): Promise<ApiResponse<PaginatedResponse<ContentItem>>> => {
     return apiClient.get<ApiResponse<PaginatedResponse<ContentItem>>>(
-      `/user/saved?page=${page}&limit=${limit}`
+      `/users/me/saved?page=${page}&limit=${limit}`
     );
   },
 
   saveContent: async (contentId: string): Promise<ApiResponse<{ message: string }>> => {
-    return apiClient.post<ApiResponse<{ message: string }>>('/user/saved', { contentId });
+    return apiClient.post<ApiResponse<{ message: string }>>('/users/me/saved', { contentId });
   },
 
   removeSavedContent: async (contentId: string): Promise<ApiResponse<{ message: string }>> => {
-    return apiClient.delete<ApiResponse<{ message: string }>>(`/user/saved/${contentId}`);
+    return apiClient.delete<ApiResponse<{ message: string }>>(`/users/me/saved/${contentId}`);
   },
 
   getEpisode: async (episodeId: string): Promise<ApiResponse<Episode>> => {

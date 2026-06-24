@@ -42,7 +42,7 @@ async function bootstrap(): Promise<void> {
     Logger.warn('CREATOR_ALLOWED_ORIGINS not set, using default localhost origin');
   }
   const allowedOrigins = process.env.CREATOR_ALLOWED_ORIGINS?.split(',') || [
-    'http://localhost:3014',
+    'http://localhost:4014',
   ];
 
   app.enableCors({
@@ -56,7 +56,7 @@ async function bootstrap(): Promise<void> {
 
   app.enableShutdownHooks();
 
-  const port = process.env.PORT || 3014;
+  const port = process.env.PORT || 4014;
   await app.listen(port);
   logger.log(`Creator Portal is running on port ${port}`);
 }

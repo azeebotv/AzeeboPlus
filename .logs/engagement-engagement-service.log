@@ -2,9 +2,9 @@
 > @azeebo/engagement-service@1.0.0 start:dev /Users/deprof/www/azeebo+/services/engagement/engagement-service
 > nest start --watch
 
-[2J[3J[H[[90m4:55:07 PM[0m] Starting compilation in watch mode...
+[2J[3J[H[[90m2:56:11 PM[0m] Starting compilation in watch mode...
 
-[[90m4:55:12 PM[0m] Found 0 errors. Watching for file changes.
+[[90m2:56:15 PM[0m] Found 0 errors. Watching for file changes.
 
 node:internal/modules/cjs/loader:1478
   throw err;
@@ -24,10 +24,120 @@ Error: Cannot find module '/Users/deprof/www/azeebo+/services/engagement/engagem
 }
 
 Node.js v26.0.0
-[2J[3J[H[[90m6:52:58 PM[0m] File change detected. Starting incremental compilation...
+[2J[3J[H[[90m4:57:30 PM[0m] File change detected. Starting incremental compilation...
 
-[[90m6:52:59 PM[0m] Found 0 errors. Watching for file changes.
+[2J[3J[H[[90m4:57:30 PM[0m] File change detected. Starting incremental compilation...
 
+[[90m4:57:32 PM[0m] Found 0 errors. Watching for file changes.
+
+[[90m4:57:32 PM[0m] Found 0 errors. Watching for file changes.
+
+node:internal/modules/cjs/loader:1478
+  throw err;
+  ^
+
+Error: Cannot find module '/Users/deprof/www/azeebo+/services/engagement/engagement-service/dist/main'
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1475:15)
+    at wrapResolveFilename (node:internal/modules/cjs/loader:1048:27)
+    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1072:10)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1093:12)
+    at Module._load (node:internal/modules/cjs/loader:1261:25)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+    at node:internal/main/run_main_module:33:47 {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: []
+}
+
+Node.js v26.0.0
+node:internal/modules/cjs/loader:1478
+  throw err;
+  ^
+
+Error: Cannot find module '/Users/deprof/www/azeebo+/services/engagement/engagement-service/dist/main'
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1475:15)
+    at wrapResolveFilename (node:internal/modules/cjs/loader:1048:27)
+    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1072:10)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1093:12)
+    at Module._load (node:internal/modules/cjs/loader:1261:25)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+    at node:internal/main/run_main_module:33:47 {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: []
+}
+
+Node.js v26.0.0
+[2J[3J[H[[90m4:58:00 PM[0m] File change detected. Starting incremental compilation...
+
+[2J[3J[H[[90m4:58:00 PM[0m] File change detected. Starting incremental compilation...
+
+[[90m4:58:01 PM[0m] Found 0 errors. Watching for file changes.
+
+[[90m4:58:01 PM[0m] Found 0 errors. Watching for file changes.
+
+node:internal/modules/cjs/loader:1478
+  throw err;
+  ^
+
+Error: Cannot find module '/Users/deprof/www/azeebo+/services/engagement/engagement-service/dist/main'
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1475:15)
+    at wrapResolveFilename (node:internal/modules/cjs/loader:1048:27)
+    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1072:10)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1093:12)
+    at Module._load (node:internal/modules/cjs/loader:1261:25)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+    at node:internal/main/run_main_module:33:47 {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: []
+}
+
+Node.js v26.0.0
+node:internal/modules/cjs/loader:1478
+  throw err;
+  ^
+
+Error: Cannot find module '/Users/deprof/www/azeebo+/services/engagement/engagement-service/dist/main'
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1475:15)
+    at wrapResolveFilename (node:internal/modules/cjs/loader:1048:27)
+    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1072:10)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1093:12)
+    at Module._load (node:internal/modules/cjs/loader:1261:25)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+    at node:internal/main/run_main_module:33:47 {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: []
+}
+
+Node.js v26.0.0
+[2J[3J[H[[90m5:16:50 PM[0m] File change detected. Starting incremental compilation...
+
+[2J[3J[H[[90m5:16:50 PM[0m] File change detected. Starting incremental compilation...
+
+[[90m5:16:51 PM[0m] Found 0 errors. Watching for file changes.
+
+[[90m5:16:52 PM[0m] Found 0 errors. Watching for file changes.
+
+node:internal/modules/cjs/loader:1478
+  throw err;
+  ^
+
+Error: Cannot find module '/Users/deprof/www/azeebo+/services/engagement/engagement-service/dist/main'
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1475:15)
+    at wrapResolveFilename (node:internal/modules/cjs/loader:1048:27)
+    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1072:10)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1093:12)
+    at Module._load (node:internal/modules/cjs/loader:1261:25)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+    at node:internal/main/run_main_module:33:47 {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: []
+}
+
+Node.js v26.0.0
 node:internal/modules/cjs/loader:1478
   throw err;
   ^

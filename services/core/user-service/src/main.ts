@@ -64,6 +64,7 @@ async function bootstrap(): Promise<void> {
   // API versioning
   app.enableVersioning({ type: VersioningType.URI, prefix: 'v', defaultVersion: '1' });
 
+  app.enableShutdownHooks();
   await app.listen(process.env.PORT || 3001);
   Logger.log('User Service is running on port ' + (process.env.PORT || 3001));
 }

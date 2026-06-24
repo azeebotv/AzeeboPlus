@@ -22,26 +22,41 @@ export function ToastProvider({ children }: { children: ReactNode }): React.JSX.
 
   const showToast = useCallback((message: string, type: Toast['type'] = 'info') => {
     const id = Date.now().toString();
-    setToasts(prev => [...prev, { id, message, type }]);
-    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3000);
+    setToasts((prev) => [...prev, { id, message, type }]);
+    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 3000);
   }, []);
 
   const removeToast = useCallback((id: string) => {
-    setToasts(prev => prev.filter(t => t.id !== id));
+    setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
   return (
     <ToastContext.Provider value={{ showToast }}>
       {children}
-      <div style={{ position: 'fixed', bottom: 24, right: 24, zIndex: 9999, display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {toasts.map(toast => (
+      <div
+        style={{
+          position: 'fixed',
+          bottom: 24,
+          right: 24,
+          zIndex: 9999,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 8,
+        }}
+      >
+        {toasts.map((toast) => (
           <div
             key={toast.id}
             onClick={() => removeToast(toast.id)}
             style={{
               padding: '12px 20px',
               borderRadius: 12,
-              backgroundColor: toast.type === 'error' ? '#CC1C1C' : toast.type === 'success' ? '#0D3B2E' : '#1A0A0A',
+              backgroundColor:
+                toast.type === 'error'
+                  ? '#CC1C1C'
+                  : toast.type === 'success'
+                    ? '#0D3B2E'
+                    : '#1A0A0A',
               border: '1px solid #2A1A1A',
               color: '#F5F0EB',
               fontSize: 14,

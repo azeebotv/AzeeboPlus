@@ -57,6 +57,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
     setError(null);
     try {
+      // TODO: Verify correct gateway endpoint — user-service may use /me/preferences or /users/me/settings
       const response = await apiClient.get<UserSettings>('/user/settings');
       setSettings(response);
     } catch (error: any) {
@@ -70,6 +71,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
     setError(null);
     try {
+      // TODO: Verify correct gateway endpoint — user-service may use /me/preferences or /users/me/settings
       const response = await apiClient.put<UserSettings>('/user/settings', newSettings);
       setSettings(response);
     } catch (error: any) {
@@ -84,6 +86,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
     setError(null);
     try {
+      // TODO: Verify correct gateway endpoint — may need /users/me/profile
       const response = await apiClient.put<UserSettings>('/user/profile', profile);
       setSettings(response);
     } catch (error: any) {
@@ -98,6 +101,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
     setError(null);
     try {
+      // TODO: Verify correct gateway endpoint — auth-service may expose /auth/change-password
       await apiClient.post('/user/change-password', { currentPassword, newPassword });
     } catch (error: any) {
       setError(error.message || 'Failed to change password');

@@ -1,5 +1,5 @@
 {
-  "name": "azeebo-scripts",
+  "name": "@azeebo/scripts",
   "version": "1.0.0",
   "description": "Automation scripts for Azeebo+ platform",
   "packageManager": "pnpm@10.33.2",

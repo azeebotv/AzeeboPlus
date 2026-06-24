@@ -171,7 +171,7 @@ export default function ForgotPasswordPage(): React.JSX.Element {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="az-input"
-                placeholder="e.g. williams@azeebo.com"
+                placeholder="e.g. williams@azeeboplus.com"
               />
             </div>
 

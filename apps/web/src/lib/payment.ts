@@ -56,7 +56,7 @@ class PaymentService {
     try {
       const response = await api.payment.initialize({
         amount,
-        currency: 'USD',
+        currency: 'NGN',
         email,
         metadata,
       });
@@ -190,7 +190,7 @@ class PaymentService {
         authorizationUrl: paymentData.authorizationUrl || '',
         accessCode: paymentData.accessCode,
         amount,
-        currency: 'USD',
+        currency: 'NGN',
         email,
         metadata,
       });
@@ -200,7 +200,7 @@ class PaymentService {
         authorizationUrl: paymentData.authorizationUrl || '',
         txRef: paymentData.reference,
         amount,
-        currency: 'USD',
+        currency: 'NGN',
         email,
         metadata,
       });

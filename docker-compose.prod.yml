@@ -787,15 +787,15 @@ services:
       context: .
       dockerfile: apps/web/Dockerfile
       args:
-        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://app.azeebo.com}
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://app.azeeboplus.com}
     container_name: azeebo_prod_web
     ports:
       - "${WEB_PORT:-4000}:3000"
     environment:
       NODE_ENV: production
       API_GATEWAY_URL: http://api-gateway:3013
-      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://app.azeebo.com}
-      NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_URL:-https://app.azeebo.com}
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://app.azeeboplus.com}
+      NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_URL:-https://app.azeeboplus.com}
     networks:
       - frontend
       - backend

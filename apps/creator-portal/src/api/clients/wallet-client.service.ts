@@ -51,7 +51,7 @@ export class WalletClientService {
   private readonly walletServiceUrl: string;
 
   constructor(private readonly configService: ConfigService) {
-    this.walletServiceUrl = this.configService.getOrThrow<string>('WALLET_SERVICE_URL');
+    this.walletServiceUrl = this.configService.get<string>('API_GATEWAY_URL') || 'http://localhost:3013';
   }
 
   private async request<T>(
@@ -110,7 +110,7 @@ export class WalletClientService {
   }
 
   async getWallet(userId: string): Promise<WalletServiceResponse<Wallet>> {
-    const endpoint = `/api/wallet/user/${userId}`;
+    const endpoint = `/v1/wallet/user/${userId}`;
     return this.request<Wallet>(endpoint);
   }
 
@@ -120,7 +120,7 @@ export class WalletClientService {
     limit = 20,
     type?: string
   ): Promise<WalletServiceResponse<{ items: WalletTransaction[]; total: number }>> {
-    const endpoint = `/api/wallet/user/${userId}/transactions?page=${page}&limit=${limit}${type ? `&type=${type}` : ''}`;
+    const endpoint = `/v1/wallet/user/${userId}/transactions?page=${page}&limit=${limit}${type ? `&type=${type}` : ''}`;
     return this.request<{ items: WalletTransaction[]; total: number }>(endpoint);
   }
 
@@ -130,7 +130,7 @@ export class WalletClientService {
     method: string,
     metadata?: Record<string, unknown>
   ): Promise<WalletServiceResponse<PayoutRequest>> {
-    const endpoint = '/api/wallet/payouts';
+    const endpoint = '/v1/wallet/payouts';
     return this.request<PayoutRequest>(endpoint, {
       method: 'POST',
       body: {
@@ -148,12 +148,12 @@ export class WalletClientService {
     limit = 20,
     status?: string
   ): Promise<WalletServiceResponse<{ items: PayoutRequest[]; total: number }>> {
-    const endpoint = `/api/wallet/payouts/user/${userId}?page=${page}&limit=${limit}${status ? `&status=${status}` : ''}`;
+    const endpoint = `/v1/wallet/payouts/user/${userId}?page=${page}&limit=${limit}${status ? `&status=${status}` : ''}`;
     return this.request<{ items: PayoutRequest[]; total: number }>(endpoint);
   }
 
   async getPayoutRequestById(payoutId: string): Promise<WalletServiceResponse<PayoutRequest>> {
-    const endpoint = `/api/wallet/payouts/${payoutId}`;
+    const endpoint = `/v1/wallet/payouts/${payoutId}`;
     return this.request<PayoutRequest>(endpoint);
   }
 
@@ -165,7 +165,7 @@ export class WalletClientService {
       pendingPayouts: number;
     }>
   > {
-    const endpoint = `/api/wallet/user/${userId}/stats`;
+    const endpoint = `/v1/wallet/user/${userId}/stats`;
     return this.request<{
       totalBalance: number;
       totalEarnings: number;
@@ -177,7 +177,7 @@ export class WalletClientService {
   async cancelPayoutRequest(
     payoutId: string
   ): Promise<WalletServiceResponse<{ success: boolean; message: string }>> {
-    const endpoint = `/api/wallet/payouts/${payoutId}/cancel`;
+    const endpoint = `/v1/wallet/payouts/${payoutId}/cancel`;
     return this.request<{ success: boolean; message: string }>(endpoint, {
       method: 'POST',
     });

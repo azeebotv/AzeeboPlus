@@ -118,7 +118,7 @@ export class SocialAuthService {
     const appleClientId = this.configService.get<string>('APPLE_CLIENT_ID', '');
     const frontendUrl = this.configService.get<string>('FRONTEND_URL', 'http://localhost:3000');
 
-    const callbackBase = `${this.configService.get<string>('BASE_URL', 'http://localhost:3001')}/auth/social/callback`;
+    const callbackBase = `${this.configService.get<string>('BASE_URL', 'http://localhost:3000')}/auth/social/callback`;
     const callbackUrl = `${callbackBase}?provider=${provider}`;
 
     switch (provider) {

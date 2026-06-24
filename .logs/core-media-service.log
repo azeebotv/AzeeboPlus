@@ -2,118 +2,27 @@
 > @azeebo/media-service@0.1.0 start:dev /Users/deprof/www/azeebo+/services/core/media-service
 > ts-node-dev --respawn --transpile-only src/main.ts
 
-[INFO] 15:50:19 ts-node-dev ver. 2.0.0 (using ts-node ver. 10.9.2, typescript ver. 5.9.3)
-[32m[Nest] 46054  - [39m06/23/2026, 3:50:21 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
-[32m[Nest] 46054  - [39m06/23/2026, 3:50:21 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCommonModule dependencies initialized[39m[38;5;3m +28ms[39m
-[32m[Nest] 46054  - [39m06/23/2026, 3:50:21 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 46054  - [39m06/23/2026, 3:50:21 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mThrottlerModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 46054  - [39m06/23/2026, 3:50:21 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 46054  - [39m06/23/2026, 3:50:21 PM [32m    LOG[39m [38;5;3m[S3Service] [39m[32mS3Service initialized with circuit breaker[39m
-[32m[Nest] 46054  - [39m06/23/2026, 3:50:21 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 46054  - [39m06/23/2026, 3:50:21 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 46054  - [39m06/23/2026, 3:50:21 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTerminusModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 46054  - [39m06/23/2026, 3:50:21 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 46054  - [39m06/23/2026, 3:50:21 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 46054  - [39m06/23/2026, 3:50:21 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mUploadModule dependencies initialized[39m[38;5;3m +2ms[39m
-[32m[Nest] 46054  - [39m06/23/2026, 3:50:21 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAdminModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 46054  - [39m06/23/2026, 3:50:21 PM [32m    LOG[39m [32mSwagger documentation enabled at /docs[39m
-[32m[Nest] 46054  - [39m06/23/2026, 3:50:21 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mUploadController {/api/media} (version: 1):[39m[38;5;3m +5ms[39m
-[32m[Nest] 46054  - [39m06/23/2026, 3:50:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/upload/image, POST} (version: 1) route[39m[38;5;3m +5ms[39m
-[32m[Nest] 46054  - [39m06/23/2026, 3:50:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/upload/video, POST} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 46054  - [39m06/23/2026, 3:50:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/upload/audio, POST} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 46054  - [39m06/23/2026, 3:50:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/upload/document, POST} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 46054  - [39m06/23/2026, 3:50:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/upload/thumbnail, POST} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 46054  - [39m06/23/2026, 3:50:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/upload/avatar, POST} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 46054  - [39m06/23/2026, 3:50:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/upload/banner, POST} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 46054  - [39m06/23/2026, 3:50:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/presigned/upload, GET} (version: 1) route[39m[38;5;3m +3ms[39m
-[32m[Nest] 46054  - [39m06/23/2026, 3:50:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/presigned/download, GET} (version: 1) route[39m[38;5;3m +2ms[39m
-[32m[Nest] 46054  - [39m06/23/2026, 3:50:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/metadata, GET} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 46054  - [39m06/23/2026, 3:50:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/:key, DELETE} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 46054  - [39m06/23/2026, 3:50:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/transcoding/:jobId/status, GET} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 46054  - [39m06/23/2026, 3:50:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/transcoding/jobs, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 46054  - [39m06/23/2026, 3:50:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/transcoding/retry-failed, POST} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 46054  - [39m06/23/2026, 3:50:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/cleanup/orphaned, POST} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 46054  - [39m06/23/2026, 3:50:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/premium/url, POST} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 46054  - [39m06/23/2026, 3:50:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/premium/url/cdn, POST} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 46054  - [39m06/23/2026, 3:50:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/premium/url/validate, POST} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 46054  - [39m06/23/2026, 3:50:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/premium/url/:token, DELETE} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 46054  - [39m06/23/2026, 3:50:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/premium/urls/user, DELETE} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 46054  - [39m06/23/2026, 3:50:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/premium/url/:token/analytics, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 46054  - [39m06/23/2026, 3:50:21 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAdminController {/admin} (version: 1):[39m[38;5;3m +1ms[39m
-[32m[Nest] 46054  - [39m06/23/2026, 3:50:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/stats, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 46054  - [39m06/23/2026, 3:50:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/uploads, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 46054  - [39m06/23/2026, 3:50:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/uploads/:id, DELETE} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 46054  - [39m06/23/2026, 3:50:21 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHealthController {/health} (version: 1):[39m[38;5;3m +0ms[39m
-[32m[Nest] 46054  - [39m06/23/2026, 3:50:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health, GET} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 46054  - [39m06/23/2026, 3:50:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/live, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 46054  - [39m06/23/2026, 3:50:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/ready, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 46054  - [39m06/23/2026, 3:50:21 PM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +4ms[39m
-[32m[Nest] 46054  - [39m06/23/2026, 3:50:21 PM [32m    LOG[39m [32mMedia Service running on port 3019[39m
-
-> @azeebo/media-service@0.1.0 start:dev /Users/deprof/www/azeebo+/services/core/media-service
-> ts-node-dev --respawn --transpile-only src/main.ts
-
-[INFO] 16:54:56 ts-node-dev ver. 2.0.0 (using ts-node ver. 10.9.2, typescript ver. 5.9.3)
-[32m[Nest] 93245  - [39m06/23/2026, 4:54:57 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
-[32m[Nest] 93245  - [39m06/23/2026, 4:54:57 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCommonModule dependencies initialized[39m[38;5;3m +15ms[39m
-[32m[Nest] 93245  - [39m06/23/2026, 4:54:57 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 93245  - [39m06/23/2026, 4:54:57 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mThrottlerModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 93245  - [39m06/23/2026, 4:54:57 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 93245  - [39m06/23/2026, 4:54:57 PM [32m    LOG[39m [38;5;3m[S3Service] [39m[32mS3Service initialized with circuit breaker[39m
-[32m[Nest] 93245  - [39m06/23/2026, 4:54:57 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 93245  - [39m06/23/2026, 4:54:57 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 93245  - [39m06/23/2026, 4:54:57 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTerminusModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 93245  - [39m06/23/2026, 4:54:57 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 93245  - [39m06/23/2026, 4:54:57 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 93245  - [39m06/23/2026, 4:54:57 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mUploadModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 93245  - [39m06/23/2026, 4:54:57 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAdminModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 93245  - [39m06/23/2026, 4:54:57 PM [32m    LOG[39m [32mSwagger documentation enabled at /docs[39m
-[32m[Nest] 93245  - [39m06/23/2026, 4:54:57 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mUploadController {/api/media} (version: 1):[39m[38;5;3m +3ms[39m
-[32m[Nest] 93245  - [39m06/23/2026, 4:54:57 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/upload/image, POST} (version: 1) route[39m[38;5;3m +5ms[39m
-[32m[Nest] 93245  - [39m06/23/2026, 4:54:57 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/upload/video, POST} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 93245  - [39m06/23/2026, 4:54:57 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/upload/audio, POST} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 93245  - [39m06/23/2026, 4:54:57 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/upload/document, POST} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 93245  - [39m06/23/2026, 4:54:57 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/upload/thumbnail, POST} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 93245  - [39m06/23/2026, 4:54:57 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/upload/avatar, POST} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 93245  - [39m06/23/2026, 4:54:57 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/upload/banner, POST} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 93245  - [39m06/23/2026, 4:54:57 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/presigned/upload, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 93245  - [39m06/23/2026, 4:54:57 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/presigned/download, GET} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 93245  - [39m06/23/2026, 4:54:57 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/metadata, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 93245  - [39m06/23/2026, 4:54:57 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/:key, DELETE} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 93245  - [39m06/23/2026, 4:54:57 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/transcoding/:jobId/status, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 93245  - [39m06/23/2026, 4:54:57 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/transcoding/jobs, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 93245  - [39m06/23/2026, 4:54:57 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/transcoding/retry-failed, POST} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 93245  - [39m06/23/2026, 4:54:57 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/cleanup/orphaned, POST} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 93245  - [39m06/23/2026, 4:54:57 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/premium/url, POST} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 93245  - [39m06/23/2026, 4:54:57 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/premium/url/cdn, POST} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 93245  - [39m06/23/2026, 4:54:57 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/premium/url/validate, POST} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 93245  - [39m06/23/2026, 4:54:57 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/premium/url/:token, DELETE} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 93245  - [39m06/23/2026, 4:54:57 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/premium/urls/user, DELETE} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 93245  - [39m06/23/2026, 4:54:57 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/premium/url/:token/analytics, GET} (version: 1) route[39m[38;5;3m +10ms[39m
-[32m[Nest] 93245  - [39m06/23/2026, 4:54:57 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAdminController {/admin} (version: 1):[39m[38;5;3m +0ms[39m
-[32m[Nest] 93245  - [39m06/23/2026, 4:54:57 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/stats, GET} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 93245  - [39m06/23/2026, 4:54:57 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/uploads, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 93245  - [39m06/23/2026, 4:54:57 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/uploads/:id, DELETE} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 93245  - [39m06/23/2026, 4:54:57 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHealthController {/health} (version: 1):[39m[38;5;3m +0ms[39m
-[32m[Nest] 93245  - [39m06/23/2026, 4:54:57 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 93245  - [39m06/23/2026, 4:54:57 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/live, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 93245  - [39m06/23/2026, 4:54:57 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/ready, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 93245  - [39m06/23/2026, 4:54:57 PM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +4ms[39m
-[32m[Nest] 93245  - [39m06/23/2026, 4:54:57 PM [32m    LOG[39m [32mMedia Service running on port 3019[39m
-[INFO] 18:53:07 Restarting: /Users/deprof/www/azeebo+/packages/logger/dist/distributed-tracing.interceptor.js has been modified
-[INFO] 18:53:08 Restarting: /Users/deprof/www/azeebo+/packages/logger/dist/distributed-tracing.interceptor.js has been modified
-[32m[Nest] 10573  - [39m06/23/2026, 6:53:44 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
-[32m[Nest] 10573  - [39m06/23/2026, 6:53:46 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCommonModule dependencies initialized[39m[38;5;3m +1554ms[39m
-[31m[Nest] 10573  - [39m06/23/2026, 6:53:46 PM [31m  ERROR[39m [38;5;3m[ExceptionHandler] [39mUnknownDependenciesException [Error]: Nest can't resolve dependencies of the ResponseSanitizationInterceptor (?). Please make sure that the argument at index [0] is available in the current module.
+[INFO] 14:56:04 ts-node-dev ver. 2.0.0 (using ts-node ver. 10.9.2, typescript ver. 5.9.3)
+[32m[Nest] 51140  - [39m06/24/2026, 2:56:06 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
+[32m[Nest] 51140  - [39m06/24/2026, 2:56:06 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCommonModule dependencies initialized[39m[38;5;3m +23ms[39m
+[32m[Nest] 51140  - [39m06/24/2026, 2:56:06 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 51140  - [39m06/24/2026, 2:56:06 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mThrottlerModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 51140  - [39m06/24/2026, 2:56:06 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 51140  - [39m06/24/2026, 2:56:06 PM [32m    LOG[39m [38;5;3m[S3Service] [39m[32mS3Service initialized with circuit breaker[39m
+[32m[Nest] 51140  - [39m06/24/2026, 2:56:06 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 51140  - [39m06/24/2026, 2:56:06 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 51140  - [39m06/24/2026, 2:56:06 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTerminusModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 51140  - [39m06/24/2026, 2:56:06 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 51140  - [39m06/24/2026, 2:56:06 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +2ms[39m
+[31m[Nest] 51140  - [39m06/24/2026, 2:56:06 PM [31m  ERROR[39m [38;5;3m[ExceptionHandler] [39mUnknownDependenciesException [Error]: Nest can't resolve dependencies of the AdminGuard (?, Object). Please make sure that the argument JwtService at index [0] is available in the UploadModule module.
 
 Potential solutions:
-- The dependency at index [0] appears to be undefined at runtime
-- This commonly occurs when using 'import type' instead of 'import' for injectable classes
-- Check your imports and change:
-  ❌ import type { SomeService } from './some.service';
-  ✅ import { SomeService } from './some.service';
-- Ensure the imported class is decorated with @Injectable() or is a valid provider
-- If using dynamic imports, ensure the class is available at runtime, not just for type checking
+- Is UploadModule a valid NestJS module?
+- If JwtService is a provider, is it part of the current UploadModule?
+- If JwtService is exported from a separate @Module, is that module imported within UploadModule?
+  @Module({
+    imports: [ /* the Module containing JwtService */ ]
+  })
 
 For more common dependency resolution issues, see: https://docs.nestjs.com/faq/common-errors
     at Injector.lookupComponentInParentModules (/Users/deprof/www/azeebo+/node_modules/[4m.pnpm[24m/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/[4m@nestjs/core[24m/injector/injector.js:300:19)
@@ -122,37 +31,47 @@ For more common dependency resolution issues, see: https://docs.nestjs.com/faq/c
     at async Promise.all (index 0)
     at Injector.resolveConstructorParams (/Users/deprof/www/azeebo+/node_modules/[4m.pnpm[24m/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/[4m@nestjs/core[24m/injector/injector.js:179:27)
     at Injector.loadInstance (/Users/deprof/www/azeebo+/node_modules/[4m.pnpm[24m/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/[4m@nestjs/core[24m/injector/injector.js:77:13)
-    at Injector.loadProvider (/Users/deprof/www/azeebo+/node_modules/[4m.pnpm[24m/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/[4m@nestjs/core[24m/injector/injector.js:111:9)
-    at /Users/deprof/www/azeebo+/node_modules/[4m.pnpm[24m/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/[4m@nestjs/core[24m/injector/instance-loader.js:56:13
-    at async Promise.all (index 4)
-    at InstanceLoader.createInstancesOfProviders (/Users/deprof/www/azeebo+/node_modules/[4m.pnpm[24m/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/[4m@nestjs/core[24m/injector/instance-loader.js:55:9) {
-  type: [32m'ResponseSanitizationInterceptor'[39m,
+    at Injector.loadInjectable (/Users/deprof/www/azeebo+/node_modules/[4m.pnpm[24m/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/[4m@nestjs/core[24m/injector/injector.js:104:9)
+    at /Users/deprof/www/azeebo+/node_modules/[4m.pnpm[24m/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/[4m@nestjs/core[24m/injector/instance-loader.js:80:13
+    at async Promise.all (index 1)
+    at InstanceLoader.createInstancesOfInjectables (/Users/deprof/www/azeebo+/node_modules/[4m.pnpm[24m/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/[4m@nestjs/core[24m/injector/instance-loader.js:79:9) {
+  type: [32m'AdminGuard'[39m,
   context: {
     index: [33m0[39m,
     dependencies: [
+      [36m[class JwtService][39m,
       [36m[Function: Object][39m
     ],
-    name: [36m[Function: Object][39m
+    name: [36m[class JwtService][39m
   },
   metadata: {
-    id: [32m'9835d66f4dd0c8b0a593e'[39m
+    id: [32m'95dfabd56e4eea8b5fa1a'[39m
   },
   moduleRef: {
-    id: [32m'6d596b17de09bcd3f48d9'[39m
+    id: [32m'5b8461dcc9f007002320d'[39m
   }
 }
-[32m[Nest] 10602  - [39m06/23/2026, 6:53:47 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
-[32m[Nest] 10602  - [39m06/23/2026, 6:53:48 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCommonModule dependencies initialized[39m[38;5;3m +843ms[39m
-[31m[Nest] 10602  - [39m06/23/2026, 6:53:48 PM [31m  ERROR[39m [38;5;3m[ExceptionHandler] [39mUnknownDependenciesException [Error]: Nest can't resolve dependencies of the ResponseSanitizationInterceptor (?). Please make sure that the argument at index [0] is available in the current module.
+[INFO] 16:57:59 Restarting: /Users/deprof/www/azeebo+/services/core/media-service/src/main.ts has been modified
+[32m[Nest] 1252  - [39m06/24/2026, 4:58:07 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
+[32m[Nest] 1252  - [39m06/24/2026, 4:58:08 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCommonModule dependencies initialized[39m[38;5;3m +510ms[39m
+[32m[Nest] 1252  - [39m06/24/2026, 4:58:08 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 1252  - [39m06/24/2026, 4:58:08 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mThrottlerModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 1252  - [39m06/24/2026, 4:58:08 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 1252  - [39m06/24/2026, 4:58:08 PM [32m    LOG[39m [38;5;3m[S3Service] [39m[32mS3Service initialized with circuit breaker[39m
+[32m[Nest] 1252  - [39m06/24/2026, 4:58:08 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 1252  - [39m06/24/2026, 4:58:08 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 1252  - [39m06/24/2026, 4:58:08 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTerminusModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 1252  - [39m06/24/2026, 4:58:08 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 1252  - [39m06/24/2026, 4:58:08 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +42ms[39m
+[31m[Nest] 1252  - [39m06/24/2026, 4:58:08 PM [31m  ERROR[39m [38;5;3m[ExceptionHandler] [39mUnknownDependenciesException [Error]: Nest can't resolve dependencies of the AdminGuard (?, Object). Please make sure that the argument JwtService at index [0] is available in the UploadModule module.
 
 Potential solutions:
-- The dependency at index [0] appears to be undefined at runtime
-- This commonly occurs when using 'import type' instead of 'import' for injectable classes
-- Check your imports and change:
-  ❌ import type { SomeService } from './some.service';
-  ✅ import { SomeService } from './some.service';
-- Ensure the imported class is decorated with @Injectable() or is a valid provider
-- If using dynamic imports, ensure the class is available at runtime, not just for type checking
+- Is UploadModule a valid NestJS module?
+- If JwtService is a provider, is it part of the current UploadModule?
+- If JwtService is exported from a separate @Module, is that module imported within UploadModule?
+  @Module({
+    imports: [ /* the Module containing JwtService */ ]
+  })
 
 For more common dependency resolution issues, see: https://docs.nestjs.com/faq/common-errors
     at Injector.lookupComponentInParentModules (/Users/deprof/www/azeebo+/node_modules/[4m.pnpm[24m/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/[4m@nestjs/core[24m/injector/injector.js:300:19)
@@ -161,127 +80,121 @@ For more common dependency resolution issues, see: https://docs.nestjs.com/faq/c
     at async Promise.all (index 0)
     at Injector.resolveConstructorParams (/Users/deprof/www/azeebo+/node_modules/[4m.pnpm[24m/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/[4m@nestjs/core[24m/injector/injector.js:179:27)
     at Injector.loadInstance (/Users/deprof/www/azeebo+/node_modules/[4m.pnpm[24m/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/[4m@nestjs/core[24m/injector/injector.js:77:13)
-    at Injector.loadProvider (/Users/deprof/www/azeebo+/node_modules/[4m.pnpm[24m/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/[4m@nestjs/core[24m/injector/injector.js:111:9)
-    at /Users/deprof/www/azeebo+/node_modules/[4m.pnpm[24m/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/[4m@nestjs/core[24m/injector/instance-loader.js:56:13
-    at async Promise.all (index 4)
-    at InstanceLoader.createInstancesOfProviders (/Users/deprof/www/azeebo+/node_modules/[4m.pnpm[24m/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/[4m@nestjs/core[24m/injector/instance-loader.js:55:9) {
-  type: [32m'ResponseSanitizationInterceptor'[39m,
+    at Injector.loadInjectable (/Users/deprof/www/azeebo+/node_modules/[4m.pnpm[24m/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/[4m@nestjs/core[24m/injector/injector.js:104:9)
+    at /Users/deprof/www/azeebo+/node_modules/[4m.pnpm[24m/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/[4m@nestjs/core[24m/injector/instance-loader.js:80:13
+    at async Promise.all (index 1)
+    at InstanceLoader.createInstancesOfInjectables (/Users/deprof/www/azeebo+/node_modules/[4m.pnpm[24m/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/[4m@nestjs/core[24m/injector/instance-loader.js:79:9) {
+  type: [32m'AdminGuard'[39m,
   context: {
     index: [33m0[39m,
     dependencies: [
+      [36m[class JwtService][39m,
       [36m[Function: Object][39m
     ],
-    name: [36m[Function: Object][39m
+    name: [36m[class JwtService][39m
   },
   metadata: {
-    id: [32m'ab8bc1aaeee8a876ffdc7'[39m
+    id: [32m'9b438cb4772fe347943e4'[39m
   },
   moduleRef: {
-    id: [32m'786f63f1fe947d1aa2110'[39m
+    id: [32m'261d857b55e2b08a641f5'[39m
   }
 }
-[INFO] 18:54:21 Restarting: /Users/deprof/www/azeebo+/packages/logger/dist/response-sanitizer.interceptor.js has been modified
-[INFO] 18:54:21 Restarting: /Users/deprof/www/azeebo+/packages/logger/dist/response-sanitizer.interceptor.js has been modified
-[32m[Nest] 12184  - [39m06/23/2026, 6:54:57 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
-[32m[Nest] 12188  - [39m06/23/2026, 6:54:58 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
-[32m[Nest] 12184  - [39m06/23/2026, 6:54:58 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCommonModule dependencies initialized[39m[38;5;3m +1234ms[39m
-[32m[Nest] 12184  - [39m06/23/2026, 6:54:58 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +9ms[39m
-[32m[Nest] 12184  - [39m06/23/2026, 6:54:58 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mThrottlerModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 12184  - [39m06/23/2026, 6:54:58 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 12184  - [39m06/23/2026, 6:54:59 PM [32m    LOG[39m [38;5;3m[S3Service] [39m[32mS3Service initialized with circuit breaker[39m
-[32m[Nest] 12184  - [39m06/23/2026, 6:54:59 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +140ms[39m
-[32m[Nest] 12184  - [39m06/23/2026, 6:54:59 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 12184  - [39m06/23/2026, 6:54:59 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTerminusModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 12184  - [39m06/23/2026, 6:54:59 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 12184  - [39m06/23/2026, 6:55:00 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +331ms[39m
-[32m[Nest] 12184  - [39m06/23/2026, 6:55:00 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mUploadModule dependencies initialized[39m[38;5;3m +43ms[39m
-[32m[Nest] 12184  - [39m06/23/2026, 6:55:00 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAdminModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 12188  - [39m06/23/2026, 6:55:00 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCommonModule dependencies initialized[39m[38;5;3m +2827ms[39m
-[32m[Nest] 12188  - [39m06/23/2026, 6:55:00 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +21ms[39m
-[32m[Nest] 12188  - [39m06/23/2026, 6:55:00 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mThrottlerModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 12188  - [39m06/23/2026, 6:55:00 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 12188  - [39m06/23/2026, 6:55:01 PM [32m    LOG[39m [38;5;3m[S3Service] [39m[32mS3Service initialized with circuit breaker[39m
-[32m[Nest] 12188  - [39m06/23/2026, 6:55:01 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +15ms[39m
-[32m[Nest] 12188  - [39m06/23/2026, 6:55:01 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +9ms[39m
-[32m[Nest] 12188  - [39m06/23/2026, 6:55:01 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTerminusModule dependencies initialized[39m[38;5;3m +6ms[39m
-[32m[Nest] 12188  - [39m06/23/2026, 6:55:01 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 12188  - [39m06/23/2026, 6:55:01 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +216ms[39m
-[32m[Nest] 12188  - [39m06/23/2026, 6:55:01 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mUploadModule dependencies initialized[39m[38;5;3m +244ms[39m
-[32m[Nest] 12188  - [39m06/23/2026, 6:55:01 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAdminModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 12184  - [39m06/23/2026, 6:55:07 PM [32m    LOG[39m [32mSwagger documentation enabled at /docs[39m
-[32m[Nest] 12184  - [39m06/23/2026, 6:55:07 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mUploadController {/api/media} (version: 1):[39m[38;5;3m +6ms[39m
-[32m[Nest] 12184  - [39m06/23/2026, 6:55:07 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/upload/image, POST} (version: 1) route[39m[38;5;3m +5ms[39m
-[32m[Nest] 12184  - [39m06/23/2026, 6:55:07 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/upload/video, POST} (version: 1) route[39m[38;5;3m +7ms[39m
-[32m[Nest] 12184  - [39m06/23/2026, 6:55:07 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/upload/audio, POST} (version: 1) route[39m[38;5;3m +5ms[39m
-[32m[Nest] 12184  - [39m06/23/2026, 6:55:07 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/upload/document, POST} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 12184  - [39m06/23/2026, 6:55:07 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/upload/thumbnail, POST} (version: 1) route[39m[38;5;3m +2ms[39m
-[32m[Nest] 12184  - [39m06/23/2026, 6:55:07 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/upload/avatar, POST} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 12184  - [39m06/23/2026, 6:55:07 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/upload/banner, POST} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 12184  - [39m06/23/2026, 6:55:07 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/presigned/upload, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 12184  - [39m06/23/2026, 6:55:07 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/presigned/download, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 12184  - [39m06/23/2026, 6:55:07 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/metadata, GET} (version: 1) route[39m[38;5;3m +5ms[39m
-[32m[Nest] 12184  - [39m06/23/2026, 6:55:07 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/:key, DELETE} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 12184  - [39m06/23/2026, 6:55:07 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/transcoding/:jobId/status, GET} (version: 1) route[39m[38;5;3m +30ms[39m
-[32m[Nest] 12184  - [39m06/23/2026, 6:55:07 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/transcoding/jobs, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 12184  - [39m06/23/2026, 6:55:07 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/transcoding/retry-failed, POST} (version: 1) route[39m[38;5;3m +62ms[39m
-[32m[Nest] 12184  - [39m06/23/2026, 6:55:07 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/cleanup/orphaned, POST} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 12188  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [32mSwagger documentation enabled at /docs[39m
-[32m[Nest] 12188  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mUploadController {/api/media} (version: 1):[39m[38;5;3m +35ms[39m
-[32m[Nest] 12188  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/upload/image, POST} (version: 1) route[39m[38;5;3m +6ms[39m
-[32m[Nest] 12188  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/upload/video, POST} (version: 1) route[39m[38;5;3m +8ms[39m
-[32m[Nest] 12188  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/upload/audio, POST} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 12188  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/upload/document, POST} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 12188  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/upload/thumbnail, POST} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 12188  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/upload/avatar, POST} (version: 1) route[39m[38;5;3m +4ms[39m
-[32m[Nest] 12188  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/upload/banner, POST} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 12188  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/presigned/upload, GET} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 12188  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/presigned/download, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 12188  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/metadata, GET} (version: 1) route[39m[38;5;3m +6ms[39m
-[32m[Nest] 12188  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/:key, DELETE} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 12188  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/transcoding/:jobId/status, GET} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 12188  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/transcoding/jobs, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 12188  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/transcoding/retry-failed, POST} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 12188  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/cleanup/orphaned, POST} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 12188  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/premium/url, POST} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 12188  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/premium/url/cdn, POST} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 12188  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/premium/url/validate, POST} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 12188  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/premium/url/:token, DELETE} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 12188  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/premium/urls/user, DELETE} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 12188  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/premium/url/:token/analytics, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 12188  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAdminController {/admin} (version: 1):[39m[38;5;3m +0ms[39m
-[32m[Nest] 12188  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/stats, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 12188  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/uploads, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 12188  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/uploads/:id, DELETE} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 12188  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHealthController {/health} (version: 1):[39m[38;5;3m +0ms[39m
-[32m[Nest] 12188  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 12188  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/live, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 12188  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/ready, GET} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 12184  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/premium/url, POST} (version: 1) route[39m[38;5;3m +251ms[39m
-[32m[Nest] 12184  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/premium/url/cdn, POST} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 12184  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/premium/url/validate, POST} (version: 1) route[39m[38;5;3m +39ms[39m
-[32m[Nest] 12184  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/premium/url/:token, DELETE} (version: 1) route[39m[38;5;3m +12ms[39m
-[32m[Nest] 12184  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/premium/urls/user, DELETE} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 12184  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/media/premium/url/:token/analytics, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 12184  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAdminController {/admin} (version: 1):[39m[38;5;3m +0ms[39m
-[32m[Nest] 12184  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/stats, GET} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 12184  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/uploads, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 12184  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/uploads/:id, DELETE} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 12184  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHealthController {/health} (version: 1):[39m[38;5;3m +0ms[39m
-[32m[Nest] 12184  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 12184  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/live, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 12184  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/ready, GET} (version: 1) route[39m[38;5;3m +7ms[39m
-[32m[Nest] 12188  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +225ms[39m
-[32m[Nest] 12184  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +125ms[39m
-[31m[Nest] 12184  - [39m06/23/2026, 6:55:08 PM [31m  ERROR[39m [38;5;3m[NestApplication] [39m[31mError: listen EADDRINUSE: address already in use :::3019[39m[38;5;3m +113ms[39m
-[32m[Nest] 12188  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [32mMedia Service running on port 3019[39m
-Error: listen EADDRINUSE: address already in use :::3019
-    at Server.setupListenHandle [as _listen2] (node:net:2008:16)
-    at listenInCluster (node:net:2065:12)
-    at Server.listen (node:net:2170:7)
-    at ExpressAdapter.listen (/Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+platform-express@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-v_6278f7c733229edabd2decf6bc28c361/node_modules/@nestjs/platform-express/adapters/express-adapter.js:115:32)
-    at /Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/@nestjs/core/nest-application.js:190:30
-    at new Promise (<anonymous>)
-    at NestApplication.listen (/Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/@nestjs/core/nest-application.js:180:16)
-    at processTicksAndRejections (node:internal/process/task_queues:104:5)
-    at bootstrap (/Users/deprof/www/azeebo+/services/core/media-service/src/main.ts:65:3)
-[ERROR] 18:55:08 Error: listen EADDRINUSE: address already in use :::3019
+[INFO] 17:09:49 Restarting: /Users/deprof/www/azeebo+/services/core/media-service/src/modules/upload/upload.controller.ts has been modified
+[32m[Nest] 4235  - [39m06/24/2026, 5:09:51 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
+[32m[Nest] 4235  - [39m06/24/2026, 5:09:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCommonModule dependencies initialized[39m[38;5;3m +16ms[39m
+[32m[Nest] 4235  - [39m06/24/2026, 5:09:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 4235  - [39m06/24/2026, 5:09:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mThrottlerModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 4235  - [39m06/24/2026, 5:09:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 4235  - [39m06/24/2026, 5:09:51 PM [32m    LOG[39m [38;5;3m[S3Service] [39m[32mS3Service initialized with circuit breaker[39m
+[32m[Nest] 4235  - [39m06/24/2026, 5:09:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 4235  - [39m06/24/2026, 5:09:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 4235  - [39m06/24/2026, 5:09:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTerminusModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 4235  - [39m06/24/2026, 5:09:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 4235  - [39m06/24/2026, 5:09:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
+[31m[Nest] 4235  - [39m06/24/2026, 5:09:51 PM [31m  ERROR[39m [38;5;3m[ExceptionHandler] [39mUnknownDependenciesException [Error]: Nest can't resolve dependencies of the AdminGuard (?, Object). Please make sure that the argument JwtService at index [0] is available in the UploadModule module.
+
+Potential solutions:
+- Is UploadModule a valid NestJS module?
+- If JwtService is a provider, is it part of the current UploadModule?
+- If JwtService is exported from a separate @Module, is that module imported within UploadModule?
+  @Module({
+    imports: [ /* the Module containing JwtService */ ]
+  })
+
+For more common dependency resolution issues, see: https://docs.nestjs.com/faq/common-errors
+    at Injector.lookupComponentInParentModules (/Users/deprof/www/azeebo+/node_modules/[4m.pnpm[24m/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/[4m@nestjs/core[24m/injector/injector.js:300:19)
+[90m    at processTicksAndRejections (node:internal/process/task_queues:104:5)[39m
+    at resolveParam (/Users/deprof/www/azeebo+/node_modules/[4m.pnpm[24m/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/[4m@nestjs/core[24m/injector/injector.js:150:38)
+    at async Promise.all (index 0)
+    at Injector.resolveConstructorParams (/Users/deprof/www/azeebo+/node_modules/[4m.pnpm[24m/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/[4m@nestjs/core[24m/injector/injector.js:179:27)
+    at Injector.loadInstance (/Users/deprof/www/azeebo+/node_modules/[4m.pnpm[24m/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/[4m@nestjs/core[24m/injector/injector.js:77:13)
+    at Injector.loadInjectable (/Users/deprof/www/azeebo+/node_modules/[4m.pnpm[24m/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/[4m@nestjs/core[24m/injector/injector.js:104:9)
+    at /Users/deprof/www/azeebo+/node_modules/[4m.pnpm[24m/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/[4m@nestjs/core[24m/injector/instance-loader.js:80:13
+    at async Promise.all (index 1)
+    at InstanceLoader.createInstancesOfInjectables (/Users/deprof/www/azeebo+/node_modules/[4m.pnpm[24m/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/[4m@nestjs/core[24m/injector/instance-loader.js:79:9) {
+  type: [32m'AdminGuard'[39m,
+  context: {
+    index: [33m0[39m,
+    dependencies: [
+      [36m[class JwtService][39m,
+      [36m[Function: Object][39m
+    ],
+    name: [36m[class JwtService][39m
+  },
+  metadata: {
+    id: [32m'a83569c5b3ace0dc9e13f'[39m
+  },
+  moduleRef: {
+    id: [32m'6c6b6b14ef3cd42c95858'[39m
+  }
+}
+[INFO] 17:10:04 Restarting: /Users/deprof/www/azeebo+/services/core/media-service/src/main.ts has been modified
+[32m[Nest] 5420  - [39m06/24/2026, 5:10:07 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
+[32m[Nest] 5420  - [39m06/24/2026, 5:10:07 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCommonModule dependencies initialized[39m[38;5;3m +36ms[39m
+[32m[Nest] 5420  - [39m06/24/2026, 5:10:07 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 5420  - [39m06/24/2026, 5:10:07 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mThrottlerModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 5420  - [39m06/24/2026, 5:10:07 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 5420  - [39m06/24/2026, 5:10:07 PM [32m    LOG[39m [38;5;3m[S3Service] [39m[32mS3Service initialized with circuit breaker[39m
+[32m[Nest] 5420  - [39m06/24/2026, 5:10:07 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 5420  - [39m06/24/2026, 5:10:07 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 5420  - [39m06/24/2026, 5:10:07 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTerminusModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 5420  - [39m06/24/2026, 5:10:07 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 5420  - [39m06/24/2026, 5:10:07 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +2ms[39m
+[31m[Nest] 5420  - [39m06/24/2026, 5:10:07 PM [31m  ERROR[39m [38;5;3m[ExceptionHandler] [39mUnknownDependenciesException [Error]: Nest can't resolve dependencies of the AdminGuard (?, Object). Please make sure that the argument JwtService at index [0] is available in the UploadModule module.
+
+Potential solutions:
+- Is UploadModule a valid NestJS module?
+- If JwtService is a provider, is it part of the current UploadModule?
+- If JwtService is exported from a separate @Module, is that module imported within UploadModule?
+  @Module({
+    imports: [ /* the Module containing JwtService */ ]
+  })
+
+For more common dependency resolution issues, see: https://docs.nestjs.com/faq/common-errors
+    at Injector.lookupComponentInParentModules (/Users/deprof/www/azeebo+/node_modules/[4m.pnpm[24m/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/[4m@nestjs/core[24m/injector/injector.js:300:19)
+[90m    at processTicksAndRejections (node:internal/process/task_queues:104:5)[39m
+    at resolveParam (/Users/deprof/www/azeebo+/node_modules/[4m.pnpm[24m/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/[4m@nestjs/core[24m/injector/injector.js:150:38)
+    at async Promise.all (index 0)
+    at Injector.resolveConstructorParams (/Users/deprof/www/azeebo+/node_modules/[4m.pnpm[24m/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/[4m@nestjs/core[24m/injector/injector.js:179:27)
+    at Injector.loadInstance (/Users/deprof/www/azeebo+/node_modules/[4m.pnpm[24m/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/[4m@nestjs/core[24m/injector/injector.js:77:13)
+    at Injector.loadInjectable (/Users/deprof/www/azeebo+/node_modules/[4m.pnpm[24m/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/[4m@nestjs/core[24m/injector/injector.js:104:9)
+    at /Users/deprof/www/azeebo+/node_modules/[4m.pnpm[24m/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/[4m@nestjs/core[24m/injector/instance-loader.js:80:13
+    at async Promise.all (index 1)
+    at InstanceLoader.createInstancesOfInjectables (/Users/deprof/www/azeebo+/node_modules/[4m.pnpm[24m/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/[4m@nestjs/core[24m/injector/instance-loader.js:79:9) {
+  type: [32m'AdminGuard'[39m,
+  context: {
+    index: [33m0[39m,
+    dependencies: [
+      [36m[class JwtService][39m,
+      [36m[Function: Object][39m
+    ],
+    name: [36m[class JwtService][39m
+  },
+  metadata: {
+    id: [32m'499efed36fb8f92f04856'[39m
+  },
+  moduleRef: {
+    id: [32m'199a5030aeac7d25f8d10'[39m
+  }
+}

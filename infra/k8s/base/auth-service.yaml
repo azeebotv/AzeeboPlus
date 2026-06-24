@@ -58,6 +58,8 @@ spec:
           env:
             - name: NODE_ENV
               value: "production"
+            - name: PORT
+              value: "3000"
             - name: NODE_NAME
               valueFrom:
                 fieldRef:
@@ -76,11 +78,11 @@ spec:
                 secretKeyRef:
                   name: azeebo-secrets
                   key: redis-url
-            - name: JWT_SECRET
+            - name: JWT_ACCESS_SECRET
               valueFrom:
                 secretKeyRef:
                   name: azeebo-secrets
-                  key: jwt-secret
+                  key: jwt-access-secret
             - name: JWT_REFRESH_SECRET
               valueFrom:
                 secretKeyRef:

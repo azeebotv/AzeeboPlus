@@ -57,5 +57,5 @@ pnpm start:dev
 ## Ownership
 
 - **Team**: User Experience
-- **Maintainer**: ux-engineering@azeebo.com
+- **Maintainer**: ux-engineering@azeeboplus.com
 - **Last Updated**: 2026-05-11

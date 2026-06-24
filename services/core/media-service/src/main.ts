@@ -5,8 +5,10 @@ import { AppModule } from './app.module';
 import helmet from 'helmet';
 import { GlobalExceptionFilter } from '@azeebo/error-handling';
 import { LoggingInterceptor } from '@azeebo/logger';
+import { validateEnvironment } from '@azeebo/shared-types';
 
 async function bootstrap(): Promise<void> {
+  validateEnvironment(process.env);
   const app = await NestFactory.create(AppModule);
 
   app.useGlobalFilters(new GlobalExceptionFilter());
@@ -58,10 +60,11 @@ async function bootstrap(): Promise<void> {
     Logger.log('Swagger documentation enabled at /docs');
   }
 
-  // API versioning
+  // URI versioning: controllers use bare names (e.g. @Controller('media'))
   app.enableVersioning({ type: VersioningType.URI, prefix: 'v', defaultVersion: '1' });
 
   const port = process.env.PORT || 3019;
+  app.enableShutdownHooks();
   await app.listen(port);
   Logger.log(`Media Service running on port ${port}`);
 }

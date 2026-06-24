@@ -108,7 +108,7 @@ export const walletApi = {
         totalSpent: number;
         totalWithdrawn: number;
       }>
-    >'/v1/wallet/summary')
+    >('/v1/wallet/summary')
   },
 
   redeemReward: async (data: {

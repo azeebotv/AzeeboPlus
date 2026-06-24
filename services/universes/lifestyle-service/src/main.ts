@@ -1,5 +1,5 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe, Logger, VersioningType } from '@nestjs/common';
+import { ValidationPipe, Logger } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import helmet from 'helmet';
@@ -56,16 +56,17 @@ async function bootstrap(): Promise<void> {
       .setDescription('Azeebo+ Lifestyle Service API')
       .setVersion('1.0.0')
       .addTag('lifestyle')
+      .addServer('http://localhost:3013', 'API Gateway')
       .build();
     const document = SwaggerModule.createDocument(app, config);
     SwaggerModule.setup('docs', app, document);
     Logger.log('Swagger documentation enabled at /docs');
   }
 
-  // API versioning
-  app.enableVersioning({ type: VersioningType.URI, prefix: 'v', defaultVersion: '1' });
+  // Versioning disabled: controllers already prefix routes with 'v1/' manually
 
   const port = process.env.PORT || 3016;
+  app.enableShutdownHooks();
   await app.listen(port);
   const logger = new Logger('Lifestyle Service');
   logger.log(`Lifestyle Service running on port ${port}`);

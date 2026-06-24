@@ -93,11 +93,11 @@ spec:
                   name: azeebo-secrets
                   key: redis-url
                   optional: true
-            - name: JWT_SECRET
+            - name: JWT_ACCESS_SECRET
               valueFrom:
                 secretKeyRef:
                   name: azeebo-secrets
-                  key: jwt-secret
+                  key: jwt-access-secret
                   optional: true
           resources:
             requests:

@@ -1,11 +1,16 @@
 'use client';
 import React, { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
 import Link from 'next/link';
 import { api, ContentItem } from '../../lib/api';
 import { webLogger } from '../../lib/logger';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
+import { AmbientGlow } from '@/components/motion/AmbientGlow';
+import { ScrollReveal } from '@/components/motion/ScrollReveal';
+import { StaggerGrid } from '@/components/motion/StaggerGrid';
+import { GlowCard } from '@/components/motion/GlowCard';
 
 interface Contestant {
   id: string;
@@ -14,6 +19,20 @@ interface Contestant {
   votes: number;
   status: 'safe' | 'danger' | 'eliminated';
 }
+
+const staggerContainer = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.08 } },
+};
+
+const staggerItem = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] as const },
+  },
+};
 
 export default function RealityPage(): React.JSX.Element {
   const { isAuthenticated } = useAuth();
@@ -26,7 +45,6 @@ export default function RealityPage(): React.JSX.Element {
 
   useEffect(() => {
     let cancelled = false;
-
     async function fetchShows() {
       try {
         setIsLoading(true);
@@ -49,85 +67,134 @@ export default function RealityPage(): React.JSX.Element {
         if (!cancelled) setIsLoading(false);
       }
     }
-
     fetchShows();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
     let cancelled = false;
-
     async function fetchContestants() {
-      if (!selectedShow) { setContestants([]); return; }
+      if (!selectedShow) {
+        setContestants([]);
+        return;
+      }
       try {
         const response = await api.reality.getContestants(selectedShow.id);
         if (cancelled) return;
-        if (response.success && response.data) {
-          setContestants(response.data);
-        }
+        if (response.success && response.data) setContestants(response.data);
       } catch (err) {
         if (cancelled) return;
         const message = err instanceof Error ? err.message : 'An unexpected error occurred';
         webLogger.error('Failed to load contestants', { error: message });
       }
     }
-
     fetchContestants();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [selectedShow]);
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+    <div className="min-h-screen az-nollywood-bg">
       <AppHeader active="Reality" />
 
       {/* Hero Section */}
       <section className="relative">
         {isLoading ? (
-          <div className="h-[500px] animate-pulse" style={{ backgroundColor: '#2A2A2A' }} />
+          <div
+            className="h-[400px] sm:h-[500px] az-shimmer"
+            style={{ backgroundColor: '#2A2A2A' }}
+          />
         ) : selectedShow ? (
-          <div className="relative h-[500px]">
-            <img src={selectedShow.thumbnail} alt={selectedShow.title} className="w-full h-full object-cover" />
+          <div className="relative h-[400px] sm:h-[500px]">
+            <motion.img
+              src={selectedShow.thumbnail}
+              alt={selectedShow.title}
+              className="w-full h-full object-cover"
+              initial={{ scale: 1.1, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
+            />
             <div className="absolute inset-0 bg-gradient-to-t from-[#1A0A0A] via-[#1A0A0A]/50 to-transparent" />
-            <div className="absolute bottom-0 left-0 right-0 p-8 max-w-7xl mx-auto">
-              <h2 className="text-4xl font-bold text-white mb-2">{selectedShow.title}</h2>
-              <p className="text-white/60 text-lg mb-6 max-w-2xl">{selectedShow.description}</p>
-              <div className="flex items-center gap-4">
+            <AmbientGlow color="rgba(204,28,28,0.3)" size={500} className="bottom-0 right-0" />
+
+            <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-8 max-w-7xl mx-auto">
+              <motion.h2
+                className="text-3xl sm:text-4xl font-bold text-white mb-2"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2, duration: 0.5 }}
+              >
+                {selectedShow.title}
+              </motion.h2>
+              <motion.p
+                className="text-white/60 text-base sm:text-lg mb-5 sm:mb-6 max-w-2xl"
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3, duration: 0.5 }}
+              >
+                {selectedShow.description}
+              </motion.p>
+              <motion.div
+                className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4"
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4, duration: 0.5 }}
+              >
                 <Link href={`/watch/${selectedShow.id}`}>
-                  <button type="button" className="az-btn-primary" style={{ width: 'auto', paddingInline: '2rem' }}>
+                  <motion.button
+                    type="button"
+                    className="az-btn-primary"
+                    style={{ width: 'auto', paddingInline: '2rem' }}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
                     Watch Live
-                  </button>
+                  </motion.button>
                 </Link>
-                <button
+                <motion.button
                   type="button"
                   className="px-6 py-3 rounded-full text-sm font-semibold text-white transition-all"
-                  style={{ border: '1px solid rgba(255,255,255,0.2)', backgroundColor: 'rgba(255,255,255,0.08)' }}
+                  style={{
+                    border: '1px solid rgba(255,255,255,0.2)',
+                    backgroundColor: 'rgba(255,255,255,0.08)',
+                  }}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                 >
                   Vote Now
-                </button>
-              </div>
+                </motion.button>
+              </motion.div>
             </div>
           </div>
         ) : null}
       </section>
 
       {/* Shows Grid */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h2 className="text-2xl sm:text-3xl font-bold text-white">Reality Shows</h2>
-            <p className="text-base mt-1 text-white/50">Watch and vote for your favorite contestants</p>
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
+        <ScrollReveal>
+          <div className="flex items-center justify-between mb-6 sm:mb-8">
+            <div>
+              <h2 className="text-2xl sm:text-3xl font-bold text-white">Reality Shows</h2>
+              <p className="text-sm sm:text-base mt-1 text-white/50">
+                Watch and vote for your favorite contestants
+              </p>
+            </div>
           </div>
-        </div>
+        </ScrollReveal>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <StaggerGrid className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
           {shows.map((show) => (
             <Link key={show.id} href={`/watch/${show.id}`}>
-              <article
-                className="az-glass overflow-hidden cursor-pointer transition-all hover:scale-[1.02]"
-                style={{ boxShadow: '0 0 20px rgba(255,255,255,0.05)' }}
-              >
+              <GlowCard universe="reality" className="overflow-hidden">
                 <div className="relative">
-                  <img src={show.thumbnail} alt={show.title} className="w-full h-48 object-cover" />
+                  <img
+                    src={show.thumbnail}
+                    alt={show.title}
+                    className="w-full h-44 sm:h-48 object-cover"
+                  />
                   <div className="absolute inset-0 bg-gradient-to-t from-[#1A0A0A]/80 to-transparent" />
                   <div className="absolute bottom-4 left-4 right-4">
                     <span
@@ -136,148 +203,220 @@ export default function RealityPage(): React.JSX.Element {
                     >
                       {show.contentType || 'Reality'}
                     </span>
-                    <h3 className="text-xl font-bold text-white">{show.title}</h3>
+                    <h3 className="text-lg sm:text-xl font-bold text-white">{show.title}</h3>
                   </div>
                 </div>
                 <div className="p-4">
-                  <p className="text-sm text-white/50 mb-3">{show.description}</p>
+                  <p className="text-sm text-white/50 mb-3 line-clamp-2">{show.description}</p>
                   <div className="flex items-center justify-between text-sm text-white/40">
                     <span>{show.duration || 0} min</span>
                     <span>{new Date(show.createdAt).toLocaleDateString()}</span>
                   </div>
-                  <button type="button" className="az-btn-primary w-full mt-4">
+                  <motion.button
+                    type="button"
+                    className="az-btn-primary w-full mt-4"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
                     Watch Now
-                  </button>
+                  </motion.button>
                 </div>
-              </article>
+              </GlowCard>
             </Link>
           ))}
-        </div>
+        </StaggerGrid>
       </section>
 
       {/* Leaderboard */}
       {contestants.length > 0 && (
-        <section className="py-12" style={{ backgroundColor: '#0d0505' }}>
+        <section className="py-10 sm:py-12" style={{ backgroundColor: '#0d0505' }}>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center justify-between mb-8">
-              <div>
-                <h2 className="text-2xl sm:text-3xl font-bold text-white">Vote Leaderboard</h2>
-                <p className="text-base mt-1 text-white/50">See who&apos;s leading the competition</p>
-              </div>
-              <Link
-                href="/reality/results"
-                className="text-sm font-medium text-[#E8420A] hover:text-[#CC1C1C] transition-colors"
-              >
-                View All
-              </Link>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <div className="az-glass p-6">
-                <h3 className="text-lg font-bold mb-4 text-white">
-                  {selectedShow?.title || 'Show'} - Current Vote Count
-                </h3>
-                <div className="space-y-4">
-                  {contestants.map((contestant, index) => (
-                    <div key={contestant.id} className="flex items-center gap-4">
-                      <div className="flex items-center gap-3">
-                        <span
-                          className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white"
-                          style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}
-                        >
-                          {index + 1}
-                        </span>
-                        <div
-                          className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white text-sm"
-                          style={{ background: 'linear-gradient(135deg, #E8420A, #CC1C1C)' }}
-                        >
-                          {contestant.avatar?.charAt(0) || contestant.name.charAt(0)}
-                        </div>
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="font-medium text-white">{contestant.name}</span>
-                          <span className="text-sm text-white/50">{contestant.votes.toLocaleString()} votes</span>
-                        </div>
-                        <div className="h-2 rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}>
-                          <div
-                            className="h-full rounded-full transition-all"
-                            style={{
-                              width: `${(contestant.votes / (maxVotes || 1)) * 100}%`,
-                              background: contestant.status === 'safe'
-                                ? 'linear-gradient(90deg, #22C55E, #4ADE80)'
-                                : contestant.status === 'danger'
-                                  ? 'linear-gradient(90deg, #EF4444, #F87171)'
-                                  : 'rgba(255,255,255,0.3)',
-                            }}
-                          />
-                        </div>
-                      </div>
-                      {contestant.status === 'danger' && (
-                        <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold" style={{ backgroundColor: 'rgba(239,68,68,0.2)', color: '#EF4444' }}>
-                          Danger
-                        </span>
-                      )}
-                      {contestant.status === 'eliminated' && (
-                        <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold" style={{ backgroundColor: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.5)' }}>
-                          Eliminated
-                        </span>
-                      )}
-                    </div>
-                  ))}
-                </div>
-                <button type="button" className="az-btn-primary w-full mt-6">
-                  Vote Now
-                </button>
-              </div>
-
-              <div className="space-y-6">
-                <div
-                  className="rounded-xl p-6 text-white"
-                  style={{ background: 'linear-gradient(135deg, #E8420A, #CC1C1C)' }}
-                >
-                  <h3 className="text-xl font-bold mb-2">Vote & Win Rewards!</h3>
-                  <p className="text-white/80 mb-4">
-                    Every vote you cast earns you reward points that can be redeemed for exclusive content and prizes.
+            <ScrollReveal>
+              <div className="flex items-center justify-between mb-6 sm:mb-8">
+                <div>
+                  <h2 className="text-2xl sm:text-3xl font-bold text-white">Vote Leaderboard</h2>
+                  <p className="text-sm sm:text-base mt-1 text-white/50">
+                    See who&apos;s leading the competition
                   </p>
-                  <div className="flex items-center gap-4">
-                    <div className="text-center">
-                      <p className="text-3xl font-bold">
-                        {(selectedShow as unknown as { pointsEarned?: number })?.pointsEarned ?? 0}
-                      </p>
-                      <p className="text-sm text-white/70">Points Earned</p>
-                    </div>
-                    <div className="w-px h-12" style={{ backgroundColor: 'rgba(255,255,255,0.3)' }} />
-                    <div className="text-center">
-                      <p className="text-3xl font-bold">
-                        {(selectedShow as unknown as { votesToday?: number })?.votesToday ?? 0}
-                      </p>
-                      <p className="text-sm text-white/70">Votes Today</p>
-                    </div>
-                  </div>
                 </div>
-
-                <div className="az-glass">
-                  <div className="p-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-                    <h3 className="font-bold text-white">Vote Tips</h3>
-                  </div>
-                  <div className="p-4 space-y-3">
-                    {[
-                      { icon: '💡', title: 'Supervote Power', desc: 'Use supervotes to multiply your impact' },
-                      { icon: '🎁', title: 'Daily Rewards', desc: 'Vote daily to earn bonus points' },
-                      { icon: '🏆', title: 'Leaderboard Bonus', desc: 'Top voters get exclusive perks' },
-                    ].map((tip) => (
-                      <div key={tip.title} className="flex items-start gap-3">
-                        <span className="text-lg">{tip.icon}</span>
-                        <div>
-                          <p className="font-medium text-sm text-white">{tip.title}</p>
-                          <p className="text-xs text-white/50">{tip.desc}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                <Link
+                  href="/reality/results"
+                  className="text-sm font-medium text-[#E8420A] hover:text-[#CC1C1C] transition-colors"
+                >
+                  View All
+                </Link>
               </div>
+            </ScrollReveal>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
+              <ScrollReveal direction="left">
+                <div className="az-glass p-5 sm:p-6">
+                  <h3 className="text-base sm:text-lg font-bold mb-4 text-white">
+                    {selectedShow?.title || 'Show'} - Current Vote Count
+                  </h3>
+                  <motion.div
+                    className="space-y-4"
+                    variants={staggerContainer}
+                    initial="hidden"
+                    whileInView="visible"
+                    viewport={{ once: true }}
+                  >
+                    {contestants.map((contestant, index) => (
+                      <motion.div
+                        key={contestant.id}
+                        className="flex items-center gap-3 sm:gap-4"
+                        variants={staggerItem}
+                      >
+                        <div className="flex items-center gap-2 sm:gap-3">
+                          <span
+                            className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs sm:text-sm font-bold text-white"
+                            style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}
+                          >
+                            {index + 1}
+                          </span>
+                          <div
+                            className="w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-white text-xs sm:text-sm"
+                            style={{ background: 'linear-gradient(135deg, #E8420A, #CC1C1C)' }}
+                          >
+                            {contestant.avatar?.charAt(0) || contestant.name.charAt(0)}
+                          </div>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="font-medium text-white text-sm truncate">
+                              {contestant.name}
+                            </span>
+                            <span className="text-xs sm:text-sm text-white/50 flex-shrink-0 ml-2">
+                              {contestant.votes.toLocaleString()} votes
+                            </span>
+                          </div>
+                          <div
+                            className="h-1.5 sm:h-2 rounded-full overflow-hidden"
+                            style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}
+                          >
+                            <motion.div
+                              className="h-full rounded-full"
+                              initial={{ width: 0 }}
+                              whileInView={{
+                                width: `${(contestant.votes / (maxVotes || 1)) * 100}%`,
+                              }}
+                              viewport={{ once: true }}
+                              transition={{ duration: 0.8, delay: index * 0.1, ease: 'easeOut' }}
+                              style={{
+                                background:
+                                  contestant.status === 'safe'
+                                    ? 'linear-gradient(90deg, #22C55E, #4ADE80)'
+                                    : contestant.status === 'danger'
+                                      ? 'linear-gradient(90deg, #EF4444, #F87171)'
+                                      : 'rgba(255,255,255,0.3)',
+                              }}
+                            />
+                          </div>
+                        </div>
+                        {contestant.status === 'danger' && (
+                          <span
+                            className="px-2 py-0.5 sm:px-2.5 sm:py-0.5 rounded-full text-[10px] sm:text-xs font-semibold flex-shrink-0"
+                            style={{ backgroundColor: 'rgba(239,68,68,0.2)', color: '#EF4444' }}
+                          >
+                            Danger
+                          </span>
+                        )}
+                        {contestant.status === 'eliminated' && (
+                          <span
+                            className="px-2 py-0.5 sm:px-2.5 sm:py-0.5 rounded-full text-[10px] sm:text-xs font-semibold flex-shrink-0"
+                            style={{
+                              backgroundColor: 'rgba(255,255,255,0.1)',
+                              color: 'rgba(255,255,255,0.5)',
+                            }}
+                          >
+                            Eliminated
+                          </span>
+                        )}
+                      </motion.div>
+                    ))}
+                  </motion.div>
+                  <motion.button
+                    type="button"
+                    className="az-btn-primary w-full mt-6"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    Vote Now
+                  </motion.button>
+                </div>
+              </ScrollReveal>
+
+              <ScrollReveal direction="right">
+                <div className="space-y-5 sm:space-y-6">
+                  <motion.div
+                    className="rounded-xl p-5 sm:p-6 text-white"
+                    style={{ background: 'linear-gradient(135deg, #E8420A, #CC1C1C)' }}
+                    whileHover={{ scale: 1.01 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <h3 className="text-lg sm:text-xl font-bold mb-2">Vote & Win Rewards!</h3>
+                    <p className="text-white/80 text-sm sm:text-base mb-4">
+                      Every vote you cast earns you reward points that can be redeemed for exclusive
+                      content and prizes.
+                    </p>
+                    <div className="flex items-center gap-4">
+                      <div className="text-center">
+                        <p className="text-2xl sm:text-3xl font-bold">
+                          {(selectedShow as unknown as { pointsEarned?: number })?.pointsEarned ??
+                            0}
+                        </p>
+                        <p className="text-xs sm:text-sm text-white/70">Points Earned</p>
+                      </div>
+                      <div
+                        className="w-px h-10 sm:h-12"
+                        style={{ backgroundColor: 'rgba(255,255,255,0.3)' }}
+                      />
+                      <div className="text-center">
+                        <p className="text-2xl sm:text-3xl font-bold">
+                          {(selectedShow as unknown as { votesToday?: number })?.votesToday ?? 0}
+                        </p>
+                        <p className="text-xs sm:text-sm text-white/70">Votes Today</p>
+                      </div>
+                    </div>
+                  </motion.div>
+
+                  <GlowCard className="overflow-hidden">
+                    <div
+                      className="p-4"
+                      style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}
+                    >
+                      <h3 className="font-bold text-white text-sm sm:text-base">Vote Tips</h3>
+                    </div>
+                    <div className="p-4 space-y-3">
+                      {[
+                        {
+                          icon: '\u{1F4A1}',
+                          title: 'Supervote Power',
+                          desc: 'Use supervotes to multiply your impact',
+                        },
+                        {
+                          icon: '\u{1F381}',
+                          title: 'Daily Rewards',
+                          desc: 'Vote daily to earn bonus points',
+                        },
+                        {
+                          icon: '\u{1F3C6}',
+                          title: 'Leaderboard Bonus',
+                          desc: 'Top voters get exclusive perks',
+                        },
+                      ].map((tip) => (
+                        <div key={tip.title} className="flex items-start gap-3">
+                          <span className="text-base sm:text-lg">{tip.icon}</span>
+                          <div>
+                            <p className="font-medium text-xs sm:text-sm text-white">{tip.title}</p>
+                            <p className="text-[10px] sm:text-xs text-white/50">{tip.desc}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </GlowCard>
+                </div>
+              </ScrollReveal>
             </div>
           </div>
         </section>

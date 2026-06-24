@@ -32,12 +32,12 @@ export default function RecommendationsPage(): React.JSX.Element {
   const lastItemRef = useRef<HTMLDivElement | null>(null);
 
   const filters = [
-    { id: 'all', name: 'All', icon: '&#x1F3AC;' },
-    { id: 'movies', name: 'Movies', icon: '&#x1F3AC;' },
-    { id: 'series', name: 'Series', icon: '&#x1F4FA;' },
-    { id: 'reality', name: 'Reality', icon: '&#x1F3AD;' },
-    { id: 'comedy', name: 'Comedy', icon: '&#x1F602;' },
-    { id: 'sports', name: 'Sports', icon: '&#x26BD;' },
+    { id: 'all', name: 'All', icon: '🎬' },
+    { id: 'movies', name: 'Movies', icon: '🎬' },
+    { id: 'series', name: 'Series', icon: '📺' },
+    { id: 'reality', name: 'Reality', icon: '🎭' },
+    { id: 'comedy', name: 'Comedy', icon: '😂' },
+    { id: 'sports', name: 'Sports', icon: '⚽' },
   ];
 
   const fetchRecommendations = useCallback(async (pageNum: number, filter: string) => {
@@ -48,31 +48,47 @@ export default function RecommendationsPage(): React.JSX.Element {
       if (filter !== 'all') params.set('category', filter);
       const response = await apiFetch<any>(`/content/recommendations?${params.toString()}`);
       if (response.success && response.data) {
-        const data = Array.isArray(response.data) ? response.data : (response.data.items || []);
-        setRecommendations((prev) => pageNum === 1 ? data : [...prev, ...data]);
+        const data = Array.isArray(response.data) ? response.data : response.data.items || [];
+        setRecommendations((prev) => (pageNum === 1 ? data : [...prev, ...data]));
         setHasMore(data.length >= 12);
       } else {
         setError('Failed to load recommendations');
       }
     } catch (err) {
       setError('Failed to load recommendations. Please try again.');
-    } finally { setIsLoading(false); }
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
-  useEffect(() => { setPage(1); fetchRecommendations(1, activeFilter); }, [activeFilter, fetchRecommendations]);
+  useEffect(() => {
+    setPage(1);
+    fetchRecommendations(1, activeFilter);
+  }, [activeFilter, fetchRecommendations]);
 
   useEffect(() => {
     if (observerRef.current) observerRef.current.disconnect();
-    observerRef.current = new IntersectionObserver((entries) => {
-      if (entries[0].isIntersecting && hasMore && !isLoading) {
-        setPage((prev) => { const next = prev + 1; fetchRecommendations(next, activeFilter); return next; });
-      }
-    }, { threshold: 0.1 });
+    observerRef.current = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !isLoading) {
+          setPage((prev) => {
+            const next = prev + 1;
+            fetchRecommendations(next, activeFilter);
+            return next;
+          });
+        }
+      },
+      { threshold: 0.1 }
+    );
     if (lastItemRef.current) observerRef.current.observe(lastItemRef.current);
-    return () => { if (observerRef.current) observerRef.current.disconnect(); };
+    return () => {
+      if (observerRef.current) observerRef.current.disconnect();
+    };
   }, [hasMore, isLoading, activeFilter, fetchRecommendations]);
 
-  const handleFilterChange = useCallback((filter: string) => { setActiveFilter(filter); }, []);
+  const handleFilterChange = useCallback((filter: string) => {
+    setActiveFilter(filter);
+  }, []);
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
@@ -80,11 +96,17 @@ export default function RecommendationsPage(): React.JSX.Element {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
           <h1 className="az-headline text-white text-3xl sm:text-4xl mb-2">Recommended For You</h1>
-          <p className="text-white/50 text-sm">Personalized content based on your viewing history and preferences</p>
+          <p className="text-white/50 text-sm">
+            Personalized content based on your viewing history and preferences
+          </p>
         </div>
 
         {/* Filters */}
-        <div className="flex gap-3 mb-8 overflow-x-auto pb-2" role="radiogroup" aria-label="Content type filters">
+        <div
+          className="flex gap-3 mb-8 overflow-x-auto pb-2"
+          role="radiogroup"
+          aria-label="Content type filters"
+        >
           {filters.map((filter) => (
             <button
               key={filter.id}
@@ -94,9 +116,13 @@ export default function RecommendationsPage(): React.JSX.Element {
               className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
                 activeFilter === filter.id ? 'text-white' : 'text-white/60 hover:text-white'
               }`}
-              style={activeFilter === filter.id ? { background: 'linear-gradient(135deg, #E8420A, #CC1C1C)' } : { border: '1px solid rgba(255,255,255,0.15)' }}
+              style={
+                activeFilter === filter.id
+                  ? { background: 'linear-gradient(135deg, #E8420A, #CC1C1C)' }
+                  : { border: '1px solid rgba(255,255,255,0.15)' }
+              }
             >
-              <span dangerouslySetInnerHTML={{ __html: filter.icon }} />
+              <span>{filter.icon}</span>
               {filter.name}
             </button>
           ))}
@@ -123,13 +149,23 @@ export default function RecommendationsPage(): React.JSX.Element {
             <span className="text-4xl mb-4 block">&#x26A0;&#xFE0F;</span>
             <h3 className="text-lg font-bold text-white mb-2">Oops! Something went wrong</h3>
             <p className="text-white/50 text-sm mb-4">{error}</p>
-            <button onClick={() => fetchRecommendations(1, activeFilter)} className="az-btn-primary" style={{ width: 'auto', paddingInline: '1.5rem' }}>Try Again</button>
+            <button
+              onClick={() => fetchRecommendations(1, activeFilter)}
+              className="az-btn-primary"
+              style={{ width: 'auto', paddingInline: '1.5rem' }}
+            >
+              Try Again
+            </button>
           </div>
         )}
 
         {/* Content Grid */}
         {!error && recommendations.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" role="list" aria-label="Recommended content">
+          <div
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+            role="list"
+            aria-label="Recommended content"
+          >
             {recommendations.map((item, index) => (
               <div
                 key={item.id}
@@ -140,29 +176,57 @@ export default function RecommendationsPage(): React.JSX.Element {
                 <a href={`/watch/${item.id}`} className="block">
                   <div className="relative h-48">
                     {item.thumbnail ? (
-                      <img src={item.thumbnail} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                      <img
+                        src={item.thumbnail}
+                        alt={item.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center" style={{ background: 'linear-gradient(135deg, rgba(232,66,10,0.3), rgba(13,59,46,0.4))' }}>
+                      <div
+                        className="w-full h-full flex items-center justify-center"
+                        style={{
+                          background:
+                            'linear-gradient(135deg, rgba(232,66,10,0.3), rgba(13,59,46,0.4))',
+                        }}
+                      >
                         <span style={{ fontSize: 48 }}>&#x1F3AC;</span>
                       </div>
                     )}
                     {item.score != null && item.score > 80 && (
-                      <span className="absolute top-3 right-3 px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded" style={{ background: 'rgba(232,66,10,0.9)', color: '#fff' }}>Top Pick</span>
+                      <span
+                        className="absolute top-3 right-3 px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded"
+                        style={{ background: 'rgba(232,66,10,0.9)', color: '#fff' }}
+                      >
+                        Top Pick
+                      </span>
                     )}
                     {item.duration && (
-                      <span className="absolute bottom-2 right-2 px-2 py-0.5 rounded text-xs font-medium" style={{ background: 'rgba(0,0,0,0.7)', color: '#fff' }}>
+                      <span
+                        className="absolute bottom-2 right-2 px-2 py-0.5 rounded text-xs font-medium"
+                        style={{ background: 'rgba(0,0,0,0.7)', color: '#fff' }}
+                      >
                         {Math.floor(item.duration / 60)}m
                       </span>
                     )}
                   </div>
                   <div className="p-4">
-                    <h3 className="font-bold text-white text-sm mb-1 group-hover:text-[#E8420A] transition-colors line-clamp-1">{item.title}</h3>
+                    <h3 className="font-bold text-white text-sm mb-1 group-hover:text-[#E8420A] transition-colors line-clamp-1">
+                      {item.title}
+                    </h3>
                     <p className="text-xs text-white/45 line-clamp-2 mb-2">{item.description}</p>
                     <div className="flex items-center gap-2">
-                      {item.universe && <span className="text-[10px] font-bold uppercase tracking-wider text-[#E8420A]">{item.universe.name}</span>}
-                      {item.creator && <span className="text-[10px] text-white/40">by {item.creator.name}</span>}
+                      {item.universe && (
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-[#E8420A]">
+                          {item.universe.name}
+                        </span>
+                      )}
+                      {item.creator && (
+                        <span className="text-[10px] text-white/40">by {item.creator.name}</span>
+                      )}
                     </div>
-                    {item.reason && <p className="text-[10px] text-white/30 mt-2 italic">{item.reason}</p>}
+                    {item.reason && (
+                      <p className="text-[10px] text-white/30 mt-2 italic">{item.reason}</p>
+                    )}
                   </div>
                 </a>
               </div>
@@ -182,8 +246,16 @@ export default function RecommendationsPage(): React.JSX.Element {
           <div className="az-glass p-12 text-center">
             <span className="text-5xl mb-4 block">&#x1F3AF;</span>
             <h3 className="text-xl font-bold text-white mb-2">No recommendations yet</h3>
-            <p className="text-white/50 text-sm mb-4">Watch some content to get personalized recommendations</p>
-            <a href="/browse" className="az-btn-primary inline-block" style={{ width: 'auto', paddingInline: '2rem' }}>Browse Content</a>
+            <p className="text-white/50 text-sm mb-4">
+              Watch some content to get personalized recommendations
+            </p>
+            <a
+              href="/browse"
+              className="az-btn-primary inline-block"
+              style={{ width: 'auto', paddingInline: '2rem' }}
+            >
+              Browse Content
+            </a>
           </div>
         )}
 

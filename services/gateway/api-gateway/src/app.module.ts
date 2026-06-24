@@ -24,15 +24,15 @@ import { CsrfMiddleware } from './common/csrf.middleware';
     }),
     CacheModule.register({
       isGlobal: true,
-      ttl: 300000, // 5 minutes
+      ttl: 300_000, // 5 minutes — keep in sync with proxy controller CACHE_TTL_MS
       max: 100, // maximum number of items in cache
     }),
     ThrottlerModule.forRoot({
       throttlers: [
-        // Global rate limit: 1000 requests per minute in dev, 100 in prod
+        // Global rate limit
         {
-          ttl: 60000,
-          limit: process.env.NODE_ENV === 'production' ? 100 : 1000,
+          ttl: parseInt(process.env.RATE_LIMIT_TTL || '60', 10) * 1000,
+          limit: parseInt(process.env.RATE_LIMIT_MAX || '1000', 10),
         },
         // Stricter limit for auth endpoints: 10 requests per minute
         {
@@ -56,7 +56,10 @@ export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     // CSRF protection for state-changing requests (SEC-005)
     consumer.apply(CsrfMiddleware).exclude(
+      { path: 'api/v1/auth/(.*)', method: RequestMethod.ALL },
       { path: 'api/auth/(.*)', method: RequestMethod.ALL },
+      { path: 'api/v1/users/(.*)', method: RequestMethod.ALL },
+      { path: 'api/users/(.*)', method: RequestMethod.ALL },
       { path: 'api/health', method: RequestMethod.ALL },
       { path: 'api/routes', method: RequestMethod.ALL },
       { path: '(.*)', method: RequestMethod.GET },

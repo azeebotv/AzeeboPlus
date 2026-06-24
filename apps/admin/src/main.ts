@@ -48,8 +48,8 @@ async function bootstrap() {
 
   // CORS configuration — aligned with shared security package
   const allowedOrigins = process.env.ADMIN_ALLOWED_ORIGINS?.split(',') || [
-    'https://admin.azeebo.com',
-    'http://localhost:3016',
+    'https://admin.azeeboplus.com',
+    'http://localhost:4016',
   ];
 
   app.enableCors({
@@ -68,7 +68,7 @@ async function bootstrap() {
   });
 
   app.enableShutdownHooks();
-  const port = process.env.PORT || 3016;
+  const port = process.env.PORT || 4016;
   await app.listen(port);
   logger.log(`Admin Panel is running on port ${port}`);
 }

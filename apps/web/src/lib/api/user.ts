@@ -1,12 +1,6 @@
 // User domain methods
 
-import type {
-  ApiResponse,
-  ContentItem,
-  PaginatedResponse,
-  RequestClient,
-  User,
-} from './base';
+import type { ApiResponse, ContentItem, PaginatedResponse, RequestClient, User } from './base';
 
 export function createUserMethods(client: RequestClient) {
   return {
@@ -34,16 +28,16 @@ export function createUserMethods(client: RequestClient) {
 
     getWatchHistory: async (
       page = 1,
-      limit = 20,
+      limit = 20
     ): Promise<ApiResponse<PaginatedResponse<ContentItem>>> => {
       return client.request<PaginatedResponse<ContentItem>>(
-        `/api/v1/users/me/history?page=${page}&limit=${limit}`,
+        `/api/v1/users/me/history?page=${page}&limit=${limit}`
       );
     },
 
     addToWatchHistory: async (
       contentId: string,
-      progress = 0,
+      progress = 0
     ): Promise<ApiResponse<{ message: string }>> => {
       return client.request<{ message: string }>('/api/v1/users/me/history', {
         method: 'POST',
@@ -56,7 +50,7 @@ export function createUserMethods(client: RequestClient) {
     },
 
     updatePreferences: async (
-      preferences: Record<string, unknown>,
+      preferences: Record<string, unknown>
     ): Promise<ApiResponse<Record<string, unknown>>> => {
       return client.request<Record<string, unknown>>('/api/v1/users/me/preferences', {
         method: 'PATCH',

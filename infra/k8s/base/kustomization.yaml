@@ -22,19 +22,23 @@ resources:
   - vertical-service.yaml
   - support-service.yaml
   - queue-service.yaml
-  - api-gateway.yaml
-  - web-app.yaml
   - comedy-service.yaml
   - games-service.yaml
   - movie-service.yaml
   - moderation-service.yaml
+  - engagement-service.yaml
+  - messaging-service.yaml
+  - referral-service.yaml
+  - subscription-service.yaml
+  - admin-app.yaml
+  - creator-portal-app.yaml
   - ingress.yaml
   - hpa.yaml
   - pod-disruption-budgets.yaml
   - network-policies.yaml
 
 commonLabels:
-  app.kubernetes.io/name: azeebo
+  app.kubernetes.io/name: azeebo-plus
   app.kubernetes.io/managed-by: kustomize
   app.kubernetes.io/part-of: azeebo-platform
 
@@ -86,4 +90,16 @@ images:
   - name: azeebo/support-service
     newTag: v1.0.0
   - name: azeebo/queue-service
+    newTag: v1.0.0
+  - name: azeebo/engagement-service
+    newTag: v1.0.0
+  - name: azeebo/messaging-service
+    newTag: v1.0.0
+  - name: azeebo/referral-service
+    newTag: v1.0.0
+  - name: azeebo/subscription-service
+    newTag: v1.0.0
+  - name: azeebo/admin-app
+    newTag: v1.0.0
+  - name: azeebo/creator-portal-app
     newTag: v1.0.0

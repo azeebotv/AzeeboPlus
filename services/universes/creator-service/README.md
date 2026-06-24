@@ -42,5 +42,5 @@ pnpm start:dev
 ## Ownership
 
 - **Team**: Creator Platform
-- **Maintainer**: creator-platform@azeebo.com
+- **Maintainer**: creator-platform@azeeboplus.com
 - **Last Updated**: 2026-05-14

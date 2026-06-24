@@ -32,14 +32,14 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: azeebo-secrets
-                  key: DATABASE_URL
+                  key: database-url
             - name: REDIS_URL
               value: redis://redis.azeebo-staging.svc.cluster.local:6379
-            - name: JWT_SECRET
+            - name: JWT_ACCESS_SECRET
               valueFrom:
                 secretKeyRef:
                   name: azeebo-secrets
-                  key: JWT_SECRET
+                  key: jwt-access-secret
             - name: JWT_EXPIRES_IN
               value: "30m"
           resources:

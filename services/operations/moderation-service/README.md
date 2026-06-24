@@ -43,5 +43,5 @@ pnpm start:dev
 ## Ownership
 
 - **Team**: Trust & Safety
-- **Maintainer**: trust-safety@azeebo.com
+- **Maintainer**: trust-safety@azeeboplus.com
 - **Last Updated**: 2026-05-14

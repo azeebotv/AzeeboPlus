@@ -1,18 +1,12 @@
 // Creator domain methods
 
-import type {
-  ApiResponse,
-  ContentItem,
-  PaginatedResponse,
-  RequestClient,
-  User,
-} from './base';
+import type { ApiResponse, ContentItem, PaginatedResponse, RequestClient, User } from './base';
 
 export function createCreatorMethods(client: RequestClient) {
   return {
     getCreators: async (
       page = 1,
-      limit = 20,
+      limit = 20
     ): Promise<
       ApiResponse<PaginatedResponse<User & { contentCount: number; subscriberCount: number }>>
     > => {
@@ -22,20 +16,20 @@ export function createCreatorMethods(client: RequestClient) {
     },
 
     getCreator: async (
-      creatorId: string,
+      creatorId: string
     ): Promise<ApiResponse<User & { contentCount: number; subscriberCount: number }>> => {
       return client.request<User & { contentCount: number; subscriberCount: number }>(
-        `/api/v1/creators/${creatorId}`,
+        `/api/v1/creators/${creatorId}`
       );
     },
 
     getCreatorContent: async (
       creatorId: string,
       page = 1,
-      limit = 20,
+      limit = 20
     ): Promise<ApiResponse<PaginatedResponse<ContentItem>>> => {
       return client.request<PaginatedResponse<ContentItem>>(
-        `/api/v1/creators/${creatorId}/content?page=${page}&limit=${limit}`,
+        `/api/v1/creators/${creatorId}/content?page=${page}&limit=${limit}`
       );
     },
 

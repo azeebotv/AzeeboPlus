@@ -55,7 +55,7 @@ export class AnalyticsClientService {
   private readonly analyticsServiceUrl: string;
 
   constructor(private readonly configService: ConfigService) {
-    this.analyticsServiceUrl = this.configService.getOrThrow<string>('ANALYTICS_SERVICE_URL');
+    this.analyticsServiceUrl = this.configService.get<string>('API_GATEWAY_URL') || 'http://localhost:3013';
   }
 
   private async request<T>(
@@ -118,7 +118,7 @@ export class AnalyticsClientService {
     startDate: string,
     endDate: string
   ): Promise<AnalyticsServiceResponse<CreatorAnalytics>> {
-    const endpoint = `/api/analytics/creator/${creatorId}?startDate=${startDate}&endDate=${endDate}`;
+    const endpoint = `/v1/analytics/creator/${creatorId}?startDate=${startDate}&endDate=${endDate}`;
     return this.request<CreatorAnalytics>(endpoint);
   }
 
@@ -128,7 +128,7 @@ export class AnalyticsClientService {
     startDate: string,
     endDate: string
   ): Promise<AnalyticsServiceResponse<ContentAnalytics>> {
-    const endpoint = `/api/analytics/content/${contentId}?startDate=${startDate}&endDate=${endDate}`;
+    const endpoint = `/v1/analytics/content/${contentId}?startDate=${startDate}&endDate=${endDate}`;
     return this.request<ContentAnalytics>(endpoint);
   }
 
@@ -136,7 +136,7 @@ export class AnalyticsClientService {
     creatorId: string,
     limit = 10
   ): Promise<AnalyticsServiceResponse<ContentAnalytics[]>> {
-    const endpoint = `/api/analytics/creator/${creatorId}/top-content?limit=${limit}`;
+    const endpoint = `/v1/analytics/creator/${creatorId}/top-content?limit=${limit}`;
     return this.request<ContentAnalytics[]>(endpoint);
   }
 
@@ -144,7 +144,7 @@ export class AnalyticsClientService {
     creatorId: string,
     limit = 10
   ): Promise<AnalyticsServiceResponse<UserAnalytics[]>> {
-    const endpoint = `/api/analytics/creator/${creatorId}/top-users?limit=${limit}`;
+    const endpoint = `/v1/analytics/creator/${creatorId}/top-users?limit=${limit}`;
     return this.request<UserAnalytics[]>(endpoint);
   }
 
@@ -156,7 +156,7 @@ export class AnalyticsClientService {
       deviceDistribution: Record<string, number>;
     }>
   > {
-    const endpoint = `/api/analytics/creator/${creatorId}/demographics`;
+    const endpoint = `/v1/analytics/creator/${creatorId}/demographics`;
     return this.request<{
       ageDistribution: Record<string, number>;
       genderDistribution: Record<string, number>;
@@ -178,7 +178,7 @@ export class AnalyticsClientService {
       }[]
     >
   > {
-    const endpoint = `/api/analytics/creator/${creatorId}/engagement?days=${days}`;
+    const endpoint = `/v1/analytics/creator/${creatorId}/engagement?days=${days}`;
     return this.request<
       {
         date: string;
@@ -207,7 +207,7 @@ export class AnalyticsClientService {
       }>;
     }>
   > {
-    const endpoint = `/api/analytics/creator/${creatorId}/revenue?startDate=${startDate}&endDate=${endDate}`;
+    const endpoint = `/v1/analytics/creator/${creatorId}/revenue?startDate=${startDate}&endDate=${endDate}`;
     return this.request<{
       totalRevenue: number;
       revenueByContent: Array<{
@@ -227,7 +227,7 @@ export class AnalyticsClientService {
     eventName: string,
     eventData: Record<string, unknown>
   ): Promise<AnalyticsServiceResponse<{ success: boolean; eventId: string }>> {
-    const endpoint = '/api/analytics/events';
+    const endpoint = '/v1/analytics/events';
     return this.request<{ success: boolean; eventId: string }>(endpoint, {
       method: 'POST',
       body: {

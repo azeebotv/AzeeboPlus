@@ -1,63 +1,95 @@
 import { Tabs, useRouter } from 'expo-router';
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, useColorScheme } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+} from 'react-native-reanimated';
+import { colors, typography, spacing, radius, shadows, spring } from '../../src/theme';
 
-// Type declaration for expo-router focused parameter
 interface TabIconProps {
   name: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  focused: any;
+  focused: boolean;
 }
 
+const TAB_ICONS: Record<string, { active: string; inactive: string }> = {
+  home: { active: '◉', inactive: '○' },
+  watch: { active: '▶', inactive: '▷' },
+  rewards: { active: '★', inactive: '☆' },
+  profile: { active: '●', inactive: '○' },
+};
+
+const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
+
 function TabIcon({ name, focused }: TabIconProps) {
-  const icons: Record<string, string> = {
-    home: '🏠',
-    watch: '📺',
-    create: '🎬',
-    rewards: '🎁',
-    profile: '👤',
-  };
+  const scale = useSharedValue(focused ? 1.15 : 1);
+
+  React.useEffect(() => {
+    scale.value = withSpring(focused ? 1.15 : 1, spring.snappy);
+  }, [focused, scale]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  const iconSet = TAB_ICONS[name] || TAB_ICONS.home;
 
   return (
-    <View style={styles.iconContainer}>
-      <Text style={[styles.icon, focused && styles.iconFocused]}>{icons[name]}</Text>
-    </View>
+    <Animated.View style={[styles.iconContainer, animatedStyle]}>
+      <Text style={[styles.icon, focused && styles.iconFocused]}>
+        {focused ? iconSet.active : iconSet.inactive}
+      </Text>
+    </Animated.View>
   );
 }
 
 function CreateButton({ onPress }: { onPress: () => void }) {
+  const scale = useSharedValue(1);
+
+  const handlePressIn = () => {
+    scale.value = withSpring(0.9, spring.stiff);
+  };
+
+  const handlePressOut = () => {
+    scale.value = withSpring(1, spring.gentle);
+  };
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
   return (
-    <TouchableOpacity onPress={onPress} style={styles.createButton} activeOpacity={0.7}>
+    <AnimatedTouchable
+      onPress={onPress}
+      style={[styles.createButton, animatedStyle]}
+      activeOpacity={1}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      accessibilityLabel="Create content"
+      accessibilityRole="button"
+    >
       <View style={styles.createButtonInner}>
         <Text style={styles.createIcon}>+</Text>
       </View>
-    </TouchableOpacity>
+    </AnimatedTouchable>
   );
 }
 
 function HeaderUtilities({
   router,
-  colorScheme,
 }: {
   router: ReturnType<typeof useRouter>;
-  colorScheme: ReturnType<typeof useColorScheme>;
 }) {
-  const [notificationCount, setNotificationCount] = useState(3);
-  const [walletBalance, setWalletBalance] = useState('2,500');
-  const [isLive, setIsLive] = useState(true);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setIsLive(true); // Mock: deterministic live status
-    }, 10000);
-    return () => clearInterval(interval);
-  }, []);
+  const [notificationCount] = useState(3);
+  const [walletBalance] = useState('2,500');
+  const [isLive] = useState(true);
 
   return (
     <View style={styles.header}>
       <View style={styles.headerLeft}>
-        <Text style={[styles.logo, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
-          AZEEBO+
+        <Text style={[styles.logo, { color: colors.text.primary }]}>
+          AZEEBO<Text style={styles.logoPlus}>+</Text>
         </Text>
         {isLive && (
           <View style={styles.liveIndicator}>
@@ -68,19 +100,34 @@ function HeaderUtilities({
       </View>
 
       <View style={styles.headerRight}>
-        <TouchableOpacity style={styles.headerButton} onPress={() => router.push('/(tabs)/search')}>
-          <Text style={styles.headerIcon}>🔍</Text>
+        <TouchableOpacity
+          style={styles.headerButton}
+          onPress={() => router.push('/(tabs)/search')}
+          accessibilityLabel="Search"
+          accessibilityRole="button"
+        >
+          <Text style={styles.headerButtonText}>⌕</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.headerButton} onPress={() => router.push('/(tabs)/wallet')}>
-          <Text style={styles.headerIcon}>💰</Text>
+        <TouchableOpacity
+          style={styles.headerButton}
+          onPress={() => router.push('/(tabs)/wallet')}
+          accessibilityLabel={`Wallet balance: ${walletBalance} tokens`}
+          accessibilityRole="button"
+        >
+          <Text style={styles.headerButtonText}>◈</Text>
           <View style={styles.walletBadge}>
             <Text style={styles.walletText}>{walletBalance}</Text>
           </View>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.headerButton} onPress={() => router.push('/notifications')}>
-          <Text style={styles.headerIcon}>🔔</Text>
+        <TouchableOpacity
+          style={styles.headerButton}
+          onPress={() => router.push('/notifications')}
+          accessibilityLabel={`${notificationCount} notifications`}
+          accessibilityRole="button"
+        >
+          <Text style={styles.headerButtonText}>♡</Text>
           {notificationCount > 0 && (
             <View style={styles.notificationBadge}>
               <Text style={styles.notificationText}>{notificationCount}</Text>
@@ -91,6 +138,8 @@ function HeaderUtilities({
         <TouchableOpacity
           style={styles.avatarButton}
           onPress={() => router.push('/(tabs)/profile')}
+          accessibilityLabel="Profile"
+          accessibilityRole="button"
         >
           <View style={styles.avatar}>
             <Text style={styles.avatarText}>U</Text>
@@ -102,34 +151,28 @@ function HeaderUtilities({
 }
 
 export default function TabsLayout() {
-  const colorScheme = useColorScheme();
   const router = useRouter();
 
   return (
-    <View
-      style={[
-        styles.container,
-        { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' },
-      ]}
-    >
-      <HeaderUtilities router={router} colorScheme={colorScheme} />
+    <View style={styles.container}>
+      <HeaderUtilities router={router} />
 
       <Tabs
         screenOptions={{
           headerShown: false,
           tabBarStyle: {
-            backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff',
-            borderTopColor: colorScheme === 'dark' ? '#1a1a1a' : '#e5e5e5',
+            backgroundColor: colors.bg.primary,
+            borderTopColor: colors.border.default,
             borderTopWidth: 1,
             height: 84,
             paddingBottom: 24,
             paddingTop: 8,
           },
-          tabBarActiveTintColor: '#8B5CF6',
-          tabBarInactiveTintColor: '#888888',
+          tabBarActiveTintColor: colors.primary,
+          tabBarInactiveTintColor: colors.text.tertiary,
           tabBarLabelStyle: {
-            fontSize: 11,
-            fontWeight: '600',
+            fontSize: typography.fontSize.xs,
+            fontWeight: typography.fontWeight.semibold as any,
             marginTop: 4,
           },
         }}
@@ -182,78 +225,82 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    paddingTop: 40,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    paddingTop: 50,
     borderBottomWidth: 1,
-    borderBottomColor: '#1a1a1a',
+    borderBottomColor: colors.border.default,
   },
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: spacing.md,
   },
   logo: {
-    fontSize: 22,
-    fontWeight: '700',
+    fontSize: typography.fontSize.xl,
+    fontWeight: '800',
     letterSpacing: -0.5,
+  },
+  logoPlus: {
+    color: colors.primary,
   },
   liveIndicator: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: '#EF4444',
+    backgroundColor: colors.red,
     paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 12,
+    borderRadius: radius.pill,
   },
   liveDot: {
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#22c55e',
+    backgroundColor: colors.success,
   },
   liveText: {
-    color: '#ffffff',
-    fontSize: 11,
-    fontWeight: '700',
+    color: '#FFFFFF',
+    fontSize: typography.fontSize.xs,
+    fontWeight: typography.fontWeight.bold,
   },
   headerRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: spacing.sm,
   },
   headerButton: {
     position: 'relative',
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#1a1a1a',
+    backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  headerIcon: {
+  headerButtonText: {
     fontSize: 16,
+    color: colors.text.primary,
   },
   walletBadge: {
     position: 'absolute',
-    bottom: -2,
-    left: 50,
-    backgroundColor: '#8B5CF6',
+    bottom: -4,
+    right: -4,
+    backgroundColor: colors.primary,
     paddingHorizontal: 4,
     paddingVertical: 1,
     borderRadius: 4,
   },
   walletText: {
-    color: '#ffffff',
-    fontSize: 9,
-    fontWeight: '600',
+    color: '#FFFFFF',
+    fontSize: 8,
+    fontWeight: typography.fontWeight.bold,
   },
   notificationBadge: {
     position: 'absolute',
     top: -2,
     right: -2,
-    backgroundColor: '#EF4444',
+    backgroundColor: colors.red,
     minWidth: 16,
     height: 16,
     borderRadius: 8,
@@ -262,36 +309,37 @@ const styles = StyleSheet.create({
     paddingHorizontal: 3,
   },
   notificationText: {
-    color: '#ffffff',
+    color: '#FFFFFF',
     fontSize: 10,
-    fontWeight: '700',
+    fontWeight: typography.fontWeight.bold,
   },
   avatarButton: {
-    marginLeft: 4,
+    marginLeft: spacing.xs,
   },
   avatar: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#8B5CF6',
+    backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
   avatarText: {
-    color: '#ffffff',
+    color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: typography.fontWeight.semibold,
   },
   iconContainer: {
     alignItems: 'center',
     justifyContent: 'center',
   },
   icon: {
-    fontSize: 24,
-    opacity: 0.6,
+    fontSize: 20,
+    opacity: 0.5,
   },
   iconFocused: {
     opacity: 1,
+    color: colors.primary,
   },
   createButton: {
     alignItems: 'center',
@@ -299,21 +347,17 @@ const styles = StyleSheet.create({
     marginTop: -20,
   },
   createButtonInner: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: '#8B5CF6',
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: colors.red,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#8B5CF6',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
-    elevation: 8,
+    ...shadows.red,
   },
   createIcon: {
-    fontSize: 32,
-    color: '#ffffff',
+    fontSize: 30,
+    color: '#FFFFFF',
     fontWeight: '300',
   },
 });

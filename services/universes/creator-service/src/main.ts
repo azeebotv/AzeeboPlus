@@ -1,5 +1,5 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe, Logger, VersioningType } from '@nestjs/common';
+import { ValidationPipe, Logger } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import helmet from 'helmet';
@@ -77,6 +77,7 @@ async function bootstrap(): Promise<void> {
       .setVersion('1.0')
       .addTag('creators', 'Creator operations')
       .addBearerAuth()
+      .addServer('http://localhost:3013', 'API Gateway')
       .build();
 
     const document = SwaggerModule.createDocument(app, swaggerConfig);
@@ -84,10 +85,10 @@ async function bootstrap(): Promise<void> {
     Logger.log('Swagger documentation enabled at /api/docs');
   }
 
-  // API versioning
-  app.enableVersioning({ type: VersioningType.URI, prefix: 'v', defaultVersion: '1' });
+  // Versioning disabled: controllers already prefix routes with 'v1/' manually
 
   const port = process.env.PORT || 3018;
+  app.enableShutdownHooks();
   await app.listen(port);
   const logger = new Logger('Creator Service');
   logger.log(`Creator Service running on port ${port}`);

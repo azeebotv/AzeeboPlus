@@ -37,5 +37,5 @@ analytics.track('screen_view', {
 ## Ownership
 
 - **Team**: Data Engineering
-- **Maintainer**: analytics@azeebo.com
+- **Maintainer**: analytics@azeeboplus.com
 - **Last Updated**: 2026-05-11

@@ -21,10 +21,10 @@ spec:
   ingressClassName: nginx
   tls:
     - hosts:
-        - cdn.azeebo.com
+        - cdn.azeeboplus.com
       secretName: azeebo-cdn-tls
   rules:
-    - host: cdn.azeebo.com
+    - host: cdn.azeeboplus.com
       http:
         paths:
           - path: /media
@@ -50,10 +50,10 @@ spec:
   ingressClassName: nginx
   tls:
     - hosts:
-        - static.azeebo.com
+        - static.azeeboplus.com
       secretName: azeebo-static-tls
   rules:
-    - host: static.azeebo.com
+    - host: static.azeeboplus.com
       http:
         paths:
           - path: /

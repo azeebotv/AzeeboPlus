@@ -1,13 +1,30 @@
 'use client';
 
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 import { useAuth } from '../../../context/AuthContext';
 import { useRouter } from 'next/navigation';
 import AuthShell from '@/components/auth/AuthShell';
 import { Alert, Spinner } from '@/components/auth/FormBits';
 
+const formVariants = {
+  hidden: {},
+  visible: {
+    transition: { staggerChildren: 0.08 },
+  },
+};
+
+const fieldVariants = {
+  hidden: { opacity: 0, y: 12 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] as const },
+  },
+};
+
 export default function LoginPage(): React.JSX.Element {
-  const [phone, setPhone] = useState<string>('');
+  const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -20,11 +37,11 @@ export default function LoginPage(): React.JSX.Element {
     setError(null);
     setIsLoading(true);
     try {
-      const result = await login(phone, password);
+      const result = await login(email, password);
       if (result.success) {
         router.push('/');
       } else {
-        setError(result.message || 'Invalid phone number or password');
+        setError(result.message || 'Invalid email or password');
       }
     } catch {
       setError('An error occurred during login');
@@ -38,40 +55,45 @@ export default function LoginPage(): React.JSX.Element {
       headlineLines={['Explore Nigerian', 'Entertainment', 'Like Never Before']}
       backgroundFallback="#1A0A0A"
     >
-      <form className="space-y-5" onSubmit={handleSubmit}>
-        <div>
+      <motion.form
+        className="space-y-5"
+        onSubmit={handleSubmit}
+        variants={formVariants}
+        initial="hidden"
+        animate="visible"
+      >
+        <motion.div variants={fieldVariants}>
           <h2 className="az-headline text-white text-3xl">Welcome</h2>
-        </div>
+        </motion.div>
 
-        {error && <Alert>{error}</Alert>}
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.3 }}
+          >
+            <Alert>{error}</Alert>
+          </motion.div>
+        )}
 
-        <div>
-          <label htmlFor="phone" className="az-label">
-            Phone Number
+        <motion.div variants={fieldVariants}>
+          <label htmlFor="email" className="az-label">
+            Email
           </label>
-          <div className="relative flex items-center">
-            <span
-              className="absolute left-3 flex items-center gap-1 text-white text-sm font-medium"
-              aria-hidden="true"
-            >
-              🇳🇬 <span className="text-white/70">+234</span>
-            </span>
-            <input
-              id="phone"
-              name="phone"
-              type="tel"
-              autoComplete="tel"
-              required
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              className="az-input"
-              style={{ paddingLeft: '5.5rem' }}
-              placeholder="801 234 5678"
-            />
-          </div>
-        </div>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            autoComplete="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="az-input"
+            placeholder="you@example.com"
+          />
+        </motion.div>
 
-        <div>
+        <motion.div variants={fieldVariants}>
           <label htmlFor="password" className="az-label">
             Enter your password
           </label>
@@ -88,40 +110,57 @@ export default function LoginPage(): React.JSX.Element {
               style={{ paddingRight: '3.5rem' }}
               placeholder="••••••••"
             />
-            <button
+            <motion.button
               type="button"
               onClick={() => setShowPassword((s) => !s)}
               className="absolute inset-y-0 right-0 px-3 flex items-center text-white/50 hover:text-white"
               aria-label={showPassword ? 'Hide password' : 'Show password'}
+              whileTap={{ scale: 0.9 }}
             >
               {showPassword ? 'Hide' : 'Show'}
-            </button>
+            </motion.button>
           </div>
-        </div>
+        </motion.div>
 
-        <div className="text-center">
+        <motion.div variants={fieldVariants} className="text-center">
           <a
             href="/auth/forgot-password"
             className="text-white/50 hover:text-white text-xs transition-colors"
           >
             Forgot your password?
           </a>
-        </div>
+        </motion.div>
 
-        <button type="submit" className="az-btn-primary" disabled={isLoading}>
-          {isLoading ? (
-            <span className="inline-flex items-center gap-2">
-              <Spinner /> Logging in...
-            </span>
-          ) : (
-            'Login to Azeebo+'
-          )}
-        </button>
+        <motion.div variants={fieldVariants}>
+          <motion.button
+            type="submit"
+            className="az-btn-primary w-full"
+            disabled={isLoading}
+            whileHover={isLoading ? {} : { scale: 1.02 }}
+            whileTap={isLoading ? {} : { scale: 0.98 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+          >
+            {isLoading ? (
+              <span className="inline-flex items-center gap-2">
+                <Spinner /> Logging in...
+              </span>
+            ) : (
+              'Login to Azeebo+'
+            )}
+          </motion.button>
+        </motion.div>
 
-        <div className="az-divider">Or continue with</div>
+        <motion.div variants={fieldVariants} className="az-divider">
+          Or continue with
+        </motion.div>
 
-        <div className="grid grid-cols-2 gap-3">
-          <button type="button" className="az-btn-social az-btn-social--light">
+        <motion.div variants={fieldVariants} className="grid grid-cols-2 gap-3">
+          <motion.button
+            type="button"
+            className="az-btn-social az-btn-social--light"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.97 }}
+          >
             <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">
               <path
                 fill="#4285F4"
@@ -141,16 +180,21 @@ export default function LoginPage(): React.JSX.Element {
               />
             </svg>
             Google
-          </button>
-          <button type="button" className="az-btn-social az-btn-social--dark">
+          </motion.button>
+          <motion.button
+            type="button"
+            className="az-btn-social az-btn-social--dark"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.97 }}
+          >
             <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" />
             </svg>
             Apple
-          </button>
-        </div>
+          </motion.button>
+        </motion.div>
 
-        <p className="text-center text-white/50 text-sm pt-2">
+        <motion.p variants={fieldVariants} className="text-center text-white/50 text-sm pt-2">
           Don&apos;t have an account.{' '}
           <a
             href="/auth/register"
@@ -158,8 +202,8 @@ export default function LoginPage(): React.JSX.Element {
           >
             Sign up!
           </a>
-        </p>
-      </form>
+        </motion.p>
+      </motion.form>
     </AuthShell>
   );
 }

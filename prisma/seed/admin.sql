@@ -27,7 +27,7 @@ BEGIN
     INSERT INTO users (id, email, password, display_name, role, created_at, updated_at)
     VALUES (
       '770e8400-e29b-41d4-a716-446655440001',
-      'admin@azeebo.com',
+      'admin@azeeboplus.com',
       '$2b$12$DEVELOPMENT_ONLY_PLACEHOLDER_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX',
       'Admin (Dev Only)',
       'admin',

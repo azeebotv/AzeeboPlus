@@ -13,7 +13,7 @@ PATTERNS=(
   "password.*['\"].{8,}['\"]"
   "secret.*['\"].{16,}['\"]"
   "api_key.*['\"][A-Za-z0-9]{32,}['\"]"
-  "JWT_SECRET.*['\"][^'\"]{32,}['\"]"
+  "JWT_ACCESS_SECRET.*['\"][^'\"]{32,}['\"]"
   "sk_live_[a-z]+"
   "sk_test_[a-z]+"
   "pk_live_[a-z]+"

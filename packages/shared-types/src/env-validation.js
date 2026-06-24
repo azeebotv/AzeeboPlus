@@ -23,8 +23,8 @@ exports.environmentSchema = zod_1.z.object({
     JWT_REFRESH_SECRET: zod_1.z.string().min(32, 'JWT_REFRESH_SECRET must be at least 32 characters'),
     JWT_EXPIRES_IN: zod_1.z.string().default('15m'),
     JWT_REFRESH_EXPIRES_IN: zod_1.z.string().default('7d'),
-    JWT_ISSUER: zod_1.z.string().default('azeebo-plus'),
-    JWT_AUDIENCE: zod_1.z.string().default('azeebo-plus-users'),
+    JWT_ISSUER: zod_1.z.string().default('azeebo-auth'),
+    JWT_AUDIENCE: zod_1.z.string().default('azeebo-api'),
     // API Gateway
     API_GATEWAY_PORT: zod_1.z.coerce.number().default(3013),
     API_GATEWAY_URL: zod_1.z.string().url().default('http://localhost:3013'),

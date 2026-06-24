@@ -19,7 +19,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
    * @see https://www.rfc-editor.org/rfc/rfc9457#name-https-api-rfc9110org-
    */
   private getProblemTypeUri(status: number): string {
-    return `https://api.azeebo.com/problems/${status}`;
+    return `https://api.azeeboplus.com/problems/${status}`;
   }
 
   /**

@@ -6,7 +6,14 @@ import AdminLayout from '@/components/layout/AdminLayout';
 
 export default function AdminPage(): React.JSX.Element {
   const { isAuthenticated, user } = useAuth();
-  const [stats, setStats] = useState({ totalUsers: 0, totalCreators: 0, totalContent: 0, activeSubscriptions: 0, revenue: 0, pendingReviews: 0 });
+  const [stats, setStats] = useState({
+    totalUsers: 0,
+    totalCreators: 0,
+    totalContent: 0,
+    activeSubscriptions: 0,
+    revenue: 0,
+    pendingReviews: 0,
+  });
   const [recentActivity, setRecentActivity] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -30,7 +37,11 @@ export default function AdminPage(): React.JSX.Element {
         });
         setRecentActivity(d.recentActivity || []);
       }
-    } catch { /* ignore */ } finally { setIsLoading(false); }
+    } catch {
+      /* ignore */
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -40,19 +51,65 @@ export default function AdminPage(): React.JSX.Element {
 
       {isLoading ? (
         <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}>
-          <div style={{ width: 40, height: 40, border: '3px solid #2A1A1A', borderTopColor: '#E8420A', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+          <div
+            style={{
+              width: 40,
+              height: 40,
+              border: '3px solid #2A1A1A',
+              borderTopColor: '#E8420A',
+              borderRadius: '50%',
+              animation: 'spin 0.8s linear infinite',
+            }}
+          />
         </div>
       ) : (
         <>
           {/* Stats grid */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 16, marginBottom: 32 }}>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
+              gap: 16,
+              marginBottom: 32,
+            }}
+          >
             {[
-              { label: 'Total Users', value: stats.totalUsers.toLocaleString(), icon: '👥', color: '#E8420A' },
-              { label: 'Creators', value: stats.totalCreators.toLocaleString(), icon: '✨', color: '#0D3B2E' },
-              { label: 'Content', value: stats.totalContent.toLocaleString(), icon: '🎬', color: '#CC1C1C' },
-              { label: 'Subscriptions', value: stats.activeSubscriptions.toLocaleString(), icon: '⭐', color: '#F59E0B' },
-              { label: 'Revenue', value: `₦${stats.revenue.toLocaleString()}`, icon: '💰', color: '#0D3B2E' },
-              { label: 'Pending Reviews', value: stats.pendingReviews.toString(), icon: '📋', color: '#E8420A' },
+              {
+                label: 'Total Users',
+                value: stats.totalUsers.toLocaleString(),
+                icon: '👥',
+                color: '#E8420A',
+              },
+              {
+                label: 'Creators',
+                value: stats.totalCreators.toLocaleString(),
+                icon: '✨',
+                color: '#0D3B2E',
+              },
+              {
+                label: 'Content',
+                value: stats.totalContent.toLocaleString(),
+                icon: '🎬',
+                color: '#CC1C1C',
+              },
+              {
+                label: 'Subscriptions',
+                value: stats.activeSubscriptions.toLocaleString(),
+                icon: '⭐',
+                color: '#F59E0B',
+              },
+              {
+                label: 'Revenue',
+                value: `₦${stats.revenue.toLocaleString()}`,
+                icon: '💰',
+                color: '#0D3B2E',
+              },
+              {
+                label: 'Pending Reviews',
+                value: stats.pendingReviews.toString(),
+                icon: '📋',
+                color: '#E8420A',
+              },
             ].map((stat, i) => (
               <div key={i} className="az-glass" style={{ padding: 20, borderRadius: 16 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
@@ -67,7 +124,13 @@ export default function AdminPage(): React.JSX.Element {
           {/* Quick links */}
           <div className="az-glass" style={{ padding: 24, borderRadius: 20 }}>
             <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16 }}>Quick Actions</h2>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+                gap: 12,
+              }}
+            >
               {[
                 { href: '/admin/users', label: 'Manage Users', icon: '👥' },
                 { href: '/admin/content-review', label: 'Review Queue', icon: '✅' },
@@ -75,8 +138,24 @@ export default function AdminPage(): React.JSX.Element {
                 { href: '/admin/financial', label: 'Financial Overview', icon: '💰' },
                 { href: '/admin/reports', label: 'Reports', icon: '📊' },
                 { href: '/admin/settings', label: 'Platform Settings', icon: '⚙️' },
-              ].map(link => (
-                <a key={link.href} href={link.href} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 16px', borderRadius: 12, border: '1px solid #2A1A1A', textDecoration: 'none', color: '#F5F0EB', fontSize: 14, fontWeight: 500, transition: 'border-color 0.2s' }}>
+              ].map((link) => (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 10,
+                    padding: '14px 16px',
+                    borderRadius: 12,
+                    border: '1px solid #2A1A1A',
+                    textDecoration: 'none',
+                    color: '#F5F0EB',
+                    fontSize: 14,
+                    fontWeight: 500,
+                    transition: 'border-color 0.2s',
+                  }}
+                >
                   <span style={{ fontSize: 18 }}>{link.icon}</span>
                   {link.label}
                 </a>

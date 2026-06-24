@@ -1,11 +1,16 @@
 'use client';
 import React, { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
 import Link from 'next/link';
 import { apiFetch, ContentItem } from '@/lib/api';
 import { webLogger } from '@/lib/logger';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
+import { AmbientGlow } from '@/components/motion/AmbientGlow';
+import { ScrollReveal } from '@/components/motion/ScrollReveal';
+import { StaggerGrid } from '@/components/motion/StaggerGrid';
+import { GlowCard } from '@/components/motion/GlowCard';
 
 export default function GamesPage(): React.JSX.Element {
   const { isAuthenticated } = useAuth();
@@ -18,10 +23,7 @@ export default function GamesPage(): React.JSX.Element {
       try {
         setIsLoading(true);
         const result = await apiFetch<ContentItem[]>('/v1/content?universe=games&limit=20');
-
-        if (result.success && result.data) {
-          setGames(result.data);
-        }
+        if (result.success && result.data) setGames(result.data);
       } catch (err) {
         webLogger.error('Failed to fetch games content', err);
         setError('Failed to load games. Please try again.');
@@ -29,42 +31,61 @@ export default function GamesPage(): React.JSX.Element {
         setIsLoading(false);
       }
     };
-
     fetchContent();
   }, []);
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+    <div className="min-h-screen az-nollywood-bg">
       <AppHeader active="Games" />
 
       {/* Hero Section */}
       <section className="relative">
         {isLoading ? (
-          <div className="h-[500px] animate-pulse" style={{ backgroundColor: '#2A2A2A' }} />
+          <div
+            className="h-[400px] sm:h-[500px] az-shimmer"
+            style={{ backgroundColor: '#2A2A2A' }}
+          />
         ) : error ? (
-          <div className="h-[500px] flex items-center justify-center">
-            <div className="text-center">
-              <p className="text-lg mb-4 text-white/60">{error}</p>
-              <button
+          <div className="h-[400px] sm:h-[500px] flex items-center justify-center">
+            <motion.div
+              className="text-center"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.4 }}
+            >
+              <p className="text-base sm:text-lg mb-4 text-white/60">{error}</p>
+              <motion.button
                 type="button"
                 onClick={() => window.location.reload()}
                 className="az-btn-primary"
                 style={{ width: 'auto', paddingInline: '1.5rem' }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
               >
                 Retry
-              </button>
-            </div>
+              </motion.button>
+            </motion.div>
           </div>
         ) : games.length > 0 ? (
-          <div className="relative h-[500px]">
-            <img
+          <div className="relative h-[400px] sm:h-[500px]">
+            <motion.img
               src={games[0].thumbnail}
               alt={games[0].title}
               className="w-full h-full object-cover"
+              initial={{ scale: 1.1, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-[#1A0A0A] via-[#1A0A0A]/50 to-transparent" />
-            <div className="absolute bottom-0 left-0 right-0 p-8 max-w-7xl mx-auto">
-              <div className="flex items-center gap-2 mb-4">
+            <AmbientGlow color="rgba(59,130,246,0.25)" size={500} className="bottom-0 right-0" />
+
+            <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-8 max-w-7xl mx-auto">
+              <motion.div
+                className="flex items-center gap-2 mb-3 sm:mb-4"
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2, duration: 0.4 }}
+              >
                 <span
                   className="px-3 py-1 rounded-full text-xs font-semibold"
                   style={{ backgroundColor: '#E8420A', color: '#fff' }}
@@ -73,67 +94,106 @@ export default function GamesPage(): React.JSX.Element {
                 </span>
                 <span
                   className="px-3 py-1 rounded-full text-xs font-medium"
-                  style={{ backgroundColor: 'rgba(232,66,10,0.2)', color: '#E8420A' }}
+                  style={{ backgroundColor: 'rgba(59,130,246,0.2)', color: '#60A5FA' }}
                 >
                   {games[0].contentType || 'Game'}
                 </span>
-              </div>
-              <h2 className="text-4xl font-bold text-white mb-2">{games[0].title}</h2>
-              <p className="text-white/60 text-lg mb-6 max-w-2xl">{games[0].description}</p>
-              <div className="flex items-center gap-4">
+              </motion.div>
+              <motion.h2
+                className="text-3xl sm:text-4xl font-bold text-white mb-2"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.25, duration: 0.5 }}
+              >
+                {games[0].title}
+              </motion.h2>
+              <motion.p
+                className="text-white/60 text-base sm:text-lg mb-5 sm:mb-6 max-w-2xl"
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.35, duration: 0.5 }}
+              >
+                {games[0].description}
+              </motion.p>
+              <motion.div
+                className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4"
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.45, duration: 0.5 }}
+              >
                 <Link href={`/watch/${games[0].id}`}>
-                  <button type="button" className="az-btn-primary" style={{ width: 'auto', paddingInline: '2rem' }}>
+                  <motion.button
+                    type="button"
+                    className="az-btn-primary"
+                    style={{ width: 'auto', paddingInline: '2rem' }}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
                     Play Now
-                  </button>
+                  </motion.button>
                 </Link>
-                <button
+                <motion.button
                   type="button"
                   className="px-6 py-3 rounded-full text-sm font-semibold text-white transition-all"
-                  style={{ border: '1px solid rgba(255,255,255,0.2)', backgroundColor: 'rgba(255,255,255,0.08)' }}
+                  style={{
+                    border: '1px solid rgba(255,255,255,0.2)',
+                    backgroundColor: 'rgba(255,255,255,0.08)',
+                  }}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                 >
                   Leaderboard
-                </button>
-              </div>
+                </motion.button>
+              </motion.div>
             </div>
           </div>
         ) : (
-          <div className="h-[500px] flex items-center justify-center">
-            <p className="text-lg text-white/60">No games available</p>
+          <div className="h-[400px] sm:h-[500px] flex items-center justify-center">
+            <p className="text-base sm:text-lg text-white/60">No games available</p>
           </div>
         )}
       </section>
 
       {/* Games Grid */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h2 className="text-2xl sm:text-3xl font-bold text-white">Featured Games</h2>
-            <p className="text-base mt-1 text-white/50">Play and earn rewards</p>
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
+        <ScrollReveal>
+          <div className="flex items-center justify-between mb-6 sm:mb-8">
+            <div>
+              <h2 className="text-2xl sm:text-3xl font-bold text-white">Featured Games</h2>
+              <p className="text-sm sm:text-base mt-1 text-white/50">Play and earn rewards</p>
+            </div>
           </div>
-        </div>
+        </ScrollReveal>
 
         {isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
             {Array.from({ length: 6 }).map((_, i) => (
               <div key={i} className="az-glass overflow-hidden">
-                <div className="h-60 animate-pulse" style={{ backgroundColor: '#2A2A2A' }} />
+                <div className="h-52 sm:h-60 az-shimmer" style={{ backgroundColor: '#2A2A2A' }} />
                 <div className="p-4 space-y-3">
-                  <div className="h-5 w-3/4 animate-pulse rounded" style={{ backgroundColor: '#2A2A2A' }} />
-                  <div className="h-4 w-1/2 animate-pulse rounded" style={{ backgroundColor: '#2A2A2A' }} />
+                  <div
+                    className="h-5 w-3/4 az-shimmer rounded"
+                    style={{ backgroundColor: '#2A2A2A' }}
+                  />
+                  <div
+                    className="h-4 w-1/2 az-shimmer rounded"
+                    style={{ backgroundColor: '#2A2A2A' }}
+                  />
                 </div>
               </div>
             ))}
           </div>
         ) : games.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <StaggerGrid className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
             {games.map((game) => (
               <Link key={game.id} href={`/watch/${game.id}`}>
-                <article
-                  className="az-glass overflow-hidden cursor-pointer transition-all hover:scale-[1.02]"
-                  style={{ boxShadow: '0 0 20px rgba(255,255,255,0.05)' }}
-                >
+                <GlowCard universe="games" className="overflow-hidden">
                   <div className="relative">
-                    <img src={game.thumbnail} alt={game.title} className="w-full h-48 object-cover" />
+                    <img
+                      src={game.thumbnail}
+                      alt={game.title}
+                      className="w-full h-44 sm:h-48 object-cover"
+                    />
                     <span
                       className="absolute top-2 right-2 px-2.5 py-0.5 rounded-full text-xs font-semibold"
                       style={{ backgroundColor: '#E8420A', color: '#fff' }}
@@ -144,26 +204,31 @@ export default function GamesPage(): React.JSX.Element {
                     <div className="absolute bottom-4 left-4 right-4">
                       <span
                         className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium mb-2"
-                        style={{ backgroundColor: 'rgba(232,66,10,0.2)', color: '#E8420A' }}
+                        style={{ backgroundColor: 'rgba(59,130,246,0.2)', color: '#60A5FA' }}
                       >
                         {game.contentType || 'Game'}
                       </span>
-                      <h3 className="text-xl font-bold text-white">{game.title}</h3>
+                      <h3 className="text-lg sm:text-xl font-bold text-white">{game.title}</h3>
                     </div>
                   </div>
                   <div className="p-4">
                     <p className="text-sm text-white/50 mb-3 line-clamp-2">{game.description}</p>
-                    <button type="button" className="az-btn-primary w-full">
+                    <motion.button
+                      type="button"
+                      className="az-btn-primary w-full"
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
                       Play Now
-                    </button>
+                    </motion.button>
                   </div>
-                </article>
+                </GlowCard>
               </Link>
             ))}
-          </div>
+          </StaggerGrid>
         ) : (
-          <div className="text-center py-12">
-            <p className="text-lg text-white/50">No games available yet</p>
+          <div className="text-center py-10 sm:py-12">
+            <p className="text-base sm:text-lg text-white/50">No games available yet</p>
           </div>
         )}
       </section>

@@ -1,8 +1,7 @@
 FROM node:22-alpine AS builder
 WORKDIR /app
 
-RUN apk add --no-cache curl && \
-    for i in 1 2 3 4 5; do npm install -g pnpm@10.33.2 @nestjs/cli prisma@6.19.0 && break || (echo "Retry $i/5..." && sleep 10); done
+RUN for i in 1 2 3 4 5; do npm install -g pnpm@10.33.2 && break || (echo "Retry $i/5..." && sleep 10); done
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.json ./
 COPY packages ./packages
@@ -14,6 +13,7 @@ COPY services/core/search-service/src ./services/core/search-service/src
 COPY services/core/search-service/tsconfig*.json ./services/core/search-service/
 COPY services/core/search-service/prisma ./services/core/search-service/prisma
 
+RUN cd services/core/search-service && npx prisma generate
 RUN pnpm --filter @azeebo/search-service run build
 
 FROM node:22-alpine AS runner
@@ -23,11 +23,10 @@ LABEL org.opencontainers.image.source="https://github.com/azeebo/azeebo-plus"
 LABEL org.opencontainers.image.description="Azeebo+ Search Service"
 LABEL org.opencontainers.image.licenses="Proprietary"
 
-RUN apk add --no-cache curl && \
-    for i in 1 2 3 4 5; do npm install -g pnpm@10.33.2 @nestjs/cli prisma@6.19.0 && break || (echo "Retry $i/5..." && sleep 10); done && \
+RUN apk add --no-cache tini && \
     addgroup -g 65532 -S nodejs && \
-    apk add --no-cache tini && \
-    adduser -S nodejs -u 65532
+    adduser -S nodejs -u 65532 && \
+    for i in 1 2 3 4 5; do npm install -g pnpm@10.33.2 && break || (echo "Retry $i/5..." && sleep 10); done
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY services/core/search-service/package.json ./services/core/search-service/
@@ -54,7 +53,7 @@ USER nodejs
 EXPOSE 3005
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:3005/live || exit 1
+    CMD node -e "fetch('http://localhost:3005/live').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 
 ENTRYPOINT ["/sbin/tini", "--"]
 CMD ["node", "services/core/search-service/dist/services/core/search-service/src/main.js"]

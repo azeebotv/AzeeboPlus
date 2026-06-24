@@ -20,13 +20,7 @@ import type {
   FeatureFlag,
   SystemSetting,
 } from '../admin-types';
-import type {
-  ApiResponse,
-  AnalyticsOverview,
-  ContentItem,
-  PaginatedResponse,
-  User,
-} from './base';
+import type { ApiResponse, AnalyticsOverview, ContentItem, PaginatedResponse, User } from './base';
 
 export function createAdminMethods(client: RequestClient) {
   return {
@@ -60,22 +54,22 @@ export function createAdminMethods(client: RequestClient) {
 
     getUsers: async (page = 1, limit = 20): Promise<ApiResponse<PaginatedResponse<User>>> => {
       return client.request<PaginatedResponse<User>>(
-        `/api/v1/admin/users?page=${page}&limit=${limit}`,
+        `/api/v1/admin/users?page=${page}&limit=${limit}`
       );
     },
 
     getContent: async (
       page = 1,
-      limit = 20,
+      limit = 20
     ): Promise<ApiResponse<PaginatedResponse<ContentItem>>> => {
       return client.request<PaginatedResponse<ContentItem>>(
-        `/api/v1/admin/content?page=${page}&limit=${limit}`,
+        `/api/v1/admin/content?page=${page}&limit=${limit}`
       );
     },
 
     getAnalytics: async (
       startDate?: string,
-      endDate?: string,
+      endDate?: string
     ): Promise<ApiResponse<AnalyticsOverview>> => {
       const params = new URLSearchParams();
       if (startDate) params.append('startDate', startDate);
@@ -91,16 +85,16 @@ export function createAdminMethods(client: RequestClient) {
     // Wallet Management
     getWallets: async (
       page = 1,
-      limit = 20,
+      limit = 20
     ): Promise<ApiResponse<PaginatedResponse<AdminWallet>>> => {
       return client.request<PaginatedResponse<AdminWallet>>(
-        `/api/v1/admin/wallets?page=${page}&limit=${limit}`,
+        `/api/v1/admin/wallets?page=${page}&limit=${limit}`
       );
     },
 
     updateWalletStatus: async (
       walletId: string,
-      status: string,
+      status: string
     ): Promise<ApiResponse<{ message: string }>> => {
       return client.request<{ message: string }>(`/api/v1/admin/wallets/${walletId}/status`, {
         method: 'PUT',
@@ -111,16 +105,16 @@ export function createAdminMethods(client: RequestClient) {
     // Creator Management
     getCreators: async (
       page = 1,
-      limit = 20,
+      limit = 20
     ): Promise<ApiResponse<PaginatedResponse<AdminCreator>>> => {
       return client.request<PaginatedResponse<AdminCreator>>(
-        `/api/v1/admin/creators?page=${page}&limit=${limit}`,
+        `/api/v1/admin/creators?page=${page}&limit=${limit}`
       );
     },
 
     updateCreatorStatus: async (
       creatorId: string,
-      status: string,
+      status: string
     ): Promise<ApiResponse<{ message: string }>> => {
       return client.request<{ message: string }>(`/api/v1/admin/creators/${creatorId}/status`, {
         method: 'PUT',
@@ -141,60 +135,57 @@ export function createAdminMethods(client: RequestClient) {
 
     togglePaymentGateway: async (
       gatewayId: string,
-      isEnabled: boolean,
+      isEnabled: boolean
     ): Promise<ApiResponse<{ message: string }>> => {
       return client.request<{ message: string }>(
         `/api/v1/admin/payment-gateways/${gatewayId}/toggle`,
         {
           method: 'PUT',
           body: JSON.stringify({ isEnabled }),
-        },
+        }
       );
     },
 
     updatePaymentGatewayMode: async (
       gatewayId: string,
-      mode: 'live' | 'test',
+      mode: 'live' | 'test'
     ): Promise<ApiResponse<{ message: string }>> => {
       return client.request<{ message: string }>(
         `/api/v1/admin/payment-gateways/${gatewayId}/mode`,
         {
           method: 'PUT',
           body: JSON.stringify({ mode }),
-        },
+        }
       );
     },
 
     // Reality Shows Management
     getRealityShows: async (
       page = 1,
-      limit = 20,
+      limit = 20
     ): Promise<ApiResponse<PaginatedResponse<RealityShow>>> => {
       return client.request<PaginatedResponse<RealityShow>>(
-        `/api/v1/admin/reality-shows?page=${page}&limit=${limit}`,
+        `/api/v1/admin/reality-shows?page=${page}&limit=${limit}`
       );
     },
 
     updateRealityShowStatus: async (
       showId: string,
-      status: string,
+      status: string
     ): Promise<ApiResponse<{ message: string }>> => {
-      return client.request<{ message: string }>(
-        `/api/v1/admin/reality-shows/${showId}/status`,
-        {
-          method: 'PUT',
-          body: JSON.stringify({ status }),
-        },
-      );
+      return client.request<{ message: string }>(`/api/v1/admin/reality-shows/${showId}/status`, {
+        method: 'PUT',
+        body: JSON.stringify({ status }),
+      });
     },
 
     // Content Review
     getContentReviewQueue: async (
       page = 1,
-      limit = 20,
+      limit = 20
     ): Promise<ApiResponse<PaginatedResponse<ContentReviewItem>>> => {
       return client.request<PaginatedResponse<ContentReviewItem>>(
-        `/api/v1/admin/content-review?page=${page}&limit=${limit}`,
+        `/api/v1/admin/content-review?page=${page}&limit=${limit}`
       );
     },
 
@@ -203,20 +194,20 @@ export function createAdminMethods(client: RequestClient) {
         `/api/v1/admin/content-review/${contentId}/approve`,
         {
           method: 'POST',
-        },
+        }
       );
     },
 
     rejectContent: async (
       contentId: string,
-      reason: string,
+      reason: string
     ): Promise<ApiResponse<{ message: string }>> => {
       return client.request<{ message: string }>(
         `/api/v1/admin/content-review/${contentId}/reject`,
         {
           method: 'POST',
           body: JSON.stringify({ reason }),
-        },
+        }
       );
     },
 
@@ -226,7 +217,7 @@ export function createAdminMethods(client: RequestClient) {
     },
 
     getEngagementTrends: async (
-      range: '7d' | '30d' | '90d' = '30d',
+      range: '7d' | '30d' | '90d' = '30d'
     ): Promise<ApiResponse<EngagementTrend[]>> => {
       return client.request<EngagementTrend[]>(`/api/v1/admin/engagement/trends?range=${range}`);
     },
@@ -254,20 +245,20 @@ export function createAdminMethods(client: RequestClient) {
 
     updateNotificationTemplate: async (
       templateId: string,
-      template: Partial<NotificationTemplate>,
+      template: Partial<NotificationTemplate>
     ): Promise<ApiResponse<NotificationTemplate>> => {
       return client.request<NotificationTemplate>(
         `/api/v1/admin/notification-templates/${templateId}`,
         {
           method: 'PUT',
           body: JSON.stringify(template),
-        },
+        }
       );
     },
 
     // Reports
     getReports: async (
-      range: '7d' | '30d' | '90d' | 'all' = '30d',
+      range: '7d' | '30d' | '90d' | 'all' = '30d'
     ): Promise<ApiResponse<AdminReport[]>> => {
       return client.request<AdminReport[]>(`/api/v1/admin/reports?range=${range}`);
     },
@@ -346,7 +337,7 @@ export function createAdminMethods(client: RequestClient) {
         isEnabled?: boolean;
         sortOrder?: number;
         metadata?: Record<string, unknown>;
-      },
+      }
     ): Promise<ApiResponse<AdminUniverse>> => {
       return client.request<AdminUniverse>(`/api/v1/admin/universes/${id}`, {
         method: 'PUT',
@@ -373,7 +364,7 @@ export function createAdminMethods(client: RequestClient) {
         featureKey: string;
         isEnabled: boolean;
         metadata?: Record<string, unknown>;
-      },
+      }
     ): Promise<ApiResponse<FeatureFlag>> => {
       return client.request<FeatureFlag>(`/api/v1/admin/universes/${universeId}/feature-flags`, {
         method: 'PUT',
@@ -383,22 +374,22 @@ export function createAdminMethods(client: RequestClient) {
 
     deleteFeatureFlag: async (
       universeId: string,
-      featureKey: string,
+      featureKey: string
     ): Promise<ApiResponse<{ message: string }>> => {
       return client.request<{ message: string }>(
         `/api/v1/admin/universes/${universeId}/feature-flags/${featureKey}`,
         {
           method: 'DELETE',
-        },
+        }
       );
     },
 
     checkFeatureFlag: async (
       universeName: string,
-      featureKey: string,
+      featureKey: string
     ): Promise<ApiResponse<{ universeName: string; featureKey: string; isEnabled: boolean }>> => {
       return client.request<{ universeName: string; featureKey: string; isEnabled: boolean }>(
-        `/api/v1/admin/universes/check/${universeName}/${featureKey}`,
+        `/api/v1/admin/universes/check/${universeName}/${featureKey}`
       );
     },
 
@@ -447,7 +438,7 @@ export function createAdminMethods(client: RequestClient) {
         category?: string;
         description?: string;
         isPublic?: boolean;
-      },
+      }
     ): Promise<ApiResponse<SystemSetting>> => {
       return client.request<SystemSetting>(`/api/v1/admin/settings/${key}`, {
         method: 'PUT',
@@ -462,7 +453,7 @@ export function createAdminMethods(client: RequestClient) {
     },
 
     bulkCreateSettings: async (
-      settings: Partial<SystemSetting>[],
+      settings: Partial<SystemSetting>[]
     ): Promise<ApiResponse<SystemSetting[]>> => {
       return client.request<SystemSetting[]>('/api/v1/admin/settings/bulk', {
         method: 'POST',
@@ -471,7 +462,7 @@ export function createAdminMethods(client: RequestClient) {
     },
 
     bulkUpdateSettings: async (
-      settings: { key: string; value: unknown }[],
+      settings: { key: string; value: unknown }[]
     ): Promise<ApiResponse<SystemSetting[]>> => {
       return client.request<SystemSetting[]>('/api/v1/admin/settings/bulk', {
         method: 'PUT',

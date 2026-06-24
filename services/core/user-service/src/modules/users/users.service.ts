@@ -455,11 +455,23 @@ export class UsersService {
 
   async completeProfileSetup(
     userId: string,
-    dto: CompleteProfileSetupDto
+    dto: CompleteProfileSetupDto,
+    email?: string
   ): Promise<Record<string, unknown>> {
-    const user = await this.prisma.user.findUnique({
+    let user = await this.prisma.user.findUnique({
       where: { id: userId },
     });
+
+    if (!user && email) {
+      user = await this.prisma.user.create({
+        data: {
+          id: userId,
+          email,
+          displayName: dto.displayName || email.split('@')[0],
+          role: dto.role || 'user',
+        },
+      });
+    }
 
     if (!user) {
       throw new NotFoundException('User not found');

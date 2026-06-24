@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
-import { colors } from '@azeebo/design-tokens';
+import { colors } from '../theme';
 
 interface PasswordInputProps {
   value: string;
@@ -66,7 +66,7 @@ const styles = StyleSheet.create({
     borderColor: '#333',
   },
   inputError: {
-    borderColor: colors.error[500],
+    borderColor: colors.error,
   },
   input: {
     flex: 1,
@@ -83,7 +83,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   errorText: {
-    color: colors.error[500],
+    color: colors.error,
     fontSize: 12,
     marginTop: 4,
   },

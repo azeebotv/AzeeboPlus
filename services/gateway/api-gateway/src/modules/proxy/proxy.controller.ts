@@ -24,6 +24,8 @@ import { ConfigService } from '@nestjs/config';
 import { ApiVersioningConfig, API_VERSION_HEADER, DEFAULT_API_VERSION } from '@azeebo/shared-types';
 import { randomUUID } from 'crypto';
 
+const CACHE_TTL_MS = 300_000; // 5 minutes
+
 interface Endpoint {
   method: string;
   path: string;
@@ -127,7 +129,7 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
     fallbackUrl: 'http://wallet-service:3002',
     supportedVersions: ['1'],
     defaultVersion: '1',
-    pathStrategy: 'default',
+    pathStrategy: 'no-prefix',
     endpoints: [
       { method: 'GET', path: '/', description: "Get current user's wallet" },
       { method: 'GET', path: '/transactions', description: 'Get transaction history' },
@@ -301,7 +303,7 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
   {
     path: '/admin',
     envKey: 'ADMIN_SERVICE_URL',
-    fallbackUrl: 'http://localhost:4016',
+    fallbackUrl: 'http://admin-service:4016',
     supportedVersions: ['1'],
     defaultVersion: '1',
     pathStrategy: 'no-prefix',
@@ -335,7 +337,7 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
   {
     path: '/creator',
     envKey: 'CREATOR_PORTAL_SERVICE_URL',
-    fallbackUrl: 'http://localhost:4014',
+    fallbackUrl: 'http://creator-portal:4014',
     supportedVersions: ['1'],
     defaultVersion: '1',
     pathStrategy: 'no-prefix',
@@ -412,7 +414,7 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
     fallbackUrl: 'http://support-service:3020',
     supportedVersions: ['1'],
     defaultVersion: '1',
-    pathStrategy: 'no-prefix',
+    pathStrategy: 'default',
     endpoints: [
       { method: 'POST', path: '/tickets', description: 'Create ticket' },
       { method: 'GET', path: '/tickets', description: 'Get tickets' },
@@ -474,7 +476,7 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
     fallbackUrl: 'http://referral-service:3025',
     supportedVersions: ['1'],
     defaultVersion: '1',
-    pathStrategy: 'no-prefix',
+    pathStrategy: 'default',
     endpoints: [
       { method: 'GET', path: '/code', description: 'Get referral code' },
       { method: 'POST', path: '/generate', description: 'Generate new referral code' },
@@ -507,7 +509,7 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
     fallbackUrl: 'http://media-service:3019',
     supportedVersions: ['1'],
     defaultVersion: '1',
-    pathStrategy: 'no-prefix',
+    pathStrategy: 'default',
     endpoints: [
       { method: 'POST', path: '/upload/image', description: 'Upload image' },
       { method: 'POST', path: '/upload/video', description: 'Upload video' },
@@ -524,8 +526,9 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
     fallbackUrl: 'http://content-service:3004',
     supportedVersions: ['1'],
     defaultVersion: '1',
-    pathStrategy: 'no-prefix',
-    endpoints: [{ method: 'GET', path: '/', description: 'Get all universes' }],
+    pathStrategy: 'default',
+    pathRewrite: { '/universe': '/content' },
+    endpoints: [{ method: 'GET', path: '/:id', description: 'Get universe by ID' }],
   },
   {
     path: '/comedy',
@@ -715,7 +718,7 @@ export class ProxyController {
       route
     );
     if (response && typeof response === 'object') {
-      await this.cacheManager.set(cacheKey, response, 300000);
+      await this.cacheManager.set(cacheKey, response, CACHE_TTL_MS);
       res.setHeader(API_VERSION_HEADER, version);
       res.setHeader(this.REQUEST_ID_HEADER, requestId);
       res.json(response);
@@ -850,6 +853,168 @@ export class ProxyController {
     await this.forwardRequest(req, res, route.targetUrl, version, requestId, route);
   }
 
+  // Root-path handlers for /:version/:service (no sub-path required)
+  // Express/NestJS requires *path to match at least something, so /api/v1/wallet
+  // doesn't match /:version/:service/*path — it falls through to /:service/*path
+  // with service="v1". These handlers fix that by explicitly matching root paths.
+
+  @Get(':version/:service')
+  @HttpCode(HttpStatus.OK)
+  async proxyVersionedRootGet(
+    @Param('version') version: string,
+    @Param('service') service: string,
+    @Req() req: Request,
+    @Res() res: Response
+  ): Promise<void> {
+    const requestId = (req.headers[this.REQUEST_ID_HEADER.toLowerCase()] as string) || randomUUID();
+    const route = this.findRoute(service);
+    if (!route) {
+      res.setHeader(this.REQUEST_ID_HEADER, requestId);
+      res.status(HttpStatus.NOT_FOUND).json({ message: 'Service not found' });
+      return;
+    }
+    if (!this.validateVersion(version, route)) {
+      res.setHeader(this.REQUEST_ID_HEADER, requestId);
+      res.status(HttpStatus.NOT_FOUND).json({
+        message: `API version ${version} not supported for this service`,
+        supportedVersions: route.supportedVersions,
+        defaultVersion: route.defaultVersion,
+      });
+      return;
+    }
+    const cacheKey = this.buildCacheKey(req, version);
+    const cachedResponse = await this.cacheManager.get(cacheKey);
+    if (cachedResponse) {
+      res.setHeader(API_VERSION_HEADER, version);
+      res.setHeader(this.REQUEST_ID_HEADER, requestId);
+      res.json(cachedResponse);
+      return;
+    }
+    const response = await this.forwardRequest(req, res, route.targetUrl, version, requestId, route);
+    if (response && typeof response === 'object') {
+      await this.cacheManager.set(cacheKey, response, CACHE_TTL_MS);
+      res.setHeader(API_VERSION_HEADER, version);
+      res.setHeader(this.REQUEST_ID_HEADER, requestId);
+      res.json(response);
+    }
+  }
+
+  @Post(':version/:service')
+  @HttpCode(HttpStatus.CREATED)
+  async proxyVersionedRootPost(
+    @Param('version') version: string,
+    @Param('service') service: string,
+    @Req() req: Request,
+    @Res() res: Response
+  ): Promise<void> {
+    const requestId = (req.headers[this.REQUEST_ID_HEADER.toLowerCase()] as string) || randomUUID();
+    const route = this.findRoute(service);
+    if (!route) {
+      res.setHeader(this.REQUEST_ID_HEADER, requestId);
+      res.status(HttpStatus.NOT_FOUND).json({ message: 'Service not found' });
+      return;
+    }
+    if (!this.validateVersion(version, route)) {
+      res.setHeader(this.REQUEST_ID_HEADER, requestId);
+      res.status(HttpStatus.NOT_FOUND).json({
+        message: `API version ${version} not supported for this service`,
+        supportedVersions: route.supportedVersions,
+        defaultVersion: route.defaultVersion,
+      });
+      return;
+    }
+    res.setHeader(API_VERSION_HEADER, version);
+    res.setHeader(this.REQUEST_ID_HEADER, requestId);
+    await this.forwardRequest(req, res, route.targetUrl, version, requestId, route);
+  }
+
+  @Put(':version/:service')
+  @HttpCode(HttpStatus.OK)
+  async proxyVersionedRootPut(
+    @Param('version') version: string,
+    @Param('service') service: string,
+    @Req() req: Request,
+    @Res() res: Response
+  ): Promise<void> {
+    const requestId = (req.headers[this.REQUEST_ID_HEADER.toLowerCase()] as string) || randomUUID();
+    const route = this.findRoute(service);
+    if (!route) {
+      res.setHeader(this.REQUEST_ID_HEADER, requestId);
+      res.status(HttpStatus.NOT_FOUND).json({ message: 'Service not found' });
+      return;
+    }
+    if (!this.validateVersion(version, route)) {
+      res.setHeader(this.REQUEST_ID_HEADER, requestId);
+      res.status(HttpStatus.NOT_FOUND).json({
+        message: `API version ${version} not supported for this service`,
+        supportedVersions: route.supportedVersions,
+        defaultVersion: route.defaultVersion,
+      });
+      return;
+    }
+    res.setHeader(API_VERSION_HEADER, version);
+    res.setHeader(this.REQUEST_ID_HEADER, requestId);
+    await this.forwardRequest(req, res, route.targetUrl, version, requestId, route);
+  }
+
+  @Patch(':version/:service')
+  @HttpCode(HttpStatus.OK)
+  async proxyVersionedRootPatch(
+    @Param('version') version: string,
+    @Param('service') service: string,
+    @Req() req: Request,
+    @Res() res: Response
+  ): Promise<void> {
+    const requestId = (req.headers[this.REQUEST_ID_HEADER.toLowerCase()] as string) || randomUUID();
+    const route = this.findRoute(service);
+    if (!route) {
+      res.setHeader(this.REQUEST_ID_HEADER, requestId);
+      res.status(HttpStatus.NOT_FOUND).json({ message: 'Service not found' });
+      return;
+    }
+    if (!this.validateVersion(version, route)) {
+      res.setHeader(this.REQUEST_ID_HEADER, requestId);
+      res.status(HttpStatus.NOT_FOUND).json({
+        message: `API version ${version} not supported for this service`,
+        supportedVersions: route.supportedVersions,
+        defaultVersion: route.defaultVersion,
+      });
+      return;
+    }
+    res.setHeader(API_VERSION_HEADER, version);
+    res.setHeader(this.REQUEST_ID_HEADER, requestId);
+    await this.forwardRequest(req, res, route.targetUrl, version, requestId, route);
+  }
+
+  @Delete(':version/:service')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async proxyVersionedRootDelete(
+    @Param('version') version: string,
+    @Param('service') service: string,
+    @Req() req: Request,
+    @Res() res: Response
+  ): Promise<void> {
+    const requestId = (req.headers[this.REQUEST_ID_HEADER.toLowerCase()] as string) || randomUUID();
+    const route = this.findRoute(service);
+    if (!route) {
+      res.setHeader(this.REQUEST_ID_HEADER, requestId);
+      res.status(HttpStatus.NOT_FOUND).json({ message: 'Service not found' });
+      return;
+    }
+    if (!this.validateVersion(version, route)) {
+      res.setHeader(this.REQUEST_ID_HEADER, requestId);
+      res.status(HttpStatus.NOT_FOUND).json({
+        message: `API version ${version} not supported for this service`,
+        supportedVersions: route.supportedVersions,
+        defaultVersion: route.defaultVersion,
+      });
+      return;
+    }
+    res.setHeader(API_VERSION_HEADER, version);
+    res.setHeader(this.REQUEST_ID_HEADER, requestId);
+    await this.forwardRequest(req, res, route.targetUrl, version, requestId, route);
+  }
+
   @Get(':service/*path')
   @HttpCode(HttpStatus.OK)
   async proxyGet(
@@ -890,7 +1055,7 @@ export class ProxyController {
       route
     );
     if (response && typeof response === 'object') {
-      await this.cacheManager.set(cacheKey, response, 300000);
+      await this.cacheManager.set(cacheKey, response, CACHE_TTL_MS);
       res.setHeader(API_VERSION_HEADER, validatedVersion);
       res.setHeader(this.REQUEST_ID_HEADER, requestId);
       res.json(response);
@@ -1028,7 +1193,9 @@ export class ProxyController {
     const config = SERVICE_CONFIGS.find(
       (r) => r.path === `/${service}` || r.path.startsWith(`/${service}/`)
     );
-    if (!config) return undefined;
+    if (!config) {
+      return undefined;
+    }
     return {
       ...config,
       targetUrl: this.configService.get<string>(config.envKey) || config.fallbackUrl,
@@ -1058,7 +1225,8 @@ export class ProxyController {
 
   /**
    * Extract user ID from JWT header FOR CACHE PARTITIONING ONLY.
-   * THIS DOES NOT PERFORM JWT VERIFICATION - authentication is handled by upstream services.
+   * WARNING: This does NOT verify the JWT signature. Do NOT use for authorization.
+   * Authentication is handled by upstream services via GatewayAuthGuard.
    * We only use this for cache keying to separate cached responses between users.
    */
   private extractUserIdFromAuth(authHeader: string): string | null {
@@ -1111,7 +1279,7 @@ export class ProxyController {
   ): Promise<unknown> {
     const service = req.params['service'];
     const rawPathParam = req.params['path'] || req.params[0] || '';
-    const rawPath = Array.isArray(rawPathParam) ? rawPathParam[0] : rawPathParam;
+    const rawPath = Array.isArray(rawPathParam) ? rawPathParam.join('/') : rawPathParam;
     // Strip query string from path (captured by *path wildcard)
     const cleanPath = rawPath.split('?')[0];
     const path = cleanPath ? `/${cleanPath}` : '';
@@ -1230,7 +1398,9 @@ export class ProxyController {
         res.status(HttpStatus.BAD_GATEWAY).json({
           message: 'Failed to reach upstream service',
           requestId,
-          error: error instanceof Error ? error.message : 'Unknown error',
+          ...(process.env.NODE_ENV === 'production'
+            ? {}
+            : { error: error instanceof Error ? error.message : 'Unknown error' }),
         });
       }
       return null;

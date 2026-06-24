@@ -5,7 +5,7 @@
  * This script runs daily to enforce data retention policies and clean up expired user data
  */
 
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '../services/core/content-service/prisma/client';
 import { DataClassification, PiiCategory, DEFAULT_RETENTION_POLICIES } from '@azeebo/shared-types';
 
 const prisma = new PrismaClient();

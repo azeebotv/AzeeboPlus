@@ -26,20 +26,22 @@ spec:
         - name: wallet-service
           image: azeebo/wallet-service:latest
           ports:
-            - containerPort: 3000
+            - containerPort: 3002
           env:
             - name: NODE_ENV
               value: "production"
+            - name: PORT
+              value: "3002"
             - name: DATABASE_URL
               valueFrom:
                 secretKeyRef:
                   name: azeebo-secrets
-                  key: DATABASE_URL
+                  key: database-url
             - name: REDIS_URL
               valueFrom:
                 secretKeyRef:
                   name: azeebo-secrets
-                  key: REDIS_URL
+                  key: redis-url
           resources:
             requests:
               memory: "256Mi"
@@ -50,13 +52,13 @@ spec:
           livenessProbe:
             httpGet:
               path: /health
-              port: 3000
+              port: 3002
             initialDelaySeconds: 30
             periodSeconds: 10
           readinessProbe:
             httpGet:
               path: /ready
-              port: 3000
+              port: 3002
             initialDelaySeconds: 5
             periodSeconds: 10
           securityContext:
@@ -75,8 +77,8 @@ spec:
   selector:
     app: wallet-service
   ports:
-    - port: 3000
-      targetPort: 3000
+    - port: 3002
+      targetPort: 3002
   type: ClusterIP
 ---
 apiVersion: policy/v1

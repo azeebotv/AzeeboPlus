@@ -12,7 +12,6 @@ describe('Prediction Markets Controller Contract Tests', () => {
 
   beforeAll(async () => {
     // Set test environment variables
-    process.env.JWT_SECRET = 'test-jwt-secret-for-testing-only';
     process.env.JWT_ACCESS_SECRET = 'test-jwt-access-secret-for-testing-only';
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -52,7 +51,6 @@ describe('Prediction Markets Controller Contract Tests', () => {
   afterAll(async () => {
     await app.close();
     // Clean up test environment variables
-    delete process.env.JWT_SECRET;
     delete process.env.JWT_ACCESS_SECRET;
   });
 

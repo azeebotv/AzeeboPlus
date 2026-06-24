@@ -9,7 +9,13 @@ interface SkeletonProps {
   style?: React.CSSProperties;
 }
 
-export function Skeleton({ width, height, borderRadius, className = '', style }: SkeletonProps): React.ReactElement {
+export function Skeleton({
+  width,
+  height,
+  borderRadius,
+  className = '',
+  style,
+}: SkeletonProps): React.ReactElement {
   const skeletonStyle: React.CSSProperties = {
     backgroundColor: '#2A1A1A',
     animation: 'pulse 1.5s ease-in-out infinite',
@@ -37,7 +43,13 @@ export function CardSkeleton(): React.ReactElement {
 
 export function ContentGridSkeleton({ count = 6 }: { count?: number }): React.ReactElement {
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 24 }}>
+    <div
+      style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+        gap: 24,
+      }}
+    >
       {Array.from({ length: count }).map((_, i) => (
         <CardSkeleton key={i} />
       ))}
@@ -87,8 +99,17 @@ export function ListItemSkeleton(): React.ReactElement {
 
 export function VideoPlayerSkeleton(): React.ReactElement {
   return (
-    <div style={{ backgroundColor: '#000', borderRadius: 12, overflow: 'hidden', marginBottom: 24 }}>
-      <div style={{ aspectRatio: '16/9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <div
+      style={{ backgroundColor: '#000', borderRadius: 12, overflow: 'hidden', marginBottom: 24 }}
+    >
+      <div
+        style={{
+          aspectRatio: '16/9',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
         <Skeleton width="64px" height="64px" borderRadius="50%" />
       </div>
     </div>

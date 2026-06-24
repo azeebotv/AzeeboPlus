@@ -48,7 +48,7 @@ export type {
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 if (!API_BASE_URL) {
   throw new Error(
-    'NEXT_PUBLIC_API_BASE_URL is required — set it in .env.local or environment variables',
+    'NEXT_PUBLIC_API_BASE_URL is required — set it in .env.local or environment variables'
   );
 }
 export const resolvedApiUrl = API_BASE_URL;
@@ -85,23 +85,23 @@ export interface ApiError {
   success: false;
 
   // --- RFC 7807 fields ---
-  type?: string;         // A URI reference that identifies the problem type
-  title?: string;        // A short, human-readable summary of the problem type
-  status?: number;       // HTTP status code (alias for statusCode)
-  detail?: string;       // A human-readable explanation specific to this occurrence
-  instance?: string;     // A URI reference that identifies the specific occurrence
+  type?: string; // A URI reference that identifies the problem type
+  title?: string; // A short, human-readable summary of the problem type
+  status?: number; // HTTP status code (alias for statusCode)
+  detail?: string; // A human-readable explanation specific to this occurrence
+  instance?: string; // A URI reference that identifies the specific occurrence
 
   // --- Application-level fields ---
-  code?: string;         // Application-specific error code (e.g. "EMAIL_ALREADY_EXISTS")
-  message: string;       // Human-readable message (primary, always present)
-  error?: string;        // Legacy error string for backward compat
-  statusCode?: number;   // Legacy status code for backward compat
+  code?: string; // Application-specific error code (e.g. "EMAIL_ALREADY_EXISTS")
+  message: string; // Human-readable message (primary, always present)
+  error?: string; // Legacy error string for backward compat
+  statusCode?: number; // Legacy status code for backward compat
   details?: {
     fieldErrors?: Record<string, string[]>;
     [key: string]: unknown;
   };
-  timestamp?: string;    // ISO 8601 timestamp of the error
-  path?: string;         // Request path that caused the error
+  timestamp?: string; // ISO 8601 timestamp of the error
+  path?: string; // Request path that caused the error
 }
 
 export interface User {
@@ -195,7 +195,7 @@ export interface LoginRequest {
 }
 
 export interface RegisterRequest {
-  name: string;
+  displayName: string;
   email: string;
   password: string;
 }
@@ -318,7 +318,7 @@ export interface RequestClient {
   request<T>(
     endpoint: string,
     options?: RequestInit,
-    retryOptions?: RetryOptions,
+    retryOptions?: RetryOptions
   ): Promise<ApiResponse<T>>;
 }
 
@@ -334,7 +334,7 @@ export function gatewayPath(endpoint: string): string {
 
 export async function apiFetch<T>(
   endpoint: string,
-  options: RequestInit = {},
+  options: RequestInit = {}
 ): Promise<ApiResponse<T>> {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -367,7 +367,7 @@ export async function apiFetch<T>(
         details: data.details,
         timestamp: data.timestamp,
         path: data.path,
-      };
+      } as any;
     }
 
     return {
@@ -381,6 +381,6 @@ export async function apiFetch<T>(
       message: 'Network error. Please check your connection.',
       error: error instanceof Error ? error.message : 'Unknown error',
       status: 0,
-    };
+    } as any;
   }
 }

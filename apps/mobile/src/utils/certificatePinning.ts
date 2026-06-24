@@ -25,7 +25,7 @@ const loadPinsFromConfig = (): CertificatePin[] => {
   const prodBackup = extras.CERT_PIN_PRODUCTION_BACKUP;
   if (prodPin && !prodPin.includes('PLACEHOLDER')) {
     pins.push({
-      hostname: 'api.azeebo.com',
+      hostname: 'api.azeeboplus.com',
       sha256Fingerprint: prodPin,
       backupPin: prodBackup,
       expiresAt: extras.CERT_PIN_EXPIRY || '2027-12-31T23:59:59Z',
@@ -37,7 +37,7 @@ const loadPinsFromConfig = (): CertificatePin[] => {
   const stagingBackup = extras.CERT_PIN_STAGING_BACKUP;
   if (stagingPin && !stagingPin.includes('PLACEHOLDER')) {
     pins.push({
-      hostname: 'staging-api.azeebo.com',
+      hostname: 'staging-api.azeeboplus.com',
       sha256Fingerprint: stagingPin,
       backupPin: stagingBackup,
       expiresAt: extras.CERT_PIN_EXPIRY || '2027-12-31T23:59:59Z',

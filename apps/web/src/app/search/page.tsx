@@ -37,7 +37,10 @@ export default function SearchPage(): React.JSX.Element {
   const [isLoading, setIsLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [filters, setFilters] = useState<SearchFilters>({
-    type: 'all', category: 'all', duration: 'all', sortBy: 'relevance',
+    type: 'all',
+    category: 'all',
+    duration: 'all',
+    sortBy: 'relevance',
   });
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -52,7 +55,9 @@ export default function SearchPage(): React.JSX.Element {
       try {
         const parsed = JSON.parse(saved) as HistoryItem[];
         setSearchHistory(parsed.map((item) => ({ ...item, timestamp: new Date(item.timestamp) })));
-      } catch { /* intentionally minimal */ }
+      } catch {
+        /* intentionally minimal */
+      }
     }
   }, []);
 
@@ -71,60 +76,93 @@ export default function SearchPage(): React.JSX.Element {
   }, []);
 
   const fetchSuggestions = useCallback(async (searchQuery: string) => {
-    if (searchQuery.length < 2) { setSuggestions([]); return; }
+    if (searchQuery.length < 2) {
+      setSuggestions([]);
+      return;
+    }
     try {
       const response = await fetch(`/api/suggestions?q=${encodeURIComponent(searchQuery)}`);
       if (response.ok) {
         const data = await response.json();
         setSuggestions(data.suggestions || []);
       }
-    } catch { /* intentionally minimal */ }
+    } catch {
+      /* intentionally minimal */
+    }
   }, []);
 
-  const handleQueryChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setQuery(value);
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => fetchSuggestions(value), 300);
-  }, [fetchSuggestions]);
+  const handleQueryChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const value = e.target.value;
+      setQuery(value);
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      debounceRef.current = setTimeout(() => fetchSuggestions(value), 300);
+    },
+    [fetchSuggestions]
+  );
 
-  const handleSearch = useCallback(async (searchQuery: string) => {
-    if (!searchQuery.trim()) return;
-    setIsLoading(true);
-    setHasSearched(true);
-    setShowSuggestions(false);
-    try {
-      const params = new URLSearchParams({ q: searchQuery, type: filters.type, category: filters.category, duration: filters.duration, sortBy: filters.sortBy });
-      const response = await fetch(`/api/search?${params.toString()}`);
-      const data = await response.json();
-      setResults(data.results || []);
-      const newHistoryItem = { query: searchQuery, timestamp: new Date() };
-      setSearchHistory((prev) => [newHistoryItem, ...prev.filter((item) => item.query !== searchQuery)].slice(0, 10));
-      localStorage.setItem('searchHistory', JSON.stringify(searchHistory));
-    } catch (error) {
-      console.error('Search failed:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [filters, searchHistory]);
+  const handleSearch = useCallback(
+    async (searchQuery: string) => {
+      if (!searchQuery.trim()) return;
+      setIsLoading(true);
+      setHasSearched(true);
+      setShowSuggestions(false);
+      try {
+        const params = new URLSearchParams({
+          q: searchQuery,
+          type: filters.type,
+          category: filters.category,
+          duration: filters.duration,
+          sortBy: filters.sortBy,
+        });
+        const response = await fetch(`/api/search?${params.toString()}`);
+        const data = await response.json();
+        setResults(data.results || []);
+        const newHistoryItem = { query: searchQuery, timestamp: new Date() };
+        setSearchHistory((prev) =>
+          [newHistoryItem, ...prev.filter((item) => item.query !== searchQuery)].slice(0, 10)
+        );
+        localStorage.setItem('searchHistory', JSON.stringify(searchHistory));
+      } catch (error) {
+        console.error('Search failed:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [filters, searchHistory]
+  );
 
-  const handleSubmit = (e: React.FormEvent) => { e.preventDefault(); handleSearch(query); };
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    handleSearch(query);
+  };
 
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'ArrowDown' && suggestions.length > 0) {
-      e.preventDefault();
-      const first = suggestionsRef.current?.querySelector('button');
-      first?.focus();
-    }
-  }, [suggestions.length]);
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === 'ArrowDown' && suggestions.length > 0) {
+        e.preventDefault();
+        const first = suggestionsRef.current?.querySelector('button');
+        first?.focus();
+      }
+    },
+    [suggestions.length]
+  );
 
   const handleSuggestionKeyDown = useCallback((e: React.KeyboardEvent, index: number) => {
     const buttons = suggestionsRef.current?.querySelectorAll('button');
     if (!buttons) return;
     let nextIndex = index;
-    if (e.key === 'ArrowDown') { e.preventDefault(); nextIndex = (index + 1) % buttons.length; }
-    else if (e.key === 'ArrowUp') { e.preventDefault(); nextIndex = (index - 1 + buttons.length) % buttons.length; }
-    else if (e.key === 'Escape') { setShowSuggestions(false); searchInputRef.current?.focus(); return; }
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      nextIndex = (index + 1) % buttons.length;
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      nextIndex = (index - 1 + buttons.length) % buttons.length;
+    } else if (e.key === 'Escape') {
+      setShowSuggestions(false);
+      searchInputRef.current?.focus();
+      return;
+    }
     (buttons[nextIndex] as HTMLElement).focus();
   }, []);
 
@@ -132,20 +170,35 @@ export default function SearchPage(): React.JSX.Element {
     const buttons = suggestionsRef.current?.querySelectorAll('[role="option"]');
     if (!buttons) return;
     let nextIndex = index;
-    if (e.key === 'ArrowDown') { e.preventDefault(); nextIndex = (index + 1) % buttons.length; }
-    else if (e.key === 'ArrowUp') { e.preventDefault(); nextIndex = (index - 1 + buttons.length) % buttons.length; }
-    else if (e.key === 'Escape') { setShowSuggestions(false); searchInputRef.current?.focus(); return; }
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      nextIndex = (index + 1) % buttons.length;
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      nextIndex = (index - 1 + buttons.length) % buttons.length;
+    } else if (e.key === 'Escape') {
+      setShowSuggestions(false);
+      searchInputRef.current?.focus();
+      return;
+    }
     (buttons[nextIndex] as HTMLElement).focus();
   }, []);
 
-  const clearHistory = () => { setSearchHistory([]); localStorage.removeItem('searchHistory'); };
+  const clearHistory = () => {
+    setSearchHistory([]);
+    localStorage.removeItem('searchHistory');
+  };
 
   const filteredResults = results.filter((result) => {
     if (filters.type !== 'all' && result.type !== filters.type) return false;
     if (filters.category !== 'all' && result.category !== filters.category) return false;
     if (filters.duration !== 'all') {
       if (filters.duration === 'short' && (result.duration || 0) > 60) return false;
-      if (filters.duration === 'medium' && ((result.duration || 0) <= 60 || (result.duration || 0) > 180)) return false;
+      if (
+        filters.duration === 'medium' &&
+        ((result.duration || 0) <= 60 || (result.duration || 0) > 180)
+      )
+        return false;
       if (filters.duration === 'long' && (result.duration || 0) <= 180) return false;
     }
     return true;
@@ -163,7 +216,12 @@ export default function SearchPage(): React.JSX.Element {
 
         {/* Search Form */}
         <div className="relative mb-8" ref={suggestionsRef}>
-          <form onSubmit={handleSubmit} className="relative" role="search" aria-label="Search content">
+          <form
+            onSubmit={handleSubmit}
+            className="relative"
+            role="search"
+            aria-label="Search content"
+          >
             <div className="az-glass flex items-center p-1">
               <input
                 ref={searchInputRef}
@@ -177,48 +235,122 @@ export default function SearchPage(): React.JSX.Element {
                 aria-label="Search query"
                 aria-autocomplete="list"
                 aria-controls="search-suggestions"
-                aria-expanded={showSuggestions && (suggestions.length > 0 || searchHistory.length > 0)}
+                aria-expanded={
+                  showSuggestions && (suggestions.length > 0 || searchHistory.length > 0)
+                }
                 aria-describedby="search-instructions"
               />
-              <button type="submit" className="az-btn-primary" style={{ width: 'auto', paddingInline: '1.5rem', margin: '0.25rem', padding: '0.6rem 1.5rem' }} aria-label="Search">
+              <button
+                type="submit"
+                className="az-btn-primary"
+                style={{
+                  width: 'auto',
+                  paddingInline: '1.5rem',
+                  margin: '0.25rem',
+                  padding: '0.6rem 1.5rem',
+                }}
+                aria-label="Search"
+              >
                 Search
               </button>
             </div>
-            <p id="search-instructions" className="sr-only">Type to search, use arrow keys to navigate suggestions, Enter to search, Escape to close suggestions.</p>
+            <p id="search-instructions" className="sr-only">
+              Type to search, use arrow keys to navigate suggestions, Enter to search, Escape to
+              close suggestions.
+            </p>
           </form>
 
           {/* Suggestions Dropdown */}
-          {showSuggestions && (suggestions.length > 0 || (searchHistory.length > 0 && query.length === 0)) && (
-            <div id="search-suggestions" role="listbox" aria-label="Search suggestions" className="absolute top-full left-0 right-0 mt-2 az-glass p-2 z-50 max-h-80 overflow-y-auto">
-              {suggestions.length > 0 ? (
-                <div>
-                  <p className="px-3 py-1 text-xs font-bold text-white/40 uppercase tracking-wider">Suggestions</p>
-                  {suggestions.map((suggestion, index) => (
-                    <button key={index} role="option" onClick={() => { setQuery(suggestion); handleSearch(suggestion); }} onKeyDown={(e) => handleSuggestionKeyDown(e, index)} className="w-full text-left px-3 py-2 rounded-lg text-sm text-white/70 hover:text-white hover:bg-white/5 transition-colors">
-                      <svg className="w-4 h-4 inline-block mr-3 text-white/40" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                      {suggestion}
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <div>
-                  <div className="flex items-center justify-between px-3 py-1">
-                    <p className="text-xs font-bold text-white/40 uppercase tracking-wider">Recent Searches</p>
-                    <button onClick={clearHistory} className="text-xs text-[#E8420A] hover:text-[#CC1C1C] transition-colors">Clear</button>
+          {showSuggestions &&
+            (suggestions.length > 0 || (searchHistory.length > 0 && query.length === 0)) && (
+              <div
+                id="search-suggestions"
+                role="listbox"
+                aria-label="Search suggestions"
+                className="absolute top-full left-0 right-0 mt-2 az-glass p-2 z-50 max-h-80 overflow-y-auto"
+              >
+                {suggestions.length > 0 ? (
+                  <div>
+                    <p className="px-3 py-1 text-xs font-bold text-white/40 uppercase tracking-wider">
+                      Suggestions
+                    </p>
+                    {suggestions.map((suggestion, index) => (
+                      <button
+                        key={index}
+                        role="option"
+                        onClick={() => {
+                          setQuery(suggestion);
+                          handleSearch(suggestion);
+                        }}
+                        onKeyDown={(e) => handleSuggestionKeyDown(e, index)}
+                        className="w-full text-left px-3 py-2 rounded-lg text-sm text-white/70 hover:text-white hover:bg-white/5 transition-colors"
+                      >
+                        <svg
+                          className="w-4 h-4 inline-block mr-3 text-white/40"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                          />
+                        </svg>
+                        {suggestion}
+                      </button>
+                    ))}
                   </div>
-                  {searchHistory.map((item, index) => (
-                    <button key={index} role="option" onClick={() => { setQuery(item.query); handleSearch(item.query); }} onKeyDown={(e) => handleHistoryKeyDown(e, index)} className="w-full text-left px-3 py-2 rounded-lg text-sm text-white/70 hover:text-white hover:bg-white/5 transition-colors flex items-center justify-between">
-                      <span>
-                        <svg className="w-4 h-4 inline-block mr-3 text-white/40" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                        {item.query}
-                      </span>
-                      <span className="text-xs text-white/30">{item.timestamp.toLocaleDateString()}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
+                ) : (
+                  <div>
+                    <div className="flex items-center justify-between px-3 py-1">
+                      <p className="text-xs font-bold text-white/40 uppercase tracking-wider">
+                        Recent Searches
+                      </p>
+                      <button
+                        onClick={clearHistory}
+                        className="text-xs text-[#E8420A] hover:text-[#CC1C1C] transition-colors"
+                      >
+                        Clear
+                      </button>
+                    </div>
+                    {searchHistory.map((item, index) => (
+                      <button
+                        key={index}
+                        role="option"
+                        onClick={() => {
+                          setQuery(item.query);
+                          handleSearch(item.query);
+                        }}
+                        onKeyDown={(e) => handleHistoryKeyDown(e, index)}
+                        className="w-full text-left px-3 py-2 rounded-lg text-sm text-white/70 hover:text-white hover:bg-white/5 transition-colors flex items-center justify-between"
+                      >
+                        <span>
+                          <svg
+                            className="w-4 h-4 inline-block mr-3 text-white/40"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                          </svg>
+                          {item.query}
+                        </span>
+                        <span className="text-xs text-white/30">
+                          {item.timestamp.toLocaleDateString()}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
         </div>
 
         {/* Filters */}
@@ -226,8 +358,15 @@ export default function SearchPage(): React.JSX.Element {
           <div className="mb-6 az-glass p-4">
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               <div>
-                <label htmlFor="filter-type" className="block text-sm font-bold text-white/50 mb-1">Type</label>
-                <select id="filter-type" value={filters.type} onChange={(e) => setFilters({ ...filters, type: e.target.value })} className="az-input w-full">
+                <label htmlFor="filter-type" className="block text-sm font-bold text-white/50 mb-1">
+                  Type
+                </label>
+                <select
+                  id="filter-type"
+                  value={filters.type}
+                  onChange={(e) => setFilters({ ...filters, type: e.target.value })}
+                  className="az-input w-full"
+                >
                   <option value="all">All Types</option>
                   <option value="movie">Movies</option>
                   <option value="series">Series</option>
@@ -236,8 +375,18 @@ export default function SearchPage(): React.JSX.Element {
                 </select>
               </div>
               <div>
-                <label htmlFor="filter-category" className="block text-sm font-bold text-white/50 mb-1">Category</label>
-                <select id="filter-category" value={filters.category} onChange={(e) => setFilters({ ...filters, category: e.target.value })} className="az-input w-full">
+                <label
+                  htmlFor="filter-category"
+                  className="block text-sm font-bold text-white/50 mb-1"
+                >
+                  Category
+                </label>
+                <select
+                  id="filter-category"
+                  value={filters.category}
+                  onChange={(e) => setFilters({ ...filters, category: e.target.value })}
+                  className="az-input w-full"
+                >
                   <option value="all">All Categories</option>
                   <option value="drama">Drama</option>
                   <option value="comedy">Comedy</option>
@@ -246,8 +395,18 @@ export default function SearchPage(): React.JSX.Element {
                 </select>
               </div>
               <div>
-                <label htmlFor="filter-duration" className="block text-sm font-bold text-white/50 mb-1">Duration</label>
-                <select id="filter-duration" value={filters.duration} onChange={(e) => setFilters({ ...filters, duration: e.target.value })} className="az-input w-full">
+                <label
+                  htmlFor="filter-duration"
+                  className="block text-sm font-bold text-white/50 mb-1"
+                >
+                  Duration
+                </label>
+                <select
+                  id="filter-duration"
+                  value={filters.duration}
+                  onChange={(e) => setFilters({ ...filters, duration: e.target.value })}
+                  className="az-input w-full"
+                >
                   <option value="all">Any Duration</option>
                   <option value="short">&lt; 1 hour</option>
                   <option value="medium">1-3 hours</option>
@@ -255,8 +414,15 @@ export default function SearchPage(): React.JSX.Element {
                 </select>
               </div>
               <div>
-                <label htmlFor="filter-sort" className="block text-sm font-bold text-white/50 mb-1">Sort By</label>
-                <select id="filter-sort" value={filters.sortBy} onChange={(e) => setFilters({ ...filters, sortBy: e.target.value })} className="az-input w-full">
+                <label htmlFor="filter-sort" className="block text-sm font-bold text-white/50 mb-1">
+                  Sort By
+                </label>
+                <select
+                  id="filter-sort"
+                  value={filters.sortBy}
+                  onChange={(e) => setFilters({ ...filters, sortBy: e.target.value })}
+                  className="az-input w-full"
+                >
                   <option value="relevance">Relevance</option>
                   <option value="date">Newest</option>
                   <option value="rating">Top Rated</option>
@@ -284,23 +450,54 @@ export default function SearchPage(): React.JSX.Element {
             </div>
           ) : results.length > 0 ? (
             <div className="space-y-4">
-              <p className="text-sm text-white/50 mb-4">Found {filteredResults.length} result{filteredResults.length !== 1 ? 's' : ''}</p>
+              <p className="text-sm text-white/50 mb-4">
+                Found {filteredResults.length} result{filteredResults.length !== 1 ? 's' : ''}
+              </p>
               {filteredResults.map((result) => (
-                <a key={result.id} href={`/watch/${result.id}`} className="az-glass p-4 flex gap-4 hover:bg-white/5 transition-colors cursor-pointer group">
-                  <div className="w-40 h-24 rounded-lg overflow-hidden flex-shrink-0 relative" style={{ background: 'linear-gradient(135deg, rgba(232,66,10,0.3), rgba(13,59,46,0.4))' }}>
+                <a
+                  key={result.id}
+                  href={`/watch/${result.id}`}
+                  className="az-glass p-4 flex gap-4 hover:bg-white/5 transition-colors cursor-pointer group"
+                >
+                  <div
+                    className="w-40 h-24 rounded-lg overflow-hidden flex-shrink-0 relative"
+                    style={{
+                      background:
+                        'linear-gradient(135deg, rgba(232,66,10,0.3), rgba(13,59,46,0.4))',
+                    }}
+                  >
                     {result.thumbnail ? (
-                      <img src={result.thumbnail} alt={result.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                      <img
+                        src={result.thumbnail}
+                        alt={result.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-white/40">
-                        <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/></svg>
+                        <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z" />
+                        </svg>
                       </div>
                     )}
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-bold text-white text-sm group-hover:text-[#E8420A] transition-colors">{result.title}</h3>
-                    {result.description && <p className="text-xs text-white/45 mt-1 line-clamp-2">{result.description}</p>}
+                    <h3 className="font-bold text-white text-sm group-hover:text-[#E8420A] transition-colors">
+                      {result.title}
+                    </h3>
+                    {result.description && (
+                      <p className="text-xs text-white/45 mt-1 line-clamp-2">
+                        {result.description}
+                      </p>
+                    )}
                     <div className="flex items-center gap-3 mt-2 text-xs text-white/40">
-                      {result.universe && <span className="px-2 py-0.5 rounded" style={{ background: 'rgba(232,66,10,0.15)', color: '#E8420A' }}>{result.universe.name}</span>}
+                      {result.universe && (
+                        <span
+                          className="px-2 py-0.5 rounded"
+                          style={{ background: 'rgba(232,66,10,0.15)', color: '#E8420A' }}
+                        >
+                          {result.universe.name}
+                        </span>
+                      )}
                       {result.creator && <span>{result.creator.name}</span>}
                       {result.duration && <span>{Math.floor(result.duration / 60)} min</span>}
                     </div>
@@ -318,7 +515,9 @@ export default function SearchPage(): React.JSX.Element {
             <div className="text-center py-12">
               <span className="text-5xl mb-4 block">&#x1F3AC;</span>
               <h3 className="text-xl font-bold text-white mb-2">Start exploring</h3>
-              <p className="text-white/50 text-sm">Search for your favorite content, creators, or genres</p>
+              <p className="text-white/50 text-sm">
+                Search for your favorite content, creators, or genres
+              </p>
             </div>
           )}
         </div>

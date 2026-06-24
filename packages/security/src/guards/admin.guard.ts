@@ -37,7 +37,10 @@ export class AdminGuard implements CanActivate {
     }
 
     try {
-      const payload = this.jwtService.verify<{ sub: string; id: string; role?: string }>(token);
+      const payload = this.jwtService.verify<{ sub: string; id: string; role?: string }>(token, {
+        audience: 'azeebo-api',
+        issuer: 'azeebo-auth',
+      });
       request.user = payload;
 
       if (!payload.role || !this.allowedRoles.includes(payload.role)) {

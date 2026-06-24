@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
-import { colors, universeColors } from '@azeebo/design-tokens';
+import { colors, universeColors } from '../src/theme';
 
 const PLACEHOLDER_IMAGE = '';
 
@@ -98,7 +98,7 @@ export default function CityGuideScreen() {
       <ScrollView
         style={[
           styles.scrollView,
-          { backgroundColor: colorScheme === 'dark' ? colors.dark[900] : colors.light[50] },
+          { backgroundColor: colorScheme === 'dark' ? colors.bg.primary : '#FFFFFF' },
         ]}
       >
         <View style={styles.header}>
@@ -108,7 +108,7 @@ export default function CityGuideScreen() {
           <Text
             style={[
               styles.headerTitle,
-              { color: colorScheme === 'dark' ? colors.text.primary : colors.dark[900] },
+              { color: colors.text.primary },
             ]}
           >
             City Guide
@@ -178,7 +178,7 @@ export default function CityGuideScreen() {
             <Text
               style={[
                 styles.sectionTitle,
-                { color: colorScheme === 'dark' ? colors.text.primary : colors.dark[900] },
+                { color: colors.text.primary },
               ]}
             >
               Featured Events
@@ -204,7 +204,7 @@ export default function CityGuideScreen() {
                   <Text
                     style={[
                       styles.featuredTitle,
-                      { color: colorScheme === 'dark' ? colors.text.primary : colors.dark[900] },
+                      { color: colors.text.primary },
                     ]}
                   >
                     {event.title}
@@ -237,7 +237,7 @@ export default function CityGuideScreen() {
           <Text
             style={[
               styles.sectionTitle,
-              { color: colorScheme === 'dark' ? colors.text.primary : colors.dark[900] },
+              { color: colors.text.primary },
             ]}
           >
             Upcoming Events
@@ -251,7 +251,7 @@ export default function CityGuideScreen() {
                     <Text
                       style={[
                         styles.eventTitle,
-                        { color: colorScheme === 'dark' ? colors.text.primary : colors.dark[900] },
+                        { color: colors.text.primary },
                       ]}
                     >
                       {event.title}

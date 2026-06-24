@@ -1,12 +1,10 @@
 import { Controller, Delete, Get, Param, Post, Body, Req, UseGuards, ForbiddenException } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
 import { Throttle } from '@nestjs/throttler';
 import { UsersService } from '../users/users.service';
 import { Request } from 'express';
 import { createLogger } from '@azeebo/logger';
 
 @Controller('privacy')
-@UseGuards(AuthGuard('jwt'))
 export class UserDeletionController {
   private readonly logger = createLogger('user-deletion');
 

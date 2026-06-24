@@ -23,7 +23,7 @@ describe('Support Controller Contract Tests', () => {
   };
 
   beforeAll(async () => {
-    process.env.JWT_SECRET = 'test-jwt-secret';
+    process.env.JWT_ACCESS_SECRET = 'test-jwt-secret';
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [SupportModule],

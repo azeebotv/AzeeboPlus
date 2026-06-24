@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { colors } from '@azeebo/design-tokens';
+import { colors } from '../src/theme';
 import { apiClient } from '../src/api/client';
 import { LoadingState, ErrorState } from '../src/components/StateContainers';
 
@@ -74,7 +74,7 @@ export default function CharacterLoreScreen() {
       <ScrollView
         style={[
           styles.scrollView,
-          { backgroundColor: isDark ? colors.dark[900] : colors.light[50] },
+          { backgroundColor: isDark ? colors.bg.primary : '#FFFFFF' },
         ]}
       >
         <View style={styles.header}>
@@ -82,7 +82,7 @@ export default function CharacterLoreScreen() {
             <Text style={styles.backIcon}>←</Text>
           </TouchableOpacity>
           <Text
-            style={[styles.headerTitle, { color: isDark ? colors.text.primary : colors.dark[900] }]}
+            style={[styles.headerTitle, { color: colors.text.primary }]}
           >
             Character Lore
           </Text>
@@ -119,7 +119,7 @@ export default function CharacterLoreScreen() {
               <Text
                 style={[
                   styles.sectionTitle,
-                  { color: isDark ? colors.text.primary : colors.dark[900] },
+                  { color: colors.text.primary },
                 ]}
               >
                 Story
@@ -142,7 +142,7 @@ export default function CharacterLoreScreen() {
               <Text
                 style={[
                   styles.sectionTitle,
-                  { color: isDark ? colors.text.primary : colors.dark[900] },
+                  { color: colors.text.primary },
                 ]}
               >
                 Attributes
@@ -162,7 +162,7 @@ export default function CharacterLoreScreen() {
                       <Text
                         style={[
                           styles.statValue,
-                          { color: isDark ? colors.text.primary : colors.dark[900] },
+                          { color: colors.text.primary },
                         ]}
                       >
                         {stat.value}
@@ -189,7 +189,7 @@ export default function CharacterLoreScreen() {
               <Text
                 style={[
                   styles.sectionTitle,
-                  { color: isDark ? colors.text.primary : colors.dark[900] },
+                  { color: colors.text.primary },
                 ]}
               >
                 Relationships
@@ -204,7 +204,7 @@ export default function CharacterLoreScreen() {
                       <Text
                         style={[
                           styles.relName,
-                          { color: isDark ? colors.text.primary : colors.dark[900] },
+                          { color: colors.text.primary },
                         ]}
                       >
                         {rel.name}
@@ -225,7 +225,7 @@ export default function CharacterLoreScreen() {
               <Text
                 style={[
                   styles.sectionTitle,
-                  { color: isDark ? colors.text.primary : colors.dark[900] },
+                  { color: colors.text.primary },
                 ]}
               >
                 Lore Chapters
@@ -244,7 +244,7 @@ export default function CharacterLoreScreen() {
                       <Text
                         style={[
                           styles.loreTitle,
-                          { color: isDark ? colors.text.primary : colors.dark[900] },
+                          { color: colors.text.primary },
                           !chapter.unlocked && styles.loreTextLocked,
                         ]}
                       >

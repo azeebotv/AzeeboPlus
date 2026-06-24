@@ -8,7 +8,7 @@ echo "========================================="
 AWS_REGION="${AWS_REGION:-us-east-1}"
 SECRET_PREFIX="${SECRET_PREFIX:-azeebo}"
 ROTATION_INTERVAL_DAYS="${ROTATION_INTERVAL_DAYS:-90}"
-NOTIFICATION_EMAIL="${NOTIFICATION_EMAIL:-security@azeebo.com}"
+NOTIFICATION_EMAIL="${NOTIFICATION_EMAIL:-security@azeeboplus.com}"
 SLACK_WEBHOOK_URL="${SLACK_WEBHOOK_URL:-}"
 
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)

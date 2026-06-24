@@ -38,7 +38,7 @@ describe('Auth Controller Contract Tests', () => {
   let app: INestApplication;
 
   beforeAll(async () => {
-    process.env.JWT_SECRET = 'test-jwt-secret';
+    process.env.JWT_ACCESS_SECRET = 'test-jwt-secret';
     process.env.REFRESH_TOKEN_SECRET = 'test-refresh-token-secret';
     process.env.JWT_EXPIRES_IN = '60s';
     process.env.REFRESH_TOKEN_EXPIRES_IN = '7d';

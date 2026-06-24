@@ -19,7 +19,7 @@ spec:
         tier: backend
       annotations:
         prometheus.io/scrape: "true"
-        prometheus.io/port: "3019"
+        prometheus.io/port: "3012"
         prometheus.io/path: "/metrics"
     spec:
       serviceAccountName: azeebo-sa
@@ -46,14 +46,14 @@ spec:
           image: azeebo/comedy-service:latest
           imagePullPolicy: Always
           ports:
-            - containerPort: 3019
+            - containerPort: 3012
               protocol: TCP
               name: http
           env:
             - name: NODE_ENV
               value: production
             - name: PORT
-              value: "3019"
+              value: "3012"
             - name: DATABASE_URL
               valueFrom:
                 secretKeyRef:
@@ -76,7 +76,7 @@ spec:
           livenessProbe:
             httpGet:
               path: /health
-              port: 3019
+              port: 3012
             initialDelaySeconds: 30
             periodSeconds: 10
             timeoutSeconds: 5
@@ -84,7 +84,7 @@ spec:
           readinessProbe:
             httpGet:
               path: /ready
-              port: 3019
+              port: 3012
             initialDelaySeconds: 5
             periodSeconds: 5
             timeoutSeconds: 3
@@ -113,12 +113,12 @@ metadata:
     app: comedy-service
   annotations:
     prometheus.io/scrape: "true"
-    prometheus.io/port: "3019"
+    prometheus.io/port: "3012"
 spec:
   type: ClusterIP
   ports:
-    - port: 3019
-      targetPort: 3019
+    - port: 3012
+      targetPort: 3012
       protocol: TCP
       name: http
   selector:

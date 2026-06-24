@@ -43,5 +43,5 @@ pnpm start:dev
 ## Ownership
 
 - **Team**: Rewards Team
-- **Maintainer**: rewards@azeebo.com
+- **Maintainer**: rewards@azeeboplus.com
 - **Last Updated**: 2026-05-14

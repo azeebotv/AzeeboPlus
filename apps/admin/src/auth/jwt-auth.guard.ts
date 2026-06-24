@@ -24,7 +24,9 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     }
     try {
       const payload = this.jwtService.verify(token, {
-        secret: process.env.JWT_SECRET,
+        secret: process.env.JWT_ACCESS_SECRET,
+        audience: 'azeebo-api',
+        issuer: 'azeebo-auth',
       });
       // Attach payload to request for downstream handlers
       (request as AuthenticatedRequest).user = payload;

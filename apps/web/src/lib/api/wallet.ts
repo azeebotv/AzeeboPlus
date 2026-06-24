@@ -17,16 +17,16 @@ export function createWalletMethods(client: RequestClient) {
 
     getTransactions: async (
       page = 1,
-      limit = 20,
+      limit = 20
     ): Promise<ApiResponse<PaginatedResponse<Transaction>>> => {
       return client.request<PaginatedResponse<Transaction>>(
-        `/api/v1/wallet/transactions?page=${page}&limit=${limit}`,
+        `/api/v1/wallet/transactions?page=${page}&limit=${limit}`
       );
     },
 
     fundWallet: async (
       amount: number,
-      paymentMethod: string,
+      paymentMethod: string
     ): Promise<ApiResponse<PaymentInitResponse>> => {
       return client.request<PaymentInitResponse>('/api/v1/wallet/fund', {
         method: 'POST',
@@ -36,7 +36,7 @@ export function createWalletMethods(client: RequestClient) {
 
     withdraw: async (
       amount: number,
-      bankDetails: Record<string, string>,
+      bankDetails: Record<string, string>
     ): Promise<ApiResponse<{ message: string }>> => {
       return client.request<{ message: string }>('/api/v1/wallet/withdraw', {
         method: 'POST',
@@ -46,7 +46,7 @@ export function createWalletMethods(client: RequestClient) {
 
     transfer: async (
       amount: number,
-      recipientId: string,
+      recipientId: string
     ): Promise<ApiResponse<{ message: string }>> => {
       return client.request<{ message: string }>('/api/v1/wallet/transfer', {
         method: 'POST',

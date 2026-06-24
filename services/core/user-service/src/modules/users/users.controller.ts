@@ -14,7 +14,6 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
 
 import { UsersService } from './users.service';
 import { UpdateUniverseAffinityDto } from './dto/update-universe-affinity.dto';
@@ -24,39 +23,40 @@ import { RateLimitGuard, RateLimit } from '@azeebo/security';
 
 interface AuthenticatedRequest {
   user: {
-    sub: string;
+    id: string;
+    sub?: string;
+    role?: string;
+    email?: string;
   };
 }
 
 @ApiTags('Users')
 @ApiBearerAuth()
-@Controller('v1/users')
+@Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get('me')
-  @UseGuards(AuthGuard('jwt'))
-  @ApiOperation({ summary: 'Get current user profile' })
+    @ApiOperation({ summary: 'Get current user profile' })
   @ApiResponse({ status: 200, description: 'User profile' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getProfile(@Request() req: AuthenticatedRequest) {
-    return this.usersService.getProfile(req.user.sub);
+    return this.usersService.getProfile(req.user.id);
   }
 
   @Patch('me')
-  @UseGuards(AuthGuard('jwt'), RateLimitGuard)
+  @UseGuards(RateLimitGuard)
   @RateLimit(10, 3600000)
   @ApiOperation({ summary: 'Update current user profile' })
   @ApiResponse({ status: 200, description: 'Profile updated' })
   @ApiResponse({ status: 400, description: 'Invalid input' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async updateProfile(@Request() req: AuthenticatedRequest, @Body() dto: UpdateUserProfileDto) {
-    return this.usersService.updateProfile(req.user.sub, dto);
+    return this.usersService.updateProfile(req.user.id, dto);
   }
 
   @Get(':id')
-  @UseGuards(AuthGuard('jwt'))
-  @ApiOperation({ summary: 'Get user by ID' })
+    @ApiOperation({ summary: 'Get user by ID' })
   @ApiResponse({ status: 200, description: 'User profile' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'User not found' })
@@ -65,29 +65,28 @@ export class UsersController {
   }
 
   @Post(':id/follow')
-  @UseGuards(AuthGuard('jwt'), RateLimitGuard)
+  @UseGuards(RateLimitGuard)
   @RateLimit(10, 60000)
   @ApiOperation({ summary: 'Follow a user' })
   @ApiResponse({ status: 201, description: 'User followed' })
   @ApiResponse({ status: 400, description: 'Invalid input' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async followUser(@Request() req: AuthenticatedRequest, @Param('id') id: string) {
-    return this.usersService.followUser(req.user.sub, id);
+    return this.usersService.followUser(req.user.id, id);
   }
 
   @Delete(':id/follow')
-  @UseGuards(AuthGuard('jwt'), RateLimitGuard)
+  @UseGuards(RateLimitGuard)
   @RateLimit(10, 60000)
   @ApiOperation({ summary: 'Unfollow a user' })
   @ApiResponse({ status: 200, description: 'User unfollowed' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async unfollowUser(@Request() req: AuthenticatedRequest, @Param('id') id: string) {
-    return this.usersService.unfollowUser(req.user.sub, id);
+    return this.usersService.unfollowUser(req.user.id, id);
   }
 
   @Get(':id/followers')
-  @UseGuards(AuthGuard('jwt'))
-  @ApiOperation({ summary: 'Get user followers' })
+    @ApiOperation({ summary: 'Get user followers' })
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiResponse({ status: 200, description: 'User followers' })
@@ -97,8 +96,7 @@ export class UsersController {
   }
 
   @Get(':id/following')
-  @UseGuards(AuthGuard('jwt'))
-  @ApiOperation({ summary: 'Get users being followed' })
+    @ApiOperation({ summary: 'Get users being followed' })
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiResponse({ status: 200, description: 'Users being followed' })
@@ -108,17 +106,15 @@ export class UsersController {
   }
 
   @Get('me/preferences')
-  @UseGuards(AuthGuard('jwt'))
-  @ApiOperation({ summary: 'Get user preferences' })
+    @ApiOperation({ summary: 'Get user preferences' })
   @ApiResponse({ status: 200, description: 'User preferences' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getPreferences(@Request() req: AuthenticatedRequest): Promise<Record<string, unknown>> {
-    return this.usersService.getPreferences(req.user.sub);
+    return this.usersService.getPreferences(req.user.id);
   }
 
   @Put('me/preferences')
-  @UseGuards(AuthGuard('jwt'))
-  @ApiOperation({ summary: 'Update user preferences' })
+    @ApiOperation({ summary: 'Update user preferences' })
   @ApiResponse({ status: 200, description: 'Preferences updated' })
   @ApiResponse({ status: 400, description: 'Invalid input' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -126,12 +122,11 @@ export class UsersController {
     @Request() req: AuthenticatedRequest,
     @Body() preferences: Record<string, unknown>
   ): Promise<Record<string, unknown>> {
-    return this.usersService.updatePreferences(req.user.sub, preferences);
+    return this.usersService.updatePreferences(req.user.id, preferences);
   }
 
   @Get('me/history')
-  @UseGuards(AuthGuard('jwt'))
-  @ApiOperation({ summary: 'Get user watch history' })
+    @ApiOperation({ summary: 'Get user watch history' })
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiResponse({ status: 200, description: 'Watch history' })
@@ -141,12 +136,11 @@ export class UsersController {
     @Query('page') page = 1,
     @Query('limit') limit = 20
   ): Promise<unknown> {
-    return this.usersService.getWatchHistory(req.user.sub, Number(page), Number(limit));
+    return this.usersService.getWatchHistory(req.user.id, Number(page), Number(limit));
   }
 
   @Get('me/saved')
-  @UseGuards(AuthGuard('jwt'))
-  @ApiOperation({ summary: 'Get user saved items' })
+    @ApiOperation({ summary: 'Get user saved items' })
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiResponse({ status: 200, description: 'Saved items' })
@@ -156,36 +150,33 @@ export class UsersController {
     @Query('page') page = 1,
     @Query('limit') limit = 20
   ): Promise<unknown> {
-    return this.usersService.getSavedItems(req.user.sub, Number(page), Number(limit));
+    return this.usersService.getSavedItems(req.user.id, Number(page), Number(limit));
   }
 
   @Post('me/saved')
-  @UseGuards(AuthGuard('jwt'))
-  @ApiOperation({ summary: 'Save an item' })
+    @ApiOperation({ summary: 'Save an item' })
   @ApiResponse({ status: 201, description: 'Item saved' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async saveItem(
     @Request() req: AuthenticatedRequest,
     @Body() body: { contentId: string }
   ): Promise<{ message: string }> {
-    return this.usersService.saveItem(req.user.sub, body.contentId);
+    return this.usersService.saveItem(req.user.id, body.contentId);
   }
 
   @Delete('me/saved/:contentId')
-  @UseGuards(AuthGuard('jwt'))
-  @ApiOperation({ summary: 'Unsave an item' })
+    @ApiOperation({ summary: 'Unsave an item' })
   @ApiResponse({ status: 200, description: 'Item unsaved' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async unsaveItem(
     @Request() req: AuthenticatedRequest,
     @Param('contentId') contentId: string
   ): Promise<{ message: string }> {
-    return this.usersService.unsaveItem(req.user.sub, contentId);
+    return this.usersService.unsaveItem(req.user.id, contentId);
   }
 
   @Get('watch-history')
-  @UseGuards(AuthGuard('jwt'))
-  @ApiOperation({ summary: 'Get watch history' })
+    @ApiOperation({ summary: 'Get watch history' })
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiResponse({ status: 200, description: 'Watch history' })
@@ -202,8 +193,7 @@ export class UsersController {
   }
 
   @Post('watch-history')
-  @UseGuards(AuthGuard('jwt'))
-  @ApiOperation({ summary: 'Add to watch history' })
+    @ApiOperation({ summary: 'Add to watch history' })
   @ApiResponse({ status: 201, description: 'Added to watch history' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async addToWatchHistory(
@@ -217,8 +207,7 @@ export class UsersController {
   }
 
   @Get('saved')
-  @UseGuards(AuthGuard('jwt'))
-  @ApiOperation({ summary: 'Get saved content' })
+    @ApiOperation({ summary: 'Get saved content' })
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiResponse({ status: 200, description: 'Saved content' })
@@ -235,8 +224,7 @@ export class UsersController {
   }
 
   @Post('saved')
-  @UseGuards(AuthGuard('jwt'))
-  @ApiOperation({ summary: 'Save content' })
+    @ApiOperation({ summary: 'Save content' })
   @ApiResponse({ status: 201, description: 'Content saved' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async saveContent(
@@ -250,8 +238,7 @@ export class UsersController {
   }
 
   @Delete('saved/:contentId')
-  @UseGuards(AuthGuard('jwt'))
-  @ApiOperation({ summary: 'Remove saved content' })
+    @ApiOperation({ summary: 'Remove saved content' })
   @ApiResponse({ status: 200, description: 'Saved content removed' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async removeSaved(
@@ -265,17 +252,15 @@ export class UsersController {
   }
 
   @Get('me/universe-affinity')
-  @UseGuards(AuthGuard('jwt'))
-  @ApiOperation({ summary: 'Get user universe affinity' })
+    @ApiOperation({ summary: 'Get user universe affinity' })
   @ApiResponse({ status: 200, description: 'Universe affinity' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getUniverseAffinity(@Request() req: AuthenticatedRequest): Promise<unknown> {
-    return this.usersService.getUniverseAffinity(req.user.sub);
+    return this.usersService.getUniverseAffinity(req.user.id);
   }
 
   @Patch('me/universe-affinity')
-  @UseGuards(AuthGuard('jwt'))
-  @ApiOperation({ summary: 'Update user universe affinity' })
+    @ApiOperation({ summary: 'Update user universe affinity' })
   @ApiResponse({ status: 200, description: 'Universe affinity updated' })
   @ApiResponse({ status: 400, description: 'Invalid input' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -283,11 +268,11 @@ export class UsersController {
     @Request() req: AuthenticatedRequest,
     @Body() dto: UpdateUniverseAffinityDto
   ): Promise<{ message: string; interests: string[] }> {
-    return this.usersService.updateUniverseAffinity(req.user.sub, dto);
+    return this.usersService.updateUniverseAffinity(req.user.id, dto);
   }
 
   @Post('me/complete-profile')
-  @UseGuards(AuthGuard('jwt'), RateLimitGuard)
+  @UseGuards(RateLimitGuard)
   @RateLimit(5, 3600000)
   @ApiOperation({ summary: 'Complete profile setup after registration' })
   @ApiResponse({ status: 200, description: 'Profile setup completed' })
@@ -297,6 +282,6 @@ export class UsersController {
     @Request() req: AuthenticatedRequest,
     @Body() dto: CompleteProfileSetupDto
   ): Promise<Record<string, unknown>> {
-    return this.usersService.completeProfileSetup(req.user.sub, dto);
+    return this.usersService.completeProfileSetup(req.user.id, dto, req.user.email);
   }
 }

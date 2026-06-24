@@ -25,5 +25,5 @@ providers: [
 ## Ownership
 
 - **Team**: Platform Engineering
-- **Maintainer**: backend@azeebo.com
+- **Maintainer**: backend@azeeboplus.com
 - **Last Updated**: 2026-05-11

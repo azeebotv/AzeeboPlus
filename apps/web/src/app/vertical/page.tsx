@@ -82,14 +82,21 @@ export default function VerticalPage(): React.JSX.Element {
               <p className="text-white/60 text-lg mb-6 max-w-2xl">{series[0].description}</p>
               <div className="flex items-center gap-4">
                 <Link href={`/watch/${series[0].id}`}>
-                  <button type="button" className="az-btn-primary" style={{ width: 'auto', paddingInline: '2rem' }}>
+                  <button
+                    type="button"
+                    className="az-btn-primary"
+                    style={{ width: 'auto', paddingInline: '2rem' }}
+                  >
                     Start Watching
                   </button>
                 </Link>
                 <button
                   type="button"
                   className="px-6 py-3 rounded-full text-sm font-semibold text-white transition-all"
-                  style={{ border: '1px solid rgba(255,255,255,0.2)', backgroundColor: 'rgba(255,255,255,0.08)' }}
+                  style={{
+                    border: '1px solid rgba(255,255,255,0.2)',
+                    backgroundColor: 'rgba(255,255,255,0.08)',
+                  }}
                 >
                   Character Lore
                 </button>
@@ -118,8 +125,14 @@ export default function VerticalPage(): React.JSX.Element {
               <div key={i} className="az-glass overflow-hidden">
                 <div className="h-60 animate-pulse" style={{ backgroundColor: '#2A2A2A' }} />
                 <div className="p-4 space-y-3">
-                  <div className="h-5 w-3/4 animate-pulse rounded" style={{ backgroundColor: '#2A2A2A' }} />
-                  <div className="h-4 w-1/2 animate-pulse rounded" style={{ backgroundColor: '#2A2A2A' }} />
+                  <div
+                    className="h-5 w-3/4 animate-pulse rounded"
+                    style={{ backgroundColor: '#2A2A2A' }}
+                  />
+                  <div
+                    className="h-4 w-1/2 animate-pulse rounded"
+                    style={{ backgroundColor: '#2A2A2A' }}
+                  />
                 </div>
               </div>
             ))}
@@ -133,7 +146,11 @@ export default function VerticalPage(): React.JSX.Element {
                   style={{ boxShadow: '0 0 20px rgba(255,255,255,0.05)' }}
                 >
                   <div className="relative">
-                    <img src={show.thumbnail} alt={show.title} className="w-full h-48 object-cover" />
+                    <img
+                      src={show.thumbnail}
+                      alt={show.title}
+                      className="w-full h-48 object-cover"
+                    />
                     <span
                       className="absolute top-2 right-2 px-2.5 py-0.5 rounded-full text-xs font-semibold"
                       style={{ backgroundColor: '#E8420A', color: '#fff' }}

@@ -73,13 +73,20 @@ export default function LifestylePage(): React.JSX.Element {
               <h2 className="text-4xl font-bold text-white mb-2">{events[0].title}</h2>
               <p className="text-white/60 text-lg mb-6 max-w-2xl">{events[0].description}</p>
               <div className="flex items-center gap-4">
-                <button type="button" className="az-btn-primary" style={{ width: 'auto', paddingInline: '2rem' }}>
+                <button
+                  type="button"
+                  className="az-btn-primary"
+                  style={{ width: 'auto', paddingInline: '2rem' }}
+                >
                   Get Tickets
                 </button>
                 <button
                   type="button"
                   className="px-6 py-3 rounded-full text-sm font-semibold text-white transition-all"
-                  style={{ border: '1px solid rgba(255,255,255,0.2)', backgroundColor: 'rgba(255,255,255,0.08)' }}
+                  style={{
+                    border: '1px solid rgba(255,255,255,0.2)',
+                    backgroundColor: 'rgba(255,255,255,0.08)',
+                  }}
                 >
                   View Details
                 </button>
@@ -98,7 +105,9 @@ export default function LifestylePage(): React.JSX.Element {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h2 className="text-2xl sm:text-3xl font-bold text-white">Upcoming Events</h2>
-            <p className="text-base mt-1 text-white/50">Discover exciting lifestyle events across Africa</p>
+            <p className="text-base mt-1 text-white/50">
+              Discover exciting lifestyle events across Africa
+            </p>
           </div>
         </div>
 
@@ -108,8 +117,14 @@ export default function LifestylePage(): React.JSX.Element {
               <div key={i} className="az-glass overflow-hidden">
                 <div className="h-60 animate-pulse" style={{ backgroundColor: '#2A2A2A' }} />
                 <div className="p-4 space-y-3">
-                  <div className="h-5 w-3/4 animate-pulse rounded" style={{ backgroundColor: '#2A2A2A' }} />
-                  <div className="h-4 w-1/2 animate-pulse rounded" style={{ backgroundColor: '#2A2A2A' }} />
+                  <div
+                    className="h-5 w-3/4 animate-pulse rounded"
+                    style={{ backgroundColor: '#2A2A2A' }}
+                  />
+                  <div
+                    className="h-4 w-1/2 animate-pulse rounded"
+                    style={{ backgroundColor: '#2A2A2A' }}
+                  />
                 </div>
               </div>
             ))}

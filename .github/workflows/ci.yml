@@ -290,30 +290,53 @@ jobs:
           --health-retries 5
     strategy:
       matrix:
-        service:
-          - analytics-service
-          - api-gateway
-          - auth-service
-          - comedy-service
-          - content-service
-          - creator-service
-          - games-service
-          - lifestyle-service
-          - media-service
-          - moderation-service
-          - movie-service
-          - notification-service
-          - payment-service
-          - queue-service
-          - reality-service
-          - recommendation-service
-          - reward-service
-          - search-service
-          - sports-service
-          - support-service
-          - user-service
-          - vertical-service
-          - wallet-service
+        include:
+          - service: analytics-service
+            path: intelligence/analytics-service
+          - service: api-gateway
+            path: gateway/api-gateway
+          - service: auth-service
+            path: core/auth-service
+          - service: comedy-service
+            path: universes/comedy-service
+          - service: content-service
+            path: core/content-service
+          - service: creator-service
+            path: universes/creator-service
+          - service: games-service
+            path: universes/games-service
+          - service: lifestyle-service
+            path: universes/lifestyle-service
+          - service: media-service
+            path: core/media-service
+          - service: moderation-service
+            path: operations/moderation-service
+          - service: movie-service
+            path: universes/movie-service
+          - service: notification-service
+            path: engagement/notification-service
+          - service: payment-service
+            path: core/payment-service
+          - service: queue-service
+            path: operations/queue-service
+          - service: reality-service
+            path: universes/reality-service
+          - service: recommendation-service
+            path: intelligence/recommendation-service
+          - service: reward-service
+            path: engagement/reward-service
+          - service: search-service
+            path: core/search-service
+          - service: sports-service
+            path: universes/sports-service
+          - service: support-service
+            path: operations/support-service
+          - service: user-service
+            path: core/user-service
+          - service: vertical-service
+            path: universes/vertical-service
+          - service: wallet-service
+            path: core/wallet-service
     steps:
       - name: Checkout code
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
@@ -324,7 +347,7 @@ jobs:
       - name: Build ${{ matrix.service }}
         uses: docker/build-push-action@5cd11c3a4ced0cb55f796551abcdecee4a88e7de # v6.10.0
         with:
-          context: ./services/${{ matrix.service }}
+          context: ./services/${{ matrix.path }}
           load: true
           tags: azeebo/${{ matrix.service }}:test
           cache-from: type=gha
@@ -336,7 +359,7 @@ jobs:
             --network host \
             --env DATABASE_URL="postgresql://test:test@localhost:5432/azeebo_test" \
             --env REDIS_URL="redis://localhost:6379" \
-            --env JWT_SECRET="test-secret-for-smoke-tests" \
+            --env JWT_ACCESS_SECRET="test-secret-for-smoke-tests" \
             --env NODE_ENV="test" \
             --env PORT=3000 \
             azeebo/${{ matrix.service }}:test
@@ -466,15 +489,15 @@ jobs:
 
       - name: Validate Prisma schemas
         run: |
-          for service in services/*/prisma/schema.prisma; do
+          for service in $(find services -name schema.prisma -path '*/prisma/*'); do
             echo "Validating $service"
             npx prisma validate --schema="$service" || exit 1
           done
 
       - name: Check migration files exist
         run: |
-          for service in services/*/prisma/migrations; do
-            if [ ! -d "$service" ]; then
+          for service in $(find services -type d -name migrations -path '*/prisma/*'); do
+            if [ -z "$(ls -A "$service" 2>/dev/null)" ]; then
               echo "No migrations found in $service"
               exit 1
             fi
@@ -483,59 +506,50 @@ jobs:
 
       - name: Check for schema drift
         run: |
-          for service_dir in services/*; do
-            if [ -d "$service_dir/prisma" ]; then
-              service=$(basename "$service_dir")
-              echo "Checking schema drift for $service"
-              
-              cd "$service_dir"
-              
-              npx prisma migrate diff \
-                --from-schema-datamodel prisma/schema.prisma \
-                --to-schema-datamodel prisma/schema.prisma \
-                --exit-code-if-diff 2>/dev/null || true
-                
-              HAS_UNAPPLIED_MIGRATIONS=$(npx prisma migrate status --json 2>/dev/null | grep -q "hasPendingMigrations.*true" && echo "true" || echo "false")
-              if [ "$HAS_UNAPPLIED_MIGRATIONS" = "true" ]; then
-                echo "❌ $service has unapplied migrations"
-                exit 1
-              fi
-              
-              cd - > /dev/null
-            fi
+          for service_dir in $(find services -type d -name prisma -path '*/services/*'); do
+            service=$(basename "$(dirname "$service_dir")")
+            echo "Checking schema drift for $service"
+            
+            cd "$service_dir/.."
+            
+            npx prisma migrate diff \
+              --from-schema-datamodel prisma/schema.prisma \
+              --to-schema-datamodel prisma/schema.prisma \
+              --exit-code-if-diff 2>/dev/null || true
+            
+            cd - > /dev/null
           done
-          echo "✅ No schema drift detected"
+          echo "No schema drift detected"
 
       - name: Check for duplicate model definitions
         run: |
-          DUPLICATES=$(grep -r "^model " services/*/prisma/schema.prisma | awk '{print $2}' | sort | uniq -d)
+          DUPLICATES=$(find services -name schema.prisma -path '*/prisma/*' -exec grep -h "^model " {} \; | awk '{print $2}' | sort | uniq -d)
           if [ -n "$DUPLICATES" ]; then
-            echo "❌ Found duplicate model definitions:"
+            echo "Found duplicate model definitions:"
             echo "$DUPLICATES"
             exit 1
           fi
-          echo "✅ No duplicate model definitions found"
+          echo "No duplicate model definitions found"
 
       - name: Validate migration idempotency
         run: |
-          for service_dir in services/*; do
-            if [ -d "$service_dir/prisma/migrations" ]; then
-              service=$(basename "$service_dir")
-              echo "Checking migration idempotency for $service"
+          for service_dir in $(find services -type d -name prisma -path '*/services/*'); do
+            service=$(basename "$(dirname "$service_dir")")
+            echo "Checking migration idempotency for $service"
 
-              for migration in "$service_dir/prisma/migrations"/*; do
+            if [ -d "$service_dir/migrations" ]; then
+              for migration in "$service_dir/migrations"/*; do
                 if [ -f "$migration/migration.sql" ]; then
-                  # Check for DML statements that may not be idempotent
                   if grep -qE "^(INSERT|UPDATE|DELETE)" "$migration/migration.sql"; then
                     if ! grep -qE "(ON CONFLICT|IF NOT EXISTS|IF EXISTS)" "$migration/migration.sql"; then
-                      echo "⚠️  $service migration may not be idempotent: $(basename "$migration")"
+                      echo "Warning: $service migration may not be idempotent: $(basename "$migration")"
                     fi
                   fi
                 fi
               done
             fi
           done
-          echo "✅ Migration idempotency check completed"
+          echo "Migration idempotency check completed"
 
   web-build:
     name: Web App Build

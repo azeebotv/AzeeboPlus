@@ -94,9 +94,12 @@ export class CircuitBreakerProxyService {
     const target = `${targetUrl}${path}${queryString ? `?${queryString}` : ''}`;
     const serviceName = new URL(targetUrl).hostname || 'unknown';
 
-    this.logger.debug(`Proxying request to ${target}`, { requestId });
+    // Use path-based key to avoid shared circuit breakers across services on same host
+    const circuitKey = `${serviceName}:${path.split('/')[1] || 'root'}`;
 
-    const circuitBreaker = this.getCircuitBreaker(serviceName);
+    this.logger.debug(`Proxying ${method} ${path}`, { requestId });
+
+    const circuitBreaker = this.getCircuitBreaker(circuitKey);
     const tracer = trace.getTracer('api-gateway');
 
     return await tracer.startActiveSpan(`proxy.${serviceName}`, { attributes: { 'http.method': method, 'http.url': target } }, async (span: Span) => {

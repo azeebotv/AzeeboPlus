@@ -34,7 +34,10 @@ export default function EpisodesPage(): React.JSX.Element {
 
   useEffect(() => {
     const fetchEpisodes = async () => {
-      if (!contentId) { setIsLoading(false); return; }
+      if (!contentId) {
+        setIsLoading(false);
+        return;
+      }
       try {
         const result = await apiFetch<{ seasons: Season[] }>(`/v1/content/${contentId}/episodes`);
         if (result.success && result.data) {
@@ -45,13 +48,68 @@ export default function EpisodesPage(): React.JSX.Element {
             {
               seasonNumber: 1,
               episodes: [
-                { id: 'ep1', title: 'Pilot Episode', description: 'The journey begins...', episodeNumber: 1, seasonNumber: 1, duration: 3600, thumbnail: PLACEHOLDER_THUMBNAIL, releaseDate: '2026-01-15', isLocked: false },
-                { id: 'ep2', title: 'The First Challenge', description: 'Contestants face their first task', episodeNumber: 2, seasonNumber: 1, duration: 3600, thumbnail: PLACEHOLDER_THUMBNAIL, releaseDate: '2026-01-22', isLocked: false },
-                { id: 'ep3', title: 'Alliance Forming', description: 'New alliances are formed', episodeNumber: 3, seasonNumber: 1, duration: 3600, thumbnail: PLACEHOLDER_THUMBNAIL, releaseDate: '2026-01-29', isLocked: true },
-                { id: 'ep4', title: 'Mid-Season Twist', description: 'A surprise twist changes everything', episodeNumber: 4, seasonNumber: 1, duration: 3600, thumbnail: PLACEHOLDER_THUMBNAIL, releaseDate: '2026-02-05', isLocked: true },
+                {
+                  id: 'ep1',
+                  title: 'Pilot Episode',
+                  description: 'The journey begins...',
+                  episodeNumber: 1,
+                  seasonNumber: 1,
+                  duration: 3600,
+                  thumbnail: PLACEHOLDER_THUMBNAIL,
+                  releaseDate: '2026-01-15',
+                  isLocked: false,
+                },
+                {
+                  id: 'ep2',
+                  title: 'The First Challenge',
+                  description: 'Contestants face their first task',
+                  episodeNumber: 2,
+                  seasonNumber: 1,
+                  duration: 3600,
+                  thumbnail: PLACEHOLDER_THUMBNAIL,
+                  releaseDate: '2026-01-22',
+                  isLocked: false,
+                },
+                {
+                  id: 'ep3',
+                  title: 'Alliance Forming',
+                  description: 'New alliances are formed',
+                  episodeNumber: 3,
+                  seasonNumber: 1,
+                  duration: 3600,
+                  thumbnail: PLACEHOLDER_THUMBNAIL,
+                  releaseDate: '2026-01-29',
+                  isLocked: true,
+                },
+                {
+                  id: 'ep4',
+                  title: 'Mid-Season Twist',
+                  description: 'A surprise twist changes everything',
+                  episodeNumber: 4,
+                  seasonNumber: 1,
+                  duration: 3600,
+                  thumbnail: PLACEHOLDER_THUMBNAIL,
+                  releaseDate: '2026-02-05',
+                  isLocked: true,
+                },
               ],
             },
-            { seasonNumber: 2, episodes: [{ id: 'ep5', title: 'Season 2 Premiere', description: 'New contestants, new drama', episodeNumber: 1, seasonNumber: 2, duration: 3600, thumbnail: PLACEHOLDER_THUMBNAIL, releaseDate: '2026-03-01', isLocked: true }] },
+            {
+              seasonNumber: 2,
+              episodes: [
+                {
+                  id: 'ep5',
+                  title: 'Season 2 Premiere',
+                  description: 'New contestants, new drama',
+                  episodeNumber: 1,
+                  seasonNumber: 2,
+                  duration: 3600,
+                  thumbnail: PLACEHOLDER_THUMBNAIL,
+                  releaseDate: '2026-03-01',
+                  isLocked: true,
+                },
+              ],
+            },
           ];
           setSeasons(mockSeasons);
         }
@@ -71,7 +129,11 @@ export default function EpisodesPage(): React.JSX.Element {
   };
 
   const formatDate = (dateString: string): string =>
-    new Date(dateString).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    new Date(dateString).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
 
   const handleEpisodeClick = (episode: Episode): void => {
     if (episode.isLocked) return;
@@ -84,9 +146,15 @@ export default function EpisodesPage(): React.JSX.Element {
     return (
       <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
         <AppHeader />
-        <div className="flex items-center justify-center" style={{ minHeight: 'calc(100vh - 200px)' }}>
+        <div
+          className="flex items-center justify-center"
+          style={{ minHeight: 'calc(100vh - 200px)' }}
+        >
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 mx-auto" style={{ border: '3px solid rgba(255,255,255,0.1)', borderTopColor: '#E8420A' }} />
+            <div
+              className="animate-spin rounded-full h-12 w-12 mx-auto"
+              style={{ border: '3px solid rgba(255,255,255,0.1)', borderTopColor: '#E8420A' }}
+            />
             <p className="mt-4 text-white/60">Loading episodes...</p>
           </div>
         </div>
@@ -99,8 +167,18 @@ export default function EpisodesPage(): React.JSX.Element {
       <AppHeader />
       <div className="max-w-5xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
-          <button onClick={() => router.back()} className="text-white/50 hover:text-white mb-4 flex items-center gap-2 transition-colors">
-            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+          <button
+            onClick={() => router.back()}
+            className="text-white/50 hover:text-white mb-4 flex items-center gap-2 transition-colors"
+          >
+            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 19l-7-7 7-7"
+              />
+            </svg>
             Back
           </button>
           <h1 className="text-3xl font-bold text-white">{contentTitle}</h1>
@@ -118,7 +196,15 @@ export default function EpisodesPage(): React.JSX.Element {
                 className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
                   selectedSeason === season.seasonNumber ? 'az-btn-primary' : ''
                 }`}
-                style={selectedSeason !== season.seasonNumber ? { border: '1px solid rgba(255,255,255,0.2)', backgroundColor: 'rgba(255,255,255,0.08)', color: '#fff' } : undefined}
+                style={
+                  selectedSeason !== season.seasonNumber
+                    ? {
+                        border: '1px solid rgba(255,255,255,0.2)',
+                        backgroundColor: 'rgba(255,255,255,0.08)',
+                        color: '#fff',
+                      }
+                    : undefined
+                }
               >
                 Season {season.seasonNumber}
               </button>
@@ -132,11 +218,17 @@ export default function EpisodesPage(): React.JSX.Element {
               key={episode.id}
               onClick={() => handleEpisodeClick(episode)}
               className={`az-glass flex gap-4 overflow-hidden transition-all ${
-                episode.isLocked ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer hover:scale-[1.01]'
+                episode.isLocked
+                  ? 'opacity-60 cursor-not-allowed'
+                  : 'cursor-pointer hover:scale-[1.01]'
               }`}
             >
               <div className="relative w-48 h-28 flex-shrink-0">
-                <img src={episode.thumbnail} alt={episode.title} className="w-full h-full object-cover" />
+                <img
+                  src={episode.thumbnail}
+                  alt={episode.title}
+                  className="w-full h-full object-cover"
+                />
                 {episode.isLocked && (
                   <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
                     <span className="text-3xl">🔒</span>

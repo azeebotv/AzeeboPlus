@@ -18,7 +18,7 @@ export function createRecommendationMethods(client: RequestClient) {
 
     getCrossUniverse: async (limit = 10): Promise<ApiResponse<RecommendationItem[]>> => {
       return client.request<RecommendationItem[]>(
-        `/api/v1/recommendation/cross-universe?limit=${limit}`,
+        `/api/v1/recommendation/cross-universe?limit=${limit}`
       );
     },
   };

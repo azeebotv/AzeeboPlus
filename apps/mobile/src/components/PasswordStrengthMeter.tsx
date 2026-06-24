@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { colors } from '@azeebo/design-tokens';
+import { colors } from '../theme';
 
 interface PasswordStrengthMeterProps {
   password: string;
@@ -36,7 +36,7 @@ export function PasswordStrengthMeter({ password, onStrengthChange }: PasswordSt
       case 0:
       case 1:
         label = 'Very Weak';
-        color = colors.error[500];
+        color = colors.error;
         break;
       case 2:
         label = 'Weak';
@@ -52,7 +52,7 @@ export function PasswordStrengthMeter({ password, onStrengthChange }: PasswordSt
         break;
       case 5:
         label = 'Very Strong';
-        color = colors.success[600];
+        color = colors.success;
         break;
       default:
         label = '';

@@ -64,5 +64,5 @@ pnpm start:dev
 ## Ownership
 
 - **Team**: Support Engineering
-- **Maintainer**: support-engineering@azeebo.com
+- **Maintainer**: support-engineering@azeeboplus.com
 - **Last Updated**: 2026-05-11

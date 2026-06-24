@@ -11,7 +11,12 @@ interface SeoMetaProps {
   noIndex?: boolean;
 }
 
-export function SeoMeta({ title, description, image, noIndex = false }: SeoMetaProps): React.JSX.Element {
+export function SeoMeta({
+  title,
+  description,
+  image,
+  noIndex = false,
+}: SeoMetaProps): React.JSX.Element {
   const pathname = usePathname();
   const { getSetting } = useSettings();
   const siteName = getSetting('site_name', 'Azeebo+');

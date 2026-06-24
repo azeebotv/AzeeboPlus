@@ -112,7 +112,7 @@ export default function OTPVerificationPage(): React.JSX.Element {
       <div className="az-glass az-glass--glow relative z-10 w-full max-w-xl p-8 sm:p-10 text-center">
         <h1 className="az-headline text-white text-3xl mb-3">Verify Your Identity</h1>
         <p className="text-white/55 text-sm leading-relaxed mb-8">
-          Enter your 6 digits verification code sent to your +234 801 234 5678
+          Enter your 6 digits verification code sent to your phone number
         </p>
 
         {error && (

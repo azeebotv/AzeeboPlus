@@ -2,353 +2,150 @@
 > @azeebo/wallet-service@0.1.0 start:dev /Users/deprof/www/azeebo+/services/core/wallet-service
 > ts-node-dev --respawn --transpile-only src/main.ts
 
-[INFO] 15:50:11 ts-node-dev ver. 2.0.0 (using ts-node ver. 10.9.2, typescript ver. 5.9.3)
-[32m[Nest] 45619  - [39m06/23/2026, 3:50:14 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
-[32m[Nest] 45619  - [39m06/23/2026, 3:50:14 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisModule dependencies initialized[39m[38;5;3m +47ms[39m
-[32m[Nest] 45619  - [39m06/23/2026, 3:50:14 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPassportModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 45619  - [39m06/23/2026, 3:50:14 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDatabaseModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 45619  - [39m06/23/2026, 3:50:14 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +48ms[39m
-[32m[Nest] 45619  - [39m06/23/2026, 3:50:14 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisCoreModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 45619  - [39m06/23/2026, 3:50:14 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mThrottlerModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 45619  - [39m06/23/2026, 3:50:14 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 45619  - [39m06/23/2026, 3:50:14 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mMetricsModule dependencies initialized[39m[38;5;3m +2ms[39m
-[32m[Nest] 45619  - [39m06/23/2026, 3:50:14 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 45619  - [39m06/23/2026, 3:50:14 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 45619  - [39m06/23/2026, 3:50:14 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 45619  - [39m06/23/2026, 3:50:14 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTerminusModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 45619  - [39m06/23/2026, 3:50:14 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRateLimiterModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 45619  - [39m06/23/2026, 3:50:14 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 45619  - [39m06/23/2026, 3:50:14 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +1ms[39m
-[31m[Nest] 45619  - [39m06/23/2026, 3:50:15 PM [31m  ERROR[39m [38;5;3m[ExceptionHandler] [39mUnknownDependenciesException [Error]: Nest can't resolve dependencies of the CacheInterceptor (?, Reflector). Please make sure that the argument CacheService at index [0] is available in the WalletModule module.
-
-Potential solutions:
-- Is WalletModule a valid NestJS module?
-- If CacheService is a provider, is it part of the current WalletModule?
-- If CacheService is exported from a separate @Module, is that module imported within WalletModule?
-  @Module({
-    imports: [ /* the Module containing CacheService */ ]
-  })
-
-For more common dependency resolution issues, see: https://docs.nestjs.com/faq/common-errors
-    at Injector.lookupComponentInParentModules (/Users/deprof/www/azeebo+/node_modules/[4m.pnpm[24m/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/[4m@nestjs/core[24m/injector/injector.js:300:19)
-[90m    at processTicksAndRejections (node:internal/process/task_queues:104:5)[39m
-    at resolveParam (/Users/deprof/www/azeebo+/node_modules/[4m.pnpm[24m/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/[4m@nestjs/core[24m/injector/injector.js:150:38)
-    at async Promise.all (index 0)
-    at Injector.resolveConstructorParams (/Users/deprof/www/azeebo+/node_modules/[4m.pnpm[24m/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/[4m@nestjs/core[24m/injector/injector.js:179:27)
-    at Injector.loadInstance (/Users/deprof/www/azeebo+/node_modules/[4m.pnpm[24m/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/[4m@nestjs/core[24m/injector/injector.js:77:13)
-    at Injector.loadInjectable (/Users/deprof/www/azeebo+/node_modules/[4m.pnpm[24m/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/[4m@nestjs/core[24m/injector/injector.js:104:9)
-    at /Users/deprof/www/azeebo+/node_modules/[4m.pnpm[24m/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/[4m@nestjs/core[24m/injector/instance-loader.js:80:13
-    at async Promise.all (index 2)
-    at InstanceLoader.createInstancesOfInjectables (/Users/deprof/www/azeebo+/node_modules/[4m.pnpm[24m/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/[4m@nestjs/core[24m/injector/instance-loader.js:79:9) {
-  type: [32m'CacheInterceptor'[39m,
-  context: {
-    index: [33m0[39m,
-    dependencies: [
-      [36m[class CacheService][39m,
-      [36m[class Reflector][39m
-    ],
-    name: [36m[class CacheService][39m
-  },
-  metadata: {
-    id: [32m'eed36975b71c1dfe25717'[39m
-  },
-  moduleRef: {
-    id: [32m'6683171e3082a79268959'[39m
-  }
-}
-[INFO] 15:52:33 Restarting: /Users/deprof/www/azeebo+/services/core/wallet-service/src/app.module.ts has been modified
-Error: Cannot find module '../../cache'
-Require stack:
-- /Users/deprof/www/azeebo+/services/core/wallet-service/src/app.module.ts
-- /Users/deprof/www/azeebo+/services/core/wallet-service/src/main.ts
-    at Module._resolveFilename (node:internal/modules/cjs/loader:1475:15)
-    at wrapResolveFilename (node:internal/modules/cjs/loader:1048:27)
-    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1072:10)
-    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1093:12)
-    at Module._load (node:internal/modules/cjs/loader:1261:25)
-    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
-    at Module.require (node:internal/modules/cjs/loader:1575:12)
-    at require (node:internal/modules/helpers:191:16)
-    at Object.<anonymous> (/Users/deprof/www/azeebo+/services/core/wallet-service/src/app.module.ts:15:1)
-    at Module._compile (node:internal/modules/cjs/loader:1829:14)
-[ERROR] 15:52:38 Error: Cannot find module '../../cache'
-Require stack:
-- /Users/deprof/www/azeebo+/services/core/wallet-service/src/app.module.ts
-- /Users/deprof/www/azeebo+/services/core/wallet-service/src/main.ts
-[INFO] 16:01:03 Restarting: /Users/deprof/www/azeebo+/services/core/wallet-service/src/app.module.ts has been modified
-[32m[Nest] 53956  - [39m06/23/2026, 4:01:07 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
-[32m[Nest] 53956  - [39m06/23/2026, 4:01:07 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisModule dependencies initialized[39m[38;5;3m +37ms[39m
-[32m[Nest] 53956  - [39m06/23/2026, 4:01:07 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 53956  - [39m06/23/2026, 4:01:07 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPassportModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 53956  - [39m06/23/2026, 4:01:07 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDatabaseModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 53956  - [39m06/23/2026, 4:01:07 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +36ms[39m
-[32m[Nest] 53956  - [39m06/23/2026, 4:01:07 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisCoreModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 53956  - [39m06/23/2026, 4:01:07 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mThrottlerModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 53956  - [39m06/23/2026, 4:01:07 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 53956  - [39m06/23/2026, 4:01:07 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mMetricsModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 53956  - [39m06/23/2026, 4:01:07 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 53956  - [39m06/23/2026, 4:01:07 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 53956  - [39m06/23/2026, 4:01:07 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCacheModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 53956  - [39m06/23/2026, 4:01:07 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 53956  - [39m06/23/2026, 4:01:07 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTerminusModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 53956  - [39m06/23/2026, 4:01:07 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRateLimiterModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 53956  - [39m06/23/2026, 4:01:07 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 53956  - [39m06/23/2026, 4:01:07 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 53956  - [39m06/23/2026, 4:01:07 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mWalletModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 53956  - [39m06/23/2026, 4:01:07 PM [32m    LOG[39m [32mSwagger documentation enabled at /docs[39m
-[32m[Nest] 53956  - [39m06/23/2026, 4:01:07 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mWalletController {/v1/wallet} (version: 1):[39m[38;5;3m +5ms[39m
-[32m[Nest] 53956  - [39m06/23/2026, 4:01:07 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/wallet, GET} (version: 1) route[39m[38;5;3m +9ms[39m
-[32m[Nest] 53956  - [39m06/23/2026, 4:01:07 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/wallet/transactions, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 53956  - [39m06/23/2026, 4:01:07 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/wallet/summary, GET} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 53956  - [39m06/23/2026, 4:01:07 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/wallet/fund, POST} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 53956  - [39m06/23/2026, 4:01:07 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/wallet/redeem-reward, POST} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 53956  - [39m06/23/2026, 4:01:07 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/wallet/bonus-credit, POST} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 53956  - [39m06/23/2026, 4:01:07 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/wallet/promo-credit, POST} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 53956  - [39m06/23/2026, 4:01:07 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/wallet/audit-trail, GET} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 53956  - [39m06/23/2026, 4:01:07 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/wallet/debit, POST} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 53956  - [39m06/23/2026, 4:01:07 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/wallet/credit, POST} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 53956  - [39m06/23/2026, 4:01:07 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/wallet/withdraw, POST} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 53956  - [39m06/23/2026, 4:01:07 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/wallet/transfer, POST} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 53956  - [39m06/23/2026, 4:01:07 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/wallet/transactions/:id, GET} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 53956  - [39m06/23/2026, 4:01:07 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHealthController {/health} (version: 1):[39m[38;5;3m +0ms[39m
-[32m[Nest] 53956  - [39m06/23/2026, 4:01:07 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 53956  - [39m06/23/2026, 4:01:07 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/live, GET} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 53956  - [39m06/23/2026, 4:01:07 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/ready, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 53956  - [39m06/23/2026, 4:01:07 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mMetricsController {/metrics} (version: 1):[39m[38;5;3m +0ms[39m
-[32m[Nest] 53956  - [39m06/23/2026, 4:01:07 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/metrics, GET} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 53956  - [39m06/23/2026, 4:01:07 PM [32m    LOG[39m [38;5;3m[PrismaService] [39m[32mDatabase connection established[39m
-[32m[Nest] 53956  - [39m06/23/2026, 4:01:07 PM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +2ms[39m
-[32m[Nest] 53956  - [39m06/23/2026, 4:01:07 PM [32m    LOG[39m [32mWallet Service is running on port 3002[39m
-
-> @azeebo/wallet-service@0.1.0 start:dev /Users/deprof/www/azeebo+/services/core/wallet-service
-> ts-node-dev --respawn --transpile-only src/main.ts
-
-[INFO] 16:54:47 ts-node-dev ver. 2.0.0 (using ts-node ver. 10.9.2, typescript ver. 5.9.3)
-[32m[Nest] 92900  - [39m06/23/2026, 4:54:49 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
-[32m[Nest] 92900  - [39m06/23/2026, 4:54:49 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisModule dependencies initialized[39m[38;5;3m +35ms[39m
-[32m[Nest] 92900  - [39m06/23/2026, 4:54:49 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 92900  - [39m06/23/2026, 4:54:49 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPassportModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 92900  - [39m06/23/2026, 4:54:49 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDatabaseModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 92900  - [39m06/23/2026, 4:54:49 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +35ms[39m
-[32m[Nest] 92900  - [39m06/23/2026, 4:54:49 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisCoreModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 92900  - [39m06/23/2026, 4:54:49 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mThrottlerModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 92900  - [39m06/23/2026, 4:54:49 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 92900  - [39m06/23/2026, 4:54:49 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mMetricsModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 92900  - [39m06/23/2026, 4:54:49 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 92900  - [39m06/23/2026, 4:54:49 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 92900  - [39m06/23/2026, 4:54:49 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCacheModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 92900  - [39m06/23/2026, 4:54:49 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +5ms[39m
-[32m[Nest] 92900  - [39m06/23/2026, 4:54:49 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTerminusModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 92900  - [39m06/23/2026, 4:54:49 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRateLimiterModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 92900  - [39m06/23/2026, 4:54:49 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 92900  - [39m06/23/2026, 4:54:49 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 92900  - [39m06/23/2026, 4:54:49 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mWalletModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 92900  - [39m06/23/2026, 4:54:49 PM [32m    LOG[39m [32mSwagger documentation enabled at /docs[39m
-[32m[Nest] 92900  - [39m06/23/2026, 4:54:49 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mWalletController {/v1/wallet} (version: 1):[39m[38;5;3m +3ms[39m
-[32m[Nest] 92900  - [39m06/23/2026, 4:54:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/wallet, GET} (version: 1) route[39m[38;5;3m +3ms[39m
-[32m[Nest] 92900  - [39m06/23/2026, 4:54:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/wallet/transactions, GET} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 92900  - [39m06/23/2026, 4:54:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/wallet/summary, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 92900  - [39m06/23/2026, 4:54:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/wallet/fund, POST} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 92900  - [39m06/23/2026, 4:54:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/wallet/redeem-reward, POST} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 92900  - [39m06/23/2026, 4:54:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/wallet/bonus-credit, POST} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 92900  - [39m06/23/2026, 4:54:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/wallet/promo-credit, POST} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 92900  - [39m06/23/2026, 4:54:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/wallet/audit-trail, GET} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 92900  - [39m06/23/2026, 4:54:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/wallet/debit, POST} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 92900  - [39m06/23/2026, 4:54:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/wallet/credit, POST} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 92900  - [39m06/23/2026, 4:54:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/wallet/withdraw, POST} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 92900  - [39m06/23/2026, 4:54:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/wallet/transfer, POST} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 92900  - [39m06/23/2026, 4:54:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/wallet/transactions/:id, GET} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 92900  - [39m06/23/2026, 4:54:49 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHealthController {/health} (version: 1):[39m[38;5;3m +0ms[39m
-[32m[Nest] 92900  - [39m06/23/2026, 4:54:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 92900  - [39m06/23/2026, 4:54:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/live, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 92900  - [39m06/23/2026, 4:54:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/ready, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 92900  - [39m06/23/2026, 4:54:49 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mMetricsController {/metrics} (version: 1):[39m[38;5;3m +0ms[39m
-[32m[Nest] 92900  - [39m06/23/2026, 4:54:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/metrics, GET} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 92900  - [39m06/23/2026, 4:54:49 PM [32m    LOG[39m [38;5;3m[PrismaService] [39m[32mDatabase connection established[39m
-[32m[Nest] 92900  - [39m06/23/2026, 4:54:49 PM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +2ms[39m
-[32m[Nest] 92900  - [39m06/23/2026, 4:54:49 PM [32m    LOG[39m [32mWallet Service is running on port 3002[39m
-[INFO] 18:53:07 Restarting: /Users/deprof/www/azeebo+/packages/logger/dist/distributed-tracing.interceptor.js has been modified
-[INFO] 18:53:07 Restarting: /Users/deprof/www/azeebo+/packages/logger/dist/distributed-tracing.interceptor.js has been modified
-[32m[Nest] 10599  - [39m06/23/2026, 6:53:50 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
-[32m[Nest] 10554  - [39m06/23/2026, 6:53:51 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
-[32m[Nest] 10599  - [39m06/23/2026, 6:53:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisModule dependencies initialized[39m[38;5;3m +421ms[39m
-[32m[Nest] 10599  - [39m06/23/2026, 6:53:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 10599  - [39m06/23/2026, 6:53:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPassportModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 10599  - [39m06/23/2026, 6:53:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDatabaseModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 10554  - [39m06/23/2026, 6:53:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisModule dependencies initialized[39m[38;5;3m +296ms[39m
-[32m[Nest] 10554  - [39m06/23/2026, 6:53:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisModule dependencies initialized[39m[38;5;3m +10ms[39m
-[32m[Nest] 10554  - [39m06/23/2026, 6:53:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPassportModule dependencies initialized[39m[38;5;3m +3ms[39m
-[32m[Nest] 10554  - [39m06/23/2026, 6:53:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDatabaseModule dependencies initialized[39m[38;5;3m +32ms[39m
-[32m[Nest] 10599  - [39m06/23/2026, 6:53:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +406ms[39m
-[32m[Nest] 10599  - [39m06/23/2026, 6:53:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisCoreModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 10599  - [39m06/23/2026, 6:53:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mThrottlerModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 10554  - [39m06/23/2026, 6:53:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +297ms[39m
-[32m[Nest] 10554  - [39m06/23/2026, 6:53:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisCoreModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 10554  - [39m06/23/2026, 6:53:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mThrottlerModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 10554  - [39m06/23/2026, 6:53:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 10599  - [39m06/23/2026, 6:53:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +7ms[39m
-[31m[Nest] 10554  - [39m06/23/2026, 6:53:51 PM [31m  ERROR[39m [38;5;3m[ExceptionHandler] [39mUnknownDependenciesException [Error]: Nest can't resolve dependencies of the ResponseSanitizationInterceptor (?). Please make sure that the argument at index [0] is available in the current module.
-
-Potential solutions:
-- The dependency at index [0] appears to be undefined at runtime
-- This commonly occurs when using 'import type' instead of 'import' for injectable classes
-- Check your imports and change:
-  ❌ import type { SomeService } from './some.service';
-  ✅ import { SomeService } from './some.service';
-- Ensure the imported class is decorated with @Injectable() or is a valid provider
-- If using dynamic imports, ensure the class is available at runtime, not just for type checking
-
-For more common dependency resolution issues, see: https://docs.nestjs.com/faq/common-errors
-    at Injector.lookupComponentInParentModules (/Users/deprof/www/azeebo+/node_modules/[4m.pnpm[24m/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/[4m@nestjs/core[24m/injector/injector.js:300:19)
-[90m    at processTicksAndRejections (node:internal/process/task_queues:104:5)[39m
-    at resolveParam (/Users/deprof/www/azeebo+/node_modules/[4m.pnpm[24m/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/[4m@nestjs/core[24m/injector/injector.js:150:38)
-    at async Promise.all (index 0)
-    at Injector.resolveConstructorParams (/Users/deprof/www/azeebo+/node_modules/[4m.pnpm[24m/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/[4m@nestjs/core[24m/injector/injector.js:179:27)
-    at Injector.loadInstance (/Users/deprof/www/azeebo+/node_modules/[4m.pnpm[24m/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/[4m@nestjs/core[24m/injector/injector.js:77:13)
-    at Injector.loadProvider (/Users/deprof/www/azeebo+/node_modules/[4m.pnpm[24m/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/[4m@nestjs/core[24m/injector/injector.js:111:9)
-    at /Users/deprof/www/azeebo+/node_modules/[4m.pnpm[24m/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/[4m@nestjs/core[24m/injector/instance-loader.js:56:13
-    at async Promise.all (index 4)
-    at InstanceLoader.createInstancesOfProviders (/Users/deprof/www/azeebo+/node_modules/[4m.pnpm[24m/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/[4m@nestjs/core[24m/injector/instance-loader.js:55:9) {
-  type: [32m'ResponseSanitizationInterceptor'[39m,
-  context: {
-    index: [33m0[39m,
-    dependencies: [
-      [36m[Function: Object][39m
-    ],
-    name: [36m[Function: Object][39m
-  },
-  metadata: {
-    id: [32m'5f5f88ef91675cc719255'[39m
-  },
-  moduleRef: {
-    id: [32m'7eee62e478c1845dacd56'[39m
-  }
-}
-[31m[Nest] 10599  - [39m06/23/2026, 6:53:51 PM [31m  ERROR[39m [38;5;3m[ExceptionHandler] [39mUnknownDependenciesException [Error]: Nest can't resolve dependencies of the ResponseSanitizationInterceptor (?). Please make sure that the argument at index [0] is available in the current module.
-
-Potential solutions:
-- The dependency at index [0] appears to be undefined at runtime
-- This commonly occurs when using 'import type' instead of 'import' for injectable classes
-- Check your imports and change:
-  ❌ import type { SomeService } from './some.service';
-  ✅ import { SomeService } from './some.service';
-- Ensure the imported class is decorated with @Injectable() or is a valid provider
-- If using dynamic imports, ensure the class is available at runtime, not just for type checking
-
-For more common dependency resolution issues, see: https://docs.nestjs.com/faq/common-errors
-    at Injector.lookupComponentInParentModules (/Users/deprof/www/azeebo+/node_modules/[4m.pnpm[24m/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/[4m@nestjs/core[24m/injector/injector.js:300:19)
-[90m    at processTicksAndRejections (node:internal/process/task_queues:104:5)[39m
-    at resolveParam (/Users/deprof/www/azeebo+/node_modules/[4m.pnpm[24m/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/[4m@nestjs/core[24m/injector/injector.js:150:38)
-    at async Promise.all (index 0)
-    at Injector.resolveConstructorParams (/Users/deprof/www/azeebo+/node_modules/[4m.pnpm[24m/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/[4m@nestjs/core[24m/injector/injector.js:179:27)
-    at Injector.loadInstance (/Users/deprof/www/azeebo+/node_modules/[4m.pnpm[24m/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/[4m@nestjs/core[24m/injector/injector.js:77:13)
-    at Injector.loadProvider (/Users/deprof/www/azeebo+/node_modules/[4m.pnpm[24m/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/[4m@nestjs/core[24m/injector/injector.js:111:9)
-    at /Users/deprof/www/azeebo+/node_modules/[4m.pnpm[24m/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/[4m@nestjs/core[24m/injector/instance-loader.js:56:13
-    at async Promise.all (index 4)
-    at InstanceLoader.createInstancesOfProviders (/Users/deprof/www/azeebo+/node_modules/[4m.pnpm[24m/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/[4m@nestjs/core[24m/injector/instance-loader.js:55:9) {
-  type: [32m'ResponseSanitizationInterceptor'[39m,
-  context: {
-    index: [33m0[39m,
-    dependencies: [
-      [36m[Function: Object][39m
-    ],
-    name: [36m[Function: Object][39m
-  },
-  metadata: {
-    id: [32m'1170aabe1c33c00829217'[39m
-  },
-  moduleRef: {
-    id: [32m'fe8730ccc213de06aac73'[39m
-  }
-}
-[INFO] 18:54:21 Restarting: /Users/deprof/www/azeebo+/packages/logger/dist/response-sanitizer.interceptor.js has been modified
-[INFO] 18:54:21 Restarting: /Users/deprof/www/azeebo+/packages/logger/dist/response-sanitizer.interceptor.js has been modified
-[32m[Nest] 12172  - [39m06/23/2026, 6:55:07 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
-[32m[Nest] 12172  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisModule dependencies initialized[39m[38;5;3m +237ms[39m
-[32m[Nest] 12172  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 12172  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPassportModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 12172  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDatabaseModule dependencies initialized[39m[38;5;3m +39ms[39m
-[32m[Nest] 12172  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +67ms[39m
-[32m[Nest] 12172  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisCoreModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 12172  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mThrottlerModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 12172  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +2ms[39m
-[32m[Nest] 12172  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mMetricsModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 12172  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 12172  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 12172  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCacheModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 12172  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 12172  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTerminusModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 12172  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRateLimiterModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 12172  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 12172  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 12172  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mWalletModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 12172  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [32mSwagger documentation enabled at /docs[39m
-[32m[Nest] 12177  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
-[32m[Nest] 12172  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mWalletController {/v1/wallet} (version: 1):[39m[38;5;3m +149ms[39m
-[32m[Nest] 12172  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/wallet, GET} (version: 1) route[39m[38;5;3m +41ms[39m
-[32m[Nest] 12172  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/wallet/transactions, GET} (version: 1) route[39m[38;5;3m +21ms[39m
-[32m[Nest] 12177  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisModule dependencies initialized[39m[38;5;3m +210ms[39m
-[32m[Nest] 12177  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 12177  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPassportModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 12177  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDatabaseModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 12172  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/wallet/summary, GET} (version: 1) route[39m[38;5;3m +11ms[39m
-[32m[Nest] 12172  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/wallet/fund, POST} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 12172  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/wallet/redeem-reward, POST} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 12172  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/wallet/bonus-credit, POST} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 12172  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/wallet/promo-credit, POST} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 12172  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/wallet/audit-trail, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 12172  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/wallet/debit, POST} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 12172  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/wallet/credit, POST} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 12172  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/wallet/withdraw, POST} (version: 1) route[39m[38;5;3m +3ms[39m
-[32m[Nest] 12172  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/wallet/transfer, POST} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 12172  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/wallet/transactions/:id, GET} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 12172  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHealthController {/health} (version: 1):[39m[38;5;3m +0ms[39m
-[32m[Nest] 12172  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 12172  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/live, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 12172  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/ready, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 12172  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mMetricsController {/metrics} (version: 1):[39m[38;5;3m +0ms[39m
-[32m[Nest] 12172  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/metrics, GET} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 12177  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +67ms[39m
-[32m[Nest] 12177  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisCoreModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 12177  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mThrottlerModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 12177  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 12177  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mMetricsModule dependencies initialized[39m[38;5;3m +2ms[39m
-[32m[Nest] 12177  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 12177  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 12177  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCacheModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 12177  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 12177  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTerminusModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 12177  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRateLimiterModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 12177  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 12177  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 12177  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mWalletModule dependencies initialized[39m[38;5;3m +4ms[39m
-[32m[Nest] 12172  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[PrismaService] [39m[32mDatabase connection established[39m
-[32m[Nest] 12172  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +30ms[39m
-[32m[Nest] 12172  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [32mWallet Service is running on port 3002[39m
-[32m[Nest] 12177  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [32mSwagger documentation enabled at /docs[39m
-[32m[Nest] 12177  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mWalletController {/v1/wallet} (version: 1):[39m[38;5;3m +12ms[39m
-[32m[Nest] 12177  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/wallet, GET} (version: 1) route[39m[38;5;3m +42ms[39m
-[32m[Nest] 12177  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/wallet/transactions, GET} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 12177  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/wallet/summary, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 12177  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/wallet/fund, POST} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 12177  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/wallet/redeem-reward, POST} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 12177  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/wallet/bonus-credit, POST} (version: 1) route[39m[38;5;3m +14ms[39m
-[32m[Nest] 12177  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/wallet/promo-credit, POST} (version: 1) route[39m[38;5;3m +6ms[39m
-[32m[Nest] 12177  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/wallet/audit-trail, GET} (version: 1) route[39m[38;5;3m +8ms[39m
-[32m[Nest] 12177  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/wallet/debit, POST} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 12177  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/wallet/credit, POST} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 12177  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/wallet/withdraw, POST} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 12177  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/wallet/transfer, POST} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 12177  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/wallet/transactions/:id, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 12177  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHealthController {/health} (version: 1):[39m[38;5;3m +0ms[39m
-[32m[Nest] 12177  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health, GET} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 12177  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/live, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 12177  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/ready, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 12177  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mMetricsController {/metrics} (version: 1):[39m[38;5;3m +0ms[39m
-[32m[Nest] 12177  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/metrics, GET} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 12177  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[PrismaService] [39m[32mDatabase connection established[39m
-[32m[Nest] 12177  - [39m06/23/2026, 6:55:09 PM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +10ms[39m
-[31m[Nest] 12177  - [39m06/23/2026, 6:55:09 PM [31m  ERROR[39m [38;5;3m[NestApplication] [39m[31mError: listen EADDRINUSE: address already in use :::3002[39m[38;5;3m +4ms[39m
+[INFO] 14:55:55 ts-node-dev ver. 2.0.0 (using ts-node ver. 10.9.2, typescript ver. 5.9.3)
+[32m[Nest] 50832  - [39m06/24/2026, 2:55:57 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
+[32m[Nest] 50832  - [39m06/24/2026, 2:55:57 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisModule dependencies initialized[39m[38;5;3m +38ms[39m
+[32m[Nest] 50832  - [39m06/24/2026, 2:55:57 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 50832  - [39m06/24/2026, 2:55:57 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPassportModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 50832  - [39m06/24/2026, 2:55:57 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDatabaseModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 50832  - [39m06/24/2026, 2:55:57 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +8ms[39m
+[32m[Nest] 50832  - [39m06/24/2026, 2:55:57 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisCoreModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 50832  - [39m06/24/2026, 2:55:57 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mThrottlerModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 50832  - [39m06/24/2026, 2:55:57 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 50832  - [39m06/24/2026, 2:55:57 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mMetricsModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 50832  - [39m06/24/2026, 2:55:57 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 50832  - [39m06/24/2026, 2:55:57 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 50832  - [39m06/24/2026, 2:55:57 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCacheModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 50832  - [39m06/24/2026, 2:55:57 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 50832  - [39m06/24/2026, 2:55:57 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTerminusModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 50832  - [39m06/24/2026, 2:55:57 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRateLimiterModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 50832  - [39m06/24/2026, 2:55:57 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 50832  - [39m06/24/2026, 2:55:57 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 50832  - [39m06/24/2026, 2:55:57 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mWalletModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 50832  - [39m06/24/2026, 2:55:57 PM [32m    LOG[39m [32mSwagger documentation enabled at /docs[39m
+[32m[Nest] 50832  - [39m06/24/2026, 2:55:57 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mWalletController {/wallet} (version: 1):[39m[38;5;3m +4ms[39m
+[32m[Nest] 50832  - [39m06/24/2026, 2:55:57 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/wallet, GET} (version: 1) route[39m[38;5;3m +4ms[39m
+[32m[Nest] 50832  - [39m06/24/2026, 2:55:57 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/wallet/transactions, GET} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 50832  - [39m06/24/2026, 2:55:57 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/wallet/summary, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 50832  - [39m06/24/2026, 2:55:57 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/wallet/fund, POST} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 50832  - [39m06/24/2026, 2:55:57 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/wallet/redeem-reward, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 50832  - [39m06/24/2026, 2:55:57 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/wallet/bonus-credit, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 50832  - [39m06/24/2026, 2:55:57 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/wallet/promo-credit, POST} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 50832  - [39m06/24/2026, 2:55:57 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/wallet/audit-trail, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 50832  - [39m06/24/2026, 2:55:57 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/wallet/debit, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 50832  - [39m06/24/2026, 2:55:57 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/wallet/credit, POST} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 50832  - [39m06/24/2026, 2:55:57 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/wallet/withdraw, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 50832  - [39m06/24/2026, 2:55:57 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/wallet/transfer, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 50832  - [39m06/24/2026, 2:55:57 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/wallet/transactions/:id, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 50832  - [39m06/24/2026, 2:55:57 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHealthController {/health} (version: 1):[39m[38;5;3m +0ms[39m
+[32m[Nest] 50832  - [39m06/24/2026, 2:55:57 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health, GET} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 50832  - [39m06/24/2026, 2:55:57 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/live, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 50832  - [39m06/24/2026, 2:55:57 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/ready, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 50832  - [39m06/24/2026, 2:55:57 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mMetricsController {/metrics} (version: 1):[39m[38;5;3m +0ms[39m
+[32m[Nest] 50832  - [39m06/24/2026, 2:55:57 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/metrics, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 50832  - [39m06/24/2026, 2:55:57 PM [32m    LOG[39m [38;5;3m[PrismaService] [39m[32mDatabase connection established[39m
+[32m[Nest] 50832  - [39m06/24/2026, 2:55:57 PM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +2ms[39m
+[32m[Nest] 50832  - [39m06/24/2026, 2:55:57 PM [32m    LOG[39m [32mWallet Service is running on port 3002[39m
+[31m[Nest] 50832  - [39m06/24/2026, 2:57:30 PM [31m  ERROR[39m [38;5;3m[HTTP] [39m[31m{"timestamp":"2026-06-24T13:57:30.674Z","level":"error","message":"GET /v1/wallet ERROR 97ms - Wallet not found for user 31a9a1a2-c1ee-4ea5-9399-f9bdb7db0761","service":"wallet-service","traceId":"5f2b94ff-2c4c-4d43-8581-2a9f323bdbed","spanId":"1a0f149f","userId":"31a9a1a2-c1ee-4ea5-9399-f9bdb7db0761","method":"GET","path":"/v1/wallet","duration":97,"error":{"name":"NotFoundException","message":"Wallet not found for user 31a9a1a2-c1ee-4ea5-9399-f9bdb7db0761","stack":"NotFoundException: Wallet not found for user 31a9a1a2-c1ee-4ea5-9399-f9bdb7db0761\n    at WalletService.getBalance (/Users/deprof/www/azeebo+/services/core/wallet-service/src/modules/wallet/wallet.service.ts:34:13)"}}[39m
+[31m[Nest] 50832  - [39m06/24/2026, 3:12:40 PM [31m  ERROR[39m [38;5;3m[HTTP] [39m[31m{"timestamp":"2026-06-24T14:12:40.540Z","level":"error","message":"GET /v1/wallet ERROR 124ms - Wallet not found for user 31a9a1a2-c1ee-4ea5-9399-f9bdb7db0761","service":"wallet-service","traceId":"ade80f65-eb8e-40e1-8f74-aba80d00a097","spanId":"bea15a7c","userId":"31a9a1a2-c1ee-4ea5-9399-f9bdb7db0761","method":"GET","path":"/v1/wallet","duration":124,"error":{"name":"NotFoundException","message":"Wallet not found for user 31a9a1a2-c1ee-4ea5-9399-f9bdb7db0761","stack":"NotFoundException: Wallet not found for user 31a9a1a2-c1ee-4ea5-9399-f9bdb7db0761\n    at WalletService.getBalance (/Users/deprof/www/azeebo+/services/core/wallet-service/src/modules/wallet/wallet.service.ts:34:13)"}}[39m
+[31m[Nest] 50832  - [39m06/24/2026, 4:03:59 PM [31m  ERROR[39m [38;5;3m[HTTP] [39m[31m{"timestamp":"2026-06-24T15:03:59.794Z","level":"error","message":"GET /v1/wallet ERROR 601ms - Wallet not found for user 31a9a1a2-c1ee-4ea5-9399-f9bdb7db0761","service":"wallet-service","traceId":"b023a595-aab7-4203-83d3-57c42a7fcbf9","spanId":"b1dbf693","userId":"31a9a1a2-c1ee-4ea5-9399-f9bdb7db0761","method":"GET","path":"/v1/wallet","duration":601,"error":{"name":"NotFoundException","message":"Wallet not found for user 31a9a1a2-c1ee-4ea5-9399-f9bdb7db0761","stack":"NotFoundException: Wallet not found for user 31a9a1a2-c1ee-4ea5-9399-f9bdb7db0761\n    at WalletService.getBalance (/Users/deprof/www/azeebo+/services/core/wallet-service/src/modules/wallet/wallet.service.ts:34:13)"}}[39m
+[31m[Nest] 50832  - [39m06/24/2026, 4:13:59 PM [31m  ERROR[39m [38;5;3m[HTTP] [39m[31m{"timestamp":"2026-06-24T15:13:59.466Z","level":"error","message":"GET /v1/wallet ERROR 1452ms - Wallet not found for user 31a9a1a2-c1ee-4ea5-9399-f9bdb7db0761","service":"wallet-service","traceId":"bb6f5d6b-334e-4b82-8813-5887382aa468","spanId":"82acbb70","userId":"31a9a1a2-c1ee-4ea5-9399-f9bdb7db0761","method":"GET","path":"/v1/wallet","duration":1452,"error":{"name":"NotFoundException","message":"Wallet not found for user 31a9a1a2-c1ee-4ea5-9399-f9bdb7db0761","stack":"NotFoundException: Wallet not found for user 31a9a1a2-c1ee-4ea5-9399-f9bdb7db0761\n    at WalletService.getBalance (/Users/deprof/www/azeebo+/services/core/wallet-service/src/modules/wallet/wallet.service.ts:34:13)"}}[39m
+[31m[Nest] 50832  - [39m06/24/2026, 4:25:54 PM [31m  ERROR[39m [38;5;3m[HTTP] [39m[31m{"timestamp":"2026-06-24T15:25:54.432Z","level":"error","message":"GET /v1/wallet ERROR 41ms - Wallet not found for user 31a9a1a2-c1ee-4ea5-9399-f9bdb7db0761","service":"wallet-service","traceId":"dfa054bc-6873-4d6d-bdd7-77fcb4ecda61","spanId":"5174ec0c","userId":"31a9a1a2-c1ee-4ea5-9399-f9bdb7db0761","method":"GET","path":"/v1/wallet","duration":41,"error":{"name":"NotFoundException","message":"Wallet not found for user 31a9a1a2-c1ee-4ea5-9399-f9bdb7db0761","stack":"NotFoundException: Wallet not found for user 31a9a1a2-c1ee-4ea5-9399-f9bdb7db0761\n    at WalletService.getBalance (/Users/deprof/www/azeebo+/services/core/wallet-service/src/modules/wallet/wallet.service.ts:34:13)"}}[39m
+[31m[Nest] 50832  - [39m06/24/2026, 4:36:01 PM [31m  ERROR[39m [38;5;3m[HTTP] [39m[31m{"timestamp":"2026-06-24T15:36:01.149Z","level":"error","message":"GET /v1/wallet ERROR 33ms - Wallet not found for user 31a9a1a2-c1ee-4ea5-9399-f9bdb7db0761","service":"wallet-service","traceId":"7ed84c2e-d64b-4553-8830-2659ab9cdc86","spanId":"a9a78d93","userId":"31a9a1a2-c1ee-4ea5-9399-f9bdb7db0761","method":"GET","path":"/v1/wallet","duration":33,"error":{"name":"NotFoundException","message":"Wallet not found for user 31a9a1a2-c1ee-4ea5-9399-f9bdb7db0761","stack":"NotFoundException: Wallet not found for user 31a9a1a2-c1ee-4ea5-9399-f9bdb7db0761\n    at WalletService.getBalance (/Users/deprof/www/azeebo+/services/core/wallet-service/src/modules/wallet/wallet.service.ts:34:13)"}}[39m
+[31m[Nest] 50832  - [39m06/24/2026, 4:38:03 PM [31m  ERROR[39m [38;5;3m[HTTP] [39m[31m{"timestamp":"2026-06-24T15:38:03.214Z","level":"error","message":"GET /v1/wallet/transactions?page=1&limit=20 ERROR 29ms - Wallet not found for user 31a9a1a2-c1ee-4ea5-9399-f9bdb7db0761","service":"wallet-service","traceId":"bcc577b6-e9ee-4426-ab25-48c258b14117","spanId":"19b19334","userId":"31a9a1a2-c1ee-4ea5-9399-f9bdb7db0761","method":"GET","path":"/v1/wallet/transactions?page=1&limit=20","duration":29,"error":{"name":"NotFoundException","message":"Wallet not found for user 31a9a1a2-c1ee-4ea5-9399-f9bdb7db0761","stack":"NotFoundException: Wallet not found for user 31a9a1a2-c1ee-4ea5-9399-f9bdb7db0761\n    at WalletService.getTransactions (/Users/deprof/www/azeebo+/services/core/wallet-service/src/modules/wallet/wallet.service.ts:74:13)"}}[39m
+[31m[Nest] 50832  - [39m06/24/2026, 4:42:46 PM [31m  ERROR[39m [38;5;3m[HTTP] [39m[31m{"timestamp":"2026-06-24T15:42:46.714Z","level":"error","message":"GET /v1/wallet ERROR 341ms - Wallet not found for user 31a9a1a2-c1ee-4ea5-9399-f9bdb7db0761","service":"wallet-service","traceId":"07c51134-a5fa-456c-9b35-9274a4d21e63","spanId":"de2aec9c","userId":"31a9a1a2-c1ee-4ea5-9399-f9bdb7db0761","method":"GET","path":"/v1/wallet","duration":341,"error":{"name":"NotFoundException","message":"Wallet not found for user 31a9a1a2-c1ee-4ea5-9399-f9bdb7db0761","stack":"NotFoundException: Wallet not found for user 31a9a1a2-c1ee-4ea5-9399-f9bdb7db0761\n    at WalletService.getBalance (/Users/deprof/www/azeebo+/services/core/wallet-service/src/modules/wallet/wallet.service.ts:34:13)"}}[39m
+[31m[Nest] 50832  - [39m06/24/2026, 4:48:35 PM [31m  ERROR[39m [38;5;3m[HTTP] [39m[31m{"timestamp":"2026-06-24T15:48:35.983Z","level":"error","message":"GET /v1/wallet ERROR 82ms - Wallet not found for user 31a9a1a2-c1ee-4ea5-9399-f9bdb7db0761","service":"wallet-service","traceId":"12224f5d-c208-4c59-9f09-662ff87bde5b","spanId":"14bd17f8","userId":"31a9a1a2-c1ee-4ea5-9399-f9bdb7db0761","method":"GET","path":"/v1/wallet","duration":82,"error":{"name":"NotFoundException","message":"Wallet not found for user 31a9a1a2-c1ee-4ea5-9399-f9bdb7db0761","stack":"NotFoundException: Wallet not found for user 31a9a1a2-c1ee-4ea5-9399-f9bdb7db0761\n    at WalletService.getBalance (/Users/deprof/www/azeebo+/services/core/wallet-service/src/modules/wallet/wallet.service.ts:34:13)"}}[39m
+[31m[Nest] 50832  - [39m06/24/2026, 4:48:36 PM [31m  ERROR[39m [38;5;3m[HTTP] [39m[31m{"timestamp":"2026-06-24T15:48:36.383Z","level":"error","message":"GET /v1/wallet/transactions?page=1&limit=20 ERROR 3ms - Wallet not found for user 31a9a1a2-c1ee-4ea5-9399-f9bdb7db0761","service":"wallet-service","traceId":"521bf08d-a65b-49d3-9534-f97004bd1e2d","spanId":"269bad2c","userId":"31a9a1a2-c1ee-4ea5-9399-f9bdb7db0761","method":"GET","path":"/v1/wallet/transactions?page=1&limit=20","duration":3,"error":{"name":"NotFoundException","message":"Wallet not found for user 31a9a1a2-c1ee-4ea5-9399-f9bdb7db0761","stack":"NotFoundException: Wallet not found for user 31a9a1a2-c1ee-4ea5-9399-f9bdb7db0761\n    at WalletService.getTransactions (/Users/deprof/www/azeebo+/services/core/wallet-service/src/modules/wallet/wallet.service.ts:74:13)"}}[39m
+[INFO] 16:53:01 Restarting: /Users/deprof/www/azeebo+/services/core/wallet-service/src/main.ts has been modified
+[32m[Nest] 50832  - [39m06/24/2026, 4:53:01 PM [32m    LOG[39m [38;5;3m[PrismaService] [39m[32mDatabase connection closed[39m
+[32m[Nest] 99628  - [39m06/24/2026, 4:53:03 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
+[32m[Nest] 99628  - [39m06/24/2026, 4:53:03 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisModule dependencies initialized[39m[38;5;3m +50ms[39m
+[32m[Nest] 99628  - [39m06/24/2026, 4:53:03 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 99628  - [39m06/24/2026, 4:53:03 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPassportModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 99628  - [39m06/24/2026, 4:53:03 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDatabaseModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 99628  - [39m06/24/2026, 4:53:03 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +29ms[39m
+[32m[Nest] 99628  - [39m06/24/2026, 4:53:03 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisCoreModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 99628  - [39m06/24/2026, 4:53:03 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mThrottlerModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 99628  - [39m06/24/2026, 4:53:03 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 99628  - [39m06/24/2026, 4:53:03 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mMetricsModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 99628  - [39m06/24/2026, 4:53:03 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 99628  - [39m06/24/2026, 4:53:03 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 99628  - [39m06/24/2026, 4:53:03 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCacheModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 99628  - [39m06/24/2026, 4:53:03 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 99628  - [39m06/24/2026, 4:53:03 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTerminusModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 99628  - [39m06/24/2026, 4:53:03 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRateLimiterModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 99628  - [39m06/24/2026, 4:53:03 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 99628  - [39m06/24/2026, 4:53:03 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 99628  - [39m06/24/2026, 4:53:03 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mWalletModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 99628  - [39m06/24/2026, 4:53:03 PM [32m    LOG[39m [32mSwagger documentation enabled at /docs[39m
+[32m[Nest] 99628  - [39m06/24/2026, 4:53:03 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mWalletController {/wallet}:[39m[38;5;3m +7ms[39m
+[32m[Nest] 99628  - [39m06/24/2026, 4:53:03 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/wallet, GET} route[39m[38;5;3m +4ms[39m
+[32m[Nest] 99628  - [39m06/24/2026, 4:53:03 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/wallet/transactions, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 99628  - [39m06/24/2026, 4:53:03 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/wallet/summary, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 99628  - [39m06/24/2026, 4:53:03 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/wallet/fund, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 99628  - [39m06/24/2026, 4:53:03 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/wallet/redeem-reward, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 99628  - [39m06/24/2026, 4:53:03 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/wallet/bonus-credit, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 99628  - [39m06/24/2026, 4:53:03 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/wallet/promo-credit, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 99628  - [39m06/24/2026, 4:53:03 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/wallet/audit-trail, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 99628  - [39m06/24/2026, 4:53:03 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/wallet/debit, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 99628  - [39m06/24/2026, 4:53:03 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/wallet/credit, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 99628  - [39m06/24/2026, 4:53:03 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/wallet/withdraw, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 99628  - [39m06/24/2026, 4:53:03 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/wallet/transfer, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 99628  - [39m06/24/2026, 4:53:03 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/wallet/transactions/:id, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 99628  - [39m06/24/2026, 4:53:03 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHealthController {/health}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 99628  - [39m06/24/2026, 4:53:03 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 99628  - [39m06/24/2026, 4:53:03 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/live, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 99628  - [39m06/24/2026, 4:53:03 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/ready, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 99628  - [39m06/24/2026, 4:53:03 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mMetricsController {/metrics}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 99628  - [39m06/24/2026, 4:53:03 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/metrics, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 99628  - [39m06/24/2026, 4:53:03 PM [32m    LOG[39m [38;5;3m[PrismaService] [39m[32mDatabase connection established[39m
+[32m[Nest] 99628  - [39m06/24/2026, 4:53:03 PM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +3ms[39m
+[32m[Nest] 99628  - [39m06/24/2026, 4:53:03 PM [32m    LOG[39m [32mWallet Service is running on port 3002[39m
+[INFO] 16:53:15 Restarting: /Users/deprof/www/azeebo+/services/core/wallet-service/src/main.ts has been modified
+[32m[Nest] 99628  - [39m06/24/2026, 4:53:15 PM [32m    LOG[39m [38;5;3m[PrismaService] [39m[32mDatabase connection closed[39m
+[32m[Nest] 99664  - [39m06/24/2026, 4:53:17 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
+[32m[Nest] 99664  - [39m06/24/2026, 4:53:17 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisModule dependencies initialized[39m[38;5;3m +18ms[39m
+[32m[Nest] 99664  - [39m06/24/2026, 4:53:17 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 99664  - [39m06/24/2026, 4:53:17 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPassportModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 99664  - [39m06/24/2026, 4:53:17 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDatabaseModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 99664  - [39m06/24/2026, 4:53:17 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +9ms[39m
+[32m[Nest] 99664  - [39m06/24/2026, 4:53:17 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisCoreModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 99664  - [39m06/24/2026, 4:53:17 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mThrottlerModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 99664  - [39m06/24/2026, 4:53:17 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 99664  - [39m06/24/2026, 4:53:17 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mMetricsModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 99664  - [39m06/24/2026, 4:53:17 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 99664  - [39m06/24/2026, 4:53:17 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 99664  - [39m06/24/2026, 4:53:17 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCacheModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 99664  - [39m06/24/2026, 4:53:17 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 99664  - [39m06/24/2026, 4:53:17 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTerminusModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 99664  - [39m06/24/2026, 4:53:17 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRateLimiterModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 99664  - [39m06/24/2026, 4:53:17 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 99664  - [39m06/24/2026, 4:53:17 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 99664  - [39m06/24/2026, 4:53:17 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mWalletModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 99664  - [39m06/24/2026, 4:53:17 PM [32m    LOG[39m [32mSwagger documentation enabled at /docs[39m
+[32m[Nest] 99664  - [39m06/24/2026, 4:53:17 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mWalletController {/wallet}:[39m[38;5;3m +3ms[39m
+[32m[Nest] 99664  - [39m06/24/2026, 4:53:17 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/wallet, GET} route[39m[38;5;3m +2ms[39m
+[32m[Nest] 99664  - [39m06/24/2026, 4:53:17 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/wallet/transactions, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 99664  - [39m06/24/2026, 4:53:17 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/wallet/summary, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 99664  - [39m06/24/2026, 4:53:17 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/wallet/fund, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 99664  - [39m06/24/2026, 4:53:17 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/wallet/redeem-reward, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 99664  - [39m06/24/2026, 4:53:17 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/wallet/bonus-credit, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 99664  - [39m06/24/2026, 4:53:17 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/wallet/promo-credit, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 99664  - [39m06/24/2026, 4:53:17 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/wallet/audit-trail, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 99664  - [39m06/24/2026, 4:53:17 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/wallet/debit, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 99664  - [39m06/24/2026, 4:53:17 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/wallet/credit, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 99664  - [39m06/24/2026, 4:53:17 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/wallet/withdraw, POST} route[39m[38;5;3m +7ms[39m
+[32m[Nest] 99664  - [39m06/24/2026, 4:53:17 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/wallet/transfer, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 99664  - [39m06/24/2026, 4:53:17 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/wallet/transactions/:id, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 99664  - [39m06/24/2026, 4:53:17 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHealthController {/health}:[39m[38;5;3m +1ms[39m
+[32m[Nest] 99664  - [39m06/24/2026, 4:53:17 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 99664  - [39m06/24/2026, 4:53:17 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/live, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 99664  - [39m06/24/2026, 4:53:17 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/ready, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 99664  - [39m06/24/2026, 4:53:17 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mMetricsController {/metrics}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 99664  - [39m06/24/2026, 4:53:17 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/metrics, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 99664  - [39m06/24/2026, 4:53:17 PM [32m    LOG[39m [38;5;3m[PrismaService] [39m[32mDatabase connection established[39m
+[32m[Nest] 99664  - [39m06/24/2026, 4:53:17 PM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +1ms[39m
+[31m[Nest] 99664  - [39m06/24/2026, 4:53:17 PM [31m  ERROR[39m [38;5;3m[NestApplication] [39m[31mError: listen EADDRINUSE: address already in use :::3002[39m[38;5;3m +2ms[39m
 Error: listen EADDRINUSE: address already in use :::3002
     at Server.setupListenHandle [as _listen2] (node:net:2008:16)
     at listenInCluster (node:net:2065:12)
@@ -357,5 +154,6 @@ Error: listen EADDRINUSE: address already in use :::3002
     at /Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/@nestjs/core/nest-application.js:190:30
     at new Promise (<anonymous>)
     at NestApplication.listen (/Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/@nestjs/core/nest-application.js:180:16)
-    at bootstrap (/Users/deprof/www/azeebo+/services/core/wallet-service/src/main.ts:69:3)
-[ERROR] 18:55:09 Error: listen EADDRINUSE: address already in use :::3002
+    at bootstrap (/Users/deprof/www/azeebo+/services/core/wallet-service/src/main.ts:70:3)
+[ERROR] 16:53:17 Error: listen EADDRINUSE: address already in use :::3002
+[32m[Nest] 99664  - [39m06/24/2026, 4:53:17 PM [32m    LOG[39m [38;5;3m[PrismaService] [39m[32mDatabase connection closed[39m

@@ -21,7 +21,11 @@ export default function AdminPaymentGatewaysPage(): React.JSX.Element {
         const data = response.data as any;
         setGateways(Array.isArray(data) ? data : data.items || []);
       }
-    } catch { /* ignore */ } finally { setIsLoading(false); }
+    } catch {
+      /* ignore */
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -31,24 +35,59 @@ export default function AdminPaymentGatewaysPage(): React.JSX.Element {
 
       {isLoading ? (
         <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}>
-          <div style={{ width: 40, height: 40, border: '3px solid #2A1A1A', borderTopColor: '#E8420A', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+          <div
+            style={{
+              width: 40,
+              height: 40,
+              border: '3px solid #2A1A1A',
+              borderTopColor: '#E8420A',
+              borderRadius: '50%',
+              animation: 'spin 0.8s linear infinite',
+            }}
+          />
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
-          {gateways.map(gw => (
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+            gap: 16,
+          }}
+        >
+          {gateways.map((gw) => (
             <div key={gw.id} className="az-glass" style={{ padding: 24, borderRadius: 16 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: 12,
+                }}
+              >
                 <h3 style={{ fontWeight: 700, fontSize: 16 }}>{gw.name}</h3>
-                <span style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: gw.isActive ? '#0D3B2E' : '#CC1C1C' }} />
+                <span
+                  style={{
+                    width: 10,
+                    height: 10,
+                    borderRadius: '50%',
+                    backgroundColor: gw.isActive ? '#0D3B2E' : '#CC1C1C',
+                  }}
+                />
               </div>
-              <p style={{ color: '#9A8A7A', fontSize: 13, marginBottom: 12 }}>{gw.description || 'Payment gateway'}</p>
+              <p style={{ color: '#9A8A7A', fontSize: 13, marginBottom: 12 }}>
+                {gw.description || 'Payment gateway'}
+              </p>
               <div style={{ display: 'flex', gap: 12, fontSize: 12, color: '#9A8A7A' }}>
                 <span>{gw.transactionCount || 0} transactions</span>
                 <span>₦{(gw.totalVolume || 0).toLocaleString()} volume</span>
               </div>
             </div>
           ))}
-          {gateways.length === 0 && <p style={{ textAlign: 'center', padding: 40, color: '#9A8A7A', gridColumn: '1/-1' }}>No payment gateways configured</p>}
+          {gateways.length === 0 && (
+            <p style={{ textAlign: 'center', padding: 40, color: '#9A8A7A', gridColumn: '1/-1' }}>
+              No payment gateways configured
+            </p>
+          )}
         </div>
       )}
     </AdminLayout>

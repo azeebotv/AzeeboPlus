@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, ActivityIndicator, StyleSheet, TouchableOpacity } from 'react-native';
-import { colors } from '@azeebo/design-tokens';
+import { colors, radius, typography, spacing, shadows } from '../theme';
 
 interface LoadingStateProps {
   text?: string;
@@ -21,53 +21,74 @@ export const LoadingState: React.FC<LoadingStateProps> = ({ text = 'Loading...' 
 interface EmptyStateProps {
   icon: string;
   title: string;
-  description: string;
+  description?: string;
+  actionLabel?: string;
+  onAction?: () => void;
 }
 
-export const EmptyState: React.FC<EmptyStateProps> = ({ icon, title, description }) => (
+export const EmptyState: React.FC<EmptyStateProps> = ({
+  icon,
+  title,
+  description,
+  actionLabel,
+  onAction,
+}) => (
   <View
     style={styles.container}
     accessibilityRole="none"
-    accessibilityLabel={`Empty state: ${title}. ${description}`}
+    accessibilityLabel={`Empty state: ${title}. ${description || ''}`}
   >
     <Text style={styles.icon} accessibilityElementsHidden>
       {icon}
     </Text>
     <Text style={styles.title}>{title}</Text>
-    <Text style={styles.description}>{description}</Text>
+    {description && <Text style={styles.description}>{description}</Text>}
+    {actionLabel && onAction && (
+      <TouchableOpacity
+        style={styles.retryButton}
+        onPress={onAction}
+        accessibilityRole="button"
+        accessibilityLabel={actionLabel}
+      >
+        <Text style={styles.retryButtonText}>{actionLabel}</Text>
+      </TouchableOpacity>
+    )}
   </View>
 );
 
 interface ErrorStateProps {
   title?: string;
   description?: string;
-  onRetry: () => void;
+  onRetry?: () => void;
+  actionLabel?: string;
 }
 
 export const ErrorState: React.FC<ErrorStateProps> = ({
   title = 'Something went wrong',
-  description = 'Please try again later',
+  description,
   onRetry,
+  actionLabel,
 }) => (
   <View
     style={styles.container}
     accessibilityRole="alert"
-    accessibilityLabel={`Error: ${title}. ${description}`}
+    accessibilityLabel={`Error: ${title}. ${description || ''}`}
   >
     <Text style={styles.icon} accessibilityElementsHidden>
       ❌
     </Text>
     <Text style={styles.title}>{title}</Text>
-    <Text style={styles.description}>{description}</Text>
-    <TouchableOpacity
-      style={styles.retryButton}
-      onPress={onRetry}
-      accessibilityRole="button"
-      accessibilityLabel={`Retry: ${title}`}
-      accessibilityHint="Tapping this button will attempt to load the content again"
-    >
-      <Text style={styles.retryButtonText}>Retry</Text>
-    </TouchableOpacity>
+    {description && <Text style={styles.description}>{description}</Text>}
+    {onRetry && (
+      <TouchableOpacity
+        style={styles.retryButton}
+        onPress={onRetry}
+        accessibilityRole="button"
+        accessibilityLabel={actionLabel || 'Retry'}
+      >
+        <Text style={styles.retryButtonText}>{actionLabel || 'Retry'}</Text>
+      </TouchableOpacity>
+    )}
   </View>
 );
 
@@ -88,7 +109,7 @@ export const SuccessState: React.FC<SuccessStateProps> = ({
 }) => (
   <View
     style={styles.container}
-    accessibilityRole="status"
+    accessibilityRole="text"
     accessibilityLabel={`Success: ${title}. ${description || ''}`}
     accessibilityLiveRegion="polite"
   >
@@ -103,11 +124,24 @@ export const SuccessState: React.FC<SuccessStateProps> = ({
         onPress={onAction}
         accessibilityRole="button"
         accessibilityLabel={actionText}
-        accessibilityHint={`Tapping this button will ${actionText.toLowerCase()}`}
       >
         <Text style={styles.retryButtonText}>{actionText}</Text>
       </TouchableOpacity>
     )}
+  </View>
+);
+
+interface ContentCardSkeletonProps {
+  style?: object;
+}
+
+export const ContentCardSkeleton: React.FC<ContentCardSkeletonProps> = ({ style }) => (
+  <View style={[styles.skeletonCard, style]}>
+    <View style={styles.skeletonThumbnail} />
+    <View style={styles.skeletonInfo}>
+      <View style={styles.skeletonTitle} />
+      <View style={styles.skeletonSubtitle} />
+    </View>
   </View>
 );
 
@@ -117,27 +151,26 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 24,
-    backgroundColor: colors.bg.primary,
   },
   icon: {
     fontSize: 64,
     marginBottom: 16,
   },
   title: {
-    fontSize: 20,
-    fontWeight: '700',
+    fontSize: typography.fontSize.xl,
+    fontWeight: typography.fontWeight.bold,
     color: colors.text.primary,
     marginBottom: 8,
     textAlign: 'center',
   },
   description: {
-    fontSize: 14,
+    fontSize: typography.fontSize.base,
     color: colors.text.secondary,
     textAlign: 'center',
     marginBottom: 24,
   },
   text: {
-    fontSize: 16,
+    fontSize: typography.fontSize.md,
     color: colors.text.secondary,
     marginTop: 16,
   },
@@ -145,15 +178,49 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     paddingHorizontal: 32,
     paddingVertical: 12,
-    borderRadius: 24,
+    borderRadius: radius.pill,
     marginTop: 16,
     minHeight: 48,
     minWidth: 120,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...shadows.red,
   },
   retryButtonText: {
-    color: colors.text.inverse,
-    fontSize: 16,
-    fontWeight: '600',
+    color: '#FFFFFF',
+    fontSize: typography.fontSize.md,
+    fontWeight: typography.fontWeight.semibold,
+  },
+  skeletonCard: {
+    flexDirection: 'row',
+    backgroundColor: colors.bg.glass,
+    borderWidth: 1,
+    borderColor: colors.bg.glassBorder,
+    borderRadius: radius.xl,
+    overflow: 'hidden',
+  },
+  skeletonThumbnail: {
+    width: 120,
+    height: 80,
+    backgroundColor: colors.bg.tertiary,
+  },
+  skeletonInfo: {
+    flex: 1,
+    padding: spacing.md,
+    justifyContent: 'center',
+    gap: 8,
+  },
+  skeletonTitle: {
+    height: 14,
+    backgroundColor: colors.bg.tertiary,
+    borderRadius: radius.sm,
+    width: '80%',
+  },
+  skeletonSubtitle: {
+    height: 10,
+    backgroundColor: colors.bg.tertiary,
+    borderRadius: radius.sm,
+    width: '50%',
   },
 });
 
@@ -162,4 +229,5 @@ export default {
   EmptyState,
   ErrorState,
   SuccessState,
+  ContentCardSkeleton,
 };

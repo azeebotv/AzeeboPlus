@@ -1,35 +1,68 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withDelay,
+  withSpring,
+  interpolate,
+  Extrapolation,
+} from 'react-native-reanimated';
+import { AccessibilityInfo } from 'react-native';
+import { colors, typography, spacing, shadows } from '../src/theme';
+import { BrandButton } from '../src/components/ui';
+import { AmbientGlow, FadeIn, ScrollReveal } from '../src/components/motion';
+
+const AnimatedTouchable = Animated.createAnimatedComponent(
+  require('react-native').TouchableOpacity
+);
 
 export default function SplashScreen() {
   const colorScheme = useColorScheme();
   const router = useRouter();
   const [progress, setProgress] = useState(0);
   const [showContent, setShowContent] = useState(false);
-  const fadeAnim = React.useRef(new Animated.Value(0)).current;
-  const slideUpAnim = React.useRef(new Animated.Value(100)).current;
+
+  const logoScale = useSharedValue(0.6);
+  const logoOpacity = useSharedValue(0);
+  const ringRotation = useSharedValue(0);
+  const featuresOpacity = useSharedValue(0);
+  const featuresTranslate = useSharedValue(20);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      Animated.parallel([
-        Animated.timing(fadeAnim, {
-          toValue: 1,
-          duration: 800,
-          useNativeDriver: true,
-        }),
-        Animated.timing(slideUpAnim, {
-          toValue: 0,
-          duration: 800,
-          useNativeDriver: true,
-        }),
-      ]).start();
-      setShowContent(true);
-    }, 500);
+    let cancelled = false;
 
-    return () => clearTimeout(timer);
-  }, [fadeAnim, slideUpAnim]);
+    AccessibilityInfo.isReduceMotionEnabled().then((reduceMotion) => {
+      if (cancelled) return;
+      if (reduceMotion) {
+        logoScale.value = 1;
+        logoOpacity.value = 1;
+        ringRotation.value = 0;
+        featuresOpacity.value = 1;
+        featuresTranslate.value = 0;
+        setShowContent(true);
+        return;
+      }
+
+      const timer = setTimeout(() => {
+        logoScale.value = withSpring(1, { damping: 12, stiffness: 100 });
+        logoOpacity.value = withTiming(1, { duration: 600 });
+        ringRotation.value = withTiming(360, { duration: 1200 });
+        featuresOpacity.value = withDelay(400, withTiming(1, { duration: 500 }));
+        featuresTranslate.value = withDelay(400, withTiming(0, { duration: 500 }));
+        setShowContent(true);
+      }, 400);
+
+      return () => clearTimeout(timer);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [featuresOpacity, featuresTranslate, logoOpacity, logoScale, ringRotation]);
 
   useEffect(() => {
     if (!showContent) return;
@@ -39,7 +72,7 @@ export default function SplashScreen() {
           clearInterval(interval);
           setTimeout(() => {
             router.replace('/(auth)/login');
-          }, 500);
+          }, 400);
           return 100;
         }
         return prev + 2;
@@ -49,72 +82,99 @@ export default function SplashScreen() {
     return () => clearInterval(interval);
   }, [showContent, router]);
 
-  const handleGetStarted = () => {
-    router.replace('/(auth)/login');
-  };
+  const logoAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(logoOpacity.value, [0, 1], [0, 1], Extrapolation.CLAMP),
+    transform: [{ scale: logoScale.value }],
+  }));
+
+  const ringAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${ringRotation.value}deg` }],
+  }));
+
+  const featuresAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(featuresOpacity.value, [0, 1], [0, 1], Extrapolation.CLAMP),
+    transform: [{ translateY: featuresTranslate.value }],
+  }));
+
+  const featureItems = [
+    { icon: '🎬', label: 'Movies' },
+    { icon: '🎵', label: 'Music' },
+    { icon: '🎮', label: 'Games' },
+    { icon: '⚽', label: 'Sports' },
+  ];
 
   return (
     <View
       style={[
         styles.container,
-        { backgroundColor: colorScheme === 'dark' ? '#000000' : '#ffffff' },
+        { backgroundColor: colorScheme === 'dark' ? colors.bg.primary : '#ffffff' },
       ]}
     >
-      <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideUpAnim }] }}>
+      <AmbientGlow color={colors.primary} size={250} intensity={0.08} />
+
+      <Animated.View style={logoAnimatedStyle}>
         <View style={styles.logoContainer}>
-          <View style={styles.logoRing}>
-            <Text style={styles.logoText}>A+</Text>
-          </View>
-          <Text style={[styles.appName, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
-            Azeebo+
+          <Animated.View style={[styles.logoRing, ringAnimatedStyle]}>
+            <Text style={styles.logoText}>A</Text>
+            <Text style={styles.logoPlus}>+</Text>
+          </Animated.View>
+          <Text
+            style={[
+              styles.appName,
+              { color: colorScheme === 'dark' ? colors.text.primary : '#000000' },
+            ]}
+          >
+            Azeebo
+            <Text style={styles.appNamePlus}>+</Text>
           </Text>
           <Text style={styles.appTagline}>Experience the Future of Entertainment</Text>
         </View>
 
-        <View style={styles.featureIcons}>
-          {['🎬', '🎮', '🎤', '⚽', '😂', '✨'].map((icon, index) => (
-            <Animated.Text
-              key={index}
-              style={[
-                styles.featureIcon,
-                {
-                  opacity: fadeAnim,
-                  transform: [
-                    {
-                      translateY: slideUpAnim.interpolate({
-                        inputRange: [0, 100],
-                        outputRange: [0, 50 + index * 10],
-                      }),
-                    },
-                  ],
-                },
-              ]}
-            >
-              {icon}
-            </Animated.Text>
-          ))}
-        </View>
+        <Animated.View style={[styles.featureIcons, featuresAnimatedStyle]}>
+          {featureItems.map((item, index) => {
+            const itemDelay = index * 80;
+            return (
+              <ScrollReveal key={index} direction="up" delay={500 + itemDelay}>
+                <AnimatedTouchable
+                  style={styles.featureIcon}
+                  onPress={() => {}}
+                  accessibilityLabel={item.label}
+                  accessibilityRole="button"
+                >
+                  <Text style={styles.featureIconText}>{item.icon}</Text>
+                </AnimatedTouchable>
+              </ScrollReveal>
+            );
+          })}
+        </Animated.View>
 
         <View style={styles.progressContainer}>
           <View style={styles.progressBar}>
-            <View style={[styles.progressFill, { width: `${progress}%` }]} />
+            <View style={[styles.progressFill, { width: `${progress}%` as any }]} />
           </View>
-          <Text style={styles.progressText}>{progress}%</Text>
         </View>
 
-        <TouchableOpacity onPress={handleGetStarted} style={styles.getStartedButton}>
-          <Text style={styles.getStartedText}>Get Started</Text>
-        </TouchableOpacity>
+        <FadeIn delay={800}>
+          <BrandButton
+            title="Get Started"
+            onPress={() => router.replace('/(auth)/login')}
+            variant="primary"
+          />
 
-        <View style={styles.bottomLinks}>
-          <TouchableOpacity onPress={() => router.replace('/(auth)/login')}>
-            <Text style={styles.linkText}>Sign In</Text>
-          </TouchableOpacity>
-          <Text style={styles.divider}>|</Text>
-          <TouchableOpacity onPress={() => router.replace('/(auth)/register')}>
-            <Text style={styles.linkText}>Sign Up</Text>
-          </TouchableOpacity>
-        </View>
+          <View style={styles.bottomLinks}>
+            <BrandButton
+              title="Sign In"
+              onPress={() => router.replace('/(auth)/login')}
+              variant="ghost"
+            />
+            <Text style={styles.divider}>|</Text>
+            <BrandButton
+              title="Sign Up"
+              onPress={() => router.replace('/(auth)/register')}
+              variant="ghost"
+            />
+          </View>
+        </FadeIn>
       </Animated.View>
     </View>
   );
@@ -125,94 +185,89 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 32,
+    paddingHorizontal: spacing.xxxl,
   },
   logoContainer: {
     alignItems: 'center',
-    marginBottom: 40,
+    marginBottom: 48,
   },
   logoRing: {
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: '#8B5CF6',
+    backgroundColor: colors.red,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#8B5CF6',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.5,
-    shadowRadius: 20,
-    elevation: 10,
+    flexDirection: 'row',
+    ...shadows.red,
   },
   logoText: {
-    fontSize: 48,
+    fontSize: 44,
+    fontWeight: '800',
+    color: '#FFFFFF',
+  },
+  logoPlus: {
+    fontSize: 28,
     fontWeight: '700',
-    color: '#ffffff',
+    color: colors.primary,
+    marginTop: -16,
   },
   appName: {
-    fontSize: 32,
-    fontWeight: '700',
+    fontSize: typography.fontSize.hero,
+    fontWeight: '800',
     marginTop: 20,
+    color: colors.text.primary,
+  },
+  appNamePlus: {
+    color: colors.primary,
   },
   appTagline: {
-    fontSize: 14,
-    color: '#888',
-    marginTop: 8,
+    fontSize: typography.fontSize.base,
+    color: colors.text.secondary,
+    marginTop: spacing.sm,
   },
   featureIcons: {
     flexDirection: 'row',
-    gap: 16,
-    marginBottom: 40,
+    justifyContent: 'center',
+    gap: 24,
+    marginBottom: 48,
   },
   featureIcon: {
-    fontSize: 28,
-    opacity: 0.8,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  featureIconText: {
+    fontSize: 24,
   },
   progressContainer: {
     width: '100%',
     marginBottom: 32,
   },
   progressBar: {
-    height: 4,
+    height: 3,
     borderRadius: 2,
-    backgroundColor: '#e0e0e0',
+    backgroundColor: colors.bg.tertiary,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#8B5CF6',
+    backgroundColor: colors.primary,
     borderRadius: 2,
-  },
-  progressText: {
-    textAlign: 'right',
-    fontSize: 12,
-    color: '#888',
-    marginTop: 4,
-  },
-  getStartedButton: {
-    width: '100%',
-    padding: 16,
-    borderRadius: 12,
-    backgroundColor: '#8B5CF6',
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  getStartedText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '600',
   },
   bottomLinks: {
     flexDirection: 'row',
-    gap: 16,
+    justifyContent: 'center',
     alignItems: 'center',
-  },
-  linkText: {
-    fontSize: 14,
-    color: '#8B5CF6',
-    fontWeight: '500',
+    marginTop: spacing.lg,
   },
   divider: {
-    color: '#ccc',
+    color: colors.text.tertiary,
+    fontSize: typography.fontSize.base,
   },
 });

@@ -10,7 +10,6 @@ export default function ResetPasswordPage(): React.JSX.Element {
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
 
-  const [currentPassword, setCurrentPassword] = useState<string>('');
   const [newPassword, setNewPassword] = useState<string>('');
   const [confirmPassword, setConfirmPassword] = useState<string>('');
   const [showNew, setShowNew] = useState<boolean>(false);
@@ -144,33 +143,6 @@ export default function ResetPasswordPage(): React.JSX.Element {
         </div>
 
         {error && <Alert>{error}</Alert>}
-
-        <div>
-          <label htmlFor="current" className="az-label">
-            Current password
-          </label>
-          <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40">
-              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                />
-              </svg>
-            </span>
-            <input
-              id="current"
-              type="password"
-              className="az-input"
-              style={{ paddingLeft: '2.5rem' }}
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              placeholder="••••••••"
-            />
-          </div>
-        </div>
 
         <div>
           <label htmlFor="new-password" className="az-label">

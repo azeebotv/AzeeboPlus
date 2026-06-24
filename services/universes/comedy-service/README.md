@@ -40,5 +40,5 @@ pnpm start:dev
 ## Ownership
 
 - **Team**: Content Engineering
-- **Maintainer**: content-engineering@azeebo.com
+- **Maintainer**: content-engineering@azeeboplus.com
 - **Last Updated**: 2026-05-14

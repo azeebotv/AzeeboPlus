@@ -41,11 +41,11 @@ spec:
                 secretKeyRef:
                   name: azeebo-secrets
                   key: redis-url
-            - name: JWT_SECRET
+            - name: JWT_ACCESS_SECRET
               valueFrom:
                 secretKeyRef:
                   name: azeebo-secrets
-                  key: jwt-secret
+                  key: jwt-access-secret
             - name: JWT_EXPIRES_IN
               value: "30m"
           resources:

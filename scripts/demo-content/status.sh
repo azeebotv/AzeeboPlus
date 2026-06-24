@@ -177,10 +177,10 @@ fi
 
 # Check for active admin
 ADMIN=$($PSQL_BASE -t -A -c "
-  SELECT COUNT(*) FROM auth_users WHERE status = 'active' AND email = 'admin@azeebo.com'
+  SELECT COUNT(*) FROM auth_users WHERE status = 'active' AND email = 'admin@azeeboplus.com'
 " 2>/dev/null || echo "0")
 if [ "$ADMIN" != "0" ]; then
-  echo "  [OK] Admin user exists (admin@azeebo.com)"
+  echo "  [OK] Admin user exists (admin@azeeboplus.com)"
 else
   echo "  [WARN] No active admin user"
 fi

@@ -19,7 +19,7 @@ spec:
         tier: backend
       annotations:
         prometheus.io/scrape: "true"
-        prometheus.io/port: "3014"
+        prometheus.io/port: "3022"
         prometheus.io/path: "/metrics"
     spec:
       serviceAccountName: azeebo-sa
@@ -46,14 +46,14 @@ spec:
           image: azeebo/moderation-service:latest
           imagePullPolicy: Always
           ports:
-            - containerPort: 3014
+            - containerPort: 3022
               protocol: TCP
               name: http
           env:
             - name: NODE_ENV
               value: production
             - name: PORT
-              value: "3014"
+              value: "3022"
             - name: DATABASE_URL
               valueFrom:
                 secretKeyRef:
@@ -76,7 +76,7 @@ spec:
           livenessProbe:
             httpGet:
               path: /health
-              port: 3014
+              port: 3022
             initialDelaySeconds: 30
             periodSeconds: 10
             timeoutSeconds: 5
@@ -84,7 +84,7 @@ spec:
           readinessProbe:
             httpGet:
               path: /ready
-              port: 3014
+              port: 3022
             initialDelaySeconds: 5
             periodSeconds: 5
             timeoutSeconds: 3
@@ -113,12 +113,12 @@ metadata:
     app: moderation-service
   annotations:
     prometheus.io/scrape: "true"
-    prometheus.io/port: "3014"
+    prometheus.io/port: "3022"
 spec:
   type: ClusterIP
   ports:
-    - port: 3014
-      targetPort: 3014
+    - port: 3022
+      targetPort: 3022
       protocol: TCP
       name: http
   selector:

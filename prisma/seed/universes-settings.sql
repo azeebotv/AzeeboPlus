@@ -123,8 +123,8 @@ VALUES
   (gen_random_uuid(), 'social_instagram', '"@azeeboplus"', 'social', 'Instagram handle', true, NOW(), NOW()),
   (gen_random_uuid(), 'social_facebook', '"azeeboplus"', 'social', 'Facebook page', true, NOW(), NOW()),
   (gen_random_uuid(), 'social_youtube', '"@azeeboplus"', 'social', 'YouTube channel', true, NOW(), NOW()),
-  (gen_random_uuid(), 'contact_email', '"support@azeebo.com"', 'contact', 'Contact email address', true, NOW(), NOW()),
-  (gen_random_uuid(), 'support_email', '"help@azeebo.com"', 'contact', 'Support email address', true, NOW(), NOW()),
+  (gen_random_uuid(), 'contact_email', '"support@azeeboplus.com"', 'contact', 'Contact email address', true, NOW(), NOW()),
+  (gen_random_uuid(), 'support_email', '"help@azeeboplus.com"', 'contact', 'Support email address', true, NOW(), NOW()),
   (gen_random_uuid(), 'maintenance_mode', 'false', 'system', 'Enable maintenance mode', false, NOW(), NOW()),
   (gen_random_uuid(), 'registration_enabled', 'true', 'system', 'Allow new user registrations', false, NOW(), NOW()),
   (gen_random_uuid(), 'creator_approval_required', 'true', 'system', 'Require approval for new creators', false, NOW(), NOW())

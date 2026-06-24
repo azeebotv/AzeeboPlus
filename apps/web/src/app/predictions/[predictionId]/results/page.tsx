@@ -11,26 +11,62 @@ export default function PredictionResultsPage(): React.JSX.Element {
   const [results, setResults] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => { loadResults(); }, [predictionId]);
+  useEffect(() => {
+    loadResults();
+  }, [predictionId]);
 
   const loadResults = async () => {
     try {
       const response = await apiFetch<any>(`/engagement/predictions/${predictionId}/results`);
       if (response.success && response.data) setResults(response.data);
-    } catch { /* ignore */ } finally { setIsLoading(false); }
+    } catch {
+      /* ignore */
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <div style={{ backgroundColor: '#1A0A0A', minHeight: '100vh', color: '#F5F0EB' }}>
       <AppHeader />
-      <main style={{ paddingTop: 100, paddingBottom: 60, maxWidth: 700, margin: '0 auto', padding: '100px 24px 60px' }}>
-        <button onClick={() => router.back()} style={{ background: 'none', border: 'none', color: '#9A8A7A', cursor: 'pointer', fontSize: 14, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+      <main
+        style={{
+          paddingTop: 100,
+          paddingBottom: 60,
+          maxWidth: 700,
+          margin: '0 auto',
+          padding: '100px 24px 60px',
+        }}
+      >
+        <button
+          onClick={() => router.back()}
+          style={{
+            background: 'none',
+            border: 'none',
+            color: '#9A8A7A',
+            cursor: 'pointer',
+            fontSize: 14,
+            marginBottom: 16,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+          }}
+        >
           <span>←</span> Back
         </button>
 
         {isLoading ? (
           <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}>
-            <div style={{ width: 40, height: 40, border: '3px solid #2A1A1A', borderTopColor: '#E8420A', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+            <div
+              style={{
+                width: 40,
+                height: 40,
+                border: '3px solid #2A1A1A',
+                borderTopColor: '#E8420A',
+                borderRadius: '50%',
+                animation: 'spin 0.8s linear infinite',
+              }}
+            />
           </div>
         ) : !results ? (
           <div className="az-glass" style={{ padding: 40, borderRadius: 20, textAlign: 'center' }}>
@@ -40,39 +76,90 @@ export default function PredictionResultsPage(): React.JSX.Element {
           </div>
         ) : (
           <>
-            <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>{results.title || 'Prediction Results'}</h1>
+            <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>
+              {results.title || 'Prediction Results'}
+            </h1>
             <p style={{ color: '#9A8A7A', marginBottom: 32 }}>{results.description || ''}</p>
 
             {results.correctAnswer && (
-              <div className="az-glass" style={{ padding: 24, borderRadius: 20, marginBottom: 20, border: '1px solid #0D3B2E', textAlign: 'center' }}>
+              <div
+                className="az-glass"
+                style={{
+                  padding: 24,
+                  borderRadius: 20,
+                  marginBottom: 20,
+                  border: '1px solid #0D3B2E',
+                  textAlign: 'center',
+                }}
+              >
                 <p style={{ color: '#9A8A7A', fontSize: 14, marginBottom: 8 }}>Correct Answer</p>
-                <p style={{ fontSize: 24, fontWeight: 700, color: '#0D3B2E' }}>{results.correctAnswer}</p>
+                <p style={{ fontSize: 24, fontWeight: 700, color: '#0D3B2E' }}>
+                  {results.correctAnswer}
+                </p>
               </div>
             )}
 
             {results.options && (
               <div className="az-glass" style={{ padding: 24, borderRadius: 20, marginBottom: 20 }}>
-                <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16 }}>Results Breakdown</h2>
+                <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16 }}>
+                  Results Breakdown
+                </h2>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                   {results.options.map((opt: any, i: number) => {
-                    const pct = results.totalVotes > 0 ? Math.round((opt.votes / results.totalVotes) * 100) : 0;
+                    const pct =
+                      results.totalVotes > 0
+                        ? Math.round((opt.votes / results.totalVotes) * 100)
+                        : 0;
                     const isCorrect = opt.text === results.correctAnswer;
                     return (
                       <div key={i}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                          <span style={{ fontWeight: 600, fontSize: 14, color: isCorrect ? '#0D3B2E' : '#F5F0EB' }}>
+                        <div
+                          style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            marginBottom: 6,
+                          }}
+                        >
+                          <span
+                            style={{
+                              fontWeight: 600,
+                              fontSize: 14,
+                              color: isCorrect ? '#0D3B2E' : '#F5F0EB',
+                            }}
+                          >
                             {opt.text} {isCorrect && '✓'}
                           </span>
-                          <span style={{ color: '#9A8A7A', fontSize: 13 }}>{pct}% ({opt.votes} votes)</span>
+                          <span style={{ color: '#9A8A7A', fontSize: 13 }}>
+                            {pct}% ({opt.votes} votes)
+                          </span>
                         </div>
-                        <div style={{ height: 8, borderRadius: 4, backgroundColor: '#2A1A1A', overflow: 'hidden' }}>
-                          <div style={{ height: '100%', width: `${pct}%`, borderRadius: 4, background: isCorrect ? 'linear-gradient(135deg, #0D3B2E 0%, #1A5E45 100%)' : 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)', transition: 'width 0.5s ease' }} />
+                        <div
+                          style={{
+                            height: 8,
+                            borderRadius: 4,
+                            backgroundColor: '#2A1A1A',
+                            overflow: 'hidden',
+                          }}
+                        >
+                          <div
+                            style={{
+                              height: '100%',
+                              width: `${pct}%`,
+                              borderRadius: 4,
+                              background: isCorrect
+                                ? 'linear-gradient(135deg, #0D3B2E 0%, #1A5E45 100%)'
+                                : 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
+                              transition: 'width 0.5s ease',
+                            }}
+                          />
                         </div>
                       </div>
                     );
                   })}
                 </div>
-                <p style={{ color: '#9A8A7A', fontSize: 13, marginTop: 16, textAlign: 'center' }}>Total votes: {results.totalVotes}</p>
+                <p style={{ color: '#9A8A7A', fontSize: 13, marginTop: 16, textAlign: 'center' }}>
+                  Total votes: {results.totalVotes}
+                </p>
               </div>
             )}
           </>

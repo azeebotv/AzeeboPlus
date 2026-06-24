@@ -14,11 +14,12 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { AuthGuard } from '@nestjs/passport';
+import { AdminGuard } from '@azeebo/security';
 import { UploadService } from './upload.service';
 import { PremiumContentService } from './premium-content.service';
 import { ApiResponseWrapper } from '@azeebo/shared-types';
 
-@Controller('api/media')
+@Controller('media')
 export class UploadController {
   constructor(
     private readonly uploadService: UploadService,
@@ -26,6 +27,7 @@ export class UploadController {
   ) {}
 
   @Post('upload/image')
+  @UseGuards(AuthGuard('jwt'))
   @UseInterceptors(FileInterceptor('file'))
   async uploadImage(@UploadedFile() file: Express.Multer.File): Promise<unknown> {
     if (!file) {
@@ -35,6 +37,7 @@ export class UploadController {
   }
 
   @Post('upload/video')
+  @UseGuards(AuthGuard('jwt'))
   @UseInterceptors(FileInterceptor('file'))
   async uploadVideo(@UploadedFile() file: Express.Multer.File): Promise<unknown> {
     if (!file) {
@@ -44,6 +47,7 @@ export class UploadController {
   }
 
   @Post('upload/audio')
+  @UseGuards(AuthGuard('jwt'))
   @UseInterceptors(FileInterceptor('file'))
   async uploadAudio(@UploadedFile() file: Express.Multer.File): Promise<unknown> {
     if (!file) {
@@ -53,6 +57,7 @@ export class UploadController {
   }
 
   @Post('upload/document')
+  @UseGuards(AuthGuard('jwt'))
   @UseInterceptors(FileInterceptor('file'))
   async uploadDocument(@UploadedFile() file: Express.Multer.File): Promise<unknown> {
     if (!file) {
@@ -62,6 +67,7 @@ export class UploadController {
   }
 
   @Post('upload/thumbnail')
+  @UseGuards(AuthGuard('jwt'))
   @UseInterceptors(FileInterceptor('file'))
   async uploadThumbnail(@UploadedFile() file: Express.Multer.File): Promise<unknown> {
     if (!file) {
@@ -71,6 +77,7 @@ export class UploadController {
   }
 
   @Post('upload/avatar')
+  @UseGuards(AuthGuard('jwt'))
   @UseInterceptors(FileInterceptor('file'))
   async uploadAvatar(@UploadedFile() file: Express.Multer.File): Promise<unknown> {
     if (!file) {
@@ -80,6 +87,7 @@ export class UploadController {
   }
 
   @Post('upload/banner')
+  @UseGuards(AuthGuard('jwt'))
   @UseInterceptors(FileInterceptor('file'))
   async uploadBanner(@UploadedFile() file: Express.Multer.File): Promise<unknown> {
     if (!file) {
@@ -89,6 +97,7 @@ export class UploadController {
   }
 
   @Get('presigned/upload')
+  @UseGuards(AuthGuard('jwt'))
   async getPresignedUploadUrl(
     @Query('type') type: 'image' | 'video' | 'audio' | 'document',
     @Query('fileId') fileId: string,
@@ -111,6 +120,7 @@ export class UploadController {
   }
 
   @Get('presigned/download')
+  @UseGuards(AuthGuard('jwt'))
   async getPresignedDownloadUrl(
     @Query('key') key: string,
     @Query('expiresIn') expiresIn = 3600
@@ -123,6 +133,7 @@ export class UploadController {
   }
 
   @Get('metadata')
+  @UseGuards(AuthGuard('jwt'))
   async getFileMetadata(@Query('key') key: string): Promise<unknown> {
     if (!key) {
       throw new BadRequestException('Missing required parameter: key');
@@ -131,6 +142,7 @@ export class UploadController {
   }
 
   @Delete(':key')
+  @UseGuards(AuthGuard('jwt'))
   async deleteFile(@Param('key') key: string): Promise<unknown> {
     await this.uploadService.deleteFile(decodeURIComponent(key));
     return ApiResponseWrapper.success({ message: 'File deleted successfully' });
@@ -154,12 +166,14 @@ export class UploadController {
   }
 
   @Post('transcoding/retry-failed')
+  @UseGuards(AuthGuard('jwt'), AdminGuard)
   async retryFailedTranscodingJobs(): Promise<unknown> {
     const retriedCount = await this.uploadService.retryFailedTranscodingJobs();
     return ApiResponseWrapper.success({ retriedCount });
   }
 
   @Post('cleanup/orphaned')
+  @UseGuards(AuthGuard('jwt'), AdminGuard)
   async cleanupOrphanedFiles(
     @Query('prefix') prefix?: string,
     @Query('olderThanDays') olderThanDays = 30

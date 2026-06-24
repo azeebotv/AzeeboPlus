@@ -14,7 +14,10 @@ export default function TransactionDetailPage(): React.JSX.Element {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (!isAuthenticated || !user) { router.push('/auth/login'); return; }
+    if (!isAuthenticated || !user) {
+      router.push('/auth/login');
+      return;
+    }
     loadTransaction();
   }, [isAuthenticated, user, router, transactionId]);
 
@@ -22,7 +25,11 @@ export default function TransactionDetailPage(): React.JSX.Element {
     try {
       const response = await api.wallet.getTransaction(transactionId as string);
       if (response.success && response.data) setTransaction(response.data);
-    } catch { /* ignore */ } finally { setIsLoading(false); }
+    } catch {
+      /* ignore */
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   if (!isAuthenticated || !user) return <></>;
@@ -30,9 +37,30 @@ export default function TransactionDetailPage(): React.JSX.Element {
   return (
     <div style={{ backgroundColor: '#1A0A0A', minHeight: '100vh', color: '#F5F0EB' }}>
       <AppHeader />
-      <main style={{ paddingTop: 100, paddingBottom: 60, maxWidth: 600, margin: '0 auto', padding: '100px 24px 60px' }}>
+      <main
+        style={{
+          paddingTop: 100,
+          paddingBottom: 60,
+          maxWidth: 600,
+          margin: '0 auto',
+          padding: '100px 24px 60px',
+        }}
+      >
         <div style={{ marginBottom: 32 }}>
-          <button onClick={() => router.back()} style={{ background: 'none', border: 'none', color: '#9A8A7A', cursor: 'pointer', fontSize: 14, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <button
+            onClick={() => router.back()}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#9A8A7A',
+              cursor: 'pointer',
+              fontSize: 14,
+              marginBottom: 16,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+            }}
+          >
             <span>←</span> Back to Transactions
           </button>
           <h1 style={{ fontSize: 28, fontWeight: 700 }}>Transaction Details</h1>
@@ -40,22 +68,67 @@ export default function TransactionDetailPage(): React.JSX.Element {
 
         {isLoading ? (
           <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}>
-            <div style={{ width: 40, height: 40, border: '3px solid #2A1A1A', borderTopColor: '#E8420A', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+            <div
+              style={{
+                width: 40,
+                height: 40,
+                border: '3px solid #2A1A1A',
+                borderTopColor: '#E8420A',
+                borderRadius: '50%',
+                animation: 'spin 0.8s linear infinite',
+              }}
+            />
           </div>
         ) : !transaction ? (
           <div className="az-glass" style={{ padding: 40, borderRadius: 20, textAlign: 'center' }}>
             <div style={{ fontSize: 48, marginBottom: 16 }}>🔍</div>
             <h3 style={{ fontSize: 18, marginBottom: 8 }}>Transaction not found</h3>
-            <a href="/wallet/transactions" style={{ color: '#E8420A', textDecoration: 'none', fontWeight: 600 }}>View all transactions</a>
+            <a
+              href="/wallet/transactions"
+              style={{ color: '#E8420A', textDecoration: 'none', fontWeight: 600 }}
+            >
+              View all transactions
+            </a>
           </div>
         ) : (
           <div className="az-glass" style={{ padding: 28, borderRadius: 20 }}>
             {/* Amount */}
             <div style={{ textAlign: 'center', marginBottom: 28 }}>
-              <p style={{ fontSize: 36, fontWeight: 700, color: transaction.type === 'deposit' || transaction.type === 'earning' ? '#0D3B2E' : '#CC1C1C' }}>
-                {transaction.type === 'deposit' || transaction.type === 'earning' ? '+' : '-'}₦{(transaction.amount || 0).toLocaleString()}
+              <p
+                style={{
+                  fontSize: 36,
+                  fontWeight: 700,
+                  color:
+                    transaction.type === 'deposit' || transaction.type === 'earning'
+                      ? '#0D3B2E'
+                      : '#CC1C1C',
+                }}
+              >
+                {transaction.type === 'deposit' || transaction.type === 'earning' ? '+' : '-'}₦
+                {(transaction.amount || 0).toLocaleString()}
               </p>
-              <span style={{ display: 'inline-block', marginTop: 8, padding: '4px 14px', borderRadius: 999, fontSize: 12, fontWeight: 600, backgroundColor: transaction.status === 'completed' ? 'rgba(13,59,46,0.2)' : transaction.status === 'pending' ? 'rgba(245,158,11,0.2)' : 'rgba(204,28,28,0.2)', color: transaction.status === 'completed' ? '#0D3B2E' : transaction.status === 'pending' ? '#F59E0B' : '#CC1C1C' }}>
+              <span
+                style={{
+                  display: 'inline-block',
+                  marginTop: 8,
+                  padding: '4px 14px',
+                  borderRadius: 999,
+                  fontSize: 12,
+                  fontWeight: 600,
+                  backgroundColor:
+                    transaction.status === 'completed'
+                      ? 'rgba(13,59,46,0.2)'
+                      : transaction.status === 'pending'
+                        ? 'rgba(245,158,11,0.2)'
+                        : 'rgba(204,28,28,0.2)',
+                  color:
+                    transaction.status === 'completed'
+                      ? '#0D3B2E'
+                      : transaction.status === 'pending'
+                        ? '#F59E0B'
+                        : '#CC1C1C',
+                }}
+              >
                 {transaction.status}
               </span>
             </div>
@@ -68,13 +141,27 @@ export default function TransactionDetailPage(): React.JSX.Element {
                 { label: 'Date', value: new Date(transaction.createdAt).toLocaleString() },
                 { label: 'Description', value: transaction.description || 'N/A' },
                 { label: 'Payment Method', value: transaction.paymentMethod || 'N/A' },
-                transaction.fee ? { label: 'Fee', value: `₦${transaction.fee.toLocaleString()}` } : null,
-              ].filter(Boolean).map((item, i) => (
-                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #2A1A1A' }}>
-                  <span style={{ color: '#9A8A7A', fontSize: 14 }}>{item!.label}</span>
-                  <span style={{ fontWeight: 600, fontSize: 14, textTransform: 'capitalize' }}>{item!.value}</span>
-                </div>
-              ))}
+                transaction.fee
+                  ? { label: 'Fee', value: `₦${transaction.fee.toLocaleString()}` }
+                  : null,
+              ]
+                .filter(Boolean)
+                .map((item, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      padding: '10px 0',
+                      borderBottom: '1px solid #2A1A1A',
+                    }}
+                  >
+                    <span style={{ color: '#9A8A7A', fontSize: 14 }}>{item!.label}</span>
+                    <span style={{ fontWeight: 600, fontSize: 14, textTransform: 'capitalize' }}>
+                      {item!.value}
+                    </span>
+                  </div>
+                ))}
             </div>
           </div>
         )}

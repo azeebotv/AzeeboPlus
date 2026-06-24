@@ -52,11 +52,12 @@ export function usePWA() {
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
-    // Listen for install prompt
-    window.addEventListener('beforeinstallprompt', (e: Event) => {
+    // Listen for install prompt (store handler for cleanup)
+    const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
       setState((prev) => ({ ...prev, deferredPrompt: e as BeforeInstallPromptEvent }));
-    });
+    };
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
 
     // Check if already installed
     if (window.matchMedia('(display-mode: standalone)').matches) {
@@ -66,6 +67,7 @@ export function usePWA() {
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     };
   }, []);
 

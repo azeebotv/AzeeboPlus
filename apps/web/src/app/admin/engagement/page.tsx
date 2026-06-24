@@ -6,7 +6,13 @@ import AdminLayout from '@/components/layout/AdminLayout';
 
 export default function AdminEngagementPage(): React.JSX.Element {
   const { isAuthenticated, user } = useAuth();
-  const [engagement, setEngagement] = useState({ dailyActiveUsers: 0, monthlyActiveUsers: 0, averageSessionDuration: 0, retentionRate: 0, bounceRate: 0 });
+  const [engagement, setEngagement] = useState({
+    dailyActiveUsers: 0,
+    monthlyActiveUsers: 0,
+    averageSessionDuration: 0,
+    retentionRate: 0,
+    bounceRate: 0,
+  });
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -18,7 +24,11 @@ export default function AdminEngagementPage(): React.JSX.Element {
     try {
       const response = await api.admin.getEngagementMetrics();
       if (response.success && response.data) setEngagement(response.data as typeof engagement);
-    } catch { /* ignore */ } finally { setIsLoading(false); }
+    } catch {
+      /* ignore */
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -28,15 +38,43 @@ export default function AdminEngagementPage(): React.JSX.Element {
 
       {isLoading ? (
         <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}>
-          <div style={{ width: 40, height: 40, border: '3px solid #2A1A1A', borderTopColor: '#E8420A', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+          <div
+            style={{
+              width: 40,
+              height: 40,
+              border: '3px solid #2A1A1A',
+              borderTopColor: '#E8420A',
+              borderRadius: '50%',
+              animation: 'spin 0.8s linear infinite',
+            }}
+          />
         </div>
       ) : (
         <>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 16, marginBottom: 32 }}>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+              gap: 16,
+              marginBottom: 32,
+            }}
+          >
             {[
-              { label: 'Daily Active Users', value: engagement.dailyActiveUsers.toLocaleString(), color: '#E8420A' },
-              { label: 'Monthly Active Users', value: engagement.monthlyActiveUsers.toLocaleString(), color: '#0D3B2E' },
-              { label: 'Avg Session', value: `${Math.floor(engagement.averageSessionDuration / 60)}m`, color: '#F59E0B' },
+              {
+                label: 'Daily Active Users',
+                value: engagement.dailyActiveUsers.toLocaleString(),
+                color: '#E8420A',
+              },
+              {
+                label: 'Monthly Active Users',
+                value: engagement.monthlyActiveUsers.toLocaleString(),
+                color: '#0D3B2E',
+              },
+              {
+                label: 'Avg Session',
+                value: `${Math.floor(engagement.averageSessionDuration / 60)}m`,
+                color: '#F59E0B',
+              },
               { label: 'Retention Rate', value: `${engagement.retentionRate}%`, color: '#CC1C1C' },
             ].map((stat, i) => (
               <div key={i} className="az-glass" style={{ padding: 20, borderRadius: 16 }}>

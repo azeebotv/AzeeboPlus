@@ -9,11 +9,21 @@ import AppFooter from '@/components/layout/AppFooter';
 export default function SettingsPage(): React.JSX.Element {
   const { isAuthenticated, user } = useAuth();
   const router = useRouter();
-  const [settings, setSettings] = useState({ language: 'en', autoplay: true, notifications: true, darkMode: true, dataSaver: false, downloadQuality: 'hd' });
+  const [settings, setSettings] = useState({
+    language: 'en',
+    autoplay: true,
+    notifications: true,
+    darkMode: true,
+    dataSaver: false,
+    downloadQuality: 'hd',
+  });
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    if (!isAuthenticated || !user) { router.push('/auth/login'); return; }
+    if (!isAuthenticated || !user) {
+      router.push('/auth/login');
+      return;
+    }
   }, [isAuthenticated, user, router]);
 
   const handleSave = async () => {
@@ -21,7 +31,9 @@ export default function SettingsPage(): React.JSX.Element {
       await api.user.updatePreferences(settings);
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   };
 
   if (!isAuthenticated || !user) return <></>;
@@ -36,20 +48,67 @@ export default function SettingsPage(): React.JSX.Element {
   return (
     <div style={{ backgroundColor: '#1A0A0A', minHeight: '100vh', color: '#F5F0EB' }}>
       <AppHeader />
-      <main style={{ paddingTop: 100, paddingBottom: 60, maxWidth: 600, margin: '0 auto', padding: '100px 24px 60px' }}>
+      <main
+        style={{
+          paddingTop: 100,
+          paddingBottom: 60,
+          maxWidth: 600,
+          margin: '0 auto',
+          padding: '100px 24px 60px',
+        }}
+      >
         <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 32 }}>Settings</h1>
 
         <div className="az-glass" style={{ padding: 24, borderRadius: 20, marginBottom: 20 }}>
           <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16 }}>Preferences</h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            {toggleItems.map(item => (
-              <div key={item.key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid #2A1A1A' }}>
+            {toggleItems.map((item) => (
+              <div
+                key={item.key}
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: '8px 0',
+                  borderBottom: '1px solid #2A1A1A',
+                }}
+              >
                 <div>
                   <p style={{ fontWeight: 600, fontSize: 15 }}>{item.label}</p>
                   <p style={{ color: '#9A8A7A', fontSize: 13 }}>{item.desc}</p>
                 </div>
-                <button onClick={() => setSettings({ ...settings, [item.key]: !settings[item.key as keyof typeof settings] })} style={{ width: 48, height: 28, borderRadius: 14, border: 'none', cursor: 'pointer', position: 'relative', backgroundColor: settings[item.key as keyof typeof settings] ? '#E8420A' : '#2A1A1A', transition: 'background-color 0.2s' }}>
-                  <span style={{ position: 'absolute', top: 3, left: settings[item.key as keyof typeof settings] ? 23 : 3, width: 22, height: 22, borderRadius: '50%', backgroundColor: '#fff', transition: 'left 0.2s' }} />
+                <button
+                  onClick={() =>
+                    setSettings({
+                      ...settings,
+                      [item.key]: !settings[item.key as keyof typeof settings],
+                    })
+                  }
+                  style={{
+                    width: 48,
+                    height: 28,
+                    borderRadius: 14,
+                    border: 'none',
+                    cursor: 'pointer',
+                    position: 'relative',
+                    backgroundColor: settings[item.key as keyof typeof settings]
+                      ? '#E8420A'
+                      : '#2A1A1A',
+                    transition: 'background-color 0.2s',
+                  }}
+                >
+                  <span
+                    style={{
+                      position: 'absolute',
+                      top: 3,
+                      left: settings[item.key as keyof typeof settings] ? 23 : 3,
+                      width: 22,
+                      height: 22,
+                      borderRadius: '50%',
+                      backgroundColor: '#fff',
+                      transition: 'left 0.2s',
+                    }}
+                  />
                 </button>
               </div>
             ))}
@@ -59,8 +118,26 @@ export default function SettingsPage(): React.JSX.Element {
         <div className="az-glass" style={{ padding: 24, borderRadius: 20, marginBottom: 20 }}>
           <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16 }}>Download Quality</h2>
           <div style={{ display: 'flex', gap: 8 }}>
-            {['sd', 'hd', 'fullhd'].map(q => (
-              <button key={q} onClick={() => setSettings({ ...settings, downloadQuality: q })} style={{ flex: 1, padding: '10px 0', borderRadius: 12, border: settings.downloadQuality === q ? 'none' : '1px solid #2A1A1A', background: settings.downloadQuality === q ? 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)' : 'transparent', color: settings.downloadQuality === q ? '#fff' : '#9A8A7A', fontWeight: 600, fontSize: 13, cursor: 'pointer', textTransform: 'uppercase' }}>
+            {['sd', 'hd', 'fullhd'].map((q) => (
+              <button
+                key={q}
+                onClick={() => setSettings({ ...settings, downloadQuality: q })}
+                style={{
+                  flex: 1,
+                  padding: '10px 0',
+                  borderRadius: 12,
+                  border: settings.downloadQuality === q ? 'none' : '1px solid #2A1A1A',
+                  background:
+                    settings.downloadQuality === q
+                      ? 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)'
+                      : 'transparent',
+                  color: settings.downloadQuality === q ? '#fff' : '#9A8A7A',
+                  fontWeight: 600,
+                  fontSize: 13,
+                  cursor: 'pointer',
+                  textTransform: 'uppercase',
+                }}
+              >
                 {q === 'fullhd' ? 'Full HD' : q.toUpperCase()}
               </button>
             ))}
@@ -75,8 +152,20 @@ export default function SettingsPage(): React.JSX.Element {
               { href: '/profile/privacy-security', label: 'Privacy & Security' },
               { href: '/settings/devices', label: 'Manage Devices' },
               { href: '/wallet/subscription-plans', label: 'Subscription Plans' },
-            ].map(link => (
-              <a key={link.href} href={link.href} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: '1px solid #2A1A1A', textDecoration: 'none', color: '#F5F0EB' }}>
+            ].map((link) => (
+              <a
+                key={link.href}
+                href={link.href}
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: '12px 0',
+                  borderBottom: '1px solid #2A1A1A',
+                  textDecoration: 'none',
+                  color: '#F5F0EB',
+                }}
+              >
                 <span style={{ fontWeight: 500, fontSize: 15 }}>{link.label}</span>
                 <span style={{ color: '#9A8A7A' }}>→</span>
               </a>
@@ -84,7 +173,21 @@ export default function SettingsPage(): React.JSX.Element {
           </div>
         </div>
 
-        <button onClick={handleSave} className="az-btn-primary" style={{ width: '100%', padding: '14px 0', borderRadius: 999, border: 'none', background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)', color: '#fff', fontWeight: 700, fontSize: 16, cursor: 'pointer' }}>
+        <button
+          onClick={handleSave}
+          className="az-btn-primary"
+          style={{
+            width: '100%',
+            padding: '14px 0',
+            borderRadius: 999,
+            border: 'none',
+            background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
+            color: '#fff',
+            fontWeight: 700,
+            fontSize: 16,
+            cursor: 'pointer',
+          }}
+        >
           {saved ? '✓ Saved!' : 'Save Settings'}
         </button>
       </main>

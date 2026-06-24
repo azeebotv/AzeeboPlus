@@ -1,5 +1,8 @@
 # Node modules
 node_modules/
+.qoder/
+.dev-state/
+
 # Build output
 dist/
 .next/
@@ -7,24 +10,57 @@ dist/
 **/generated/prisma/
 *.tsbuildinfo
 coverage/
+
 # Logs
 yarn-error.log
 npm-debug.log*
-logs/
-# Environment files
+*.log
+
+# Environment files (contain secrets - NEVER commit)
 .env
 .env.*
+!.env.example
+
+# Redis dumps
+dump.rdb
+
+# SSL/TLS certificates and private keys
+*.key
+*.pem
+*.cert
+*.p12
+*.pfx
+
+# Kubernetes/secrets files (use External Secrets in production)
+**/secrets.yaml
+**/*-secrets.yaml
+**/*secrets*.yml
+
+# Database dumps
+*.sql.gz
+*.dump
+
 # OS files
 .DS_Store
+Thumbs.db
+
 # IDE files
 .vscode/
 .idea/
-.logs/
-# Stale backups from the dockerfile fix
+
+# Stale backups
 *.bak
 Dockerfile.bak
+
 # PgBouncer credentials
 infra/config/pgbouncer_userlist.txt
+
+# Terraform state
+*.tfstate
+*.tfstate.*
+.terraform/
+*.tfvars
+!*.tfvars.example
 
 # Optional npm cache
 npm-packages/

@@ -9,7 +9,7 @@ describe('configureCors', () => {
 
   it('should call enableCors with correct configuration', () => {
     configureCors(mockApp as any, {
-      allowedOrigins: ['https://azeebo.com'],
+      allowedOrigins: ['https://azeeboplus.com'],
     });
 
     expect(mockApp.enableCors).toHaveBeenCalledTimes(1);
@@ -38,7 +38,7 @@ describe('configureCors', () => {
 
   it('should accept custom maxAge and credentials', () => {
     configureCors(mockApp as any, {
-      allowedOrigins: ['https://azeebo.com'],
+      allowedOrigins: ['https://azeeboplus.com'],
       credentials: false,
       maxAge: 7200,
     });
@@ -50,7 +50,7 @@ describe('configureCors', () => {
 
   it('should configure allowed headers', () => {
     configureCors(mockApp as any, {
-      allowedOrigins: ['https://azeebo.com'],
+      allowedOrigins: ['https://azeeboplus.com'],
     });
 
     const config = mockApp.enableCors.mock.calls[0][0];
@@ -61,7 +61,7 @@ describe('configureCors', () => {
 
   it('should configure exposed headers', () => {
     configureCors(mockApp as any, {
-      allowedOrigins: ['https://azeebo.com'],
+      allowedOrigins: ['https://azeeboplus.com'],
     });
 
     const config = mockApp.enableCors.mock.calls[0][0];
@@ -72,18 +72,18 @@ describe('configureCors', () => {
   describe('origin validation callback', () => {
     it('should allow matching origins', () => {
       configureCors(mockApp as any, {
-        allowedOrigins: ['https://azeebo.com'],
+        allowedOrigins: ['https://azeeboplus.com'],
       });
 
       const originCallback = mockApp.enableCors.mock.calls[0][0].origin;
       const callback = jest.fn();
-      originCallback('https://azeebo.com', callback);
+      originCallback('https://azeeboplus.com', callback);
       expect(callback).toHaveBeenCalledWith(null, true);
     });
 
     it('should reject non-matching origins', () => {
       configureCors(mockApp as any, {
-        allowedOrigins: ['https://azeebo.com'],
+        allowedOrigins: ['https://azeeboplus.com'],
       });
 
       const originCallback = mockApp.enableCors.mock.calls[0][0].origin;
@@ -99,7 +99,7 @@ describe('configureCors', () => {
 
     it('should reject missing origin', () => {
       configureCors(mockApp as any, {
-        allowedOrigins: ['https://azeebo.com'],
+        allowedOrigins: ['https://azeeboplus.com'],
       });
 
       const originCallback = mockApp.enableCors.mock.calls[0][0].origin;

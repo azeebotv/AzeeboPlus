@@ -3,16 +3,22 @@ import { ValidationPipe, Logger } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import helmet from 'helmet';
-import { validateEnvironment } from '@azeebo/shared-types';
 import { LoggingInterceptor } from '@azeebo/logger';
 import { GlobalExceptionFilter } from '@azeebo/error-handling';
 
 async function bootstrap(): Promise<void> {
-  validateEnvironment(process.env);
+  if (!process.env.JWT_ACCESS_SECRET) {
+    Logger.error('JWT_ACCESS_SECRET environment variable is required');
+    process.exit(1);
+  }
 
   const app = await NestFactory.create(AppModule, {
     bodyParser: true,
   });
+
+  // Cookie parsing for CSRF protection and auth cookies
+  const cookieParser = require('cookie-parser');
+  app.use(cookieParser());
 
   // Body size limits to prevent memory exhaustion attacks (SEC-010)
   const bodyParser = require('body-parser');
@@ -50,9 +56,9 @@ async function bootstrap(): Promise<void> {
 
   // Allow-listed origins for all frontend apps
   const allowedOrigins = [
-    'https://app.azeebo.com',
-    'https://creator.azeebo.com',
-    'https://admin.azeebo.com',
+    'https://app.azeeboplus.com',
+    'https://creator.azeeboplus.com',
+    'https://admin.azeeboplus.com',
     'http://localhost:3000',
     'http://localhost:4000',
     'http://localhost:4014',
@@ -89,6 +95,7 @@ async function bootstrap(): Promise<void> {
       .setDescription('Azeebo+ API Gateway')
       .setVersion('1.0.0')
       .addTag('gateway')
+      .addServer('http://localhost:3013', 'API Gateway')
       .build();
     const document = SwaggerModule.createDocument(app, config);
     SwaggerModule.setup('docs', app, document);
@@ -96,6 +103,7 @@ async function bootstrap(): Promise<void> {
   }
 
   const port = process.env.PORT || 3013;
+  app.enableShutdownHooks();
   await app.listen(port);
   const logger = new Logger('API Gateway');
   logger.log(`API Gateway running on port ${port}`);

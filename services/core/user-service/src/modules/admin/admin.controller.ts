@@ -12,9 +12,30 @@ import {
   Req,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { IsString, IsOptional, IsObject } from 'class-validator';
 import { AdminService } from './admin.service';
 import { AdminGuard } from '@azeebo/security';
 import { Request } from 'express';
+
+class UpdateSubscriptionDto {
+  @IsString()
+  @IsOptional()
+  status?: string;
+
+  @IsString()
+  @IsOptional()
+  plan?: string;
+
+  @IsObject()
+  @IsOptional()
+  metadata?: Record<string, unknown>;
+}
+
+class UpdatePreferencesDto {
+  @IsObject()
+  @IsOptional()
+  preferences?: Record<string, unknown>;
+}
 
 interface AuthenticatedRequest extends Request {
   user?: {
@@ -66,7 +87,7 @@ export class AdminController {
   @ApiResponse({ status: 403, description: 'Forbidden' })
   async updateSubscription(
     @Param('subscriptionId') subscriptionId: string,
-    @Body() updateData: Record<string, unknown>,
+    @Body() updateData: UpdateSubscriptionDto,
     @Req() req: AuthenticatedRequest
   ) {
     const actorId = req.user?.id || 'admin';
@@ -104,7 +125,7 @@ export class AdminController {
   @ApiResponse({ status: 403, description: 'Forbidden' })
   async updateUserPreferences(
     @Param('userId') userId: string,
-    @Body() preferences: Record<string, unknown>,
+    @Body() preferences: UpdatePreferencesDto,
     @Req() req: AuthenticatedRequest
   ) {
     const actorId = req.user?.id || 'admin';

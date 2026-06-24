@@ -1,152 +1,1078 @@
+# ============================================================
+# Azeebo+ — Full-Stack Docker Compose
+# ============================================================
+# Quick start:
+#   cp .env.example .env   # fill in secrets
+#   docker compose up -d   # start infrastructure + all services
+#
+# Selective startup:
+#   docker compose --profile core up -d       # core domain only
+#   docker compose --profile monitoring up -d  # add Prometheus + Grafana
+#
+# View logs:
+#   docker compose logs -f api-gateway
+#   docker compose ps                        # health status
+#
+# Stop everything:
+#   docker compose down -v                    # -v removes volumes
+# ============================================================
 
+# ------------------------------------------------------------------
+# Shared YAML anchors — DRY configuration across ~30 services
+# ------------------------------------------------------------------
+x-common-env: &common-env
+  NODE_ENV: ${NODE_ENV:-development}
+  REDIS_URL: redis://redis:6379
+  POSTGRES_HOST: postgres
+  POSTGRES_PORT: "5432"
 
+x-nestjs-service: &nestjs-service
+  restart: unless-stopped
+  networks:
+    - backend
+  # Health check — every NestJS service exposes GET /health
+  healthcheck:
+    test: ["CMD", "node", "-e", "fetch('http://localhost:${PORT:-3000}/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+    interval: 30s
+    timeout: 10s
+    retries: 3
+    start_period: 40s
+  # Logging with rotation
+  logging:
+    driver: json-file
+    options:
+      max-size: "50m"
+      max-file: "5"
+  # Resource caps — adjust per service below
+  deploy:
+    resources:
+      limits:
+        memory: 512M
+        cpus: "0.5"
+  # Security: run as non-root, drop all capabilities, no new privileges
+  security_opt:
+    - no-new-privileges:true
+  cap_drop:
+    - ALL
+
+# ============================================================
+# SERVICES
+# ============================================================
 services:
-  # Auth Service
+
+  # ============================================================
+  # INFRASTRUCTURE
+  # ============================================================
+
+  # --- PostgreSQL ---
+  # Primary datastore. One database per microservice, created by
+  # scripts/docker-init-databases.sh on first run.
+  postgres:
+    image: postgres:15-alpine
+    container_name: azeebo_postgres
+    ports:
+      - "${POSTGRES_EXTERNAL_PORT:-5432}:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-azeebo}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-azeebo_plus_dev}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./scripts/docker-init-databases.sh:/docker-entrypoint-initdb.d/01-init-databases.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-azeebo} -d ${POSTGRES_DB:-azeebo_plus_dev}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - data
+      - backend
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "1.0"
+    # Postgres performance tuning for local dev
+    command: >
+      postgres
+        -c shared_buffers=256MB
+        -c effective_cache_size=768MB
+        -c work_mem=8MB
+        -c maintenance_work_mem=128MB
+        -c max_connections=100
+        -c log_min_duration_statement=500
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "5"
+
+  # --- Redis ---
+  # Caching, sessions, rate limiting. AOF persistence enabled.
+  redis:
+    image: redis:7-alpine
+    container_name: azeebo_redis
+    ports:
+      - "${REDIS_EXTERNAL_PORT:-6379}:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - data
+      - backend
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.5"
+    command: >
+      redis-server
+        --appendonly yes
+        --appendfsync everysec
+        --maxmemory 256mb
+        --maxmemory-policy allkeys-lru
+        --save 900 1
+        --save 300 10
+        --save 60 10000
+    logging:
+      driver: json-file
+      options:
+        max-size: "25m"
+        max-file: "3"
+
+  # --- MailHog ---
+  # Local email catcher. UI at http://localhost:8025
+  mailhog:
+    image: mailhog/mailhog:v1.0.1
+    container_name: azeebo_mailhog
+    ports:
+      - "${MAILHOG_SMTP_PORT:-1025}:1025"
+      - "${MAILHOG_UI_PORT:-8025}:8025"
+    networks:
+      - backend
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: "0.25"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ============================================================
+  # CORE DOMAIN
+  # ============================================================
+
   auth-service:
+    <<: *nestjs-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     build:
       context: .
       dockerfile: services/core/auth-service/Dockerfile
+    container_name: azeebo_auth_service
     ports:
-      - "3001:3000"
-    env_file:
-      - .env
+      - "3000:3000"
     environment:
-      - PORT=3000
-      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public
-      - REDIS_URL=redis://redis:6379
-      - ALLOWED_ORIGINS=${CORS_ORIGIN}
-    depends_on:
-      - postgres
-      - redis
-    networks:
-      - azeebo-network
+      <<: *common-env
+      PORT: "3000"
+      DATABASE_URL: postgresql://azeebo:${AUTH_DB_PASSWORD:-${POSTGRES_PASSWORD}}@postgres:5432/auth_db?schema=public
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:?Set JWT_ACCESS_SECRET in .env}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?Set JWT_REFRESH_SECRET in .env}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-1d}
+      JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN:-7d}
+      ALLOWED_ORIGINS: ${CORS_ORIGIN:-http://localhost:4000}
+    profiles:
+      - core
+      - all
 
-  # Engagement Service
+  user-service:
+    <<: *nestjs-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    build:
+      context: .
+      dockerfile: services/core/user-service/Dockerfile
+    container_name: azeebo_user_service
+    ports:
+      - "3001:3001"
+    environment:
+      <<: *common-env
+      PORT: "3001"
+      DATABASE_URL: postgresql://azeebo:${USER_DB_PASSWORD:-${POSTGRES_PASSWORD}}@postgres:5432/user_db?schema=public
+      ALLOWED_ORIGINS: ${CORS_ORIGIN:-http://localhost:4000}
+    profiles:
+      - core
+      - all
+
+  wallet-service:
+    <<: *nestjs-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    build:
+      context: .
+      dockerfile: services/core/wallet-service/Dockerfile
+    container_name: azeebo_wallet_service
+    ports:
+      - "3002:3002"
+    environment:
+      <<: *common-env
+      PORT: "3002"
+      DATABASE_URL: postgresql://azeebo:${WALLET_DB_PASSWORD:-${POSTGRES_PASSWORD}}@postgres:5432/wallet_db?schema=public
+      ALLOWED_ORIGINS: ${CORS_ORIGIN:-http://localhost:4000}
+    profiles:
+      - core
+      - all
+
+  payment-service:
+    <<: *nestjs-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    build:
+      context: .
+      dockerfile: services/core/payment-service/Dockerfile
+    container_name: azeebo_payment_service
+    ports:
+      - "3003:3003"
+    environment:
+      <<: *common-env
+      PORT: "3003"
+      DATABASE_URL: postgresql://azeebo:${PAYMENT_DB_PASSWORD:-${POSTGRES_PASSWORD}}@postgres:5432/payment_db?schema=public
+      PAYSTACK_SECRET_KEY: ${PAYSTACK_SECRET_KEY:-sk_test_placeholder}
+      FLW_SECRET_KEY: ${FLW_SECRET_KEY:-FLWSECK_TEST_placeholder}
+      ALLOWED_ORIGINS: ${CORS_ORIGIN:-http://localhost:4000}
+    profiles:
+      - core
+      - all
+
+  content-service:
+    <<: *nestjs-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    build:
+      context: .
+      dockerfile: services/core/content-service/Dockerfile
+    container_name: azeebo_content_service
+    ports:
+      - "3004:3004"
+    environment:
+      <<: *common-env
+      PORT: "3004"
+      DATABASE_URL: postgresql://azeebo:${CONTENT_DB_PASSWORD:-${POSTGRES_PASSWORD}}@postgres:5432/content_db?schema=public
+      ALLOWED_ORIGINS: ${CORS_ORIGIN:-http://localhost:4000}
+    profiles:
+      - core
+      - all
+
+  search-service:
+    <<: *nestjs-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    build:
+      context: .
+      dockerfile: services/core/search-service/Dockerfile
+    container_name: azeebo_search_service
+    ports:
+      - "3005:3005"
+    environment:
+      <<: *common-env
+      PORT: "3005"
+      DATABASE_URL: postgresql://azeebo:${SEARCH_DB_PASSWORD:-${POSTGRES_PASSWORD}}@postgres:5432/search_db?schema=public
+      ALLOWED_ORIGINS: ${CORS_ORIGIN:-http://localhost:4000}
+    profiles:
+      - core
+      - all
+
+  media-service:
+    <<: *nestjs-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    build:
+      context: .
+      dockerfile: services/core/media-service/Dockerfile
+    container_name: azeebo_media_service
+    ports:
+      - "3019:3019"
+    environment:
+      <<: *common-env
+      PORT: "3019"
+      DATABASE_URL: postgresql://azeebo:${MEDIA_DB_PASSWORD:-${POSTGRES_PASSWORD}}@postgres:5432/media_db?schema=public
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-placeholder}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-placeholder}
+      AWS_S3_BUCKET: ${AWS_S3_BUCKET:-azeebo-media-dev}
+      ALLOWED_ORIGINS: ${CORS_ORIGIN:-http://localhost:4000}
+    profiles:
+      - core
+      - all
+
+  # ============================================================
+  # ENGAGEMENT DOMAIN
+  # ============================================================
+
+  notification-service:
+    <<: *nestjs-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    build:
+      context: .
+      dockerfile: services/engagement/notification-service/Dockerfile
+    container_name: azeebo_notification_service
+    ports:
+      - "3006:3006"
+    environment:
+      <<: *common-env
+      PORT: "3006"
+      DATABASE_URL: postgresql://azeebo:${NOTIFICATION_DB_PASSWORD:-${POSTGRES_PASSWORD}}@postgres:5432/notification_db?schema=public
+      SMTP_HOST: ${SMTP_HOST:-mailhog}
+      SMTP_PORT: ${SMTP_PORT:-1025}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      EMAIL_FROM: ${EMAIL_FROM:-noreply@azeebo.dev}
+      ALLOWED_ORIGINS: ${CORS_ORIGIN:-http://localhost:4000}
+    profiles:
+      - engagement
+      - all
+
+  reward-service:
+    <<: *nestjs-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    build:
+      context: .
+      dockerfile: services/engagement/reward-service/Dockerfile
+    container_name: azeebo_reward_service
+    ports:
+      - "3007:3007"
+    environment:
+      <<: *common-env
+      PORT: "3007"
+      DATABASE_URL: postgresql://azeebo:${REWARD_DB_PASSWORD:-${POSTGRES_PASSWORD}}@postgres:5432/reward_db?schema=public
+      ALLOWED_ORIGINS: ${CORS_ORIGIN:-http://localhost:4000}
+    profiles:
+      - engagement
+      - all
+
   engagement-service:
+    <<: *nestjs-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     build:
       context: .
       dockerfile: services/engagement/engagement-service/Dockerfile
+    container_name: azeebo_engagement_service
     ports:
-      - "3002:3000"
-    env_file:
-      - .env
+      - "3023:3023"
     environment:
-      - PORT=3000
-      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public
-      - REDIS_URL=redis://redis:6379
-      - ALLOWED_ORIGINS=${CORS_ORIGIN}
-    depends_on:
-      - postgres
-      - redis
-    networks:
-      - azeebo-network
+      <<: *common-env
+      PORT: "3023"
+      DATABASE_URL: postgresql://azeebo:${ENGAGEMENT_DB_PASSWORD:-${POSTGRES_PASSWORD}}@postgres:5432/engagement_db?schema=public
+      ALLOWED_ORIGINS: ${CORS_ORIGIN:-http://localhost:4000}
+    profiles:
+      - engagement
+      - all
 
-  # Support Service
-  support-service:
+  messaging-service:
+    <<: *nestjs-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     build:
       context: .
-      dockerfile: services/operations/support-service/Dockerfile
+      dockerfile: services/engagement/messaging-service/Dockerfile
+    container_name: azeebo_messaging_service
     ports:
-      - "3003:3000"
-    env_file:
-      - .env
+      - "3024:3024"
     environment:
-      - PORT=3000
-      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public
-      - REDIS_URL=redis://redis:6379
-      - ALLOWED_ORIGINS=${CORS_ORIGIN}
-    depends_on:
-      - postgres
-      - redis
-    networks:
-      - azeebo-network
+      <<: *common-env
+      PORT: "3024"
+      DATABASE_URL: postgresql://azeebo:${MESSAGING_DB_PASSWORD:-${POSTGRES_PASSWORD}}@postgres:5432/messaging_db?schema=public
+      ALLOWED_ORIGINS: ${CORS_ORIGIN:-http://localhost:4000}
+    profiles:
+      - engagement
+      - all
 
-  # Universe Service (Lifestyle)
+  referral-service:
+    <<: *nestjs-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    build:
+      context: .
+      dockerfile: services/engagement/referral-service/Dockerfile
+    container_name: azeebo_referral_service
+    ports:
+      - "3025:3025"
+    environment:
+      <<: *common-env
+      PORT: "3025"
+      DATABASE_URL: postgresql://azeebo:${REFERRAL_DB_PASSWORD:-${POSTGRES_PASSWORD}}@postgres:5432/referral_db?schema=public
+      ALLOWED_ORIGINS: ${CORS_ORIGIN:-http://localhost:4000}
+    profiles:
+      - engagement
+      - all
+
+  subscription-service:
+    <<: *nestjs-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    build:
+      context: .
+      dockerfile: services/engagement/subscription-service/Dockerfile
+    container_name: azeebo_subscription_service
+    ports:
+      - "3026:3026"
+    environment:
+      <<: *common-env
+      PORT: "3026"
+      DATABASE_URL: postgresql://azeebo:${SUBSCRIPTION_DB_PASSWORD:-${POSTGRES_PASSWORD}}@postgres:5432/subscription_db?schema=public
+      ALLOWED_ORIGINS: ${CORS_ORIGIN:-http://localhost:4000}
+    profiles:
+      - engagement
+      - all
+
+  # ============================================================
+  # INTELLIGENCE DOMAIN
+  # ============================================================
+
+  analytics-service:
+    <<: *nestjs-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    build:
+      context: .
+      dockerfile: services/intelligence/analytics-service/Dockerfile
+    container_name: azeebo_analytics_service
+    ports:
+      - "3008:3008"
+    environment:
+      <<: *common-env
+      PORT: "3008"
+      DATABASE_URL: postgresql://azeebo:${ANALYTICS_DB_PASSWORD:-${POSTGRES_PASSWORD}}@postgres:5432/analytics_db?schema=public
+      ALLOWED_ORIGINS: ${CORS_ORIGIN:-http://localhost:4000}
+    profiles:
+      - intelligence
+      - all
+
+  recommendation-service:
+    <<: *nestjs-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    build:
+      context: .
+      dockerfile: services/intelligence/recommendation-service/Dockerfile
+    container_name: azeebo_recommendation_service
+    ports:
+      - "3009:3009"
+    environment:
+      <<: *common-env
+      PORT: "3009"
+      DATABASE_URL: postgresql://azeebo:${RECOMMENDATION_DB_PASSWORD:-${POSTGRES_PASSWORD}}@postgres:5432/recommendation_db?schema=public
+      ALLOWED_ORIGINS: ${CORS_ORIGIN:-http://localhost:4000}
+    profiles:
+      - intelligence
+      - all
+
+  # ============================================================
+  # UNIVERSES DOMAIN
+  # ============================================================
+
+  reality-service:
+    <<: *nestjs-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    build:
+      context: .
+      dockerfile: services/universes/reality-service/Dockerfile
+    container_name: azeebo_reality_service
+    ports:
+      - "3010:3010"
+    environment:
+      <<: *common-env
+      PORT: "3010"
+      DATABASE_URL: postgresql://azeebo:${REALITY_DB_PASSWORD:-${POSTGRES_PASSWORD}}@postgres:5432/reality_db?schema=public
+      ALLOWED_ORIGINS: ${CORS_ORIGIN:-http://localhost:4000}
+    profiles:
+      - universes
+      - all
+
+  movie-service:
+    <<: *nestjs-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    build:
+      context: .
+      dockerfile: services/universes/movie-service/Dockerfile
+    container_name: azeebo_movie_service
+    ports:
+      - "3011:3011"
+    environment:
+      <<: *common-env
+      PORT: "3011"
+      DATABASE_URL: postgresql://azeebo:${MOVIE_DB_PASSWORD:-${POSTGRES_PASSWORD}}@postgres:5432/movie_db?schema=public
+      ALLOWED_ORIGINS: ${CORS_ORIGIN:-http://localhost:4000}
+    profiles:
+      - universes
+      - all
+
+  comedy-service:
+    <<: *nestjs-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    build:
+      context: .
+      dockerfile: services/universes/comedy-service/Dockerfile
+    container_name: azeebo_comedy_service
+    ports:
+      - "3012:3012"
+    environment:
+      <<: *common-env
+      PORT: "3012"
+      DATABASE_URL: postgresql://azeebo:${COMEDY_DB_PASSWORD:-${POSTGRES_PASSWORD}}@postgres:5432/comedy_db?schema=public
+      ALLOWED_ORIGINS: ${CORS_ORIGIN:-http://localhost:4000}
+    profiles:
+      - universes
+      - all
+
+  games-service:
+    <<: *nestjs-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    build:
+      context: .
+      dockerfile: services/universes/games-service/Dockerfile
+    container_name: azeebo_games_service
+    ports:
+      - "3014:3014"
+    environment:
+      <<: *common-env
+      PORT: "3014"
+      DATABASE_URL: postgresql://azeebo:${GAMES_DB_PASSWORD:-${POSTGRES_PASSWORD}}@postgres:5432/games_db?schema=public
+      ALLOWED_ORIGINS: ${CORS_ORIGIN:-http://localhost:4000}
+    profiles:
+      - universes
+      - all
+
+  sports-service:
+    <<: *nestjs-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    build:
+      context: .
+      dockerfile: services/universes/sports-service/Dockerfile
+    container_name: azeebo_sports_service
+    ports:
+      - "3021:3021"
+    environment:
+      <<: *common-env
+      PORT: "3021"
+      DATABASE_URL: postgresql://azeebo:${SPORTS_DB_PASSWORD:-${POSTGRES_PASSWORD}}@postgres:5432/sports_db?schema=public
+      ALLOWED_ORIGINS: ${CORS_ORIGIN:-http://localhost:4000}
+    profiles:
+      - universes
+      - all
+
   lifestyle-service:
+    <<: *nestjs-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     build:
       context: .
       dockerfile: services/universes/lifestyle-service/Dockerfile
+    container_name: azeebo_lifestyle_service
     ports:
-      - "3004:3000"
-    env_file:
-      - .env
+      - "3016:3016"
     environment:
-      - PORT=3000
-      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public
-      - REDIS_URL=redis://redis:6379
-      - ALLOWED_ORIGINS=${CORS_ORIGIN}
-    depends_on:
-      - postgres
-      - redis
-    networks:
-      - azeebo-network
+      <<: *common-env
+      PORT: "3016"
+      DATABASE_URL: postgresql://azeebo:${LIFESTYLE_DB_PASSWORD:-${POSTGRES_PASSWORD}}@postgres:5432/lifestyle_db?schema=public
+      ALLOWED_ORIGINS: ${CORS_ORIGIN:-http://localhost:4000}
+    profiles:
+      - universes
+      - all
 
-  # Web App
-  web:
+  vertical-service:
+    <<: *nestjs-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    build:
+      context: .
+      dockerfile: services/universes/vertical-service/Dockerfile
+    container_name: azeebo_vertical_service
+    ports:
+      - "3017:3017"
+    environment:
+      <<: *common-env
+      PORT: "3017"
+      DATABASE_URL: postgresql://azeebo:${VERTICAL_DB_PASSWORD:-${POSTGRES_PASSWORD}}@postgres:5432/vertical_db?schema=public
+      ALLOWED_ORIGINS: ${CORS_ORIGIN:-http://localhost:4000}
+    profiles:
+      - universes
+      - all
+
+  # ============================================================
+  # OPERATIONS DOMAIN
+  # ============================================================
+
+  queue-service:
+    <<: *nestjs-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    build:
+      context: .
+      dockerfile: services/operations/queue-service/Dockerfile
+    container_name: azeebo_queue_service
+    ports:
+      - "3015:3015"
+    environment:
+      <<: *common-env
+      PORT: "3015"
+      DATABASE_URL: postgresql://azeebo:${QUEUE_DB_PASSWORD:-${POSTGRES_PASSWORD}}@postgres:5432/queue_db?schema=public
+      ALLOWED_ORIGINS: ${CORS_ORIGIN:-http://localhost:4000}
+    profiles:
+      - operations
+      - all
+
+  creator-service:
+    <<: *nestjs-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    build:
+      context: .
+      dockerfile: services/universes/creator-service/Dockerfile
+    container_name: azeebo_creator_service
+    ports:
+      - "3018:3018"
+    environment:
+      <<: *common-env
+      PORT: "3018"
+      DATABASE_URL: postgresql://azeebo:${CREATOR_DB_PASSWORD:-${POSTGRES_PASSWORD}}@postgres:5432/creator_db?schema=public
+      ALLOWED_ORIGINS: ${CORS_ORIGIN:-http://localhost:4000}
+    profiles:
+      - operations
+      - all
+
+  support-service:
+    <<: *nestjs-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    build:
+      context: .
+      dockerfile: services/operations/support-service/Dockerfile
+    container_name: azeebo_support_service
+    ports:
+      - "3020:3020"
+    environment:
+      <<: *common-env
+      PORT: "3020"
+      DATABASE_URL: postgresql://azeebo:${SUPPORT_DB_PASSWORD:-${POSTGRES_PASSWORD}}@postgres:5432/support_db?schema=public
+      ALLOWED_ORIGINS: ${CORS_ORIGIN:-http://localhost:4000}
+    profiles:
+      - operations
+      - all
+
+  moderation-service:
+    <<: *nestjs-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    build:
+      context: .
+      dockerfile: services/operations/moderation-service/Dockerfile
+    container_name: azeebo_moderation_service
+    ports:
+      - "3022:3022"
+    environment:
+      <<: *common-env
+      PORT: "3022"
+      DATABASE_URL: postgresql://azeebo:${MODERATION_DB_PASSWORD:-${POSTGRES_PASSWORD}}@postgres:5432/moderation_db?schema=public
+      ALLOWED_ORIGINS: ${CORS_ORIGIN:-http://localhost:4000}
+    profiles:
+      - operations
+      - all
+
+  # ============================================================
+  # API GATEWAY — single entry point for all backend services
+  # ============================================================
+  api-gateway:
+    <<: *nestjs-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    build:
+      context: .
+      dockerfile: services/gateway/api-gateway/Dockerfile
+    container_name: azeebo_api_gateway
+    ports:
+      - "${GATEWAY_PORT:-3013}:3013"
+    environment:
+      <<: *common-env
+      PORT: "3013"
+      # Service discovery — gateway routes to these Docker hostnames
+      AUTH_SERVICE_URL: http://auth-service:3000
+      USER_SERVICE_URL: http://user-service:3001
+      WALLET_SERVICE_URL: http://wallet-service:3002
+      PAYMENT_SERVICE_URL: http://payment-service:3003
+      CONTENT_SERVICE_URL: http://content-service:3004
+      SEARCH_SERVICE_URL: http://search-service:3005
+      NOTIFICATION_SERVICE_URL: http://notification-service:3006
+      REWARD_SERVICE_URL: http://reward-service:3007
+      ANALYTICS_SERVICE_URL: http://analytics-service:3008
+      RECOMMENDATION_SERVICE_URL: http://recommendation-service:3009
+      REALITY_SERVICE_URL: http://reality-service:3010
+      MOVIE_SERVICE_URL: http://movie-service:3011
+      COMEDY_SERVICE_URL: http://comedy-service:3012
+      GAMES_SERVICE_URL: http://games-service:3014
+      QUEUE_SERVICE_URL: http://queue-service:3015
+      LIFESTYLE_SERVICE_URL: http://lifestyle-service:3016
+      VERTICAL_SERVICE_URL: http://vertical-service:3017
+      CREATOR_SERVICE_URL: http://creator-service:3018
+      MEDIA_SERVICE_URL: http://media-service:3019
+      SUPPORT_SERVICE_URL: http://support-service:3020
+      SPORTS_SERVICE_URL: http://sports-service:3021
+      MODERATION_SERVICE_URL: http://moderation-service:3022
+      ENGAGEMENT_SERVICE_URL: http://engagement-service:3023
+      MESSAGING_SERVICE_URL: http://messaging-service:3024
+      REFERRAL_SERVICE_URL: http://referral-service:3025
+      SUBSCRIPTION_SERVICE_URL: http://subscription-service:3026
+      RATE_LIMIT_TTL: ${RATE_LIMIT_TTL:-60}
+      RATE_LIMIT_MAX: ${RATE_LIMIT_MAX:-100}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:4000}
+    profiles:
+      - gateway
+      - all
+
+  # ============================================================
+  # FRONTEND APPLICATIONS
+  # ============================================================
+
+  web-app:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
+    container_name: azeebo_web_app
     ports:
-      - "3000:3000"
-    env_file:
-      - .env
-    depends_on:
-      - auth-service
-      - engagement-service
-      - support-service
-      - lifestyle-service
+      - "${WEB_PORT:-4000}:3000"
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      API_GATEWAY_URL: http://api-gateway:3013
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:${WEB_PORT:-4000}}
+      NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:${WEB_PORT:-4000}}
     networks:
-      - azeebo-network
+      - frontend
+      - backend
+    depends_on:
+      api-gateway:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3000').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "5"
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "1.0"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    profiles:
+      - frontend
+      - all
 
-  # Admin App
-  admin:
+  admin-app:
     build:
       context: .
       dockerfile: apps/admin/Dockerfile
+    container_name: azeebo_admin_app
     ports:
-      - "3005:3000"
-    env_file:
-      - .env
+      - "${ADMIN_PORT:-4016}:4016"
     environment:
-      - PORT=3000
+      <<: *common-env
+      PORT: "4016"
+      DATABASE_URL: postgresql://azeebo:${ADMIN_DB_PASSWORD:-${POSTGRES_PASSWORD}}@postgres:5432/admin_db?schema=public
+    networks:
+      - frontend
+      - backend
     depends_on:
-      - auth-service
-      - engagement-service
-      - support-service
-      - lifestyle-service
-    networks:
-      - azeebo-network
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:4016').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "5"
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.5"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    profiles:
+      - frontend
+      - all
 
-  # Database
-  postgres:
-    image: postgres:15-alpine
+  creator-portal-app:
+    build:
+      context: .
+      dockerfile: apps/creator-portal/Dockerfile
+    container_name: azeebo_creator_portal
     ports:
-      - "5432:5432"
+      - "${CREATOR_PORTAL_PORT:-4014}:4014"
     environment:
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=${POSTGRES_DB}
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
+      <<: *common-env
+      PORT: "4014"
+      DATABASE_URL: postgresql://azeebo:${CREATOR_PORTAL_DB_PASSWORD:-${POSTGRES_PASSWORD}}@postgres:5432/creator_portal_db?schema=public
     networks:
-      - azeebo-network
+      - frontend
+      - backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:4014').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "5"
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.5"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    profiles:
+      - frontend
+      - all
 
-  # Redis
-  redis:
-    image: redis:7-alpine
+  # ============================================================
+  # MONITORING (opt-in via --profile monitoring)
+  # ============================================================
+
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    container_name: azeebo_prometheus
     ports:
-      - "6379:6379"
+      - "${PROMETHEUS_PORT:-9090}:9090"
     volumes:
-      - redis-data:/data
+      - ./infra/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.retention.time=7d"
+      - "--web.enable-lifecycle"
     networks:
-      - azeebo-network
+      - backend
+      - monitoring
+    logging:
+      driver: json-file
+      options:
+        max-size: "25m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.5"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - SETGID
+      - SETUID
+      - DAC_OVERRIDE
+    profiles:
+      - monitoring
+      - all
 
-# Networks
+  grafana:
+    image: grafana/grafana:11.1.0
+    container_name: azeebo_grafana
+    ports:
+      - "${GRAFANA_PORT:-3100}:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./infra/monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+    networks:
+      - monitoring
+    depends_on:
+      prometheus:
+        condition: service_started
+    logging:
+      driver: json-file
+      options:
+        max-size: "25m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: "0.25"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - SETGID
+      - SETUID
+      - DAC_OVERRIDE
+    profiles:
+      - monitoring
+      - all
+
+# ============================================================
+# NETWORKS
+# Isolated tiers for defense-in-depth:
+#   data        — postgres, redis (database only)
+#   backend     — all microservices + gateway (can reach data)
+#   frontend    — web/admin/creator-portal (can reach backend)
+#   monitoring  — prometheus, grafana
+# ============================================================
 networks:
-  azeebo-network:
+  data:
     driver: bridge
+    name: azeebo_data
+  backend:
+    driver: bridge
+    name: azeebo_backend
+  frontend:
+    driver: bridge
+    name: azeebo_frontend
+  monitoring:
+    driver: bridge
+    name: azeebo_monitoring
 
-# Volumes
+# ============================================================
+# VOLUMES — persistent data across container restarts
+# ============================================================
 volumes:
   postgres-data:
+    driver: local
+    name: azeebo_postgres_data
   redis-data:
+    driver: local
+    name: azeebo_redis_data
+  prometheus-data:
+    driver: local
+    name: azeebo_prometheus_data
+  grafana-data:
+    driver: local
+    name: azeebo_grafana_data

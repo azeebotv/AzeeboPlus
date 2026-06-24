@@ -33,9 +33,9 @@ describe('RefundService (Integration)', () => {
     const mockConfigService = {
       get: jest.fn((key: string, defaultValue?: any) => {
         const config: Record<string, string> = {
-          PAYMENT_SERVICE_URL: 'http://localhost:3002',
-          WALLET_SERVICE_URL: 'http://localhost:3003',
-          MODERATION_SERVICE_URL: 'http://localhost:3006',
+          PAYMENT_SERVICE_URL: 'http://localhost:3003',
+          WALLET_SERVICE_URL: 'http://localhost:3002',
+          MODERATION_SERVICE_URL: 'http://localhost:3022',
           CONTENT_SERVICE_URL: 'http://localhost:3004',
           USER_SERVICE_URL: 'http://localhost:3001',
           DEFAULT_API_TIMEOUT: '30000',
@@ -44,9 +44,9 @@ describe('RefundService (Integration)', () => {
       }),
       getOrThrow: jest.fn((key: string) => {
         const config: Record<string, string> = {
-          PAYMENT_SERVICE_URL: 'http://localhost:3002',
-          WALLET_SERVICE_URL: 'http://localhost:3003',
-          MODERATION_SERVICE_URL: 'http://localhost:3006',
+          PAYMENT_SERVICE_URL: 'http://localhost:3003',
+          WALLET_SERVICE_URL: 'http://localhost:3002',
+          MODERATION_SERVICE_URL: 'http://localhost:3022',
           CONTENT_SERVICE_URL: 'http://localhost:3004',
           USER_SERVICE_URL: 'http://localhost:3001',
           DEFAULT_API_TIMEOUT: '30000',

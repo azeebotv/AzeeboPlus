@@ -66,7 +66,7 @@ export const paymentApi = {
         limit: number;
         totalPages: number;
       }>
-    '/v1/payments/transactions?page=${page}&limit=${limit}'
+    >(`/v1/payments/transactions?page=${page}&limit=${limit}`);
   },
 
   getProviders: async (): Promise<ApiResponse<{ provider: string; name: string }[]>> => {

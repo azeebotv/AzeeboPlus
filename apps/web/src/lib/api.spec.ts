@@ -50,7 +50,7 @@ describe('Web App API Client', () => {
       mockFetch.mockResolvedValue(mockResponse);
 
       await api.auth.register({
-        name: 'Test',
+        displayName: 'Test',
         email: 'test@example.com',
         password: 'mock-password',
       });
@@ -106,10 +106,7 @@ describe('Web App API Client', () => {
         expect.stringContaining('/wallet'),
         expect.objectContaining({ method: 'GET' })
       );
-      expect(mockFetch).not.toHaveBeenCalledWith(
-        expect.stringContaining('/v1/wallet'),
-        expect.anything()
-      );
+      expect(mockFetch.mock.calls[0][0]).toMatch(/\/wallet$/);
     });
 
     it('getTransactions should call GET /wallet/transactions with pagination', async () => {

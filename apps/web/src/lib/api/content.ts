@@ -26,25 +26,25 @@ export function createContentMethods(client: RequestClient) {
     getContentByUniverse: async (
       universeId: string,
       page = 1,
-      limit = 20,
+      limit = 20
     ): Promise<ApiResponse<PaginatedResponse<ContentItem>>> => {
       return client.request<PaginatedResponse<ContentItem>>(
-        `/api/v1/content/universe/${universeId}?page=${page}&limit=${limit}`,
+        `/api/v1/content/universe/${universeId}?page=${page}&limit=${limit}`
       );
     },
 
     getContentByCategory: async (
       categoryId: string,
       page = 1,
-      limit = 20,
+      limit = 20
     ): Promise<ApiResponse<PaginatedResponse<ContentItem>>> => {
       return client.request<PaginatedResponse<ContentItem>>(
-        `/api/v1/content/category/${categoryId}?page=${page}&limit=${limit}`,
+        `/api/v1/content/category/${categoryId}?page=${page}&limit=${limit}`
       );
     },
 
     searchContent: async (
-      filters: SearchFilters,
+      filters: SearchFilters
     ): Promise<ApiResponse<PaginatedResponse<ContentItem>>> => {
       const params = new URLSearchParams();
       if (filters.query) params.append('q', filters.query);
@@ -58,15 +58,15 @@ export function createContentMethods(client: RequestClient) {
       if (filters.limit) params.append('limit', filters.limit.toString());
 
       return client.request<PaginatedResponse<ContentItem>>(
-        `/api/v1/content/search?${params.toString()}`,
+        `/api/v1/content/search?${params.toString()}`
       );
     },
 
     getSignedUrl: async (
-      contentId: string,
+      contentId: string
     ): Promise<ApiResponse<{ url: string; expiresIn: number }>> => {
       return client.request<{ url: string; expiresIn: number }>(
-        `/api/v1/content/${contentId}/media/signed-url`,
+        `/api/v1/content/${contentId}/media/signed-url`
       );
     },
 
@@ -128,14 +128,14 @@ export function createContentMethods(client: RequestClient) {
 
     getRelatedContent: async (
       contentId: string,
-      limit = 4,
+      limit = 4
     ): Promise<ApiResponse<ContentItem[]>> => {
       return client.request<ContentItem[]>(`/api/v1/content/${contentId}/related?limit=${limit}`);
     },
 
     getContentByCreator: async (
       creatorId: string,
-      limit = 3,
+      limit = 3
     ): Promise<ApiResponse<ContentItem[]>> => {
       return client.request<ContentItem[]>(`/api/v1/content/creator/${creatorId}?limit=${limit}`);
     },
@@ -147,7 +147,7 @@ export function createContentMethods(client: RequestClient) {
         contentType?: string;
         status?: string;
         sort?: 'newest' | 'oldest' | 'popular' | 'trending';
-      } = {},
+      } = {}
     ): Promise<ApiResponse<PaginatedResponse<ContentItem>>> => {
       const searchParams = new URLSearchParams();
       if (params.limit) searchParams.append('limit', params.limit.toString());
@@ -157,7 +157,7 @@ export function createContentMethods(client: RequestClient) {
       if (params.sort) searchParams.append('sort', params.sort);
 
       return client.request<PaginatedResponse<ContentItem>>(
-        `/api/v1/content/me?${searchParams.toString()}`,
+        `/api/v1/content/me?${searchParams.toString()}`
       );
     },
   };

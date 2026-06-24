@@ -11,7 +11,6 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
 import { PrismaService } from '../database/prisma.service';
 import { RateLimitGuard, RateLimit } from '@azeebo/security';
 import { CacheInterceptor, Cache } from '../../cache';
@@ -27,13 +26,16 @@ import { WalletResponse } from './interfaces/wallet-response.interface';
 
 interface AuthenticatedRequest {
   user: {
-    sub: string;
+    id: string;
+    sub?: string;
+    role?: string;
+    email?: string;
   };
 }
 
 @ApiTags('Wallet')
 @ApiBearerAuth()
-@Controller('v1/wallet')
+@Controller('wallet')
 @UseInterceptors(CacheInterceptor)
 export class WalletController {
   constructor(
@@ -43,18 +45,16 @@ export class WalletController {
 
   @Get()
   @Cache({ key: 'wallet:balance:{userId}', ttl: 60 })
-  @UseGuards(AuthGuard('jwt'))
-  @ApiOperation({ summary: 'Get wallet balance' })
+    @ApiOperation({ summary: 'Get wallet balance' })
   @ApiResponse({ status: 200, description: 'Wallet balance' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getBalance(@Request() req: AuthenticatedRequest): Promise<WalletResponse> {
-    return this.walletService.getBalance(req.user.sub);
+    return this.walletService.getBalance(req.user.id);
   }
 
   @Get('transactions')
   @Cache({ key: 'wallet:transactions:{userId}', ttl: 60 })
-  @UseGuards(AuthGuard('jwt'))
-  @ApiOperation({ summary: 'Get wallet transaction history' })
+    @ApiOperation({ summary: 'Get wallet transaction history' })
   @ApiResponse({ status: 200, description: 'Transaction history' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getTransactions(
@@ -63,21 +63,20 @@ export class WalletController {
     @Query('limit') limit = 20,
     @Query('cursor') cursor?: string
   ): Promise<WalletResponse> {
-    return this.walletService.getTransactions(req.user.sub, Number(page), Number(limit), cursor);
+    return this.walletService.getTransactions(req.user.id, Number(page), Number(limit), cursor);
   }
 
   @Get('summary')
   @Cache({ key: 'wallet:summary:{userId}', ttl: 60 })
-  @UseGuards(AuthGuard('jwt'))
-  @ApiOperation({ summary: 'Get wallet summary widget' })
+    @ApiOperation({ summary: 'Get wallet summary widget' })
   @ApiResponse({ status: 200, description: 'Wallet summary' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getSummary(@Request() req: AuthenticatedRequest): Promise<WalletResponse> {
-    return this.walletService.getSummary(req.user.sub);
+    return this.walletService.getSummary(req.user.id);
   }
 
   @Post('fund')
-  @UseGuards(AuthGuard('jwt'), RateLimitGuard)
+  @UseGuards(RateLimitGuard)
   @RateLimit(10, 60000)
   @ApiOperation({ summary: 'Initialize wallet funding' })
   @ApiResponse({ status: 201, description: 'Payment intent created' })
@@ -87,11 +86,11 @@ export class WalletController {
     @Request() req: AuthenticatedRequest,
     @Body() fundWalletDto: FundWalletDto
   ): Promise<WalletResponse> {
-    return this.walletService.initializeFunding(req.user.sub, fundWalletDto);
+    return this.walletService.initializeFunding(req.user.id, fundWalletDto);
   }
 
   @Post('redeem-reward')
-  @UseGuards(AuthGuard('jwt'), RateLimitGuard)
+  @UseGuards(RateLimitGuard)
   @RateLimit(10, 60000)
   @ApiOperation({ summary: 'Convert reward points to wallet balance' })
   @ApiResponse({ status: 200, description: 'Reward redeemed' })
@@ -101,11 +100,11 @@ export class WalletController {
     @Request() req: AuthenticatedRequest,
     @Body() redeemRewardDto: RedeemRewardDto
   ): Promise<WalletResponse> {
-    return this.walletService.redeemReward(req.user.sub, redeemRewardDto.points);
+    return this.walletService.redeemReward(req.user.id, redeemRewardDto.points);
   }
 
   @Post('bonus-credit')
-  @UseGuards(AuthGuard('jwt'), RateLimitGuard)
+  @UseGuards(RateLimitGuard)
   @RateLimit(10, 3600000)
   @ApiOperation({ summary: 'Add bonus credit to wallet' })
   @ApiResponse({ status: 200, description: 'Bonus credit added' })
@@ -116,11 +115,11 @@ export class WalletController {
     @Body() addBonusCreditDto: AddBonusCreditDto
   ): Promise<WalletResponse> {
     const wallet = await this.prisma.wallet.findUnique({
-      where: { userId: req.user.sub },
+      where: { userId: req.user.id },
     });
 
     if (!wallet) {
-      throw new NotFoundException(`Wallet not found for user ${req.user.sub}`);
+      throw new NotFoundException(`Wallet not found for user ${req.user.id}`);
     }
 
     return this.walletService.addBonusCredit(
@@ -131,7 +130,7 @@ export class WalletController {
   }
 
   @Post('promo-credit')
-  @UseGuards(AuthGuard('jwt'), RateLimitGuard)
+  @UseGuards(RateLimitGuard)
   @RateLimit(10, 3600000)
   @ApiOperation({ summary: 'Add promo credit to wallet' })
   @ApiResponse({ status: 200, description: 'Promo credit added' })
@@ -142,11 +141,11 @@ export class WalletController {
     @Body() addPromoCreditDto: AddPromoCreditDto
   ): Promise<WalletResponse> {
     const wallet = await this.prisma.wallet.findUnique({
-      where: { userId: req.user.sub },
+      where: { userId: req.user.id },
     });
 
     if (!wallet) {
-      throw new NotFoundException(`Wallet not found for user ${req.user.sub}`);
+      throw new NotFoundException(`Wallet not found for user ${req.user.id}`);
     }
 
     return this.walletService.addPromoCredit(
@@ -158,8 +157,7 @@ export class WalletController {
   }
 
   @Get('audit-trail')
-  @UseGuards(AuthGuard('jwt'))
-  @ApiOperation({ summary: 'Get transaction audit trail' })
+    @ApiOperation({ summary: 'Get transaction audit trail' })
   @ApiResponse({ status: 200, description: 'Audit trail' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getAuditTrail(
@@ -168,11 +166,11 @@ export class WalletController {
     @Query('endDate') endDate?: string
   ): Promise<WalletResponse> {
     const wallet = await this.prisma.wallet.findUnique({
-      where: { userId: req.user.sub },
+      where: { userId: req.user.id },
     });
 
     if (!wallet) {
-      throw new NotFoundException(`Wallet not found for user ${req.user.sub}`);
+      throw new NotFoundException(`Wallet not found for user ${req.user.id}`);
     }
 
     const start = startDate ? new Date(startDate) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
@@ -213,7 +211,7 @@ export class WalletController {
   }
 
   @Post('withdraw')
-  @UseGuards(AuthGuard('jwt'), RateLimitGuard)
+  @UseGuards(RateLimitGuard)
   @RateLimit(5, 3600000)
   @ApiOperation({ summary: 'Withdraw funds from wallet' })
   @ApiResponse({ status: 200, description: 'Withdrawal initiated' })
@@ -223,11 +221,11 @@ export class WalletController {
     @Request() req: AuthenticatedRequest,
     @Body() withdrawDto: WithdrawWalletDto
   ): Promise<WalletResponse> {
-    return this.walletService.withdraw(req.user.sub, withdrawDto);
+    return this.walletService.withdraw(req.user.id, withdrawDto);
   }
 
   @Post('transfer')
-  @UseGuards(AuthGuard('jwt'), RateLimitGuard)
+  @UseGuards(RateLimitGuard)
   @RateLimit(10, 3600000)
   @ApiOperation({ summary: 'Transfer funds to another user' })
   @ApiResponse({ status: 200, description: 'Transfer completed' })
@@ -237,12 +235,11 @@ export class WalletController {
     @Request() req: AuthenticatedRequest,
     @Body() transferDto: TransferWalletDto
   ): Promise<WalletResponse> {
-    return this.walletService.transfer(req.user.sub, transferDto);
+    return this.walletService.transfer(req.user.id, transferDto);
   }
 
   @Get('transactions/:id')
-  @UseGuards(AuthGuard('jwt'))
-  @ApiOperation({ summary: 'Get transaction details' })
+    @ApiOperation({ summary: 'Get transaction details' })
   @ApiParam({ name: 'id', description: 'Transaction ID' })
   @ApiResponse({ status: 200, description: 'Transaction details' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -251,6 +248,6 @@ export class WalletController {
     @Request() req: AuthenticatedRequest,
     @Param('id') id: string
   ): Promise<WalletResponse> {
-    return this.walletService.getTransaction(req.user.sub, id);
+    return this.walletService.getTransaction(req.user.id, id);
   }
 }

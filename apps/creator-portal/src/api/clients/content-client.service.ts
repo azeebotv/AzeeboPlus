@@ -47,11 +47,11 @@ export class ContentClientService {
   private readonly contentServiceUrl: string;
 
   constructor(private readonly configService: ConfigService) {
-    const url = this.configService.get<string>('CONTENT_SERVICE_URL');
+    const url = this.configService.get<string>('API_GATEWAY_URL');
     if (!url && process.env.NODE_ENV === 'production') {
-      throw new Error('CONTENT_SERVICE_URL environment variable must be set in production');
+      throw new Error('API_GATEWAY_URL environment variable must be set in production');
     }
-    this.contentServiceUrl = url || 'http://localhost:3004';
+    this.contentServiceUrl = url || 'http://localhost:3013';
   }
 
   private async request<T>(
@@ -115,19 +115,19 @@ export class ContentClientService {
     limit = 20,
     status?: string
   ): Promise<ContentServiceResponse<{ items: ContentItem[]; total: number }>> {
-    const endpoint = `/api/content/creator/${creatorId}?page=${page}&limit=${limit}${status ? `&status=${status}` : ''}`;
+    const endpoint = `/v1/content/creator/${creatorId}?page=${page}&limit=${limit}${status ? `&status=${status}` : ''}`;
     return this.request<{ items: ContentItem[]; total: number }>(endpoint);
   }
 
   async getContentItemById(contentId: string): Promise<ContentServiceResponse<ContentItem>> {
-    const endpoint = `/api/content/${contentId}`;
+    const endpoint = `/v1/content/${contentId}`;
     return this.request<ContentItem>(endpoint);
   }
 
   async createContentItem(
     data: Partial<ContentItem>
   ): Promise<ContentServiceResponse<ContentItem>> {
-    const endpoint = '/api/content';
+    const endpoint = '/v1/content';
     return this.request<ContentItem>(endpoint, {
       method: 'POST',
       body: data,
@@ -138,7 +138,7 @@ export class ContentClientService {
     contentId: string,
     data: Partial<ContentItem>
   ): Promise<ContentServiceResponse<ContentItem>> {
-    const endpoint = `/api/content/${contentId}`;
+    const endpoint = `/v1/content/${contentId}`;
     return this.request<ContentItem>(endpoint, {
       method: 'PUT',
       body: data,
@@ -148,14 +148,14 @@ export class ContentClientService {
   async deleteContentItem(
     contentId: string
   ): Promise<ContentServiceResponse<{ success: boolean; message: string }>> {
-    const endpoint = `/api/content/${contentId}`;
+    const endpoint = `/v1/content/${contentId}`;
     return this.request<{ success: boolean; message: string }>(endpoint, {
       method: 'DELETE',
     });
   }
 
   async getContentStats(creatorId: string): Promise<ContentServiceResponse<ContentStats>> {
-    const endpoint = `/api/content/creator/${creatorId}/stats`;
+    const endpoint = `/v1/content/creator/${creatorId}/stats`;
     return this.request<ContentStats>(endpoint);
   }
 
@@ -164,7 +164,7 @@ export class ContentClientService {
     startDate: string,
     endDate: string
   ): Promise<ContentServiceResponse<Record<string, unknown>>> {
-    const endpoint = `/api/content/creator/${creatorId}/analytics?startDate=${startDate}&endDate=${endDate}`;
+    const endpoint = `/v1/content/creator/${creatorId}/analytics?startDate=${startDate}&endDate=${endDate}`;
     return this.request<Record<string, unknown>>(endpoint);
   }
 }

@@ -55,7 +55,7 @@ export class PushNotificationService {
 
     const subscription = await registration.pushManager.subscribe({
       userVisibleOnly: true,
-      applicationServerKey: this.urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+      applicationServerKey: this.urlBase64ToUint8Array(VAPID_PUBLIC_KEY) as BufferSource,
     });
 
     return this.extractSubscriptionData(subscription);

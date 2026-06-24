@@ -53,8 +53,9 @@ export class ShareService {
 
     if (typeof navigator !== 'undefined' && 'clipboard' in navigator) {
       await navigator.clipboard.writeText(text);
-    } else {
-      // Fallback for older browsers
+    } else if (typeof document !== 'undefined') {
+      // Fallback for older browsers using deprecated execCommand
+      // eslint-disable-next-line deprecation/deprecation
       const textArea = document.createElement('textarea');
       textArea.value = text;
       textArea.style.position = 'fixed';

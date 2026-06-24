@@ -1,5 +1,5 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe, Logger, VersioningType } from '@nestjs/common';
+import { ValidationPipe, Logger } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import helmet from 'helmet';
@@ -63,6 +63,7 @@ async function bootstrap(): Promise<void> {
       .setDescription('Azeebo+ Content Service API')
       .setVersion('1.0.0')
       .addTag('content')
+      .addServer('http://localhost:3013', 'API Gateway')
       .build();
     const document = SwaggerModule.createDocument(app, config);
     SwaggerModule.setup('docs', app, document);
@@ -73,6 +74,7 @@ async function bootstrap(): Promise<void> {
   // e.g. @Controller('v1/content'), @Controller('v1/public')
 
   const port = process.env.PORT || 3004;
+  app.enableShutdownHooks();
   await app.listen(port);
   Logger.log(`Content Service running on port ${port}`);
 }

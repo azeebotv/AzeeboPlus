@@ -2,141 +2,144 @@
 > @azeebo/comedy-service@0.1.0 start:dev /Users/deprof/www/azeebo+/services/universes/comedy-service
 > ts-node-dev --respawn --transpile-only src/main.ts
 
-[INFO] 16:55:19 ts-node-dev ver. 2.0.0 (using ts-node ver. 10.9.2, typescript ver. 5.9.3)
-[32m[Nest] 94280  - [39m06/23/2026, 4:55:21 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
-[32m[Nest] 94280  - [39m06/23/2026, 4:55:21 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDatabaseModule dependencies initialized[39m[38;5;3m +29ms[39m
-[32m[Nest] 94280  - [39m06/23/2026, 4:55:21 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 94280  - [39m06/23/2026, 4:55:21 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPassportModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 94280  - [39m06/23/2026, 4:55:21 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +63ms[39m
-[32m[Nest] 94280  - [39m06/23/2026, 4:55:21 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisCoreModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 94280  - [39m06/23/2026, 4:55:21 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 94280  - [39m06/23/2026, 4:55:21 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 94280  - [39m06/23/2026, 4:55:21 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTerminusModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 94280  - [39m06/23/2026, 4:55:21 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 94280  - [39m06/23/2026, 4:55:21 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mComedyFeedModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 94280  - [39m06/23/2026, 4:55:21 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRateLimiterModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 94280  - [39m06/23/2026, 4:55:21 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 94280  - [39m06/23/2026, 4:55:21 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 94280  - [39m06/23/2026, 4:55:21 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 94280  - [39m06/23/2026, 4:55:21 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAdminModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 94280  - [39m06/23/2026, 4:55:21 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mComedyModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 94280  - [39m06/23/2026, 4:55:21 PM [32m    LOG[39m [32mSwagger documentation enabled at /docs[39m
-[32m[Nest] 94280  - [39m06/23/2026, 4:55:21 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mComedyController {/v1/comedy} (version: 1):[39m[38;5;3m +4ms[39m
-[32m[Nest] 94280  - [39m06/23/2026, 4:55:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/comedy/clips, GET} (version: 1) route[39m[38;5;3m +3ms[39m
-[32m[Nest] 94280  - [39m06/23/2026, 4:55:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/comedy/comedians, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 94280  - [39m06/23/2026, 4:55:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/comedy/series, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 94280  - [39m06/23/2026, 4:55:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/comedy/challenges, POST} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 94280  - [39m06/23/2026, 4:55:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/comedy/challenges, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 94280  - [39m06/23/2026, 4:55:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/comedy/clips/:clipId/share, POST} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 94280  - [39m06/23/2026, 4:55:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/comedy/trending, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 94280  - [39m06/23/2026, 4:55:21 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mComedyFeedController {/v1/comedy} (version: 1):[39m[38;5;3m +0ms[39m
-[32m[Nest] 94280  - [39m06/23/2026, 4:55:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/comedy, GET} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 94280  - [39m06/23/2026, 4:55:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/comedy/trending, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 94280  - [39m06/23/2026, 4:55:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/comedy/specials, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 94280  - [39m06/23/2026, 4:55:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/comedy/specials/:id, GET} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 94280  - [39m06/23/2026, 4:55:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/comedy/specials/:id/like, POST} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 94280  - [39m06/23/2026, 4:55:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/comedy/clips/:id, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 94280  - [39m06/23/2026, 4:55:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/comedy/clips/:id/like, POST} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 94280  - [39m06/23/2026, 4:55:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/comedy/clips/:id/comment, POST} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 94280  - [39m06/23/2026, 4:55:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/comedy/trends/record, POST} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 94280  - [39m06/23/2026, 4:55:21 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHealthController {/} (version: 1):[39m[38;5;3m +0ms[39m
-[32m[Nest] 94280  - [39m06/23/2026, 4:55:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health, GET} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 94280  - [39m06/23/2026, 4:55:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/ready, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 94280  - [39m06/23/2026, 4:55:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/live, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 94280  - [39m06/23/2026, 4:55:21 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAdminController {/admin} (version: 1):[39m[38;5;3m +1ms[39m
-[32m[Nest] 94280  - [39m06/23/2026, 4:55:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/stats, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 94280  - [39m06/23/2026, 4:55:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/clips, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 94280  - [39m06/23/2026, 4:55:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/comedians, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 94280  - [39m06/23/2026, 4:55:21 PM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +31ms[39m
-[32m[Nest] 94280  - [39m06/23/2026, 4:55:21 PM [32m    LOG[39m [38;5;3m[Comedy Service] [39m[32mComedy Service running on port 3012[39m
-[INFO] 18:53:07 Restarting: /Users/deprof/www/azeebo+/packages/logger/dist/distributed-tracing.interceptor.js has been modified
-[32m[Nest] 10601  - [39m06/23/2026, 6:53:44 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
-[32m[Nest] 10601  - [39m06/23/2026, 6:53:46 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDatabaseModule dependencies initialized[39m[38;5;3m +1355ms[39m
-[32m[Nest] 10601  - [39m06/23/2026, 6:53:46 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisModule dependencies initialized[39m[38;5;3m +106ms[39m
-[32m[Nest] 10601  - [39m06/23/2026, 6:53:46 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPassportModule dependencies initialized[39m[38;5;3m +21ms[39m
-[32m[Nest] 10601  - [39m06/23/2026, 6:53:46 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +237ms[39m
-[32m[Nest] 10601  - [39m06/23/2026, 6:53:46 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisCoreModule dependencies initialized[39m[38;5;3m +0ms[39m
-[31m[Nest] 10601  - [39m06/23/2026, 6:53:46 PM [31m  ERROR[39m [38;5;3m[ExceptionHandler] [39mUnknownDependenciesException [Error]: Nest can't resolve dependencies of the ResponseSanitizationInterceptor (?). Please make sure that the argument at index [0] is available in the current module.
-
-Potential solutions:
-- The dependency at index [0] appears to be undefined at runtime
-- This commonly occurs when using 'import type' instead of 'import' for injectable classes
-- Check your imports and change:
-  ❌ import type { SomeService } from './some.service';
-  ✅ import { SomeService } from './some.service';
-- Ensure the imported class is decorated with @Injectable() or is a valid provider
-- If using dynamic imports, ensure the class is available at runtime, not just for type checking
-
-For more common dependency resolution issues, see: https://docs.nestjs.com/faq/common-errors
-    at Injector.lookupComponentInParentModules (/Users/deprof/www/azeebo+/node_modules/[4m.pnpm[24m/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/[4m@nestjs/core[24m/injector/injector.js:300:19)
-[90m    at processTicksAndRejections (node:internal/process/task_queues:104:5)[39m
-    at resolveParam (/Users/deprof/www/azeebo+/node_modules/[4m.pnpm[24m/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/[4m@nestjs/core[24m/injector/injector.js:150:38)
-    at async Promise.all (index 0)
-    at Injector.resolveConstructorParams (/Users/deprof/www/azeebo+/node_modules/[4m.pnpm[24m/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/[4m@nestjs/core[24m/injector/injector.js:179:27)
-    at Injector.loadInstance (/Users/deprof/www/azeebo+/node_modules/[4m.pnpm[24m/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/[4m@nestjs/core[24m/injector/injector.js:77:13)
-    at Injector.loadProvider (/Users/deprof/www/azeebo+/node_modules/[4m.pnpm[24m/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/[4m@nestjs/core[24m/injector/injector.js:111:9)
-    at /Users/deprof/www/azeebo+/node_modules/[4m.pnpm[24m/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/[4m@nestjs/core[24m/injector/instance-loader.js:56:13
-    at async Promise.all (index 4)
-    at InstanceLoader.createInstancesOfProviders (/Users/deprof/www/azeebo+/node_modules/[4m.pnpm[24m/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/[4m@nestjs/core[24m/injector/instance-loader.js:55:9) {
-  type: [32m'ResponseSanitizationInterceptor'[39m,
-  context: {
-    index: [33m0[39m,
-    dependencies: [
-      [36m[Function: Object][39m
-    ],
-    name: [36m[Function: Object][39m
-  },
-  metadata: {
-    id: [32m'7c49f8344c83f2ba5137e'[39m
-  },
-  moduleRef: {
-    id: [32m'5053a5700c4a500138d48'[39m
-  }
-}
-[INFO] 18:54:21 Restarting: /Users/deprof/www/azeebo+/packages/logger/dist/response-sanitizer.interceptor.js has been modified
-[32m[Nest] 12205  - [39m06/23/2026, 6:54:59 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
-[32m[Nest] 12205  - [39m06/23/2026, 6:55:01 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDatabaseModule dependencies initialized[39m[38;5;3m +1985ms[39m
-[32m[Nest] 12205  - [39m06/23/2026, 6:55:01 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 12205  - [39m06/23/2026, 6:55:01 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPassportModule dependencies initialized[39m[38;5;3m +19ms[39m
-[32m[Nest] 12205  - [39m06/23/2026, 6:55:02 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +1056ms[39m
-[32m[Nest] 12205  - [39m06/23/2026, 6:55:02 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisCoreModule dependencies initialized[39m[38;5;3m +2ms[39m
-[32m[Nest] 12205  - [39m06/23/2026, 6:55:02 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +41ms[39m
-[32m[Nest] 12205  - [39m06/23/2026, 6:55:02 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +8ms[39m
-[32m[Nest] 12205  - [39m06/23/2026, 6:55:02 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTerminusModule dependencies initialized[39m[38;5;3m +10ms[39m
-[32m[Nest] 12205  - [39m06/23/2026, 6:55:02 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +4ms[39m
-[32m[Nest] 12205  - [39m06/23/2026, 6:55:02 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mComedyFeedModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 12205  - [39m06/23/2026, 6:55:02 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRateLimiterModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 12205  - [39m06/23/2026, 6:55:02 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 12205  - [39m06/23/2026, 6:55:02 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 12205  - [39m06/23/2026, 6:55:02 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 12205  - [39m06/23/2026, 6:55:02 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAdminModule dependencies initialized[39m[38;5;3m +3ms[39m
-[32m[Nest] 12205  - [39m06/23/2026, 6:55:02 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mComedyModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 12205  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [32mSwagger documentation enabled at /docs[39m
-[32m[Nest] 12205  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mComedyController {/v1/comedy} (version: 1):[39m[38;5;3m +184ms[39m
-[32m[Nest] 12205  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/comedy/clips, GET} (version: 1) route[39m[38;5;3m +24ms[39m
-[32m[Nest] 12205  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/comedy/comedians, GET} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 12205  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/comedy/series, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 12205  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/comedy/challenges, POST} (version: 1) route[39m[38;5;3m +103ms[39m
-[32m[Nest] 12205  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/comedy/challenges, GET} (version: 1) route[39m[38;5;3m +2ms[39m
-[32m[Nest] 12205  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/comedy/clips/:clipId/share, POST} (version: 1) route[39m[38;5;3m +5ms[39m
-[32m[Nest] 12205  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/comedy/trending, GET} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 12205  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mComedyFeedController {/v1/comedy} (version: 1):[39m[38;5;3m +0ms[39m
-[32m[Nest] 12205  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/comedy, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 12205  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/comedy/trending, GET} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 12205  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/comedy/specials, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 12205  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/comedy/specials/:id, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 12205  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/comedy/specials/:id/like, POST} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 12205  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/comedy/clips/:id, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 12205  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/comedy/clips/:id/like, POST} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 12205  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/comedy/clips/:id/comment, POST} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 12205  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/comedy/trends/record, POST} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 12205  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHealthController {/} (version: 1):[39m[38;5;3m +0ms[39m
-[32m[Nest] 12205  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 12205  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/ready, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 12205  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/live, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 12205  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAdminController {/admin} (version: 1):[39m[38;5;3m +0ms[39m
-[32m[Nest] 12205  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/stats, GET} (version: 1) route[39m[38;5;3m +4ms[39m
-[32m[Nest] 12205  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/clips, GET} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 12205  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/comedians, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 12205  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +392ms[39m
-[32m[Nest] 12205  - [39m06/23/2026, 6:55:08 PM [32m    LOG[39m [38;5;3m[Comedy Service] [39m[32mComedy Service running on port 3012[39m
+[INFO] 14:56:28 ts-node-dev ver. 2.0.0 (using ts-node ver. 10.9.2, typescript ver. 5.9.3)
+[32m[Nest] 51995  - [39m06/24/2026, 2:56:30 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
+[32m[Nest] 51995  - [39m06/24/2026, 2:56:30 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDatabaseModule dependencies initialized[39m[38;5;3m +28ms[39m
+[32m[Nest] 51995  - [39m06/24/2026, 2:56:30 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 51995  - [39m06/24/2026, 2:56:30 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPassportModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 51995  - [39m06/24/2026, 2:56:30 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +40ms[39m
+[32m[Nest] 51995  - [39m06/24/2026, 2:56:30 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisCoreModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 51995  - [39m06/24/2026, 2:56:30 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 51995  - [39m06/24/2026, 2:56:30 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 51995  - [39m06/24/2026, 2:56:30 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTerminusModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 51995  - [39m06/24/2026, 2:56:30 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 51995  - [39m06/24/2026, 2:56:30 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mComedyFeedModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 51995  - [39m06/24/2026, 2:56:30 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRateLimiterModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 51995  - [39m06/24/2026, 2:56:30 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 51995  - [39m06/24/2026, 2:56:30 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 51995  - [39m06/24/2026, 2:56:30 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 51995  - [39m06/24/2026, 2:56:30 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAdminModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 51995  - [39m06/24/2026, 2:56:30 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mComedyModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 51995  - [39m06/24/2026, 2:56:30 PM [32m    LOG[39m [32mSwagger documentation enabled at /docs[39m
+[32m[Nest] 51995  - [39m06/24/2026, 2:56:30 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mComedyController {/v1/comedy} (version: 1):[39m[38;5;3m +6ms[39m
+[32m[Nest] 51995  - [39m06/24/2026, 2:56:30 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/comedy/clips, GET} (version: 1) route[39m[38;5;3m +4ms[39m
+[32m[Nest] 51995  - [39m06/24/2026, 2:56:30 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/comedy/comedians, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 51995  - [39m06/24/2026, 2:56:30 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/comedy/series, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 51995  - [39m06/24/2026, 2:56:30 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/comedy/challenges, POST} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 51995  - [39m06/24/2026, 2:56:30 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/comedy/challenges, GET} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 51995  - [39m06/24/2026, 2:56:30 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/comedy/clips/:clipId/share, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 51995  - [39m06/24/2026, 2:56:30 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/comedy/trending, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 51995  - [39m06/24/2026, 2:56:30 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mComedyFeedController {/v1/comedy} (version: 1):[39m[38;5;3m +0ms[39m
+[32m[Nest] 51995  - [39m06/24/2026, 2:56:30 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/comedy, GET} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 51995  - [39m06/24/2026, 2:56:30 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/comedy/trending, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 51995  - [39m06/24/2026, 2:56:30 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/comedy/specials, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 51995  - [39m06/24/2026, 2:56:30 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/comedy/specials/:id, GET} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 51995  - [39m06/24/2026, 2:56:30 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/comedy/specials/:id/like, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 51995  - [39m06/24/2026, 2:56:30 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/comedy/clips/:id, GET} (version: 1) route[39m[38;5;3m +3ms[39m
+[32m[Nest] 51995  - [39m06/24/2026, 2:56:30 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/comedy/clips/:id/like, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 51995  - [39m06/24/2026, 2:56:30 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/comedy/clips/:id/comment, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 51995  - [39m06/24/2026, 2:56:30 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/comedy/trends/record, POST} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 51995  - [39m06/24/2026, 2:56:30 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHealthController {/} (version: 1):[39m[38;5;3m +0ms[39m
+[32m[Nest] 51995  - [39m06/24/2026, 2:56:30 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 51995  - [39m06/24/2026, 2:56:30 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/ready, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 51995  - [39m06/24/2026, 2:56:30 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/live, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 51995  - [39m06/24/2026, 2:56:30 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAdminController {/admin} (version: 1):[39m[38;5;3m +0ms[39m
+[32m[Nest] 51995  - [39m06/24/2026, 2:56:30 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/stats, GET} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 51995  - [39m06/24/2026, 2:56:30 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/clips, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 51995  - [39m06/24/2026, 2:56:30 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/comedians, GET} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 51995  - [39m06/24/2026, 2:56:30 PM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +36ms[39m
+[32m[Nest] 51995  - [39m06/24/2026, 2:56:30 PM [32m    LOG[39m [38;5;3m[Comedy Service] [39m[32mComedy Service running on port 3012[39m
+[INFO] 16:57:30 Restarting: /Users/deprof/www/azeebo+/services/universes/comedy-service/src/main.ts has been modified
+[32m[Nest] 469  - [39m06/24/2026, 4:57:37 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
+[32m[Nest] 469  - [39m06/24/2026, 4:57:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDatabaseModule dependencies initialized[39m[38;5;3m +135ms[39m
+[32m[Nest] 469  - [39m06/24/2026, 4:57:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 469  - [39m06/24/2026, 4:57:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPassportModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 469  - [39m06/24/2026, 4:57:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +64ms[39m
+[32m[Nest] 469  - [39m06/24/2026, 4:57:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisCoreModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 469  - [39m06/24/2026, 4:57:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +2ms[39m
+[32m[Nest] 469  - [39m06/24/2026, 4:57:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 469  - [39m06/24/2026, 4:57:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTerminusModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 469  - [39m06/24/2026, 4:57:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 469  - [39m06/24/2026, 4:57:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mComedyFeedModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 469  - [39m06/24/2026, 4:57:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRateLimiterModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 469  - [39m06/24/2026, 4:57:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 469  - [39m06/24/2026, 4:57:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 469  - [39m06/24/2026, 4:57:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 469  - [39m06/24/2026, 4:57:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAdminModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 469  - [39m06/24/2026, 4:57:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mComedyModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 469  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [32mSwagger documentation enabled at /docs[39m
+[32m[Nest] 469  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mComedyController {/v1/comedy}:[39m[38;5;3m +4ms[39m
+[32m[Nest] 469  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/comedy/clips, GET} route[39m[38;5;3m +4ms[39m
+[32m[Nest] 469  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/comedy/comedians, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 469  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/comedy/series, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 469  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/comedy/challenges, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 469  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/comedy/challenges, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 469  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/comedy/clips/:clipId/share, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 469  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/comedy/trending, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 469  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mComedyFeedController {/v1/comedy}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 469  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/comedy, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 469  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/comedy/trending, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 469  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/comedy/specials, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 469  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/comedy/specials/:id, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 469  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/comedy/specials/:id/like, POST} route[39m[38;5;3m +4ms[39m
+[32m[Nest] 469  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/comedy/clips/:id, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 469  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/comedy/clips/:id/like, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 469  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/comedy/clips/:id/comment, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 469  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/comedy/trends/record, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 469  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHealthController {/}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 469  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 469  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/ready, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 469  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/live, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 469  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAdminController {/admin}:[39m[38;5;3m +1ms[39m
+[32m[Nest] 469  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/stats, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 469  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/clips, GET} route[39m[38;5;3m +2ms[39m
+[32m[Nest] 469  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/comedians, GET} route[39m[38;5;3m +5ms[39m
+[32m[Nest] 469  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +106ms[39m
+[32m[Nest] 469  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[Comedy Service] [39m[32mComedy Service running on port 3012[39m
+[INFO] 16:58:00 Restarting: /Users/deprof/www/azeebo+/services/universes/comedy-service/src/main.ts has been modified
+[32m[Nest] 1277  - [39m06/24/2026, 4:58:08 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
+[32m[Nest] 1277  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDatabaseModule dependencies initialized[39m[38;5;3m +480ms[39m
+[32m[Nest] 1277  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisModule dependencies initialized[39m[38;5;3m +14ms[39m
+[32m[Nest] 1277  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPassportModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 1277  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +60ms[39m
+[32m[Nest] 1277  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisCoreModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 1277  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +2ms[39m
+[32m[Nest] 1277  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +7ms[39m
+[32m[Nest] 1277  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTerminusModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 1277  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 1277  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mComedyFeedModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 1277  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRateLimiterModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 1277  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 1277  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 1277  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 1277  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAdminModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 1277  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mComedyModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 1277  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [32mSwagger documentation enabled at /docs[39m
+[32m[Nest] 1277  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mComedyController {/v1/comedy}:[39m[38;5;3m +20ms[39m
+[32m[Nest] 1277  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/comedy/clips, GET} route[39m[38;5;3m +4ms[39m
+[32m[Nest] 1277  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/comedy/comedians, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 1277  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/comedy/series, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 1277  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/comedy/challenges, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 1277  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/comedy/challenges, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 1277  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/comedy/clips/:clipId/share, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 1277  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/comedy/trending, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 1277  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mComedyFeedController {/v1/comedy}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 1277  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/comedy, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 1277  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/comedy/trending, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 1277  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/comedy/specials, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 1277  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/comedy/specials/:id, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 1277  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/comedy/specials/:id/like, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 1277  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/comedy/clips/:id, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 1277  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/comedy/clips/:id/like, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 1277  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/comedy/clips/:id/comment, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 1277  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/comedy/trends/record, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 1277  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHealthController {/}:[39m[38;5;3m +1ms[39m
+[32m[Nest] 1277  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 1277  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/ready, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 1277  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/live, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 1277  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAdminController {/admin}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 1277  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/stats, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 1277  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/clips, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 1277  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/comedians, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 1277  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +116ms[39m
+[32m[Nest] 1277  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[Comedy Service] [39m[32mComedy Service running on port 3012[39m

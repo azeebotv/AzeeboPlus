@@ -1,5 +1,5 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe, Logger, VersioningType } from '@nestjs/common';
+import { ValidationPipe, Logger } from '@nestjs/common';
 import { AppModule } from './app.module';
 import helmet from 'helmet';
 import { validateEnvironment } from '@azeebo/shared-types';
@@ -49,12 +49,12 @@ async function bootstrap(): Promise<void> {
     credentials: true,
   });
 
-  // API versioning
-  app.enableVersioning({ type: VersioningType.URI, prefix: 'v', defaultVersion: '1' });
+  // Versioning disabled: controllers already prefix routes with 'v1/' manually
 
   const port = process.env.PORT || 3007;
+  app.enableShutdownHooks();
   await app.listen(port);
-  const logger = new Logger('Content Service');
-  logger.log(`Content Service running on port ${port}`);
+  const logger = new Logger('Reward Service');
+  logger.log(`Reward Service running on port ${port}`);
 }
 bootstrap();

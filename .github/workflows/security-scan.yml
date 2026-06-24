@@ -68,7 +68,7 @@ jobs:
       - name: OWASP ZAP Scan
         uses: zaproxy/action-full-scan@75ee1686750ab1511a73b26b77a2aedd46806163 # v0.10.0
         with:
-          target: 'https://api.azeebo.com'
+          target: 'https://api.azeeboplus.com'
           rules_file_name: 'infra/security/zap-config.yaml'
           docker_params: '-t 60'
           fail_action: true

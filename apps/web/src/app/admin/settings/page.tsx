@@ -6,7 +6,15 @@ import AdminLayout from '@/components/layout/AdminLayout';
 
 export default function AdminSettingsPage(): React.JSX.Element {
   const { isAuthenticated, user } = useAuth();
-  const [settings, setSettings] = useState({ platformName: 'Azeebo+', maintenanceMode: false, registrationEnabled: true, maxUploadSize: 500, subscriptionEnabled: true, superVoteEnabled: true, referralEnabled: true });
+  const [settings, setSettings] = useState({
+    platformName: 'Azeebo+',
+    maintenanceMode: false,
+    registrationEnabled: true,
+    maxUploadSize: 500,
+    subscriptionEnabled: true,
+    superVoteEnabled: true,
+    referralEnabled: true,
+  });
   const [isSaving, setIsSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
@@ -21,10 +29,15 @@ export default function AdminSettingsPage(): React.JSX.Element {
       if (response.success && response.data) {
         const arr = response.data as any[];
         const map: Record<string, any> = {};
-        if (Array.isArray(arr)) arr.forEach((s: any) => { map[s.key] = s.value; });
+        if (Array.isArray(arr))
+          arr.forEach((s: any) => {
+            map[s.key] = s.value;
+          });
         setSettings({ ...settings, ...map });
       }
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   };
 
   const handleSave = async () => {
@@ -34,12 +47,18 @@ export default function AdminSettingsPage(): React.JSX.Element {
       await api.admin.bulkUpdateSettings(payload);
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
     setIsSaving(false);
   };
 
   const toggleItems = [
-    { key: 'maintenanceMode', label: 'Maintenance Mode', desc: 'Put the platform in maintenance mode' },
+    {
+      key: 'maintenanceMode',
+      label: 'Maintenance Mode',
+      desc: 'Put the platform in maintenance mode',
+    },
     { key: 'registrationEnabled', label: 'Registration', desc: 'Allow new user registrations' },
     { key: 'subscriptionEnabled', label: 'Subscriptions', desc: 'Enable subscription purchases' },
     { key: 'superVoteEnabled', label: 'Super Votes', desc: 'Enable super vote feature' },
@@ -55,12 +74,57 @@ export default function AdminSettingsPage(): React.JSX.Element {
         <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16 }}>General</h2>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div>
-            <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6, color: '#9A8A7A' }}>Platform Name</label>
-            <input value={settings.platformName} onChange={e => setSettings({ ...settings, platformName: e.target.value })} style={{ width: '100%', padding: '12px 16px', borderRadius: 12, border: '1px solid #2A1A1A', backgroundColor: '#0D0505', color: '#F5F0EB', fontSize: 15 }} />
+            <label
+              style={{
+                display: 'block',
+                fontSize: 13,
+                fontWeight: 600,
+                marginBottom: 6,
+                color: '#9A8A7A',
+              }}
+            >
+              Platform Name
+            </label>
+            <input
+              value={settings.platformName}
+              onChange={(e) => setSettings({ ...settings, platformName: e.target.value })}
+              style={{
+                width: '100%',
+                padding: '12px 16px',
+                borderRadius: 12,
+                border: '1px solid #2A1A1A',
+                backgroundColor: '#0D0505',
+                color: '#F5F0EB',
+                fontSize: 15,
+              }}
+            />
           </div>
           <div>
-            <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6, color: '#9A8A7A' }}>Max Upload Size (MB)</label>
-            <input type="number" value={settings.maxUploadSize} onChange={e => setSettings({ ...settings, maxUploadSize: Number(e.target.value) })} style={{ width: '100%', padding: '12px 16px', borderRadius: 12, border: '1px solid #2A1A1A', backgroundColor: '#0D0505', color: '#F5F0EB', fontSize: 15 }} />
+            <label
+              style={{
+                display: 'block',
+                fontSize: 13,
+                fontWeight: 600,
+                marginBottom: 6,
+                color: '#9A8A7A',
+              }}
+            >
+              Max Upload Size (MB)
+            </label>
+            <input
+              type="number"
+              value={settings.maxUploadSize}
+              onChange={(e) => setSettings({ ...settings, maxUploadSize: Number(e.target.value) })}
+              style={{
+                width: '100%',
+                padding: '12px 16px',
+                borderRadius: 12,
+                border: '1px solid #2A1A1A',
+                backgroundColor: '#0D0505',
+                color: '#F5F0EB',
+                fontSize: 15,
+              }}
+            />
           </div>
         </div>
       </div>
@@ -68,21 +132,77 @@ export default function AdminSettingsPage(): React.JSX.Element {
       <div className="az-glass" style={{ padding: 24, borderRadius: 20, marginBottom: 24 }}>
         <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16 }}>Feature Toggles</h2>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {toggleItems.map(item => (
-            <div key={item.key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid #2A1A1A' }}>
+          {toggleItems.map((item) => (
+            <div
+              key={item.key}
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '8px 0',
+                borderBottom: '1px solid #2A1A1A',
+              }}
+            >
               <div>
                 <p style={{ fontWeight: 600, fontSize: 15 }}>{item.label}</p>
                 <p style={{ color: '#9A8A7A', fontSize: 13 }}>{item.desc}</p>
               </div>
-              <button onClick={() => setSettings({ ...settings, [item.key]: !settings[item.key as keyof typeof settings] })} style={{ width: 48, height: 28, borderRadius: 14, border: 'none', cursor: 'pointer', position: 'relative', backgroundColor: settings[item.key as keyof typeof settings] ? '#E8420A' : '#2A1A1A', transition: 'background-color 0.2s' }}>
-                <span style={{ position: 'absolute', top: 3, left: settings[item.key as keyof typeof settings] ? 23 : 3, width: 22, height: 22, borderRadius: '50%', backgroundColor: '#fff', transition: 'left 0.2s' }} />
+              <button
+                onClick={() =>
+                  setSettings({
+                    ...settings,
+                    [item.key]: !settings[item.key as keyof typeof settings],
+                  })
+                }
+                style={{
+                  width: 48,
+                  height: 28,
+                  borderRadius: 14,
+                  border: 'none',
+                  cursor: 'pointer',
+                  position: 'relative',
+                  backgroundColor: settings[item.key as keyof typeof settings]
+                    ? '#E8420A'
+                    : '#2A1A1A',
+                  transition: 'background-color 0.2s',
+                }}
+              >
+                <span
+                  style={{
+                    position: 'absolute',
+                    top: 3,
+                    left: settings[item.key as keyof typeof settings] ? 23 : 3,
+                    width: 22,
+                    height: 22,
+                    borderRadius: '50%',
+                    backgroundColor: '#fff',
+                    transition: 'left 0.2s',
+                  }}
+                />
               </button>
             </div>
           ))}
         </div>
       </div>
 
-      <button onClick={handleSave} disabled={isSaving} className="az-btn-primary" style={{ width: '100%', maxWidth: 400, padding: '14px 0', borderRadius: 999, border: 'none', background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)', color: '#fff', fontWeight: 700, fontSize: 16, cursor: 'pointer', opacity: isSaving ? 0.6 : 1 }}>
+      <button
+        onClick={handleSave}
+        disabled={isSaving}
+        className="az-btn-primary"
+        style={{
+          width: '100%',
+          maxWidth: 400,
+          padding: '14px 0',
+          borderRadius: 999,
+          border: 'none',
+          background: 'linear-gradient(135deg, #E8420A 0%, #CC1C1C 100%)',
+          color: '#fff',
+          fontWeight: 700,
+          fontSize: 16,
+          cursor: 'pointer',
+          opacity: isSaving ? 0.6 : 1,
+        }}
+      >
         {saved ? '✓ Saved!' : isSaving ? 'Saving...' : 'Save Settings'}
       </button>
     </AdminLayout>

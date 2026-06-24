@@ -42,5 +42,5 @@ pnpm start:dev
 ## Ownership
 
 - **Team**: Platform Engineering
-- **Maintainer**: platform-engineering@azeebo.com
+- **Maintainer**: platform-engineering@azeeboplus.com
 - **Last Updated**: 2026-05-11

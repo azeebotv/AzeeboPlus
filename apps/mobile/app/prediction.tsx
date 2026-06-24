@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { colors, universeColors } from '@azeebo/design-tokens';
+import { colors, universeColors } from '../src/theme';
 import { engagementApi, PredictionResult } from '../src/api/engagement';
 import { walletApi } from '../src/api/wallet';
 import { logger } from '../src/utils/logger';
@@ -114,7 +114,7 @@ export default function PredictionScreen() {
         style={[
           styles.container,
           styles.centerContent,
-          { backgroundColor: colorScheme === 'dark' ? colors.dark[900] : colors.light[50] },
+          { backgroundColor: colorScheme === 'dark' ? colors.bg.primary : '#FFFFFF' },
         ]}
       >
         <LoadingState text="Loading..." />
@@ -128,7 +128,7 @@ export default function PredictionScreen() {
         style={[
           styles.container,
           styles.centerContent,
-          { backgroundColor: colorScheme === 'dark' ? colors.dark[900] : colors.light[50] },
+          { backgroundColor: colorScheme === 'dark' ? colors.bg.primary : '#FFFFFF' },
         ]}
       >
         <ErrorState title="Failed to load" description={error} onRetry={loadData} />
@@ -141,7 +141,7 @@ export default function PredictionScreen() {
       <ScrollView
         style={[
           styles.scrollView,
-          { backgroundColor: colorScheme === 'dark' ? colors.dark[900] : colors.light[50] },
+          { backgroundColor: colorScheme === 'dark' ? colors.bg.primary : '#FFFFFF' },
         ]}
       >
         <View style={styles.header}>
@@ -151,7 +151,7 @@ export default function PredictionScreen() {
           <Text
             style={[
               styles.headerTitle,
-              { color: colorScheme === 'dark' ? colors.text.primary : colors.dark[900] },
+              { color: colorScheme === 'dark' ? colors.text.primary : colors.bg.primary },
             ]}
           >
             Predict & Win
@@ -171,7 +171,7 @@ export default function PredictionScreen() {
               <Text
                 style={[
                   styles.predictionTitle,
-                  { color: colorScheme === 'dark' ? colors.text.primary : colors.dark[900] },
+                  { color: colorScheme === 'dark' ? colors.text.primary : colors.bg.primary },
                 ]}
               >
                 Who will be evicted tonight?
@@ -202,7 +202,7 @@ export default function PredictionScreen() {
                   <Text
                     style={[
                       styles.optionLabel,
-                      { color: colorScheme === 'dark' ? colors.text.primary : colors.dark[900] },
+                      { color: colorScheme === 'dark' ? colors.text.primary : colors.bg.primary },
                     ]}
                   >
                     {option.label}
@@ -237,7 +237,7 @@ export default function PredictionScreen() {
               <Text
                 style={[
                   styles.betAmountText,
-                  { color: colorScheme === 'dark' ? colors.text.primary : colors.dark[900] },
+                  { color: colorScheme === 'dark' ? colors.text.primary : colors.bg.primary },
                 ]}
               >
                 {betAmount} pts
@@ -296,7 +296,7 @@ export default function PredictionScreen() {
           <Text
             style={[
               styles.rulesTitle,
-              { color: colorScheme === 'dark' ? colors.text.primary : colors.dark[900] },
+              { color: colorScheme === 'dark' ? colors.text.primary : colors.bg.primary },
             ]}
           >
             How It Works
@@ -341,7 +341,7 @@ export default function PredictionScreen() {
             <Text
               style={[
                 styles.sectionTitle,
-                { color: colorScheme === 'dark' ? colors.text.primary : colors.dark[900] },
+                { color: colorScheme === 'dark' ? colors.text.primary : colors.bg.primary },
               ]}
             >
               Leaderboard
@@ -374,7 +374,7 @@ export default function PredictionScreen() {
                   <Text
                     style={[
                       styles.leaderboardName,
-                      { color: colorScheme === 'dark' ? colors.text.primary : colors.dark[900] },
+                      { color: colorScheme === 'dark' ? colors.text.primary : colors.bg.primary },
                     ]}
                   >
                     {entry.name}
@@ -396,7 +396,7 @@ export default function PredictionScreen() {
                 <Text
                   style={[
                     styles.successTitle,
-                    { color: colorScheme === 'dark' ? colors.text.primary : colors.dark[900] },
+                    { color: colorScheme === 'dark' ? colors.text.primary : colors.bg.primary },
                   ]}
                 >
                   Bet Placed!
@@ -415,7 +415,7 @@ export default function PredictionScreen() {
                 <Text
                   style={[
                     styles.modalTitle,
-                    { color: colorScheme === 'dark' ? colors.text.primary : colors.dark[900] },
+                    { color: colorScheme === 'dark' ? colors.text.primary : colors.bg.primary },
                   ]}
                 >
                   Confirm Bet

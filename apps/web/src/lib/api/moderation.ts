@@ -7,7 +7,7 @@ export function createModerationMethods(client: RequestClient) {
     reportContent: async (
       contentId: string,
       reason: string,
-      description?: string,
+      description?: string
     ): Promise<ApiResponse<{ message: string }>> => {
       return client.request<{ message: string }>('/api/v1/moderation/report', {
         method: 'POST',

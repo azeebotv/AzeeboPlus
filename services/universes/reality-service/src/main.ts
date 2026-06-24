@@ -1,5 +1,5 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe, Logger, VersioningType } from '@nestjs/common';
+import { ValidationPipe, Logger } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import helmet from 'helmet';
@@ -53,14 +53,17 @@ async function bootstrap(): Promise<void> {
     .setTitle('Reality Service')
     .setDescription('Azeebo+ Reality Service API')
     .setVersion('1.0')
+    .addServer('http://localhost:3013', 'API Gateway')
     .build();
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api/docs', app, document);
+  if (process.env.NODE_ENV !== 'production') {
+    SwaggerModule.setup('api/docs', app, document);
+  }
 
-  // API versioning
-  app.enableVersioning({ type: VersioningType.URI, prefix: 'v', defaultVersion: '1' });
+  // Versioning disabled: controllers already prefix routes with 'v1/' manually
 
   const port = process.env.PORT || 3010;
+  app.enableShutdownHooks();
   await app.listen(port);
   Logger.log(`Reality Service running on port ${port}`);
 }

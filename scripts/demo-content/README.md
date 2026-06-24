@@ -35,10 +35,10 @@ scripts/demo-content/
 ### Users (10)
 | Email | Role | Status |
 |-------|------|--------|
-| admin@azeebo.com | Admin | Active |
-| mod@azeebo.com | Admin (Moderator) | Active |
-| banned@azeebo.com | User | Banned |
-| unverified@azeebo.com | User | Pending |
+| admin@azeeboplus.com | Admin | Active |
+| mod@azeeboplus.com | Admin (Moderator) | Active |
+| banned@azeeboplus.com | User | Banned |
+| unverified@azeeboplus.com | User | Pending |
 | creator@choplife.com | Creator | Active |
 | creator@naijavibes.com | Creator | Active |
 | creator@lagosvibes.com | Creator | Active |

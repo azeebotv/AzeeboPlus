@@ -33,7 +33,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: ${{ inputs.environment }}
-      url: ${{ inputs.environment == 'staging' && 'https://staging.azeebo.com' || 'https://azeebo.com' }}
+      url: ${{ inputs.environment == 'staging' && 'https://staging.azeeboplus.com' || 'https://azeeboplus.com' }}
 
     steps:
       - name: Checkout code
@@ -95,9 +95,9 @@ jobs:
           echo "Verifying rollback..."
           
           if [ "${{ inputs.environment }}" = "staging" ]; then
-            BASE_URL="https://staging.azeebo.com"
+            BASE_URL="https://staging.azeeboplus.com"
           else
-            BASE_URL="https://azeebo.com"
+            BASE_URL="https://azeeboplus.com"
           fi
           
           echo "Testing health endpoint..."
@@ -110,7 +110,7 @@ jobs:
         uses: slackapi/slack-github-action@485a9d42d3a49605f4898a3e6526e5a02eab28e0 # v1.27.1
         with:
           channel-id: ${{ secrets.SLACK_CHANNEL_ID }}
-          slack-message: "🔄 *Rollback Complete*\n\nEnvironment: `${{ inputs.environment }}`\nService: ${{ inputs.service || 'All Services' }}\nTarget Tag: `${{ inputs.target_tag }}`\nURL: ${{ inputs.environment == 'staging' && 'https://staging.azeebo.com' || 'https://azeebo.com' }}"
+          slack-message: "🔄 *Rollback Complete*\n\nEnvironment: `${{ inputs.environment }}`\nService: ${{ inputs.service || 'All Services' }}\nTarget Tag: `${{ inputs.target_tag }}`\nURL: ${{ inputs.environment == 'staging' && 'https://staging.azeeboplus.com' || 'https://azeeboplus.com' }}"
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
 

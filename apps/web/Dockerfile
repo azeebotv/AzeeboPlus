@@ -3,8 +3,7 @@ FROM node:22-alpine AS builder
 WORKDIR /app
 
 # Install pnpm
-RUN apk add --no-cache curl && \
-    for i in 1 2 3 4 5; do npm install -g pnpm@10.33.2 @nestjs/cli prisma@6.19.0 && break || (echo "Retry $i/5..." && sleep 10); done
+RUN for i in 1 2 3 4 5; do npm install -g pnpm@10.33.2 && break || (echo "Retry $i/5..." && sleep 10); done
 
 # Copy all workspace files for pnpm to resolve dependencies
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.json ./
@@ -24,7 +23,7 @@ COPY apps/web/tsconfig.json ./apps/web/
 COPY apps/web/public ./apps/web/public/
 
 # Build application (API_GATEWAY_URL used at runtime by next.config.js rewrites)
-ARG NEXT_PUBLIC_API_URL=http://localhost:4000
+ARG NEXT_PUBLIC_API_URL=http://localhost:3013
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_API_BASE_URL=$NEXT_PUBLIC_API_URL
 RUN pnpm --filter @azeebo/web run build
@@ -36,9 +35,6 @@ WORKDIR /app
 LABEL org.opencontainers.image.source="https://github.com/azeebo/azeebo-plus"
 LABEL org.opencontainers.image.description="Azeebo+ Web App"
 LABEL org.opencontainers.image.licenses="Proprietary"
-
-# Install runtime dependencies only
-RUN apk add --no-cache curl
 
 # Create non-root user
 RUN addgroup -g 65532 -S nodejs && \
@@ -56,12 +52,12 @@ RUN chown -R nodejs:nodejs /app
 # Switch to non-root user
 USER nodejs
 
-# Expose port
-EXPOSE 3000
+ENV PORT=4000
+EXPOSE 4000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:3000 || exit 1
+    CMD node -e "fetch('http://localhost:4000').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 
 # Start application
 CMD ["node", "node_modules/next/dist/bin/next", "start"]

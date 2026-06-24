@@ -28,7 +28,7 @@ describe('AuthService - Refresh Token Rotation (Integration)', () => {
   };
 
   beforeAll(async () => {
-    process.env.JWT_SECRET = 'test-jwt-secret-for-integration';
+    process.env.JWT_ACCESS_SECRET = 'test-jwt-secret-for-integration';
     process.env.REFRESH_TOKEN_SECRET = 'test-refresh-token-secret-for-integration';
     process.env.NODE_ENV = 'test';
 
@@ -98,7 +98,7 @@ describe('AuthService - Refresh Token Rotation (Integration)', () => {
         },
         {
           expiresIn: '15m',
-          secret: process.env.JWT_SECRET,
+          secret: process.env.JWT_ACCESS_SECRET,
         }
       );
 

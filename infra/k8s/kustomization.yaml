@@ -13,7 +13,7 @@ resources:
   - ingress.yaml
 
 commonLabels:
-  app.kubernetes.io/name: azeebo
+  app.kubernetes.io/name: azeebo-plus
   app.kubernetes.io/managed-by: kustomize
 
 configMapGenerator:

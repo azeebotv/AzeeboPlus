@@ -4,10 +4,12 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { GlobalExceptionFilter } from '@azeebo/error-handling';
 import { LoggingInterceptor } from '@azeebo/logger';
 import helmet from 'helmet';
+import { validateEnvironment } from '@azeebo/shared-types';
 
 import { AppModule } from './app.module';
 
 async function bootstrap() {
+  validateEnvironment(process.env);
   const app = await NestFactory.create(AppModule);
 
   app.useGlobalFilters(new GlobalExceptionFilter());
@@ -39,12 +41,15 @@ async function bootstrap() {
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, document);
+  if (process.env.NODE_ENV !== 'production') {
+    SwaggerModule.setup('api', app, document);
+  }
 
   // API versioning
   app.enableVersioning({ type: VersioningType.URI, prefix: 'v', defaultVersion: '1' });
 
   const port = process.env.PORT || 3025;
+  app.enableShutdownHooks();
   await app.listen(port);
   Logger.log(`Referral service running on port ${port}`, 'Bootstrap');
 }
