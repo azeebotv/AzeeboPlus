@@ -1,11 +1,11 @@
 // User domain methods
 
-import type { ApiResponse, ContentItem, PaginatedResponse, RequestClient, User } from './base';
+import type { ApiResponse, ContentItem, PaginatedResponse, RequestClient, RetryOptions, User } from './base';
 
 export function createUserMethods(client: RequestClient) {
   return {
-    getProfile: async (): Promise<ApiResponse<User>> => {
-      return client.request<User>('/api/v1/users/me');
+    getProfile: async (retryOptions?: RetryOptions): Promise<ApiResponse<User>> => {
+      return client.request<User>('/api/v1/users/me', {}, retryOptions);
     },
 
     updateProfile: async (data: Partial<User>): Promise<ApiResponse<User>> => {
@@ -55,6 +55,19 @@ export function createUserMethods(client: RequestClient) {
       return client.request<Record<string, unknown>>('/api/v1/users/me/preferences', {
         method: 'PATCH',
         body: JSON.stringify(preferences),
+      });
+    },
+
+    getPrivacySettings: async (): Promise<ApiResponse<Record<string, unknown>>> => {
+      return client.request<Record<string, unknown>>('/api/v1/users/me/privacy-settings');
+    },
+
+    updatePrivacySettings: async (
+      settings: Record<string, unknown>
+    ): Promise<ApiResponse<Record<string, unknown>>> => {
+      return client.request<Record<string, unknown>>('/api/v1/users/me/privacy-settings', {
+        method: 'PUT',
+        body: JSON.stringify(settings),
       });
     },
   };

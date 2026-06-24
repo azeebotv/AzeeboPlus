@@ -284,4 +284,24 @@ export class UsersController {
   ): Promise<Record<string, unknown>> {
     return this.usersService.completeProfileSetup(req.user.id, dto, req.user.email);
   }
+
+  @Get('me/privacy-settings')
+  @ApiOperation({ summary: 'Get user privacy settings' })
+  @ApiResponse({ status: 200, description: 'Privacy settings' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async getPrivacySettings(@Request() req: AuthenticatedRequest): Promise<Record<string, unknown>> {
+    return this.usersService.getPrivacySettings(req.user.id);
+  }
+
+  @Put('me/privacy-settings')
+  @ApiOperation({ summary: 'Update user privacy settings' })
+  @ApiResponse({ status: 200, description: 'Privacy settings updated' })
+  @ApiResponse({ status: 400, description: 'Invalid input' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async updatePrivacySettings(
+    @Request() req: AuthenticatedRequest,
+    @Body() settings: Record<string, unknown>
+  ): Promise<Record<string, unknown>> {
+    return this.usersService.updatePrivacySettings(req.user.id, settings);
+  }
 }

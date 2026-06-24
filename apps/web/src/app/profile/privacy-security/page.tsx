@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { apiFetch } from '@/lib/api';
+import { api } from '@/lib/api';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 
@@ -28,7 +28,7 @@ export default function PrivacySecurityPage(): React.JSX.Element {
 
   const loadSettings = async () => {
     try {
-      const response = await apiFetch<any>('/users/privacy-settings');
+      const response = await api.user.getPrivacySettings();
       if (response.success && response.data) setSettings(response.data as typeof settings);
     } catch {
       /* ignore */
@@ -38,10 +38,7 @@ export default function PrivacySecurityPage(): React.JSX.Element {
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      await apiFetch<any>('/users/privacy-settings', {
-        method: 'PUT',
-        body: JSON.stringify(settings),
-      });
+      await api.user.updatePrivacySettings(settings);
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     } catch {

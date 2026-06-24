@@ -34,12 +34,6 @@ import { CsrfMiddleware } from './common/csrf.middleware';
           ttl: parseInt(process.env.RATE_LIMIT_TTL || '60', 10) * 1000,
           limit: parseInt(process.env.RATE_LIMIT_MAX || '1000', 10),
         },
-        // Stricter limit for auth endpoints: 10 requests per minute
-        {
-          ttl: 60000,
-          limit: 10,
-          name: 'auth',
-        },
       ],
     }),
     HealthModule,

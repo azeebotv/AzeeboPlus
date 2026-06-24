@@ -1,6 +1,6 @@
 generator client {
   provider = "prisma-client-js"
-  output = "../generated/prisma/client"
+  output   = "../src/prisma/client"
 }
 
 datasource db {
@@ -29,6 +29,7 @@ model UserPreferences {
   darkMode        Boolean  @default(false)
   notifications   Json?    @default("{}")
   contentPreferences Json?  @default("[]")
+  privacySettings Json?    @default("{\"isPrivate\":false,\"showActivity\":true,\"allowMessages\":true,\"twoFactorEnabled\":false}")
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 

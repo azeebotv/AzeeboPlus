@@ -189,6 +189,11 @@ export interface AuthResponse {
   user: User;
 }
 
+export interface RefreshTokensResponse {
+  access_token: string;
+  refresh_token: string;
+}
+
 export interface LoginRequest {
   email: string;
   password: string;
@@ -308,6 +313,8 @@ export interface AnalyticsOverview {
 export interface RetryOptions {
   /** Retry on HTTP 401 (useful for refresh-token clock-skew resilience) */
   retryOn401?: boolean;
+  /** Skip the automatic 401 refresh handling in ApiClient (caller handles refresh itself) */
+  skipAuthRetry?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -329,7 +336,8 @@ export interface RequestClient {
 // Ensure endpoint routes through the gateway's /api prefix
 export function gatewayPath(endpoint: string): string {
   if (endpoint.startsWith('/api/')) return endpoint;
-  return `/api${endpoint}`;
+  if (endpoint.startsWith('/v1/')) return `/api${endpoint}`;
+  return `/api/v1${endpoint}`;
 }
 
 export async function apiFetch<T>(

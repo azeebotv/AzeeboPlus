@@ -82,6 +82,57 @@ export class UsersService {
     };
   }
 
+  async getPrivacySettings(userId: string): Promise<Record<string, unknown>> {
+    const prefs = await this.prisma.userPreferences.findUnique({
+      where: { userId },
+    });
+
+    const defaults = {
+      isPrivate: false,
+      showActivity: true,
+      allowMessages: true,
+      twoFactorEnabled: false,
+    };
+
+    if (!prefs || !prefs.privacySettings) {
+      return defaults;
+    }
+
+    return { ...defaults, ...(prefs.privacySettings as Record<string, unknown>) };
+  }
+
+  async updatePrivacySettings(
+    userId: string,
+    settings: Record<string, unknown>
+  ): Promise<Record<string, unknown>> {
+    const existing = await this.prisma.userPreferences.findUnique({
+      where: { userId },
+    });
+
+    const privacyData = {
+      isPrivate: (settings.isPrivate as boolean) ?? false,
+      showActivity: (settings.showActivity as boolean) ?? true,
+      allowMessages: (settings.allowMessages as boolean) ?? true,
+      twoFactorEnabled: (settings.twoFactorEnabled as boolean) ?? false,
+    };
+
+    if (existing) {
+      await this.prisma.userPreferences.update({
+        where: { userId },
+        data: { privacySettings: privacyData as Prisma.InputJsonValue },
+      });
+    } else {
+      await this.prisma.userPreferences.create({
+        data: {
+          userId,
+          privacySettings: privacyData as Prisma.InputJsonValue,
+        },
+      });
+    }
+
+    return privacyData;
+  }
+
   async getWatchHistory(userId: string, page = 1, limit = 20): Promise<Record<string, unknown>> {
     const skip = (page - 1) * limit;
     const take = Math.min(limit, 100);

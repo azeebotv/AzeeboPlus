@@ -118,23 +118,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
 
     try {
-      const response = await api.auth.refreshToken(currentRefreshToken);
-      if (response.success && response.data) {
-        const newAccessToken = response.data.access_token;
-        const newRefreshToken = response.data.refresh_token;
-
-        // Update stored tokens
-        setToken(newAccessToken);
-        setRefreshToken(newRefreshToken);
-        api.setToken(newAccessToken);
-        localStorage.setItem(ACCESS_TOKEN_KEY, newAccessToken);
-        localStorage.setItem(REFRESH_TOKEN_KEY, newRefreshToken);
-
-        // Refresh token cookie
-        const storedUser = localStorage.getItem(USER_KEY);
-        if (storedUser) {
-          setAuthCookie(JSON.parse(storedUser).id);
-        }
+      // Use ApiClient's attemptRefresh() which deduplicates concurrent attempts
+      const data = await api.attemptRefresh();
+      if (data) {
+        // Update React state (localStorage is already updated by attemptRefresh)
+        setToken(data.access_token);
+        setRefreshToken(data.refresh_token);
 
         return true;
       }
@@ -142,6 +131,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       clearSession();
       return false;
     } catch {
+      clearSession();
       return false;
     }
   }, [clearSession]);
@@ -184,7 +174,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         if (storedAccessToken) {
           // Validate the access token by fetching the user profile
           try {
-            const response = await api.user.getProfile();
+            const response = await api.user.getProfile({ skipAuthRetry: true });
             if (cancelled) return;
 
             if (response.success && response.data) {

@@ -31,7 +31,7 @@ function setAuthCookie(value: string, maxAge: number = 7 * 24 * 60 * 60): void {
 class ApiClient {
   private baseUrl: string;
   private token: string | null = null;
-  private refreshPromise: Promise<boolean> | null = null;
+  private refreshPromise: Promise<import('./base').RefreshTokensResponse | null> | null = null;
 
   auth: ReturnType<typeof createAuthMethods>;
   user: ReturnType<typeof createUserMethods>;
@@ -86,16 +86,17 @@ class ApiClient {
   /**
    * Attempt to refresh the access token using the stored refresh token.
    * Deduplicates concurrent refresh attempts.
+   * Returns the auth response on success, null on failure.
    */
-  private async attemptRefresh(): Promise<boolean> {
+  async attemptRefresh(): Promise<import('./base').RefreshTokensResponse | null> {
     if (this.refreshPromise) {
       return this.refreshPromise;
     }
 
-    this.refreshPromise = (async (): Promise<boolean> => {
+    this.refreshPromise = (async (): Promise<import('./base').RefreshTokensResponse | null> => {
       try {
         const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
-        if (!refreshToken) return false;
+        if (!refreshToken) return null;
 
         const response = await this.auth.refreshToken(refreshToken);
         if (response.success && response.data) {
@@ -108,11 +109,11 @@ class ApiClient {
           if (storedUser) {
             setAuthCookie(JSON.parse(storedUser).id);
           }
-          return true;
+          return response.data;
         }
-        return false;
+        return null;
       } catch {
-        return false;
+        return null;
       } finally {
         this.refreshPromise = null;
       }
@@ -180,23 +181,19 @@ class ApiClient {
 
       if (!response.ok) {
         // T-CORE: On 401, attempt automatic token refresh and retry the request
-        if (response.status === 401 && !endpoint.includes('/auth/refresh') && !endpoint.includes('/auth/login')) {
+        if (response.status === 401 && !retryOptions?.skipAuthRetry && !endpoint.includes('/auth/refresh') && !endpoint.includes('/auth/login')) {
           const refreshed = await this.attemptRefresh();
           if (refreshed) {
             // Retry the original request with the new token
             return this.request<T>(endpoint, options, retryOptions, attempt);
           }
-          // Refresh failed — clear session
-          if (typeof window !== 'undefined') {
-            localStorage.removeItem(ACCESS_TOKEN_KEY);
-            localStorage.removeItem(REFRESH_TOKEN_KEY);
-            localStorage.removeItem(USER_KEY);
-            document.cookie = 'auth=; path=/; max-age=0; SameSite=Lax';
-          }
+          // Refresh failed — do NOT clear session here; let AuthContext handle cleanup
         }
 
-        // T-M15: retry on standard retryable codes
-        const retryable = this.isRetryableError(response.status);
+        // T-M15: retry on standard retryable codes, but skip retry for auth/refresh
+        // to prevent generating multiple refresh requests that hit rate limits
+        const retryable = this.isRetryableError(response.status)
+          && !endpoint.includes('/auth/refresh');
 
         if (retryable && attempt < RETRY_CONFIG.maxRetries) {
           const retryAfter = response.headers.get('Retry-After');

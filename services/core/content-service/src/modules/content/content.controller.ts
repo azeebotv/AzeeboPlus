@@ -242,8 +242,36 @@ export class ContentController {
   }
 
   // ========================
-  // Parameterized GET routes (:id must come after all static string routes)
+  // Parameterized GET routes (more specific patterns before :id catch-all)
   // ========================
+
+  @Get('universe/:universeId')
+  @Cache({ key: 'content:universe:{universeId}:{page}:{limit}', ttl: 600 })
+  @UseGuards(RateLimitGuard)
+  @RateLimit(100, 60000)
+  @ApiOperation({ summary: 'Get content by universe' })
+  @ApiResponse({ status: 200, description: 'Content list for universe' })
+  async getContentByUniverse(
+    @Param('universeId') universeId: string,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number
+  ): Promise<ContentResponse> {
+    return this.contentService.listContent({ universe: universeId }, page, limit);
+  }
+
+  @Get('category/:categoryId')
+  @Cache({ key: 'content:category:{categoryId}:{page}:{limit}', ttl: 600 })
+  @UseGuards(RateLimitGuard)
+  @RateLimit(100, 60000)
+  @ApiOperation({ summary: 'Get content by category' })
+  @ApiResponse({ status: 200, description: 'Content list for category' })
+  async getContentByCategoryParam(
+    @Param('categoryId') categoryId: string,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number
+  ): Promise<ContentResponse> {
+    return this.contentService.getContentByCategory(categoryId);
+  }
 
   @Get(':id')
   @Cache({ key: 'content:{id}', ttl: 300 })
