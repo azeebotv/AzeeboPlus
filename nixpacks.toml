@@ -1,0 +1,18 @@
+# ============================================================
+# Nixpacks Configuration for Azeebo+ Monorepo
+# ============================================================
+# Each microservice is a separate Coolify app that shares this
+# Git repo. The install/build/start commands are set per-app
+# in the Coolify UI.
+#
+# This file ensures pnpm and Node are installed correctly.
+# ============================================================
+
+[phases.setup]
+nixPkgs = ["nodejs_20"]
+
+[phases.install]
+cmds = ["npm install -g pnpm@10.33.2", "pnpm install --frozen-lockfile"]
+
+[start]
+cmd = "echo 'Set start command in Coolify UI'"
