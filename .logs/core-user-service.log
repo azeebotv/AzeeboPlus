@@ -2,254 +2,132 @@
 > @azeebo/user-service@0.1.0 start:dev /Users/deprof/www/azeebo+/services/core/user-service
 > ts-node-dev --respawn --transpile-only src/main.ts
 
-[INFO] 14:55:51 ts-node-dev ver. 2.0.0 (using ts-node ver. 10.9.2, typescript ver. 5.9.3)
-[32m[Nest] 50736  - [39m06/24/2026, 2:55:52 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
-[32m[Nest] 50736  - [39m06/24/2026, 2:55:52 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisModule dependencies initialized[39m[38;5;3m +16ms[39m
-[32m[Nest] 50736  - [39m06/24/2026, 2:55:52 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDatabaseModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 50736  - [39m06/24/2026, 2:55:52 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPassportModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 50736  - [39m06/24/2026, 2:55:52 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +7ms[39m
-[32m[Nest] 50736  - [39m06/24/2026, 2:55:52 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisCoreModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 50736  - [39m06/24/2026, 2:55:52 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mThrottlerModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 50736  - [39m06/24/2026, 2:55:52 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 50736  - [39m06/24/2026, 2:55:52 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 50736  - [39m06/24/2026, 2:55:52 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 50736  - [39m06/24/2026, 2:55:52 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 50736  - [39m06/24/2026, 2:55:52 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 50736  - [39m06/24/2026, 2:55:52 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTerminusModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 50736  - [39m06/24/2026, 2:55:52 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRateLimiterModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 50736  - [39m06/24/2026, 2:55:52 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 50736  - [39m06/24/2026, 2:55:52 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 50736  - [39m06/24/2026, 2:55:52 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mUsersModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 50736  - [39m06/24/2026, 2:55:52 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAdminModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 50736  - [39m06/24/2026, 2:55:52 PM [32m    LOG[39m [32mSwagger documentation enabled at /docs[39m
-[32m[Nest] 50736  - [39m06/24/2026, 2:55:52 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mUsersController {/users} (version: 1):[39m[38;5;3m +3ms[39m
-[32m[Nest] 50736  - [39m06/24/2026, 2:55:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/me, GET} (version: 1) route[39m[38;5;3m +3ms[39m
-[32m[Nest] 50736  - [39m06/24/2026, 2:55:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/me, PATCH} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50736  - [39m06/24/2026, 2:55:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/:id, GET} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 50736  - [39m06/24/2026, 2:55:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/:id/follow, POST} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50736  - [39m06/24/2026, 2:55:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/:id/follow, DELETE} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50736  - [39m06/24/2026, 2:55:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/:id/followers, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50736  - [39m06/24/2026, 2:55:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/:id/following, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50736  - [39m06/24/2026, 2:55:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/me/preferences, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50736  - [39m06/24/2026, 2:55:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/me/preferences, PUT} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 50736  - [39m06/24/2026, 2:55:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/me/history, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50736  - [39m06/24/2026, 2:55:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/me/saved, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50736  - [39m06/24/2026, 2:55:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/me/saved, POST} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50736  - [39m06/24/2026, 2:55:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/me/saved/:contentId, DELETE} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50736  - [39m06/24/2026, 2:55:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/watch-history, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50736  - [39m06/24/2026, 2:55:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/watch-history, POST} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50736  - [39m06/24/2026, 2:55:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/saved, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50736  - [39m06/24/2026, 2:55:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/saved, POST} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50736  - [39m06/24/2026, 2:55:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/saved/:contentId, DELETE} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 50736  - [39m06/24/2026, 2:55:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/me/universe-affinity, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50736  - [39m06/24/2026, 2:55:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/me/universe-affinity, PATCH} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50736  - [39m06/24/2026, 2:55:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/me/complete-profile, POST} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50736  - [39m06/24/2026, 2:55:52 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mUserDeletionController {/privacy} (version: 1):[39m[38;5;3m +0ms[39m
-[32m[Nest] 50736  - [39m06/24/2026, 2:55:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/privacy/deletion-request, POST} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50736  - [39m06/24/2026, 2:55:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/privacy/data/:userId, DELETE} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50736  - [39m06/24/2026, 2:55:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/privacy/data/:userId/export, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50736  - [39m06/24/2026, 2:55:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/privacy/deletion-status/:userId, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50736  - [39m06/24/2026, 2:55:52 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHealthController {/health} (version: 1):[39m[38;5;3m +0ms[39m
-[32m[Nest] 50736  - [39m06/24/2026, 2:55:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health, GET} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 50736  - [39m06/24/2026, 2:55:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/live, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50736  - [39m06/24/2026, 2:55:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/ready, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50736  - [39m06/24/2026, 2:55:52 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAdminController {/admin} (version: 1):[39m[38;5;3m +0ms[39m
-[32m[Nest] 50736  - [39m06/24/2026, 2:55:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/stats, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50736  - [39m06/24/2026, 2:55:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/subscriptions, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50736  - [39m06/24/2026, 2:55:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/subscriptions/:subscriptionId, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50736  - [39m06/24/2026, 2:55:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/subscriptions/:subscriptionId, PUT} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50736  - [39m06/24/2026, 2:55:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/subscriptions/:subscriptionId, DELETE} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50736  - [39m06/24/2026, 2:55:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/preferences/:userId, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50736  - [39m06/24/2026, 2:55:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/preferences/:userId, PUT} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50736  - [39m06/24/2026, 2:55:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/watch-history/:userId, DELETE} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50736  - [39m06/24/2026, 2:55:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/saved-items/:userId, DELETE} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50736  - [39m06/24/2026, 2:55:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/users/:id, GET} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 50736  - [39m06/24/2026, 2:55:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/users/:id, PATCH} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50736  - [39m06/24/2026, 2:55:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/users/:id/suspend, POST} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50736  - [39m06/24/2026, 2:55:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/content/:id/moderate, PATCH} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50736  - [39m06/24/2026, 2:55:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/moderation/reports, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50736  - [39m06/24/2026, 2:55:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/moderation/reports/:id, PATCH} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50736  - [39m06/24/2026, 2:55:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/analytics, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50736  - [39m06/24/2026, 2:55:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/audit-logs, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50736  - [39m06/24/2026, 2:55:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/creators/verification, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50736  - [39m06/24/2026, 2:55:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/creators/:id/verify, PATCH} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50736  - [39m06/24/2026, 2:55:52 PM [32m    LOG[39m [38;5;3m[PrismaService] [39m[32mDatabase connection established[39m
-[32m[Nest] 50736  - [39m06/24/2026, 2:55:52 PM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +1ms[39m
-[32m[Nest] 50736  - [39m06/24/2026, 2:55:52 PM [32m    LOG[39m [32mUser Service is running on port 3001[39m
-[32m[Nest] 50736  - [39m06/24/2026, 4:04:37 PM [32m    LOG[39m [38;5;3m[HTTP] [39m[32m{"timestamp":"2026-06-24T15:04:37.518Z","level":"info","message":"GET /v1/users/me 200 782ms","service":"user-service","traceId":"06e23eff-66d5-48a0-b314-f4731aca4cce","spanId":"42ef531e","userId":"31a9a1a2-c1ee-4ea5-9399-f9bdb7db0761","method":"GET","path":"/v1/users/me","statusCode":200,"duration":782}[39m
-[32m[Nest] 50736  - [39m06/24/2026, 4:13:59 PM [32m    LOG[39m [38;5;3m[HTTP] [39m[32m{"timestamp":"2026-06-24T15:13:59.456Z","level":"info","message":"GET /v1/users/me 200 1772ms","service":"user-service","traceId":"e34c6c86-d052-4de4-bbef-32fdacc9972a","spanId":"9cd87ad1","userId":"31a9a1a2-c1ee-4ea5-9399-f9bdb7db0761","method":"GET","path":"/v1/users/me","statusCode":200,"duration":1772}[39m
-[32m[Nest] 50736  - [39m06/24/2026, 4:25:54 PM [32m    LOG[39m [38;5;3m[HTTP] [39m[32m{"timestamp":"2026-06-24T15:25:54.337Z","level":"info","message":"GET /v1/users/me 200 49ms","service":"user-service","traceId":"4358693c-737c-4e77-8afd-dfea78c8bc1b","spanId":"daf3d9ec","userId":"31a9a1a2-c1ee-4ea5-9399-f9bdb7db0761","method":"GET","path":"/v1/users/me","statusCode":200,"duration":49}[39m
-[32m[Nest] 50736  - [39m06/24/2026, 4:36:01 PM [32m    LOG[39m [38;5;3m[HTTP] [39m[32m{"timestamp":"2026-06-24T15:36:01.157Z","level":"info","message":"GET /v1/users/me 200 33ms","service":"user-service","traceId":"13d0eba0-869b-4d16-b660-c5c859b0b217","spanId":"5a428ab3","userId":"31a9a1a2-c1ee-4ea5-9399-f9bdb7db0761","method":"GET","path":"/v1/users/me","statusCode":200,"duration":33}[39m
-[32m[Nest] 50736  - [39m06/24/2026, 4:42:46 PM [32m    LOG[39m [38;5;3m[HTTP] [39m[32m{"timestamp":"2026-06-24T15:42:46.723Z","level":"info","message":"GET /v1/users/me 200 383ms","service":"user-service","traceId":"7e42bb49-23a6-4880-9685-6dc6ae268a94","spanId":"acfa9ca1","userId":"31a9a1a2-c1ee-4ea5-9399-f9bdb7db0761","method":"GET","path":"/v1/users/me","statusCode":200,"duration":383}[39m
-[32m[Nest] 50736  - [39m06/24/2026, 4:48:35 PM [32m    LOG[39m [38;5;3m[HTTP] [39m[32m{"timestamp":"2026-06-24T15:48:35.952Z","level":"info","message":"GET /v1/users/me 200 55ms","service":"user-service","traceId":"7d061539-ad8c-4c55-9e43-dfa3b79aee40","spanId":"ad43c80b","userId":"31a9a1a2-c1ee-4ea5-9399-f9bdb7db0761","method":"GET","path":"/v1/users/me","statusCode":200,"duration":55}[39m
-[INFO] 16:57:59 Restarting: /Users/deprof/www/azeebo+/services/core/user-service/src/main.ts has been modified
-[32m[Nest] 50736  - [39m06/24/2026, 4:57:59 PM [32m    LOG[39m [38;5;3m[PrismaService] [39m[32mDatabase connection closed[39m
-[32m[Nest] 1269  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
-[32m[Nest] 1269  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisModule dependencies initialized[39m[38;5;3m +275ms[39m
-[32m[Nest] 1269  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDatabaseModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 1269  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPassportModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 1269  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +53ms[39m
-[32m[Nest] 1269  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisCoreModule dependencies initialized[39m[38;5;3m +4ms[39m
-[32m[Nest] 1269  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mThrottlerModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 1269  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +16ms[39m
-[32m[Nest] 1269  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +9ms[39m
-[32m[Nest] 1269  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 1269  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 1269  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 1269  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTerminusModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 1269  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRateLimiterModule dependencies initialized[39m[38;5;3m +2ms[39m
-[32m[Nest] 1269  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +4ms[39m
-[32m[Nest] 1269  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 1269  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mUsersModule dependencies initialized[39m[38;5;3m +2ms[39m
-[32m[Nest] 1269  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAdminModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 1269  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [32mSwagger documentation enabled at /docs[39m
-[32m[Nest] 1269  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mUsersController {/users} (version: 1):[39m[38;5;3m +39ms[39m
-[32m[Nest] 1269  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/me, GET} (version: 1) route[39m[38;5;3m +37ms[39m
-[32m[Nest] 1269  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/me, PATCH} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 1269  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/:id, GET} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 1269  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/:id/follow, POST} (version: 1) route[39m[38;5;3m +2ms[39m
-[32m[Nest] 1269  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/:id/follow, DELETE} (version: 1) route[39m[38;5;3m +2ms[39m
-[32m[Nest] 1269  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/:id/followers, GET} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 1269  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/:id/following, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1269  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/me/preferences, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1269  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/me/preferences, PUT} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 1269  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/me/history, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1269  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/me/saved, GET} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 1269  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/me/saved, POST} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1269  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/me/saved/:contentId, DELETE} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1269  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/watch-history, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1269  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/watch-history, POST} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 1269  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/saved, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1269  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/saved, POST} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1269  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/saved/:contentId, DELETE} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1269  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/me/universe-affinity, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1269  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/me/universe-affinity, PATCH} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1269  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/me/complete-profile, POST} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 1269  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mUserDeletionController {/privacy} (version: 1):[39m[38;5;3m +0ms[39m
-[32m[Nest] 1269  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/privacy/deletion-request, POST} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1269  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/privacy/data/:userId, DELETE} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1269  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/privacy/data/:userId/export, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1269  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/privacy/deletion-status/:userId, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1269  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHealthController {/health} (version: 1):[39m[38;5;3m +1ms[39m
-[32m[Nest] 1269  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1269  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/live, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1269  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/ready, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1269  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAdminController {/admin} (version: 1):[39m[38;5;3m +0ms[39m
-[32m[Nest] 1269  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/stats, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1269  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/subscriptions, GET} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 1269  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/subscriptions/:subscriptionId, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1269  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/subscriptions/:subscriptionId, PUT} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1269  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/subscriptions/:subscriptionId, DELETE} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1269  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/preferences/:userId, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1269  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/preferences/:userId, PUT} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1269  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/watch-history/:userId, DELETE} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1269  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/saved-items/:userId, DELETE} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 1269  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/users/:id, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1269  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/users/:id, PATCH} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1269  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/users/:id/suspend, POST} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1269  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/content/:id/moderate, PATCH} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1269  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/moderation/reports, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1269  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/moderation/reports/:id, PATCH} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1269  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/analytics, GET} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 1269  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/audit-logs, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1269  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/creators/verification, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1269  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/creators/:id/verify, PATCH} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1269  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[PrismaService] [39m[32mDatabase connection established[39m
-[32m[Nest] 1269  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +5ms[39m
-[31m[Nest] 1269  - [39m06/24/2026, 4:58:09 PM [31m  ERROR[39m [38;5;3m[NestApplication] [39m[31mError: listen EADDRINUSE: address already in use :::3001[39m[38;5;3m +11ms[39m
-Error: listen EADDRINUSE: address already in use :::3001
-    at Server.setupListenHandle [as _listen2] (node:net:2008:16)
-    at listenInCluster (node:net:2065:12)
-    at Server.listen (node:net:2170:7)
-    at ExpressAdapter.listen (/Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+platform-express@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-v_6278f7c733229edabd2decf6bc28c361/node_modules/@nestjs/platform-express/adapters/express-adapter.js:115:32)
-    at /Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/@nestjs/core/nest-application.js:190:30
-    at new Promise (<anonymous>)
-    at NestApplication.listen (/Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/@nestjs/core/nest-application.js:180:16)
-    at bootstrap (/Users/deprof/www/azeebo+/services/core/user-service/src/main.ts:68:3)
-[ERROR] 16:58:09 Error: listen EADDRINUSE: address already in use :::3001
-[32m[Nest] 1269  - [39m06/24/2026, 4:58:09 PM [32m    LOG[39m [38;5;3m[PrismaService] [39m[32mDatabase connection closed[39m
-[INFO] 16:58:16 Restarting: /Users/deprof/www/azeebo+/services/core/user-service/src/main.ts has been modified
-[32m[Nest] 1413  - [39m06/24/2026, 4:58:20 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
-[32m[Nest] 1413  - [39m06/24/2026, 4:58:20 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisModule dependencies initialized[39m[38;5;3m +80ms[39m
-[32m[Nest] 1413  - [39m06/24/2026, 4:58:20 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDatabaseModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 1413  - [39m06/24/2026, 4:58:20 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPassportModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 1413  - [39m06/24/2026, 4:58:20 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +19ms[39m
-[32m[Nest] 1413  - [39m06/24/2026, 4:58:20 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisCoreModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 1413  - [39m06/24/2026, 4:58:20 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mThrottlerModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 1413  - [39m06/24/2026, 4:58:20 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 1413  - [39m06/24/2026, 4:58:20 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 1413  - [39m06/24/2026, 4:58:20 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 1413  - [39m06/24/2026, 4:58:20 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 1413  - [39m06/24/2026, 4:58:20 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 1413  - [39m06/24/2026, 4:58:20 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTerminusModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 1413  - [39m06/24/2026, 4:58:20 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRateLimiterModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 1413  - [39m06/24/2026, 4:58:20 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 1413  - [39m06/24/2026, 4:58:20 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 1413  - [39m06/24/2026, 4:58:20 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mUsersModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 1413  - [39m06/24/2026, 4:58:20 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAdminModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 1413  - [39m06/24/2026, 4:58:20 PM [32m    LOG[39m [32mSwagger documentation enabled at /docs[39m
-[32m[Nest] 1413  - [39m06/24/2026, 4:58:20 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mUsersController {/users} (version: 1):[39m[38;5;3m +10ms[39m
-[32m[Nest] 1413  - [39m06/24/2026, 4:58:20 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/me, GET} (version: 1) route[39m[38;5;3m +4ms[39m
-[32m[Nest] 1413  - [39m06/24/2026, 4:58:20 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/me, PATCH} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1413  - [39m06/24/2026, 4:58:20 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/:id, GET} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 1413  - [39m06/24/2026, 4:58:20 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/:id/follow, POST} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1413  - [39m06/24/2026, 4:58:20 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/:id/follow, DELETE} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1413  - [39m06/24/2026, 4:58:20 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/:id/followers, GET} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 1413  - [39m06/24/2026, 4:58:20 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/:id/following, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1413  - [39m06/24/2026, 4:58:20 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/me/preferences, GET} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 1413  - [39m06/24/2026, 4:58:20 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/me/preferences, PUT} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1413  - [39m06/24/2026, 4:58:20 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/me/history, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1413  - [39m06/24/2026, 4:58:20 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/me/saved, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1413  - [39m06/24/2026, 4:58:20 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/me/saved, POST} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 1413  - [39m06/24/2026, 4:58:20 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/me/saved/:contentId, DELETE} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1413  - [39m06/24/2026, 4:58:20 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/watch-history, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1413  - [39m06/24/2026, 4:58:20 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/watch-history, POST} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1413  - [39m06/24/2026, 4:58:20 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/saved, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1413  - [39m06/24/2026, 4:58:20 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/saved, POST} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1413  - [39m06/24/2026, 4:58:20 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/saved/:contentId, DELETE} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 1413  - [39m06/24/2026, 4:58:20 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/me/universe-affinity, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1413  - [39m06/24/2026, 4:58:20 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/me/universe-affinity, PATCH} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1413  - [39m06/24/2026, 4:58:20 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/me/complete-profile, POST} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1413  - [39m06/24/2026, 4:58:20 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mUserDeletionController {/privacy} (version: 1):[39m[38;5;3m +1ms[39m
-[32m[Nest] 1413  - [39m06/24/2026, 4:58:20 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/privacy/deletion-request, POST} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 1413  - [39m06/24/2026, 4:58:20 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/privacy/data/:userId, DELETE} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 1413  - [39m06/24/2026, 4:58:20 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/privacy/data/:userId/export, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1413  - [39m06/24/2026, 4:58:20 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/privacy/deletion-status/:userId, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1413  - [39m06/24/2026, 4:58:20 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHealthController {/health} (version: 1):[39m[38;5;3m +0ms[39m
-[32m[Nest] 1413  - [39m06/24/2026, 4:58:20 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1413  - [39m06/24/2026, 4:58:20 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/live, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1413  - [39m06/24/2026, 4:58:20 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/ready, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1413  - [39m06/24/2026, 4:58:20 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAdminController {/admin} (version: 1):[39m[38;5;3m +1ms[39m
-[32m[Nest] 1413  - [39m06/24/2026, 4:58:20 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/stats, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1413  - [39m06/24/2026, 4:58:20 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/subscriptions, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1413  - [39m06/24/2026, 4:58:20 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/subscriptions/:subscriptionId, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1413  - [39m06/24/2026, 4:58:20 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/subscriptions/:subscriptionId, PUT} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1413  - [39m06/24/2026, 4:58:20 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/subscriptions/:subscriptionId, DELETE} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 1413  - [39m06/24/2026, 4:58:20 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/preferences/:userId, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1413  - [39m06/24/2026, 4:58:20 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/preferences/:userId, PUT} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1413  - [39m06/24/2026, 4:58:20 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/watch-history/:userId, DELETE} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1413  - [39m06/24/2026, 4:58:20 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/saved-items/:userId, DELETE} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 1413  - [39m06/24/2026, 4:58:20 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/users/:id, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1413  - [39m06/24/2026, 4:58:20 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/users/:id, PATCH} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1413  - [39m06/24/2026, 4:58:20 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/users/:id/suspend, POST} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1413  - [39m06/24/2026, 4:58:20 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/content/:id/moderate, PATCH} (version: 1) route[39m[38;5;3m +8ms[39m
-[32m[Nest] 1413  - [39m06/24/2026, 4:58:20 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/moderation/reports, GET} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 1413  - [39m06/24/2026, 4:58:20 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/moderation/reports/:id, PATCH} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1413  - [39m06/24/2026, 4:58:20 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/analytics, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1413  - [39m06/24/2026, 4:58:20 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/audit-logs, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1413  - [39m06/24/2026, 4:58:20 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/creators/verification, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1413  - [39m06/24/2026, 4:58:20 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/creators/:id/verify, PATCH} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1413  - [39m06/24/2026, 4:58:20 PM [32m    LOG[39m [38;5;3m[PrismaService] [39m[32mDatabase connection established[39m
-[32m[Nest] 1413  - [39m06/24/2026, 4:58:20 PM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +2ms[39m
-[31m[Nest] 1413  - [39m06/24/2026, 4:58:20 PM [31m  ERROR[39m [38;5;3m[NestApplication] [39m[31mError: listen EADDRINUSE: address already in use :::3001[39m[38;5;3m +14ms[39m
-Error: listen EADDRINUSE: address already in use :::3001
-    at Server.setupListenHandle [as _listen2] (node:net:2008:16)
-    at listenInCluster (node:net:2065:12)
-    at Server.listen (node:net:2170:7)
-    at ExpressAdapter.listen (/Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+platform-express@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-v_6278f7c733229edabd2decf6bc28c361/node_modules/@nestjs/platform-express/adapters/express-adapter.js:115:32)
-    at /Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/@nestjs/core/nest-application.js:190:30
-    at new Promise (<anonymous>)
-    at NestApplication.listen (/Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+core@11.1.27_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@0.1_add7a8078c1314f333a8a0bd437e1493/node_modules/@nestjs/core/nest-application.js:180:16)
-    at bootstrap (/Users/deprof/www/azeebo+/services/core/user-service/src/main.ts:68:3)
-[ERROR] 16:58:20 Error: listen EADDRINUSE: address already in use :::3001
-[32m[Nest] 1413  - [39m06/24/2026, 4:58:20 PM [32m    LOG[39m [38;5;3m[PrismaService] [39m[32mDatabase connection closed[39m
+[INFO] 09:33:26 ts-node-dev ver. 2.0.0 (using ts-node ver. 10.9.2, typescript ver. 5.9.3)
+[32m[Nest] 42094  - [39m06/25/2026, 9:33:30 AM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
+[32m[Nest] 42094  - [39m06/25/2026, 9:33:30 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisModule dependencies initialized[39m[38;5;3m +49ms[39m
+[32m[Nest] 42094  - [39m06/25/2026, 9:33:30 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDatabaseModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 42094  - [39m06/25/2026, 9:33:30 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPassportModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 42094  - [39m06/25/2026, 9:33:30 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +41ms[39m
+[32m[Nest] 42094  - [39m06/25/2026, 9:33:30 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisCoreModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 42094  - [39m06/25/2026, 9:33:30 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mThrottlerModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 42094  - [39m06/25/2026, 9:33:30 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 42094  - [39m06/25/2026, 9:33:30 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +2ms[39m
+[32m[Nest] 42094  - [39m06/25/2026, 9:33:30 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 42094  - [39m06/25/2026, 9:33:30 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 42094  - [39m06/25/2026, 9:33:30 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 42094  - [39m06/25/2026, 9:33:30 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTerminusModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 42094  - [39m06/25/2026, 9:33:30 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRateLimiterModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 42094  - [39m06/25/2026, 9:33:30 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 42094  - [39m06/25/2026, 9:33:30 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 42094  - [39m06/25/2026, 9:33:30 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mUsersModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 42094  - [39m06/25/2026, 9:33:30 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAdminModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 42094  - [39m06/25/2026, 9:33:30 AM [32m    LOG[39m [32mSwagger documentation enabled at /docs[39m
+[32m[Nest] 42094  - [39m06/25/2026, 9:33:30 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mUsersController {/users} (version: 1):[39m[38;5;3m +7ms[39m
+[32m[Nest] 42094  - [39m06/25/2026, 9:33:30 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/me, GET} (version: 1) route[39m[38;5;3m +7ms[39m
+[32m[Nest] 42094  - [39m06/25/2026, 9:33:30 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/me, PATCH} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 42094  - [39m06/25/2026, 9:33:30 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/:id, GET} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 42094  - [39m06/25/2026, 9:33:30 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/:id/follow, POST} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 42094  - [39m06/25/2026, 9:33:30 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/:id/follow, DELETE} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42094  - [39m06/25/2026, 9:33:30 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/:id/followers, GET} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 42094  - [39m06/25/2026, 9:33:30 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/:id/following, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42094  - [39m06/25/2026, 9:33:30 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/me/preferences, GET} (version: 1) route[39m[38;5;3m +9ms[39m
+[32m[Nest] 42094  - [39m06/25/2026, 9:33:30 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/me/preferences, PUT} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 42094  - [39m06/25/2026, 9:33:30 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/me/history, GET} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 42094  - [39m06/25/2026, 9:33:30 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/me/saved, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42094  - [39m06/25/2026, 9:33:30 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/me/saved, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42094  - [39m06/25/2026, 9:33:30 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/me/saved/:contentId, DELETE} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 42094  - [39m06/25/2026, 9:33:30 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/watch-history, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42094  - [39m06/25/2026, 9:33:30 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/watch-history, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42094  - [39m06/25/2026, 9:33:30 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/saved, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42094  - [39m06/25/2026, 9:33:30 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/saved, POST} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 42094  - [39m06/25/2026, 9:33:30 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/saved/:contentId, DELETE} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42094  - [39m06/25/2026, 9:33:30 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/me/universe-affinity, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42094  - [39m06/25/2026, 9:33:30 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/me/universe-affinity, PATCH} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42094  - [39m06/25/2026, 9:33:30 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/me/complete-profile, POST} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 42094  - [39m06/25/2026, 9:33:30 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/me/privacy-settings, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42094  - [39m06/25/2026, 9:33:30 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/me/continue-watching, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42094  - [39m06/25/2026, 9:33:30 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/me/universes, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42094  - [39m06/25/2026, 9:33:30 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/users/me/privacy-settings, PUT} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 42094  - [39m06/25/2026, 9:33:30 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mUserDeletionController {/privacy} (version: 1):[39m[38;5;3m +0ms[39m
+[32m[Nest] 42094  - [39m06/25/2026, 9:33:30 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/privacy/deletion-request, POST} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42094  - [39m06/25/2026, 9:33:30 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/privacy/data/:userId, DELETE} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42094  - [39m06/25/2026, 9:33:30 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/privacy/data/:userId/export, GET} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 42094  - [39m06/25/2026, 9:33:30 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/privacy/deletion-status/:userId, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42094  - [39m06/25/2026, 9:33:30 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHealthController {/health} (version: 1):[39m[38;5;3m +0ms[39m
+[32m[Nest] 42094  - [39m06/25/2026, 9:33:30 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42094  - [39m06/25/2026, 9:33:30 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/live, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42094  - [39m06/25/2026, 9:33:30 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/ready, GET} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 42094  - [39m06/25/2026, 9:33:30 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAdminController {/admin} (version: 1):[39m[38;5;3m +0ms[39m
+[32m[Nest] 42094  - [39m06/25/2026, 9:33:30 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/stats, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42094  - [39m06/25/2026, 9:33:30 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/subscriptions, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42094  - [39m06/25/2026, 9:33:30 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/subscriptions/:subscriptionId, GET} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 42094  - [39m06/25/2026, 9:33:30 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/subscriptions/:subscriptionId, PUT} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42094  - [39m06/25/2026, 9:33:30 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/subscriptions/:subscriptionId, DELETE} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42094  - [39m06/25/2026, 9:33:30 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/preferences/:userId, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42094  - [39m06/25/2026, 9:33:30 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/preferences/:userId, PUT} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 42094  - [39m06/25/2026, 9:33:30 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/watch-history/:userId, DELETE} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42094  - [39m06/25/2026, 9:33:30 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/saved-items/:userId, DELETE} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42094  - [39m06/25/2026, 9:33:30 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/users/:id, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42094  - [39m06/25/2026, 9:33:30 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/users/:id, PATCH} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42094  - [39m06/25/2026, 9:33:30 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/users/:id/suspend, POST} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 42094  - [39m06/25/2026, 9:33:30 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/content/:id/moderate, PATCH} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42094  - [39m06/25/2026, 9:33:30 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/moderation/reports, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42094  - [39m06/25/2026, 9:33:30 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/moderation/reports/:id, PATCH} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 42094  - [39m06/25/2026, 9:33:30 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/analytics, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42094  - [39m06/25/2026, 9:33:30 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/audit-logs, GET} (version: 1) route[39m[38;5;3m +1ms[39m
+[32m[Nest] 42094  - [39m06/25/2026, 9:33:30 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/creators/verification, GET} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42094  - [39m06/25/2026, 9:33:30 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/creators/:id/verify, PATCH} (version: 1) route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42094  - [39m06/25/2026, 9:33:30 AM [32m    LOG[39m [38;5;3m[PrismaService] [39m[32mDatabase connection established[39m
+[32m[Nest] 42094  - [39m06/25/2026, 9:33:30 AM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +3ms[39m
+[32m[Nest] 42094  - [39m06/25/2026, 9:33:30 AM [32m    LOG[39m [32mUser Service is running on port 3001[39m
+[32m[Nest] 42094  - [39m06/25/2026, 9:35:25 AM [32m    LOG[39m [38;5;3m[HTTP] [39m[32m{"timestamp":"2026-06-25T08:35:25.898Z","level":"info","message":"GET /v1/users/me 200 770ms","service":"user-service","traceId":"e885cb0d-2a9d-40e0-84ae-add205701918","spanId":"bbf1cb85","userId":"31a9a1a2-c1ee-4ea5-9399-f9bdb7db0761","method":"GET","path":"/v1/users/me","statusCode":200,"duration":770}[39m
+[31m[Nest] 42094  - [39m06/25/2026, 9:35:55 AM [31m  ERROR[39m [38;5;3m[HTTP] [39m[31m{"timestamp":"2026-06-25T08:35:55.127Z","level":"error","message":"GET /v1/users/me/history?limit=10&offset=0 ERROR 17416ms - \nInvalid `this.prisma.watchHistory.findMany()` invocation in\n/Users/deprof/www/azeebo+/services/core/user-service/src/modules/users/users.service.ts:141:32\n\n  138 const take = Math.min(limit, 100);\n  139 \n  140 const [history, total] = await Promise.all([\n→ 141   this.prisma.watchHistory.findMany(\nThe column `watch_history.contentType` does not exist in the current database.","service":"user-service","traceId":"bd340990-aa2b-4d05-9403-c0df3c087c12","spanId":"79308970","userId":"31a9a1a2-c1ee-4ea5-9399-f9bdb7db0761","method":"GET","path":"/v1/users/me/history?limit=10&offset=0","duration":17416,"error":{"name":"PrismaClientKnownRequestError","message":"\nInvalid `this.prisma.watchHistory.findMany()` invocation in\n/Users/deprof/www/azeebo+/services/core/user-service/src/modules/users/users.service.ts:141:32\n\n  138 const take = Math.min(limit, 100);\n  139 \n  140 const [history, total] = await Promise.all([\n→ 141   this.prisma.watchHistory.findMany(\nThe column `watch_history.contentType` does not exist in the current database.","stack":"PrismaClientKnownRequestError: \nInvalid `this.prisma.watchHistory.findMany()` invocation in\n/Users/deprof/www/azeebo+/services/core/user-service/src/modules/users/users.service.ts:141:32\n\n  138 const take = Math.min(limit, 100);\n  139 \n  140 const [history, total] = await Promise.all([\n→ 141   this.prisma.watchHistory.findMany(\nThe column `watch_history.contentType` does not exist in the current database.\n    at ei.handleRequestError (/Users/deprof/www/azeebo+/services/core/user-service/src/prisma/client/runtime/library.js:125:7268)\n    at ei.handleAndLogRequestError (/Users/deprof/www/azeebo+/services/core/user-service/src/prisma/client/runtime/library.js:125:6593)\n    at ei.request (/Users/deprof/www/azeebo+/services/core/user-service/src/prisma/client/runtime/library.js:125:6300)\n    at a (/Users/deprof/www/azeebo+/services/core/user-service/src/prisma/client/runtime/library.js:134:9551)\n    at async Promise.all (index 0)\n    at UsersService.getWatchHistory (/Users/deprof/www/azeebo+/services/core/user-service/src/modules/users/users.service.ts:140:30)"}}[39m
+[31m[Nest] 42094  - [39m06/25/2026, 9:35:55 AM [31m  ERROR[39m [38;5;3m[ExceptionFilter] [39m[31mUnhandled exception: 
+Invalid `this.prisma.watchHistory.findMany()` invocation in
+/Users/deprof/www/azeebo+/services/core/user-service/src/modules/users/users.service.ts:141:32
+
+  138 const take = Math.min(limit, 100);
+  139 
+  140 const [history, total] = await Promise.all([
+→ 141   this.prisma.watchHistory.findMany(
+The column `watch_history.contentType` does not exist in the current database.[39m
+PrismaClientKnownRequestError: 
+Invalid `this.prisma.watchHistory.findMany()` invocation in
+/Users/deprof/www/azeebo+/services/core/user-service/src/modules/users/users.service.ts:141:32
+
+  138 const take = Math.min(limit, 100);
+  139 
+  140 const [history, total] = await Promise.all([
+→ 141   this.prisma.watchHistory.findMany(
+The column `watch_history.contentType` does not exist in the current database.
+    at ei.handleRequestError (/Users/deprof/www/azeebo+/services/core/user-service/src/prisma/client/runtime/library.js:125:7268)
+    at ei.handleAndLogRequestError (/Users/deprof/www/azeebo+/services/core/user-service/src/prisma/client/runtime/library.js:125:6593)
+    at ei.request (/Users/deprof/www/azeebo+/services/core/user-service/src/prisma/client/runtime/library.js:125:6300)
+    at a (/Users/deprof/www/azeebo+/services/core/user-service/src/prisma/client/runtime/library.js:134:9551)
+    at async Promise.all (index 0)
+    at UsersService.getWatchHistory (/Users/deprof/www/azeebo+/services/core/user-service/src/modules/users/users.service.ts:140:30)
+[32m[Nest] 42094  - [39m06/25/2026, 9:35:55 AM [32m    LOG[39m [38;5;3m[HTTP] [39m[32m{"timestamp":"2026-06-25T08:35:55.675Z","level":"info","message":"GET /v1/users/me/universes 200 8451ms","service":"user-service","traceId":"46354930-dd48-4621-bd95-599ceb19eea1","spanId":"53eb7d9b","userId":"31a9a1a2-c1ee-4ea5-9399-f9bdb7db0761","method":"GET","path":"/v1/users/me/universes","statusCode":200,"duration":8451}[39m
+[31m[Nest] 42094  - [39m06/25/2026, 9:35:57 AM [31m  ERROR[39m [38;5;3m[HTTP] [39m[31m{"timestamp":"2026-06-25T08:35:57.616Z","level":"error","message":"GET /v1/users/me/continue-watching?limit=10 ERROR 1565ms - \nInvalid `this.prisma.watchHistory.findMany()` invocation in\n/Users/deprof/www/azeebo+/services/core/user-service/src/modules/users/users.service.ts:579:52\n\n  576 }\n  577 \n  578 async getContinueWatching(userId: string, limit = 10): Promise<Record<string, unknown>> {\n→ 579   const history = await this.prisma.watchHistory.findMany(\nThe column `watch_history.contentType` does not exist in the current database.","service":"user-service","traceId":"9219dfe1-b550-4d59-b5a4-18a2c3e08829","spanId":"fc96afd5","userId":"31a9a1a2-c1ee-4ea5-9399-f9bdb7db0761","method":"GET","path":"/v1/users/me/continue-watching?limit=10","duration":1565,"error":{"name":"PrismaClientKnownRequestError","message":"\nInvalid `this.prisma.watchHistory.findMany()` invocation in\n/Users/deprof/www/azeebo+/services/core/user-service/src/modules/users/users.service.ts:579:52\n\n  576 }\n  577 \n  578 async getContinueWatching(userId: string, limit = 10): Promise<Record<string, unknown>> {\n→ 579   const history = await this.prisma.watchHistory.findMany(\nThe column `watch_history.contentType` does not exist in the current database.","stack":"PrismaClientKnownRequestError: \nInvalid `this.prisma.watchHistory.findMany()` invocation in\n/Users/deprof/www/azeebo+/services/core/user-service/src/modules/users/users.service.ts:579:52\n\n  576 }\n  577 \n  578 async getContinueWatching(userId: string, limit = 10): Promise<Record<string, unknown>> {\n→ 579   const history = await this.prisma.watchHistory.findMany(\nThe column `watch_history.contentType` does not exist in the current database.\n    at ei.handleRequestError (/Users/deprof/www/azeebo+/services/core/user-service/src/prisma/client/runtime/library.js:125:7268)\n    at ei.handleAndLogRequestError (/Users/deprof/www/azeebo+/services/core/user-service/src/prisma/client/runtime/library.js:125:6593)\n    at ei.request (/Users/deprof/www/azeebo+/services/core/user-service/src/prisma/client/runtime/library.js:125:6300)\n    at a (/Users/deprof/www/azeebo+/services/core/user-service/src/prisma/client/runtime/library.js:134:9551)\n    at UsersService.getContinueWatching (/Users/deprof/www/azeebo+/services/core/user-service/src/modules/users/users.service.ts:579:21)"}}[39m
+[31m[Nest] 42094  - [39m06/25/2026, 9:35:57 AM [31m  ERROR[39m [38;5;3m[ExceptionFilter] [39m[31mUnhandled exception: 
+Invalid `this.prisma.watchHistory.findMany()` invocation in
+/Users/deprof/www/azeebo+/services/core/user-service/src/modules/users/users.service.ts:579:52
+
+  576 }
+  577 
+  578 async getContinueWatching(userId: string, limit = 10): Promise<Record<string, unknown>> {
+→ 579   const history = await this.prisma.watchHistory.findMany(
+The column `watch_history.contentType` does not exist in the current database.[39m
+PrismaClientKnownRequestError: 
+Invalid `this.prisma.watchHistory.findMany()` invocation in
+/Users/deprof/www/azeebo+/services/core/user-service/src/modules/users/users.service.ts:579:52
+
+  576 }
+  577 
+  578 async getContinueWatching(userId: string, limit = 10): Promise<Record<string, unknown>> {
+→ 579   const history = await this.prisma.watchHistory.findMany(
+The column `watch_history.contentType` does not exist in the current database.
+    at ei.handleRequestError (/Users/deprof/www/azeebo+/services/core/user-service/src/prisma/client/runtime/library.js:125:7268)
+    at ei.handleAndLogRequestError (/Users/deprof/www/azeebo+/services/core/user-service/src/prisma/client/runtime/library.js:125:6593)
+    at ei.request (/Users/deprof/www/azeebo+/services/core/user-service/src/prisma/client/runtime/library.js:125:6300)
+    at a (/Users/deprof/www/azeebo+/services/core/user-service/src/prisma/client/runtime/library.js:134:9551)
+    at UsersService.getContinueWatching (/Users/deprof/www/azeebo+/services/core/user-service/src/modules/users/users.service.ts:579:21)

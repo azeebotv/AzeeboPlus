@@ -2,132 +2,46 @@
 > @azeebo/notification-service@0.1.0 start:dev /Users/deprof/www/azeebo+/services/engagement/notification-service
 > ts-node-dev --respawn --transpile-only src/main.ts
 
-[INFO] 14:56:06 ts-node-dev ver. 2.0.0 (using ts-node ver. 10.9.2, typescript ver. 5.9.3)
-[32m[Nest] 51220  - [39m06/24/2026, 2:56:08 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
-[32m[Nest] 51220  - [39m06/24/2026, 2:56:08 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisModule dependencies initialized[39m[38;5;3m +28ms[39m
-[32m[Nest] 51220  - [39m06/24/2026, 2:56:08 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDatabaseModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 51220  - [39m06/24/2026, 2:56:08 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPassportModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 51220  - [39m06/24/2026, 2:56:08 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +38ms[39m
-[32m[Nest] 51220  - [39m06/24/2026, 2:56:08 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisCoreModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 51220  - [39m06/24/2026, 2:56:08 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 51220  - [39m06/24/2026, 2:56:08 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +2ms[39m
-[32m[Nest] 51220  - [39m06/24/2026, 2:56:08 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 51220  - [39m06/24/2026, 2:56:08 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 51220  - [39m06/24/2026, 2:56:08 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mFirebaseModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 51220  - [39m06/24/2026, 2:56:08 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mEmailModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 51220  - [39m06/24/2026, 2:56:08 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mSmsModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 51220  - [39m06/24/2026, 2:56:08 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRateLimiterModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 51220  - [39m06/24/2026, 2:56:08 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 51220  - [39m06/24/2026, 2:56:08 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 51220  - [39m06/24/2026, 2:56:08 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAdminModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 51220  - [39m06/24/2026, 2:56:08 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mNotificationsModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 51220  - [39m06/24/2026, 2:56:08 PM [32m    LOG[39m [32mSwagger documentation enabled at /docs[39m
-[32m[Nest] 51220  - [39m06/24/2026, 2:56:08 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mNotificationsController {/v1/notifications} (version: 1):[39m[38;5;3m +5ms[39m
-[32m[Nest] 51220  - [39m06/24/2026, 2:56:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/notifications, GET} (version: 1) route[39m[38;5;3m +4ms[39m
-[32m[Nest] 51220  - [39m06/24/2026, 2:56:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/notifications/:id/read, PATCH} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 51220  - [39m06/24/2026, 2:56:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/notifications/read-all, PATCH} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 51220  - [39m06/24/2026, 2:56:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/notifications/preferences, PUT} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 51220  - [39m06/24/2026, 2:56:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/notifications/settings, GET} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 51220  - [39m06/24/2026, 2:56:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/notifications/unread-count, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 51220  - [39m06/24/2026, 2:56:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/notifications/push-tokens, POST} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 51220  - [39m06/24/2026, 2:56:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/notifications/push-tokens, GET} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 51220  - [39m06/24/2026, 2:56:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/notifications/push-tokens/:token, DELETE} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 51220  - [39m06/24/2026, 2:56:08 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAdminController {/admin} (version: 1):[39m[38;5;3m +0ms[39m
-[32m[Nest] 51220  - [39m06/24/2026, 2:56:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/stats, GET} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 51220  - [39m06/24/2026, 2:56:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/notifications, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 51220  - [39m06/24/2026, 2:56:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/notifications, POST} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 51220  - [39m06/24/2026, 2:56:08 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHealthController {/health} (version: 1):[39m[38;5;3m +0ms[39m
-[32m[Nest] 51220  - [39m06/24/2026, 2:56:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 51220  - [39m06/24/2026, 2:56:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/live, GET} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 51220  - [39m06/24/2026, 2:56:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/ready, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[33m[Nest] 51220  - [39m06/24/2026, 2:56:08 PM [33m   WARN[39m [38;5;3m[FirebaseService] [39m[33mFirebase service account not configured. Push notifications will be disabled.[39m
-[33m[Nest] 51220  - [39m06/24/2026, 2:56:08 PM [33m   WARN[39m [38;5;3m[EmailService] [39m[33mSendGrid API key not configured. Email notifications will be disabled.[39m
-[33m[Nest] 51220  - [39m06/24/2026, 2:56:08 PM [33m   WARN[39m [38;5;3m[SmsService] [39m[33mTwilio credentials not configured. SMS notifications will be disabled.[39m
-[32m[Nest] 51220  - [39m06/24/2026, 2:56:08 PM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +25ms[39m
-[32m[Nest] 51220  - [39m06/24/2026, 2:56:08 PM [32m    LOG[39m [32mNotification Service running on port 3006[39m
-[INFO] 16:57:30 Restarting: /Users/deprof/www/azeebo+/services/engagement/notification-service/src/main.ts has been modified
-[32m[Nest] 475  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
-[32m[Nest] 475  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisModule dependencies initialized[39m[38;5;3m +38ms[39m
-[32m[Nest] 475  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDatabaseModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 475  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPassportModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 475  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +49ms[39m
-[32m[Nest] 475  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisCoreModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 475  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 475  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +4ms[39m
-[32m[Nest] 475  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 475  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 475  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mFirebaseModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 475  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mEmailModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 475  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mSmsModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 475  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRateLimiterModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 475  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 475  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 475  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAdminModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 475  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mNotificationsModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 475  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [32mSwagger documentation enabled at /docs[39m
-[32m[Nest] 475  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mNotificationsController {/v1/notifications}:[39m[38;5;3m +6ms[39m
-[32m[Nest] 475  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/notifications, GET} route[39m[38;5;3m +7ms[39m
-[32m[Nest] 475  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/notifications/:id/read, PATCH} route[39m[38;5;3m +2ms[39m
-[32m[Nest] 475  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/notifications/read-all, PATCH} route[39m[38;5;3m +2ms[39m
-[32m[Nest] 475  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/notifications/preferences, PUT} route[39m[38;5;3m +2ms[39m
-[32m[Nest] 475  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/notifications/settings, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 475  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/notifications/unread-count, GET} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 475  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/notifications/push-tokens, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 475  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/notifications/push-tokens, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 475  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/notifications/push-tokens/:token, DELETE} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 475  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAdminController {/admin}:[39m[38;5;3m +0ms[39m
-[32m[Nest] 475  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/stats, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 475  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/notifications, GET} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 475  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/notifications, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 475  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHealthController {/health}:[39m[38;5;3m +0ms[39m
-[32m[Nest] 475  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 475  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/live, GET} route[39m[38;5;3m +2ms[39m
-[32m[Nest] 475  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/ready, GET} route[39m[38;5;3m +0ms[39m
-[33m[Nest] 475  - [39m06/24/2026, 4:57:38 PM [33m   WARN[39m [38;5;3m[FirebaseService] [39m[33mFirebase service account not configured. Push notifications will be disabled.[39m
-[33m[Nest] 475  - [39m06/24/2026, 4:57:38 PM [33m   WARN[39m [38;5;3m[EmailService] [39m[33mSendGrid API key not configured. Email notifications will be disabled.[39m
-[33m[Nest] 475  - [39m06/24/2026, 4:57:38 PM [33m   WARN[39m [38;5;3m[SmsService] [39m[33mTwilio credentials not configured. SMS notifications will be disabled.[39m
-[32m[Nest] 475  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +24ms[39m
-[32m[Nest] 475  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [32mNotification Service running on port 3006[39m
-[INFO] 16:57:59 Restarting: /Users/deprof/www/azeebo+/services/engagement/notification-service/src/main.ts has been modified
-[32m[Nest] 1263  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
-[32m[Nest] 1263  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisModule dependencies initialized[39m[38;5;3m +81ms[39m
-[32m[Nest] 1263  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDatabaseModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 1263  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPassportModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 1263  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +54ms[39m
-[32m[Nest] 1263  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisCoreModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 1263  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 1263  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 1263  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 1263  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 1263  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mFirebaseModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 1263  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mEmailModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 1263  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mSmsModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 1263  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRateLimiterModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 1263  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 1263  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 1263  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAdminModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 1263  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mNotificationsModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 1263  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [32mSwagger documentation enabled at /docs[39m
-[32m[Nest] 1263  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mNotificationsController {/v1/notifications}:[39m[38;5;3m +6ms[39m
-[32m[Nest] 1263  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/notifications, GET} route[39m[38;5;3m +4ms[39m
-[32m[Nest] 1263  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/notifications/:id/read, PATCH} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 1263  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/notifications/read-all, PATCH} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1263  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/notifications/preferences, PUT} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1263  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/notifications/settings, GET} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 1263  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/notifications/unread-count, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1263  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/notifications/push-tokens, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1263  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/notifications/push-tokens, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1263  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/notifications/push-tokens/:token, DELETE} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1263  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAdminController {/admin}:[39m[38;5;3m +1ms[39m
-[32m[Nest] 1263  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/stats, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1263  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/notifications, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1263  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/notifications, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1263  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHealthController {/health}:[39m[38;5;3m +0ms[39m
-[32m[Nest] 1263  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1263  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/live, GET} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 1263  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/ready, GET} route[39m[38;5;3m +0ms[39m
-[33m[Nest] 1263  - [39m06/24/2026, 4:58:10 PM [33m   WARN[39m [38;5;3m[FirebaseService] [39m[33mFirebase service account not configured. Push notifications will be disabled.[39m
-[33m[Nest] 1263  - [39m06/24/2026, 4:58:10 PM [33m   WARN[39m [38;5;3m[EmailService] [39m[33mSendGrid API key not configured. Email notifications will be disabled.[39m
-[33m[Nest] 1263  - [39m06/24/2026, 4:58:10 PM [33m   WARN[39m [38;5;3m[SmsService] [39m[33mTwilio credentials not configured. SMS notifications will be disabled.[39m
-[32m[Nest] 1263  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +60ms[39m
-[32m[Nest] 1263  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [32mNotification Service running on port 3006[39m
+[INFO] 09:33:55 ts-node-dev ver. 2.0.0 (using ts-node ver. 10.9.2, typescript ver. 5.9.3)
+[32m[Nest] 42765  - [39m06/25/2026, 9:34:00 AM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
+[32m[Nest] 42765  - [39m06/25/2026, 9:34:00 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisModule dependencies initialized[39m[38;5;3m +46ms[39m
+[32m[Nest] 42765  - [39m06/25/2026, 9:34:00 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDatabaseModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 42765  - [39m06/25/2026, 9:34:00 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPassportModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 42765  - [39m06/25/2026, 9:34:00 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +52ms[39m
+[32m[Nest] 42765  - [39m06/25/2026, 9:34:00 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisCoreModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 42765  - [39m06/25/2026, 9:34:00 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 42765  - [39m06/25/2026, 9:34:00 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +2ms[39m
+[32m[Nest] 42765  - [39m06/25/2026, 9:34:00 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 42765  - [39m06/25/2026, 9:34:00 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 42765  - [39m06/25/2026, 9:34:00 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mFirebaseModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 42765  - [39m06/25/2026, 9:34:00 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mEmailModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 42765  - [39m06/25/2026, 9:34:00 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mSmsModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 42765  - [39m06/25/2026, 9:34:00 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRateLimiterModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 42765  - [39m06/25/2026, 9:34:00 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 42765  - [39m06/25/2026, 9:34:00 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 42765  - [39m06/25/2026, 9:34:00 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAdminModule dependencies initialized[39m[38;5;3m +2ms[39m
+[32m[Nest] 42765  - [39m06/25/2026, 9:34:00 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mNotificationsModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 42765  - [39m06/25/2026, 9:34:00 AM [32m    LOG[39m [32mSwagger documentation enabled at /docs[39m
+[32m[Nest] 42765  - [39m06/25/2026, 9:34:00 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mNotificationsController {/v1/notifications}:[39m[38;5;3m +7ms[39m
+[32m[Nest] 42765  - [39m06/25/2026, 9:34:00 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/notifications, GET} route[39m[38;5;3m +7ms[39m
+[32m[Nest] 42765  - [39m06/25/2026, 9:34:00 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/notifications/:id/read, PATCH} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 42765  - [39m06/25/2026, 9:34:00 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/notifications/read-all, PATCH} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 42765  - [39m06/25/2026, 9:34:00 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/notifications/preferences, PUT} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42765  - [39m06/25/2026, 9:34:00 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/notifications/settings, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42765  - [39m06/25/2026, 9:34:00 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/notifications/unread-count, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 42765  - [39m06/25/2026, 9:34:00 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/notifications/push-tokens, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 42765  - [39m06/25/2026, 9:34:00 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/notifications/push-tokens, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42765  - [39m06/25/2026, 9:34:00 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/notifications/push-tokens/:token, DELETE} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 42765  - [39m06/25/2026, 9:34:00 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAdminController {/admin}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 42765  - [39m06/25/2026, 9:34:00 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/stats, GET} route[39m[38;5;3m +2ms[39m
+[32m[Nest] 42765  - [39m06/25/2026, 9:34:00 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/notifications, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 42765  - [39m06/25/2026, 9:34:00 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/notifications, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 42765  - [39m06/25/2026, 9:34:00 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHealthController {/health}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 42765  - [39m06/25/2026, 9:34:00 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 42765  - [39m06/25/2026, 9:34:00 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/live, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42765  - [39m06/25/2026, 9:34:00 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/ready, GET} route[39m[38;5;3m +1ms[39m
+[33m[Nest] 42765  - [39m06/25/2026, 9:34:00 AM [33m   WARN[39m [38;5;3m[FirebaseService] [39m[33mFirebase service account not configured. Push notifications will be disabled.[39m
+[33m[Nest] 42765  - [39m06/25/2026, 9:34:00 AM [33m   WARN[39m [38;5;3m[EmailService] [39m[33mSendGrid API key not configured. Email notifications will be disabled.[39m
+[33m[Nest] 42765  - [39m06/25/2026, 9:34:00 AM [33m   WARN[39m [38;5;3m[SmsService] [39m[33mTwilio credentials not configured. SMS notifications will be disabled.[39m
+[32m[Nest] 42765  - [39m06/25/2026, 9:34:00 AM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +58ms[39m
+[32m[Nest] 42765  - [39m06/25/2026, 9:34:00 AM [32m    LOG[39m [32mNotification Service running on port 3006[39m

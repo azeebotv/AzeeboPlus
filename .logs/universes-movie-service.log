@@ -2,180 +2,62 @@
 > @azeebo/movie-service@0.1.0 start:dev /Users/deprof/www/azeebo+/services/universes/movie-service
 > ts-node-dev --respawn --transpile-only src/main.ts
 
-[INFO] 14:56:26 ts-node-dev ver. 2.0.0 (using ts-node ver. 10.9.2, typescript ver. 5.9.3)
-[32m[Nest] 51917  - [39m06/24/2026, 2:56:28 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
-[32m[Nest] 51917  - [39m06/24/2026, 2:56:28 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisModule dependencies initialized[39m[38;5;3m +26ms[39m
-[32m[Nest] 51917  - [39m06/24/2026, 2:56:28 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDatabaseModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 51917  - [39m06/24/2026, 2:56:28 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPassportModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 51917  - [39m06/24/2026, 2:56:28 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +40ms[39m
-[32m[Nest] 51917  - [39m06/24/2026, 2:56:28 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisCoreModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 51917  - [39m06/24/2026, 2:56:28 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 51917  - [39m06/24/2026, 2:56:28 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 51917  - [39m06/24/2026, 2:56:28 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 51917  - [39m06/24/2026, 2:56:28 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTerminusModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 51917  - [39m06/24/2026, 2:56:28 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 51917  - [39m06/24/2026, 2:56:28 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCinemaPassModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 51917  - [39m06/24/2026, 2:56:28 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mFilmmakerModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 51917  - [39m06/24/2026, 2:56:28 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRateLimiterModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 51917  - [39m06/24/2026, 2:56:28 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 51917  - [39m06/24/2026, 2:56:28 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 51917  - [39m06/24/2026, 2:56:28 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mMoviesModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 51917  - [39m06/24/2026, 2:56:28 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAdminModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 51917  - [39m06/24/2026, 2:56:28 PM [32m    LOG[39m [32mSwagger documentation enabled at /docs[39m
-[32m[Nest] 51917  - [39m06/24/2026, 2:56:28 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mMoviesController {/v1/movies} (version: 1):[39m[38;5;3m +5ms[39m
-[32m[Nest] 51917  - [39m06/24/2026, 2:56:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies, GET} (version: 1) route[39m[38;5;3m +4ms[39m
-[32m[Nest] 51917  - [39m06/24/2026, 2:56:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/:movieId, GET} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 51917  - [39m06/24/2026, 2:56:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/:movieId/rent, POST} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 51917  - [39m06/24/2026, 2:56:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/premieres, GET} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 51917  - [39m06/24/2026, 2:56:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/watchlist, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 51917  - [39m06/24/2026, 2:56:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/watchlist, POST} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 51917  - [39m06/24/2026, 2:56:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/watchlist/:movieId, DELETE} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 51917  - [39m06/24/2026, 2:56:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/me/library, GET} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 51917  - [39m06/24/2026, 2:56:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/:movieId/viewing-windows, POST} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 51917  - [39m06/24/2026, 2:56:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/viewing-windows/:windowId, PUT} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 51917  - [39m06/24/2026, 2:56:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/:movieId/viewing-windows, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 51917  - [39m06/24/2026, 2:56:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/viewing-windows/active, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 51917  - [39m06/24/2026, 2:56:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/:movieId/availability, GET} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 51917  - [39m06/24/2026, 2:56:28 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mCinemaPassController {/v1/movies/passes} (version: 1):[39m[38;5;3m +0ms[39m
-[32m[Nest] 51917  - [39m06/24/2026, 2:56:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/passes, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 51917  - [39m06/24/2026, 2:56:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/passes/:id, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 51917  - [39m06/24/2026, 2:56:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/passes/user/subscriptions, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 51917  - [39m06/24/2026, 2:56:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/passes/subscribe, POST} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 51917  - [39m06/24/2026, 2:56:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/passes/cancel, DELETE} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 51917  - [39m06/24/2026, 2:56:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/passes/access/:movieId, GET} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 51917  - [39m06/24/2026, 2:56:28 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mFilmmakerController {/v1/movies/filmmakers} (version: 1):[39m[38;5;3m +0ms[39m
-[32m[Nest] 51917  - [39m06/24/2026, 2:56:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/filmmakers/projects, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 51917  - [39m06/24/2026, 2:56:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/filmmakers/projects/:id, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 51917  - [39m06/24/2026, 2:56:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/filmmakers/projects, POST} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 51917  - [39m06/24/2026, 2:56:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/filmmakers/projects/:id, PATCH} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 51917  - [39m06/24/2026, 2:56:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/filmmakers/projects/:id/updates, POST} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 51917  - [39m06/24/2026, 2:56:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/filmmakers/back, POST} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 51917  - [39m06/24/2026, 2:56:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/filmmakers/projects/:id/backers, GET} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 51917  - [39m06/24/2026, 2:56:28 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHealthController {/} (version: 1):[39m[38;5;3m +0ms[39m
-[32m[Nest] 51917  - [39m06/24/2026, 2:56:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 51917  - [39m06/24/2026, 2:56:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/ready, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 51917  - [39m06/24/2026, 2:56:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/live, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 51917  - [39m06/24/2026, 2:56:28 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAdminController {/admin} (version: 1):[39m[38;5;3m +0ms[39m
-[32m[Nest] 51917  - [39m06/24/2026, 2:56:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/stats, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 51917  - [39m06/24/2026, 2:56:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/movies, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 51917  - [39m06/24/2026, 2:56:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/premieres, GET} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 51917  - [39m06/24/2026, 2:56:28 PM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +28ms[39m
-[32m[Nest] 51917  - [39m06/24/2026, 2:56:28 PM [32m    LOG[39m [38;5;3m[Movie Service] [39m[32mMovie Service running on port 3011[39m
-[INFO] 16:57:30 Restarting: /Users/deprof/www/azeebo+/services/universes/movie-service/src/main.ts has been modified
-[32m[Nest] 480  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
-[32m[Nest] 480  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisModule dependencies initialized[39m[38;5;3m +54ms[39m
-[32m[Nest] 480  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDatabaseModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 480  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPassportModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 480  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +38ms[39m
-[32m[Nest] 480  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisCoreModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 480  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +2ms[39m
-[32m[Nest] 480  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 480  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 480  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTerminusModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 480  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 480  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCinemaPassModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 480  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mFilmmakerModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 480  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRateLimiterModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 480  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 480  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 480  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mMoviesModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 480  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAdminModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 480  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [32mSwagger documentation enabled at /docs[39m
-[32m[Nest] 480  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mMoviesController {/v1/movies}:[39m[38;5;3m +6ms[39m
-[32m[Nest] 480  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies, GET} route[39m[38;5;3m +4ms[39m
-[32m[Nest] 480  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/:movieId, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 480  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/:movieId/rent, POST} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 480  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/premieres, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 480  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/watchlist, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 480  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/watchlist, POST} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 480  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/watchlist/:movieId, DELETE} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 480  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/me/library, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 480  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/:movieId/viewing-windows, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 480  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/viewing-windows/:windowId, PUT} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 480  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/:movieId/viewing-windows, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 480  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/viewing-windows/active, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 480  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/:movieId/availability, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 480  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mCinemaPassController {/v1/movies/passes}:[39m[38;5;3m +0ms[39m
-[32m[Nest] 480  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/passes, GET} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 480  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/passes/:id, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 480  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/passes/user/subscriptions, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 480  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/passes/subscribe, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 480  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/passes/cancel, DELETE} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 480  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/passes/access/:movieId, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 480  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mFilmmakerController {/v1/movies/filmmakers}:[39m[38;5;3m +0ms[39m
-[32m[Nest] 480  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/filmmakers/projects, GET} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 480  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/filmmakers/projects/:id, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 480  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/filmmakers/projects, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 480  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/filmmakers/projects/:id, PATCH} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 480  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/filmmakers/projects/:id/updates, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 480  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/filmmakers/back, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 480  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/filmmakers/projects/:id/backers, GET} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 480  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHealthController {/}:[39m[38;5;3m +0ms[39m
-[32m[Nest] 480  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health, GET} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 480  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/ready, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 480  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/live, GET} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 480  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAdminController {/admin}:[39m[38;5;3m +0ms[39m
-[32m[Nest] 480  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/stats, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 480  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/movies, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 480  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/premieres, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 480  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +92ms[39m
-[32m[Nest] 480  - [39m06/24/2026, 4:57:38 PM [32m    LOG[39m [38;5;3m[Movie Service] [39m[32mMovie Service running on port 3011[39m
-[INFO] 16:58:00 Restarting: /Users/deprof/www/azeebo+/services/universes/movie-service/src/main.ts has been modified
-[32m[Nest] 1296  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
-[32m[Nest] 1296  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisModule dependencies initialized[39m[38;5;3m +110ms[39m
-[32m[Nest] 1296  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDatabaseModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 1296  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPassportModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 1296  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +24ms[39m
-[32m[Nest] 1296  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisCoreModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 1296  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 1296  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 1296  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 1296  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTerminusModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 1296  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 1296  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCinemaPassModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 1296  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mFilmmakerModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 1296  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRateLimiterModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 1296  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 1296  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 1296  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mMoviesModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 1296  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAdminModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 1296  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [32mSwagger documentation enabled at /docs[39m
-[32m[Nest] 1296  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mMoviesController {/v1/movies}:[39m[38;5;3m +5ms[39m
-[32m[Nest] 1296  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies, GET} route[39m[38;5;3m +4ms[39m
-[32m[Nest] 1296  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/:movieId, GET} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 1296  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/:movieId/rent, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1296  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/premieres, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1296  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/watchlist, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1296  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/watchlist, POST} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 1296  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/watchlist/:movieId, DELETE} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1296  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/me/library, GET} route[39m[38;5;3m +8ms[39m
-[32m[Nest] 1296  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/:movieId/viewing-windows, POST} route[39m[38;5;3m +14ms[39m
-[32m[Nest] 1296  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/viewing-windows/:windowId, PUT} route[39m[38;5;3m +3ms[39m
-[32m[Nest] 1296  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/:movieId/viewing-windows, GET} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 1296  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/viewing-windows/active, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1296  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/:movieId/availability, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1296  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mCinemaPassController {/v1/movies/passes}:[39m[38;5;3m +1ms[39m
-[32m[Nest] 1296  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/passes, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1296  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/passes/:id, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1296  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/passes/user/subscriptions, GET} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 1296  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/passes/subscribe, POST} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 1296  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/passes/cancel, DELETE} route[39m[38;5;3m +2ms[39m
-[32m[Nest] 1296  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/passes/access/:movieId, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1296  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mFilmmakerController {/v1/movies/filmmakers}:[39m[38;5;3m +0ms[39m
-[32m[Nest] 1296  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/filmmakers/projects, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1296  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/filmmakers/projects/:id, GET} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 1296  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/filmmakers/projects, POST} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 1296  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/filmmakers/projects/:id, PATCH} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1296  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/filmmakers/projects/:id/updates, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1296  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/filmmakers/back, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1296  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/filmmakers/projects/:id/backers, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1296  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHealthController {/}:[39m[38;5;3m +0ms[39m
-[32m[Nest] 1296  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health, GET} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 1296  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/ready, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1296  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/live, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1296  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAdminController {/admin}:[39m[38;5;3m +0ms[39m
-[32m[Nest] 1296  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/stats, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1296  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/movies, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1296  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/premieres, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1296  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +58ms[39m
-[32m[Nest] 1296  - [39m06/24/2026, 4:58:10 PM [32m    LOG[39m [38;5;3m[Movie Service] [39m[32mMovie Service running on port 3011[39m
+[INFO] 09:34:42 ts-node-dev ver. 2.0.0 (using ts-node ver. 10.9.2, typescript ver. 5.9.3)
+[32m[Nest] 43828  - [39m06/25/2026, 9:35:01 AM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
+[32m[Nest] 43828  - [39m06/25/2026, 9:35:02 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisModule dependencies initialized[39m[38;5;3m +870ms[39m
+[32m[Nest] 43828  - [39m06/25/2026, 9:35:02 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDatabaseModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 43828  - [39m06/25/2026, 9:35:02 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPassportModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 43828  - [39m06/25/2026, 9:35:02 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +176ms[39m
+[32m[Nest] 43828  - [39m06/25/2026, 9:35:02 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisCoreModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 43828  - [39m06/25/2026, 9:35:02 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +6ms[39m
+[32m[Nest] 43828  - [39m06/25/2026, 9:35:02 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 43828  - [39m06/25/2026, 9:35:02 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +9ms[39m
+[32m[Nest] 43828  - [39m06/25/2026, 9:35:02 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTerminusModule dependencies initialized[39m[38;5;3m +22ms[39m
+[32m[Nest] 43828  - [39m06/25/2026, 9:35:02 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 43828  - [39m06/25/2026, 9:35:02 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCinemaPassModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 43828  - [39m06/25/2026, 9:35:02 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mFilmmakerModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 43828  - [39m06/25/2026, 9:35:02 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRateLimiterModule dependencies initialized[39m[38;5;3m +2ms[39m
+[32m[Nest] 43828  - [39m06/25/2026, 9:35:02 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +10ms[39m
+[32m[Nest] 43828  - [39m06/25/2026, 9:35:02 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 43828  - [39m06/25/2026, 9:35:02 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mMoviesModule dependencies initialized[39m[38;5;3m +22ms[39m
+[32m[Nest] 43828  - [39m06/25/2026, 9:35:02 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAdminModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 43828  - [39m06/25/2026, 9:35:02 AM [32m    LOG[39m [32mSwagger documentation enabled at /docs[39m
+[32m[Nest] 43828  - [39m06/25/2026, 9:35:02 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mMoviesController {/v1/movies}:[39m[38;5;3m +12ms[39m
+[32m[Nest] 43828  - [39m06/25/2026, 9:35:02 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies, GET} route[39m[38;5;3m +121ms[39m
+[32m[Nest] 43828  - [39m06/25/2026, 9:35:02 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/:movieId, GET} route[39m[38;5;3m +27ms[39m
+[32m[Nest] 43828  - [39m06/25/2026, 9:35:02 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/:movieId/rent, POST} route[39m[38;5;3m +2ms[39m
+[32m[Nest] 43828  - [39m06/25/2026, 9:35:02 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/premieres, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 43828  - [39m06/25/2026, 9:35:02 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/watchlist, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 43828  - [39m06/25/2026, 9:35:02 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/watchlist, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 43828  - [39m06/25/2026, 9:35:02 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/watchlist/:movieId, DELETE} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 43828  - [39m06/25/2026, 9:35:02 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/me/library, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 43828  - [39m06/25/2026, 9:35:02 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/:movieId/viewing-windows, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 43828  - [39m06/25/2026, 9:35:02 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/viewing-windows/:windowId, PUT} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 43828  - [39m06/25/2026, 9:35:02 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/:movieId/viewing-windows, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 43828  - [39m06/25/2026, 9:35:02 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/viewing-windows/active, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 43828  - [39m06/25/2026, 9:35:02 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/:movieId/availability, GET} route[39m[38;5;3m +2ms[39m
+[32m[Nest] 43828  - [39m06/25/2026, 9:35:02 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mCinemaPassController {/v1/movies/passes}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 43828  - [39m06/25/2026, 9:35:02 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/passes, GET} route[39m[38;5;3m +2ms[39m
+[32m[Nest] 43828  - [39m06/25/2026, 9:35:02 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/passes/:id, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 43828  - [39m06/25/2026, 9:35:02 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/passes/user/subscriptions, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 43828  - [39m06/25/2026, 9:35:02 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/passes/subscribe, POST} route[39m[38;5;3m +2ms[39m
+[32m[Nest] 43828  - [39m06/25/2026, 9:35:02 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/passes/cancel, DELETE} route[39m[38;5;3m +2ms[39m
+[32m[Nest] 43828  - [39m06/25/2026, 9:35:02 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/passes/access/:movieId, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 43828  - [39m06/25/2026, 9:35:02 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mFilmmakerController {/v1/movies/filmmakers}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 43828  - [39m06/25/2026, 9:35:02 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/filmmakers/projects, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 43828  - [39m06/25/2026, 9:35:02 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/filmmakers/projects/:id, GET} route[39m[38;5;3m +4ms[39m
+[32m[Nest] 43828  - [39m06/25/2026, 9:35:02 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/filmmakers/projects, POST} route[39m[38;5;3m +3ms[39m
+[32m[Nest] 43828  - [39m06/25/2026, 9:35:02 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/filmmakers/projects/:id, PATCH} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 43828  - [39m06/25/2026, 9:35:02 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/filmmakers/projects/:id/updates, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 43828  - [39m06/25/2026, 9:35:02 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/filmmakers/back, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 43828  - [39m06/25/2026, 9:35:03 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/movies/filmmakers/projects/:id/backers, GET} route[39m[38;5;3m +4ms[39m
+[32m[Nest] 43828  - [39m06/25/2026, 9:35:03 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHealthController {/}:[39m[38;5;3m +1ms[39m
+[32m[Nest] 43828  - [39m06/25/2026, 9:35:03 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 43828  - [39m06/25/2026, 9:35:03 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/ready, GET} route[39m[38;5;3m +3ms[39m
+[32m[Nest] 43828  - [39m06/25/2026, 9:35:03 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/live, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 43828  - [39m06/25/2026, 9:35:03 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAdminController {/admin}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 43828  - [39m06/25/2026, 9:35:03 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/stats, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 43828  - [39m06/25/2026, 9:35:03 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/movies, GET} route[39m[38;5;3m +2ms[39m
+[32m[Nest] 43828  - [39m06/25/2026, 9:35:03 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/premieres, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 43828  - [39m06/25/2026, 9:35:03 AM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +603ms[39m
+[32m[Nest] 43828  - [39m06/25/2026, 9:35:03 AM [32m    LOG[39m [38;5;3m[Movie Service] [39m[32mMovie Service running on port 3011[39m

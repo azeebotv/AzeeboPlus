@@ -2,99 +2,35 @@
 > @azeebo/search-service@1.0.0 start:dev /Users/deprof/www/azeebo+/services/core/search-service
 > ts-node-dev --respawn --transpile-only src/main.ts
 
-[INFO] 14:56:02 ts-node-dev ver. 2.0.0 (using ts-node ver. 10.9.2, typescript ver. 5.9.3)
-[32m[Nest] 51061  - [39m06/24/2026, 2:56:03 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
-[32m[Nest] 51061  - [39m06/24/2026, 2:56:03 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisModule dependencies initialized[39m[38;5;3m +27ms[39m
-[32m[Nest] 51061  - [39m06/24/2026, 2:56:03 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDatabaseModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 51061  - [39m06/24/2026, 2:56:03 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPassportModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 51061  - [39m06/24/2026, 2:56:04 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +29ms[39m
-[32m[Nest] 51061  - [39m06/24/2026, 2:56:04 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisCoreModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 51061  - [39m06/24/2026, 2:56:04 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 51061  - [39m06/24/2026, 2:56:04 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 51061  - [39m06/24/2026, 2:56:04 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +2ms[39m
-[32m[Nest] 51061  - [39m06/24/2026, 2:56:04 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 51061  - [39m06/24/2026, 2:56:04 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 51061  - [39m06/24/2026, 2:56:04 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRateLimiterModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 51061  - [39m06/24/2026, 2:56:04 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 51061  - [39m06/24/2026, 2:56:04 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAdminModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 51061  - [39m06/24/2026, 2:56:04 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mSearchModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 51061  - [39m06/24/2026, 2:56:04 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mSearchController {/v1/search} (version: 1):[39m[38;5;3m +126ms[39m
-[32m[Nest] 51061  - [39m06/24/2026, 2:56:04 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/search, GET} (version: 1) route[39m[38;5;3m +4ms[39m
-[32m[Nest] 51061  - [39m06/24/2026, 2:56:04 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/search/faceted, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 51061  - [39m06/24/2026, 2:56:04 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/search/suggestions, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 51061  - [39m06/24/2026, 2:56:04 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/search/trending, GET} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 51061  - [39m06/24/2026, 2:56:04 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/search/facets, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 51061  - [39m06/24/2026, 2:56:04 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/search/log, POST} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 51061  - [39m06/24/2026, 2:56:04 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAdminController {/admin} (version: 1):[39m[38;5;3m +0ms[39m
-[32m[Nest] 51061  - [39m06/24/2026, 2:56:04 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/stats, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 51061  - [39m06/24/2026, 2:56:04 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/queries, GET} (version: 1) route[39m[38;5;3m +1ms[39m
-[32m[Nest] 51061  - [39m06/24/2026, 2:56:04 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHealthController {/health} (version: 1):[39m[38;5;3m +0ms[39m
-[32m[Nest] 51061  - [39m06/24/2026, 2:56:04 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 51061  - [39m06/24/2026, 2:56:04 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/live, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 51061  - [39m06/24/2026, 2:56:04 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/ready, GET} (version: 1) route[39m[38;5;3m +0ms[39m
-[32m[Nest] 51061  - [39m06/24/2026, 2:56:04 PM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +33ms[39m
-[32m[Nest] 51061  - [39m06/24/2026, 2:56:04 PM [32m    LOG[39m [38;5;3m[Search Service] [39m[32mSearch Service running on port 3005[39m
-[INFO] 16:57:30 Restarting: /Users/deprof/www/azeebo+/services/core/search-service/src/main.ts has been modified
-[32m[Nest] 474  - [39m06/24/2026, 4:57:36 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
-[32m[Nest] 474  - [39m06/24/2026, 4:57:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisModule dependencies initialized[39m[38;5;3m +92ms[39m
-[32m[Nest] 474  - [39m06/24/2026, 4:57:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDatabaseModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 474  - [39m06/24/2026, 4:57:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPassportModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 474  - [39m06/24/2026, 4:57:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +113ms[39m
-[32m[Nest] 474  - [39m06/24/2026, 4:57:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisCoreModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 474  - [39m06/24/2026, 4:57:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 474  - [39m06/24/2026, 4:57:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 474  - [39m06/24/2026, 4:57:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 474  - [39m06/24/2026, 4:57:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 474  - [39m06/24/2026, 4:57:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 474  - [39m06/24/2026, 4:57:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRateLimiterModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 474  - [39m06/24/2026, 4:57:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 474  - [39m06/24/2026, 4:57:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAdminModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 474  - [39m06/24/2026, 4:57:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mSearchModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 474  - [39m06/24/2026, 4:57:37 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mSearchController {/v1/search}:[39m[38;5;3m +601ms[39m
-[32m[Nest] 474  - [39m06/24/2026, 4:57:37 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/search, GET} route[39m[38;5;3m +15ms[39m
-[32m[Nest] 474  - [39m06/24/2026, 4:57:37 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/search/faceted, GET} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 474  - [39m06/24/2026, 4:57:37 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/search/suggestions, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 474  - [39m06/24/2026, 4:57:37 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/search/trending, GET} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 474  - [39m06/24/2026, 4:57:37 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/search/facets, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 474  - [39m06/24/2026, 4:57:37 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/search/log, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 474  - [39m06/24/2026, 4:57:37 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAdminController {/admin}:[39m[38;5;3m +0ms[39m
-[32m[Nest] 474  - [39m06/24/2026, 4:57:37 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/stats, GET} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 474  - [39m06/24/2026, 4:57:37 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/queries, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 474  - [39m06/24/2026, 4:57:37 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHealthController {/health}:[39m[38;5;3m +0ms[39m
-[32m[Nest] 474  - [39m06/24/2026, 4:57:37 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health, GET} route[39m[38;5;3m +33ms[39m
-[32m[Nest] 474  - [39m06/24/2026, 4:57:37 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/live, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 474  - [39m06/24/2026, 4:57:37 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/ready, GET} route[39m[38;5;3m +6ms[39m
-[32m[Nest] 474  - [39m06/24/2026, 4:57:37 PM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +68ms[39m
-[32m[Nest] 474  - [39m06/24/2026, 4:57:37 PM [32m    LOG[39m [38;5;3m[Search Service] [39m[32mSearch Service running on port 3005[39m
-[INFO] 16:57:59 Restarting: /Users/deprof/www/azeebo+/services/core/search-service/src/main.ts has been modified
-[32m[Nest] 1237  - [39m06/24/2026, 4:58:03 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
-[32m[Nest] 1237  - [39m06/24/2026, 4:58:04 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisModule dependencies initialized[39m[38;5;3m +303ms[39m
-[32m[Nest] 1237  - [39m06/24/2026, 4:58:04 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDatabaseModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 1237  - [39m06/24/2026, 4:58:04 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPassportModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 1237  - [39m06/24/2026, 4:58:04 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +69ms[39m
-[32m[Nest] 1237  - [39m06/24/2026, 4:58:04 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisCoreModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 1237  - [39m06/24/2026, 4:58:04 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 1237  - [39m06/24/2026, 4:58:04 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 1237  - [39m06/24/2026, 4:58:04 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +2ms[39m
-[32m[Nest] 1237  - [39m06/24/2026, 4:58:04 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 1237  - [39m06/24/2026, 4:58:04 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 1237  - [39m06/24/2026, 4:58:04 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRateLimiterModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 1237  - [39m06/24/2026, 4:58:04 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 1237  - [39m06/24/2026, 4:58:04 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAdminModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 1237  - [39m06/24/2026, 4:58:04 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mSearchModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 1237  - [39m06/24/2026, 4:58:05 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mSearchController {/v1/search}:[39m[38;5;3m +1278ms[39m
-[32m[Nest] 1237  - [39m06/24/2026, 4:58:05 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/search, GET} route[39m[38;5;3m +5ms[39m
-[32m[Nest] 1237  - [39m06/24/2026, 4:58:05 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/search/faceted, GET} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 1237  - [39m06/24/2026, 4:58:05 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/search/suggestions, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1237  - [39m06/24/2026, 4:58:05 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/search/trending, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1237  - [39m06/24/2026, 4:58:05 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/search/facets, GET} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 1237  - [39m06/24/2026, 4:58:05 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/search/log, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1237  - [39m06/24/2026, 4:58:05 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAdminController {/admin}:[39m[38;5;3m +80ms[39m
-[32m[Nest] 1237  - [39m06/24/2026, 4:58:05 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/stats, GET} route[39m[38;5;3m +4ms[39m
-[32m[Nest] 1237  - [39m06/24/2026, 4:58:05 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/queries, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 1237  - [39m06/24/2026, 4:58:05 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHealthController {/health}:[39m[38;5;3m +0ms[39m
-[32m[Nest] 1237  - [39m06/24/2026, 4:58:05 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health, GET} route[39m[38;5;3m +9ms[39m
-[32m[Nest] 1237  - [39m06/24/2026, 4:58:05 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/live, GET} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 1237  - [39m06/24/2026, 4:58:05 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/ready, GET} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 1237  - [39m06/24/2026, 4:58:05 PM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +123ms[39m
-[32m[Nest] 1237  - [39m06/24/2026, 4:58:05 PM [32m    LOG[39m [38;5;3m[Search Service] [39m[32mSearch Service running on port 3005[39m
+[INFO] 09:33:48 ts-node-dev ver. 2.0.0 (using ts-node ver. 10.9.2, typescript ver. 5.9.3)
+[32m[Nest] 42561  - [39m06/25/2026, 9:33:52 AM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
+[32m[Nest] 42561  - [39m06/25/2026, 9:33:52 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisModule dependencies initialized[39m[38;5;3m +50ms[39m
+[32m[Nest] 42561  - [39m06/25/2026, 9:33:52 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDatabaseModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 42561  - [39m06/25/2026, 9:33:52 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPassportModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 42561  - [39m06/25/2026, 9:33:52 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +58ms[39m
+[32m[Nest] 42561  - [39m06/25/2026, 9:33:52 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisCoreModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 42561  - [39m06/25/2026, 9:33:52 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 42561  - [39m06/25/2026, 9:33:52 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 42561  - [39m06/25/2026, 9:33:52 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +2ms[39m
+[32m[Nest] 42561  - [39m06/25/2026, 9:33:52 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 42561  - [39m06/25/2026, 9:33:52 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 42561  - [39m06/25/2026, 9:33:52 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRateLimiterModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 42561  - [39m06/25/2026, 9:33:52 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 42561  - [39m06/25/2026, 9:33:52 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAdminModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 42561  - [39m06/25/2026, 9:33:52 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mSearchModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 42561  - [39m06/25/2026, 9:33:53 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mSearchController {/v1/search}:[39m[38;5;3m +324ms[39m
+[32m[Nest] 42561  - [39m06/25/2026, 9:33:53 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/search, GET} route[39m[38;5;3m +14ms[39m
+[32m[Nest] 42561  - [39m06/25/2026, 9:33:53 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/search/faceted, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 42561  - [39m06/25/2026, 9:33:53 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/search/suggestions, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 42561  - [39m06/25/2026, 9:33:53 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/search/trending, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 42561  - [39m06/25/2026, 9:33:53 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/search/facets, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42561  - [39m06/25/2026, 9:33:53 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/search/log, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 42561  - [39m06/25/2026, 9:33:53 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAdminController {/admin}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 42561  - [39m06/25/2026, 9:33:53 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/stats, GET} route[39m[38;5;3m +3ms[39m
+[32m[Nest] 42561  - [39m06/25/2026, 9:33:53 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/queries, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 42561  - [39m06/25/2026, 9:33:53 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHealthController {/health}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 42561  - [39m06/25/2026, 9:33:53 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 42561  - [39m06/25/2026, 9:33:53 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/live, GET} route[39m[38;5;3m +2ms[39m
+[32m[Nest] 42561  - [39m06/25/2026, 9:33:53 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/ready, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 42561  - [39m06/25/2026, 9:33:53 AM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +92ms[39m
+[32m[Nest] 42561  - [39m06/25/2026, 9:33:53 AM [32m    LOG[39m [38;5;3m[Search Service] [39m[32mSearch Service running on port 3005[39m

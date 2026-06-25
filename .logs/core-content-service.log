@@ -2,238 +2,109 @@
 > @azeebo/content-service@0.1.0 start:dev /Users/deprof/www/azeebo+/services/core/content-service
 > ts-node-dev --respawn --transpile-only src/main.ts
 
-[INFO] 14:56:00 ts-node-dev ver. 2.0.0 (using ts-node ver. 10.9.2, typescript ver. 5.9.3)
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisModule dependencies initialized[39m[38;5;3m +27ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDatabaseModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPassportModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +31ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisCoreModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mThrottlerModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +8ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCacheModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPublicModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCacheModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mMediaModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRateLimiterModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mContentModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [32mSwagger documentation enabled at /docs[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mContentController {/v1/content}:[39m[38;5;3m +4ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content, GET} route[39m[38;5;3m +4ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/home, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/watch, GET} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/featured, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/trending, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/search, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/recommended, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/accessible, GET} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/passes/access, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/rentals/:contentId/access, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/screenings/:screeningId/access, GET} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/extras/:extraId/access, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/categories, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/categories/:id/content, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/tags, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/tags/:id/content, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id, GET} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/comments, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/results, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/analytics, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/moderation-status, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/access-check, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/playback-url, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/relationships, GET} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/related, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/media, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/media/signed-url, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/transcode/:jobId/status, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/transcode/:jobId/url, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/vote, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/super-vote, POST} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/categories, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/tags, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/comments, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/media, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/media/thumbnail, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/publish, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/unpublish, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/report, POST} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/transcode, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/scan, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/categories/:categoryId, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/tags/:tagId, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/relationships, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id, PATCH} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/media, PATCH} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/categories/:id, PATCH} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/tags/:id, PATCH} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id, DELETE} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/media, DELETE} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/categories/:categoryId, DELETE} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/tags/:tagId, DELETE} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/relationships/:relatedContentId, DELETE} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/categories/:id, DELETE} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/tags/:id, DELETE} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHealthController {/health}:[39m[38;5;3m +0ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/live, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/ready, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mPublicController {/v1/public}:[39m[38;5;3m +0ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/public/universes, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/public/settings, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/public/settings/:key, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/public/universes/:name/features, GET} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[PrismaService] [39m[32mDatabase connection established[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +2ms[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [32mContent Service running on port 3004[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:56:02 PM [32m    LOG[39m [38;5;3m[RedisService] [39m[32mConnected to Redis[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:57:45 PM [32m    LOG[39m [38;5;3m[HTTP] [39m[32m{"timestamp":"2026-06-24T13:57:45.120Z","level":"info","message":"GET /v1/public/settings 200 257ms","service":"content-service","traceId":"cd7ef1eb-f92c-4251-acd3-b361ad570a53","spanId":"c3906fe9","method":"GET","path":"/v1/public/settings","statusCode":200,"duration":257}[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:58:27 PM [32m    LOG[39m [38;5;3m[HTTP] [39m[32m{"timestamp":"2026-06-24T13:58:27.505Z","level":"info","message":"GET /v1/content/categories 200 48ms","service":"content-service","traceId":"a47cf8f0-4e84-49b4-9e30-3e9c59381bf9","spanId":"63f8268a","userId":"31a9a1a2-c1ee-4ea5-9399-f9bdb7db0761","method":"GET","path":"/v1/content/categories","statusCode":200,"duration":48}[39m
-[32m[Nest] 50983  - [39m06/24/2026, 2:58:27 PM [32m    LOG[39m [38;5;3m[HTTP] [39m[32m{"timestamp":"2026-06-24T13:58:27.597Z","level":"info","message":"GET /v1/content/featured?limit=10 200 129ms","service":"content-service","traceId":"dd240e40-3e8e-4f23-888b-74f3f97cbac1","spanId":"71ee9766","method":"GET","path":"/v1/content/featured?limit=10","statusCode":200,"duration":129}[39m
-[95m[Nest] 50983  - [39m06/24/2026, 2:58:27 PM [95m  DEBUG[39m [38;5;3m[CacheService] [39m[95mCache SET: cache:content:featured (TTL: 600s)[39m
-[32m[Nest] 50983  - [39m06/24/2026, 3:01:03 PM [32m    LOG[39m [38;5;3m[RedisService] [39m[32mConnected to Redis[39m
-[32m[Nest] 50983  - [39m06/24/2026, 3:05:47 PM [32m    LOG[39m [38;5;3m[HTTP] [39m[32m{"timestamp":"2026-06-24T14:05:47.224Z","level":"info","message":"GET /v1/content/featured?limit=10 200 23ms","service":"content-service","traceId":"36d9862d-a8c2-4041-b39a-7e4a23cee494","spanId":"2f6cd597","method":"GET","path":"/v1/content/featured?limit=10","statusCode":200,"duration":23}[39m
-[32m[Nest] 50983  - [39m06/24/2026, 3:06:04 PM [32m    LOG[39m [38;5;3m[RedisService] [39m[32mConnected to Redis[39m
-[32m[Nest] 50983  - [39m06/24/2026, 3:09:51 PM [32m    LOG[39m [38;5;3m[HTTP] [39m[32m{"timestamp":"2026-06-24T14:09:51.003Z","level":"info","message":"GET /v1/public/settings 200 389ms","service":"content-service","traceId":"7178218c-afd8-40fe-9e5a-a24a3a29f056","spanId":"b951a4ec","method":"GET","path":"/v1/public/settings","statusCode":200,"duration":389}[39m
-[32m[Nest] 50983  - [39m06/24/2026, 3:11:05 PM [32m    LOG[39m [38;5;3m[RedisService] [39m[32mConnected to Redis[39m
-[32m[Nest] 50983  - [39m06/24/2026, 3:12:29 PM [32m    LOG[39m [38;5;3m[HTTP] [39m[32m{"timestamp":"2026-06-24T14:12:29.851Z","level":"info","message":"GET /v1/content/featured?limit=10 200 93ms","service":"content-service","traceId":"5adcdb08-fc37-4f78-8aed-98f5c51a86d1","spanId":"b4c0b0e1","method":"GET","path":"/v1/content/featured?limit=10","statusCode":200,"duration":93}[39m
-[95m[Nest] 50983  - [39m06/24/2026, 3:12:29 PM [95m  DEBUG[39m [38;5;3m[CacheService] [39m[95mCache SET: cache:content:featured (TTL: 600s)[39m
-[32m[Nest] 50983  - [39m06/24/2026, 3:15:52 PM [32m    LOG[39m [38;5;3m[HTTP] [39m[32m{"timestamp":"2026-06-24T14:15:52.781Z","level":"info","message":"GET /v1/public/settings 200 40ms","service":"content-service","traceId":"9b99f9ac-fead-4265-a348-ea26ffe6b569","spanId":"9b4c85c0","method":"GET","path":"/v1/public/settings","statusCode":200,"duration":40}[39m
-[32m[Nest] 50983  - [39m06/24/2026, 3:16:06 PM [32m    LOG[39m [38;5;3m[RedisService] [39m[32mConnected to Redis[39m
-[32m[Nest] 50983  - [39m06/24/2026, 3:16:16 PM [32m    LOG[39m [38;5;3m[HTTP] [39m[32m{"timestamp":"2026-06-24T14:16:16.784Z","level":"info","message":"GET /v1/content/categories 200 16ms","service":"content-service","traceId":"69ca4a64-0011-416d-a7c2-6c65befccca1","spanId":"edd303bf","userId":"31a9a1a2-c1ee-4ea5-9399-f9bdb7db0761","method":"GET","path":"/v1/content/categories","statusCode":200,"duration":16}[39m
-[32m[Nest] 50983  - [39m06/24/2026, 3:21:07 PM [32m    LOG[39m [38;5;3m[RedisService] [39m[32mConnected to Redis[39m
-[32m[Nest] 50983  - [39m06/24/2026, 3:26:08 PM [32m    LOG[39m [38;5;3m[RedisService] [39m[32mConnected to Redis[39m
-[32m[Nest] 50983  - [39m06/24/2026, 3:31:09 PM [32m    LOG[39m [38;5;3m[RedisService] [39m[32mConnected to Redis[39m
-[32m[Nest] 50983  - [39m06/24/2026, 3:33:24 PM [32m    LOG[39m [38;5;3m[HTTP] [39m[32m{"timestamp":"2026-06-24T14:33:24.955Z","level":"info","message":"GET /v1/public/settings 200 685ms","service":"content-service","traceId":"6233c49e-d03b-48b0-864e-fa2b1ff37eab","spanId":"c1abf52b","method":"GET","path":"/v1/public/settings","statusCode":200,"duration":685}[39m
-[32m[Nest] 50983  - [39m06/24/2026, 3:36:10 PM [32m    LOG[39m [38;5;3m[RedisService] [39m[32mConnected to Redis[39m
-[32m[Nest] 50983  - [39m06/24/2026, 3:40:04 PM [32m    LOG[39m [38;5;3m[HTTP] [39m[32m{"timestamp":"2026-06-24T14:40:04.571Z","level":"info","message":"GET /v1/public/settings 200 27ms","service":"content-service","traceId":"614dc69c-15a2-4b60-a12e-d62f25a2dece","spanId":"b87a6e94","method":"GET","path":"/v1/public/settings","statusCode":200,"duration":27}[39m
-[32m[Nest] 50983  - [39m06/24/2026, 3:41:11 PM [32m    LOG[39m [38;5;3m[RedisService] [39m[32mConnected to Redis[39m
-[32m[Nest] 50983  - [39m06/24/2026, 3:46:12 PM [32m    LOG[39m [38;5;3m[RedisService] [39m[32mConnected to Redis[39m
-[32m[Nest] 50983  - [39m06/24/2026, 3:51:13 PM [32m    LOG[39m [38;5;3m[RedisService] [39m[32mConnected to Redis[39m
-[32m[Nest] 50983  - [39m06/24/2026, 3:54:08 PM [32m    LOG[39m [38;5;3m[HTTP] [39m[32m{"timestamp":"2026-06-24T14:54:08.821Z","level":"info","message":"GET /v1/public/settings 200 124ms","service":"content-service","traceId":"3525e801-b114-4bdd-ad2c-77aa19406e74","spanId":"b5a771aa","method":"GET","path":"/v1/public/settings","statusCode":200,"duration":124}[39m
-[32m[Nest] 50983  - [39m06/24/2026, 3:56:14 PM [32m    LOG[39m [38;5;3m[RedisService] [39m[32mConnected to Redis[39m
-[32m[Nest] 50983  - [39m06/24/2026, 4:00:38 PM [32m    LOG[39m [38;5;3m[HTTP] [39m[32m{"timestamp":"2026-06-24T15:00:38.828Z","level":"info","message":"GET /v1/public/settings 200 17ms","service":"content-service","traceId":"a2a629f6-25d3-4494-9a81-676216658205","spanId":"0df5b630","method":"GET","path":"/v1/public/settings","statusCode":200,"duration":17}[39m
-[32m[Nest] 50983  - [39m06/24/2026, 4:01:15 PM [32m    LOG[39m [38;5;3m[RedisService] [39m[32mConnected to Redis[39m
-[32m[Nest] 50983  - [39m06/24/2026, 4:06:16 PM [32m    LOG[39m [38;5;3m[RedisService] [39m[32mConnected to Redis[39m
-[32m[Nest] 50983  - [39m06/24/2026, 4:11:17 PM [32m    LOG[39m [38;5;3m[RedisService] [39m[32mConnected to Redis[39m
-[32m[Nest] 50983  - [39m06/24/2026, 4:13:59 PM [32m    LOG[39m [38;5;3m[HTTP] [39m[32m{"timestamp":"2026-06-24T15:13:59.440Z","level":"info","message":"GET /v1/public/settings 200 1760ms","service":"content-service","traceId":"a45b2d58-15a2-4fcc-b3df-08cf0b0daafc","spanId":"9a10197c","method":"GET","path":"/v1/public/settings","statusCode":200,"duration":1760}[39m
-[32m[Nest] 50983  - [39m06/24/2026, 4:16:18 PM [32m    LOG[39m [38;5;3m[RedisService] [39m[32mConnected to Redis[39m
-[32m[Nest] 50983  - [39m06/24/2026, 4:21:19 PM [32m    LOG[39m [38;5;3m[RedisService] [39m[32mConnected to Redis[39m
-[32m[Nest] 50983  - [39m06/24/2026, 4:25:54 PM [32m    LOG[39m [38;5;3m[HTTP] [39m[32m{"timestamp":"2026-06-24T15:25:54.340Z","level":"info","message":"GET /v1/public/settings 200 53ms","service":"content-service","traceId":"5c55f7ff-a1ce-4ce6-94f7-6420b8b8bed8","spanId":"e69b77b6","method":"GET","path":"/v1/public/settings","statusCode":200,"duration":53}[39m
-[32m[Nest] 50983  - [39m06/24/2026, 4:26:20 PM [32m    LOG[39m [38;5;3m[RedisService] [39m[32mConnected to Redis[39m
-[32m[Nest] 50983  - [39m06/24/2026, 4:31:21 PM [32m    LOG[39m [38;5;3m[RedisService] [39m[32mConnected to Redis[39m
-[32m[Nest] 50983  - [39m06/24/2026, 4:36:01 PM [32m    LOG[39m [38;5;3m[HTTP] [39m[32m{"timestamp":"2026-06-24T15:36:01.528Z","level":"info","message":"GET /v1/public/settings 200 443ms","service":"content-service","traceId":"8d49037f-30e6-4de6-9c76-2b906684e3d0","spanId":"59ed0204","method":"GET","path":"/v1/public/settings","statusCode":200,"duration":443}[39m
-[32m[Nest] 50983  - [39m06/24/2026, 4:36:22 PM [32m    LOG[39m [38;5;3m[RedisService] [39m[32mConnected to Redis[39m
-[32m[Nest] 50983  - [39m06/24/2026, 4:41:23 PM [32m    LOG[39m [38;5;3m[RedisService] [39m[32mConnected to Redis[39m
-[32m[Nest] 50983  - [39m06/24/2026, 4:42:46 PM [32m    LOG[39m [38;5;3m[HTTP] [39m[32m{"timestamp":"2026-06-24T15:42:46.766Z","level":"info","message":"GET /v1/public/universes 200 439ms","service":"content-service","traceId":"13a77199-0b2d-4e4f-991e-8116486ebc03","spanId":"e0b550f7","method":"GET","path":"/v1/public/universes","statusCode":200,"duration":439}[39m
-[32m[Nest] 50983  - [39m06/24/2026, 4:46:24 PM [32m    LOG[39m [38;5;3m[RedisService] [39m[32mConnected to Redis[39m
-[32m[Nest] 50983  - [39m06/24/2026, 4:48:35 PM [32m    LOG[39m [38;5;3m[HTTP] [39m[32m{"timestamp":"2026-06-24T15:48:35.954Z","level":"info","message":"GET /v1/public/universes 200 60ms","service":"content-service","traceId":"c1c1e55a-07f3-48de-92e5-a76aa02791dc","spanId":"52f47404","method":"GET","path":"/v1/public/universes","statusCode":200,"duration":60}[39m
-[32m[Nest] 50983  - [39m06/24/2026, 4:51:25 PM [32m    LOG[39m [38;5;3m[RedisService] [39m[32mConnected to Redis[39m
-[32m[Nest] 50983  - [39m06/24/2026, 4:56:26 PM [32m    LOG[39m [38;5;3m[RedisService] [39m[32mConnected to Redis[39m
-[INFO] 16:57:49 Restarting: /Users/deprof/www/azeebo+/services/core/content-service/src/main.ts has been modified
-[32m[Nest] 50983  - [39m06/24/2026, 4:57:49 PM [32m    LOG[39m [38;5;3m[PrismaService] [39m[32mDatabase connection closed[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisModule dependencies initialized[39m[38;5;3m +25ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDatabaseModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPassportModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +19ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisCoreModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mThrottlerModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +8ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCacheModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPublicModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCacheModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mMediaModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRateLimiterModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mContentModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [32mSwagger documentation enabled at /docs[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mContentController {/v1/content}:[39m[38;5;3m +3ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content, GET} route[39m[38;5;3m +3ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/home, GET} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/watch, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/featured, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/trending, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/search, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/recommended, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/accessible, GET} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/passes/access, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/rentals/:contentId/access, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/screenings/:screeningId/access, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/extras/:extraId/access, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/categories, GET} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/categories/:id/content, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/tags, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/tags/:id/content, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/comments, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/results, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/analytics, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/moderation-status, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/access-check, GET} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/playback-url, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/relationships, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/related, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/media, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/media/signed-url, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/transcode/:jobId/status, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/transcode/:jobId/url, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/vote, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/super-vote, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/categories, POST} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/tags, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/comments, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/media, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/media/thumbnail, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/publish, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/unpublish, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/report, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/transcode, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/scan, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/categories/:categoryId, POST} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/tags/:tagId, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/relationships, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id, PATCH} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/media, PATCH} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/categories/:id, PATCH} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/tags/:id, PATCH} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id, DELETE} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/media, DELETE} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/categories/:categoryId, DELETE} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/tags/:tagId, DELETE} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/relationships/:relatedContentId, DELETE} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/categories/:id, DELETE} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/tags/:id, DELETE} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHealthController {/health}:[39m[38;5;3m +0ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/live, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/ready, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mPublicController {/v1/public}:[39m[38;5;3m +0ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/public/universes, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/public/settings, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/public/settings/:key, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/public/universes/:name/features, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[PrismaService] [39m[32mDatabase connection established[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +2ms[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [32mContent Service running on port 3004[39m
-[32m[Nest] 663  - [39m06/24/2026, 4:57:51 PM [32m    LOG[39m [38;5;3m[RedisService] [39m[32mConnected to Redis[39m
-[32m[Nest] 663  - [39m06/24/2026, 5:02:52 PM [32m    LOG[39m [38;5;3m[RedisService] [39m[32mConnected to Redis[39m
-[32m[Nest] 663  - [39m06/24/2026, 5:06:26 PM [32m    LOG[39m [38;5;3m[HTTP] [39m[32m{"timestamp":"2026-06-24T16:06:26.156Z","level":"info","message":"GET /v1/public/settings 200 314ms","service":"content-service","traceId":"a53597a1-55d6-45ab-8b56-b2efe0f82465","spanId":"c3050995","method":"GET","path":"/v1/public/settings","statusCode":200,"duration":314}[39m
-[32m[Nest] 663  - [39m06/24/2026, 5:06:26 PM [32m    LOG[39m [38;5;3m[HTTP] [39m[32m{"timestamp":"2026-06-24T16:06:26.302Z","level":"info","message":"GET /v1/public/universes 200 504ms","service":"content-service","traceId":"a38abb39-bc58-4ab1-adea-d3b44d65c6a6","spanId":"1a9dbcc2","method":"GET","path":"/v1/public/universes","statusCode":200,"duration":504}[39m
-[32m[Nest] 663  - [39m06/24/2026, 5:07:53 PM [32m    LOG[39m [38;5;3m[RedisService] [39m[32mConnected to Redis[39m
-[32m[Nest] 663  - [39m06/24/2026, 5:12:54 PM [32m    LOG[39m [38;5;3m[RedisService] [39m[32mConnected to Redis[39m
-[32m[Nest] 663  - [39m06/24/2026, 5:16:07 PM [32m    LOG[39m [38;5;3m[HTTP] [39m[32m{"timestamp":"2026-06-24T16:16:07.516Z","level":"info","message":"GET /v1/public/universes 200 119ms","service":"content-service","traceId":"1ca56377-8c38-480d-90b5-2611b08cf934","spanId":"e268640b","method":"GET","path":"/v1/public/universes","statusCode":200,"duration":119}[39m
-[32m[Nest] 663  - [39m06/24/2026, 5:17:55 PM [32m    LOG[39m [38;5;3m[RedisService] [39m[32mConnected to Redis[39m
-[32m[Nest] 663  - [39m06/24/2026, 5:22:56 PM [32m    LOG[39m [38;5;3m[RedisService] [39m[32mConnected to Redis[39m
-[32m[Nest] 663  - [39m06/24/2026, 5:24:48 PM [32m    LOG[39m [38;5;3m[HTTP] [39m[32m{"timestamp":"2026-06-24T16:24:48.583Z","level":"info","message":"GET /v1/public/universes 200 138ms","service":"content-service","traceId":"9371bdba-9232-419f-bbc1-520b3b2bf29a","spanId":"f84d3b1e","method":"GET","path":"/v1/public/universes","statusCode":200,"duration":138}[39m
+[INFO] 09:33:42 ts-node-dev ver. 2.0.0 (using ts-node ver. 10.9.2, typescript ver. 5.9.3)
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:48 AM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:48 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisModule dependencies initialized[39m[38;5;3m +96ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:48 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDatabaseModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:48 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:48 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPassportModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:48 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +105ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:48 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisCoreModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:48 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mThrottlerModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:48 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:48 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +38ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:48 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:48 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:48 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCacheModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:48 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPublicModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:48 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCacheModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:48 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mMediaModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:48 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRateLimiterModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:48 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +2ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:48 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mContentModule dependencies initialized[39m[38;5;3m +5ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:49 AM [32m    LOG[39m [32mSwagger documentation enabled at /docs[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:49 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mContentController {/v1/content}:[39m[38;5;3m +8ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:49 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content, GET} route[39m[38;5;3m +7ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:49 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/home, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:49 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/watch, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:49 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/featured, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:49 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/trending, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:49 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/new-releases, GET} route[39m[38;5;3m +2ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:49 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/featured-slides, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:49 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/popular-region, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:49 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/search, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:49 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/recommended, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:49 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/accessible, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:49 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/passes/access, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:49 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/rentals/:contentId/access, GET} route[39m[38;5;3m +2ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:49 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/screenings/:screeningId/access, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:49 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/extras/:extraId/access, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:49 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/categories, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:49 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/categories/:id/content, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:49 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/tags, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:49 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/tags/:id/content, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:49 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/universe/:universeId, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:49 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/category/:categoryId, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:49 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:49 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/comments, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:49 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/results, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:49 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/analytics, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:49 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/moderation-status, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:49 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/access-check, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:49 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/playback-url, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:49 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/relationships, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:49 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/related, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:49 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/media, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:49 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/media/signed-url, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:49 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/transcode/:jobId/status, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:49 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/transcode/:jobId/url, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:49 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:49 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/vote, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:49 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/super-vote, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:49 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/categories, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:49 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/tags, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:49 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/comments, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:49 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/media, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:49 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/media/thumbnail, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:49 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/publish, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:49 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/unpublish, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:49 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/report, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:49 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/transcode, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:49 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/scan, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:49 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/categories/:categoryId, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:49 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/tags/:tagId, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:49 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/relationships, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:49 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id, PATCH} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:49 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/media, PATCH} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:49 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/categories/:id, PATCH} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:49 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/tags/:id, PATCH} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:49 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id, DELETE} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:49 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/media, DELETE} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:49 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/categories/:categoryId, DELETE} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:49 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/tags/:tagId, DELETE} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:49 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/:id/relationships/:relatedContentId, DELETE} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:49 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/categories/:id, DELETE} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:49 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/content/tags/:id, DELETE} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:49 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHealthController {/health}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:49 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:49 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/live, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:49 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/ready, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:49 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mPublicController {/v1/public}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:49 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/public/universes, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:49 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/public/settings, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:49 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/public/settings/:key, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:49 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/public/universes/:name/features, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:49 AM [32m    LOG[39m [38;5;3m[RedisService] [39m[32mConnected to Redis[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:49 AM [32m    LOG[39m [38;5;3m[PrismaService] [39m[32mDatabase connection established[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:49 AM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +3ms[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:33:49 AM [32m    LOG[39m [32mContent Service running on port 3004[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:35:25 AM [32m    LOG[39m [38;5;3m[HTTP] [39m[32m{"timestamp":"2026-06-25T08:35:25.940Z","level":"info","message":"GET /v1/public/settings 200 811ms","service":"content-service","traceId":"cf7633c5-a5fc-4629-8b85-a4835474b5af","spanId":"be36cf14","method":"GET","path":"/v1/public/settings","statusCode":200,"duration":811}[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:35:39 AM [32m    LOG[39m [38;5;3m[HTTP] [39m[32m{"timestamp":"2026-06-25T08:35:39.009Z","level":"info","message":"GET /v1/public/universes 200 9500ms","service":"content-service","traceId":"ace99b2d-a2ed-4d23-a6cf-a20c3a14f9a8","spanId":"367ab02f","method":"GET","path":"/v1/public/universes","statusCode":200,"duration":9500}[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:35:55 AM [32m    LOG[39m [38;5;3m[HTTP] [39m[32m{"timestamp":"2026-06-25T08:35:55.427Z","level":"info","message":"GET /v1/content/featured-slides?limit=5 200 16365ms","service":"content-service","traceId":"258269c7-e709-4d3c-9b70-7d7e6917320c","spanId":"99d89e3f","method":"GET","path":"/v1/content/featured-slides?limit=5","statusCode":200,"duration":16365}[39m
+[95m[Nest] 42445  - [39m06/25/2026, 9:35:56 AM [95m  DEBUG[39m [38;5;3m[CacheService] [39m[95mCache SET: cache:content:featured-slides (TTL: 300s)[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:35:56 AM [32m    LOG[39m [38;5;3m[HTTP] [39m[32m{"timestamp":"2026-06-25T08:35:56.940Z","level":"info","message":"GET /v1/content/popular-region?limit=12 200 9540ms","service":"content-service","traceId":"51556fc3-bdce-4406-b190-4a2e05c2e260","spanId":"00b3f7e7","method":"GET","path":"/v1/content/popular-region?limit=12","statusCode":200,"duration":9540}[39m
+[95m[Nest] 42445  - [39m06/25/2026, 9:35:57 AM [95m  DEBUG[39m [38;5;3m[CacheService] [39m[95mCache SET: cache:content:popular-region (TTL: 300s)[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:35:59 AM [32m    LOG[39m [38;5;3m[HTTP] [39m[32m{"timestamp":"2026-06-25T08:35:59.001Z","level":"info","message":"GET /v1/content/new-releases?limit=12 200 2373ms","service":"content-service","traceId":"a0d42657-4f67-4f77-b1c7-9b108f2f6bca","spanId":"2662de25","method":"GET","path":"/v1/content/new-releases?limit=12","statusCode":200,"duration":2373}[39m
+[95m[Nest] 42445  - [39m06/25/2026, 9:35:59 AM [95m  DEBUG[39m [38;5;3m[CacheService] [39m[95mCache SET: cache:content:new-releases (TTL: 300s)[39m
+[32m[Nest] 42445  - [39m06/25/2026, 9:36:00 AM [32m    LOG[39m [38;5;3m[HTTP] [39m[32m{"timestamp":"2026-06-25T08:36:00.569Z","level":"info","message":"GET /v1/content/trending?limit=12 200 171ms","service":"content-service","traceId":"9d862dd2-f164-4faf-8803-c19ecfbb1249","spanId":"5918748c","method":"GET","path":"/v1/content/trending?limit=12","statusCode":200,"duration":171}[39m
+[95m[Nest] 42445  - [39m06/25/2026, 9:36:00 AM [95m  DEBUG[39m [38;5;3m[CacheService] [39m[95mCache SET: cache:content:trending (TTL: 300s)[39m
