@@ -2,49 +2,49 @@
 > @azeebo/payment-service@0.1.0 start:dev /Users/deprof/www/azeebo+/services/core/payment-service
 > ts-node-dev --respawn --transpile-only src/main.ts
 
-[INFO] 09:33:37 ts-node-dev ver. 2.0.0 (using ts-node ver. 10.9.2, typescript ver. 5.9.3)
-[32m[Nest] 42348  - [39m06/25/2026, 9:33:42 AM [32m    LOG[39m [32mEnvironment variables validated successfully[39m
-[32m[Nest] 42348  - [39m06/25/2026, 9:33:43 AM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m[38;5;3m +204ms[39m
-[32m[Nest] 42348  - [39m06/25/2026, 9:33:43 AM [32m    LOG[39m [38;5;3m[PaystackProvider] [39m[32mPaystackProvider initialized with circuit breaker[39m
-[32m[Nest] 42348  - [39m06/25/2026, 9:33:43 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisModule dependencies initialized[39m[38;5;3m +51ms[39m
-[32m[Nest] 42348  - [39m06/25/2026, 9:33:43 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPaymentProviderModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 42348  - [39m06/25/2026, 9:33:43 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDatabaseModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 42348  - [39m06/25/2026, 9:33:43 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 42348  - [39m06/25/2026, 9:33:43 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +73ms[39m
-[32m[Nest] 42348  - [39m06/25/2026, 9:33:43 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisCoreModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 42348  - [39m06/25/2026, 9:33:43 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mThrottlerModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 42348  - [39m06/25/2026, 9:33:43 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDiscoveryModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 42348  - [39m06/25/2026, 9:33:43 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mScheduledTasksModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 42348  - [39m06/25/2026, 9:33:43 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mMetricsModule dependencies initialized[39m[38;5;3m +3ms[39m
-[32m[Nest] 42348  - [39m06/25/2026, 9:33:43 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 42348  - [39m06/25/2026, 9:33:43 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mScheduleModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 42348  - [39m06/25/2026, 9:33:43 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 42348  - [39m06/25/2026, 9:33:43 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRateLimiterModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 42348  - [39m06/25/2026, 9:33:43 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mWebhookModule dependencies initialized[39m[38;5;3m +4ms[39m
-[32m[Nest] 42348  - [39m06/25/2026, 9:33:43 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 42348  - [39m06/25/2026, 9:33:43 AM [32m    LOG[39m [32mSwagger documentation enabled at /api/docs[39m
-[32m[Nest] 42348  - [39m06/25/2026, 9:33:43 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mPaymentsController {/v1/payments}:[39m[38;5;3m +28ms[39m
-[32m[Nest] 42348  - [39m06/25/2026, 9:33:43 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/payments/initialize, POST} route[39m[38;5;3m +15ms[39m
-[32m[Nest] 42348  - [39m06/25/2026, 9:33:43 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/payments/verify, POST} route[39m[38;5;3m +2ms[39m
-[32m[Nest] 42348  - [39m06/25/2026, 9:33:43 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/payments/history, GET} route[39m[38;5;3m +2ms[39m
-[32m[Nest] 42348  - [39m06/25/2026, 9:33:43 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/payments/:id, GET} route[39m[38;5;3m +3ms[39m
-[32m[Nest] 42348  - [39m06/25/2026, 9:33:43 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/payments/webhook, POST} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 42348  - [39m06/25/2026, 9:33:43 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/payments/refund-request, POST} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 42348  - [39m06/25/2026, 9:33:43 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHealthController {/health}:[39m[38;5;3m +2ms[39m
-[32m[Nest] 42348  - [39m06/25/2026, 9:33:43 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health, GET} route[39m[38;5;3m +2ms[39m
-[32m[Nest] 42348  - [39m06/25/2026, 9:33:43 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/live, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 42348  - [39m06/25/2026, 9:33:43 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/ready, GET} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 42348  - [39m06/25/2026, 9:33:43 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mWebhookController {/webhooks}:[39m[38;5;3m +0ms[39m
-[32m[Nest] 42348  - [39m06/25/2026, 9:33:43 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/webhooks/paystack, POST} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 42348  - [39m06/25/2026, 9:33:43 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/webhooks/flutterwave, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 42348  - [39m06/25/2026, 9:33:43 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mMetricsController {/metrics}:[39m[38;5;3m +1ms[39m
-[32m[Nest] 42348  - [39m06/25/2026, 9:33:43 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/metrics, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 42348  - [39m06/25/2026, 9:33:43 AM [32m    LOG[39m [38;5;3m[PrismaService] [39m[32mDatabase connection established[39m
-[32m[Nest] 42348  - [39m06/25/2026, 9:33:43 AM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +7ms[39m
-[32m[Nest] 42348  - [39m06/25/2026, 9:33:43 AM [32m    LOG[39m [38;5;3m[Payment Service] [39m[32mPayment Service running on port 3003[39m
-[32m[Nest] 42348  - [39m06/25/2026, 9:33:43 AM [32m    LOG[39m [38;5;3m[RedisService] [39m[32mRedis connected successfully[39m
-[31m[Nest] 42348  - [39m06/25/2026, 9:34:44 AM [31m  ERROR[39m [38;5;3m[WebhookRetryService] [39m[31mError processing webhook retries:[39m
-[31m[Nest] 42348  - [39m06/25/2026, 9:34:44 AM [31m  ERROR[39m [38;5;3m[WebhookRetryService] [39mPrismaClientKnownRequestError: 
+[INFO] 09:42:13 ts-node-dev ver. 2.0.0 (using ts-node ver. 10.9.2, typescript ver. 5.9.3)
+[32m[Nest] 47432  - [39m06/25/2026, 9:42:24 AM [32m    LOG[39m [32mEnvironment variables validated successfully[39m
+[32m[Nest] 47432  - [39m06/25/2026, 9:42:24 AM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m[38;5;3m +248ms[39m
+[32m[Nest] 47432  - [39m06/25/2026, 9:42:24 AM [32m    LOG[39m [38;5;3m[PaystackProvider] [39m[32mPaystackProvider initialized with circuit breaker[39m
+[32m[Nest] 47432  - [39m06/25/2026, 9:42:24 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisModule dependencies initialized[39m[38;5;3m +33ms[39m
+[32m[Nest] 47432  - [39m06/25/2026, 9:42:24 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPaymentProviderModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 47432  - [39m06/25/2026, 9:42:24 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDatabaseModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 47432  - [39m06/25/2026, 9:42:24 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 47432  - [39m06/25/2026, 9:42:24 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +65ms[39m
+[32m[Nest] 47432  - [39m06/25/2026, 9:42:24 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisCoreModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 47432  - [39m06/25/2026, 9:42:24 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mThrottlerModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 47432  - [39m06/25/2026, 9:42:24 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDiscoveryModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 47432  - [39m06/25/2026, 9:42:24 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mScheduledTasksModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 47432  - [39m06/25/2026, 9:42:24 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mMetricsModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 47432  - [39m06/25/2026, 9:42:24 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 47432  - [39m06/25/2026, 9:42:24 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mScheduleModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 47432  - [39m06/25/2026, 9:42:24 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 47432  - [39m06/25/2026, 9:42:24 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRateLimiterModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 47432  - [39m06/25/2026, 9:42:24 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mWebhookModule dependencies initialized[39m[38;5;3m +2ms[39m
+[32m[Nest] 47432  - [39m06/25/2026, 9:42:24 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 47432  - [39m06/25/2026, 9:42:25 AM [32m    LOG[39m [32mSwagger documentation enabled at /api/docs[39m
+[32m[Nest] 47432  - [39m06/25/2026, 9:42:25 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mPaymentsController {/v1/payments}:[39m[38;5;3m +5ms[39m
+[32m[Nest] 47432  - [39m06/25/2026, 9:42:25 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/payments/initialize, POST} route[39m[38;5;3m +8ms[39m
+[32m[Nest] 47432  - [39m06/25/2026, 9:42:25 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/payments/verify, POST} route[39m[38;5;3m +2ms[39m
+[32m[Nest] 47432  - [39m06/25/2026, 9:42:25 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/payments/history, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 47432  - [39m06/25/2026, 9:42:25 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/payments/:id, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 47432  - [39m06/25/2026, 9:42:25 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/payments/webhook, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 47432  - [39m06/25/2026, 9:42:25 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/payments/refund-request, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 47432  - [39m06/25/2026, 9:42:25 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHealthController {/health}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 47432  - [39m06/25/2026, 9:42:25 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 47432  - [39m06/25/2026, 9:42:25 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/live, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 47432  - [39m06/25/2026, 9:42:25 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/ready, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 47432  - [39m06/25/2026, 9:42:25 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mWebhookController {/webhooks}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 47432  - [39m06/25/2026, 9:42:25 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/webhooks/paystack, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 47432  - [39m06/25/2026, 9:42:25 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/webhooks/flutterwave, POST} route[39m[38;5;3m +3ms[39m
+[32m[Nest] 47432  - [39m06/25/2026, 9:42:25 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mMetricsController {/metrics}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 47432  - [39m06/25/2026, 9:42:25 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/metrics, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 47432  - [39m06/25/2026, 9:42:25 AM [32m    LOG[39m [38;5;3m[RedisService] [39m[32mRedis connected successfully[39m
+[32m[Nest] 47432  - [39m06/25/2026, 9:42:25 AM [32m    LOG[39m [38;5;3m[PrismaService] [39m[32mDatabase connection established[39m
+[32m[Nest] 47432  - [39m06/25/2026, 9:42:25 AM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +3ms[39m
+[32m[Nest] 47432  - [39m06/25/2026, 9:42:25 AM [32m    LOG[39m [38;5;3m[Payment Service] [39m[32mPayment Service running on port 3003[39m
+[31m[Nest] 47432  - [39m06/25/2026, 9:43:25 AM [31m  ERROR[39m [38;5;3m[WebhookRetryService] [39m[31mError processing webhook retries:[39m
+[31m[Nest] 47432  - [39m06/25/2026, 9:43:25 AM [31m  ERROR[39m [38;5;3m[WebhookRetryService] [39mPrismaClientKnownRequestError: 
 Invalid `this.prisma.webhookRetry.findMany()` invocation in
 /Users/deprof/www/azeebo+/services/core/payment-service/src/modules/payments/webhook-retry.service.ts:95:59
 
@@ -66,8 +66,8 @@ The table `public.webhook_retries` does not exist in the current database.
   },
   clientVersion: [32m'6.19.3'[39m
 }
-[31m[Nest] 42348  - [39m06/25/2026, 9:35:50 AM [31m  ERROR[39m [38;5;3m[WebhookRetryService] [39m[31mError processing webhook retries:[39m
-[31m[Nest] 42348  - [39m06/25/2026, 9:35:50 AM [31m  ERROR[39m [38;5;3m[WebhookRetryService] [39mPrismaClientKnownRequestError: 
+[31m[Nest] 47432  - [39m06/25/2026, 9:44:25 AM [31m  ERROR[39m [38;5;3m[WebhookRetryService] [39m[31mError processing webhook retries:[39m
+[31m[Nest] 47432  - [39m06/25/2026, 9:44:25 AM [31m  ERROR[39m [38;5;3m[WebhookRetryService] [39mPrismaClientKnownRequestError: 
 Invalid `this.prisma.webhookRetry.findMany()` invocation in
 /Users/deprof/www/azeebo+/services/core/payment-service/src/modules/payments/webhook-retry.service.ts:95:59
 

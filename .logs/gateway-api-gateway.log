@@ -1,0 +1,46 @@
+
+> @azeebo/api-gateway@0.1.0 start:dev /Users/deprof/www/azeebo+/services/gateway/api-gateway
+> ts-node-dev --respawn --transpile-only src/main.ts
+
+[INFO] 09:43:37 ts-node-dev ver. 2.0.0 (using ts-node ver. 10.9.2, typescript ver. 5.9.3)
+[32m[Nest] 49803  - [39m06/25/2026, 9:43:38 AM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
+[32m[Nest] 49803  - [39m06/25/2026, 9:43:38 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +11ms[39m
+[32m[Nest] 49803  - [39m06/25/2026, 9:43:38 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mThrottlerModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 49803  - [39m06/25/2026, 9:43:38 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 49803  - [39m06/25/2026, 9:43:38 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCacheModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 49803  - [39m06/25/2026, 9:43:38 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTerminusModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 49803  - [39m06/25/2026, 9:43:38 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 49803  - [39m06/25/2026, 9:43:38 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 49803  - [39m06/25/2026, 9:43:38 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mProxyModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 49803  - [39m06/25/2026, 9:43:38 AM [32m    LOG[39m [32mSwagger documentation enabled at /docs[39m
+[33m[Nest] 49803  - [39m06/25/2026, 9:43:38 AM [33m   WARN[39m [38;5;3m[LegacyRouteConverter] [39m[33mUnsupported route path: "/api/v1/auth/(.*)". In previous versions, the symbols ?, *, and + were used to denote optional or repeating path parameters. The latest version of "path-to-regexp" now requires the use of named parameters. For example, instead of using a route like /users/* to capture all routes starting with "/users", you should use /users/*path. For more details, refer to the migration guide. Attempting to auto-convert...[39m
+[33m[Nest] 49803  - [39m06/25/2026, 9:43:38 AM [33m   WARN[39m [38;5;3m[LegacyRouteConverter] [39m[33mUnsupported route path: "/api/auth/(.*)". In previous versions, the symbols ?, *, and + were used to denote optional or repeating path parameters. The latest version of "path-to-regexp" now requires the use of named parameters. For example, instead of using a route like /users/* to capture all routes starting with "/users", you should use /users/*path. For more details, refer to the migration guide. Attempting to auto-convert...[39m
+[33m[Nest] 49803  - [39m06/25/2026, 9:43:38 AM [33m   WARN[39m [38;5;3m[LegacyRouteConverter] [39m[33mUnsupported route path: "/api/v1/users/(.*)". In previous versions, the symbols ?, *, and + were used to denote optional or repeating path parameters. The latest version of "path-to-regexp" now requires the use of named parameters. For example, instead of using a route like /users/* to capture all routes starting with "/users", you should use /users/*path. For more details, refer to the migration guide. Attempting to auto-convert...[39m
+[33m[Nest] 49803  - [39m06/25/2026, 9:43:38 AM [33m   WARN[39m [38;5;3m[LegacyRouteConverter] [39m[33mUnsupported route path: "/api/users/(.*)". In previous versions, the symbols ?, *, and + were used to denote optional or repeating path parameters. The latest version of "path-to-regexp" now requires the use of named parameters. For example, instead of using a route like /users/* to capture all routes starting with "/users", you should use /users/*path. For more details, refer to the migration guide. Attempting to auto-convert...[39m
+[32m[Nest] 49803  - [39m06/25/2026, 9:43:38 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHealthController {/}:[39m[38;5;3m +1ms[39m
+[32m[Nest] 49803  - [39m06/25/2026, 9:43:38 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health, GET} route[39m[38;5;3m +2ms[39m
+[32m[Nest] 49803  - [39m06/25/2026, 9:43:38 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/ready, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 49803  - [39m06/25/2026, 9:43:38 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/live, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 49803  - [39m06/25/2026, 9:43:38 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mCircuitBreakerHealthController {/health}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 49803  - [39m06/25/2026, 9:43:38 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/circuit-breaker, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 49803  - [39m06/25/2026, 9:43:38 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/circuit-breaker/:service, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 49803  - [39m06/25/2026, 9:43:38 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/circuit-breaker/:service/reset, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 49803  - [39m06/25/2026, 9:43:38 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mProxyController {/api}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 49803  - [39m06/25/2026, 9:43:38 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/:version/:service/*path, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 49803  - [39m06/25/2026, 9:43:38 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/:version/:service/*path, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 49803  - [39m06/25/2026, 9:43:38 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/:version/:service/*path, PUT} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 49803  - [39m06/25/2026, 9:43:38 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/:version/:service/*path, PATCH} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 49803  - [39m06/25/2026, 9:43:38 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/:version/:service/*path, DELETE} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 49803  - [39m06/25/2026, 9:43:38 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/:version/:service, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 49803  - [39m06/25/2026, 9:43:38 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/:version/:service, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 49803  - [39m06/25/2026, 9:43:38 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/:version/:service, PUT} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 49803  - [39m06/25/2026, 9:43:38 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/:version/:service, PATCH} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 49803  - [39m06/25/2026, 9:43:38 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/:version/:service, DELETE} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 49803  - [39m06/25/2026, 9:43:38 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/:service/*path, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 49803  - [39m06/25/2026, 9:43:38 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/:service/*path, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 49803  - [39m06/25/2026, 9:43:38 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/:service/*path, PUT} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 49803  - [39m06/25/2026, 9:43:38 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/:service/*path, PATCH} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 49803  - [39m06/25/2026, 9:43:38 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/:service/*path, DELETE} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 49803  - [39m06/25/2026, 9:43:38 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/routes, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 49803  - [39m06/25/2026, 9:43:38 AM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +1ms[39m
+[32m[Nest] 49803  - [39m06/25/2026, 9:43:38 AM [32m    LOG[39m [38;5;3m[API Gateway] [39m[32mAPI Gateway running on port 3013[39m

@@ -8,27 +8,25 @@
    - Environments: .env
 
  ✓ Starting...
- ✓ Ready in 2.9s
- ○ Compiling /middleware ...
- ✓ Compiled /middleware in 2.7s (158 modules)
- ○ Compiling /auth/login ...
- ✓ Compiled /auth/login in 11s (1550 modules)
- GET /auth/login 200 in 13270ms
- ○ Compiling / ...
- ✓ Compiled / in 33.8s (1677 modules)
- GET / 200 in 44963ms
- GET / 200 in 1561ms
- ✓ Compiled in 2.4s (1677 modules)
- GET / 200 in 2956ms
- ○ Compiling /notifications ...
- ✓ Compiled /notifications in 4.6s (1672 modules)
- GET /notifications 200 in 6561ms
- GET / 200 in 64ms
- ⚠ Found a change in next.config.js. Restarting the server to apply the changes...
-   ▲ Next.js 15.5.19
-   - Local:        http://localhost:4000
-   - Network:      http://192.168.1.111:4000
-   - Environments: .env
-
- ✓ Starting...
- ✓ Ready in 2.8s
+Watchpack Error (watcher): Error: EMFILE: too many open files, watch
+Watchpack Error (watcher): Error: EMFILE: too many open files, watch
+Watchpack Error (watcher): Error: EMFILE: too many open files, watch
+Watchpack Error (watcher): Error: EMFILE: too many open files, watch
+Watchpack Error (watcher): Error: EMFILE: too many open files, watch
+Watchpack Error (watcher): Error: EMFILE: too many open files, watch
+Watchpack Error (watcher): Error: EMFILE: too many open files, watch
+Watchpack Error (watcher): Error: EMFILE: too many open files, watch
+Watchpack Error (watcher): Error: EMFILE: too many open files, watch
+ ✓ Ready in 4.7s
+Watchpack Error (watcher): Error: EMFILE: too many open files, watch
+Watchpack Error (watcher): Error: EMFILE: too many open files, watch
+Watchpack Error (watcher): Error: EMFILE: too many open files, watch
+Watchpack Error (watcher): Error: EMFILE: too many open files, watch
+Watchpack Error (watcher): Error: EMFILE: too many open files, watch
+Watchpack Error (watcher): Error: EMFILE: too many open files, watch
+Watchpack Error (watcher): Error: EMFILE: too many open files, watch
+Watchpack Error (watcher): Error: EMFILE: too many open files, watch
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 4.1s (740 modules)
+ GET / 404 in 4552ms
+ GET / 404 in 145ms

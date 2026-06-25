@@ -2,66 +2,66 @@
 > @azeebo/sports-service@0.1.0 start:dev /Users/deprof/www/azeebo+/services/universes/sports-service
 > ts-node-dev --respawn --transpile-only src/main.ts
 
-[INFO] 09:35:13 ts-node-dev ver. 2.0.0 (using ts-node ver. 10.9.2, typescript ver. 5.9.3)
-[32m[Nest] 44311  - [39m06/25/2026, 9:36:25 AM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
-[32m[Nest] 44311  - [39m06/25/2026, 9:36:25 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisModule dependencies initialized[39m[38;5;3m +324ms[39m
-[32m[Nest] 44311  - [39m06/25/2026, 9:36:25 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDatabaseModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 44311  - [39m06/25/2026, 9:36:25 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPassportModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 44311  - [39m06/25/2026, 9:36:25 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +102ms[39m
-[32m[Nest] 44311  - [39m06/25/2026, 9:36:25 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisCoreModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 44311  - [39m06/25/2026, 9:36:25 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +7ms[39m
-[32m[Nest] 44311  - [39m06/25/2026, 9:36:25 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 44311  - [39m06/25/2026, 9:36:25 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 44311  - [39m06/25/2026, 9:36:25 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTerminusModule dependencies initialized[39m[38;5;3m +2ms[39m
-[32m[Nest] 44311  - [39m06/25/2026, 9:36:25 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +3ms[39m
-[32m[Nest] 44311  - [39m06/25/2026, 9:36:25 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRateLimiterModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 44311  - [39m06/25/2026, 9:36:25 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +3ms[39m
-[32m[Nest] 44311  - [39m06/25/2026, 9:36:25 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 44311  - [39m06/25/2026, 9:36:26 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPredictionMarketsModule dependencies initialized[39m[38;5;3m +21ms[39m
-[32m[Nest] 44311  - [39m06/25/2026, 9:36:26 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mFixturesModule dependencies initialized[39m[38;5;3m +47ms[39m
-[32m[Nest] 44311  - [39m06/25/2026, 9:36:26 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mFanContestsModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 44311  - [39m06/25/2026, 9:36:26 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAdminModule dependencies initialized[39m[38;5;3m +3ms[39m
-[32m[Nest] 44311  - [39m06/25/2026, 9:36:26 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mSportsModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 44311  - [39m06/25/2026, 9:36:26 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mSportsController {/v1/sports}:[39m[38;5;3m +84ms[39m
-[32m[Nest] 44311  - [39m06/25/2026, 9:36:26 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/sports/home, GET} route[39m[38;5;3m +11ms[39m
-[32m[Nest] 44311  - [39m06/25/2026, 9:36:26 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/sports/highlights, GET} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 44311  - [39m06/25/2026, 9:36:26 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/sports/fixtures, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 44311  - [39m06/25/2026, 9:36:26 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/sports/fixtures/:id, GET} route[39m[38;5;3m +2ms[39m
-[32m[Nest] 44311  - [39m06/25/2026, 9:36:26 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/sports/predictions, GET} route[39m[38;5;3m +2ms[39m
-[32m[Nest] 44311  - [39m06/25/2026, 9:36:26 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/sports/predictions, POST} route[39m[38;5;3m +6ms[39m
-[32m[Nest] 44311  - [39m06/25/2026, 9:36:26 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/sports/leaderboard, GET} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 44311  - [39m06/25/2026, 9:36:26 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/sports/fan-boards, GET} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 44311  - [39m06/25/2026, 9:36:26 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/sports/fan-contests, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 44311  - [39m06/25/2026, 9:36:26 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/sports/fan-contests/:id/enter, POST} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 44311  - [39m06/25/2026, 9:36:26 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mPredictionMarketsController {/v1/sports/predictions}:[39m[38;5;3m +0ms[39m
-[32m[Nest] 44311  - [39m06/25/2026, 9:36:26 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/sports/predictions, GET} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 44311  - [39m06/25/2026, 9:36:26 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/sports/predictions/leaderboard, GET} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 44311  - [39m06/25/2026, 9:36:26 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/sports/predictions/my, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 44311  - [39m06/25/2026, 9:36:26 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/sports/predictions/:id, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 44311  - [39m06/25/2026, 9:36:26 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/sports/predictions/create, POST} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 44311  - [39m06/25/2026, 9:36:26 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/sports/predictions/:id/predict, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 44311  - [39m06/25/2026, 9:36:26 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/sports/predictions/:id/settle, POST} route[39m[38;5;3m +8ms[39m
-[32m[Nest] 44311  - [39m06/25/2026, 9:36:26 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mFixturesController {/v1/sports/fixtures}:[39m[38;5;3m +1ms[39m
-[32m[Nest] 44311  - [39m06/25/2026, 9:36:26 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/sports/fixtures, GET} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 44311  - [39m06/25/2026, 9:36:26 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/sports/fixtures/sports, GET} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 44311  - [39m06/25/2026, 9:36:26 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/sports/fixtures/:id, GET} route[39m[38;5;3m +38ms[39m
-[32m[Nest] 44311  - [39m06/25/2026, 9:36:26 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/sports/fixtures/:id/metadata, POST} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 44311  - [39m06/25/2026, 9:36:26 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/sports/fixtures/:id/result, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 44311  - [39m06/25/2026, 9:36:26 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mFanContestsController {/v1/sports/fan-contests}:[39m[38;5;3m +1ms[39m
-[32m[Nest] 44311  - [39m06/25/2026, 9:36:26 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/sports/fan-contests, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 44311  - [39m06/25/2026, 9:36:26 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/sports/fan-contests/:id, GET} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 44311  - [39m06/25/2026, 9:36:26 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/sports/fan-contests/:id/enter, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 44311  - [39m06/25/2026, 9:36:26 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/sports/fan-contests/:id/score, POST} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 44311  - [39m06/25/2026, 9:36:26 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/sports/fan-contests/:id/leaderboard, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 44311  - [39m06/25/2026, 9:36:26 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/sports/fan-contests/:id/rank/:userId, GET} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 44311  - [39m06/25/2026, 9:36:26 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/sports/fan-contests/:id/end, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 44311  - [39m06/25/2026, 9:36:26 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHealthController {/}:[39m[38;5;3m +1ms[39m
-[32m[Nest] 44311  - [39m06/25/2026, 9:36:26 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 44311  - [39m06/25/2026, 9:36:26 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/ready, GET} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 44311  - [39m06/25/2026, 9:36:26 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/live, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 44311  - [39m06/25/2026, 9:36:26 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAdminController {/admin}:[39m[38;5;3m +0ms[39m
-[32m[Nest] 44311  - [39m06/25/2026, 9:36:26 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/stats, GET} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 44311  - [39m06/25/2026, 9:36:26 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/events, GET} route[39m[38;5;3m +7ms[39m
-[32m[Nest] 44311  - [39m06/25/2026, 9:36:26 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/predictions, GET} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 44311  - [39m06/25/2026, 9:36:26 AM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +272ms[39m
-[32m[Nest] 44311  - [39m06/25/2026, 9:36:26 AM [32m    LOG[39m [38;5;3m[Sports Service] [39m[32mSports Service running on port 3021[39m
+[INFO] 09:43:12 ts-node-dev ver. 2.0.0 (using ts-node ver. 10.9.2, typescript ver. 5.9.3)
+[32m[Nest] 49129  - [39m06/25/2026, 9:43:14 AM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
+[32m[Nest] 49129  - [39m06/25/2026, 9:43:14 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisModule dependencies initialized[39m[38;5;3m +26ms[39m
+[32m[Nest] 49129  - [39m06/25/2026, 9:43:14 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDatabaseModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 49129  - [39m06/25/2026, 9:43:14 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPassportModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 49129  - [39m06/25/2026, 9:43:14 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +34ms[39m
+[32m[Nest] 49129  - [39m06/25/2026, 9:43:14 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisCoreModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 49129  - [39m06/25/2026, 9:43:14 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +2ms[39m
+[32m[Nest] 49129  - [39m06/25/2026, 9:43:14 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 49129  - [39m06/25/2026, 9:43:14 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 49129  - [39m06/25/2026, 9:43:14 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTerminusModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 49129  - [39m06/25/2026, 9:43:14 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 49129  - [39m06/25/2026, 9:43:14 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRateLimiterModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 49129  - [39m06/25/2026, 9:43:14 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 49129  - [39m06/25/2026, 9:43:14 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 49129  - [39m06/25/2026, 9:43:14 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPredictionMarketsModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 49129  - [39m06/25/2026, 9:43:14 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mFixturesModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 49129  - [39m06/25/2026, 9:43:14 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mFanContestsModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 49129  - [39m06/25/2026, 9:43:14 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAdminModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 49129  - [39m06/25/2026, 9:43:14 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mSportsModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 49129  - [39m06/25/2026, 9:43:14 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mSportsController {/v1/sports}:[39m[38;5;3m +10ms[39m
+[32m[Nest] 49129  - [39m06/25/2026, 9:43:14 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/sports/home, GET} route[39m[38;5;3m +3ms[39m
+[32m[Nest] 49129  - [39m06/25/2026, 9:43:14 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/sports/highlights, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 49129  - [39m06/25/2026, 9:43:14 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/sports/fixtures, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 49129  - [39m06/25/2026, 9:43:14 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/sports/fixtures/:id, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 49129  - [39m06/25/2026, 9:43:14 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/sports/predictions, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 49129  - [39m06/25/2026, 9:43:14 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/sports/predictions, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 49129  - [39m06/25/2026, 9:43:14 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/sports/leaderboard, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 49129  - [39m06/25/2026, 9:43:14 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/sports/fan-boards, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 49129  - [39m06/25/2026, 9:43:14 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/sports/fan-contests, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 49129  - [39m06/25/2026, 9:43:14 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/sports/fan-contests/:id/enter, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 49129  - [39m06/25/2026, 9:43:14 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mPredictionMarketsController {/v1/sports/predictions}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 49129  - [39m06/25/2026, 9:43:14 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/sports/predictions, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 49129  - [39m06/25/2026, 9:43:14 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/sports/predictions/leaderboard, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 49129  - [39m06/25/2026, 9:43:14 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/sports/predictions/my, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 49129  - [39m06/25/2026, 9:43:14 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/sports/predictions/:id, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 49129  - [39m06/25/2026, 9:43:14 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/sports/predictions/create, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 49129  - [39m06/25/2026, 9:43:14 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/sports/predictions/:id/predict, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 49129  - [39m06/25/2026, 9:43:14 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/sports/predictions/:id/settle, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 49129  - [39m06/25/2026, 9:43:14 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mFixturesController {/v1/sports/fixtures}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 49129  - [39m06/25/2026, 9:43:14 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/sports/fixtures, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 49129  - [39m06/25/2026, 9:43:14 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/sports/fixtures/sports, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 49129  - [39m06/25/2026, 9:43:14 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/sports/fixtures/:id, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 49129  - [39m06/25/2026, 9:43:14 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/sports/fixtures/:id/metadata, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 49129  - [39m06/25/2026, 9:43:14 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/sports/fixtures/:id/result, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 49129  - [39m06/25/2026, 9:43:14 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mFanContestsController {/v1/sports/fan-contests}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 49129  - [39m06/25/2026, 9:43:14 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/sports/fan-contests, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 49129  - [39m06/25/2026, 9:43:14 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/sports/fan-contests/:id, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 49129  - [39m06/25/2026, 9:43:14 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/sports/fan-contests/:id/enter, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 49129  - [39m06/25/2026, 9:43:14 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/sports/fan-contests/:id/score, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 49129  - [39m06/25/2026, 9:43:14 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/sports/fan-contests/:id/leaderboard, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 49129  - [39m06/25/2026, 9:43:14 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/sports/fan-contests/:id/rank/:userId, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 49129  - [39m06/25/2026, 9:43:14 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/sports/fan-contests/:id/end, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 49129  - [39m06/25/2026, 9:43:14 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHealthController {/}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 49129  - [39m06/25/2026, 9:43:14 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 49129  - [39m06/25/2026, 9:43:14 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/ready, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 49129  - [39m06/25/2026, 9:43:14 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/live, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 49129  - [39m06/25/2026, 9:43:14 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAdminController {/admin}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 49129  - [39m06/25/2026, 9:43:14 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/stats, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 49129  - [39m06/25/2026, 9:43:14 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/events, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 49129  - [39m06/25/2026, 9:43:14 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/predictions, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 49129  - [39m06/25/2026, 9:43:14 AM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +49ms[39m
+[32m[Nest] 49129  - [39m06/25/2026, 9:43:14 AM [32m    LOG[39m [38;5;3m[Sports Service] [39m[32mSports Service running on port 3021[39m
