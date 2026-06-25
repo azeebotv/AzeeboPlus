@@ -1,0 +1,391 @@
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, ScrollView, StyleSheet, Pressable } from 'react-native';
+import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
+import Animated, { FadeInDown } from 'react-native-reanimated';
+import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import { api } from '@/api';
+import type { ContentItem } from '@/api';
+import type {
+  EngagementHistoryItem,
+  UserUniverseEngagement,
+  HomepageRecommendationGroup,
+} from '@/api';
+import { Typography, Spacing } from '@/theme';
+import { BrandButton } from '@/components/ui/BrandButton';
+import { ScrollReveal } from '@/components/motion/ScrollReveal';
+import HeroCarousel from './HeroCarousel';
+import ContentRow from './ContentRow';
+
+interface AuthenticatedHomepageProps {
+  siteName?: string;
+}
+
+interface UniverseSection {
+  universeId: string;
+  universeName: string;
+  universeIcon?: string;
+  items: ContentItem[];
+}
+
+export default function AuthenticatedHomepage({
+  siteName = 'Azeebo+',
+}: AuthenticatedHomepageProps) {
+  const router = useRouter();
+  const { t } = useTranslation();
+
+  // Section 1: Hero Slides
+  const [featuredSlides, setFeaturedSlides] = useState<ContentItem[]>([]);
+
+  // Section 2: Recently Watched
+  const [recentlyWatched, setRecentlyWatched] = useState<EngagementHistoryItem[]>([]);
+  const [recentlyWatchedOffset, setRecentlyWatchedOffset] = useState(0);
+  const [hasMoreHistory, setHasMoreHistory] = useState(false);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(true);
+
+  // Section 3: Universe-Specific Content
+  const [universeSections, setUniverseSections] = useState<UniverseSection[]>([]);
+  const [isLoadingUniverses, setIsLoadingUniverses] = useState(true);
+
+  // Section 4: Personalized Recommendations
+  const [recommendationGroups, setRecommendationGroups] = useState<HomepageRecommendationGroup[]>([]);
+  const [isLoadingRecommendations, setIsLoadingRecommendations] = useState(true);
+
+  // Section 5: Supplementary
+  const [trendingContent, setTrendingContent] = useState<ContentItem[]>([]);
+  const [continueWatching, setContinueWatching] = useState<ContentItem[]>([]);
+  const [newReleases, setNewReleases] = useState<ContentItem[]>([]);
+  const [popularInRegion, setPopularInRegion] = useState<ContentItem[]>([]);
+  const [isLoadingSupplementary, setIsLoadingSupplementary] = useState(true);
+
+  // --- Section 1: Hero Slides ---
+  useEffect(() => {
+    const loadSlides = async () => {
+      try {
+        const response = await api.homepageEngagement.getFeaturedSlides(5);
+        if (response.success && response.data) {
+          setFeaturedSlides(response.data);
+        }
+      } catch {}
+    };
+    loadSlides();
+  }, []);
+
+  // --- Section 2: Recently Watched (with infinite scroll) ---
+  const HISTORY_PAGE_SIZE = 10;
+
+  const loadRecentlyWatched = useCallback(async () => {
+    try {
+      const response = await api.homepageEngagement.getRecentlyWatched(
+        HISTORY_PAGE_SIZE,
+        recentlyWatchedOffset
+      );
+      if (response.success && response.data) {
+        const newItems = response.data.items || [];
+        setRecentlyWatched((prev) =>
+          recentlyWatchedOffset === 0 ? newItems : [...prev, ...newItems]
+        );
+        setHasMoreHistory(response.data.hasMore);
+      }
+    } catch {} finally {
+      setIsLoadingHistory(false);
+    }
+  }, [recentlyWatchedOffset]);
+
+  useEffect(() => {
+    loadRecentlyWatched();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const loadMoreHistory = useCallback(async () => {
+    const nextOffset = recentlyWatchedOffset + HISTORY_PAGE_SIZE;
+    setRecentlyWatchedOffset(nextOffset);
+    try {
+      const response = await api.homepageEngagement.getRecentlyWatched(HISTORY_PAGE_SIZE, nextOffset);
+      if (response.success && response.data) {
+        setRecentlyWatched((prev) => [...prev, ...(response.data?.items || [])]);
+        setHasMoreHistory(response.data.hasMore);
+      }
+    } catch {}
+  }, [recentlyWatchedOffset]);
+
+  const recentlyWatchedProgressMap: Record<string, number> = {};
+  recentlyWatched.forEach((item) => {
+    recentlyWatchedProgressMap[item.contentId] = item.progress;
+  });
+
+  // --- Section 3: Universe-Specific Content ---
+  useEffect(() => {
+    const loadUniverseContent = async () => {
+      try {
+        const engagementResponse = await api.homepageEngagement.getUniverseEngagement();
+        if (!engagementResponse.success || !engagementResponse.data) {
+          setIsLoadingUniverses(false);
+          return;
+        }
+
+        const universeEngagement = engagementResponse.data
+          .sort((a: UserUniverseEngagement, b: UserUniverseEngagement) => b.engagementCount - a.engagementCount);
+
+        const contentPromises = universeEngagement.map(async (ue: UserUniverseEngagement) => {
+          try {
+            const contentResponse = await api.homepageEngagement.getContentByUniverse(ue.universeId, 12);
+            return {
+              universeId: ue.universeId,
+              universeName: ue.universeName,
+              universeIcon: ue.universeIcon,
+              items: contentResponse.success ? contentResponse.data || [] : [],
+            };
+          } catch {
+            return {
+              universeId: ue.universeId,
+              universeName: ue.universeName,
+              universeIcon: ue.universeIcon,
+              items: [],
+            };
+          }
+        });
+
+        const sections = await Promise.all(contentPromises);
+        setUniverseSections(sections.filter((s: UniverseSection) => s.items.length > 0));
+      } catch {} finally {
+        setIsLoadingUniverses(false);
+      }
+    };
+    loadUniverseContent();
+  }, []);
+
+  // --- Section 4: Personalized Recommendations ---
+  useEffect(() => {
+    const loadRecommendations = async () => {
+      try {
+        const response = await api.homepageEngagement.getPersonalizedRecommendations();
+        if (response.success && response.data) {
+          setRecommendationGroups(response.data);
+        }
+      } catch {
+        // Fallback to generic recommendations
+        try {
+          const [forYou, trending] = await Promise.allSettled([
+            api.recommendation.getForYou(12),
+            api.recommendation.getTrending(12),
+          ]);
+
+          const fallbackGroups: HomepageRecommendationGroup[] = [];
+          if (forYou.status === 'fulfilled' && forYou.value.success && forYou.value.data) {
+            fallbackGroups.push({
+              title: t('home.topPicksForYou'),
+              reason: t('home.basedOnHistory'),
+              items: forYou.value.data.map((r: any) => r.content),
+            });
+          }
+          if (trending.status === 'fulfilled' && trending.value.success && trending.value.data) {
+            fallbackGroups.push({
+              title: t('home.popularRightNow'),
+              reason: t('home.trendingAcrossPlatform'),
+              items: trending.value.data.map((r: any) => r.content),
+            });
+          }
+          setRecommendationGroups(fallbackGroups);
+        } catch {}
+      } finally {
+        setIsLoadingRecommendations(false);
+      }
+    };
+    loadRecommendations();
+  }, []);
+
+  // --- Section 5: Supplementary ---
+  useEffect(() => {
+    const loadSupplementary = async () => {
+      try {
+        const [trendingRes, continueRes, newRes, popularRes] = await Promise.allSettled([
+          api.content.getTrendingContent(12),
+          api.homepageEngagement.getContinueWatching(10),
+          api.homepageEngagement.getNewReleases(12),
+          api.homepageEngagement.getPopularInRegion(12),
+        ]);
+
+        if (trendingRes.status === 'fulfilled' && trendingRes.value.success && trendingRes.value.data) {
+          setTrendingContent(trendingRes.value.data);
+        }
+        if (continueRes.status === 'fulfilled' && continueRes.value.success && continueRes.value.data) {
+          setContinueWatching(continueRes.value.data);
+        }
+        if (newRes.status === 'fulfilled' && newRes.value.success && newRes.value.data) {
+          setNewReleases(newRes.value.data);
+        }
+        if (popularRes.status === 'fulfilled' && popularRes.value.success && popularRes.value.data) {
+          setPopularInRegion(popularRes.value.data);
+        }
+      } catch {} finally {
+        setIsLoadingSupplementary(false);
+      }
+    };
+    loadSupplementary();
+  }, []);
+
+  return (
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      {/* ===== Section 1: Hero Slides Carousel ===== */}
+      <HeroCarousel slides={featuredSlides} />
+
+      {/* Personalized greeting */}
+      <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.greetingContainer}>
+        <Text style={styles.greeting}>{t('home.welcomeBack')}</Text>
+      </Animated.View>
+
+      {/* ===== Section 2: Recently Watched ===== */}
+      <ContentRow
+        title={t('home.recentlyWatched')}
+        subtitle={t('home.recentlyWatchedSubtitle')}
+        sectionId="recently-watched"
+        items={recentlyWatched.map((e) => e.content)}
+        isLoading={isLoadingHistory}
+        progressMap={recentlyWatchedProgressMap}
+        showProgress
+        onLoadMore={loadMoreHistory}
+        hasMore={hasMoreHistory}
+      />
+
+      {/* ===== Section 3: Universe-Specific Content Sections ===== */}
+      {universeSections.length > 0 ? (
+        <View testID="universe-sections">
+          {universeSections.map((section) => (
+            <ContentRow
+              key={section.universeId}
+              title={section.universeIcon ? `${section.universeIcon} ${section.universeName}` : section.universeName}
+              sectionId={`universe-${section.universeId}`}
+              items={section.items}
+              isLoading={isLoadingUniverses}
+            />
+          ))}
+        </View>
+      ) : null}
+
+      {/* ===== Section 4: Personalized Recommendations ===== */}
+      {recommendationGroups.length > 0 ? (
+        <View testID="recommendation-sections">
+          {recommendationGroups.map((group, index) => (
+            <ScrollReveal key={`${group.title}-${index}`}>
+              <ContentRow
+                title={group.title}
+                subtitle={group.reason}
+                sectionId={`recommendation-${index}`}
+                items={group.items}
+                isLoading={isLoadingRecommendations}
+              />
+            </ScrollReveal>
+          ))}
+        </View>
+      ) : null}
+
+      {/* ===== Section 5: Supplementary Sections ===== */}
+
+      {/* Continue Watching */}
+      <ContentRow
+        title={t('home.continueWatching')}
+        subtitle={t('home.continueWatchingSubtitle')}
+        sectionId="continue-watching"
+        items={continueWatching}
+        isLoading={isLoadingSupplementary}
+        showProgress
+        progressMap={Object.fromEntries(continueWatching.map((c) => [c.id, 0.5]))}
+      />
+
+      {/* Trending Now */}
+      <ContentRow
+        title={t('home.trending')}
+        subtitle={t('home.trendingAcrossPlatform')}
+        sectionId="trending"
+        items={trendingContent}
+        isLoading={isLoadingSupplementary}
+        cardSize="lg"
+      />
+
+      {/* New Releases */}
+      <ScrollReveal>
+        <ContentRow
+          title={t('home.newReleases')}
+          subtitle={t('home.newReleasesSubtitle')}
+          sectionId="new-releases"
+          items={newReleases}
+          isLoading={isLoadingSupplementary}
+        />
+      </ScrollReveal>
+
+      {/* Popular in Your Region */}
+      <ScrollReveal>
+        <ContentRow
+          title={t('home.popularInYourRegion')}
+          subtitle={t('home.popularNearYou')}
+          sectionId="popular-region"
+          items={popularInRegion}
+          isLoading={isLoadingSupplementary}
+        />
+      </ScrollReveal>
+
+      {/* Referral CTA */}
+      <ScrollReveal>
+        <LinearGradient
+          colors={['#CC1C1C', '#E8420A']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.referralCard}
+        >
+          <View style={styles.referralContent}>
+            <Text style={styles.referralTitle}>{t('home.inviteFriends')}</Text>
+            <Text style={styles.referralDescription}>{t('home.inviteFriendsDescription')}</Text>
+            <BrandButton
+              label={t('home.shareYourLink')}
+              onPress={() => router.push('/referral')}
+              variant="dark"
+            />
+          </View>
+        </LinearGradient>
+      </ScrollReveal>
+    </ScrollView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: 'transparent',
+  },
+  greetingContainer: {
+    paddingHorizontal: 20,
+    paddingTop: 24,
+    paddingBottom: 4,
+  },
+  greeting: {
+    color: '#fff',
+    fontSize: 24,
+    fontWeight: '800',
+  },
+  referralCard: {
+    margin: 20,
+    borderRadius: 20,
+    overflow: 'hidden',
+    padding: 24,
+    alignItems: 'center',
+  },
+  referralContent: {
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  referralTitle: {
+    color: '#fff',
+    fontSize: 22,
+    fontWeight: '800',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  referralDescription: {
+    color: 'rgba(255,255,255,0.9)',
+    fontSize: 14,
+    lineHeight: 20,
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+});

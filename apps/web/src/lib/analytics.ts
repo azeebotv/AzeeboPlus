@@ -506,6 +506,87 @@ class Analytics {
     });
   }
 
+  // ---------------------------------------------------------------------------
+  // Homepage analytics
+  // ---------------------------------------------------------------------------
+
+  homepageSectionViewed(sectionId: string, sectionName: string, properties?: EventProperties): void {
+    this.track('homepage_section_viewed', {
+      sectionId,
+      sectionName,
+      ...properties,
+    });
+  }
+
+  homepageSectionScrolled(
+    sectionId: string,
+    scrollDepth: number,
+    properties?: EventProperties
+  ): void {
+    this.track('homepage_section_scrolled', {
+      sectionId,
+      scrollDepth,
+      ...properties,
+    });
+  }
+
+  homepageHeroSlideViewed(
+    slideIndex: number,
+    contentId: string,
+    properties?: EventProperties
+  ): void {
+    this.track('homepage_hero_slide_viewed', {
+      slideIndex,
+      contentId,
+      ...properties,
+    });
+  }
+
+  homepageHeroSlideClicked(
+    slideIndex: number,
+    contentId: string,
+    properties?: EventProperties
+  ): void {
+    this.track('homepage_hero_slide_clicked', {
+      slideIndex,
+      contentId,
+      ...properties,
+    });
+  }
+
+  homepageCardClicked(
+    sectionId: string,
+    contentId: string,
+    position: number,
+    properties?: EventProperties
+  ): void {
+    this.track('homepage_card_clicked', {
+      sectionId,
+      contentId,
+      position,
+      ...properties,
+    });
+  }
+
+  homepageSectionTimeSpent(
+    sectionId: string,
+    timeSpentMs: number,
+    properties?: EventProperties
+  ): void {
+    this.track('homepage_section_time_spent', {
+      sectionId,
+      timeSpentMs,
+      ...properties,
+    });
+  }
+
+  homepageVersionServed(isAuthenticated: boolean, properties?: EventProperties): void {
+    this.track('homepage_version_served', {
+      isAuthenticated,
+      ...properties,
+    });
+  }
+
   getEvents(): AnalyticsEvent[] {
     return [...this.events];
   }

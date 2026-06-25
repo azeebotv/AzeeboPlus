@@ -574,4 +574,42 @@ export class UsersService {
   async getDeletionStatus(userId: string) {
     return { userId, status: 'none', requestedAt: null };
   }
+
+  async getContinueWatching(userId: string, limit = 10): Promise<Record<string, unknown>> {
+    const history = await this.prisma.watchHistory.findMany({
+      where: { userId },
+      orderBy: { watchedAt: 'desc' },
+      take: Math.min(limit, 50),
+    });
+
+    return {
+      success: true,
+      data: history.map((item) => ({
+        id: item.contentId,
+        contentId: item.contentId,
+        contentType: item.contentType,
+        universe: item.universe,
+        watchedAt: item.watchedAt.toISOString(),
+        progress: 0,
+      })),
+    };
+  }
+
+  async getUniverseEngagement(userId: string): Promise<Record<string, unknown>> {
+    const affinity = await this.prisma.userUniverseAffinity.findMany({
+      where: { userId },
+      orderBy: { affinityScore: 'desc' },
+    });
+
+    return {
+      success: true,
+      data: affinity.map((item) => ({
+        universeId: item.universeId,
+        universeName: item.universeId,
+        universeIcon: undefined,
+        engagementCount: item.affinityScore,
+        lastEngagedAt: item.lastEngaged.toISOString(),
+      })),
+    };
+  }
 }

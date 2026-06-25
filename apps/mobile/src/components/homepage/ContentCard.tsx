@@ -1,0 +1,196 @@
+import React, { useCallback } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
+import Animated, { FadeInDown, useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
+import { Typography } from '@/theme';
+import type { ContentItem } from '@/api';
+
+const CARD_SIZES = {
+  sm: { width: 120, height: 168 },
+  md: { width: 140, height: 196 },
+  lg: { width: 168, height: 236 },
+} as const;
+
+interface ContentCardProps {
+  item: ContentItem;
+  sectionId: string;
+  position: number;
+  progress?: number;
+  showProgress?: boolean;
+  size?: 'sm' | 'md' | 'lg';
+}
+
+export default function ContentCard({
+  item,
+  sectionId,
+  position,
+  progress,
+  showProgress = false,
+  size = 'md',
+}: ContentCardProps) {
+  const router = useRouter();
+  const { t } = useTranslation();
+  const scale = useSharedValue(1);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  const handlePressIn = useCallback(() => {
+    scale.value = withSpring(0.96, { damping: 15, stiffness: 400 });
+  }, [scale]);
+
+  const handlePressOut = useCallback(() => {
+    scale.value = withSpring(1, { damping: 15, stiffness: 400 });
+  }, [scale]);
+
+  const handlePress = useCallback(() => {
+    router.push(`/content/${item.id}`);
+  }, [router, item.id]);
+
+  const { width, height } = CARD_SIZES[size];
+  const thumbnailSrc =
+    item.mediaAsset?.thumbnailUrl ||
+    item.thumbnail ||
+    'https://placehold.co/400x560/0D3B2E/FFF?text=Azeebo%2B';
+
+  const formatDuration = (seconds?: number): string => {
+    if (!seconds) return '';
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  return (
+    <Animated.View entering={FadeInDown.delay(position * 60).springify()}>
+      <Animated.View style={animatedStyle}>
+        <TouchableOpacity
+          style={[styles.card, { width, height }]}
+          onPress={handlePress}
+          onPressIn={handlePressIn}
+          onPressOut={handlePressOut}
+          activeOpacity={0.9}
+          accessibilityLabel={`${t('content.watch')} ${item.title}`}
+          accessibilityRole="button"
+        >
+          <Image
+            source={{ uri: thumbnailSrc }}
+            style={styles.thumbnail}
+            resizeMode="cover"
+          />
+
+          {/* Duration badge */}
+          {item.duration ? (
+            <View style={styles.durationBadge}>
+              <Text style={styles.durationText}>{formatDuration(item.duration)}</Text>
+            </View>
+          ) : null}
+
+          {/* Universe badge */}
+          {item.universe?.icon ? (
+            <View style={styles.universeBadge}>
+              <Text style={styles.universeText}>{item.universe.icon}</Text>
+            </View>
+          ) : null}
+
+          {/* Progress bar */}
+          {showProgress && typeof progress === 'number' && progress > 0 ? (
+            <View
+              style={styles.progressBarContainer}
+              accessibilityLabel={`${Math.round(progress * 100)}% ${t('content.watched')}`}
+              accessibilityRole="progressbar"
+              accessibilityValue={{
+                min: 0,
+                max: 100,
+                now: Math.round(progress * 100),
+              }}
+            >
+              <View
+                style={[styles.progressBarFill, { width: `${Math.round(progress * 100)}%` as any }]}
+              />
+            </View>
+          ) : null}
+        </TouchableOpacity>
+
+        {/* Title */}
+        <View style={styles.titleContainer}>
+          <Text style={styles.title} numberOfLines={1}>
+            {item.title}
+          </Text>
+          {item.creator?.name ? (
+            <Text style={styles.creator} numberOfLines={1}>
+              {item.creator.name}
+            </Text>
+          ) : null}
+        </View>
+      </Animated.View>
+    </Animated.View>
+  );
+}
+
+const styles = StyleSheet.create({
+  card: {
+    borderRadius: 12,
+    overflow: 'hidden',
+    backgroundColor: 'rgba(255,255,255,0.05)',
+  },
+  thumbnail: {
+    width: '100%',
+    height: '100%',
+  },
+  durationBadge: {
+    position: 'absolute',
+    bottom: 8,
+    right: 8,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  durationText: {
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: '600',
+  },
+  universeBadge: {
+    position: 'absolute',
+    top: 8,
+    left: 8,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  universeText: {
+    fontSize: 12,
+  },
+  progressBarContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 3,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+  },
+  progressBarFill: {
+    height: '100%',
+    backgroundColor: '#E8420A',
+    borderRadius: 2,
+  },
+  titleContainer: {
+    paddingHorizontal: 2,
+    marginTop: 6,
+  },
+  title: {
+    color: '#fff',
+    fontSize: 13,
+    fontWeight: '600',
+    lineHeight: 17,
+  },
+  creator: {
+    color: 'rgba(255,255,255,0.5)',
+    fontSize: 11,
+    marginTop: 2,
+  },
+});

@@ -96,6 +96,39 @@ export class ContentController {
     return this.contentService.getTrending();
   }
 
+  @Public()
+  @Get('new-releases')
+  @Cache({ key: 'content:new-releases', ttl: 300 })
+  @UseGuards(RateLimitGuard)
+  @RateLimit(100, 60000)
+  @ApiOperation({ summary: 'Get new release content' })
+  @ApiResponse({ status: 200, description: 'New releases' })
+  async getNewReleases(@Query('limit') limit?: number): Promise<ContentResponse> {
+    return this.contentService.getNewReleases(limit);
+  }
+
+  @Public()
+  @Get('featured-slides')
+  @Cache({ key: 'content:featured-slides', ttl: 300 })
+  @UseGuards(RateLimitGuard)
+  @RateLimit(100, 60000)
+  @ApiOperation({ summary: 'Get featured slides for hero carousel' })
+  @ApiResponse({ status: 200, description: 'Featured slides' })
+  async getFeaturedSlides(@Query('limit') limit?: number): Promise<ContentResponse> {
+    return this.contentService.getFeaturedSlides(limit);
+  }
+
+  @Public()
+  @Get('popular-region')
+  @Cache({ key: 'content:popular-region', ttl: 300 })
+  @UseGuards(RateLimitGuard)
+  @RateLimit(100, 60000)
+  @ApiOperation({ summary: 'Get popular content in region' })
+  @ApiResponse({ status: 200, description: 'Popular content' })
+  async getPopularInRegion(@Query('limit') limit?: number): Promise<ContentResponse> {
+    return this.contentService.getPopularInRegion(limit);
+  }
+
   @Get('search')
   @Cache({ key: 'content:search:{q}', ttl: 600 })
   @UseGuards(RateLimitGuard)

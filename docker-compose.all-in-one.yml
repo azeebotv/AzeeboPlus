@@ -1,0 +1,111 @@
+# ============================================================
+# Azeebo+ All-in-One — Coolify Deployment
+# ============================================================
+# Single container running everything: PostgreSQL, Redis,
+# PgBouncer, all 25+ microservices, and all 3 frontends.
+#
+# Usage in Coolify:
+#   1. Create a new project → "Docker Compose" type
+#   2. Point to this file: docker-compose.all-in-one.yml
+#   3. Add all env vars in the Coolify UI
+#   4. Deploy
+#
+# This is the simplest deployment option.
+# Requires a VPS with at least 8GB RAM.
+# ============================================================
+
+services:
+  azeebo:
+    build:
+      context: .
+      dockerfile: Dockerfile.all-in-one
+    ports:
+      - "3013:3013"   # API Gateway
+      - "4000:4000"   # Web App
+      - "4014:4014"   # Creator Portal
+      - "4016:4016"   # Admin Panel
+    environment:
+      NODE_ENV: production
+
+      # PostgreSQL
+      POSTGRES_USER: ${POSTGRES_USER:-azeebo}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-azeebo_plus}
+
+      # Redis
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+
+      # Auth
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-15m}
+      JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN:-7d}
+
+      # Payment
+      PAYSTACK_SECRET_KEY: ${PAYSTACK_SECRET_KEY:-}
+      FLW_SECRET_KEY: ${FLW_SECRET_KEY:-}
+
+      # Email
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      EMAIL_FROM: ${EMAIL_FROM:-}
+
+      # AWS
+      AWS_REGION: ${AWS_REGION:-}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+      AWS_S3_BUCKET: ${AWS_S3_BUCKET:-}
+
+      # Frontend
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://app.azeeboplus.com}
+      API_GATEWAY_URL: http://localhost:3013
+      CORS_ORIGIN: ${CORS_ORIGIN:-https://app.azeeboplus.com}
+
+      # DB Passwords (all default to POSTGRES_PASSWORD if not set)
+      AUTH_DB_PASSWORD: ${AUTH_DB_PASSWORD:-${POSTGRES_PASSWORD}}
+      USER_DB_PASSWORD: ${USER_DB_PASSWORD:-${POSTGRES_PASSWORD}}
+      WALLET_DB_PASSWORD: ${WALLET_DB_PASSWORD:-${POSTGRES_PASSWORD}}
+      PAYMENT_DB_PASSWORD: ${PAYMENT_DB_PASSWORD:-${POSTGRES_PASSWORD}}
+      CONTENT_DB_PASSWORD: ${CONTENT_DB_PASSWORD:-${POSTGRES_PASSWORD}}
+      SEARCH_DB_PASSWORD: ${SEARCH_DB_PASSWORD:-${POSTGRES_PASSWORD}}
+      NOTIFICATION_DB_PASSWORD: ${NOTIFICATION_DB_PASSWORD:-${POSTGRES_PASSWORD}}
+      REWARD_DB_PASSWORD: ${REWARD_DB_PASSWORD:-${POSTGRES_PASSWORD}}
+      ANALYTICS_DB_PASSWORD: ${ANALYTICS_DB_PASSWORD:-${POSTGRES_PASSWORD}}
+      RECOMMENDATION_DB_PASSWORD: ${RECOMMENDATION_DB_PASSWORD:-${POSTGRES_PASSWORD}}
+      REALITY_DB_PASSWORD: ${REALITY_DB_PASSWORD:-${POSTGRES_PASSWORD}}
+      MOVIE_DB_PASSWORD: ${MOVIE_DB_PASSWORD:-${POSTGRES_PASSWORD}}
+      COMEDY_DB_PASSWORD: ${COMEDY_DB_PASSWORD:-${POSTGRES_PASSWORD}}
+      GAMES_DB_PASSWORD: ${GAMES_DB_PASSWORD:-${POSTGRES_PASSWORD}}
+      QUEUE_DB_PASSWORD: ${QUEUE_DB_PASSWORD:-${POSTGRES_PASSWORD}}
+      LIFESTYLE_DB_PASSWORD: ${LIFESTYLE_DB_PASSWORD:-${POSTGRES_PASSWORD}}
+      VERTICAL_DB_PASSWORD: ${VERTICAL_DB_PASSWORD:-${POSTGRES_PASSWORD}}
+      CREATOR_DB_PASSWORD: ${CREATOR_DB_PASSWORD:-${POSTGRES_PASSWORD}}
+      MEDIA_DB_PASSWORD: ${MEDIA_DB_PASSWORD:-${POSTGRES_PASSWORD}}
+      SUPPORT_DB_PASSWORD: ${SUPPORT_DB_PASSWORD:-${POSTGRES_PASSWORD}}
+      SPORTS_DB_PASSWORD: ${SPORTS_DB_PASSWORD:-${POSTGRES_PASSWORD}}
+      MODERATION_DB_PASSWORD: ${MODERATION_DB_PASSWORD:-${POSTGRES_PASSWORD}}
+      ENGAGEMENT_DB_PASSWORD: ${ENGAGEMENT_DB_PASSWORD:-${POSTGRES_PASSWORD}}
+      MESSAGING_DB_PASSWORD: ${MESSAGING_DB_PASSWORD:-${POSTGRES_PASSWORD}}
+      REFERRAL_DB_PASSWORD: ${REFERRAL_DB_PASSWORD:-${POSTGRES_PASSWORD}}
+      SUBSCRIPTION_DB_PASSWORD: ${SUBSCRIPTION_DB_PASSWORD:-${POSTGRES_PASSWORD}}
+      ADMIN_DB_PASSWORD: ${ADMIN_DB_PASSWORD:-${POSTGRES_PASSWORD}}
+      CREATOR_PORTAL_DB_PASSWORD: ${CREATOR_PORTAL_DB_PASSWORD:-${POSTGRES_PASSWORD}}
+
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - redis-data:/var/lib/redis
+
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 8G
+          cpus: "4.0"
+
+volumes:
+  postgres-data:
+    driver: local
+  redis-data:
+    driver: local

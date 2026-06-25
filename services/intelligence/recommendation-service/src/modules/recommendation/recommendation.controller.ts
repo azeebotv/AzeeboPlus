@@ -104,6 +104,7 @@ export class RecommendationController {
   }
 
   @Get('personalized-feed')
+  @Get('personalized')
   @ApiOperation({ summary: 'Get personalized feed' })
   @ApiResponse({ status: 200, description: 'Personalized content feed' })
   async getPersonalizedFeed(

@@ -14,6 +14,7 @@ import { createUniverseMethods } from './universe';
 import { createCreatorMethods } from './creator';
 import { createModerationMethods } from './moderation';
 import { createAdminMethods } from './admin';
+import { createEngagementMethods } from './engagement';
 
 import type { ApiResponse } from './base';
 
@@ -44,6 +45,7 @@ class ApiClient {
   creator: ReturnType<typeof createCreatorMethods>;
   moderation: ReturnType<typeof createModerationMethods>;
   admin: ReturnType<typeof createAdminMethods>;
+  engagement: ReturnType<typeof createEngagementMethods>;
 
   constructor(baseUrl: string) {
     this.baseUrl = baseUrl;
@@ -69,6 +71,7 @@ class ApiClient {
     this.creator = createCreatorMethods(this);
     this.moderation = createModerationMethods(this);
     this.admin = createAdminMethods(this);
+    this.engagement = createEngagementMethods(this);
   }
 
   setToken(token: string | null): void {
@@ -302,3 +305,9 @@ export type {
   PaginatedResponse,
   AnalyticsOverview,
 } from './base';
+
+export type {
+  EngagementHistoryItem,
+  UserUniverseEngagement,
+  RecommendationGroup,
+} from './engagement';

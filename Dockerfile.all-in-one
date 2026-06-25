@@ -1,0 +1,221 @@
+# ============================================================
+# Azeebo+ All-in-One Dockerfile
+# ============================================================
+# Builds everything (25+ services + web) into a single
+# container managed by supervisord.
+#
+# Usage:
+#   docker build -f Dockerfile.all-in-one -t azeebo-all-in-one .
+#   docker run -d --name azeebo \
+#     -e POSTGRES_PASSWORD=secret \
+#     -e REDIS_PASSWORD=secret \
+#     -e JWT_ACCESS_SECRET=... \
+#     -e JWT_REFRESH_SECRET=... \
+#     -p 3013:3013 -p 4000:4000 -p 4016:4016 -p 4014:4014 \
+#     azeebo-all-in-one
+#
+# Exposed ports:
+#   3013 - API Gateway
+#   4000 - Web App
+#   4014 - Creator Portal
+#   4016 - Admin Panel
+#   5432 - PostgreSQL (internal)
+#   6379 - Redis (internal)
+#   6432 - PgBouncer (internal)
+# ============================================================
+
+# ============================================================
+# Stage 1: Build
+# ============================================================
+FROM node:20-bookworm-slim AS builder
+
+# Install pnpm
+RUN corepack enable && corepack prepare pnpm@10.33.2 --activate
+
+WORKDIR /app
+
+# Copy workspace config
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+
+# Copy all package.json files for dependency resolution
+COPY apps/web/package.json apps/web/
+COPY apps/admin/package.json apps/admin/
+COPY apps/creator-portal/package.json apps/creator-portal/
+COPY libs/api-client/package.json libs/api-client/
+COPY libs/config/package.json libs/config/
+COPY libs/error-handling/package.json libs/error-handling/
+COPY libs/logger/package.json libs/logger/
+COPY libs/shared-types/package.json libs/shared-types/
+COPY libs/utils/package.json libs/utils/
+COPY libs/validation/package.json libs/validation/
+COPY libs/design-tokens/package.json libs/design-tokens/
+COPY libs/ui/package.json libs/ui/
+COPY services/core/auth-service/package.json services/core/auth-service/
+COPY services/core/user-service/package.json services/core/user-service/
+COPY services/core/wallet-service/package.json services/core/wallet-service/
+COPY services/core/payment-service/package.json services/core/payment-service/
+COPY services/core/content-service/package.json services/core/content-service/
+COPY services/core/search-service/package.json services/core/search-service/
+COPY services/core/media-service/package.json services/core/media-service/
+COPY services/engagement/notification-service/package.json services/engagement/notification-service/
+COPY services/engagement/reward-service/package.json services/engagement/reward-service/
+COPY services/engagement/engagement-service/package.json services/engagement/engagement-service/
+COPY services/engagement/messaging-service/package.json services/engagement/messaging-service/
+COPY services/engagement/referral-service/package.json services/engagement/referral-service/
+COPY services/engagement/subscription-service/package.json services/engagement/subscription-service/
+COPY services/intelligence/analytics-service/package.json services/intelligence/analytics-service/
+COPY services/intelligence/recommendation-service/package.json services/intelligence/recommendation-service/
+COPY services/universes/reality-service/package.json services/universes/reality-service/
+COPY services/universes/movie-service/package.json services/universes/movie-service/
+COPY services/universes/comedy-service/package.json services/universes/comedy-service/
+COPY services/universes/games-service/package.json services/universes/games-service/
+COPY services/universes/sports-service/package.json services/universes/sports-service/
+COPY services/universes/lifestyle-service/package.json services/universes/lifestyle-service/
+COPY services/universes/vertical-service/package.json services/universes/vertical-service/
+COPY services/universes/creator-service/package.json services/universes/creator-service/
+COPY services/operations/queue-service/package.json services/operations/queue-service/
+COPY services/operations/support-service/package.json services/operations/support-service/
+COPY services/operations/moderation-service/package.json services/operations/moderation-service/
+COPY services/gateway/api-gateway/package.json services/gateway/api-gateway/
+
+# Install dependencies
+RUN pnpm install --frozen-lockfile
+
+# Copy source code
+COPY . .
+
+# Copy Prisma schemas
+COPY services/core/auth-service/prisma services/core/auth-service/prisma
+COPY services/core/user-service/prisma services/core/user-service/prisma
+COPY services/core/wallet-service/prisma services/core/wallet-service/prisma
+COPY services/core/payment-service/prisma services/core/payment-service/prisma
+COPY services/core/content-service/prisma services/core/content-service/prisma
+COPY services/core/search-service/prisma services/core/search-service/prisma
+COPY services/core/media-service/prisma services/core/media-service/prisma
+COPY services/engagement/notification-service/prisma services/engagement/notification-service/prisma
+COPY services/engagement/reward-service/prisma services/engagement/reward-service/prisma
+COPY services/engagement/engagement-service/prisma services/engagement/engagement-service/prisma
+COPY services/engagement/messaging-service/prisma services/engagement/messaging-service/prisma
+COPY services/engagement/referral-service/prisma services/engagement/referral-service/prisma
+COPY services/engagement/subscription-service/prisma services/engagement/subscription-service/prisma
+COPY services/intelligence/analytics-service/prisma services/intelligence/analytics-service/prisma
+COPY services/intelligence/recommendation-service/prisma services/intelligence/recommendation-service/prisma
+COPY services/universes/reality-service/prisma services/universes/reality-service/prisma
+COPY services/universes/movie-service/prisma services/universes/movie-service/prisma
+COPY services/universes/comedy-service/prisma services/universes/comedy-service/prisma
+COPY services/universes/games-service/prisma services/universes/games-service/prisma
+COPY services/universes/sports-service/prisma services/universes/sports-service/prisma
+COPY services/universes/lifestyle-service/prisma services/universes/lifestyle-service/prisma
+COPY services/universes/vertical-service/prisma services/universes/vertical-service/prisma
+COPY services/universes/creator-service/prisma services/universes/creator-service/prisma
+COPY services/operations/queue-service/prisma services/operations/queue-service/prisma
+COPY services/operations/support-service/prisma services/operations/support-service/prisma
+COPY services/operations/moderation-service/prisma services/operations/moderation-service/prisma
+
+# Build all libraries first
+RUN pnpm --filter @azeebo/utils run build && \
+    pnpm --filter @azeebo/shared-types run build && \
+    pnpm --filter @azeebo/validation run build && \
+    pnpm --filter @azeebo/error-handling run build && \
+    pnpm --filter @azeebo/logger run build && \
+    pnpm --filter @azeebo/config run build && \
+    pnpm --filter @azeebo/api-client run build && \
+    pnpm --filter @azeebo/design-tokens run build && \
+    pnpm --filter @azeebo/ui run build
+
+# Build all services
+RUN pnpm --filter @azeebo/auth-service prisma:generate && pnpm --filter @azeebo/auth-service run build && \
+    pnpm --filter @azeebo/user-service prisma:generate && pnpm --filter @azeebo/user-service run build && \
+    pnpm --filter @azeebo/wallet-service prisma:generate && pnpm --filter @azeebo/wallet-service run build && \
+    pnpm --filter @azeebo/payment-service prisma:generate && pnpm --filter @azeebo/payment-service run build && \
+    pnpm --filter @azeebo/content-service prisma:generate && pnpm --filter @azeebo/content-service run build && \
+    pnpm --filter @azeebo/search-service prisma:generate && pnpm --filter @azeebo/search-service run build && \
+    pnpm --filter @azeebo/media-service prisma:generate && pnpm --filter @azeebo/media-service run build && \
+    pnpm --filter @azeebo/notification-service prisma:generate && pnpm --filter @azeebo/notification-service run build && \
+    pnpm --filter @azeebo/reward-service prisma:generate && pnpm --filter @azeebo/reward-service run build && \
+    pnpm --filter @azeebo/engagement-service prisma:generate && pnpm --filter @azeebo/engagement-service run build && \
+    pnpm --filter @azeebo/messaging-service prisma:generate && pnpm --filter @azeebo/messaging-service run build && \
+    pnpm --filter @azeebo/referral-service prisma:generate && pnpm --filter @azeebo/referral-service run build && \
+    pnpm --filter @azeebo/subscription-service prisma:generate && pnpm --filter @azeebo/subscription-service run build && \
+    pnpm --filter @azeebo/analytics-service prisma:generate && pnpm --filter @azeebo/analytics-service run build && \
+    pnpm --filter @azeebo/recommendation-service prisma:generate && pnpm --filter @azeebo/recommendation-service run build && \
+    pnpm --filter @azeebo/reality-service prisma:generate && pnpm --filter @azeebo/reality-service run build && \
+    pnpm --filter @azeebo/movie-service prisma:generate && pnpm --filter @azeebo/movie-service run build && \
+    pnpm --filter @azeebo/comedy-service prisma:generate && pnpm --filter @azeebo/comedy-service run build && \
+    pnpm --filter @azeebo/games-service prisma:generate && pnpm --filter @azeebo/games-service run build && \
+    pnpm --filter @azeebo/queue-service prisma:generate && pnpm --filter @azeebo/queue-service run build && \
+    pnpm --filter @azeebo/lifestyle-service prisma:generate && pnpm --filter @azeebo/lifestyle-service run build && \
+    pnpm --filter @azeebo/vertical-service prisma:generate && pnpm --filter @azeebo/vertical-service run build && \
+    pnpm --filter @azeebo/creator-service prisma:generate && pnpm --filter @azeebo/creator-service run build && \
+    pnpm --filter @azeebo/support-service prisma:generate && pnpm --filter @azeebo/support-service run build && \
+    pnpm --filter @azeebo/sports-service prisma:generate && pnpm --filter @azeebo/sports-service run build && \
+    pnpm --filter @azeebo/moderation-service prisma:generate && pnpm --filter @azeebo/moderation-service run build && \
+    pnpm --filter @azeebo/api-gateway prisma:generate && pnpm --filter @azeebo/api-gateway run build && \
+    pnpm --filter @azeebo/admin run build && \
+    pnpm --filter @azeebo/creator-portal run build && \
+    pnpm --filter @azeebo/web run build
+
+# ============================================================
+# Stage 2: Runtime
+# ============================================================
+FROM debian:bookworm-slim
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install PostgreSQL 15, Redis, PgBouncer, Supervisor, Node.js 20
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    postgresql-15 \
+    redis-server \
+    pgbouncer \
+    supervisor \
+    curl \
+    gnupg \
+    ca-certificates \
+    locales \
+    procps \
+    net-tools \
+  && sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen \
+  && locale-gen en_US.UTF-8 \
+  && apt-get clean \
+  && rm -rf /var/lib/apt/lists/*
+
+ENV LANG=en_US.UTF-8
+ENV LANGUAGE=en_US:en
+ENV LC_ALL=en_US.UTF-8
+
+# Install Node.js 20
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+  && apt-get install -y nodejs \
+  && apt-get clean \
+  && rm -rf /var/lib/apt/lists/*
+
+# Install pnpm
+RUN corepack enable && corepack prepare pnpm@10.33.2 --activate
+
+# Install npx (comes with npm but ensure it's available)
+RUN npm install -g npx
+
+# Create required users and directories
+RUN useradd -r -s /bin/false pgbouncer || true && \
+    mkdir -p /var/lib/redis /var/run/pgbouncer /var/log/supervisor && \
+    chown -R redis:redis /var/lib/redis && \
+    chown -R pgbouncer:pgbouncer /var/run/pgbouncer
+
+# Copy built application from builder
+COPY --from=builder /app /app
+
+WORKDIR /app
+
+# Copy config files
+COPY supervisord.conf /etc/supervisord.conf
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+# Expose all ports
+EXPOSE 3013 4000 4014 4016 5432 6379 6432
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --retries=3 --start-period=60s \
+  CMD curl -f http://localhost:3013/health || exit 1
+
+ENTRYPOINT ["/entrypoint.sh"]

@@ -366,6 +366,73 @@ export class ContentService {
     }
   }
 
+  async getNewReleases(limit?: number): Promise<{ success: boolean; data: any }> {
+    try {
+      const take = Math.min(limit || 12, 50);
+      const content = await this.prisma.contentItem.findMany({
+        where: {
+          status: 'published',
+          releaseDate: { not: null },
+        },
+        orderBy: { releaseDate: 'desc' },
+        take,
+        include: { universe: true },
+      });
+
+      return { success: true, data: content };
+    } catch {
+      return { success: true, data: [] };
+    }
+  }
+
+  async getFeaturedSlides(limit?: number): Promise<{ success: boolean; data: any }> {
+    try {
+      const take = Math.min(limit || 5, 10);
+      const content = await this.prisma.contentItem.findMany({
+        where: {
+          status: 'published',
+          OR: [
+            { isExclusive: true },
+            { isPremiere: true },
+          ],
+        },
+        orderBy: { viewCount: 'desc' },
+        take,
+        include: { universe: true },
+      });
+
+      if (content.length === 0) {
+        const fallback = await this.prisma.contentItem.findMany({
+          where: { status: 'published' },
+          orderBy: { viewCount: 'desc' },
+          take,
+          include: { universe: true },
+        });
+        return { success: true, data: fallback };
+      }
+
+      return { success: true, data: content };
+    } catch {
+      return { success: true, data: [] };
+    }
+  }
+
+  async getPopularInRegion(limit?: number): Promise<{ success: boolean; data: any }> {
+    try {
+      const take = Math.min(limit || 12, 50);
+      const content = await this.prisma.contentItem.findMany({
+        where: { status: 'published' },
+        orderBy: { viewCount: 'desc' },
+        take,
+        include: { universe: true },
+      });
+
+      return { success: true, data: content };
+    } catch {
+      return { success: true, data: [] };
+    }
+  }
+
   async getRecommended(userId: string): Promise<{ success: boolean; data: any }> {
     // Get user's watched content IDs and their universe
     const watchedContent = await this.prisma.watchHistory.findMany({

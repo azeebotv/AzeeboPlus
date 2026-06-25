@@ -8,7 +8,8 @@ const nextConfig = {
   images: {
     domains: process.env.IMAGE_DOMAINS
       ? process.env.IMAGE_DOMAINS.split(',')
-      : ['localhost', 'api.azeeboplus.com'],
+      : ['localhost', 'api.azeeboplus.com', 'picsum.photos'],
+    qualities: [85],
   },
   async headers() {
     return [

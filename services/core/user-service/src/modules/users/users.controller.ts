@@ -293,6 +293,26 @@ export class UsersController {
     return this.usersService.getPrivacySettings(req.user.id);
   }
 
+  @Get('me/continue-watching')
+  @ApiOperation({ summary: 'Get continue watching list' })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiResponse({ status: 200, description: 'Continue watching items' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async getContinueWatching(
+    @Request() req: AuthenticatedRequest,
+    @Query('limit') limit = 10
+  ): Promise<unknown> {
+    return this.usersService.getContinueWatching(req.user.id, Number(limit));
+  }
+
+  @Get('me/universes')
+  @ApiOperation({ summary: 'Get user universe engagement' })
+  @ApiResponse({ status: 200, description: 'Universe engagement list' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async getUniverses(@Request() req: AuthenticatedRequest): Promise<unknown> {
+    return this.usersService.getUniverseEngagement(req.user.id);
+  }
+
   @Put('me/privacy-settings')
   @ApiOperation({ summary: 'Update user privacy settings' })
   @ApiResponse({ status: 200, description: 'Privacy settings updated' })

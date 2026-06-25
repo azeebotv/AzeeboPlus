@@ -20,7 +20,12 @@ export { universeApi } from './universe';
 export { userApi } from './user';
 export { subscriptionApi } from './subscription';
 export { messagingApi, chatApi } from './messaging';
-export { engagementApi, realityApi } from './engagement';
+export { engagementApi, realityApi, homepageEngagementApi } from './engagement';
+export type {
+  EngagementHistoryItem,
+  UserUniverseEngagement,
+  RecommendationGroup as HomepageRecommendationGroup,
+} from './engagement';
 export { referralApi } from './referral';
 export { creatorApi } from './creator';
 export { supportApi } from './support';
