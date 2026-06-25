@@ -89,3 +89,26 @@ The table `public.webhook_retries` does not exist in the current database.
   },
   clientVersion: [32m'6.19.3'[39m
 }
+[31m[Nest] 47432  - [39m06/25/2026, 9:45:25 AM [31m  ERROR[39m [38;5;3m[WebhookRetryService] [39m[31mError processing webhook retries:[39m
+[31m[Nest] 47432  - [39m06/25/2026, 9:45:25 AM [31m  ERROR[39m [38;5;3m[WebhookRetryService] [39mPrismaClientKnownRequestError: 
+Invalid `this.prisma.webhookRetry.findMany()` invocation in
+/Users/deprof/www/azeebo+/services/core/payment-service/src/modules/payments/webhook-retry.service.ts:95:59
+
+  92 }
+  93 
+  94 private async processPendingRetries(): Promise<void> {
+→ 95   const pendingRetries = await this.prisma.webhookRetry.findMany(
+The table `public.webhook_retries` does not exist in the current database.
+    at ei.handleRequestError [90m(/Users/deprof/www/azeebo+/services/core/payment-service/[39msrc/prisma/client/runtime/library.js:125:7268[90m)[39m
+    at ei.handleAndLogRequestError [90m(/Users/deprof/www/azeebo+/services/core/payment-service/[39msrc/prisma/client/runtime/library.js:125:6593[90m)[39m
+    at ei.request [90m(/Users/deprof/www/azeebo+/services/core/payment-service/[39msrc/prisma/client/runtime/library.js:125:6300[90m)[39m
+    at a [90m(/Users/deprof/www/azeebo+/services/core/payment-service/[39msrc/prisma/client/runtime/library.js:134:9551[90m)[39m
+    at WebhookRetryService.processPendingRetries [90m(/Users/deprof/www/azeebo+/services/core/payment-service/[39msrc/modules/payments/webhook-retry.service.ts:95:28[90m)[39m
+    at Timeout._onTimeout [90m(/Users/deprof/www/azeebo+/services/core/payment-service/[39msrc/modules/payments/webhook-retry.service.ts:25:9[90m)[39m {
+  code: [32m'P2021'[39m,
+  meta: {
+    modelName: [32m'WebhookRetry'[39m,
+    table: [32m'public.webhook_retries'[39m
+  },
+  clientVersion: [32m'6.19.3'[39m
+}
