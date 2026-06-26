@@ -41,15 +41,14 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/web/package.json apps/web/
 COPY apps/admin/package.json apps/admin/
 COPY apps/creator-portal/package.json apps/creator-portal/
-COPY libs/api-client/package.json libs/api-client/
-COPY libs/config/package.json libs/config/
-COPY libs/error-handling/package.json libs/error-handling/
-COPY libs/logger/package.json libs/logger/
-COPY libs/shared-types/package.json libs/shared-types/
-COPY libs/utils/package.json libs/utils/
-COPY libs/validation/package.json libs/validation/
-COPY libs/design-tokens/package.json libs/design-tokens/
-COPY libs/ui/package.json libs/ui/
+COPY packages/api-client/package.json packages/api-client/
+COPY packages/error-handling/package.json packages/error-handling/
+COPY packages/logger/package.json packages/logger/
+COPY packages/shared-types/package.json packages/shared-types/
+COPY packages/utils/package.json packages/utils/
+COPY packages/validation/package.json packages/validation/
+COPY packages/design-tokens/package.json packages/design-tokens/
+COPY packages/ui/package.json packages/ui/
 COPY services/core/auth-service/package.json services/core/auth-service/
 COPY services/core/user-service/package.json services/core/user-service/
 COPY services/core/wallet-service/package.json services/core/wallet-service/
@@ -117,7 +116,6 @@ RUN pnpm --filter @azeebo/utils run build && \
     pnpm --filter @azeebo/validation run build && \
     pnpm --filter @azeebo/error-handling run build && \
     pnpm --filter @azeebo/logger run build && \
-    pnpm --filter @azeebo/config run build && \
     pnpm --filter @azeebo/api-client run build && \
     pnpm --filter @azeebo/design-tokens run build && \
     pnpm --filter @azeebo/ui run build

@@ -2,6 +2,7 @@
 node_modules/
 .qoder/
 .dev-state/
+.logs/
 
 # Build output
 dist/

@@ -14,7 +14,6 @@ pnpm --filter @azeebo/shared-types run build
 pnpm --filter @azeebo/validation run build
 pnpm --filter @azeebo/error-handling run build
 pnpm --filter @azeebo/logger run build
-pnpm --filter @azeebo/config run build
 pnpm --filter @azeebo/api-client run build
 pnpm --filter @azeebo/design-tokens run build
 pnpm --filter @azeebo/ui run build
