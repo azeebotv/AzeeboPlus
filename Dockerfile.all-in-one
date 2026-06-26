@@ -127,7 +127,7 @@ RUN pnpm --filter @azeebo/error-handling run build
 RUN pnpm --filter @azeebo/logger run build
 RUN pnpm --filter @azeebo/api-client run build
 RUN pnpm --filter @azeebo/design-tokens run build
-RUN pnpm --filter @azeebo/shared-services run build
+RUN DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy" pnpm --filter @azeebo/shared-services prisma:generate && pnpm --filter @azeebo/shared-services run build
 RUN pnpm --filter @azeebo/security run build
 RUN pnpm --filter @azeebo/ui run build
 
