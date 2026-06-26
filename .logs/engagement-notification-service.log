@@ -108,3 +108,75 @@ Error: Unknown authentication strategy "jwt"
     at /Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+passport@11.0.5_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@_8c77ce69b7be5e9acfedcbbfec1585d5/node_modules/@nestjs/passport/dist/auth.guard.js:80:83
     at 1d1e6d935694b8e8c707e.canActivate (/Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+passport@11.0.5_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@_8c77ce69b7be5e9acfedcbbfec1585d5/node_modules/@nestjs/passport/dist/auth.guard.js:44:32)
     at processTicksAndRejections (node:internal/process/task_queues:104:5)
+[31m[Nest] 14381  - [39m06/26/2026, 3:40:09 AM [31m  ERROR[39m [38;5;3m[ExceptionFilter] [39m[31mUnhandled exception: Unknown authentication strategy "jwt"[39m
+Error: Unknown authentication strategy "jwt"
+    at attempt (/Users/deprof/www/azeebo+/node_modules/.pnpm/passport@0.7.0/node_modules/passport/lib/middleware/authenticate.js:193:39)
+    at authenticate (/Users/deprof/www/azeebo+/node_modules/.pnpm/passport@0.7.0/node_modules/passport/lib/middleware/authenticate.js:379:7)
+    at /Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+passport@11.0.5_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@_8c77ce69b7be5e9acfedcbbfec1585d5/node_modules/@nestjs/passport/dist/auth.guard.js:88:3
+    at new Promise (<anonymous>)
+    at /Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+passport@11.0.5_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@_8c77ce69b7be5e9acfedcbbfec1585d5/node_modules/@nestjs/passport/dist/auth.guard.js:80:83
+    at 1d1e6d935694b8e8c707e.canActivate (/Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+passport@11.0.5_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@_8c77ce69b7be5e9acfedcbbfec1585d5/node_modules/@nestjs/passport/dist/auth.guard.js:44:32)
+    at processTicksAndRejections (node:internal/process/task_queues:104:5)
+[31m[Nest] 14381  - [39m06/26/2026, 3:45:09 AM [31m  ERROR[39m [38;5;3m[ExceptionFilter] [39m[31mUnhandled exception: Unknown authentication strategy "jwt"[39m
+Error: Unknown authentication strategy "jwt"
+    at attempt (/Users/deprof/www/azeebo+/node_modules/.pnpm/passport@0.7.0/node_modules/passport/lib/middleware/authenticate.js:193:39)
+    at authenticate (/Users/deprof/www/azeebo+/node_modules/.pnpm/passport@0.7.0/node_modules/passport/lib/middleware/authenticate.js:379:7)
+    at /Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+passport@11.0.5_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@_8c77ce69b7be5e9acfedcbbfec1585d5/node_modules/@nestjs/passport/dist/auth.guard.js:88:3
+    at new Promise (<anonymous>)
+    at /Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+passport@11.0.5_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@_8c77ce69b7be5e9acfedcbbfec1585d5/node_modules/@nestjs/passport/dist/auth.guard.js:80:83
+    at 1d1e6d935694b8e8c707e.canActivate (/Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+passport@11.0.5_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@_8c77ce69b7be5e9acfedcbbfec1585d5/node_modules/@nestjs/passport/dist/auth.guard.js:44:32)
+    at processTicksAndRejections (node:internal/process/task_queues:104:5)
+[31m[Nest] 14381  - [39m06/26/2026, 3:52:51 AM [31m  ERROR[39m [38;5;3m[ExceptionFilter] [39m[31mUnhandled exception: Unknown authentication strategy "jwt"[39m
+Error: Unknown authentication strategy "jwt"
+    at attempt (/Users/deprof/www/azeebo+/node_modules/.pnpm/passport@0.7.0/node_modules/passport/lib/middleware/authenticate.js:193:39)
+    at authenticate (/Users/deprof/www/azeebo+/node_modules/.pnpm/passport@0.7.0/node_modules/passport/lib/middleware/authenticate.js:379:7)
+    at /Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+passport@11.0.5_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@_8c77ce69b7be5e9acfedcbbfec1585d5/node_modules/@nestjs/passport/dist/auth.guard.js:88:3
+    at new Promise (<anonymous>)
+    at /Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+passport@11.0.5_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@_8c77ce69b7be5e9acfedcbbfec1585d5/node_modules/@nestjs/passport/dist/auth.guard.js:80:83
+    at 1d1e6d935694b8e8c707e.canActivate (/Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+passport@11.0.5_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@_8c77ce69b7be5e9acfedcbbfec1585d5/node_modules/@nestjs/passport/dist/auth.guard.js:44:32)
+    at processTicksAndRejections (node:internal/process/task_queues:104:5)
+[31m[Nest] 14381  - [39m06/26/2026, 4:02:14 AM [31m  ERROR[39m [38;5;3m[ExceptionFilter] [39m[31mUnhandled exception: Unknown authentication strategy "jwt"[39m
+Error: Unknown authentication strategy "jwt"
+    at attempt (/Users/deprof/www/azeebo+/node_modules/.pnpm/passport@0.7.0/node_modules/passport/lib/middleware/authenticate.js:193:39)
+    at authenticate (/Users/deprof/www/azeebo+/node_modules/.pnpm/passport@0.7.0/node_modules/passport/lib/middleware/authenticate.js:379:7)
+    at /Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+passport@11.0.5_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@_8c77ce69b7be5e9acfedcbbfec1585d5/node_modules/@nestjs/passport/dist/auth.guard.js:88:3
+    at new Promise (<anonymous>)
+    at /Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+passport@11.0.5_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@_8c77ce69b7be5e9acfedcbbfec1585d5/node_modules/@nestjs/passport/dist/auth.guard.js:80:83
+    at 1d1e6d935694b8e8c707e.canActivate (/Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+passport@11.0.5_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@_8c77ce69b7be5e9acfedcbbfec1585d5/node_modules/@nestjs/passport/dist/auth.guard.js:44:32)
+    at processTicksAndRejections (node:internal/process/task_queues:104:5)
+[31m[Nest] 14381  - [39m06/26/2026, 4:32:06 AM [31m  ERROR[39m [38;5;3m[ExceptionFilter] [39m[31mUnhandled exception: Unknown authentication strategy "jwt"[39m
+Error: Unknown authentication strategy "jwt"
+    at attempt (/Users/deprof/www/azeebo+/node_modules/.pnpm/passport@0.7.0/node_modules/passport/lib/middleware/authenticate.js:193:39)
+    at authenticate (/Users/deprof/www/azeebo+/node_modules/.pnpm/passport@0.7.0/node_modules/passport/lib/middleware/authenticate.js:379:7)
+    at /Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+passport@11.0.5_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@_8c77ce69b7be5e9acfedcbbfec1585d5/node_modules/@nestjs/passport/dist/auth.guard.js:88:3
+    at new Promise (<anonymous>)
+    at /Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+passport@11.0.5_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@_8c77ce69b7be5e9acfedcbbfec1585d5/node_modules/@nestjs/passport/dist/auth.guard.js:80:83
+    at 1d1e6d935694b8e8c707e.canActivate (/Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+passport@11.0.5_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@_8c77ce69b7be5e9acfedcbbfec1585d5/node_modules/@nestjs/passport/dist/auth.guard.js:44:32)
+    at processTicksAndRejections (node:internal/process/task_queues:104:5)
+[31m[Nest] 14381  - [39m06/26/2026, 4:37:12 AM [31m  ERROR[39m [38;5;3m[ExceptionFilter] [39m[31mUnhandled exception: Unknown authentication strategy "jwt"[39m
+Error: Unknown authentication strategy "jwt"
+    at attempt (/Users/deprof/www/azeebo+/node_modules/.pnpm/passport@0.7.0/node_modules/passport/lib/middleware/authenticate.js:193:39)
+    at authenticate (/Users/deprof/www/azeebo+/node_modules/.pnpm/passport@0.7.0/node_modules/passport/lib/middleware/authenticate.js:379:7)
+    at /Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+passport@11.0.5_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@_8c77ce69b7be5e9acfedcbbfec1585d5/node_modules/@nestjs/passport/dist/auth.guard.js:88:3
+    at new Promise (<anonymous>)
+    at /Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+passport@11.0.5_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@_8c77ce69b7be5e9acfedcbbfec1585d5/node_modules/@nestjs/passport/dist/auth.guard.js:80:83
+    at 1d1e6d935694b8e8c707e.canActivate (/Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+passport@11.0.5_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@_8c77ce69b7be5e9acfedcbbfec1585d5/node_modules/@nestjs/passport/dist/auth.guard.js:44:32)
+    at processTicksAndRejections (node:internal/process/task_queues:104:5)
+[31m[Nest] 14381  - [39m06/26/2026, 6:22:27 AM [31m  ERROR[39m [38;5;3m[ExceptionFilter] [39m[31mUnhandled exception: Unknown authentication strategy "jwt"[39m
+Error: Unknown authentication strategy "jwt"
+    at attempt (/Users/deprof/www/azeebo+/node_modules/.pnpm/passport@0.7.0/node_modules/passport/lib/middleware/authenticate.js:193:39)
+    at authenticate (/Users/deprof/www/azeebo+/node_modules/.pnpm/passport@0.7.0/node_modules/passport/lib/middleware/authenticate.js:379:7)
+    at /Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+passport@11.0.5_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@_8c77ce69b7be5e9acfedcbbfec1585d5/node_modules/@nestjs/passport/dist/auth.guard.js:88:3
+    at new Promise (<anonymous>)
+    at /Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+passport@11.0.5_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@_8c77ce69b7be5e9acfedcbbfec1585d5/node_modules/@nestjs/passport/dist/auth.guard.js:80:83
+    at 1d1e6d935694b8e8c707e.canActivate (/Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+passport@11.0.5_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@_8c77ce69b7be5e9acfedcbbfec1585d5/node_modules/@nestjs/passport/dist/auth.guard.js:44:32)
+    at processTicksAndRejections (node:internal/process/task_queues:104:5)
+[31m[Nest] 14381  - [39m06/26/2026, 6:33:05 AM [31m  ERROR[39m [38;5;3m[ExceptionFilter] [39m[31mUnhandled exception: Unknown authentication strategy "jwt"[39m
+Error: Unknown authentication strategy "jwt"
+    at attempt (/Users/deprof/www/azeebo+/node_modules/.pnpm/passport@0.7.0/node_modules/passport/lib/middleware/authenticate.js:193:39)
+    at authenticate (/Users/deprof/www/azeebo+/node_modules/.pnpm/passport@0.7.0/node_modules/passport/lib/middleware/authenticate.js:379:7)
+    at /Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+passport@11.0.5_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@_8c77ce69b7be5e9acfedcbbfec1585d5/node_modules/@nestjs/passport/dist/auth.guard.js:88:3
+    at new Promise (<anonymous>)
+    at /Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+passport@11.0.5_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@_8c77ce69b7be5e9acfedcbbfec1585d5/node_modules/@nestjs/passport/dist/auth.guard.js:80:83
+    at 1d1e6d935694b8e8c707e.canActivate (/Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+passport@11.0.5_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@_8c77ce69b7be5e9acfedcbbfec1585d5/node_modules/@nestjs/passport/dist/auth.guard.js:44:32)
+    at processTicksAndRejections (node:internal/process/task_queues:104:5)
