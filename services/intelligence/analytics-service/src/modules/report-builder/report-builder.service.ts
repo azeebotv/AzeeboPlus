@@ -1,5 +1,5 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
-import { Prisma, PrismaClient, ProductEvent } from '../../../src/prisma/client';
+import { Prisma, PrismaClient, ProductEvent } from '@prisma/client';
 import { PrismaService } from '../database/prisma.service';
 import {
   CreateReportDto,
