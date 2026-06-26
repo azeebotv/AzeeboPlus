@@ -10,6 +10,7 @@
     "rootDir": "./src",
     "incremental": true,
     "types": ["node", "jest"],
+    "paths": {},
     "noImplicitAny": false,
     "strictBindCallApply": false,
     "forceConsistentCasingInFileNames": false,

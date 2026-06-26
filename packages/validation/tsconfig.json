@@ -10,7 +10,8 @@
     "rootDir": "./src",
     "incremental": true,
     "types": ["node", "jest"],
-    "skipDefaultLibCheck": true
+    "skipDefaultLibCheck": true,
+    "paths": {}
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "**/*.spec.ts"]

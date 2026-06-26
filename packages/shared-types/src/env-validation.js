@@ -4,66 +4,55 @@ exports.EnvValidationError = exports.environmentSchema = void 0;
 exports.validateEnvironment = validateEnvironment;
 const zod_1 = require("zod");
 exports.environmentSchema = zod_1.z.object({
-    // Node Environment
     NODE_ENV: zod_1.z.enum(['development', 'production', 'test']).default('development'),
     PORT: zod_1.z.coerce.number().default(3000),
-    // Database
     DATABASE_URL: zod_1.z.string().url(),
     DATABASE_HOST: zod_1.z.string().default('localhost'),
     DATABASE_PORT: zod_1.z.coerce.number().default(5432),
     DATABASE_USER: zod_1.z.string().default('postgres'),
     DATABASE_PASSWORD: zod_1.z.string(),
     DATABASE_NAME: zod_1.z.string().default('azeebo_plus_dev'),
-    // Redis
     REDIS_URL: zod_1.z.string().url().default('redis://localhost:6379'),
     REDIS_HOST: zod_1.z.string().default('localhost'),
     REDIS_PORT: zod_1.z.coerce.number().default(6379),
-    // JWT
     JWT_ACCESS_SECRET: zod_1.z.string().min(32, 'JWT_ACCESS_SECRET must be at least 32 characters'),
     JWT_REFRESH_SECRET: zod_1.z.string().min(32, 'JWT_REFRESH_SECRET must be at least 32 characters'),
     JWT_EXPIRES_IN: zod_1.z.string().default('15m'),
     JWT_REFRESH_EXPIRES_IN: zod_1.z.string().default('7d'),
     JWT_ISSUER: zod_1.z.string().default('azeebo-auth'),
     JWT_AUDIENCE: zod_1.z.string().default('azeebo-api'),
-    // API Gateway
     API_GATEWAY_PORT: zod_1.z.coerce.number().default(3013),
     API_GATEWAY_URL: zod_1.z.string().url().default('http://localhost:3013'),
-    // Service URLs
     AUTH_SERVICE_URL: zod_1.z.string().url().default('http://auth-service:3000'),
-    USER_SERVICE_URL: zod_1.z.string().url().default('http://user-service:3000'),
-    WALLET_SERVICE_URL: zod_1.z.string().url().default('http://wallet-service:3000'),
-    PAYMENT_SERVICE_URL: zod_1.z.string().url().default('http://payment-service:3000'),
-    CONTENT_SERVICE_URL: zod_1.z.string().url().default('http://content-service:3000'),
-    NOTIFICATION_SERVICE_URL: zod_1.z.string().url().default('http://notification-service:3000'),
-    REWARD_SERVICE_URL: zod_1.z.string().url().default('http://reward-service:3000'),
-    SEARCH_SERVICE_URL: zod_1.z.string().url().default('http://search-service:3000'),
-    ANALYTICS_SERVICE_URL: zod_1.z.string().url().default('http://analytics-service:3000'),
-    MODERATION_SERVICE_URL: zod_1.z.string().url().default('http://moderation-service:3000'),
-    RECOMMENDATION_SERVICE_URL: zod_1.z.string().url().default('http://recommendation-service:3000'),
-    CREATOR_SERVICE_URL: zod_1.z.string().url().default('http://creator-portal:3000'),
+    USER_SERVICE_URL: zod_1.z.string().url().default('http://user-service:3001'),
+    WALLET_SERVICE_URL: zod_1.z.string().url().default('http://wallet-service:3002'),
+    PAYMENT_SERVICE_URL: zod_1.z.string().url().default('http://payment-service:3003'),
+    CONTENT_SERVICE_URL: zod_1.z.string().url().default('http://content-service:3004'),
+    NOTIFICATION_SERVICE_URL: zod_1.z.string().url().default('http://notification-service:3006'),
+    REWARD_SERVICE_URL: zod_1.z.string().url().default('http://reward-service:3007'),
+    SEARCH_SERVICE_URL: zod_1.z.string().url().default('http://search-service:3005'),
+    ANALYTICS_SERVICE_URL: zod_1.z.string().url().default('http://analytics-service:3008'),
+    MODERATION_SERVICE_URL: zod_1.z.string().url().default('http://moderation-service:3022'),
+    RECOMMENDATION_SERVICE_URL: zod_1.z.string().url().default('http://recommendation-service:3009'),
+    CREATOR_SERVICE_URL: zod_1.z.string().url().default('http://creator-service:3018'),
     LIFESTYLE_SERVICE_URL: zod_1.z.string().url().default('http://lifestyle-service:3016'),
     VERTICAL_SERVICE_URL: zod_1.z.string().url().default('http://vertical-service:3017'),
     QUEUE_SERVICE_URL: zod_1.z.string().url().default('http://queue-service:3015'),
     MEDIA_SERVICE_URL: zod_1.z.string().url().default('http://media-service:3019'),
-    // Payment Providers
     PAYSTACK_SECRET_KEY: zod_1.z.string().optional(),
     PAYSTACK_WEBHOOK_SECRET: zod_1.z.string().optional(),
     FLUTTERWAVE_SECRET_KEY: zod_1.z.string().optional(),
     FLUTTERWAVE_WEBHOOK_SECRET: zod_1.z.string().optional(),
-    // Notification Providers
     SENDGRID_API_KEY: zod_1.z.string().optional(),
     TWILIO_ACCOUNT_SID: zod_1.z.string().optional(),
     TWILIO_AUTH_TOKEN: zod_1.z.string().optional(),
     TWILIO_PHONE_NUMBER: zod_1.z.string().optional(),
-    // AWS
     AWS_ACCESS_KEY_ID: zod_1.z.string().optional(),
     AWS_SECRET_ACCESS_KEY: zod_1.z.string().optional(),
     AWS_REGION: zod_1.z.string().default('us-east-1'),
     AWS_S3_BUCKET: zod_1.z.string().optional(),
     CDN_URL: zod_1.z.string().url().optional(),
-    // CORS
     ALLOWED_ORIGINS: zod_1.z.string().default('http://localhost:3000'),
-    // Security
     ADMIN_EMAIL: zod_1.z.string().email().optional(),
 });
 class EnvValidationError extends Error {
@@ -91,7 +80,6 @@ function validateEnvironment(env) {
         });
         throw new EnvValidationError(missing, invalid);
     }
-    // Production-specific validations
     if (result.data.NODE_ENV === 'production') {
         validateProductionEnvironment(result.data);
     }
@@ -99,52 +87,42 @@ function validateEnvironment(env) {
 }
 function validateProductionEnvironment(env) {
     const errors = [];
-    // Check JWT secret strength
     if (env.JWT_ACCESS_SECRET.length < 64) {
         errors.push('JWT_ACCESS_SECRET should be at least 64 characters in production');
     }
     if (env.JWT_REFRESH_SECRET.length < 64) {
         errors.push('JWT_REFRESH_SECRET should be at least 64 characters in production');
     }
-    // Check for localhost database in production
     if (env.DATABASE_HOST === 'localhost' || env.DATABASE_HOST === '127.0.0.1') {
         errors.push('DATABASE_HOST cannot be localhost in production');
     }
-    // Check for localhost redis in production
     if (env.REDIS_HOST === 'localhost' || env.REDIS_HOST === '127.0.0.1') {
         errors.push('REDIS_HOST cannot be localhost in production');
     }
-    // Check that payment secrets are configured
     if (!env.PAYSTACK_SECRET_KEY && !env.FLUTTERWAVE_SECRET_KEY) {
         errors.push('At least one payment provider secret must be configured in production');
     }
-    // Check payment webhook secrets
     if (env.PAYSTACK_SECRET_KEY && !env.PAYSTACK_WEBHOOK_SECRET) {
         errors.push('PAYSTACK_WEBHOOK_SECRET must be configured when PAYSTACK_SECRET_KEY is set');
     }
     if (env.FLUTTERWAVE_SECRET_KEY && !env.FLUTTERWAVE_WEBHOOK_SECRET) {
         errors.push('FLUTTERWAVE_WEBHOOK_SECRET must be configured when FLUTTERWAVE_SECRET_KEY is set');
     }
-    // Check allowed origins
     if (env.ALLOWED_ORIGINS.includes('localhost') || env.ALLOWED_ORIGINS === '*') {
         errors.push('ALLOWED_ORIGINS cannot include localhost or wildcard in production');
     }
-    // Check that ALLOWED_ORIGINS is properly configured
     if (!env.ALLOWED_ORIGINS || env.ALLOWED_ORIGINS.trim() === '') {
         errors.push('ALLOWED_ORIGINS must be configured in production');
     }
-    // Check AWS credentials if S3 bucket is configured
     if (env.AWS_S3_BUCKET && (!env.AWS_ACCESS_KEY_ID || !env.AWS_SECRET_ACCESS_KEY)) {
         errors.push('AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY must be configured when AWS_S3_BUCKET is set');
     }
-    // Check notification provider credentials
     if (!env.SENDGRID_API_KEY && !env.TWILIO_ACCOUNT_SID) {
         errors.push('At least one notification provider (SendGrid or Twilio) must be configured in production');
     }
     if (env.TWILIO_ACCOUNT_SID && (!env.TWILIO_AUTH_TOKEN || !env.TWILIO_PHONE_NUMBER)) {
         errors.push('TWILIO_AUTH_TOKEN and TWILIO_PHONE_NUMBER must be configured when TWILIO_ACCOUNT_SID is set');
     }
-    // Check that service URLs are not localhost
     const serviceUrls = [
         'AUTH_SERVICE_URL',
         'USER_SERVICE_URL',
@@ -173,3 +151,4 @@ function validateProductionEnvironment(env) {
         throw new Error(`Production environment validation failed:\n${errors.join('\n')}`);
     }
 }
+//# sourceMappingURL=env-validation.js.map

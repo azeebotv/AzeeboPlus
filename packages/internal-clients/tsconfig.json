@@ -6,7 +6,8 @@
     "declaration": true,
     "types": ["node", "jest"],
     "outDir": "./dist",
-    "rootDir": "./src"
+    "rootDir": "./src",
+    "paths": {}
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]

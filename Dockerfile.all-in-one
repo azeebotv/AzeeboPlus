@@ -48,6 +48,16 @@ COPY packages/shared-types/package.json packages/shared-types/
 COPY packages/utils/package.json packages/utils/
 COPY packages/validation/package.json packages/validation/
 COPY packages/design-tokens/package.json packages/design-tokens/
+COPY packages/security/package.json packages/security/
+COPY packages/shared-services/package.json packages/shared-services/
+COPY packages/auth/package.json packages/auth/
+COPY packages/observability/package.json packages/observability/
+COPY packages/feature-flags/package.json packages/feature-flags/
+COPY packages/analytics-sdk/package.json packages/analytics-sdk/
+COPY packages/internal-clients/package.json packages/internal-clients/
+COPY packages/opentelemetry/package.json packages/opentelemetry/
+COPY packages/test-utils/package.json packages/test-utils/
+COPY packages/contract-tests/package.json packages/contract-tests/
 COPY packages/ui/package.json packages/ui/
 COPY services/core/auth-service/package.json services/core/auth-service/
 COPY services/core/user-service/package.json services/core/user-service/
@@ -118,6 +128,8 @@ RUN pnpm --filter @azeebo/error-handling run build
 RUN pnpm --filter @azeebo/logger run build
 RUN pnpm --filter @azeebo/api-client run build
 RUN pnpm --filter @azeebo/design-tokens run build
+RUN pnpm --filter @azeebo/shared-services run build
+RUN pnpm --filter @azeebo/security run build
 RUN pnpm --filter @azeebo/ui run build
 
 # Build all services
