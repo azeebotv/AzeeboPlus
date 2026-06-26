@@ -142,7 +142,7 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
 
 # Clean up to reduce image size
 RUN rm -rf .git && \
-    pnpm install --prod --frozen-lockfile && \
+    CI=true pnpm install --prod --frozen-lockfile && \
     find . -path '*/node_modules/.cache' -delete 2>/dev/null || true && \
     find . -name '*.tsbuildinfo' -delete 2>/dev/null || true && \
     find . -name '.eslintcache' -delete 2>/dev/null || true && \
