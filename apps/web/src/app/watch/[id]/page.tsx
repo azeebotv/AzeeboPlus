@@ -1,6 +1,6 @@
 import React from 'react';
 import { Metadata } from 'next';
-import { apiFetch } from '../../../lib/api';
+import { resolvedApiUrl } from '../../../lib/api';
 import WatchPageClient from './WatchPageClient';
 
 interface Props {
@@ -12,16 +12,19 @@ interface Props {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
   try {
-    const contentResponse = await apiFetch<any>(`/content/${id}`);
+    const res = await fetch(`${resolvedApiUrl}/api/v1/content/${id}`, {
+      next: { revalidate: 60 },
+    });
+    const body = await res.json();
 
-    if (!contentResponse.success || !contentResponse.data) {
+    if (!body.success || !body.data) {
       return {
         title: 'Content Not Found',
         description: 'The requested content could not be found.',
       };
     }
 
-    const content = contentResponse.data;
+    const content = body.data;
 
     return {
       title: content.title,

@@ -29,7 +29,7 @@ export interface FileMetadata {
 export const mediaApi = {
   uploadImage: async (file: FormData): Promise<ApiResponse<MediaUploadResponse>> => {
     const token = apiClient.getToken();
-    const response = await fetch(`${MEDIA_BASE_URL}/v1/media/upload/image`, {
+    const response = await fetch(`${MEDIA_BASE_URL}/api/v1/media/upload/image`, {
       method: 'POST',
       headers: {
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -42,7 +42,7 @@ export const mediaApi = {
 
   uploadVideo: async (file: FormData): Promise<ApiResponse<MediaUploadResponse>> => {
     const token = apiClient.getToken();
-    const response = await fetch(`${MEDIA_BASE_URL}/v1/media/upload/video`, {
+    const response = await fetch(`${MEDIA_BASE_URL}/api/v1/media/upload/video`, {
       method: 'POST',
       headers: {
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -55,7 +55,7 @@ export const mediaApi = {
 
   uploadAvatar: async (file: FormData): Promise<ApiResponse<MediaUploadResponse>> => {
     const token = apiClient.getToken();
-    const response = await fetch(`${MEDIA_BASE_URL}/v1/media/upload/avatar`, {
+    const response = await fetch(`${MEDIA_BASE_URL}/api/v1/media/upload/avatar`, {
       method: 'POST',
       headers: {
         ...(token ? { Authorization: `Bearer ${token}` } : {}),

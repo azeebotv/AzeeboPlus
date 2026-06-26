@@ -220,52 +220,32 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
     announceToScreenReader(`Playback speed: ${rate}x`);
   }, []);
 
-  const toggleLike = useCallback(async (): Promise<void> => {
-    try {
-      if (!user) return;
-      const response = await apiFetch<any>(`/content/${id}/reactions`, {
-        method: 'POST',
-        body: JSON.stringify({ type: 'like' }),
-      });
-      if (response.success) {
-        setIsLiked(!isLiked);
-        setLikeCount((prev) => (isLiked ? prev - 1 : prev + 1));
-        if (isDisliked) {
-          setIsDisliked(false);
-          setDislikeCount((prev) => prev - 1);
-        }
-        announceToScreenReader(isLiked ? 'Removed like' : 'Added like');
-      }
-    } catch (err) {
-      /* intentionally minimal */
+  const toggleLike = useCallback((): void => {
+    if (!user) return;
+    setIsLiked(!isLiked);
+    setLikeCount((prev) => (isLiked ? prev - 1 : prev + 1));
+    if (isDisliked) {
+      setIsDisliked(false);
+      setDislikeCount((prev) => prev - 1);
     }
-  }, [id, isLiked, isDisliked, user]);
+    announceToScreenReader(isLiked ? 'Removed like' : 'Added like');
+  }, [isLiked, isDisliked, user]);
 
-  const toggleDislike = useCallback(async (): Promise<void> => {
-    try {
-      if (!user) return;
-      const response = await apiFetch<any>(`/content/${id}/reactions`, {
-        method: 'POST',
-        body: JSON.stringify({ type: 'dislike' }),
-      });
-      if (response.success) {
-        setIsDisliked(!isDisliked);
-        setDislikeCount((prev) => (isDisliked ? prev - 1 : prev + 1));
-        if (isLiked) {
-          setIsLiked(false);
-          setLikeCount((prev) => prev - 1);
-        }
-        announceToScreenReader(isDisliked ? 'Removed dislike' : 'Added dislike');
-      }
-    } catch (err) {
-      /* intentionally minimal */
+  const toggleDislike = useCallback((): void => {
+    if (!user) return;
+    setIsDisliked(!isDisliked);
+    setDislikeCount((prev) => (isDisliked ? prev - 1 : prev + 1));
+    if (isLiked) {
+      setIsLiked(false);
+      setLikeCount((prev) => prev - 1);
     }
-  }, [id, isDisliked, isLiked, user]);
+    announceToScreenReader(isDisliked ? 'Removed dislike' : 'Added dislike');
+  }, [isDisliked, isLiked, user]);
 
   const toggleSubscribe = useCallback(async (): Promise<void> => {
     try {
       if (!user || !content?.creator?.id) return;
-      const response = await apiFetch<any>(`/creators/${content.creator.id}/subscribe`, {
+      const response = await apiFetch<any>(`/creators/subscribe/${content.creator.id}`, {
         method: 'POST',
       });
       if (response.success) {
@@ -340,7 +320,7 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
     async (reason: string, details: string): Promise<void> => {
       try {
         setIsReporting(true);
-        const response = await apiFetch<any>('/reports', {
+        const response = await apiFetch<any>('/moderation/report', {
           method: 'POST',
           body: JSON.stringify({ targetId: id, targetType: 'content', reason, details }),
         });

@@ -2,58 +2,58 @@
 > @azeebo/games-service@0.1.0 start:dev /Users/deprof/www/azeebo+/services/universes/games-service
 > ts-node-dev --respawn --transpile-only src/main.ts
 
-[INFO] 13:17:33 ts-node-dev ver. 2.0.0 (using ts-node ver. 10.9.2, typescript ver. 5.9.3)
-[32m[Nest] 15435  - [39m06/25/2026, 1:17:34 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
-[32m[Nest] 15435  - [39m06/25/2026, 1:17:34 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisModule dependencies initialized[39m[38;5;3m +15ms[39m
-[32m[Nest] 15435  - [39m06/25/2026, 1:17:34 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDatabaseModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 15435  - [39m06/25/2026, 1:17:34 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPassportModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 15435  - [39m06/25/2026, 1:17:34 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +21ms[39m
-[32m[Nest] 15435  - [39m06/25/2026, 1:17:34 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisCoreModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 15435  - [39m06/25/2026, 1:17:34 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 15435  - [39m06/25/2026, 1:17:34 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 15435  - [39m06/25/2026, 1:17:34 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 15435  - [39m06/25/2026, 1:17:34 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTerminusModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 15435  - [39m06/25/2026, 1:17:34 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 15435  - [39m06/25/2026, 1:17:34 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mGameCatalogModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 15435  - [39m06/25/2026, 1:17:34 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRateLimiterModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 15435  - [39m06/25/2026, 1:17:34 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 15435  - [39m06/25/2026, 1:17:34 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 15435  - [39m06/25/2026, 1:17:34 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTournamentModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 15435  - [39m06/25/2026, 1:17:34 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAdminModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 15435  - [39m06/25/2026, 1:17:34 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mGamesModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 15435  - [39m06/25/2026, 1:17:34 PM [32m    LOG[39m [32mSwagger documentation enabled at /docs[39m
-[32m[Nest] 15435  - [39m06/25/2026, 1:17:34 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mGamesController {/v1/games}:[39m[38;5;3m +2ms[39m
-[32m[Nest] 15435  - [39m06/25/2026, 1:17:34 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/games/home, GET} route[39m[38;5;3m +2ms[39m
-[32m[Nest] 15435  - [39m06/25/2026, 1:17:34 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/games/daily-challenge/submit, POST} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 15435  - [39m06/25/2026, 1:17:34 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/games/daily-challenge, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 15435  - [39m06/25/2026, 1:17:34 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/games/sessions, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 15435  - [39m06/25/2026, 1:17:34 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/games/sessions/:sessionId/submit, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 15435  - [39m06/25/2026, 1:17:34 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/games/leaderboard, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 15435  - [39m06/25/2026, 1:17:34 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/games/tournaments, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 15435  - [39m06/25/2026, 1:17:34 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/games/tournaments/:tournamentId/enter, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 15435  - [39m06/25/2026, 1:17:34 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mGameCatalogController {/v1/games}:[39m[38;5;3m +0ms[39m
-[32m[Nest] 15435  - [39m06/25/2026, 1:17:34 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/games, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 15435  - [39m06/25/2026, 1:17:34 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/games/categories, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 15435  - [39m06/25/2026, 1:17:34 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/games/stats/:userId, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 15435  - [39m06/25/2026, 1:17:34 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/games/:slug, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 15435  - [39m06/25/2026, 1:17:34 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/games/:gameId/start, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 15435  - [39m06/25/2026, 1:17:34 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/games/answer, POST} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 15435  - [39m06/25/2026, 1:17:34 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/games/:sessionId/complete, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 15435  - [39m06/25/2026, 1:17:34 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mTournamentController {/v1/games/tournaments}:[39m[38;5;3m +0ms[39m
-[32m[Nest] 15435  - [39m06/25/2026, 1:17:34 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/games/tournaments, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 15435  - [39m06/25/2026, 1:17:34 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/games/tournaments/:id, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 15435  - [39m06/25/2026, 1:17:34 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/games/tournaments/:id/enter, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 15435  - [39m06/25/2026, 1:17:34 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/games/tournaments/:id/score, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 15435  - [39m06/25/2026, 1:17:34 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/games/tournaments/:id/leaderboard, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 15435  - [39m06/25/2026, 1:17:34 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/games/tournaments/:id/rank/:userId, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 15435  - [39m06/25/2026, 1:17:34 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/games/tournaments/:id/end, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 15435  - [39m06/25/2026, 1:17:34 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHealthController {/}:[39m[38;5;3m +0ms[39m
-[32m[Nest] 15435  - [39m06/25/2026, 1:17:34 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health, GET} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 15435  - [39m06/25/2026, 1:17:34 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/ready, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 15435  - [39m06/25/2026, 1:17:34 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/live, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 15435  - [39m06/25/2026, 1:17:34 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAdminController {/admin}:[39m[38;5;3m +0ms[39m
-[32m[Nest] 15435  - [39m06/25/2026, 1:17:34 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/stats, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 15435  - [39m06/25/2026, 1:17:34 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/games, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 15435  - [39m06/25/2026, 1:17:34 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/tournaments, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 15435  - [39m06/25/2026, 1:17:34 PM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +17ms[39m
-[32m[Nest] 15435  - [39m06/25/2026, 1:17:34 PM [32m    LOG[39m [38;5;3m[Games Service] [39m[32mGames Service running on port 3014[39m
+[INFO] 11:05:39 ts-node-dev ver. 2.0.0 (using ts-node ver. 10.9.2, typescript ver. 5.9.3)
+[32m[Nest] 48564  - [39m06/26/2026, 11:05:41 AM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
+[32m[Nest] 48564  - [39m06/26/2026, 11:05:41 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisModule dependencies initialized[39m[38;5;3m +22ms[39m
+[32m[Nest] 48564  - [39m06/26/2026, 11:05:41 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDatabaseModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 48564  - [39m06/26/2026, 11:05:41 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPassportModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 48564  - [39m06/26/2026, 11:05:41 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +25ms[39m
+[32m[Nest] 48564  - [39m06/26/2026, 11:05:41 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisCoreModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 48564  - [39m06/26/2026, 11:05:41 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 48564  - [39m06/26/2026, 11:05:41 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 48564  - [39m06/26/2026, 11:05:41 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 48564  - [39m06/26/2026, 11:05:41 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTerminusModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 48564  - [39m06/26/2026, 11:05:41 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 48564  - [39m06/26/2026, 11:05:41 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mGameCatalogModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 48564  - [39m06/26/2026, 11:05:41 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRateLimiterModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 48564  - [39m06/26/2026, 11:05:41 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 48564  - [39m06/26/2026, 11:05:41 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 48564  - [39m06/26/2026, 11:05:41 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTournamentModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 48564  - [39m06/26/2026, 11:05:41 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAdminModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 48564  - [39m06/26/2026, 11:05:41 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mGamesModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 48564  - [39m06/26/2026, 11:05:41 AM [32m    LOG[39m [32mSwagger documentation enabled at /docs[39m
+[32m[Nest] 48564  - [39m06/26/2026, 11:05:41 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mGamesController {/v1/games}:[39m[38;5;3m +3ms[39m
+[32m[Nest] 48564  - [39m06/26/2026, 11:05:41 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/games/home, GET} route[39m[38;5;3m +3ms[39m
+[32m[Nest] 48564  - [39m06/26/2026, 11:05:41 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/games/daily-challenge/submit, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 48564  - [39m06/26/2026, 11:05:41 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/games/daily-challenge, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 48564  - [39m06/26/2026, 11:05:41 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/games/sessions, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 48564  - [39m06/26/2026, 11:05:41 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/games/sessions/:sessionId/submit, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 48564  - [39m06/26/2026, 11:05:41 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/games/leaderboard, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 48564  - [39m06/26/2026, 11:05:41 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/games/tournaments, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 48564  - [39m06/26/2026, 11:05:41 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/games/tournaments/:tournamentId/enter, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 48564  - [39m06/26/2026, 11:05:41 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mGameCatalogController {/v1/games}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 48564  - [39m06/26/2026, 11:05:41 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/games, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 48564  - [39m06/26/2026, 11:05:41 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/games/categories, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 48564  - [39m06/26/2026, 11:05:41 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/games/stats/:userId, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 48564  - [39m06/26/2026, 11:05:41 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/games/:slug, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 48564  - [39m06/26/2026, 11:05:41 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/games/:gameId/start, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 48564  - [39m06/26/2026, 11:05:41 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/games/answer, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 48564  - [39m06/26/2026, 11:05:41 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/games/:sessionId/complete, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 48564  - [39m06/26/2026, 11:05:41 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mTournamentController {/v1/games/tournaments}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 48564  - [39m06/26/2026, 11:05:41 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/games/tournaments, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 48564  - [39m06/26/2026, 11:05:41 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/games/tournaments/:id, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 48564  - [39m06/26/2026, 11:05:41 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/games/tournaments/:id/enter, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 48564  - [39m06/26/2026, 11:05:41 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/games/tournaments/:id/score, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 48564  - [39m06/26/2026, 11:05:41 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/games/tournaments/:id/leaderboard, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 48564  - [39m06/26/2026, 11:05:41 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/games/tournaments/:id/rank/:userId, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 48564  - [39m06/26/2026, 11:05:41 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/games/tournaments/:id/end, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 48564  - [39m06/26/2026, 11:05:41 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHealthController {/}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 48564  - [39m06/26/2026, 11:05:41 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 48564  - [39m06/26/2026, 11:05:41 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/ready, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 48564  - [39m06/26/2026, 11:05:41 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/live, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 48564  - [39m06/26/2026, 11:05:41 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAdminController {/admin}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 48564  - [39m06/26/2026, 11:05:41 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/stats, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 48564  - [39m06/26/2026, 11:05:41 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/games, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 48564  - [39m06/26/2026, 11:05:41 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/tournaments, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 48564  - [39m06/26/2026, 11:05:41 AM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +23ms[39m
+[32m[Nest] 48564  - [39m06/26/2026, 11:05:41 AM [32m    LOG[39m [38;5;3m[Games Service] [39m[32mGames Service running on port 3014[39m

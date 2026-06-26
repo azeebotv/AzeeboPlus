@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
 import Link from 'next/link';
-import { apiFetch, ContentItem } from '@/lib/api';
+import { api, ContentItem } from '@/lib/api';
 import { webLogger } from '@/lib/logger';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
@@ -22,8 +22,11 @@ export default function GamesPage(): React.JSX.Element {
     const fetchContent = async () => {
       try {
         setIsLoading(true);
-        const result = await apiFetch<ContentItem[]>('/v1/content?universe=games&limit=20');
-        if (result.success && result.data) setGames(result.data);
+        const result = await api.content.getContentByUniverse('games', 1, 20);
+        if (result.success && result.data) {
+          const items = Array.isArray(result.data) ? result.data : result.data.items || [];
+          setGames(items);
+        }
       } catch (err) {
         webLogger.error('Failed to fetch games content', err);
         setError('Failed to load games. Please try again.');

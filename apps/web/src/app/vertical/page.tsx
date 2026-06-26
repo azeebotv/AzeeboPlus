@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import Link from 'next/link';
-import { apiFetch, ContentItem } from '@/lib/api';
+import { api, ContentItem } from '@/lib/api';
 import { webLogger } from '@/lib/logger';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
@@ -17,10 +17,11 @@ export default function VerticalPage(): React.JSX.Element {
     const fetchContent = async () => {
       try {
         setIsLoading(true);
-        const result = await apiFetch<ContentItem[]>('/v1/content?universe=vertical&limit=20');
+        const result = await api.content.getContentByUniverse('vertical', 1, 20);
 
         if (result.success && result.data) {
-          setSeries(result.data);
+          const items = Array.isArray(result.data) ? result.data : result.data.items || [];
+          setSeries(items);
         }
       } catch (err) {
         webLogger.error('Failed to fetch vertical content', err);

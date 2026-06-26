@@ -32,7 +32,7 @@ export const universeApi = {
     limit = 100
   ): Promise<ApiResponse<PaginatedResponse<Universe>>> => {
     const response = await apiClient.get<PaginatedResponse<Universe>>(
-      `/universe?page=${page}&limit=${limit}`
+      `/api/v1/universe?page=${page}&limit=${limit}`
     );
     return {
       success: true,

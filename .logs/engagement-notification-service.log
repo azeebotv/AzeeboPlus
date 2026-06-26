@@ -2,181 +2,46 @@
 > @azeebo/notification-service@0.1.0 start:dev /Users/deprof/www/azeebo+/services/engagement/notification-service
 > ts-node-dev --respawn --transpile-only src/main.ts
 
-[INFO] 13:16:54 ts-node-dev ver. 2.0.0 (using ts-node ver. 10.9.2, typescript ver. 5.9.3)
-[32m[Nest] 14381  - [39m06/25/2026, 1:16:55 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
-[32m[Nest] 14381  - [39m06/25/2026, 1:16:56 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisModule dependencies initialized[39m[38;5;3m +13ms[39m
-[32m[Nest] 14381  - [39m06/25/2026, 1:16:56 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDatabaseModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 14381  - [39m06/25/2026, 1:16:56 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPassportModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 14381  - [39m06/25/2026, 1:16:56 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +16ms[39m
-[32m[Nest] 14381  - [39m06/25/2026, 1:16:56 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisCoreModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 14381  - [39m06/25/2026, 1:16:56 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 14381  - [39m06/25/2026, 1:16:56 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 14381  - [39m06/25/2026, 1:16:56 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 14381  - [39m06/25/2026, 1:16:56 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 14381  - [39m06/25/2026, 1:16:56 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mFirebaseModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 14381  - [39m06/25/2026, 1:16:56 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mEmailModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 14381  - [39m06/25/2026, 1:16:56 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mSmsModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 14381  - [39m06/25/2026, 1:16:56 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRateLimiterModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 14381  - [39m06/25/2026, 1:16:56 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 14381  - [39m06/25/2026, 1:16:56 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 14381  - [39m06/25/2026, 1:16:56 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAdminModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 14381  - [39m06/25/2026, 1:16:56 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mNotificationsModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 14381  - [39m06/25/2026, 1:16:56 PM [32m    LOG[39m [32mSwagger documentation enabled at /docs[39m
-[32m[Nest] 14381  - [39m06/25/2026, 1:16:56 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mNotificationsController {/v1/notifications}:[39m[38;5;3m +2ms[39m
-[32m[Nest] 14381  - [39m06/25/2026, 1:16:56 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/notifications, GET} route[39m[38;5;3m +2ms[39m
-[32m[Nest] 14381  - [39m06/25/2026, 1:16:56 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/notifications/:id/read, PATCH} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 14381  - [39m06/25/2026, 1:16:56 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/notifications/read-all, PATCH} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 14381  - [39m06/25/2026, 1:16:56 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/notifications/preferences, PUT} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 14381  - [39m06/25/2026, 1:16:56 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/notifications/settings, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 14381  - [39m06/25/2026, 1:16:56 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/notifications/unread-count, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 14381  - [39m06/25/2026, 1:16:56 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/notifications/push-tokens, POST} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 14381  - [39m06/25/2026, 1:16:56 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/notifications/push-tokens, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 14381  - [39m06/25/2026, 1:16:56 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/notifications/push-tokens/:token, DELETE} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 14381  - [39m06/25/2026, 1:16:56 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAdminController {/admin}:[39m[38;5;3m +0ms[39m
-[32m[Nest] 14381  - [39m06/25/2026, 1:16:56 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/stats, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 14381  - [39m06/25/2026, 1:16:56 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/notifications, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 14381  - [39m06/25/2026, 1:16:56 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/notifications, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 14381  - [39m06/25/2026, 1:16:56 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHealthController {/health}:[39m[38;5;3m +0ms[39m
-[32m[Nest] 14381  - [39m06/25/2026, 1:16:56 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health, GET} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 14381  - [39m06/25/2026, 1:16:56 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/live, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 14381  - [39m06/25/2026, 1:16:56 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/ready, GET} route[39m[38;5;3m +0ms[39m
-[33m[Nest] 14381  - [39m06/25/2026, 1:16:56 PM [33m   WARN[39m [38;5;3m[FirebaseService] [39m[33mFirebase service account not configured. Push notifications will be disabled.[39m
-[33m[Nest] 14381  - [39m06/25/2026, 1:16:56 PM [33m   WARN[39m [38;5;3m[EmailService] [39m[33mSendGrid API key not configured. Email notifications will be disabled.[39m
-[33m[Nest] 14381  - [39m06/25/2026, 1:16:56 PM [33m   WARN[39m [38;5;3m[SmsService] [39m[33mTwilio credentials not configured. SMS notifications will be disabled.[39m
-[32m[Nest] 14381  - [39m06/25/2026, 1:16:56 PM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +16ms[39m
-[32m[Nest] 14381  - [39m06/25/2026, 1:16:56 PM [32m    LOG[39m [32mNotification Service running on port 3006[39m
-[31m[Nest] 14381  - [39m06/25/2026, 1:17:45 PM [31m  ERROR[39m [38;5;3m[ExceptionFilter] [39m[31mUnhandled exception: Unknown authentication strategy "jwt"[39m
-Error: Unknown authentication strategy "jwt"
-    at attempt (/Users/deprof/www/azeebo+/node_modules/.pnpm/passport@0.7.0/node_modules/passport/lib/middleware/authenticate.js:193:39)
-    at authenticate (/Users/deprof/www/azeebo+/node_modules/.pnpm/passport@0.7.0/node_modules/passport/lib/middleware/authenticate.js:379:7)
-    at /Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+passport@11.0.5_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@_8c77ce69b7be5e9acfedcbbfec1585d5/node_modules/@nestjs/passport/dist/auth.guard.js:88:3
-    at new Promise (<anonymous>)
-    at /Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+passport@11.0.5_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@_8c77ce69b7be5e9acfedcbbfec1585d5/node_modules/@nestjs/passport/dist/auth.guard.js:80:83
-    at 1d1e6d935694b8e8c707e.canActivate (/Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+passport@11.0.5_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@_8c77ce69b7be5e9acfedcbbfec1585d5/node_modules/@nestjs/passport/dist/auth.guard.js:44:32)
-    at processTicksAndRejections (node:internal/process/task_queues:104:5)
-[31m[Nest] 14381  - [39m06/25/2026, 1:18:34 PM [31m  ERROR[39m [38;5;3m[ExceptionFilter] [39m[31mUnhandled exception: Unknown authentication strategy "jwt"[39m
-Error: Unknown authentication strategy "jwt"
-    at attempt (/Users/deprof/www/azeebo+/node_modules/.pnpm/passport@0.7.0/node_modules/passport/lib/middleware/authenticate.js:193:39)
-    at authenticate (/Users/deprof/www/azeebo+/node_modules/.pnpm/passport@0.7.0/node_modules/passport/lib/middleware/authenticate.js:379:7)
-    at /Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+passport@11.0.5_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@_8c77ce69b7be5e9acfedcbbfec1585d5/node_modules/@nestjs/passport/dist/auth.guard.js:88:3
-    at new Promise (<anonymous>)
-    at /Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+passport@11.0.5_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@_8c77ce69b7be5e9acfedcbbfec1585d5/node_modules/@nestjs/passport/dist/auth.guard.js:80:83
-    at 1d1e6d935694b8e8c707e.canActivate (/Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+passport@11.0.5_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@_8c77ce69b7be5e9acfedcbbfec1585d5/node_modules/@nestjs/passport/dist/auth.guard.js:44:32)
-    at processTicksAndRejections (node:internal/process/task_queues:104:5)
-[31m[Nest] 14381  - [39m06/25/2026, 7:44:30 PM [31m  ERROR[39m [38;5;3m[ExceptionFilter] [39m[31mUnhandled exception: Unknown authentication strategy "jwt"[39m
-Error: Unknown authentication strategy "jwt"
-    at attempt (/Users/deprof/www/azeebo+/node_modules/.pnpm/passport@0.7.0/node_modules/passport/lib/middleware/authenticate.js:193:39)
-    at authenticate (/Users/deprof/www/azeebo+/node_modules/.pnpm/passport@0.7.0/node_modules/passport/lib/middleware/authenticate.js:379:7)
-    at /Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+passport@11.0.5_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@_8c77ce69b7be5e9acfedcbbfec1585d5/node_modules/@nestjs/passport/dist/auth.guard.js:88:3
-    at new Promise (<anonymous>)
-    at /Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+passport@11.0.5_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@_8c77ce69b7be5e9acfedcbbfec1585d5/node_modules/@nestjs/passport/dist/auth.guard.js:80:83
-    at 1d1e6d935694b8e8c707e.canActivate (/Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+passport@11.0.5_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@_8c77ce69b7be5e9acfedcbbfec1585d5/node_modules/@nestjs/passport/dist/auth.guard.js:44:32)
-    at processTicksAndRejections (node:internal/process/task_queues:104:5)
-[31m[Nest] 14381  - [39m06/25/2026, 7:50:32 PM [31m  ERROR[39m [38;5;3m[ExceptionFilter] [39m[31mUnhandled exception: Unknown authentication strategy "jwt"[39m
-Error: Unknown authentication strategy "jwt"
-    at attempt (/Users/deprof/www/azeebo+/node_modules/.pnpm/passport@0.7.0/node_modules/passport/lib/middleware/authenticate.js:193:39)
-    at authenticate (/Users/deprof/www/azeebo+/node_modules/.pnpm/passport@0.7.0/node_modules/passport/lib/middleware/authenticate.js:379:7)
-    at /Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+passport@11.0.5_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@_8c77ce69b7be5e9acfedcbbfec1585d5/node_modules/@nestjs/passport/dist/auth.guard.js:88:3
-    at new Promise (<anonymous>)
-    at /Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+passport@11.0.5_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@_8c77ce69b7be5e9acfedcbbfec1585d5/node_modules/@nestjs/passport/dist/auth.guard.js:80:83
-    at 1d1e6d935694b8e8c707e.canActivate (/Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+passport@11.0.5_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@_8c77ce69b7be5e9acfedcbbfec1585d5/node_modules/@nestjs/passport/dist/auth.guard.js:44:32)
-    at processTicksAndRejections (node:internal/process/task_queues:104:5)
-[31m[Nest] 14381  - [39m06/26/2026, 3:22:43 AM [31m  ERROR[39m [38;5;3m[ExceptionFilter] [39m[31mUnhandled exception: Unknown authentication strategy "jwt"[39m
-Error: Unknown authentication strategy "jwt"
-    at attempt (/Users/deprof/www/azeebo+/node_modules/.pnpm/passport@0.7.0/node_modules/passport/lib/middleware/authenticate.js:193:39)
-    at authenticate (/Users/deprof/www/azeebo+/node_modules/.pnpm/passport@0.7.0/node_modules/passport/lib/middleware/authenticate.js:379:7)
-    at /Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+passport@11.0.5_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@_8c77ce69b7be5e9acfedcbbfec1585d5/node_modules/@nestjs/passport/dist/auth.guard.js:88:3
-    at new Promise (<anonymous>)
-    at /Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+passport@11.0.5_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@_8c77ce69b7be5e9acfedcbbfec1585d5/node_modules/@nestjs/passport/dist/auth.guard.js:80:83
-    at 1d1e6d935694b8e8c707e.canActivate (/Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+passport@11.0.5_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@_8c77ce69b7be5e9acfedcbbfec1585d5/node_modules/@nestjs/passport/dist/auth.guard.js:44:32)
-    at processTicksAndRejections (node:internal/process/task_queues:104:5)
-[31m[Nest] 14381  - [39m06/26/2026, 3:28:09 AM [31m  ERROR[39m [38;5;3m[ExceptionFilter] [39m[31mUnhandled exception: Unknown authentication strategy "jwt"[39m
-Error: Unknown authentication strategy "jwt"
-    at attempt (/Users/deprof/www/azeebo+/node_modules/.pnpm/passport@0.7.0/node_modules/passport/lib/middleware/authenticate.js:193:39)
-    at authenticate (/Users/deprof/www/azeebo+/node_modules/.pnpm/passport@0.7.0/node_modules/passport/lib/middleware/authenticate.js:379:7)
-    at /Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+passport@11.0.5_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@_8c77ce69b7be5e9acfedcbbfec1585d5/node_modules/@nestjs/passport/dist/auth.guard.js:88:3
-    at new Promise (<anonymous>)
-    at /Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+passport@11.0.5_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@_8c77ce69b7be5e9acfedcbbfec1585d5/node_modules/@nestjs/passport/dist/auth.guard.js:80:83
-    at 1d1e6d935694b8e8c707e.canActivate (/Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+passport@11.0.5_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@_8c77ce69b7be5e9acfedcbbfec1585d5/node_modules/@nestjs/passport/dist/auth.guard.js:44:32)
-    at processTicksAndRejections (node:internal/process/task_queues:104:5)
-[31m[Nest] 14381  - [39m06/26/2026, 3:34:09 AM [31m  ERROR[39m [38;5;3m[ExceptionFilter] [39m[31mUnhandled exception: Unknown authentication strategy "jwt"[39m
-Error: Unknown authentication strategy "jwt"
-    at attempt (/Users/deprof/www/azeebo+/node_modules/.pnpm/passport@0.7.0/node_modules/passport/lib/middleware/authenticate.js:193:39)
-    at authenticate (/Users/deprof/www/azeebo+/node_modules/.pnpm/passport@0.7.0/node_modules/passport/lib/middleware/authenticate.js:379:7)
-    at /Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+passport@11.0.5_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@_8c77ce69b7be5e9acfedcbbfec1585d5/node_modules/@nestjs/passport/dist/auth.guard.js:88:3
-    at new Promise (<anonymous>)
-    at /Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+passport@11.0.5_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@_8c77ce69b7be5e9acfedcbbfec1585d5/node_modules/@nestjs/passport/dist/auth.guard.js:80:83
-    at 1d1e6d935694b8e8c707e.canActivate (/Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+passport@11.0.5_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@_8c77ce69b7be5e9acfedcbbfec1585d5/node_modules/@nestjs/passport/dist/auth.guard.js:44:32)
-    at processTicksAndRejections (node:internal/process/task_queues:104:5)
-[31m[Nest] 14381  - [39m06/26/2026, 3:40:09 AM [31m  ERROR[39m [38;5;3m[ExceptionFilter] [39m[31mUnhandled exception: Unknown authentication strategy "jwt"[39m
-Error: Unknown authentication strategy "jwt"
-    at attempt (/Users/deprof/www/azeebo+/node_modules/.pnpm/passport@0.7.0/node_modules/passport/lib/middleware/authenticate.js:193:39)
-    at authenticate (/Users/deprof/www/azeebo+/node_modules/.pnpm/passport@0.7.0/node_modules/passport/lib/middleware/authenticate.js:379:7)
-    at /Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+passport@11.0.5_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@_8c77ce69b7be5e9acfedcbbfec1585d5/node_modules/@nestjs/passport/dist/auth.guard.js:88:3
-    at new Promise (<anonymous>)
-    at /Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+passport@11.0.5_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@_8c77ce69b7be5e9acfedcbbfec1585d5/node_modules/@nestjs/passport/dist/auth.guard.js:80:83
-    at 1d1e6d935694b8e8c707e.canActivate (/Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+passport@11.0.5_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@_8c77ce69b7be5e9acfedcbbfec1585d5/node_modules/@nestjs/passport/dist/auth.guard.js:44:32)
-    at processTicksAndRejections (node:internal/process/task_queues:104:5)
-[31m[Nest] 14381  - [39m06/26/2026, 3:45:09 AM [31m  ERROR[39m [38;5;3m[ExceptionFilter] [39m[31mUnhandled exception: Unknown authentication strategy "jwt"[39m
-Error: Unknown authentication strategy "jwt"
-    at attempt (/Users/deprof/www/azeebo+/node_modules/.pnpm/passport@0.7.0/node_modules/passport/lib/middleware/authenticate.js:193:39)
-    at authenticate (/Users/deprof/www/azeebo+/node_modules/.pnpm/passport@0.7.0/node_modules/passport/lib/middleware/authenticate.js:379:7)
-    at /Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+passport@11.0.5_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@_8c77ce69b7be5e9acfedcbbfec1585d5/node_modules/@nestjs/passport/dist/auth.guard.js:88:3
-    at new Promise (<anonymous>)
-    at /Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+passport@11.0.5_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@_8c77ce69b7be5e9acfedcbbfec1585d5/node_modules/@nestjs/passport/dist/auth.guard.js:80:83
-    at 1d1e6d935694b8e8c707e.canActivate (/Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+passport@11.0.5_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@_8c77ce69b7be5e9acfedcbbfec1585d5/node_modules/@nestjs/passport/dist/auth.guard.js:44:32)
-    at processTicksAndRejections (node:internal/process/task_queues:104:5)
-[31m[Nest] 14381  - [39m06/26/2026, 3:52:51 AM [31m  ERROR[39m [38;5;3m[ExceptionFilter] [39m[31mUnhandled exception: Unknown authentication strategy "jwt"[39m
-Error: Unknown authentication strategy "jwt"
-    at attempt (/Users/deprof/www/azeebo+/node_modules/.pnpm/passport@0.7.0/node_modules/passport/lib/middleware/authenticate.js:193:39)
-    at authenticate (/Users/deprof/www/azeebo+/node_modules/.pnpm/passport@0.7.0/node_modules/passport/lib/middleware/authenticate.js:379:7)
-    at /Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+passport@11.0.5_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@_8c77ce69b7be5e9acfedcbbfec1585d5/node_modules/@nestjs/passport/dist/auth.guard.js:88:3
-    at new Promise (<anonymous>)
-    at /Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+passport@11.0.5_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@_8c77ce69b7be5e9acfedcbbfec1585d5/node_modules/@nestjs/passport/dist/auth.guard.js:80:83
-    at 1d1e6d935694b8e8c707e.canActivate (/Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+passport@11.0.5_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@_8c77ce69b7be5e9acfedcbbfec1585d5/node_modules/@nestjs/passport/dist/auth.guard.js:44:32)
-    at processTicksAndRejections (node:internal/process/task_queues:104:5)
-[31m[Nest] 14381  - [39m06/26/2026, 4:02:14 AM [31m  ERROR[39m [38;5;3m[ExceptionFilter] [39m[31mUnhandled exception: Unknown authentication strategy "jwt"[39m
-Error: Unknown authentication strategy "jwt"
-    at attempt (/Users/deprof/www/azeebo+/node_modules/.pnpm/passport@0.7.0/node_modules/passport/lib/middleware/authenticate.js:193:39)
-    at authenticate (/Users/deprof/www/azeebo+/node_modules/.pnpm/passport@0.7.0/node_modules/passport/lib/middleware/authenticate.js:379:7)
-    at /Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+passport@11.0.5_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@_8c77ce69b7be5e9acfedcbbfec1585d5/node_modules/@nestjs/passport/dist/auth.guard.js:88:3
-    at new Promise (<anonymous>)
-    at /Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+passport@11.0.5_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@_8c77ce69b7be5e9acfedcbbfec1585d5/node_modules/@nestjs/passport/dist/auth.guard.js:80:83
-    at 1d1e6d935694b8e8c707e.canActivate (/Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+passport@11.0.5_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@_8c77ce69b7be5e9acfedcbbfec1585d5/node_modules/@nestjs/passport/dist/auth.guard.js:44:32)
-    at processTicksAndRejections (node:internal/process/task_queues:104:5)
-[31m[Nest] 14381  - [39m06/26/2026, 4:32:06 AM [31m  ERROR[39m [38;5;3m[ExceptionFilter] [39m[31mUnhandled exception: Unknown authentication strategy "jwt"[39m
-Error: Unknown authentication strategy "jwt"
-    at attempt (/Users/deprof/www/azeebo+/node_modules/.pnpm/passport@0.7.0/node_modules/passport/lib/middleware/authenticate.js:193:39)
-    at authenticate (/Users/deprof/www/azeebo+/node_modules/.pnpm/passport@0.7.0/node_modules/passport/lib/middleware/authenticate.js:379:7)
-    at /Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+passport@11.0.5_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@_8c77ce69b7be5e9acfedcbbfec1585d5/node_modules/@nestjs/passport/dist/auth.guard.js:88:3
-    at new Promise (<anonymous>)
-    at /Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+passport@11.0.5_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@_8c77ce69b7be5e9acfedcbbfec1585d5/node_modules/@nestjs/passport/dist/auth.guard.js:80:83
-    at 1d1e6d935694b8e8c707e.canActivate (/Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+passport@11.0.5_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@_8c77ce69b7be5e9acfedcbbfec1585d5/node_modules/@nestjs/passport/dist/auth.guard.js:44:32)
-    at processTicksAndRejections (node:internal/process/task_queues:104:5)
-[31m[Nest] 14381  - [39m06/26/2026, 4:37:12 AM [31m  ERROR[39m [38;5;3m[ExceptionFilter] [39m[31mUnhandled exception: Unknown authentication strategy "jwt"[39m
-Error: Unknown authentication strategy "jwt"
-    at attempt (/Users/deprof/www/azeebo+/node_modules/.pnpm/passport@0.7.0/node_modules/passport/lib/middleware/authenticate.js:193:39)
-    at authenticate (/Users/deprof/www/azeebo+/node_modules/.pnpm/passport@0.7.0/node_modules/passport/lib/middleware/authenticate.js:379:7)
-    at /Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+passport@11.0.5_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@_8c77ce69b7be5e9acfedcbbfec1585d5/node_modules/@nestjs/passport/dist/auth.guard.js:88:3
-    at new Promise (<anonymous>)
-    at /Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+passport@11.0.5_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@_8c77ce69b7be5e9acfedcbbfec1585d5/node_modules/@nestjs/passport/dist/auth.guard.js:80:83
-    at 1d1e6d935694b8e8c707e.canActivate (/Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+passport@11.0.5_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@_8c77ce69b7be5e9acfedcbbfec1585d5/node_modules/@nestjs/passport/dist/auth.guard.js:44:32)
-    at processTicksAndRejections (node:internal/process/task_queues:104:5)
-[31m[Nest] 14381  - [39m06/26/2026, 6:22:27 AM [31m  ERROR[39m [38;5;3m[ExceptionFilter] [39m[31mUnhandled exception: Unknown authentication strategy "jwt"[39m
-Error: Unknown authentication strategy "jwt"
-    at attempt (/Users/deprof/www/azeebo+/node_modules/.pnpm/passport@0.7.0/node_modules/passport/lib/middleware/authenticate.js:193:39)
-    at authenticate (/Users/deprof/www/azeebo+/node_modules/.pnpm/passport@0.7.0/node_modules/passport/lib/middleware/authenticate.js:379:7)
-    at /Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+passport@11.0.5_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@_8c77ce69b7be5e9acfedcbbfec1585d5/node_modules/@nestjs/passport/dist/auth.guard.js:88:3
-    at new Promise (<anonymous>)
-    at /Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+passport@11.0.5_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@_8c77ce69b7be5e9acfedcbbfec1585d5/node_modules/@nestjs/passport/dist/auth.guard.js:80:83
-    at 1d1e6d935694b8e8c707e.canActivate (/Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+passport@11.0.5_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@_8c77ce69b7be5e9acfedcbbfec1585d5/node_modules/@nestjs/passport/dist/auth.guard.js:44:32)
-    at processTicksAndRejections (node:internal/process/task_queues:104:5)
-[31m[Nest] 14381  - [39m06/26/2026, 6:33:05 AM [31m  ERROR[39m [38;5;3m[ExceptionFilter] [39m[31mUnhandled exception: Unknown authentication strategy "jwt"[39m
-Error: Unknown authentication strategy "jwt"
-    at attempt (/Users/deprof/www/azeebo+/node_modules/.pnpm/passport@0.7.0/node_modules/passport/lib/middleware/authenticate.js:193:39)
-    at authenticate (/Users/deprof/www/azeebo+/node_modules/.pnpm/passport@0.7.0/node_modules/passport/lib/middleware/authenticate.js:379:7)
-    at /Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+passport@11.0.5_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@_8c77ce69b7be5e9acfedcbbfec1585d5/node_modules/@nestjs/passport/dist/auth.guard.js:88:3
-    at new Promise (<anonymous>)
-    at /Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+passport@11.0.5_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@_8c77ce69b7be5e9acfedcbbfec1585d5/node_modules/@nestjs/passport/dist/auth.guard.js:80:83
-    at 1d1e6d935694b8e8c707e.canActivate (/Users/deprof/www/azeebo+/node_modules/.pnpm/@nestjs+passport@11.0.5_@nestjs+common@11.1.27_class-transformer@0.5.1_class-validator@_8c77ce69b7be5e9acfedcbbfec1585d5/node_modules/@nestjs/passport/dist/auth.guard.js:44:32)
-    at processTicksAndRejections (node:internal/process/task_queues:104:5)
+[INFO] 11:04:58 ts-node-dev ver. 2.0.0 (using ts-node ver. 10.9.2, typescript ver. 5.9.3)
+[32m[Nest] 47132  - [39m06/26/2026, 11:04:59 AM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
+[32m[Nest] 47132  - [39m06/26/2026, 11:04:59 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisModule dependencies initialized[39m[38;5;3m +16ms[39m
+[32m[Nest] 47132  - [39m06/26/2026, 11:04:59 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDatabaseModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 47132  - [39m06/26/2026, 11:04:59 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPassportModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 47132  - [39m06/26/2026, 11:04:59 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +19ms[39m
+[32m[Nest] 47132  - [39m06/26/2026, 11:04:59 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisCoreModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 47132  - [39m06/26/2026, 11:04:59 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 47132  - [39m06/26/2026, 11:04:59 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 47132  - [39m06/26/2026, 11:04:59 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 47132  - [39m06/26/2026, 11:04:59 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 47132  - [39m06/26/2026, 11:04:59 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mFirebaseModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 47132  - [39m06/26/2026, 11:04:59 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mEmailModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 47132  - [39m06/26/2026, 11:04:59 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mSmsModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 47132  - [39m06/26/2026, 11:04:59 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRateLimiterModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 47132  - [39m06/26/2026, 11:04:59 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 47132  - [39m06/26/2026, 11:04:59 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 47132  - [39m06/26/2026, 11:04:59 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAdminModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 47132  - [39m06/26/2026, 11:04:59 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mNotificationsModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 47132  - [39m06/26/2026, 11:04:59 AM [32m    LOG[39m [32mSwagger documentation enabled at /docs[39m
+[32m[Nest] 47132  - [39m06/26/2026, 11:04:59 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mNotificationsController {/v1/notifications}:[39m[38;5;3m +2ms[39m
+[32m[Nest] 47132  - [39m06/26/2026, 11:04:59 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/notifications, GET} route[39m[38;5;3m +2ms[39m
+[32m[Nest] 47132  - [39m06/26/2026, 11:04:59 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/notifications/:id/read, PATCH} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 47132  - [39m06/26/2026, 11:04:59 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/notifications/read-all, PATCH} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 47132  - [39m06/26/2026, 11:04:59 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/notifications/preferences, PUT} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 47132  - [39m06/26/2026, 11:04:59 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/notifications/settings, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 47132  - [39m06/26/2026, 11:04:59 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/notifications/unread-count, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 47132  - [39m06/26/2026, 11:04:59 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/notifications/push-tokens, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 47132  - [39m06/26/2026, 11:04:59 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/notifications/push-tokens, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 47132  - [39m06/26/2026, 11:04:59 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/notifications/push-tokens/:token, DELETE} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 47132  - [39m06/26/2026, 11:04:59 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAdminController {/admin}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 47132  - [39m06/26/2026, 11:04:59 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/stats, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 47132  - [39m06/26/2026, 11:04:59 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/notifications, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 47132  - [39m06/26/2026, 11:04:59 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/notifications, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 47132  - [39m06/26/2026, 11:04:59 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHealthController {/health}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 47132  - [39m06/26/2026, 11:04:59 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 47132  - [39m06/26/2026, 11:04:59 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/live, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 47132  - [39m06/26/2026, 11:04:59 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/ready, GET} route[39m[38;5;3m +0ms[39m
+[33m[Nest] 47132  - [39m06/26/2026, 11:04:59 AM [33m   WARN[39m [38;5;3m[FirebaseService] [39m[33mFirebase service account not configured. Push notifications will be disabled.[39m
+[33m[Nest] 47132  - [39m06/26/2026, 11:04:59 AM [33m   WARN[39m [38;5;3m[EmailService] [39m[33mSendGrid API key not configured. Email notifications will be disabled.[39m
+[33m[Nest] 47132  - [39m06/26/2026, 11:04:59 AM [33m   WARN[39m [38;5;3m[SmsService] [39m[33mTwilio credentials not configured. SMS notifications will be disabled.[39m
+[32m[Nest] 47132  - [39m06/26/2026, 11:04:59 AM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +14ms[39m
+[32m[Nest] 47132  - [39m06/26/2026, 11:04:59 AM [32m    LOG[39m [32mNotification Service running on port 3006[39m

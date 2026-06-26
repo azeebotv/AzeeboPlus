@@ -47,19 +47,19 @@ export const engagementApi = {
     category = 'all'
   ): Promise<ApiResponse<LeaderboardEntry[]>> {
     const response = await apiClient.get<LeaderboardEntry[]>(
-      `/v1/engagement/leaderboard?timePeriod=${timePeriod}&category=${category}`
+      `/api/v1/engagement/leaderboard?timePeriod=${timePeriod}&category=${category}`
     );
     return { success: true, data: response };
   },
 
   async getRankings(): Promise<ApiResponse<RankingCategory[]>> {
-    const response = await apiClient.get<RankingCategory[]>('/v1/engagement/rankings');
+    const response = await apiClient.get<RankingCategory[]>('/api/v1/engagement/rankings');
     return { success: true, data: response };
   },
 
   async getPredictionResults(predictionId: string): Promise<ApiResponse<PredictionResult>> {
     const response = await apiClient.get<PredictionResult>(
-      `/v1/reality/predictions/${predictionId}/results`
+      `/api/v1/reality/predictions/${predictionId}/results`
     );
     return { success: true, data: response };
   },
@@ -110,30 +110,30 @@ export interface RealityContestant {
 
 export const realityApi = {
   async getLiveViewerCount(showId: string): Promise<ApiResponse<{ count: number }>> {
-    const response = await apiClient.get<{ count: number }>(`/v1/reality/shows/${showId}/viewers`);
+    const response = await apiClient.get<{ count: number }>(`/api/v1/reality/shows/${showId}/viewers`);
     return { success: true, data: response };
   },
 
   async getShowDetails(showId: string): Promise<ApiResponse<RealityShow>> {
-    const response = await apiClient.get<RealityShow>(`/v1/reality/shows/${showId}`);
+    const response = await apiClient.get<RealityShow>(`/api/v1/reality/shows/${showId}`);
     return { success: true, data: response };
   },
 
   async getEpisodes(showId: string): Promise<ApiResponse<RealityEpisode[]>> {
-    const response = await apiClient.get<RealityEpisode[]>(`/v1/reality/shows/${showId}/episodes`);
+    const response = await apiClient.get<RealityEpisode[]>(`/api/v1/reality/shows/${showId}/episodes`);
     return { success: true, data: response };
   },
 
   async getContestants(showId: string): Promise<ApiResponse<RealityContestant[]>> {
     const response = await apiClient.get<RealityContestant[]>(
-      `/v1/reality/shows/${showId}/contestants`
+      `/api/v1/reality/shows/${showId}/contestants`
     );
     return { success: true, data: response };
   },
 
   async getPredictionResults(predictionId: string): Promise<ApiResponse<PredictionResult>> {
     const response = await apiClient.get<PredictionResult>(
-      `/v1/reality/predictions/${predictionId}/results`
+      `/api/v1/reality/predictions/${predictionId}/results`
     );
     return { success: true, data: response };
   },
@@ -170,13 +170,13 @@ export const homepageEngagementApi = {
     offset = 0
   ): Promise<ApiResponse<{ items: EngagementHistoryItem[]; hasMore: boolean }>> => {
     const response = await apiClient.get<{ items: EngagementHistoryItem[]; hasMore: boolean }>(
-      `/v1/users/me/history?limit=${limit}&offset=${offset}`
+      `/api/v1/users/me/history?limit=${limit}&offset=${offset}`
     );
     return { success: true, data: response };
   },
 
   getUniverseEngagement: async (): Promise<ApiResponse<UserUniverseEngagement[]>> => {
-    const response = await apiClient.get<UserUniverseEngagement[]>('/v1/users/me/universes');
+    const response = await apiClient.get<UserUniverseEngagement[]>('/api/v1/users/me/universes');
     return { success: true, data: response };
   },
 
@@ -185,40 +185,40 @@ export const homepageEngagementApi = {
     limit = 12
   ): Promise<ApiResponse<ContentItem[]>> => {
     const response = await apiClient.get<ContentItem[]>(
-      `/v1/content/universe/${universeId}?limit=${limit}&sort=trending`
+      `/api/v1/content/universe/${universeId}?limit=${limit}&sort=trending`
     );
     return { success: true, data: response };
   },
 
   getNewReleases: async (limit = 12): Promise<ApiResponse<ContentItem[]>> => {
-    const response = await apiClient.get<ContentItem[]>(`/v1/content/new-releases?limit=${limit}`);
+    const response = await apiClient.get<ContentItem[]>(`/api/v1/content/new-releases?limit=${limit}`);
     return { success: true, data: response };
   },
 
   getContinueWatching: async (limit = 10): Promise<ApiResponse<ContentItem[]>> => {
     const response = await apiClient.get<ContentItem[]>(
-      `/v1/users/me/continue-watching?limit=${limit}`
+      `/api/v1/users/me/continue-watching?limit=${limit}`
     );
     return { success: true, data: response };
   },
 
   getPopularInRegion: async (limit = 12): Promise<ApiResponse<ContentItem[]>> => {
     const response = await apiClient.get<ContentItem[]>(
-      `/v1/content/popular-region?limit=${limit}`
+      `/api/v1/content/popular-region?limit=${limit}`
     );
     return { success: true, data: response };
   },
 
   getPersonalizedRecommendations: async (): Promise<ApiResponse<RecommendationGroup[]>> => {
     const response = await apiClient.get<RecommendationGroup[]>(
-      '/v1/recommendation/personalized'
+      '/api/v1/recommendation/personalized'
     );
     return { success: true, data: response };
   },
 
   getFeaturedSlides: async (limit = 5): Promise<ApiResponse<ContentItem[]>> => {
     const response = await apiClient.get<ContentItem[]>(
-      `/v1/content/featured-slides?limit=${limit}`
+      `/api/v1/content/featured-slides?limit=${limit}`
     );
     return { success: true, data: response };
   },

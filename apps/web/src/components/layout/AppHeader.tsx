@@ -2,41 +2,36 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '../../context/AuthContext';
 import BrandLogo from '../auth/BrandLogo';
 import { apiFetch } from '../../lib/api/base';
 
 /* ─── Constants ─── */
 
-const UNIVERSE_TABS = [
-  { key: 'reality', label: 'Reality', href: '/universe/reality', hasLive: true },
-  { key: 'creators', label: 'Creators', href: '/universe/creators' },
-  { key: 'lifestyle', label: 'Lifestyle', href: '/universe/lifestyle' },
-  { key: 'vertical', label: 'Vertical', href: '/universe/vertical' },
-  { key: 'movies', label: 'Movies', href: '/universe/movies' },
-  { key: 'games', label: 'Games', href: '/universe/games' },
-  { key: 'comedy', label: 'Comedy', href: '/universe/comedy' },
-  { key: 'sports', label: 'Sports', href: '/universe/sports' },
-] as const;
-
-const SEARCH_UNIVERSE_FILTERS = ['All', 'Reality', 'Creators', 'Movies', 'Games', 'Sports'] as const;
-
-const TRENDING_SEARCHES = [
-  'BBNaija All Stars',
-  'Nollywood movies',
-  'Lagos comedy',
-  'Afrobeats concert',
-  'Big Brother',
-  'Naija football',
+const NAV_LINKS = [
+  { label: 'Home', href: '/home' },
+  { label: 'Browse', href: '/browse' },
+  { label: 'Library', href: '/library' },
 ];
 
-const AVATAR_MENU_ITEMS = [
-  { label: 'Profile', href: '/profile' },
-  { label: 'Wallet', href: '/wallet' },
-  { label: 'Rewards', href: '/rewards' },
-  { label: 'Creator tools', href: '/creators', role: 'creator' as const },
-  { label: 'Settings', href: '/settings' },
+const UNIVERSE_OPTIONS = [
+  { key: 'reality', label: 'Reality', href: '/reality' },
+  { key: 'creators', label: 'Creators', href: '/creators' },
+  { key: 'lifestyle', label: 'Lifestyle', href: '/lifestyle' },
+  { key: 'vertical', label: 'Vertical', href: '/vertical' },
+  { key: 'movies', label: 'Movies', href: '/movies' },
+  { key: 'games', label: 'Games', href: '/games' },
+  { key: 'comedy', label: 'Comedy', href: '/comedy' },
+  { key: 'sports', label: 'Sports', href: '/sports' },
+] as const;
+
+const PROFILE_MENU_ITEMS: { label: string; href: string; icon: 'user' | 'star' | 'wallet' | 'creator' | 'settings'; creatorOnly?: boolean }[] = [
+  { label: 'Profile', href: '/profile', icon: 'user' },
+  { label: 'Rewards', href: '/rewards', icon: 'star' },
+  { label: 'Wallet', href: '/wallet', icon: 'wallet' },
+  { label: 'Creator Dashboard', href: '/creators/dashboard', icon: 'creator', creatorOnly: true },
+  { label: 'Settings', href: '/settings', icon: 'settings' },
 ];
 
 /* ─── Helpers ─── */
@@ -57,14 +52,48 @@ function seededGradient(userId: string): string {
   return `linear-gradient(135deg, hsl(${hue}, 70%, 50%), hsl(${(hue + 40) % 360}, 60%, 40%))`;
 }
 
-function formatCountdown(ms: number): string {
-  if (ms <= 0) return '0m';
-  const h = Math.floor(ms / 3600000);
-  const m = Math.floor((ms % 3600000) / 60000);
-  const s = Math.floor((ms % 60000) / 1000);
-  if (h > 0) return `${h}h ${m}m`;
-  if (m > 0) return `${m}m ${s}s`;
-  return `${s}s`;
+function formatBalance(amount: number): string {
+  if (amount >= 1000000) return `₦${(amount / 1000000).toFixed(1)}M`;
+  if (amount >= 1000) return `₦${(amount / 1000).toFixed(amount >= 10000 ? 0 : 1)}k`;
+  return `₦${amount.toLocaleString()}`;
+}
+
+/* ─── Profile menu icon component ─── */
+function MenuIcon({ type }: { type: 'user' | 'star' | 'wallet' | 'creator' | 'settings' }) {
+  const cls = 'w-4 h-4 flex-shrink-0';
+  switch (type) {
+    case 'user':
+      return (
+        <svg className={cls} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+        </svg>
+      );
+    case 'star':
+      return (
+        <svg className={cls} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
+        </svg>
+      );
+    case 'wallet':
+      return (
+        <svg className={cls} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a2.25 2.25 0 00-2.25-2.25H15a3 3 0 11-6 0H5.25A2.25 2.25 0 003 12m18 0v6a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 18v-6m18 0V9M3 12V9m18 0a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 9m18 0V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v3" />
+        </svg>
+      );
+    case 'creator':
+      return (
+        <svg className={cls} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" />
+        </svg>
+      );
+    case 'settings':
+      return (
+        <svg className={cls} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+      );
+  }
 }
 
 /* ─── AppHeader ─── */
@@ -72,38 +101,25 @@ function formatCountdown(ms: number): string {
 export default function AppHeader({ active }: { active?: string }) {
   const { user, isAuthenticated, logout } = useAuth();
   const pathname = usePathname();
+  const router = useRouter();
   const isCreator = user?.role === 'creator' || user?.role === 'CREATOR';
 
-  // Global state
+  // UI state
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [universesOpen, setUniversesOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchFilter, setSearchFilter] = useState('All');
-  const [recentSearches, setRecentSearches] = useState<string[]>([]);
-  const [userMenuOpen, setUserMenuOpen] = useState(false);
-
-  // Live ticker
-  const [liveEvent, setLiveEvent] = useState<{ title: string; endsAt: string; href: string } | null>(null);
-  const [tickerDismissed, setTickerDismissed] = useState(false);
-  const [countdown, setCountdown] = useState('');
-  const [isRealityLive, setIsRealityLive] = useState(false);
-
-  // Notifications
-  const [unreadCount, setUnreadCount] = useState(0);
-
-  // Search results
-  const [searchResults, setSearchResults] = useState<any[]>([]);
-  const [searchLoading, setSearchLoading] = useState(false);
+  const [confirmLogout, setConfirmLogout] = useState(false);
 
   // Refs
   const searchInputRef = useRef<HTMLInputElement>(null);
   const hamburgerRef = useRef<HTMLButtonElement>(null);
   const drawerRef = useRef<HTMLDivElement>(null);
-  const userMenuRef = useRef<HTMLDivElement>(null);
+  const profileMenuRef = useRef<HTMLDivElement>(null);
+  const universeDropdownRef = useRef<HTMLDivElement>(null);
   const searchOverlayRef = useRef<HTMLDivElement>(null);
-  const universeNavRef = useRef<HTMLDivElement>(null);
-  const [activeTabIndicator, setActiveTabIndicator] = useState<{ left: number; width: number } | null>(null);
 
   /* ─── Scroll Effect ─── */
   useEffect(() => {
@@ -118,11 +134,13 @@ export default function AppHeader({ active }: { active?: string }) {
     return () => { document.body.style.overflow = ''; };
   }, [mobileMenuOpen]);
 
-  /* ─── Close menus on route change ─── */
+  /* ─── Close on route change ─── */
   useEffect(() => {
     setMobileMenuOpen(false);
-    setUserMenuOpen(false);
+    setProfileOpen(false);
+    setUniversesOpen(false);
     setSearchOpen(false);
+    setConfirmLogout(false);
   }, [pathname]);
 
   /* ─── Keyboard: Esc closes overlays ─── */
@@ -131,405 +149,295 @@ export default function AppHeader({ active }: { active?: string }) {
       if (e.key === 'Escape') {
         if (searchOpen) { setSearchOpen(false); return; }
         if (mobileMenuOpen) { setMobileMenuOpen(false); hamburgerRef.current?.focus(); return; }
-        if (userMenuOpen) setUserMenuOpen(false);
+        if (profileOpen) { setProfileOpen(false); return; }
+        if (universesOpen) { setUniversesOpen(false); return; }
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [searchOpen, mobileMenuOpen, userMenuOpen]);
+  }, [searchOpen, mobileMenuOpen, profileOpen, universesOpen]);
 
   /* ─── Click outside for dropdowns ─── */
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) setUserMenuOpen(false);
+      if (profileMenuRef.current && !profileMenuRef.current.contains(e.target as Node)) setProfileOpen(false);
+      if (universeDropdownRef.current && !universeDropdownRef.current.contains(e.target as Node)) setUniversesOpen(false);
     };
-    if (userMenuOpen) document.addEventListener('mousedown', handler);
+    if (profileOpen || universesOpen) document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
-  }, [userMenuOpen]);
+  }, [profileOpen, universesOpen]);
 
-  /* ─── Fetch live event ─── */
+  /* ─── Search auto-focus ─── */
   useEffect(() => {
-    let cancelled = false;
-    const fetchLive = async () => {
-      try {
-        const res = await apiFetch<any>('/reality/live');
-        if (!cancelled && res?.success && res.data) {
-          const ev = res.data;
-          setLiveEvent({
-            title: ev.title || ev.name || 'Live Event',
-            endsAt: ev.endsAt || ev.endDate || '',
-            href: ev.href || ev.url || '/universe/reality',
-          });
-          setIsRealityLive(true);
-        }
-      } catch {
-        // no live event — silent
-      }
-    };
-    fetchLive();
-    const interval = setInterval(fetchLive, 60000);
-    return () => { cancelled = true; clearInterval(interval); };
-  }, []);
-
-  /* ─── Countdown timer ─── */
-  useEffect(() => {
-    if (!liveEvent?.endsAt) return;
-    const tick = () => {
-      const diff = new Date(liveEvent.endsAt).getTime() - Date.now();
-      setCountdown(formatCountdown(diff));
-    };
-    tick();
-    const interval = setInterval(tick, 1000);
-    return () => clearInterval(interval);
-  }, [liveEvent?.endsAt]);
-
-  /* ─── Fetch unread notifications count ─── */
-  useEffect(() => {
-    if (!isAuthenticated) return;
-    let cancelled = false;
-    const fetchCount = async () => {
-      try {
-        const res = await apiFetch<any>('/notifications/unread-count');
-        if (!cancelled && res?.success) setUnreadCount(res.data?.count ?? 0);
-      } catch { /* silent */ }
-    };
-    fetchCount();
-    const interval = setInterval(fetchCount, 30000);
-    return () => { cancelled = true; clearInterval(interval); };
-  }, [isAuthenticated]);
-
-  /* ─── Load recent searches from localStorage ─── */
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem('azeebo_recent_searches');
-      if (stored) setRecentSearches(JSON.parse(stored));
-    } catch { /* silent */ }
-  }, []);
-
-  /* ─── Search input auto-focus ─── */
-  useEffect(() => {
-    if (searchOpen) {
-      setTimeout(() => searchInputRef.current?.focus(), 50);
-    }
+    if (searchOpen) setTimeout(() => searchInputRef.current?.focus(), 50);
   }, [searchOpen]);
-
-  /* ─── Search debounce ─── */
-  useEffect(() => {
-    if (!searchQuery.trim() || searchQuery.trim().length < 2) {
-      setSearchResults([]);
-      setSearchLoading(false);
-      return;
-    }
-    setSearchLoading(true);
-    const timer = setTimeout(async () => {
-      try {
-        const params = new URLSearchParams({ q: searchQuery.trim(), limit: '8' });
-        if (searchFilter !== 'All') params.set('universe', searchFilter.toLowerCase());
-        const res = await apiFetch<any>(`/search?${params}`);
-        if (res?.success) setSearchResults(res.data?.results ?? []);
-      } catch { setSearchResults([]); }
-      setSearchLoading(false);
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [searchQuery, searchFilter]);
-
-  /* ─── Ticker dismissed state from sessionStorage ─── */
-  useEffect(() => {
-    setTickerDismissed(sessionStorage.getItem('ticker_dismissed') === '1');
-  }, []);
-
-  const dismissTicker = useCallback(() => {
-    setTickerDismissed(true);
-    sessionStorage.setItem('ticker_dismissed', '1');
-  }, []);
-
-  /* ─── Universe tab underline indicator ─── */
-  const updateTabIndicator = useCallback(() => {
-    if (!universeNavRef.current) return;
-    const activeEl = universeNavRef.current.querySelector('[data-tab-active="true"]') as HTMLElement | null;
-    if (activeEl) {
-      const navRect = universeNavRef.current.getBoundingClientRect();
-      const tabRect = activeEl.getBoundingClientRect();
-      setActiveTabIndicator({ left: tabRect.left - navRect.left, width: tabRect.width });
-    } else {
-      setActiveTabIndicator(null);
-    }
-  }, [pathname]);
-
-  useEffect(() => {
-    updateTabIndicator();
-    window.addEventListener('resize', updateTabIndicator);
-    return () => window.removeEventListener('resize', updateTabIndicator);
-  }, [updateTabIndicator, pathname]);
 
   /* ─── Search submit ─── */
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const q = searchQuery.trim();
     if (!q) return;
-    // Save to recent searches
-    const next = [q, ...recentSearches.filter((s) => s !== q)].slice(0, 5);
-    setRecentSearches(next);
-    localStorage.setItem('azeebo_recent_searches', JSON.stringify(next));
-    window.location.href = `/search?q=${encodeURIComponent(q)}`;
+    setSearchOpen(false);
+    setSearchQuery('');
+    router.push(`/search?q=${encodeURIComponent(q)}`);
   };
 
-  /* ─── Check if a universe tab is active ─── */
-  const isTabActive = (href: string) => pathname.startsWith(href);
+  /* ─── Log out with confirmation ─── */
+  const handleLogout = useCallback(() => {
+    if (!confirmLogout) {
+      setConfirmLogout(true);
+      return;
+    }
+    setConfirmLogout(false);
+    setProfileOpen(false);
+    logout();
+  }, [confirmLogout, logout]);
 
-  /* ─── Ticker: show only when live + not dismissed ─── */
-  const showTicker = !!liveEvent && !tickerDismissed;
+  const isActive = (href: string) => pathname === href || pathname.startsWith(href + '/');
 
   return (
     <>
       <header
         className="fixed top-0 left-0 right-0 z-[100] transition-all duration-500"
         style={{
-          backdropFilter: 'blur(18px)',
-          WebkitBackdropFilter: 'blur(18px)',
-          background: scrolled ? 'rgba(9,9,15,0.96)' : 'rgba(9,9,15,0.82)',
-          borderBottom: `1px solid rgba(255,255,255,${scrolled ? '0.1' : '0.07'})`,
+          backdropFilter: 'blur(18px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(18px) saturate(180%)',
+          background: scrolled ? 'rgba(9,9,15,0.92)' : 'rgba(9,9,15,0.75)',
+          borderTop: '1px solid rgba(255,255,255,0.04)',
+          borderBottom: `1px solid rgba(255,255,255,${scrolled ? '0.1' : '0.06'})`,
+          boxShadow: `0 1px ${scrolled ? '24px' : '12px'} rgba(0,0,0,${scrolled ? '0.4' : '0.2'})`,
         }}
         role="banner"
       >
-        {/* ═══ Layer 1 — Live Event Ticker Strip ═══ */}
-        {showTicker && (
-          <div
-            className="relative overflow-hidden transition-all duration-500"
-            style={{
-              background: 'rgba(232,74,95,0.08)',
-              borderLeft: '3px solid #E8420A',
-            }}
-          >
-            <div className="max-w-[1280px] mx-auto px-4 sm:px-6 flex items-center justify-between h-9 gap-3">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <span className="relative flex-shrink-0">
-                  <span
-                    className="block w-2 h-2 rounded-full"
-                    style={{ background: '#E8420A' }}
-                  />
-                  <span
-                    className="absolute inset-0 w-2 h-2 rounded-full animate-ping"
-                    style={{ background: '#E8420A' }}
-                  />
-                </span>
-                <span className="text-xs text-white/70 truncate">
-                  <span className="text-white font-medium">{liveEvent.title}</span>
-                  {' '}voting closes in{' '}
-                  <span className="font-mono font-semibold text-white">{countdown}</span>
-                </span>
-                <Link
-                  href={liveEvent.href}
-                  className="hidden sm:inline-flex flex-shrink-0 items-center px-3 py-1 rounded-full text-[11px] font-bold text-white transition-all hover:scale-105"
-                  style={{ background: 'linear-gradient(135deg, #E8420A, #CC1C1C)' }}
-                >
-                  Vote now
-                </Link>
-              </div>
-              <button
-                onClick={dismissTicker}
-                className="flex-shrink-0 p-1 rounded text-white/30 hover:text-white/70 transition-colors"
-                aria-label="Dismiss live event ticker"
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* ═══ Layer 2 — Main Header Bar ═══ */}
-        <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-6 flex items-center justify-between gap-4" style={{ height: scrolled ? 56 : 68 }}>
-          {/* Zone A — Logo */}
-          <Link
-            href="/"
-            className="flex-shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E8420A] focus-visible:ring-offset-2 focus-visible:ring-offset-[#09090F] rounded-lg transition-transform hover:scale-105"
-            aria-label="Azeebo+ home"
-          >
-            <BrandLogo variant="orange" />
-          </Link>
-
-          {/* Zone B — Universe Navigation (Desktop only) */}
-          <nav
-            ref={universeNavRef}
-            className="hidden lg:flex items-center gap-0.5 relative overflow-x-auto scrollbar-none"
-            aria-label="Universe navigation"
-            style={{ scrollbarWidth: 'none' }}
-          >
-            {UNIVERSE_TABS.map((tab) => {
-              const active = isTabActive(tab.href);
-              return (
-                <Link
-                  key={tab.key}
-                  href={tab.href}
-                  data-tab-active={active ? 'true' : undefined}
-                  className="relative flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-medium whitespace-nowrap transition-all duration-200"
-                  style={{
-                    color: active ? '#fff' : 'rgba(255,255,255,0.55)',
-                    background: active ? 'rgba(232,74,95,0.14)' : 'transparent',
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!active) e.currentTarget.style.color = 'rgba(255,255,255,0.85)';
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!active) e.currentTarget.style.color = 'rgba(255,255,255,0.55)';
-                  }}
-                >
-                  {/* Red dot prefix */}
-                  <span
-                    className="w-[5px] h-[5px] rounded-full flex-shrink-0 transition-opacity duration-200"
-                    style={{
-                      background: '#E8420A',
-                      opacity: active ? 1 : 0,
-                    }}
-                  />
-                  {tab.label}
-                  {/* Live badge for Reality */}
-                  {tab.hasLive && isRealityLive && (
-                    <span
-                      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider text-white"
-                      style={{ background: '#E8420A' }}
-                      aria-label="Live now"
-                    >
-                      <span className="relative flex h-1.5 w-1.5">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
-                        <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-white" />
-                      </span>
-                      Live
-                    </span>
-                  )}
-                </Link>
-              );
-            })}
-            {/* Sliding underline indicator */}
-            {activeTabIndicator && (
-              <span
-                className="absolute bottom-0 h-[2px] rounded-full transition-all duration-300"
-                style={{
-                  left: activeTabIndicator.left,
-                  width: activeTabIndicator.width,
-                  background: '#E8420A',
-                }}
-              />
-            )}
-          </nav>
-
-          {/* Zone C — Right Cluster */}
-          <div className="flex items-center gap-1.5 sm:gap-2">
-            {/* Search button */}
-            <button
-              onClick={() => setSearchOpen((v) => !v)}
-              className="p-2.5 rounded-xl text-white/50 hover:text-white hover:bg-white/[0.06] transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E8420A]"
-              aria-label="Search"
-              aria-expanded={searchOpen}
+        {/* ═══ Main Header Bar ═══ */}
+        <div
+          className="relative max-w-[1280px] mx-auto"
+          style={{ height: scrolled ? 56 : 68 }}
+        >
+          {/* ─── 1. Brand Logo — pinned left ─── */}
+          <div className="absolute left-4 sm:left-6 top-1/2 -translate-y-1/2 z-10">
+            <Link
+              href="/"
+              className="flex items-center focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E8420A] focus-visible:ring-offset-2 focus-visible:ring-offset-[#09090F] rounded-lg transition-transform hover:scale-105"
+              aria-label="Azeebo+ home"
             >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            </button>
+              <BrandLogo variant="orange" />
+            </Link>
+          </div>
 
+          {/* ─── 2+3. Center: Navigation + Universes (authenticated only) ─── */}
+          {isAuthenticated && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="hidden lg:flex items-center gap-2">
+                {/* Main Navigation */}
+                <nav className="flex items-center gap-1" aria-label="Main navigation">
+                  {NAV_LINKS.map((link) => {
+                    const active = isActive(link.href);
+                    return (
+                      <Link
+                        key={link.href}
+                        href={link.href}
+                        className="relative px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200"
+                        style={{
+                          color: active ? '#fff' : 'rgba(255,255,255,0.55)',
+                          background: active ? 'rgba(232,74,95,0.14)' : 'transparent',
+                        }}
+                        onMouseEnter={(e) => { if (!active) e.currentTarget.style.color = 'rgba(255,255,255,0.85)'; }}
+                        onMouseLeave={(e) => { if (!active) e.currentTarget.style.color = 'rgba(255,255,255,0.55)'; }}
+                      >
+                        {link.label}
+                        {active && (
+                          <span
+                            className="absolute bottom-0 left-3 right-3 h-[2px] rounded-full"
+                            style={{ background: '#E8420A' }}
+                          />
+                        )}
+                      </Link>
+                    );
+                  })}
+                </nav>
+
+                {/* Divider */}
+                <span className="w-px h-4 bg-white/10 mx-1" aria-hidden="true" />
+
+                {/* Universes Dropdown */}
+                <div className="relative" ref={universeDropdownRef}>
+                  <button
+                    onClick={() => setUniversesOpen((v) => !v)}
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200"
+                    style={{
+                      color: universesOpen ? '#fff' : 'rgba(255,255,255,0.55)',
+                      background: universesOpen ? 'rgba(232,74,95,0.14)' : 'transparent',
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.color = 'rgba(255,255,255,0.85)'; }}
+                    onMouseLeave={(e) => { if (!universesOpen) e.currentTarget.style.color = 'rgba(255,255,255,0.55)'; }}
+                    aria-label="Browse universes"
+                    aria-expanded={universesOpen}
+                    aria-haspopup="true"
+                  >
+                    Universes
+                    <svg
+                      className={`w-4 h-4 transition-transform duration-200 ${universesOpen ? 'rotate-180' : ''}`}
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                      aria-hidden="true"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+
+                  {universesOpen && (
+                    <div
+                      className="absolute left-1/2 -translate-x-1/2 mt-2 w-48 rounded-2xl border border-white/[0.08] shadow-2xl py-1.5 z-50"
+                      style={{ background: 'rgba(9,9,15,0.97)', backdropFilter: 'blur(24px)' }}
+                      role="menu"
+                      aria-label="Universes"
+                    >
+                      {UNIVERSE_OPTIONS.map((u) => {
+                        const active = isActive(u.href);
+                        return (
+                          <Link
+                            key={u.key}
+                            href={u.href}
+                            onClick={() => setUniversesOpen(false)}
+                            className="flex items-center gap-2.5 px-4 py-2 text-sm transition-colors"
+                            style={{
+                              color: active ? '#E8420A' : 'rgba(255,255,255,0.6)',
+                              background: active ? 'rgba(232,74,95,0.1)' : 'transparent',
+                            }}
+                            onMouseEnter={(e) => { if (!active) { e.currentTarget.style.color = '#fff'; e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; } }}
+                            onMouseLeave={(e) => { if (!active) { e.currentTarget.style.color = 'rgba(255,255,255,0.6)'; e.currentTarget.style.background = 'transparent'; } }}
+                            role="menuitem"
+                          >
+                            <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: active ? '#E8420A' : 'transparent' }} />
+                            {u.label}
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ─── 4. Utility / Action Section — pinned right ─── */}
+          <div className="absolute right-4 sm:right-6 top-1/2 -translate-y-1/2 flex items-center gap-1.5 sm:gap-2 z-10">
             {isAuthenticated ? (
               <>
-                {/* Wallet chip — desktop only */}
-                <div className="hidden lg:flex items-center gap-0 px-3 py-1.5 rounded-full text-xs font-medium border border-white/[0.06]"
+                {/* Search icon */}
+                <button
+                  onClick={() => setSearchOpen((v) => !v)}
+                  className="p-2.5 rounded-xl text-white/50 hover:text-white hover:bg-white/[0.06] transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E8420A]"
+                  aria-label="Search"
+                  aria-expanded={searchOpen}
+                >
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </button>
+
+                {/* Wallet balance — desktop only */}
+                <div className="hidden sm:flex items-center gap-0 px-3 py-1.5 rounded-full text-xs font-medium border border-white/[0.06]"
                   style={{ background: 'rgba(255,255,255,0.04)' }}
                 >
-                  <span className="text-[#E8420A] font-semibold">₦{(user as any)?.balance ?? '0'}</span>
-                  <span className="mx-1.5 w-px h-3 bg-white/10" aria-hidden="true" />
-                  <span className="text-yellow-500 font-semibold">0 pts</span>
-                  <Link
-                    href="/wallet/topup"
-                    className="ml-1 flex items-center justify-center w-5 h-5 rounded-full text-white/40 hover:text-white hover:bg-white/10 transition-colors"
-                    aria-label="Top up wallet"
-                  >
-                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                    </svg>
-                  </Link>
+                  <span className="text-[#E8420A] font-semibold whitespace-nowrap">
+                    {formatBalance((user as any)?.balance ?? 0)}
+                  </span>
                 </div>
 
-                {/* Notifications */}
-                <div className="relative">
+                {/* Profile icon with dropdown */}
+                <div className="relative" ref={profileMenuRef}>
                   <button
-                    className="relative p-2.5 rounded-xl text-white/50 hover:text-white hover:bg-white/[0.06] transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E8420A]"
-                    aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount} unread` : ''}`}
-                    onClick={() => window.location.href = '/notifications'}
-                  >
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                    </svg>
-                    {unreadCount > 0 && (
-                      <span
-                        className="absolute top-1.5 right-1.5 w-[7px] h-[7px] rounded-full"
-                        style={{ background: '#E8420A', boxShadow: '0 0 6px rgba(232,66,10,0.6)' }}
-                        aria-hidden="true"
-                      />
-                    )}
-                  </button>
-                </div>
-
-                {/* Avatar button */}
-                <div className="relative" ref={userMenuRef}>
-                  <button
-                    onClick={() => setUserMenuOpen((v) => !v)}
+                    onClick={() => setProfileOpen((v) => !v)}
                     className="flex items-center justify-center w-9 h-9 rounded-full text-white text-xs font-bold transition-all hover:ring-2 hover:ring-white/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E8420A]"
                     style={{ background: seededGradient(user?.id || 'default') }}
-                    aria-label="User menu"
-                    aria-expanded={userMenuOpen}
+                    aria-label="Profile menu"
+                    aria-expanded={profileOpen}
                     aria-haspopup="true"
                   >
                     {getInitials(user?.displayName || user?.name)}
                   </button>
 
-                  {userMenuOpen && (
+                  {profileOpen && (
                     <div
                       className="absolute right-0 mt-2 w-56 rounded-2xl border border-white/[0.08] shadow-2xl py-1.5 z-50 overflow-hidden"
                       style={{ background: 'rgba(9,9,15,0.97)', backdropFilter: 'blur(24px)' }}
                       role="menu"
-                      aria-label="User options"
+                      aria-label="User menu"
                     >
+                      {/* User info header */}
                       <div className="px-4 py-3 border-b border-white/[0.06]">
                         <p className="text-sm font-semibold text-white truncate">{user?.displayName || user?.name}</p>
                         <p className="text-xs text-white/40 truncate">{user?.email}</p>
                       </div>
+
+                      {/* Menu items */}
                       <div className="py-1">
-                        {AVATAR_MENU_ITEMS.map((item) => {
-                          if (item.role && !isCreator) return null;
+                        {PROFILE_MENU_ITEMS.map((item) => {
+                          if (item.creatorOnly && !isCreator) return null;
                           return (
                             <Link
                               key={item.href}
                               href={item.href}
-                              onClick={() => setUserMenuOpen(false)}
-                              className="block px-4 py-2 text-sm text-white/60 hover:text-white hover:bg-white/[0.06] transition-colors"
+                              onClick={() => setProfileOpen(false)}
+                              className="flex items-center gap-2.5 px-4 py-2 text-sm text-white/60 hover:text-white hover:bg-white/[0.06] transition-colors"
                               role="menuitem"
                             >
+                              <MenuIcon type={item.icon} />
                               {item.label}
                             </Link>
                           );
                         })}
                       </div>
+
+                      {/* Log out */}
                       <div className="border-t border-white/[0.06] pt-1">
-                        <button
-                          onClick={() => { setUserMenuOpen(false); logout(); }}
-                          className="w-full text-left px-4 py-2 text-sm text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors"
-                          role="menuitem"
-                        >
-                          Sign out
-                        </button>
+                        {!confirmLogout ? (
+                          <button
+                            onClick={handleLogout}
+                            className="w-full text-left px-4 py-2 text-sm text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors flex items-center gap-2.5"
+                            role="menuitem"
+                          >
+                            <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+                            </svg>
+                            Sign out
+                          </button>
+                        ) : (
+                          <div className="px-4 py-2">
+                            <p className="text-xs text-white/50 mb-2">Are you sure?</p>
+                            <div className="flex gap-2">
+                              <button
+                                onClick={handleLogout}
+                                className="flex-1 px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-red-500 hover:bg-red-600 transition-colors"
+                              >
+                                Yes, sign out
+                              </button>
+                              <button
+                                onClick={() => setConfirmLogout(false)}
+                                className="flex-1 px-3 py-1.5 rounded-lg text-xs font-medium text-white/60 border border-white/[0.1] hover:text-white transition-colors"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
                 </div>
               </>
             ) : (
-              /* Logged-out: Sign in + Join free */
+              /* Guest: Sign up + Login buttons */
               <div className="flex items-center gap-2">
                 <Link
                   href="/auth/login"
                   className="hidden sm:inline-flex px-4 py-1.5 rounded-full text-sm font-medium text-white/60 hover:text-white transition-colors border border-white/[0.1]"
                 >
-                  Sign in
+                  Log in
                 </Link>
                 <Link
                   href="/auth/register"
@@ -539,12 +447,12 @@ export default function AppHeader({ active }: { active?: string }) {
                     boxShadow: '0 4px 14px rgba(232,66,10,0.25)',
                   }}
                 >
-                  Join free
+                  Sign up
                 </Link>
               </div>
             )}
 
-            {/* Hamburger — mobile only */}
+            {/* ─── Hamburger — mobile only ─── */}
             <button
               ref={hamburgerRef}
               onClick={() => setMobileMenuOpen((v) => !v)}
@@ -562,16 +470,15 @@ export default function AppHeader({ active }: { active?: string }) {
           </div>
         </div>
 
-        {/* ═══ Layer 3 — Search Overlay ═══ */}
+        {/* ═══ Search Overlay ═══ */}
         <div
           ref={searchOverlayRef}
-          className={`overflow-hidden transition-all duration-300 ${searchOpen ? 'max-h-[420px]' : 'max-h-0'}`}
+          className={`overflow-hidden transition-all duration-300 ${searchOpen ? 'max-h-[120px]' : 'max-h-0'}`}
           style={{ background: 'rgba(9,9,15,0.98)', borderTop: searchOpen ? '1px solid rgba(255,255,255,0.06)' : 'none' }}
           role="search"
           aria-label="Site search"
         >
-          <div className="max-w-[1280px] mx-auto px-4 sm:px-6 py-4">
-            {/* Search input */}
+          <div className="max-w-[1280px] mx-auto px-4 sm:px-6 py-3">
             <form onSubmit={handleSearchSubmit}>
               <div className="relative">
                 <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/30" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
@@ -600,106 +507,6 @@ export default function AppHeader({ active }: { active?: string }) {
                 )}
               </div>
             </form>
-
-            {/* Universe filter pills */}
-            <div className="flex items-center gap-2 mt-3 overflow-x-auto scrollbar-none" style={{ scrollbarWidth: 'none' }}>
-              {SEARCH_UNIVERSE_FILTERS.map((f) => (
-                <button
-                  key={f}
-                  onClick={() => setSearchFilter(f)}
-                  className="flex-shrink-0 px-3 py-1 rounded-full text-xs font-medium transition-all duration-200"
-                  style={{
-                    background: searchFilter === f ? 'rgba(232,74,95,0.18)' : 'rgba(255,255,255,0.04)',
-                    color: searchFilter === f ? '#E8420A' : 'rgba(255,255,255,0.5)',
-                    border: `1px solid ${searchFilter === f ? 'rgba(232,74,95,0.3)' : 'rgba(255,255,255,0.06)'}`,
-                  }}
-                >
-                  {f}
-                </button>
-              ))}
-            </div>
-
-            {/* Content area: trending / recent / results */}
-            <div className="mt-4 max-h-[280px] overflow-y-auto">
-              {/* Quick results */}
-              {searchQuery.trim().length >= 2 && (
-                <div>
-                  {searchLoading ? (
-                    <div className="py-6 text-center">
-                      <div className="w-5 h-5 border-2 border-white/20 border-t-[#E8420A] rounded-full animate-spin mx-auto" />
-                    </div>
-                  ) : searchResults.length > 0 ? (
-                    <div className="space-y-1">
-                      {searchResults.map((r: any, i: number) => (
-                        <Link
-                          key={i}
-                          href={r.href || r.url || `/watch/${r.id}`}
-                          className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/[0.04] transition-colors"
-                        >
-                          <div className="w-10 h-10 rounded-lg bg-white/[0.06] flex items-center justify-center flex-shrink-0 overflow-hidden">
-                            {r.thumbnail ? (
-                              <img src={r.thumbnail} alt="" className="w-full h-full object-cover" />
-                            ) : (
-                              <svg className="w-5 h-5 text-white/20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z" />
-                              </svg>
-                            )}
-                          </div>
-                          <div className="min-w-0">
-                            <p className="text-sm text-white truncate">{r.title || r.name}</p>
-                            <p className="text-xs text-white/40">{r.type || r.universe || 'Content'}</p>
-                          </div>
-                        </Link>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="py-6 text-center text-sm text-white/30">No results found</p>
-                  )}
-                </div>
-              )}
-
-              {/* Trending searches */}
-              {!searchQuery.trim() && (
-                <div>
-                  <p className="text-[11px] font-bold uppercase tracking-widest text-white/30 mb-2 px-1">Trending</p>
-                  <div className="space-y-0.5">
-                    {TRENDING_SEARCHES.map((q) => (
-                      <button
-                        key={q}
-                        onClick={() => { setSearchQuery(q); }}
-                        className="flex items-center gap-3 w-full px-3 py-2 rounded-xl text-left text-sm text-white/60 hover:text-white hover:bg-white/[0.04] transition-colors"
-                      >
-                        <svg className="w-4 h-4 text-white/20 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M2 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                        </svg>
-                        {q}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Recent searches (logged-in only) */}
-              {!searchQuery.trim() && isAuthenticated && recentSearches.length > 0 && (
-                <div className="mt-4">
-                  <p className="text-[11px] font-bold uppercase tracking-widest text-white/30 mb-2 px-1">Recent</p>
-                  <div className="space-y-0.5">
-                    {recentSearches.map((q) => (
-                      <button
-                        key={q}
-                        onClick={() => setSearchQuery(q)}
-                        className="flex items-center gap-3 w-full px-3 py-2 rounded-xl text-left text-sm text-white/60 hover:text-white hover:bg-white/[0.04] transition-colors"
-                      >
-                        <svg className="w-4 h-4 text-white/20 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        {q}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
           </div>
         </div>
       </header>
@@ -730,46 +537,80 @@ export default function AppHeader({ active }: { active?: string }) {
           aria-label="Navigation menu"
         >
           <div className="max-w-[1280px] mx-auto px-4 sm:px-6 py-4">
-            {/* Universe links */}
-            <p className="text-[11px] font-bold uppercase tracking-widest text-white/30 mb-3">Universe</p>
-            <div className="space-y-0.5">
-              {UNIVERSE_TABS.map((tab) => {
-                const active = isTabActive(tab.href);
-                return (
-                  <Link
-                    key={tab.key}
-                    href={tab.href}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
-                    style={{
-                      color: active ? '#fff' : 'rgba(255,255,255,0.6)',
-                      background: active ? 'rgba(232,74,95,0.14)' : 'transparent',
-                    }}
-                  >
-                    <span className="w-[5px] h-[5px] rounded-full flex-shrink-0" style={{ background: active ? '#E8420A' : 'transparent' }} />
-                    {tab.label}
-                    {tab.hasLive && isRealityLive && (
-                      <span
-                        className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider text-white"
-                        style={{ background: '#E8420A' }}
-                        aria-label="Live now"
+            {/* Search in mobile */}
+            <form onSubmit={handleSearchSubmit} className="mb-4">
+              <div className="relative">
+                <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <input
+                  type="search"
+                  placeholder="Search…"
+                  className="w-full pl-10 pr-4 py-2.5 rounded-full text-sm text-white placeholder-white/30 bg-white/[0.04] border border-white/[0.08] outline-none"
+                  aria-label="Search Azeebo+"
+                />
+              </div>
+            </form>
+
+            {/* Main nav links (authenticated only) */}
+            {isAuthenticated && (
+              <nav aria-label="Main navigation" className="mb-2">
+                {NAV_LINKS.map((link) => {
+                  const active = isActive(link.href);
+                  return (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
+                      style={{
+                        color: active ? '#fff' : 'rgba(255,255,255,0.6)',
+                        background: active ? 'rgba(232,74,95,0.14)' : 'transparent',
+                      }}
+                    >
+                      <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: active ? '#E8420A' : 'transparent' }} />
+                      {link.label}
+                    </Link>
+                  );
+                })}
+              </nav>
+            )}
+
+            {/* Universes section (authenticated only) */}
+            {isAuthenticated && (
+              <>
+                <p className="text-[11px] font-bold uppercase tracking-widest text-white/30 mb-2 px-3">Universes</p>
+                <div className="space-y-0.5 mb-2">
+                  {UNIVERSE_OPTIONS.map((u) => {
+                    const active = isActive(u.href);
+                    return (
+                      <Link
+                        key={u.key}
+                        href={u.href}
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-all"
+                        style={{
+                          color: active ? '#fff' : 'rgba(255,255,255,0.6)',
+                          background: active ? 'rgba(232,74,95,0.14)' : 'transparent',
+                        }}
                       >
-                        Live
-                      </span>
-                    )}
-                  </Link>
-                );
-              })}
-            </div>
+                        <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: active ? '#E8420A' : 'transparent' }} />
+                        {u.label}
+                      </Link>
+                    );
+                  })}
+                </div>
+              </>
+            )}
 
             <div className="my-4 h-px bg-white/[0.06]" />
 
-            {/* Wallet summary (logged-in only) */}
+            {/* Wallet (mobile, authenticated only) */}
             {isAuthenticated && (
               <div className="flex items-center gap-3 px-3 py-2.5 mb-2">
-                <span className="text-sm text-[#E8420A] font-semibold">₦{(user as any)?.balance ?? '0'}</span>
-                <span className="w-px h-4 bg-white/10" />
-                <span className="text-sm text-yellow-500 font-semibold">0 pts</span>
+                <span className="text-sm text-[#E8420A] font-semibold">
+                  {formatBalance((user as any)?.balance ?? 0)}
+                </span>
               </div>
             )}
 
@@ -781,7 +622,7 @@ export default function AppHeader({ active }: { active?: string }) {
                   onClick={() => setMobileMenuOpen(false)}
                   className="block w-full text-center px-4 py-2.5 rounded-full text-sm font-medium text-white/60 border border-white/[0.1] transition-colors hover:text-white"
                 >
-                  Sign in
+                  Log in
                 </Link>
                 <Link
                   href="/auth/register"
@@ -789,7 +630,7 @@ export default function AppHeader({ active }: { active?: string }) {
                   className="block w-full text-center px-4 py-2.5 rounded-full text-sm font-semibold text-white transition-all"
                   style={{ background: 'linear-gradient(135deg, #E8420A, #CC1C1C)' }}
                 >
-                  Join free
+                  Sign up
                 </Link>
               </div>
             )}
@@ -806,7 +647,7 @@ export default function AppHeader({ active }: { active?: string }) {
       </div>
 
       {/* Spacer so page content doesn't hide behind fixed header */}
-      <div style={{ height: showTicker ? (scrolled ? 105 : 117) : (scrolled ? 56 : 68) }} />
+      <div style={{ height: scrolled ? 56 : 68 }} />
     </>
   );
 }

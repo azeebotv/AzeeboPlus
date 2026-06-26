@@ -4,29 +4,26 @@
 
    ▲ Next.js 15.5.19
    - Local:        http://localhost:4000
-   - Network:      http://10.104.91.229:4000
+   - Network:      http://127.0.2.2:4000
    - Environments: .env
 
  ✓ Starting...
- ✓ Ready in 5.8s
- ✓ Compiled /middleware in 274ms (158 modules)
- ○ Compiling /_not-found ...
- ✓ Compiled /_not-found in 3s (740 modules)
- GET /universe/reality 404 in 3262ms
- GET /universe/reality 404 in 176ms
- ○ Compiling /watch/[id] ...
- ✓ Compiled /watch/[id] in 2.5s (827 modules)
- GET /universe/reality 404 in 97ms
- GET /watch/cnt00002-0000-0000-0000-000000000027 200 in 4093ms
- GET /watch/cnt00002-0000-0000-0000-000000000027 200 in 260ms
- GET /wallet/topup 404 in 37ms
- GET /wallet/topup 404 in 65ms
- ○ Compiling /wallet ...
- ✓ Compiled /wallet in 745ms (820 modules)
- GET /wallet 200 in 1119ms
- ○ Compiling /wallet/add-funds ...
- ✓ Compiled /wallet/add-funds in 551ms (827 modules)
- GET /wallet/add-funds 200 in 718ms
- ○ Compiling /site.webmanifest ...
- ✓ Compiled /site.webmanifest in 946ms (847 modules)
- GET /site.webmanifest 200 in 1305ms
+Watchpack Error (watcher): Error: EMFILE: too many open files, watch
+Watchpack Error (watcher): Error: EMFILE: too many open files, watch
+Watchpack Error (watcher): Error: EMFILE: too many open files, watch
+Watchpack Error (watcher): Error: EMFILE: too many open files, watch
+Watchpack Error (watcher): Error: EMFILE: too many open files, watch
+Watchpack Error (watcher): Error: EMFILE: too many open files, watch
+Watchpack Error (watcher): Error: EMFILE: too many open files, watch
+Watchpack Error (watcher): Error: EMFILE: too many open files, watch
+Watchpack Error (watcher): Error: EMFILE: too many open files, watch
+ ✓ Ready in 2.4s
+Watchpack Error (watcher): Error: EMFILE: too many open files, watch
+Watchpack Error (watcher): Error: EMFILE: too many open files, watch
+Watchpack Error (watcher): Error: EMFILE: too many open files, watch
+Watchpack Error (watcher): Error: EMFILE: too many open files, watch
+Watchpack Error (watcher): Error: EMFILE: too many open files, watch
+Watchpack Error (watcher): Error: EMFILE: too many open files, watch
+Watchpack Error (watcher): Error: EMFILE: too many open files, watch
+Watchpack Error (watcher): Error: EMFILE: too many open files, watch
+Watchpack Error (watcher): Error: EMFILE: too many open files, watch

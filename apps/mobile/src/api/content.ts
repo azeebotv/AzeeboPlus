@@ -172,15 +172,15 @@ export interface PaginatedResponse<T> {
 
 export const contentApi = {
   getFeaturedContent: async (limit = 10): Promise<ApiResponse<ContentItem[]>> => {
-    return apiClient.get<ApiResponse<ContentItem[]>>(`/content/featured?limit=${limit}`);
+    return apiClient.get<ApiResponse<ContentItem[]>>(`/api/v1/content/featured?limit=${limit}`);
   },
 
   getTrendingContent: async (limit = 10): Promise<ApiResponse<ContentItem[]>> => {
-    return apiClient.get<ApiResponse<ContentItem[]>>(`/content/trending?limit=${limit}`);
+    return apiClient.get<ApiResponse<ContentItem[]>>(`/api/v1/content/trending?limit=${limit}`);
   },
 
   getContentById: async (contentId: string): Promise<ApiResponse<ContentItem>> => {
-    return apiClient.get<ApiResponse<ContentItem>>(`/content/${contentId}`);
+    return apiClient.get<ApiResponse<ContentItem>>(`/api/v1/content/${contentId}`);
   },
 
   getContentByCategory: async (
@@ -189,7 +189,7 @@ export const contentApi = {
     limit = 20
   ): Promise<ApiResponse<PaginatedResponse<ContentItem>>> => {
     return apiClient.get<ApiResponse<PaginatedResponse<ContentItem>>>(
-      `/content/category/${categoryId}?page=${page}&limit=${limit}`
+      `/api/v1/content/category/${categoryId}?page=${page}&limit=${limit}`
     );
   },
 
@@ -199,7 +199,7 @@ export const contentApi = {
     limit = 20
   ): Promise<ApiResponse<PaginatedResponse<ContentItem>>> => {
     return apiClient.get<ApiResponse<PaginatedResponse<ContentItem>>>(
-      `/content/search?q=${encodeURIComponent(query)}&page=${page}&limit=${limit}`
+      `/api/v1/content/search?q=${encodeURIComponent(query)}&page=${page}&limit=${limit}`
     );
   },
 
@@ -208,12 +208,12 @@ export const contentApi = {
     limit = 20
   ): Promise<ApiResponse<PaginatedResponse<ContentItem>>> => {
     return apiClient.get<ApiResponse<PaginatedResponse<ContentItem>>>(
-      `/users/me/history?page=${page}&limit=${limit}`
+      `/api/v1/users/me/history?page=${page}&limit=${limit}`
     );
   },
 
   addToWatchHistory: async (contentId: string): Promise<ApiResponse<{ message: string }>> => {
-    return apiClient.post<ApiResponse<{ message: string }>>('/users/me/history', { contentId });
+    return apiClient.post<ApiResponse<{ message: string }>>('/api/v1/users/me/history', { contentId });
   },
 
   getSavedContent: async (
@@ -221,20 +221,20 @@ export const contentApi = {
     limit = 20
   ): Promise<ApiResponse<PaginatedResponse<ContentItem>>> => {
     return apiClient.get<ApiResponse<PaginatedResponse<ContentItem>>>(
-      `/users/me/saved?page=${page}&limit=${limit}`
+      `/api/v1/users/me/saved?page=${page}&limit=${limit}`
     );
   },
 
   saveContent: async (contentId: string): Promise<ApiResponse<{ message: string }>> => {
-    return apiClient.post<ApiResponse<{ message: string }>>('/users/me/saved', { contentId });
+    return apiClient.post<ApiResponse<{ message: string }>>('/api/v1/users/me/saved', { contentId });
   },
 
   removeSavedContent: async (contentId: string): Promise<ApiResponse<{ message: string }>> => {
-    return apiClient.delete<ApiResponse<{ message: string }>>(`/users/me/saved/${contentId}`);
+    return apiClient.delete<ApiResponse<{ message: string }>>(`/api/v1/users/me/saved/${contentId}`);
   },
 
   getEpisode: async (episodeId: string): Promise<ApiResponse<Episode>> => {
-    return apiClient.get<ApiResponse<Episode>>(`/content/episodes/${episodeId}`);
+    return apiClient.get<ApiResponse<Episode>>(`/api/v1/content/episodes/${episodeId}`);
   },
 
   vote: async (data: {
@@ -242,19 +242,19 @@ export const contentApi = {
     contestantId?: string;
     isSuperVote: boolean;
   }): Promise<ApiResponse<Vote>> => {
-    return apiClient.post<ApiResponse<Vote>>('/content/vote', data);
+    return apiClient.post<ApiResponse<Vote>>('/api/v1/content/vote', data);
   },
 
   getEpisodes: async (contentId: string): Promise<ApiResponse<Episode[]>> => {
-    return apiClient.get<ApiResponse<Episode[]>>(`/content/${contentId}/episodes`);
+    return apiClient.get<ApiResponse<Episode[]>>(`/api/v1/content/${contentId}/episodes`);
   },
 
   getContestant: async (contestantId: string): Promise<ApiResponse<Contestant>> => {
-    return apiClient.get<ApiResponse<Contestant>>(`/content/contestants/${contestantId}`);
+    return apiClient.get<ApiResponse<Contestant>>(`/api/v1/content/contestants/${contestantId}`);
   },
 
   getContestants: async (episodeId: string): Promise<ApiResponse<Contestant[]>> => {
-    return apiClient.get<ApiResponse<Contestant[]>>(`/content/episodes/${episodeId}/contestants`);
+    return apiClient.get<ApiResponse<Contestant[]>>(`/api/v1/content/episodes/${episodeId}/contestants`);
   },
 
   superVote: async (data: {
@@ -262,67 +262,67 @@ export const contentApi = {
     episodeId: string;
     voteCount: number;
   }): Promise<ApiResponse<Vote>> => {
-    return apiClient.post<ApiResponse<Vote>>('/content/super-vote', data);
+    return apiClient.post<ApiResponse<Vote>>('/api/v1/content/super-vote', data);
   },
 
   getResults: async (contentId: string): Promise<ApiResponse<VoteResult[]>> => {
-    return apiClient.get<ApiResponse<VoteResult[]>>(`/content/${contentId}/results`);
+    return apiClient.get<ApiResponse<VoteResult[]>>(`/api/v1/content/${contentId}/results`);
   },
 
   getCreatorContent: async (): Promise<ApiResponse<CreatorContent[]>> => {
-    return apiClient.get<ApiResponse<CreatorContent[]>>('/creator/content');
+    return apiClient.get<ApiResponse<CreatorContent[]>>('/api/v1/creator/content');
   },
 
   deleteContent: async (contentId: string): Promise<ApiResponse<{ message: string }>> => {
-    return apiClient.delete<ApiResponse<{ message: string }>>(`/creator/content/${contentId}`);
+    return apiClient.delete<ApiResponse<{ message: string }>>(`/api/v1/creator/content/${contentId}`);
   },
 
   publishContent: async (contentId: string): Promise<ApiResponse<{ message: string }>> => {
     return apiClient.post<ApiResponse<{ message: string }>>(
-      `/creator/content/${contentId}/publish`
+      `/api/v1/creator/content/${contentId}/publish`
     );
   },
 
   getDrafts: async (): Promise<ApiResponse<CreatorContent[]>> => {
-    return apiClient.get<ApiResponse<CreatorContent[]>>('/creator/drafts');
+    return apiClient.get<ApiResponse<CreatorContent[]>>('/api/v1/creator/drafts');
   },
 
   deleteDraft: async (draftId: string): Promise<ApiResponse<{ message: string }>> => {
-    return apiClient.delete<ApiResponse<{ message: string }>>(`/creator/drafts/${draftId}`);
+    return apiClient.delete<ApiResponse<{ message: string }>>(`/api/v1/creator/drafts/${draftId}`);
   },
 
   getPublishedContent: async (): Promise<ApiResponse<CreatorContent[]>> => {
-    return apiClient.get<ApiResponse<CreatorContent[]>>('/creator/published');
+    return apiClient.get<ApiResponse<CreatorContent[]>>('/api/v1/creator/published');
   },
 
   getScheduledPosts: async (): Promise<ApiResponse<CreatorContent[]>> => {
-    return apiClient.get<ApiResponse<CreatorContent[]>>('/creator/scheduled');
+    return apiClient.get<ApiResponse<CreatorContent[]>>('/api/v1/creator/scheduled');
   },
 
   getCreatorAnalytics: async (): Promise<ApiResponse<CreatorAnalytics>> => {
-    return apiClient.get<ApiResponse<CreatorAnalytics>>('/creator/analytics');
+    return apiClient.get<ApiResponse<CreatorAnalytics>>('/api/v1/creator/analytics');
   },
 
   getEarnings: async (): Promise<ApiResponse<CreatorEarnings>> => {
-    return apiClient.get<ApiResponse<CreatorEarnings>>('/creator/earnings');
+    return apiClient.get<ApiResponse<CreatorEarnings>>('/api/v1/creator/earnings');
   },
 
   getMonetizationSettings: async (): Promise<ApiResponse<MonetizationSettings>> => {
-    return apiClient.get<ApiResponse<MonetizationSettings>>('/creator/monetization');
+    return apiClient.get<ApiResponse<MonetizationSettings>>('/api/v1/creator/monetization');
   },
 
   updateMonetizationSettings: async (
     data: Partial<MonetizationSettings>
   ): Promise<ApiResponse<MonetizationSettings>> => {
-    return apiClient.put<ApiResponse<MonetizationSettings>>('/creator/monetization', data);
+    return apiClient.put<ApiResponse<MonetizationSettings>>('/api/v1/creator/monetization', data);
   },
 
   getCreatorProfile: async (creatorId: string): Promise<ApiResponse<CreatorProfile>> => {
-    return apiClient.get<ApiResponse<CreatorProfile>>(`/creator/profile/${creatorId}`);
+    return apiClient.get<ApiResponse<CreatorProfile>>(`/api/v1/creator/profile/${creatorId}`);
   },
 
   getRecommendations: async (type?: string): Promise<ApiResponse<Recommendation[]>> => {
-    const url = type ? `/content/recommendations?type=${type}` : '/content/recommendations';
+    const url = type ? `/api/v1/content/recommendations?type=${type}` : '/api/v1/content/recommendations';
     return apiClient.get<ApiResponse<Recommendation[]>>(url);
   },
 
@@ -335,6 +335,6 @@ export const contentApi = {
     thumbnail?: string;
     isPremium?: boolean;
   }): Promise<ApiResponse<ContentItem>> => {
-    return apiClient.post<ApiResponse<ContentItem>>('/content', data);
+    return apiClient.post<ApiResponse<ContentItem>>('/api/v1/content', data);
   },
 };

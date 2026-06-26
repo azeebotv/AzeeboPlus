@@ -1,6 +1,13 @@
 import Constants from 'expo-constants';
 import { certificatePinningService } from '../utils/certificatePinning';
 
+// Ensure endpoint routes through the gateway's /api prefix
+export function gatewayPath(endpoint: string): string {
+  if (endpoint.startsWith('/api/')) return endpoint;
+  if (endpoint.startsWith('/v1/')) return `/api${endpoint}`;
+  return `/api/v1${endpoint}`;
+}
+
 interface ApiClientConfig {
   baseURL: string;
   token: string | null;
@@ -60,7 +67,7 @@ class ApiClientClass {
     body?: unknown,
     options: RequestInit = {}
   ): Promise<T> {
-    const url = `${this.config.baseURL}${endpoint}`;
+    const url = `${this.config.baseURL}${gatewayPath(endpoint)}`;
 
     const headers: HeadersInit = {
       'Content-Type': 'application/json',

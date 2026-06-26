@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
 import Link from 'next/link';
-import { apiFetch, ContentItem, Category } from '@/lib/api';
+import { api, ContentItem, Category } from '@/lib/api';
 import { webLogger } from '@/lib/logger';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
@@ -24,10 +24,13 @@ export default function MoviesPage(): React.JSX.Element {
       try {
         setIsLoading(true);
         const [moviesRes, categoriesRes] = await Promise.all([
-          apiFetch<ContentItem[]>('/v1/content?universe=movies&limit=20'),
-          apiFetch<Category[]>('/v1/content/categories'),
+          api.content.getContentByUniverse('movies', 1, 20),
+          api.content.getCategories(),
         ]);
-        if (moviesRes.success && moviesRes.data) setMovies(moviesRes.data);
+        if (moviesRes.success && moviesRes.data) {
+          const items = Array.isArray(moviesRes.data) ? moviesRes.data : moviesRes.data.items || [];
+          setMovies(items);
+        }
         if (categoriesRes.success && categoriesRes.data) setCategories(categoriesRes.data);
       } catch (err) {
         webLogger.error('Failed to fetch movies', err);

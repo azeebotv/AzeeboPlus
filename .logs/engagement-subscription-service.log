@@ -2,39 +2,9 @@
 > @azeebo/subscription-service@1.0.0 start:dev /Users/deprof/www/azeebo+/services/engagement/subscription-service
 > nest start --watch
 
-[2J[3J[H[[90m1:17:10 PM[0m] Starting compilation in watch mode...
+[2J[3J[H[[90m11:05:15 AM[0m] Starting compilation in watch mode...
 
-[[90m1:17:11 PM[0m] Found 0 errors. Watching for file changes.
-
-node:internal/modules/cjs/loader:1478
-  throw err;
-  ^
-
-Error: Cannot find module '/Users/deprof/www/azeebo+/services/engagement/subscription-service/dist/main'
-    at Module._resolveFilename (node:internal/modules/cjs/loader:1475:15)
-    at wrapResolveFilename (node:internal/modules/cjs/loader:1048:27)
-    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1072:10)
-    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1093:12)
-    at Module._load (node:internal/modules/cjs/loader:1261:25)
-    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
-    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
-    at node:internal/main/run_main_module:33:47 {
-  code: 'MODULE_NOT_FOUND',
-  requireStack: []
-}
-
-Node.js v26.0.0
-[2J[3J[H[[90m3:44:41 AM[0m] File change detected. Starting incremental compilation...
-
-[2J[3J[H[[90m3:44:42 AM[0m] File change detected. Starting incremental compilation...
-
-[2J[3J[H[[90m3:44:42 AM[0m] File change detected. Starting incremental compilation...
-
-[[90m3:44:42 AM[0m] Found 0 errors. Watching for file changes.
-
-[2J[3J[H[[90m3:44:42 AM[0m] File change detected. Starting incremental compilation...
-
-[2J[3J[H[[90m3:44:42 AM[0m] File change detected. Starting incremental compilation...
+[[90m11:05:18 AM[0m] Found 0 errors. Watching for file changes.
 
 node:internal/modules/cjs/loader:1478
   throw err;
@@ -54,68 +24,10 @@ Error: Cannot find module '/Users/deprof/www/azeebo+/services/engagement/subscri
 }
 
 Node.js v26.0.0
-[[90m3:44:44 AM[0m] Found 0 errors. Watching for file changes.
+[2J[3J[H[[90m11:05:18 AM[0m] File change detected. Starting incremental compilation...
 
-[[90m3:44:44 AM[0m] Found 0 errors. Watching for file changes.
+[[90m11:05:19 AM[0m] Found 0 errors. Watching for file changes.
 
-[[90m3:44:44 AM[0m] Found 0 errors. Watching for file changes.
-
-[[90m3:44:44 AM[0m] Found 0 errors. Watching for file changes.
-
-node:internal/modules/cjs/loader:1478
-  throw err;
-  ^
-
-Error: Cannot find module '/Users/deprof/www/azeebo+/services/engagement/subscription-service/dist/main'
-    at Module._resolveFilename (node:internal/modules/cjs/loader:1475:15)
-    at wrapResolveFilename (node:internal/modules/cjs/loader:1048:27)
-    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1072:10)
-    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1093:12)
-    at Module._load (node:internal/modules/cjs/loader:1261:25)
-    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
-    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
-    at node:internal/main/run_main_module:33:47 {
-  code: 'MODULE_NOT_FOUND',
-  requireStack: []
-}
-
-Node.js v26.0.0
-node:internal/modules/cjs/loader:1478
-  throw err;
-  ^
-
-Error: Cannot find module '/Users/deprof/www/azeebo+/services/engagement/subscription-service/dist/main'
-    at Module._resolveFilename (node:internal/modules/cjs/loader:1475:15)
-    at wrapResolveFilename (node:internal/modules/cjs/loader:1048:27)
-    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1072:10)
-    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1093:12)
-    at Module._load (node:internal/modules/cjs/loader:1261:25)
-    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
-    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
-    at node:internal/main/run_main_module:33:47 {
-  code: 'MODULE_NOT_FOUND',
-  requireStack: []
-}
-
-Node.js v26.0.0
-node:internal/modules/cjs/loader:1478
-  throw err;
-  ^
-
-Error: Cannot find module '/Users/deprof/www/azeebo+/services/engagement/subscription-service/dist/main'
-    at Module._resolveFilename (node:internal/modules/cjs/loader:1475:15)
-    at wrapResolveFilename (node:internal/modules/cjs/loader:1048:27)
-    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1072:10)
-    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1093:12)
-    at Module._load (node:internal/modules/cjs/loader:1261:25)
-    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
-    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
-    at node:internal/main/run_main_module:33:47 {
-  code: 'MODULE_NOT_FOUND',
-  requireStack: []
-}
-
-Node.js v26.0.0
 node:internal/modules/cjs/loader:1478
   throw err;
   ^
