@@ -4,6 +4,7 @@
   "private": true,
   "description": "Shared services for Azeebo+ backend",
   "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
     "prisma:generate": "prisma generate --schema=prisma/schema.prisma",
     "prebuild": "prisma generate --schema=prisma/schema.prisma",
