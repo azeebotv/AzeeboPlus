@@ -56,6 +56,7 @@ export function Motion({
       }, duration);
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [isAnimating, duration, onAnimationComplete]);
 
   const animationClasses: Record<AnimationType, string> = {

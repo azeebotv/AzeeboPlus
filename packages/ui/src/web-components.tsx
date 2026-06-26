@@ -514,7 +514,7 @@ export function Tooltip({
     right: 'left-full top-1/2 -translate-y-1/2 border-8 border-transparent border-r-bg-tertiary',
   };
 
-  const child = React.Children.only(children) as React.ReactElement;
+  const child = React.Children.only(children) as React.ReactElement<Record<string, unknown>>;
   const hasAriaLabel = child.props['aria-label'] || child.props['aria-labelledby'];
 
   return (
