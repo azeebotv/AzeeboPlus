@@ -86,41 +86,20 @@ COPY services/operations/support-service/package.json services/operations/suppor
 COPY services/operations/moderation-service/package.json services/operations/moderation-service/
 COPY services/gateway/api-gateway/package.json services/gateway/api-gateway/
 
-# Install dependencies
-RUN pnpm install --frozen-lockfile
+# Install dependencies with cache mount
+RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
+    pnpm install --frozen-lockfile
 
 # Copy source code
 COPY . .
 
-# Copy Prisma schemas
-COPY services/core/auth-service/prisma services/core/auth-service/prisma
-COPY services/core/user-service/prisma services/core/user-service/prisma
-COPY services/core/wallet-service/prisma services/core/wallet-service/prisma
-COPY services/core/payment-service/prisma services/core/payment-service/prisma
-COPY services/core/content-service/prisma services/core/content-service/prisma
-COPY services/core/search-service/prisma services/core/search-service/prisma
-COPY services/engagement/notification-service/prisma services/engagement/notification-service/prisma
-COPY services/engagement/reward-service/prisma services/engagement/reward-service/prisma
-COPY services/engagement/engagement-service/prisma services/engagement/engagement-service/prisma
-COPY services/engagement/messaging-service/prisma services/engagement/messaging-service/prisma
-COPY services/engagement/referral-service/prisma services/engagement/referral-service/prisma
-COPY services/engagement/subscription-service/prisma services/engagement/subscription-service/prisma
-COPY services/intelligence/analytics-service/prisma services/intelligence/analytics-service/prisma
-COPY services/intelligence/recommendation-service/prisma services/intelligence/recommendation-service/prisma
-COPY services/universes/reality-service/prisma services/universes/reality-service/prisma
-COPY services/universes/movie-service/prisma services/universes/movie-service/prisma
-COPY services/universes/comedy-service/prisma services/universes/comedy-service/prisma
-COPY services/universes/games-service/prisma services/universes/games-service/prisma
-COPY services/universes/sports-service/prisma services/universes/sports-service/prisma
-COPY services/universes/lifestyle-service/prisma services/universes/lifestyle-service/prisma
-COPY services/universes/vertical-service/prisma services/universes/vertical-service/prisma
-COPY services/universes/creator-service/prisma services/universes/creator-service/prisma
-COPY services/operations/queue-service/prisma services/operations/queue-service/prisma
-COPY services/operations/support-service/prisma services/operations/support-service/prisma
-COPY services/operations/moderation-service/prisma services/operations/moderation-service/prisma
+# Build all libraries, core services, engagement, intelligence,
+# universe, operations, gateway, and apps in one layer
+ARG NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_URL}
 
-# Build all libraries
-RUN pnpm --filter @azeebo/utils run build && \
+RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
+    pnpm --filter @azeebo/utils run build && \
     pnpm --filter @azeebo/shared-types run build && \
     pnpm --filter @azeebo/validation run build && \
     pnpm --filter @azeebo/error-handling run build && \
@@ -129,79 +108,60 @@ RUN pnpm --filter @azeebo/utils run build && \
     pnpm --filter @azeebo/design-tokens run build && \
     pnpm --filter @azeebo/shared-services prisma:generate && pnpm --filter @azeebo/shared-services run build && \
     pnpm --filter @azeebo/security run build && \
-    pnpm --filter @azeebo/ui run build
-
-# Build core services
-RUN pnpm --filter @azeebo/auth-service prisma:generate && pnpm --filter @azeebo/auth-service run build && \
+    pnpm --filter @azeebo/ui run build && \
+    pnpm --filter @azeebo/auth-service prisma:generate && pnpm --filter @azeebo/auth-service run build && \
     pnpm --filter @azeebo/user-service prisma:generate && pnpm --filter @azeebo/user-service run build && \
     pnpm --filter @azeebo/wallet-service prisma:generate && pnpm --filter @azeebo/wallet-service run build && \
-    pnpm --filter @azeebo/payment-service prisma:generate && pnpm --filter @azeebo/payment-service run build
-
-RUN pnpm --filter @azeebo/content-service prisma:generate && pnpm --filter @azeebo/content-service run build && \
+    pnpm --filter @azeebo/payment-service prisma:generate && pnpm --filter @azeebo/payment-service run build && \
+    pnpm --filter @azeebo/content-service prisma:generate && pnpm --filter @azeebo/content-service run build && \
     pnpm --filter @azeebo/search-service prisma:generate && pnpm --filter @azeebo/search-service run build && \
-    pnpm --filter @azeebo/media-service run build
-
-# Build engagement + intelligence services
-RUN pnpm --filter @azeebo/notification-service prisma:generate && pnpm --filter @azeebo/notification-service run build && \
+    pnpm --filter @azeebo/media-service run build && \
+    pnpm --filter @azeebo/notification-service prisma:generate && pnpm --filter @azeebo/notification-service run build && \
     pnpm --filter @azeebo/reward-service prisma:generate && pnpm --filter @azeebo/reward-service run build && \
     pnpm --filter @azeebo/engagement-service prisma:generate && pnpm --filter @azeebo/engagement-service run build && \
     pnpm --filter @azeebo/messaging-service prisma:generate && pnpm --filter @azeebo/messaging-service run build && \
     pnpm --filter @azeebo/referral-service prisma:generate && pnpm --filter @azeebo/referral-service run build && \
-    pnpm --filter @azeebo/subscription-service prisma:generate && pnpm --filter @azeebo/subscription-service run build
-
-RUN pnpm --filter @azeebo/analytics-service prisma:generate && pnpm --filter @azeebo/analytics-service run build && \
-    pnpm --filter @azeebo/recommendation-service prisma:generate && pnpm --filter @azeebo/recommendation-service run build
-
-# Build universe services
-RUN pnpm --filter @azeebo/reality-service prisma:generate && pnpm --filter @azeebo/reality-service run build && \
+    pnpm --filter @azeebo/subscription-service prisma:generate && pnpm --filter @azeebo/subscription-service run build && \
+    pnpm --filter @azeebo/analytics-service prisma:generate && pnpm --filter @azeebo/analytics-service run build && \
+    pnpm --filter @azeebo/recommendation-service prisma:generate && pnpm --filter @azeebo/recommendation-service run build && \
+    pnpm --filter @azeebo/reality-service prisma:generate && pnpm --filter @azeebo/reality-service run build && \
     pnpm --filter @azeebo/movie-service prisma:generate && pnpm --filter @azeebo/movie-service run build && \
     pnpm --filter @azeebo/comedy-service prisma:generate && pnpm --filter @azeebo/comedy-service run build && \
     pnpm --filter @azeebo/games-service prisma:generate && pnpm --filter @azeebo/games-service run build && \
     pnpm --filter @azeebo/sports-service prisma:generate && pnpm --filter @azeebo/sports-service run build && \
     pnpm --filter @azeebo/lifestyle-service prisma:generate && pnpm --filter @azeebo/lifestyle-service run build && \
     pnpm --filter @azeebo/vertical-service prisma:generate && pnpm --filter @azeebo/vertical-service run build && \
-    pnpm --filter @azeebo/creator-service prisma:generate && pnpm --filter @azeebo/creator-service run build
-
-# Build operations + gateway services
-RUN pnpm --filter @azeebo/queue-service prisma:generate && pnpm --filter @azeebo/queue-service run build && \
+    pnpm --filter @azeebo/creator-service prisma:generate && pnpm --filter @azeebo/creator-service run build && \
+    pnpm --filter @azeebo/queue-service prisma:generate && pnpm --filter @azeebo/queue-service run build && \
     pnpm --filter @azeebo/support-service prisma:generate && pnpm --filter @azeebo/support-service run build && \
     pnpm --filter @azeebo/moderation-service prisma:generate && pnpm --filter @azeebo/moderation-service run build && \
-    pnpm --filter @azeebo/api-gateway run build
-
-# Build apps
-ARG NEXT_PUBLIC_API_URL
-ENV NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_URL}
-RUN pnpm --filter @azeebo/admin prisma:generate && pnpm --filter @azeebo/admin run build && \
+    pnpm --filter @azeebo/api-gateway run build && \
+    pnpm --filter @azeebo/admin prisma:generate && pnpm --filter @azeebo/admin run build && \
     pnpm --filter @azeebo/creator-portal prisma:generate && pnpm --filter @azeebo/creator-portal run build && \
     pnpm --filter @azeebo/web run build
 
-# Clean up to reduce image size:
-# 1. Remove devDependencies (prisma CLI, typescript, eslint, etc.)
-# 2. Remove .git, caches, and TypeScript source (only dist/ needed)
-# 3. Prune pnpm store
+# Clean up to reduce image size
 RUN rm -rf .git && \
     pnpm install --prod --frozen-lockfile && \
-    find . -path '*/node_modules/.cache' -delete 2>/dev/null; \
-    find . -name '*.tsbuildinfo' -delete 2>/dev/null; \
-    find . -name '.eslintcache' -delete 2>/dev/null; \
+    find . -path '*/node_modules/.cache' -delete 2>/dev/null || true && \
+    find . -name '*.tsbuildinfo' -delete 2>/dev/null || true && \
+    find . -name '.eslintcache' -delete 2>/dev/null || true && \
     pnpm store prune 2>/dev/null || true
 
 # ============================================================
 # Stage 2: Runtime
 # ============================================================
-FROM debian:bookworm-slim
+FROM node:20-bookworm-slim
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install PostgreSQL 15, Redis, PgBouncer, Supervisor, Node.js 20
+# Install PostgreSQL 15, Redis, PgBouncer, Supervisor
 RUN apt-get update && apt-get install -y --no-install-recommends \
     postgresql-15 \
     redis-server \
     pgbouncer \
     supervisor \
     curl \
-    gnupg \
-    ca-certificates \
     locales \
     procps \
     net-tools \
@@ -213,15 +173,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 ENV LANG=en_US.UTF-8
 ENV LANGUAGE=en_US:en
 ENV LC_ALL=en_US.UTF-8
-
-# Install Node.js 20
-RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
-  && apt-get install -y nodejs \
-  && apt-get clean \
-  && rm -rf /var/lib/apt/lists/*
-
-# Install pnpm
-RUN corepack enable && corepack prepare pnpm@10.33.2 --activate
 
 # Create required users and directories
 RUN useradd -r -s /bin/false pgbouncer || true && \
