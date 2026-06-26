@@ -26,12 +26,20 @@ export class WalletService {
    * @throws NotFoundException if wallet does not exist for the user
    */
   async getBalance(userId: string): Promise<WalletResponse> {
-    const wallet = await this.prisma.wallet.findUnique({
+    let wallet = await this.prisma.wallet.findUnique({
       where: { userId },
     });
 
     if (!wallet) {
-      throw new NotFoundException(`Wallet not found for user ${userId}`);
+      // Auto-create wallet for new users
+      wallet = await this.prisma.wallet.create({
+        data: {
+          userId,
+          balance: 0,
+          bonusBalance: 0,
+          promoBalance: 0,
+        },
+      });
     }
 
     return {

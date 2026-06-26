@@ -662,7 +662,14 @@ start_service() {
   local log_file="$LOG_DIR/${group_name}-${pkg##*/}.log"
   : > "$log_file"  # truncate
 
-  # Set environment for this service
+  # Load service .env file first (for JWT keys, etc.)
+  if [[ -f "$service_dir/.env" ]]; then
+    set -a
+    source "$service_dir/.env"
+    set +a
+  fi
+
+  # Set critical environment for this service (override service .env values)
   export DATABASE_URL="$SHARED_DB"
   export DATABASE_PASSWORD=""
   export REDIS_URL="$REDIS_URL"
