@@ -111,14 +111,14 @@ COPY services/operations/support-service/prisma services/operations/support-serv
 COPY services/operations/moderation-service/prisma services/operations/moderation-service/prisma
 
 # Build all libraries first
-RUN pnpm --filter @azeebo/utils run build && \
-    pnpm --filter @azeebo/shared-types run build && \
-    pnpm --filter @azeebo/validation run build && \
-    pnpm --filter @azeebo/error-handling run build && \
-    pnpm --filter @azeebo/logger run build && \
-    pnpm --filter @azeebo/api-client run build && \
-    pnpm --filter @azeebo/design-tokens run build && \
-    pnpm --filter @azeebo/ui run build
+RUN pnpm --filter @azeebo/utils run build
+RUN pnpm --filter @azeebo/shared-types run build
+RUN pnpm --filter @azeebo/validation run build
+RUN pnpm --filter @azeebo/error-handling run build
+RUN pnpm --filter @azeebo/logger run build
+RUN pnpm --filter @azeebo/api-client run build
+RUN pnpm --filter @azeebo/design-tokens run build
+RUN pnpm --filter @azeebo/ui run build
 
 # Build all services
 RUN pnpm --filter @azeebo/auth-service prisma:generate && pnpm --filter @azeebo/auth-service run build && \
@@ -147,7 +147,7 @@ RUN pnpm --filter @azeebo/auth-service prisma:generate && pnpm --filter @azeebo/
     pnpm --filter @azeebo/support-service prisma:generate && pnpm --filter @azeebo/support-service run build && \
     pnpm --filter @azeebo/sports-service prisma:generate && pnpm --filter @azeebo/sports-service run build && \
     pnpm --filter @azeebo/moderation-service prisma:generate && pnpm --filter @azeebo/moderation-service run build && \
-    pnpm --filter @azeebo/api-gateway prisma:generate && pnpm --filter @azeebo/api-gateway run build && \
+    pnpm --filter @azeebo/api-gateway run build && \
     pnpm --filter @azeebo/admin run build && \
     pnpm --filter @azeebo/creator-portal run build && \
     pnpm --filter @azeebo/web run build
