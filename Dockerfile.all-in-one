@@ -161,6 +161,8 @@ RUN pnpm --filter @azeebo/auth-service prisma:generate && pnpm --filter @azeebo/
     pnpm --filter @azeebo/api-gateway run build
 
 # Build apps
+ARG NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_URL}
 RUN pnpm --filter @azeebo/admin prisma:generate && pnpm --filter @azeebo/admin run build && \
     pnpm --filter @azeebo/creator-portal prisma:generate && pnpm --filter @azeebo/creator-portal run build && \
     pnpm --filter @azeebo/web run build
