@@ -662,7 +662,7 @@ start_service() {
   local log_file="$LOG_DIR/${group_name}-${pkg##*/}.log"
   : > "$log_file"  # truncate
 
-  # Load service .env file first (for JWT keys, etc.)
+  # Load service .env file (for JWT keys, etc.)
   if [[ -f "$service_dir/.env" ]]; then
     set -a
     source "$service_dir/.env"
