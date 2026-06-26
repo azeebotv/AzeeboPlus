@@ -1,0 +1,21 @@
+id,key,value,category,description,isPublic,createdAt,updatedAt
+5ad42692-e6f2-4a1f-b5f9-1dbff03a678c,site_name,"""Azeebo+""",general,Platform name,t,2026-06-23 19:21:14.502869+01,2026-06-23 19:21:14.502869+01
+62c415ae-7873-472b-9b76-0f0f85a06bc2,site_description,"""Nigeria's premier entertainment streaming platform""",general,Platform tagline,t,2026-06-23 19:21:14.502869+01,2026-06-23 19:21:14.502869+01
+dfe3b909-360f-4550-8c9a-6b91f45fab60,maintenance_mode,false,general,Maintenance mode toggle,f,2026-06-23 19:21:14.502869+01,2026-06-23 19:21:14.502869+01
+7a98a30a-7e9e-49cc-974a-71eff64fcd8c,registration_enabled,true,auth,Allow new registrations,f,2026-06-23 19:21:14.502869+01,2026-06-23 19:21:14.502869+01
+095dbb1e-1fde-4cf1-ab7c-c92001ca437c,max_upload_size_mb,500,uploads,Maximum file upload size in MB,f,2026-06-23 19:21:14.502869+01,2026-06-23 19:21:14.502869+01
+15b32093-437c-43df-b698-247d52028415,default_currency,"""NGN""",payments,Default transaction currency,t,2026-06-23 19:21:14.502869+01,2026-06-23 19:21:14.502869+01
+a21fec5e-89a1-4926-a7d1-8f562a1ff75e,currency_symbol,"""₦""",payments,Currency display symbol,t,2026-06-23 19:21:14.502869+01,2026-06-23 19:21:14.502869+01
+cb20789a-4b3f-4ce1-b47e-ad72879f7018,min_rental_price,200,payments,Minimum rental price in NGN,f,2026-06-23 19:21:14.502869+01,2026-06-23 19:21:14.502869+01
+58d6fda2-0ea5-4b1f-bc9e-d90ee04b3ede,max_rental_price,50000,payments,Maximum rental price in NGN,f,2026-06-23 19:21:14.502869+01,2026-06-23 19:21:14.502869+01
+d59a91ef-ba83-4fe6-92ce-c842c64c2dca,featured_content_limit,6,content,Max featured items on homepage,t,2026-06-23 19:21:14.502869+01,2026-06-23 19:21:14.502869+01
+1e7d3166-f882-48ff-9d6f-b5d4d6420e33,trending_window_hours,168,content,Hours to consider for trending calc,f,2026-06-23 19:21:14.502869+01,2026-06-23 19:21:14.502869+01
+3c65547a-6347-4664-afbe-10c838e47efa,comment_max_length,2000,content,Max comment character length,f,2026-06-23 19:21:14.502869+01,2026-06-23 19:21:14.502869+01
+ab831f94-7f4c-429c-b5db-bd4ac51a8a00,screening_max_viewers,10000,screenings,Default max viewers per screening,f,2026-06-23 19:21:14.502869+01,2026-06-23 19:21:14.502869+01
+9f355cbe-2e5a-48ea-979a-b6ca239af12b,otp_expiry_minutes,10,auth,OTP code expiration in minutes,f,2026-06-23 19:21:14.502869+01,2026-06-23 19:21:14.502869+01
+6235c95a-1c8c-49d9-9b0e-1dc508589907,social_google_enabled,true,social,Google OAuth login enabled,t,2026-06-23 19:21:14.502869+01,2026-06-23 19:21:14.502869+01
+3e252c24-6c49-4548-b69c-f3f190ccfab0,social_apple_enabled,true,social,Apple Sign-In enabled,t,2026-06-23 19:21:14.502869+01,2026-06-23 19:21:14.502869+01
+857a1581-d44c-4f3b-a457-2a6e6d1d1afd,seo_title,"""Azeebo+ - Stream Nigerian Entertainment""",seo,Default SEO title,t,2026-06-23 19:21:14.502869+01,2026-06-23 19:21:14.502869+01
+d4b59e25-5974-459c-b9fd-69a7a9e27943,seo_description,"""Watch reality shows, creator content, lifestyle, movies and more on Azeebo+""",seo,Default SEO description,t,2026-06-23 19:21:14.502869+01,2026-06-23 19:21:14.502869+01
+79504f89-8b0a-44a7-ad2f-76dd2617e1f7,support_email,"""support@azeebo.com""",contact,Support email address,t,2026-06-23 19:21:14.502869+01,2026-06-23 19:21:14.502869+01
+688a77e0-bd6d-4043-b6fd-b0adbbc1d19d,terms_url,"""https://azeebo.com/terms""",legal,Terms of service URL,t,2026-06-23 19:21:14.502869+01,2026-06-23 19:21:14.502869+01

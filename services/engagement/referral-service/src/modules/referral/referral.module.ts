@@ -5,6 +5,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 
 import { ReferralController } from './referral.controller';
 import { ReferralService } from './referral.service';
+import { JwtStrategy } from './jwt.strategy';
 import { DatabaseModule } from '../database/database.module';
 
 @Module({
@@ -23,7 +24,7 @@ import { DatabaseModule } from '../database/database.module';
     }),
   ],
   controllers: [ReferralController],
-  providers: [ReferralService],
+  providers: [ReferralService, JwtStrategy],
   exports: [ReferralService, DatabaseModule],
 })
 export class ReferralModule {}

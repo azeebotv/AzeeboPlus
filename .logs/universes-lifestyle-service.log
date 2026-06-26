@@ -2,133 +2,133 @@
 > @azeebo/lifestyle-service@0.1.0 start:dev /Users/deprof/www/azeebo+/services/universes/lifestyle-service
 > ts-node-dev --respawn --transpile-only src/main.ts
 
-[INFO] 09:43:17 ts-node-dev ver. 2.0.0 (using ts-node ver. 10.9.2, typescript ver. 5.9.3)
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCommonModule dependencies initialized[39m[38;5;3m +24ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDatabaseModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPassportModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +30ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisCoreModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +2ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTerminusModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mSocialModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCityGuideModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mMusicModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCelebrityModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mNightlifeModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mInfluencerModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRateLimiterModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mStoriesModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mEventsModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mChallengeModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPollModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mQuizModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAdminModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mFeedModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [32mSwagger documentation enabled at /docs[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHealthController {/}:[39m[38;5;3m +3ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health, GET} route[39m[38;5;3m +2ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/ready, GET} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/live, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mStoriesController {/v1/lifestyle/stories}:[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/stories, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/stories/categories, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/stories/:slug, GET} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/stories, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/stories/:id, PATCH} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/stories/:id, DELETE} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/stories/:id/view, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mEventsController {/v1/lifestyle/events}:[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/events, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/events/categories, GET} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/events/upcoming, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/events/:slug, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/events, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/events/:id, PATCH} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/events/:id, DELETE} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/events/:id/rsvp, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/events/:id/rsvp, DELETE} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mSocialController {/v1/lifestyle/social}:[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/social/save, POST} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/social/save, DELETE} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/social/saved, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/social/saved/check, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/social/share, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/social/share/count, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mCityGuideController {/v1/lifestyle/city-guide}:[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/city-guide, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/city-guide/featured, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/city-guide/search, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/city-guide/tags, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/city-guide/:slug, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/city-guide, POST} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/city-guide/:id, PATCH} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/city-guide/:id, DELETE} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mMusicController {/v1/lifestyle/music}:[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/music, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/music/trending, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/music/genres, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/music/:slug, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/music, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/music/:id, PATCH} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/music/:id, DELETE} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mCelebrityController {/v1/lifestyle/celebrities}:[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/celebrities, GET} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/celebrities/featured, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/celebrities/:slug, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/celebrities/:celebrityId/news, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/celebrities, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/celebrities/news, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/celebrities/:id, PATCH} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/celebrities/:id, DELETE} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mNightlifeController {/v1/lifestyle/nightlife}:[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/nightlife, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/nightlife/featured, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/nightlife/:slug, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/nightlife, POST} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/nightlife/:id, PATCH} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/nightlife/:id, DELETE} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mInfluencerController {/v1/lifestyle/influencers}:[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/influencers, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/influencers/featured, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/influencers/:slug, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/influencers/:influencerId/collaborations, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/influencers, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/influencers/collaborations, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/influencers/:id, PATCH} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/influencers/:id, DELETE} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mFeedController {/v1/lifestyle/feed}:[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/feed, GET} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/feed/trending, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mChallengeController {/challenges}:[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/challenges, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/challenges/:id, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/challenges, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/challenges/:id/submit, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/challenges/submissions/:id/vote, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mPollController {/polls}:[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/polls, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/polls/:id, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/polls, POST} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/polls/:id/vote, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mQuizController {/quizzes}:[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/quizzes, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/quizzes/:id, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/quizzes, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/quizzes/:id/start, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/quizzes/attempts/:attemptId/submit, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/quizzes/:id/leaderboard, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAdminController {/admin}:[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/stats, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/content, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/users, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +21ms[39m
-[32m[Nest] 49236  - [39m06/25/2026, 9:43:19 AM [32m    LOG[39m [38;5;3m[Lifestyle Service] [39m[32mLifestyle Service running on port 3016[39m
+[INFO] 13:17:47 ts-node-dev ver. 2.0.0 (using ts-node ver. 10.9.2, typescript ver. 5.9.3)
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:51 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCommonModule dependencies initialized[39m[38;5;3m +26ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDatabaseModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPassportModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +37ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisCoreModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTerminusModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mSocialModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCityGuideModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mMusicModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCelebrityModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mNightlifeModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mInfluencerModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRateLimiterModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mStoriesModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mEventsModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mChallengeModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPollModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mQuizModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAdminModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mFeedModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [32mSwagger documentation enabled at /docs[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHealthController {/}:[39m[38;5;3m +3ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health, GET} route[39m[38;5;3m +3ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/ready, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/live, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mStoriesController {/v1/lifestyle/stories}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/stories, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/stories/categories, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/stories/:slug, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/stories, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/stories/:id, PATCH} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/stories/:id, DELETE} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/stories/:id/view, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mEventsController {/v1/lifestyle/events}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/events, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/events/categories, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/events/upcoming, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/events/:slug, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/events, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/events/:id, PATCH} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/events/:id, DELETE} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/events/:id/rsvp, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/events/:id/rsvp, DELETE} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mSocialController {/v1/lifestyle/social}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/social/save, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/social/save, DELETE} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/social/saved, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/social/saved/check, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/social/share, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/social/share/count, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mCityGuideController {/v1/lifestyle/city-guide}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/city-guide, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/city-guide/featured, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/city-guide/search, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/city-guide/tags, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/city-guide/:slug, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/city-guide, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/city-guide/:id, PATCH} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/city-guide/:id, DELETE} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mMusicController {/v1/lifestyle/music}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/music, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/music/trending, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/music/genres, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/music/:slug, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/music, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/music/:id, PATCH} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/music/:id, DELETE} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mCelebrityController {/v1/lifestyle/celebrities}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/celebrities, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/celebrities/featured, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/celebrities/:slug, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/celebrities/:celebrityId/news, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/celebrities, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/celebrities/news, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/celebrities/:id, PATCH} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/celebrities/:id, DELETE} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mNightlifeController {/v1/lifestyle/nightlife}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/nightlife, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/nightlife/featured, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/nightlife/:slug, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/nightlife, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/nightlife/:id, PATCH} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/nightlife/:id, DELETE} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mInfluencerController {/v1/lifestyle/influencers}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/influencers, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/influencers/featured, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/influencers/:slug, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/influencers/:influencerId/collaborations, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/influencers, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/influencers/collaborations, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/influencers/:id, PATCH} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/influencers/:id, DELETE} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mFeedController {/v1/lifestyle/feed}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/feed, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/lifestyle/feed/trending, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mChallengeController {/challenges}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/challenges, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/challenges/:id, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/challenges, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/challenges/:id/submit, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/challenges/submissions/:id/vote, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mPollController {/polls}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/polls, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/polls/:id, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/polls, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/polls/:id/vote, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mQuizController {/quizzes}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/quizzes, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/quizzes/:id, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/quizzes, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/quizzes/:id/start, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/quizzes/attempts/:attemptId/submit, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/quizzes/:id/leaderboard, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAdminController {/admin}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/stats, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/content, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/users, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +25ms[39m
+[32m[Nest] 15685  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[Lifestyle Service] [39m[32mLifestyle Service running on port 3016[39m

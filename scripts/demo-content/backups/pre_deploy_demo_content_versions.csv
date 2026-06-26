@@ -1,0 +1,2 @@
+id,version,deployedAt,deployedBy,rollbackSnapshotId,metadata,status
+f896e8c9-2404-4548-8ed2-c4c1f1dd2412,1.0.0,2026-06-23 19:26:25.935842+01,manual-deploy,,"{""description"": ""Initial demo content - 30 content items, 10 users, 8 universes""}",active

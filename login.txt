@@ -1,0 +1,58 @@
+Azeebo+ Demo Login Credentials
+================================
+
+Admin Users
+-----------
+Email: admin@azeebo.com
+Password: Demo123!
+Role: Admin
+
+Email: mod@azeeboplus.com
+Password: Demo123!
+Role: Admin (Moderator)
+
+Creator Users
+-------------
+Email: creator@choplife.com
+Password: Demo123!
+Role: Creator
+
+Email: creator@naijavibes.com
+Password: Demo123!
+Role: Creator
+
+Email: creator@lagosvibes.com
+Password: Demo123!
+Role: Creator
+
+Email: creator@naijagaming.com
+Password: Demo123!
+Role: Creator (Gaming)
+
+Email: creator@naijasports.com
+Password: Demo123!
+Role: Creator (Sports)
+
+Viewer Users
+------------
+Email: viewer1@demo.com
+Password: Demo123!
+Role: Viewer
+
+Email: viewer2@demo.com
+Password: Demo123!
+Role: Viewer
+
+Email: viewer3@demo.com
+Password: Demo123!
+Role: Viewer
+
+Special Status Users
+--------------------
+Email: banned@azeeboplus.com
+Password: Demo123!
+Status: Banned
+
+Email: unverified@azeeboplus.com
+Password: Demo123!
+Status: Pending Verification

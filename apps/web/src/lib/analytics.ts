@@ -587,6 +587,28 @@ class Analytics {
     });
   }
 
+  homepageAccessed(path: string, isAuthenticated: boolean, properties?: EventProperties): void {
+    this.track('homepage_accessed', {
+      path,
+      isAuthenticated,
+      ...properties,
+    });
+  }
+
+  homepageRedirected(
+    from: string,
+    to: string,
+    reason: string,
+    properties?: EventProperties
+  ): void {
+    this.track('homepage_redirected', {
+      from,
+      to,
+      reason,
+      ...properties,
+    });
+  }
+
   getEvents(): AnalyticsEvent[] {
     return [...this.events];
   }

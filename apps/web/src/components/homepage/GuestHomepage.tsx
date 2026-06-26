@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { motion, useScroll, useTransform } from 'framer-motion';
+import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import Link from 'next/link';
 import { usePWA } from '../../hooks/usePWA';
 import { useSettings } from '@/hooks/useDatabase';
@@ -11,7 +11,6 @@ import { AmbientGlow } from '@/components/motion/AmbientGlow';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { api } from '@/lib/api';
 import type { ContentItem } from '@/lib/api';
-import HeroSlides from './HeroSlides';
 import ContentRow from './ContentRow';
 
 type CategoryCard = {
@@ -23,12 +22,15 @@ type CategoryCard = {
 };
 
 const CATEGORY_CARDS: CategoryCard[] = [
-  { category: 'Music', sub: 'Afrobeats', descriptor: 'Wande Coal', emoji: '\u{1F3A4}', side: 'left' },
-  { category: 'Movies', sub: 'Nollywood', descriptor: 'Genevive Nnaji', emoji: '\u{1F3AC}', side: 'left' },
-  { category: 'Sports', sub: 'Super Eagles', descriptor: 'Live Matches', emoji: '\u26BD', side: 'left' },
-  { category: 'Culture', sub: 'Heritage', descriptor: 'Osun Osogbo', emoji: '\u{1FA95}', side: 'right' },
-  { category: 'Comedy', sub: 'Taooma', descriptor: 'Laugh Out Loud', emoji: '\u{1F602}', side: 'right' },
-  { category: 'Creators', sub: 'Vloggers', descriptor: 'Live Stream', emoji: '\u{1F4E1}', side: 'right' },
+  { category: 'Reality', sub: 'Universe', descriptor: 'Reality TV & Shows', emoji: '\u{1F4FA}', side: 'left' },
+  { category: 'Vertical', sub: 'Universe', descriptor: 'Short-Form Content', emoji: '\u{1F4F1}', side: 'left' },
+  { category: 'Movie', sub: 'Universe', descriptor: 'Nollywood & Beyond', emoji: '\u{1F3AC}', side: 'left' },
+  { category: 'Creator', sub: 'Universe', descriptor: 'Vlogs & Livestreams', emoji: '\u{1F4E1}', side: 'right' },
+  { category: 'Cinemaxis', sub: 'Digital Cinema', descriptor: 'Premium Viewing', emoji: '\u{1F3A6}', side: 'right' },
+  { category: 'Comedy', sub: 'Universe', descriptor: 'Laughs & Skits', emoji: '\u{1F602}', side: 'right' },
+  { category: 'Sports', sub: 'Universe', descriptor: 'Live Matches & Highlights', emoji: '\u26BD', side: 'left' },
+  { category: 'Lifestyle', sub: 'Universe', descriptor: 'Culture & Heritage', emoji: '\u{1F3A8}', side: 'left' },
+  { category: 'Games', sub: 'Universe', descriptor: 'Play & Compete', emoji: '\u{1F3AE}', side: 'right' },
 ];
 
 export default function GuestHomepage(): React.JSX.Element {
@@ -36,7 +38,6 @@ export default function GuestHomepage(): React.JSX.Element {
   const { getSetting } = useSettings();
   const siteName = getSetting('site_name', 'Azeebo+');
   const [showInstallPrompt, setShowInstallPrompt] = useState(false);
-  const [featuredContent, setFeaturedContent] = useState<ContentItem[]>([]);
   const [trendingContent, setTrendingContent] = useState<ContentItem[]>([]);
 
   const heroRef = useRef<HTMLDivElement>(null);
@@ -47,6 +48,16 @@ export default function GuestHomepage(): React.JSX.Element {
   const heroY = useTransform(scrollYProgress, [0, 1], [0, 150]);
   const heroOpacity = useTransform(scrollYProgress, [0, 0.6], [1, 0]);
 
+  // Greeting cycle
+  const greetings = ['Ekaabo.', 'Welcome.', 'Sannu Da Zuwa.'];
+  const [greetingIndex, setGreetingIndex] = useState(0);
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setGreetingIndex((prev) => (prev + 1) % greetings.length);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [greetings.length]);
+
   useEffect((): (() => void) | undefined => {
     if (!isInstalled && 'serviceWorker' in navigator) {
       const timer = setTimeout(() => setShowInstallPrompt(true), 5000);
@@ -55,19 +66,13 @@ export default function GuestHomepage(): React.JSX.Element {
     return undefined;
   }, [isInstalled]);
 
-  // Load content for guest preview
+  // Load trending content for guest preview
   useEffect(() => {
     const loadGuestContent = async () => {
       try {
-        const [featured, trending] = await Promise.allSettled([
-          api.content.getFeaturedContent(5),
-          api.content.getTrendingContent(12),
-        ]);
-        if (featured.status === 'fulfilled' && featured.value.success && featured.value.data) {
-          setFeaturedContent(featured.value.data);
-        }
-        if (trending.status === 'fulfilled' && trending.value.success && trending.value.data) {
-          setTrendingContent(trending.value.data);
+        const trending = await api.content.getTrendingContent(12);
+        if (trending.success && trending.data) {
+          setTrendingContent(trending.data);
         }
       } catch {
         // Guest page gracefully degrades without content
@@ -171,157 +176,148 @@ export default function GuestHomepage(): React.JSX.Element {
 
       <AppHeader active="Home" />
 
-      {/* ===================== Hero Carousel ===================== */}
-      {featuredContent.length > 0 ? (
-        <HeroSlides slides={featuredContent} />
-      ) : (
-        /* Fallback hero for guests when content isn't loaded yet */
-        <section
-          ref={heroRef}
-          className="relative w-full overflow-hidden flex items-center justify-center py-16 sm:py-20 lg:py-28"
-          style={{ backgroundColor: '#0D3B2E' }}
-        >
-          <AmbientGlow color="rgba(13,90,60,0.5)" size={600} className="-top-48 -left-48" />
+      {/* ===================== Hero ===================== */}
+      <section
+        ref={heroRef}
+        className="relative w-full overflow-hidden flex items-center justify-center py-16 sm:py-20 lg:py-28"
+        style={{ backgroundColor: '#0D3B2E' }}
+      >
+        <AmbientGlow color="rgba(13,90,60,0.5)" size={600} className="-top-48 -left-48" />
 
-          {/* Orbiting category cards (desktop only) */}
-          <div className="hidden xl:flex absolute inset-0 items-center pointer-events-none">
-            <div className="flex flex-col gap-6 mr-auto pl-8 2xl:pl-24">
-              {leftCards.map(renderOrbitCard)}
-            </div>
-            <div className="flex flex-col gap-6 ml-auto pr-8 2xl:pr-24">
-              {rightCards.map(renderOrbitCard)}
-            </div>
+        {/* Orbiting category cards (desktop only) */}
+        <div className="hidden xl:flex absolute inset-0 items-center pointer-events-none">
+          <div className="flex flex-col gap-6 mr-auto pl-8 2xl:pl-24">
+            {leftCards.map(renderOrbitCard)}
           </div>
+          <div className="flex flex-col gap-6 ml-auto pr-8 2xl:pr-24">
+            {rightCards.map(renderOrbitCard)}
+          </div>
+        </div>
 
-          {/* Center: phone mockup + multilingual welcome */}
+        {/* Center: phone mockup + multilingual welcome */}
+        <motion.div
+          className="relative z-10 flex flex-col lg:flex-row items-center gap-8 lg:gap-10 px-4 sm:px-6 text-center lg:text-left"
+          style={{ y: heroY, opacity: heroOpacity }}
+        >
+          {/* Phone mockup */}
           <motion.div
-            className="relative z-10 flex flex-col lg:flex-row items-center gap-8 lg:gap-10 px-4 sm:px-6 text-center lg:text-left"
-            style={{ y: heroY, opacity: heroOpacity }}
+            className="relative rounded-[2.5rem] p-2 flex-shrink-0"
+            style={{
+              width: 220,
+              height: 440,
+              background: 'linear-gradient(160deg, #1A0A0A, #000)',
+              border: '2px solid rgba(255,255,255,0.15)',
+              boxShadow: '0 0 50px rgba(232,66,10,0.25), 0 30px 60px rgba(0,0,0,0.6)',
+            }}
+            initial={{ opacity: 0, y: 40, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ delay: 0.2, duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] }}
           >
-            {/* Phone mockup */}
-            <motion.div
-              className="relative rounded-[2.5rem] p-2 flex-shrink-0"
+            <div
+              className="absolute top-2 left-1/2 -translate-x-1/2 rounded-full"
+              style={{ width: 86, height: 18, background: '#000' }}
+            />
+            <div
+              className="relative w-full h-full rounded-[2.1rem] overflow-hidden flex flex-col items-center justify-center px-4 sm:px-5"
               style={{
-                width: 220,
-                height: 440,
-                background: 'linear-gradient(160deg, #1A0A0A, #000)',
-                border: '2px solid rgba(255,255,255,0.15)',
-                boxShadow: '0 0 50px rgba(232,66,10,0.25), 0 30px 60px rgba(0,0,0,0.6)',
+                background:
+                  'linear-gradient(160deg, rgba(204,28,28,0.35) 0%, rgba(13,59,46,0.6) 60%, rgba(26,10,10,0.9) 100%)',
               }}
-              initial={{ opacity: 0, y: 40, scale: 0.9 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              transition={{ delay: 0.2, duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] }}
             >
-              <div
-                className="absolute top-2 left-1/2 -translate-x-1/2 rounded-full"
-                style={{ width: 86, height: 18, background: '#000' }}
-              />
-              <div
-                className="relative w-full h-full rounded-[2.1rem] overflow-hidden flex flex-col items-center justify-center px-4 sm:px-5"
-                style={{
-                  background:
-                    'linear-gradient(160deg, rgba(204,28,28,0.35) 0%, rgba(13,59,46,0.6) 60%, rgba(26,10,10,0.9) 100%)',
-                }}
-              >
-                <div className="grid grid-cols-3 gap-1.5 mb-4 sm:mb-5 opacity-90">
-                  {['\u{1F3AC}', '\u{1F3A4}', '\u26BD', '\u{1F3AD}', '\u{1F3C6}', '\u{1F3B5}'].map((e, i) => (
-                    <motion.div
-                      key={i}
-                      className="rounded-md flex items-center justify-center text-base sm:text-lg"
-                      style={{
-                        width: 38,
-                        height: 38,
-                        background: 'rgba(255,255,255,0.08)',
-                        border: '1px solid rgba(255,255,255,0.12)',
-                      }}
-                      initial={{ opacity: 0, scale: 0.5 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: 0.6 + i * 0.08, duration: 0.35 }}
-                    >
-                      {e}
-                    </motion.div>
-                  ))}
-                </div>
-                <p className="az-headline text-white text-lg sm:text-xl leading-tight mb-1">Ekaabo</p>
-                <p className="text-white/80 text-xs sm:text-sm font-semibold mb-1">Sannu Da Zuwa</p>
-                <p className="az-headline text-white text-base sm:text-lg leading-tight mb-4 sm:mb-5">Welcome Home</p>
-                <Link href="/auth/register">
-                  <motion.button
-                    type="button"
-                    className="az-btn-primary"
-                    style={{ width: 'auto', paddingInline: '1.5rem', fontSize: '0.75rem' }}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
+              <div className="grid grid-cols-3 gap-1.5 mb-4 sm:mb-5 opacity-90">
+                {['\u{1F3AC}', '\u{1F3A4}', '\u26BD', '\u{1F3AD}', '\u{1F3C6}', '\u{1F3B5}'].map((e, i) => (
+                  <motion.div
+                    key={i}
+                    className="rounded-md flex items-center justify-center text-base sm:text-lg"
+                    style={{
+                      width: 38,
+                      height: 38,
+                      background: 'rgba(255,255,255,0.08)',
+                      border: '1px solid rgba(255,255,255,0.12)',
+                    }}
+                    initial={{ opacity: 0, scale: 0.5 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.6 + i * 0.08, duration: 0.35 }}
                   >
-                    GET STARTED
-                  </motion.button>
-                </Link>
+                    {e}
+                  </motion.div>
+                ))}
               </div>
-            </motion.div>
-
-            {/* Headline + CTA */}
-            <div className="max-w-lg">
-              <h1 className="az-headline text-white text-3xl sm:text-4xl lg:text-5xl xl:text-6xl mb-4">
-                <motion.span
-                  className="block"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3, duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
+              <p className="az-headline text-white text-lg sm:text-xl leading-tight mb-1">Ekaabo</p>
+              <p className="text-white/80 text-xs sm:text-sm font-semibold mb-1">Sannu Da Zuwa</p>
+              <p className="az-headline text-white text-base sm:text-lg leading-tight mb-4 sm:mb-5">Welcome</p>
+              <Link href="/auth/register">
+                <motion.button
+                  type="button"
+                  className="az-btn-primary"
+                  style={{ width: 'auto', paddingInline: '1.5rem', fontSize: '0.75rem' }}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                 >
-                  Ekaabo.
-                </motion.span>
-                <motion.span
-                  className="block"
-                  style={{ color: '#E8420A' }}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.45, duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
-                >
-                  Welcome Home.
-                </motion.span>
-              </h1>
-              <motion.p
-                className="text-white/70 text-sm sm:text-base lg:text-lg mb-6 sm:mb-8 leading-relaxed"
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.55, duration: 0.5 }}
-              >
-                The home of Nigerian entertainment — Afrobeats, Nollywood, Super Eagles, comedy,
-                creators and more. Stream, vote, earn, and celebrate culture.
-              </motion.p>
-              <motion.div
-                className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 justify-center lg:justify-start"
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.65, duration: 0.5 }}
-              >
-                <Link href="/auth/register">
-                  <motion.button
-                    type="button"
-                    className="az-btn-primary"
-                    style={{ width: 'auto', paddingInline: '2.5rem' }}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    Get Started Free
-                  </motion.button>
-                </Link>
-                <Link href="/auth/login">
-                  <motion.button
-                    type="button"
-                    className="px-6 py-3 rounded-full text-sm font-semibold text-white hover:text-white/80 transition-colors"
-                    style={{ border: '1px solid rgba(255,255,255,0.25)' }}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    I already have an account
-                  </motion.button>
-                </Link>
-              </motion.div>
+                  GET STARTED
+                </motion.button>
+              </Link>
             </div>
           </motion.div>
-        </section>
-      )}
+
+          {/* Headline + CTA */}
+          <div className="max-w-lg">
+            <h1 className="az-headline text-white text-3xl sm:text-4xl lg:text-5xl xl:text-6xl mb-4">
+              <AnimatePresence mode="wait">
+                <motion.span
+                  key={greetingIndex}
+                  className="block"
+                  style={{ color: '#E8420A' }}
+                  initial={{ opacity: 0, y: 24 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -24 }}
+                  transition={{ duration: 0.45, ease: [0.25, 0.46, 0.45, 0.94] }}
+                >
+                  {greetings[greetingIndex]}
+                </motion.span>
+              </AnimatePresence>
+            </h1>
+            <motion.p
+              className="text-white/70 text-sm sm:text-base lg:text-lg mb-6 sm:mb-8 leading-relaxed"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.55, duration: 0.5 }}
+            >
+              The home of Nigerian entertainment — Afrobeats, Nollywood, Super Eagles, comedy,
+              creators and more. Stream, vote, earn, and celebrate culture.
+            </motion.p>
+            <motion.div
+              className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 justify-center lg:justify-start"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.65, duration: 0.5 }}
+            >
+              <Link href="/auth/register">
+                <motion.button
+                  type="button"
+                  className="az-btn-primary"
+                  style={{ width: 'auto', paddingInline: '2.5rem' }}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  Get Started Free
+                </motion.button>
+              </Link>
+              <Link href="/auth/login">
+                <motion.button
+                  type="button"
+                  className="px-6 py-3 rounded-full text-sm font-semibold text-white hover:text-white/80 transition-colors"
+                  style={{ border: '1px solid rgba(255,255,255,0.25)' }}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  I already have an account
+                </motion.button>
+              </Link>
+            </motion.div>
+          </div>
+        </motion.div>
+      </section>
 
       {/* ===================== Main Content ===================== */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
@@ -400,13 +396,15 @@ export default function GuestHomepage(): React.JSX.Element {
             </h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
               {[
-                { name: 'Movies', icon: '\u{1F3AC}', href: '/movies', color: '#E8420A' },
+                { name: 'Movie', icon: '\u{1F3AC}', href: '/movies', color: '#E8420A' },
                 { name: 'Comedy', icon: '\u{1F602}', href: '/comedy', color: '#fbbf24' },
                 { name: 'Sports', icon: '\u26BD', href: '/sports', color: '#22c55e' },
                 { name: 'Reality', icon: '\u{1F4FA}', href: '/reality', color: '#8b5cf6' },
                 { name: 'Lifestyle', icon: '\u{1F3A8}', href: '/lifestyle', color: '#ec4899' },
                 { name: 'Vertical', icon: '\u{1F4F1}', href: '/vertical', color: '#3b82f6' },
                 { name: 'Games', icon: '\u{1F3AE}', href: '/games', color: '#06b6d4' },
+                { name: 'Creator', icon: '\u{1F4E1}', href: '/creators', color: '#f97316' },
+                { name: 'Cinemaxis', icon: '\u{1F3A6}', href: '/cinemaxis', color: '#a855f7' },
               ].map((u) => (
                 <Link
                   key={u.name}

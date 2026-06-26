@@ -61,7 +61,7 @@ export default function AuthenticatedHomepage({
     const loadSlides = async () => {
       try {
         const response = await api.engagement.getFeaturedSlides(5);
-        if (response.success && response.data) {
+        if (response.success && Array.isArray(response.data)) {
           setFeaturedSlides(response.data);
         }
       } catch {
@@ -81,7 +81,7 @@ export default function AuthenticatedHomepage({
         recentlyWatchedOffset
       );
       if (response.success && response.data) {
-        const newItems = response.data.items || [];
+        const newItems = Array.isArray(response.data.items) ? response.data.items : [];
         setRecentlyWatched((prev) =>
           recentlyWatchedOffset === 0 ? newItems : [...prev, ...newItems]
         );
@@ -214,16 +214,16 @@ export default function AuthenticatedHomepage({
           api.engagement.getPopularInRegion(12),
         ]);
 
-        if (trendingRes.status === 'fulfilled' && trendingRes.value.success && trendingRes.value.data) {
+        if (trendingRes.status === 'fulfilled' && trendingRes.value.success && Array.isArray(trendingRes.value.data)) {
           setTrendingContent(trendingRes.value.data);
         }
-        if (continueRes.status === 'fulfilled' && continueRes.value.success && continueRes.value.data) {
+        if (continueRes.status === 'fulfilled' && continueRes.value.success && Array.isArray(continueRes.value.data)) {
           setContinueWatching(continueRes.value.data);
         }
-        if (newRes.status === 'fulfilled' && newRes.value.success && newRes.value.data) {
+        if (newRes.status === 'fulfilled' && newRes.value.success && Array.isArray(newRes.value.data)) {
           setNewReleases(newRes.value.data);
         }
-        if (popularRes.status === 'fulfilled' && popularRes.value.success && popularRes.value.data) {
+        if (popularRes.status === 'fulfilled' && popularRes.value.success && Array.isArray(popularRes.value.data)) {
           setPopularInRegion(popularRes.value.data);
         }
       } catch {

@@ -30,9 +30,9 @@ scripts/demo-content/
     └── 002_seed_demo_data.sql      # Comprehensive seed data
 ```
 
-## Demo Data Overview
+## Demo Data Overview (v2.0.0)
 
-### Users (10)
+### Users (12)
 | Email | Role | Status |
 |-------|------|--------|
 | admin@azeeboplus.com | Admin | Active |
@@ -42,6 +42,8 @@ scripts/demo-content/
 | creator@choplife.com | Creator | Active |
 | creator@naijavibes.com | Creator | Active |
 | creator@lagosvibes.com | Creator | Active |
+| creator@naijagaming.com | Creator (Gaming) | Active |
+| creator@naijasports.com | Creator (Sports) | Active |
 | viewer1@demo.com | Viewer | Active |
 | viewer2@demo.com | Viewer | Active |
 | viewer3@demo.com | Viewer | Active |
@@ -51,34 +53,76 @@ scripts/demo-content/
 ### Universes (8)
 Reality TV, Creator Hub, Lifestyle, Movies, Comedy, Sports, Music, Gaming
 
-### Content Items (30)
-30 realistic Nigerian entertainment content items across all universes:
-- Reality: Big Brother Naija, Lagos Love Island, Cook Off Naija, etc.
-- Creator: Creator Academy, Unbox Therapy Naija, Tech Talk Naija, etc.
-- Lifestyle: Lagos Food Tour, Fashion Week Lagos, etc.
-- Movies: Lagos King: The Return, Love at First Jollof, The Guardian, etc.
-- Comedy: AY Live: Uncensored, Basketmouth: Africa Laughs, etc.
-- Sports: Naija Football League, Lagos Marathon 2025, etc.
-- Music: Burna Boy: Live in Lagos, Wizkid: Made in Lagos Tour, etc.
-- Gaming: Naija Gaming League, FIFA Tournament Lagos, etc.
+### Content Items (68)
+68 realistic Nigerian entertainment content items across all universes:
+- **Reality** (12): Big Brother Naija, Lagos Love Island, Cook Off Naija, etc.
+- **Creator** (10): Creator Academy, Unbox Therapy Naija, Tech Talk Naija, etc.
+- **Lifestyle** (8): Lagos Food Tour, Fashion Week Lagos, etc.
+- **Movies** (10): Lagos King: The Return, Love at First Jollof, etc.
+- **Comedy** (8): AY Live: Uncensored, Basketmouth: Africa Laughs, etc.
+- **Sports** (5): Naija Football League, Lagos Marathon 2025, etc.
+- **Music** (7): Burna Boy: Live in Lagos, Wizkid: Made in Lagos Tour, etc.
+- **Gaming** (8): Naija Gaming League, FIFA Tournament Lagos, etc.
+
+### Creator Ecosystem
+- **3 Creator Profiles** (Chinedu Creator, Chioma Vibes, Tunde Gaming)
+- **3 Creator Channels** (ChopLife TV, Naija Vibes, Tunde Gaming)
+- **6 Creator Earnings** (views, tips, subscriptions)
+- **2 Creator Challenges** (Comedy Skit Challenge, Gaming Tournament)
+- **3 Challenge Entries** with submission details
+- **2 Payout Requests** (pending + completed)
+
+### Reality TV & Voting
+- **3 Reality Shows** (Big Brother Naija, Lagos Love Island, Cook Off Naija)
+- **3 Reality Seasons** (current seasons)
+- **6 Reality Episodes** with air dates
+- **8 Reality Contestants** across shows
+- **15 Reality Votes** with viewer preferences
+- **3 Reality Supervotes** (premium voting)
+- **5 Reality Predictions** (who will win)
+
+### Sports & Predictions
+- **4 Sports Events** (NPL matches, Lagos Marathon)
+- **6 Event Teams** (clubs + marathon participants)
+- **2 Prediction Markets** (match winners, marathon top 3)
+- **4 Prediction Entries** with stake amounts
+
+### Games & Tournaments
+- **5 Games** (Naija Trivia, Lagos History, Music Quiz, etc.)
+- **15 Game Questions** with options and explanations
+- **2 Tournaments** (Weekly Trivia, Monthly Championship)
+- **4 Tournament Entries** with scores
+
+### Comedy
+- **2 Comedian Profiles** (AY Makun, Basketmouth)
+- **4 Comedy Clips** with metadata
+
+### Engagement & Gamification
+- **12 Notifications** (system, payment, content, social, reward)
+- **8 Leaderboard Entries** (trivia, comedy, predictions)
+- **3 Referrals** with reward tracking
+
+### Operations
+- **3 Moderation Queue** items (pending, reviewed, dismissed)
+- **2 Support Tickets** (wallet + subscription issues)
 
 ### Financial Data
-- **3 Wallets** with balances (NGN 8,500 - 23,000)
-- **10 Wallet Transactions** (credits, debits, bonuses, refunds)
-- **3 Passes** (daily, weekly, monthly with different statuses)
+- **5 Wallets** with balances (NGN 8,500 - 25,000)
+- **20 Wallet Transactions** (credits, debits, tips, earnings, refunds)
+- **5 Passes** (daily, weekly, monthly with different statuses)
 - **2 Rentals** (Lagos King, Love at First Jollof)
-- **3 Subscriptions** (basic, premium, yearly)
+- **5 Subscriptions** (basic, premium, yearly, active, cancelled)
 
 ### Other Data
 - **8 Categories** (Trending, New Releases, Editor's Picks, etc.)
-- **15 Tags** (naija, big-brother, nollywood, afrobeats, etc.)
-- **5 Media Assets** (video + thumbnail pairs)
+- **15 Tags** (naija, big-brother, nollywood, afrobeats, gaming, etc.)
+- **60+ Media Assets** (video + thumbnail pairs for all content)
 - **5 Content Relationships** (sequels, spin-offs, compilations)
-- **10 Comments** with realistic Nigerian entertainment discussions
-- **10 Watch History** records
+- **25 Comments** with threaded replies
+- **20 Watch History** records
 - **2 Screenings** (upcoming events)
 - **4 Locked Extras** (behind-the-scenes, deleted scenes)
-- **6 Universe Feature Flags**
+- **12 Universe Feature Flags** (gaming tournaments, live streams, etc.)
 - **20 System Settings** (general, SEO, payments, content, auth)
 - **3 Audit Logs**
 
@@ -192,22 +236,10 @@ After deployment, these endpoints return real data:
 
 | Endpoint | Method | Auth | Returns |
 |----------|--------|------|---------|
-| `/api/v1/content/featured` | GET | Public | 6 exclusive/premiere items |
-| `/api/v1/content/trending` | GET | Public | 20 items by view count |
+| `/api/v1/content/featured` | GET | Public | 6+ exclusive/premiere items |
+| `/api/v1/content/trending` | GET | Public | 20+ items by view count |
 | `/api/v1/content/:id` | GET | Public | Individual content item |
 | `/api/v1/content` | GET | Required | Full content list |
-
-## Content Service Enhancement
-
-The `getFeatured()` endpoint was implemented to query actual data:
-
-```typescript
-// content.service.ts
-async getFeatured() {
-  // First tries: exclusive OR premiere content
-  // Falls back to: top viewed published content
-}
-```
 
 ## Database Tables Created
 
@@ -219,6 +251,13 @@ The migration creates tables for all services:
 | Content | universes, categories, tags, content_items, content_categories, content_tags, media_assets, content_relationships |
 | User | user_profiles, user_preferences, saved_items, following, subscriptions, user_universe_affinity |
 | Wallet | wallets, wallet_transactions |
+| Creator | creator_profiles, creator_channels, creator_earnings, creator_challenges, challenge_entries, payout_requests |
+| Reality | reality_shows, reality_seasons, reality_episodes, reality_contestants, reality_votes, reality_supervotes, reality_predictions |
+| Sports | sports_events, event_teams, prediction_markets, prediction_entries |
+| Games | games, game_questions, tournaments, tournament_entries |
+| Comedy | comedian_profiles, comedy_clips |
+| Engagement | notifications, leaderboard_entries, referrals |
+| Operations | moderation_queue, support_tickets |
 | Shared | comments, rentals, passes, screenings, locked_extras, user_unlocks, watch_history, universe_feature_flags, system_settings, audit_logs |
 | Demo | demo_content_versions |
 

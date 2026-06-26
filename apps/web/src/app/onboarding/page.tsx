@@ -50,10 +50,10 @@ export default function OnboardingPage(): React.JSX.Element {
         body: JSON.stringify({ interests: selectedInterests, onboardingCompleted: true }),
       });
       localStorage.setItem('onboardingCompleted', 'true');
-      router.push('/');
+      router.push('/home');
     } catch (error) {
       webLogger.error('Failed to save preferences', error);
-      router.push('/');
+      router.push('/home');
     }
   };
 

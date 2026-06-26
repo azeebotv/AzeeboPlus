@@ -1,31 +1,49 @@
 'use client';
 
 import React, { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '../context/AuthContext';
-import { useSettings } from '@/hooks/useDatabase';
 import GuestHomepage from '../components/homepage/GuestHomepage';
-import AuthenticatedHomepage from '../components/homepage/AuthenticatedHomepage';
 import analytics from '@/lib/analytics';
+import { webLogger } from '@/lib/logger';
 
 /**
- * Root homepage — serves distinct experiences based on authentication status.
+ * Root homepage (/) — Legacy homepage for guest (unauthenticated) users.
  *
- * While the auth session is loading (`isLoading === true`), we render a minimal
- * skeleton to avoid layout shift. Once resolved, we render the appropriate
- * homepage variant. When the user logs in or out, the AuthContext state changes
- * and this component re-renders with the new variant — no full page reload needed.
+ * Server-side guard: middleware redirects authenticated users to /home
+ * when they visit / (see middleware.ts).
+ * Client-side guard: if auth state resolves to authenticated, redirect
+ * to /home. This handles cases where the cookie exists but the user
+ * just logged in and the middleware hasn't caught it yet.
+ *
+ * The legacy homepage shows a public-facing experience with trending
+ * content previews, category browsing, and sign-up CTAs.
  */
 export default function Home(): React.JSX.Element {
   const { isAuthenticated, isLoading } = useAuth();
-  const { getSetting } = useSettings();
-  const siteName = getSetting('site_name', 'Azeebo+');
+  const router = useRouter();
 
-  // Track which version is served
+  // Log homepage access
   useEffect(() => {
     if (!isLoading) {
-      analytics.homepageVersionServed(isAuthenticated);
+      webLogger.log('[Homepage] Legacy homepage accessed', {
+        isAuthenticated,
+        path: '/',
+      });
+      analytics.homepageAccessed('/', isAuthenticated);
     }
   }, [isAuthenticated, isLoading]);
+
+  // Client-side guard: redirect authenticated users to redesigned homepage
+  useEffect(() => {
+    if (!isLoading && isAuthenticated) {
+      webLogger.log('[Homepage] Authenticated user on / — redirecting to /home', {
+        path: '/',
+      });
+      analytics.homepageRedirected('/', '/home', 'authenticated_user_on_legacy');
+      router.replace('/home');
+    }
+  }, [isAuthenticated, isLoading, router]);
 
   // Loading state: minimal skeleton to avoid layout shift
   if (isLoading) {
@@ -47,8 +65,9 @@ export default function Home(): React.JSX.Element {
     );
   }
 
+  // Authenticated users should not see this page — show nothing while redirecting
   if (isAuthenticated) {
-    return <AuthenticatedHomepage siteName={siteName} />;
+    return <></>;
   }
 
   return <GuestHomepage />;

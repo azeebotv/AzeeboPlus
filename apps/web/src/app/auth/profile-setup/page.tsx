@@ -78,7 +78,7 @@ export default function ProfileSetupPage(): React.JSX.Element {
 
       await refreshUser?.();
       setSuccess(true);
-      setTimeout(() => router.push('/'), 2000);
+      setTimeout(() => router.push('/home'), 2000);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'An error occurred during profile setup';
       setError(message);
@@ -339,7 +339,7 @@ export default function ProfileSetupPage(): React.JSX.Element {
               </button>
               <button
                 type="button"
-                onClick={() => router.push('/')}
+                onClick={() => router.push('/home')}
                 className="px-6 rounded-full text-sm font-medium text-white/55 hover:text-white transition-colors"
                 style={{ border: '1px solid rgba(255,255,255,0.15)' }}
               >

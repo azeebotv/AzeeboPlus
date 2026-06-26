@@ -2,7 +2,11 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 /**
- * Middleware: Role-Based Access Control + Auth Guard.
+ * Middleware: Homepage Routing + Role-Based Access Control + Auth Guard.
+ *
+ * Homepage routing:
+ *   - / (legacy homepage) → redirect authenticated users to /home
+ *   - /home (redesigned homepage) → redirect unauthenticated users to /
  *
  * SECURITY: Uses Next.js `auth` cookie to check authentication status.
  * This cookie is set/cleared by AuthContext on login/logout and survives
@@ -39,6 +43,26 @@ export function middleware(request: NextRequest) {
   // Check if the user is authenticated using the 'auth' cookie
   const isAuthenticated = request.cookies.has('auth');
 
+  // --- Homepage routing guards ---
+  if (pathname === '/') {
+    // Authenticated users should see the redesigned homepage
+    if (isAuthenticated) {
+      return NextResponse.redirect(new URL('/home', request.url));
+    }
+    // Guest users see the legacy homepage — no redirect
+    return NextResponse.next();
+  }
+
+  if (pathname === '/home') {
+    // Unauthenticated users should see the legacy homepage
+    if (!isAuthenticated) {
+      return NextResponse.redirect(new URL('/', request.url));
+    }
+    // Authenticated users see the redesigned homepage — no redirect
+    return NextResponse.next();
+  }
+
+  // --- Protected route guards ---
   if (!isAuthenticated) {
     if (
       protectedRoutes.some(route => pathname.startsWith(route)) ||

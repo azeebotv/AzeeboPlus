@@ -92,7 +92,7 @@ export class AdminController {
   ) {
     const actorId = req.user?.id || 'admin';
     const actorRole = req.user?.role || 'admin';
-    return this.adminService.updateSubscription(subscriptionId, updateData, actorId, actorRole);
+    return this.adminService.updateSubscription(subscriptionId, updateData as Record<string, unknown>, actorId, actorRole);
   }
 
   @Delete('subscriptions/:subscriptionId')
@@ -130,7 +130,7 @@ export class AdminController {
   ) {
     const actorId = req.user?.id || 'admin';
     const actorRole = req.user?.role || 'admin';
-    return this.adminService.updateUserPreferences(userId, preferences, actorId, actorRole);
+    return this.adminService.updateUserPreferences(userId, preferences as Record<string, unknown>, actorId, actorRole);
   }
 
   @Delete('watch-history/:userId')

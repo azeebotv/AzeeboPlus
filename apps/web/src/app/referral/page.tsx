@@ -31,8 +31,29 @@ export default function ReferralPage(): React.JSX.Element {
 
   const loadReferralData = async () => {
     try {
-      const response = await apiFetch<any>(`/users/${user!.id}/referral`);
-      if (response.success && response.data) setReferralData(response.data as typeof referralData);
+      const [codeRes, statsRes, referralsRes] = await Promise.allSettled([
+        apiFetch<any>('/referrals/code'),
+        apiFetch<any>('/referrals/stats'),
+        apiFetch<any>('/referrals'),
+      ]);
+
+      const code = codeRes.status === 'fulfilled' ? codeRes.value : null;
+      const stats = statsRes.status === 'fulfilled' ? statsRes.value : null;
+      const referrals = referralsRes.status === 'fulfilled' ? referralsRes.value : null;
+
+      const codeData = code?.data ?? {};
+      const statsData = stats?.data ?? {};
+      const referralsData = referrals?.data ?? {};
+
+      setReferralData({
+        code: codeData.code ?? codeData.referralCode ?? '',
+        link: codeData.link ?? codeData.referralLink ?? '',
+        totalReferrals: statsData.totalReferrals ?? statsData.total ?? referralsData.total ?? 0,
+        successfulReferrals: statsData.successfulReferrals ?? statsData.successful ?? 0,
+        pendingReferrals: statsData.pendingReferrals ?? statsData.pending ?? 0,
+        totalEarned: statsData.totalEarned ?? statsData.earned ?? 0,
+        referrals: Array.isArray(referralsData.referrals) ? referralsData.referrals : Array.isArray(referralsData) ? referralsData : [],
+      });
     } catch {
       /* ignore */
     } finally {
@@ -158,17 +179,17 @@ export default function ReferralPage(): React.JSX.Element {
               {[
                 {
                   label: 'Total Referrals',
-                  value: referralData.totalReferrals.toString(),
+                  value: String(referralData.totalReferrals ?? 0),
                   color: '#E8420A',
                 },
                 {
                   label: 'Successful',
-                  value: referralData.successfulReferrals.toString(),
+                  value: String(referralData.successfulReferrals ?? 0),
                   color: '#0D3B2E',
                 },
                 {
                   label: 'Earned',
-                  value: `₦${referralData.totalEarned.toLocaleString()}`,
+                  value: `₦${(referralData.totalEarned ?? 0).toLocaleString()}`,
                   color: '#F59E0B',
                 },
               ].map((stat, i) => (

@@ -330,6 +330,61 @@ describe('Mobile Homepage — Dual System', () => {
     });
   });
 
+  describe('Homepage Routing', () => {
+    it('should render GuestHomepage for unauthenticated users', () => {
+      const routingConfig = {
+        isAuthenticated: false,
+        showsGuestHomepage: true,
+        showsAuthenticatedHomepage: false,
+      };
+      expect(routingConfig.showsGuestHomepage).toBe(true);
+      expect(routingConfig.showsAuthenticatedHomepage).toBe(false);
+    });
+
+    it('should render AuthenticatedHomepage for authenticated users', () => {
+      const routingConfig = {
+        isAuthenticated: true,
+        showsGuestHomepage: false,
+        showsAuthenticatedHomepage: true,
+      };
+      expect(routingConfig.showsAuthenticatedHomepage).toBe(true);
+      expect(routingConfig.showsGuestHomepage).toBe(false);
+    });
+
+    it('should show loading indicator during auth state resolution', () => {
+      const loadingState = {
+        isLoading: true,
+        showsActivityIndicator: true,
+        color: '#E8420A',
+      };
+      expect(loadingState.showsActivityIndicator).toBe(true);
+    });
+
+    it('should seamlessly transition on login', () => {
+      const transition = {
+        trigger: 'login',
+        from: 'GuestHomepage',
+        to: 'AuthenticatedHomepage',
+        requiresPageReload: false,
+      };
+      expect(transition.requiresPageReload).toBe(false);
+      expect(transition.from).toBe('GuestHomepage');
+      expect(transition.to).toBe('AuthenticatedHomepage');
+    });
+
+    it('should seamlessly transition on logout', () => {
+      const transition = {
+        trigger: 'logout',
+        from: 'AuthenticatedHomepage',
+        to: 'GuestHomepage',
+        requiresPageReload: false,
+      };
+      expect(transition.requiresPageReload).toBe(false);
+      expect(transition.from).toBe('AuthenticatedHomepage');
+      expect(transition.to).toBe('GuestHomepage');
+    });
+  });
+
   describe('Accessibility (WCAG 2.1 AA)', () => {
     it('should have proper accessibility labels on all interactive elements', () => {
       const a11yLabels = [

@@ -340,14 +340,25 @@ export function gatewayPath(endpoint: string): string {
   return `/api/v1${endpoint}`;
 }
 
+const ACCESS_TOKEN_KEY = 'azeebo_access_token';
+
 export async function apiFetch<T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<ApiResponse<T>> {
+  const storedToken =
+    typeof window !== 'undefined'
+      ? localStorage.getItem(ACCESS_TOKEN_KEY)
+      : null;
+
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...(options.headers as Record<string, string>),
   };
+
+  if (storedToken) {
+    headers['Authorization'] = `Bearer ${storedToken}`;
+  }
 
   try {
     const response = await fetch(`${resolvedApiUrl}${gatewayPath(endpoint)}`, {

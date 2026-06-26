@@ -430,6 +430,359 @@ CREATE TABLE IF NOT EXISTS "balance_snapshots" (
 CREATE INDEX IF NOT EXISTS idx_balance_snapshots_wallet ON "balance_snapshots"("walletId");
 
 -- ============================================================================
+-- CREATOR SERVICE TABLES
+-- ============================================================================
+
+CREATE TABLE IF NOT EXISTS "creator_profiles" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+  "userId" TEXT UNIQUE NOT NULL,
+  "displayName" TEXT NOT NULL,
+  avatar TEXT,
+  bio TEXT,
+  banner TEXT,
+  "socialLinks" JSONB DEFAULT '{}',
+  verified BOOLEAN NOT NULL DEFAULT false,
+  "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+  "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_creator_profiles_user ON "creator_profiles"("userId");
+
+CREATE TABLE IF NOT EXISTS "creator_channels" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+  "creatorId" TEXT NOT NULL,
+  name TEXT NOT NULL,
+  description TEXT,
+  category TEXT,
+  "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+  "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_creator_channels_creator ON "creator_channels"("creatorId");
+
+CREATE TABLE IF NOT EXISTS "creator_earnings" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+  "creatorId" TEXT NOT NULL,
+  amount NUMERIC(18,2) NOT NULL,
+  type TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending',
+  "paidAt" TIMESTAMPTZ,
+  "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_creator_earnings_creator ON "creator_earnings"("creatorId");
+
+CREATE TABLE IF NOT EXISTS "creator_challenges" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+  "creatorId" TEXT NOT NULL,
+  title TEXT NOT NULL,
+  description TEXT,
+  prize NUMERIC(18,2),
+  "startDate" TIMESTAMPTZ,
+  "endDate" TIMESTAMPTZ,
+  status TEXT NOT NULL DEFAULT 'active',
+  "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "challenge_entries" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+  "challengeId" TEXT NOT NULL,
+  "userId" TEXT NOT NULL,
+  "contentUrl" TEXT,
+  "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE("challengeId", "userId")
+);
+
+CREATE TABLE IF NOT EXISTS "payout_requests" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+  "creatorId" TEXT NOT NULL,
+  amount NUMERIC(18,2) NOT NULL,
+  method TEXT NOT NULL,
+  "accountDetails" JSONB,
+  status TEXT NOT NULL DEFAULT 'pending',
+  "processedAt" TIMESTAMPTZ,
+  "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- ============================================================================
+-- REALITY SERVICE TABLES
+-- ============================================================================
+
+CREATE TABLE IF NOT EXISTS "reality_shows" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+  title TEXT NOT NULL,
+  description TEXT,
+  thumbnail TEXT,
+  banner TEXT,
+  status TEXT NOT NULL DEFAULT 'active',
+  "universeId" TEXT,
+  "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+  "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "reality_seasons" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+  "showId" TEXT NOT NULL,
+  number INTEGER NOT NULL,
+  "startDate" TIMESTAMPTZ,
+  "endDate" TIMESTAMPTZ,
+  "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_reality_seasons_show ON "reality_seasons"("showId");
+
+CREATE TABLE IF NOT EXISTS "reality_episodes" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+  "seasonId" TEXT NOT NULL,
+  number INTEGER NOT NULL,
+  title TEXT,
+  thumbnail TEXT,
+  "mediaUrl" TEXT,
+  "airedAt" TIMESTAMPTZ,
+  "viewCount" INTEGER NOT NULL DEFAULT 0,
+  "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_reality_episodes_season ON "reality_episodes"("seasonId");
+
+CREATE TABLE IF NOT EXISTS "reality_contestants" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+  "showId" TEXT NOT NULL,
+  name TEXT NOT NULL,
+  thumbnail TEXT,
+  "socialLinks" JSONB DEFAULT '{}',
+  "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_reality_contestants_show ON "reality_contestants"("showId");
+
+CREATE TABLE IF NOT EXISTS "reality_votes" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+  "userId" TEXT NOT NULL,
+  "contestantId" TEXT NOT NULL,
+  "showId" TEXT NOT NULL,
+  "episodeId" TEXT,
+  "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE("userId", "contestantId")
+);
+CREATE INDEX IF NOT EXISTS idx_reality_votes_contestant ON "reality_votes"("contestantId");
+CREATE INDEX IF NOT EXISTS idx_reality_votes_show ON "reality_votes"("showId");
+
+CREATE TABLE IF NOT EXISTS "reality_supervotes" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+  "userId" TEXT NOT NULL,
+  "contestantId" TEXT NOT NULL,
+  "showId" TEXT NOT NULL,
+  amount NUMERIC(18,2) NOT NULL DEFAULT 10.00,
+  "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE("userId", "contestantId")
+);
+
+CREATE TABLE IF NOT EXISTS "reality_predictions" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+  "userId" TEXT NOT NULL,
+  "showId" TEXT NOT NULL,
+  "episodeId" TEXT,
+  "contestantId" TEXT,
+  prediction JSONB NOT NULL,
+  "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_reality_predictions_show ON "reality_predictions"("showId");
+
+-- ============================================================================
+-- SPORTS SERVICE TABLES
+-- ============================================================================
+
+CREATE TABLE IF NOT EXISTS "sports_events" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+  title TEXT NOT NULL,
+  sport TEXT NOT NULL,
+  "startsAt" TIMESTAMPTZ,
+  "endsAt" TIMESTAMPTZ,
+  status TEXT NOT NULL DEFAULT 'upcoming',
+  metadata JSONB,
+  "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+  "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "event_teams" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+  "eventId" TEXT NOT NULL,
+  name TEXT NOT NULL,
+  logo TEXT,
+  score INTEGER NOT NULL DEFAULT 0,
+  "order" INTEGER NOT NULL DEFAULT 0,
+  "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_event_teams_event ON "event_teams"("eventId");
+
+CREATE TABLE IF NOT EXISTS "prediction_markets" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+  "eventId" TEXT NOT NULL,
+  question TEXT NOT NULL,
+  options JSONB NOT NULL,
+  odds JSONB,
+  "totalPool" NUMERIC(18,2) NOT NULL DEFAULT 0,
+  status TEXT NOT NULL DEFAULT 'open',
+  "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+  "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_prediction_markets_event ON "prediction_markets"("eventId");
+
+CREATE TABLE IF NOT EXISTS "prediction_entries" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+  "userId" TEXT NOT NULL,
+  "eventId" TEXT NOT NULL,
+  "marketId" TEXT,
+  prediction JSONB NOT NULL,
+  points INTEGER NOT NULL DEFAULT 0,
+  "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_prediction_entries_event ON "prediction_entries"("eventId");
+
+-- ============================================================================
+-- GAMES SERVICE TABLES
+-- ============================================================================
+
+CREATE TABLE IF NOT EXISTS "games" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+  title TEXT NOT NULL,
+  slug TEXT UNIQUE NOT NULL,
+  description TEXT,
+  thumbnail TEXT,
+  category TEXT,
+  difficulty TEXT NOT NULL DEFAULT 'medium',
+  "playCount" INTEGER NOT NULL DEFAULT 0,
+  "isActive" BOOLEAN NOT NULL DEFAULT true,
+  "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+  "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "game_questions" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+  "gameId" TEXT NOT NULL,
+  question TEXT NOT NULL,
+  answer TEXT NOT NULL,
+  options JSONB,
+  points INTEGER NOT NULL DEFAULT 10,
+  "order" INTEGER NOT NULL DEFAULT 0,
+  "timeLimit" INTEGER NOT NULL DEFAULT 30,
+  "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_game_questions_game ON "game_questions"("gameId");
+
+CREATE TABLE IF NOT EXISTS "tournaments" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+  title TEXT NOT NULL,
+  "startsAt" TIMESTAMPTZ,
+  "endsAt" TIMESTAMPTZ,
+  "entryFee" NUMERIC(18,2) NOT NULL DEFAULT 0,
+  "prizePool" NUMERIC(18,2) NOT NULL DEFAULT 0,
+  status TEXT NOT NULL DEFAULT 'upcoming',
+  "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+  "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "tournament_entries" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+  "tournamentId" TEXT NOT NULL,
+  "userId" TEXT NOT NULL,
+  score INTEGER NOT NULL DEFAULT 0,
+  "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE("tournamentId", "userId")
+);
+CREATE INDEX IF NOT EXISTS idx_tournament_entries_tournament ON "tournament_entries"("tournamentId");
+
+-- ============================================================================
+-- COMEDY SERVICE TABLES
+-- ============================================================================
+
+CREATE TABLE IF NOT EXISTS "comedian_profiles" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+  "userId" TEXT NOT NULL,
+  bio TEXT,
+  banner TEXT,
+  "socialLinks" JSONB DEFAULT '{}',
+  verified BOOLEAN NOT NULL DEFAULT false,
+  "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+  "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "comedy_clips" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+  "comedianId" TEXT NOT NULL,
+  "creatorId" TEXT NOT NULL,
+  title TEXT NOT NULL,
+  thumbnail TEXT,
+  "mediaUrl" TEXT,
+  "viewCount" INTEGER NOT NULL DEFAULT 0,
+  "shareCount" INTEGER NOT NULL DEFAULT 0,
+  "likeCount" INTEGER NOT NULL DEFAULT 0,
+  "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+  "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_comedy_clips_comedian ON "comedy_clips"("comedianId");
+
+-- ============================================================================
+-- ENGAGEMENT TABLES
+-- ============================================================================
+
+CREATE TABLE IF NOT EXISTS "notifications" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+  "userId" TEXT NOT NULL,
+  type TEXT NOT NULL,
+  title TEXT NOT NULL,
+  message TEXT NOT NULL,
+  metadata JSONB,
+  "readAt" TIMESTAMPTZ,
+  "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_notifications_user ON "notifications"("userId");
+CREATE INDEX IF NOT EXISTS idx_notifications_type ON "notifications"(type);
+
+CREATE TABLE IF NOT EXISTS "leaderboard_entries" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+  "userId" TEXT UNIQUE NOT NULL,
+  score INTEGER NOT NULL DEFAULT 0,
+  level INTEGER NOT NULL DEFAULT 1,
+  "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "referrals" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+  "referrerId" TEXT NOT NULL,
+  "referredId" TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending',
+  reward NUMERIC(18,2) NOT NULL DEFAULT 0,
+  "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_referrals_referrer ON "referrals"("referrerId");
+
+-- ============================================================================
+-- OPERATIONS TABLES
+-- ============================================================================
+
+CREATE TABLE IF NOT EXISTS "support_tickets" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+  "userId" TEXT NOT NULL,
+  subject TEXT NOT NULL,
+  description TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'open',
+  priority TEXT NOT NULL DEFAULT 'medium',
+  "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+  "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_support_tickets_user ON "support_tickets"("userId");
+CREATE INDEX IF NOT EXISTS idx_support_tickets_status ON "support_tickets"(status);
+
+CREATE TABLE IF NOT EXISTS "moderation_queue" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+  "contentId" TEXT,
+  "reportedBy" TEXT,
+  "reportType" TEXT NOT NULL,
+  description TEXT,
+  status TEXT NOT NULL DEFAULT 'pending',
+  "reviewedBy" TEXT,
+  "reviewedAt" TIMESTAMPTZ,
+  "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_moderation_queue_status ON "moderation_queue"(status);
+
+-- ============================================================================
 -- DEMO VERSION TRACKING
 -- ============================================================================
 

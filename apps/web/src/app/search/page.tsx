@@ -123,8 +123,8 @@ export default function SearchPage(): React.JSX.Element {
           [newHistoryItem, ...prev.filter((item) => item.query !== searchQuery)].slice(0, 10)
         );
         localStorage.setItem('searchHistory', JSON.stringify(searchHistory));
-      } catch (error) {
-        console.error('Search failed:', error);
+      } catch {
+        // search failed silently
       } finally {
         setIsLoading(false);
       }

@@ -10,6 +10,7 @@ import { ResponseWrapperInterceptor, ResponseSanitizationInterceptor } from '@az
 import { RateLimiterModule } from '@azeebo/security';
 import { ServiceAuthGuard } from '@azeebo/security';
 import { CacheModule } from './cache/cache.module';
+import { JwtStrategy } from './modules/auth/jwt.strategy';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { CacheModule } from './cache/cache.module';
     PublicModule,
   ],
   providers: [
+    JwtStrategy,
     {
       provide: APP_INTERCEPTOR,
       useClass: ResponseWrapperInterceptor,

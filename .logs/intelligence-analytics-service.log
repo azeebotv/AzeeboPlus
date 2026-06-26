@@ -2,9 +2,9 @@
 > @azeebo/analytics-service@0.1.0 start:dev /Users/deprof/www/azeebo+/services/intelligence/analytics-service
 > ts-node-dev --respawn --transpile-only src/main.ts
 
-[INFO] 09:42:48 ts-node-dev ver. 2.0.0 (using ts-node ver. 10.9.2, typescript ver. 5.9.3)
-[32m[Nest] 48460  - [39m06/25/2026, 9:42:51 AM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
-[31m[Nest] 48460  - [39m06/25/2026, 9:42:51 AM [31m  ERROR[39m [38;5;3m[ExceptionHandler] [39mPrismaClientInitializationError: `PrismaClient` needs to be constructed with a non-empty, valid `PrismaClientOptions`:
+[INFO] 13:17:12 ts-node-dev ver. 2.0.0 (using ts-node ver. 10.9.2, typescript ver. 5.9.3)
+[32m[Nest] 14911  - [39m06/25/2026, 1:17:13 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
+[31m[Nest] 14911  - [39m06/25/2026, 1:17:13 PM [31m  ERROR[39m [38;5;3m[ExceptionHandler] [39mPrismaClientInitializationError: `PrismaClient` needs to be constructed with a non-empty, valid `PrismaClientOptions`:
 
 ```
 new PrismaClient({

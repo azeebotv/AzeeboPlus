@@ -2,10 +2,10 @@
 > @azeebo/queue-service@0.1.0 start:dev /Users/deprof/www/azeebo+/services/operations/queue-service
 > ts-node-dev --respawn --transpile-only src/main.ts
 
-[INFO] 09:43:28 ts-node-dev ver. 2.0.0 (using ts-node ver. 10.9.2, typescript ver. 5.9.3)
-[32m[Nest] 49530  - [39m06/25/2026, 9:43:30 AM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
-[32m[Nest] 49530  - [39m06/25/2026, 9:43:30 AM [32m    LOG[39m [38;5;3m[PaystackProvider] [39m[32mPaystackProvider initialized with circuit breaker[39m
-[31m[Nest] 49530  - [39m06/25/2026, 9:43:30 AM [31m  ERROR[39m [38;5;3m[ExceptionHandler] [39mPrismaClientConstructorValidationError: Using engine type "client" requires either "adapter" or "accelerateUrl" to be provided to PrismaClient constructor.
+[INFO] 13:17:56 ts-node-dev ver. 2.0.0 (using ts-node ver. 10.9.2, typescript ver. 5.9.3)
+[32m[Nest] 15988  - [39m06/25/2026, 1:17:57 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
+[32m[Nest] 15988  - [39m06/25/2026, 1:17:57 PM [32m    LOG[39m [38;5;3m[PaystackProvider] [39m[32mPaystackProvider initialized with circuit breaker[39m
+[31m[Nest] 15988  - [39m06/25/2026, 1:17:57 PM [31m  ERROR[39m [38;5;3m[ExceptionHandler] [39mPrismaClientConstructorValidationError: Using engine type "client" requires either "adapter" or "accelerateUrl" to be provided to PrismaClient constructor.
 Read more at https://pris.ly/d/client-constructor
     at Rm [90m(/Users/deprof/www/azeebo+/services/operations/queue-service/[39msrc/prisma/client/runtime/client.js:70:4137[90m)[39m
     at jl [90m(/Users/deprof/www/azeebo+/services/operations/queue-service/[39msrc/prisma/client/runtime/client.js:70:4438[90m)[39m

@@ -2,67 +2,67 @@
 > @azeebo/creator-service@0.1.0 start:dev /Users/deprof/www/azeebo+/services/universes/creator-service
 > ts-node-dev --respawn --transpile-only src/main.ts
 
-[INFO] 09:43:26 ts-node-dev ver. 2.0.0 (using ts-node ver. 10.9.2, typescript ver. 5.9.3)
-[32m[Nest] 49448  - [39m06/25/2026, 9:43:27 AM [32m    LOG[39m [32mEnvironment variables validated successfully[39m
-[32m[Nest] 49448  - [39m06/25/2026, 9:43:27 AM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m[38;5;3m +59ms[39m
-[32m[Nest] 49448  - [39m06/25/2026, 9:43:27 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisModule dependencies initialized[39m[38;5;3m +15ms[39m
-[32m[Nest] 49448  - [39m06/25/2026, 9:43:27 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDatabaseModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 49448  - [39m06/25/2026, 9:43:27 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPassportModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 49448  - [39m06/25/2026, 9:43:27 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRateLimiterModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 49448  - [39m06/25/2026, 9:43:27 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +15ms[39m
-[32m[Nest] 49448  - [39m06/25/2026, 9:43:27 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisCoreModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 49448  - [39m06/25/2026, 9:43:27 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mThrottlerModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 49448  - [39m06/25/2026, 9:43:27 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 49448  - [39m06/25/2026, 9:43:27 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 49448  - [39m06/25/2026, 9:43:27 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 49448  - [39m06/25/2026, 9:43:27 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTerminusModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 49448  - [39m06/25/2026, 9:43:27 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 49448  - [39m06/25/2026, 9:43:27 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRateLimiterModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 49448  - [39m06/25/2026, 9:43:27 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 49448  - [39m06/25/2026, 9:43:27 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 49448  - [39m06/25/2026, 9:43:27 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAdminModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 49448  - [39m06/25/2026, 9:43:27 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCreatorsModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 49448  - [39m06/25/2026, 9:43:27 AM [32m    LOG[39m [32mSwagger documentation enabled at /api/docs[39m
-[32m[Nest] 49448  - [39m06/25/2026, 9:43:27 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mCreatorsController {/v1/creators}:[39m[38;5;3m +2ms[39m
-[32m[Nest] 49448  - [39m06/25/2026, 9:43:27 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/creators/onboard, POST} route[39m[38;5;3m +2ms[39m
-[32m[Nest] 49448  - [39m06/25/2026, 9:43:27 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/creators/verification/submit, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49448  - [39m06/25/2026, 9:43:27 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/creators/verification/status, GET} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 49448  - [39m06/25/2026, 9:43:27 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/creators/upload/initiate, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49448  - [39m06/25/2026, 9:43:27 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/creators/upload/complete, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49448  - [39m06/25/2026, 9:43:27 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/creators/me, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49448  - [39m06/25/2026, 9:43:27 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/creators/:creatorId, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49448  - [39m06/25/2026, 9:43:27 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/creators/me, PATCH} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49448  - [39m06/25/2026, 9:43:27 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/creators/channels, POST} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 49448  - [39m06/25/2026, 9:43:27 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/creators/channels, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49448  - [39m06/25/2026, 9:43:27 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/creators/channels/:channelId, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49448  - [39m06/25/2026, 9:43:27 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/creators/uploads, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49448  - [39m06/25/2026, 9:43:27 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/creators/channels/:channelId/uploads, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49448  - [39m06/25/2026, 9:43:27 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/creators/uploads, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49448  - [39m06/25/2026, 9:43:27 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/creators/discover, GET} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 49448  - [39m06/25/2026, 9:43:27 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/creators/tips/:creatorId, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49448  - [39m06/25/2026, 9:43:27 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/creators/subscribe/:creatorId, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49448  - [39m06/25/2026, 9:43:27 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/creators/subscribe/:creatorId, DELETE} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49448  - [39m06/25/2026, 9:43:27 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/creators/subscriptions, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49448  - [39m06/25/2026, 9:43:27 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/creators/subscribers, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49448  - [39m06/25/2026, 9:43:27 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/creators/earnings, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49448  - [39m06/25/2026, 9:43:27 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/creators/payouts, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49448  - [39m06/25/2026, 9:43:27 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/creators/payouts, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49448  - [39m06/25/2026, 9:43:27 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/creators/analytics, GET} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 49448  - [39m06/25/2026, 9:43:27 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/creators/challenges, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49448  - [39m06/25/2026, 9:43:27 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/creators/challenges, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49448  - [39m06/25/2026, 9:43:27 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/creators/challenges/:challengeId/participate, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49448  - [39m06/25/2026, 9:43:27 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAdminController {/admin}:[39m[38;5;3m +0ms[39m
-[32m[Nest] 49448  - [39m06/25/2026, 9:43:27 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/stats, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49448  - [39m06/25/2026, 9:43:27 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/creators, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49448  - [39m06/25/2026, 9:43:27 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/creators/:creatorId, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49448  - [39m06/25/2026, 9:43:27 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/creators/user/:userId, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49448  - [39m06/25/2026, 9:43:27 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/creators/:creatorId/verify, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49448  - [39m06/25/2026, 9:43:27 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/creators/:creatorId/unverify, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49448  - [39m06/25/2026, 9:43:27 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/creators/:creatorId/earnings, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49448  - [39m06/25/2026, 9:43:27 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/payouts, GET} route[39m[38;5;3m +2ms[39m
-[32m[Nest] 49448  - [39m06/25/2026, 9:43:27 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHealthController {/}:[39m[38;5;3m +1ms[39m
-[32m[Nest] 49448  - [39m06/25/2026, 9:43:27 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49448  - [39m06/25/2026, 9:43:27 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/ready, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49448  - [39m06/25/2026, 9:43:27 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/live, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49448  - [39m06/25/2026, 9:43:27 AM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +12ms[39m
-[32m[Nest] 49448  - [39m06/25/2026, 9:43:27 AM [32m    LOG[39m [38;5;3m[Creator Service] [39m[32mCreator Service running on port 3018[39m
+[INFO] 13:17:54 ts-node-dev ver. 2.0.0 (using ts-node ver. 10.9.2, typescript ver. 5.9.3)
+[32m[Nest] 15888  - [39m06/25/2026, 1:17:55 PM [32m    LOG[39m [32mEnvironment variables validated successfully[39m
+[32m[Nest] 15888  - [39m06/25/2026, 1:17:55 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m[38;5;3m +79ms[39m
+[32m[Nest] 15888  - [39m06/25/2026, 1:17:55 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisModule dependencies initialized[39m[38;5;3m +20ms[39m
+[32m[Nest] 15888  - [39m06/25/2026, 1:17:55 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDatabaseModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 15888  - [39m06/25/2026, 1:17:55 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPassportModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 15888  - [39m06/25/2026, 1:17:55 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRateLimiterModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 15888  - [39m06/25/2026, 1:17:55 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +31ms[39m
+[32m[Nest] 15888  - [39m06/25/2026, 1:17:55 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisCoreModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 15888  - [39m06/25/2026, 1:17:55 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mThrottlerModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 15888  - [39m06/25/2026, 1:17:55 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 15888  - [39m06/25/2026, 1:17:55 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 15888  - [39m06/25/2026, 1:17:55 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 15888  - [39m06/25/2026, 1:17:55 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTerminusModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 15888  - [39m06/25/2026, 1:17:55 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 15888  - [39m06/25/2026, 1:17:55 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRateLimiterModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 15888  - [39m06/25/2026, 1:17:55 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 15888  - [39m06/25/2026, 1:17:55 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 15888  - [39m06/25/2026, 1:17:55 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAdminModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 15888  - [39m06/25/2026, 1:17:55 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCreatorsModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 15888  - [39m06/25/2026, 1:17:55 PM [32m    LOG[39m [32mSwagger documentation enabled at /api/docs[39m
+[32m[Nest] 15888  - [39m06/25/2026, 1:17:55 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mCreatorsController {/v1/creators}:[39m[38;5;3m +3ms[39m
+[32m[Nest] 15888  - [39m06/25/2026, 1:17:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/creators/onboard, POST} route[39m[38;5;3m +43ms[39m
+[32m[Nest] 15888  - [39m06/25/2026, 1:17:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/creators/verification/submit, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15888  - [39m06/25/2026, 1:17:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/creators/verification/status, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15888  - [39m06/25/2026, 1:17:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/creators/upload/initiate, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15888  - [39m06/25/2026, 1:17:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/creators/upload/complete, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 15888  - [39m06/25/2026, 1:17:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/creators/me, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15888  - [39m06/25/2026, 1:17:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/creators/:creatorId, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15888  - [39m06/25/2026, 1:17:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/creators/me, PATCH} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15888  - [39m06/25/2026, 1:17:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/creators/channels, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15888  - [39m06/25/2026, 1:17:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/creators/channels, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 15888  - [39m06/25/2026, 1:17:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/creators/channels/:channelId, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15888  - [39m06/25/2026, 1:17:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/creators/uploads, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15888  - [39m06/25/2026, 1:17:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/creators/channels/:channelId/uploads, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15888  - [39m06/25/2026, 1:17:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/creators/uploads, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15888  - [39m06/25/2026, 1:17:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/creators/discover, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15888  - [39m06/25/2026, 1:17:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/creators/tips/:creatorId, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15888  - [39m06/25/2026, 1:17:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/creators/subscribe/:creatorId, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 15888  - [39m06/25/2026, 1:17:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/creators/subscribe/:creatorId, DELETE} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15888  - [39m06/25/2026, 1:17:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/creators/subscriptions, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15888  - [39m06/25/2026, 1:17:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/creators/subscribers, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15888  - [39m06/25/2026, 1:17:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/creators/earnings, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15888  - [39m06/25/2026, 1:17:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/creators/payouts, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15888  - [39m06/25/2026, 1:17:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/creators/payouts, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15888  - [39m06/25/2026, 1:17:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/creators/analytics, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 15888  - [39m06/25/2026, 1:17:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/creators/challenges, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15888  - [39m06/25/2026, 1:17:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/creators/challenges, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15888  - [39m06/25/2026, 1:17:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/creators/challenges/:challengeId/participate, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15888  - [39m06/25/2026, 1:17:55 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAdminController {/admin}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 15888  - [39m06/25/2026, 1:17:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/stats, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 15888  - [39m06/25/2026, 1:17:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/creators, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15888  - [39m06/25/2026, 1:17:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/creators/:creatorId, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15888  - [39m06/25/2026, 1:17:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/creators/user/:userId, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15888  - [39m06/25/2026, 1:17:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/creators/:creatorId/verify, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15888  - [39m06/25/2026, 1:17:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/creators/:creatorId/unverify, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15888  - [39m06/25/2026, 1:17:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/creators/:creatorId/earnings, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 15888  - [39m06/25/2026, 1:17:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/payouts, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15888  - [39m06/25/2026, 1:17:55 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHealthController {/}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 15888  - [39m06/25/2026, 1:17:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15888  - [39m06/25/2026, 1:17:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/ready, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15888  - [39m06/25/2026, 1:17:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/live, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15888  - [39m06/25/2026, 1:17:55 PM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +25ms[39m
+[32m[Nest] 15888  - [39m06/25/2026, 1:17:55 PM [32m    LOG[39m [38;5;3m[Creator Service] [39m[32mCreator Service running on port 3018[39m

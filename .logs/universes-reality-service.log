@@ -2,58 +2,58 @@
 > @azeebo/reality-service@0.1.0 start:dev /Users/deprof/www/azeebo+/services/universes/reality-service
 > ts-node-dev --respawn --transpile-only src/main.ts
 
-[INFO] 09:42:54 ts-node-dev ver. 2.0.0 (using ts-node ver. 10.9.2, typescript ver. 5.9.3)
-[32m[Nest] 48690  - [39m06/25/2026, 9:42:56 AM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
-[32m[Nest] 48690  - [39m06/25/2026, 9:42:56 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisModule dependencies initialized[39m[38;5;3m +17ms[39m
-[32m[Nest] 48690  - [39m06/25/2026, 9:42:56 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDatabaseModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 48690  - [39m06/25/2026, 9:42:56 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPassportModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 48690  - [39m06/25/2026, 9:42:56 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +23ms[39m
-[32m[Nest] 48690  - [39m06/25/2026, 9:42:56 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisCoreModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 48690  - [39m06/25/2026, 9:42:56 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 48690  - [39m06/25/2026, 9:42:56 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 48690  - [39m06/25/2026, 9:42:56 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 48690  - [39m06/25/2026, 9:42:56 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTerminusModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 48690  - [39m06/25/2026, 9:42:56 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 48690  - [39m06/25/2026, 9:42:56 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRateLimiterModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 48690  - [39m06/25/2026, 9:42:56 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 48690  - [39m06/25/2026, 9:42:56 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRealityModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 48690  - [39m06/25/2026, 9:42:56 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mRealityController {/v1/reality}:[39m[38;5;3m +36ms[39m
-[32m[Nest] 48690  - [39m06/25/2026, 9:42:56 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/reality/shows, GET} route[39m[38;5;3m +2ms[39m
-[32m[Nest] 48690  - [39m06/25/2026, 9:42:56 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/reality/shows/:showId, GET} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 48690  - [39m06/25/2026, 9:42:56 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/reality/shows, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 48690  - [39m06/25/2026, 9:42:56 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/reality/shows/:showId, PUT} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 48690  - [39m06/25/2026, 9:42:56 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/reality/shows/:showId, DELETE} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 48690  - [39m06/25/2026, 9:42:56 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/reality/shows/:showId/episodes, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 48690  - [39m06/25/2026, 9:42:56 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/reality/shows/:showId/episodes, POST} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 48690  - [39m06/25/2026, 9:42:56 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/reality/episodes/:episodeId, PUT} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 48690  - [39m06/25/2026, 9:42:56 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/reality/episodes/:episodeId, DELETE} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 48690  - [39m06/25/2026, 9:42:56 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/reality/shows/:showId/seasons, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 48690  - [39m06/25/2026, 9:42:56 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/reality/shows/:showId/contestants, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 48690  - [39m06/25/2026, 9:42:56 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/reality/shows/:showId/contestants, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 48690  - [39m06/25/2026, 9:42:56 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/reality/contestants/:contestantId, PUT} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 48690  - [39m06/25/2026, 9:42:56 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/reality/contestants/:contestantId, DELETE} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 48690  - [39m06/25/2026, 9:42:56 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/reality/shows/:showId/leaderboard, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 48690  - [39m06/25/2026, 9:42:56 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/reality/shows/:showId/analytics, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 48690  - [39m06/25/2026, 9:42:56 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/reality/shows/:showId/vote, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 48690  - [39m06/25/2026, 9:42:56 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/reality/votes, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 48690  - [39m06/25/2026, 9:42:56 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/reality/votes/quantity, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 48690  - [39m06/25/2026, 9:42:56 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/reality/supervotes, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 48690  - [39m06/25/2026, 9:42:56 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/reality/predictions, POST} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 48690  - [39m06/25/2026, 9:42:56 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/reality/predictions/:showId, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 48690  - [39m06/25/2026, 9:42:56 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/reality/clips, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 48690  - [39m06/25/2026, 9:42:56 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/reality/wallet/balance, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 48690  - [39m06/25/2026, 9:42:56 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/reality/pricing, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 48690  - [39m06/25/2026, 9:42:56 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/reality/premium-extras, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 48690  - [39m06/25/2026, 9:42:56 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/reality/premium-extras/:extraId/purchase, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 48690  - [39m06/25/2026, 9:42:56 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/reality/rewards/:showId/confirm, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 48690  - [39m06/25/2026, 9:42:56 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/reality/admin/dashboard, GET} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 48690  - [39m06/25/2026, 9:42:56 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/reality/shows/:showId/fraud/votes, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 48690  - [39m06/25/2026, 9:42:56 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/reality/shows/:showId/fraud/supervotes, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 48690  - [39m06/25/2026, 9:42:56 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/reality/shows/:showId/fraud/predictions, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 48690  - [39m06/25/2026, 9:42:56 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/reality/shows/:showId/fraud/assessment, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 48690  - [39m06/25/2026, 9:42:56 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHealthController {/health}:[39m[38;5;3m +0ms[39m
-[32m[Nest] 48690  - [39m06/25/2026, 9:42:56 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 48690  - [39m06/25/2026, 9:42:56 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/ready, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 48690  - [39m06/25/2026, 9:42:56 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/live, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 48690  - [39m06/25/2026, 9:42:56 AM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +16ms[39m
-[32m[Nest] 48690  - [39m06/25/2026, 9:42:56 AM [32m    LOG[39m [32mReality Service running on port 3010[39m
+[INFO] 13:17:20 ts-node-dev ver. 2.0.0 (using ts-node ver. 10.9.2, typescript ver. 5.9.3)
+[32m[Nest] 15122  - [39m06/25/2026, 1:17:21 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
+[32m[Nest] 15122  - [39m06/25/2026, 1:17:21 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisModule dependencies initialized[39m[38;5;3m +14ms[39m
+[32m[Nest] 15122  - [39m06/25/2026, 1:17:21 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDatabaseModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 15122  - [39m06/25/2026, 1:17:21 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPassportModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 15122  - [39m06/25/2026, 1:17:21 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +51ms[39m
+[32m[Nest] 15122  - [39m06/25/2026, 1:17:21 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisCoreModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 15122  - [39m06/25/2026, 1:17:21 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 15122  - [39m06/25/2026, 1:17:21 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 15122  - [39m06/25/2026, 1:17:21 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 15122  - [39m06/25/2026, 1:17:21 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTerminusModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 15122  - [39m06/25/2026, 1:17:21 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 15122  - [39m06/25/2026, 1:17:21 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRateLimiterModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 15122  - [39m06/25/2026, 1:17:21 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 15122  - [39m06/25/2026, 1:17:21 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRealityModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 15122  - [39m06/25/2026, 1:17:21 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mRealityController {/v1/reality}:[39m[38;5;3m +28ms[39m
+[32m[Nest] 15122  - [39m06/25/2026, 1:17:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/reality/shows, GET} route[39m[38;5;3m +2ms[39m
+[32m[Nest] 15122  - [39m06/25/2026, 1:17:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/reality/shows/:showId, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15122  - [39m06/25/2026, 1:17:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/reality/shows, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15122  - [39m06/25/2026, 1:17:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/reality/shows/:showId, PUT} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 15122  - [39m06/25/2026, 1:17:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/reality/shows/:showId, DELETE} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15122  - [39m06/25/2026, 1:17:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/reality/shows/:showId/episodes, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15122  - [39m06/25/2026, 1:17:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/reality/shows/:showId/episodes, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15122  - [39m06/25/2026, 1:17:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/reality/episodes/:episodeId, PUT} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15122  - [39m06/25/2026, 1:17:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/reality/episodes/:episodeId, DELETE} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15122  - [39m06/25/2026, 1:17:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/reality/shows/:showId/seasons, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15122  - [39m06/25/2026, 1:17:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/reality/shows/:showId/contestants, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 15122  - [39m06/25/2026, 1:17:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/reality/shows/:showId/contestants, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15122  - [39m06/25/2026, 1:17:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/reality/contestants/:contestantId, PUT} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15122  - [39m06/25/2026, 1:17:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/reality/contestants/:contestantId, DELETE} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15122  - [39m06/25/2026, 1:17:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/reality/shows/:showId/leaderboard, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15122  - [39m06/25/2026, 1:17:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/reality/shows/:showId/analytics, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15122  - [39m06/25/2026, 1:17:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/reality/shows/:showId/vote, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15122  - [39m06/25/2026, 1:17:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/reality/votes, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15122  - [39m06/25/2026, 1:17:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/reality/votes/quantity, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15122  - [39m06/25/2026, 1:17:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/reality/supervotes, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15122  - [39m06/25/2026, 1:17:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/reality/predictions, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15122  - [39m06/25/2026, 1:17:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/reality/predictions/:showId, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 15122  - [39m06/25/2026, 1:17:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/reality/clips, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15122  - [39m06/25/2026, 1:17:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/reality/wallet/balance, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15122  - [39m06/25/2026, 1:17:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/reality/pricing, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15122  - [39m06/25/2026, 1:17:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/reality/premium-extras, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15122  - [39m06/25/2026, 1:17:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/reality/premium-extras/:extraId/purchase, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15122  - [39m06/25/2026, 1:17:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/reality/rewards/:showId/confirm, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15122  - [39m06/25/2026, 1:17:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/reality/admin/dashboard, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15122  - [39m06/25/2026, 1:17:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/reality/shows/:showId/fraud/votes, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15122  - [39m06/25/2026, 1:17:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/reality/shows/:showId/fraud/supervotes, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15122  - [39m06/25/2026, 1:17:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/reality/shows/:showId/fraud/predictions, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15122  - [39m06/25/2026, 1:17:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/reality/shows/:showId/fraud/assessment, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15122  - [39m06/25/2026, 1:17:21 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHealthController {/health}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 15122  - [39m06/25/2026, 1:17:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 15122  - [39m06/25/2026, 1:17:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/ready, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15122  - [39m06/25/2026, 1:17:21 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health/live, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15122  - [39m06/25/2026, 1:17:21 PM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +17ms[39m
+[32m[Nest] 15122  - [39m06/25/2026, 1:17:21 PM [32m    LOG[39m [32mReality Service running on port 3010[39m

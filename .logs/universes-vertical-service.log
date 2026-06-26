@@ -2,77 +2,77 @@
 > @azeebo/vertical-service@0.1.0 start:dev /Users/deprof/www/azeebo+/services/universes/vertical-service
 > ts-node-dev --respawn --transpile-only src/main.ts
 
-[INFO] 09:43:21 ts-node-dev ver. 2.0.0 (using ts-node ver. 10.9.2, typescript ver. 5.9.3)
-[32m[Nest] 49341  - [39m06/25/2026, 9:43:23 AM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
-[32m[Nest] 49341  - [39m06/25/2026, 9:43:23 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisModule dependencies initialized[39m[38;5;3m +46ms[39m
-[32m[Nest] 49341  - [39m06/25/2026, 9:43:23 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDatabaseModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 49341  - [39m06/25/2026, 9:43:23 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +115ms[39m
-[32m[Nest] 49341  - [39m06/25/2026, 9:43:23 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisCoreModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 49341  - [39m06/25/2026, 9:43:23 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mThrottlerModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 49341  - [39m06/25/2026, 9:43:23 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 49341  - [39m06/25/2026, 9:43:23 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 49341  - [39m06/25/2026, 9:43:23 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTerminusModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 49341  - [39m06/25/2026, 9:43:23 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 49341  - [39m06/25/2026, 9:43:23 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 49341  - [39m06/25/2026, 9:43:23 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCharactersModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 49341  - [39m06/25/2026, 9:43:23 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTimelineModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 49341  - [39m06/25/2026, 9:43:23 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTitlesModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 49341  - [39m06/25/2026, 9:43:23 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mLoreModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 49341  - [39m06/25/2026, 9:43:23 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCrossoversModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 49341  - [39m06/25/2026, 9:43:23 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRateLimiterModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 49341  - [39m06/25/2026, 9:43:23 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 49341  - [39m06/25/2026, 9:43:23 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mUniverseModule dependencies initialized[39m[38;5;3m +1ms[39m
-[32m[Nest] 49341  - [39m06/25/2026, 9:43:23 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAdminModule dependencies initialized[39m[38;5;3m +0ms[39m
-[32m[Nest] 49341  - [39m06/25/2026, 9:43:23 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHealthController {/}:[39m[38;5;3m +173ms[39m
-[32m[Nest] 49341  - [39m06/25/2026, 9:43:23 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health, GET} route[39m[38;5;3m +4ms[39m
-[32m[Nest] 49341  - [39m06/25/2026, 9:43:23 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/ready, GET} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 49341  - [39m06/25/2026, 9:43:23 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/live, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49341  - [39m06/25/2026, 9:43:23 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mUniverseController {/v1/vertical/universes}:[39m[38;5;3m +1ms[39m
-[32m[Nest] 49341  - [39m06/25/2026, 9:43:23 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/vertical/universes, GET} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 49341  - [39m06/25/2026, 9:43:23 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/vertical/universes/map/:slug, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49341  - [39m06/25/2026, 9:43:23 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/vertical/universes/locations, GET} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 49341  - [39m06/25/2026, 9:43:23 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/vertical/universes/locations/:slug, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49341  - [39m06/25/2026, 9:43:23 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/vertical/universes/locations, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49341  - [39m06/25/2026, 9:43:23 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/vertical/universes/locations/:id, PATCH} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 49341  - [39m06/25/2026, 9:43:23 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/vertical/universes/categories, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49341  - [39m06/25/2026, 9:43:23 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mCharactersController {/characters}:[39m[38;5;3m +0ms[39m
-[32m[Nest] 49341  - [39m06/25/2026, 9:43:23 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/characters, GET} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 49341  - [39m06/25/2026, 9:43:23 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/characters/:slug, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49341  - [39m06/25/2026, 9:43:23 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/characters/:slug/relationships, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49341  - [39m06/25/2026, 9:43:23 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/characters, POST} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 49341  - [39m06/25/2026, 9:43:23 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/characters/:id, PATCH} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49341  - [39m06/25/2026, 9:43:23 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/characters/:id/relationships, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49341  - [39m06/25/2026, 9:43:23 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mTimelineController {/timeline}:[39m[38;5;3m +0ms[39m
-[32m[Nest] 49341  - [39m06/25/2026, 9:43:23 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/timeline, GET} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 49341  - [39m06/25/2026, 9:43:23 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/timeline/event/:id, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49341  - [39m06/25/2026, 9:43:23 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/timeline/upcoming, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49341  - [39m06/25/2026, 9:43:23 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/timeline, POST} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 49341  - [39m06/25/2026, 9:43:23 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mTitlesController {/v1/vertical/titles}:[39m[38;5;3m +0ms[39m
-[32m[Nest] 49341  - [39m06/25/2026, 9:43:23 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/vertical/titles, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49341  - [39m06/25/2026, 9:43:23 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/vertical/titles/featured, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49341  - [39m06/25/2026, 9:43:23 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/vertical/titles/:slug, GET} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 49341  - [39m06/25/2026, 9:43:23 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/vertical/titles, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49341  - [39m06/25/2026, 9:43:23 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/vertical/titles/:id, PATCH} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49341  - [39m06/25/2026, 9:43:23 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/vertical/titles/:id, DELETE} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49341  - [39m06/25/2026, 9:43:23 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/vertical/titles/:titleId/chapters, POST} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 49341  - [39m06/25/2026, 9:43:23 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/vertical/titles/:titleId/chapters/:number, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49341  - [39m06/25/2026, 9:43:23 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mLoreController {/v1/vertical/lore}:[39m[38;5;3m +0ms[39m
-[32m[Nest] 49341  - [39m06/25/2026, 9:43:23 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/vertical/lore, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49341  - [39m06/25/2026, 9:43:23 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/vertical/lore/categories, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49341  - [39m06/25/2026, 9:43:23 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/vertical/lore/:slug, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49341  - [39m06/25/2026, 9:43:23 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/vertical/lore, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49341  - [39m06/25/2026, 9:43:23 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/vertical/lore/:id, PATCH} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 49341  - [39m06/25/2026, 9:43:23 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/vertical/lore/:id, DELETE} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49341  - [39m06/25/2026, 9:43:23 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mCrossoversController {/crossovers}:[39m[38;5;3m +0ms[39m
-[32m[Nest] 49341  - [39m06/25/2026, 9:43:23 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/crossovers, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49341  - [39m06/25/2026, 9:43:23 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/crossovers/:slug, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49341  - [39m06/25/2026, 9:43:23 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/crossovers, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49341  - [39m06/25/2026, 9:43:23 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/crossovers/recaps, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49341  - [39m06/25/2026, 9:43:23 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/crossovers/recaps/:id, GET} route[39m[38;5;3m +1ms[39m
-[32m[Nest] 49341  - [39m06/25/2026, 9:43:23 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/crossovers/recaps, POST} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49341  - [39m06/25/2026, 9:43:23 AM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAdminController {/admin}:[39m[38;5;3m +0ms[39m
-[32m[Nest] 49341  - [39m06/25/2026, 9:43:23 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/stats, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49341  - [39m06/25/2026, 9:43:23 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/titles, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49341  - [39m06/25/2026, 9:43:23 AM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/characters, GET} route[39m[38;5;3m +0ms[39m
-[32m[Nest] 49341  - [39m06/25/2026, 9:43:23 AM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +55ms[39m
-[32m[Nest] 49341  - [39m06/25/2026, 9:43:23 AM [32m    LOG[39m [32mVertical Service running on port 3017[39m
+[INFO] 13:17:49 ts-node-dev ver. 2.0.0 (using ts-node ver. 10.9.2, typescript ver. 5.9.3)
+[32m[Nest] 15751  - [39m06/25/2026, 1:17:51 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
+[32m[Nest] 15751  - [39m06/25/2026, 1:17:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisModule dependencies initialized[39m[38;5;3m +28ms[39m
+[32m[Nest] 15751  - [39m06/25/2026, 1:17:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDatabaseModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 15751  - [39m06/25/2026, 1:17:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +36ms[39m
+[32m[Nest] 15751  - [39m06/25/2026, 1:17:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisCoreModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 15751  - [39m06/25/2026, 1:17:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mThrottlerModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 15751  - [39m06/25/2026, 1:17:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 15751  - [39m06/25/2026, 1:17:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 15751  - [39m06/25/2026, 1:17:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTerminusModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 15751  - [39m06/25/2026, 1:17:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 15751  - [39m06/25/2026, 1:17:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 15751  - [39m06/25/2026, 1:17:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCharactersModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 15751  - [39m06/25/2026, 1:17:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTimelineModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 15751  - [39m06/25/2026, 1:17:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTitlesModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 15751  - [39m06/25/2026, 1:17:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mLoreModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 15751  - [39m06/25/2026, 1:17:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCrossoversModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 15751  - [39m06/25/2026, 1:17:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRateLimiterModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 15751  - [39m06/25/2026, 1:17:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 15751  - [39m06/25/2026, 1:17:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mUniverseModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 15751  - [39m06/25/2026, 1:17:51 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAdminModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 15751  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHealthController {/}:[39m[38;5;3m +160ms[39m
+[32m[Nest] 15751  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health, GET} route[39m[38;5;3m +2ms[39m
+[32m[Nest] 15751  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/ready, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 15751  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/live, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15751  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mUniverseController {/v1/vertical/universes}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 15751  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/vertical/universes, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15751  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/vertical/universes/map/:slug, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 15751  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/vertical/universes/locations, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15751  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/vertical/universes/locations/:slug, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15751  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/vertical/universes/locations, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15751  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/vertical/universes/locations/:id, PATCH} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15751  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/vertical/universes/categories, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 15751  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mCharactersController {/characters}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 15751  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/characters, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15751  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/characters/:slug, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15751  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/characters/:slug/relationships, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15751  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/characters, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15751  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/characters/:id, PATCH} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15751  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/characters/:id/relationships, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15751  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mTimelineController {/timeline}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 15751  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/timeline, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 15751  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/timeline/event/:id, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15751  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/timeline/upcoming, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15751  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/timeline, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15751  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mTitlesController {/v1/vertical/titles}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 15751  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/vertical/titles, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15751  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/vertical/titles/featured, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15751  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/vertical/titles/:slug, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15751  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/vertical/titles, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15751  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/vertical/titles/:id, PATCH} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15751  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/vertical/titles/:id, DELETE} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 15751  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/vertical/titles/:titleId/chapters, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15751  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/vertical/titles/:titleId/chapters/:number, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15751  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mLoreController {/v1/vertical/lore}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 15751  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/vertical/lore, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15751  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/vertical/lore/categories, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15751  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/vertical/lore/:slug, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15751  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/vertical/lore, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15751  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/vertical/lore/:id, PATCH} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15751  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/vertical/lore/:id, DELETE} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15751  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mCrossoversController {/crossovers}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 15751  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/crossovers, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15751  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/crossovers/:slug, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 15751  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/crossovers, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15751  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/crossovers/recaps, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15751  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/crossovers/recaps/:id, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15751  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/crossovers/recaps, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15751  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAdminController {/admin}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 15751  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/stats, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15751  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/titles, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15751  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/admin/characters, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15751  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +25ms[39m
+[32m[Nest] 15751  - [39m06/25/2026, 1:17:52 PM [32m    LOG[39m [32mVertical Service running on port 3017[39m

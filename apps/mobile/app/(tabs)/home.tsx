@@ -7,11 +7,12 @@ import AuthenticatedHomepage from '@/components/homepage/AuthenticatedHomepage';
 /**
  * Root home tab — serves distinct experiences based on authentication status.
  *
- * While the auth session is loading (`isLoading === true`), we render a minimal
- * loading indicator to avoid layout shift. Once resolved, we render the
- * appropriate homepage variant. When the user logs in or out, the AuthContext
- * state changes and this component re-renders with the new variant — no full
- * reload needed.
+ * Mobile routing is tab-based (not URL-based), so the auth guard is inherent:
+ * - Unauthenticated users see GuestHomepage (legacy experience)
+ * - Authenticated users see AuthenticatedHomepage (redesigned experience)
+ * - Transitions happen in-place when auth state changes (login/logout)
+ *
+ * Analytics are tracked via each homepage component's own useEffect hooks.
  */
 export default function HomeTab() {
   const { isAuthenticated, isLoading } = useAuth();

@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../../../context/AuthContext';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import AuthShell from '@/components/auth/AuthShell';
 import { Alert, Spinner } from '@/components/auth/FormBits';
 
@@ -31,6 +31,8 @@ export default function LoginPage(): React.JSX.Element {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const { login } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get('redirect') || '/home';
 
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
@@ -39,7 +41,7 @@ export default function LoginPage(): React.JSX.Element {
     try {
       const result = await login(email, password);
       if (result.success) {
-        router.push('/');
+        router.push(redirectTo);
       } else {
         setError(result.message || 'Invalid email or password');
       }
