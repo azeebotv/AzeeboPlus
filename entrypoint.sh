@@ -147,8 +147,8 @@ save 300 10
 save 60 10000
 requirepass $REDIS_PASSWORD
 dir /var/lib/redis
-logfile ""
- REDISCONF
+ logfile ""
+REDISCONF
 mkdir -p /var/lib/redis
 chown -R redis:redis /var/lib/redis
 
