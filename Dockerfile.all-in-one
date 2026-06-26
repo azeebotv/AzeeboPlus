@@ -189,9 +189,6 @@ RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
 # Install pnpm
 RUN corepack enable && corepack prepare pnpm@10.33.2 --activate
 
-# Install npx (comes with npm but ensure it's available)
-RUN npm install -g npx
-
 # Create required users and directories
 RUN useradd -r -s /bin/false pgbouncer || true && \
     mkdir -p /var/lib/redis /var/run/pgbouncer /var/log/supervisor && \
