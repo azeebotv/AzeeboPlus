@@ -176,9 +176,10 @@ ENV LC_ALL=en_US.UTF-8
 
 # Create required users and directories
 RUN useradd -r -s /bin/false pgbouncer || true && \
-    mkdir -p /var/lib/redis /var/run/pgbouncer /var/log/supervisor && \
+    mkdir -p /var/lib/redis /var/run/pgbouncer /var/log/supervisor /var/log/postgresql && \
     chown -R redis:redis /var/lib/redis && \
-    chown -R pgbouncer:pgbouncer /var/run/pgbouncer
+    chown -R pgbouncer:pgbouncer /var/run/pgbouncer && \
+    chown -R postgres:postgres /var/log/postgresql
 
 # Copy built application from builder
 COPY --from=builder /app /app

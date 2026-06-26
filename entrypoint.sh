@@ -54,7 +54,7 @@ PGHBA
 # 2. Start PostgreSQL temporarily
 # ============================================================
 echo "==> Starting PostgreSQL temporarily..."
-su - postgres -c "/usr/lib/postgresql/15/bin/pg_ctl -D $POSTGRES_DATA -l /var/log/postgresql-temp.log start -w"
+su - postgres -c "/usr/lib/postgresql/15/bin/pg_ctl -D $POSTGRES_DATA -l /var/log/postgresql/postgresql-temp.log start -w"
 
 # Wait for PostgreSQL to be ready
 for i in $(seq 1 30); do
