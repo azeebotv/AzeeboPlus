@@ -398,7 +398,7 @@ SVC_PATHS[api-gateway]="services/gateway/api-gateway"
 for entry in "${SERVICES[@]}"; do
   IFS=':' read -r svc_name db_user db_pass db_name port <<< "$entry"
   svc_path="${SVC_PATHS[$svc_name]}"
-  main_js="${svc_path}/dist/${svc_path}/src/main.js"
+  main_js="${svc_path}/dist/main.js"
 
   cat > "/app/service-wrappers/${svc_name}.sh" << WRAPPER
 #!/bin/bash
@@ -415,7 +415,8 @@ cat > /app/service-wrappers/api-gateway.sh << 'WRAPPER'
 #!/bin/bash
 export NODE_ENV="production"
 export PORT="3013"
-exec node /app/services/gateway/api-gateway/dist/services/gateway/api-gateway/src/main.js
+cd /app/services/gateway/api-gateway
+exec node dist/main.js
 WRAPPER
 chmod +x /app/service-wrappers/api-gateway.sh
 
@@ -425,7 +426,8 @@ cat > /app/service-wrappers/admin-app.sh << WRAPPER
 export DATABASE_URL="postgresql://admin_user:${ADMIN_DB_PASSWORD}@127.0.0.1:5432/admin_db?schema=public"
 export PORT="4016"
 export NODE_ENV="production"
-exec node /app/apps/admin/dist/main.js
+cd /app/apps/admin
+exec node dist/main.js
 WRAPPER
 chmod +x /app/service-wrappers/admin-app.sh
 
@@ -435,7 +437,8 @@ cat > /app/service-wrappers/creator-portal-app.sh << WRAPPER
 export DATABASE_URL="postgresql://creator_portal_user:${CREATOR_PORTAL_DB_PASSWORD}@127.0.0.1:5432/creator_portal_db?schema=public"
 export PORT="4014"
 export NODE_ENV="production"
-exec node /app/apps/creator-portal/dist/main.js
+cd /app/apps/creator-portal
+exec node dist/main.js
 WRAPPER
 chmod +x /app/service-wrappers/creator-portal-app.sh
 
@@ -446,6 +449,7 @@ export NODE_ENV="production"
 export PORT="4000"
 export API_GATEWAY_URL="http://localhost:3013"
 export NEXT_PUBLIC_API_URL="${NEXT_PUBLIC_API_URL:-https://app.azeeboplus.com}"
+cd /app/apps/web
 exec npx --yes next start -p 4000
 WRAPPER
 chmod +x /app/service-wrappers/web-app.sh
