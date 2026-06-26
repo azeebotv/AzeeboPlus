@@ -169,8 +169,8 @@ RUN pnpm --filter @azeebo/moderation-service prisma:generate && pnpm --filter @a
 
 # Build gateway and apps
 RUN pnpm --filter @azeebo/api-gateway run build
-RUN pnpm --filter @azeebo/admin run build
-RUN pnpm --filter @azeebo/creator-portal run build
+RUN DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy" pnpm --filter @azeebo/admin prisma:generate && pnpm --filter @azeebo/admin run build
+RUN DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy" pnpm --filter @azeebo/creator-portal prisma:generate && pnpm --filter @azeebo/creator-portal run build
 RUN pnpm --filter @azeebo/web run build
 
 # ============================================================
