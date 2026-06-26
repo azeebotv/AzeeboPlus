@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
-import { Prisma } from '../../prisma/client';
+import { Prisma } from '@prisma/client';
 import { CreateContentDto } from './dto/create-content.dto';
 import { UpdateContentDto } from './dto/update-content.dto';
 import { CreateMediaAssetDto } from './dto/create-media-asset.dto';

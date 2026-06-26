@@ -1,6 +1,6 @@
 import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
-import { Prisma } from '../../prisma/client';
+import { Prisma } from '@prisma/client';
 import * as crypto from 'crypto';
 
 export interface WebhookEvent {

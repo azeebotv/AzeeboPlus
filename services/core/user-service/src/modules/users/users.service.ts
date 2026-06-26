@@ -3,7 +3,7 @@ import { PrismaService } from '../database/prisma.service';
 import { UpdateUniverseAffinityDto } from './dto/update-universe-affinity.dto';
 import { UpdateUserProfileDto } from './dto/update-user-profile.dto';
 import { CompleteProfileSetupDto } from './dto/complete-profile-setup.dto';
-import { Prisma } from '../../prisma/client';
+import { Prisma } from '@prisma/client';
 
 interface UniverseAffinityResponse {
   userId: string;

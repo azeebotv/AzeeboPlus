@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { WalletService } from './wallet.service';
 import { PrismaService } from '../database/prisma.service';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
-import { Wallet, WalletTransaction, Prisma } from '../../prisma/client';
+import { Wallet, WalletTransaction, Prisma } from '@prisma/client';
 import { ConfigModule } from '@nestjs/config';
 
 jest.mock('../database/prisma.service');

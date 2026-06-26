@@ -18,7 +18,7 @@ import {
   ChargebackQueryDto,
 } from './dto/chargeback.dto';
 import { ApiResponseWrapper } from '@azeebo/shared-types';
-import { Prisma } from '../../prisma/client';
+import { Prisma } from '@prisma/client';
 import { AuthGuard } from '../../common/guards/auth.guard';
 import { AdminGuard } from '@azeebo/security';
 

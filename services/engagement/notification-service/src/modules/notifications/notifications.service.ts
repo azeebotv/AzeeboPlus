@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
-import { Prisma } from '../../prisma/client';
+import { Prisma } from '@prisma/client';
 import { FirebaseService } from '../firebase/firebase.service';
 import { EmailService } from '../email/email.service';
 import { SmsService } from '../sms/sms.service';

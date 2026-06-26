@@ -6,7 +6,7 @@ import { PaystackProvider } from './providers/paystack.provider';
 import { FlutterwaveProvider } from './providers/flutterwave.provider';
 import { WebhookRetryService } from './webhook-retry.service';
 import axios from 'axios';
-import { Prisma } from '../../prisma/client';
+import { Prisma } from '@prisma/client';
 import {
   PaymentResponse,
   InitializePaymentResponse,

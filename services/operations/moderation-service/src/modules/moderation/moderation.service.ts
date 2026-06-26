@@ -9,7 +9,7 @@ import type {
   AuditEvent,
   ReviewerAssignment,
   Report,
-} from '../../prisma/client';
+} from '@prisma/client';
 import { ModerationResponse } from './interfaces/moderation-response.interface';
 
 export interface CreateCaseRequest {

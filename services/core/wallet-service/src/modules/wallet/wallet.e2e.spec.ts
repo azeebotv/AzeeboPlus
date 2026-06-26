@@ -3,7 +3,7 @@ import { WalletService } from './wallet.service';
 import { PrismaService } from '../database/prisma.service';
 import { ConfigService } from '@nestjs/config';
 import { BadRequestException } from '@nestjs/common';
-import { Prisma } from '../../prisma/client';
+import { Prisma } from '@prisma/client';
 
 jest.mock('../database/prisma.service');
 

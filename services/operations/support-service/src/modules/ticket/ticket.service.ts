@@ -5,7 +5,7 @@ import {
   SupportTicketCategory,
   SupportTicketPriority,
   SupportTicketStatus,
-} from '../../prisma/client';
+} from '@prisma/client';
 
 @Injectable()
 export class TicketService {

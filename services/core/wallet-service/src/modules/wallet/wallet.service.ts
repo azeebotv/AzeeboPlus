@@ -106,7 +106,7 @@ export class WalletService {
     return {
       success: true,
       data: {
-        transactions: transactions.map((t) => ({
+        transactions: transactions.map((t: any) => ({
           id: t.id,
           walletId: t.walletId,
           type: t.type,
@@ -166,7 +166,7 @@ export class WalletService {
             toNumber(wallet.promoBalance.toString())
         ),
         currency: wallet.currency,
-        recentTransactions: recentTransactions.map((t) => ({
+        recentTransactions: recentTransactions.map((t: any) => ({
           id: t.id,
           walletId: t.walletId,
           type: t.type,
@@ -270,7 +270,7 @@ export class WalletService {
     const reference = `WD-${randomUUID()}`;
     const idempotencyKey = `withdraw-${userId}-${withdrawDto.amount}-${Date.now()}`;
 
-    const updatedWallet = await this.prisma.$transaction(async (tx) => {
+    const updatedWallet = await this.prisma.$transaction(async (tx: any) => {
       // Lock the wallet row and check balance atomically
       const wallet = await tx.wallet.findUnique({
         where: { userId },
@@ -340,7 +340,7 @@ export class WalletService {
     const recipientReference = `TRF-IN-${randomUUID()}`;
     const idempotencyKey = `transfer-${senderId}-${transferDto.recipientId}-${transferDto.amount}-${Date.now()}`;
 
-    const updatedSenderWallet = await this.prisma.$transaction(async (tx) => {
+    const updatedSenderWallet = await this.prisma.$transaction(async (tx: any) => {
       // Lock sender wallet and check balance atomically
       const senderWallet = await tx.wallet.findUnique({
         where: { userId: senderId },
@@ -514,7 +514,7 @@ export class WalletService {
 
     const amount = points / this.pointsToNairaRate;
 
-    const updatedWallet = await this.prisma.$transaction(async (tx) => {
+    const updatedWallet = await this.prisma.$transaction(async (tx: any) => {
       await tx.walletTransaction.create({
         data: {
           walletId: wallet.id,
@@ -596,7 +596,7 @@ export class WalletService {
       }
     }
 
-    const updatedWallet = await this.prisma.$transaction(async (tx) => {
+    const updatedWallet = await this.prisma.$transaction(async (tx: any) => {
       await tx.wallet.update({
         where: { id: walletId },
         data: { balance: { increment: amount } },
@@ -686,7 +686,7 @@ export class WalletService {
       throw new BadRequestException('Insufficient balance');
     }
 
-    const updatedWallet = await this.prisma.$transaction(async (tx) => {
+    const updatedWallet = await this.prisma.$transaction(async (tx: any) => {
       await tx.wallet.update({
         where: { id: walletId },
         data: { balance: { decrement: amount } },
@@ -766,7 +766,7 @@ export class WalletService {
       }
     }
 
-    const updatedWallet = await this.prisma.$transaction(async (tx) => {
+    const updatedWallet = await this.prisma.$transaction(async (tx: any) => {
       await tx.walletTransaction.create({
         data: {
           walletId,
@@ -847,7 +847,7 @@ export class WalletService {
       }
     }
 
-    const updatedWallet = await this.prisma.$transaction(async (tx) => {
+    const updatedWallet = await this.prisma.$transaction(async (tx: any) => {
       await tx.walletTransaction.create({
         data: {
           walletId,
@@ -916,7 +916,7 @@ export class WalletService {
         startDate: startDate.toISOString(),
         endDate: endDate.toISOString(),
         totalTransactions: transactions.length,
-        transactions: transactions.map((t) => ({
+        transactions: transactions.map((t: any) => ({
           id: t.id,
           walletId: t.walletId,
           type: t.type,

@@ -1,6 +1,6 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
-import { Prisma } from '../../prisma/client';
+import { Prisma } from '@prisma/client';
 import { SearchResponse } from './interfaces/search-response.interface';
 
 interface FacetedFilters {
