@@ -21,7 +21,7 @@
     "@nestjs/config": "^4.0.4",
     "@nestjs/core": "^11.1.27",
     "@nestjs/platform-express": "^11.1.27",
-    "@prisma/client": "^6.19.0",
+    "@prisma/client": "^7.8.0",
     "@sendgrid/mail": "^8.1.6",
     "axios": "^1.18.0",
     "bullmq": "^5.78.1",
@@ -29,7 +29,7 @@
     "handlebars": "^4.7.9",
     "helmet": "^8.2.0",
     "ioredis": "^5.11.1",
-    "prisma": "^6.19.0",
+    "prisma": "^7.8.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",
     "twilio": "^6.0.2"
