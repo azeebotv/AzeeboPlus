@@ -1,20 +1,6 @@
-# Dependencies
+# Dependencies - exclude all, pnpm will install fresh in Docker
 node_modules
 **/node_modules
-
-# Build outputs (exclude service dist, but keep packages/*/dist for runtime)
-dist
-**/dist
-build
-.next
-*.log
-
-# But keep packages' built outputs - they're required at runtime
-!packages/
-!packages/**/dist
-!packages/**/dist/**
-!packages/**/node_modules
-!packages/**/node_modules/**
 
 # Git
 .git
@@ -49,13 +35,6 @@ Thumbs.db
 *.swo
 *~
 
-# Docker and config files
+# Docker and config files (not needed inside the build)
 docker-compose*.yml
-.eslintrc.json
-.prettierrc
-prettier.config.*
-jest.config.*
-stryker.config.*
-
-# Keep tsconfig files (needed by Dockerfiles for building)
-# tsconfig.build.json is required by service build scripts (tsc -p tsconfig.build.json)
+Dockerfile*

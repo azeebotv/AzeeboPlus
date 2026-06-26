@@ -70,6 +70,13 @@ STATE_DIR="$ROOT_DIR/.dev-state"
 PID_FILE="$STATE_DIR/pids"
 START_TIME=""
 
+# ---- File Descriptor Limit ----
+# Large monorepos need more than macOS's default 256 open files limit.
+# Raise soft limit so Watchpack / file watchers can operate correctly.
+if [[ "$(uname -s)" == "Darwin" ]]; then
+  ulimit -n 65536 2>/dev/null || true
+fi
+
 # ============================================================
 # SECTION 1: Utilities
 # ============================================================
@@ -211,6 +218,19 @@ validate_prereqs() {
     log_error "Redis is not running"
     log_info "  Start with: redis-server --daemonize yes"
     failed=$((failed + 1))
+  fi
+
+  # macOS: check file descriptor limit (default 256 is too low for monorepos)
+  if [[ "$OS" == "macos" ]]; then
+    local maxfiles_soft
+    maxfiles_soft="$(launchctl limit maxfiles 2>/dev/null | awk '{print $2}')"
+    if [[ -n "$maxfiles_soft" && "$maxfiles_soft" != "unlimited" && "$maxfiles_soft" -lt 1024 ]]; then
+      log_error "macOS maxfiles soft limit is $maxfiles_soft (need >= 1024)"
+      log_info "  Fix with: sudo launchctl limit maxfiles 65536 unlimited"
+      log_info "  Then restart your terminal. This script will raise the soft limit automatically."
+    else
+      log_ok "File descriptor limit OK"
+    fi
   fi
 
   # Check pnpm store
@@ -653,6 +673,9 @@ start_service() {
 
   if [[ "$dir" == "apps/web" ]]; then
     export NEXT_PUBLIC_API_URL="http://localhost:3013"
+    # Use polling-based file watching to avoid EMFILE errors in large monorepos
+    export WATCHPACK_POLLING=true
+    export CHOKIDAR_USEPOLLING=true
     run_cmd_str="cd $service_dir && pnpm dev"
   elif [[ -f "$service_dir/package.json" ]] && grep -q '"start:dev"' "$service_dir/package.json" 2>/dev/null; then
     run_cmd_str="cd $service_dir && pnpm start:dev"

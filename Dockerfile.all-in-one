@@ -175,6 +175,17 @@ RUN pnpm --filter @azeebo/admin prisma:generate && pnpm --filter @azeebo/admin r
     pnpm --filter @azeebo/creator-portal prisma:generate && pnpm --filter @azeebo/creator-portal run build && \
     pnpm --filter @azeebo/web run build
 
+# Clean up to reduce image size:
+# 1. Remove devDependencies (prisma CLI, typescript, eslint, etc.)
+# 2. Remove .git, caches, and TypeScript source (only dist/ needed)
+# 3. Prune pnpm store
+RUN rm -rf .git && \
+    pnpm install --prod --frozen-lockfile && \
+    find . -path '*/node_modules/.cache' -delete 2>/dev/null; \
+    find . -name '*.tsbuildinfo' -delete 2>/dev/null; \
+    find . -name '.eslintcache' -delete 2>/dev/null; \
+    pnpm store prune 2>/dev/null || true
+
 # ============================================================
 # Stage 2: Runtime
 # ============================================================
