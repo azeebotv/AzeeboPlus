@@ -55,7 +55,6 @@ COPY packages/observability/package.json packages/observability/
 COPY packages/feature-flags/package.json packages/feature-flags/
 COPY packages/analytics-sdk/package.json packages/analytics-sdk/
 COPY packages/internal-clients/package.json packages/internal-clients/
-COPY packages/opentelemetry/package.json packages/opentelemetry/
 COPY packages/test-utils/package.json packages/test-utils/
 COPY packages/contract-tests/package.json packages/contract-tests/
 COPY packages/ui/package.json packages/ui/
