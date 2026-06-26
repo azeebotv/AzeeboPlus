@@ -124,7 +124,6 @@ services:
       NODE_ENV: development
     volumes:
       - ./services/core/media-service/src:/app/src:cached
-      - ./services/core/media-service/prisma:/app/prisma:ro
 
   notification-service:
     build:

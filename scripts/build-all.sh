@@ -28,7 +28,7 @@ pnpm --filter @azeebo/wallet-service prisma:generate && pnpm --filter @azeebo/wa
 pnpm --filter @azeebo/payment-service prisma:generate && pnpm --filter @azeebo/payment-service run build
 pnpm --filter @azeebo/content-service prisma:generate && pnpm --filter @azeebo/content-service run build
 pnpm --filter @azeebo/search-service prisma:generate && pnpm --filter @azeebo/search-service run build
-pnpm --filter @azeebo/media-service prisma:generate && pnpm --filter @azeebo/media-service run build
+pnpm --filter @azeebo/media-service run build
 
 # Engagement services
 pnpm --filter @azeebo/notification-service prisma:generate && pnpm --filter @azeebo/notification-service run build

@@ -91,7 +91,6 @@ COPY services/core/wallet-service/prisma services/core/wallet-service/prisma
 COPY services/core/payment-service/prisma services/core/payment-service/prisma
 COPY services/core/content-service/prisma services/core/content-service/prisma
 COPY services/core/search-service/prisma services/core/search-service/prisma
-COPY services/core/media-service/prisma services/core/media-service/prisma
 COPY services/engagement/notification-service/prisma services/engagement/notification-service/prisma
 COPY services/engagement/reward-service/prisma services/engagement/reward-service/prisma
 COPY services/engagement/engagement-service/prisma services/engagement/engagement-service/prisma
@@ -130,7 +129,7 @@ RUN pnpm --filter @azeebo/auth-service prisma:generate && pnpm --filter @azeebo/
     pnpm --filter @azeebo/payment-service prisma:generate && pnpm --filter @azeebo/payment-service run build && \
     pnpm --filter @azeebo/content-service prisma:generate && pnpm --filter @azeebo/content-service run build && \
     pnpm --filter @azeebo/search-service prisma:generate && pnpm --filter @azeebo/search-service run build && \
-    pnpm --filter @azeebo/media-service prisma:generate && pnpm --filter @azeebo/media-service run build && \
+    pnpm --filter @azeebo/media-service run build && \
     pnpm --filter @azeebo/notification-service prisma:generate && pnpm --filter @azeebo/notification-service run build && \
     pnpm --filter @azeebo/reward-service prisma:generate && pnpm --filter @azeebo/reward-service run build && \
     pnpm --filter @azeebo/engagement-service prisma:generate && pnpm --filter @azeebo/engagement-service run build && \
