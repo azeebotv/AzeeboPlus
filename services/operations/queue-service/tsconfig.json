@@ -10,7 +10,7 @@
     "outDir": "./dist",
     "incremental": true,
     "paths": {
-      "@azeebo/*": ["../../../packages/*/src"],
+      "@azeebo/*": ["../../../packages/*/dist"],
       "@queue/*": ["./*"]
     }
   },

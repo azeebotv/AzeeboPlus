@@ -11,7 +11,7 @@
     "incremental": true,
     "types": ["jest", "node", "supertest", "multer"],
     "paths": {
-      "@azeebo/*": ["../../../packages/*/src"],
+      "@azeebo/*": ["../../../packages/*/dist"],
       "@media/*": ["./*"]
     }
   },

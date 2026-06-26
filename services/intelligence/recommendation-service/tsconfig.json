@@ -14,7 +14,7 @@
     "noImplicitReturns": true,
     "types": ["jest", "node", "supertest"],
     "paths": {
-      "@azeebo/*": ["../../../packages/*/src"],
+      "@azeebo/*": ["../../../packages/*/dist"],
       "@recommendation/*": ["./*"],
       "@/*": ["src/*"],
       "@modules/*": ["src/modules/*"],

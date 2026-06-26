@@ -3,7 +3,7 @@
   "compilerOptions": {
     "outDir": "dist",
     "paths": {
-      "@azeebo/*": ["../../../packages/*/src"],
+      "@azeebo/*": ["../../../packages/*/dist"],
       "@sports/*": ["./*"]
     }
   },

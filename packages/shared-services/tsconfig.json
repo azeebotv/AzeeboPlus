@@ -4,10 +4,7 @@
     "outDir": "dist",
     "rootDir": "./src",
     "types": ["jest", "node"],
-    "paths": {
-      "@azeebo/*": ["../../packages/*/src"],
-      "@shared/*": ["./*"]
-    }
+    "paths": {}
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "src/**/*.spec.ts"]

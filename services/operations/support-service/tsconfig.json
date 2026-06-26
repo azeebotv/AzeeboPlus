@@ -16,7 +16,7 @@
     "noFallthroughCasesInSwitch": true,
     "types": ["jest", "node", "supertest"],
     "paths": {
-      "@azeebo/*": ["../../../packages/*/src"],
+      "@azeebo/*": ["../../../packages/*/dist"],
       "@/*": ["./src/*"]
     }
   },

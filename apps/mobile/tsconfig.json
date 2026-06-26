@@ -7,7 +7,7 @@
     "jsx": "react-native",
     "moduleResolution": "bundler",
     "paths": {
-      "@azeebo/*": ["../../packages/*/src"],
+      "@azeebo/*": ["../../packages/*/dist"],
       "@azeebo/design-tokens": ["../../packages/design-tokens/src"]
     }
   },
