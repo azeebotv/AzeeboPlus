@@ -87,6 +87,10 @@ export class AuthService {
       throw new UnauthorizedException('Invalid email or password');
     }
 
+    if (!user.password) {
+      throw new UnauthorizedException('Invalid email or password');
+    }
+
     const failedAttempts = await this.getFailedLoginAttempts(loginDto.email);
     if (failedAttempts >= this.maxFailedAttempts) {
       throw new UnauthorizedException('Account locked. Please try again later.');
