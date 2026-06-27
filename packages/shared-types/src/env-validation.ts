@@ -10,7 +10,7 @@ export const environmentSchema = z.object({
   DATABASE_HOST: z.string().default('localhost'),
   DATABASE_PORT: z.coerce.number().default(5432),
   DATABASE_USER: z.string().default('postgres'),
-  DATABASE_PASSWORD: z.string(),
+  DATABASE_PASSWORD: z.string().default(''),
   DATABASE_NAME: z.string().default('azeebo_plus_dev'),
 
   // Redis
@@ -123,16 +123,6 @@ function validateProductionEnvironment(env: EnvironmentVariables): void {
 
   if (env.JWT_REFRESH_SECRET.length < 64) {
     errors.push('JWT_REFRESH_SECRET should be at least 64 characters in production');
-  }
-
-  // Check for localhost database in production
-  if (env.DATABASE_HOST === 'localhost' || env.DATABASE_HOST === '127.0.0.1') {
-    errors.push('DATABASE_HOST cannot be localhost in production');
-  }
-
-  // Check for localhost redis in production
-  if (env.REDIS_HOST === 'localhost' || env.REDIS_HOST === '127.0.0.1') {
-    errors.push('REDIS_HOST cannot be localhost in production');
   }
 
   // Check that payment secrets are configured

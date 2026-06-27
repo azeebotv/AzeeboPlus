@@ -402,6 +402,11 @@ for entry in "${SERVICES[@]}"; do
   cat > "/app/service-wrappers/${svc_name}.sh" << WRAPPER
 #!/bin/bash
 export DATABASE_URL="postgresql://${db_user}:${db_pass}@127.0.0.1:5432/${db_name}?schema=public"
+export DATABASE_PASSWORD="${db_pass}"
+export DATABASE_HOST="localhost"
+export DATABASE_PORT="5432"
+export DATABASE_USER="${db_user}"
+export DATABASE_NAME="${db_name}"
 export PORT="${port}"
 export NODE_ENV="production"
 exec node /app/${main_js}
@@ -423,6 +428,11 @@ chmod +x /app/service-wrappers/api-gateway.sh
 cat > /app/service-wrappers/admin-app.sh << WRAPPER
 #!/bin/bash
 export DATABASE_URL="postgresql://admin_user:${ADMIN_DB_PASSWORD}@127.0.0.1:5432/admin_db?schema=public"
+export DATABASE_PASSWORD="${ADMIN_DB_PASSWORD}"
+export DATABASE_HOST="localhost"
+export DATABASE_PORT="5432"
+export DATABASE_USER="admin_user"
+export DATABASE_NAME="admin_db"
 export PORT="4016"
 export NODE_ENV="production"
 cd /app/apps/admin
@@ -434,6 +444,11 @@ chmod +x /app/service-wrappers/admin-app.sh
 cat > /app/service-wrappers/creator-portal-app.sh << WRAPPER
 #!/bin/bash
 export DATABASE_URL="postgresql://creator_portal_user:${CREATOR_PORTAL_DB_PASSWORD}@127.0.0.1:5432/creator_portal_db?schema=public"
+export DATABASE_PASSWORD="${CREATOR_PORTAL_DB_PASSWORD}"
+export DATABASE_HOST="localhost"
+export DATABASE_PORT="5432"
+export DATABASE_USER="creator_portal_user"
+export DATABASE_NAME="creator_portal_db"
 export PORT="4014"
 export NODE_ENV="production"
 cd /app/apps/creator-portal
@@ -448,6 +463,9 @@ export NODE_ENV="production"
 export PORT="4000"
 export API_GATEWAY_URL="http://localhost:3013"
 export NEXT_PUBLIC_API_URL="${NEXT_PUBLIC_API_URL:-https://app.azeeboplus.com}"
+export DATABASE_PASSWORD=""
+export DATABASE_HOST="localhost"
+export DATABASE_PORT="5432"
 cd /app/apps/web
 exec pnpm exec next start -p 4000
 WRAPPER

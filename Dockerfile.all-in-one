@@ -206,15 +206,35 @@ COPY --from=builder /runtime /app
 ENV CI=true
 RUN pnpm install --prod --frozen-lockfile --ignore-scripts
 
+RUN mkdir -p /app/node_modules/@azeebo && \
+    for pkg_json in $(find packages services apps -maxdepth 3 -name "package.json" \
+      -not -path "*/node_modules/*" -not -path "*/dist/*" -not -path "*/.prisma/*"); do \
+      name=$(node -e "process.stdout.write(require('./$pkg_json').name||'')" 2>/dev/null); \
+      if [ -n "$name" ]; then \
+        target=$(realpath "$(dirname "$pkg_json")"); \
+        rm -rf "/app/node_modules/$name" && \
+        ln -sfn "$target" "/app/node_modules/$name"; \
+      fi; \
+    done
+
 # Install Prisma CLI globally (needed for migrate deploy and client generation)
 RUN npm install -g prisma@6.19.3
 
 # Generate Prisma clients for all services (fresh, matching prod node_modules)
-# The builder stage generates these in .pnpm/ store which doesn't work at runtime
+# The builder stage generates these in .pnpm/ store which doesn't work at runtime.
+# After generating, copy @prisma/client to each service's local node_modules so
+# each service resolves its own generated enums/types (pnpm collision fix).
 RUN for schema in $(find services apps -name "schema.prisma" -not -path "*/node_modules/*" -not -path "*/dist/*"); do \
       dir=$(dirname "$schema"); \
       echo "Generating Prisma client for $dir..."; \
       cd "/app/$dir" && prisma generate --schema=schema.prisma 2>&1 || true; \
+      if [ -d "node_modules/.prisma/client" ]; then \
+        mkdir -p "node_modules/@prisma/client" && \
+        cp /app/node_modules/@prisma/client/package.json "node_modules/@prisma/client/" && \
+        cp /app/node_modules/@prisma/client/default.js "node_modules/@prisma/client/" 2>/dev/null || true; \
+        cp /app/node_modules/@prisma/client/index.js "node_modules/@prisma/client/" 2>/dev/null || true; \
+        cp /app/node_modules/@prisma/client/index.d.ts "node_modules/@prisma/client/" 2>/dev/null || true; \
+      fi; \
       cd /app; \
     done
 
