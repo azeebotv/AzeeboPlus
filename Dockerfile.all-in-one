@@ -122,9 +122,7 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
 # the runtime image. A fresh pnpm install --prod in the runtime
 # stage will provide production-only dependencies.
 RUN mkdir -p /runtime/node_modules && \
-    # Root workspace files
     cp package.json pnpm-lock.yaml pnpm-workspace.yaml /runtime/ && \
-    # All workspace package.json files (needed for pnpm install --prod)
     find . -maxdepth 4 -name "package.json" \
       -not -path "*/node_modules/*" \
       -not -path "*/dist/*" \
@@ -133,7 +131,6 @@ RUN mkdir -p /runtime/node_modules && \
       | while read f; do \
         mkdir -p "/runtime/$(dirname "$f")" && cp "$f" "/runtime/$f"; \
       done && \
-    # Service dist/ and prisma/ directories
     find services -maxdepth 3 -mindepth 3 -type d | while read svc; do \
       if [ -d "$svc/dist" ]; then \
         mkdir -p "/runtime/$svc" && cp -r "$svc/dist" "/runtime/$svc/dist"; \
@@ -142,16 +139,13 @@ RUN mkdir -p /runtime/node_modules && \
         mkdir -p "/runtime/$svc" && cp -r "$svc/prisma" "/runtime/$svc/prisma"; \
       fi; \
     done && \
-    # Admin and Creator Portal (NestJS apps — dist/ only)
     mkdir -p /runtime/apps/admin && cp -r apps/admin/dist /runtime/apps/admin/dist && \
     mkdir -p /runtime/apps/creator-portal && cp -r apps/creator-portal/dist /runtime/apps/creator-portal/dist && \
-    # Web app (Next.js — .next/, public/, config)
     mkdir -p /runtime/apps/web && \
     cp -r apps/web/.next /runtime/apps/web/.next && \
     cp -r apps/web/public /runtime/apps/web/public 2>/dev/null; \
     cp apps/web/next.config.js /runtime/apps/web/ 2>/dev/null; \
-    # Note: prisma clients are generated fresh in runtime stage (pnpm
-    # stores them in .pnpm/ virtual store, not node_modules/.prisma)
+    true
 
 # ============================================================
 # Stage 2: Runtime — lean image with production deps only
