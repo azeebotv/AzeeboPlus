@@ -140,13 +140,19 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     pnpm --filter @azeebo/creator-portal prisma:generate && pnpm --filter @azeebo/creator-portal run build && \
     pnpm --filter @azeebo/web run build
 
-# Clean up to reduce image size
+# Clean up aggressively to reduce image size
 RUN rm -rf .git && \
     CI=true pnpm install --prod --frozen-lockfile && \
     find . -path '*/node_modules/.cache' -delete 2>/dev/null || true && \
     find . -name '*.tsbuildinfo' -delete 2>/dev/null || true && \
     find . -name '.eslintcache' -delete 2>/dev/null || true && \
-    pnpm store prune 2>/dev/null || true
+    find . -name 'tsconfig.tsbuildinfo' -delete 2>/dev/null || true && \
+    pnpm store prune 2>/dev/null || true && \
+    rm -rf packages/*/src packages/*/test packages/*/tests packages/*/__tests__ && \
+    rm -rf apps/*/src apps/*/public apps/*/styles apps/*/e2e && \
+    rm -rf services/*/src services/*/test services/*/tests && \
+    rm -rf infra ci .github .vscode .idea *.md LICENSE CHANGELOG.md && \
+    rm -rf node_modules/.pnpm/.package-lock.json 2>/dev/null || true
 
 # ============================================================
 # Stage 2: Runtime
@@ -181,8 +187,12 @@ RUN useradd -r -s /bin/false pgbouncer || true && \
     chown -R pgbouncer:pgbouncer /var/run/pgbouncer && \
     chown -R postgres:postgres /var/log/postgresql
 
-# Copy built application from builder
-COPY --from=builder /app /app
+# Copy built application from builder - only runtime essentials
+COPY --from=builder /app/apps /app/apps
+COPY --from=builder /app/packages /app/packages
+COPY --from=builder /app/services /app/services
+COPY --from=builder /app/node_modules /app/node_modules
+COPY --from=builder /app/package.json /app/pnpm-workspace.yaml /app/pnpm-lock.yaml /app/
 
 WORKDIR /app
 
