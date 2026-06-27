@@ -137,7 +137,7 @@ RUN mkdir -p /runtime/node_modules && \
       | while read f; do \
         mkdir -p "/runtime/$(dirname "$f")" && cp "$f" "/runtime/$f"; \
       done && \
-    find services -maxdepth 3 -mindepth 3 -type d | while read svc; do \
+    find services -maxdepth 2 -mindepth 2 -type d | while read svc; do \
       if [ -d "$svc/dist" ]; then \
         mkdir -p "/runtime/$svc" && cp -r "$svc/dist" "/runtime/$svc/dist"; \
       fi; \
@@ -145,7 +145,7 @@ RUN mkdir -p /runtime/node_modules && \
         mkdir -p "/runtime/$svc" && cp -r "$svc/prisma" "/runtime/$svc/prisma"; \
       fi; \
     done && \
-    find packages -maxdepth 2 -mindepth 2 -type d | while read pkg; do \
+    find packages -maxdepth 1 -mindepth 1 -type d | while read pkg; do \
       if [ -d "$pkg/dist" ]; then \
         mkdir -p "/runtime/$pkg" && cp -r "$pkg/dist" "/runtime/$pkg/dist"; \
       fi; \
