@@ -449,7 +449,7 @@ export PORT="4000"
 export API_GATEWAY_URL="http://localhost:3013"
 export NEXT_PUBLIC_API_URL="${NEXT_PUBLIC_API_URL:-https://app.azeeboplus.com}"
 cd /app/apps/web
-exec npx --yes next start -p 4000
+exec pnpm exec next start -p 4000
 WRAPPER
 chmod +x /app/service-wrappers/web-app.sh
 
