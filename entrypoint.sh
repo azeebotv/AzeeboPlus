@@ -456,7 +456,31 @@ chmod +x /app/service-wrappers/web-app.sh
 echo "==> Wrapper scripts generated."
 
 # ============================================================
-# 11. Hand off to supervisord
+# 11. Generate SSL certificates (self-signed for internal use)
+# ============================================================
+echo "==> Generating SSL certificates..."
+mkdir -p /app/certs
+
+SSL_DOMAIN="${SSL_DOMAIN:-localhost}"
+SSL_DAYS="${SSL_DAYS:-365}"
+
+if [ ! -f /app/certs/server.crt ] || [ ! -f /app/certs/server.key ]; then
+  openssl req -x509 -nodes -days "$SSL_DAYS" \
+    -newkey rsa:2048 \
+    -keyout /app/certs/server.key \
+    -out /app/certs/server.crt \
+    -subj "/C=NG/ST=Lagos/L=Lagos/O=Azeebo+/CN=$SSL_DOMAIN" \
+    -addext "subjectAltName=DNS:$SSL_DOMAIN,DNS:localhost,DNS:*.azeeboplus.com,IP:127.0.0.1" \
+    2>&1
+  chmod 600 /app/certs/server.key
+  chmod 644 /app/certs/server.crt
+  echo "    SSL certificate generated for $SSL_DOMAIN (valid $SSL_DAYS days)."
+else
+  echo "    SSL certificates already exist, skipping generation."
+fi
+
+# ============================================================
+# 12. Hand off to supervisord
 # ============================================================
 echo "==> Starting supervisord (manages all processes)..."
 exec /usr/bin/supervisord -c /etc/supervisord.conf
