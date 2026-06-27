@@ -145,6 +145,11 @@ RUN mkdir -p /runtime/node_modules && \
         mkdir -p "/runtime/$svc" && cp -r "$svc/prisma" "/runtime/$svc/prisma"; \
       fi; \
     done && \
+    find packages -maxdepth 2 -mindepth 2 -type d | while read pkg; do \
+      if [ -d "$pkg/dist" ]; then \
+        mkdir -p "/runtime/$pkg" && cp -r "$pkg/dist" "/runtime/$pkg/dist"; \
+      fi; \
+    done && \
     mkdir -p /runtime/apps/admin && cp -r apps/admin/dist /runtime/apps/admin/dist && \
     cp -r apps/admin/prisma /runtime/apps/admin/prisma 2>/dev/null; \
     mkdir -p /runtime/apps/creator-portal && cp -r apps/creator-portal/dist /runtime/apps/creator-portal/dist && \
