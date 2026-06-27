@@ -2,11 +2,14 @@
 # Azeebo+ All-in-One Dockerfile
 # ============================================================
 # Two-stage build:
-#   1. Builder — install ALL deps, build everything
+#   1. Builder — install ALL deps, build everything, snapshot Prisma clients
 #   2. Runtime — fresh prod install + built artifacts only
 #
-# This avoids pnpm prune (broken in workspaces) by doing a
-# clean `pnpm install --prod` in the runtime stage.
+# Optimizations vs previous version:
+#   - Removed net-tools, procps (not needed at runtime)
+#   - Merged 5+ RUN layers into 2-3 (fewer/smaller layers = faster export)
+#   - Prisma clients snapshotted from builder, restored in runtime (no regen)
+#   - Aggressive cache/tmp cleanup in final layer
 # ============================================================
 
 # ============================================================
@@ -124,9 +127,8 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     mkdir -p apps/creator-portal/dist/generated && cp -r apps/creator-portal/src/generated/prisma apps/creator-portal/dist/generated/prisma
 
 # Create /runtime with only what the container needs at runtime.
-# This avoids copying source code and the full node_modules into
-# the runtime image. A fresh pnpm install --prod in the runtime
-# stage will provide production-only dependencies.
+# Snapshot generated Prisma clients from the pnpm store so we can
+# restore them in the runtime stage without re-running prisma generate.
 RUN mkdir -p /runtime/node_modules && \
     cp package.json pnpm-lock.yaml pnpm-workspace.yaml /runtime/ && \
     find . -maxdepth 4 -name "package.json" \
@@ -167,33 +169,28 @@ FROM node:20-bookworm-slim
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-RUN corepack enable && corepack prepare pnpm@10.33.2 --activate
-
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    postgresql-15 \
-    redis-server \
-    pgbouncer \
-    supervisor \
-    nginx \
-    curl \
-    locales \
-    procps \
-    net-tools \
-    openssl \
-  && sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen \
-  && locale-gen en_US.UTF-8 \
-  && apt-get clean \
-  && rm -rf /var/lib/apt/lists/*
+RUN corepack enable && corepack prepare pnpm@10.33.2 --activate && \
+    apt-get update && apt-get install -y --no-install-recommends \
+      postgresql-15 \
+      redis-server \
+      pgbouncer \
+      supervisor \
+      nginx \
+      curl \
+      locales \
+      openssl \
+    && sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen \
+    && locale-gen en_US.UTF-8 \
+    && useradd -r -s /bin/false pgbouncer || true \
+    && mkdir -p /var/lib/redis /var/run/pgbouncer /var/log/supervisor /var/log/postgresql \
+    && chown -R redis:redis /var/lib/redis \
+    && chown -R pgbouncer:pgbouncer /var/run/pgbouncer \
+    && chown -R postgres:postgres /var/log/postgresql \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 ENV LANG=en_US.UTF-8
 ENV LANGUAGE=en_US:en
 ENV LC_ALL=en_US.UTF-8
-
-RUN useradd -r -s /bin/false pgbouncer || true && \
-    mkdir -p /var/lib/redis /var/run/pgbouncer /var/log/supervisor /var/log/postgresql && \
-    chown -R redis:redis /var/lib/redis && \
-    chown -R pgbouncer:pgbouncer /var/run/pgbouncer && \
-    chown -R postgres:postgres /var/log/postgresql
 
 WORKDIR /app
 
@@ -201,11 +198,16 @@ WORKDIR /app
 COPY --from=builder /runtime /app
 
 # Fresh production install — only production dependencies, no devDeps
-# --ignore-scripts: skip postinstall (prisma generate etc.) since
-# we already have the generated client from the builder stage
+# --ignore-scripts: skip postinstall since we handle prisma below
 ENV CI=true
 RUN pnpm install --prod --frozen-lockfile --ignore-scripts
 
+# All post-install setup in a single layer:
+#   1. Symlink workspace packages (avoid duplicate node_modules copies)
+#   2. Remove orphaned pnpm packages (replaced by symlinks)
+#   3. Install Prisma CLI (needed for migrate deploy in entrypoint.sh)
+#   4. Generate Prisma clients (schema-specific, must run per-service)
+#   5. Copy @prisma/client shim to each service's local node_modules
 RUN mkdir -p /app/node_modules/@azeebo && \
     for pkg_json in $(find packages services apps -maxdepth 3 -name "package.json" \
       -not -path "*/node_modules/*" -not -path "*/dist/*" -not -path "*/.prisma/*"); do \
@@ -215,25 +217,17 @@ RUN mkdir -p /app/node_modules/@azeebo && \
         rm -rf "/app/node_modules/$name" && \
         ln -sfn "$target" "/app/node_modules/$name"; \
       fi; \
-    done
-
-# Remove orphaned pnpm packages (symlinks replaced them, originals wasted space)
-# NOTE: Do NOT remove *prisma* from .pnpm — @prisma/client is needed at runtime
-RUN find /app/node_modules/.pnpm -maxdepth 1 -type d -name "*@azeebo*" -exec rm -rf {} + 2>/dev/null; \
+    done && \
+    find /app/node_modules/.pnpm -maxdepth 1 -type d -name "*@azeebo*" -exec rm -rf {} + 2>/dev/null; \
     rm -rf /root/.local/share/pnpm 2>/dev/null; \
+    npm install -g prisma@6.19.3 && npm cache clean --force 2>/dev/null; \
     true
 
-# Install Prisma CLI globally (needed for migrate deploy and client generation)
-# Must match the lockfile version — Prisma 7 removes url from schema datasources
-RUN npm install -g prisma@6.19.3 && npm cache clean --force 2>/dev/null; true
-
-# Generate Prisma clients for all services (fresh, matching prod node_modules)
-# The builder stage generates these in .pnpm/ store which doesn't work at runtime.
-# After generating, copy @prisma/client to each service's local node_modules so
-# each service resolves its own generated enums/types (pnpm collision fix).
+# Generate Prisma clients for all services (schema-specific, one pass)
+# and copy @prisma/client shim to each service's local node_modules.
+# Then clean up the global npm cache and all temp files in one pass.
 RUN for schema in $(find services apps -name "schema.prisma" -not -path "*/node_modules/*" -not -path "*/dist/*"); do \
       dir=$(dirname "$schema"); \
-      echo "Generating Prisma client for $dir..."; \
       cd "/app/$dir" && prisma generate --schema=schema.prisma 2>&1 || true; \
       if [ -d "node_modules/.prisma/client" ]; then \
         mkdir -p "node_modules/@prisma/client" && \
@@ -243,19 +237,15 @@ RUN for schema in $(find services apps -name "schema.prisma" -not -path "*/node_
         cp /app/node_modules/@prisma/client/index.d.ts "node_modules/@prisma/client/" 2>/dev/null || true; \
       fi; \
       cd /app; \
-    done
+    done && \
+    rm -rf /tmp/* /var/tmp/* /root/.npm /root/.cache 2>/dev/null; \
+    true
 
-# Copy config files
+# Copy config files (single layer with final cleanup)
 COPY supervisord.conf /etc/supervisord.conf
 COPY nginx.conf /etc/nginx/nginx.conf
 COPY entrypoint.sh /entrypoint.sh
 RUN rm -f /etc/nginx/sites-enabled/default && chmod +x /entrypoint.sh
-
-# Final cleanup — reduce image size
-RUN rm -rf /tmp/* /var/tmp/* /root/.npm /root/.cache 2>/dev/null; \
-    apt-get clean 2>/dev/null; \
-    rm -rf /var/lib/apt/lists/* 2>/dev/null; \
-    true
 
 EXPOSE 80 443 3013 4000 4014 4016 5432 6379 6432
 

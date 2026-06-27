@@ -17,8 +17,10 @@ docs/
 docx/
 infra/
 scripts/
+ci/
 .github/
 .qoder/
+docker-bake.hcl
 
 # Markdown (except README)
 *.md
