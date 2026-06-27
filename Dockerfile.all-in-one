@@ -146,7 +146,9 @@ RUN mkdir -p /runtime/node_modules && \
       fi; \
     done && \
     mkdir -p /runtime/apps/admin && cp -r apps/admin/dist /runtime/apps/admin/dist && \
+    cp -r apps/admin/prisma /runtime/apps/admin/prisma 2>/dev/null; \
     mkdir -p /runtime/apps/creator-portal && cp -r apps/creator-portal/dist /runtime/apps/creator-portal/dist && \
+    cp -r apps/creator-portal/prisma /runtime/apps/creator-portal/prisma 2>/dev/null; \
     mkdir -p /runtime/apps/web && \
     cp -r apps/web/.next /runtime/apps/web/.next && \
     cp -r apps/web/public /runtime/apps/web/public 2>/dev/null; \
