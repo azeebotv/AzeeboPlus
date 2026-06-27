@@ -9,18 +9,19 @@ datasource db {
 }
 
 model User {
-  id           String   @id @default(uuid())
-  email        String   @unique
-  password     String
-  displayName  String
-  avatar       String?
-  role         String   @default("user")
-  isVerified   Boolean  @default(false)
-  mfaEnabled   Boolean  @default(false)
-  mfaSecret    String?
-  mfaBackupCodes String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id              String   @id @default(uuid())
+  email           String   @unique
+  password        String   @default("")
+  displayName     String
+  avatar          String?
+  role            String   @default("user")
+  preferences     Json?
+  isVerified      Boolean  @default(false)
+  mfaEnabled      Boolean  @default(false)
+  mfaSecret       String?
+  mfaBackupCodes  String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   sessions Session[]
   otps     Otp[]
