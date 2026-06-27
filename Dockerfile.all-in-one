@@ -150,8 +150,8 @@ RUN mkdir -p /runtime/node_modules && \
     cp -r apps/web/.next /runtime/apps/web/.next && \
     cp -r apps/web/public /runtime/apps/web/public 2>/dev/null; \
     cp apps/web/next.config.js /runtime/apps/web/ 2>/dev/null; \
-    # Prisma generated client (needed at runtime by all services)
-    cp -r node_modules/.prisma /runtime/node_modules/.prisma
+    # Note: prisma clients are generated fresh in runtime stage (pnpm
+    # stores them in .pnpm/ virtual store, not node_modules/.prisma)
 
 # ============================================================
 # Stage 2: Runtime — lean image with production deps only
@@ -199,8 +199,17 @@ COPY --from=builder /runtime /app
 ENV CI=true
 RUN pnpm install --prod --frozen-lockfile --ignore-scripts
 
-# Install Prisma CLI globally (needed for migrate deploy at runtime)
+# Install Prisma CLI globally (needed for migrate deploy and client generation)
 RUN npm install -g prisma@6.19.3
+
+# Generate Prisma clients for all services (fresh, matching prod node_modules)
+# The builder stage generates these in .pnpm/ store which doesn't work at runtime
+RUN for schema in $(find services apps -name "schema.prisma" -not -path "*/node_modules/*" -not -path "*/dist/*"); do \
+      dir=$(dirname "$schema"); \
+      echo "Generating Prisma client for $dir..."; \
+      cd "/app/$dir" && prisma generate --schema=schema.prisma 2>&1 || true; \
+      cd /app; \
+    done
 
 # Copy config files
 COPY supervisord.conf /etc/supervisord.conf
