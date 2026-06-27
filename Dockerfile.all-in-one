@@ -115,7 +115,9 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     pnpm --filter @azeebo/api-gateway run build && \
     pnpm --filter @azeebo/admin prisma:generate && pnpm --filter @azeebo/admin run build && \
     pnpm --filter @azeebo/creator-portal prisma:generate && pnpm --filter @azeebo/creator-portal run build && \
-    pnpm --filter @azeebo/web run build
+    pnpm --filter @azeebo/web run build && \
+    mkdir -p apps/admin/dist/generated && cp -r apps/admin/src/generated/prisma apps/admin/dist/generated/prisma && \
+    mkdir -p apps/creator-portal/dist/generated && cp -r apps/creator-portal/src/generated/prisma apps/creator-portal/dist/generated/prisma
 
 # Create /runtime with only what the container needs at runtime.
 # This avoids copying source code and the full node_modules into
@@ -203,12 +205,6 @@ RUN for schema in $(find services apps -name "schema.prisma" -not -path "*/node_
       echo "Generating Prisma client for $dir..."; \
       cd "/app/$dir" && prisma generate --schema=schema.prisma 2>&1 || true; \
       cd /app; \
-    done && \
-    for app_dir in apps/admin apps/creator-portal; do \
-      if [ -d "/app/$app_dir/src/generated/prisma" ]; then \
-        mkdir -p "/app/$app_dir/dist/generated" && \
-        cp -r "/app/$app_dir/src/generated/prisma" "/app/$app_dir/dist/generated/prisma"; \
-      fi; \
     done
 
 # Copy config files
