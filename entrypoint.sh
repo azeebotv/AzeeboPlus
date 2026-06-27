@@ -244,7 +244,7 @@ for entry in "${MIGRATE_SERVICES[@]}"; do
   echo "    Migrating $svc_name..."
 
   DATABASE_URL="postgresql://$db_user:$db_pass@127.0.0.1:5432/$db_name?schema=public" \
-    pnpm exec prisma migrate deploy --schema="$svc_dir/prisma/schema.prisma" 2>&1 || \
+    prisma migrate deploy --schema="$svc_dir/prisma/schema.prisma" 2>&1 || \
     echo "    WARNING: Migration failed for $svc_name (may not have migrations yet)"
 done
 

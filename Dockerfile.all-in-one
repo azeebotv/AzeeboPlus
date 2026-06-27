@@ -1,17 +1,12 @@
 # ============================================================
 # Azeebo+ All-in-One Dockerfile
 # ============================================================
-# Builds everything (25+ services + web) into a single
-# container managed by supervisord.
+# Two-stage build:
+#   1. Builder — install ALL deps, build everything
+#   2. Runtime — fresh prod install + built artifacts only
 #
-# Exposed ports:
-#   3013 - API Gateway
-#   4000 - Web App
-#   4014 - Creator Portal
-#   4016 - Admin Panel
-#   5432 - PostgreSQL (internal)
-#   6379 - Redis (internal)
-#   6432 - PgBouncer (internal)
+# This avoids pnpm prune (broken in workspaces) by doing a
+# clean `pnpm install --prod` in the runtime stage.
 # ============================================================
 
 # ============================================================
@@ -122,36 +117,44 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     pnpm --filter @azeebo/creator-portal prisma:generate && pnpm --filter @azeebo/creator-portal run build && \
     pnpm --filter @azeebo/web run build
 
-# Prune node_modules — remove devDependencies, docs, source, tests, and cache
-ENV CI=true
-RUN pnpm prune --prod && \
-    rm -rf node_modules/.cache node_modules/.pnpm/.package-lock.json && \
-    find node_modules -name "*.md" -delete 2>/dev/null || true && \
-    find node_modules -name "LICENSE*" -delete 2>/dev/null || true && \
-    find node_modules -name "CHANGELOG*" -delete 2>/dev/null || true && \
-    find node_modules -name "*.map" -delete 2>/dev/null || true && \
-    find node_modules -type d -name "test" -exec rm -rf {} + 2>/dev/null || true && \
-    find node_modules -type d -name "tests" -exec rm -rf {} + 2>/dev/null || true && \
-    find node_modules -type d -name "__tests__" -exec rm -rf {} + 2>/dev/null || true && \
-    find node_modules -type d -name "docs" -exec rm -rf {} + 2>/dev/null || true && \
-    find node_modules -type d -name "example" -exec rm -rf {} + 2>/dev/null || true && \
-    find node_modules -type d -name "examples" -exec rm -rf {} + 2>/dev/null || true && \
-    find node_modules -type d -name "dist-tests" -exec rm -rf {} + 2>/dev/null || true && \
-    find node_modules -type f -name "*.d.ts" -delete 2>/dev/null || true && \
-    find node_modules -type f -name "*.d.mts" -delete 2>/dev/null || true && \
-    find node_modules -type f -name "*.d.cts" -delete 2>/dev/null || true && \
-    find node_modules -type f -name "*.ts" ! -name "*.d.ts" -delete 2>/dev/null || true && \
-    find node_modules -type f -name "*.mts" -delete 2>/dev/null || true && \
-    find node_modules -type f -name "*.cts" -delete 2>/dev/null || true && \
-    find . -name "src" -type d -not -path "*/node_modules/*" -exec rm -rf {} + 2>/dev/null || true && \
-    find . -name "test" -type d -not -path "*/node_modules/*" -exec rm -rf {} + 2>/dev/null || true && \
-    find . -name "tests" -type d -not -path "*/node_modules/*" -exec rm -rf {} + 2>/dev/null || true && \
-    find . -name "__tests__" -type d -not -path "*/node_modules/*" -exec rm -rf {} + 2>/dev/null || true && \
-    find . -name "e2e" -type d -not -path "*/node_modules/*" -exec rm -rf {} + 2>/dev/null || true && \
-    rm -rf .git infra ci .github .vscode .idea *.md LICENSE CHANGELOG.md scripts docs
+# Create /runtime with only what the container needs at runtime.
+# This avoids copying source code and the full node_modules into
+# the runtime image. A fresh pnpm install --prod in the runtime
+# stage will provide production-only dependencies.
+RUN mkdir -p /runtime/node_modules && \
+    # Root workspace files
+    cp package.json pnpm-lock.yaml pnpm-workspace.yaml /runtime/ && \
+    # All workspace package.json files (needed for pnpm install --prod)
+    find . -maxdepth 4 -name "package.json" \
+      -not -path "*/node_modules/*" \
+      -not -path "*/dist/*" \
+      -not -path "*/.next/*" \
+      -not -path "*/.prisma/*" \
+      | while read f; do \
+        mkdir -p "/runtime/$(dirname "$f")" && cp "$f" "/runtime/$f"; \
+      done && \
+    # Service dist/ and prisma/ directories
+    find services -maxdepth 3 -mindepth 3 -type d | while read svc; do \
+      if [ -d "$svc/dist" ]; then \
+        mkdir -p "/runtime/$svc" && cp -r "$svc/dist" "/runtime/$svc/dist"; \
+      fi; \
+      if [ -d "$svc/prisma" ]; then \
+        mkdir -p "/runtime/$svc" && cp -r "$svc/prisma" "/runtime/$svc/prisma"; \
+      fi; \
+    done && \
+    # Admin and Creator Portal (NestJS apps — dist/ only)
+    mkdir -p /runtime/apps/admin && cp -r apps/admin/dist /runtime/apps/admin/dist && \
+    mkdir -p /runtime/apps/creator-portal && cp -r apps/creator-portal/dist /runtime/apps/creator-portal/dist && \
+    # Web app (Next.js — .next/, public/, config)
+    mkdir -p /runtime/apps/web && \
+    cp -r apps/web/.next /runtime/apps/web/.next && \
+    cp -r apps/web/public /runtime/apps/web/public 2>/dev/null; \
+    cp apps/web/next.config.js /runtime/apps/web/ 2>/dev/null; \
+    # Prisma generated client (needed at runtime by all services)
+    cp -r node_modules/.prisma /runtime/node_modules/.prisma
 
 # ============================================================
-# Stage 2: Runtime — lean image with fresh prod install
+# Stage 2: Runtime — lean image with production deps only
 # ============================================================
 FROM node:20-bookworm-slim
 
@@ -185,10 +188,19 @@ RUN useradd -r -s /bin/false pgbouncer || true && \
     chown -R pgbouncer:pgbouncer /var/run/pgbouncer && \
     chown -R postgres:postgres /var/log/postgresql
 
-# Copy everything from builder (source removed, node_modules pruned)
-COPY --from=builder /app /app
-
 WORKDIR /app
+
+# Copy runtime skeleton from builder (workspace structure + built artifacts)
+COPY --from=builder /runtime /app
+
+# Fresh production install — only production dependencies, no devDeps
+# --ignore-scripts: skip postinstall (prisma generate etc.) since
+# we already have the generated client from the builder stage
+ENV CI=true
+RUN pnpm install --prod --frozen-lockfile --ignore-scripts
+
+# Install Prisma CLI globally (needed for migrate deploy at runtime)
+RUN npm install -g prisma@6.19.3
 
 # Copy config files
 COPY supervisord.conf /etc/supervisord.conf
