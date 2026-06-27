@@ -230,7 +230,6 @@ MIGRATE_SERVICES=(
   "services/universes/lifestyle-service:lifestyle-service:lifestyle_db:lifestyle_user:${LIFESTYLE_DB_PASSWORD:-$POSTGRES_PASSWORD}"
   "services/universes/vertical-service:vertical-service:vertical_db:vertical_user:${VERTICAL_DB_PASSWORD:-$POSTGRES_PASSWORD}"
   "services/universes/creator-service:creator-service:creator_db:creator_user:${CREATOR_DB_PASSWORD:-$POSTGRES_PASSWORD}"
-  "services/core/media-service:media-service:media_db:media_user:${MEDIA_DB_PASSWORD:-$POSTGRES_PASSWORD}"
   "services/operations/support-service:support-service:support_db:support_user:${SUPPORT_DB_PASSWORD:-$POSTGRES_PASSWORD}"
   "services/universes/sports-service:sports-service:sports_db:sports_user:${SPORTS_DB_PASSWORD:-$POSTGRES_PASSWORD}"
   "services/operations/moderation-service:moderation-service:moderation_db:moderation_user:${MODERATION_DB_PASSWORD:-$POSTGRES_PASSWORD}"
@@ -245,7 +244,7 @@ for entry in "${MIGRATE_SERVICES[@]}"; do
   echo "    Migrating $svc_name..."
 
   DATABASE_URL="postgresql://$db_user:$db_pass@127.0.0.1:5432/$db_name?schema=public" \
-    npx --yes prisma migrate deploy --schema="$svc_dir/prisma/schema.prisma" 2>&1 || \
+    pnpm exec prisma migrate deploy --schema="$svc_dir/prisma/schema.prisma" 2>&1 || \
     echo "    WARNING: Migration failed for $svc_name (may not have migrations yet)"
 done
 
