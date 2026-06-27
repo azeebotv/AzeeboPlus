@@ -394,6 +394,11 @@ SVC_PATHS[support-service]="services/operations/support-service"
 SVC_PATHS[moderation-service]="services/operations/moderation-service"
 SVC_PATHS[api-gateway]="services/gateway/api-gateway"
 
+JWT_ACCESS_SECRET="${JWT_ACCESS_SECRET:-$(openssl rand -hex 32)}"
+JWT_REFRESH_SECRET="${JWT_REFRESH_SECRET:-$(openssl rand -hex 32)}"
+ALLOWED_ORIGINS="${ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:4000,http://localhost:4014,http://localhost:4016,https://app.azeeboplus.com,https://admin.azeeboplus.com,https://creator.azeeboplus.com}"
+REDIS_URL_VAL="redis://:${REDIS_PASSWORD}@127.0.0.1:6379"
+
 for entry in "${SERVICES[@]}"; do
   IFS=':' read -r svc_name db_user db_pass db_name port <<< "$entry"
   svc_path="${SVC_PATHS[$svc_name]}"
@@ -409,16 +414,22 @@ export DATABASE_USER="${db_user}"
 export DATABASE_NAME="${db_name}"
 export PORT="${port}"
 export NODE_ENV="production"
+export JWT_ACCESS_SECRET="${JWT_ACCESS_SECRET}"
+export JWT_REFRESH_SECRET="${JWT_REFRESH_SECRET}"
+export ALLOWED_ORIGINS="${ALLOWED_ORIGINS}"
+export REDIS_URL="${REDIS_URL_VAL}"
 exec node /app/${main_js}
 WRAPPER
   chmod +x "/app/service-wrappers/${svc_name}.sh"
 done
 
-# API gateway wrapper (no database, just service URLs)
-cat > /app/service-wrappers/api-gateway.sh << 'WRAPPER'
+# API gateway wrapper (routes to services)
+cat > /app/service-wrappers/api-gateway.sh << WRAPPER
 #!/bin/bash
 export NODE_ENV="production"
 export PORT="3013"
+export JWT_ACCESS_SECRET="${JWT_ACCESS_SECRET}"
+export REDIS_URL="${REDIS_URL_VAL}"
 cd /app/services/gateway/api-gateway
 exec node dist/main.js
 WRAPPER
@@ -435,6 +446,8 @@ export DATABASE_USER="admin_user"
 export DATABASE_NAME="admin_db"
 export PORT="4016"
 export NODE_ENV="production"
+export JWT_ACCESS_SECRET="${JWT_ACCESS_SECRET}"
+export API_GATEWAY_URL="http://localhost:3013"
 cd /app/apps/admin
 exec node dist/main.js
 WRAPPER
@@ -451,6 +464,8 @@ export DATABASE_USER="creator_portal_user"
 export DATABASE_NAME="creator_portal_db"
 export PORT="4014"
 export NODE_ENV="production"
+export CREATOR_ALLOWED_ORIGINS="${ALLOWED_ORIGINS}"
+export API_GATEWAY_URL="http://localhost:3013"
 cd /app/apps/creator-portal
 exec node dist/main.js
 WRAPPER

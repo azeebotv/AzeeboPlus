@@ -218,13 +218,14 @@ RUN mkdir -p /app/node_modules/@azeebo && \
     done
 
 # Remove orphaned pnpm packages (symlinks replaced them, originals wasted space)
+# NOTE: Do NOT remove *prisma* from .pnpm — @prisma/client is needed at runtime
 RUN find /app/node_modules/.pnpm -maxdepth 1 -type d -name "*@azeebo*" -exec rm -rf {} + 2>/dev/null; \
-    rm -rf /app/node_modules/.pnpm/*prisma* 2>/dev/null; \
     rm -rf /root/.local/share/pnpm 2>/dev/null; \
     true
 
 # Install Prisma CLI globally (needed for migrate deploy and client generation)
-RUN npm install -g prisma@6.19.3 && npm cache clean --force 2>/dev/null; true
+# Must match the workspace override version in pnpm-workspace.yaml
+RUN npm install -g prisma@7.8.0 && npm cache clean --force 2>/dev/null; true
 
 # Generate Prisma clients for all services (fresh, matching prod node_modules)
 # The builder stage generates these in .pnpm/ store which doesn't work at runtime.
