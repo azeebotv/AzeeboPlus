@@ -225,16 +225,20 @@ RUN mkdir -p /app/node_modules/@azeebo && \
 
 # Generate Prisma clients for all services (schema-specific, one pass)
 # and copy @prisma/client shim to each service's local node_modules.
-# Then clean up the global npm cache and all temp files in one pass.
-RUN for schema in $(find services apps -name "schema.prisma" -not -path "*/node_modules/*" -not -path "*/dist/*"); do \
-      dir=$(dirname "$schema"); \
-      cd "/app/$dir" && prisma generate --schema=schema.prisma 2>&1 || true; \
-      if [ -d "node_modules/.prisma/client" ]; then \
-        mkdir -p "node_modules/@prisma/client" && \
-        cp /app/node_modules/@prisma/client/package.json "node_modules/@prisma/client/" && \
-        cp /app/node_modules/@prisma/client/default.js "node_modules/@prisma/client/" 2>/dev/null || true; \
-        cp /app/node_modules/@prisma/client/index.js "node_modules/@prisma/client/" 2>/dev/null || true; \
-        cp /app/node_modules/@prisma/client/index.d.ts "node_modules/@prisma/client/" 2>/dev/null || true; \
+# DATABASE_URL is required by prisma generate (schema validation) even though no connection is made.
+RUN DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholder" && \
+    export DATABASE_URL && \
+    for schema in $(find services apps -name "schema.prisma" -not -path "*/node_modules/*" -not -path "*/dist/*"); do \
+      proj_root=$(dirname "$schema"); \
+      echo "  Generating Prisma client for $proj_root..."; \
+      cd "/app/$proj_root" && prisma generate --schema=schema.prisma 2>&1 || \
+        echo "  WARNING: prisma generate failed for $proj_root"; \
+      if [ -d "/app/$proj_root/node_modules/.prisma/client" ]; then \
+        mkdir -p "/app/$proj_root/node_modules/@prisma/client" && \
+        cp /app/node_modules/@prisma/client/package.json "/app/$proj_root/node_modules/@prisma/client/" && \
+        cp /app/node_modules/@prisma/client/default.js "/app/$proj_root/node_modules/@prisma/client/" 2>/dev/null || true; \
+        cp /app/node_modules/@prisma/client/index.js "/app/$proj_root/node_modules/@prisma/client/" 2>/dev/null || true; \
+        cp /app/node_modules/@prisma/client/index.d.ts "/app/$proj_root/node_modules/@prisma/client/" 2>/dev/null || true; \
       fi; \
       cd /app; \
     done && \
