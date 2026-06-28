@@ -471,18 +471,16 @@ exec node dist/main.js
 WRAPPER
 chmod +x /app/service-wrappers/creator-portal-app.sh
 
-# Web app wrapper
+# Web app wrapper (standalone mode)
 cat > /app/service-wrappers/web-app.sh << WRAPPER
 #!/bin/bash
 export NODE_ENV="production"
 export PORT="4000"
+export HOSTNAME="0.0.0.0"
 export API_GATEWAY_URL="http://localhost:3013"
 export NEXT_PUBLIC_API_URL="${NEXT_PUBLIC_API_URL:-https://app.azeeboplus.com}"
-export DATABASE_PASSWORD=""
-export DATABASE_HOST="localhost"
-export DATABASE_PORT="5432"
-cd /app/apps/web
-exec pnpm exec next start -p 4000
+cd /app/apps/web/standalone
+exec node server.js
 WRAPPER
 chmod +x /app/service-wrappers/web-app.sh
 

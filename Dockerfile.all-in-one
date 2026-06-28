@@ -17,6 +17,8 @@
 # ============================================================
 FROM node:20-bookworm-slim AS builder
 
+ENV NODE_OPTIONS="--max-old-space-size=4096"
+
 RUN corepack enable && corepack prepare pnpm@10.33.2 --activate
 
 WORKDIR /app
@@ -122,9 +124,11 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
 RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     pnpm --filter @azeebo/admin prisma:generate && pnpm --filter @azeebo/admin run build && \
     pnpm --filter @azeebo/creator-portal prisma:generate && pnpm --filter @azeebo/creator-portal run build && \
-    pnpm --filter @azeebo/web run build && \
     mkdir -p apps/admin/dist/generated && cp -r apps/admin/src/generated/prisma apps/admin/dist/generated/prisma && \
     mkdir -p apps/creator-portal/dist/generated && cp -r apps/creator-portal/src/generated/prisma apps/creator-portal/dist/generated/prisma
+
+RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
+    pnpm --filter @azeebo/web run build
 
 # Create /runtime with only what the container needs at runtime.
 # Snapshot generated Prisma clients from the pnpm store so we can
@@ -157,9 +161,11 @@ RUN mkdir -p /runtime/node_modules && \
     mkdir -p /runtime/apps/creator-portal && cp -r apps/creator-portal/dist /runtime/apps/creator-portal/dist && \
     cp -r apps/creator-portal/prisma /runtime/apps/creator-portal/prisma 2>/dev/null; \
     mkdir -p /runtime/apps/web && \
-    cp -r apps/web/.next /runtime/apps/web/.next && \
-    cp -r apps/web/public /runtime/apps/web/public 2>/dev/null; \
-    cp apps/web/next.config.js /runtime/apps/web/ 2>/dev/null; \
+    cp -r apps/web/.next/standalone /runtime/apps/web/standalone && \
+    mkdir -p /runtime/apps/web/standalone/static && \
+    cp -r apps/web/.next/static /runtime/apps/web/standalone/static && \
+    cp -r apps/web/public /runtime/apps/web/standalone/public 2>/dev/null; \
+    cp apps/web/next.config.js /runtime/apps/web/standalone/ 2>/dev/null; \
     true
 
 # ============================================================
