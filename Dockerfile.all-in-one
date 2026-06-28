@@ -96,7 +96,6 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     pnpm --filter @azeebo/user-service prisma:generate && pnpm --filter @azeebo/user-service run build && \
     pnpm --filter @azeebo/wallet-service prisma:generate && pnpm --filter @azeebo/wallet-service run build && \
     pnpm --filter @azeebo/payment-service prisma:generate && pnpm --filter @azeebo/payment-service run build && \
-    pnpm --filter @azeebo/content-service prisma:generate && pnpm --filter @azeebo/content-service run build && \
     pnpm --filter @azeebo/search-service prisma:generate && pnpm --filter @azeebo/search-service run build && \
     pnpm --filter @azeebo/media-service run build && \
     pnpm --filter @azeebo/notification-service prisma:generate && pnpm --filter @azeebo/notification-service run build && \
@@ -118,6 +117,7 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     pnpm --filter @azeebo/queue-service prisma:generate && pnpm --filter @azeebo/queue-service run build && \
     pnpm --filter @azeebo/support-service prisma:generate && pnpm --filter @azeebo/support-service run build && \
     pnpm --filter @azeebo/moderation-service prisma:generate && pnpm --filter @azeebo/moderation-service run build && \
+    pnpm --filter @azeebo/content-service prisma:generate && pnpm --filter @azeebo/content-service run build && \
     pnpm --filter @azeebo/api-gateway run build && \
     pnpm --filter @azeebo/admin prisma:generate && pnpm --filter @azeebo/admin run build && \
     pnpm --filter @azeebo/creator-portal prisma:generate && pnpm --filter @azeebo/creator-portal run build && \
@@ -231,14 +231,16 @@ RUN DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholde
     for schema in $(find services apps -name "schema.prisma" -not -path "*/node_modules/*" -not -path "*/dist/*"); do \
       proj_root=$(dirname "$schema"); \
       echo "  Generating Prisma client for $proj_root..."; \
+      # Ensure @prisma/client directory exists before prisma generate
+      mkdir -p "/app/$proj_root/node_modules/@prisma/client" 2>/dev/null || true; \
+      cp /app/node_modules/@prisma/client/package.json "/app/$proj_root/node_modules/@prisma/client/" 2>/dev/null || true; \
+      cp /app/node_modules/@prisma/client/default.js "/app/$proj_root/node_modules/@prisma/client/" 2>/dev/null || true; \
       cd "/app/$proj_root" && prisma generate --schema=schema.prisma 2>&1 || \
         echo "  WARNING: prisma generate failed for $proj_root"; \
+      # Copy the generated client index.js from .prisma/client (not the global base one)
       if [ -d "/app/$proj_root/node_modules/.prisma/client" ]; then \
-        mkdir -p "/app/$proj_root/node_modules/@prisma/client" && \
-        cp /app/node_modules/@prisma/client/package.json "/app/$proj_root/node_modules/@prisma/client/" && \
-        cp /app/node_modules/@prisma/client/default.js "/app/$proj_root/node_modules/@prisma/client/" 2>/dev/null || true; \
-        cp /app/node_modules/@prisma/client/index.js "/app/$proj_root/node_modules/@prisma/client/" 2>/dev/null || true; \
-        cp /app/node_modules/@prisma/client/index.d.ts "/app/$proj_root/node_modules/@prisma/client/" 2>/dev/null || true; \
+        cp "/app/$proj_root/node_modules/.prisma/client/index.js" "/app/$proj_root/node_modules/@prisma/client/index.js" 2>/dev/null || true; \
+        cp "/app/$proj_root/node_modules/.prisma/client/index.d.ts" "/app/$proj_root/node_modules/@prisma/client/index.d.ts" 2>/dev/null || true; \
       fi; \
       cd /app; \
     done && \
