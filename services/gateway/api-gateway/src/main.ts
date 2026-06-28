@@ -1,4 +1,5 @@
 import { NestFactory } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { ValidationPipe, Logger } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
@@ -12,8 +13,8 @@ async function bootstrap(): Promise<void> {
     process.exit(1);
   }
 
-  const app = await NestFactory.create(AppModule, {
-    bodyParser: true,
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    bodyParser: false,
   });
 
   // Cookie parsing for CSRF protection and auth cookies
@@ -21,9 +22,8 @@ async function bootstrap(): Promise<void> {
   app.use(cookieParser());
 
   // Body size limits to prevent memory exhaustion attacks (SEC-010)
-  const bodyParser = require('body-parser');
-  app.use(bodyParser.json({ limit: '1mb' }));
-  app.use(bodyParser.urlencoded({ limit: '1mb', extended: true }));
+  app.useBodyParser('json', { limit: '1mb' });
+  app.useBodyParser('urlencoded', { limit: '1mb', extended: true });
 
   app.useGlobalFilters(new GlobalExceptionFilter());
 

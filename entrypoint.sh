@@ -488,7 +488,7 @@ export SENDGRID_API_KEY="${SENDGRID_API_KEY:-}"
 export TWILIO_ACCOUNT_SID="${TWILIO_ACCOUNT_SID:-}"
 export TWILIO_AUTH_TOKEN="${TWILIO_AUTH_TOKEN:-}"
 export TWILIO_PHONE_NUMBER="${TWILIO_PHONE_NUMBER:-}"
-exec node /app/\${main_js}
+exec node /app/${main_js}
 WRAPPER
   chmod +x "/app/service-wrappers/${svc_name}.sh"
 done
