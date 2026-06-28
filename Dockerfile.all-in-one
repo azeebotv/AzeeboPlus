@@ -1,15 +1,15 @@
 # ============================================================
-# Azeebo+ All-in-One Dockerfile
+# Azeebo+ All-in-One Dockerfile (Optimized)
 # ============================================================
 # Two-stage build:
 #   1. Builder — install ALL deps, build everything, snapshot Prisma clients
 #   2. Runtime — fresh prod install + built artifacts only
 #
-# Optimizations vs previous version:
-#   - Removed net-tools, procps (not needed at runtime)
-#   - Merged 5+ RUN layers into 2-3 (fewer/smaller layers = faster export)
-#   - Prisma clients snapshotted from builder, restored in runtime (no regen)
-#   - Aggressive cache/tmp cleanup in final layer
+# Optimizations:
+#   - Merged RUN layers for faster export and smaller image
+#   - Aggressive cleanup of build artifacts, caches, and temp files
+#   - Prisma clients snapshotted from builder, restored in runtime
+#   - Only production dependencies in final image
 # ============================================================
 
 # ============================================================
@@ -80,6 +80,7 @@ COPY . .
 ARG NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_URL}
 
+# Build shared packages, then all services, then apps — single merged layer
 RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     pnpm --filter @azeebo/utils run build && \
     pnpm --filter @azeebo/shared-types run build && \
@@ -97,9 +98,7 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     pnpm --filter @azeebo/payment-service prisma:generate && pnpm --filter @azeebo/payment-service run build && \
     pnpm --filter @azeebo/content-service prisma:generate && pnpm --filter @azeebo/content-service run build && \
     pnpm --filter @azeebo/search-service prisma:generate && pnpm --filter @azeebo/search-service run build && \
-    pnpm --filter @azeebo/media-service run build
-
-RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
+    pnpm --filter @azeebo/media-service run build && \
     pnpm --filter @azeebo/notification-service prisma:generate && pnpm --filter @azeebo/notification-service run build && \
     pnpm --filter @azeebo/reward-service prisma:generate && pnpm --filter @azeebo/reward-service run build && \
     pnpm --filter @azeebo/engagement-service prisma:generate && pnpm --filter @azeebo/engagement-service run build && \
@@ -119,20 +118,14 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     pnpm --filter @azeebo/queue-service prisma:generate && pnpm --filter @azeebo/queue-service run build && \
     pnpm --filter @azeebo/support-service prisma:generate && pnpm --filter @azeebo/support-service run build && \
     pnpm --filter @azeebo/moderation-service prisma:generate && pnpm --filter @azeebo/moderation-service run build && \
-    pnpm --filter @azeebo/api-gateway run build
-
-RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
+    pnpm --filter @azeebo/api-gateway run build && \
     pnpm --filter @azeebo/admin prisma:generate && pnpm --filter @azeebo/admin run build && \
     pnpm --filter @azeebo/creator-portal prisma:generate && pnpm --filter @azeebo/creator-portal run build && \
     mkdir -p apps/admin/dist/generated && cp -r apps/admin/src/generated/prisma apps/admin/dist/generated/prisma && \
-    mkdir -p apps/creator-portal/dist/generated && cp -r apps/creator-portal/src/generated/prisma apps/creator-portal/dist/generated/prisma
-
-RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
+    mkdir -p apps/creator-portal/dist/generated && cp -r apps/creator-portal/src/generated/prisma apps/creator-portal/dist/generated/prisma && \
     pnpm --filter @azeebo/web run build
 
 # Create /runtime with only what the container needs at runtime.
-# Snapshot generated Prisma clients from the pnpm store so we can
-# restore them in the runtime stage without re-running prisma generate.
 RUN mkdir -p /runtime/node_modules && \
     cp package.json pnpm-lock.yaml pnpm-workspace.yaml /runtime/ && \
     find . -maxdepth 4 -name "package.json" \
@@ -175,6 +168,7 @@ FROM node:20-bookworm-slim
 
 ENV DEBIAN_FRONTEND=noninteractive
 
+# Install system dependencies in a single layer with aggressive cleanup
 RUN corepack enable && corepack prepare pnpm@10.33.2 --activate && \
     apt-get update && apt-get install -y --no-install-recommends \
       postgresql-15 \
@@ -192,7 +186,7 @@ RUN corepack enable && corepack prepare pnpm@10.33.2 --activate && \
     && chown -R redis:redis /var/lib/redis \
     && chown -R pgbouncer:pgbouncer /var/run/pgbouncer \
     && chown -R postgres:postgres /var/log/postgresql \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
+    && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 ENV LANG=en_US.UTF-8
 ENV LANGUAGE=en_US:en
@@ -204,7 +198,6 @@ WORKDIR /app
 COPY --from=builder /runtime /app
 
 # Fresh production install — only production dependencies, no devDeps
-# --ignore-scripts: skip postinstall since we handle prisma below
 ENV CI=true
 RUN pnpm install --prod --frozen-lockfile --ignore-scripts
 
@@ -214,6 +207,7 @@ RUN pnpm install --prod --frozen-lockfile --ignore-scripts
 #   3. Install Prisma CLI (needed for migrate deploy in entrypoint.sh)
 #   4. Generate Prisma clients (schema-specific, must run per-service)
 #   5. Copy @prisma/client shim to each service's local node_modules
+#   6. Aggressive cleanup of all caches and temp files
 RUN mkdir -p /app/node_modules/@azeebo && \
     for pkg_json in $(find packages services apps -maxdepth 3 -name "package.json" \
       -not -path "*/node_modules/*" -not -path "*/dist/*" -not -path "*/.prisma/*"); do \
@@ -244,14 +238,20 @@ RUN for schema in $(find services apps -name "schema.prisma" -not -path "*/node_
       fi; \
       cd /app; \
     done && \
-    rm -rf /tmp/* /var/tmp/* /root/.npm /root/.cache 2>/dev/null; \
+    npm cache clean --force 2>/dev/null; \
+    rm -rf /tmp/* /var/tmp/* /root/.npm /root/.cache /root/.local 2>/dev/null; \
+    find /app/node_modules -name "*.md" -o -name "*.txt" -o -name "*.map" -o -name "LICENSE*" -o -name "CHANGELOG*" | xargs rm -f 2>/dev/null; \
+    find /app/node_modules -name "__tests__" -type d -exec rm -rf {} + 2>/dev/null; \
+    find /app/node_modules -name "test" -type d -exec rm -rf {} + 2>/dev/null; \
+    find /app/node_modules -name "docs" -type d -exec rm -rf {} + 2>/dev/null; \
     true
 
 # Copy config files (single layer with final cleanup)
 COPY supervisord.conf /etc/supervisord.conf
 COPY nginx.conf /etc/nginx/nginx.conf
 COPY entrypoint.sh /entrypoint.sh
-RUN rm -f /etc/nginx/sites-enabled/default && chmod +x /entrypoint.sh
+RUN rm -f /etc/nginx/sites-enabled/default && chmod +x /entrypoint.sh && \
+    rm -rf /var/cache/apt /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 EXPOSE 80 443 3013 4000 4014 4016 5432 6379 6432
 

@@ -20,6 +20,7 @@ scripts/
 ci/
 .github/
 .qoder/
+.trae/
 docker-bake.hcl
 
 # Markdown (except README)
@@ -40,3 +41,51 @@ Thumbs.db
 # Docker and config files (not needed inside the build)
 docker-compose*.yml
 Dockerfile*
+
+# Logs
+*.log
+logs/
+*.rdb
+
+# Test files (not needed in production build)
+**/*.test.ts
+**/*.spec.ts
+**/*.test.js
+**/*.spec.js
+**/__tests__/
+**/test/
+**/tests/
+**/e2e/
+**/playwright-report/
+**/coverage/
+
+# Build artifacts that will be rebuilt inside Docker
+**/dist/
+**/.next/
+**/.nuxt/
+**/.output/
+
+# Generated Prisma clients (will be regenerated in Docker)
+**/src/generated/
+**/.prisma/
+
+# Dev tooling configs
+.prettierrc
+eslint.config.js
+tsconfig.json
+tsconfig.scripts.json
+.nvmrc
+.npmrc
+.pnpmrc
+Procfile
+nixpacks.toml
+nixpacks-start.sh
+
+# Mobile app (not part of all-in-one build)
+apps/mobile/
+
+# Temp and cache files
+.cache/
+*.cache
+.turbo/
+.vercel/
