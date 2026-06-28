@@ -4,6 +4,12 @@ on:
   push:
     branches: [Dev-Branch]
   workflow_dispatch:
+    inputs:
+      no_cache:
+        description: "Force full rebuild (skip all cache)"
+        required: false
+        type: boolean
+        default: false
 
 env:
   REGISTRY: ghcr.io
@@ -47,6 +53,7 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          no-cache: ${{ inputs.no_cache || false }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
