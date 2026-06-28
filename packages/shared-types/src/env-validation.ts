@@ -1,7 +1,9 @@
 import { z } from 'zod';
 
 // Preprocess: normalize CORS_ORIGIN into ALLOWED_ORIGINS (used in .env.production)
-function normalizeCorsOrigin(env: Record<string, string | undefined>): Record<string, string | undefined> {
+function normalizeCorsOrigin(
+  env: Record<string, string | undefined>
+): Record<string, string | undefined> {
   if (!env.ALLOWED_ORIGINS && env.CORS_ORIGIN) {
     return { ...env, ALLOWED_ORIGINS: env.CORS_ORIGIN };
   }
@@ -143,13 +145,17 @@ function validateProductionEnvironment(env: EnvironmentVariables): void {
     errors.push('At least one payment provider secret must be configured in production');
   }
 
-  // Check payment webhook secrets
-  if (env.PAYSTACK_SECRET_KEY && !env.PAYSTACK_WEBHOOK_SECRET) {
-    errors.push('PAYSTACK_WEBHOOK_SECRET must be configured when PAYSTACK_SECRET_KEY is set');
-  }
+  // Check payment webhook secrets (skip pairing check in all-in-one mode - can be configured later)
+  if (!isAllInOne) {
+    if (env.PAYSTACK_SECRET_KEY && !env.PAYSTACK_WEBHOOK_SECRET) {
+      errors.push('PAYSTACK_WEBHOOK_SECRET must be configured when PAYSTACK_SECRET_KEY is set');
+    }
 
-  if (env.FLUTTERWAVE_SECRET_KEY && !env.FLUTTERWAVE_WEBHOOK_SECRET) {
-    errors.push('FLUTTERWAVE_WEBHOOK_SECRET must be configured when FLUTTERWAVE_SECRET_KEY is set');
+    if (env.FLUTTERWAVE_SECRET_KEY && !env.FLUTTERWAVE_WEBHOOK_SECRET) {
+      errors.push(
+        'FLUTTERWAVE_WEBHOOK_SECRET must be configured when FLUTTERWAVE_SECRET_KEY is set'
+      );
+    }
   }
 
   // Check allowed origins (skip localhost check in all-in-one mode)

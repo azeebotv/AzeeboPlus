@@ -223,27 +223,47 @@ RUN mkdir -p /app/node_modules/@azeebo && \
     npm install -g prisma@6.19.3 && npm cache clean --force 2>/dev/null; \
     true
 
-# Generate Prisma clients for all services (schema-specific, one pass)
-# and copy @prisma/client shim to each service's local node_modules.
+# Generate Prisma clients per-service with ISOLATED output.
+#
+# All services share a single @prisma/client pnpm package, so `prisma generate`
+# writes the generated client to the SHARED .pnpm/@prisma+client@*/node_modules/.prisma/client.
+# Without isolation, each generate overwrites the previous, and only the LAST schema's
+# enums/models survive — causing `@IsEnum(SomePrismaEnum)` to crash with
+# "Cannot convert undefined or null to object" at module load for every other service.
+#
+# Fix: after each service's `prisma generate`, snapshot the shared generated client
+# AND a real (de-symlinked) copy of @prisma/client into that service's own node_modules,
+# so `require('@prisma/client')` resolves the service-specific generated client.
+# The query-engine binaries are deduplicated (one real copy, the rest symlinked).
+#
 # DATABASE_URL is required by prisma generate (schema validation) even though no connection is made.
 RUN DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholder" && \
     export DATABASE_URL && \
+    SHARED_CLIENT_DIR=$(cd /app/services/core/auth-service && node -e "console.log(require('path').dirname(require.resolve('@prisma/client')))" 2>/dev/null) && \
+    SHARED_NM="$(dirname "$SHARED_CLIENT_DIR")" && \
+    SHARED_GEN="$SHARED_NM/.prisma/client" && \
+    echo "  Shared @prisma/client: $SHARED_CLIENT_DIR" && \
     for schema in $(find services apps -name "schema.prisma" -not -path "*/node_modules/*" -not -path "*/dist/*"); do \
       proj_root=$(dirname "$schema"); \
       echo "  Generating Prisma client for $proj_root..."; \
-      # Ensure @prisma/client directory exists before prisma generate
-      mkdir -p "/app/$proj_root/node_modules/@prisma/client" 2>/dev/null || true; \
-      cp /app/node_modules/@prisma/client/package.json "/app/$proj_root/node_modules/@prisma/client/" 2>/dev/null || true; \
-      cp /app/node_modules/@prisma/client/default.js "/app/$proj_root/node_modules/@prisma/client/" 2>/dev/null || true; \
-      cd "/app/$proj_root" && prisma generate --schema=schema.prisma 2>&1 || \
+      (cd "/app/$proj_root" && prisma generate --schema=schema.prisma 2>&1) || \
         echo "  WARNING: prisma generate failed for $proj_root"; \
-      # Copy the generated client index.js from .prisma/client (not the global base one)
-      if [ -d "/app/$proj_root/node_modules/.prisma/client" ]; then \
-        cp "/app/$proj_root/node_modules/.prisma/client/index.js" "/app/$proj_root/node_modules/@prisma/client/index.js" 2>/dev/null || true; \
-        cp "/app/$proj_root/node_modules/.prisma/client/index.d.ts" "/app/$proj_root/node_modules/@prisma/client/index.d.ts" 2>/dev/null || true; \
-      fi; \
+      SVC_NM="/app/$proj_root/node_modules"; \
+      rm -rf "$SVC_NM/@prisma/client" "$SVC_NM/.prisma"; \
+      mkdir -p "$SVC_NM/@prisma/client" "$SVC_NM/.prisma/client"; \
+      cp -r "$SHARED_CLIENT_DIR/." "$SVC_NM/@prisma/client/"; \
+      rm -rf "$SVC_NM/@prisma/client/node_modules"; \
+      cp -r "$SHARED_GEN/." "$SVC_NM/.prisma/client/"; \
       cd /app; \
     done && \
+    SHARED_ENGINE=""; \
+    for engine in $(find /app/services /app/apps -path "*/.prisma/client/libquery_engine-*.node" -type f 2>/dev/null); do \
+      if [ -z "$SHARED_ENGINE" ]; then \
+        SHARED_ENGINE="$engine"; \
+      else \
+        rm -f "$engine" && ln -sfn "$SHARED_ENGINE" "$engine"; \
+      fi; \
+    done; \
     npm cache clean --force 2>/dev/null; \
     rm -rf /tmp/* /var/tmp/* /root/.npm /root/.cache /root/.local 2>/dev/null; \
     find /app/node_modules -name "*.md" -o -name "*.txt" -o -name "*.map" -o -name "LICENSE*" -o -name "CHANGELOG*" | xargs rm -f 2>/dev/null; \

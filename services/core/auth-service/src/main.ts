@@ -1,4 +1,5 @@
 import { NestFactory } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
 import { Logger, ValidationPipe, VersioningType } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
@@ -8,8 +9,6 @@ import { SanitizeOutputInterceptor } from '@azeebo/validation';
 import helmet from 'helmet';
 import { validateEnvironment } from '@azeebo/shared-types';
 import { configureCors } from '@azeebo/security';
-// @ts-ignore - body-parser is a transitive dependency of Express
-import * as bodyParser from 'body-parser';
 
 async function bootstrap(): Promise<void> {
   // Validate JWT secrets before starting
@@ -40,11 +39,11 @@ async function bootstrap(): Promise<void> {
     process.exit(1);
   }
 
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
-  // Payload size limits (10MB max)
-  app.use(bodyParser.json({ limit: '10mb' }));
-  app.use(bodyParser.urlencoded({ limit: '10mb', extended: true }));
+  // Payload size limits (10MB max) — use Nest's built-in body parser (no body-parser dep)
+  app.useBodyParser('json', { limit: '10mb' });
+  app.useBodyParser('urlencoded', { limit: '10mb', extended: true });
 
   // Security headers
   app.use(
