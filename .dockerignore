@@ -69,14 +69,11 @@ logs/
 **/src/generated/
 **/.prisma/
 
-# Dev tooling configs
+# Dev tooling configs (tsconfig.json and .npmrc MUST be included — needed for build)
 .prettierrc
 eslint.config.js
-tsconfig.json
 tsconfig.scripts.json
 .nvmrc
-.npmrc
-.pnpmrc
 Procfile
 nixpacks.toml
 nixpacks-start.sh
