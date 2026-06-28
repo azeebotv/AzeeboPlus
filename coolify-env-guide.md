@@ -127,7 +127,9 @@ PORT=3003
 REDIS_URL=redis://:<REDIS_PASSWORD>@<REDIS_HOST>:6379
 DATABASE_URL=postgresql://payment_user:<PAYMENT_DB_PASSWORD>@<POSTGRES_HOST>:5432/payment_db?schema=public
 PAYSTACK_SECRET_KEY=<your-key>
+PAYSTACK_WEBHOOK_SECRET=<your-webhook-secret>
 FLW_SECRET_KEY=<your-key>
+FLW_WEBHOOK_SECRET=<your-webhook-secret>
 ```
 
 ### content-service (port 3004)
@@ -157,6 +159,10 @@ SMTP_PORT=587
 SMTP_USER=<smtp-user>
 SMTP_PASS=<smtp-pass>
 EMAIL_FROM=<email-from>
+SENDGRID_API_KEY=<your-sendgrid-api-key>
+TWILIO_ACCOUNT_SID=<your-twilio-account-sid>
+TWILIO_AUTH_TOKEN=<your-twilio-auth-token>
+TWILIO_PHONE_NUMBER=<your-twilio-phone-number>
 ```
 
 ### reward-service (port 3007)

@@ -1,5 +1,13 @@
 import { z } from 'zod';
 
+// Preprocess: normalize CORS_ORIGIN into ALLOWED_ORIGINS (used in .env.production)
+function normalizeCorsOrigin(env: Record<string, string | undefined>): Record<string, string | undefined> {
+  if (!env.ALLOWED_ORIGINS && env.CORS_ORIGIN) {
+    return { ...env, ALLOWED_ORIGINS: env.CORS_ORIGIN };
+  }
+  return env;
+}
+
 export const environmentSchema = z.object({
   // Node Environment
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
@@ -90,7 +98,8 @@ export class EnvValidationError extends Error {
 }
 
 export function validateEnvironment(env: Record<string, string | undefined>): EnvironmentVariables {
-  const result = environmentSchema.safeParse(env);
+  const normalized = normalizeCorsOrigin(env);
+  const result = environmentSchema.safeParse(normalized);
 
   if (!result.success) {
     const missing: string[] = [];
