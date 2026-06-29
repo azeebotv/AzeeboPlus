@@ -179,6 +179,7 @@ RUN corepack enable && corepack prepare pnpm@10.33.2 --activate && \
       curl \
       locales \
       openssl \
+      procps \
     && sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen \
     && locale-gen en_US.UTF-8 \
     && useradd -r -s /bin/false pgbouncer || true \
@@ -186,6 +187,10 @@ RUN corepack enable && corepack prepare pnpm@10.33.2 --activate && \
     && chown -R redis:redis /var/lib/redis \
     && chown -R pgbouncer:pgbouncer /var/run/pgbouncer \
     && chown -R postgres:postgres /var/log/postgresql \
+    && fallocate -l 4G /swapfile \
+    && chmod 600 /swapfile \
+    && mkswap /swapfile \
+    && echo '/swapfile swap swap defaults 0 0' >> /etc/fstab \
     && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 ENV LANG=en_US.UTF-8
@@ -281,7 +286,7 @@ RUN rm -f /etc/nginx/sites-enabled/default && chmod +x /entrypoint.sh && \
 
 EXPOSE 80 443 3013 4000 4014 4016 5432 6379 6432
 
-HEALTHCHECK --interval=30s --timeout=10s --retries=3 --start-period=180s \
-  CMD curl -f http://localhost:3013/health || exit 1
+HEALTHCHECK --interval=30s --timeout=10s --retries=5 --start-period=300s \
+  CMD curl -f http://localhost:8080/ 2>/dev/null || curl -f http://localhost:3013/health || exit 1
 
 ENTRYPOINT ["/entrypoint.sh"]

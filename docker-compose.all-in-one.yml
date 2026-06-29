@@ -106,11 +106,14 @@ services:
       - redis-data:/var/lib/redis
 
     restart: unless-stopped
+    mem_limit: 12g
+    memswap_limit: 16g
+    shm_size: 1g
     deploy:
       resources:
         limits:
-          memory: 8G
-          cpus: "4.0"
+          memory: 12G
+          cpus: "6.0"
 
 volumes:
   postgres-data:

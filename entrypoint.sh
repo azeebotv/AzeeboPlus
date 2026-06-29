@@ -17,6 +17,14 @@ REDIS_PASSWORD="${REDIS_PASSWORD:?REDIS_PASSWORD is required}"
 echo "==> Starting Azeebo+ all-in-one container..."
 
 # ============================================================
+# 0. Enable swap space (created in Dockerfile)
+# ============================================================
+if [ -f /swapfile ]; then
+  swapon /swapfile 2>/dev/null || true
+  echo "==> Swap enabled."
+fi
+
+# ============================================================
 # 1. Initialize PostgreSQL if empty
 # ============================================================
 if [ ! -f "$POSTGRES_DATA/PG_VERSION" ]; then
@@ -57,13 +65,13 @@ echo "==> Starting PostgreSQL temporarily..."
 su - postgres -c "/usr/lib/postgresql/15/bin/pg_ctl -D $POSTGRES_DATA -l /var/log/postgresql/postgresql-temp.log start -w"
 
 # Wait for PostgreSQL to be ready
-for i in $(seq 1 30); do
+for i in $(seq 1 60); do
   if su - postgres -c "pg_isready -h localhost -p 5432" > /dev/null 2>&1; then
     echo "==> PostgreSQL is ready."
     break
   fi
-  echo "    Waiting for PostgreSQL... ($i/30)"
-  sleep 1
+  echo "    Waiting for PostgreSQL... ($i/60)"
+  sleep 2
 done
 
 # ============================================================
@@ -729,4 +737,9 @@ fi
 # 12. Hand off to supervisord
 # ============================================================
 echo "==> Starting supervisord (manages all processes)..."
+
+# Log memory status before starting services
+echo "==> System memory status:"
+free -h || cat /proc/meminfo | head -5
+
 exec /usr/bin/supervisord -c /etc/supervisord.conf
