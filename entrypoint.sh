@@ -17,14 +17,6 @@ REDIS_PASSWORD="${REDIS_PASSWORD:?REDIS_PASSWORD is required}"
 echo "==> Starting Azeebo+ all-in-one container..."
 
 # ============================================================
-# 0. Enable swap space (created in Dockerfile)
-# ============================================================
-if [ -f /swapfile ]; then
-  swapon /swapfile 2>/dev/null || true
-  echo "==> Swap enabled."
-fi
-
-# ============================================================
 # 1. Initialize PostgreSQL if empty
 # ============================================================
 if [ ! -f "$POSTGRES_DATA/PG_VERSION" ]; then

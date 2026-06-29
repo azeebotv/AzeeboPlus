@@ -106,6 +106,9 @@ services:
       - redis-data:/var/lib/redis
 
     restart: unless-stopped
+    # Container needs 12GB RAM. Host MUST have swap enabled:
+    #   sudo fallocate -l 4G /swapfile && sudo chmod 600 /swapfile
+    #   sudo mkswap /swapfile && sudo swapon /swapfile
     mem_limit: 12g
     memswap_limit: 16g
     shm_size: 1g

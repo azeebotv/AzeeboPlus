@@ -187,10 +187,6 @@ RUN corepack enable && corepack prepare pnpm@10.33.2 --activate && \
     && chown -R redis:redis /var/lib/redis \
     && chown -R pgbouncer:pgbouncer /var/run/pgbouncer \
     && chown -R postgres:postgres /var/log/postgresql \
-    && fallocate -l 4G /swapfile \
-    && chmod 600 /swapfile \
-    && mkswap /swapfile \
-    && echo '/swapfile swap swap defaults 0 0' >> /etc/fstab \
     && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 ENV LANG=en_US.UTF-8
