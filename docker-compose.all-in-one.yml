@@ -29,7 +29,7 @@ services:
       # PostgreSQL
       POSTGRES_USER: ${POSTGRES_USER:-azeebo}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB:-azeebo_plus}
+      POSTGRES_DB: ${POSTGRES_DB:-azeebo_dev}
 
       # Redis
       REDIS_PASSWORD: ${REDIS_PASSWORD}

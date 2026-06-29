@@ -1,4 +1,4 @@
-FROM node:22-alpine AS builder
+FROM node:22.16.0-alpine AS builder
 WORKDIR /app
 
 RUN for i in 1 2 3 4 5; do npm install -g pnpm@10.33.2 && break || (echo "Retry $i/5..." && sleep 10); done
@@ -16,7 +16,7 @@ COPY services/operations/support-service/prisma ./services/operations/support-se
 RUN for i in 1 2 3 4 5; do pnpm --filter @azeebo/support-service prisma:generate && break || (echo "Retry prisma generate $i/5..." && sleep 15); done
 RUN pnpm --filter @azeebo/support-service run build
 
-FROM node:22-alpine AS runner
+FROM node:22.16.0-alpine AS runner
 WORKDIR /app
 
 LABEL org.opencontainers.image.source="https://github.com/azeebotv/AzeeboPlus"

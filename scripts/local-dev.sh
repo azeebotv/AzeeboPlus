@@ -46,7 +46,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT_DIR="$(dirname "$SCRIPT_DIR")"
 
 # ---- Configuration ----
-REQUIRED_NODE_VERSION="20.11.1"
+REQUIRED_NODE_VERSION="22.0.0"
 REQUIRED_PNPM_VERSION="10.33.2"
 LOG_LEVEL="${LOG_LEVEL:-info}"
 SKIP_PREREQS="${SKIP_PREREQS:-false}"
@@ -265,6 +265,18 @@ load_env() {
   export MODERATION_SERVICE_URL="${MODERATION_SERVICE_URL:-http://localhost:3022}"
   export QUEUE_SERVICE_URL="${QUEUE_SERVICE_URL:-http://localhost:3015}"
   export MEDIA_SERVICE_URL="${MEDIA_SERVICE_URL:-http://localhost:3019}"
+  export REALITY_SERVICE_URL="${REALITY_SERVICE_URL:-http://localhost:3010}"
+  export MOVIE_SERVICE_URL="${MOVIE_SERVICE_URL:-http://localhost:3011}"
+  export COMEDY_SERVICE_URL="${COMEDY_SERVICE_URL:-http://localhost:3012}"
+  export GAMES_SERVICE_URL="${GAMES_SERVICE_URL:-http://localhost:3014}"
+  export LIFESTYLE_SERVICE_URL="${LIFESTYLE_SERVICE_URL:-http://localhost:3016}"
+  export VERTICAL_SERVICE_URL="${VERTICAL_SERVICE_URL:-http://localhost:3017}"
+  export SPORTS_SERVICE_URL="${SPORTS_SERVICE_URL:-http://localhost:3021}"
+  export CREATOR_SERVICE_URL="${CREATOR_SERVICE_URL:-http://localhost:3018}"
+  export ENGAGEMENT_SERVICE_URL="${ENGAGEMENT_SERVICE_URL:-http://localhost:3023}"
+  export MESSAGING_SERVICE_URL="${MESSAGING_SERVICE_URL:-http://localhost:3024}"
+  export REFERRAL_SERVICE_URL="${REFERRAL_SERVICE_URL:-http://localhost:3025}"
+  export SUBSCRIPTION_SERVICE_URL="${SUBSCRIPTION_SERVICE_URL:-http://localhost:3026}"
 }
 
 validate_env() {
@@ -329,6 +341,8 @@ DB_SERVICES=(
   "support-service|services/operations/support-service|azeebo_support|3020"
   "moderation-service|services/operations/moderation-service|azeebo_moderation|3022"
   "auth-service|services/core/auth-service|azeebo_auth|3000"
+  "admin|apps/admin|azeebo_admin|4016"
+  "creator-portal|apps/creator-portal|azeebo_creator_portal|4014"
 )
 
 setup_multi_db() {

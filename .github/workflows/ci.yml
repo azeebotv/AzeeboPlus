@@ -19,7 +19,7 @@ permissions:
   pull-requests: read
 
 env:
-  NODE_VERSION: '20.x'
+  NODE_VERSION: '22.x'
   PNPM_VERSION: '10.33.2'
 
 jobs:
@@ -337,6 +337,14 @@ jobs:
             path: universes/vertical-service
           - service: wallet-service
             path: core/wallet-service
+          - service: engagement-service
+            path: engagement/engagement-service
+          - service: messaging-service
+            path: engagement/messaging-service
+          - service: referral-service
+            path: engagement/referral-service
+          - service: subscription-service
+            path: engagement/subscription-service
     steps:
       - name: Checkout code
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7

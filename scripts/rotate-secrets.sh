@@ -16,10 +16,10 @@ echo "=== Azeebo+ Secret Rotation Script ==="
 echo "Date: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
 echo ""
 
-# Generate new JWT secrets (48 bytes base64 = 64 chars)
+# Generate new JWT secrets (64-byte hex = 128 chars)
 echo "Generating new secrets..."
-JWT_ACCESS_SECRET=$(openssl rand -base64 48)
-JWT_REFRESH_SECRET=$(openssl rand -base64 48)
+JWT_ACCESS_SECRET=$(openssl rand -hex 64)
+JWT_REFRESH_SECRET=$(openssl rand -hex 64)
 SESSION_SECRET=$(openssl rand -base64 32)
 WEBHOOK_SECRET=$(openssl rand -base64 32)
 ENCRYPTION_KEY=$(openssl rand -hex 32)

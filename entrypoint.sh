@@ -11,7 +11,7 @@ set -e
 POSTGRES_DATA="/var/lib/postgresql/data"
 POSTGRES_USER="${POSTGRES_USER:-azeebo}"
 POSTGRES_PASSWORD="${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}"
-POSTGRES_DB="${POSTGRES_DB:-azeebo_plus}"
+POSTGRES_DB="${POSTGRES_DB:-azeebo_dev}"
 REDIS_PASSWORD="${REDIS_PASSWORD:?REDIS_PASSWORD is required}"
 
 echo "==> Starting Azeebo+ all-in-one container..."
@@ -82,34 +82,34 @@ su - postgres -c "psql -c \"SELECT 1 FROM pg_database WHERE datname='$POSTGRES_D
 echo "==> Creating service databases..."
 
 DBS=(
-  "auth_db:auth_user:${AUTH_DB_PASSWORD:-$POSTGRES_PASSWORD}"
-  "user_db:user_user:${USER_DB_PASSWORD:-$POSTGRES_PASSWORD}"
-  "wallet_db:wallet_user:${WALLET_DB_PASSWORD:-$POSTGRES_PASSWORD}"
-  "payment_db:payment_user:${PAYMENT_DB_PASSWORD:-$POSTGRES_PASSWORD}"
-  "content_db:content_user:${CONTENT_DB_PASSWORD:-$POSTGRES_PASSWORD}"
-  "search_db:search_user:${SEARCH_DB_PASSWORD:-$POSTGRES_PASSWORD}"
-  "notification_db:notification_user:${NOTIFICATION_DB_PASSWORD:-$POSTGRES_PASSWORD}"
-  "reward_db:reward_user:${REWARD_DB_PASSWORD:-$POSTGRES_PASSWORD}"
-  "analytics_db:analytics_user:${ANALYTICS_DB_PASSWORD:-$POSTGRES_PASSWORD}"
-  "recommendation_db:recommendation_user:${RECOMMENDATION_DB_PASSWORD:-$POSTGRES_PASSWORD}"
-  "reality_db:reality_user:${REALITY_DB_PASSWORD:-$POSTGRES_PASSWORD}"
-  "movie_db:movie_user:${MOVIE_DB_PASSWORD:-$POSTGRES_PASSWORD}"
-  "comedy_db:comedy_user:${COMEDY_DB_PASSWORD:-$POSTGRES_PASSWORD}"
-  "games_db:games_user:${GAMES_DB_PASSWORD:-$POSTGRES_PASSWORD}"
-  "queue_db:queue_user:${QUEUE_DB_PASSWORD:-$POSTGRES_PASSWORD}"
-  "lifestyle_db:lifestyle_user:${LIFESTYLE_DB_PASSWORD:-$POSTGRES_PASSWORD}"
-  "vertical_db:vertical_user:${VERTICAL_DB_PASSWORD:-$POSTGRES_PASSWORD}"
-  "creator_db:creator_user:${CREATOR_DB_PASSWORD:-$POSTGRES_PASSWORD}"
-  "media_db:media_user:${MEDIA_DB_PASSWORD:-$POSTGRES_PASSWORD}"
-  "support_db:support_user:${SUPPORT_DB_PASSWORD:-$POSTGRES_PASSWORD}"
-  "sports_db:sports_user:${SPORTS_DB_PASSWORD:-$POSTGRES_PASSWORD}"
-  "moderation_db:moderation_user:${MODERATION_DB_PASSWORD:-$POSTGRES_PASSWORD}"
-  "engagement_db:engagement_user:${ENGAGEMENT_DB_PASSWORD:-$POSTGRES_PASSWORD}"
-  "messaging_db:messaging_user:${MESSAGING_DB_PASSWORD:-$POSTGRES_PASSWORD}"
-  "referral_db:referral_user:${REFERRAL_DB_PASSWORD:-$POSTGRES_PASSWORD}"
-  "subscription_db:subscription_user:${SUBSCRIPTION_DB_PASSWORD:-$POSTGRES_PASSWORD}"
-  "admin_db:admin_user:${ADMIN_DB_PASSWORD:-$POSTGRES_PASSWORD}"
-  "creator_portal_db:creator_portal_user:${CREATOR_PORTAL_DB_PASSWORD:-$POSTGRES_PASSWORD}"
+  "azeebo_auth:azeebo:${AUTH_DB_PASSWORD:-$POSTGRES_PASSWORD}"
+  "azeebo_user:azeebo:${USER_DB_PASSWORD:-$POSTGRES_PASSWORD}"
+  "azeebo_wallet:azeebo:${WALLET_DB_PASSWORD:-$POSTGRES_PASSWORD}"
+  "azeebo_payment:azeebo:${PAYMENT_DB_PASSWORD:-$POSTGRES_PASSWORD}"
+  "azeebo_content:azeebo:${CONTENT_DB_PASSWORD:-$POSTGRES_PASSWORD}"
+  "azeebo_search:azeebo:${SEARCH_DB_PASSWORD:-$POSTGRES_PASSWORD}"
+  "azeebo_notification:azeebo:${NOTIFICATION_DB_PASSWORD:-$POSTGRES_PASSWORD}"
+  "azeebo_reward:azeebo:${REWARD_DB_PASSWORD:-$POSTGRES_PASSWORD}"
+  "azeebo_analytics:azeebo:${ANALYTICS_DB_PASSWORD:-$POSTGRES_PASSWORD}"
+  "azeebo_recommendation:azeebo:${RECOMMENDATION_DB_PASSWORD:-$POSTGRES_PASSWORD}"
+  "azeebo_reality:azeebo:${REALITY_DB_PASSWORD:-$POSTGRES_PASSWORD}"
+  "azeebo_movie:azeebo:${MOVIE_DB_PASSWORD:-$POSTGRES_PASSWORD}"
+  "azeebo_comedy:azeebo:${COMEDY_DB_PASSWORD:-$POSTGRES_PASSWORD}"
+  "azeebo_games:azeebo:${GAMES_DB_PASSWORD:-$POSTGRES_PASSWORD}"
+  "azeebo_queue:azeebo:${QUEUE_DB_PASSWORD:-$POSTGRES_PASSWORD}"
+  "azeebo_lifestyle:azeebo:${LIFESTYLE_DB_PASSWORD:-$POSTGRES_PASSWORD}"
+  "azeebo_vertical:azeebo:${VERTICAL_DB_PASSWORD:-$POSTGRES_PASSWORD}"
+  "azeebo_creator:azeebo:${CREATOR_DB_PASSWORD:-$POSTGRES_PASSWORD}"
+  "azeebo_media:azeebo:${MEDIA_DB_PASSWORD:-$POSTGRES_PASSWORD}"
+  "azeebo_support:azeebo:${SUPPORT_DB_PASSWORD:-$POSTGRES_PASSWORD}"
+  "azeebo_sports:azeebo:${SPORTS_DB_PASSWORD:-$POSTGRES_PASSWORD}"
+  "azeebo_moderation:azeebo:${MODERATION_DB_PASSWORD:-$POSTGRES_PASSWORD}"
+  "azeebo_engagement:azeebo:${ENGAGEMENT_DB_PASSWORD:-$POSTGRES_PASSWORD}"
+  "azeebo_messaging:azeebo:${MESSAGING_DB_PASSWORD:-$POSTGRES_PASSWORD}"
+  "azeebo_referral:azeebo:${REFERRAL_DB_PASSWORD:-$POSTGRES_PASSWORD}"
+  "azeebo_subscription:azeebo:${SUBSCRIPTION_DB_PASSWORD:-$POSTGRES_PASSWORD}"
+  "azeebo_admin:azeebo:${ADMIN_DB_PASSWORD:-$POSTGRES_PASSWORD}"
+  "azeebo_creator_portal:azeebo:${CREATOR_PORTAL_DB_PASSWORD:-$POSTGRES_PASSWORD}"
 )
 
 for entry in "${DBS[@]}"; do
@@ -160,34 +160,34 @@ mkdir -p /etc/pgbouncer /var/log/pgbouncer /var/run/pgbouncer
 cat > /etc/pgbouncer/pgbouncer.ini << PGBOUNCERINI
 [databases]
 $POSTGRES_DB = host=127.0.0.1 port=5432 dbname=$POSTGRES_DB
-auth_db = host=127.0.0.1 port=5432 dbname=auth_db
-user_db = host=127.0.0.1 port=5432 dbname=user_db
-wallet_db = host=127.0.0.1 port=5432 dbname=wallet_db
-payment_db = host=127.0.0.1 port=5432 dbname=payment_db
-content_db = host=127.0.0.1 port=5432 dbname=content_db
-search_db = host=127.0.0.1 port=5432 dbname=search_db
-notification_db = host=127.0.0.1 port=5432 dbname=notification_db
-reward_db = host=127.0.0.1 port=5432 dbname=reward_db
-analytics_db = host=127.0.0.1 port=5432 dbname=analytics_db
-recommendation_db = host=127.0.0.1 port=5432 dbname=recommendation_db
-reality_db = host=127.0.0.1 port=5432 dbname=reality_db
-movie_db = host=127.0.0.1 port=5432 dbname=movie_db
-comedy_db = host=127.0.0.1 port=5432 dbname=comedy_db
-games_db = host=127.0.0.1 port=5432 dbname=games_db
-queue_db = host=127.0.0.1 port=5432 dbname=queue_db
-lifestyle_db = host=127.0.0.1 port=5432 dbname=lifestyle_db
-vertical_db = host=127.0.0.1 port=5432 dbname=vertical_db
-creator_db = host=127.0.0.1 port=5432 dbname=creator_db
-media_db = host=127.0.0.1 port=5432 dbname=media_db
-support_db = host=127.0.0.1 port=5432 dbname=support_db
-sports_db = host=127.0.0.1 port=5432 dbname=sports_db
-moderation_db = host=127.0.0.1 port=5432 dbname=moderation_db
-engagement_db = host=127.0.0.1 port=5432 dbname=engagement_db
-messaging_db = host=127.0.0.1 port=5432 dbname=messaging_db
-referral_db = host=127.0.0.1 port=5432 dbname=referral_db
-subscription_db = host=127.0.0.1 port=5432 dbname=subscription_db
-admin_db = host=127.0.0.1 port=5432 dbname=admin_db
-creator_portal_db = host=127.0.0.1 port=5432 dbname=creator_portal_db
+azeebo_auth = host=127.0.0.1 port=5432 dbname=azeebo_auth
+azeebo_user = host=127.0.0.1 port=5432 dbname=azeebo_user
+azeebo_wallet = host=127.0.0.1 port=5432 dbname=azeebo_wallet
+azeebo_payment = host=127.0.0.1 port=5432 dbname=azeebo_payment
+azeebo_content = host=127.0.0.1 port=5432 dbname=azeebo_content
+azeebo_search = host=127.0.0.1 port=5432 dbname=azeebo_search
+azeebo_notification = host=127.0.0.1 port=5432 dbname=azeebo_notification
+azeebo_reward = host=127.0.0.1 port=5432 dbname=azeebo_reward
+azeebo_analytics = host=127.0.0.1 port=5432 dbname=azeebo_analytics
+azeebo_recommendation = host=127.0.0.1 port=5432 dbname=azeebo_recommendation
+azeebo_reality = host=127.0.0.1 port=5432 dbname=azeebo_reality
+azeebo_movie = host=127.0.0.1 port=5432 dbname=azeebo_movie
+azeebo_comedy = host=127.0.0.1 port=5432 dbname=azeebo_comedy
+azeebo_games = host=127.0.0.1 port=5432 dbname=azeebo_games
+azeebo_queue = host=127.0.0.1 port=5432 dbname=azeebo_queue
+azeebo_lifestyle = host=127.0.0.1 port=5432 dbname=azeebo_lifestyle
+azeebo_vertical = host=127.0.0.1 port=5432 dbname=azeebo_vertical
+azeebo_creator = host=127.0.0.1 port=5432 dbname=azeebo_creator
+azeebo_media = host=127.0.0.1 port=5432 dbname=azeebo_media
+azeebo_support = host=127.0.0.1 port=5432 dbname=azeebo_support
+azeebo_sports = host=127.0.0.1 port=5432 dbname=azeebo_sports
+azeebo_moderation = host=127.0.0.1 port=5432 dbname=azeebo_moderation
+azeebo_engagement = host=127.0.0.1 port=5432 dbname=azeebo_engagement
+azeebo_messaging = host=127.0.0.1 port=5432 dbname=azeebo_messaging
+azeebo_referral = host=127.0.0.1 port=5432 dbname=azeebo_referral
+azeebo_subscription = host=127.0.0.1 port=5432 dbname=azeebo_subscription
+azeebo_admin = host=127.0.0.1 port=5432 dbname=azeebo_admin
+azeebo_creator_portal = host=127.0.0.1 port=5432 dbname=azeebo_creator_portal
 
 [pgbouncer]
 listen_addr = 0.0.0.0
@@ -212,31 +212,32 @@ chown -R pgbouncer:pgbouncer /var/run/pgbouncer
 echo "==> Running Prisma migrations..."
 
 MIGRATE_SERVICES=(
-  "services/core/auth-service:auth-service:auth_db:auth_user:${AUTH_DB_PASSWORD:-$POSTGRES_PASSWORD}"
-  "services/core/user-service:user-service:user_db:user_user:${USER_DB_PASSWORD:-$POSTGRES_PASSWORD}"
-  "services/core/wallet-service:wallet-service:wallet_db:wallet_user:${WALLET_DB_PASSWORD:-$POSTGRES_PASSWORD}"
-  "services/core/payment-service:payment-service:payment_db:payment_user:${PAYMENT_DB_PASSWORD:-$POSTGRES_PASSWORD}"
-  "services/core/content-service:content-service:content_db:content_user:${CONTENT_DB_PASSWORD:-$POSTGRES_PASSWORD}"
-  "services/core/search-service:search-service:search_db:search_user:${SEARCH_DB_PASSWORD:-$POSTGRES_PASSWORD}"
-  "services/engagement/notification-service:notification-service:notification_db:notification_user:${NOTIFICATION_DB_PASSWORD:-$POSTGRES_PASSWORD}"
-  "services/engagement/reward-service:reward-service:reward_db:reward_user:${REWARD_DB_PASSWORD:-$POSTGRES_PASSWORD}"
-  "services/intelligence/analytics-service:analytics-service:analytics_db:analytics_user:${ANALYTICS_DB_PASSWORD:-$POSTGRES_PASSWORD}"
-  "services/intelligence/recommendation-service:recommendation-service:recommendation_db:recommendation_user:${RECOMMENDATION_DB_PASSWORD:-$POSTGRES_PASSWORD}"
-  "services/universes/reality-service:reality-service:reality_db:reality_user:${REALITY_DB_PASSWORD:-$POSTGRES_PASSWORD}"
-  "services/universes/movie-service:movie-service:movie_db:movie_user:${MOVIE_DB_PASSWORD:-$POSTGRES_PASSWORD}"
-  "services/universes/comedy-service:comedy-service:comedy_db:comedy_user:${COMEDY_DB_PASSWORD:-$POSTGRES_PASSWORD}"
-  "services/universes/games-service:games-service:games_db:games_user:${GAMES_DB_PASSWORD:-$POSTGRES_PASSWORD}"
-  "services/operations/queue-service:queue-service:queue_db:queue_user:${QUEUE_DB_PASSWORD:-$POSTGRES_PASSWORD}"
-  "services/universes/lifestyle-service:lifestyle-service:lifestyle_db:lifestyle_user:${LIFESTYLE_DB_PASSWORD:-$POSTGRES_PASSWORD}"
-  "services/universes/vertical-service:vertical-service:vertical_db:vertical_user:${VERTICAL_DB_PASSWORD:-$POSTGRES_PASSWORD}"
-  "services/universes/creator-service:creator-service:creator_db:creator_user:${CREATOR_DB_PASSWORD:-$POSTGRES_PASSWORD}"
-  "services/operations/support-service:support-service:support_db:support_user:${SUPPORT_DB_PASSWORD:-$POSTGRES_PASSWORD}"
-  "services/universes/sports-service:sports-service:sports_db:sports_user:${SPORTS_DB_PASSWORD:-$POSTGRES_PASSWORD}"
-  "services/operations/moderation-service:moderation-service:moderation_db:moderation_user:${MODERATION_DB_PASSWORD:-$POSTGRES_PASSWORD}"
-  "services/engagement/engagement-service:engagement-service:engagement_db:engagement_user:${ENGAGEMENT_DB_PASSWORD:-$POSTGRES_PASSWORD}"
-  "services/engagement/messaging-service:messaging-service:messaging_db:messaging_user:${MESSAGING_DB_PASSWORD:-$POSTGRES_PASSWORD}"
-  "services/engagement/referral-service:referral-service:referral_db:referral_user:${REFERRAL_DB_PASSWORD:-$POSTGRES_PASSWORD}"
-  "services/engagement/subscription-service:subscription-service:subscription_db:subscription_user:${SUBSCRIPTION_DB_PASSWORD:-$POSTGRES_PASSWORD}"
+  "services/core/auth-service:auth-service:azeebo_auth:azeebo:${AUTH_DB_PASSWORD:-$POSTGRES_PASSWORD}"
+  "services/core/user-service:user-service:azeebo_user:azeebo:${USER_DB_PASSWORD:-$POSTGRES_PASSWORD}"
+  "services/core/wallet-service:wallet-service:azeebo_wallet:azeebo:${WALLET_DB_PASSWORD:-$POSTGRES_PASSWORD}"
+  "services/core/payment-service:payment-service:azeebo_payment:azeebo:${PAYMENT_DB_PASSWORD:-$POSTGRES_PASSWORD}"
+  "services/core/content-service:content-service:azeebo_content:azeebo:${CONTENT_DB_PASSWORD:-$POSTGRES_PASSWORD}"
+  "services/core/search-service:search-service:azeebo_search:azeebo:${SEARCH_DB_PASSWORD:-$POSTGRES_PASSWORD}"
+  "services/core/media-service:media-service:azeebo_media:azeebo:${MEDIA_DB_PASSWORD:-$POSTGRES_PASSWORD}"
+  "services/engagement/notification-service:notification-service:azeebo_notification:azeebo:${NOTIFICATION_DB_PASSWORD:-$POSTGRES_PASSWORD}"
+  "services/engagement/reward-service:reward-service:azeebo_reward:azeebo:${REWARD_DB_PASSWORD:-$POSTGRES_PASSWORD}"
+  "services/intelligence/analytics-service:analytics-service:azeebo_analytics:azeebo:${ANALYTICS_DB_PASSWORD:-$POSTGRES_PASSWORD}"
+  "services/intelligence/recommendation-service:recommendation-service:azeebo_recommendation:azeebo:${RECOMMENDATION_DB_PASSWORD:-$POSTGRES_PASSWORD}"
+  "services/universes/reality-service:reality-service:azeebo_reality:azeebo:${REALITY_DB_PASSWORD:-$POSTGRES_PASSWORD}"
+  "services/universes/movie-service:movie-service:azeebo_movie:azeebo:${MOVIE_DB_PASSWORD:-$POSTGRES_PASSWORD}"
+  "services/universes/comedy-service:comedy-service:azeebo_comedy:azeebo:${COMEDY_DB_PASSWORD:-$POSTGRES_PASSWORD}"
+  "services/universes/games-service:games-service:azeebo_games:azeebo:${GAMES_DB_PASSWORD:-$POSTGRES_PASSWORD}"
+  "services/operations/queue-service:queue-service:azeebo_queue:azeebo:${QUEUE_DB_PASSWORD:-$POSTGRES_PASSWORD}"
+  "services/universes/lifestyle-service:lifestyle-service:azeebo_lifestyle:azeebo:${LIFESTYLE_DB_PASSWORD:-$POSTGRES_PASSWORD}"
+  "services/universes/vertical-service:vertical-service:azeebo_vertical:azeebo:${VERTICAL_DB_PASSWORD:-$POSTGRES_PASSWORD}"
+  "services/universes/creator-service:creator-service:azeebo_creator:azeebo:${CREATOR_DB_PASSWORD:-$POSTGRES_PASSWORD}"
+  "services/operations/support-service:support-service:azeebo_support:azeebo:${SUPPORT_DB_PASSWORD:-$POSTGRES_PASSWORD}"
+  "services/universes/sports-service:sports-service:azeebo_sports:azeebo:${SPORTS_DB_PASSWORD:-$POSTGRES_PASSWORD}"
+  "services/operations/moderation-service:moderation-service:azeebo_moderation:azeebo:${MODERATION_DB_PASSWORD:-$POSTGRES_PASSWORD}"
+  "services/engagement/engagement-service:engagement-service:azeebo_engagement:azeebo:${ENGAGEMENT_DB_PASSWORD:-$POSTGRES_PASSWORD}"
+  "services/engagement/messaging-service:messaging-service:azeebo_messaging:azeebo:${MESSAGING_DB_PASSWORD:-$POSTGRES_PASSWORD}"
+  "services/engagement/referral-service:referral-service:azeebo_referral:azeebo:${REFERRAL_DB_PASSWORD:-$POSTGRES_PASSWORD}"
+  "services/engagement/subscription-service:subscription-service:azeebo_subscription:azeebo:${SUBSCRIPTION_DB_PASSWORD:-$POSTGRES_PASSWORD}"
 )
 
 for entry in "${MIGRATE_SERVICES[@]}"; do
@@ -294,34 +295,34 @@ CREATOR_PORTAL_DB_PASSWORD="${CREATOR_PORTAL_DB_PASSWORD:-$POSTGRES_PASSWORD}"
 
 # Export DATABASE_URL for each service
 export DATABASE_URL="postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@127.0.0.1:5432/${POSTGRES_DB}?schema=public"
-export AUTH_DATABASE_URL="postgresql://auth_user:${AUTH_DB_PASSWORD}@127.0.0.1:5432/auth_db?schema=public"
-export USER_DATABASE_URL="postgresql://user_user:${USER_DB_PASSWORD}@127.0.0.1:5432/user_db?schema=public"
-export WALLET_DATABASE_URL="postgresql://wallet_user:${WALLET_DB_PASSWORD}@127.0.0.1:5432/wallet_db?schema=public"
-export PAYMENT_DATABASE_URL="postgresql://payment_user:${PAYMENT_DB_PASSWORD}@127.0.0.1:5432/payment_db?schema=public"
-export CONTENT_DATABASE_URL="postgresql://content_user:${CONTENT_DB_PASSWORD}@127.0.0.1:5432/content_db?schema=public"
-export SEARCH_DATABASE_URL="postgresql://search_user:${SEARCH_DB_PASSWORD}@127.0.0.1:5432/search_db?schema=public"
-export NOTIFICATION_DATABASE_URL="postgresql://notification_user:${NOTIFICATION_DB_PASSWORD}@127.0.0.1:5432/notification_db?schema=public"
-export REWARD_DATABASE_URL="postgresql://reward_user:${REWARD_DB_PASSWORD}@127.0.0.1:5432/reward_db?schema=public"
-export ANALYTICS_DATABASE_URL="postgresql://analytics_user:${ANALYTICS_DB_PASSWORD}@127.0.0.1:5432/analytics_db?schema=public"
-export RECOMMENDATION_DATABASE_URL="postgresql://recommendation_user:${RECOMMENDATION_DB_PASSWORD}@127.0.0.1:5432/recommendation_db?schema=public"
-export REALITY_DATABASE_URL="postgresql://reality_user:${REALITY_DB_PASSWORD}@127.0.0.1:5432/reality_db?schema=public"
-export MOVIE_DATABASE_URL="postgresql://movie_user:${MOVIE_DB_PASSWORD}@127.0.0.1:5432/movie_db?schema=public"
-export COMEDY_DATABASE_URL="postgresql://comedy_user:${COMEDY_DB_PASSWORD}@127.0.0.1:5432/comedy_db?schema=public"
-export GAMES_DATABASE_URL="postgresql://games_user:${GAMES_DB_PASSWORD}@127.0.0.1:5432/games_db?schema=public"
-export QUEUE_DATABASE_URL="postgresql://queue_user:${QUEUE_DB_PASSWORD}@127.0.0.1:5432/queue_db?schema=public"
-export LIFESTYLE_DATABASE_URL="postgresql://lifestyle_user:${LIFESTYLE_DB_PASSWORD}@127.0.0.1:5432/lifestyle_db?schema=public"
-export VERTICAL_DATABASE_URL="postgresql://vertical_user:${VERTICAL_DB_PASSWORD}@127.0.0.1:5432/vertical_db?schema=public"
-export CREATOR_DATABASE_URL="postgresql://creator_user:${CREATOR_DB_PASSWORD}@127.0.0.1:5432/creator_db?schema=public"
-export MEDIA_DATABASE_URL="postgresql://media_user:${MEDIA_DB_PASSWORD}@127.0.0.1:5432/media_db?schema=public"
-export SUPPORT_DATABASE_URL="postgresql://support_user:${SUPPORT_DB_PASSWORD}@127.0.0.1:5432/support_db?schema=public"
-export SPORTS_DATABASE_URL="postgresql://sports_user:${SPORTS_DB_PASSWORD}@127.0.0.1:5432/sports_db?schema=public"
-export MODERATION_DATABASE_URL="postgresql://moderation_user:${MODERATION_DB_PASSWORD}@127.0.0.1:5432/moderation_db?schema=public"
-export ENGAGEMENT_DATABASE_URL="postgresql://engagement_user:${ENGAGEMENT_DB_PASSWORD}@127.0.0.1:5432/engagement_db?schema=public"
-export MESSAGING_DATABASE_URL="postgresql://messaging_user:${MESSAGING_DB_PASSWORD}@127.0.0.1:5432/messaging_db?schema=public"
-export REFERRAL_DATABASE_URL="postgresql://referral_user:${REFERRAL_DB_PASSWORD}@127.0.0.1:5432/referral_db?schema=public"
-export SUBSCRIPTION_DATABASE_URL="postgresql://subscription_user:${SUBSCRIPTION_DB_PASSWORD}@127.0.0.1:5432/subscription_db?schema=public"
-export ADMIN_DATABASE_URL="postgresql://admin_user:${ADMIN_DB_PASSWORD}@127.0.0.1:5432/admin_db?schema=public"
-export CREATOR_PORTAL_DATABASE_URL="postgresql://creator_portal_user:${CREATOR_PORTAL_DB_PASSWORD}@127.0.0.1:5432/creator_portal_db?schema=public"
+export AUTH_DATABASE_URL="postgresql://azeebo:${AUTH_DB_PASSWORD}@127.0.0.1:5432/azeebo_auth?schema=public"
+export USER_DATABASE_URL="postgresql://azeebo:${USER_DB_PASSWORD}@127.0.0.1:5432/azeebo_user?schema=public"
+export WALLET_DATABASE_URL="postgresql://azeebo:${WALLET_DB_PASSWORD}@127.0.0.1:5432/azeebo_wallet?schema=public"
+export PAYMENT_DATABASE_URL="postgresql://azeebo:${PAYMENT_DB_PASSWORD}@127.0.0.1:5432/azeebo_payment?schema=public"
+export CONTENT_DATABASE_URL="postgresql://azeebo:${CONTENT_DB_PASSWORD}@127.0.0.1:5432/azeebo_content?schema=public"
+export SEARCH_DATABASE_URL="postgresql://azeebo:${SEARCH_DB_PASSWORD}@127.0.0.1:5432/azeebo_search?schema=public"
+export NOTIFICATION_DATABASE_URL="postgresql://azeebo:${NOTIFICATION_DB_PASSWORD}@127.0.0.1:5432/azeebo_notification?schema=public"
+export REWARD_DATABASE_URL="postgresql://azeebo:${REWARD_DB_PASSWORD}@127.0.0.1:5432/azeebo_reward?schema=public"
+export ANALYTICS_DATABASE_URL="postgresql://azeebo:${ANALYTICS_DB_PASSWORD}@127.0.0.1:5432/azeebo_analytics?schema=public"
+export RECOMMENDATION_DATABASE_URL="postgresql://azeebo:${RECOMMENDATION_DB_PASSWORD}@127.0.0.1:5432/azeebo_recommendation?schema=public"
+export REALITY_DATABASE_URL="postgresql://azeebo:${REALITY_DB_PASSWORD}@127.0.0.1:5432/azeebo_reality?schema=public"
+export MOVIE_DATABASE_URL="postgresql://azeebo:${MOVIE_DB_PASSWORD}@127.0.0.1:5432/azeebo_movie?schema=public"
+export COMEDY_DATABASE_URL="postgresql://azeebo:${COMEDY_DB_PASSWORD}@127.0.0.1:5432/azeebo_comedy?schema=public"
+export GAMES_DATABASE_URL="postgresql://azeebo:${GAMES_DB_PASSWORD}@127.0.0.1:5432/azeebo_games?schema=public"
+export QUEUE_DATABASE_URL="postgresql://azeebo:${QUEUE_DB_PASSWORD}@127.0.0.1:5432/azeebo_queue?schema=public"
+export LIFESTYLE_DATABASE_URL="postgresql://azeebo:${LIFESTYLE_DB_PASSWORD}@127.0.0.1:5432/azeebo_lifestyle?schema=public"
+export VERTICAL_DATABASE_URL="postgresql://azeebo:${VERTICAL_DB_PASSWORD}@127.0.0.1:5432/azeebo_vertical?schema=public"
+export CREATOR_DATABASE_URL="postgresql://azeebo:${CREATOR_DB_PASSWORD}@127.0.0.1:5432/azeebo_creator?schema=public"
+export MEDIA_DATABASE_URL="postgresql://azeebo:${MEDIA_DB_PASSWORD}@127.0.0.1:5432/azeebo_media?schema=public"
+export SUPPORT_DATABASE_URL="postgresql://azeebo:${SUPPORT_DB_PASSWORD}@127.0.0.1:5432/azeebo_support?schema=public"
+export SPORTS_DATABASE_URL="postgresql://azeebo:${SPORTS_DB_PASSWORD}@127.0.0.1:5432/azeebo_sports?schema=public"
+export MODERATION_DATABASE_URL="postgresql://azeebo:${MODERATION_DB_PASSWORD}@127.0.0.1:5432/azeebo_moderation?schema=public"
+export ENGAGEMENT_DATABASE_URL="postgresql://azeebo:${ENGAGEMENT_DB_PASSWORD}@127.0.0.1:5432/azeebo_engagement?schema=public"
+export MESSAGING_DATABASE_URL="postgresql://azeebo:${MESSAGING_DB_PASSWORD}@127.0.0.1:5432/azeebo_messaging?schema=public"
+export REFERRAL_DATABASE_URL="postgresql://azeebo:${REFERRAL_DB_PASSWORD}@127.0.0.1:5432/azeebo_referral?schema=public"
+export SUBSCRIPTION_DATABASE_URL="postgresql://azeebo:${SUBSCRIPTION_DB_PASSWORD}@127.0.0.1:5432/azeebo_subscription?schema=public"
+export ADMIN_DATABASE_URL="postgresql://azeebo:${ADMIN_DB_PASSWORD}@127.0.0.1:5432/azeebo_admin?schema=public"
+export CREATOR_PORTAL_DATABASE_URL="postgresql://azeebo:${CREATOR_PORTAL_DB_PASSWORD}@127.0.0.1:5432/azeebo_creator_portal?schema=public"
 
 echo "==> Environment variables configured."
 
@@ -335,33 +336,33 @@ mkdir -p /app/service-wrappers
 # Generate a wrapper for each NestJS service
 # Format: service_name:db_user:db_password:db_name:port
 SERVICES=(
-  "auth-service:auth_user:${AUTH_DB_PASSWORD}:auth_db:3000"
-  "user-service:user_user:${USER_DB_PASSWORD}:user_db:3001"
-  "wallet-service:wallet_user:${WALLET_DB_PASSWORD}:wallet_db:3002"
-  "payment-service:payment_user:${PAYMENT_DB_PASSWORD}:payment_db:3003"
-  "content-service:content_user:${CONTENT_DB_PASSWORD}:content_db:3004"
-  "search-service:search_user:${SEARCH_DB_PASSWORD}:search_db:3005"
-  "notification-service:notification_user:${NOTIFICATION_DB_PASSWORD}:notification_db:3006"
-  "reward-service:reward_user:${REWARD_DB_PASSWORD}:reward_db:3007"
-  "analytics-service:analytics_user:${ANALYTICS_DB_PASSWORD}:analytics_db:3008"
-  "recommendation-service:recommendation_user:${RECOMMENDATION_DB_PASSWORD}:recommendation_db:3009"
-  "reality-service:reality_user:${REALITY_DB_PASSWORD}:reality_db:3010"
-  "movie-service:movie_user:${MOVIE_DB_PASSWORD}:movie_db:3011"
-  "comedy-service:comedy_user:${COMEDY_DB_PASSWORD}:comedy_db:3012"
-  "api-gateway:api_user:${POSTGRES_PASSWORD:-placeholder}:api_db:3013"
-  "games-service:games_user:${GAMES_DB_PASSWORD}:games_db:3014"
-  "queue-service:queue_user:${QUEUE_DB_PASSWORD}:queue_db:3015"
-  "lifestyle-service:lifestyle_user:${LIFESTYLE_DB_PASSWORD}:lifestyle_db:3016"
-  "vertical-service:vertical_user:${VERTICAL_DB_PASSWORD}:vertical_db:3017"
-  "creator-service:creator_user:${CREATOR_DB_PASSWORD}:creator_db:3018"
-  "media-service:media_user:${MEDIA_DB_PASSWORD}:media_db:3019"
-  "support-service:support_user:${SUPPORT_DB_PASSWORD}:support_db:3020"
-  "sports-service:sports_user:${SPORTS_DB_PASSWORD}:sports_db:3021"
-  "moderation-service:moderation_user:${MODERATION_DB_PASSWORD}:moderation_db:3022"
-  "engagement-service:engagement_user:${ENGAGEMENT_DB_PASSWORD}:engagement_db:3023"
-  "messaging-service:messaging_user:${MESSAGING_DB_PASSWORD}:messaging_db:3024"
-  "referral-service:referral_user:${REFERRAL_DB_PASSWORD}:referral_db:3025"
-  "subscription-service:subscription_user:${SUBSCRIPTION_DB_PASSWORD}:subscription_db:3026"
+  "auth-service:azeebo:${AUTH_DB_PASSWORD}:azeebo_auth:3000"
+  "user-service:azeebo:${USER_DB_PASSWORD}:azeebo_user:3001"
+  "wallet-service:azeebo:${WALLET_DB_PASSWORD}:azeebo_wallet:3002"
+  "payment-service:azeebo:${PAYMENT_DB_PASSWORD}:azeebo_payment:3003"
+  "content-service:azeebo:${CONTENT_DB_PASSWORD}:azeebo_content:3004"
+  "search-service:azeebo:${SEARCH_DB_PASSWORD}:azeebo_search:3005"
+  "notification-service:azeebo:${NOTIFICATION_DB_PASSWORD}:azeebo_notification:3006"
+  "reward-service:azeebo:${REWARD_DB_PASSWORD}:azeebo_reward:3007"
+  "analytics-service:azeebo:${ANALYTICS_DB_PASSWORD}:azeebo_analytics:3008"
+  "recommendation-service:azeebo:${RECOMMENDATION_DB_PASSWORD}:azeebo_recommendation:3009"
+  "reality-service:azeebo:${REALITY_DB_PASSWORD}:azeebo_reality:3010"
+  "movie-service:azeebo:${MOVIE_DB_PASSWORD}:azeebo_movie:3011"
+  "comedy-service:azeebo:${COMEDY_DB_PASSWORD}:azeebo_comedy:3012"
+  "api-gateway:azeebo:${POSTGRES_PASSWORD:-placeholder}:azeebo_api:3013"
+  "games-service:azeebo:${GAMES_DB_PASSWORD}:azeebo_games:3014"
+  "queue-service:azeebo:${QUEUE_DB_PASSWORD}:azeebo_queue:3015"
+  "lifestyle-service:azeebo:${LIFESTYLE_DB_PASSWORD}:azeebo_lifestyle:3016"
+  "vertical-service:azeebo:${VERTICAL_DB_PASSWORD}:azeebo_vertical:3017"
+  "creator-service:azeebo:${CREATOR_DB_PASSWORD}:azeebo_creator:3018"
+  "media-service:azeebo:${MEDIA_DB_PASSWORD}:azeebo_media:3019"
+  "support-service:azeebo:${SUPPORT_DB_PASSWORD}:azeebo_support:3020"
+  "sports-service:azeebo:${SPORTS_DB_PASSWORD}:azeebo_sports:3021"
+  "moderation-service:azeebo:${MODERATION_DB_PASSWORD}:azeebo_moderation:3022"
+  "engagement-service:azeebo:${ENGAGEMENT_DB_PASSWORD}:azeebo_engagement:3023"
+  "messaging-service:azeebo:${MESSAGING_DB_PASSWORD}:azeebo_messaging:3024"
+  "referral-service:azeebo:${REFERRAL_DB_PASSWORD}:azeebo_referral:3025"
+  "subscription-service:azeebo:${SUBSCRIPTION_DB_PASSWORD}:azeebo_subscription:3026"
 )
 
 # Map service names to their monorepo paths
@@ -546,12 +547,12 @@ chmod +x /app/service-wrappers/api-gateway.sh
 cat > /app/service-wrappers/admin-app.sh << WRAPPER
 #!/bin/bash
 export ALL_IN_ONE="true"
-export DATABASE_URL="postgresql://admin_user:${ADMIN_DB_PASSWORD}@127.0.0.1:5432/admin_db?schema=public"
+export DATABASE_URL="postgresql://azeebo:${ADMIN_DB_PASSWORD}@127.0.0.1:5432/azeebo_admin?schema=public"
 export DATABASE_PASSWORD="${ADMIN_DB_PASSWORD}"
 export DATABASE_HOST="localhost"
 export DATABASE_PORT="5432"
-export DATABASE_USER="admin_user"
-export DATABASE_NAME="admin_db"
+export DATABASE_USER="azeebo"
+export DATABASE_NAME="azeebo_admin"
 export PORT="4016"
 export NODE_ENV="production"
 export JWT_ACCESS_SECRET="${JWT_ACCESS_SECRET}"
@@ -600,12 +601,12 @@ chmod +x /app/service-wrappers/admin-app.sh
 cat > /app/service-wrappers/creator-portal-app.sh << WRAPPER
 #!/bin/bash
 export ALL_IN_ONE="true"
-export DATABASE_URL="postgresql://creator_portal_user:${CREATOR_PORTAL_DB_PASSWORD}@127.0.0.1:5432/creator_portal_db?schema=public"
+export DATABASE_URL="postgresql://azeebo:${CREATOR_PORTAL_DB_PASSWORD}@127.0.0.1:5432/azeebo_creator_portal?schema=public"
 export DATABASE_PASSWORD="${CREATOR_PORTAL_DB_PASSWORD}"
 export DATABASE_HOST="localhost"
 export DATABASE_PORT="5432"
-export DATABASE_USER="creator_portal_user"
-export DATABASE_NAME="creator_portal_db"
+export DATABASE_USER="azeebo"
+export DATABASE_NAME="azeebo_creator_portal"
 export PORT="4014"
 export NODE_ENV="production"
 export CREATOR_ALLOWED_ORIGINS="${ALLOWED_ORIGINS}"

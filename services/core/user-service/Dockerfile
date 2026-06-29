@@ -1,4 +1,4 @@
-FROM node:22-alpine AS builder
+FROM node:22.16.0-alpine AS builder
 WORKDIR /app
 
 RUN for i in 1 2 3 4 5; do npm install -g pnpm@10.33.2 && break || (echo "Retry $i/5..." && sleep 10); done
@@ -16,7 +16,7 @@ COPY services/core/user-service/prisma ./services/core/user-service/prisma
 RUN cd services/core/user-service && npx prisma generate
 RUN pnpm --filter @azeebo/user-service run build
 
-FROM node:22-alpine AS runner
+FROM node:22.16.0-alpine AS runner
 WORKDIR /app
 
 LABEL org.opencontainers.image.source="https://github.com/azeebotv/AzeeboPlus"
@@ -39,8 +39,12 @@ RUN for i in 1 2 3 4 5; do pnpm install --prod --frozen-lockfile && break || (ec
 
 COPY --from=builder /app/services/core/user-service/dist ./services/core/user-service/dist
 COPY --from=builder /app/services/core/user-service/prisma ./services/core/user-service/prisma
-# Copy the generated Prisma client (schema output = "../generated/prisma/client").
-COPY --from=builder /app/services/core/user-service/generated ./services/core/user-service/generated
+# The compiled prisma.service.js requires ../../prisma/client, resolved from
+# dist/services/core/user-service/src/modules/database/prisma.service.js ->
+# dist/services/core/user-service/src/prisma/client. The prisma generate step inside the
+# builder stage emits the client to src/prisma/client (per the schema's
+# `output = "../src/prisma/client"`), so copy it from there.
+COPY --from=builder /app/services/core/user-service/src/prisma ./services/core/user-service/dist/services/core/user-service/src/prisma
 
 RUN chown -R nodejs:nodejs /app
 
