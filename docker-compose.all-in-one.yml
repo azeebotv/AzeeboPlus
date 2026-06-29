@@ -18,7 +18,6 @@ services:
   azeebo:
     image: ghcr.io/deprofxi/azeebo-all-in-one:dev
     ports:
-      - "80:80"       # HTTP (Coolify forwards TLS-terminated traffic here)
       - "3013:3013"   # API Gateway
       - "4000:4000"   # Web App
       - "4014:4014"   # Creator Portal
