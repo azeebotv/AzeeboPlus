@@ -49,8 +49,8 @@ export class AuthService {
     private readonly configService: ConfigService
   ) {
     this.saltRounds = this.configService.get<number>('SALT_ROUNDS', 10);
-    this.accessTokenExpiry = this.configService.get<string>('ACCESS_TOKEN_EXPIRY', '15m');
-    this.refreshTokenExpiry = this.configService.get<string>('REFRESH_TOKEN_EXPIRY', '7d');
+    this.accessTokenExpiry = this.configService.get<string>('JWT_EXPIRES_IN', '30m');
+    this.refreshTokenExpiry = this.configService.get<string>('JWT_REFRESH_EXPIRES_IN', '7d');
     this.refreshTokenExpiryDays = this.configService.get<number>('REFRESH_TOKEN_EXPIRY_DAYS', 7);
     this.maxFailedAttempts = this.configService.get<number>('MAX_FAILED_ATTEMPTS', 5);
     this.lockoutDurationSeconds = this.configService.get<number>(

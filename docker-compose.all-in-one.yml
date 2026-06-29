@@ -17,6 +17,15 @@
 services:
   azeebo:
     image: ghcr.io/azeebotv/azeebo-all-in-one:dev
+    container_name: azeebo-all-in-one
+    labels:
+      - "azeebo.service=all-in-one"
+      - "azeebo.category=infrastructure"
+      - "azeebo.port=3013,4000,4014,4016"
+      - "org.opencontainers.image.source=https://github.com/azeebotv/AzeeboPlus"
+      - "org.opencontainers.image.description=Azeebo+ All-in-One Production Container"
+      - "org.opencontainers.image.licenses=Proprietary"
+      - "com.azeeboplus.tier=production"
     ports:
       - "3013:3013"   # API Gateway
       - "4000:4000"   # Web App
@@ -37,7 +46,7 @@ services:
       # Auth
       JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
-      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-15m}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-30m}
       JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN:-7d}
 
       # Payment
@@ -68,8 +77,8 @@ services:
       # Frontend
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://app.azeeboplus.com}
       API_GATEWAY_URL: http://localhost:3013
-      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-https://app.azeeboplus.com}
-      CORS_ORIGIN: ${CORS_ORIGIN:-https://app.azeeboplus.com}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:80,https://localhost:443,https://app.azeeboplus.com}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:80,https://localhost:443,https://app.azeeboplus.com}
 
       # DB Passwords (all default to POSTGRES_PASSWORD if not set)
       AUTH_DB_PASSWORD: ${AUTH_DB_PASSWORD:-${POSTGRES_PASSWORD}}
@@ -105,16 +114,21 @@ services:
       - postgres-data:/var/lib/postgresql/data
       - redis-data:/var/lib/redis
 
+    # Restart policy: unless-stopped (not always) allows manual `docker stop`
+    # for maintenance without Docker auto-restarting the container.
+    # For critical infra (DB, Redis, nginx) in multi-service setups use
+    # restart: always, but in this all-in-one config the single container
+    # covers everything, so unless-stopped is the right trade-off.
     restart: unless-stopped
-    # Container needs 12GB RAM. Host MUST have swap enabled:
-    #   sudo fallocate -l 4G /swapfile && sudo chmod 600 /swapfile
-    #   sudo mkswap /swapfile && sudo swapon /swapfile
-    mem_limit: 12g
-    memswap_limit: 16g
     shm_size: 1g
     deploy:
       resources:
         limits:
+          # 12GB for the single container running PostgreSQL (~1GB), Redis (~500MB),
+          # Nginx (~50MB), PgBouncer (~50MB), and 27+ Node.js services each limited
+          # to 512MB heap via NODE_OPTIONS="--max-old-space-size=512" in service
+          # wrapper scripts. Actual RSS per Node service averages 150-300MB, with
+          # burst up to 512MB under load. 12GB provides comfortable headroom.
           memory: 12G
           cpus: "4.0"
 

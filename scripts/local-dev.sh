@@ -30,6 +30,9 @@
 #   --frontend     Frontend apps
 #   --all          Start everything
 #   --quick        Core + gateway + web (recommended for most dev work)
+#   --no-build     Skip prisma generate (fast start with cached builds)
+#   --skip-migrate Skip migration checks
+#   --local-frontend Start frontend on host via pnpm dev instead of Docker
 #
 # Options (for 'db'):
 #   migrate        Run Prisma migrations for all services
@@ -530,6 +533,8 @@ GATEWAY_SERVICES=(
 
 FRONTEND_SERVICES=(
   "@azeebo/web|apps/web|4000"
+  "@azeebo/admin|apps/admin|4016"
+  "@azeebo/creator-portal|apps/creator-portal|4014"
 )
 
 ALL_SERVICE_GROUPS=(
@@ -583,6 +588,23 @@ start_service() {
     set +a
   fi
 
+  # Re-apply real JWT secrets from .env.local over service .env placeholders
+  if [[ -f "$ROOT_DIR/.env.local" ]]; then
+    local jwt_access jwt_refresh
+    jwt_access="$(grep '^JWT_ACCESS_SECRET=' "$ROOT_DIR/.env.local" | tail -1 | cut -d= -f2-)"
+    jwt_refresh="$(grep '^JWT_REFRESH_SECRET=' "$ROOT_DIR/.env.local" | tail -1 | cut -d= -f2-)"
+    [[ -n "$jwt_access" ]] && export JWT_ACCESS_SECRET="$jwt_access"
+    [[ -n "$jwt_refresh" ]] && export JWT_REFRESH_SECRET="$jwt_refresh"
+  fi
+
+  # Warn if placeholder secrets are in use
+  if [[ "${JWT_ACCESS_SECRET:-}" == *"your-super-secret"* ]] || [[ "${JWT_REFRESH_SECRET:-}" == *"your-super-secret"* ]]; then
+    log_warn "  $pkg: using placeholder JWT secrets — run './scripts/local-dev.sh setup' to generate real secrets"
+  fi
+
+  # Log effective DATABASE_URL at debug level (for per-service DB verification)
+  log_debug "  $pkg: DATABASE_URL=${DATABASE_URL:-unset}"
+
   export NODE_ENV="development"
   export PORT="$port"
 
@@ -634,6 +656,61 @@ start_group() {
   log_info "  $group_name: $started started, $failed failed"
 }
 
+ensure_docker_network() {
+  local network_name="${1:-azeebo-dev}"
+  if docker network inspect "$network_name" &>/dev/null 2>&1; then
+    log_debug "Docker network '$network_name' exists"
+  else
+    log_info "Creating Docker network '$network_name'..."
+    docker network create "$network_name" 2>/dev/null || true
+    log_ok "Docker network '$network_name' created"
+  fi
+}
+
+docker_frontend_stop() {
+  section "Stopping Frontend Docker Containers"
+  for app_dir in apps/web apps/admin apps/creator-portal; do
+    local compose_dir="$ROOT_DIR/$app_dir"
+    if [[ -f "$compose_dir/docker-compose.yml" ]]; then
+      log_info "  Stopping $app_dir..."
+      (cd "$compose_dir" && docker compose down 2>/dev/null) || true
+    fi
+  done
+  log_ok "Frontend Docker containers stopped"
+}
+
+start_frontend_via_docker() {
+  section "Starting Frontend Services (Docker)"
+  ensure_docker_network azeebo-dev
+
+  local started=0 failed=0
+  for entry in "${FRONTEND_SERVICES[@]}"; do
+    IFS='|' read -r pkg dir port <<< "$entry"
+    local compose_dir="$ROOT_DIR/$dir"
+
+    if [[ ! -f "$compose_dir/docker-compose.yml" ]]; then
+      log_warn "  $pkg: no docker-compose.yml — skipping"
+      failed=$((failed + 1))
+      continue
+    fi
+
+    log_info "  Building and starting $pkg on port $port..."
+    local output
+    output="$(cd "$compose_dir" && docker compose up -d --build 2>&1)"
+    local rc=$?
+    if [[ $rc -eq 0 ]] && docker ps --format '{{.Names}}' | grep -q "azeebo-${pkg##*/}"; then
+      log_ok "  $pkg container running"
+      started=$((started + 1))
+    else
+      log_warn "  $pkg: docker compose failed (rc=$rc)"
+      log_debug "    $output"
+      failed=$((failed + 1))
+    fi
+  done
+
+  log_info "  Frontend Docker: $started started, $failed failed"
+}
+
 # ============================================================
 # SECTION 7: Cleanup
 # ============================================================
@@ -650,6 +727,7 @@ cleanup() {
     done < "$PID_FILE"
     rm -f "$PID_FILE"
   fi
+  docker_frontend_stop
   wait 2>/dev/null || true
   log_ok "All services stopped"
   exit 0
@@ -675,7 +753,12 @@ show_status() {
     if [[ -n "$pid" ]]; then
       printf "  %-35s %-8s ${GREEN}%-10s${RESET} %s\n" "$short_name" "$port" "RUNNING" "$pid"
     else
-      printf "  %-35s %-8s ${RED}%-10s${RESET} %s\n" "$short_name" "$port" "STOPPED" "-"
+      local container_name="azeebo-${short_name}"
+      if docker ps --format '{{.Names}}' 2>/dev/null | grep -q "$container_name"; then
+        printf "  %-35s %-8s ${GREEN}%-10s${RESET} %s\n" "$short_name" "$port" "DOCKER" "$container_name"
+      else
+        printf "  %-35s %-8s ${RED}%-10s${RESET} %s\n" "$short_name" "$port" "STOPPED" "-"
+      fi
     fi
   done
 }
@@ -755,6 +838,8 @@ cmd_start() {
   local do_core=false do_engagement=false do_intelligence=false
   local do_universes=false do_operations=false do_gateway=false
   local do_frontend=false do_all=false do_quick=false
+  local do_no_build=false do_skip_migrate=false
+  local do_local_frontend=false
 
   while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -767,6 +852,9 @@ cmd_start() {
       --frontend)     do_frontend=true ;;
       --all)          do_all=true ;;
       --quick)        do_quick=true ;;
+      --no-build)     do_no_build=true ;;
+      --skip-migrate) do_skip_migrate=true ;;
+      --local-frontend) do_local_frontend=true ;;
       *)              log_error "Unknown option: $1"; return 1 ;;
     esac
     shift
@@ -781,7 +869,13 @@ cmd_start() {
   [[ "$do_universes" == "true" ]]  && start_group "universes" "${UNIVERSE_SERVICES[@]}"
   [[ "$do_operations" == "true" ]] && start_group "operations" "${OPERATIONS_SERVICES[@]}"
   [[ "$do_gateway" == "true" ]]    && start_group "gateway" "${GATEWAY_SERVICES[@]}"
-  [[ "$do_frontend" == "true" ]]   && start_group "frontend" "${FRONTEND_SERVICES[@]}"
+  if [[ "$do_frontend" == "true" ]]; then
+    if [[ "$do_local_frontend" == "true" ]]; then
+      start_group "frontend" "${FRONTEND_SERVICES[@]}"
+    else
+      start_frontend_via_docker
+    fi
+  fi
 
   local elapsed=$(( $(date +%s) - START_TIME ))
   echo ""
@@ -802,7 +896,7 @@ cmd_start_interactive() {
   echo "  4)  Universe Services   (reality, movie, comedy, games, sports, lifestyle, vertical, creator)"
   echo "  5)  Operations          (queue, support, moderation)"
   echo "  6)  Gateway             (api-gateway)"
-  echo "  7)  Frontend Apps       (web)"
+  echo "  7)  Frontend Apps       (web, admin, creator-portal)"
   echo "  8)  All Services        (everything)"
   echo "  9)  Quick Start         (core + gateway + web)"
   echo "  0)  Exit"
@@ -827,7 +921,7 @@ cmd_start_interactive() {
       4) start_group "universes" "${UNIVERSE_SERVICES[@]}" ;;
       5) start_group "operations" "${OPERATIONS_SERVICES[@]}" ;;
       6) start_group "gateway" "${GATEWAY_SERVICES[@]}" ;;
-      7) start_group "frontend" "${FRONTEND_SERVICES[@]}" ;;
+      7) start_frontend_via_docker ;;
       8)
         start_group "core" "${CORE_SERVICES[@]}"
         start_group "engagement" "${ENGAGEMENT_SERVICES[@]}"
@@ -835,12 +929,12 @@ cmd_start_interactive() {
         start_group "universes" "${UNIVERSE_SERVICES[@]}"
         start_group "operations" "${OPERATIONS_SERVICES[@]}"
         start_group "gateway" "${GATEWAY_SERVICES[@]}"
-        start_group "frontend" "${FRONTEND_SERVICES[@]}"
+        start_frontend_via_docker
         ;;
       9)
         start_group "core" "${CORE_SERVICES[@]}"
         start_group "gateway" "${GATEWAY_SERVICES[@]}"
-        start_group "frontend" "${FRONTEND_SERVICES[@]}"
+        start_frontend_via_docker
         ;;
       *) log_error "Invalid choice: $sel" ;;
     esac
@@ -870,6 +964,8 @@ cmd_stop() {
     fi
   done
   [[ -f "$PID_FILE" ]] && while IFS= read -r pid; do kill "$pid" 2>/dev/null || true; done < "$PID_FILE" && rm -f "$PID_FILE"
+
+  docker_frontend_stop
 
   if (( stopped > 0 )); then
     sleep 1
@@ -974,6 +1070,9 @@ START OPTIONS:
   --frontend     Web app
   --all          Everything (~6GB+ RAM)
   --quick        Core + gateway + web (recommended)
+  --no-build     Skip prisma generate (fast start with cached builds)
+  --skip-migrate Skip migration checks (use --no-build for full skip)
+  --local-frontend Start frontend on host via pnpm dev instead of Docker
 
 DB ACTIONS:
   migrate        Run Prisma migrations for all services

@@ -1,8 +1,0 @@
-# Monitoring Namespace
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: azeebo-monitoring
-  labels:
-    name: azeebo-monitoring
-    purpose: monitoring

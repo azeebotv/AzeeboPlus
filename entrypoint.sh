@@ -450,7 +450,7 @@ export JWT_ACCESS_SECRET="${JWT_ACCESS_SECRET}"
 export JWT_REFRESH_SECRET="${JWT_REFRESH_SECRET}"
 export JWT_ISSUER="${JWT_ISSUER:-azeebo-auth}"
 export JWT_AUDIENCE="${JWT_AUDIENCE:-azeebo-api}"
-export JWT_EXPIRES_IN="${JWT_EXPIRES_IN:-15m}"
+export JWT_EXPIRES_IN="${JWT_EXPIRES_IN:-30m}"
 export JWT_REFRESH_EXPIRES_IN="${JWT_REFRESH_EXPIRES_IN:-7d}"
 export ALLOWED_ORIGINS="${ALLOWED_ORIGINS}"
 export REDIS_URL="${REDIS_URL_VAL}"
@@ -489,6 +489,7 @@ export SENDGRID_API_KEY="${SENDGRID_API_KEY:-}"
 export TWILIO_ACCOUNT_SID="${TWILIO_ACCOUNT_SID:-}"
 export TWILIO_AUTH_TOKEN="${TWILIO_AUTH_TOKEN:-}"
 export TWILIO_PHONE_NUMBER="${TWILIO_PHONE_NUMBER:-}"
+export NODE_OPTIONS="--max-old-space-size=512"
 exec node /app/${main_js}
 WRAPPER
   chmod +x "/app/service-wrappers/${svc_name}.sh"
@@ -499,6 +500,7 @@ cat > /app/service-wrappers/api-gateway.sh << WRAPPER
 #!/bin/bash
 export ALL_IN_ONE="true"
 export NODE_ENV="production"
+export NODE_OPTIONS="--max-old-space-size=512"
 export PORT="3013"
 export JWT_ACCESS_SECRET="${JWT_ACCESS_SECRET}"
 export REDIS_URL="${REDIS_URL_VAL}"
@@ -547,6 +549,7 @@ chmod +x /app/service-wrappers/api-gateway.sh
 cat > /app/service-wrappers/admin-app.sh << WRAPPER
 #!/bin/bash
 export ALL_IN_ONE="true"
+export NODE_OPTIONS="--max-old-space-size=512"
 export DATABASE_URL="postgresql://azeebo:${ADMIN_DB_PASSWORD}@127.0.0.1:5432/azeebo_admin?schema=public"
 export DATABASE_PASSWORD="${ADMIN_DB_PASSWORD}"
 export DATABASE_HOST="localhost"
@@ -601,6 +604,7 @@ chmod +x /app/service-wrappers/admin-app.sh
 cat > /app/service-wrappers/creator-portal-app.sh << WRAPPER
 #!/bin/bash
 export ALL_IN_ONE="true"
+export NODE_OPTIONS="--max-old-space-size=512"
 export DATABASE_URL="postgresql://azeebo:${CREATOR_PORTAL_DB_PASSWORD}@127.0.0.1:5432/azeebo_creator_portal?schema=public"
 export DATABASE_PASSWORD="${CREATOR_PORTAL_DB_PASSWORD}"
 export DATABASE_HOST="localhost"
@@ -656,6 +660,7 @@ cat > /app/service-wrappers/web-app.sh << WRAPPER
 #!/bin/bash
 export ALL_IN_ONE="true"
 export NODE_ENV="production"
+export NODE_OPTIONS="--max-old-space-size=512"
 export PORT="4000"
 export HOSTNAME="0.0.0.0"
 export API_GATEWAY_URL="${API_GATEWAY_URL}"

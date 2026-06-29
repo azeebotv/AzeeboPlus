@@ -1,0 +1,28 @@
+services:
+  admin:
+    build:
+      context: ../..
+      dockerfile: apps/admin/Dockerfile
+      target: builder
+    container_name: azeebo-admin
+    ports:
+      - "4016:4016"
+    volumes:
+      - ../../apps/admin:/app/apps/admin
+      - /app/apps/admin/node_modules
+      - /app/apps/admin/dist
+      - /app/node_modules
+      - ../../packages:/app/packages
+    environment:
+      - NODE_ENV=development
+      - PORT=4016
+      - DATABASE_URL=postgresql://azeebo:azeebo_dev_2024@host.docker.internal:5432/azeebo_admin?schema=public
+    command: ["pnpm", "--filter", "@azeebo/admin", "start:dev"]
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - azeebo-dev
+
+networks:
+  azeebo-dev:
+    external: true
