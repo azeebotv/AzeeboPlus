@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import axios from 'axios';
 
 interface FlutterwaveInitializeResponse {
@@ -54,13 +54,14 @@ interface RefundResult {
 
 @Injectable()
 export class FlutterwaveProvider {
+  private readonly logger = new Logger(FlutterwaveProvider.name);
   private readonly apiKey: string;
   private readonly baseUrl = 'https://api.flutterwave.com/v3';
 
   constructor() {
-    this.apiKey = process.env.FLUTTERWAVE_SECRET_KEY!;
+    this.apiKey = process.env.FLUTTERWAVE_SECRET_KEY || '';
     if (!this.apiKey) {
-      throw new Error('FLUTTERWAVE_SECRET_KEY is not configured');
+      this.logger.warn('FLUTTERWAVE_SECRET_KEY is not configured — Flutterwave payments will be unavailable');
     }
   }
 
@@ -69,6 +70,9 @@ export class FlutterwaveProvider {
     currency: string,
     userId: string
   ): Promise<InitializeResult> {
+    if (!this.apiKey) {
+      throw new BadRequestException('Flutterwave payments are not configured');
+    }
     try {
       const response = await axios.post<FlutterwaveInitializeResponse>(
         `${this.baseUrl}/payments`,
@@ -110,6 +114,9 @@ export class FlutterwaveProvider {
   }
 
   async verifyPayment(reference: string): Promise<VerifyResult> {
+    if (!this.apiKey) {
+      throw new BadRequestException('Flutterwave payments are not configured');
+    }
     try {
       const response = await axios.get<FlutterwaveVerifyResponse>(
         `${this.baseUrl}/transactions/${reference}/verify`,
@@ -139,6 +146,9 @@ export class FlutterwaveProvider {
   }
 
   async processRefund(transactionReference: string, reason: string): Promise<RefundResult> {
+    if (!this.apiKey) {
+      throw new BadRequestException('Flutterwave payments are not configured');
+    }
     try {
       const response = await axios.post<FlutterwaveRefundResponse>(
         `${this.baseUrl}/transactions/${transactionReference}/refund`,
@@ -173,6 +183,9 @@ export class FlutterwaveProvider {
     payload: Record<string, unknown>,
     signature: string
   ): Promise<boolean> {
+    if (!this.apiKey) {
+      return false;
+    }
     const crypto = await import('crypto');
     const hash = crypto
       .createHmac('sha256', this.apiKey)
