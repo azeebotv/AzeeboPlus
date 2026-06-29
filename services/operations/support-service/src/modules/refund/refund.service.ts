@@ -2,27 +2,15 @@ import { Injectable, Logger, NotFoundException, BadRequestException } from '@nes
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
 import { Prisma } from '@prisma/client';
-import { createApiClient } from '@azeebo/api-client';
+import { createApiClient, ApiClient } from '@azeebo/api-client';
 
 @Injectable()
 export class RefundService {
   private readonly logger = new Logger(RefundService.name);
-  private readonly paymentServiceClient = createApiClient({
-    baseUrl: '',
-    timeout: 30000,
-  });
-  private readonly walletServiceClient = createApiClient({
-    baseUrl: '',
-    timeout: 30000,
-  });
-  private readonly auditServiceClient = createApiClient({
-    baseUrl: '',
-    timeout: 30000,
-  });
-  private readonly notificationServiceClient = createApiClient({
-    baseUrl: '',
-    timeout: 30000,
-  });
+  private paymentServiceClient!: ApiClient;
+  private walletServiceClient!: ApiClient;
+  private auditServiceClient!: ApiClient;
+  private notificationServiceClient!: ApiClient;
 
   constructor(
     private prisma: PrismaService,
