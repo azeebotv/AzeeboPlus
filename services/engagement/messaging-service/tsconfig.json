@@ -4,6 +4,7 @@
     "outDir": "dist",
     "types": ["jest", "node", "supertest"],
     "paths": {
+      "@prisma/client": ["./src/prisma/client"],
       "@azeebo/*": ["../../../packages/*/dist"],
       "@messaging/*": ["./*"]
     }
