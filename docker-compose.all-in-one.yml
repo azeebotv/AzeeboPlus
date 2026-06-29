@@ -24,6 +24,7 @@ services:
       - "4016:4016"   # Admin Panel
     environment:
       NODE_ENV: production
+      ALL_IN_ONE: "true"
 
       # PostgreSQL
       POSTGRES_USER: ${POSTGRES_USER:-azeebo}
@@ -67,6 +68,7 @@ services:
       # Frontend
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://app.azeeboplus.com}
       API_GATEWAY_URL: http://localhost:3013
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-https://app.azeeboplus.com}
       CORS_ORIGIN: ${CORS_ORIGIN:-https://app.azeeboplus.com}
 
       # DB Passwords (all default to POSTGRES_PASSWORD if not set)
