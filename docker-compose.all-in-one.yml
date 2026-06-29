@@ -16,7 +16,7 @@
 
 services:
   azeebo:
-    image: ghcr.io/deprofxi/azeebo-all-in-one:dev
+    image: ghcr.io/azeebotv/azeebo-all-in-one:dev
     ports:
       - "3013:3013"   # API Gateway
       - "4000:4000"   # Web App

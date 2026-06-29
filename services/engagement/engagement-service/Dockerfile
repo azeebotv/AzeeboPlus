@@ -22,7 +22,7 @@ WORKDIR /app
 FROM node:22-alpine AS runner
 WORKDIR /app
 
-LABEL org.opencontainers.image.source="https://github.com/azeebo/azeebo-plus"
+LABEL org.opencontainers.image.source="https://github.com/azeebotv/AzeeboPlus"
 LABEL org.opencontainers.image.description="Azeebo+ Engagement Service"
 LABEL org.opencontainers.image.licenses="Proprietary"
 
