@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
       - name: Setup pnpm
         uses: pnpm/action-setup@b7178b1d3c6c0e6e0f7e2c6f8e7e2e7e7e7e7e7e # v2.4.0
@@ -63,7 +63,7 @@ jobs:
     if: github.event_name == 'schedule' || github.ref == 'refs/heads/main'
     steps:
       - name: Checkout code
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
       - name: OWASP ZAP Scan
         uses: zaproxy/action-full-scan@75ee1686750ab1511a73b26b77a2aedd46806163 # v0.10.0
@@ -81,7 +81,7 @@ jobs:
     needs: dependency-audit
     steps:
       - name: Checkout code
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
       - name: Build Docker image
         run: |
