@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import {
+  SupportTicketCategory,
   SupportTicketPriority,
   SupportTicketStatus,
 } from '../ticket/dto/ticket.dto';
@@ -44,9 +45,9 @@ export class SupportRepository {
 
   async createTicket(data: CreateTicketDto): Promise<Ticket> {
     const priorityMap: Record<string, SupportTicketPriority> = {
-      low: 'LOW',
-      medium: 'MEDIUM',
-      high: 'HIGH',
+      low: SupportTicketPriority.LOW,
+      medium: SupportTicketPriority.MEDIUM,
+      high: SupportTicketPriority.HIGH,
     };
 
     const ticket = await this.prisma.supportTicket.create({
@@ -122,16 +123,16 @@ export class SupportRepository {
 
   async updateTicket(ticketId: string, data: Partial<Ticket>): Promise<Ticket | null> {
     const statusMap: Record<string, SupportTicketStatus> = {
-      open: 'OPEN',
-      in_progress: 'IN_PROGRESS',
-      resolved: 'RESOLVED',
-      closed: 'CLOSED',
+      open: SupportTicketStatus.OPEN,
+      in_progress: SupportTicketStatus.IN_PROGRESS,
+      resolved: SupportTicketStatus.RESOLVED,
+      closed: SupportTicketStatus.CLOSED,
     };
 
     const priorityMap: Record<string, SupportTicketPriority> = {
-      low: 'LOW',
-      medium: 'MEDIUM',
-      high: 'HIGH',
+      low: SupportTicketPriority.LOW,
+      medium: SupportTicketPriority.MEDIUM,
+      high: SupportTicketPriority.HIGH,
     };
 
     const ticket = await this.prisma.supportTicket.update({
