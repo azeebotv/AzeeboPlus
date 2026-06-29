@@ -50,4 +50,4 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
     CMD node -e "fetch('http://localhost:3010/live').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 
 ENTRYPOINT ["/sbin/tini", "--"]
-CMD ["node", "services/universes/reality-service/dist/services/universes/reality-service/src/main.js"]
+CMD ["node", "services/universes/reality-service/dist/main.js"]

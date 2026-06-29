@@ -50,4 +50,4 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
     CMD node -e "fetch('http://localhost:3008/live').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 
 ENTRYPOINT ["/sbin/tini", "--"]
-CMD ["node", "services/intelligence/analytics-service/dist/services/intelligence/analytics-service/src/main.js"]
+CMD ["node", "services/intelligence/analytics-service/dist/main.js"]
