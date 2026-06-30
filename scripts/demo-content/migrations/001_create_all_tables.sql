@@ -107,6 +107,20 @@ CREATE TABLE IF NOT EXISTS "verification_tokens" (
 -- CONTENT SERVICE TABLES
 -- ============================================================================
 
+CREATE TABLE IF NOT EXISTS "system_settings" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+  "key" TEXT UNIQUE NOT NULL,
+  value JSONB NOT NULL,
+  category TEXT NOT NULL DEFAULT 'general',
+  "description" TEXT,
+  "isPublic" BOOLEAN NOT NULL DEFAULT false,
+  "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+  "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_system_settings_key ON "system_settings"("key");
+CREATE INDEX IF NOT EXISTS idx_system_settings_category ON "system_settings"(category);
+CREATE INDEX IF NOT EXISTS idx_system_settings_is_public ON "system_settings"("isPublic");
+
 CREATE TABLE IF NOT EXISTS "universes" (
   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
   name TEXT UNIQUE NOT NULL,
@@ -408,6 +422,38 @@ CREATE INDEX IF NOT EXISTS idx_audit_logs_actor ON "audit_logs"("actorId");
 CREATE INDEX IF NOT EXISTS idx_audit_logs_action ON "audit_logs"(action);
 CREATE INDEX IF NOT EXISTS idx_audit_logs_resource ON "audit_logs"("resourceType", "resourceId");
 CREATE INDEX IF NOT EXISTS idx_audit_logs_created ON "audit_logs"("createdAt");
+
+-- ============================================================================
+-- WALLET SERVICE TABLES
+-- ============================================================================
+
+CREATE TABLE IF NOT EXISTS "wallets" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+  "userId" TEXT UNIQUE NOT NULL,
+  balance NUMERIC(18,2) NOT NULL DEFAULT 0,
+  "bonusBalance" NUMERIC(18,2) NOT NULL DEFAULT 0,
+  "promoBalance" NUMERIC(18,2) NOT NULL DEFAULT 0,
+  currency TEXT NOT NULL DEFAULT 'NGN',
+  "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+  "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_wallets_user ON "wallets"("userId");
+
+CREATE TABLE IF NOT EXISTS "wallet_transactions" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+  "walletId" TEXT NOT NULL,
+  type TEXT NOT NULL,
+  amount NUMERIC(18,2) NOT NULL,
+  status TEXT NOT NULL,
+  description TEXT,
+  provider TEXT,
+  "providerRef" TEXT,
+  "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+  "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_wallet_transactions_wallet ON "wallet_transactions"("walletId");
+CREATE INDEX IF NOT EXISTS idx_wallet_transactions_type ON "wallet_transactions"(type);
+CREATE INDEX IF NOT EXISTS idx_wallet_transactions_status ON "wallet_transactions"(status);
 
 -- ============================================================================
 -- BALANCE SNAPSHOTS (wallet-service)
