@@ -80,6 +80,22 @@ COPY . .
 ARG NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_URL}
 
+ARG NEXT_PUBLIC_BASE_URL=""
+ARG NEXT_PUBLIC_AUTH_URL=""
+ARG NEXT_PUBLIC_STRIPE_PUBLIC_KEY=""
+ARG NEXT_PUBLIC_FIREBASE_API_KEY=""
+ARG NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=""
+ARG NEXT_PUBLIC_FIREBASE_PROJECT_ID=""
+ARG NEXT_PUBLIC_SENTRY_DSN=""
+
+ENV NEXT_PUBLIC_BASE_URL=${NEXT_PUBLIC_BASE_URL}
+ENV NEXT_PUBLIC_AUTH_URL=${NEXT_PUBLIC_AUTH_URL}
+ENV NEXT_PUBLIC_STRIPE_PUBLIC_KEY=${NEXT_PUBLIC_STRIPE_PUBLIC_KEY}
+ENV NEXT_PUBLIC_FIREBASE_API_KEY=${NEXT_PUBLIC_FIREBASE_API_KEY}
+ENV NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=${NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN}
+ENV NEXT_PUBLIC_FIREBASE_PROJECT_ID=${NEXT_PUBLIC_FIREBASE_PROJECT_ID}
+ENV NEXT_PUBLIC_SENTRY_DSN=${NEXT_PUBLIC_SENTRY_DSN}
+
 # Cache-bust: set to a unique value (e.g. git hash or timestamp) to force rebuild
 ARG CACHEBUST
 
@@ -127,7 +143,10 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     pnpm --filter @azeebo/creator-portal prisma:generate && pnpm --filter @azeebo/creator-portal run build && \
     mkdir -p apps/admin/dist/generated && cp -r apps/admin/src/generated/prisma apps/admin/dist/generated/prisma && \
     mkdir -p apps/creator-portal/dist/generated && cp -r apps/creator-portal/src/generated/prisma apps/creator-portal/dist/generated/prisma && \
-    pnpm --filter @azeebo/web run build
+    pnpm --filter @azeebo/web run build && \
+    echo "=== Web build output check ===" ; \
+    ls -la apps/web/.next/standalone/server.js 2>&1; \
+    ls -la apps/web/.next/ 2>&1 | head -15
 
 # Create /runtime with only what the container needs at runtime.
 # Each copy section is independent (;) so a failure in one section does NOT
@@ -167,7 +186,7 @@ RUN echo "Cache bust: $CACHEBUST" && \
     cp -r apps/web/public/. /runtime/apps/web/standalone/public/ 2>/dev/null; \
     cp apps/web/next.config.js /runtime/apps/web/standalone/ 2>/dev/null; \
     echo "=== Builder dist inventory ===" && \
-    find services -maxdepth 3 -name "main.js" -path "*/dist/*" | sort && \
+    find services -name "main.js" -path "*/dist/*" | sort && \
     echo "=== Web standalone inventory ===" && \
     ls -la apps/web/.next/standalone/server.js 2>/dev/null && echo "OK: standalone/server.js exists in builder" || echo "MISSING: standalone/server.js NOT in builder" && \
     echo "=== /runtime dist inventory ===" && \
