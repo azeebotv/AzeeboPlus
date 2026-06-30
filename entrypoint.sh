@@ -218,7 +218,6 @@ MIGRATE_SERVICES=(
   "services/core/payment-service:payment-service:azeebo_payment:azeebo:${PAYMENT_DB_PASSWORD:-$POSTGRES_PASSWORD}"
   "services/core/content-service:content-service:azeebo_content:azeebo:${CONTENT_DB_PASSWORD:-$POSTGRES_PASSWORD}"
   "services/core/search-service:search-service:azeebo_search:azeebo:${SEARCH_DB_PASSWORD:-$POSTGRES_PASSWORD}"
-  "services/core/media-service:media-service:azeebo_media:azeebo:${MEDIA_DB_PASSWORD:-$POSTGRES_PASSWORD}"
   "services/engagement/notification-service:notification-service:azeebo_notification:azeebo:${NOTIFICATION_DB_PASSWORD:-$POSTGRES_PASSWORD}"
   "services/engagement/reward-service:reward-service:azeebo_reward:azeebo:${REWARD_DB_PASSWORD:-$POSTGRES_PASSWORD}"
   "services/intelligence/analytics-service:analytics-service:azeebo_analytics:azeebo:${ANALYTICS_DB_PASSWORD:-$POSTGRES_PASSWORD}"

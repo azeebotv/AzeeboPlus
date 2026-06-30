@@ -145,10 +145,13 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     mkdir -p apps/creator-portal/dist/generated && cp -r apps/creator-portal/src/generated/prisma apps/creator-portal/dist/generated/prisma && \
     echo "=== Flattening nested dist directories ===" && \
     for svc in $(find services -name "dist" -type d -not -path "*/node_modules/*"); do \
-      nested=$(find "$svc" -name "main.js" -path "*/src/*" 2>/dev/null | head -1); \
-      if [ -n "$nested" ] && [ ! -f "$svc/main.js" ]; then \
-        echo "Flattening: $nested -> $svc/main.js"; \
-        cp "$nested" "$svc/main.js"; \
+      nested_main=$(find "$svc" -name "main.js" -path "*/src/*" -not -path "$svc/main.js" 2>/dev/null | head -1); \
+      if [ -n "$nested_main" ] && [ ! -f "$svc/main.js" ]; then \
+        nested_dir=$(dirname "$nested_main"); \
+        echo "Flattening: $nested_dir/ -> $svc/"; \
+        (cd "$nested_dir" && find . -type f \( -name "*.js" -o -name "*.d.ts" \) | while read f; do \
+          mkdir -p "$svc/$(dirname "$f")" && cp "$f" "$svc/$f"; \
+        done); \
       fi; \
     done && \
     echo "=== Flattened dist inventory ===" && \
@@ -200,8 +203,8 @@ RUN echo "Cache bust: $CACHEBUST" && \
     else \
       echo "WARNING: No standalone output found in apps/web/.next/standalone/"; \
     fi; \
-    mkdir -p /runtime/apps/web/standalone/static && \
-    cp -r apps/web/.next/static/. /runtime/apps/web/standalone/static/ 2>/dev/null; \
+    mkdir -p /runtime/apps/web/standalone/.next/static && \
+    cp -r apps/web/.next/static/. /runtime/apps/web/standalone/.next/static/ 2>/dev/null; \
     cp -r apps/web/public/. /runtime/apps/web/standalone/public/ 2>/dev/null; \
     cp apps/web/next.config.js /runtime/apps/web/standalone/ 2>/dev/null; \
     echo "=== Builder dist inventory ===" && \
