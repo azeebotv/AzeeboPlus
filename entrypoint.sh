@@ -249,6 +249,19 @@ for entry in "${MIGRATE_SERVICES[@]}"; do
 done
 
 # ============================================================
+# 7b. Load demo content if DEMO_MODE is enabled
+# ============================================================
+if [ "${DEMO_MODE:-false}" = "true" ]; then
+  echo "==> DEMO_MODE enabled — loading demo content into all databases..."
+  if [ -x /app/scripts/demo-content/deploy-all-in-one.sh ]; then
+    DB_PASSWORD="$POSTGRES_PASSWORD" /app/scripts/demo-content/deploy-all-in-one.sh || \
+      echo "    WARNING: Demo content deployment had errors (non-fatal)"
+  else
+    echo "    WARNING: /app/scripts/demo-content/deploy-all-in-one.sh not found or not executable"
+  fi
+fi
+
+# ============================================================
 # 8. Stop temporary PostgreSQL (supervisord will restart it)
 # ============================================================
 echo "==> Stopping temporary PostgreSQL..."
