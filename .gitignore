@@ -4,6 +4,12 @@ node_modules/
 .dev-state/
 .logs/
 
+# Prisma generated binaries and client
+**/libquery_engine-*.node
+**/query_engine-*
+**/libquery_engine-*.dylib.node
+**/prisma/client/runtime/libquery_engine-*
+
 # Build output
 dist/
 .next/

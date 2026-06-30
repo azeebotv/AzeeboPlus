@@ -32,9 +32,4 @@ done
 | `012-sync-media-service-schema.sql` | Creates `media`, `uploads`, `premium_content_media` |
 | `013-init-test-db.sql` | Initializes the test database with extensions and schema |
 
-## Legacy
 
-| File | Description |
-|------|-------------|
-| `legacy-sync-auth-schema.sql` | Original auth sync script (superseded by `002`) |
-| `legacy-fix-auth-password.sql` | Original password fix (superseded by `003`) |

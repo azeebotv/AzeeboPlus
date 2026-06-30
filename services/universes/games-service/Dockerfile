@@ -1,4 +1,4 @@
-FROM node:22-alpine AS builder
+FROM node:22.16.0-alpine AS builder
 WORKDIR /app
 
 RUN for i in 1 2 3 4 5; do npm install -g pnpm@10.33.2 && break || (echo "Retry $i/5..." && sleep 10); done
@@ -16,10 +16,10 @@ COPY services/universes/games-service/prisma ./services/universes/games-service/
 RUN cd services/universes/games-service && npx prisma generate
 RUN pnpm --filter @azeebo/games-service run build
 
-FROM node:22-alpine AS runner
+FROM node:22.16.0-alpine AS runner
 WORKDIR /app
 
-LABEL org.opencontainers.image.source="https://github.com/azeebo/azeebo-plus"
+LABEL org.opencontainers.image.source="https://github.com/azeebotv/AzeeboPlus"
 LABEL org.opencontainers.image.description="Azeebo+ Games Service"
 LABEL org.opencontainers.image.licenses="Proprietary"
 
@@ -50,4 +50,4 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
     CMD node -e "fetch('http://localhost:3014/live').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 
 ENTRYPOINT ["/sbin/tini", "--"]
-CMD ["node", "services/universes/games-service/dist/services/universes/games-service/src/main.js"]
+CMD ["node", "services/universes/games-service/dist/main.js"]

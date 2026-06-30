@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
+import { Prisma } from '@prisma/client';
 import {
-  Prisma,
   SupportTicketCategory,
   SupportTicketPriority,
   SupportTicketStatus,
-} from '@prisma/client';
+} from '../ticket/dto/ticket.dto';
 
 @Injectable()
 export class TicketService {

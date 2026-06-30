@@ -5,7 +5,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard } from '@azeebo/security';
 import { TicketController } from './ticket.controller';
 import { TicketService } from './ticket.service';
-import { SupportTicketStatus, SupportTicketCategory } from '@prisma/client';
+import { SupportTicketStatus, SupportTicketCategory } from './dto/ticket.dto';
 
 describe('Support Service Pagination Tests', () => {
   let app: INestApplication;

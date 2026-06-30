@@ -2,7 +2,7 @@ import { Injectable, Logger, NotFoundException, BadRequestException } from '@nes
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
 import { Prisma } from '@prisma/client';
-import { createApiClient } from '@azeebo/api-client';
+import { createApiClient, noopTokenStorage } from '@azeebo/api-client';
 
 @Injectable()
 export class ChargebackService {
@@ -18,14 +18,17 @@ export class ChargebackService {
     this.paymentServiceClient = createApiClient({
       baseUrl: this.configService.getOrThrow<string>('PAYMENT_SERVICE_URL'),
       timeout: 30000,
+      tokenStorage: noopTokenStorage,
     });
     this.walletServiceClient = createApiClient({
       baseUrl: this.configService.getOrThrow<string>('WALLET_SERVICE_URL'),
       timeout: 30000,
+      tokenStorage: noopTokenStorage,
     });
     this.auditServiceClient = createApiClient({
       baseUrl: this.configService.getOrThrow<string>('MODERATION_SERVICE_URL'),
       timeout: 30000,
+      tokenStorage: noopTokenStorage,
     });
   }
 

@@ -1,0 +1,3 @@
+networks:
+  azeebo-dev:
+    external: true

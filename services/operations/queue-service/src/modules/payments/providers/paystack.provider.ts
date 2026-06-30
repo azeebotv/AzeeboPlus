@@ -41,16 +41,17 @@ export class PaystackProvider {
   private readonly circuitBreaker: CircuitBreaker;
 
   constructor() {
-    this.apiKey = process.env.PAYSTACK_SECRET_KEY!;
+    this.apiKey = process.env.PAYSTACK_SECRET_KEY || '';
     if (!this.apiKey) {
-      throw new Error('PAYSTACK_SECRET_KEY is not configured');
+      this.logger.warn('PAYSTACK_SECRET_KEY is not configured — Paystack payments will be unavailable');
+    } else {
+      this.logger.log('PaystackProvider initialized with circuit breaker');
     }
     this.circuitBreaker = new CircuitBreaker({
       failureThreshold: 5,
       resetTimeout: 60000,
       halfOpenRequests: 3,
     });
-    this.logger.log('PaystackProvider initialized with circuit breaker');
   }
 
   // PAY-003: In-memory idempotency store (production should use Redis/DB)
@@ -79,6 +80,9 @@ export class PaystackProvider {
   }
 
   async initializePayment(amount: number, currency: string, userId: string, idempotencyKey?: string) {
+    if (!this.apiKey) {
+      throw new BadRequestException('Paystack payments are not configured');
+    }
     // SEC-007/PAY-002: Validate payment amount
     if (typeof amount !== 'number' || amount <= 0 || !isFinite(amount)) {
       throw new BadRequestException('Payment amount must be a positive number');
@@ -143,6 +147,9 @@ export class PaystackProvider {
   }
 
   async verifyPayment(reference: string) {
+    if (!this.apiKey) {
+      throw new BadRequestException('Paystack payments are not configured');
+    }
     try {
       const result = await this.circuitBreaker.execute(async () => {
         const response = await axios.get<PaystackVerifyResponse>(
@@ -181,6 +188,9 @@ export class PaystackProvider {
   }
 
   async processRefund(transactionReference: string, reason: string) {
+    if (!this.apiKey) {
+      throw new BadRequestException('Paystack payments are not configured');
+    }
     try {
       const result = await this.circuitBreaker.execute(async () => {
         const response = await axios.post(
@@ -232,6 +242,9 @@ export class PaystackProvider {
     payload: Record<string, unknown>,
     signature: string
   ): Promise<boolean> {
+    if (!this.apiKey) {
+      return false;
+    }
     const hash: string = createHmac('sha512', this.apiKey)
       .update(JSON.stringify(payload))
       .digest('hex');

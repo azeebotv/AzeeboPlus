@@ -1,4 +1,4 @@
-FROM node:22-alpine AS builder
+FROM node:22.16.0-alpine AS builder
 WORKDIR /app
 
 RUN for i in 1 2 3 4 5; do npm install -g pnpm@10.33.2 && break || (echo "Retry $i/5..." && sleep 10); done
@@ -14,10 +14,10 @@ COPY services/gateway/api-gateway/tsconfig*.json ./services/gateway/api-gateway/
 
 RUN pnpm --filter @azeebo/api-gateway run build
 
-FROM node:22-alpine AS runner
+FROM node:22.16.0-alpine AS runner
 WORKDIR /app
 
-LABEL org.opencontainers.image.source="https://github.com/azeebo/azeebo-plus"
+LABEL org.opencontainers.image.source="https://github.com/azeebotv/AzeeboPlus"
 LABEL org.opencontainers.image.description="Azeebo+ API Gateway"
 LABEL org.opencontainers.image.licenses="Proprietary"
 

@@ -48,7 +48,7 @@ export class SafetyScanningService {
     }
 
     this.malwareApiConfig = {
-      apiKey: this.configService.getOrThrow<string>('MALWARE_SCAN_API_KEY'),
+      apiKey: this.configService.get<string>('MALWARE_SCAN_API_KEY', ''),
       endpoint: this.configService.get<string>(
         'MALWARE_SCAN_API_ENDPOINT',
         'https://api.virustotal.com/v3/files'
@@ -57,7 +57,7 @@ export class SafetyScanningService {
     };
 
     this.contentSafetyApiConfig = {
-      apiKey: this.configService.getOrThrow<string>('CONTENT_SAFETY_API_KEY'),
+      apiKey: this.configService.get<string>('CONTENT_SAFETY_API_KEY', ''),
       endpoint: this.configService.get<string>(
         'CONTENT_SAFETY_API_ENDPOINT',
         'https://vision.googleapis.com/v1/images:annotate'
@@ -66,7 +66,7 @@ export class SafetyScanningService {
     };
 
     this.copyrightApiConfig = {
-      apiKey: this.configService.getOrThrow<string>('COPYRIGHT_API_KEY'),
+      apiKey: this.configService.get<string>('COPYRIGHT_API_KEY', ''),
       endpoint: this.configService.get<string>(
         'COPYRIGHT_API_ENDPOINT',
         'https://api.copyright.com/v1/search'

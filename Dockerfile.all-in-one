@@ -1,21 +1,23 @@
 # ============================================================
-# Azeebo+ All-in-One Dockerfile
+# Azeebo+ All-in-One Dockerfile (Optimized)
 # ============================================================
 # Two-stage build:
 #   1. Builder — install ALL deps, build everything, snapshot Prisma clients
 #   2. Runtime — fresh prod install + built artifacts only
 #
-# Optimizations vs previous version:
-#   - Removed net-tools, procps (not needed at runtime)
-#   - Merged 5+ RUN layers into 2-3 (fewer/smaller layers = faster export)
-#   - Prisma clients snapshotted from builder, restored in runtime (no regen)
-#   - Aggressive cache/tmp cleanup in final layer
+# Optimizations:
+#   - Merged RUN layers for faster export and smaller image
+#   - Aggressive cleanup of build artifacts, caches, and temp files
+#   - Prisma clients snapshotted from builder, restored in runtime
+#   - Only production dependencies in final image
 # ============================================================
 
 # ============================================================
 # Stage 1: Build — compile everything
 # ============================================================
-FROM node:20-bookworm-slim AS builder
+FROM node:22.16.0-bookworm-slim AS builder
+
+ENV NODE_OPTIONS="--max-old-space-size=4096"
 
 RUN corepack enable && corepack prepare pnpm@10.33.2 --activate
 
@@ -78,6 +80,7 @@ COPY . .
 ARG NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_URL}
 
+# Build shared packages, then all services, then apps — single merged layer
 RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     pnpm --filter @azeebo/utils run build && \
     pnpm --filter @azeebo/shared-types run build && \
@@ -93,11 +96,8 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     pnpm --filter @azeebo/user-service prisma:generate && pnpm --filter @azeebo/user-service run build && \
     pnpm --filter @azeebo/wallet-service prisma:generate && pnpm --filter @azeebo/wallet-service run build && \
     pnpm --filter @azeebo/payment-service prisma:generate && pnpm --filter @azeebo/payment-service run build && \
-    pnpm --filter @azeebo/content-service prisma:generate && pnpm --filter @azeebo/content-service run build && \
     pnpm --filter @azeebo/search-service prisma:generate && pnpm --filter @azeebo/search-service run build && \
-    pnpm --filter @azeebo/media-service run build
-
-RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
+    pnpm --filter @azeebo/media-service run build && \
     pnpm --filter @azeebo/notification-service prisma:generate && pnpm --filter @azeebo/notification-service run build && \
     pnpm --filter @azeebo/reward-service prisma:generate && pnpm --filter @azeebo/reward-service run build && \
     pnpm --filter @azeebo/engagement-service prisma:generate && pnpm --filter @azeebo/engagement-service run build && \
@@ -117,18 +117,15 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     pnpm --filter @azeebo/queue-service prisma:generate && pnpm --filter @azeebo/queue-service run build && \
     pnpm --filter @azeebo/support-service prisma:generate && pnpm --filter @azeebo/support-service run build && \
     pnpm --filter @azeebo/moderation-service prisma:generate && pnpm --filter @azeebo/moderation-service run build && \
-    pnpm --filter @azeebo/api-gateway run build
-
-RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
+    pnpm --filter @azeebo/content-service prisma:generate && pnpm --filter @azeebo/content-service run build && \
+    pnpm --filter @azeebo/api-gateway run build && \
     pnpm --filter @azeebo/admin prisma:generate && pnpm --filter @azeebo/admin run build && \
     pnpm --filter @azeebo/creator-portal prisma:generate && pnpm --filter @azeebo/creator-portal run build && \
-    pnpm --filter @azeebo/web run build && \
     mkdir -p apps/admin/dist/generated && cp -r apps/admin/src/generated/prisma apps/admin/dist/generated/prisma && \
-    mkdir -p apps/creator-portal/dist/generated && cp -r apps/creator-portal/src/generated/prisma apps/creator-portal/dist/generated/prisma
+    mkdir -p apps/creator-portal/dist/generated && cp -r apps/creator-portal/src/generated/prisma apps/creator-portal/dist/generated/prisma && \
+    pnpm --filter @azeebo/web run build
 
 # Create /runtime with only what the container needs at runtime.
-# Snapshot generated Prisma clients from the pnpm store so we can
-# restore them in the runtime stage without re-running prisma generate.
 RUN mkdir -p /runtime/node_modules && \
     cp package.json pnpm-lock.yaml pnpm-workspace.yaml /runtime/ && \
     find . -maxdepth 4 -name "package.json" \
@@ -157,18 +154,21 @@ RUN mkdir -p /runtime/node_modules && \
     mkdir -p /runtime/apps/creator-portal && cp -r apps/creator-portal/dist /runtime/apps/creator-portal/dist && \
     cp -r apps/creator-portal/prisma /runtime/apps/creator-portal/prisma 2>/dev/null; \
     mkdir -p /runtime/apps/web && \
-    cp -r apps/web/.next /runtime/apps/web/.next && \
-    cp -r apps/web/public /runtime/apps/web/public 2>/dev/null; \
-    cp apps/web/next.config.js /runtime/apps/web/ 2>/dev/null; \
+    cp -r apps/web/.next/standalone /runtime/apps/web/standalone && \
+    mkdir -p /runtime/apps/web/standalone/static && \
+    cp -r apps/web/.next/static /runtime/apps/web/standalone/static && \
+    cp -r apps/web/public /runtime/apps/web/standalone/public 2>/dev/null; \
+    cp apps/web/next.config.js /runtime/apps/web/standalone/ 2>/dev/null; \
     true
 
 # ============================================================
 # Stage 2: Runtime — lean image with production deps only
 # ============================================================
-FROM node:20-bookworm-slim
+FROM node:22.16.0-bookworm-slim
 
 ENV DEBIAN_FRONTEND=noninteractive
 
+# Install system dependencies in a single layer with aggressive cleanup
 RUN corepack enable && corepack prepare pnpm@10.33.2 --activate && \
     apt-get update && apt-get install -y --no-install-recommends \
       postgresql-15 \
@@ -179,6 +179,7 @@ RUN corepack enable && corepack prepare pnpm@10.33.2 --activate && \
       curl \
       locales \
       openssl \
+      procps \
     && sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen \
     && locale-gen en_US.UTF-8 \
     && useradd -r -s /bin/false pgbouncer || true \
@@ -186,7 +187,7 @@ RUN corepack enable && corepack prepare pnpm@10.33.2 --activate && \
     && chown -R redis:redis /var/lib/redis \
     && chown -R pgbouncer:pgbouncer /var/run/pgbouncer \
     && chown -R postgres:postgres /var/log/postgresql \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
+    && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 ENV LANG=en_US.UTF-8
 ENV LANGUAGE=en_US:en
@@ -198,7 +199,6 @@ WORKDIR /app
 COPY --from=builder /runtime /app
 
 # Fresh production install — only production dependencies, no devDeps
-# --ignore-scripts: skip postinstall since we handle prisma below
 ENV CI=true
 RUN pnpm install --prod --frozen-lockfile --ignore-scripts
 
@@ -208,6 +208,7 @@ RUN pnpm install --prod --frozen-lockfile --ignore-scripts
 #   3. Install Prisma CLI (needed for migrate deploy in entrypoint.sh)
 #   4. Generate Prisma clients (schema-specific, must run per-service)
 #   5. Copy @prisma/client shim to each service's local node_modules
+#   6. Aggressive cleanup of all caches and temp files
 RUN mkdir -p /app/node_modules/@azeebo && \
     for pkg_json in $(find packages services apps -maxdepth 3 -name "package.json" \
       -not -path "*/node_modules/*" -not -path "*/dist/*" -not -path "*/.prisma/*"); do \
@@ -223,33 +224,65 @@ RUN mkdir -p /app/node_modules/@azeebo && \
     npm install -g prisma@6.19.3 && npm cache clean --force 2>/dev/null; \
     true
 
-# Generate Prisma clients for all services (schema-specific, one pass)
-# and copy @prisma/client shim to each service's local node_modules.
-# Then clean up the global npm cache and all temp files in one pass.
-RUN for schema in $(find services apps -name "schema.prisma" -not -path "*/node_modules/*" -not -path "*/dist/*"); do \
-      dir=$(dirname "$schema"); \
-      cd "/app/$dir" && prisma generate --schema=schema.prisma 2>&1 || true; \
-      if [ -d "node_modules/.prisma/client" ]; then \
-        mkdir -p "node_modules/@prisma/client" && \
-        cp /app/node_modules/@prisma/client/package.json "node_modules/@prisma/client/" && \
-        cp /app/node_modules/@prisma/client/default.js "node_modules/@prisma/client/" 2>/dev/null || true; \
-        cp /app/node_modules/@prisma/client/index.js "node_modules/@prisma/client/" 2>/dev/null || true; \
-        cp /app/node_modules/@prisma/client/index.d.ts "node_modules/@prisma/client/" 2>/dev/null || true; \
-      fi; \
+# Generate Prisma clients per-service with ISOLATED output.
+#
+# All services share a single @prisma/client pnpm package, so `prisma generate`
+# writes the generated client to the SHARED .pnpm/@prisma+client@*/node_modules/.prisma/client.
+# Without isolation, each generate overwrites the previous, and only the LAST schema's
+# enums/models survive — causing `@IsEnum(SomePrismaEnum)` to crash with
+# "Cannot convert undefined or null to object" at module load for every other service.
+#
+# Fix: after each service's `prisma generate`, snapshot the shared generated client
+# AND a real (de-symlinked) copy of @prisma/client into that service's own node_modules,
+# so `require('@prisma/client')` resolves the service-specific generated client.
+# The query-engine binaries are deduplicated (one real copy, the rest symlinked).
+#
+# DATABASE_URL is required by prisma generate (schema validation) even though no connection is made.
+RUN DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholder" && \
+    export DATABASE_URL && \
+    SHARED_CLIENT_DIR=$(cd /app/services/core/auth-service && node -e "console.log(require('path').dirname(require.resolve('@prisma/client')))" 2>/dev/null) && \
+    SHARED_NM="$(dirname "$SHARED_CLIENT_DIR")" && \
+    SHARED_GEN="$SHARED_NM/.prisma/client" && \
+    echo "  Shared @prisma/client: $SHARED_CLIENT_DIR" && \
+    for schema in $(find services apps -name "schema.prisma" -not -path "*/node_modules/*" -not -path "*/dist/*"); do \
+      proj_root=$(dirname "$schema"); \
+      echo "  Generating Prisma client for $proj_root..."; \
+      (cd "/app/$proj_root" && prisma generate --schema=schema.prisma 2>&1) || \
+        echo "  WARNING: prisma generate failed for $proj_root"; \
+      SVC_NM="/app/$proj_root/node_modules"; \
+      rm -rf "$SVC_NM/@prisma/client" "$SVC_NM/.prisma"; \
+      mkdir -p "$SVC_NM/@prisma/client" "$SVC_NM/.prisma/client"; \
+      cp -r "$SHARED_CLIENT_DIR/." "$SVC_NM/@prisma/client/"; \
+      rm -rf "$SVC_NM/@prisma/client/node_modules"; \
+      cp -r "$SHARED_GEN/." "$SVC_NM/.prisma/client/"; \
       cd /app; \
     done && \
-    rm -rf /tmp/* /var/tmp/* /root/.npm /root/.cache 2>/dev/null; \
+    SHARED_ENGINE=""; \
+    for engine in $(find /app/services /app/apps -path "*/.prisma/client/libquery_engine-*.node" -type f 2>/dev/null); do \
+      if [ -z "$SHARED_ENGINE" ]; then \
+        SHARED_ENGINE="$engine"; \
+      else \
+        rm -f "$engine" && ln -sfn "$SHARED_ENGINE" "$engine"; \
+      fi; \
+    done; \
+    npm cache clean --force 2>/dev/null; \
+    rm -rf /tmp/* /var/tmp/* /root/.npm /root/.cache /root/.local 2>/dev/null; \
+    find /app/node_modules -name "*.md" -o -name "*.txt" -o -name "*.map" -o -name "LICENSE*" -o -name "CHANGELOG*" | xargs rm -f 2>/dev/null; \
+    find /app/node_modules -name "__tests__" -type d -exec rm -rf {} + 2>/dev/null; \
+    find /app/node_modules -name "test" -type d -exec rm -rf {} + 2>/dev/null; \
+    find /app/node_modules -name "docs" -type d -exec rm -rf {} + 2>/dev/null; \
     true
 
 # Copy config files (single layer with final cleanup)
 COPY supervisord.conf /etc/supervisord.conf
 COPY nginx.conf /etc/nginx/nginx.conf
 COPY entrypoint.sh /entrypoint.sh
-RUN rm -f /etc/nginx/sites-enabled/default && chmod +x /entrypoint.sh
+RUN rm -f /etc/nginx/sites-enabled/default && chmod +x /entrypoint.sh && \
+    rm -rf /var/cache/apt /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 EXPOSE 80 443 3013 4000 4014 4016 5432 6379 6432
 
-HEALTHCHECK --interval=30s --timeout=10s --retries=3 --start-period=180s \
-  CMD curl -f http://localhost:3013/health || exit 1
+HEALTHCHECK --interval=30s --timeout=10s --retries=5 --start-period=300s \
+  CMD curl -f http://localhost:80/health || exit 1
 
 ENTRYPOINT ["/entrypoint.sh"]
