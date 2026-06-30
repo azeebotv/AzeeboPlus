@@ -130,6 +130,8 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     pnpm --filter @azeebo/web run build
 
 # Create /runtime with only what the container needs at runtime.
+# Each copy section is independent (;) so a failure in one section does NOT
+# silently skip the others (which was the root cause of the dist-missing bug).
 RUN echo "Cache bust: $CACHEBUST" && \
     mkdir -p /runtime/node_modules && \
     cp package.json pnpm-lock.yaml pnpm-workspace.yaml /runtime/ && \
@@ -140,30 +142,34 @@ RUN echo "Cache bust: $CACHEBUST" && \
       -not -path "*/.prisma/*" \
       | while read f; do \
         mkdir -p "/runtime/$(dirname "$f")" && cp "$f" "/runtime/$f"; \
-      done && \
+      done; \
     find services -maxdepth 2 -mindepth 2 -type d | while read svc; do \
       if [ -d "$svc/dist" ]; then \
-        mkdir -p "/runtime/$svc" && cp -r "$svc/dist" "/runtime/$svc/dist"; \
+        mkdir -p "/runtime/$svc/dist" && cp -r "$svc/dist/." "/runtime/$svc/dist/"; \
       fi; \
       if [ -d "$svc/prisma" ]; then \
-        mkdir -p "/runtime/$svc" && cp -r "$svc/prisma" "/runtime/$svc/prisma"; \
+        mkdir -p "/runtime/$svc/prisma" && cp -r "$svc/prisma/." "/runtime/$svc/prisma/"; \
       fi; \
-    done && \
+    done; \
     find packages -maxdepth 1 -mindepth 1 -type d | while read pkg; do \
       if [ -d "$pkg/dist" ]; then \
-        mkdir -p "/runtime/$pkg" && cp -r "$pkg/dist" "/runtime/$pkg/dist"; \
+        mkdir -p "/runtime/$pkg/dist" && cp -r "$pkg/dist/." "/runtime/$pkg/dist/"; \
       fi; \
-    done && \
-    mkdir -p /runtime/apps/admin && cp -r apps/admin/dist /runtime/apps/admin/dist && \
-    cp -r apps/admin/prisma /runtime/apps/admin/prisma 2>/dev/null; \
-    mkdir -p /runtime/apps/creator-portal && cp -r apps/creator-portal/dist /runtime/apps/creator-portal/dist && \
-    cp -r apps/creator-portal/prisma /runtime/apps/creator-portal/prisma 2>/dev/null; \
-    mkdir -p /runtime/apps/web && \
-    cp -r apps/web/.next/standalone /runtime/apps/web/standalone && \
+    done; \
+    mkdir -p /runtime/apps/admin/dist && cp -r apps/admin/dist/. /runtime/apps/admin/dist/ && \
+    mkdir -p /runtime/apps/admin/prisma && cp -r apps/admin/prisma/. /runtime/apps/admin/prisma/ 2>/dev/null; \
+    mkdir -p /runtime/apps/creator-portal/dist && cp -r apps/creator-portal/dist/. /runtime/apps/creator-portal/dist/ && \
+    mkdir -p /runtime/apps/creator-portal/prisma && cp -r apps/creator-portal/prisma/. /runtime/apps/creator-portal/prisma/ 2>/dev/null; \
+    mkdir -p /runtime/apps/web/standalone && \
+    cp -r apps/web/.next/standalone/. /runtime/apps/web/standalone/ && \
     mkdir -p /runtime/apps/web/standalone/static && \
-    cp -r apps/web/.next/static /runtime/apps/web/standalone/static && \
-    cp -r apps/web/public /runtime/apps/web/standalone/public 2>/dev/null; \
+    cp -r apps/web/.next/static/. /runtime/apps/web/standalone/static/ && \
+    cp -r apps/web/public/. /runtime/apps/web/standalone/public/ 2>/dev/null; \
     cp apps/web/next.config.js /runtime/apps/web/standalone/ 2>/dev/null; \
+    echo "=== Verifying critical dist files ===" && \
+    test -f /runtime/services/core/content-service/dist/main.js && echo "OK: content-service" || echo "MISSING: content-service/dist/main.js" && \
+    test -f /runtime/services/core/wallet-service/dist/main.js && echo "OK: wallet-service" || echo "MISSING: wallet-service/dist/main.js" && \
+    test -f /runtime/apps/web/standalone/server.js && echo "OK: web-app standalone" || echo "MISSING: web-app/standalone/server.js" && \
     true
 
 # ============================================================
@@ -237,17 +243,18 @@ RUN mkdir -p /app/node_modules/@azeebo && \
 # enums/models survive — causing `@IsEnum(SomePrismaEnum)` to crash with
 # "Cannot convert undefined or null to object" at module load for every other service.
 #
-# Fix: after each service's `prisma generate`, snapshot the shared generated client
-# AND a real (de-symlinked) copy of @prisma/client into that service's own node_modules,
-# so `require('@prisma/client')` resolves the service-specific generated client.
-# The query-engine binaries are deduplicated (one real copy, the rest symlinked).
+# Fix: after each service's `prisma generate`, copy a real (de-symlinked) copy of
+# @prisma/client into that service's own node_modules and write a shim that
+# re-exports the generated client (either from a custom output dir or from the
+# shared .prisma/client that prisma generate just wrote).
+#
+# IMPORTANT: Do NOT rm -rf .prisma — that deletes the generated client that
+# prisma generate just wrote. Only rm -rf @prisma/client (the shim target).
 #
 # DATABASE_URL is required by prisma generate (schema validation) even though no connection is made.
 RUN DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholder" && \
     export DATABASE_URL && \
     SHARED_CLIENT_DIR=$(cd /app/services/core/auth-service && node -e "console.log(require('path').dirname(require.resolve('@prisma/client')))" 2>/dev/null) && \
-    SHARED_NM="$(dirname "$SHARED_CLIENT_DIR")" && \
-    SHARED_GEN="$SHARED_NM/.prisma/client" && \
     echo "  Shared @prisma/client: $SHARED_CLIENT_DIR" && \
     for schema in $(find services apps -name "schema.prisma" -not -path "*/node_modules/*" -not -path "*/dist/*"); do \
       proj_root=$(dirname "$schema"); \
@@ -256,7 +263,7 @@ RUN DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholde
       (cd "/app/$proj_root" && prisma generate --schema=schema.prisma 2>&1) || \
         echo "  WARNING: prisma generate failed for $proj_root"; \
       SVC_NM="/app/$svc_root/node_modules"; \
-      rm -rf "$SVC_NM/@prisma/client" "$SVC_NM/.prisma"; \
+      rm -rf "$SVC_NM/@prisma/client"; \
       mkdir -p "$SVC_NM/@prisma/client"; \
       cp -r "$SHARED_CLIENT_DIR/." "$SVC_NM/@prisma/client/"; \
       rm -rf "$SVC_NM/@prisma/client/node_modules"; \
@@ -270,8 +277,6 @@ RUN DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholde
           echo "  WARNING: Custom output $FULL_OUTPUT not found for $svc_root"; \
         fi; \
       else \
-        mkdir -p "$SVC_NM/.prisma/client"; \
-        cp -r "$SHARED_GEN/." "$SVC_NM/.prisma/client/"; \
         echo "module.exports = { ...require('$SVC_NM/.prisma/client') }" > "$SVC_NM/@prisma/client/index.js"; \
         echo "module.exports = { ...require('$SVC_NM/.prisma/client') }" > "$SVC_NM/@prisma/client/default.js"; \
       fi; \
