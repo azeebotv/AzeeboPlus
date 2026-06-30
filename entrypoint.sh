@@ -141,7 +141,7 @@ no-appendfsync-on-rewrite yes
 auto-aof-rewrite-percentage 100
 auto-aof-rewrite-min-size 64mb
 maxmemory 512mb
-maxmemory-policy allkeys-lru
+maxmemory-policy noeviction
 save 900 1
 save 300 10
 save 60 10000
@@ -238,6 +238,26 @@ MIGRATE_SERVICES=(
   "services/engagement/referral-service:referral-service:azeebo_referral:azeebo:${REFERRAL_DB_PASSWORD:-$POSTGRES_PASSWORD}"
   "services/engagement/subscription-service:subscription-service:azeebo_subscription:azeebo:${SUBSCRIPTION_DB_PASSWORD:-$POSTGRES_PASSWORD}"
 )
+
+# First: resolve any stuck/failed Prisma migrations (P3009) before deploying
+for entry in "${MIGRATE_SERVICES[@]}"; do
+  IFS=':' read -r svc_dir svc_name db_name db_user db_pass <<< "$entry"
+
+  # Check if prisma_migrations table exists and has stuck failures
+  failed_migrations=$(PGPASSWORD="$db_pass" psql -h 127.0.0.1 -U "$db_user" -d "$db_name" -t -A -c \
+    "SELECT migration_name FROM prisma_migrations WHERE finished_at IS NULL AND rolling_back_at IS NULL AND started_at IS NOT NULL LIMIT 50" 2>/dev/null || echo "")
+
+  if [ -n "$failed_migrations" ]; then
+    echo "    Resolving stuck migrations for $svc_name..."
+    while IFS= read -r migration_name; do
+      [ -z "$migration_name" ] && continue
+      echo "      Resolving: $migration_name"
+      DATABASE_URL="postgresql://$db_user:$db_pass@127.0.0.1:5432/$db_name?schema=public" \
+        prisma migrate resolve --rolled-back "$migration_name" --schema="$svc_dir/prisma/schema.prisma" 2>&1 || \
+        echo "      WARNING: Could not resolve $migration_name (may already be resolved)"
+    done <<< "$failed_migrations"
+  fi
+done
 
 for entry in "${MIGRATE_SERVICES[@]}"; do
   IFS=':' read -r svc_dir svc_name db_name db_user db_pass <<< "$entry"

@@ -11,28 +11,24 @@ BEGIN;
 -- AUTH SERVICE TABLES
 -- ============================================================================
 
-CREATE TABLE IF NOT EXISTS "auth_users" (
+CREATE TABLE IF NOT EXISTS "users" (
   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
   email TEXT UNIQUE NOT NULL,
-  "phoneNumber" TEXT UNIQUE,
-  "passwordHash" TEXT NOT NULL,
-  "firstName" TEXT NOT NULL,
-  "lastName" TEXT NOT NULL,
+  password TEXT NOT NULL DEFAULT '',
   "displayName" TEXT NOT NULL,
   avatar TEXT,
-  "dateOfBirth" DATE,
-  "emailVerified" BOOLEAN NOT NULL DEFAULT false,
-  "phoneVerified" BOOLEAN NOT NULL DEFAULT false,
-  "twoFactorEnabled" BOOLEAN NOT NULL DEFAULT false,
-  "twoFactorSecret" TEXT,
-  status TEXT NOT NULL DEFAULT 'active',
-  "lastLoginAt" TIMESTAMPTZ,
+  role TEXT NOT NULL DEFAULT 'user',
+  preferences JSONB,
+  "isVerified" BOOLEAN NOT NULL DEFAULT false,
+  "mfaEnabled" BOOLEAN NOT NULL DEFAULT false,
+  "mfaSecret" TEXT,
+  "mfaBackupCodes" TEXT,
   "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
   "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-CREATE INDEX IF NOT EXISTS idx_auth_users_email ON "auth_users"(email);
-CREATE INDEX IF NOT EXISTS idx_auth_users_phone ON "auth_users"("phoneNumber");
-CREATE INDEX IF NOT EXISTS idx_auth_users_status ON "auth_users"(status);
+CREATE INDEX IF NOT EXISTS idx_users_email ON "users"(email);
+CREATE INDEX IF NOT EXISTS idx_users_role ON "users"(role);
+CREATE INDEX IF NOT EXISTS idx_users_created_at ON "users"("createdAt");
 
 CREATE TABLE IF NOT EXISTS "user_roles" (
   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
