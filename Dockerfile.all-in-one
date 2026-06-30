@@ -144,14 +144,19 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     mkdir -p apps/admin/dist/generated && cp -r apps/admin/src/generated/prisma apps/admin/dist/generated/prisma && \
     mkdir -p apps/creator-portal/dist/generated && cp -r apps/creator-portal/src/generated/prisma apps/creator-portal/dist/generated/prisma && \
     echo "=== Flattening nested dist directories ===" && \
-    for svc in $(find services -name "dist" -type d -not -path "*/node_modules/*"); do \
-      nested_main=$(find "$svc" -name "main.js" -path "*/src/*" -not -path "$svc/main.js" 2>/dev/null | head -1); \
-      if [ -n "$nested_main" ] && [ ! -f "$svc/main.js" ]; then \
-        nested_dir=$(dirname "$nested_main"); \
-        echo "Flattening: $nested_dir/ -> $svc/"; \
-        (cd "$nested_dir" && find . -type f \( -name "*.js" -o -name "*.d.ts" \) | while read f; do \
-          mkdir -p "$svc/$(dirname "$f")" && cp "$f" "$svc/$f"; \
-        done); \
+    for svc_dir in $(find services -maxdepth 2 -mindepth 2 -type d -not -path "*/node_modules/*" | sort); do \
+      dist="$svc_dir/dist"; \
+      [ -d "$dist" ] || continue; \
+      nested_main=$(find "$dist" -maxdepth 5 -name "main.js" -path "*/src/*" ! -path "$dist/main.js" 2>/dev/null | head -1); \
+      if [ -n "$nested_main" ]; then \
+        nested_src=$(echo "$nested_main" | sed 's|/src/.*||'); \
+        echo "Flattening: $nested_src/src/ -> $dist/"; \
+        find "$nested_src/src" -maxdepth 1 -type f \( -name "*.js" -o -name "*.d.ts" \) -exec cp {} "$dist/" \; 2>/dev/null; \
+        find "$nested_src/src" -mindepth 2 -type f \( -name "*.js" -o -name "*.d.ts" \) | while read f; do \
+          rel="${f#$nested_src/src/}"; \
+          mkdir -p "$dist/$(dirname "$rel")" && cp "$f" "$dist/$rel"; \
+        done 2>/dev/null; \
+        rm -rf "$nested_src" 2>/dev/null; \
       fi; \
     done && \
     echo "=== Flattened dist inventory ===" && \
