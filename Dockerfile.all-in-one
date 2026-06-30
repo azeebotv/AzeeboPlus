@@ -143,10 +143,17 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     pnpm --filter @azeebo/creator-portal prisma:generate && pnpm --filter @azeebo/creator-portal run build && \
     mkdir -p apps/admin/dist/generated && cp -r apps/admin/src/generated/prisma apps/admin/dist/generated/prisma && \
     mkdir -p apps/creator-portal/dist/generated && cp -r apps/creator-portal/src/generated/prisma apps/creator-portal/dist/generated/prisma && \
-    pnpm --filter @azeebo/web run build && \
-    echo "=== Web build output check ===" ; \
-    ls -la apps/web/.next/standalone/server.js 2>&1; \
-    ls -la apps/web/.next/ 2>&1 | head -15
+    echo "=== Flattening nested dist directories ===" && \
+    for svc in $(find services -name "dist" -type d -not -path "*/node_modules/*"); do \
+      nested=$(find "$svc" -name "main.js" -path "*/src/*" 2>/dev/null | head -1); \
+      if [ -n "$nested" ] && [ ! -f "$svc/main.js" ]; then \
+        echo "Flattening: $nested -> $svc/main.js"; \
+        cp "$nested" "$svc/main.js"; \
+      fi; \
+    done && \
+    echo "=== Flattened dist inventory ===" && \
+    find services -name "main.js" -path "*/dist/*" | sort && \
+    pnpm --filter @azeebo/web run build
 
 # Create /runtime with only what the container needs at runtime.
 # Each copy section is independent (;) so a failure in one section does NOT
