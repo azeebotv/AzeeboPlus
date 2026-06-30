@@ -251,21 +251,19 @@ RUN DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholde
       (cd "/app/$proj_root" && prisma generate --schema=schema.prisma 2>&1) || \
         echo "  WARNING: prisma generate failed for $proj_root"; \
       SVC_NM="/app/$svc_root/node_modules"; \
-      rm -rf "$SVC_NM/@prisma/client" "$SVC_NM/.prisma"; \
-      mkdir -p "$SVC_NM/@prisma/client" "$SVC_NM/.prisma/client"; \
+      rm -rf "$SVC_NM/@prisma/client"; \
+      mkdir -p "$SVC_NM/@prisma/client"; \
       cp -r "$SHARED_CLIENT_DIR/." "$SVC_NM/@prisma/client/"; \
       rm -rf "$SVC_NM/@prisma/client/node_modules"; \
       CUSTOM_OUTPUT=$(grep -m1 'output\s*=' "/app/$schema" | sed 's/.*"\(.*\)".*/\1/'); \
       if [ -n "$CUSTOM_OUTPUT" ]; then \
         FULL_OUTPUT="/app/$proj_root/$CUSTOM_OUTPUT"; \
         if [ -d "$FULL_OUTPUT" ]; then \
-          cp -r "$FULL_OUTPUT/." "$SVC_NM/.prisma/client/"; \
+          echo "module.exports = { ...require('$FULL_OUTPUT') }" > "$SVC_NM/@prisma/client/index.js"; \
+          echo "module.exports = { ...require('$FULL_OUTPUT') }" > "$SVC_NM/@prisma/client/default.js"; \
         else \
           echo "  WARNING: Custom output $FULL_OUTPUT not found for $svc_root"; \
-          cp -r "$SHARED_GEN/." "$SVC_NM/.prisma/client/"; \
         fi; \
-      else \
-        cp -r "$SHARED_GEN/." "$SVC_NM/.prisma/client/"; \
       fi; \
       cd /app; \
     done && \
