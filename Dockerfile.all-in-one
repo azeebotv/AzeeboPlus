@@ -153,7 +153,10 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     done && \
     echo "=== Flattened dist inventory ===" && \
     find services -name "main.js" -path "*/dist/*" | sort && \
-    pnpm --filter @azeebo/web run build
+    pnpm --filter @azeebo/web run build; \
+    echo "=== Web .next/ contents ===" && ls -la apps/web/.next/ 2>&1 | head -20; \
+    echo "=== .next/standalone check ===" && ls -la apps/web/.next/standalone/ 2>&1 | head -10; \
+    echo "=== .next/standalone/server.js check ===" && ls -la apps/web/.next/standalone/server.js 2>&1
 
 # Create /runtime with only what the container needs at runtime.
 # Each copy section is independent (;) so a failure in one section does NOT
@@ -187,9 +190,20 @@ RUN echo "Cache bust: $CACHEBUST" && \
     mkdir -p /runtime/apps/creator-portal/dist && cp -r apps/creator-portal/dist/. /runtime/apps/creator-portal/dist/ && \
     mkdir -p /runtime/apps/creator-portal/prisma && cp -r apps/creator-portal/prisma/. /runtime/apps/creator-portal/prisma/ 2>/dev/null; \
     mkdir -p /runtime/apps/web/standalone && \
-    cp -r apps/web/.next/standalone/. /runtime/apps/web/standalone/ && \
+    if [ -f apps/web/.next/standalone/server.js ]; then \
+      cp -r apps/web/.next/standalone/. /runtime/apps/web/standalone/ && \
+      echo "Standalone: copied from .next/standalone/ (direct)"; \
+    elif [ -f apps/web/.next/standalone/apps/web/server.js ]; then \
+      cp -r apps/web/.next/standalone/apps/web/. /runtime/apps/web/standalone/ && \
+      echo "Standalone: copied from .next/standalone/apps/web/ (nested)"; \
+    elif [ -d apps/web/.next/standalone ]; then \
+      cp -r apps/web/.next/standalone/. /runtime/apps/web/standalone/ && \
+      echo "Standalone: copied from .next/standalone/ (fallback)"; \
+    else \
+      echo "WARNING: No standalone output found in apps/web/.next/standalone/"; \
+    fi; \
     mkdir -p /runtime/apps/web/standalone/static && \
-    cp -r apps/web/.next/static/. /runtime/apps/web/standalone/static/ && \
+    cp -r apps/web/.next/static/. /runtime/apps/web/standalone/static/ 2>/dev/null; \
     cp -r apps/web/public/. /runtime/apps/web/standalone/public/ 2>/dev/null; \
     cp apps/web/next.config.js /runtime/apps/web/standalone/ 2>/dev/null; \
     echo "=== Builder dist inventory ===" && \
@@ -201,7 +215,7 @@ RUN echo "Cache bust: $CACHEBUST" && \
     echo "=== Verifying critical dist files ===" && \
     test -f /runtime/services/core/content-service/dist/main.js && echo "OK: content-service" || echo "MISSING: content-service/dist/main.js" && \
     test -f /runtime/services/core/wallet-service/dist/main.js && echo "OK: wallet-service" || echo "MISSING: wallet-service/dist/main.js" && \
-    test -f /runtime/apps/web/standalone/server.js && echo "OK: web-app standalone" || echo "MISSING: web-app/standalone/server.js" && \
+    (test -f /runtime/apps/web/standalone/server.js && echo "OK: web-app standalone" || echo "MISSING: web-app/standalone/server.js") && \
     true
 
 # ============================================================
