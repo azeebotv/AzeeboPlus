@@ -251,7 +251,7 @@ RUN DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholde
       (cd "/app/$proj_root" && prisma generate --schema=schema.prisma 2>&1) || \
         echo "  WARNING: prisma generate failed for $proj_root"; \
       SVC_NM="/app/$svc_root/node_modules"; \
-      rm -rf "$SVC_NM/@prisma/client"; \
+      rm -rf "$SVC_NM/@prisma/client" "$SVC_NM/.prisma"; \
       mkdir -p "$SVC_NM/@prisma/client"; \
       cp -r "$SHARED_CLIENT_DIR/." "$SVC_NM/@prisma/client/"; \
       rm -rf "$SVC_NM/@prisma/client/node_modules"; \
@@ -264,6 +264,11 @@ RUN DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholde
         else \
           echo "  WARNING: Custom output $FULL_OUTPUT not found for $svc_root"; \
         fi; \
+      else \
+        mkdir -p "$SVC_NM/.prisma/client"; \
+        cp -r "$SHARED_GEN/." "$SVC_NM/.prisma/client/"; \
+        echo "module.exports = { ...require('$SVC_NM/.prisma/client') }" > "$SVC_NM/@prisma/client/index.js"; \
+        echo "module.exports = { ...require('$SVC_NM/.prisma/client') }" > "$SVC_NM/@prisma/client/default.js"; \
       fi; \
       cd /app; \
     done && \
