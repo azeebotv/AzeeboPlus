@@ -80,8 +80,12 @@ COPY . .
 ARG NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_URL}
 
+# Cache-bust: set to a unique value (e.g. git hash or timestamp) to force rebuild
+ARG CACHEBUST
+
 # Build shared packages, then all services, then apps — single merged layer
 RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
+    echo "Cache bust: $CACHEBUST" && \
     pnpm --filter @azeebo/utils run build && \
     pnpm --filter @azeebo/shared-types run build && \
     pnpm --filter @azeebo/validation run build && \
@@ -126,7 +130,8 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     pnpm --filter @azeebo/web run build
 
 # Create /runtime with only what the container needs at runtime.
-RUN mkdir -p /runtime/node_modules && \
+RUN echo "Cache bust: $CACHEBUST" && \
+    mkdir -p /runtime/node_modules && \
     cp package.json pnpm-lock.yaml pnpm-workspace.yaml /runtime/ && \
     find . -maxdepth 4 -name "package.json" \
       -not -path "*/node_modules/*" \
