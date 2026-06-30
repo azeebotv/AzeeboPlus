@@ -255,14 +255,18 @@ RUN mkdir -p /app/node_modules/@azeebo && \
 # shared .prisma/client that prisma generate just wrote).
 #
 # IMPORTANT: Do NOT rm -rf .prisma — that deletes the generated client that
-# prisma generate just wrote. Only rm -rf @prisma/client (the shim target).
+# prisma generate just wrote. Only rm -rf @prisma/client (to replace with shared).
+#
+# Non-custom-output services: leave @prisma/client intact — the real package's
+# index.js resolves .prisma/client/ automatically via relative require.
+# Custom-output services: replace @prisma/client/index.js with shim pointing to
+# the custom output dir (e.g., src/prisma/client/).
 #
 # DATABASE_URL is required by prisma generate (schema validation) even though no connection is made.
 RUN DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholder" && \
     export DATABASE_URL && \
     SHARED_CLIENT_DIR=$(cd /app/services/core/auth-service && node -e "console.log(require('path').dirname(require.resolve('@prisma/client')))" 2>/dev/null) && \
     echo "  Shared @prisma/client: $SHARED_CLIENT_DIR" && \
-    mkdir -p /app/.prisma-clients && \
     for schema in $(find services apps -name "schema.prisma" -not -path "*/node_modules/*" -not -path "*/dist/*"); do \
       proj_root=$(dirname "$schema"); \
       svc_root=$(dirname "$proj_root"); \
@@ -286,22 +290,11 @@ RUN DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholde
       else \
         (cd "/app/$proj_root" && prisma generate --schema=schema.prisma 2>&1) || \
           echo "  WARNING: prisma generate failed for $proj_root"; \
-        ISOLATED="/app/.prisma-clients/$(echo "$svc_root" | tr / _)"; \
-        rm -rf "$ISOLATED" && mkdir -p "$ISOLATED"; \
-        PRISMA_SRC=""; \
-        if [ -d "/app/$svc_root/node_modules/.prisma/client" ]; then \
-          PRISMA_SRC="/app/$svc_root/node_modules/.prisma/client"; \
-        elif [ -d "/app/node_modules/.prisma/client" ]; then \
-          PRISMA_SRC="/app/node_modules/.prisma/client"; \
-        fi; \
-        if [ -n "$PRISMA_SRC" ]; then \
-          cp -r "$PRISMA_SRC/." "$ISOLATED/"; \
-          echo "  Isolated Prisma client for $svc_root from $PRISMA_SRC -> $ISOLATED"; \
+        if [ -d "$SVC_NM/.prisma/client" ]; then \
+          echo "  Generated Prisma client for $svc_root at $SVC_NM/.prisma/client"; \
         else \
-          echo "  ERROR: No .prisma/client found for $svc_root after generate!"; \
+          echo "  WARNING: No .prisma/client found for $svc_root after generate!"; \
         fi; \
-        echo "module.exports = { ...require('$ISOLATED') }" > "$SVC_NM/@prisma/client/index.js"; \
-        echo "module.exports = { ...require('$ISOLATED') }" > "$SVC_NM/@prisma/client/default.js"; \
       fi; \
       cd /app; \
     done && \
