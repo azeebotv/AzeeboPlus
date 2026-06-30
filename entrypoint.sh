@@ -502,10 +502,30 @@ export TWILIO_ACCOUNT_SID="${TWILIO_ACCOUNT_SID:-}"
 export TWILIO_AUTH_TOKEN="${TWILIO_AUTH_TOKEN:-}"
 export TWILIO_PHONE_NUMBER="${TWILIO_PHONE_NUMBER:-}"
 export NODE_OPTIONS="--max-old-space-size=512"
+if [ "$svc_name" = "auth-service" ]; then
+  /app/service-wrappers/auth-service-flush.sh || true
+fi
 exec node /app/${main_js}
 WRAPPER
   chmod +x "/app/service-wrappers/${svc_name}.sh"
 done
+
+# Flush stale rate limit keys on auth-service startup
+cat > /app/service-wrappers/auth-service-flush.sh << 'FLUSH'
+#!/bin/bash
+# Wait for Redis to be ready, then flush rate limit keys
+for i in $(seq 1 30); do
+  if redis-cli -a "$REDIS_PASSWORD" ping >/dev/null 2>&1; then
+    redis-cli -a "$REDIS_PASSWORD" --no-auth-warning keys "rate_limit:*" | xargs -r redis-cli -a "$REDIS_PASSWORD" --no-auth-warning del >/dev/null 2>&1
+    redis-cli -a "$REDIS_PASSWORD" --no-auth-warning keys "ratelimit:*" | xargs -r redis-cli -a "$REDIS_PASSWORD" --no-auth-warning del >/dev/null 2>&1
+    echo "    Flushed stale rate limit keys from Redis"
+    exit 0
+  fi
+  sleep 1
+done
+echo "    WARNING: Could not flush rate limit keys (Redis not ready)"
+FLUSH
+chmod +x /app/service-wrappers/auth-service-flush.sh
 
 # API gateway wrapper (routes to services)
 cat > /app/service-wrappers/api-gateway.sh << WRAPPER

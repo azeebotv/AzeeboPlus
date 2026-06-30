@@ -42,7 +42,7 @@ export class AuthController {
 
   @Post('login')
   @UseGuards(RateLimitGuard)
-  @RateLimit(5, 900000) // 5 requests per 15 minutes
+  @RateLimit(20, 900000) // 20 requests per 15 minutes
   @ApiOperation({ summary: 'User login' })
   @ApiResponse({ status: 200, description: 'Login successful' })
   @ApiResponse({ status: 401, description: 'Invalid credentials' })
