@@ -166,6 +166,12 @@ RUN echo "Cache bust: $CACHEBUST" && \
     cp -r apps/web/.next/static/. /runtime/apps/web/standalone/static/ && \
     cp -r apps/web/public/. /runtime/apps/web/standalone/public/ 2>/dev/null; \
     cp apps/web/next.config.js /runtime/apps/web/standalone/ 2>/dev/null; \
+    echo "=== Builder dist inventory ===" && \
+    find services -maxdepth 3 -name "main.js" -path "*/dist/*" | sort && \
+    echo "=== Web standalone inventory ===" && \
+    ls -la apps/web/.next/standalone/server.js 2>/dev/null && echo "OK: standalone/server.js exists in builder" || echo "MISSING: standalone/server.js NOT in builder" && \
+    echo "=== /runtime dist inventory ===" && \
+    find /runtime/services -name "main.js" -path "*/dist/*" 2>/dev/null | sort && \
     echo "=== Verifying critical dist files ===" && \
     test -f /runtime/services/core/content-service/dist/main.js && echo "OK: content-service" || echo "MISSING: content-service/dist/main.js" && \
     test -f /runtime/services/core/wallet-service/dist/main.js && echo "OK: wallet-service" || echo "MISSING: wallet-service/dist/main.js" && \
@@ -282,12 +288,20 @@ RUN DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholde
           echo "  WARNING: prisma generate failed for $proj_root"; \
         ISOLATED="/app/.prisma-clients/$(echo "$svc_root" | tr / _)"; \
         rm -rf "$ISOLATED" && mkdir -p "$ISOLATED"; \
-        if [ -d "/app/node_modules/.prisma/client" ]; then \
-          cp -r /app/node_modules/.prisma/client/. "$ISOLATED/"; \
+        PRISMA_SRC=""; \
+        if [ -d "/app/$svc_root/node_modules/.prisma/client" ]; then \
+          PRISMA_SRC="/app/$svc_root/node_modules/.prisma/client"; \
+        elif [ -d "/app/node_modules/.prisma/client" ]; then \
+          PRISMA_SRC="/app/node_modules/.prisma/client"; \
+        fi; \
+        if [ -n "$PRISMA_SRC" ]; then \
+          cp -r "$PRISMA_SRC/." "$ISOLATED/"; \
+          echo "  Isolated Prisma client for $svc_root from $PRISMA_SRC -> $ISOLATED"; \
+        else \
+          echo "  ERROR: No .prisma/client found for $svc_root after generate!"; \
         fi; \
         echo "module.exports = { ...require('$ISOLATED') }" > "$SVC_NM/@prisma/client/index.js"; \
         echo "module.exports = { ...require('$ISOLATED') }" > "$SVC_NM/@prisma/client/default.js"; \
-        echo "  Isolated Prisma client for $svc_root at $ISOLATED"; \
       fi; \
       cd /app; \
     done && \
