@@ -60,7 +60,13 @@ INSERT INTO "users" (id, email, password, "displayName", avatar, role, "isVerifi
   ('a0000001-0000-0000-0000-000000000011', 'sportscreator@azeeboplus.com', '$2b$10$lLbu4m6fSQnzaCK1Frz32eoUFvToUh18TwhX7VVD9dAOCUt3HIWw.', 'Chinedu Sports', 'https://ui-avatars.com/api/?name=Chinedu+Obi&background=E65100&color=fff', 'user', true, '2025-03-10T00:00:00Z'),
   -- Gaming creator
   ('a0000001-0000-0000-0000-000000000012', 'gamer@azeeboplus.com', '$2b$10$lLbu4m6fSQnzaCK1Frz32eoUFvToUh18TwhX7VVD9dAOCUt3HIWw.', 'Tunde Gaming', 'https://ui-avatars.com/api/?name=Tunde+Olatunji&background=1A237E&color=fff', 'user', true, '2025-04-01T00:00:00Z')
-ON CONFLICT (id) DO NOTHING;
+ON CONFLICT (id) DO UPDATE SET
+  email = EXCLUDED.email,
+  password = EXCLUDED.password,
+  "displayName" = EXCLUDED."displayName",
+  avatar = EXCLUDED.avatar,
+  role = EXCLUDED.role,
+  "isVerified" = EXCLUDED."isVerified";
 
 -- ============================================================================
 -- SECTION 3: USER ROLES
