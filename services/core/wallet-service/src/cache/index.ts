@@ -1,1 +1,1 @@
-export * from '../../../../../packages/shared-services/src/cache';
+export * from '@azeebo/shared-services';
