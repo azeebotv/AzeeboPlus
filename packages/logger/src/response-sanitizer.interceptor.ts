@@ -20,13 +20,8 @@ const DEFAULT_MASK_FIELDS = ['email', 'phone', 'ssn'];
 
 @Injectable()
 export class ResponseSanitizationInterceptor implements NestInterceptor {
-  private readonly excludeFields: string[];
-  private readonly maskFields: string[];
-
-  constructor(config?: SanitizationConfig) {
-    this.excludeFields = config?.excludeFields || DEFAULT_EXCLUDE_FIELDS;
-    this.maskFields = config?.maskFields || DEFAULT_MASK_FIELDS;
-  }
+  private readonly excludeFields: string[] = DEFAULT_EXCLUDE_FIELDS;
+  private readonly maskFields: string[] = DEFAULT_MASK_FIELDS;
 
   intercept(_context: ExecutionContext, next: CallHandler): Observable<unknown> {
     return next.handle().pipe(

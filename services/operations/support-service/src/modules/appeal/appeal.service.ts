@@ -2,7 +2,7 @@ import { Injectable, Logger, NotFoundException, BadRequestException } from '@nes
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
 import { Prisma } from '@prisma/client';
-import { createApiClient } from '@azeebo/api-client';
+import { createApiClient, noopTokenStorage } from '@azeebo/api-client';
 
 @Injectable()
 export class AppealService {
@@ -18,14 +18,17 @@ export class AppealService {
     this.contentServiceClient = createApiClient({
       baseUrl: this.configService.getOrThrow<string>('CONTENT_SERVICE_URL'),
       timeout: 30000,
+      tokenStorage: noopTokenStorage,
     });
     this.moderationServiceClient = createApiClient({
       baseUrl: this.configService.getOrThrow<string>('MODERATION_SERVICE_URL'),
       timeout: 30000,
+      tokenStorage: noopTokenStorage,
     });
     this.userServiceClient = createApiClient({
       baseUrl: this.configService.getOrThrow<string>('USER_SERVICE_URL'),
       timeout: 30000,
+      tokenStorage: noopTokenStorage,
     });
   }
 

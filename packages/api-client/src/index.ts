@@ -257,4 +257,18 @@ const createApiClient = (config: ApiClientConfig): ApiClient => {
   return new ApiClient(config);
 };
 
-export { ApiClient, ApiClientConfig, createApiClient, generateIdempotencyKey };
+class NoopTokenStorage implements TokenStorage {
+  get(): string | null {
+    return null;
+  }
+  set(_token: string): void {
+    // no-op for server-side usage
+  }
+  remove(): void {
+    // no-op for server-side usage
+  }
+}
+
+const noopTokenStorage = new NoopTokenStorage();
+
+export { ApiClient, ApiClientConfig, createApiClient, generateIdempotencyKey, noopTokenStorage };

@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import axios from 'axios';
 import { createHmac } from 'crypto';
 import { CircuitBreaker, CircuitBreakerOpenError } from '@azeebo/shared-types';
@@ -79,16 +79,17 @@ export class PaystackProvider {
   private readonly circuitBreaker: CircuitBreaker;
 
   constructor() {
-    this.apiKey = process.env.PAYSTACK_SECRET_KEY!;
+    this.apiKey = process.env.PAYSTACK_SECRET_KEY || '';
     if (!this.apiKey) {
-      throw new Error('PAYSTACK_SECRET_KEY is not configured');
+      this.logger.warn('PAYSTACK_SECRET_KEY is not configured — Paystack payments will be unavailable');
+    } else {
+      this.logger.log('PaystackProvider initialized with circuit breaker');
     }
     this.circuitBreaker = new CircuitBreaker({
       failureThreshold: 5,
       resetTimeout: 60000,
       halfOpenRequests: 3,
     });
-    this.logger.log('PaystackProvider initialized with circuit breaker');
   }
 
   async initializePayment(
@@ -96,6 +97,9 @@ export class PaystackProvider {
     currency: string,
     userId: string
   ): Promise<InitializeResult> {
+    if (!this.apiKey) {
+      throw new BadRequestException('Paystack payments are not configured');
+    }
     try {
       const result = await this.circuitBreaker.execute(async () => {
         const response = await axios.post<PaystackInitializeResponse>(
@@ -142,6 +146,9 @@ export class PaystackProvider {
   }
 
   async verifyPayment(reference: string): Promise<VerifyResult> {
+    if (!this.apiKey) {
+      throw new BadRequestException('Paystack payments are not configured');
+    }
     try {
       const result = await this.circuitBreaker.execute(async () => {
         const response = await axios.get<PaystackVerifyResponse>(
@@ -180,6 +187,9 @@ export class PaystackProvider {
   }
 
   async processRefund(transactionReference: string, reason: string): Promise<RefundResult> {
+    if (!this.apiKey) {
+      throw new BadRequestException('Paystack payments are not configured');
+    }
     try {
       const result = await this.circuitBreaker.execute(async () => {
         const response = await axios.post<PaystackRefundResponse>(
@@ -223,6 +233,9 @@ export class PaystackProvider {
     payload: Record<string, unknown>,
     signature: string
   ): Promise<boolean> {
+    if (!this.apiKey) {
+      return false;
+    }
     const hash: string = createHmac('sha512', this.apiKey)
       .update(JSON.stringify(payload))
       .digest('hex');

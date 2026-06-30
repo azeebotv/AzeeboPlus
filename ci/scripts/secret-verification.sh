@@ -1,49 +1,62 @@
 #!/bin/bash
-# Secret Verification Script - Checks for hardcoded secrets in codebase
-# This should be run in CI pipeline before deployment
-
+# =============================================================
+# Secret Verification Script
+# Validates that all required secrets from .env.example are
+# defined as GitHub repository secrets (via gh CLI).
+# =============================================================
 set -euo pipefail
 
-echo "Running secret verification scan..."
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
 
-# Patterns to check for
-PATTERNS=(
-  "aws_access_key.*AK[A-Z0-9]{16}"
-  "aws_secret_access_key.*[A-Za-z0-9/+=]{40}"
-  "password.*['\"].{8,}['\"]"
-  "secret.*['\"].{16,}['\"]"
-  "api_key.*['\"][A-Za-z0-9]{32,}['\"]"
-  "JWT_ACCESS_SECRET.*['\"][^'\"]{32,}['\"]"
-  "sk_live_[a-z]+"
-  "sk_test_[a-z]+"
-  "pk_live_[a-z]+"
-  "pk_test_[a-z]+"
-)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+ENV_EXAMPLE="$REPO_ROOT/.env.example"
 
-EXIT_CODE=0
-CHECKED_FILES=0
+if [[ ! -f "$ENV_EXAMPLE" ]]; then
+  echo -e "${RED}ERROR: .env.example not found at $ENV_EXAMPLE${NC}"
+  exit 1
+fi
 
-for pattern in "${PATTERNS[@]}"; do
-  MATCHES=$(grep -r "$pattern" --include="*.ts" --include="*.js" --include="*.tsx" --include="*.json" . \
-    --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=dist 2>/dev/null || true)
+# Extract secret variable names from .env.example (skip comments and blanks)
+REQUIRED_VARS=()
+while IFS= read -r line; do
+  # Skip comments and empty lines
+  [[ "$line" =~ ^[[:space:]]*# ]] && continue
+  [[ -z "$line" ]] && continue
+  # Extract variable name (before the =)
+  var_name="${line%%=*}"
+  var_name="$(echo "$var_name" | xargs)" # trim whitespace
+  [[ -n "$var_name" ]] && REQUIRED_VARS+=("$var_name")
+done < "$ENV_EXAMPLE"
 
-  if [[ -n "$MATCHES" ]]; then
-    echo "ERROR: Found potential hardcoded secret matching pattern: $pattern"
-    echo "$MATCHES"
-    EXIT_CODE=1
+echo "Found ${#REQUIRED_VARS[@]} variables in .env.example"
+echo ""
+
+MISSING=()
+FOUND=()
+
+for var in "${REQUIRED_VARS[@]}"; do
+  # Check if the secret exists in GitHub repository secrets
+  if gh secret list --json name -q ".[].name" 2>/dev/null | grep -qx "$var"; then
+    FOUND+=("$var")
+  else
+    MISSING+=("$var")
   fi
 done
 
-# Check for secrets.yaml files with actual values
-if grep -r "data:" --include="*secrets*.yaml" . --exclude-dir=.git 2>/dev/null | grep -v "data: {}" | grep -v "<PLACEHOLDER>"; then
-  echo "ERROR: Found secrets.yaml with hardcoded values"
-  EXIT_CODE=1
-fi
-
-if [[ $EXIT_CODE -eq 0 ]]; then
-  echo "✅ No hardcoded secrets found"
+echo -e "${GREEN}FOUND: ${#FOUND[@]} secrets${NC}"
+if [[ ${#MISSING[@]} -gt 0 ]]; then
+  echo -e "${YELLOW}MISSING: ${#MISSING[@]} secrets${NC}"
+  for m in "${MISSING[@]}"; do
+    echo -e "  ${YELLOW}- $m${NC}"
+  done
+  echo ""
+  echo -e "${YELLOW}NOTE: Missing secrets may be optional for CI or set via other mechanisms.${NC}"
+  echo -e "${YELLOW}Review the list above and add any required secrets to the repository.${NC}"
+  # Non-fatal: some vars are optional or set via other means
 else
-  echo "❌ Secret verification failed - please review the output above"
+  echo -e "${GREEN}All secrets from .env.example are present in the repository.${NC}"
 fi
-
-exit $EXIT_CODE

@@ -1,5 +1,15 @@
 import { z } from 'zod';
 
+// Preprocess: normalize CORS_ORIGIN into ALLOWED_ORIGINS (used in .env.production)
+function normalizeCorsOrigin(
+  env: Record<string, string | undefined>
+): Record<string, string | undefined> {
+  if (!env.ALLOWED_ORIGINS && env.CORS_ORIGIN) {
+    return { ...env, ALLOWED_ORIGINS: env.CORS_ORIGIN };
+  }
+  return env;
+}
+
 export const environmentSchema = z.object({
   // Node Environment
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
@@ -72,6 +82,9 @@ export const environmentSchema = z.object({
 
   // Security
   ADMIN_EMAIL: z.string().email().optional(),
+
+  // All-in-one mode (disables localhost restrictions for single-container deployments)
+  ALL_IN_ONE: z.string().optional(),
 });
 
 export type EnvironmentVariables = z.infer<typeof environmentSchema>;
@@ -87,7 +100,8 @@ export class EnvValidationError extends Error {
 }
 
 export function validateEnvironment(env: Record<string, string | undefined>): EnvironmentVariables {
-  const result = environmentSchema.safeParse(env);
+  const normalized = normalizeCorsOrigin(env);
+  const result = environmentSchema.safeParse(normalized);
 
   if (!result.success) {
     const missing: string[] = [];
@@ -115,6 +129,7 @@ export function validateEnvironment(env: Record<string, string | undefined>): En
 
 function validateProductionEnvironment(env: EnvironmentVariables): void {
   const errors: string[] = [];
+  const isAllInOne = env.ALL_IN_ONE === 'true';
 
   // Check JWT secret strength
   if (env.JWT_ACCESS_SECRET.length < 64) {
@@ -130,17 +145,21 @@ function validateProductionEnvironment(env: EnvironmentVariables): void {
     errors.push('At least one payment provider secret must be configured in production');
   }
 
-  // Check payment webhook secrets
-  if (env.PAYSTACK_SECRET_KEY && !env.PAYSTACK_WEBHOOK_SECRET) {
-    errors.push('PAYSTACK_WEBHOOK_SECRET must be configured when PAYSTACK_SECRET_KEY is set');
+  // Check payment webhook secrets (skip pairing check in all-in-one mode - can be configured later)
+  if (!isAllInOne) {
+    if (env.PAYSTACK_SECRET_KEY && !env.PAYSTACK_WEBHOOK_SECRET) {
+      errors.push('PAYSTACK_WEBHOOK_SECRET must be configured when PAYSTACK_SECRET_KEY is set');
+    }
+
+    if (env.FLUTTERWAVE_SECRET_KEY && !env.FLUTTERWAVE_WEBHOOK_SECRET) {
+      errors.push(
+        'FLUTTERWAVE_WEBHOOK_SECRET must be configured when FLUTTERWAVE_SECRET_KEY is set'
+      );
+    }
   }
 
-  if (env.FLUTTERWAVE_SECRET_KEY && !env.FLUTTERWAVE_WEBHOOK_SECRET) {
-    errors.push('FLUTTERWAVE_WEBHOOK_SECRET must be configured when FLUTTERWAVE_SECRET_KEY is set');
-  }
-
-  // Check allowed origins
-  if (env.ALLOWED_ORIGINS.includes('localhost') || env.ALLOWED_ORIGINS === '*') {
+  // Check allowed origins (skip localhost check in all-in-one mode)
+  if (!isAllInOne && (env.ALLOWED_ORIGINS.includes('localhost') || env.ALLOWED_ORIGINS === '*')) {
     errors.push('ALLOWED_ORIGINS cannot include localhost or wildcard in production');
   }
 
@@ -156,8 +175,8 @@ function validateProductionEnvironment(env: EnvironmentVariables): void {
     );
   }
 
-  // Check notification provider credentials
-  if (!env.SENDGRID_API_KEY && !env.TWILIO_ACCOUNT_SID) {
+  // Check notification provider credentials (skip in all-in-one mode - can be configured later)
+  if (!isAllInOne && !env.SENDGRID_API_KEY && !env.TWILIO_ACCOUNT_SID) {
     errors.push(
       'At least one notification provider (SendGrid or Twilio) must be configured in production'
     );
@@ -169,32 +188,34 @@ function validateProductionEnvironment(env: EnvironmentVariables): void {
     );
   }
 
-  // Check that service URLs are not localhost
-  const serviceUrls: Array<keyof EnvironmentVariables> = [
-    'AUTH_SERVICE_URL',
-    'USER_SERVICE_URL',
-    'WALLET_SERVICE_URL',
-    'PAYMENT_SERVICE_URL',
-    'CONTENT_SERVICE_URL',
-    'NOTIFICATION_SERVICE_URL',
-    'REWARD_SERVICE_URL',
-    'SEARCH_SERVICE_URL',
-    'ANALYTICS_SERVICE_URL',
-    'MODERATION_SERVICE_URL',
-    'RECOMMENDATION_SERVICE_URL',
-    'CREATOR_SERVICE_URL',
-    'LIFESTYLE_SERVICE_URL',
-    'VERTICAL_SERVICE_URL',
-    'QUEUE_SERVICE_URL',
-    'MEDIA_SERVICE_URL',
-  ];
+  // Check that service URLs are not localhost (skip in all-in-one mode)
+  if (!isAllInOne) {
+    const serviceUrls: Array<keyof EnvironmentVariables> = [
+      'AUTH_SERVICE_URL',
+      'USER_SERVICE_URL',
+      'WALLET_SERVICE_URL',
+      'PAYMENT_SERVICE_URL',
+      'CONTENT_SERVICE_URL',
+      'NOTIFICATION_SERVICE_URL',
+      'REWARD_SERVICE_URL',
+      'SEARCH_SERVICE_URL',
+      'ANALYTICS_SERVICE_URL',
+      'MODERATION_SERVICE_URL',
+      'RECOMMENDATION_SERVICE_URL',
+      'CREATOR_SERVICE_URL',
+      'LIFESTYLE_SERVICE_URL',
+      'VERTICAL_SERVICE_URL',
+      'QUEUE_SERVICE_URL',
+      'MEDIA_SERVICE_URL',
+    ];
 
-  serviceUrls.forEach((urlName) => {
-    const url = env[urlName];
-    if (typeof url === 'string' && (url.includes('localhost') || url.includes('127.0.0.1'))) {
-      errors.push(`${urlName} cannot point to localhost in production`);
-    }
-  });
+    serviceUrls.forEach((urlName) => {
+      const url = env[urlName];
+      if (typeof url === 'string' && (url.includes('localhost') || url.includes('127.0.0.1'))) {
+        errors.push(`${urlName} cannot point to localhost in production`);
+      }
+    });
+  }
 
   if (errors.length > 0) {
     throw new Error(`Production environment validation failed:\n${errors.join('\n')}`);

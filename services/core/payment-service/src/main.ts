@@ -6,7 +6,6 @@ import helmet from 'helmet';
 import { GlobalExceptionFilter } from '@azeebo/error-handling';
 import { LoggingInterceptor } from '@azeebo/logger';
 import { configureCors } from '@azeebo/security';
-import * as bodyParser from 'body-parser';
 import { validateEnvironment } from '@azeebo/shared-types';
 
 async function bootstrap(): Promise<void> {
@@ -19,21 +18,9 @@ async function bootstrap(): Promise<void> {
     process.exit(1);
   }
 
-  const app = await NestFactory.create(AppModule);
-
-  app.use('/webhooks', bodyParser.raw({ type: 'application/json' }));
-
-  app.use('/webhooks', (req: { body: Buffer | object }, _res: unknown, next: () => void) => {
-    if (req.body && Buffer.isBuffer(req.body)) {
-      try {
-        (req as unknown as { rawBody: string }).rawBody = req.body.toString('utf8');
-        req.body = JSON.parse((req as unknown as { rawBody: string }).rawBody);
-      } catch {
-        req.body = {};
-      }
-    }
-    next();
-  });
+  // rawBody: true captures the raw request buffer as req.rawBody (Buffer) for
+  // webhook signature verification, while still parsing JSON into req.body.
+  const app = await NestFactory.create(AppModule, { rawBody: true });
 
   app.use(
     helmet({

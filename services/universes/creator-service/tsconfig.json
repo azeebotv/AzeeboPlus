@@ -3,6 +3,7 @@
   "compilerOptions": {
     "outDir": "dist",
     "paths": {
+      "@prisma/client": ["./src/prisma/client"],
       "@azeebo/*": ["../../../packages/*/dist"],
       "@creator/*": ["./*"]
     }

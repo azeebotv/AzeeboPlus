@@ -1,16 +1,37 @@
 import { IsEnum, IsOptional, IsString, IsInt, Min } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import {
-  SupportTicketCategory,
-  SupportTicketPriority,
-  SupportTicketStatus,
-} from '@prisma/client';
+
+export enum SupportTicketCategory {
+  REFUND = 'REFUND',
+  CHARGEBACK = 'CHARGEBACK',
+  ACCOUNT_APPEAL = 'ACCOUNT_APPEAL',
+  CONTENT_TAKEDOWN = 'CONTENT_TAKEDOWN',
+  PAYOUT_DISPUTE = 'PAYOUT_DISPUTE',
+  USER_SUSPENSION = 'USER_SUSPENSION',
+  GENERAL = 'GENERAL',
+}
+
+export enum SupportTicketPriority {
+  LOW = 'LOW',
+  MEDIUM = 'MEDIUM',
+  HIGH = 'HIGH',
+  CRITICAL = 'CRITICAL',
+}
+
+export enum SupportTicketStatus {
+  OPEN = 'OPEN',
+  IN_PROGRESS = 'IN_PROGRESS',
+  PENDING_INFO = 'PENDING_INFO',
+  RESOLVED = 'RESOLVED',
+  CLOSED = 'CLOSED',
+  ESCALATED = 'ESCALATED',
+}
 
 export class CreateTicketDto {
   @ApiProperty({ enum: SupportTicketCategory })
   @IsEnum(SupportTicketCategory)
-  category: SupportTicketCategory = 'REFUND' as SupportTicketCategory;
+  category: SupportTicketCategory = SupportTicketCategory.REFUND;
 
   @ApiProperty()
   @IsString()
@@ -81,7 +102,7 @@ export class TicketQueryDto {
 export class UpdateStatusDto {
   @ApiProperty({ enum: SupportTicketStatus })
   @IsEnum(SupportTicketStatus)
-  status: SupportTicketStatus = 'OPEN' as SupportTicketStatus;
+  status: SupportTicketStatus = SupportTicketStatus.OPEN;
 
   @ApiPropertyOptional()
   @IsOptional()

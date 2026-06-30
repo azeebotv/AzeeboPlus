@@ -1,4 +1,4 @@
-FROM node:22-alpine AS builder
+FROM node:22.16.0-alpine AS builder
 WORKDIR /app
 
 RUN for i in 1 2 3 4 5; do npm install -g pnpm@10.33.2 && break || (echo "Retry $i/5..." && sleep 10); done
@@ -19,10 +19,10 @@ WORKDIR /app/services/engagement/engagement-service
 RUN nest build
 WORKDIR /app
 
-FROM node:22-alpine AS runner
+FROM node:22.16.0-alpine AS runner
 WORKDIR /app
 
-LABEL org.opencontainers.image.source="https://github.com/azeebo/azeebo-plus"
+LABEL org.opencontainers.image.source="https://github.com/azeebotv/AzeeboPlus"
 LABEL org.opencontainers.image.description="Azeebo+ Engagement Service"
 LABEL org.opencontainers.image.licenses="Proprietary"
 
@@ -53,4 +53,4 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
     CMD node -e "fetch('http://localhost:3023/live').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 
 ENTRYPOINT ["/sbin/tini", "--"]
-CMD ["node", "services/engagement/engagement-service/dist/services/engagement/engagement-service/src/main.js"]
+CMD ["node", "services/engagement/engagement-service/dist/main.js"]

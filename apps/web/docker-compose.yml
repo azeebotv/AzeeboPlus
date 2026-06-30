@@ -1,0 +1,30 @@
+services:
+  web:
+    build:
+      context: ../..
+      dockerfile: apps/web/Dockerfile
+      target: builder
+    container_name: azeebo-web
+    ports:
+      - "4000:4000"
+    volumes:
+      - ../../apps/web:/app/apps/web
+      - /app/apps/web/node_modules
+      - /app/apps/web/.next
+      - /app/node_modules
+      - ../../packages:/app/packages
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_API_URL=http://host.docker.internal:3013
+      - PORT=4000
+      - WATCHPACK_POLLING=true
+      - CHOKIDAR_USEPOLLING=true
+    command: ["pnpm", "--filter", "@azeebo/web", "dev"]
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - azeebo-dev
+
+networks:
+  azeebo-dev:
+    external: true
