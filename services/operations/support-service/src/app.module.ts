@@ -22,7 +22,7 @@ import { ServiceAuthGuard } from '@azeebo/security';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
-    RateLimiterModule,
+    RateLimiterModule.forRoot(),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       useFactory: (configService: ConfigService) => ({
