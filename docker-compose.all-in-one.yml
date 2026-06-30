@@ -17,7 +17,6 @@
 services:
   azeebo:
     image: ghcr.io/azeebotv/azeebo-all-in-one:dev
-    pull_policy: always
     container_name: azeebo-all-in-one
     labels:
       - "azeebo.service=all-in-one"
