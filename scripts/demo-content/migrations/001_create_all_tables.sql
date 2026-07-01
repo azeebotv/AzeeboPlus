@@ -438,18 +438,34 @@ CREATE TABLE IF NOT EXISTS "universe_feature_flags" (
 -- USER SERVICE TABLES
 -- ============================================================================
 
-CREATE TABLE IF NOT EXISTS "user_profiles" (
+CREATE TABLE IF NOT EXISTS "users" (
   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
-  "userId" TEXT UNIQUE NOT NULL,
+  email TEXT UNIQUE NOT NULL,
+  password TEXT NOT NULL DEFAULT '',
   "displayName" TEXT NOT NULL,
   avatar TEXT,
-  bio TEXT,
-  "dateOfBirth" DATE,
-  location TEXT,
-  website TEXT,
-  "isPublic" BOOLEAN NOT NULL DEFAULT true,
+  role TEXT NOT NULL DEFAULT 'user',
+  preferences JSONB DEFAULT '{}',
+  "isVerified" BOOLEAN NOT NULL DEFAULT false,
+  "mfaEnabled" BOOLEAN NOT NULL DEFAULT false,
+  "mfaSecret" TEXT,
+  "mfaBackupCodes" TEXT,
   "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
   "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_users_email ON "users"(email);
+CREATE INDEX IF NOT EXISTS idx_users_role ON "users"(role);
+
+CREATE TABLE IF NOT EXISTS "user_profiles" (
+   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+   "userId" TEXT UNIQUE NOT NULL,
+   "displayName" TEXT,
+   avatar TEXT,
+   bio TEXT,
+   location TEXT,
+   "isPublic" BOOLEAN NOT NULL DEFAULT true,
+   "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+   "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS "user_preferences" (
@@ -560,6 +576,7 @@ CREATE TABLE IF NOT EXISTS "wallet_transactions" (
    amount NUMERIC(18,2) NOT NULL,
    status TEXT NOT NULL,
    description TEXT,
+   reference TEXT,
    provider TEXT,
    "providerRef" TEXT,
    "idempotencyKey" TEXT UNIQUE,
@@ -1171,5 +1188,16 @@ CREATE TABLE IF NOT EXISTS "demo_content_versions" (
   status TEXT NOT NULL DEFAULT 'active'
 );
 CREATE INDEX IF NOT EXISTS idx_demo_versions_status ON "demo_content_versions"(status);
+
+-- ============================================================================
+-- ALTER: Add missing columns for cross-service compatibility
+-- These run after CREATE to ensure tables exist first
+-- ============================================================================
+
+-- Add missing columns to user_preferences (privacySettings)
+ALTER TABLE IF EXISTS "user_preferences" ADD COLUMN IF NOT EXISTS "privacySettings" JSONB DEFAULT '{"isPrivate":false,"showActivity":true,"allowMessages":true,"twoFactorEnabled":false}';
+
+-- Add missing columns to wallet_transactions (reference)
+ALTER TABLE IF EXISTS "wallet_transactions" ADD COLUMN IF NOT EXISTS reference TEXT;
 
 COMMIT;

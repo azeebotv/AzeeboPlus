@@ -2,10 +2,15 @@
 CREATE TABLE "users" (
     "id" TEXT NOT NULL,
     "email" TEXT NOT NULL,
+    "password" TEXT NOT NULL DEFAULT '',
     "displayName" TEXT NOT NULL,
     "avatar" TEXT,
     "role" TEXT NOT NULL DEFAULT 'user',
     "preferences" JSONB DEFAULT '{}',
+    "isVerified" BOOLEAN NOT NULL DEFAULT false,
+    "mfaEnabled" BOOLEAN NOT NULL DEFAULT false,
+    "mfaSecret" TEXT,
+    "mfaBackupCodes" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -19,6 +24,7 @@ CREATE TABLE "user_preferences" (
     "darkMode" BOOLEAN NOT NULL DEFAULT false,
     "notifications" JSONB DEFAULT '{}',
     "contentPreferences" JSONB DEFAULT '[]',
+    "privacySettings" JSONB DEFAULT '{"isPrivate":false,"showActivity":true,"allowMessages":true,"twoFactorEnabled":false}',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 

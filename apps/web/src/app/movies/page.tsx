@@ -24,7 +24,7 @@ export default function MoviesPage(): React.JSX.Element {
       try {
         setIsLoading(true);
         const [moviesRes, categoriesRes] = await Promise.all([
-          api.content.getContentByUniverse('movies', 1, 20),
+          api.content.getContentByUniverse('u0000001-0000-0000-0000-000000000004', 1, 20),
           api.content.getCategories(),
         ]);
         if (moviesRes.success && moviesRes.data) {
