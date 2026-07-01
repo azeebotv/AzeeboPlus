@@ -8,6 +8,18 @@
 BEGIN;
 
 -- ============================================================================
+-- CLEANUP: Remove tables from failed migrations (allows clean recreation)
+-- These migrations may have partially executed before failure
+-- ============================================================================
+
+DROP TABLE IF EXISTS "balance_snapshots" CASCADE;
+DROP TABLE IF EXISTS "delivery_attempts" CASCADE;
+DROP TABLE IF EXISTS "notification_preferences" CASCADE;
+DROP TABLE IF EXISTS "notification_templates" CASCADE;
+DROP TABLE IF EXISTS "campaigns" CASCADE;
+DROP TABLE IF EXISTS "campaign_triggers" CASCADE;
+
+-- ============================================================================
 -- AUTH SERVICE TABLES
 -- ============================================================================
 
@@ -23,26 +35,117 @@ CREATE TABLE IF NOT EXISTS "users" (
   "mfaEnabled" BOOLEAN NOT NULL DEFAULT false,
   "mfaSecret" TEXT,
   "mfaBackupCodes" TEXT,
-  "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
-  "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT now()
+"createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+   "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS idx_users_email ON "users"(email);
 CREATE INDEX IF NOT EXISTS idx_users_role ON "users"(role);
 CREATE INDEX IF NOT EXISTS idx_users_created_at ON "users"("createdAt");
 
+-- Auth Service sessions
+CREATE TABLE IF NOT EXISTS "sessions" (
+   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+   "userId" TEXT NOT NULL,
+   "refreshToken" TEXT UNIQUE,
+   "expiresAt" TIMESTAMPTZ NOT NULL,
+   "deviceName" TEXT,
+   "deviceType" TEXT,
+   os TEXT,
+   browser TEXT,
+   "ipAddress" TEXT,
+   "lastActiveAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+   "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+   "updatedAt" TIMESTAMPTZ
+);
+CREATE INDEX IF NOT EXISTS idx_sessions_user ON "sessions"("userId");
+CREATE INDEX IF NOT EXISTS idx_sessions_expires ON "sessions"("expiresAt");
+
+-- OTP for 2FA
+CREATE TABLE IF NOT EXISTS "otps" (
+   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+   "userId" TEXT UNIQUE NOT NULL,
+   code TEXT NOT NULL,
+   "expiresAt" TIMESTAMPTZ NOT NULL,
+   "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+   "updatedAt" TIMESTAMPTZ
+);
+CREATE INDEX IF NOT EXISTS idx_otps_user ON "otps"("userId");
+CREATE INDEX IF NOT EXISTS idx_otps_expires ON "otps"("expiresAt");
+
+-- Social accounts
+CREATE TABLE IF NOT EXISTS "social_accounts" (
+   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+   "userId" TEXT NOT NULL,
+   provider TEXT NOT NULL,
+   "socialId" TEXT NOT NULL,
+   "accessToken" TEXT,
+   "refreshToken" TEXT,
+   "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+   "updatedAt" TIMESTAMPTZ,
+   UNIQUE("socialId", provider),
+   UNIQUE("userId", provider)
+);
+CREATE INDEX IF NOT EXISTS idx_social_accounts_user ON "social_accounts"("userId");
+CREATE INDEX IF NOT EXISTS idx_social_accounts_provider ON "social_accounts"(provider);
+
 CREATE TABLE IF NOT EXISTS "user_roles" (
-  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
-  "userId" TEXT NOT NULL,
-  role TEXT NOT NULL DEFAULT 'user',
-  "universeId" TEXT,
-  "grantedBy" TEXT,
-  "grantedAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
-  "expiresAt" TIMESTAMPTZ,
-  "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
-  "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT now()
+   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+   "userId" TEXT NOT NULL,
+   role TEXT NOT NULL,
+   "grantedBy" TEXT,
+   "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+   UNIQUE("userId", role)
 );
 CREATE INDEX IF NOT EXISTS idx_user_roles_user ON "user_roles"("userId");
 CREATE INDEX IF NOT EXISTS idx_user_roles_role ON "user_roles"(role);
+
+CREATE TABLE IF NOT EXISTS "roles" (
+   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+   name TEXT UNIQUE NOT NULL,
+   description TEXT,
+   "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+   "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "permissions" (
+   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+   name TEXT UNIQUE NOT NULL,
+   description TEXT,
+   resource TEXT NOT NULL,
+   action TEXT NOT NULL,
+   "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+   "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_permissions_resource ON "permissions"(resource);
+CREATE INDEX IF NOT EXISTS idx_permissions_action ON "permissions"(action);
+
+CREATE TABLE IF NOT EXISTS "role_permissions" (
+   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+   "roleId" TEXT NOT NULL,
+   "permissionId" TEXT NOT NULL,
+   "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+   UNIQUE("roleId", "permissionId")
+);
+CREATE INDEX IF NOT EXISTS idx_role_permissions_role ON "role_permissions"("roleId");
+CREATE INDEX IF NOT EXISTS idx_role_permissions_permission ON "role_permissions"("permissionId");
+
+CREATE TABLE IF NOT EXISTS "sessions" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+  "userId" TEXT NOT NULL,
+  "refreshToken" TEXT NOT NULL,
+  "expiresAt" TIMESTAMPTZ NOT NULL,
+  "deviceName" TEXT,
+  "deviceType" TEXT,
+  os TEXT,
+  browser TEXT,
+  "ipAddress" TEXT,
+  "lastActiveAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+  "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+  "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_sessions_user ON "sessions"("userId");
+CREATE INDEX IF NOT EXISTS idx_sessions_token ON "sessions"("refreshToken");
+CREATE INDEX IF NOT EXISTS idx_sessions_expires ON "sessions"("expiresAt");
 
 CREATE TABLE IF NOT EXISTS "refresh_tokens" (
   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
@@ -307,15 +410,18 @@ CREATE TABLE IF NOT EXISTS "user_unlocks" (
 );
 
 CREATE TABLE IF NOT EXISTS "watch_history" (
-  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
-  "userId" TEXT NOT NULL,
-  "contentId" TEXT NOT NULL,
-  progress INTEGER NOT NULL DEFAULT 0,
-  "watchedAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
-  "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
-  "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
-  UNIQUE("userId", "contentId")
+   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+   "userId" TEXT NOT NULL,
+   "contentId" TEXT NOT NULL,
+   "contentType" TEXT,
+   universe TEXT DEFAULT 'unknown',
+   progress INTEGER DEFAULT 0,
+   "watchedAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+   "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+   "updatedAt" TIMESTAMPTZ
 );
+CREATE INDEX IF NOT EXISTS idx_watch_history_user ON "watch_history"("userId");
+CREATE INDEX IF NOT EXISTS idx_watch_history_content ON "watch_history"("contentId");
 
 CREATE TABLE IF NOT EXISTS "universe_feature_flags" (
   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
@@ -347,13 +453,14 @@ CREATE TABLE IF NOT EXISTS "user_profiles" (
 );
 
 CREATE TABLE IF NOT EXISTS "user_preferences" (
-  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
-  "userId" TEXT UNIQUE NOT NULL,
-  "darkMode" BOOLEAN NOT NULL DEFAULT false,
-  notifications JSONB DEFAULT '{}',
-  "contentPreferences" JSONB DEFAULT '[]',
-  "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
-  "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT now()
+   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+   "userId" TEXT UNIQUE NOT NULL,
+   "darkMode" BOOLEAN NOT NULL DEFAULT false,
+   notifications JSONB DEFAULT '{}',
+   "contentPreferences" JSONB DEFAULT '[]',
+   "privacySettings" JSONB DEFAULT '{"isPrivate":false,"showActivity":true,"allowMessages":true,"twoFactorEnabled":false}',
+   "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+   "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS "saved_items" (
@@ -402,26 +509,33 @@ CREATE TABLE IF NOT EXISTS "user_universe_affinity" (
 -- ============================================================================
 
 CREATE TABLE IF NOT EXISTS "audit_logs" (
-  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
-  "actorId" TEXT NOT NULL,
-  "actorType" TEXT NOT NULL,
-  action TEXT NOT NULL,
-  "resourceType" TEXT NOT NULL,
-  "resourceId" TEXT,
-  "previousValue" TEXT,
-  "newValue" TEXT,
-  "ipAddress" TEXT,
-  "userAgent" TEXT,
-  status TEXT NOT NULL,
-  "errorMessage" TEXT,
-  metadata JSONB,
-  "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
-  "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT now()
+   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+   "actorId" TEXT,
+   "actorRole" TEXT,
+   actor TEXT,
+   action TEXT NOT NULL,
+   "targetType" TEXT,
+   "targetId" TEXT,
+   "resourceType" TEXT,
+   "resourceId" TEXT,
+   details JSONB,
+   "ipAddress" TEXT,
+   "userAgent" TEXT,
+   result TEXT,
+   "errorMessage" TEXT,
+   status TEXT,
+   "timestamp" TIMESTAMPTZ,
+   "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+   "updatedAt" TIMESTAMPTZ,
+   "previousValue" TEXT,
+   "newValue" TEXT,
+   metadata JSONB
 );
 CREATE INDEX IF NOT EXISTS idx_audit_logs_actor ON "audit_logs"("actorId");
 CREATE INDEX IF NOT EXISTS idx_audit_logs_action ON "audit_logs"(action);
-CREATE INDEX IF NOT EXISTS idx_audit_logs_resource ON "audit_logs"("resourceType", "resourceId");
+CREATE INDEX IF NOT EXISTS idx_audit_logs_resource ON "audit_logs"("targetType", "targetId");
 CREATE INDEX IF NOT EXISTS idx_audit_logs_created ON "audit_logs"("createdAt");
+CREATE INDEX IF NOT EXISTS idx_audit_logs_timestamp ON "audit_logs"("timestamp");
 
 -- ============================================================================
 -- WALLET SERVICE TABLES
@@ -440,16 +554,18 @@ CREATE TABLE IF NOT EXISTS "wallets" (
 CREATE INDEX IF NOT EXISTS idx_wallets_user ON "wallets"("userId");
 
 CREATE TABLE IF NOT EXISTS "wallet_transactions" (
-  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
-  "walletId" TEXT NOT NULL,
-  type TEXT NOT NULL,
-  amount NUMERIC(18,2) NOT NULL,
-  status TEXT NOT NULL,
-  description TEXT,
-  provider TEXT,
-  "providerRef" TEXT,
-  "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
-  "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT now()
+   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+   "walletId" TEXT NOT NULL,
+   type TEXT NOT NULL,
+   amount NUMERIC(18,2) NOT NULL,
+   status TEXT NOT NULL,
+   description TEXT,
+   provider TEXT,
+   "providerRef" TEXT,
+   "idempotencyKey" TEXT UNIQUE,
+   metadata JSONB,
+   "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+   "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS idx_wallet_transactions_wallet ON "wallet_transactions"("walletId");
 CREATE INDEX IF NOT EXISTS idx_wallet_transactions_type ON "wallet_transactions"(type);
@@ -460,14 +576,14 @@ CREATE INDEX IF NOT EXISTS idx_wallet_transactions_status ON "wallet_transaction
 -- ============================================================================
 
 CREATE TABLE IF NOT EXISTS "balance_snapshots" (
-  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
-  "walletId" TEXT NOT NULL,
-  balance NUMERIC(65,30) NOT NULL,
-  "bonusBalance" NUMERIC(65,30) NOT NULL,
-  "promoBalance" NUMERIC(65,30) NOT NULL,
-  currency TEXT NOT NULL DEFAULT 'NGN',
-  "capturedAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
-  "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now()
+   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+   "walletId" TEXT NOT NULL,
+   balance NUMERIC(18,2) NOT NULL DEFAULT 0,
+   "bonusBalance" NUMERIC(18,2) NOT NULL DEFAULT 0,
+   "promoBalance" NUMERIC(18,2) NOT NULL DEFAULT 0,
+   currency TEXT NOT NULL DEFAULT 'NGN',
+   "capturedAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+   "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS idx_balance_snapshots_wallet ON "balance_snapshots"("walletId");
 
@@ -763,6 +879,10 @@ CREATE INDEX IF NOT EXISTS idx_comedy_clips_comedian ON "comedy_clips"("comedian
 -- ENGAGEMENT TABLES
 -- ============================================================================
 
+-- ============================================================================
+-- NOTIFICATION SERVICE TABLES (init migration)
+-- ============================================================================
+
 CREATE TABLE IF NOT EXISTS "notifications" (
   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
   "userId" TEXT NOT NULL,
@@ -775,6 +895,84 @@ CREATE TABLE IF NOT EXISTS "notifications" (
 );
 CREATE INDEX IF NOT EXISTS idx_notifications_user ON "notifications"("userId");
 CREATE INDEX IF NOT EXISTS idx_notifications_type ON "notifications"(type);
+
+-- ============================================================================
+-- NOTIFICATION SERVICE TABLES (20260617000006_notification_category_a migration)
+-- ============================================================================
+
+CREATE TABLE IF NOT EXISTS "notification_templates" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+  key TEXT NOT NULL,
+  channel TEXT NOT NULL,
+  subject TEXT,
+  body TEXT NOT NULL,
+  variables JSONB NOT NULL,
+  "isActive" BOOLEAN NOT NULL DEFAULT true,
+  version INTEGER NOT NULL DEFAULT 1,
+  "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+  "updatedAt" TIMESTAMPTZ
+);
+CREATE UNIQUE INDEX IF NOT EXISTS notification_templates_key_key ON "notification_templates"(key);
+CREATE INDEX IF NOT EXISTS idx_notification_templates_channel ON "notification_templates"(channel);
+
+CREATE TABLE IF NOT EXISTS "delivery_attempts" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+  "notificationId" TEXT NOT NULL,
+  channel TEXT NOT NULL,
+  provider TEXT,
+  status TEXT NOT NULL,
+  "providerResponse" JSONB,
+  error TEXT,
+  "attemptedAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+  "deliveredAt" TIMESTAMPTZ,
+  "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_delivery_attempts_notification ON "delivery_attempts"("notificationId");
+CREATE INDEX IF NOT EXISTS idx_delivery_attempts_status ON "delivery_attempts"(status);
+
+CREATE TABLE IF NOT EXISTS "notification_preferences" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+  "userId" TEXT NOT NULL,
+  "pushEnabled" BOOLEAN NOT NULL DEFAULT true,
+  "emailEnabled" BOOLEAN NOT NULL DEFAULT true,
+  "smsEnabled" BOOLEAN NOT NULL DEFAULT false,
+  "inAppEnabled" BOOLEAN NOT NULL DEFAULT true,
+  "quietHoursStart" TEXT,
+  "quietHoursEnd" TEXT,
+  timezone TEXT,
+  "categoryOverrides" JSONB,
+  "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+  "updatedAt" TIMESTAMPTZ
+);
+CREATE UNIQUE INDEX IF NOT EXISTS notification_preferences_userId_key ON "notification_preferences"("userId");
+
+CREATE TABLE IF NOT EXISTS "campaigns" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+  name TEXT NOT NULL,
+  "templateKey" TEXT NOT NULL,
+  channel TEXT NOT NULL,
+  audience JSONB NOT NULL,
+  status TEXT NOT NULL DEFAULT 'draft',
+  "scheduledAt" TIMESTAMPTZ,
+  "startedAt" TIMESTAMPTZ,
+  "completedAt" TIMESTAMPTZ,
+  metadata JSONB,
+  "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+  "updatedAt" TIMESTAMPTZ
+);
+CREATE INDEX IF NOT EXISTS idx_campaigns_status ON "campaigns"(status);
+
+CREATE TABLE IF NOT EXISTS "campaign_triggers" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+  "campaignId" TEXT NOT NULL,
+  "userId" TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending',
+  "sentAt" TIMESTAMPTZ,
+  error TEXT,
+  "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_campaign_triggers_campaign ON "campaign_triggers"("campaignId");
+CREATE INDEX IF NOT EXISTS idx_campaign_triggers_user ON "campaign_triggers"("userId");
 
 CREATE TABLE IF NOT EXISTS "leaderboard_entries" (
   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
@@ -823,6 +1021,141 @@ CREATE TABLE IF NOT EXISTS "moderation_queue" (
   "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS idx_moderation_queue_status ON "moderation_queue"(status);
+
+-- ============================================================================
+-- RECOMMENDATION SERVICE TABLES (for recommendation-service DB)
+-- ============================================================================
+
+CREATE TABLE IF NOT EXISTS "product_events" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+  type TEXT NOT NULL,
+  "userId" TEXT,
+  "sessionId" TEXT,
+  metadata JSONB,
+  timestamp TIMESTAMPTZ NOT NULL DEFAULT now(),
+  "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "recommendation_logs" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+  "userId" TEXT NOT NULL,
+  type TEXT NOT NULL,
+  "itemId" TEXT NOT NULL,
+  score NUMERIC(18,2) NOT NULL,
+  timestamp TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_recommendation_logs_user ON "recommendation_logs"("userId");
+
+CREATE TABLE IF NOT EXISTS "levels" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+  name TEXT NOT NULL,
+  rank INTEGER NOT NULL,
+  "minPoints" INTEGER NOT NULL,
+  icon TEXT,
+  color TEXT,
+  "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+  "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "badges" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+  name TEXT NOT NULL,
+  description TEXT,
+  icon TEXT NOT NULL,
+  points INTEGER NOT NULL,
+  "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+  "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "reward_accounts" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+  "userId" TEXT NOT NULL,
+  points INTEGER NOT NULL DEFAULT 0,
+  "levelId" TEXT,
+  streak INTEGER NOT NULL DEFAULT 0,
+  "lastLoginAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+  "lastCheckInAt" TIMESTAMPTZ,
+  "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+  "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_reward_accounts_user ON "reward_accounts"("userId");
+
+CREATE TABLE IF NOT EXISTS "missions" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+  title TEXT NOT NULL,
+  description TEXT,
+  points INTEGER NOT NULL,
+  type TEXT NOT NULL,
+  "isActive" BOOLEAN NOT NULL DEFAULT true,
+  metadata JSONB,
+  "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+  "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "mission_rewards" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+  "missionId" TEXT NOT NULL,
+  "rewardId" TEXT NOT NULL,
+  quantity INTEGER NOT NULL DEFAULT 1,
+  "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "rewards" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+  name TEXT NOT NULL,
+  description TEXT,
+  cost INTEGER NOT NULL,
+  type TEXT NOT NULL,
+  metadata JSONB,
+  "isActive" BOOLEAN NOT NULL DEFAULT true,
+  "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+  "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "mission_completions" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+  "userId" TEXT NOT NULL,
+  "missionId" TEXT NOT NULL,
+  "completedAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE("userId", "missionId")
+);
+
+CREATE TABLE IF NOT EXISTS "reward_redemptions" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+  "userId" TEXT NOT NULL,
+  "rewardId" TEXT NOT NULL,
+  "pointsCost" INTEGER NOT NULL,
+  "redeemedAt" TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "points_ledger" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+  "userId" TEXT NOT NULL,
+  points INTEGER NOT NULL,
+  type TEXT NOT NULL,
+  reason TEXT NOT NULL,
+  metadata JSONB,
+  "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_points_ledger_user ON "points_ledger"("userId");
+
+CREATE TABLE IF NOT EXISTS "search_query_logs" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+  query TEXT NOT NULL,
+  count INTEGER NOT NULL DEFAULT 1,
+  "lastSearchAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+  "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+  "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_search_query_logs_query ON "search_query_logs"(query);
+
+CREATE TABLE IF NOT EXISTS "user_searches" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+  "userId" TEXT NOT NULL,
+  "queryId" TEXT NOT NULL,
+  "resultsCount" INTEGER,
+  "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now()
+);
 
 -- ============================================================================
 -- DEMO VERSION TRACKING

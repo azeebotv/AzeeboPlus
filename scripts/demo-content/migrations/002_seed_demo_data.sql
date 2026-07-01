@@ -73,39 +73,39 @@ ON CONFLICT (id) DO UPDATE SET
 -- ============================================================================
 
 INSERT INTO "user_roles" (id, "userId", role, "grantedBy", "createdAt") VALUES
-  ('b0000001-0000-0000-0000-000000000001', 'a0000001-0000-0000-0000-000000000001', 'admin', 'system', '2025-01-01T00:00:00Z'),
-  ('b0000001-0000-0000-0000-000000000002', 'a0000001-0000-0000-0000-000000000002', 'moderator', 'a0000001-0000-0000-0000-000000000001', '2025-01-15T00:00:00Z'),
-  ('b0000001-0000-0000-0000-000000000003', 'a0000001-0000-0000-0000-000000000003', 'creator', 'a0000001-0000-0000-0000-000000000001', '2025-02-01T00:00:00Z'),
-  ('b0000001-0000-0000-0000-000000000004', 'a0000001-0000-0000-0000-000000000004', 'creator', 'a0000001-0000-0000-0000-000000000001', '2025-02-15T00:00:00Z'),
-  ('b0000001-0000-0000-0000-000000000005', 'a0000001-0000-0000-0000-000000000005', 'creator', 'a0000001-0000-0000-0000-000000000001', '2025-03-01T00:00:00Z'),
-  ('b0000001-0000-0000-0000-000000000011', 'a0000001-0000-0000-0000-000000000011', 'creator', 'a0000001-0000-0000-0000-000000000001', '2025-03-10T00:00:00Z'),
-  ('b0000001-0000-0000-0000-000000000012', 'a0000001-0000-0000-0000-000000000012', 'creator', 'a0000001-0000-0000-0000-000000000001', '2025-04-01T00:00:00Z')
+   ('b0000001-0000-0000-0000-000000000001', 'a0000001-0000-0000-0000-000000000001', 'admin', 'system', '2025-01-01T00:00:00Z'),
+   ('b0000001-0000-0000-0000-000000000002', 'a0000001-0000-0000-0000-000000000002', 'moderator', 'a0000001-0000-0000-0000-000000000001', '2025-01-15T00:00:00Z'),
+   ('b0000001-0000-0000-0000-000000000003', 'a0000001-0000-0000-0000-000000000003', 'creator', 'a0000001-0000-0000-0000-000000000001', '2025-02-01T00:00:00Z'),
+   ('b0000001-0000-0000-0000-000000000004', 'a0000001-0000-0000-0000-000000000004', 'creator', 'a0000001-0000-0000-0000-000000000001', '2025-02-15T00:00:00Z'),
+   ('b0000001-0000-0000-0000-000000000005', 'a0000001-0000-0000-0000-000000000005', 'creator', 'a0000001-0000-0000-0000-000000000001', '2025-03-01T00:00:00Z'),
+   ('b0000001-0000-0000-0000-000000000011', 'a0000001-0000-0000-0000-000000000011', 'creator', 'a0000001-0000-0000-0000-000000000001', '2025-03-10T00:00:00Z'),
+   ('b0000001-0000-0000-0000-000000000012', 'a0000001-0000-0000-0000-000000000012', 'creator', 'a0000001-0000-0000-0000-000000000001', '2025-04-01T00:00:00Z')
 ON CONFLICT (id) DO NOTHING;
 
 -- ============================================================================
 -- SECTION 4: USER PROFILES (User Service)
 -- ============================================================================
 
-INSERT INTO "user_profiles" (id, "userId", "displayName", avatar, bio, location, "isPublic") VALUES
-  ('c0000001-0000-0000-0000-000000000001', 'a0000001-0000-0000-0000-000000000001', 'Admin Chidi', 'https://ui-avatars.com/api/?name=Chidi+Okonkwo&background=1B5E20&color=fff', 'Platform administrator and entertainment enthusiast.', 'Lagos, Nigeria', true),
-  ('c0000001-0000-0000-0000-000000000003', 'a0000001-0000-0000-0000-000000000003', 'Tunde Creates', 'https://ui-avatars.com/api/?name=Tunde+Adebayo&background=1565C0&color=fff', 'Content creator specializing in reality TV reactions and Nigerian pop culture commentary. 500K+ followers.', 'Lagos, Nigeria', true),
-  ('c0000001-0000-0000-0000-000000000004', 'a0000001-0000-0000-0000-000000000004', 'Ngozi Vibes', 'https://ui-avatars.com/api/?name=Ngozi+Eze&background=6A1B9A&color=fff', 'Lifestyle and fashion content creator. Showing you the best of Nigerian living.', 'Abuja, Nigeria', true),
-  ('c0000001-0000-0000-0000-000000000005', 'a0000001-0000-0000-0000-000000000005', 'Emeka Studios', 'https://ui-avatars.com/api/?name=Emeka+Nwosu&background=B71C1C&color=fff', 'Independent filmmaker and short film producer. Telling Nigerian stories to the world.', 'Enugu, Nigeria', true),
-  ('c0000001-0000-0000-0000-000000000006', 'a0000001-0000-0000-0000-000000000006', 'Kemi Watch', 'https://ui-avatars.com/api/?name=Kemi+Adesanya&background=00695C&color=fff', 'Entertainment junkie. Watching everything so you don''t have to.', 'Ibadan, Nigeria', true),
-  ('c0000001-0000-0000-0000-000000000007', 'a0000001-0000-0000-0000-000000000007', 'Olumide F', 'https://ui-avatars.com/api/?name=Olumide+Fashola&background=4E342E&color=fff', 'Sports and comedy fan. Always up for a good laugh.', 'Lagos, Nigeria', true),
-  ('c0000001-0000-0000-0000-000000000008', 'a0000001-0000-0000-0000-000000000008', 'Fatima A', 'https://ui-avatars.com/api/?name=Fatima+Abubakar&background=0277BD&color=fff', 'Music lover and reality TV addict. Big Brother is mySuper Bowl.', 'Kano, Nigeria', true),
-  ('c0000001-0000-0000-0000-000000000011', 'a0000001-0000-0000-0000-000000000011', 'Chinedu Sports', 'https://ui-avatars.com/api/?name=Chinedu+Obi&background=E65100&color=fff', 'Sports content creator covering NPFL, Super Eagles, and Nigerian athletics. Bringing you closer to the game.', 'Port Harcourt, Nigeria', true),
-  ('c0000001-0000-0000-0000-000000000012', 'a0000001-0000-0000-0000-000000000012', 'Tunde Gaming', 'https://ui-avatars.com/api/?name=Tunde+Olatunji&background=1A237E&color=fff', 'Professional gamer and content creator. FIFA champion, FPS enthusiast, and Naija gaming ambassador.', 'Lagos, Nigeria', true)
+INSERT INTO "user_profiles" (id, "userId", "displayName", avatar, bio, location, "isPublic", "createdAt", "updatedAt") VALUES
+   ('c0000001-0000-0000-0000-000000000001', 'a0000001-0000-0000-0000-000000000001', 'Admin Chidi', 'https://ui-avatars.com/api/?name=Chidi+Okonkwo&background=1B5E20&color=fff', 'Platform administrator and entertainment enthusiast.', 'Lagos, Nigeria', true, '2025-01-01T00:00:00Z', '2025-06-01T00:00:00Z'),
+   ('c0000001-0000-0000-0000-000000000003', 'a0000001-0000-0000-0000-000000000003', 'Tunde Creates', 'https://ui-avatars.com/api/?name=Tunde+Adebayo&background=1565C0&color=fff', 'Content creator specializing in reality TV reactions and Nigerian pop culture commentary. 500K+ followers.', 'Lagos, Nigeria', true, '2025-02-01T00:00:00Z', '2025-06-01T00:00:00Z'),
+   ('c0000001-0000-0000-0000-000000000004', 'a0000001-0000-0000-0000-000000000004', 'Ngozi Vibes', 'https://ui-avatars.com/api/?name=Ngozi+Eze&background=6A1B9A&color=fff', 'Lifestyle and fashion content creator. Showing you the best of Nigerian living.', 'Abuja, Nigeria', true, '2025-02-15T00:00:00Z', '2025-06-01T00:00:00Z'),
+   ('c0000001-0000-0000-0000-000000000005', 'a0000001-0000-0000-0000-000000000005', 'Emeka Studios', 'https://ui-avatars.com/api/?name=Emeka+Nwosu&background=B71C1C&color=fff', 'Independent filmmaker and short film producer. Telling Nigerian stories to the world.', 'Enugu, Nigeria', true, '2025-03-01T00:00:00Z', '2025-06-01T00:00:00Z'),
+   ('c0000001-0000-0000-0000-000000000006', 'a0000001-0000-0000-0000-000000000006', 'Kemi Watch', 'https://ui-avatars.com/api/?name=Kemi+Adesanya&background=00695C&color=fff', 'Entertainment junkie. Watching everything so you don''t have to.', 'Ibadan, Nigeria', true, '2025-03-15T00:00:00Z', '2025-06-15T00:00:00Z'),
+   ('c0000001-0000-0000-0000-000000000007', 'a0000001-0000-0000-0000-000000000007', 'Olumide F', 'https://ui-avatars.com/api/?name=Olumide+Fashola&background=4E342E&color=fff', 'Sports and comedy fan. Always up for a good laugh.', 'Lagos, Nigeria', true, '2025-04-01T00:00:00Z', '2025-06-14T00:00:00Z'),
+   ('c0000001-0000-0000-0000-000000000008', 'a0000001-0000-0000-0000-000000000008', 'Fatima A', 'https://ui-avatars.com/api/?name=Fatima+Abubakar&background=0277BD&color=fff', 'Music lover and reality TV addict. Big Brother is mySuper Bowl.', 'Kano, Nigeria', true, '2025-04-15T00:00:00Z', '2025-06-08T00:00:00Z'),
+   ('c0000001-0000-0000-0000-000000000011', 'a0000001-0000-0000-0000-000000000011', 'Chinedu Sports', 'https://ui-avatars.com/api/?name=Chinedu+Obi&background=E65100&color=fff', 'Sports content creator covering NPFL, Super Eagles, and Nigerian athletics. Bringing you closer to the game.', 'Port Harcourt, Nigeria', true, '2025-03-10T00:00:00Z', '2025-06-16T00:00:00Z'),
+   ('c0000001-0000-0000-0000-000000000012', 'a0000001-0000-0000-0000-000000000012', 'Tunde Gaming', 'https://ui-avatars.com/api/?name=Tunde+Olatunji&background=1A237E&color=fff', 'Professional gamer and content creator. FIFA champion, FPS enthusiast, and Naija gaming ambassador.', 'Lagos, Nigeria', true, '2025-04-01T00:00:00Z', '2025-06-15T00:00:00Z')
 ON CONFLICT (id) DO NOTHING;
 
 -- ============================================================================
 -- SECTION 5: USER PREFERENCES
 -- ============================================================================
 
-INSERT INTO "user_preferences" (id, "userId", "darkMode", notifications, "contentPreferences") VALUES
-  ('d0000001-0000-0000-0000-000000000006', 'a0000001-0000-0000-0000-000000000006', true, '{"email":true,"push":true,"sms":false}', '["reality","comedy","music"]'),
-  ('d0000001-0000-0000-0000-000000000007', 'a0000001-0000-0000-0000-000000000007', false, '{"email":true,"push":false,"sms":true}', '["sports","comedy","games"]'),
-  ('d0000001-0000-0000-0000-000000000008', 'a0000001-0000-0000-0000-000000000008', true, '{"email":false,"push":true,"sms":false}', '["reality","lifestyle","music"]')
+INSERT INTO "user_preferences" (id, "userId", "darkMode", notifications, "contentPreferences", "privacySettings") VALUES
+   ('d0000001-0000-0000-0000-000000000006', 'a0000001-0000-0000-0000-000000000006', true, '{"email":true,"push":true,"sms":false}', '["reality","comedy","music"]', '{"isPrivate":false,"showActivity":true,"allowMessages":true,"twoFactorEnabled":false}'),
+   ('d0000001-0000-0000-0000-000000000007', 'a0000001-0000-0000-0000-000000000007', false, '{"email":true,"push":false,"sms":true}', '["sports","comedy","games"]', '{"isPrivate":false,"showActivity":true,"allowMessages":true,"twoFactorEnabled":false}'),
+   ('d0000001-0000-0000-0000-000000000008', 'a0000001-0000-0000-0000-000000000008', true, '{"email":false,"push":true,"sms":false}', '["reality","lifestyle","music"]', '{"isPrivate":false,"showActivity":true,"allowMessages":true,"twoFactorEnabled":false}')
 ON CONFLICT (id) DO NOTHING;
 
 -- ============================================================================
@@ -506,7 +506,14 @@ INSERT INTO "wallets" (id, "userId", balance, "bonusBalance", "promoBalance", cu
   ('w000001-0000-0000-0000-000000000003', 'a0000001-0000-0000-0000-000000000008', 23000.00, 5000.00, 2000.00, 'NGN', '2025-06-05T08:00:00Z', '2025-06-20T09:00:00Z'),
   ('w000001-0000-0000-0000-000000000004', 'a0000001-0000-0000-0000-000000000011', 42000.00, 3000.00, 1000.00, 'NGN', '2025-05-10T09:00:00Z', '2025-06-18T14:00:00Z'),
   ('w000001-0000-0000-0000-000000000005', 'a0000001-0000-0000-0000-000000000012', 18500.00, 2000.00, 500.00, 'NGN', '2025-05-15T11:00:00Z', '2025-06-19T16:00:00Z')
-ON CONFLICT (id) DO NOTHING;
+ON CONFLICT (id) DO UPDATE SET
+  "userId" = EXCLUDED."userId",
+  balance = EXCLUDED.balance,
+  "bonusBalance" = EXCLUDED."bonusBalance",
+  "promoBalance" = EXCLUDED."promoBalance",
+  currency = EXCLUDED.currency,
+  "createdAt" = EXCLUDED."createdAt",
+  "updatedAt" = EXCLUDED."updatedAt";
 
 INSERT INTO "wallet_transactions" (id, "walletId", type, amount, status, description, provider, "providerRef", "createdAt", "updatedAt") VALUES
   ('tx00001-0000-0000-0000-000000000001', 'w000001-0000-0000-0000-000000000001', 'credit', 20000.00, 'completed', 'Wallet funding via Paystack', 'paystack', 'PSK-TXN-001', '2025-06-01T10:00:00Z', '2025-06-01T10:00:00Z'),
@@ -526,10 +533,10 @@ INSERT INTO "wallet_transactions" (id, "walletId", type, amount, status, descrip
   ('tx00002-0000-0000-0000-000000000004', 'w000001-0000-0000-0000-000000000003', 'debit', 2000.00, 'completed', 'Rental: Thunder in the East', NULL, NULL, '2025-06-14T19:00:00Z', '2025-06-14T19:00:00Z'),
   ('tx00002-0000-0000-0000-000000000005', 'w000001-0000-0000-0000-000000000004', 'credit', 50000.00, 'completed', 'Creator earnings payout', 'paystack', 'PSK-TXN-005', '2025-06-01T08:00:00Z', '2025-06-01T08:00:00Z'),
   ('tx00002-0000-0000-0000-000000000006', 'w000001-0000-0000-0000-000000000004', 'debit', 8000.00, 'completed', 'Pass: Monthly Sports', NULL, NULL, '2025-06-05T10:00:00Z', '2025-06-05T10:00:00Z'),
-  ('tx00002-0000-0000-0000-000000000007', 'w000001-0000-0000-0000-000000000004', 'tip', 1500.00, 'completed', 'Tip from fan', NULL, NULL, '2025-06-10T16:00:00Z', '2025-06-10T16:00:00Z'),
+  ('tx00002-0000-0000-0000-000000000007', 'w000001-0000-0000-0000-000000000004', 'credit', 1500.00, 'completed', 'Tip from fan', NULL, NULL, '2025-06-10T16:00:00Z', '2025-06-10T16:00:00Z'),
   ('tx00002-0000-0000-0000-000000000008', 'w000001-0000-0000-0000-000000000005', 'credit', 25000.00, 'completed', 'Wallet funding via Flutterwave', 'flutterwave', 'FLW-TXN-004', '2025-05-20T10:00:00Z', '2025-05-20T10:00:00Z'),
   ('tx00002-0000-0000-0000-000000000009', 'w000001-0000-0000-0000-000000000005', 'debit', 500.00, 'completed', 'Gaming Tournament Entry', NULL, NULL, '2025-06-08T14:30:00Z', '2025-06-08T14:30:00Z'),
-  ('tx00002-0000-0000-0000-000000000010', 'w000001-0000-0000-0000-000000000005', 'earning', 3500.00, 'completed', 'Tournament prize winnings', NULL, NULL, '2025-06-14T22:00:00Z', '2025-06-14T22:00:00Z')
+  ('tx00002-0000-0000-0000-000000000010', 'w000001-0000-0000-0000-000000000005', 'credit', 3500.00, 'completed', 'Tournament prize winnings', NULL, NULL, '2025-06-14T22:00:00Z', '2025-06-14T22:00:00Z')
 ON CONFLICT (id) DO NOTHING;
 
 -- ============================================================================
@@ -608,28 +615,28 @@ ON CONFLICT (id) DO NOTHING;
 -- SECTION 20: WATCH HISTORY
 -- ============================================================================
 
-INSERT INTO "watch_history" (id, "userId", "contentId", progress, "watchedAt") VALUES
-  ('wh00001-0000-0000-0000-000000000001', 'a0000001-0000-0000-0000-000000000006', 'cnt00001-0000-0000-0000-000000000001', 85, '2025-06-15T22:00:00Z'),
-  ('wh00001-0000-0000-0000-000000000002', 'a0000001-0000-0000-0000-000000000006', 'cnt00001-0000-0000-0000-000000000018', 100, '2025-06-11T10:00:00Z'),
-  ('wh00001-0000-0000-0000-000000000003', 'a0000001-0000-0000-0000-000000000006', 'cnt00001-0000-0000-0000-000000000029', 67, '2025-05-15T20:00:00Z'),
-  ('wh00001-0000-0000-0000-000000000004', 'a0000001-0000-0000-0000-000000000006', 'cnt00001-0000-0000-0000-000000000008', 100, '2025-06-11T16:00:00Z'),
-  ('wh00001-0000-0000-0000-000000000005', 'a0000001-0000-0000-0000-000000000007', 'cnt00001-0000-0000-0000-000000000023', 45, '2025-06-01T20:00:00Z'),
-  ('wh00001-0000-0000-0000-000000000006', 'a0000001-0000-0000-0000-000000000007', 'cnt00001-0000-0000-0000-000000000027', 100, '2025-06-15T18:00:00Z'),
-  ('wh00001-0000-0000-0000-000000000007', 'a0000001-0000-0000-0000-000000000008', 'cnt00001-0000-0000-0000-000000000003', 100, '2025-06-02T12:00:00Z'),
-  ('wh00001-0000-0000-0000-000000000008', 'a0000001-0000-0000-0000-000000000008', 'cnt00001-0000-0000-0000-000000000030', 92, '2025-06-08T10:00:00Z'),
-  ('wh00001-0000-0000-0000-000000000009', 'a0000001-0000-0000-0000-000000000008', 'cnt00001-0000-0000-0000-000000000019', 78, '2025-06-03T14:00:00Z'),
-  ('wh00001-0000-0000-0000-000000000010', 'a0000001-0000-0000-0000-000000000006', 'cnt00001-0000-0000-0000-000000000005', 100, '2025-06-09T14:00:00Z'),
-  -- Expanded watch history
-  ('wh00002-0000-0000-0000-000000000001', 'a0000001-0000-0000-0000-000000000006', 'cnt00002-0000-0000-0000-000000000001', 100, '2025-06-17T22:00:00Z'),
-  ('wh00002-0000-0000-0000-000000000002', 'a0000001-0000-0000-0000-000000000006', 'cnt00002-0000-0000-0000-000000000016', 56, '2025-06-14T19:00:00Z'),
-  ('wh00002-0000-0000-0000-000000000003', 'a0000001-0000-0000-0000-000000000006', 'cnt00002-0000-0000-0000-000000000027', 34, '2025-04-25T20:00:00Z'),
-  ('wh00002-0000-0000-0000-000000000004', 'a0000001-0000-0000-0000-000000000007', 'cnt00003-0000-0000-0000-000000000001', 100, '2025-06-15T18:00:00Z'),
-  ('wh00002-0000-0000-0000-000000000005', 'a0000001-0000-0000-0000-000000000007', 'cnt00002-0000-0000-0000-000000000025', 88, '2025-06-11T20:00:00Z'),
-  ('wh00002-0000-0000-0000-000000000006', 'a0000001-0000-0000-0000-000000000008', 'cnt00002-0000-0000-0000-000000000015', 100, '2025-06-07T18:00:00Z'),
-  ('wh00002-0000-0000-0000-000000000007', 'a0000001-0000-0000-0000-000000000008', 'cnt00002-0000-0000-0000-000000000029', 45, '2025-06-05T10:00:00Z'),
-  ('wh00002-0000-0000-0000-000000000008', 'a0000001-0000-0000-0000-000000000011', 'cnt00001-0000-0000-0000-000000000027', 100, '2025-06-16T18:00:00Z'),
-  ('wh00002-0000-0000-0000-000000000009', 'a0000001-0000-0000-0000-000000000012', 'cnt00003-0000-0000-0000-000000000001', 100, '2025-06-15T20:00:00Z'),
-  ('wh00002-0000-0000-0000-000000000010', 'a0000001-0000-0000-0000-000000000012', 'cnt00003-0000-0000-0000-000000000008', 67, '2025-06-16T21:00:00Z')
+INSERT INTO "watch_history" (id, "userId", "contentId", "contentType", universe, progress, "watchedAt", "createdAt", "updatedAt") VALUES
+   ('wh00001-0000-0000-0000-000000000001', 'a0000001-0000-0000-0000-000000000006', 'cnt00001-0000-0000-0000-000000000001', 'content', 'reality', 85, '2025-06-15T22:00:00Z', '2025-06-15T21:00:00Z', '2025-06-15T22:00:00Z'),
+   ('wh00001-0000-0000-0000-000000000002', 'a0000001-0000-0000-0000-000000000006', 'cnt00001-0000-0000-0000-000000000018', 'content', 'movies', 100, '2025-06-11T10:00:00Z', '2025-06-11T09:00:00Z', '2025-06-11T10:00:00Z'),
+   ('wh00001-0000-0000-0000-000000000003', 'a0000001-0000-0000-0000-000000000006', 'cnt00001-0000-0000-0000-000000000029', 'content', 'music', 67, '2025-05-15T20:00:00Z', '2025-05-15T19:00:00Z', '2025-05-15T20:00:00Z'),
+   ('wh00001-0000-0000-0000-000000000004', 'a0000001-0000-0000-0000-000000000006', 'cnt00001-0000-0000-0000-000000000008', 'content', 'creator', 100, '2025-06-11T16:00:00Z', '2025-06-11T15:00:00Z', '2025-06-11T16:00:00Z'),
+   ('wh00001-0000-0000-0000-000000000005', 'a0000001-0000-0000-0000-000000000007', 'cnt00001-0000-0000-0000-000000000023', 'content', 'comedy', 45, '2025-06-01T20:00:00Z', '2025-06-01T19:00:00Z', '2025-06-01T20:00:00Z'),
+   ('wh00001-0000-0000-0000-000000000006', 'a0000001-0000-0000-0000-000000000007', 'cnt00001-0000-0000-0000-000000000027', 'content', 'sports', 100, '2025-06-15T18:00:00Z', '2025-06-15T17:00:00Z', '2025-06-15T18:00:00Z'),
+   ('wh00001-0000-0000-0000-000000000007', 'a0000001-0000-0000-0000-000000000008', 'cnt00001-0000-0000-0000-000000000003', 'content', 'creator', 100, '2025-06-02T12:00:00Z', '2025-06-02T11:00:00Z', '2025-06-02T12:00:00Z'),
+   ('wh00001-0000-0000-0000-000000000008', 'a0000001-0000-0000-0000-000000000008', 'cnt00001-0000-0000-0000-000000000030', 'content', 'music', 92, '2025-06-08T10:00:00Z', '2025-06-08T09:00:00Z', '2025-06-08T10:00:00Z'),
+   ('wh00001-0000-0000-0000-000000000009', 'a0000001-0000-0000-0000-000000000008', 'cnt00001-0000-0000-0000-000000000019', 'content', 'comedy', 78, '2025-06-03T14:00:00Z', '2025-06-03T13:00:00Z', '2025-06-03T14:00:00Z'),
+   ('wh00001-0000-0000-0000-000000000010', 'a0000001-0000-0000-0000-000000000006', 'cnt00001-0000-0000-0000-000000000005', 'content', 'comedy', 100, '2025-06-09T14:00:00Z', '2025-06-09T13:00:00Z', '2025-06-09T14:00:00Z'),
+   -- Expanded watch history
+   ('wh00002-0000-0000-0000-000000000001', 'a0000001-0000-0000-0000-000000000006', 'cnt00002-0000-0000-0000-000000000001', 'content', 'reality', 100, '2025-06-17T22:00:00Z', '2025-06-17T21:00:00Z', '2025-06-17T22:00:00Z'),
+   ('wh00002-0000-0000-0000-000000000002', 'a0000001-0000-0000-0000-000000000006', 'cnt00002-0000-0000-0000-000000000016', 'content', 'movies', 56, '2025-06-14T19:00:00Z', '2025-06-14T18:00:00Z', '2025-06-14T19:00:00Z'),
+   ('wh00002-0000-0000-0000-000000000003', 'a0000001-0000-0000-0000-000000000006', 'cnt00002-0000-0000-0000-000000000027', 'content', 'music', 34, '2025-04-25T20:00:00Z', '2025-04-25T19:00:00Z', '2025-04-25T20:00:00Z'),
+   ('wh00002-0000-0000-0000-000000000004', 'a0000001-0000-0000-0000-000000000007', 'cnt00003-0000-0000-0000-000000000001', 'content', 'games', 100, '2025-06-15T18:00:00Z', '2025-06-15T17:00:00Z', '2025-06-15T18:00:00Z'),
+   ('wh00002-0000-0000-0000-000000000005', 'a0000001-0000-0000-0000-000000000007', 'cnt00002-0000-0000-0000-000000000025', 'content', 'sports', 88, '2025-06-11T20:00:00Z', '2025-06-11T19:00:00Z', '2025-06-11T20:00:00Z'),
+   ('wh00002-0000-0000-0000-000000000006', 'a0000001-0000-0000-0000-000000000008', 'cnt00002-0000-0000-0000-000000000015', 'content', 'movies', 100, '2025-06-07T18:00:00Z', '2025-06-07T17:00:00Z', '2025-06-07T18:00:00Z'),
+   ('wh00002-0000-0000-0000-000000000007', 'a0000001-0000-0000-0000-000000000008', 'cnt00002-0000-0000-0000-000000000029', 'content', 'music', 45, '2025-06-05T10:00:00Z', '2025-06-05T09:00:00Z', '2025-06-05T10:00:00Z'),
+   ('wh00002-0000-0000-0000-000000000008', 'a0000001-0000-0000-0000-000000000011', 'cnt00001-0000-0000-0000-000000000027', 'content', 'sports', 100, '2025-06-16T18:00:00Z', '2025-06-16T17:00:00Z', '2025-06-16T18:00:00Z'),
+   ('wh00002-0000-0000-0000-000000000009', 'a0000001-0000-0000-0000-000000000012', 'cnt00003-0000-0000-0000-000000000001', 'content', 'games', 100, '2025-06-15T20:00:00Z', '2025-06-15T19:00:00Z', '2025-06-15T20:00:00Z'),
+   ('wh00002-0000-0000-0000-000000000010', 'a0000001-0000-0000-0000-000000000012', 'cnt00003-0000-0000-0000-000000000008', 'content', 'games', 67, '2025-06-16T21:00:00Z', '2025-06-16T20:00:00Z', '2025-06-16T21:00:00Z')
 ON CONFLICT (id) DO NOTHING;
 
 -- ============================================================================
@@ -668,10 +675,10 @@ ON CONFLICT (id) DO NOTHING;
 -- SECTION 23: AUDIT LOGS (sample)
 -- ============================================================================
 
-INSERT INTO "audit_logs" (id, "actorId", "actorType", action, "resourceType", "resourceId", status, metadata, "createdAt") VALUES
-  ('al00001-0000-0000-0000-000000000001', 'a0000001-0000-0000-0000-000000000001', 'admin', 'user.ban', 'user', 'a0000001-0000-0000-0000-000000000009', 'success', '{"reason":"Violation of community guidelines"}', '2025-06-10T10:00:00Z'),
-  ('al00001-0000-0000-0000-000000000002', 'a0000001-0000-0000-0000-000000000001', 'admin', 'content.publish', 'content', 'cnt00001-0000-0000-0000-000000000018', 'success', '{"title":"Lagos King: The Return"}', '2025-05-20T17:00:00Z'),
-  ('al00001-0000-0000-0000-000000000003', 'a0000001-0000-0000-0000-000000000002', 'moderator', 'content.flag', 'content', 'cnt00001-0000-0000-0000-000000000024', 'success', '{"reason":"Potential copyright concern"}', '2025-06-13T09:00:00Z')
+INSERT INTO "audit_logs" (id, "actorId", "actorRole", action, "targetType", "targetId", status, details, "createdAt") VALUES
+   ('al00001-0000-0000-0000-000000000001', 'a0000001-0000-0000-0000-000000000001', 'admin', 'user.ban', 'user', 'a0000001-0000-0000-0000-000000000009', 'success', '{"reason":"Violation of community guidelines"}', '2025-06-10T10:00:00Z'),
+   ('al00001-0000-0000-0000-000000000002', 'a0000001-0000-0000-0000-000000000001', 'admin', 'content.publish', 'content', 'cnt00001-0000-0000-0000-000000000018', 'success', '{"title":"Lagos King: The Return"}', '2025-05-20T17:00:00Z'),
+   ('al00001-0000-0000-0000-000000000003', 'a0000001-0000-0000-0000-000000000002', 'moderator', 'content.flag', 'content', 'cnt00001-0000-0000-0000-000000000024', 'success', '{"reason":"Potential copyright concern"}', '2025-06-13T09:00:00Z')
 ON CONFLICT (id) DO NOTHING;
 
 -- ============================================================================
@@ -753,7 +760,112 @@ INSERT INTO "payout_requests" (id, "creatorId", amount, method, "accountDetails"
 ON CONFLICT (id) DO NOTHING;
 
 -- ============================================================================
--- SECTION 28: REALITY SHOWS, CONTESTANTS & VOTING
+-- SECTION 28.5: NOTIFICATION PREFERENCES
+-- ============================================================================
+
+INSERT INTO "notification_preferences" (id, "userId", "pushEnabled", "emailEnabled", "smsEnabled", "inAppEnabled") VALUES
+   ('np00001-0000-0000-0000-000000000001', 'a0000001-0000-0000-0000-000000000006', true, true, false, true),
+   ('np00001-0000-0000-0000-000000000002', 'a0000001-0000-0000-0000-000000000007', true, true, false, true),
+   ('np00001-0000-0000-0000-000000000003', 'a0000001-0000-0000-0000-000000000008', true, false, false, true)
+ON CONFLICT (id) DO NOTHING;
+
+-- ============================================================================
+-- SECTION 28.8: ROLES & PERMISSIONS (Auth Service)
+-- ============================================================================
+
+INSERT INTO "roles" (id, name, description) VALUES
+   ('rl00001-0000-0000-0000-000000000001', 'admin', 'Platform administrator'),
+   ('rl00001-0000-0000-0000-000000000002', 'moderator', 'Content moderator'),
+   ('rl00001-0000-0000-0000-000000000003', 'creator', 'Content creator'),
+   ('rl00001-0000-0000-0000-000000000004', 'user', 'Regular user')
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO "permissions" (id, name, description, resource, action) VALUES
+   ('pm00001-0000-0000-0000-000000000001', 'manage_users', 'Manage all users', 'users', 'manage'),
+   ('pm00001-0000-0000-0000-000000000002', 'moderate_content', 'Moderate content', 'content', 'moderate'),
+   ('pm00001-0000-0000-0000-000000000003', 'create_content', 'Create content', 'content', 'create'),
+   ('pm00001-0000-0000-0000-000000000004', 'view_premium', 'View premium content', 'content', 'view')
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO "role_permissions" (id, "roleId", "permissionId") VALUES
+   ('rp00001-0000-0000-0000-000000000001', 'rl00001-0000-0000-0000-000000000001', 'pm00001-0000-0000-0000-000000000001'),
+   ('rp00001-0000-0000-0000-000000000002', 'rl00001-0000-0000-0000-000000000001', 'pm00001-0000-0000-0000-000000000002'),
+   ('rp00001-0000-0000-0000-000000000003', 'rl00001-0000-0000-0000-000000000002', 'pm00001-0000-0000-0000-000000000002'),
+   ('rp00001-0000-0000-0000-000000000004', 'rl00001-0000-0000-0000-000000000003', 'pm00001-0000-0000-0000-000000000003'),
+   ('rp00001-0000-0000-0000-000000000005', 'rl00001-0000-0000-0000-000000000004', 'pm00001-0000-0000-0000-000000000004')
+ON CONFLICT (id) DO NOTHING;
+
+-- ============================================================================
+-- SECTION 28.9: NOTIFICATION TEMPLATES & CAMPAIGNS
+-- ============================================================================
+
+INSERT INTO "notification_templates" (id, key, channel, subject, body, variables, "isActive") VALUES
+   ('nt00001-0000-0000-0000-000000000001', 'welcome_email', 'email', 'Welcome to Azeebo+', 'Welcome {{displayName}}! Start exploring Nigerian entertainment.', '{"displayName":"string"}', true),
+   ('nt00001-0000-0000-0000-000000000002', 'new_content', 'inapp', NULL, '{{creator}} uploaded {{title}}', '{"creator":"string","title":"string"}', true)
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO "campaigns" (id, name, "templateKey", channel, audience, status) VALUES
+   ('cmp0001-0000-0000-0000-000000000001', 'June Content Update', 'new_content', 'inapp', '{"userIds":["a0000001-0000-0000-0000-000000000006","a0000001-0000-0000-0000-000000000007","a0000001-0000-0000-0000-000000000008"]}', 'draft')
+ON CONFLICT (id) DO NOTHING;
+
+-- ============================================================================
+-- SECTION 29: RECOMMENDATION SERVICE TABLES
+-- ============================================================================
+
+INSERT INTO "product_events" (id, type, "userId", metadata, timestamp) VALUES
+  ('pe00001-0000-0000-0000-000000000001', 'content_view', 'a0000001-0000-0000-0000-000000000006', '{"contentId":"cnt00001-0000-0000-0000-000000000001","universeId":"u0000001-0000-0000-0000-000000000001"}', '2025-06-15T20:30:00Z'),
+  ('pe00001-0000-0000-0000-000000000002', 'content_view', 'a0000001-0000-0000-0000-000000000008', '{"contentId":"cnt00001-0000-0000-0000-000000000007"}', '2025-06-14T10:15:00Z')
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO "levels" (id, name, rank, "minPoints", icon, color) VALUES
+  ('lvl00001-0000-0000-0000-000000000001', 'Bronze', 1, 0, '🥉', '#CD7F32'),
+  ('lvl00001-0000-0000-0000-000000000002', 'Silver', 2, 500, '🥈', '#C0C0C0'),
+  ('lvl00001-0000-0000-0000-000000000003', 'Gold', 3, 2000, '🥇', '#FFD700')
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO "badges" (id, name, description, icon, points) VALUES
+  ('bdg00001-0000-0000-0000-000000000001', 'First Watch', 'Watched your first content', '🎬', 100),
+  ('bdg00001-0000-0000-0000-000000000002', 'Binge Watcher', 'Watched 10 episodes in a day', '📺', 500)
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO "reward_accounts" (id, "userId", points, "levelId", streak, "lastLoginAt") VALUES
+  ('ra00001-0000-0000-0000-000000000001', 'a0000001-0000-0000-0000-000000000006', 1250, 'lvl00001-0000-0000-0000-000000000002', 7, '2025-06-15T12:00:00Z'),
+  ('ra00001-0000-0000-0000-000000000002', 'a0000001-0000-0000-0000-000000000008', 800, 'lvl00001-0000-0000-0000-000000000001', 3, '2025-06-15T08:00:00Z')
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO "points_ledger" (id, "userId", points, type, reason) VALUES
+  ('pl00001-0000-0000-0000-000000000001', 'a0000001-0000-0000-0000-000000000006', 100, 'credit', 'Daily login bonus'),
+  ('pl00001-0000-0000-0000-000000000002', 'a0000001-0000-0000-0000-000000000006', 50, 'credit', 'Content watched bonus'),
+  ('pl00001-0000-0000-0000-000000000003', 'a0000001-0000-0000-0000-000000000008', 25, 'credit', 'New user bonus')
+ON CONFLICT (id) DO NOTHING;
+
+-- ============================================================================
+-- SECTION 28.7: SEARCH QUERY LOGS
+-- ============================================================================
+
+INSERT INTO "search_query_logs" (id, query, count, "lastSearchAt") VALUES
+   ('sq00001-0000-0000-0000-000000000001', 'BBNaija', 156, '2025-06-15T20:00:00Z'),
+   ('sq00001-0000-0000-0000-000000000002', 'Burna Boy', 89, '2025-06-14T19:00:00Z'),
+   ('sq00001-0000-0000-0000-000000000003', 'comedy', 234, '2025-06-13T18:00:00Z')
+ON CONFLICT (query) DO UPDATE SET
+   count = EXCLUDED.count,
+   "lastSearchAt" = EXCLUDED."lastSearchAt";
+
+INSERT INTO "user_searches" (id, "userId", "queryId", "resultsCount", "createdAt") VALUES
+   ('us00001-0000-0000-0000-000000000001', 'a0000001-0000-0000-0000-000000000006', 'sq00001-0000-0000-0000-000000000001', 5, '2025-06-15T20:00:00Z'),
+   ('us00001-0000-0000-0000-000000000002', 'a0000001-0000-0000-0000-000000000007', 'sq00001-0000-0000-0000-000000000003', 12, '2025-06-13T18:00:00Z')
+ON CONFLICT (id) DO NOTHING;
+
+-- ============================================================================
+-- SECTION 30: MISCELLANEOUS & DEMO CONTENT VERSION
+-- ============================================================================
+
+INSERT INTO "demo_content_versions" (id, version) VALUES
+   ('dcv0001-0000-0000-0000-000000000001', '1.0.0')
+ON CONFLICT (id) DO NOTHING;
+
+-- ============================================================================
+-- SECTION 31: OPERATIONS TABLES
 -- ============================================================================
 
 INSERT INTO "reality_shows" (id, title, description, thumbnail, banner, status, "universeId") VALUES

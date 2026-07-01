@@ -28,6 +28,32 @@ model User {
   @@index([createdAt])
 }
 
+model UserProfile {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  displayName String?
+  avatar      String?
+  bio         String?
+  location    String?
+  isPublic    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("user_profiles")
+  @@index([userId])
+}
+
+model UserRole {
+  id        String   @id @default(uuid())
+  userId    String
+  role      String
+  grantedBy String
+  createdAt DateTime @default(now())
+
+  @@map("user_roles")
+  @@index([userId])
+}
+
 model UserPreferences {
   id              String   @id @default(uuid())
   userId          String   @unique

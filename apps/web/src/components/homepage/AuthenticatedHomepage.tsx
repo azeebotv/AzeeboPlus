@@ -179,17 +179,23 @@ export default function AuthenticatedHomepage({
 
           const fallbackGroups: RecommendationGroup[] = [];
           if (forYou.status === 'fulfilled' && forYou.value.success && forYou.value.data) {
+            const items = Array.isArray(forYou.value.data)
+              ? forYou.value.data.map((r: any) => r.content || r)
+              : [];
             fallbackGroups.push({
               title: 'Top picks for you',
               reason: 'Based on your viewing history',
-              items: forYou.value.data.map((r) => r.content),
+              items,
             });
           }
           if (trending.status === 'fulfilled' && trending.value.success && trending.value.data) {
+            const items = Array.isArray(trending.value.data)
+              ? trending.value.data.map((r: any) => r.content || r)
+              : [];
             fallbackGroups.push({
               title: 'Popular right now',
               reason: 'Trending across the platform',
-              items: trending.value.data.map((r) => r.content),
+              items,
             });
           }
           setRecommendationGroups(fallbackGroups);
