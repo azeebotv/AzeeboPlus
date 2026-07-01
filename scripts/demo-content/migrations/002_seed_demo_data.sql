@@ -88,6 +88,7 @@ ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO "user_profiles" (id, "userId", "displayName", avatar, bio, location, "isPublic", "createdAt", "updatedAt") VALUES
    ('c0000001-0000-0000-0000-000000000001', 'a0000001-0000-0000-0000-000000000001', 'Admin Chidi', 'https://ui-avatars.com/api/?name=Chidi+Okonkwo&background=1B5E20&color=fff', 'Platform administrator and entertainment enthusiast.', 'Lagos, Nigeria', true, '2025-01-01T00:00:00Z', '2025-06-01T00:00:00Z'),
+   ('c0000001-0000-0000-0000-000000000002', 'a0000001-0000-0000-0000-000000000002', 'Mod Amina', 'https://ui-avatars.com/api/?name=Amina+Bello&background=E65100&color=fff', 'Community moderator keeping the platform safe.', 'Lagos, Nigeria', true, '2025-01-15T00:00:00Z', '2025-06-01T00:00:00Z'),
    ('c0000001-0000-0000-0000-000000000003', 'a0000001-0000-0000-0000-000000000003', 'Tunde Creates', 'https://ui-avatars.com/api/?name=Tunde+Adebayo&background=1565C0&color=fff', 'Content creator specializing in reality TV reactions and Nigerian pop culture commentary. 500K+ followers.', 'Lagos, Nigeria', true, '2025-02-01T00:00:00Z', '2025-06-01T00:00:00Z'),
    ('c0000001-0000-0000-0000-000000000004', 'a0000001-0000-0000-0000-000000000004', 'Ngozi Vibes', 'https://ui-avatars.com/api/?name=Ngozi+Eze&background=6A1B9A&color=fff', 'Lifestyle and fashion content creator. Showing you the best of Nigerian living.', 'Abuja, Nigeria', true, '2025-02-15T00:00:00Z', '2025-06-01T00:00:00Z'),
    ('c0000001-0000-0000-0000-000000000005', 'a0000001-0000-0000-0000-000000000005', 'Emeka Studios', 'https://ui-avatars.com/api/?name=Emeka+Nwosu&background=B71C1C&color=fff', 'Independent filmmaker and short film producer. Telling Nigerian stories to the world.', 'Enugu, Nigeria', true, '2025-03-01T00:00:00Z', '2025-06-01T00:00:00Z'),
@@ -95,32 +96,43 @@ INSERT INTO "user_profiles" (id, "userId", "displayName", avatar, bio, location,
    ('c0000001-0000-0000-0000-000000000007', 'a0000001-0000-0000-0000-000000000007', 'Olumide F', 'https://ui-avatars.com/api/?name=Olumide+Fashola&background=4E342E&color=fff', 'Sports and comedy fan. Always up for a good laugh.', 'Lagos, Nigeria', true, '2025-04-01T00:00:00Z', '2025-06-14T00:00:00Z'),
    ('c0000001-0000-0000-0000-000000000008', 'a0000001-0000-0000-0000-000000000008', 'Fatima A', 'https://ui-avatars.com/api/?name=Fatima+Abubakar&background=0277BD&color=fff', 'Music lover and reality TV addict. Big Brother is mySuper Bowl.', 'Kano, Nigeria', true, '2025-04-15T00:00:00Z', '2025-06-08T00:00:00Z'),
    ('c0000001-0000-0000-0000-000000000011', 'a0000001-0000-0000-0000-000000000011', 'Chinedu Sports', 'https://ui-avatars.com/api/?name=Chinedu+Obi&background=E65100&color=fff', 'Sports content creator covering NPFL, Super Eagles, and Nigerian athletics. Bringing you closer to the game.', 'Port Harcourt, Nigeria', true, '2025-03-10T00:00:00Z', '2025-06-16T00:00:00Z'),
-   ('c0000001-0000-0000-0000-000000000012', 'a0000001-0000-0000-0000-000000000012', 'Tunde Gaming', 'https://ui-avatars.com/api/?name=Tunde+Olatunji&background=1A237E&color=fff', 'Professional gamer and content creator. FIFA champion, FPS enthusiast, and Naija gaming ambassador.', 'Lagos, Nigeria', true, '2025-04-01T00:00:00Z', '2025-06-15T00:00:00Z')
-ON CONFLICT (id) DO NOTHING;
+   ('c0000001-0000-0000-0000-000000000012', 'a0000001-0000-0000-0000-000000000012', 'Tunde Gaming', 'https://ui-avatars.com/api/?name=Tunde+Olatunji&background=1A237E&color=fff', 'Professional gamer and content creator. FIFA champion, FPS enthusiast, and Naija gaming ambassador.', 'Lagos, Nigeria', true, '2025-04-01T00:00:00Z', '2025-06-15T00:00:00Z'),
+   ('c0000001-0000-0000-0000-000000000009', 'a0000001-0000-0000-0000-000000000009', 'Chukwu M', NULL, 'Former user (banned)', NULL, false, '2025-02-20T00:00:00Z', '2025-02-20T00:00:00Z'),
+   ('c0000001-0000-0000-0000-000000000010', 'a0000001-0000-0000-0000-000000000010', 'Yemi O', NULL, 'Unverified account', NULL, false, '2025-05-01T00:00:00Z', '2025-05-01T00:00:00Z')
+ON CONFLICT (id) DO UPDATE SET "displayName" = EXCLUDED."displayName", avatar = EXCLUDED.avatar, bio = EXCLUDED.bio, location = EXCLUDED.location, "isPublic" = EXCLUDED."isPublic";
 
 -- ============================================================================
 -- SECTION 5: USER PREFERENCES
 -- ============================================================================
 
 INSERT INTO "user_preferences" (id, "userId", "darkMode", notifications, "contentPreferences", "privacySettings") VALUES
+   ('d0000001-0000-0000-0000-000000000001', 'a0000001-0000-0000-0000-000000000001', false, '{}', '[]', '{"isPrivate":false,"showActivity":true,"allowMessages":true,"twoFactorEnabled":false}'),
+   ('d0000001-0000-0000-0000-000000000002', 'a0000001-0000-0000-0000-000000000002', false, '{}', '[]', '{"isPrivate":false,"showActivity":true,"allowMessages":true,"twoFactorEnabled":false}'),
+   ('d0000001-0000-0000-0000-000000000003', 'a0000001-0000-0000-0000-000000000003', true, '{}', '["reality","comedy","music","vertical"]', '{"isPrivate":false,"showActivity":true,"allowMessages":true,"twoFactorEnabled":false}'),
+   ('d0000001-0000-0000-0000-000000000004', 'a0000001-0000-0000-0000-000000000004', false, '{}', '["creator","lifestyle","vertical"]', '{"isPrivate":false,"showActivity":true,"allowMessages":true,"twoFactorEnabled":false}'),
+   ('d0000001-0000-0000-0000-000000000005', 'a0000001-0000-0000-0000-000000000005', false, '{}', '["movies","nollywood","vertical"]', '{"isPrivate":false,"showActivity":true,"allowMessages":true,"twoFactorEnabled":false}'),
    ('d0000001-0000-0000-0000-000000000006', 'a0000001-0000-0000-0000-000000000006', true, '{"email":true,"push":true,"sms":false}', '["reality","comedy","music"]', '{"isPrivate":false,"showActivity":true,"allowMessages":true,"twoFactorEnabled":false}'),
    ('d0000001-0000-0000-0000-000000000007', 'a0000001-0000-0000-0000-000000000007', false, '{"email":true,"push":false,"sms":true}', '["sports","comedy","games"]', '{"isPrivate":false,"showActivity":true,"allowMessages":true,"twoFactorEnabled":false}'),
-   ('d0000001-0000-0000-0000-000000000008', 'a0000001-0000-0000-0000-000000000008', true, '{"email":false,"push":true,"sms":false}', '["reality","lifestyle","music"]', '{"isPrivate":false,"showActivity":true,"allowMessages":true,"twoFactorEnabled":false}')
-ON CONFLICT (id) DO NOTHING;
+   ('d0000001-0000-0000-0000-000000000008', 'a0000001-0000-0000-0000-000000000008', true, '{"email":false,"push":true,"sms":false}', '["reality","lifestyle","music"]', '{"isPrivate":false,"showActivity":true,"allowMessages":true,"twoFactorEnabled":false}'),
+   ('d0000001-0000-0000-0000-000000000009', 'a0000001-0000-0000-0000-000000000009', false, '{}', '[]', '{"isPrivate":true,"showActivity":false,"allowMessages":false,"twoFactorEnabled":false}'),
+   ('d0000001-0000-0000-0000-000000000010', 'a0000001-0000-0000-0000-000000000010', false, '{}', '[]', '{"isPrivate":false,"showActivity":true,"allowMessages":true,"twoFactorEnabled":false}')
+ON CONFLICT (id) DO UPDATE SET "darkMode" = EXCLUDED."darkMode", notifications = EXCLUDED.notifications, "contentPreferences" = EXCLUDED."contentPreferences", "privacySettings" = EXCLUDED."privacySettings";
+ON CONFLICT (id) DO UPDATE SET "darkMode" = EXCLUDED."darkMode", notifications = EXCLUDED.notifications, "contentPreferences" = EXCLUDED."contentPreferences", "privacySettings" = EXCLUDED."privacySettings";
 
 -- ============================================================================
 -- SECTION 6: UNIVERSES
 -- ============================================================================
 
 INSERT INTO "universes" (id, name, "displayName", description, icon, color, "isEnabled", "sortOrder") VALUES
-  ('u0000001-0000-0000-0000-000000000001', 'reality', 'Reality TV', 'Nigerian reality shows including Big Brother, dating shows, and competition series.', '🎬', '#E91E63', true, 1),
-  ('u0000001-0000-0000-0000-000000000002', 'creator', 'Creator Content', 'Original content from top Nigerian creators, vlogs, and independent productions.', '🎨', '#9C27B0', true, 2),
-  ('u0000001-0000-0000-0000-000000000003', 'lifestyle', 'Lifestyle', 'Fashion, food, travel, wellness, and everyday Nigerian living.', '🏠', '#FF9800', true, 3),
-  ('u0000001-0000-0000-0000-000000000004', 'movies', 'Movies', 'Nollywood blockbusters, indie films, and cinematic masterpieces.', '🎥', '#2196F3', true, 4),
-  ('u0000001-0000-0000-0000-000000000005', 'comedy', 'Comedy', 'Stand-up specials, comedy sketches, and hilarious Naija content.', '😂', '#FFEB3B', true, 5),
-  ('u0000001-0000-0000-0000-000000000006', 'sports', 'Sports', 'Football highlights, basketball, athletics, and sports commentary.', '⚽', '#4CAF50', true, 6),
-  ('u0000001-0000-0000-0000-000000000007', 'music', 'Music', 'Music videos, concert recordings, acoustic sessions, and behind-the-scenes.', '🎵', '#FF5722', true, 7),
-  ('u0000001-0000-0000-0000-000000000008', 'games', 'Gaming', 'Nigerian gaming content, esports, reviews, and live streams.', '🎮', '#607D8B', true, 8)
+   ('u0000001-0000-0000-0000-000000000001', 'reality', 'Reality TV', 'Nigerian reality shows including Big Brother, dating shows, and competition series.', '🎬', '#E91E63', true, 1),
+   ('u0000001-0000-0000-0000-000000000002', 'creator', 'Creator Content', 'Original content from top Nigerian creators, vlogs, and independent productions.', '🎨', '#9C27B0', true, 2),
+   ('u0000001-0000-0000-0000-000000000003', 'lifestyle', 'Lifestyle', 'Fashion, food, travel, wellness, and everyday Nigerian living.', '🏠', '#FF9800', true, 3),
+   ('u0000001-0000-0000-0000-000000000004', 'movies', 'Movies', 'Nollywood blockbusters, indie films, and cinematic masterpieces.', '🎥', '#2196F3', true, 4),
+   ('u0000001-0000-0000-0000-000000000005', 'comedy', 'Comedy', 'Stand-up specials, comedy sketches, and hilarious Naija content.', '😂', '#FFEB3B', true, 5),
+   ('u0000001-0000-0000-0000-000000000006', 'sports', 'Sports', 'Football highlights, basketball, athletics, and sports commentary.', '⚽', '#4CAF50', true, 6),
+   ('u0000001-0000-0000-0000-000000000007', 'music', 'Music', 'Music videos, concert recordings, acoustic sessions, and behind-the-scenes.', '🎵', '#FF5722', true, 7),
+   ('u0000001-0000-0000-0000-000000000008', 'games', 'Gaming', 'Nigerian gaming content, esports, reviews, and live streams.', '🎮', '#607D8B', true, 8),
+   ('u0000001-0000-0000-0000-000000000009', 'vertical', 'Vertical Series', 'Premium African storytelling with interconnected characters and lore.', '📖', '#8B5CF6', true, 9)
 ON CONFLICT (id) DO NOTHING;
 
 -- ============================================================================
@@ -281,7 +293,16 @@ INSERT INTO "content_items" (id, title, description, thumbnail, "mediaUrl", "uni
   ('cnt00003-0000-0000-0000-000000000005', 'FIFA Trivia Challenge: Test Your Knowledge', 'How well do you know FIFA? Take this 50-question challenge!', 'https://picsum.photos/seed/fifatrivia/800/450', 'https://storage.azeeboplus.com/videos/fifa-trivia.mp4', 'u0000001-0000-0000-0000-000000000008', 'a0000001-0000-0000-0000-000000000012', 'published', 23000, '2025-06-04T12:00:00Z', '2025-06-04T12:00:00Z', 'basic', false, false, '{"duration":1200,"game":"FIFA 25","type":"trivia","language":"en"}'),
   ('cnt00003-0000-0000-0000-000000000006', 'Gaming Marathon Stream: 24 Hours of Fun', '24-hour gaming marathon featuring FIFA, COD, and Tekken. For charity!', 'https://picsum.photos/seed/gamingmarathon/800/450', 'https://storage.azeeboplus.com/videos/gaming-marathon.mp4', 'u0000001-0000-0000-0000-000000000008', 'a0000001-0000-0000-0000-000000000012', 'published', 78000, '2025-05-30T08:00:00Z', '2025-05-30T08:00:00Z', 'standard', false, false, '{"duration":86400,"games":"multi","platform":"multi","language":"en","charity":true}'),
   ('cnt00003-0000-0000-0000-000000000007', 'Mobile Legends Tournament: Naija Cup', 'The first Naija Mobile Legends tournament brings together the best MLBB teams.', 'https://picsum.photos/seed/mobilelegends/800/450', 'https://storage.azeeboplus.com/videos/mlbb-naija-cup.mp4', 'u0000001-0000-0000-0000-000000000008', 'a0000001-0000-0000-0000-000000000012', 'published', 34000, '2025-06-01T14:00:00Z', '2025-06-01T14:00:00Z', 'basic', false, false, '{"duration":5400,"game":"Mobile Legends","platform":"Mobile","language":"en"}'),
-  ('cnt00003-0000-0000-0000-000000000008', 'eNaija Gaming Awards 2025: Full Ceremony', 'Celebrating the best in Nigerian gaming. Awards, highlights, and special guests.', 'https://picsum.photos/seed/enaijagaming/800/450', 'https://storage.azeeboplus.com/videos/enaija-awards.mp4', 'u0000001-0000-0000-0000-000000000008', 'a0000001-0000-0000-0000-000000000012', 'published', 45000, '2025-06-15T19:00:00Z', '2025-06-15T19:00:00Z', 'premium', true, false, '{"duration":7200,"type":"awards ceremony","language":"en"}')
+  ('cnt00003-0000-0000-0000-000000000008', 'eNaija Gaming Awards 2025: Full Ceremony', 'Celebrating the best in Nigerian gaming. Awards, highlights, and special guests.', 'https://picsum.photos/seed/enaijagaming/800/450', 'https://storage.azeeboplus.com/videos/enaija-awards.mp4', 'u0000001-0000-0000-0000-000000000008', 'a0000001-0000-0000-0000-000000000012', 'published', 45000, '2025-06-15T19:00:00Z', '2025-06-15T19:00:00Z', 'premium', true, false, '{"duration":7200,"type":"awards ceremony","language":"en"}'),
+
+   -- ============================================================================
+   -- EXPANDED CONTENT: VERTICAL (NEW - 5 items)
+   -- ============================================================================
+   ('cnt00003-0000-0000-0000-000000000009', 'The Lagos Chronicles: Season 1', 'An interconnected story of life, love, and ambition in modern Lagos. Meet the characters.', 'https://picsum.photos/seed/lagoschronicles/800/450', 'https://storage.azeeboplus.com/videos/lagos-chronicles-s1.mp4', 'u0000001-0000-0000-0000-000000000009', 'a0000001-0000-0000-0000-000000000003', 'published', 123000, '2025-05-20T17:00:00Z', '2025-05-20T17:00:00Z', 'premium', true, false, '{"duration":5400,"series":"The Lagos Chronicles","season":1,"language":"en"}'),
+   ('cnt00003-0000-0000-0000-000000000010', 'The Lagos Chronicles: Season 2 Premiere', 'The saga continues with new characters and deeper storylines.', 'https://picsum.photos/seed/lagoschronicles2/800/450', 'https://storage.azeeboplus.com/videos/lagos-chronicles-s2.mp4', 'u0000001-0000-0000-0000-000000000009', 'a0000001-0000-0000-0000-000000000003', 'published', 89000, '2025-06-10T17:00:00Z', '2025-06-10T17:00:00Z', 'premium', true, false, '{"duration":4800,"series":"The Lagos Chronicles","season":2,"language":"en"}'),
+   ('cnt00003-0000-0000-0000-000000000011', 'Abuja Noir: The Minister''s Secret', 'Political intrigue in Nigeria''s capital. A story of power, corruption, and redemption.', 'https://picsum.photos/seed/abujanair/800/450', 'https://storage.azeeboplus.com/videos/abuja-noir-minister.mp4', 'u0000001-0000-0000-0000-000000000009', 'a0000001-0000-0000-0000-000000000004', 'published', 56000, '2025-05-28T16:00:00Z', '2025-05-28T16:00:00Z', 'standard', false, false, '{"duration":3600,"series":"Abuja Noir","season":1,"language":"en"}'),
+   ('cnt00003-0000-0000-0000-000000000012', 'Naija Heroes: Origins', 'The origin story of Nigeria''s first superhero team. Coming soon.', 'https://picsum.photos/seed/naijaheroes/800/450', 'https://storage.azeeboplus.com/videos/naija-heroes-origins.mp4', 'u0000001-0000-0000-0000-000000000009', 'a0000001-0000-0000-0000-000000000003', 'published', 78000, '2025-06-05T15:00:00Z', '2025-06-05T15:00:00Z', 'premium', false, true, '{"duration":6000,"series":"Naija Heroes","season":1,"language":"en"}'),
+   ('cnt00003-0000-0000-0000-000000000013', 'Rivers State Chronicles: Episode 1', 'Stories from the heart of Port Harcourt. Business, betrayal, and family drama.', 'https://picsum.photos/seed/riverschronicles/800/450', 'https://storage.azeeboplus.com/videos/rivers-chronicles-ep1.mp4', 'u0000001-0000-0000-0000-000000000009', 'a0000001-0000-0000-0000-000000000005', 'published', 45000, '2025-06-12T18:00:00Z', '2025-06-12T18:00:00Z', 'standard', false, false, '{"duration":2700,"series":"Rivers State Chronicles","language":"en"}')
 ON CONFLICT (id) DO NOTHING;
 
 -- ============================================================================
@@ -325,7 +346,13 @@ INSERT INTO "content_categories" ("contentId", "categoryId") VALUES
   -- Nollywood classics
   ('cnt00002-0000-0000-0000-000000000017', 'cat00001-0000-0000-0000-000000000007'),
   -- Documentaries
-  ('cnt00002-0000-0000-0000-000000000024', 'cat00001-0000-0000-0000-000000000008')
+  ('cnt00002-0000-0000-0000-000000000024', 'cat00001-0000-0000-0000-000000000008'),
+   -- Vertical categories
+   ('cnt00003-0000-0000-0000-000000000009', 'cat00001-0000-0000-0000-000000000003'),
+   ('cnt00003-0000-0000-0000-000000000010', 'cat00001-0000-0000-0000-000000000003'),
+   ('cnt00003-0000-0000-0000-000000000011', 'cat00001-0000-0000-0000-000000000003'),
+   ('cnt00003-0000-0000-0000-000000000012', 'cat00001-0000-0000-0000-000000000003'),
+   ('cnt00003-0000-0000-0000-000000000013', 'cat00001-0000-0000-0000-000000000003')
 ON CONFLICT DO NOTHING;
 
 -- ============================================================================
@@ -397,7 +424,17 @@ INSERT INTO "content_tags" ("contentId", "tagId") VALUES
   ('cnt00003-0000-0000-0000-000000000006', 'tag00001-0000-0000-0000-000000000015'),
   ('cnt00003-0000-0000-0000-000000000007', 'tag00001-0000-0000-0000-000000000014'),
   ('cnt00003-0000-0000-0000-000000000008', 'tag00001-0000-0000-0000-000000000014'),
-  ('cnt00003-0000-0000-0000-000000000008', 'tag00001-0000-0000-0000-000000000010')
+  ('cnt00003-0000-0000-0000-000000000008', 'tag00001-0000-0000-0000-000000000010'),
+   -- Vertical tags
+   ('cnt00003-0000-0000-0000-000000000009', 'tag00001-0000-0000-0000-000000000010'),
+   ('cnt00003-0000-0000-0000-000000000009', 'tag00001-0000-0000-0000-000000000012'),
+   ('cnt00003-0000-0000-0000-000000000010', 'tag00001-0000-0000-0000-000000000010'),
+   ('cnt00003-0000-0000-0000-000000000010', 'tag00001-0000-0000-0000-000000000012'),
+   ('cnt00003-0000-0000-0000-000000000011', 'tag00001-0000-0000-0000-000000000010'),
+   ('cnt00003-0000-0000-0000-000000000011', 'tag00001-0000-0000-0000-000000000013'),
+   ('cnt00003-0000-0000-0000-000000000012', 'tag00001-0000-0000-0000-000000000012'),
+   ('cnt00003-0000-0000-0000-000000000013', 'tag00001-0000-0000-0000-000000000003'),
+   ('cnt00003-0000-0000-0000-000000000013', 'tag00001-0000-0000-0000-000000000010')
 ON CONFLICT DO NOTHING;
 
 -- ============================================================================
@@ -481,7 +518,13 @@ INSERT INTO "media_assets" (id, "contentItemId", "originalUrl", "thumbnailUrl", 
   ('m000003-0000-0000-0000-000000000005', 'cnt00003-0000-0000-0000-000000000005', 'https://storage.azeeboplus.com/videos/fifa-trivia.mp4', 'https://picsum.photos/seed/fifatrivia/800/450', 'video/mp4', 178257920, 1200),
   ('m000003-0000-0000-0000-000000000006', 'cnt00003-0000-0000-0000-000000000006', 'https://storage.azeeboplus.com/videos/gaming-marathon.mp4', 'https://picsum.photos/seed/gamingmarathon/800/450', 'video/mp4', 12884901888, 86400),
   ('m000003-0000-0000-0000-000000000007', 'cnt00003-0000-0000-0000-000000000007', 'https://storage.azeeboplus.com/videos/mlbb-naija-cup.mp4', 'https://picsum.photos/seed/mobilelegends/800/450', 'video/mp4', 805306368, 5400),
-  ('m000003-0000-0000-0000-000000000008', 'cnt00003-0000-0000-0000-000000000008', 'https://storage.azeeboplus.com/videos/enaija-awards.mp4', 'https://picsum.photos/seed/enaijagaming/800/450', 'video/mp4', 1073741824, 7200)
+  ('m000003-0000-0000-0000-000000000008', 'cnt00003-0000-0000-0000-000000000008', 'https://storage.azeeboplus.com/videos/enaija-awards.mp4', 'https://picsum.photos/seed/enaijagaming/800/450', 'video/mp4', 1073741824, 7200),
+   -- Vertical media assets
+   ('m000003-0000-0000-0000-000000000009', 'cnt00003-0000-0000-0000-000000000009', 'https://storage.azeeboplus.com/videos/lagos-chronicles-s1.mp4', 'https://picsum.photos/seed/lagoschronicles/800/450', 'video/mp4', 805306368, 5400),
+   ('m000003-0000-0000-0000-000000000010', 'cnt00003-0000-0000-0000-000000000010', 'https://storage.azeeboplus.com/videos/lagos-chronicles-s2.mp4', 'https://picsum.photos/seed/lagoschronicles2/800/450', 'video/mp4', 716800000, 4800),
+   ('m000003-0000-0000-0000-000000000011', 'cnt00003-0000-0000-0000-000000000011', 'https://storage.azeeboplus.com/videos/abuja-noir-minister.mp4', 'https://picsum.photos/seed/abujanair/800/450', 'video/mp4', 524288000, 3600),
+   ('m000003-0000-0000-0000-000000000012', 'cnt00003-0000-0000-0000-000000000012', 'https://storage.azeeboplus.com/videos/naija-heroes-origins.mp4', 'https://picsum.photos/seed/naijaheroes/800/450', 'video/mp4', 905306368, 6000),
+   ('m000003-0000-0000-0000-000000000013', 'cnt00003-0000-0000-0000-000000000013', 'https://storage.azeeboplus.com/videos/rivers-chronicles-ep1.mp4', 'https://picsum.photos/seed/riverschronicles/800/450', 'video/mp4', 353216000, 2700)
 ON CONFLICT (id) DO NOTHING;
 
 -- ============================================================================
@@ -489,11 +532,15 @@ ON CONFLICT (id) DO NOTHING;
 -- ============================================================================
 
 INSERT INTO "content_relationships" (id, "contentId", "relatedContentId", type) VALUES
-  ('rel00001-0000-0000-0000-000000000001', 'cnt00001-0000-0000-0000-000000000001', 'cnt00001-0000-0000-0000-000000000002', 'related'),
-  ('rel00001-0000-0000-0000-000000000002', 'cnt00001-0000-0000-0000-000000000003', 'cnt00001-0000-0000-0000-000000000004', 'related'),
-  ('rel00001-0000-0000-0000-000000000003', 'cnt00001-0000-0000-0000-000000000018', 'cnt00001-0000-0000-0000-000000000019', 'related'),
-  ('rel00001-0000-0000-0000-000000000004', 'cnt00001-0000-0000-0000-000000000019', 'cnt00001-0000-0000-0000-000000000022', 'related'),
-  ('rel00001-0000-0000-0000-000000000005', 'cnt00001-0000-0000-0000-000000000029', 'cnt00001-0000-0000-0000-000000000030', 'related')
+   ('rel00001-0000-0000-0000-000000000001', 'cnt00001-0000-0000-0000-000000000001', 'cnt00001-0000-0000-0000-000000000002', 'related'),
+   ('rel00001-0000-0000-0000-000000000002', 'cnt00001-0000-0000-0000-000000000003', 'cnt00001-0000-0000-0000-000000000004', 'related'),
+   ('rel00001-0000-0000-0000-000000000003', 'cnt00001-0000-0000-0000-000000000018', 'cnt00001-0000-0000-0000-000000000019', 'related'),
+   ('rel00001-0000-0000-0000-000000000004', 'cnt00001-0000-0000-0000-000000000019', 'cnt00001-0000-0000-0000-000000000022', 'related'),
+   ('rel00001-0000-0000-0000-000000000005', 'cnt00001-0000-0000-0000-000000000029', 'cnt00001-0000-0000-0000-000000000030', 'related'),
+   -- Vertical content relationships
+   ('rel00001-0000-0000-0000-000000000006', 'cnt00003-0000-0000-0000-000000000009', 'cnt00003-0000-0000-0000-000000000010', 'related'),
+   ('rel00001-0000-0000-0000-000000000007', 'cnt00003-0000-0000-0000-000000000010', 'cnt00003-0000-0000-0000-000000000011', 'related'),
+   ('rel00001-0000-0000-0000-000000000008', 'cnt00003-0000-0000-0000-000000000011', 'cnt00003-0000-0000-0000-000000000013', 'related')
 ON CONFLICT DO NOTHING;
 
 -- ============================================================================

@@ -32,7 +32,7 @@ export default function BrowsePage(): React.JSX.Element {
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
   const [universes, setUniverses] = useState<{ id: string; name: string; icon?: string }[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [selectedUniverse, setSelectedUniverse] = useState<string | null>(null);
+  const [selectedUniverseId, setSelectedUniverseId] = useState<string | null>(null);
   const [content, setContent] = useState<ContentItem[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [sortBy, setSortBy] = useState<string>('Popular');
@@ -131,15 +131,15 @@ export default function BrowsePage(): React.JSX.Element {
     fetchUniverses();
   }, []);
 
-  useEffect(() => {
-    const fetchContent = async (): Promise<void> => {
-      try {
-        setIsLoading(true);
-        let response;
-        if (selectedUniverse) response = await api.content.getContentByUniverse(selectedUniverse);
-        else if (selectedCategory)
-          response = await api.content.getContentByCategory(selectedCategory);
-        else response = await api.content.getFeaturedContent();
+useEffect(() => {
+     const fetchContent = async (): Promise<void> => {
+       try {
+         setIsLoading(true);
+         let response;
+         if (selectedUniverseId) response = await api.content.getContentByUniverse(selectedUniverseId);
+         else if (selectedCategory)
+           response = await api.content.getContentByCategory(selectedCategory);
+         else response = await api.content.getFeaturedContent();
 
         if (response.success && response.data) {
           const data = response.data;
@@ -175,28 +175,28 @@ export default function BrowsePage(): React.JSX.Element {
         setIsLoading(false);
       }
     };
-    fetchContent();
-  }, [
-    selectedCategory,
-    selectedUniverse,
-    searchQuery,
-    minRating,
-    maxDuration,
-    selectedLanguage,
-    selectedYear,
-    sortBy,
-  ]);
+fetchContent();
+   }, [
+     selectedCategory,
+     selectedUniverseId,
+     searchQuery,
+     minRating,
+     maxDuration,
+     selectedLanguage,
+     selectedYear,
+     sortBy,
+   ]);
 
-  const clearFilters = () => {
-    setSearchQuery('');
-    setMinRating(0);
-    setMaxDuration(300);
-    setSelectedLanguage('all');
-    setSelectedYear('all');
-    setSelectedCategory(null);
-    setSelectedUniverse(null);
-    setSortBy('Popular');
-  };
+   const clearFilters = () => {
+     setSearchQuery('');
+     setMinRating(0);
+     setMaxDuration(300);
+     setSelectedLanguage('all');
+     setSelectedYear('all');
+     setSelectedCategory(null);
+     setSelectedUniverseId(null);
+     setSortBy('Popular');
+   };
 
   const activeFilterCount = [
     searchQuery,
@@ -438,39 +438,39 @@ export default function BrowsePage(): React.JSX.Element {
               >
                 <li>
                   <button
-                    onClick={() => setSelectedUniverse(null)}
-                    onKeyDown={(e) => handleUniverseKeyDown(e, 0)}
-                    aria-selected={!selectedUniverse}
-                    className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${!selectedUniverse ? 'text-white' : 'text-white/60 hover:text-white hover:bg-white/5'}`}
-                    style={
-                      !selectedUniverse
-                        ? { background: 'linear-gradient(135deg, #E8420A, #CC1C1C)' }
-                        : {}
-                    }
-                  >
-                    All Universes
-                  </button>
-                </li>
-                {universes.map((universe, index) => (
-                  <li key={universe.id}>
-                    <button
-                      onClick={() => setSelectedUniverse(universe.id)}
-                      onKeyDown={(e) => handleUniverseKeyDown(e, index + 1)}
-                      aria-selected={selectedUniverse === universe.id}
-                      className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${selectedUniverse === universe.id ? 'text-white' : 'text-white/60 hover:text-white hover:bg-white/5'}`}
-                      style={
-                        selectedUniverse === universe.id
-                          ? { background: 'linear-gradient(135deg, #E8420A, #CC1C1C)' }
-                          : {}
-                      }
-                    >
-                      {universe.icon && <span className="mr-2">{universe.icon}</span>}
-                      {universe.name}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
+onClick={() => setSelectedUniverseId(null)}
+                   onKeyDown={(e) => handleUniverseKeyDown(e, 0)}
+                   aria-selected={!selectedUniverseId}
+                   className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${!selectedUniverseId ? 'text-white' : 'text-white/60 hover:text-white hover:bg-white/5'}`}
+                   style={
+                     !selectedUniverseId
+                       ? { background: 'linear-gradient(135deg, #E8420A, #CC1C1C)' }
+                       : {}
+                   }
+                 >
+                   All Universes
+                 </button>
+               </li>
+               {universes.map((universe, index) => (
+                 <li key={universe.id}>
+                   <button
+                     onClick={() => setSelectedUniverseId(universe.id)}
+                     onKeyDown={(e) => handleUniverseKeyDown(e, index + 1)}
+                     aria-selected={selectedUniverseId === universe.id}
+                     className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${selectedUniverseId === universe.id ? 'text-white' : 'text-white/60 hover:text-white hover:bg-white/5'}`}
+                     style={
+                       selectedUniverseId === universe.id
+                         ? { background: 'linear-gradient(135deg, #E8420A, #CC1C1C)' }
+                         : {}
+                     }
+                   >
+                     {universe.icon && <span className="mr-2">{universe.icon}</span>}
+                     {universe.name}
+                   </button>
+                 </li>
+               ))}
+             </ul>
+           </div>
           </motion.div>
 
           {/* Content Grid */}
@@ -483,13 +483,13 @@ export default function BrowsePage(): React.JSX.Element {
             {/* Sort & Results Count */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
               <div>
-                <h2 className="text-xl font-bold text-white">
-                  {selectedCategory
-                    ? categories.find((c) => c.id === selectedCategory)?.name
-                    : selectedUniverse
-                      ? universes.find((u) => u.id === selectedUniverse)?.name
-                      : 'All Content'}
-                </h2>
+<h2 className="text-xl font-bold text-white">
+                   {selectedCategory
+                     ? categories.find((c) => c.id === selectedCategory)?.name
+                     : selectedUniverseId
+                       ? universes.find((u) => u.id === selectedUniverseId)?.name
+                       : 'All Content'}
+                 </h2>
                 <p className="text-sm text-white/50 mt-0.5">
                   {content.length} result{content.length !== 1 ? 's' : ''}
                   {activeFilterCount > 0 &&

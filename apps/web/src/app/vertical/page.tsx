@@ -17,7 +17,7 @@ export default function VerticalPage(): React.JSX.Element {
     const fetchContent = async () => {
       try {
         setIsLoading(true);
-        const result = await api.content.getContentByUniverse('vertical', 1, 20);
+        const result = await api.content.getContentByUniverse('u0000001-0000-0000-0000-000000000009', 1, 20);
 
         if (result.success && result.data) {
           const items = Array.isArray(result.data) ? result.data : result.data.items || [];

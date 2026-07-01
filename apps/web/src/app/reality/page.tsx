@@ -43,17 +43,18 @@ export default function RealityPage(): React.JSX.Element {
   const [contestants, setContestants] = useState<Contestant[]>([]);
   const maxVotes = Math.max(0, ...contestants.map((c) => c.votes));
 
-  useEffect(() => {
-    let cancelled = false;
-    async function fetchShows() {
-      try {
-        setIsLoading(true);
-        setError(null);
-        const response = await api.content.getContentByUniverse('reality');
+useEffect(() => {
+     let cancelled = false;
+     async function fetchShows() {
+       try {
+         setIsLoading(true);
+         setError(null);
+         // Use reality universe UUID to filter content
+         const response = await api.content.getContentByUniverse('u0000001-0000-0000-0000-000000000001', 12, 50);
         if (cancelled) return;
-        if (response.success && response.data) {
-          const items = response.data.items || [];
-          setShows(items);
+if (response.success && response.data) {
+           const items = Array.isArray(response.data) ? response.data : (response.data as { items?: ContentItem[] }).items || [];
+           setShows(items);
           if (items.length > 0) setSelectedShow(items[0]);
         } else {
           setError(response.message || 'Failed to load reality shows');
