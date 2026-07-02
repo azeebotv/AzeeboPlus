@@ -244,8 +244,9 @@ for entry in "${MIGRATE_SERVICES[@]}"; do
   IFS=':' read -r svc_dir svc_name db_name db_user db_pass <<< "$entry"
 
   # Check if prisma_migrations table exists and has stuck failures
+  # Find migrations that are not cleanly applied (started but not finished, or finished but still rolling back)
   failed_migrations=$(PGPASSWORD="$db_pass" psql -h 127.0.0.1 -U "$db_user" -d "$db_name" -t -A -c \
-    "SELECT migration_name FROM prisma_migrations WHERE finished_at IS NULL AND rolling_back_at IS NULL AND started_at IS NOT NULL LIMIT 50" 2>/dev/null || echo "")
+    "SELECT migration_name FROM prisma_migrations WHERE (finished_at IS NULL AND started_at IS NOT NULL) OR (rolling_back_at IS NOT NULL AND rolled_back_at IS NULL) LIMIT 50" 2>/dev/null || echo "")
 
   if [ -n "$failed_migrations" ]; then
     echo "    Resolving stuck migrations for $svc_name..."
@@ -752,6 +753,17 @@ export SENDGRID_API_KEY="${SENDGRID_API_KEY:-}"
 export TWILIO_ACCOUNT_SID="${TWILIO_ACCOUNT_SID:-}"
 export TWILIO_AUTH_TOKEN="${TWILIO_AUTH_TOKEN:-}"
 export TWILIO_PHONE_NUMBER="${TWILIO_PHONE_NUMBER:-}"
+# Verify standalone server exists before trying to start
+if [ ! -f /app/apps/web/standalone/server.js ]; then
+  echo "ERROR: /app/apps/web/standalone/server.js not found!"
+  echo "  Listing /app/apps/web/ directory:"
+  ls -la /app/apps/web/ 2>&1 || echo "  /app/apps/web/ does not exist"
+  echo "  Listing /app/apps/ directory:"
+  ls -la /app/apps/ 2>&1 || echo "  /app/apps/ does not exist"
+  echo "  The web app will not start until this file is present."
+  echo "  This usually means the Docker image was built without the Next.js standalone output."
+  sleep infinity
+fi
 cd /app/apps/web/standalone
 exec node server.js
 WRAPPER

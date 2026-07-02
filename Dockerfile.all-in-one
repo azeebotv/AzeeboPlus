@@ -261,6 +261,18 @@ WORKDIR /app
 # Copy runtime skeleton from builder (workspace structure + built artifacts)
 COPY --from=builder /runtime /app
 
+# Verify critical files exist before proceeding
+RUN echo "==> Verifying critical build artifacts..." && \
+    test -f /app/apps/web/standalone/server.js && echo "  OK: web-app standalone server.js" || \
+      (echo "  ERROR: web-app standalone server.js MISSING!" && \
+       echo "  Contents of /app/apps/web/:" && ls -la /app/apps/web/ 2>&1 && \
+       echo "  Contents of /app/apps/:" && ls -la /app/apps/ 2>&1 && \
+       exit 1) && \
+    test -f /app/services/core/auth-service/dist/main.js && echo "  OK: auth-service" || \
+      (echo "  ERROR: auth-service/dist/main.js MISSING!" && exit 1) && \
+    test -f /app/services/gateway/api-gateway/dist/main.js && echo "  OK: api-gateway" || \
+      (echo "  ERROR: api-gateway/dist/main.js MISSING!" && exit 1)
+
 # Fresh production install — only production dependencies, no devDeps
 ENV CI=true
 RUN pnpm install --prod --frozen-lockfile --ignore-scripts
