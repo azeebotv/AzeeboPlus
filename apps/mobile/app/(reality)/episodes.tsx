@@ -139,7 +139,7 @@ export default function EpisodesScreen() {
     return (
       <SafeAreaView style={styles.container} edges={['top']}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#8B5CF6" />
+          <ActivityIndicator size="large" color="#E8420A" />
           <Text style={styles.loadingText}>Loading episodes...</Text>
         </View>
       </SafeAreaView>
@@ -235,7 +235,7 @@ export default function EpisodesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#111827',
+    backgroundColor: '#1A0A0A',
   },
   loadingContainer: {
     flex: 1,
@@ -276,17 +276,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#1f2937',
+    borderBottomColor: 'rgba(255,255,255,0.08)',
   },
   seasonButton: {
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 20,
-    backgroundColor: '#1f2937',
+    backgroundColor: '#2A2A2A',
     marginRight: 8,
   },
   seasonButtonActive: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
   },
   seasonButtonText: {
     color: '#F3F4F6',
@@ -338,7 +338,7 @@ const styles = StyleSheet.create({
   },
   episodeNumber: {
     fontSize: 12,
-    color: '#8B5CF6',
+    color: '#E8420A',
     fontWeight: '600',
   },
   episodeDuration: {
@@ -374,7 +374,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   retryButton: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,

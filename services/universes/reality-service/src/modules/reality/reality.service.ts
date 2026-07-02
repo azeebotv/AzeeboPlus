@@ -57,7 +57,7 @@ export class RealityService {
         universe: 'reality',
         metadata,
         timestamp: new Date().toISOString(),
-      });
+      }, { timeout: 10000 });
     } catch (error) {
       this.logger.error('Failed to track analytics event:', error);
     }
@@ -299,7 +299,7 @@ export class RealityService {
         amount: this.supervoteCost,
         description: `Supervote for contestant ${contestantId} on show ${showId}`,
         idempotencyKey,
-      })
+      }, { timeout: 10000 })
       .catch((error: unknown) => {
         const errorMessage = error instanceof Error ? error.message : 'Failed to debit wallet';
         throw new ConflictException(errorMessage);
@@ -339,7 +339,7 @@ export class RealityService {
           amount: this.supervoteCost,
           description: `Compensation for failed supervote: ${idempotencyKey}`,
           reference: `compensate:${idempotencyKey}`,
-        })
+        }, { timeout: 10000 })
         .catch((compensateError: unknown) => {
           this.logger.error(
             'Failed to compensate wallet after supervote failure:',
@@ -459,7 +459,7 @@ export class RealityService {
         amount: totalCost,
         description: `${quantity} votes for contestant ${contestantId}`,
         idempotencyKey,
-      })
+      }, { timeout: 10000 })
       .catch((error: unknown) => {
         const errorMessage = error instanceof Error ? error.message : 'Failed to debit wallet';
         throw new ConflictException(errorMessage);
@@ -509,7 +509,7 @@ export class RealityService {
           amount: totalCost,
           description: `Compensation for failed votes: ${idempotencyKey}`,
           reference: `compensate:${idempotencyKey}`,
-        })
+        }, { timeout: 10000 })
         .catch((compensateError: unknown) => {
           this.logger.error('Failed to compensate wallet after votes failure:', compensateError);
         });
@@ -586,7 +586,7 @@ export class RealityService {
         amount: extra.price,
         description: `Purchase premium extra: ${extra.name}`,
         idempotencyKey,
-      });
+      }, { timeout: 10000 });
 
       await this.trackAnalyticsEvent('premium_extra_purchased', userId, {
         purchaseId: idempotencyKey,

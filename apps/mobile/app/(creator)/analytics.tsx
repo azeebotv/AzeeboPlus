@@ -1,17 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  StyleSheet,
-  ActivityIndicator,
-  TouchableOpacity,
-} from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { creatorApi } from '../../src/api';
 import { logger } from '../../src/utils/logger';
-import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
+import { LoadingState, ErrorState } from '../../src/components/StateContainers';
 
 // Analytics data interface for UI
 interface AnalyticsData {
@@ -225,7 +218,7 @@ export default function CreatorAnalyticsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#111827',
+    backgroundColor: '#1A0A0A',
   },
   loadingContainer: {
     flex: 1,
@@ -248,7 +241,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   retryButton: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,
@@ -264,7 +257,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#1f2937',
+    borderBottomColor: 'rgba(255,255,255,0.08)',
   },
   backButton: {
     marginRight: 16,
@@ -284,17 +277,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#1f2937',
+    borderBottomColor: 'rgba(255,255,255,0.08)',
   },
   timeRangeButton: {
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: '#1f2937',
+    backgroundColor: '#2A2A2A',
     marginRight: 8,
   },
   timeRangeButtonActive: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
   },
   timeRangeText: {
     color: '#F3F4F6',
@@ -315,7 +308,7 @@ const styles = StyleSheet.create({
   },
   statCard: {
     width: '48%',
-    backgroundColor: '#1f2937',
+    backgroundColor: '#2A2A2A',
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
@@ -357,7 +350,7 @@ const styles = StyleSheet.create({
   },
   metricCard: {
     width: '48%',
-    backgroundColor: '#1f2937',
+    backgroundColor: '#2A2A2A',
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
@@ -366,7 +359,7 @@ const styles = StyleSheet.create({
   metricValue: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#8B5CF6',
+    color: '#E8420A',
     marginBottom: 4,
   },
   metricLabel: {
@@ -377,7 +370,7 @@ const styles = StyleSheet.create({
   topContentItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1f2937',
+    backgroundColor: '#2A2A2A',
     borderRadius: 12,
     padding: 12,
     marginBottom: 8,
@@ -385,7 +378,7 @@ const styles = StyleSheet.create({
   rankText: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#8B5CF6',
+    color: '#E8420A',
     marginRight: 12,
     width: 30,
   },
@@ -403,7 +396,7 @@ const styles = StyleSheet.create({
     color: '#9CA3AF',
   },
   demographicsCard: {
-    backgroundColor: '#1f2937',
+    backgroundColor: '#2A2A2A',
     borderRadius: 12,
     padding: 16,
   },
@@ -426,13 +419,13 @@ const styles = StyleSheet.create({
   demographicBar: {
     flex: 1,
     height: 8,
-    backgroundColor: '#374151',
+    backgroundColor: 'rgba(255,255,255,0.2)',
     borderRadius: 4,
     marginHorizontal: 12,
   },
   demographicFill: {
     height: '100%',
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     borderRadius: 4,
   },
   demographicValue: {

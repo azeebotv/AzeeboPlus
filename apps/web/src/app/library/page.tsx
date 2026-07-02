@@ -1,5 +1,4 @@
 'use client';
-import React from 'react';
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
@@ -7,7 +6,6 @@ import { apiFetch } from '../../lib/api';
 import AppHeader from '../../components/layout/AppHeader';
 import AppFooter from '../../components/layout/AppFooter';
 import { Skeleton } from '@/components/Skeleton';
-import { AmbientGlow } from '@/components/motion/AmbientGlow';
 
 interface ContentItem {
   id: string;
@@ -29,7 +27,7 @@ interface LibrarySection {
 }
 
 export default function LibraryPage(): React.JSX.Element {
-  const { user, isAuthenticated } = useAuth();
+  const { user: _user, isAuthenticated } = useAuth();
   const [watchlist, setWatchlist] = useState<ContentItem[]>([]);
   const [watchHistory, setWatchHistory] = useState<ContentItem[]>([]);
   const [favorites, setFavorites] = useState<ContentItem[]>([]);
@@ -96,11 +94,16 @@ export default function LibraryPage(): React.JSX.Element {
   const toggleFavorite = useCallback(
     async (contentId: string) => {
       try {
-        const response = await apiFetch<any>(`/interactions/favorites/${contentId}`, {
-          method: 'DELETE',
-        });
+        const isFavorited = favorites.some((item) => item.id === contentId);
+        const response = await apiFetch<any>(
+          isFavorited ? `/interactions/favorites/${contentId}` : '/interactions/favorites',
+          {
+            method: isFavorited ? 'DELETE' : 'POST',
+            ...(isFavorited ? {} : { body: JSON.stringify({ contentId }) }),
+          }
+        );
         if (response.success) {
-          if (favorites.some((item) => item.id === contentId)) {
+          if (isFavorited) {
             setFavorites((prev) => prev.filter((item) => item.id !== contentId));
           } else {
             const item =
@@ -354,7 +357,7 @@ export default function LibraryPage(): React.JSX.Element {
                         className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${favorites.some((f) => f.id === item.id) ? 'text-[#E8420A]' : 'text-white/60 hover:text-white'}`}
                         style={{ border: '1px solid rgba(255,255,255,0.15)' }}
                       >
-                        {favorites.some((f) => f.id === item.id) ? '&#x2764;&#xFE0F;' : '&#x2661;'}
+                        {favorites.some((f) => f.id === item.id) ? '\u2764\uFE0F' : '\u2661'}
                       </button>
                     </div>
                   </div>

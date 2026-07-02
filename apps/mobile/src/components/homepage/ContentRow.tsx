@@ -1,5 +1,12 @@
 import React, { useRef, useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
+} from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -48,9 +55,7 @@ export default function ContentRow({
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
       const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
       setCanScrollLeft(contentOffset.x > 10);
-      setCanScrollRight(
-        contentOffset.x < contentSize.width - layoutMeasurement.width - 10
-      );
+      setCanScrollRight(contentOffset.x < contentSize.width - layoutMeasurement.width - 10);
 
       // Infinite scroll: trigger load more when near the end
       if (

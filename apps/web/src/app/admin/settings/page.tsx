@@ -17,6 +17,7 @@ export default function AdminSettingsPage(): React.JSX.Element {
   });
   const [isSaving, setIsSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isAuthenticated || !user || user.role !== 'admin') return;
@@ -46,9 +47,10 @@ export default function AdminSettingsPage(): React.JSX.Element {
       const payload = Object.entries(settings).map(([key, value]) => ({ key, value }));
       await api.admin.bulkUpdateSettings(payload);
       setSaved(true);
+      setSaveError(null);
       setTimeout(() => setSaved(false), 2000);
-    } catch {
-      /* ignore */
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : 'Failed to save settings');
     }
     setIsSaving(false);
   };
@@ -183,6 +185,11 @@ export default function AdminSettingsPage(): React.JSX.Element {
             </div>
           ))}
         </div>
+        {saveError && (
+          <p style={{ color: '#E8420A', fontSize: 14, marginTop: 12, textAlign: 'center' }}>
+            {saveError}
+          </p>
+        )}
       </div>
 
       <button

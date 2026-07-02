@@ -33,14 +33,19 @@ export class FlutterwaveProvider {
   constructor() {
     this.apiKey = process.env.FLUTTERWAVE_SECRET_KEY || '';
     if (!this.apiKey) {
-      this.logger.warn('FLUTTERWAVE_SECRET_KEY is not configured — Flutterwave payments will be unavailable');
+      this.logger.warn(
+        'FLUTTERWAVE_SECRET_KEY is not configured — Flutterwave payments will be unavailable'
+      );
     } else {
       this.logger.log('FlutterwaveProvider initialized');
     }
   }
 
   // PAY-003: In-memory idempotency store (production should use Redis/DB)
-  private readonly idempotencyStore = new Map<string, { result: Record<string, unknown>; timestamp: number }>();
+  private readonly idempotencyStore = new Map<
+    string,
+    { result: Record<string, unknown>; timestamp: number }
+  >();
   private readonly IDEMPOTENCY_TTL = 3600_000; // 1 hour
 
   private checkIdempotency(key: string | undefined): Record<string, unknown> | null {
@@ -65,7 +70,12 @@ export class FlutterwaveProvider {
     this.idempotencyStore.set(key, { result, timestamp: Date.now() });
   }
 
-  async initializePayment(amount: number, currency: string, userId: string, idempotencyKey?: string) {
+  async initializePayment(
+    amount: number,
+    currency: string,
+    userId: string,
+    idempotencyKey?: string
+  ) {
     if (!this.apiKey) {
       throw new BadRequestException('Flutterwave payments are not configured');
     }

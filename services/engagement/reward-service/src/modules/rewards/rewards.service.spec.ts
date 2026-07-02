@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { RewardsService } from './rewards.service';
 import { PrismaService } from '../database/prisma.service';
+import { ConfigService } from '@nestjs/config';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 
 describe('RewardsService', () => {
@@ -36,11 +37,26 @@ describe('RewardsService', () => {
       findMany: jest.fn(),
       count: jest.fn(),
     },
+    $transaction: jest.fn((operations: unknown[]) => Promise.all(operations as Promise<unknown>[])),
   };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [RewardsService, { provide: PrismaService, useValue: mockPrismaService }],
+      providers: [
+        RewardsService,
+        { provide: PrismaService, useValue: mockPrismaService },
+        {
+          provide: ConfigService,
+          useValue: {
+            get: jest.fn().mockImplementation((key: string, defaultValue?: unknown) => {
+              const config: Record<string, unknown> = {
+                DEFAULT_PAGINATION_LIMIT: 100,
+              };
+              return config[key] ?? defaultValue;
+            }),
+          },
+        },
+      ],
     }).compile();
 
     service = module.get<RewardsService>(RewardsService);
@@ -78,7 +94,7 @@ describe('RewardsService', () => {
       const result = await service.getRewardAccount('user-1');
 
       expect(result.success).toBe(true);
-      expect(result.data.rewardAccount.points).toBe(500);
+      expect(result.data!.rewardAccount!.points).toBe(500);
     });
 
     it('should create new reward account if not found', async () => {
@@ -100,7 +116,7 @@ describe('RewardsService', () => {
       const result = await service.getRewardAccount('user-new');
 
       expect(result.success).toBe(true);
-      expect(result.data.rewardAccount.points).toBe(0);
+      expect(result.data!.rewardAccount!.points).toBe(0);
     });
   });
 
@@ -117,9 +133,9 @@ describe('RewardsService', () => {
       const result = await service.getMissions('user-1');
 
       expect(result.success).toBe(true);
-      expect(result.data.missions).toHaveLength(2);
-      expect(result.data.missions[0].isCompleted).toBe(true);
-      expect(result.data.missions[1].isCompleted).toBe(false);
+      expect(result.data!.missions!).toHaveLength(2);
+      expect(result.data!.missions![0].isCompleted).toBe(true);
+      expect(result.data!.missions![1].isCompleted).toBe(false);
     });
 
     it('should respect limit parameter', async () => {
@@ -147,7 +163,7 @@ describe('RewardsService', () => {
       const result = await service.getBadges('user-1');
 
       expect(result.success).toBe(true);
-      expect(result.data.badges).toHaveLength(2);
+      expect(result.data!.badges).toHaveLength(2);
     });
 
     it('should return empty badges if no reward account', async () => {
@@ -157,7 +173,7 @@ describe('RewardsService', () => {
       const result = await service.getBadges('user-1');
 
       expect(result.success).toBe(true);
-      expect(result.data.badges).toEqual([]);
+      expect(result.data!.badges).toEqual([]);
     });
   });
 
@@ -175,7 +191,7 @@ describe('RewardsService', () => {
       const result = await service.getStreak('user-1');
 
       expect(result.success).toBe(true);
-      expect(result.data.streak).toBeDefined();
+      expect(result.data!.streak).toBeDefined();
     });
 
     it('should throw NotFoundException if no reward account', async () => {
@@ -205,8 +221,8 @@ describe('RewardsService', () => {
       const result = await service.redeemReward('user-1', 'reward-1');
 
       expect(result.success).toBe(true);
-      expect(result.data.message).toBe('Reward redeemed successfully');
-      expect(result.data.rewardAccount.points).toBe(400);
+      expect(result.data!.message).toBe('Reward redeemed successfully');
+      expect(result.data!.rewardAccount!.points).toBe(400);
     });
 
     it('should throw NotFoundException if no reward account', async () => {
@@ -250,8 +266,8 @@ describe('RewardsService', () => {
       const result = await service.getLevel('user-1');
 
       expect(result.success).toBe(true);
-      expect(result.data.level.name).toBe('Intermediate');
-      expect(result.data.message).toContain('points to next level');
+      expect(result.data!.level!.name).toBe('Intermediate');
+      expect(result.data!.message).toContain('points to next level');
     });
 
     it('should show max level reached', async () => {
@@ -267,7 +283,7 @@ describe('RewardsService', () => {
       const result = await service.getLevel('user-1');
 
       expect(result.success).toBe(true);
-      expect(result.data.message).toBe('Max level reached');
+      expect(result.data!.message).toBe('Max level reached');
     });
 
     it('should throw NotFoundException if no reward account', async () => {
@@ -292,8 +308,8 @@ describe('RewardsService', () => {
       const result = await service.addPoints('user-1', 50, 'Bonus');
 
       expect(result.success).toBe(true);
-      expect(result.data.message).toBe('Points added successfully');
-      expect(result.data.rewardAccount.points).toBe(150);
+      expect(result.data!.message).toBe('Points added successfully');
+      expect(result.data!.rewardAccount!.points).toBe(150);
     });
 
     it('should throw NotFoundException if no reward account', async () => {
@@ -323,7 +339,7 @@ describe('RewardsService', () => {
       const result = await service.checkIn('user-1');
 
       expect(result.success).toBe(true);
-      expect(result.data.message).toBe('Check-in successful');
+      expect(result.data!.message).toBe('Check-in successful');
     });
 
     it('should throw BadRequestException if already checked in today', async () => {
@@ -362,7 +378,7 @@ describe('RewardsService', () => {
       const result = await service.earnPoints('user-1', 'content_view');
 
       expect(result.success).toBe(true);
-      expect(result.data.pointsEarned).toBe(1);
+      expect(result.data!.pointsEarned).toBe(1);
     });
 
     it('should earn custom amount of points', async () => {
@@ -379,7 +395,7 @@ describe('RewardsService', () => {
       const result = await service.earnPoints('user-1', 'custom', 25);
 
       expect(result.success).toBe(true);
-      expect(result.data.pointsEarned).toBe(25);
+      expect(result.data!.pointsEarned).toBe(25);
     });
 
     it('should throw NotFoundException if no reward account', async () => {
@@ -401,7 +417,7 @@ describe('RewardsService', () => {
       const result = await service.getBalance('user-1');
 
       expect(result.success).toBe(true);
-      expect(result.data.balance).toBe(500);
+      expect(result.data!.balance).toBe(500);
     });
 
     it('should throw NotFoundException if no reward account', async () => {
@@ -430,9 +446,9 @@ describe('RewardsService', () => {
       const result = await service.getHistory('user-1', 1, 20);
 
       expect(result.success).toBe(true);
-      expect(result.data.history).toHaveLength(2);
-      expect(result.data.pagination.total).toBe(25);
-      expect(result.data.pagination.totalPages).toBe(2);
+      expect(result.data!.history).toHaveLength(2);
+      expect(result.data!.pagination!.total).toBe(25);
+      expect(result.data!.pagination!.totalPages).toBe(2);
     });
 
     it('should handle pagination correctly', async () => {
@@ -441,8 +457,8 @@ describe('RewardsService', () => {
 
       const result = await service.getHistory('user-1', 2, 10);
 
-      expect(result.data.pagination.page).toBe(2);
-      expect(result.data.pagination.totalPages).toBe(5);
+      expect(result.data!.pagination!.page).toBe(2);
+      expect(result.data!.pagination!.totalPages).toBe(5);
     });
   });
 });

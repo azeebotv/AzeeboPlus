@@ -149,8 +149,7 @@ export default function HeroSlides({
             <div
               className="absolute inset-0"
               style={{
-                background:
-                  'linear-gradient(to top, rgba(13,59,46,0.9) 0%, transparent 40%)',
+                background: 'linear-gradient(to top, rgba(13,59,46,0.9) 0%, transparent 40%)',
               }}
             />
           </div>
@@ -167,7 +166,8 @@ export default function HeroSlides({
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.1 }}
                 >
-                  {currentSlide.universe.icon} {currentSlide.universe.name}
+                  {currentSlide.universe.icon && `${currentSlide.universe.icon} `}
+                  {currentSlide.universe.name}
                 </motion.span>
               )}
 
@@ -228,7 +228,13 @@ export default function HeroSlides({
         aria-label="Previous slide"
       >
         <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-          <path d="M12 4L6 10L12 16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          <path
+            d="M12 4L6 10L12 16"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
         </svg>
       </button>
 
@@ -239,7 +245,13 @@ export default function HeroSlides({
         aria-label="Next slide"
       >
         <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-          <path d="M8 4L14 10L8 16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          <path
+            d="M8 4L14 10L8 16"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
         </svg>
       </button>
 
@@ -259,8 +271,7 @@ export default function HeroSlides({
             onClick={(): void => goTo(index)}
             className="w-2.5 h-2.5 rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-white"
             style={{
-              background:
-                index === currentIndex ? 'var(--brand-orange)' : 'rgba(255,255,255,0.4)',
+              background: index === currentIndex ? 'var(--brand-orange)' : 'rgba(255,255,255,0.4)',
               transform: index === currentIndex ? 'scale(1.3)' : 'scale(1)',
             }}
           />

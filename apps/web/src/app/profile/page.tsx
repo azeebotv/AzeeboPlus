@@ -29,34 +29,42 @@ export default function ProfilePage(): React.JSX.Element {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-     const fetchProfile = async () => {
-       try {
-         const [profileRes, prefsRes] = await Promise.all([
-           api.user.getProfile(),
-           api.user.getPreferences(),
-         ]);
-         setProfile({
-           profile: profileRes.success && profileRes.data ? {
-             id: profileRes.data.id,
-             email: profileRes.data.email,
-             displayName: profileRes.data.displayName,
-             avatar: profileRes.data.avatar,
-             role: profileRes.data.role,
-             createdAt: profileRes.data.createdAt,
-           } : undefined,
-           preferences: prefsRes.success && prefsRes.data ? {
-             darkMode: (prefsRes.data as any).darkMode as boolean | undefined,
-             notifications: (prefsRes.data as any).notifications as Record<string, boolean> | undefined,
-           } : undefined,
-         });
-       } catch {
-         // intentionally minimal
-       } finally {
-         setIsLoading(false);
-       }
-     };
-     fetchProfile();
-   }, []);
+    const fetchProfile = async () => {
+      try {
+        const [profileRes, prefsRes] = await Promise.all([
+          api.user.getProfile(),
+          api.user.getPreferences(),
+        ]);
+        setProfile({
+          profile:
+            profileRes.success && profileRes.data
+              ? {
+                  id: profileRes.data.id,
+                  email: profileRes.data.email,
+                  displayName: profileRes.data.displayName ?? '',
+                  avatar: profileRes.data.avatar ?? '',
+                  role: profileRes.data.role,
+                  createdAt: profileRes.data.createdAt ?? '',
+                }
+              : undefined,
+          preferences:
+            prefsRes.success && prefsRes.data
+              ? {
+                  darkMode: (prefsRes.data as any).darkMode as boolean | undefined,
+                  notifications: (prefsRes.data as any).notifications as
+                    | Record<string, boolean>
+                    | undefined,
+                }
+              : undefined,
+        });
+      } catch {
+        // intentionally minimal
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchProfile();
+  }, []);
 
   return (
     <div className="min-h-screen az-nollywood-bg">

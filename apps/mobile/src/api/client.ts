@@ -21,36 +21,42 @@ interface ApiClientConfig {
  */
 interface ApiError extends Error {
   // --- RFC 7807 fields ---
-  type?: string;         // A URI reference that identifies the problem type
-  title?: string;        // A short, human-readable summary of the problem type
-  status?: number;       // HTTP status code
-  detail?: string;       // A human-readable explanation specific to this occurrence
-  instance?: string;     // A URI reference that identifies the specific occurrence
+  type?: string; // A URI reference that identifies the problem type
+  title?: string; // A short, human-readable summary of the problem type
+  status?: number; // HTTP status code
+  detail?: string; // A human-readable explanation specific to this occurrence
+  instance?: string; // A URI reference that identifies the specific occurrence
 
   // --- Application-level fields ---
-  code?: string;         // Application-specific error code (e.g. "EMAIL_ALREADY_EXISTS")
-  error?: string;        // Legacy error string for backward compat
-  statusCode?: number;   // Legacy status code for backward compat
+  code?: string; // Application-specific error code (e.g. "EMAIL_ALREADY_EXISTS")
+  error?: string; // Legacy error string for backward compat
+  statusCode?: number; // Legacy status code for backward compat
   details?: {
     fieldErrors?: Record<string, string[]>;
     [key: string]: unknown;
   };
-  timestamp?: string;    // ISO 8601 timestamp of the error
-  path?: string;         // Request path that caused the error
-  data?: unknown;        // Raw response body for diagnostics
+  timestamp?: string; // ISO 8601 timestamp of the error
+  path?: string; // Request path that caused the error
+  data?: unknown; // Raw response body for diagnostics
 }
 
 class ApiClientClass {
   private config: ApiClientConfig = {
     baseURL:
       process.env.EXPO_PUBLIC_API_BASE_URL ||
-      Constants.expoConfig?.extra?.apiBaseURL ||
-      (__DEV__ ? 'http://localhost:3013' : 'http://api-gateway:3013'),
+      (Constants as any).expoConfig?.extra?.apiBaseURL ||
+      (__DEV__ ? 'http://localhost:3013' : 'https://api.azeeboplus.com'),
     token: null,
   };
+  private refreshToken: string | null = null;
+  private refreshPromise: Promise<boolean> | null = null;
 
   setToken(token: string | null): void {
     this.config.token = token;
+  }
+
+  setRefreshToken(token: string | null): void {
+    this.refreshToken = token;
   }
 
   getBaseURL(): string {
@@ -61,11 +67,47 @@ class ApiClientClass {
     return this.config.token;
   }
 
+  private async attemptTokenRefresh(): Promise<boolean> {
+    if (this.refreshPromise) {
+      return this.refreshPromise;
+    }
+
+    this.refreshPromise = (async () => {
+      try {
+        const response = await certificatePinningService.fetchWithPinning(
+          `${this.config.baseURL}/api/v1/auth/refresh`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ refreshToken: this.refreshToken }),
+          }
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && data.data) {
+            this.config.token = data.data.accessToken;
+            this.refreshToken = data.data.refreshToken;
+            return true;
+          }
+        }
+        return false;
+      } catch {
+        return false;
+      } finally {
+        this.refreshPromise = null;
+      }
+    })();
+
+    return this.refreshPromise;
+  }
+
   private async request<T>(
     method: string,
     endpoint: string,
     body?: unknown,
-    options: RequestInit = {}
+    options: RequestInit = {},
+    isRetry = false
   ): Promise<T> {
     const url = `${this.config.baseURL}${gatewayPath(endpoint)}`;
 
@@ -95,10 +137,18 @@ class ApiClientClass {
       const data = await response.json().catch(() => null);
 
       if (!response.ok) {
+        // Attempt token refresh on 401 (Unauthorized)
+        if (response.status === 401 && !isRetry && this.refreshToken) {
+          const refreshed = await this.attemptTokenRefresh();
+          if (refreshed) {
+            return this.request<T>(method, endpoint, body, options, true);
+          }
+        }
+
         const error: ApiError = new Error(
           (data as { message?: string; detail?: string })?.message ||
-          (data as { detail?: string })?.detail ||
-          'An error occurred'
+            (data as { detail?: string })?.detail ||
+            'An error occurred'
         );
         // RFC 7807 fields
         error.status = response.status;

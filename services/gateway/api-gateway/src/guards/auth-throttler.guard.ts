@@ -25,7 +25,7 @@ export class AuthThrottlerGuard extends ThrottlerGuard {
   ];
 
   private isAuthRoute(path: string): boolean {
-    return AuthThrottlerGuard.AUTH_PATH_PATTERNS.some(pattern => pattern.test(path));
+    return AuthThrottlerGuard.AUTH_PATH_PATTERNS.some((pattern) => pattern.test(path));
   }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {

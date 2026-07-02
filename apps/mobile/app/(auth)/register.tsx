@@ -7,52 +7,49 @@ import {
   Platform,
   ScrollView,
   Alert,
+  TouchableOpacity,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../src/contexts/AuthContext';
 import { colors, typography, spacing, radius } from '../../src/theme';
 import { GlassCard, BrandButton, BrandInput } from '../../src/components/ui';
-import {
-  PageTransition,
-  ScrollReveal,
-  AmbientGlow,
-} from '../../src/components/motion';
+import { PageTransition, ScrollReveal, AmbientGlow } from '../../src/components/motion';
 
 export default function RegisterScreen() {
   const router = useRouter();
   const { register, isLoading } = useAuth();
   const [formData, setFormData] = useState({
-    username: '',
-    displayName: '',
+    name: '',
     email: '',
-    phone: '',
     password: '',
-    confirmPassword: '',
   });
+  const [agreed, setAgreed] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleRegister = async () => {
-    if (!formData.username || !formData.email || !formData.password) {
+    if (!formData.name || !formData.email || !formData.password) {
       setError('Please fill in all required fields');
-      return;
-    }
-    if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
       return;
     }
     if (formData.password.length < 8) {
       setError('Password must be at least 8 characters');
       return;
     }
+    const hasUpperCase = /[A-Z]/.test(formData.password);
+    const hasLowerCase = /[a-z]/.test(formData.password);
+    const hasNumber = /[0-9]/.test(formData.password);
+    if (!hasUpperCase || !hasLowerCase || !hasNumber) {
+      setError('Password must include uppercase, lowercase, and numbers');
+      return;
+    }
+    if (!agreed) {
+      setError('You must agree to the Terms of Service and Privacy Policy');
+      return;
+    }
 
     setError(null);
     try {
-      await register(
-        formData.email,
-        formData.password,
-        formData.displayName || formData.username,
-        formData.phone || ''
-      );
+      await register(formData.email, formData.password, formData.name);
       router.push('/(auth)/otp-verification');
     } catch {
       setError('Registration failed. Please try again.');
@@ -84,25 +81,19 @@ export default function RegisterScreen() {
               <Text style={styles.logo}>
                 AZEEBO<Text style={styles.logoPlus}>+</Text>
               </Text>
-              <Text style={styles.subtitle}>Create your account</Text>
+              <Text style={styles.tagline}>Empowering Nigeria{'\u2019'}s Creative Renaissance</Text>
+              <Text style={styles.stepIndicator}>Step 1: Your Details</Text>
+              <Text style={styles.subtitle}>Create Your Azeebo+ Account</Text>
             </View>
           </ScrollReveal>
 
           <ScrollReveal direction="up" delay={100}>
             <GlassCard style={styles.card}>
               <BrandInput
-                label="Username"
-                value={formData.username}
-                onChangeText={(v) => setFormData((p) => ({ ...p, username: v }))}
-                placeholder="Choose a username"
-                autoCapitalize="none"
-              />
-
-              <BrandInput
-                label="Display Name"
-                value={formData.displayName}
-                onChangeText={(v) => setFormData((p) => ({ ...p, displayName: v }))}
-                placeholder="How should we call you?"
+                label="Name"
+                value={formData.name}
+                onChangeText={(v) => setFormData((p) => ({ ...p, name: v }))}
+                placeholder="Your full name"
               />
 
               <BrandInput
@@ -115,26 +106,10 @@ export default function RegisterScreen() {
               />
 
               <BrandInput
-                label="Phone (Optional)"
-                value={formData.phone}
-                onChangeText={(v) => setFormData((p) => ({ ...p, phone: v }))}
-                placeholder="+234 XXX XXX XXXX"
-                keyboardType="phone-pad"
-              />
-
-              <BrandInput
                 label="Password"
                 value={formData.password}
                 onChangeText={(v) => setFormData((p) => ({ ...p, password: v }))}
                 placeholder="At least 8 characters"
-                secureTextEntry
-              />
-
-              <BrandInput
-                label="Confirm Password"
-                value={formData.confirmPassword}
-                onChangeText={(v) => setFormData((p) => ({ ...p, confirmPassword: v }))}
-                placeholder="Confirm your password"
                 secureTextEntry
               />
 
@@ -143,6 +118,20 @@ export default function RegisterScreen() {
                   <Text style={styles.errorText}>{error}</Text>
                 </View>
               )}
+
+              <TouchableOpacity
+                style={styles.termsRow}
+                onPress={() => setAgreed(!agreed)}
+                activeOpacity={0.7}
+              >
+                <View style={[styles.checkbox, agreed && styles.checkboxChecked]}>
+                  {agreed && <Text style={styles.checkmark}>✓</Text>}
+                </View>
+                <Text style={styles.termsText}>
+                  I agree to the <Text style={styles.termsLink}>Terms of Service</Text> and{' '}
+                  <Text style={styles.termsLink}>Privacy Policy</Text>
+                </Text>
+              </TouchableOpacity>
 
               <BrandButton
                 title="Create Account"
@@ -215,6 +204,20 @@ const styles = StyleSheet.create({
     color: colors.text.secondary,
     marginTop: spacing.sm,
   },
+  tagline: {
+    fontSize: typography.fontSize.sm,
+    color: colors.text.tertiary,
+    marginTop: spacing.xs,
+    fontStyle: 'italic',
+  },
+  stepIndicator: {
+    fontSize: typography.fontSize.xs,
+    color: colors.primary,
+    marginTop: spacing.md,
+    fontWeight: typography.fontWeight.semibold,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
   card: {
     marginBottom: spacing.xxl,
   },
@@ -260,5 +263,40 @@ const styles = StyleSheet.create({
   footerText: {
     color: colors.text.secondary,
     fontSize: typography.fontSize.base,
+  },
+  termsRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+    marginBottom: spacing.lg,
+  },
+  checkbox: {
+    width: 18,
+    height: 18,
+    borderRadius: 4,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.4)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 2,
+  },
+  checkboxChecked: {
+    backgroundColor: '#E8420A',
+    borderColor: '#E8420A',
+  },
+  checkmark: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  termsText: {
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: 13,
+    flex: 1,
+    lineHeight: 18,
+  },
+  termsLink: {
+    color: '#E8420A',
+    textDecorationLine: 'underline',
   },
 });

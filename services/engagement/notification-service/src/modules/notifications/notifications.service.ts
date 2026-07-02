@@ -15,7 +15,11 @@ export class NotificationsService {
     private readonly smsService: SmsService
   ) {}
 
-  async getNotifications(userId: string, page = 1, limit = 20): Promise<{ success: boolean; data: Record<string, unknown> }> {
+  async getNotifications(
+    userId: string,
+    page = 1,
+    limit = 20
+  ): Promise<{ success: boolean; data: Record<string, unknown> }> {
     const skip = (page - 1) * limit;
     const take = Math.min(limit, 100);
 
@@ -54,7 +58,10 @@ export class NotificationsService {
     };
   }
 
-  async markAsRead(userId: string, notificationId: string): Promise<{ success: boolean; data: { message: string } }> {
+  async markAsRead(
+    userId: string,
+    notificationId: string
+  ): Promise<{ success: boolean; data: { message: string } }> {
     const notification = await this.prisma.notification.findUnique({
       where: { id: notificationId },
     });
@@ -98,7 +105,10 @@ export class NotificationsService {
     };
   }
 
-  async updatePreferences(userId: string, preferences: Record<string, boolean>): Promise<{ success: boolean; data: { message: string } }> {
+  async updatePreferences(
+    userId: string,
+    preferences: Record<string, boolean>
+  ): Promise<{ success: boolean; data: { message: string } }> {
     await this.prisma.user.update({
       where: { id: userId },
       data: {
@@ -116,7 +126,9 @@ export class NotificationsService {
     };
   }
 
-  async getPreferences(userId: string): Promise<{ success: boolean; data: Record<string, unknown> }> {
+  async getPreferences(
+    userId: string
+  ): Promise<{ success: boolean; data: Record<string, unknown> }> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       select: { notificationPreferences: true },
@@ -130,7 +142,9 @@ export class NotificationsService {
     };
   }
 
-  async getUnreadCount(userId: string): Promise<{ success: boolean; data: Record<string, unknown> }> {
+  async getUnreadCount(
+    userId: string
+  ): Promise<{ success: boolean; data: Record<string, unknown> }> {
     const count = await this.prisma.notification.count({
       where: { userId, readAt: null },
     });
@@ -161,7 +175,11 @@ export class NotificationsService {
     });
   }
 
-  async savePushToken(userId: string, token: string, deviceType: string): Promise<{ success: boolean; data: { message: string } }> {
+  async savePushToken(
+    userId: string,
+    token: string,
+    deviceType: string
+  ): Promise<{ success: boolean; data: { message: string } }> {
     // Check if token already exists
     const existingToken = await this.prisma.pushToken.findUnique({
       where: { token },
@@ -196,7 +214,9 @@ export class NotificationsService {
     };
   }
 
-  async getPushTokens(userId: string): Promise<{ success: boolean; data: Record<string, unknown> }> {
+  async getPushTokens(
+    userId: string
+  ): Promise<{ success: boolean; data: Record<string, unknown> }> {
     const tokens = await this.prisma.pushToken.findMany({
       where: { userId },
     });
@@ -209,7 +229,10 @@ export class NotificationsService {
     };
   }
 
-  async deletePushToken(userId: string, token: string): Promise<{ success: boolean; data: { message: string } }> {
+  async deletePushToken(
+    userId: string,
+    token: string
+  ): Promise<{ success: boolean; data: { message: string } }> {
     const existingToken = await this.prisma.pushToken.findUnique({
       where: { token },
     });
@@ -325,7 +348,11 @@ export class NotificationsService {
     });
   }
 
-  async sendContentPublishedEmail(userId: string, contentTitle: string, contentLink: string): Promise<boolean> {
+  async sendContentPublishedEmail(
+    userId: string,
+    contentTitle: string,
+    contentLink: string
+  ): Promise<boolean> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
     });
@@ -347,7 +374,11 @@ export class NotificationsService {
     );
   }
 
-  async sendContentFeaturedEmail(userId: string, contentTitle: string, contentLink: string): Promise<boolean> {
+  async sendContentFeaturedEmail(
+    userId: string,
+    contentTitle: string,
+    contentLink: string
+  ): Promise<boolean> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
     });

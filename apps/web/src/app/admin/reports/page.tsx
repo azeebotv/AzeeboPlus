@@ -75,7 +75,7 @@ export default function AdminReportsPage(): React.JSX.Element {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {reports.map((r: any, i: number) => (
             <div
-              key={i}
+              key={r.id || i}
               className="az-glass"
               style={{
                 display: 'flex',

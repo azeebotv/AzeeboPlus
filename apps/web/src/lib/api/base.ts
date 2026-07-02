@@ -346,10 +346,7 @@ export async function apiFetch<T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<ApiResponse<T>> {
-  const storedToken =
-    typeof window !== 'undefined'
-      ? localStorage.getItem(ACCESS_TOKEN_KEY)
-      : null;
+  const storedToken = typeof window !== 'undefined' ? localStorage.getItem(ACCESS_TOKEN_KEY) : null;
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -391,7 +388,7 @@ export async function apiFetch<T>(
 
     return {
       success: true,
-      data: data.data || data,
+      data: data.data !== undefined ? data.data : data,
       message: data.message,
     };
   } catch (error) {

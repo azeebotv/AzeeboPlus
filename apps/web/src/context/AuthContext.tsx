@@ -68,11 +68,13 @@ const USER_KEY = 'azeebo_user';
  * It's NOT httpOnly because the middleware needs to read it in the Edge runtime.
  */
 function setAuthCookie(value: string, maxAge: number = 7 * 24 * 60 * 60): void {
-  document.cookie = `auth=${encodeURIComponent(value)}; path=/; max-age=${maxAge}; SameSite=Lax`;
+  const secure = window.location.protocol === 'https:' ? '; Secure' : '';
+  document.cookie = `auth=${encodeURIComponent(value)}; path=/; max-age=${maxAge}; SameSite=Lax${secure}`;
 }
 
 function clearAuthCookie(): void {
-  document.cookie = 'auth=; path=/; max-age=0; SameSite=Lax';
+  const secure = window.location.protocol === 'https:' ? '; Secure' : '';
+  document.cookie = `auth=; path=/; max-age=0; SameSite=Lax${secure}`;
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
@@ -94,11 +96,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, []);
 
   const persistTokens = useCallback(
-    (
-      accessToken: string,
-      newRefreshToken: string,
-      userData: User
-    ) => {
+    (accessToken: string, newRefreshToken: string, userData: User) => {
       setToken(accessToken);
       setRefreshToken(newRefreshToken);
       setUser(userData);

@@ -120,7 +120,7 @@ export default function SupportPage(): React.JSX.Element {
               Email Support
             </a>
             <a
-              href="https://wa.me/2348000000000"
+              href="mailto:support@azeeboplus.com?subject=Support%20Request"
               style={{
                 padding: '12px 28px',
                 borderRadius: 999,
@@ -132,7 +132,7 @@ export default function SupportPage(): React.JSX.Element {
                 textDecoration: 'none',
               }}
             >
-              WhatsApp
+              Contact Support
             </a>
           </div>
         </div>

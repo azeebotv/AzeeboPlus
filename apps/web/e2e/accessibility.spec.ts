@@ -19,7 +19,7 @@ test.describe('Web Accessibility Tests', () => {
   });
 
   test('content page should be accessible', async ({ page }) => {
-    await page.goto('/content');
+    await page.goto('/browse');
 
     const accessibilityScanResults = await new AxeBuilder({ page }).analyze();
 

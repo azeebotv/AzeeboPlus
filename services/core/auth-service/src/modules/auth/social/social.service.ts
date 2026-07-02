@@ -153,7 +153,9 @@ export class SocialAuthService {
   // ─── Social login flow ─────────────────────────────────────────────
 
   async socialLogin(socialUser: SocialUser): Promise<SocialLoginResponse> {
-    this.logger.log(`Social login attempt: provider=${socialUser.provider}, email=${socialUser.email}`);
+    this.logger.log(
+      `Social login attempt: provider=${socialUser.provider}, email=${socialUser.email}`
+    );
 
     try {
       let user = await this.authRepository.findByEmail(socialUser.email);

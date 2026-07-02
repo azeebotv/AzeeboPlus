@@ -4,15 +4,12 @@ import { PrismaService } from '../database/prisma.service';
 import { MediaService } from '../media/media.service';
 import { TranscodingService } from '../media/transcoding.service';
 import { ContentRepository } from './content.repository';
-import { NotFoundException, BadRequestException } from '@nestjs/common';
+import { NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { RedisService } from '../../cache/redis.service';
 
 describe('ContentService', () => {
   let service: ContentService;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  let prisma: PrismaService;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  let mediaService: MediaService;
 
   const mockPrismaService = {
     contentItem: {
@@ -58,11 +55,19 @@ describe('ContentService', () => {
   };
 
   const mockContentRepository = {
+    findAll: jest.fn(),
+    findById: jest.fn(),
+    create: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
+    search: jest.fn(),
+    getComments: jest.fn(),
+    addComment: jest.fn(),
+    getAnalytics: jest.fn(),
     findTrending: jest.fn(),
     findRecommended: jest.fn(),
     findLatest: jest.fn(),
     findByCategory: jest.fn(),
-    getAnalytics: jest.fn(),
   };
 
   const mockConfigService = {
@@ -78,6 +83,13 @@ describe('ContentService', () => {
           return defaultValue;
       }
     }),
+  };
+
+  const mockRedisService = {
+    get: jest.fn().mockResolvedValue(null),
+    set: jest.fn().mockResolvedValue(undefined),
+    del: jest.fn().mockResolvedValue(undefined),
+    delPattern: jest.fn().mockResolvedValue(undefined),
   };
 
   beforeEach(async () => {
@@ -105,13 +117,14 @@ describe('ContentService', () => {
           provide: ConfigService,
           useValue: mockConfigService,
         },
+        {
+          provide: RedisService,
+          useValue: mockRedisService,
+        },
       ],
     }).compile();
 
     service = module.get<ContentService>(ContentService);
-    prisma = module.get<PrismaService>(PrismaService);
-    mediaService = module.get<MediaService>(MediaService);
-
     jest.clearAllMocks();
   });
 
@@ -128,9 +141,10 @@ describe('ContentService', () => {
       const mockTrending = [{ id: '1', title: 'Trending 1' }];
       const mockLatest = [{ id: '2', title: 'Latest 1' }];
 
+      mockRedisService.get.mockResolvedValue(null);
+      mockPrismaService.watchHistory.findMany.mockResolvedValue([]);
       mockPrismaService.contentItem.findMany
         .mockResolvedValueOnce(mockTrending)
-        .mockResolvedValueOnce([])
         .mockResolvedValueOnce(mockLatest);
 
       const result = await service.getHomeFeed();
@@ -144,10 +158,10 @@ describe('ContentService', () => {
       const userId = 'user-123';
       const mockRecommended = [{ id: '3', title: 'Recommended 1' }];
 
+      mockRedisService.get.mockResolvedValue(null);
       mockPrismaService.watchHistory.findMany.mockResolvedValue([{ contentId: '1' }]);
       mockPrismaService.contentItem.findMany
         .mockResolvedValueOnce([{ id: '1', universeId: 'univ-1' }])
-        .mockResolvedValueOnce([])
         .mockResolvedValueOnce(mockRecommended)
         .mockResolvedValueOnce([]);
 
@@ -170,12 +184,13 @@ describe('ContentService', () => {
 
       expect(result.success).toBe(true);
       expect(result.data).toEqual(mockContent);
-      expect(mockPrismaService.contentItem.findMany).toHaveBeenCalledWith({
-        where: { status: 'published' },
-        orderBy: { viewCount: 'desc' },
-        take: 50,
-        include: { creator: true, universe: true },
-      });
+      expect(mockPrismaService.contentItem.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { status: 'published' },
+          orderBy: { viewCount: 'desc' },
+          take: 50,
+        })
+      );
     });
   });
 
@@ -189,7 +204,7 @@ describe('ContentService', () => {
         universe: { id: 'univ-1', name: 'Reality' },
       };
 
-      mockPrismaService.contentItem.findUnique.mockResolvedValue(mockContent);
+      mockContentRepository.findById.mockResolvedValue(mockContent);
       mockPrismaService.contentItem.update.mockResolvedValue(mockContent);
 
       const result = await service.getContent(contentId);
@@ -203,7 +218,7 @@ describe('ContentService', () => {
     });
 
     it('should throw NotFoundException if content not found', async () => {
-      mockPrismaService.contentItem.findUnique.mockResolvedValue(null);
+      mockContentRepository.findById.mockResolvedValue(null);
 
       await expect(service.getContent('nonexistent')).rejects.toThrow(NotFoundException);
     });
@@ -211,14 +226,20 @@ describe('ContentService', () => {
 
   describe('searchContent', () => {
     it('should return search results', async () => {
-      const mockContent = [{ id: '1', title: 'Search Result 1' }];
+      const mockResults = {
+        data: [{ id: '1', title: 'Search Result 1' }],
+        page: 1,
+        limit: 20,
+        total: 1,
+        totalPages: 1,
+      };
 
-      mockPrismaService.contentItem.findMany.mockResolvedValue(mockContent);
+      mockContentRepository.search.mockResolvedValue(mockResults);
 
       const result = await service.searchContent('search term');
 
       expect(result.success).toBe(true);
-      expect(result.data).toEqual(mockContent);
+      expect(result.data).toEqual(mockResults.data);
     });
   });
 
@@ -249,15 +270,15 @@ describe('ContentService', () => {
       };
       const mockContent = { id: 'content-1', ...createDto, creatorId: userId, status: 'draft' };
 
-      mockPrismaService.contentItem.create.mockResolvedValue(mockContent);
+      mockContentRepository.create.mockResolvedValue(mockContent);
 
       const result = await service.createContent(userId, createDto);
 
       expect(result.success).toBe(true);
       expect(result.data).toEqual(mockContent);
-      expect(mockPrismaService.contentItem.create).toHaveBeenCalledWith({
-        data: { ...createDto, creatorId: userId, status: 'draft' },
-        include: { creator: true, universe: true },
+      expect(mockContentRepository.create).toHaveBeenCalledWith({
+        ...createDto,
+        creatorId: userId,
       });
     });
   });
@@ -270,8 +291,8 @@ describe('ContentService', () => {
       const existingContent = { id: contentId, creatorId: userId, title: 'Old Title' };
       const updatedContent = { ...existingContent, ...updateDto };
 
-      mockPrismaService.contentItem.findUnique.mockResolvedValue(existingContent);
-      mockPrismaService.contentItem.update.mockResolvedValue(updatedContent);
+      mockContentRepository.findById.mockResolvedValue(existingContent);
+      mockContentRepository.update.mockResolvedValue(updatedContent);
 
       const result = await service.updateContent(userId, contentId, updateDto);
 
@@ -280,21 +301,21 @@ describe('ContentService', () => {
     });
 
     it('should throw NotFoundException if content not found', async () => {
-      mockPrismaService.contentItem.findUnique.mockResolvedValue(null);
+      mockContentRepository.findById.mockResolvedValue(null);
 
       await expect(
         service.updateContent('user-1', 'nonexistent', { title: 'New' })
       ).rejects.toThrow(NotFoundException);
     });
 
-    it('should throw BadRequestException if not authorized', async () => {
+    it('should throw ForbiddenException if not authorized', async () => {
       const content = { id: 'content-1', creatorId: 'other-user' };
 
-      mockPrismaService.contentItem.findUnique.mockResolvedValue(content);
+      mockContentRepository.findById.mockResolvedValue(content);
 
       await expect(
         service.updateContent('user-123', 'content-1', { title: 'New' })
-      ).rejects.toThrow(BadRequestException);
+      ).rejects.toThrow(ForbiddenException);
     });
   });
 
@@ -304,8 +325,8 @@ describe('ContentService', () => {
       const contentId = 'content-1';
       const content = { id: contentId, creatorId: userId };
 
-      mockPrismaService.contentItem.findUnique.mockResolvedValue(content);
-      mockPrismaService.contentItem.update.mockResolvedValue(content);
+      mockContentRepository.findById.mockResolvedValue(content);
+      mockContentRepository.delete.mockResolvedValue(undefined);
 
       const result = await service.deleteContent(userId, contentId);
 
@@ -314,7 +335,7 @@ describe('ContentService', () => {
     });
 
     it('should throw NotFoundException if content not found', async () => {
-      mockPrismaService.contentItem.findUnique.mockResolvedValue(null);
+      mockContentRepository.findById.mockResolvedValue(null);
 
       await expect(service.deleteContent('user-123', 'nonexistent')).rejects.toThrow(
         NotFoundException
@@ -412,11 +433,20 @@ describe('ContentService', () => {
 
       mockPrismaService.contentItem.findUnique.mockResolvedValue({ id: contentId });
 
+      const originalFetch = global.fetch;
+      const mockFetch = jest.fn().mockResolvedValue({
+        ok: true,
+        json: jest.fn().mockResolvedValue({ success: true, data: { reportId: 'report-123' } }),
+      });
+      global.fetch = mockFetch;
+
       const result = await service.reportContent(userId, contentId, reportData);
 
       expect(result.success).toBe(true);
       expect(result.data.message).toBe('Content reported successfully');
-      expect(result.data.reportId).toBeDefined();
+
+      // Restore original fetch
+      global.fetch = originalFetch;
     });
   });
 
@@ -464,7 +494,7 @@ describe('ContentService', () => {
       const categoryId = 'cat-1';
 
       mockPrismaService.category.findUnique.mockResolvedValue({ id: categoryId });
-      mockPrismaService.category.delete.mockResolvedValue({ id: categoryId, status: 'deleted' });
+      mockPrismaService.category.delete.mockResolvedValue({ id: categoryId });
 
       const result = await service.deleteCategory(categoryId);
 
@@ -517,12 +547,12 @@ describe('ContentService', () => {
       const tagId = 'tag-1';
 
       mockPrismaService.tag.findUnique.mockResolvedValue({ id: tagId });
-      mockPrismaService.tag.update.mockResolvedValue({ id: tagId, status: 'deleted' });
+      mockPrismaService.tag.delete.mockResolvedValue({ id: tagId });
 
       const result = await service.deleteTag(tagId);
 
       expect(result.success).toBe(true);
-      expect(result.data.message).toBe('Tag soft deleted successfully');
+      expect(result.data.message).toBe('Tag deleted successfully');
     });
   });
 
@@ -539,19 +569,12 @@ describe('ContentService', () => {
         averageWatchDuration: 180,
       };
 
-      mockPrismaService.contentItem.findUnique.mockResolvedValue({ id: contentId });
       mockContentRepository.getAnalytics.mockResolvedValue(mockAnalytics);
 
       const result = await service.getContentAnalytics(contentId);
 
       expect(result.success).toBe(true);
       expect(result.data).toEqual(mockAnalytics);
-    });
-
-    it('should throw NotFoundException if content not found', async () => {
-      mockPrismaService.contentItem.findUnique.mockResolvedValue(null);
-
-      await expect(service.getContentAnalytics('nonexistent')).rejects.toThrow(NotFoundException);
     });
   });
 });

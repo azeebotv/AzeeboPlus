@@ -1,11 +1,6 @@
 // Engagement domain methods — homepage support APIs
 
-import type {
-  ApiResponse,
-  ContentItem,
-  PaginatedResponse,
-  RequestClient,
-} from './base';
+import type { ApiResponse, ContentItem, PaginatedResponse, RequestClient } from './base';
 
 export interface EngagementHistoryItem {
   contentId: string;

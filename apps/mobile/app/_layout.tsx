@@ -9,6 +9,7 @@ import { NotificationProvider } from '../src/contexts/NotificationContext';
 import { SettingsProvider } from '../src/contexts/SettingsContext';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { ErrorBoundary } from '../src/components/ErrorBoundary';
 
 const queryClient = new QueryClient();
 
@@ -17,30 +18,32 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider>
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <WalletProvider>
-            <ContentProvider>
-              <NotificationProvider>
-                <SettingsProvider>
-                  <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
-                  <Stack
-                    screenOptions={{
-                      headerShown: false,
-                      animation: 'slide_from_right',
-                    }}
-                  >
-                    <Stack.Screen name="index" options={{ headerShown: false }} />
-                    <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-                    <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-                    <Stack.Screen name="watch/[contentId]" options={{ headerShown: false }} />
-                  </Stack>
-                </SettingsProvider>
-              </NotificationProvider>
-            </ContentProvider>
-          </WalletProvider>
-        </AuthProvider>
-      </QueryClientProvider>
+      <ErrorBoundary>
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            <WalletProvider>
+              <ContentProvider>
+                <NotificationProvider>
+                  <SettingsProvider>
+                    <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
+                    <Stack
+                      screenOptions={{
+                        headerShown: false,
+                        animation: 'slide_from_right',
+                      }}
+                    >
+                      <Stack.Screen name="index" options={{ headerShown: false }} />
+                      <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+                      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                      <Stack.Screen name="watch/[contentId]" options={{ headerShown: false }} />
+                    </Stack>
+                  </SettingsProvider>
+                </NotificationProvider>
+              </ContentProvider>
+            </WalletProvider>
+          </AuthProvider>
+        </QueryClientProvider>
+      </ErrorBoundary>
     </SafeAreaProvider>
   );
 }

@@ -16,7 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../src/contexts/AuthContext';
 import { userApi } from '../../src/api/user';
 import { apiClient } from '../../src/api/client';
-import { LoadingState, ErrorState } from '../../src/components/StateContainers';
+import { ErrorState } from '../../src/components/StateContainers';
 
 export default function ProfileSetupScreen() {
   const router = useRouter();
@@ -156,7 +156,7 @@ export default function ProfileSetupScreen() {
                 Choose at least 3 to get personalized recommendations
               </Text>
               {isLoadingInterests ? (
-                <ActivityIndicator color="#8B5CF6" />
+                <ActivityIndicator color="#E8420A" />
               ) : interestsError ? (
                 <ErrorState description={interestsError} onRetry={fetchInterests} />
               ) : (
@@ -206,7 +206,7 @@ export default function ProfileSetupScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#111827',
+    backgroundColor: '#1A0A0A',
   },
   keyboardView: {
     flex: 1,
@@ -290,8 +290,8 @@ const styles = StyleSheet.create({
     borderColor: '#333',
   },
   interestChipSelected: {
-    backgroundColor: '#8B5CF6',
-    borderColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
+    borderColor: '#E8420A',
   },
   interestText: {
     color: '#F3F4F6',
@@ -302,7 +302,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   completeButton: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',

@@ -1,23 +1,27 @@
-import { IsString, IsNumber, Min } from 'class-validator';
+import { IsString, IsNumber, Min, IsNotEmpty } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CastVoteDto {
   @ApiProperty()
   @IsString()
+  @IsNotEmpty()
   contestantId!: string;
 
   @ApiProperty()
   @IsString()
+  @IsNotEmpty()
   showId!: string;
 }
 
 export class BuyVoteDto {
   @ApiProperty()
   @IsString()
+  @IsNotEmpty()
   contestantId!: string;
 
   @ApiProperty()
   @IsString()
+  @IsNotEmpty()
   showId!: string;
 
   @ApiProperty()
@@ -29,6 +33,7 @@ export class BuyVoteDto {
 export class MakePredictionDto {
   @ApiProperty()
   @IsString()
+  @IsNotEmpty()
   showId!: string;
 
   @ApiProperty()

@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, ScrollView, StyleSheet, Pressable } from 'react-native';
+import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { api } from '@/api';
 import type { ContentItem } from '@/api';
@@ -12,7 +11,6 @@ import type {
   UserUniverseEngagement,
   HomepageRecommendationGroup,
 } from '@/api';
-import { Typography, Spacing } from '@/theme';
 import { BrandButton } from '@/components/ui/BrandButton';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import HeroCarousel from './HeroCarousel';
@@ -30,7 +28,7 @@ interface UniverseSection {
 }
 
 export default function AuthenticatedHomepage({
-  siteName = 'Azeebo+',
+  siteName: _siteName = 'Azeebo+',
 }: AuthenticatedHomepageProps) {
   const router = useRouter();
   const { t } = useTranslation();
@@ -49,7 +47,9 @@ export default function AuthenticatedHomepage({
   const [isLoadingUniverses, setIsLoadingUniverses] = useState(true);
 
   // Section 4: Personalized Recommendations
-  const [recommendationGroups, setRecommendationGroups] = useState<HomepageRecommendationGroup[]>([]);
+  const [recommendationGroups, setRecommendationGroups] = useState<HomepageRecommendationGroup[]>(
+    []
+  );
   const [isLoadingRecommendations, setIsLoadingRecommendations] = useState(true);
 
   // Section 5: Supplementary
@@ -88,20 +88,24 @@ export default function AuthenticatedHomepage({
         );
         setHasMoreHistory(response.data.hasMore);
       }
-    } catch {} finally {
+    } catch {
+    } finally {
       setIsLoadingHistory(false);
     }
   }, [recentlyWatchedOffset]);
 
   useEffect(() => {
     loadRecentlyWatched();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   const loadMoreHistory = useCallback(async () => {
     const nextOffset = recentlyWatchedOffset + HISTORY_PAGE_SIZE;
     setRecentlyWatchedOffset(nextOffset);
     try {
-      const response = await api.homepageEngagement.getRecentlyWatched(HISTORY_PAGE_SIZE, nextOffset);
+      const response = await api.homepageEngagement.getRecentlyWatched(
+        HISTORY_PAGE_SIZE,
+        nextOffset
+      );
       if (response.success && response.data) {
         setRecentlyWatched((prev) => [...prev, ...(response.data?.items || [])]);
         setHasMoreHistory(response.data.hasMore);
@@ -124,12 +128,17 @@ export default function AuthenticatedHomepage({
           return;
         }
 
-        const universeEngagement = engagementResponse.data
-          .sort((a: UserUniverseEngagement, b: UserUniverseEngagement) => b.engagementCount - a.engagementCount);
+        const universeEngagement = engagementResponse.data.sort(
+          (a: UserUniverseEngagement, b: UserUniverseEngagement) =>
+            b.engagementCount - a.engagementCount
+        );
 
         const contentPromises = universeEngagement.map(async (ue: UserUniverseEngagement) => {
           try {
-            const contentResponse = await api.homepageEngagement.getContentByUniverse(ue.universeId, 12);
+            const contentResponse = await api.homepageEngagement.getContentByUniverse(
+              ue.universeId,
+              12
+            );
             return {
               universeId: ue.universeId,
               universeName: ue.universeName,
@@ -148,7 +157,8 @@ export default function AuthenticatedHomepage({
 
         const sections = await Promise.all(contentPromises);
         setUniverseSections(sections.filter((s: UniverseSection) => s.items.length > 0));
-      } catch {} finally {
+      } catch {
+      } finally {
         setIsLoadingUniverses(false);
       }
     };
@@ -206,19 +216,32 @@ export default function AuthenticatedHomepage({
           api.homepageEngagement.getPopularInRegion(12),
         ]);
 
-        if (trendingRes.status === 'fulfilled' && trendingRes.value.success && trendingRes.value.data) {
+        if (
+          trendingRes.status === 'fulfilled' &&
+          trendingRes.value.success &&
+          trendingRes.value.data
+        ) {
           setTrendingContent(trendingRes.value.data);
         }
-        if (continueRes.status === 'fulfilled' && continueRes.value.success && continueRes.value.data) {
+        if (
+          continueRes.status === 'fulfilled' &&
+          continueRes.value.success &&
+          continueRes.value.data
+        ) {
           setContinueWatching(continueRes.value.data);
         }
         if (newRes.status === 'fulfilled' && newRes.value.success && newRes.value.data) {
           setNewReleases(newRes.value.data);
         }
-        if (popularRes.status === 'fulfilled' && popularRes.value.success && popularRes.value.data) {
+        if (
+          popularRes.status === 'fulfilled' &&
+          popularRes.value.success &&
+          popularRes.value.data
+        ) {
           setPopularInRegion(popularRes.value.data);
         }
-      } catch {} finally {
+      } catch {
+      } finally {
         setIsLoadingSupplementary(false);
       }
     };
@@ -254,7 +277,11 @@ export default function AuthenticatedHomepage({
           {universeSections.map((section) => (
             <ContentRow
               key={section.universeId}
-              title={section.universeIcon ? `${section.universeIcon} ${section.universeName}` : section.universeName}
+              title={
+                section.universeIcon
+                  ? `${section.universeIcon} ${section.universeName}`
+                  : section.universeName
+              }
               sectionId={`universe-${section.universeId}`}
               items={section.items}
               isLoading={isLoadingUniverses}
@@ -337,8 +364,8 @@ export default function AuthenticatedHomepage({
             <Text style={styles.referralTitle}>{t('home.inviteFriends')}</Text>
             <Text style={styles.referralDescription}>{t('home.inviteFriendsDescription')}</Text>
             <BrandButton
-              label={t('home.shareYourLink')}
-              onPress={() => router.push('/referral')}
+              title={t('home.shareYourLink')}
+              onPress={() => router.push('/(tabs)/referral')}
               variant="dark"
             />
           </View>

@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
-import { RateLimitGuard, RateLimit } from '@azeebo/security';
+import { RateLimitGuard, RateLimit, AdminGuard } from '@azeebo/security';
 
 import { SubscriptionService } from './subscription.service';
 import { CreateSubscriptionPlanDto } from './dto/create-subscription-plan.dto';
@@ -44,12 +44,13 @@ export class SubscriptionController {
   }
 
   @Post('plans')
-  @UseGuards(AuthGuard('jwt'), RateLimitGuard)
+  @UseGuards(AuthGuard('jwt'), AdminGuard, RateLimitGuard)
   @RateLimit(5, 3600000)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Create a new subscription plan (admin)' })
+  @ApiOperation({ summary: 'Create a new subscription plan (admin only)' })
   @ApiResponse({ status: 201, description: 'Plan created' })
   @ApiResponse({ status: 400, description: 'Invalid input' })
+  @ApiResponse({ status: 403, description: 'Forbidden - admin only' })
   async createPlan(@Body() dto: CreateSubscriptionPlanDto): Promise<any> {
     return this.subscriptionService.createPlan(dto);
   }

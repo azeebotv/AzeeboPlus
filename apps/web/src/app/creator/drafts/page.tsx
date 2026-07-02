@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { api } from '@/lib/api';
+import { apiFetch, api } from '@/lib/api';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 
@@ -15,6 +15,7 @@ interface DraftContent {
   duration?: number;
   lastEdited: string;
   status: string;
+  updatedAt: string;
 }
 
 export default function DraftsPage(): React.JSX.Element {
@@ -33,12 +34,22 @@ export default function DraftsPage(): React.JSX.Element {
 
   const loadDrafts = async () => {
     try {
-      const response = await api.content.getMyContent({ status: 'draft' });
+      const response = await apiFetch<any>('/v1/content/me?status=draft');
       if (response.success && response.data) {
-        const items = Array.isArray(response.data)
-          ? response.data
-          : (response.data as any).items || [];
-        setDrafts(items as DraftContent[]);
+        const items = Array.isArray(response.data) ? response.data : response.data.items || [];
+        setDrafts(
+          items.map((item: any) => ({
+            id: String(item.id),
+            title: String(item.title || ''),
+            description: String(item.description || ''),
+            thumbnail: String(item.thumbnail || ''),
+            type: String(item.contentType || item.type || 'video'),
+            duration: Number(item.duration || 0),
+            lastEdited: String(item.updatedAt || item.lastEdited || ''),
+            updatedAt: String(item.updatedAt || ''),
+            status: String(item.status || 'draft'),
+          }))
+        );
       }
     } catch {
       /* ignore */

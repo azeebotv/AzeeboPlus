@@ -5,6 +5,7 @@ import { PaystackProvider } from './providers/paystack.provider';
 import { FlutterwaveProvider } from './providers/flutterwave.provider';
 import { WebhookRetryService } from './webhook-retry.service';
 import { ConfigService } from '@nestjs/config';
+import { RedisService } from '../../common/services/redis.service';
 
 jest.mock('../database/prisma.service');
 jest.mock('./providers/paystack.provider');
@@ -127,7 +128,27 @@ describe('PaymentsService E2E Tests', () => {
         {
           provide: ConfigService,
           useValue: {
-            getOrThrow: jest.fn().mockReturnValue('http://localhost:3002'),
+            getOrThrow: jest.fn((key: string) => {
+              const config: Record<string, string> = {
+                ANALYTICS_SERVICE_URL: 'http://localhost:3001',
+                WALLET_SERVICE_URL: 'http://localhost:3002',
+              };
+              return config[key];
+            }),
+            get: jest.fn((key: string, defaultValue?: unknown) => {
+              if (key === 'MIN_PAYMENT_AMOUNT_NGN') return 100;
+              return defaultValue;
+            }),
+          },
+        },
+        {
+          provide: RedisService,
+          useValue: {
+            setIfNotExists: jest.fn().mockResolvedValue(true),
+            del: jest.fn().mockResolvedValue(1),
+            get: jest.fn().mockResolvedValue(null),
+            set: jest.fn().mockResolvedValue(undefined),
+            exists: jest.fn().mockResolvedValue(false),
           },
         },
       ],

@@ -60,7 +60,11 @@ export class SmsService implements OnModuleInit {
     }
   }
 
-  async sendSmsWithTemplate(to: string, templateName: string, data: Record<string, unknown>): Promise<boolean> {
+  async sendSmsWithTemplate(
+    to: string,
+    templateName: string,
+    data: Record<string, unknown>
+  ): Promise<boolean> {
     const message = this.getTemplateMessage(templateName, data);
     return this.sendSms(to, message);
   }

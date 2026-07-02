@@ -40,7 +40,7 @@ export class SportsService {
         universe: 'sports',
         metadata,
         timestamp: new Date().toISOString(),
-      });
+      }, { timeout: 10000 });
     } catch (error) {
       this.logger.warn('Failed to track analytics event:', error);
     }
@@ -172,7 +172,7 @@ export class SportsService {
         amount: this.predictionFee,
         description: `Prediction fee for event ${body.eventId}`,
         idempotencyKey,
-      })
+      }, { timeout: 10000 })
       .catch((error: unknown) => {
         const errorMessage = error instanceof Error ? error.message : 'Failed to debit wallet';
         throw new BadRequestException(errorMessage);
@@ -213,7 +213,7 @@ export class SportsService {
           amount: this.predictionFee,
           description: `Compensation for failed prediction: ${idempotencyKey}`,
           reference: `compensate:${idempotencyKey}`,
-        })
+        }, { timeout: 10000 })
         .catch((compensateError: unknown) => {
           this.logger.error(
             'Failed to compensate wallet after prediction failure:',
@@ -335,7 +335,7 @@ export class SportsService {
         amount: this.contestEntryFee,
         description: `Contest entry fee for contest ${contestId}`,
         idempotencyKey,
-      })
+      }, { timeout: 10000 })
       .catch((error: unknown) => {
         const errorMessage = error instanceof Error ? error.message : 'Failed to debit wallet';
         throw new BadRequestException(errorMessage);
@@ -373,7 +373,7 @@ export class SportsService {
           amount: this.contestEntryFee,
           description: `Compensation for failed contest entry: ${idempotencyKey}`,
           reference: `compensate:${idempotencyKey}`,
-        })
+        }, { timeout: 10000 })
         .catch((compensateError: unknown) => {
           this.logger.error('Failed to compensate wallet:', compensateError);
         });
@@ -427,7 +427,7 @@ export class SportsService {
               walletId: wallet.id,
               amount: rewardAmount,
               description: `Correct prediction reward for event ${eventId}`,
-            })
+            }, { timeout: 10000 })
             .catch((error: unknown) => {
               this.logger.error(`Failed to credit reward to user ${prediction.userId}:`, error);
             });

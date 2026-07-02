@@ -1,8 +1,6 @@
 import { useCallback } from 'react';
 import * as SecureStore from 'expo-secure-store';
-import { Logger } from '@azeebo/shared-types';
-
-const logger = new Logger('useSecureStorage');
+import { logger } from '../utils/logger';
 
 /**
  * Secure storage hook for sensitive data (JWT tokens, credentials).

@@ -25,7 +25,8 @@ const USER_KEY = 'azeebo_user';
 /** Set the middleware-readable auth cookie so protected routes don't redirect to login. */
 function setAuthCookie(value: string, maxAge: number = 7 * 24 * 60 * 60): void {
   if (typeof document !== 'undefined') {
-    document.cookie = `auth=${encodeURIComponent(value)}; path=/; max-age=${maxAge}; SameSite=Lax`;
+    const secure = process.env.NODE_ENV === 'production' ? '; Secure' : '';
+    document.cookie = `auth=${encodeURIComponent(value)}; path=/; max-age=${maxAge}; SameSite=Lax${secure}`;
   }
 }
 
@@ -184,7 +185,12 @@ class ApiClient {
 
       if (!response.ok) {
         // T-CORE: On 401, attempt automatic token refresh and retry the request
-        if (response.status === 401 && !retryOptions?.skipAuthRetry && !endpoint.includes('/auth/refresh') && !endpoint.includes('/auth/login')) {
+        if (
+          response.status === 401 &&
+          !retryOptions?.skipAuthRetry &&
+          !endpoint.includes('/auth/refresh') &&
+          !endpoint.includes('/auth/login')
+        ) {
           const refreshed = await this.attemptRefresh();
           if (refreshed) {
             // Retry the original request with the new token
@@ -195,8 +201,8 @@ class ApiClient {
 
         // T-M15: retry on standard retryable codes, but skip retry for auth/refresh
         // to prevent generating multiple refresh requests that hit rate limits
-        const retryable = this.isRetryableError(response.status)
-          && !endpoint.includes('/auth/refresh');
+        const retryable =
+          this.isRetryableError(response.status) && !endpoint.includes('/auth/refresh');
 
         if (retryable && attempt < RETRY_CONFIG.maxRetries) {
           const retryAfter = response.headers.get('Retry-After');
@@ -215,10 +221,13 @@ class ApiClient {
           instance: data.instance,
           // Application-level fields
           code: data.code,
-          message: data.message
-            || (Array.isArray(data.error?.message) ? data.error.message.join(', ') : data.error?.message)
-            || data.detail
-            || 'An error occurred',
+          message:
+            data.message ||
+            (Array.isArray(data.error?.message)
+              ? data.error.message.join(', ')
+              : data.error?.message) ||
+            data.detail ||
+            'An error occurred',
           error: data.error,
           statusCode: response.status,
           details: data.details,

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, FlatList, useColorScheme } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, FlatList } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useAuth } from '../../src/contexts/AuthContext';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
 import { contentApi } from '../../src/api';
 
@@ -32,11 +33,18 @@ interface HistoryItem {
 
 export default function LibraryScreen() {
   const router = useRouter();
+  const { isAuthenticated } = useAuth();
   const [activeTab, setActiveTab] = useState('watchlist');
   const [watchlist, setWatchlist] = useState<WatchlistItem[]>([]);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.replace('/(auth)/login');
+    }
+  }, [isAuthenticated, router]);
 
   const fetchData = async () => {
     setIsLoading(true);
@@ -120,7 +128,7 @@ export default function LibraryScreen() {
         renderItem={({ item }) => (
           <TouchableOpacity
             style={styles.itemCard}
-            onPress={() => router.push(`/watch/${item.contentId || item.id}`)}
+            onPress={() => router.push(`/watch/${(item as any).contentId || item.id}`)}
           >
             <View style={styles.itemThumbnail}>
               <Text style={styles.itemEmoji}>📺</Text>
@@ -205,7 +213,7 @@ export default function LibraryScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: '#1A0A0A',
   },
   header: {
     paddingHorizontal: 16,
@@ -233,7 +241,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   tabActive: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
   },
   tabEmoji: {
     fontSize: 14,
@@ -287,7 +295,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -302,7 +310,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#333',
   },
   resumeText: {
-    color: '#8B5CF6',
+    color: '#E8420A',
     fontSize: 12,
     fontWeight: '600',
   },

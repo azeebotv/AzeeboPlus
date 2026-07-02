@@ -15,7 +15,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
-import { RateLimitGuard, RateLimit, Public } from '@azeebo/security';
+import { RateLimitGuard, RateLimit, Public, AdminGuard } from '@azeebo/security';
 import { CacheInterceptor, Cache } from '@azeebo/shared-services';
 
 import { ContentService } from './content.service';
@@ -348,7 +348,24 @@ export class ContentController {
   @ApiResponse({ status: 200, description: 'Analytics data' })
   @ApiResponse({ status: 404, description: 'Content not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getContentAnalytics(@Param('id') id: string): Promise<ContentResponse> {
+  @ApiResponse({ status: 403, description: 'Forbidden - not content owner' })
+  async getContentAnalytics(
+    @Param('id') id: string,
+    @Request() req: any
+  ): Promise<ContentResponse> {
+    const userId = req.user?.sub || req.user?.id;
+    if (!userId) {
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    }
+
+    const content = await this.contentService.getContent(id);
+    if (!content?.data?.userId || content.data.userId !== userId) {
+      throw new HttpException(
+        'Forbidden - you can only view analytics for your own content',
+        HttpStatus.FORBIDDEN
+      );
+    }
+
     return this.contentService.getContentAnalytics(id);
   }
 
@@ -513,10 +530,11 @@ export class ContentController {
   }
 
   @Post('categories')
-  @UseGuards(AuthGuard('jwt'))
-  @ApiOperation({ summary: 'Create category' })
+  @UseGuards(AuthGuard('jwt'), AdminGuard)
+  @ApiOperation({ summary: 'Create category (admin only)' })
   @ApiResponse({ status: 201, description: 'Category created' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - admin only' })
   async createCategory(
     @Request() req: { user: { sub: string } },
     @Body()
@@ -532,10 +550,11 @@ export class ContentController {
   }
 
   @Post('tags')
-  @UseGuards(AuthGuard('jwt'))
-  @ApiOperation({ summary: 'Create tag' })
+  @UseGuards(AuthGuard('jwt'), AdminGuard)
+  @ApiOperation({ summary: 'Create tag (admin only)' })
   @ApiResponse({ status: 201, description: 'Tag created' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - admin only' })
   async createTag(
     @Request() req: { user: { sub: string } },
     @Body() body: { name: string; description?: string }
@@ -552,9 +571,13 @@ export class ContentController {
   async addCommentToContent(
     @Request() req: { user: { sub: string } },
     @Param('id') id: string,
-    @Body() body: { text: string }
+    @Body() body: { text?: string; content?: string }
   ): Promise<ContentResponse> {
-    return this.contentService.addCommentToContent(req.user.sub, id, body.text);
+    return this.contentService.addCommentToContent(
+      req.user.sub,
+      id,
+      body.text || body.content || ''
+    );
   }
 
   @Post(':id/media')
@@ -564,11 +587,11 @@ export class ContentController {
   @ApiResponse({ status: 404, description: 'Content not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async createMediaAsset(
-    @Request() req: { user: { sub: string } },
+    @Request() req: { user: { sub: string; role?: string } },
     @Param('id') id: string,
     @Body() createMediaAssetDto: CreateMediaAssetDto
   ): Promise<ContentResponse> {
-    return this.contentService.createMediaAsset(req.user.sub, id, createMediaAssetDto);
+    return this.contentService.createMediaAsset(req.user.sub, id, createMediaAssetDto, req.user.role);
   }
 
   @Post(':id/media/thumbnail')
@@ -727,11 +750,11 @@ export class ContentController {
   @ApiResponse({ status: 404, description: 'Content or media asset not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async updateMediaAsset(
-    @Request() req: { user: { sub: string } },
+    @Request() req: { user: { sub: string; role?: string } },
     @Param('id') id: string,
     @Body() updateMediaAssetDto: UpdateMediaAssetDto
   ): Promise<ContentResponse> {
-    return this.contentService.updateMediaAsset(req.user.sub, id, updateMediaAssetDto);
+    return this.contentService.updateMediaAsset(req.user.sub, id, updateMediaAssetDto, req.user.role);
   }
 
   @Patch('categories/:id')
@@ -794,10 +817,10 @@ export class ContentController {
   @ApiResponse({ status: 404, description: 'Content or media asset not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async deleteMediaAsset(
-    @Request() req: { user: { sub: string } },
+    @Request() req: { user: { sub: string; role?: string } },
     @Param('id') id: string
   ): Promise<ContentResponse> {
-    return this.contentService.deleteMediaAsset(req.user.sub, id);
+    return this.contentService.deleteMediaAsset(req.user.sub, id, req.user.role);
   }
 
   @Delete(':id/categories/:categoryId')
@@ -843,11 +866,12 @@ export class ContentController {
   }
 
   @Delete('categories/:id')
-  @UseGuards(AuthGuard('jwt'))
-  @ApiOperation({ summary: 'Delete category' })
+  @UseGuards(AuthGuard('jwt'), AdminGuard)
+  @ApiOperation({ summary: 'Delete category (admin only)' })
   @ApiResponse({ status: 200, description: 'Category soft deleted' })
   @ApiResponse({ status: 404, description: 'Category not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - admin only' })
   async deleteCategory(
     @Request() req: { user: { sub: string } },
     @Param('id') id: string
@@ -856,11 +880,12 @@ export class ContentController {
   }
 
   @Delete('tags/:id')
-  @UseGuards(AuthGuard('jwt'))
-  @ApiOperation({ summary: 'Delete tag' })
+  @UseGuards(AuthGuard('jwt'), AdminGuard)
+  @ApiOperation({ summary: 'Delete tag (admin only)' })
   @ApiResponse({ status: 200, description: 'Tag soft deleted' })
   @ApiResponse({ status: 404, description: 'Tag not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - admin only' })
   async deleteTag(
     @Request() req: { user: { sub: string } },
     @Param('id') id: string

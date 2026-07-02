@@ -7,7 +7,7 @@ import AppFooter from '@/components/layout/AppFooter';
 interface LeaderboardEntry {
   rank: number;
   userId: string;
-  username: string;
+  displayName: string;
   avatar?: string;
   score: number;
   level: number;
@@ -26,7 +26,7 @@ export default function LeaderboardPage(): React.JSX.Element {
   const loadLeaderboard = async () => {
     setIsLoading(true);
     try {
-      const response = await apiFetch<any>(`/engagement/leaderboard?timeframe=${timeframe}`);
+      const response = await apiFetch<any>(`/engagement/leaderboard?timePeriod=${timeframe}`);
       if (response.success && response.data) {
         const data = response.data as any;
         setEntries(Array.isArray(data) ? data : data.items || []);
@@ -176,12 +176,12 @@ export default function LeaderboardPage(): React.JSX.Element {
                           fontSize: 18,
                         }}
                       >
-                        {entry.username.charAt(0).toUpperCase()}
+                        {entry.displayName.charAt(0).toUpperCase()}
                       </div>
                     )}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <h3 style={{ fontWeight: 600, fontSize: 15 }}>{entry.username}</h3>
+                    <h3 style={{ fontWeight: 600, fontSize: 15 }}>{entry.displayName}</h3>
                     <p style={{ color: '#9A8A7A', fontSize: 12 }}>Level {entry.level}</p>
                   </div>
                   <div style={{ textAlign: 'right' }}>

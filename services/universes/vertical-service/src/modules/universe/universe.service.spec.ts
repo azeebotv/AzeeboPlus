@@ -303,8 +303,8 @@ describe('UniverseService', () => {
       const result = await service.getCategories();
 
       expect(result.success).toBe(true);
-      expect((result.data as any).categories).toBeDefined();
-      expect(Array.isArray((result.data as any).categories)).toBe(true);
+      expect(result.data).toBeDefined();
+      expect(Array.isArray(result.data)).toBe(true);
     });
   });
 });

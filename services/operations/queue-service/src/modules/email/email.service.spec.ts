@@ -7,6 +7,8 @@ import { CircuitBreakerOpenError } from '@azeebo/shared-types';
 jest.mock('@sendgrid/mail');
 const mockedSgMail = sgMail as jest.Mocked<typeof sgMail>;
 
+const mockSgMailResponse: [sgMail.ClientResponse, {}] = [{ statusCode: 202, body: {}, headers: {} }, {}];
+
 describe('EmailService', () => {
   let service: EmailService;
   let configService: ConfigService;
@@ -30,6 +32,7 @@ describe('EmailService', () => {
 
     service = module.get<EmailService>(EmailService);
     configService = module.get<ConfigService>(ConfigService);
+    await service.onModuleInit();
     jest.clearAllMocks();
   });
 
@@ -39,7 +42,7 @@ describe('EmailService', () => {
 
   describe('sendEmail', () => {
     it('should send email successfully (happy path)', async () => {
-      mockedSgMail.send.mockResolvedValue([{ statusCode: 202 }]);
+      mockedSgMail.send.mockResolvedValue(mockSgMailResponse);
 
       const result = await service.sendEmail('test@example.com', 'Test Subject', 'welcome', {
         displayName: 'Test User',
@@ -102,7 +105,7 @@ describe('EmailService', () => {
 
   describe('sendCustomEmail', () => {
     it('should send custom email successfully', async () => {
-      mockedSgMail.send.mockResolvedValue([{ statusCode: 202 }]);
+      mockedSgMail.send.mockResolvedValue(mockSgMailResponse);
 
       const result = await service.sendCustomEmail(
         'test@example.com',
@@ -137,14 +140,16 @@ describe('EmailService', () => {
   });
 
   describe('addTemplate', () => {
-    it('should add a new template', () => {
+    it('should add a new template', async () => {
+      mockedSgMail.send.mockResolvedValue(mockSgMailResponse);
+
       service.addTemplate('test-template', '<p>Hello {{name}}</p>');
 
-      const result = service.sendEmail('test@example.com', 'Test', 'test-template', {
+      const result = await service.sendEmail('test@example.com', 'Test', 'test-template', {
         name: 'World',
       });
 
-      expect(result).resolves.toBe(true);
+      expect(result).toBe(true);
     });
   });
 

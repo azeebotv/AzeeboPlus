@@ -19,7 +19,19 @@ import type { NextRequest } from 'next/server';
  * on page refresh (middleware runs before client-side token refresh completes).
  */
 
-const protectedRoutes = ['/dashboard', '/rewards', '/creator', '/subscriptions', '/notifications', '/messaging', '/settings', '/creator'];
+const protectedRoutes = [
+  '/dashboard',
+  '/rewards',
+  '/creator',
+  '/subscriptions',
+  '/notifications',
+  '/messaging',
+  '/messages',
+  '/settings',
+  '/wallet',
+  '/content',
+  '/payment',
+];
 const adminRoutes = ['/admin'];
 const creatorRoutes = ['/creator-portal'];
 
@@ -39,9 +51,13 @@ export function middleware(request: NextRequest) {
   ) {
     return NextResponse.next();
   }
-
-  // Check if the user is authenticated using the 'auth' cookie
-  const isAuthenticated = request.cookies.has('auth');
+  // Check if the user is authenticated using the 'auth' cookie.
+  // Validate the cookie has a non-empty value with basic JWT structure check
+  // to prevent bypass via client-set empty/fake cookies.
+  const authCookie = request.cookies.get('auth');
+  const isAuthenticated = Boolean(
+    authCookie?.value && authCookie.value.length > 10 && authCookie.value.split('.').length === 3
+  );
 
   // --- Homepage routing guards ---
   if (pathname === '/') {
@@ -62,19 +78,37 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // --- Admin route guards ---
+  // Verify admin role from JWT payload before allowing access to admin routes
+  if (adminRoutes.some((route) => pathname.startsWith(route))) {
+    if (!isAuthenticated) {
+      const loginUrl = new URL('/auth/login', request.url);
+      loginUrl.searchParams.set('redirect', pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+    try {
+      const payload = JSON.parse(
+        Buffer.from(authCookie!.value.split('.')[1], 'base64url').toString()
+      );
+      if (payload.role !== 'admin') {
+        return NextResponse.redirect(new URL('/forbidden', request.url));
+      }
+    } catch {
+      return NextResponse.redirect(new URL('/auth/login', request.url));
+    }
+  }
+
   // --- Protected route guards ---
   if (!isAuthenticated) {
     if (
-      protectedRoutes.some(route => pathname.startsWith(route)) ||
-      adminRoutes.some(route => pathname.startsWith(route)) ||
-      creatorRoutes.some(route => pathname.startsWith(route))
+      protectedRoutes.some((route) => pathname.startsWith(route)) ||
+      creatorRoutes.some((route) => pathname.startsWith(route))
     ) {
       const loginUrl = new URL('/auth/login', request.url);
       loginUrl.searchParams.set('redirect', pathname);
       return NextResponse.redirect(loginUrl);
     }
   }
-
   return NextResponse.next();
 }
 

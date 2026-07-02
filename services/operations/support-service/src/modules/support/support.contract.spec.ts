@@ -1,10 +1,13 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication } from '@nestjs/common';
+import { INestApplication, ExecutionContext } from '@nestjs/common';
 import request from 'supertest';
+import { ConfigModule } from '@nestjs/config';
 import { SupportModule } from '../support/support.module';
 import { SupportRepository } from '../support/support.repository';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../database/prisma.service';
+import { RateLimitGuard } from '@azeebo/security';
+import { AuthGuard } from '../../common/guards/auth.guard';
 
 describe('Support Controller Contract Tests', () => {
   let app: INestApplication;
@@ -22,11 +25,19 @@ describe('Support Controller Contract Tests', () => {
     },
   };
 
+  const mockAuthGuard = {
+    canActivate: (context: ExecutionContext) => {
+      const req = context.switchToHttp().getRequest();
+      req.user = { sub: 'user-123' };
+      return true;
+    },
+  };
+
   beforeAll(async () => {
     process.env.JWT_ACCESS_SECRET = 'test-jwt-secret';
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [SupportModule],
+      imports: [ConfigModule.forRoot({ isGlobal: true }), SupportModule],
     })
       .overrideProvider(PrismaService)
       .useValue(mockPrisma)
@@ -39,6 +50,10 @@ describe('Support Controller Contract Tests', () => {
         addReply: jest.fn(),
         closeTicket: jest.fn(),
       })
+      .overrideGuard(AuthGuard)
+      .useValue(mockAuthGuard)
+      .overrideGuard(RateLimitGuard)
+      .useValue({ canActivate: jest.fn().mockReturnValue(true) })
       .compile();
 
     app = moduleFixture.createNestApplication();

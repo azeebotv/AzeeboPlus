@@ -16,7 +16,6 @@ import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../../src/contexts/AuthContext';
 import { userApi } from '../../../src/api';
-import { LoadingState, EmptyState, ErrorState } from '../../../src/components/StateContainers';
 
 export default function EditProfileScreen() {
   const router = useRouter();
@@ -179,7 +178,7 @@ export default function EditProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#111827',
+    backgroundColor: '#1A0A0A',
   },
   keyboardView: {
     flex: 1,
@@ -216,7 +215,7 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -229,7 +228,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 0,
     right: 0,
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 12,
@@ -294,7 +293,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   saveButton: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',

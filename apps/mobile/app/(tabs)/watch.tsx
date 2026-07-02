@@ -8,7 +8,9 @@ import {
   RefreshControl,
   useColorScheme,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { useAuth } from '../../src/contexts/AuthContext';
 import { contentApi } from '../../src/api';
 import type { ContentItem } from '../../src/api/content';
 import { colors, typography, spacing, radius } from '../../src/theme';
@@ -18,6 +20,13 @@ import { ScrollReveal, PageTransition } from '../../src/components/motion';
 export default function WatchScreen() {
   const colorScheme = useColorScheme();
   const router = useRouter();
+  const { isAuthenticated } = useAuth();
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.replace('/(auth)/login');
+    }
+  }, [isAuthenticated, router]);
   const [content, setContent] = useState<ContentItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -65,7 +74,9 @@ export default function WatchScreen() {
           )}
         </View>
         <View style={styles.contentInfo}>
-          <Text style={styles.contentTitle} numberOfLines={2}>{item.title}</Text>
+          <Text style={styles.contentTitle} numberOfLines={2}>
+            {item.title}
+          </Text>
           <Text style={styles.contentCreator}>{item.creator.name}</Text>
         </View>
       </TouchableOpacity>
@@ -74,27 +85,37 @@ export default function WatchScreen() {
 
   if (isLoading) {
     return (
-      <View style={[styles.container, { backgroundColor: colorScheme === 'dark' ? colors.bg.primary : '#ffffff' }]}>
+      <SafeAreaView
+        style={[
+          styles.container,
+          { backgroundColor: colorScheme === 'dark' ? colors.bg.primary : '#ffffff' },
+        ]}
+      >
         <FlatList
           data={[1, 2, 3]}
           renderItem={() => <ContentCardSkeleton />}
           keyExtractor={(item) => String(item)}
           contentContainerStyle={styles.list}
         />
-      </View>
+      </SafeAreaView>
     );
   }
 
   if (error) {
     return (
-      <View style={[styles.container, { backgroundColor: colorScheme === 'dark' ? colors.bg.primary : '#ffffff' }]}>
+      <SafeAreaView
+        style={[
+          styles.container,
+          { backgroundColor: colorScheme === 'dark' ? colors.bg.primary : '#ffffff' },
+        ]}
+      >
         <ErrorState description={error} onRetry={loadContent} />
-      </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <View
+    <SafeAreaView
       style={[
         styles.container,
         { backgroundColor: colorScheme === 'dark' ? colors.bg.primary : '#ffffff' },
@@ -125,7 +146,7 @@ export default function WatchScreen() {
           showsVerticalScrollIndicator={false}
         />
       </PageTransition>
-    </View>
+    </SafeAreaView>
   );
 }
 

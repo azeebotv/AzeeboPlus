@@ -12,7 +12,7 @@ import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { subscriptionApi } from '../../../src/api';
 import { logger } from '../../../src/utils/logger';
-import { LoadingState, EmptyState, ErrorState } from '../../../src/components/StateContainers';
+import { LoadingState } from '../../../src/components/StateContainers';
 
 interface SubscriptionPlan {
   id: string;
@@ -130,7 +130,7 @@ export default function SubscriptionPlansScreen() {
       case 'basic':
         return '#3B82F6';
       case 'premium':
-        return '#8B5CF6';
+        return '#E8420A';
       case 'enterprise':
         return '#F59E0B';
       default:
@@ -256,7 +256,7 @@ export default function SubscriptionPlansScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#111827',
+    backgroundColor: '#1A0A0A',
   },
   loadingContainer: {
     flex: 1,
@@ -295,7 +295,7 @@ const styles = StyleSheet.create({
     padding: 20,
     marginBottom: 24,
     borderWidth: 2,
-    borderColor: '#8B5CF6',
+    borderColor: '#E8420A',
   },
   currentPlanHeader: {
     flexDirection: 'row',
@@ -361,14 +361,14 @@ const styles = StyleSheet.create({
     borderColor: '#333',
   },
   planCardPopular: {
-    borderColor: '#8B5CF6',
+    borderColor: '#E8420A',
     borderWidth: 2,
   },
   planCardCurrent: {
     opacity: 0.7,
   },
   popularBadge: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     alignSelf: 'flex-start',
     paddingHorizontal: 12,
     paddingVertical: 4,
@@ -445,13 +445,13 @@ const styles = StyleSheet.create({
     color: '#F3F4F6',
   },
   subscribeButton: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     borderRadius: 12,
     padding: 14,
     alignItems: 'center',
   },
   subscribeButtonPopular: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
   },
   subscribeButtonDisabled: {
     backgroundColor: '#4B5563',

@@ -191,7 +191,7 @@ export default function ForgotPasswordPage(): React.JSX.Element {
               Back to login
             </a>
             <span>·</span>
-            <a href="#" className="hover:text-white transition-colors">
+            <a href="/support" className="hover:text-white transition-colors">
               Need Support?
             </a>
           </div>

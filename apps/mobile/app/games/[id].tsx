@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { apiClient } from '../../src/api';
@@ -62,7 +62,7 @@ export default function GameplayPage() {
 
   const handleGameOver = () => {
     setIsPlaying(false);
-    alert(`Game Over! Score: ${currentScore.toLocaleString()}`);
+    Alert.alert('Game Over', `Score: ${currentScore.toLocaleString()}`);
   };
 
   if (isLoading) {
@@ -147,7 +147,7 @@ export default function GameplayPage() {
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: isDark ? '#0a0a0a' : '#ffffff' }]}>
+    <View style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backIcon}>←</Text>
@@ -183,7 +183,7 @@ export default function GameplayPage() {
         </View>
 
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
+          <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
             Select Level
           </Text>
           <View style={styles.levelsList}>
@@ -212,7 +212,7 @@ export default function GameplayPage() {
         </View>
 
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
+          <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
             Global Leaderboard
           </Text>
           <View style={styles.leaderboardList}>
@@ -243,7 +243,7 @@ export default function GameplayPage() {
         </View>
 
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
+          <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
             Achievements
           </Text>
           <View style={styles.achievementsList}>
@@ -508,7 +508,7 @@ const styles = StyleSheet.create({
   },
   gameContainer: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: '#1A0A0A',
   },
   gameHeader: {
     flexDirection: 'row',

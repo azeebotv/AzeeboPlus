@@ -1,25 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Image,
-  SafeAreaView,
-  Modal,
-  ActivityIndicator,
-  Alert,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, Alert } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useColorScheme } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { colors, universeColors } from '../src/theme';
+import { colors } from '../src/theme';
 import { realityApi } from '../src/api/engagement';
 import { walletApi } from '../src/api/wallet';
+import { apiClient } from '../src/api/client';
 import { logger } from '../src/utils/logger';
-import { LoadingState, EmptyState, ErrorState } from '../src/components/StateContainers';
+import { LoadingState, ErrorState } from '../src/components/StateContainers';
 
-const PLACEHOLDER_IMAGE = '';
+const _PLACEHOLDER_IMAGE = '';
 
 interface VotePackage {
   id: string;
@@ -49,6 +40,7 @@ export default function VoteScreen() {
   const [voteSuccess, setVoteSuccess] = useState(false);
   const [walletBalance, setWalletBalance] = useState(0);
   const [contestants, setContestants] = useState<any[]>([]);
+  const [showData, setShowData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -56,14 +48,18 @@ export default function VoteScreen() {
     loadData();
   }, [showId]);
 
+  const showName = showData?.name || 'Reality Show';
+  const votingEndsText = showData?.votingEnds || '';
+
   const loadData = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      const [contestantsRes, walletRes] = await Promise.all([
+      const [contestantsRes, walletRes, showRes] = await Promise.all([
         realityApi.getContestants(showId || 'default'),
         walletApi.getBalance(),
+        apiClient.get<any>('/v1/reality/shows/current').catch(() => null),
       ]);
 
       if (contestantsRes.success && contestantsRes.data) {
@@ -72,6 +68,10 @@ export default function VoteScreen() {
 
       if (walletRes.success && walletRes.data) {
         setWalletBalance(walletRes.data.balance);
+      }
+
+      if (showRes) {
+        setShowData(Array.isArray(showRes) ? showRes[0] : (showRes?.data?.[0] ?? showRes));
       }
     } catch (err) {
       logger.error('Failed to load vote data:', err);
@@ -100,7 +100,7 @@ export default function VoteScreen() {
         votes: totalVotes,
       });
       if (!response.success) {
-        throw new Error(response.error?.message || 'Vote submission failed');
+        throw new Error(response.error || 'Vote submission failed');
       }
       setShowConfirmation(false);
       setVoteSuccess(true);
@@ -163,9 +163,9 @@ export default function VoteScreen() {
           <Text
             style={[styles.showTitle, { color: isDark ? colors.text.primary : colors.dark[900] }]}
           >
-            Big Brother Naija Season 9
+            {showName}
           </Text>
-          <Text style={styles.votingEnds}>Voting ends in 2 days</Text>
+          {votingEndsText ? <Text style={styles.votingEnds}>{votingEndsText}</Text> : null}
         </View>
 
         <View style={styles.contestantsSection}>
@@ -852,7 +852,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   retryButton: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,

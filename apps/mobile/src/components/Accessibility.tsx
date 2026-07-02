@@ -8,7 +8,6 @@ import {
   ViewStyle,
   TextStyle,
   AccessibilityProps,
-  AccessibilityRole,
 } from 'react-native';
 
 interface AccessibleButtonProps extends AccessibilityProps {
@@ -156,12 +155,12 @@ export const VisuallyHiddenText: React.FC<VisuallyHiddenTextProps> = ({
 
 export const colors = {
   primary: '#6366F1',
-  secondary: '#8B5CF6',
+  secondary: '#E8420A',
   success: '#10B981',
   error: '#EF4444',
   warning: '#F59E0B',
   text: {
-    primary: '#111827',
+    primary: 'rgba(255,255,255,0.2)',
     secondary: '#6B7280',
     tertiary: '#9CA3AF',
   },
@@ -236,8 +235,6 @@ const styles = StyleSheet.create({
     padding: 0,
     margin: -1,
     overflow: 'hidden',
-    clip: 'rect(0, 0, 0, 0)',
-    whiteSpace: 'nowrap',
     borderWidth: 0,
   },
 });

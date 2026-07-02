@@ -1,9 +1,10 @@
-import { IsString, IsObject, IsNumber } from 'class-validator';
+import { IsString, IsObject, IsNumber, IsNotEmpty } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class JoinContestDto {
   @ApiProperty()
   @IsString()
+  @IsNotEmpty()
   userId!: string;
 
   @ApiProperty()
@@ -14,6 +15,7 @@ export class JoinContestDto {
 export class SubmitContestScoreDto {
   @ApiProperty()
   @IsString()
+  @IsNotEmpty()
   userId!: string;
 
   @ApiProperty()

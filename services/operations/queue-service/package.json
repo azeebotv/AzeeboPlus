@@ -36,6 +36,7 @@
   },
   "devDependencies": {
     "@nestjs/testing": "^11.1.27",
+    "@types/jest": "^29.5.0",
     "@types/node": "^25.9.3",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.8.4"

@@ -21,7 +21,7 @@ export default function EpisodePlayerPage(): React.JSX.Element {
   const router = useRouter();
   const searchParams = useSearchParams();
   const episodeId = searchParams.get('id') || '';
-  const contentId = searchParams.get('contentId') || '';
+  const _contentId = searchParams.get('contentId') || '';
   const [episode, setEpisode] = useState<EpisodeDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -155,7 +155,7 @@ export default function EpisodePlayerPage(): React.JSX.Element {
     );
   }
 
-  const progress = (currentTime / episode.duration) * 100;
+  const progress = episode.duration > 0 ? (currentTime / episode.duration) * 100 : 0;
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>

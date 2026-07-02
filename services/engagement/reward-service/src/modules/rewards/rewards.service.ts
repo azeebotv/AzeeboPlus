@@ -165,7 +165,7 @@ export class RewardsService {
     let currentStreak = rewardAccount.streak;
 
     if (daysSinceLastLogin === 1) {
-      currentStreak = 1;
+      currentStreak = rewardAccount.streak + 1;
     } else if (daysSinceLastLogin === 0) {
       currentStreak = rewardAccount.streak;
     } else if (daysSinceLastLogin > 1) {
@@ -204,35 +204,34 @@ export class RewardsService {
       throw new BadRequestException('Insufficient points');
     }
 
-    await this.prisma.rewardAccount.update({
-      where: { userId },
-      data: {
-        points: { decrement: reward.cost },
-      },
-    });
-
-    await this.prisma.rewardRedemption.create({
-      data: {
-        userId,
-        rewardId,
-        pointsCost: reward.cost,
-      },
-    });
+    const [updatedAccount] = await this.prisma.$transaction([
+      this.prisma.rewardAccount.update({
+        where: { userId },
+        data: { points: { decrement: reward.cost } },
+      }),
+      this.prisma.rewardRedemption.create({
+        data: {
+          userId,
+          rewardId,
+          pointsCost: reward.cost,
+        },
+      }),
+    ]);
 
     return {
       success: true,
       data: {
         message: 'Reward redeemed successfully',
         rewardAccount: {
-          id: rewardAccount.id,
-          userId: rewardAccount.userId,
-          points: rewardAccount.points - reward.cost,
-          levelId: rewardAccount.levelId,
-          streak: rewardAccount.streak,
-          lastLoginAt: rewardAccount.lastLoginAt,
-          lastCheckInAt: rewardAccount.lastCheckInAt,
-          createdAt: rewardAccount.createdAt,
-          updatedAt: rewardAccount.updatedAt,
+          id: updatedAccount.id,
+          userId: updatedAccount.userId,
+          points: updatedAccount.points,
+          levelId: updatedAccount.levelId,
+          streak: updatedAccount.streak,
+          lastLoginAt: updatedAccount.lastLoginAt,
+          lastCheckInAt: updatedAccount.lastCheckInAt,
+          createdAt: updatedAccount.createdAt,
+          updatedAt: updatedAccount.updatedAt,
         },
       },
     };
@@ -341,50 +340,46 @@ export class RewardsService {
       throw new BadRequestException('Already checked in today');
     }
 
-    await this.prisma.rewardAccount.update({
-      where: { userId },
-      data: {
-        lastCheckInAt: today,
-        lastLoginAt: today,
-      },
-    });
-
-    await this.addPoints(userId, 10, 'Daily check-in');
-
     const daysSinceLastCheckIn = lastCheckIn
       ? Math.floor((today.getTime() - lastCheckIn.getTime()) / (1000 * 60 * 60 * 24))
       : 1;
 
-    if (daysSinceLastCheckIn === 1) {
-      await this.prisma.rewardAccount.update({
+    const newStreak = daysSinceLastCheckIn === 1 ? rewardAccount.streak + 1 : 1;
+
+    const [updatedAccount] = await this.prisma.$transaction([
+      this.prisma.rewardAccount.update({
         where: { userId },
         data: {
-          streak: { increment: 1 },
+          lastCheckInAt: today,
+          lastLoginAt: today,
+          points: { increment: 10 },
+          streak: newStreak,
         },
-      });
-    } else if (daysSinceLastCheckIn > 1) {
-      await this.prisma.rewardAccount.update({
-        where: { userId },
+      }),
+      this.prisma.pointsLedger.create({
         data: {
-          streak: 1,
+          userId,
+          points: 10,
+          reason: 'Daily check-in',
+          type: 'credit',
         },
-      });
-    }
+      }),
+    ]);
 
     return {
       success: true,
       data: {
         message: 'Check-in successful',
         rewardAccount: {
-          id: rewardAccount.id,
-          userId: rewardAccount.userId,
-          points: rewardAccount.points + 10,
-          levelId: rewardAccount.levelId,
-          streak: daysSinceLastCheckIn === 1 ? rewardAccount.streak + 1 : 1,
-          lastLoginAt: today,
-          lastCheckInAt: today,
-          createdAt: rewardAccount.createdAt,
-          updatedAt: rewardAccount.updatedAt,
+          id: updatedAccount.id,
+          userId: updatedAccount.userId,
+          points: updatedAccount.points,
+          levelId: updatedAccount.levelId,
+          streak: updatedAccount.streak,
+          lastLoginAt: updatedAccount.lastLoginAt,
+          lastCheckInAt: updatedAccount.lastCheckInAt,
+          createdAt: updatedAccount.createdAt,
+          updatedAt: updatedAccount.updatedAt,
         },
       },
     };

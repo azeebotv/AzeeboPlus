@@ -510,7 +510,11 @@ class Analytics {
   // Homepage analytics
   // ---------------------------------------------------------------------------
 
-  homepageSectionViewed(sectionId: string, sectionName: string, properties?: EventProperties): void {
+  homepageSectionViewed(
+    sectionId: string,
+    sectionName: string,
+    properties?: EventProperties
+  ): void {
     this.track('homepage_section_viewed', {
       sectionId,
       sectionName,
@@ -595,12 +599,7 @@ class Analytics {
     });
   }
 
-  homepageRedirected(
-    from: string,
-    to: string,
-    reason: string,
-    properties?: EventProperties
-  ): void {
+  homepageRedirected(from: string, to: string, reason: string, properties?: EventProperties): void {
     this.track('homepage_redirected', {
       from,
       to,

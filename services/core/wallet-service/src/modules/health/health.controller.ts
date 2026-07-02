@@ -1,15 +1,25 @@
 import { Controller, Get, HttpCode, HttpStatus } from '@nestjs/common';
 import { Public } from '@azeebo/security';
+import { PrismaService } from '../database/prisma.service';
 
 @Public()
 @Controller('health')
 export class HealthController {
+  constructor(private readonly prisma: PrismaService) {}
+
   @Get()
   @HttpCode(HttpStatus.OK)
-  check(): { status: string; timestamp: string } {
+  async check(): Promise<{ status: string; timestamp: string; database: string }> {
+    let database = 'ok';
+    try {
+      await this.prisma.$queryRaw`SELECT 1`;
+    } catch {
+      database = 'unavailable';
+    }
     return {
-      status: 'ok',
+      status: database === 'ok' ? 'ok' : 'error',
       timestamp: new Date().toISOString(),
+      database,
     };
   }
 
@@ -24,10 +34,18 @@ export class HealthController {
 
   @Get('ready')
   @HttpCode(HttpStatus.OK)
-  readiness(): { status: string; timestamp: string } {
-    return {
-      status: 'ok',
-      timestamp: new Date().toISOString(),
-    };
+  async readiness(): Promise<{ status: string; timestamp: string }> {
+    try {
+      await this.prisma.$queryRaw`SELECT 1`;
+      return {
+        status: 'ok',
+        timestamp: new Date().toISOString(),
+      };
+    } catch {
+      return {
+        status: 'error',
+        timestamp: new Date().toISOString(),
+      };
+    }
   }
 }

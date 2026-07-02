@@ -31,9 +31,29 @@ export default function EarningsDashboardPage(): React.JSX.Element {
 
   const loadEarnings = async (): Promise<void> => {
     try {
-      const result = await apiFetch<EarningsData>('/v1/creator/earnings');
+      const result = await apiFetch<any>('/v1/creators/earnings');
       if (result.success && result.data) {
-        setEarnings(result.data);
+        const d = result.data;
+        setEarnings({
+          totalEarnings: Number(d.totalEarnings ?? d.total ?? 0),
+          availableBalance: Number(d.availableBalance ?? d.pending ?? 0),
+          pendingEarnings: Number(d.pendingEarnings ?? d.pending ?? 0),
+          lifetimeEarnings: Number(d.lifetimeEarnings ?? d.totalEarnings ?? 0),
+          earningsHistory: Array.isArray(d.earningsHistory)
+            ? d.earningsHistory.map((h: any) => ({
+                date: String(h.date || h.createdAt || ''),
+                amount: Number(h.amount || 0),
+                source: String(h.source || 'unknown'),
+                status: String(h.status || 'completed') as 'completed' | 'pending' | 'failed',
+              }))
+            : [],
+          revenueBreakdown: d.revenueBreakdown || {
+            subscriptions: 0,
+            tips: 0,
+            ads: 0,
+            superVotes: 0,
+          },
+        });
       }
     } catch (error) {
       webLogger.error('Failed to load earnings', error);
@@ -100,7 +120,7 @@ export default function EarningsDashboardPage(): React.JSX.Element {
     );
   }
 
-  const totalBreakdown =
+  const _totalBreakdown =
     earnings.revenueBreakdown.subscriptions +
       earnings.revenueBreakdown.tips +
       earnings.revenueBreakdown.ads +

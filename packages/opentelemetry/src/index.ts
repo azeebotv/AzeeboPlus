@@ -20,7 +20,8 @@ export interface OpenTelemetryConfig {
 const DEFAULT_CONFIG: OpenTelemetryConfig = {
   serviceName: 'azeebo-service',
   serviceVersion: '1.0.0',
-  otlpEndpoint: process.env.OTLP_ENDPOINT || 'http://otel-collector.azeebo-monitoring.svc.cluster.local:4318',
+  otlpEndpoint:
+    process.env.OTLP_ENDPOINT || 'http://otel-collector.azeebo-monitoring.svc.cluster.local:4318',
   environment: process.env.NODE_ENV || 'development',
   samplingRatio: 1.0,
 };
@@ -66,29 +67,33 @@ export function createTracedHttpClient(baseUrl: string) {
   return {
     async request(method: string, path: string, options: RequestInit = {}) {
       const tracer = require('@opentelemetry/api').trace.getTracer('http-client');
-      return tracer.startActiveSpan(`HTTP ${method}`, { attributes: { 'http.url': `${baseUrl}${path}` } }, async (span: Span) => {
-        try {
-          const response = await fetch(`${baseUrl}${path}`, {
-            method,
-            ...options,
-            headers: {
-              'Content-Type': 'application/json',
-              ...options.headers,
-            },
-          });
-          span.setAttribute('http.status_code', response.status);
-          if (!response.ok) {
-            span.setStatus({ code: SpanStatusCode.ERROR, message: `HTTP ${response.status}` });
+      return tracer.startActiveSpan(
+        `HTTP ${method}`,
+        { attributes: { 'http.url': `${baseUrl}${path}` } },
+        async (span: Span) => {
+          try {
+            const response = await fetch(`${baseUrl}${path}`, {
+              method,
+              ...options,
+              headers: {
+                'Content-Type': 'application/json',
+                ...options.headers,
+              },
+            });
+            span.setAttribute('http.status_code', response.status);
+            if (!response.ok) {
+              span.setStatus({ code: SpanStatusCode.ERROR, message: `HTTP ${response.status}` });
+            }
+            const data = await response.json();
+            return { success: true, data };
+          } catch (error) {
+            span.setStatus({ code: SpanStatusCode.ERROR, message: (error as Error).message });
+            throw error;
+          } finally {
+            span.end();
           }
-          const data = await response.json();
-          return { success: true, data };
-        } catch (error) {
-          span.setStatus({ code: SpanStatusCode.ERROR, message: (error as Error).message });
-          throw error;
-        } finally {
-          span.end();
         }
-      });
+      );
     },
   };
 }

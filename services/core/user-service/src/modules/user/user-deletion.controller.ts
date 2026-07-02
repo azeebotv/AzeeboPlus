@@ -1,4 +1,14 @@
-import { Controller, Delete, Get, Param, Post, Body, Req, UseGuards, ForbiddenException } from '@nestjs/common';
+import {
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Body,
+  Req,
+  UseGuards,
+  ForbiddenException,
+} from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { UsersService } from '../users/users.service';
 import { Request } from 'express';
@@ -12,7 +22,10 @@ export class UserDeletionController {
 
   @Post('deletion-request')
   @Throttle({ default: { limit: 5, ttl: 60000 } })
-  async requestDataDeletion(@Body() body: { userId: string; reason?: string }, @Req() req: Request & { user: { id: string; role: string } }) {
+  async requestDataDeletion(
+    @Body() body: { userId: string; reason?: string },
+    @Req() req: Request & { user: { id: string; role: string } }
+  ) {
     const validated = { userId: body.userId, reason: body.reason };
 
     if (req.user.id !== validated.userId && req.user.role !== 'admin') {
@@ -35,7 +48,10 @@ export class UserDeletionController {
 
   @Delete('data/:userId')
   @Throttle({ default: { limit: 5, ttl: 60000 } })
-  async deleteUserData(@Param('userId') userId: string, @Req() req: Request & { user: { id: string; role: string } }) {
+  async deleteUserData(
+    @Param('userId') userId: string,
+    @Req() req: Request & { user: { id: string; role: string } }
+  ) {
     if (req.user.id !== userId && req.user.role !== 'admin') {
       throw new ForbiddenException('You can only delete your own data');
     }
@@ -54,7 +70,10 @@ export class UserDeletionController {
 
   @Get('data/:userId/export')
   @Throttle({ default: { limit: 5, ttl: 60000 } })
-  async exportUserData(@Param('userId') userId: string, @Req() req: Request & { user: { id: string; role: string } }) {
+  async exportUserData(
+    @Param('userId') userId: string,
+    @Req() req: Request & { user: { id: string; role: string } }
+  ) {
     if (req.user.id !== userId && req.user.role !== 'admin') {
       throw new ForbiddenException('You can only export your own data');
     }
@@ -73,7 +92,10 @@ export class UserDeletionController {
 
   @Get('deletion-status/:userId')
   @Throttle({ default: { limit: 10, ttl: 60000 } })
-  async getDeletionStatus(@Param('userId') userId: string, @Req() req: Request & { user: { id: string; role: string } }) {
+  async getDeletionStatus(
+    @Param('userId') userId: string,
+    @Req() req: Request & { user: { id: string; role: string } }
+  ) {
     if (req.user.id !== userId && req.user.role !== 'admin') {
       throw new ForbiddenException('You can only check your own deletion status');
     }

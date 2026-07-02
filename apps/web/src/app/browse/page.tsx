@@ -1,14 +1,12 @@
 'use client';
-import React from 'react';
 
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { api } from '../../lib/api';
-import { focusNextElement, announceToScreenReader } from '../../lib/keyboard';
+import { announceToScreenReader } from '../../lib/keyboard';
 import AppHeader from '../../components/layout/AppHeader';
 import AppFooter from '../../components/layout/AppFooter';
 import { Skeleton } from '@/components/Skeleton';
-import { AmbientGlow } from '@/components/motion/AmbientGlow';
 
 interface ContentItem {
   id: string;
@@ -42,6 +40,7 @@ export default function BrowsePage(): React.JSX.Element {
   const [selectedLanguage, setSelectedLanguage] = useState<string>('all');
   const [selectedYear, setSelectedYear] = useState<string>('all');
   const [showFilters, setShowFilters] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
   const categoryListRef = useRef<HTMLUListElement>(null);
   const universeListRef = useRef<HTMLUListElement>(null);
   const contentGridRef = useRef<HTMLDivElement>(null);
@@ -114,7 +113,9 @@ export default function BrowsePage(): React.JSX.Element {
     const fetchCategories = async (): Promise<void> => {
       try {
         const response = await api.content.getCategories();
-        if (response.success && response.data) setCategories(response.data);
+        if (response.success && response.data) {
+          setCategories(Array.isArray(response.data) ? response.data : []);
+        }
       } catch {
         /* intentionally minimal */
       }
@@ -122,7 +123,9 @@ export default function BrowsePage(): React.JSX.Element {
     const fetchUniverses = async (): Promise<void> => {
       try {
         const response = await api.universe.getUniverses();
-        if (response.success && response.data) setUniverses(response.data);
+        if (response.success && response.data) {
+          setUniverses(Array.isArray(response.data) ? response.data : []);
+        }
       } catch {
         /* intentionally minimal */
       }
@@ -131,15 +134,16 @@ export default function BrowsePage(): React.JSX.Element {
     fetchUniverses();
   }, []);
 
-useEffect(() => {
-     const fetchContent = async (): Promise<void> => {
-       try {
-         setIsLoading(true);
-         let response;
-         if (selectedUniverseId) response = await api.content.getContentByUniverse(selectedUniverseId);
-         else if (selectedCategory)
-           response = await api.content.getContentByCategory(selectedCategory);
-         else response = await api.content.getFeaturedContent();
+  useEffect(() => {
+    const fetchContent = async (): Promise<void> => {
+      try {
+        setIsLoading(true);
+        let response;
+        if (selectedUniverseId)
+          response = await api.content.getContentByUniverse(selectedUniverseId);
+        else if (selectedCategory)
+          response = await api.content.getContentByCategory(selectedCategory);
+        else response = await api.content.getFeaturedContent();
 
         if (response.success && response.data) {
           const data = response.data;
@@ -170,33 +174,33 @@ useEffect(() => {
           setContent(items);
         }
       } catch {
-        /* intentionally minimal */
+        setError('Failed to load content. Please try again.');
       } finally {
         setIsLoading(false);
       }
     };
-fetchContent();
-   }, [
-     selectedCategory,
-     selectedUniverseId,
-     searchQuery,
-     minRating,
-     maxDuration,
-     selectedLanguage,
-     selectedYear,
-     sortBy,
-   ]);
+    fetchContent();
+  }, [
+    selectedCategory,
+    selectedUniverseId,
+    searchQuery,
+    minRating,
+    maxDuration,
+    selectedLanguage,
+    selectedYear,
+    sortBy,
+  ]);
 
-   const clearFilters = () => {
-     setSearchQuery('');
-     setMinRating(0);
-     setMaxDuration(300);
-     setSelectedLanguage('all');
-     setSelectedYear('all');
-     setSelectedCategory(null);
-     setSelectedUniverseId(null);
-     setSortBy('Popular');
-   };
+  const clearFilters = () => {
+    setSearchQuery('');
+    setMinRating(0);
+    setMaxDuration(300);
+    setSelectedLanguage('all');
+    setSelectedYear('all');
+    setSelectedCategory(null);
+    setSelectedUniverseId(null);
+    setSortBy('Popular');
+  };
 
   const activeFilterCount = [
     searchQuery,
@@ -226,6 +230,33 @@ fetchContent();
           </p>
           <h1 className="az-headline text-white text-3xl sm:text-4xl">Browse Content</h1>
         </motion.div>
+
+        {error && (
+          <div
+            className="mb-6 p-4 rounded-xl"
+            style={{ background: 'rgba(204,28,28,0.15)', border: '1px solid rgba(204,28,28,0.3)' }}
+          >
+            <p style={{ color: '#E8420A', marginBottom: 12 }}>{error}</p>
+            <button
+              onClick={() => {
+                setError(null);
+                setIsLoading(true);
+              }}
+              style={{
+                padding: '8px 16px',
+                borderRadius: 8,
+                background: '#E8420A',
+                color: '#fff',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: 13,
+                fontWeight: 600,
+              }}
+            >
+              Try Again
+            </button>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 sm:gap-8">
           {/* Sidebar */}
@@ -438,39 +469,39 @@ fetchContent();
               >
                 <li>
                   <button
-onClick={() => setSelectedUniverseId(null)}
-                   onKeyDown={(e) => handleUniverseKeyDown(e, 0)}
-                   aria-selected={!selectedUniverseId}
-                   className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${!selectedUniverseId ? 'text-white' : 'text-white/60 hover:text-white hover:bg-white/5'}`}
-                   style={
-                     !selectedUniverseId
-                       ? { background: 'linear-gradient(135deg, #E8420A, #CC1C1C)' }
-                       : {}
-                   }
-                 >
-                   All Universes
-                 </button>
-               </li>
-               {universes.map((universe, index) => (
-                 <li key={universe.id}>
-                   <button
-                     onClick={() => setSelectedUniverseId(universe.id)}
-                     onKeyDown={(e) => handleUniverseKeyDown(e, index + 1)}
-                     aria-selected={selectedUniverseId === universe.id}
-                     className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${selectedUniverseId === universe.id ? 'text-white' : 'text-white/60 hover:text-white hover:bg-white/5'}`}
-                     style={
-                       selectedUniverseId === universe.id
-                         ? { background: 'linear-gradient(135deg, #E8420A, #CC1C1C)' }
-                         : {}
-                     }
-                   >
-                     {universe.icon && <span className="mr-2">{universe.icon}</span>}
-                     {universe.name}
-                   </button>
-                 </li>
-               ))}
-             </ul>
-           </div>
+                    onClick={() => setSelectedUniverseId(null)}
+                    onKeyDown={(e) => handleUniverseKeyDown(e, 0)}
+                    aria-selected={!selectedUniverseId}
+                    className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${!selectedUniverseId ? 'text-white' : 'text-white/60 hover:text-white hover:bg-white/5'}`}
+                    style={
+                      !selectedUniverseId
+                        ? { background: 'linear-gradient(135deg, #E8420A, #CC1C1C)' }
+                        : {}
+                    }
+                  >
+                    All Universes
+                  </button>
+                </li>
+                {universes.map((universe, index) => (
+                  <li key={universe.id}>
+                    <button
+                      onClick={() => setSelectedUniverseId(universe.id)}
+                      onKeyDown={(e) => handleUniverseKeyDown(e, index + 1)}
+                      aria-selected={selectedUniverseId === universe.id}
+                      className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${selectedUniverseId === universe.id ? 'text-white' : 'text-white/60 hover:text-white hover:bg-white/5'}`}
+                      style={
+                        selectedUniverseId === universe.id
+                          ? { background: 'linear-gradient(135deg, #E8420A, #CC1C1C)' }
+                          : {}
+                      }
+                    >
+                      {universe.icon && <span className="mr-2">{universe.icon}</span>}
+                      {universe.name}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </motion.div>
 
           {/* Content Grid */}
@@ -483,13 +514,13 @@ onClick={() => setSelectedUniverseId(null)}
             {/* Sort & Results Count */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
               <div>
-<h2 className="text-xl font-bold text-white">
-                   {selectedCategory
-                     ? categories.find((c) => c.id === selectedCategory)?.name
-                     : selectedUniverseId
-                       ? universes.find((u) => u.id === selectedUniverseId)?.name
-                       : 'All Content'}
-                 </h2>
+                <h2 className="text-xl font-bold text-white">
+                  {selectedCategory
+                    ? categories.find((c) => c.id === selectedCategory)?.name
+                    : selectedUniverseId
+                      ? universes.find((u) => u.id === selectedUniverseId)?.name
+                      : 'All Content'}
+                </h2>
                 <p className="text-sm text-white/50 mt-0.5">
                   {content.length} result{content.length !== 1 ? 's' : ''}
                   {activeFilterCount > 0 &&

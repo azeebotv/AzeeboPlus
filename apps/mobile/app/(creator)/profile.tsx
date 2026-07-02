@@ -110,7 +110,7 @@ export default function CreatorProfileScreen() {
     return (
       <SafeAreaView style={styles.container} edges={['top']}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#8B5CF6" />
+          <ActivityIndicator size="large" color="#E8420A" />
           <Text style={styles.loadingText}>Loading profile...</Text>
         </View>
       </SafeAreaView>
@@ -217,7 +217,7 @@ export default function CreatorProfileScreen() {
             <TouchableOpacity
               key={content.id}
               style={styles.contentCard}
-              onPress={() => router.push(`/(creator)/content-detail?id=${content.id}` as Href)}
+              onPress={() => router.push(`/(creator)/upload?id=${content.id}` as Href)}
             >
               <Image source={{ uri: content.thumbnail }} style={styles.contentThumbnail} />
               <View style={styles.contentInfo}>
@@ -240,7 +240,7 @@ export default function CreatorProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#111827',
+    backgroundColor: '#1A0A0A',
   },
   loadingContainer: {
     flex: 1,
@@ -263,7 +263,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   retryButton: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,
@@ -279,7 +279,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#1f2937',
+    borderBottomColor: 'rgba(255,255,255,0.08)',
   },
   backButton: {
     marginRight: 16,
@@ -345,13 +345,13 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   followButton: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     paddingVertical: 12,
     borderRadius: 8,
     alignItems: 'center',
   },
   followingButton: {
-    backgroundColor: '#374151',
+    backgroundColor: 'rgba(255,255,255,0.2)',
   },
   followButtonText: {
     color: '#fff',
@@ -372,7 +372,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   socialCard: {
-    backgroundColor: '#1f2937',
+    backgroundColor: '#2A2A2A',
     borderRadius: 12,
     padding: 16,
   },
@@ -381,7 +381,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#374151',
+    borderBottomColor: 'rgba(255,255,255,0.2)',
   },
   socialIcon: {
     fontSize: 20,
@@ -393,7 +393,7 @@ const styles = StyleSheet.create({
   },
   contentCard: {
     flexDirection: 'row',
-    backgroundColor: '#1f2937',
+    backgroundColor: '#2A2A2A',
     borderRadius: 12,
     marginBottom: 12,
     overflow: 'hidden',

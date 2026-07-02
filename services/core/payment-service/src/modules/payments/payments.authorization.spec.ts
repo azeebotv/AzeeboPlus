@@ -1,7 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication } from '@nestjs/common';
+import { INestApplication, ExecutionContext } from '@nestjs/common';
 import request from 'supertest';
 import { AuthGuard } from '@nestjs/passport';
+import { RateLimitGuard } from '@azeebo/security';
 import { PaymentsController } from './payments.controller';
 import { PaymentsService } from './payments.service';
 import { PrismaService } from '../database/prisma.service';
@@ -49,10 +50,29 @@ describe('Payments Service Authorization Tests', () => {
         status: 'completed',
       },
     }),
+    handleWebhook: jest.fn().mockResolvedValue({
+      success: true,
+      data: {},
+    }),
+    requestRefund: jest.fn().mockResolvedValue({
+      success: true,
+      data: {
+        refundId: 'ref-abc123',
+        amount: 1000,
+        status: 'completed',
+        message: 'Refund processed successfully',
+      },
+    }),
   };
 
   const createMockAuthGuard = (canActivate: boolean) => ({
-    canActivate: jest.fn().mockReturnValue(canActivate),
+    canActivate: jest.fn().mockImplementation((context: ExecutionContext) => {
+      if (canActivate) {
+        const req = context.switchToHttp().getRequest();
+        req.user = { sub: 'user-123' };
+      }
+      return canActivate;
+    }),
   });
 
   const createTestApp = async (authGuardReturnValue: boolean) => {
@@ -70,6 +90,8 @@ describe('Payments Service Authorization Tests', () => {
     })
       .overrideGuard(AuthGuard('jwt'))
       .useValue(mockAuthGuard)
+      .overrideGuard(RateLimitGuard)
+      .useValue({ canActivate: jest.fn().mockReturnValue(true) })
       .compile();
 
     return moduleFixture.createNestApplication();
@@ -79,13 +101,13 @@ describe('Payments Service Authorization Tests', () => {
     jest.clearAllMocks();
   });
 
-  describe('Authorization - POST /payments/initialize', () => {
+  describe('Authorization - POST /v1/payments/initialize', () => {
     it('should allow authenticated users to initialize payment', async () => {
       const testApp = await createTestApp(true);
       await testApp.init();
 
       const response = await request(testApp.getHttpServer())
-        .post('/payments/initialize')
+        .post('/v1/payments/initialize')
         .set('Authorization', 'Bearer valid-token')
         .send({
           amount: 1000,
@@ -105,14 +127,14 @@ describe('Payments Service Authorization Tests', () => {
       const testApp = await createTestApp(false);
       await testApp.init();
 
-      const response = await request(testApp.getHttpServer()).post('/payments/initialize').send({
+      const response = await request(testApp.getHttpServer()).post('/v1/payments/initialize').send({
         amount: 1000,
         currency: 'NGN',
         paymentMethod: 'card',
         description: 'Wallet funding',
       });
 
-      expect(response.status).toBe(401);
+      expect(response.status).toBe(403);
       expect(mockPaymentsService.initializePayment).not.toHaveBeenCalled();
 
       await testApp.close();
@@ -122,25 +144,25 @@ describe('Payments Service Authorization Tests', () => {
       const testApp = await createTestApp(false);
       await testApp.init();
 
-      const response = await request(testApp.getHttpServer()).post('/payments/initialize').send({
+      const response = await request(testApp.getHttpServer()).post('/v1/payments/initialize').send({
         amount: 1000,
         currency: 'NGN',
         paymentMethod: 'card',
       });
 
-      expect(response.status).toBe(401);
+      expect(response.status).toBe(403);
 
       await testApp.close();
     });
   });
 
-  describe('Authorization - GET /payments/history', () => {
+  describe('Authorization - GET /v1/payments/history', () => {
     it('should allow authenticated users to view payment history', async () => {
       const testApp = await createTestApp(true);
       await testApp.init();
 
       const response = await request(testApp.getHttpServer())
-        .get('/payments/history')
+        .get('/v1/payments/history')
         .set('Authorization', 'Bearer valid-token');
 
       expect(response.status).toBe(200);
@@ -154,9 +176,9 @@ describe('Payments Service Authorization Tests', () => {
       const testApp = await createTestApp(false);
       await testApp.init();
 
-      const response = await request(testApp.getHttpServer()).get('/payments/history');
+      const response = await request(testApp.getHttpServer()).get('/v1/payments/history');
 
-      expect(response.status).toBe(401);
+      expect(response.status).toBe(403);
       expect(mockPaymentsService.getPaymentHistory).not.toHaveBeenCalled();
 
       await testApp.close();
@@ -169,7 +191,7 @@ describe('Payments Service Authorization Tests', () => {
       await testApp.init();
 
       const response = await request(testApp.getHttpServer())
-        .get('/payments/pay-abc123')
+        .get('/v1/payments/pay-abc123')
         .set('Authorization', 'Bearer valid-token');
 
       expect(response.status).toBe(200);
@@ -183,22 +205,22 @@ describe('Payments Service Authorization Tests', () => {
       const testApp = await createTestApp(false);
       await testApp.init();
 
-      const response = await request(testApp.getHttpServer()).get('/payments/pay-abc123');
+      const response = await request(testApp.getHttpServer()).get('/v1/payments/pay-abc123');
 
-      expect(response.status).toBe(401);
+      expect(response.status).toBe(403);
       expect(mockPaymentsService.getPayment).not.toHaveBeenCalled();
 
       await testApp.close();
     });
   });
 
-  describe('Authorization - POST /payments/refund-request', () => {
+  describe('Authorization - POST /v1/payments/refund-request', () => {
     it('should allow authenticated users to request refunds', async () => {
       const testApp = await createTestApp(true);
       await testApp.init();
 
       const response = await request(testApp.getHttpServer())
-        .post('/payments/refund-request')
+        .post('/v1/payments/refund-request')
         .set('Authorization', 'Bearer valid-token')
         .send({
           transactionId: 'trx-abc123',
@@ -215,13 +237,13 @@ describe('Payments Service Authorization Tests', () => {
       await testApp.init();
 
       const response = await request(testApp.getHttpServer())
-        .post('/payments/refund-request')
+        .post('/v1/payments/refund-request')
         .send({
           transactionId: 'trx-abc123',
           reason: 'Product not received',
         });
 
-      expect(response.status).toBe(401);
+      expect(response.status).toBe(403);
 
       await testApp.close();
     });
@@ -243,13 +265,15 @@ describe('Payments Service Authorization Tests', () => {
       })
         .overrideGuard(AuthGuard('jwt'))
         .useValue(mockAuthGuard)
+        .overrideGuard(RateLimitGuard)
+        .useValue({ canActivate: jest.fn().mockReturnValue(true) })
         .compile();
 
       const testApp = moduleFixture.createNestApplication();
       await testApp.init();
 
       const response = await request(testApp.getHttpServer())
-        .post('/payments/webhook')
+        .post('/v1/payments/webhook')
         .send({
           event: 'charge.success',
           data: { id: 'evt-abc123' },

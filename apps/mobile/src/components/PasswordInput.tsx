@@ -79,7 +79,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   showButtonText: {
-    color: '#8B5CF6',
+    color: '#E8420A',
     fontSize: 14,
   },
   errorText: {

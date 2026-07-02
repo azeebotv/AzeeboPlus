@@ -94,11 +94,9 @@ export class StructuredLogger implements LoggerService {
     switch (level) {
       case 'error':
       case 'warn':
-        // eslint-disable-next-line no-console
         console.error(output);
         break;
       default:
-        // eslint-disable-next-line no-console
         console.log(output);
     }
   }

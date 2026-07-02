@@ -40,11 +40,31 @@ export default function RankingsPage(): React.JSX.Element {
       try {
         setIsLoading(true);
         const [categoriesResult, rankingsResult] = await Promise.all([
-          apiFetch<RankingCategory[]>('/v1/rankings/categories'),
-          apiFetch<RankingData>(`/v1/rankings?category=${selectedCategory}`),
+          apiFetch<RankingCategory[]>('/engagement/rankings'),
+          apiFetch<any>(`/engagement/leaderboard?timePeriod=weekly&category=${selectedCategory}`),
         ]);
-        if (categoriesResult.success && categoriesResult.data) setCategories(categoriesResult.data);
-        if (rankingsResult.success && rankingsResult.data) setRankingData(rankingsResult.data);
+        if (categoriesResult.success && categoriesResult.data) {
+          const cats = Array.isArray(categoriesResult.data) ? categoriesResult.data : [];
+          setCategories(cats);
+        }
+        if (rankingsResult.success && rankingsResult.data) {
+          const data = rankingsResult.data;
+          const entries = Array.isArray(data) ? data : data.items || [];
+          setRankingData({
+            category: selectedCategory,
+            entries: entries.map((e: any) => ({
+              userId: String(e.userId),
+              displayName: String(e.displayName || e.user?.displayName || 'Unknown'),
+              avatar: String(e.avatar || ''),
+              score: Number(e.score || 0),
+              rank: Number(e.rank || 0),
+              change: Number(e.change || 0),
+              level: Number(e.level || 0),
+            })),
+            totalParticipants: Number(data.totalParticipants || entries.length),
+            lastUpdated: String(data.lastUpdated || new Date().toISOString()),
+          });
+        }
       } catch (error) {
         webLogger.error('Failed to fetch rankings', error);
       } finally {

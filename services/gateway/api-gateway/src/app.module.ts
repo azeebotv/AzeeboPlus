@@ -49,15 +49,18 @@ import { CsrfMiddleware } from './common/csrf.middleware';
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     // CSRF protection for state-changing requests (SEC-005)
-    consumer.apply(CsrfMiddleware).exclude(
-      { path: 'api/v1/auth/(.*)', method: RequestMethod.ALL },
-      { path: 'api/auth/(.*)', method: RequestMethod.ALL },
-      { path: 'api/v1/users/(.*)', method: RequestMethod.ALL },
-      { path: 'api/users/(.*)', method: RequestMethod.ALL },
-      { path: 'api/health', method: RequestMethod.ALL },
-      { path: 'api/routes', method: RequestMethod.ALL },
-      { path: '(.*)', method: RequestMethod.GET },
-    ).forRoutes('api');
+    consumer
+      .apply(CsrfMiddleware)
+      .exclude(
+        { path: 'api/v1/auth/(.*)', method: RequestMethod.ALL },
+        { path: 'api/auth/(.*)', method: RequestMethod.ALL },
+        { path: 'api/v1/users/(.*)', method: RequestMethod.ALL },
+        { path: 'api/users/(.*)', method: RequestMethod.ALL },
+        { path: 'api/health', method: RequestMethod.ALL },
+        { path: 'api/routes', method: RequestMethod.ALL },
+        { path: '(.*)', method: RequestMethod.GET }
+      )
+      .forRoutes('api');
 
     // T-H21/T-H22/T-H24: redirect legacy unversioned paths to versioned
     consumer.apply(LegacyRedirectMiddleware).forRoutes('api');

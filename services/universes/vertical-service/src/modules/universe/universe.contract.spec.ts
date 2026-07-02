@@ -2,6 +2,9 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { UniverseModule } from './universe.module';
+import { UniverseService } from './universe.service';
+import { PrismaService } from '../database/prisma.service';
+import { RateLimitGuard } from '@azeebo/security';
 
 describe('Universe Controller Contract Tests', () => {
   let app: INestApplication;
@@ -22,8 +25,17 @@ describe('Universe Controller Contract Tests', () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [UniverseModule],
     })
-      .overrideProvider(UniverseModule)
+      .overrideProvider(UniverseService)
       .useValue(mockUniverseService)
+      .overrideProvider(PrismaService)
+      .useValue({
+        $connect: jest.fn().mockResolvedValue(undefined),
+        $disconnect: jest.fn().mockResolvedValue(undefined),
+        universeMap: { findMany: jest.fn(), findUnique: jest.fn(), count: jest.fn() },
+        location: { findMany: jest.fn(), findUnique: jest.fn(), create: jest.fn(), update: jest.fn() },
+      })
+      .overrideGuard(RateLimitGuard)
+      .useValue({ canActivate: jest.fn().mockReturnValue(true) })
       .compile();
 
     app = moduleFixture.createNestApplication();

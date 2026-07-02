@@ -61,7 +61,9 @@ export class FlutterwaveProvider {
   constructor() {
     this.apiKey = process.env.FLUTTERWAVE_SECRET_KEY || '';
     if (!this.apiKey) {
-      this.logger.warn('FLUTTERWAVE_SECRET_KEY is not configured — Flutterwave payments will be unavailable');
+      this.logger.warn(
+        'FLUTTERWAVE_SECRET_KEY is not configured — Flutterwave payments will be unavailable'
+      );
     }
   }
 
@@ -186,12 +188,12 @@ export class FlutterwaveProvider {
     if (!this.apiKey) {
       return false;
     }
-    const crypto = await import('crypto');
-    const hash = crypto
-      .createHmac('sha256', this.apiKey)
-      .update(JSON.stringify(payload))
-      .digest('hex');
+    const { createHmac, timingSafeEqual } = await import('crypto');
+    const hash = createHmac('sha256', this.apiKey).update(JSON.stringify(payload)).digest('hex');
 
-    return hash === signature;
+    if (hash.length !== signature.length) {
+      return false;
+    }
+    return timingSafeEqual(Buffer.from(hash, 'utf8'), Buffer.from(signature, 'utf8'));
   }
 }

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { contentApi } from '../src/api';
 import { logger } from '../src/utils/logger';
 import { LoadingState, ErrorState, EmptyState } from '../src/components/StateContainers';
@@ -53,9 +54,9 @@ export default function RecommendationsScreen() {
       style={styles.card}
       onPress={() => {
         if (item.type === 'content') {
-          router.push(`/content/${item.id}`)
+          router.push(`/watch/${item.id}`);
         } else if (item.type === 'creator') {
-          router.push(`/profile/${item.id}`)
+          router.push(`/(tabs)/profile?userId=${item.id}` as any);
         }
       }}
     >
@@ -79,22 +80,22 @@ export default function RecommendationsScreen() {
 
   if (isLoading) {
     return (
-      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+      <SafeAreaView style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
         <LoadingState text="Loading recommendations..." />
-      </View>
+      </SafeAreaView>
     );
   }
 
   if (error) {
     return (
-      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+      <SafeAreaView style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
         <ErrorState description={error} onRetry={loadRecommendations} />
-      </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Recommended For You</Text>
         <Text style={styles.subtitle}>Personalized suggestions based on your activity</Text>
@@ -120,7 +121,7 @@ export default function RecommendationsScreen() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
         refreshControl={
-          <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} colors={['#8B5CF6']} />
+          <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} colors={['#E8420A']} />
         }
         ListEmptyComponent={
           <EmptyState
@@ -130,14 +131,14 @@ export default function RecommendationsScreen() {
           />
         }
       />
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#111827',
+    backgroundColor: '#1A0A0A',
   },
   header: {
     padding: 16,
@@ -163,10 +164,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: '#1F2937',
+    backgroundColor: '#2A2A2A',
   },
   filterButtonActive: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
   },
   filterText: {
     fontSize: 14,
@@ -180,14 +181,14 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   card: {
-    backgroundColor: '#1F2937',
+    backgroundColor: '#2A2A2A',
     borderRadius: 12,
     marginBottom: 12,
     overflow: 'hidden',
   },
   thumbnailContainer: {
     height: 120,
-    backgroundColor: '#374151',
+    backgroundColor: 'rgba(255,255,255,0.2)',
     justifyContent: 'flex-end',
     padding: 8,
   },
@@ -195,7 +196,7 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: 'bold',
     color: '#FFFFFF',
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 4,
@@ -223,13 +224,13 @@ const styles = StyleSheet.create({
   scoreBar: {
     flex: 1,
     height: 6,
-    backgroundColor: '#374151',
+    backgroundColor: 'rgba(255,255,255,0.2)',
     borderRadius: 3,
     overflow: 'hidden',
   },
   scoreFill: {
     height: '100%',
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     borderRadius: 3,
   },
   scoreText: {

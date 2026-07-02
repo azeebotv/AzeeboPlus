@@ -59,7 +59,9 @@ export const notificationApi = {
   },
 
   deleteNotification: async (notificationId: string): Promise<ApiResponse<{ message: string }>> => {
-    return apiClient.delete<ApiResponse<{ message: string }>>(`/v1/notifications/${notificationId}`);
+    return apiClient.delete<ApiResponse<{ message: string }>>(
+      `/v1/notifications/${notificationId}`
+    );
   },
 
   registerPushToken: async (token: string): Promise<ApiResponse<{ message: string }>> => {

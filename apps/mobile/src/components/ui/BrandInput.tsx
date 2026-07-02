@@ -46,7 +46,7 @@ export function BrandInput({
   style,
   maxLength,
 }: BrandInputProps) {
-  const [isFocused, setIsFocused] = useState(false);
+  const [_isFocused, setIsFocused] = useState(false);
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const focusAnim = useSharedValue(0);
 
@@ -61,12 +61,7 @@ export function BrandInput({
   };
 
   const focusBorderStyle = useAnimatedStyle(() => ({
-    borderLeftColor: interpolate(
-      focusAnim.value,
-      [0, 1],
-      [0, 1],
-      Extrapolation.CLAMP
-    )
+    borderLeftColor: interpolate(focusAnim.value, [0, 1], [0, 1], Extrapolation.CLAMP)
       ? colors.border.focus
       : error
         ? colors.error
@@ -78,11 +73,7 @@ export function BrandInput({
     <View style={[styles.container, style]}>
       <Text style={styles.label}>{label}</Text>
       <Animated.View
-        style={[
-          styles.inputWrapper,
-          error ? styles.inputWrapperError : null,
-          focusBorderStyle,
-        ]}
+        style={[styles.inputWrapper, error ? styles.inputWrapperError : null, focusBorderStyle]}
       >
         <TextInput
           style={styles.input}
@@ -108,9 +99,7 @@ export function BrandInput({
             accessibilityLabel={isPasswordVisible ? 'Hide password' : 'Show password'}
             accessibilityRole="button"
           >
-            <Text style={styles.toggleText}>
-              {isPasswordVisible ? 'Hide' : 'Show'}
-            </Text>
+            <Text style={styles.toggleText}>{isPasswordVisible ? 'Hide' : 'Show'}</Text>
           </TouchableOpacity>
         )}
       </Animated.View>

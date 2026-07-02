@@ -1,5 +1,3 @@
-'use client';
-
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -17,9 +15,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useWallet } from '../../src/contexts/WalletContext';
 import { useAuth } from '../../src/contexts/AuthContext';
-import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
 
-export default function WalletScreen(): JSX.Element {
+export default function WalletScreen() {
   const colorScheme = useColorScheme();
   const { user, isAuthenticated } = useAuth();
   const {
@@ -116,9 +113,9 @@ export default function WalletScreen(): JSX.Element {
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('en-NG', {
       style: 'currency',
-      currency: wallet?.currency || 'USD',
+      currency: 'NGN',
     }).format(amount);
   };
 
@@ -141,7 +138,7 @@ export default function WalletScreen(): JSX.Element {
         style={[
           styles.container,
           styles.centered,
-          { backgroundColor: colorScheme === 'dark' ? '#000' : '#fff' },
+          { backgroundColor: colorScheme === 'dark' ? '#1A0A0A' : '#fff' },
         ]}
       >
         <Text style={styles.lockIcon}>🔒</Text>
@@ -154,13 +151,13 @@ export default function WalletScreen(): JSX.Element {
 
   return (
     <SafeAreaView
-      style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#000' : '#fff' }]}
+      style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#1A0A0A' : '#fff' }]}
     >
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#8B5CF6" />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#E8420A" />
         }
       >
         <View style={styles.header}>
@@ -179,10 +176,10 @@ export default function WalletScreen(): JSX.Element {
           </View>
         )}
 
-        <View style={[styles.balanceCard, { backgroundColor: '#8B5CF6' }]}>
+        <View style={[styles.balanceCard, { backgroundColor: '#E8420A' }]}>
           <Text style={styles.balanceLabel}>Available Balance</Text>
           <Text style={styles.balanceAmount}>
-            {wallet ? formatCurrency(wallet.balance) : '$0.00'}
+            {wallet ? formatCurrency(wallet.balance) : '₦0.00'}
           </Text>
           {wallet?.pendingBalance && wallet.pendingBalance > 0 && (
             <Text style={styles.pendingBalance}>
@@ -208,7 +205,7 @@ export default function WalletScreen(): JSX.Element {
           </Text>
 
           {isLoading && transactions.length === 0 ? (
-            <ActivityIndicator size="large" color="#8B5CF6" style={styles.loader} />
+            <ActivityIndicator size="large" color="#E8420A" style={styles.loader} />
           ) : transactions.length === 0 ? (
             <View style={styles.emptyState}>
               <Text style={styles.emptyIcon}>📭</Text>
@@ -284,7 +281,7 @@ export default function WalletScreen(): JSX.Element {
             </Text>
 
             <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Amount (USD)</Text>
+              <Text style={styles.inputLabel}>Amount (NGN)</Text>
               <TextInput
                 style={[
                   styles.input,
@@ -302,13 +299,13 @@ export default function WalletScreen(): JSX.Element {
             </View>
 
             <View style={styles.quickAmounts}>
-              {[10, 25, 50, 100].map((amount) => (
+              {[1000, 2000, 5000, 10000].map((amount) => (
                 <TouchableOpacity
                   key={amount}
                   style={styles.quickAmountButton}
                   onPress={() => setFundAmount(amount.toString())}
                 >
-                  <Text style={styles.quickAmountText}>${amount}</Text>
+                  <Text style={styles.quickAmountText}>₦{amount.toLocaleString()}</Text>
                 </TouchableOpacity>
               ))}
             </View>
@@ -365,7 +362,7 @@ export default function WalletScreen(): JSX.Element {
             </Text>
 
             <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Amount (USD)</Text>
+              <Text style={styles.inputLabel}>Amount (NGN)</Text>
               <TextInput
                 style={[
                   styles.input,
@@ -499,7 +496,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   retryText: {
-    color: '#8B5CF6',
+    color: '#E8420A',
     fontSize: 14,
     textAlign: 'center',
     marginTop: 8,
@@ -654,7 +651,7 @@ const styles = StyleSheet.create({
   quickAmountText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#8B5CF6',
+    color: '#E8420A',
   },
   modalButtons: {
     flexDirection: 'row',
@@ -674,7 +671,7 @@ const styles = StyleSheet.create({
   },
   confirmButton: {
     flex: 1,
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     padding: 16,
     borderRadius: 12,
     alignItems: 'center',

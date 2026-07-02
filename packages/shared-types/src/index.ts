@@ -48,7 +48,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'settings:read',
     'settings:write',
   ],
-  // eslint-disable-next-line @typescript-eslint/naming-convention
+
   super_admin: [
     'user:read',
     'user:write',
@@ -66,7 +66,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
   ],
 
   partner: ['analytics:view', 'analytics:export'],
-  // eslint-disable-next-line @typescript-eslint/naming-convention
+
   sponsor_manager: ['analytics:view'],
 };
 
@@ -96,9 +96,9 @@ export interface AuthResponse {
   success: boolean;
   data?: {
     user: User;
-    // eslint-disable-next-line @typescript-eslint/naming-convention
+
     access_token: string;
-    // eslint-disable-next-line @typescript-eslint/naming-convention
+
     refresh_token?: string;
   };
   error?: ApiError;
@@ -116,7 +116,6 @@ export interface RegisterRequest {
 }
 
 export interface RefreshTokenRequest {
-  // eslint-disable-next-line @typescript-eslint/naming-convention
   refresh_token: string;
 }
 

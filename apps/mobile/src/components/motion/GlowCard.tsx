@@ -66,11 +66,7 @@ export function GlowCard({
   return (
     <Wrapper style={[cardStyle, style]} {...wrapperProps}>
       <Animated.View
-        style={[
-          styles.glow,
-          { backgroundColor: glowColor },
-          glowStyle,
-        ]}
+        style={[styles.glow, { backgroundColor: glowColor }, glowStyle]}
         pointerEvents="none"
       />
       <Animated.View
@@ -89,7 +85,7 @@ export function GlowCard({
 
 const styles = StyleSheet.create({
   glow: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     borderRadius: radius.xl,
     opacity: 0,
   },

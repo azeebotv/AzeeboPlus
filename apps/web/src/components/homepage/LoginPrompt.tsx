@@ -64,8 +64,8 @@ export default function LoginPrompt({
             Welcome to {siteName}
           </h1>
           <p className="text-white/60 text-sm sm:text-base mb-8 leading-relaxed">
-            Sign in to access your personalized homepage with recommendations,
-            continue watching, and universe-specific content.
+            Sign in to access your personalized homepage with recommendations, continue watching,
+            and universe-specific content.
           </p>
 
           {/* Actions */}

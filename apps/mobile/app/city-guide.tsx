@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
-import { colors, universeColors } from '../src/theme';
+import { colors } from '../src/theme';
 
 const PLACEHOLDER_IMAGE = '';
 
@@ -105,14 +105,7 @@ export default function CityGuideScreen() {
           <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
             <Text style={styles.backIcon}>←</Text>
           </TouchableOpacity>
-          <Text
-            style={[
-              styles.headerTitle,
-              { color: colors.text.primary },
-            ]}
-          >
-            City Guide
-          </Text>
+          <Text style={[styles.headerTitle, { color: colors.text.primary }]}>City Guide</Text>
           <TouchableOpacity style={styles.searchButton}>
             <Text style={styles.searchIcon}>🔍</Text>
           </TouchableOpacity>
@@ -175,12 +168,7 @@ export default function CityGuideScreen() {
 
         <View style={styles.featuredSection}>
           <View style={styles.sectionHeader}>
-            <Text
-              style={[
-                styles.sectionTitle,
-                { color: colors.text.primary },
-              ]}
-            >
+            <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>
               Featured Events
             </Text>
             <TouchableOpacity>
@@ -201,12 +189,7 @@ export default function CityGuideScreen() {
                   </View>
                 </View>
                 <View style={styles.featuredInfo}>
-                  <Text
-                    style={[
-                      styles.featuredTitle,
-                      { color: colors.text.primary },
-                    ]}
-                  >
+                  <Text style={[styles.featuredTitle, { color: colors.text.primary }]}>
                     {event.title}
                   </Text>
                   <Text style={styles.featuredSubtitle}>{event.subtitle}</Text>
@@ -234,26 +217,14 @@ export default function CityGuideScreen() {
         </View>
 
         <View style={styles.upcomingSection}>
-          <Text
-            style={[
-              styles.sectionTitle,
-              { color: colors.text.primary },
-            ]}
-          >
-            Upcoming Events
-          </Text>
+          <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>Upcoming Events</Text>
           <View style={styles.eventsList}>
             {events.map((event) => (
               <TouchableOpacity key={event.id} style={styles.eventCard}>
                 <Image source={{ uri: PLACEHOLDER_IMAGE }} style={styles.eventImage} />
                 <View style={styles.eventInfo}>
                   <View style={styles.eventHeader}>
-                    <Text
-                      style={[
-                        styles.eventTitle,
-                        { color: colors.text.primary },
-                      ]}
-                    >
+                    <Text style={[styles.eventTitle, { color: colors.text.primary }]}>
                       {event.title}
                     </Text>
                     <View style={styles.eventCategory}>

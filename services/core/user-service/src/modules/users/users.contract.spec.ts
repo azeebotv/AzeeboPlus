@@ -1,11 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ExecutionContext, UnauthorizedException } from '@nestjs/common';
+import { INestApplication, ExecutionContext, UnauthorizedException, VersioningType } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import request from 'supertest';
 import { UsersModule } from './users.module';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../database/prisma.service';
-import { RateLimitGuard } from '@azeebo/security';
-import { AuthGuard } from '@nestjs/passport';
+import { RateLimitGuard, ServiceAuthGuard } from '@azeebo/security';
 
 describe('Users Controller Contract Tests', () => {
   let app: INestApplication;
@@ -45,7 +45,7 @@ describe('Users Controller Contract Tests', () => {
     canActivate: (context: ExecutionContext) => {
       const request = context.switchToHttp().getRequest();
       if (request.headers.authorization) {
-        request.user = { sub: 'user-123' };
+        request.user = { sub: 'user-123', id: 'user-123' };
         return true;
       }
       throw new UnauthorizedException();
@@ -57,6 +57,12 @@ describe('Users Controller Contract Tests', () => {
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [UsersModule],
+      providers: [
+        {
+          provide: APP_GUARD,
+          useClass: ServiceAuthGuard,
+        },
+      ],
     })
       .overrideProvider(PrismaService)
       .useValue(mockPrismaService)
@@ -65,7 +71,7 @@ describe('Users Controller Contract Tests', () => {
         verify: jest.fn(),
         sign: jest.fn(),
       })
-      .overrideGuard(AuthGuard('jwt'))
+      .overrideGuard(ServiceAuthGuard)
       .useValue(mockAuthGuard)
       .overrideGuard(RateLimitGuard)
       .useValue({
@@ -74,6 +80,7 @@ describe('Users Controller Contract Tests', () => {
       .compile();
 
     app = moduleFixture.createNestApplication();
+    app.enableVersioning({ type: VersioningType.URI, prefix: 'v', defaultVersion: '1' });
     await app.init();
   });
 

@@ -1,10 +1,12 @@
 'use client';
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { api } from '@/lib/api';
 import AdminLayout from '@/components/layout/AdminLayout';
 
 export default function AdminUsersPage(): React.JSX.Element {
+  const router = useRouter();
   const { isAuthenticated, user } = useAuth();
   const [users, setUsers] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -61,6 +63,7 @@ export default function AdminUsersPage(): React.JSX.Element {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search users..."
+          aria-label="Search users"
           style={{
             flex: 1,
             minWidth: 200,
@@ -77,6 +80,9 @@ export default function AdminUsersPage(): React.JSX.Element {
             <button
               key={role}
               onClick={() => setRoleFilter(role)}
+              role="radio"
+              aria-checked={roleFilter === role}
+              aria-label={`Filter by ${role} role`}
               style={{
                 padding: '8px 16px',
                 borderRadius: 999,
@@ -188,6 +194,8 @@ export default function AdminUsersPage(): React.JSX.Element {
                     </td>
                     <td style={{ padding: '12px 16px' }}>
                       <button
+                        onClick={() => router.push(`/admin/users/${u.id}`)}
+                        aria-label={`View ${u.username}'s profile`}
                         style={{
                           padding: '6px 14px',
                           borderRadius: 999,

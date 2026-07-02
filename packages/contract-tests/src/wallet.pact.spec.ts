@@ -37,16 +37,13 @@ describe('Wallet API Contract', () => {
           });
         })
         .executeTest(async (mockServer) => {
-          const response = await fetch(
-            `${mockServer.url}/v1/wallet/balance`,
-            {
-              method: 'GET',
-              headers: {
-                Authorization: 'Bearer some-jwt-token',
-                'Content-Type': 'application/json',
-              },
+          const response = await fetch(`${mockServer.url}/v1/wallet/balance`, {
+            method: 'GET',
+            headers: {
+              Authorization: 'Bearer some-jwt-token',
+              'Content-Type': 'application/json',
             },
-          );
+          });
 
           expect(response.status).toBe(200);
 

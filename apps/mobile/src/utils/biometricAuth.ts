@@ -1,6 +1,5 @@
 import * as LocalAuthentication from 'expo-local-authentication';
 import * as SecureStore from 'expo-secure-store';
-import { Platform } from 'react-native';
 import { logger } from './logger';
 
 const BIOMETRIC_ENABLED_KEY = 'biometric_enabled';
@@ -24,7 +23,6 @@ export interface BiometricResult {
   error?: string;
   biometricType?: BiometricType;
 }
-
 
 /**
  * Biometric authentication service for app-launch unlock convenience.
@@ -136,7 +134,12 @@ export class BiometricAuthService {
 
       // SECURITY: Validate that credentials do not contain tokens
       const credentialStr = JSON.stringify(credentials);
-      if (credentialStr.includes('token') || credentialStr.includes('Token') || credentialStr.includes('jwt') || credentialStr.includes('JWT')) {
+      if (
+        credentialStr.includes('token') ||
+        credentialStr.includes('Token') ||
+        credentialStr.includes('jwt') ||
+        credentialStr.includes('JWT')
+      ) {
         logger.error('Attempted to store token-shaped data in biometric storage');
         return false;
       }

@@ -48,7 +48,7 @@ export default function MovieDetailScreen() {
       <View
         style={[
           styles.container,
-          { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' },
+          { backgroundColor: colorScheme === 'dark' ? '#1A0A0A' : '#ffffff' },
         ]}
       >
         <LoadingState text="Loading movie..." />
@@ -61,7 +61,7 @@ export default function MovieDetailScreen() {
       <View
         style={[
           styles.container,
-          { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' },
+          { backgroundColor: colorScheme === 'dark' ? '#1A0A0A' : '#ffffff' },
         ]}
       >
         <ErrorState description={error} onRetry={fetchMovie} />
@@ -74,7 +74,7 @@ export default function MovieDetailScreen() {
       <View
         style={[
           styles.container,
-          { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' },
+          { backgroundColor: colorScheme === 'dark' ? '#1A0A0A' : '#ffffff' },
         ]}
       >
         <EmptyState
@@ -90,7 +90,7 @@ export default function MovieDetailScreen() {
     <ScrollView
       style={[
         styles.container,
-        { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' },
+        { backgroundColor: colorScheme === 'dark' ? '#1A0A0A' : '#ffffff' },
       ]}
     >
       <View style={styles.header}>
@@ -98,7 +98,7 @@ export default function MovieDetailScreen() {
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
         <Text
-          style={[styles.headerTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}
+          style={[styles.headerTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A' }]}
         >
           Movie
         </Text>
@@ -128,7 +128,7 @@ export default function MovieDetailScreen() {
 
       <View style={styles.infoSection}>
         <Text
-          style={[styles.movieTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}
+          style={[styles.movieTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A' }]}
         >
           {movie.title}
         </Text>
@@ -148,7 +148,7 @@ export default function MovieDetailScreen() {
         <TouchableOpacity style={styles.actionButton}>
           <Text style={styles.actionIcon}>🎬</Text>
           <Text
-            style={[styles.actionText, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}
+            style={[styles.actionText, { color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A' }]}
           >
             Play
           </Text>
@@ -156,7 +156,7 @@ export default function MovieDetailScreen() {
         <TouchableOpacity style={styles.actionButton}>
           <Text style={styles.actionIcon}>📖</Text>
           <Text
-            style={[styles.actionText, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}
+            style={[styles.actionText, { color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A' }]}
           >
             Watchlist
           </Text>
@@ -164,7 +164,7 @@ export default function MovieDetailScreen() {
         <TouchableOpacity style={styles.actionButton}>
           <Text style={styles.actionIcon}>⭐</Text>
           <Text
-            style={[styles.actionText, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}
+            style={[styles.actionText, { color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A' }]}
           >
             Rate
           </Text>
@@ -172,7 +172,7 @@ export default function MovieDetailScreen() {
         <TouchableOpacity style={styles.actionButton}>
           <Text style={styles.actionIcon}>👥</Text>
           <Text
-            style={[styles.actionText, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}
+            style={[styles.actionText, { color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A' }]}
           >
             Share
           </Text>
@@ -181,7 +181,7 @@ export default function MovieDetailScreen() {
 
       <View style={styles.castSection}>
         <Text
-          style={[styles.sectionTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}
+          style={[styles.sectionTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A' }]}
         >
           Cast
         </Text>
@@ -201,7 +201,7 @@ export default function MovieDetailScreen() {
                 <Text style={styles.castAvatarText}>{actor.avatar}</Text>
               </View>
               <Text
-                style={[styles.castName, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}
+                style={[styles.castName, { color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A' }]}
               >
                 {actor.name}
               </Text>
@@ -214,7 +214,7 @@ export default function MovieDetailScreen() {
       {related.length > 0 && (
         <View style={styles.recommendationsSection}>
           <Text
-            style={[styles.sectionTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}
+            style={[styles.sectionTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A' }]}
           >
             Similar Movies
           </Text>
@@ -233,7 +233,7 @@ export default function MovieDetailScreen() {
                 <Text
                   style={[
                     styles.movieCardTitle,
-                    { color: colorScheme === 'dark' ? '#ffffff' : '#000000' },
+                    { color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A' },
                   ]}
                 >
                   {item.title}
@@ -341,7 +341,7 @@ const styles = StyleSheet.create({
   progressFill: {
     height: '100%',
     borderRadius: 2,
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
   },
   timeText: {
     color: '#fff',
@@ -411,7 +411,7 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 8,

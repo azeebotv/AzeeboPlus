@@ -50,6 +50,9 @@ describe('RecommendationService', () => {
             contentItem: {
               findMany: jest.fn(),
             },
+            creatorProfile: {
+              findMany: jest.fn(),
+            },
           },
         },
       ],
@@ -87,7 +90,13 @@ describe('RecommendationService', () => {
 
   describe('getCreatorRecommendations', () => {
     it('should return creator recommendations', async () => {
-      (prismaService.contentItem.findMany as jest.Mock).mockResolvedValue([mockContentItem]);
+      (prismaService.creatorProfile.findMany as jest.Mock).mockResolvedValue([
+        {
+          id: 'creator-1',
+          bio: 'Test bio',
+          user: { id: 'user-1', displayName: 'Test Creator', avatar: 'https://example.com/avatar.jpg' },
+        },
+      ]);
 
       const result = await service.getCreatorRecommendations('user-1', 10);
 
@@ -95,7 +104,7 @@ describe('RecommendationService', () => {
     });
 
     it('should return empty array when no creators found', async () => {
-      (prismaService.contentItem.findMany as jest.Mock).mockResolvedValue([]);
+      (prismaService.creatorProfile.findMany as jest.Mock).mockResolvedValue([]);
 
       const result = await service.getCreatorRecommendations('user-1', 10);
 
@@ -106,6 +115,7 @@ describe('RecommendationService', () => {
 
   describe('getCrossUniverseRecommendations', () => {
     it('should return cross-universe recommendations', async () => {
+      (prismaService.watchHistory.findMany as jest.Mock).mockResolvedValue([]);
       (prismaService.contentItem.findMany as jest.Mock).mockResolvedValue([mockContentItem]);
 
       const result = await service.getCrossUniverseRecommendations('user-1', 10);
@@ -114,6 +124,7 @@ describe('RecommendationService', () => {
     });
 
     it('should return recommendations even without user preferences', async () => {
+      (prismaService.watchHistory.findMany as jest.Mock).mockResolvedValue([]);
       (prismaService.user.findUnique as jest.Mock).mockResolvedValue({
         ...mockUser,
         preferences: {},

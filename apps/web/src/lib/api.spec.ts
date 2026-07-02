@@ -1,12 +1,12 @@
-import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { api } from './api';
 
-const mockFetch = jest.fn();
-global.fetch = mockFetch;
+const mockFetch = vi.fn();
+global.fetch = mockFetch as unknown as typeof fetch;
 
 describe('Web App API Client', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     api.setToken('mock-access-token');
   });
 

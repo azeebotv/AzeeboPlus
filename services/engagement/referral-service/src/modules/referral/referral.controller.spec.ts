@@ -121,7 +121,10 @@ describe('ReferralController', () => {
   describe('getReferrals', () => {
     it('should call referralService.getReferrals with default page and limit', async () => {
       const mockReq = { user: { sub: 'user-1' } } as any;
-      const mockResult = { success: true, data: { referrals: [], pagination: { page: 1, limit: 20, total: 0 } } };
+      const mockResult = {
+        success: true,
+        data: { referrals: [], pagination: { page: 1, limit: 20, total: 0 } },
+      };
       mockReferralService.getReferrals.mockResolvedValue(mockResult);
 
       const result = await controller.getReferrals(mockReq);
@@ -132,7 +135,10 @@ describe('ReferralController', () => {
 
     it('should call referralService.getReferrals with custom page and limit', async () => {
       const mockReq = { user: { sub: 'user-1' } } as any;
-      const mockResult = { success: true, data: { referrals: [], pagination: { page: 2, limit: 10, total: 25 } } };
+      const mockResult = {
+        success: true,
+        data: { referrals: [], pagination: { page: 2, limit: 10, total: 25 } },
+      };
       mockReferralService.getReferrals.mockResolvedValue(mockResult);
 
       const result = await controller.getReferrals(mockReq, 2, 10);
@@ -181,7 +187,7 @@ describe('ReferralController', () => {
 
       const result = await controller.completeReferral(mockReq, 'ref-1');
 
-      expect(service.completeReferral).toHaveBeenCalledWith('ref-1');
+      expect(service.completeReferral).toHaveBeenCalledWith('ref-1', 'user-1');
       expect(result).toEqual(mockResult);
     });
   });

@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { SportsService } from './sports.service';
 import { PrismaService } from '../database/prisma.service';
+import { ConfigService } from '@nestjs/config';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 import axios from 'axios';
 
@@ -29,8 +30,15 @@ describe('SportsService', () => {
             },
             wallet: { findUnique: jest.fn() },
             contest: { findUnique: jest.fn(), findMany: jest.fn() },
-            contestEntry: { findUnique: jest.fn(), create: jest.fn() },
+            contestEntry: { findUnique: jest.fn(), findFirst: jest.fn(), create: jest.fn() },
             fanBoard: { findMany: jest.fn() },
+          },
+        },
+        {
+          provide: ConfigService,
+          useValue: {
+            get: jest.fn().mockReturnValue('test-value'),
+            getOrThrow: jest.fn().mockReturnValue('test-value'),
           },
         },
       ],
@@ -172,7 +180,7 @@ describe('SportsService', () => {
       const result = await service.enterContest(userId, contestId);
 
       expect(result.success).toBe(true);
-      expect(result.data.entryId).toBe('entry-1');
+      expect(result.data!.entryId).toBe('entry-1');
       expect(mockedAxios.post).toHaveBeenCalled();
     });
 
@@ -181,12 +189,12 @@ describe('SportsService', () => {
       const mockExistingEntry = { id: 'existing-entry-1', userId, contestId };
 
       (prismaService.contest.findUnique as jest.Mock).mockResolvedValue(mockContest);
-      (prismaService.contestEntry.findUnique as jest.Mock).mockResolvedValue(mockExistingEntry);
+      (prismaService.contestEntry.findFirst as jest.Mock).mockResolvedValue(mockExistingEntry);
 
       const result = await service.enterContest(userId, contestId);
 
       expect(result.success).toBe(true);
-      expect(result.data.idempotent).toBe(true);
+      expect(result.data!.idempotent).toBe(true);
     });
   });
 });

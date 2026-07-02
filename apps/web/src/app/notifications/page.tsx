@@ -1,5 +1,4 @@
 'use client';
-import React from 'react';
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { apiFetch } from '../../lib/api';
@@ -13,12 +12,12 @@ interface Notification {
   title: string;
   message: string;
   timestamp: string;
-  read: boolean;
+  readAt: string | null;
   metadata?: Record<string, unknown>;
 }
 
 export default function NotificationsPage(): React.JSX.Element {
-  const { user } = useAuth();
+  const { user: _user } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -31,7 +30,9 @@ export default function NotificationsPage(): React.JSX.Element {
         setError(null);
         const response = await apiFetch<any>('/notifications');
         if (response.success && response.data) {
-          const notificationsData = Array.isArray(response.data) ? response.data : [];
+          const notificationsData = Array.isArray(response.data)
+            ? response.data
+            : response.data.notifications || [];
           setNotifications(
             notificationsData.map((n: any) => ({
               id: String(n.id),
@@ -39,7 +40,7 @@ export default function NotificationsPage(): React.JSX.Element {
               title: String(n.title || ''),
               message: String(n.message || ''),
               timestamp: String(n.timestamp || n.createdAt || ''),
-              read: Boolean(n.read),
+              readAt: n.readAt ?? null,
               metadata: n.metadata,
             }))
           );
@@ -55,9 +56,9 @@ export default function NotificationsPage(): React.JSX.Element {
 
   const markAsRead = useCallback(async (notificationId: string) => {
     try {
-      await apiFetch<any>(`/notifications/${notificationId}/read`, { method: 'PUT' });
+      await apiFetch<any>(`/notifications/${notificationId}/read`, { method: 'PATCH' });
       setNotifications((prev) =>
-        prev.map((n) => (n.id === notificationId ? { ...n, read: true } : n))
+        prev.map((n) => (n.id === notificationId ? { ...n, readAt: new Date().toISOString() } : n))
       );
     } catch (err) {
       /* intentionally minimal */
@@ -66,8 +67,8 @@ export default function NotificationsPage(): React.JSX.Element {
 
   const markAllAsRead = useCallback(async () => {
     try {
-      await apiFetch<any>('/notifications/read-all', { method: 'PUT' });
-      setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+      await apiFetch<any>('/notifications/read-all', { method: 'PATCH' });
+      setNotifications((prev) => prev.map((n) => ({ ...n, readAt: new Date().toISOString() })));
     } catch (err) {
       /* intentionally minimal */
     }
@@ -91,12 +92,12 @@ export default function NotificationsPage(): React.JSX.Element {
   };
 
   const filteredNotifications = notifications.filter((n) => {
-    if (activeTab === 'unread') return !n.read;
+    if (activeTab === 'unread') return !n.readAt;
     if (activeTab === 'mentions') return n.type === 'mention';
     return true;
   });
 
-  const unreadCount = notifications.filter((n) => !n.read).length;
+  const unreadCount = notifications.filter((n) => !n.readAt).length;
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
@@ -195,8 +196,8 @@ export default function NotificationsPage(): React.JSX.Element {
                   key={notification.id}
                   role="listitem"
                   onClick={() => markAsRead(notification.id)}
-                  className={`az-glass p-4 flex items-start gap-3 cursor-pointer hover:bg-white/5 transition-colors ${!notification.read ? 'border-l-2' : ''}`}
-                  style={!notification.read ? { borderLeftColor: color } : {}}
+                  className={`az-glass p-4 flex items-start gap-3 cursor-pointer hover:bg-white/5 transition-colors ${!notification.readAt ? 'border-l-2' : ''}`}
+                  style={!notification.readAt ? { borderLeftColor: color } : {}}
                 >
                   <div
                     className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
@@ -206,7 +207,7 @@ export default function NotificationsPage(): React.JSX.Element {
                   </div>
                   <div className="flex-1 min-w-0">
                     <h4
-                      className={`text-sm font-medium ${!notification.read ? 'text-white' : 'text-white/70'}`}
+                      className={`text-sm font-medium ${!notification.readAt ? 'text-white' : 'text-white/70'}`}
                     >
                       {notification.title}
                     </h4>
@@ -217,7 +218,7 @@ export default function NotificationsPage(): React.JSX.Element {
                       {new Date(notification.timestamp).toLocaleString()}
                     </p>
                   </div>
-                  {!notification.read && (
+                  {!notification.readAt && (
                     <div
                       className="w-2 h-2 rounded-full mt-2 flex-shrink-0"
                       style={{ background: '#E8420A' }}

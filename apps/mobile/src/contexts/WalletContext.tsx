@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { walletApi, apiClient, type WalletBalance, type Transaction } from '../api';
+import { walletApi, type WalletBalance, type Transaction } from '../api';
 import { useAuth } from './AuthContext';
 
 interface WalletContextType {
@@ -82,6 +82,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     try {
       const response = await walletApi.fundWallet({ amount, provider, email });
       if (response.success && response.data) {
+        await getWallet();
         return { success: true, authorizationUrl: response.data.authorizationUrl };
       }
       return { success: false, message: response.message || 'Failed to initiate payment' };
@@ -116,17 +117,13 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await apiClient.post('/v1/wallet/transfer', {
-        amount,
-        recipientId,
-        description,
-      });
-      if (response && typeof response === 'object' && 'success' in response) {
+      const response = await walletApi.transfer({ recipientId, amount, description });
+      if (response.success) {
         await getWallet();
         await getTransactions();
         return { success: true };
       }
-      return { success: false, message: 'Failed to transfer funds' };
+      return { success: false, message: response.message || 'Failed to transfer funds' };
     } catch (error: any) {
       setError(error.message || 'Failed to transfer funds');
       return { success: false, message: error.message || 'Failed to transfer funds' };

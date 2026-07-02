@@ -33,28 +33,6 @@ export class MoviesController {
     return this.moviesService.listMovies();
   }
 
-  @Get(':movieId')
-  @UseGuards(RateLimitGuard)
-  @RateLimit(200, 60000)
-  @ApiOperation({ summary: 'Movie detail' })
-  @ApiResponse({ status: 200, description: 'Movie detail' })
-  @ApiResponse({ status: 404, description: 'Movie not found' })
-  async getMovie(@Param('movieId') movieId: string): Promise<MovieResponse> {
-    return this.moviesService.getMovie(movieId);
-  }
-
-  @Post(':movieId/rent')
-  @UseGuards(AuthGuard('jwt'))
-  @ApiOperation({ summary: 'Rent/unlock movie' })
-  @ApiResponse({ status: 201, description: 'Rental created' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async rentMovie(
-    @Request() req: { user: { sub: string } },
-    @Param('movieId') movieId: string
-  ): Promise<MovieResponse> {
-    return this.moviesService.rentMovie(req.user.sub, movieId);
-  }
-
   @Get('premieres')
   @ApiOperation({ summary: 'Premieres list' })
   @ApiResponse({ status: 200, description: 'Premieres list' })
@@ -93,6 +71,28 @@ export class MoviesController {
     @Param('movieId') movieId: string
   ): Promise<MovieResponse> {
     return this.moviesService.removeFromWatchlist(req.user.sub, movieId);
+  }
+
+  @Get(':movieId')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(200, 60000)
+  @ApiOperation({ summary: 'Movie detail' })
+  @ApiResponse({ status: 200, description: 'Movie detail' })
+  @ApiResponse({ status: 404, description: 'Movie not found' })
+  async getMovie(@Param('movieId') movieId: string): Promise<MovieResponse> {
+    return this.moviesService.getMovie(movieId);
+  }
+
+  @Post(':movieId/rent')
+  @UseGuards(AuthGuard('jwt'))
+  @ApiOperation({ summary: 'Rent/unlock movie' })
+  @ApiResponse({ status: 201, description: 'Rental created' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async rentMovie(
+    @Request() req: { user: { sub: string } },
+    @Param('movieId') movieId: string
+  ): Promise<MovieResponse> {
+    return this.moviesService.rentMovie(req.user.sub, movieId);
   }
 
   @Get('me/library')

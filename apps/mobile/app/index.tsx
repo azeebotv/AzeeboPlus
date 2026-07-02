@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import Animated, {
@@ -15,14 +15,14 @@ import { AccessibilityInfo } from 'react-native';
 import { colors, typography, spacing, shadows } from '../src/theme';
 import { BrandButton } from '../src/components/ui';
 import { AmbientGlow, FadeIn, ScrollReveal } from '../src/components/motion';
+import { useAuth } from '../src/contexts/AuthContext';
 
-const AnimatedTouchable = Animated.createAnimatedComponent(
-  require('react-native').TouchableOpacity
-);
+const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 
 export default function SplashScreen() {
   const colorScheme = useColorScheme();
   const router = useRouter();
+  const { isAuthenticated, isLoading } = useAuth();
   const [progress, setProgress] = useState(0);
   const [showContent, setShowContent] = useState(false);
 
@@ -65,13 +65,18 @@ export default function SplashScreen() {
   }, [featuresOpacity, featuresTranslate, logoOpacity, logoScale, ringRotation]);
 
   useEffect(() => {
-    if (!showContent) return;
+    if (!showContent || isLoading) return;
     const interval = setInterval(() => {
       setProgress((prev) => {
         if (prev >= 100) {
           clearInterval(interval);
           setTimeout(() => {
-            router.replace('/(auth)/login');
+            // Route based on actual auth state instead of always going to login
+            if (isAuthenticated) {
+              router.replace('/(tabs)');
+            } else {
+              router.replace('/(auth)/login');
+            }
           }, 400);
           return 100;
         }
@@ -80,7 +85,7 @@ export default function SplashScreen() {
     }, 30);
 
     return () => clearInterval(interval);
-  }, [showContent, router]);
+  }, [showContent, isLoading, isAuthenticated, router]);
 
   const logoAnimatedStyle = useAnimatedStyle(() => ({
     opacity: interpolate(logoOpacity.value, [0, 1], [0, 1], Extrapolation.CLAMP),
@@ -121,7 +126,7 @@ export default function SplashScreen() {
           <Text
             style={[
               styles.appName,
-              { color: colorScheme === 'dark' ? colors.text.primary : '#000000' },
+              { color: colorScheme === 'dark' ? colors.text.primary : '#1A0A0A' },
             ]}
           >
             Azeebo

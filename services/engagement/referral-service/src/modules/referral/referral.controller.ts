@@ -8,6 +8,7 @@ import {
   HttpCode,
   HttpStatus,
   Query,
+  Param,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
@@ -87,11 +88,12 @@ export class ReferralController {
   @ApiResponse({ status: 200, description: 'Referral completed' })
   @ApiResponse({ status: 400, description: 'Invalid request' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - not authorized' })
   @ApiResponse({ status: 404, description: 'Referral not found' })
   async completeReferral(
     @Request() req: { user: { sub: string } },
-    @Query('referralId') referralId: string
+    @Param('referralId') referralId: string
   ): Promise<ReferralResponse> {
-    return this.referralService.completeReferral(referralId);
+    return this.referralService.completeReferral(referralId, req.user.sub);
   }
 }

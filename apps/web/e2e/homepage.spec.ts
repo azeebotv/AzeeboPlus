@@ -51,7 +51,9 @@ test.describe('Guest Homepage — Legacy (/)', () => {
 
   test('should display rewards section for guests', async ({ page }) => {
     await page.goto('/');
-    await expect(page.locator('text=Unlock Exclusive Rewards').first()).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('text=Unlock Exclusive Rewards').first()).toBeVisible({
+      timeout: 10000,
+    });
   });
 
   test('should display explore by universe section', async ({ page }) => {
@@ -117,7 +119,9 @@ test.describe('Client-Side Guard — /home login prompt', () => {
   test('should show login prompt on /home for guest users', async ({ page }) => {
     // Set auth cookie to pass middleware, then clear it to simulate stale session
     await page.goto('/');
-    await page.context().addCookies([{ name: 'auth', value: 'temp', domain: 'localhost', path: '/' }]);
+    await page
+      .context()
+      .addCookies([{ name: 'auth', value: 'temp', domain: 'localhost', path: '/' }]);
 
     // Navigate to /home — middleware allows (cookie exists), but client-side detects no valid session
     await page.goto('/home');
@@ -162,11 +166,15 @@ test.describe('Authenticated Homepage — /home', () => {
   });
 
   test('should display popular in region section', async ({ page }) => {
-    await expect(page.locator('text=Popular in Your Region').first()).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('text=Popular in Your Region').first()).toBeVisible({
+      timeout: 10000,
+    });
   });
 
   test('should display referral CTA section', async ({ page }) => {
-    await expect(page.locator('text=Invite Friends, Earn Rewards').first()).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('text=Invite Friends, Earn Rewards').first()).toBeVisible({
+      timeout: 10000,
+    });
   });
 
   test('should be responsive on mobile (375px)', async ({ page }) => {
@@ -371,7 +379,9 @@ test.describe('Direct URL Navigation Guards', () => {
     await expect(page.locator('text=Get Started Free').first()).toBeVisible({ timeout: 10000 });
   });
 
-  test('authenticated user navigating to /home should see redesigned homepage', async ({ page }) => {
+  test('authenticated user navigating to /home should see redesigned homepage', async ({
+    page,
+  }) => {
     await simulateAuth(page);
     await page.goto('/home');
     await expect(page.locator('text=Recently Watched').first()).toBeVisible({ timeout: 10000 });

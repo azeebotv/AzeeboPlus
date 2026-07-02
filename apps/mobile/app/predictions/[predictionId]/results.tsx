@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   RefreshControl,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { realityApi } from '../../../src/api';
 import { logger } from '../../../src/utils/logger';
@@ -31,7 +32,7 @@ interface PredictionResult {
 }
 
 export default function PredictionResultsScreen() {
-  const router = useRouter();
+  const _router = useRouter();
   const params = useLocalSearchParams();
   const predictionId = params.predictionId as string;
 
@@ -47,7 +48,7 @@ export default function PredictionResultsScreen() {
     try {
       const response = await realityApi.getPredictionResults(predictionId);
       if (response.success && response.data) {
-        setResult(response.data);
+        setResult(response.data as any);
       }
     } catch (error) {
       logger.error('Failed to load prediction results', error);
@@ -64,90 +65,94 @@ export default function PredictionResultsScreen() {
 
   if (isLoading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#8B5CF6" />
+      <SafeAreaView style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#E8420A" />
         <Text style={styles.loadingText}>Loading results...</Text>
-      </View>
+      </SafeAreaView>
     );
   }
 
   if (!result) {
     return (
-      <View style={styles.container}>
+      <SafeAreaView style={styles.container}>
         <Text style={styles.errorText}>Failed to load prediction results</Text>
-      </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.content}
-      refreshControl={
-        <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} colors={['#8B5CF6']} />
-      }
-    >
-      <View style={styles.header}>
-        <Text style={styles.title}>Prediction Results</Text>
-        <Text style={styles.question}>{result.question}</Text>
-      </View>
+    <SafeAreaView style={styles.container}>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.content}
+        refreshControl={
+          <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} colors={['#E8420A']} />
+        }
+      >
+        <View style={styles.header}>
+          <Text style={styles.title}>Prediction Results</Text>
+          <Text style={styles.question}>{result.question}</Text>
+        </View>
 
-      <View style={styles.resultCard}>
-        <View style={styles.resultHeader}>
-          <Text style={styles.resultLabel}>Your Answer</Text>
-          <View style={[styles.badge, result.isCorrect ? styles.badgeSuccess : styles.badgeError]}>
-            <Text style={styles.badgeText}>{result.isCorrect ? '✓ Correct' : '✗ Incorrect'}</Text>
-          </View>
-        </View>
-        <Text style={styles.answerText}>{result.userAnswer}</Text>
-        <Text style={styles.correctAnswer}>Correct: {result.correctAnswer}</Text>
-      </View>
-
-      <View style={styles.statsGrid}>
-        <View style={styles.statCard}>
-          <Text style={styles.statValue}>{result.totalParticipants.toLocaleString()}</Text>
-          <Text style={styles.statLabel}>Participants</Text>
-        </View>
-        <View style={styles.statCard}>
-          <Text style={styles.statValue}>{result.correctParticipants.toLocaleString()}</Text>
-          <Text style={styles.statLabel}>Correct</Text>
-        </View>
-        <View style={styles.statCard}>
-          <Text style={styles.statValue}>{result.accuracyRate}%</Text>
-          <Text style={styles.statLabel}>Accuracy</Text>
-        </View>
-        <View style={styles.statCard}>
-          <Text style={styles.statValue}>#{result.rankedPosition}</Text>
-          <Text style={styles.statLabel}>Your Rank</Text>
-        </View>
-      </View>
-
-      <View style={styles.rewardsCard}>
-        <Text style={styles.rewardsTitle}>Rewards Earned</Text>
-        {result.rewards.map((reward, index) => (
-          <View key={index} style={styles.rewardItem}>
-            <Text style={styles.rewardIcon}>
-              {reward.type === 'points' ? '⭐' : reward.type === 'tokens' ? '🪙' : '🏆'}
-            </Text>
-            <View style={styles.rewardInfo}>
-              <Text style={styles.rewardName}>{reward.name}</Text>
-              <Text style={styles.rewardAmount}>+{reward.amount}</Text>
+        <View style={styles.resultCard}>
+          <View style={styles.resultHeader}>
+            <Text style={styles.resultLabel}>Your Answer</Text>
+            <View
+              style={[styles.badge, result.isCorrect ? styles.badgeSuccess : styles.badgeError]}
+            >
+              <Text style={styles.badgeText}>{result.isCorrect ? '✓ Correct' : '✗ Incorrect'}</Text>
             </View>
           </View>
-        ))}
-        <View style={styles.pointsEarned}>
-          <Text style={styles.pointsLabel}>Total Points Earned</Text>
-          <Text style={styles.pointsValue}>+{result.pointsEarned}</Text>
+          <Text style={styles.answerText}>{result.userAnswer}</Text>
+          <Text style={styles.correctAnswer}>Correct: {result.correctAnswer}</Text>
         </View>
-      </View>
-    </ScrollView>
+
+        <View style={styles.statsGrid}>
+          <View style={styles.statCard}>
+            <Text style={styles.statValue}>{result.totalParticipants.toLocaleString()}</Text>
+            <Text style={styles.statLabel}>Participants</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Text style={styles.statValue}>{result.correctParticipants.toLocaleString()}</Text>
+            <Text style={styles.statLabel}>Correct</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Text style={styles.statValue}>{result.accuracyRate}%</Text>
+            <Text style={styles.statLabel}>Accuracy</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Text style={styles.statValue}>#{result.rankedPosition}</Text>
+            <Text style={styles.statLabel}>Your Rank</Text>
+          </View>
+        </View>
+
+        <View style={styles.rewardsCard}>
+          <Text style={styles.rewardsTitle}>Rewards Earned</Text>
+          {result.rewards.map((reward, index) => (
+            <View key={index} style={styles.rewardItem}>
+              <Text style={styles.rewardIcon}>
+                {reward.type === 'points' ? '⭐' : reward.type === 'tokens' ? '🪙' : '🏆'}
+              </Text>
+              <View style={styles.rewardInfo}>
+                <Text style={styles.rewardName}>{reward.name}</Text>
+                <Text style={styles.rewardAmount}>+{reward.amount}</Text>
+              </View>
+            </View>
+          ))}
+          <View style={styles.pointsEarned}>
+            <Text style={styles.pointsLabel}>Total Points Earned</Text>
+            <Text style={styles.pointsValue}>+{result.pointsEarned}</Text>
+          </View>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#111827',
+    backgroundColor: '#1A0A0A',
   },
   content: {
     padding: 16,
@@ -155,7 +160,7 @@ const styles = StyleSheet.create({
   },
   loadingContainer: {
     flex: 1,
-    backgroundColor: '#111827',
+    backgroundColor: '#1A0A0A',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -182,7 +187,7 @@ const styles = StyleSheet.create({
     color: '#9CA3AF',
   },
   resultCard: {
-    backgroundColor: '#1F2937',
+    backgroundColor: '#2A2A2A',
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
@@ -232,7 +237,7 @@ const styles = StyleSheet.create({
   statCard: {
     flex: 1,
     minWidth: '45%',
-    backgroundColor: '#1F2937',
+    backgroundColor: '#2A2A2A',
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
@@ -240,7 +245,7 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#8B5CF6',
+    color: '#E8420A',
     marginBottom: 4,
   },
   statLabel: {
@@ -248,7 +253,7 @@ const styles = StyleSheet.create({
     color: '#9CA3AF',
   },
   rewardsCard: {
-    backgroundColor: '#1F2937',
+    backgroundColor: '#2A2A2A',
     borderRadius: 12,
     padding: 16,
   },
@@ -263,7 +268,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#374151',
+    borderBottomColor: 'rgba(255,255,255,0.2)',
   },
   rewardIcon: {
     fontSize: 24,
@@ -291,7 +296,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
     paddingTop: 16,
     borderTopWidth: 1,
-    borderTopColor: '#374151',
+    borderTopColor: 'rgba(255,255,255,0.2)',
   },
   pointsLabel: {
     fontSize: 16,

@@ -18,6 +18,7 @@ interface PremiumPlan {
 
 interface PremiumStatus {
   isPremium: boolean;
+  subscriptionId?: string;
   planName?: string;
   expiresAt?: string;
   autoRenew: boolean;
@@ -28,6 +29,7 @@ export default function PremiumAccessPage(): React.JSX.Element {
   const [status, setStatus] = useState<PremiumStatus | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isPurchasing, setIsPurchasing] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   useEffect(() => {
     loadPremiumData();
@@ -47,9 +49,13 @@ export default function PremiumAccessPage(): React.JSX.Element {
             tier: string;
           }>
         >('/v1/subscription/plans'),
-        apiFetch<{ status: string; plan?: { name: string }; endDate: string; autoRenew: boolean }>(
-          '/v1/subscription/current'
-        ),
+        apiFetch<{
+          id: string;
+          status: string;
+          plan?: { name: string };
+          endDate: string;
+          autoRenew: boolean;
+        }>('/v1/subscription/current'),
       ]);
 
       if (plansResult.success && plansResult.data) {
@@ -70,6 +76,7 @@ export default function PremiumAccessPage(): React.JSX.Element {
         const sub = statusResult.data;
         setStatus({
           isPremium: sub.status === 'active',
+          subscriptionId: sub.id,
           planName: sub.plan?.name,
           expiresAt: sub.endDate,
           autoRenew: sub.autoRenew,
@@ -91,30 +98,33 @@ export default function PremiumAccessPage(): React.JSX.Element {
       });
 
       if (result.success) {
-        alert('You are now a premium member!');
+        setToast({ message: 'You are now a premium member!', type: 'success' });
         loadPremiumData();
       }
     } catch (error: unknown) {
-      alert(error instanceof Error ? error.message : 'Failed to subscribe');
+      setToast({ message: error instanceof Error ? error.message : 'Failed to subscribe', type: 'error' });
     } finally {
       setIsPurchasing(false);
     }
   };
 
   const handleCancel = async (): Promise<void> => {
-    if (!confirm('Are you sure you want to cancel your premium subscription?')) return;
+    if (!status?.subscriptionId) {
+      setToast({ message: 'No active subscription found to cancel', type: 'error' });
+      return;
+    }
 
     try {
-      const result = await apiFetch('/v1/subscription/cancel', {
+      const result = await apiFetch(`/v1/subscription/${status.subscriptionId}`, {
         method: 'DELETE',
       });
 
       if (result.success) {
-        alert('Subscription cancelled');
+        setToast({ message: 'Subscription cancelled', type: 'success' });
         loadPremiumData();
       }
     } catch (error) {
-      alert('Failed to cancel subscription');
+      setToast({ message: 'Failed to cancel subscription', type: 'error' });
     }
   };
 
@@ -257,6 +267,20 @@ export default function PremiumAccessPage(): React.JSX.Element {
       </div>
 
       <AppFooter />
+
+      {toast && (
+        <div
+          className="fixed bottom-6 right-6 z-50 px-6 py-3 rounded-xl shadow-lg transition-all"
+          style={{
+            backgroundColor: toast.type === 'success' ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)',
+            border: `1px solid ${toast.type === 'success' ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)'}`,
+            color: toast.type === 'success' ? '#22C55E' : '#EF4444',
+          }}
+          role="alert"
+        >
+          {toast.message}
+        </div>
+      )}
     </div>
   );
 }

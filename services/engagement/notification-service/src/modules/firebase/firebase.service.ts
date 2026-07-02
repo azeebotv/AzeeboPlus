@@ -1,5 +1,12 @@
 import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
-import { initializeApp, cert, getApps, getApp, deleteApp, type ServiceAccount } from 'firebase-admin/app';
+import {
+  initializeApp,
+  cert,
+  getApps,
+  getApp,
+  deleteApp,
+  type ServiceAccount,
+} from 'firebase-admin/app';
 import { getMessaging, type Messaging } from 'firebase-admin/messaging';
 import { ConfigService } from '@nestjs/config';
 import { CircuitBreaker, CircuitBreakerOpenError, CircuitBreakerStats } from '@azeebo/shared-types';
@@ -30,9 +37,10 @@ export class FirebaseService implements OnModuleInit, OnModuleDestroy {
     }
 
     try {
-      const app = getApps().length === 0
-        ? initializeApp({ credential: cert(serviceAccount as ServiceAccount) })
-        : getApp();
+      const app =
+        getApps().length === 0
+          ? initializeApp({ credential: cert(serviceAccount as ServiceAccount) })
+          : getApp();
 
       this.messaging = getMessaging(app);
       this.firebaseEnabled = true;
@@ -80,7 +88,7 @@ export class FirebaseService implements OnModuleInit, OnModuleDestroy {
         await this.messaging.send(message);
       });
 
-      this.logger.log(`Push notification sent successfully to ${token}`);
+      this.logger.log(`Push notification sent successfully to ${token.slice(0, 8)}...`);
       return true;
     } catch (error) {
       if (error instanceof CircuitBreakerOpenError) {

@@ -31,6 +31,9 @@ export interface PredictionResult {
   options: Array<{
     id: string;
     text: string;
+    label?: string;
+    avatar?: string;
+    odds?: string;
     votes: number;
     percentage: number;
   }>;
@@ -59,7 +62,19 @@ export const engagementApi = {
 
   async getPredictionResults(predictionId: string): Promise<ApiResponse<PredictionResult>> {
     const response = await apiClient.get<PredictionResult>(
-      `/api/v1/reality/predictions/${predictionId}/results`
+      `/api/v1/engagement/predictions/${predictionId}/results`
+    );
+    return { success: true, data: response };
+  },
+
+  async placeBet(data: {
+    predictionId: string;
+    optionId: string;
+    amount: number;
+  }): Promise<ApiResponse<{ success: boolean }>> {
+    const response = await apiClient.post<{ success: boolean }>(
+      '/api/v1/engagement/predictions/bet',
+      data
     );
     return { success: true, data: response };
   },
@@ -110,7 +125,9 @@ export interface RealityContestant {
 
 export const realityApi = {
   async getLiveViewerCount(showId: string): Promise<ApiResponse<{ count: number }>> {
-    const response = await apiClient.get<{ count: number }>(`/api/v1/reality/shows/${showId}/viewers`);
+    const response = await apiClient.get<{ count: number }>(
+      `/api/v1/reality/shows/${showId}/viewers`
+    );
     return { success: true, data: response };
   },
 
@@ -120,7 +137,9 @@ export const realityApi = {
   },
 
   async getEpisodes(showId: string): Promise<ApiResponse<RealityEpisode[]>> {
-    const response = await apiClient.get<RealityEpisode[]>(`/api/v1/reality/shows/${showId}/episodes`);
+    const response = await apiClient.get<RealityEpisode[]>(
+      `/api/v1/reality/shows/${showId}/episodes`
+    );
     return { success: true, data: response };
   },
 
@@ -134,6 +153,18 @@ export const realityApi = {
   async getPredictionResults(predictionId: string): Promise<ApiResponse<PredictionResult>> {
     const response = await apiClient.get<PredictionResult>(
       `/api/v1/reality/predictions/${predictionId}/results`
+    );
+    return { success: true, data: response };
+  },
+
+  async submitVote(data: {
+    showId: string;
+    contestantId: string | null;
+    votes: number;
+  }): Promise<ApiResponse<{ success: boolean }>> {
+    const response = await apiClient.post<{ success: boolean }>(
+      `/api/v1/reality/shows/${data.showId}/vote`,
+      { contestantId: data.contestantId, votes: data.votes }
     );
     return { success: true, data: response };
   },
@@ -191,7 +222,9 @@ export const homepageEngagementApi = {
   },
 
   getNewReleases: async (limit = 12): Promise<ApiResponse<ContentItem[]>> => {
-    const response = await apiClient.get<ContentItem[]>(`/api/v1/content/new-releases?limit=${limit}`);
+    const response = await apiClient.get<ContentItem[]>(
+      `/api/v1/content/new-releases?limit=${limit}`
+    );
     return { success: true, data: response };
   },
 

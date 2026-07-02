@@ -13,7 +13,7 @@ import { StaggerGrid } from '@/components/motion/StaggerGrid';
 import { GlowCard } from '@/components/motion/GlowCard';
 
 export default function MoviesPage(): React.JSX.Element {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated: _isAuthenticated } = useAuth();
   const [movies, setMovies] = useState<ContentItem[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -30,8 +30,12 @@ export default function MoviesPage(): React.JSX.Element {
         if (moviesRes.success && moviesRes.data) {
           const items = Array.isArray(moviesRes.data) ? moviesRes.data : moviesRes.data.items || [];
           setMovies(items);
+        } else if (!moviesRes.success) {
+          setError(moviesRes.message || 'Failed to load movies.');
         }
-        if (categoriesRes.success && categoriesRes.data) setCategories(categoriesRes.data);
+        if (categoriesRes.success && categoriesRes.data) {
+          setCategories(Array.isArray(categoriesRes.data) ? categoriesRes.data : []);
+        }
       } catch (err) {
         webLogger.error('Failed to fetch movies', err);
         setError('Failed to load movies. Please try again.');

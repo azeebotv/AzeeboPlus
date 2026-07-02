@@ -9,13 +9,13 @@ import AppFooter from '@/components/layout/AppFooter';
 
 interface DashboardStats {
   totalViews: number;
-  followers: number;
-  videos: number;
-  revenue: number;
+  followerCount: number;
+  contentCount: number;
+  totalEarnings: number;
 }
 
 export default function CreatorDashboardPage(): React.JSX.Element {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated: _isAuthenticated } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -24,7 +24,7 @@ export default function CreatorDashboardPage(): React.JSX.Element {
     const fetchDashboard = async () => {
       try {
         setIsLoading(true);
-        const result = await apiFetch<DashboardStats>('/v1/creators/dashboard/stats');
+        const result = await apiFetch<DashboardStats>('/v1/creators/stats');
         if (result.success && result.data) setStats(result.data);
       } catch (err) {
         webLogger.error('Failed to fetch creator dashboard stats', err);
@@ -96,20 +96,25 @@ export default function CreatorDashboardPage(): React.JSX.Element {
             {[
               {
                 label: 'Total Views',
-                value: stats.totalViews.toLocaleString(),
+                value: (stats.totalViews || 0).toLocaleString(),
                 icon: '👁️',
                 color: '#E8420A',
               },
               {
                 label: 'Followers',
-                value: stats.followers.toLocaleString(),
+                value: (stats.followerCount || 0).toLocaleString(),
                 icon: '👥',
                 color: '#0D3B2E',
               },
-              { label: 'Videos', value: stats.videos.toString(), icon: '🎬', color: '#CC1C1C' },
               {
-                label: 'Revenue',
-                value: `₦${stats.revenue.toLocaleString()}`,
+                label: 'Content',
+                value: (stats.contentCount || 0).toString(),
+                icon: '🎬',
+                color: '#CC1C1C',
+              },
+              {
+                label: 'Earnings',
+                value: `₦${(stats.totalEarnings || 0).toLocaleString()}`,
                 icon: '💰',
                 color: '#F59E0B',
               },

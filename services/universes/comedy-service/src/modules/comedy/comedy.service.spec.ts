@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ComedyService } from './comedy.service';
 import { PrismaService } from '../database/prisma.service';
+import { ConfigService } from '@nestjs/config';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 import axios from 'axios';
 
@@ -26,6 +27,13 @@ describe('ComedyService', () => {
             clipShare: { create: jest.fn() },
           },
         },
+        {
+          provide: ConfigService,
+          useValue: {
+            get: jest.fn().mockReturnValue('test-value'),
+            getOrThrow: jest.fn().mockReturnValue('test-value'),
+          },
+        },
       ],
     }).compile();
 
@@ -49,7 +57,7 @@ describe('ComedyService', () => {
       const result = await service.getClips();
 
       expect(result.success).toBe(true);
-      expect(result.data.clips).toEqual(mockClips);
+      expect(result.data!.clips).toEqual(mockClips);
     });
 
     it('should return empty array when no clips exist', async () => {
@@ -58,7 +66,7 @@ describe('ComedyService', () => {
       const result = await service.getClips();
 
       expect(result.success).toBe(true);
-      expect(result.data.clips).toEqual([]);
+      expect(result.data!.clips).toEqual([]);
     });
   });
 
@@ -70,7 +78,7 @@ describe('ComedyService', () => {
       const result = await service.getComedians();
 
       expect(result.success).toBe(true);
-      expect(result.data.comedians).toEqual(mockComedians);
+      expect(result.data!.comedians).toEqual(mockComedians);
     });
   });
 
@@ -91,7 +99,7 @@ describe('ComedyService', () => {
       const result = await service.submitChallenge(userId, body);
 
       expect(result.success).toBe(true);
-      expect(result.data.entryId).toBe('entry-1');
+      expect(result.data!.entryId).toBe('entry-1');
       expect(mockedAxios.post).toHaveBeenCalled();
     });
 
@@ -134,7 +142,7 @@ describe('ComedyService', () => {
       const result = await service.shareClip(userId, clipId);
 
       expect(result.success).toBe(true);
-      expect(result.data.message).toBe('Clip shared');
+      expect(result.data!.message).toBe('Clip shared');
       expect(prismaService.clipShare.create).toHaveBeenCalled();
       expect(prismaService.comedyClip.update).toHaveBeenCalled();
     });
@@ -157,7 +165,7 @@ describe('ComedyService', () => {
       const result = await service.getTrending();
 
       expect(result.success).toBe(true);
-      expect(result.data.clips.length).toBe(2);
+      expect((result.data as any).clips.length).toBe(2);
     });
   });
 
@@ -169,7 +177,7 @@ describe('ComedyService', () => {
       const result = await service.getChallenges();
 
       expect(result.success).toBe(true);
-      expect(result.data.challenges).toEqual(mockChallenges);
+      expect(result.data!.challenges).toEqual(mockChallenges);
     });
   });
 
@@ -181,7 +189,7 @@ describe('ComedyService', () => {
       const result = await service.getSeries();
 
       expect(result.success).toBe(true);
-      expect(result.data.series).toEqual(mockSeries);
+      expect(result.data!.series).toEqual(mockSeries);
     });
   });
 });

@@ -85,16 +85,18 @@ describe('NotificationsService', () => {
       ];
 
       mockPrismaService.notification.findMany.mockResolvedValue(mockNotifications);
-      mockPrismaService.notification.count.mockResolvedValue(50);
-      mockPrismaService.notification.count.mockResolvedValueOnce(2);
+      mockPrismaService.notification.count.mockResolvedValueOnce(50);
+      mockPrismaService.notification.count.mockResolvedValue(2);
 
       const result = await service.getNotifications('user-1', 1, 20);
 
       expect(result.success).toBe(true);
-      expect(result.data.notifications).toEqual(mockNotifications);
-      expect(result.data.pagination.total).toBe(50);
-      expect(result.data.pagination.page).toBe(1);
-      expect(result.data.pagination.hasNextPage).toBe(true);
+      const data = result.data as Record<string, unknown>;
+      expect(data.notifications).toEqual(mockNotifications);
+      const pagination = data.pagination as Record<string, unknown>;
+      expect(pagination.total).toBe(50);
+      expect(pagination.page).toBe(1);
+      expect(pagination.hasNextPage).toBe(true);
     });
 
     it('should return empty notifications for user with none', async () => {
@@ -104,8 +106,9 @@ describe('NotificationsService', () => {
       const result = await service.getNotifications('user-new', 1, 20);
 
       expect(result.success).toBe(true);
-      expect(result.data.notifications).toEqual([]);
-      expect(result.data.unreadCount).toBe(0);
+      const data = result.data as Record<string, unknown>;
+      expect(data.notifications).toEqual([]);
+      expect(data.unreadCount).toBe(0);
     });
 
     it('should enforce max limit of 100', async () => {
@@ -191,7 +194,8 @@ describe('NotificationsService', () => {
       const result = await service.getPreferences('user-1');
 
       expect(result.success).toBe(true);
-      expect(result.data.settings).toEqual({ email: true, push: false });
+      const data = result.data as Record<string, unknown>;
+      expect(data.settings).toEqual({ email: true, push: false });
     });
 
     it('should return empty object if no preferences set', async () => {
@@ -202,7 +206,8 @@ describe('NotificationsService', () => {
       const result = await service.getPreferences('user-1');
 
       expect(result.success).toBe(true);
-      expect(result.data.settings).toEqual({});
+      const data = result.data as Record<string, unknown>;
+      expect(data.settings).toEqual({});
     });
   });
 
@@ -213,7 +218,8 @@ describe('NotificationsService', () => {
       const result = await service.getUnreadCount('user-1');
 
       expect(result.success).toBe(true);
-      expect(result.data.unreadCount).toBe(7);
+      const data = result.data as Record<string, unknown>;
+      expect(data.unreadCount).toBe(7);
     });
   });
 
@@ -281,7 +287,8 @@ describe('NotificationsService', () => {
         const result = await service.getPushTokens('user-1');
 
         expect(result.success).toBe(true);
-        expect(result.data.pushTokens).toEqual(mockTokens);
+        const data = result.data as Record<string, unknown>;
+        expect(data.pushTokens).toEqual(mockTokens);
       });
     });
 

@@ -267,13 +267,17 @@ export class ReportBuilderService {
           ...(dto.category && { category: dto.category }),
           ...(dto.metrics && { metrics: dto.metrics as unknown as Prisma.InputJsonValue }),
           ...(dto.dimensions && { dimensions: dto.dimensions as unknown as Prisma.InputJsonValue }),
-          ...(dto.filters !== undefined && { filters: dto.filters as unknown as Prisma.InputJsonValue }),
+          ...(dto.filters !== undefined && {
+            filters: dto.filters as unknown as Prisma.InputJsonValue,
+          }),
           ...(dto.dateField && { dateField: dto.dateField }),
           ...(dto.dateRange && { dateRange: dto.dateRange }),
           ...(dto.startDate && { startDate: new Date(dto.startDate) }),
           ...(dto.endDate && { endDate: new Date(dto.endDate) }),
           ...(dto.isPublic !== undefined && { isPublic: dto.isPublic }),
-          ...(dto.chartConfig && { chartConfig: dto.chartConfig as unknown as Prisma.InputJsonValue }),
+          ...(dto.chartConfig && {
+            chartConfig: dto.chartConfig as unknown as Prisma.InputJsonValue,
+          }),
         } as unknown as Prisma.CustomReportUpdateInput,
       });
 
@@ -494,7 +498,7 @@ export class ReportBuilderService {
           const countKeys = Object.keys(query._count);
           const countField = this.mapFieldName(countKeys[0]);
           const result: any[] = await (this.prisma.productEvent.groupBy as any)({
-            by: (groupByFields.length > 0 ? groupByFields : undefined),
+            by: groupByFields.length > 0 ? groupByFields : undefined,
             where,
             _count: { [countField]: true },
             orderBy,
@@ -518,7 +522,7 @@ export class ReportBuilderService {
           const sumKeys = Object.keys(query._sum);
           const sumField = this.mapFieldName(sumKeys[0]);
           const result: any[] = await (this.prisma.productEvent.groupBy as any)({
-            by: (groupByFields.length > 0 ? groupByFields : undefined),
+            by: groupByFields.length > 0 ? groupByFields : undefined,
             where,
             _sum: { [sumField]: true },
             orderBy,
@@ -542,7 +546,7 @@ export class ReportBuilderService {
           const avgKeys = Object.keys(query._avg);
           const avgField = this.mapFieldName(avgKeys[0]);
           const result: any[] = await (this.prisma.productEvent.groupBy as any)({
-            by: (groupByFields.length > 0 ? groupByFields : undefined),
+            by: groupByFields.length > 0 ? groupByFields : undefined,
             where,
             _avg: { [avgField]: true },
             orderBy,
@@ -566,7 +570,7 @@ export class ReportBuilderService {
           const minKeys = Object.keys(query._min);
           const minField = this.mapFieldName(minKeys[0]);
           const result: any[] = await (this.prisma.productEvent.groupBy as any)({
-            by: (groupByFields.length > 0 ? groupByFields : undefined),
+            by: groupByFields.length > 0 ? groupByFields : undefined,
             where,
             _min: { [minField]: true },
             orderBy,
@@ -590,7 +594,7 @@ export class ReportBuilderService {
           const maxKeys = Object.keys(query._max);
           const maxField = this.mapFieldName(maxKeys[0]);
           const result: any[] = await (this.prisma.productEvent.groupBy as any)({
-            by: (groupByFields.length > 0 ? groupByFields : undefined),
+            by: groupByFields.length > 0 ? groupByFields : undefined,
             where,
             _max: { [maxField]: true },
             orderBy,

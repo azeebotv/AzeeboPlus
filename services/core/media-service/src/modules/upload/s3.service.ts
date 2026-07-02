@@ -12,7 +12,6 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { randomUUID } from 'crypto';
 import { CircuitBreaker, CircuitBreakerOpenError, CircuitBreakerStats } from '@azeebo/shared-types';
 
-
 interface FileMetadata {
   contentType: string | undefined;
   contentLength: number | undefined;

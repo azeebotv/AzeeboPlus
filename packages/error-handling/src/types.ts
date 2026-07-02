@@ -10,23 +10,23 @@ export interface ErrorResponse {
   success: boolean;
 
   // --- RFC 7807 fields ---
-  type?: string;         // A URI reference that identifies the problem type
-  title?: string;        // A short, human-readable summary of the problem type
-  status?: number;       // The HTTP status code (same as statusCode)
-  detail?: string;       // A human-readable explanation specific to this occurrence
-  instance?: string;     // A URI reference that identifies the specific occurrence
+  type?: string; // A URI reference that identifies the problem type
+  title?: string; // A short, human-readable summary of the problem type
+  status?: number; // The HTTP status code (same as statusCode)
+  detail?: string; // A human-readable explanation specific to this occurrence
+  instance?: string; // A URI reference that identifies the specific occurrence
 
   // --- Application-level fields ---
-  code?: string;         // Application-specific error code (e.g. "EMAIL_ALREADY_EXISTS")
-  message: string;       // Human-readable message (primary, always present)
-  error?: string;        // Legacy error field for backward compat
-  statusCode?: number;   // Legacy status code field for backward compat
+  code?: string; // Application-specific error code (e.g. "EMAIL_ALREADY_EXISTS")
+  message: string; // Human-readable message (primary, always present)
+  error?: string; // Legacy error field for backward compat
+  statusCode?: number; // Legacy status code field for backward compat
   details?: {
     fieldErrors?: Record<string, string[]>;
     [key: string]: unknown;
   };
-  timestamp?: string;    // ISO 8601 timestamp of the error
-  path?: string;         // Request path that caused the error
+  timestamp?: string; // ISO 8601 timestamp of the error
+  path?: string; // Request path that caused the error
 }
 
 /**
@@ -35,23 +35,23 @@ export interface ErrorResponse {
  */
 export interface ApiError {
   // --- RFC 7807 fields ---
-  type?: string;         // A URI reference that identifies the problem type
-  title?: string;        // A short, human-readable summary of the problem type
-  status?: number;       // HTTP status code
-  detail?: string;       // A human-readable explanation specific to this occurrence
-  instance?: string;     // A URI reference that identifies the specific occurrence
+  type?: string; // A URI reference that identifies the problem type
+  title?: string; // A short, human-readable summary of the problem type
+  status?: number; // HTTP status code
+  detail?: string; // A human-readable explanation specific to this occurrence
+  instance?: string; // A URI reference that identifies the specific occurrence
 
   // --- Application-level fields ---
-  code?: string;         // Application-specific error code
-  message: string;       // Human-readable message (primary, always present)
-  error?: string;        // Legacy error string for backward compat
-  statusCode?: number;   // Legacy status code for backward compat
+  code?: string; // Application-specific error code
+  message: string; // Human-readable message (primary, always present)
+  error?: string; // Legacy error string for backward compat
+  statusCode?: number; // Legacy status code for backward compat
   details?: {
     fieldErrors?: Record<string, string[]>;
     [key: string]: unknown;
   };
-  timestamp?: string;    // ISO 8601 timestamp of the error
-  path?: string;         // Request path that caused the error
+  timestamp?: string; // ISO 8601 timestamp of the error
+  path?: string; // Request path that caused the error
 }
 
 export class AppError extends Error {

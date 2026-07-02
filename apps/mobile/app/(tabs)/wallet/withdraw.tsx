@@ -13,7 +13,7 @@ import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AmountInput } from '../../../src/components/AmountInput';
 import { walletApi } from '../../../src/api';
-import { LoadingState, ErrorState, EmptyState } from '../../../src/components/StateContainers';
+import { LoadingState, ErrorState } from '../../../src/components/StateContainers';
 
 const PRESET_AMOUNTS = [500, 1000, 2000, 5000, 10000];
 
@@ -91,8 +91,11 @@ export default function WithdrawFundsScreen() {
 
     setIsVerifying(true);
     try {
-      setAccountName('John Doe');
-      setErrors((prev) => ({ ...prev, accountName: undefined }));
+      // TODO: Replace with real bank account verification API call
+      // e.g. const result = await walletApi.verifyBankAccount({ bankCode, accountNumber });
+      // setAccountName(result.data.accountName);
+      setAccountName('');
+      setErrors((prev) => ({ ...prev, accountName: 'Bank verification not yet available' }));
     } catch (error: any) {
       Alert.alert('Error', 'Failed to verify account');
     } finally {
@@ -311,7 +314,7 @@ export default function WithdrawFundsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#111827',
+    backgroundColor: '#1A0A0A',
   },
   scrollContent: {
     paddingHorizontal: 24,
@@ -385,8 +388,8 @@ const styles = StyleSheet.create({
     borderColor: '#333',
   },
   presetButtonSelected: {
-    backgroundColor: '#8B5CF6',
-    borderColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
+    borderColor: '#E8420A',
   },
   presetText: {
     color: '#F3F4F6',
@@ -404,7 +407,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   verifyButton: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     borderRadius: 12,
     paddingHorizontal: 20,
     justifyContent: 'center',
@@ -418,7 +421,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   withdrawButton: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
@@ -434,7 +437,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   balanceCard: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     borderRadius: 12,
     padding: 20,
     marginBottom: 24,

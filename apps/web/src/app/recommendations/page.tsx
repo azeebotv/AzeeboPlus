@@ -15,18 +15,18 @@ interface ContentItem {
   duration?: number;
   category?: string;
   universe?: { name: string };
-  creator?: { name: string };
+  creator?: { displayName: string };
   score?: number;
   reason?: string;
 }
 
 export default function RecommendationsPage(): React.JSX.Element {
-  const { user } = useAuth();
+  const { user: _user } = useAuth();
   const [recommendations, setRecommendations] = useState<ContentItem[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState<string>('all');
-  const [page, setPage] = useState<number>(1);
+  const [_page, setPage] = useState<number>(1);
   const [hasMore, setHasMore] = useState<boolean>(true);
   const observerRef = useRef<IntersectionObserver | null>(null);
   const lastItemRef = useRef<HTMLDivElement | null>(null);
@@ -46,7 +46,7 @@ export default function RecommendationsPage(): React.JSX.Element {
       setError(null);
       const params = new URLSearchParams({ page: String(pageNum), limit: '12' });
       if (filter !== 'all') params.set('category', filter);
-      const response = await apiFetch<any>(`/content/recommendations?${params.toString()}`);
+      const response = await apiFetch<any>(`/v1/recommendation/content?${params.toString()}`);
       if (response.success && response.data) {
         const data = Array.isArray(response.data) ? response.data : response.data.items || [];
         setRecommendations((prev) => (pageNum === 1 ? data : [...prev, ...data]));
@@ -221,7 +221,9 @@ export default function RecommendationsPage(): React.JSX.Element {
                         </span>
                       )}
                       {item.creator && (
-                        <span className="text-[10px] text-white/40">by {item.creator.name}</span>
+                        <span className="text-[10px] text-white/40">
+                          by {item.creator.displayName}
+                        </span>
                       )}
                     </div>
                     {item.reason && (

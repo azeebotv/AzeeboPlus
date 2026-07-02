@@ -1,7 +1,6 @@
 'use client';
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import Link from 'next/link';
 import { apiFetch } from '@/lib/api';
 import { webLogger } from '@/lib/logger';
 import AppHeader from '@/components/layout/AppHeader';
@@ -28,7 +27,7 @@ interface Achievement {
 }
 
 export default function RewardsPage(): React.JSX.Element {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated: _isAuthenticated } = useAuth();
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [userPoints, setUserPoints] = useState(0);
@@ -40,13 +39,44 @@ export default function RewardsPage(): React.JSX.Element {
       try {
         setIsLoading(true);
         const [rewardsRes, achievementsRes, balanceRes] = await Promise.all([
-          apiFetch<Reward[]>('/v1/rewards'),
-          apiFetch<Achievement[]>('/v1/rewards/achievements'),
-          apiFetch<{ balance: number }>('/v1/wallet/balance'),
+          apiFetch<any>('/rewards/missions'),
+          apiFetch<any>('/rewards/badges'),
+          apiFetch<any>('/rewards/balance'),
         ]);
-        if (rewardsRes.success && rewardsRes.data) setRewards(rewardsRes.data);
-        if (achievementsRes.success && achievementsRes.data) setAchievements(achievementsRes.data);
-        if (balanceRes.success && balanceRes.data) setUserPoints(balanceRes.data.balance);
+        if (rewardsRes.success && rewardsRes.data) {
+          const missions = Array.isArray(rewardsRes.data)
+            ? rewardsRes.data
+            : rewardsRes.data.missions || [];
+          setRewards(
+            missions.map((m: any) => ({
+              id: String(m.id),
+              title: String(m.title || ''),
+              description: String(m.description || ''),
+              points: Number(m.points || 0),
+              image: m.image,
+              isAvailable: Boolean(m.isActive),
+              category: String(m.type || 'mission'),
+            }))
+          );
+        }
+        if (achievementsRes.success && achievementsRes.data) {
+          const badges = Array.isArray(achievementsRes.data)
+            ? achievementsRes.data
+            : achievementsRes.data.badges || [];
+          setAchievements(
+            badges.map((b: any) => ({
+              id: String(b.id),
+              name: String(b.name || ''),
+              description: String(b.description || ''),
+              unlocked: true,
+              icon: String(b.icon || '🏅'),
+              progress: Number(b.points || 0),
+              target: Number(b.points || 1),
+            }))
+          );
+        }
+        if (balanceRes.success && balanceRes.data)
+          setUserPoints(Number(balanceRes.data.balance || balanceRes.data.points || 0));
       } catch (err) {
         webLogger.error('Failed to fetch rewards', err);
         setError('Failed to load rewards. Please try again.');
@@ -59,7 +89,10 @@ export default function RewardsPage(): React.JSX.Element {
 
   const handleClaimReward = async (rewardId: string): Promise<void> => {
     try {
-      const result = await apiFetch(`/v1/rewards/${rewardId}/claim`, { method: 'POST' });
+      const result = await apiFetch(`/rewards/redeem`, {
+        method: 'POST',
+        body: JSON.stringify({ rewardId }),
+      });
       if (result.success) {
         alert('Reward claimed successfully!');
         setRewards((prev) =>

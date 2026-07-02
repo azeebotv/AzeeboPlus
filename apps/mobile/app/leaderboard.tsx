@@ -8,10 +8,11 @@ import {
   TouchableOpacity,
   Image,
 } from 'react-native';
-import { useRouter, type Href } from 'expo-router';
+import { useRouter } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { engagementApi } from '../src/api';
 import { logger } from '../src/utils/logger';
-import { LoadingState, ErrorState, EmptyState } from '../src/components/StateContainers';
+import { LoadingState, ErrorState } from '../src/components/StateContainers';
 
 interface LeaderboardEntry {
   rank: number;
@@ -92,113 +93,115 @@ export default function LeaderboardScreen() {
 
   if (isLoading) {
     return (
-      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+      <SafeAreaView style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
         <LoadingState text="Loading leaderboard..." />
-      </View>
+      </SafeAreaView>
     );
   }
 
   if (error) {
     return (
-      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+      <SafeAreaView style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
         <ErrorState description={error} onRetry={loadLeaderboard} />
-      </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.content}
-      refreshControl={
-        <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} colors={['#8B5CF6']} />
-      }
-    >
-      <View style={styles.header}>
-        <Text style={styles.title}>Leaderboard</Text>
-        <Text style={styles.subtitle}>Top performers this {timePeriod}</Text>
-      </View>
+    <SafeAreaView style={styles.container}>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={styles.content}
+        refreshControl={
+          <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} colors={['#E8420A']} />
+        }
+      >
+        <View style={styles.header}>
+          <Text style={styles.title}>Leaderboard</Text>
+          <Text style={styles.subtitle}>Top performers this {timePeriod}</Text>
+        </View>
 
-      <View style={styles.filterContainer}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll}>
-          {(['daily', 'weekly', 'monthly', 'alltime'] as TimePeriod[]).map((period) => (
+        <View style={styles.filterContainer}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll}>
+            {(['daily', 'weekly', 'monthly', 'alltime'] as TimePeriod[]).map((period) => (
+              <TouchableOpacity
+                key={period}
+                style={[styles.filterButton, timePeriod === period && styles.filterButtonActive]}
+                onPress={() => setTimePeriod(period)}
+              >
+                <Text style={[styles.filterText, timePeriod === period && styles.filterTextActive]}>
+                  {period === 'alltime'
+                    ? 'All Time'
+                    : period.charAt(0).toUpperCase() + period.slice(1)}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+
+        <View style={styles.categoryContainer}>
+          {(['overall', 'predictions', 'voting', 'engagement'] as Category[]).map((cat) => (
             <TouchableOpacity
-              key={period}
-              style={[styles.filterButton, timePeriod === period && styles.filterButtonActive]}
-              onPress={() => setTimePeriod(period)}
+              key={cat}
+              style={[styles.categoryButton, category === cat && styles.categoryButtonActive]}
+              onPress={() => setCategory(cat)}
             >
-              <Text style={[styles.filterText, timePeriod === period && styles.filterTextActive]}>
-                {period === 'alltime'
-                  ? 'All Time'
-                  : period.charAt(0).toUpperCase() + period.slice(1)}
+              <Text style={[styles.categoryText, category === cat && styles.categoryTextActive]}>
+                {cat.charAt(0).toUpperCase() + cat.slice(1)}
               </Text>
             </TouchableOpacity>
           ))}
-        </ScrollView>
-      </View>
+        </View>
 
-      <View style={styles.categoryContainer}>
-        {(['overall', 'predictions', 'voting', 'engagement'] as Category[]).map((cat) => (
-          <TouchableOpacity
-            key={cat}
-            style={[styles.categoryButton, category === cat && styles.categoryButtonActive]}
-            onPress={() => setCategory(cat)}
-          >
-            <Text style={[styles.categoryText, category === cat && styles.categoryTextActive]}>
-              {cat.charAt(0).toUpperCase() + cat.slice(1)}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      <View style={styles.topThree}>
-        {entries.slice(0, 3).map((entry) => (
-          <View
-            key={entry.userId}
-            style={[
-              styles.topCard,
-              entry.rank === 1 && styles.topCardFirst,
-              entry.rank === 2 && styles.topCardSecond,
-              entry.rank === 3 && styles.topCardThird,
-            ]}
-          >
-            <Text style={styles.rankIcon}>{getRankIcon(entry.rank)}</Text>
-            <Image source={{ uri: entry.avatar }} style={styles.topAvatar} />
-            <Text style={styles.topName}>{entry.displayName}</Text>
-            <Text style={styles.topPoints}>{entry.points.toLocaleString()} pts</Text>
-          </View>
-        ))}
-      </View>
-
-      <View style={styles.listContainer}>
-        {entries.slice(3).map((entry) => (
-          <TouchableOpacity
-            key={entry.userId}
-            style={[styles.listItem, entry.isCurrentUser && styles.listItemCurrentUser]}
-            onPress={() => router.push(`/profile/${entry.userId}` as Href)}
-          >
-            <Text style={[styles.rankText, { color: getRankColor(entry.rank) }]}>
-              {getRankIcon(entry.rank)}
-            </Text>
-            <Image source={{ uri: entry.avatar }} style={styles.avatar} />
-            <View style={styles.userInfo}>
-              <Text style={styles.username}>{entry.displayName}</Text>
-              <Text style={styles.userStats}>
-                Lvl {entry.level} • {entry.streak}🔥 • {entry.predictionsCorrect}✓
-              </Text>
+        <View style={styles.topThree}>
+          {entries.slice(0, 3).map((entry) => (
+            <View
+              key={entry.userId}
+              style={[
+                styles.topCard,
+                entry.rank === 1 && styles.topCardFirst,
+                entry.rank === 2 && styles.topCardSecond,
+                entry.rank === 3 && styles.topCardThird,
+              ]}
+            >
+              <Text style={styles.rankIcon}>{getRankIcon(entry.rank)}</Text>
+              <Image source={{ uri: entry.avatar }} style={styles.topAvatar} />
+              <Text style={styles.topName}>{entry.displayName}</Text>
+              <Text style={styles.topPoints}>{entry.points.toLocaleString()} pts</Text>
             </View>
-            <Text style={styles.pointsText}>{entry.points.toLocaleString()}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-    </ScrollView>
+          ))}
+        </View>
+
+        <View style={styles.listContainer}>
+          {entries.slice(3).map((entry) => (
+            <TouchableOpacity
+              key={entry.userId}
+              style={[styles.listItem, entry.isCurrentUser && styles.listItemCurrentUser]}
+              onPress={() => router.push(`/(tabs)/profile?userId=${entry.userId}` as any)}
+            >
+              <Text style={[styles.rankText, { color: getRankColor(entry.rank) }]}>
+                {getRankIcon(entry.rank)}
+              </Text>
+              <Image source={{ uri: entry.avatar }} style={styles.avatar} />
+              <View style={styles.userInfo}>
+                <Text style={styles.username}>{entry.displayName}</Text>
+                <Text style={styles.userStats}>
+                  Lvl {entry.level} • {entry.streak}🔥 • {entry.predictionsCorrect}✓
+                </Text>
+              </View>
+              <Text style={styles.pointsText}>{entry.points.toLocaleString()}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#111827',
+    backgroundColor: '#1A0A0A',
   },
   content: {
     padding: 16,
@@ -227,11 +230,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: '#1F2937',
+    backgroundColor: '#2A2A2A',
     marginRight: 8,
   },
   filterButtonActive: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
   },
   filterText: {
     fontSize: 14,
@@ -250,11 +253,11 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 8,
     borderRadius: 8,
-    backgroundColor: '#1F2937',
+    backgroundColor: '#2A2A2A',
     alignItems: 'center',
   },
   categoryButtonActive: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
   },
   categoryText: {
     fontSize: 12,
@@ -275,7 +278,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 16,
     borderRadius: 16,
-    backgroundColor: '#1F2937',
+    backgroundColor: '#2A2A2A',
     flex: 1,
   },
   topCardFirst: {
@@ -311,7 +314,7 @@ const styles = StyleSheet.create({
   topPoints: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#8B5CF6',
+    color: '#E8420A',
   },
   listContainer: {
     gap: 8,
@@ -320,12 +323,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 12,
-    backgroundColor: '#1F2937',
+    backgroundColor: '#2A2A2A',
     borderRadius: 12,
   },
   listItemCurrentUser: {
     borderWidth: 2,
-    borderColor: '#8B5CF6',
+    borderColor: '#E8420A',
     backgroundColor: '#2D1B69',
   },
   rankText: {
@@ -356,7 +359,7 @@ const styles = StyleSheet.create({
   pointsText: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#8B5CF6',
+    color: '#E8420A',
   },
   errorContainer: {
     flex: 1,
