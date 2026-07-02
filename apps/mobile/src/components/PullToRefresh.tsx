@@ -1,5 +1,5 @@
 import React from 'react';
-import { RefreshControl, ScrollView, FlatList, SectionList, Platform } from 'react-native';
+import { RefreshControl, ScrollView, FlatList, SectionList } from 'react-native';
 import { logger } from '../utils/logger';
 
 interface PullToRefreshProps {
@@ -128,7 +128,7 @@ interface PullToRefreshSectionListProps<T, SectionT> {
   title?: string;
 }
 
-interface SectionListData<T, SectionT> {
+interface SectionListData<T, _SectionT> {
   data: T[];
   [key: string]: any;
 }

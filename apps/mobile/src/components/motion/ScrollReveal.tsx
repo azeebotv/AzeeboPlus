@@ -66,10 +66,7 @@ export function ScrollReveal({
 
   const animatedStyle = useAnimatedStyle(() => ({
     opacity: interpolate(opacity.value, [0, 1], [0, 1], Extrapolation.CLAMP),
-    transform: [
-      { translateX: getTranslate().x },
-      { translateY: getTranslate().y },
-    ],
+    transform: [{ translateX: getTranslate().x }, { translateY: getTranslate().y }],
   }));
 
   return (

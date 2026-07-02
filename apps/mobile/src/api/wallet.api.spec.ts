@@ -21,7 +21,9 @@ describe('Wallet API Client', () => {
         data: { balance: 1000, currency: 'NGN', pendingBalance: 0 },
       };
 
-      (apiClient.get as jest.Mock).mockResolvedValue(mockResponse);
+      (apiClient.get as unknown as jest.MockedFunction<typeof apiClient.get>).mockResolvedValue(
+        mockResponse as never
+      );
 
       const result = await walletApi.getBalance();
 
@@ -52,7 +54,9 @@ describe('Wallet API Client', () => {
         },
       };
 
-      (apiClient.get as jest.Mock).mockResolvedValue(mockResponse);
+      (apiClient.get as unknown as jest.MockedFunction<typeof apiClient.get>).mockResolvedValue(
+        mockResponse as never
+      );
 
       const result = await walletApi.getTransactions(1, 20);
 
@@ -68,7 +72,9 @@ describe('Wallet API Client', () => {
         data: { authorizationUrl: 'https://payment-gateway.com', reference: 'test-ref' },
       };
 
-      (apiClient.post as jest.Mock).mockResolvedValue(mockResponse);
+      (apiClient.post as unknown as jest.MockedFunction<typeof apiClient.post>).mockResolvedValue(
+        mockResponse as never
+      );
 
       const result = await walletApi.fundWallet({
         amount: 1000,
@@ -89,7 +95,9 @@ describe('Wallet API Client', () => {
     it('should call POST /v1/wallet/withdraw with correct data', async () => {
       const mockResponse = { success: true, message: 'Withdrawal initiated' };
 
-      (apiClient.post as jest.Mock).mockResolvedValue(mockResponse);
+      (apiClient.post as unknown as jest.MockedFunction<typeof apiClient.post>).mockResolvedValue(
+        mockResponse as never
+      );
 
       const result = await walletApi.withdraw({
         amount: 500,

@@ -8,10 +8,7 @@ interface SectionHeaderProps {
   action?: { label: string; href: string };
 }
 
-export default function SectionHeader({
-  title,
-  subtitle,
-}: SectionHeaderProps): React.JSX.Element {
+export default function SectionHeader({ title, subtitle }: SectionHeaderProps): React.JSX.Element {
   return (
     <div className="mb-3">
       <h2 className="text-lg sm:text-xl font-bold text-white">{title}</h2>

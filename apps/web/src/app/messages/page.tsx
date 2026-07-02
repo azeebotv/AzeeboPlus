@@ -1,5 +1,4 @@
 'use client';
-import React from 'react';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { apiFetch } from '../../lib/api';
@@ -39,13 +38,13 @@ export default function MessagesPage(): React.JSX.Element {
   const [newMessage, setNewMessage] = useState('');
   const [isLoadingConversations, setIsLoadingConversations] = useState(true);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [_error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [unreadCount, setUnreadCount] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messageInputRef = useRef<HTMLTextAreaElement>(null);
   const conversationsListRef = useRef<HTMLDivElement>(null);
-  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const _typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const fetchConversations = async (): Promise<void> => {
@@ -82,34 +81,44 @@ export default function MessagesPage(): React.JSX.Element {
   }, [isAuthenticated]);
 
   useEffect(() => {
-    if (selectedConversation) {
-      const fetchMessages = async (): Promise<void> => {
-        try {
-          setIsLoadingMessages(true);
-          const response = await apiFetch<any>(
-            `/messages/conversations/${selectedConversation.id}/messages`
+    if (!selectedConversation) return;
+
+    const controller = new AbortController();
+
+    const fetchMessages = async (): Promise<void> => {
+      try {
+        setIsLoadingMessages(true);
+        const response = await apiFetch<any>(
+          `/messages/conversations/${selectedConversation.id}/messages`,
+          { signal: controller.signal }
+        );
+        if (response.success && response.data) {
+          const data = Array.isArray(response.data) ? response.data : [];
+          setMessages(
+            data.map((msg: any) => ({
+              id: String(msg.id),
+              senderId: String(msg.senderId),
+              receiverId: String(msg.receiverId),
+              content: String(msg.content),
+              timestamp: new Date(msg.timestamp || msg.createdAt),
+              read: Boolean(msg.read),
+            }))
           );
-          if (response.success && response.data) {
-            const data = Array.isArray(response.data) ? response.data : [];
-            setMessages(
-              data.map((msg: any) => ({
-                id: String(msg.id),
-                senderId: String(msg.senderId),
-                receiverId: String(msg.receiverId),
-                content: String(msg.content),
-                timestamp: new Date(msg.timestamp || msg.createdAt),
-                read: Boolean(msg.read),
-              }))
-            );
-          }
-        } catch (err) {
-          /* intentionally minimal */
-        } finally {
+        }
+      } catch (err) {
+        if (err instanceof DOMException && err.name === 'AbortError') return;
+        /* intentionally minimal */
+      } finally {
+        if (!controller.signal.aborted) {
           setIsLoadingMessages(false);
         }
-      };
-      fetchMessages();
-    }
+      }
+    };
+    fetchMessages();
+
+    return () => {
+      controller.abort();
+    };
   }, [selectedConversation]);
 
   useEffect(() => {
@@ -390,7 +399,7 @@ export default function MessagesPage(): React.JSX.Element {
                             className={`flex ${i % 2 === 0 ? 'justify-end' : 'justify-start'}`}
                           >
                             <Skeleton
-                              width={`${40 + Math.random() * 30}%`}
+                              width={`${40 + (i % 5) * 6}%`}
                               height="40px"
                               borderRadius="12px"
                             />

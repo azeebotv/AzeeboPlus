@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { engagementApi } from '../src/api';
 import { logger } from '../src/utils/logger';
-import { LoadingState, ErrorState, EmptyState } from '../src/components/StateContainers';
+import { LoadingState, ErrorState } from '../src/components/StateContainers';
 
 interface RankingCategory {
   id: string;
@@ -56,119 +57,121 @@ export default function RankingsScreen() {
 
   if (isLoading) {
     return (
-      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+      <SafeAreaView style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
         <LoadingState text="Loading rankings..." />
-      </View>
+      </SafeAreaView>
     );
   }
 
   if (error) {
     return (
-      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+      <SafeAreaView style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
         <ErrorState description={error} onRetry={loadRankings} />
-      </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.content}
-      refreshControl={
-        <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} colors={['#8B5CF6']} />
-      }
-    >
-      <View style={styles.header}>
-        <Text style={styles.title}>Rankings</Text>
-        <Text style={styles.subtitle}>Extended leaderboard across categories</Text>
-      </View>
+    <SafeAreaView style={styles.container}>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={styles.content}
+        refreshControl={
+          <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} colors={['#E8420A']} />
+        }
+      >
+        <View style={styles.header}>
+          <Text style={styles.title}>Rankings</Text>
+          <Text style={styles.subtitle}>Extended leaderboard across categories</Text>
+        </View>
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryScroll}>
-        {categories.map((category) => (
-          <TouchableOpacity
-            key={category.id}
-            style={[
-              styles.categoryButton,
-              selectedCategory === category.id && styles.categoryButtonActive,
-            ]}
-            onPress={() => setSelectedCategory(category.id)}
-          >
-            <Text style={styles.categoryIcon}>{category.icon}</Text>
-            <Text
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryScroll}>
+          {categories.map((category) => (
+            <TouchableOpacity
+              key={category.id}
               style={[
-                styles.categoryText,
-                selectedCategory === category.id && styles.categoryTextActive,
+                styles.categoryButton,
+                selectedCategory === category.id && styles.categoryButtonActive,
               ]}
+              onPress={() => setSelectedCategory(category.id)}
             >
-              {category.name}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
-
-      {selectedData && (
-        <View style={styles.rankingsContainer}>
-          <View style={styles.topThree}>
-            {selectedData.entries.slice(0, 3).map((entry, index) => (
-              <View
-                key={entry.userId}
+              <Text style={styles.categoryIcon}>{category.icon}</Text>
+              <Text
                 style={[
-                  styles.topCard,
-                  index === 0 && styles.topCardFirst,
-                  index === 1 && styles.topCardSecond,
-                  index === 2 && styles.topCardThird,
+                  styles.categoryText,
+                  selectedCategory === category.id && styles.categoryTextActive,
                 ]}
               >
-                <Text style={styles.rankIcon}>
-                  {index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}
-                </Text>
-                <Text style={styles.topName}>{entry.displayName}</Text>
-                <Text style={styles.topScore}>{entry.score.toLocaleString()}</Text>
+                {category.name}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+
+        {selectedData && (
+          <View style={styles.rankingsContainer}>
+            <View style={styles.topThree}>
+              {selectedData.entries.slice(0, 3).map((entry, index) => (
+                <View
+                  key={entry.userId}
+                  style={[
+                    styles.topCard,
+                    index === 0 && styles.topCardFirst,
+                    index === 1 && styles.topCardSecond,
+                    index === 2 && styles.topCardThird,
+                  ]}
+                >
+                  <Text style={styles.rankIcon}>
+                    {index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}
+                  </Text>
+                  <Text style={styles.topName}>{entry.displayName}</Text>
+                  <Text style={styles.topScore}>{entry.score.toLocaleString()}</Text>
+                  {entry.change !== 0 && (
+                    <Text
+                      style={[
+                        styles.changeText,
+                        entry.change > 0 ? styles.changeUp : styles.changeDown,
+                      ]}
+                    >
+                      {entry.change > 0 ? '↑' : '↓'} {Math.abs(entry.change)}
+                    </Text>
+                  )}
+                </View>
+              ))}
+            </View>
+
+            {selectedData.entries.slice(3).map((entry) => (
+              <TouchableOpacity
+                key={entry.userId}
+                style={styles.listItem}
+                onPress={() => router.push(`/(tabs)/profile?userId=${entry.userId}` as any)}
+              >
+                <Text style={styles.rankText}>#{entry.rank}</Text>
+                <Text style={styles.listName}>{entry.displayName}</Text>
+                <Text style={styles.listScore}>{entry.score.toLocaleString()}</Text>
                 {entry.change !== 0 && (
                   <Text
                     style={[
-                      styles.changeText,
+                      styles.changeTextSmall,
                       entry.change > 0 ? styles.changeUp : styles.changeDown,
                     ]}
                   >
-                    {entry.change > 0 ? '↑' : '↓'} {Math.abs(entry.change)}
+                    {entry.change > 0 ? '↑' : '↓'}
                   </Text>
                 )}
-              </View>
+              </TouchableOpacity>
             ))}
           </View>
-
-          {selectedData.entries.slice(3).map((entry) => (
-            <TouchableOpacity
-              key={entry.userId}
-              style={styles.listItem}
-              onPress={() => router.push(`/profile/${entry.userId}`)}
-            >
-              <Text style={styles.rankText}>#{entry.rank}</Text>
-              <Text style={styles.listName}>{entry.displayName}</Text>
-              <Text style={styles.listScore}>{entry.score.toLocaleString()}</Text>
-              {entry.change !== 0 && (
-                <Text
-                  style={[
-                    styles.changeTextSmall,
-                    entry.change > 0 ? styles.changeUp : styles.changeDown,
-                  ]}
-                >
-                  {entry.change > 0 ? '↑' : '↓'}
-                </Text>
-              )}
-            </TouchableOpacity>
-          ))}
-        </View>
-      )}
-    </ScrollView>
+        )}
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#111827',
+    backgroundColor: '#1A0A0A',
   },
   content: {
     padding: 16,
@@ -196,11 +199,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 12,
-    backgroundColor: '#1F2937',
+    backgroundColor: '#2A2A2A',
     marginRight: 8,
   },
   categoryButtonActive: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
   },
   categoryIcon: {
     fontSize: 18,
@@ -228,7 +231,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 16,
     borderRadius: 16,
-    backgroundColor: '#1F2937',
+    backgroundColor: '#2A2A2A',
     flex: 1,
   },
   topCardFirst: {
@@ -258,7 +261,7 @@ const styles = StyleSheet.create({
   topScore: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#8B5CF6',
+    color: '#E8420A',
   },
   changeText: {
     fontSize: 12,
@@ -275,7 +278,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 14,
-    backgroundColor: '#1F2937',
+    backgroundColor: '#2A2A2A',
     borderRadius: 12,
   },
   rankText: {
@@ -293,7 +296,7 @@ const styles = StyleSheet.create({
   listScore: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#8B5CF6',
+    color: '#E8420A',
     marginRight: 8,
   },
   changeTextSmall: {

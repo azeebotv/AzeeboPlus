@@ -1,11 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  StyleSheet,
-  Pressable,
-} from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import * as Updates from 'expo-updates';
@@ -22,12 +16,15 @@ import HeroCarousel from './HeroCarousel';
 import ContentRow from './ContentRow';
 
 const CATEGORY_CARDS = [
-  { category: 'Movies', sub: 'Nollywood', emoji: '\u{1F3AC}', color: '#E8420A' },
-  { category: 'Music', sub: 'Afrobeats', emoji: '\u{1F3A4}', color: '#CC1C1C' },
-  { category: 'Sports', sub: 'Super Eagles', emoji: '\u26BD', color: '#22c55e' },
-  { category: 'Comedy', sub: 'Taooma', emoji: '\u{1F602}', color: '#fbbf24' },
-  { category: 'Reality', sub: 'Live Shows', emoji: '\u{1F4FA}', color: '#8b5cf6' },
-  { category: 'Creators', sub: 'Vloggers', emoji: '\u{1F4E1}', color: '#3b82f6' },
+  { category: 'Reality', sub: 'The real you wants to play', emoji: '\u{1F4FA}', color: '#E8420A' },
+  { category: 'Vertical', sub: "Dive into what's trending", emoji: '\u{1F4F1}', color: '#CC1C1C' },
+  { category: 'Movie', sub: 'Nollywood & Beyond', emoji: '\u{1F3AC}', color: '#E8420A' },
+  { category: 'Creator', sub: 'Watch. Follow. Repeat.', emoji: '\u{1F4E1}', color: '#3B2D0D' },
+  { category: 'Cinemaxis', sub: 'Explore Cinemaxis', emoji: '\u{1F3A5}', color: '#0A1A3B' },
+  { category: 'Comedy', sub: 'Laugh Out Loud', emoji: '\u{1F602}', color: '#3B3B0D' },
+  { category: 'Sports', sub: 'Live & Loud', emoji: '\u26BD', color: '#0D2E3B' },
+  { category: 'Lifestyle', sub: 'Elevate your lifestyle', emoji: '\u{1F3A8}', color: '#2E0D3B' },
+  { category: 'Games', sub: 'Play & Win', emoji: '\u{1F3AE}', color: '#0D3B1A' },
 ];
 
 export default function GuestHomepage() {
@@ -69,10 +66,7 @@ export default function GuestHomepage() {
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       {/* OTA Update Banner */}
       {hasOTAUpdate ? (
-        <Pressable
-          style={styles.updateBanner}
-          onPress={() => Updates.reloadAsync()}
-        >
+        <Pressable style={styles.updateBanner} onPress={() => Updates.reloadAsync()}>
           <Ionicons name="arrow-up-circle" size={18} color="#1A0A0A" />
           <Text style={styles.updateBannerText}>{t('home.newUpdate')}</Text>
           <Text style={styles.updateBannerLink}>{t('home.installNow')}</Text>
@@ -85,33 +79,26 @@ export default function GuestHomepage() {
       ) : (
         /* Fallback hero for guests */
         <View style={styles.hero}>
-          <AmbientGlow color="rgba(13,90,60,0.5)" size={300} className="" />
+          <AmbientGlow color="rgba(13,90,60,0.5)" size={300} />
 
           {/* Center content */}
           <View style={styles.heroContent}>
-            <Animated.View
-              entering={FadeInDown.delay(200).springify()}
-              style={styles.heroText}
-            >
+            <Animated.View entering={FadeInDown.delay(200).springify()} style={styles.heroText}>
               <Text style={styles.heroGreeting}>{t('home.greeting')}</Text>
               <Text style={styles.heroGreetingSecondary}>{t('home.greetingSecondary')}</Text>
               <Text style={styles.heroTitle}>{t('home.title')}</Text>
               <Text style={styles.heroDescription}>{t('home.description')}</Text>
             </Animated.View>
 
-            <Animated.View
-              entering={FadeInDown.delay(600).springify()}
-              style={styles.heroActions}
-            >
+            <Animated.View entering={FadeInDown.delay(600).springify()} style={styles.heroActions}>
               <BrandButton
-                label={t('auth.getStarted')}
-                onPress={() => router.push('/auth/register')}
+                title={t('auth.getStarted')}
+                onPress={() => router.push('/(auth)/register')}
                 variant="primary"
-                icon="rocket"
               />
               <BrandButton
-                label={t('auth.alreadyHaveAccount')}
-                onPress={() => router.push('/auth/login')}
+                title={t('auth.alreadyHaveAccount')}
+                onPress={() => router.push('/(auth)/login')}
                 variant="glass"
               />
             </Animated.View>
@@ -158,7 +145,7 @@ export default function GuestHomepage() {
             end={{ x: 1, y: 1 }}
             style={styles.rewardsCard}
           >
-            <AmbientGlow color="rgba(255,255,255,0.15)" size={200} className="" />
+            <AmbientGlow color="rgba(255,255,255,0.15)" size={200} />
             <View style={styles.rewardsContent}>
               <View style={styles.rewardsBadge}>
                 <Text style={styles.rewardsBadgeText}>{t('home.earnWhileWatching')}</Text>
@@ -166,8 +153,8 @@ export default function GuestHomepage() {
               <Text style={styles.rewardsTitle}>{t('home.unlockRewards')}</Text>
               <Text style={styles.rewardsDescription}>{t('home.rewardsDescription')}</Text>
               <BrandButton
-                label={t('home.startEarning')}
-                onPress={() => router.push('/auth/register')}
+                title={t('home.startEarning')}
+                onPress={() => router.push('/(auth)/register')}
                 variant="dark"
               />
             </View>
@@ -180,13 +167,15 @@ export default function GuestHomepage() {
             <Text style={styles.sectionTitle}>{t('home.exploreByUniverse')}</Text>
             <View style={styles.universeGrid}>
               {[
-                { name: 'Movies', icon: '\u{1F3AC}', href: '/movies', color: '#E8420A' },
+                { name: 'Movie', icon: '\u{1F3AC}', href: '/movies', color: '#E8420A' },
                 { name: 'Comedy', icon: '\u{1F602}', href: '/comedy', color: '#fbbf24' },
                 { name: 'Sports', icon: '\u26BD', href: '/sports', color: '#22c55e' },
                 { name: 'Reality', icon: '\u{1F4FA}', href: '/reality', color: '#8b5cf6' },
                 { name: 'Lifestyle', icon: '\u{1F3A8}', href: '/lifestyle', color: '#ec4899' },
                 { name: 'Vertical', icon: '\u{1F4F1}', href: '/vertical', color: '#3b82f6' },
                 { name: 'Games', icon: '\u{1F3AE}', href: '/games', color: '#06b6d4' },
+                { name: 'Creator', icon: '\u{1F4E1}', href: '/creators', color: '#f97316' },
+                { name: 'Cinemaxis', icon: '\u{1F3A6}', href: '/cinemaxis', color: '#a855f7' },
               ].map((u) => (
                 <Pressable
                   key={u.name}

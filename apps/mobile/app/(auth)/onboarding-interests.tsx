@@ -1,16 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-  ActivityIndicator,
-} from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import { apiClient } from '../../src/api/client';
 import { LoadingState, ErrorState } from '../../src/components/StateContainers';
+import { logger } from '../../src/utils/logger';
 
 export default function OnboardingInterestsScreen() {
   const colorScheme = useColorScheme();
@@ -49,22 +44,35 @@ export default function OnboardingInterestsScreen() {
     }
   };
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
+    try {
+      await apiClient.post('/users/me/complete-profile', { interests: selectedInterests });
+    } catch (error) {
+      logger.error('Failed to save interests:', error);
+    }
     router.replace('/(tabs)/home');
   };
 
   if (isLoadingInterests) {
-    return <LoadingState text="Loading interests..." />;
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+        <LoadingState text="Loading interests..." />
+      </SafeAreaView>
+    );
   }
 
   if (interestsError) {
-    return <ErrorState description={interestsError} onRetry={fetchInterests} />;
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+        <ErrorState description={interestsError} onRetry={fetchInterests} />
+      </SafeAreaView>
+    );
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: isDark ? '#000000' : '#ffffff' }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
       <View style={styles.header}>
-        <Text style={[styles.title, { color: isDark ? '#ffffff' : '#000000' }]}>
+        <Text style={[styles.title, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
           What interests you?
         </Text>
         <Text style={styles.subtitle}>Select at least 3 topics to personalize your experience</Text>
@@ -78,7 +86,7 @@ export default function OnboardingInterestsScreen() {
               onPress={() => toggleInterest(interest.id)}
               style={[
                 styles.interestButton,
-                selectedInterests.includes(interest.id) && { backgroundColor: '#8B5CF6' },
+                selectedInterests.includes(interest.id) && { backgroundColor: '#E8420A' },
               ]}
             >
               <Text style={styles.interestIcon}>{interest.icon}</Text>
@@ -111,7 +119,7 @@ export default function OnboardingInterestsScreen() {
           <Text style={styles.continueButtonText}>Continue</Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -174,7 +182,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   continueButton: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     padding: 16,
     borderRadius: 12,
     alignItems: 'center',

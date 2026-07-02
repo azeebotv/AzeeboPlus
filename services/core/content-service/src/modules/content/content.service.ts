@@ -64,7 +64,7 @@ export class ContentService {
         contentId,
         mediaUrl: content.mediaAsset.originalUrl,
         scanTypes: ['malware', 'content_safety'],
-      });
+      }, { timeout: 10000 });
 
       const result = response.data;
 
@@ -119,7 +119,7 @@ export class ContentService {
         contentId,
         mediaUrl: content.mediaAsset.originalUrl,
         scanTypes: ['malware', 'content_safety'],
-      });
+      }, { timeout: 10000 });
 
       return response.data;
     } catch (error) {
@@ -128,7 +128,11 @@ export class ContentService {
     }
   }
 
-  async listContent(filters?: { universe?: string }, page?: number, limit?: number): Promise<{ success: boolean; data: any }> {
+  async listContent(
+    filters?: { universe?: string },
+    page?: number,
+    limit?: number
+  ): Promise<{ success: boolean; data: any }> {
     const result = await this.contentRepository.findAll(filters, page || 1, limit || 20);
 
     return {
@@ -173,6 +177,15 @@ export class ContentService {
       },
     };
 
+    const watchedContentIds = userId
+      ? (
+          await this.prisma.watchHistory.findMany({
+            where: { userId },
+            select: { contentId: true },
+          })
+        ).map((h) => h.contentId)
+      : [];
+
     const [trending, recommended, latest] = await Promise.all([
       this.prisma.contentItem.findMany({
         where: { status: 'published' },
@@ -181,17 +194,10 @@ export class ContentService {
         take: 10,
       }),
       userId
-        ? await this.prisma.contentItem.findMany({
+        ? this.prisma.contentItem.findMany({
             where: {
               status: 'published',
-              id: {
-                notIn: (
-                  await this.prisma.watchHistory.findMany({
-                    where: { userId },
-                    select: { contentId: true },
-                  })
-                ).map((h) => h.contentId),
-              },
+              id: { notIn: watchedContentIds },
             },
             select: contentSelect,
             orderBy: { viewCount: 'desc' },
@@ -278,24 +284,34 @@ export class ContentService {
     };
   }
 
-  async getContentComments(contentId: string, page?: number, limit?: number): Promise<{ success: boolean; data: any }> {
+  async getContentComments(
+    contentId: string,
+    page?: number,
+    limit?: number
+  ): Promise<{ success: boolean; data: any }> {
     const result = await this.contentRepository.getComments(contentId, page || 1, limit || 20);
+
+    const items = result.data.map((c: any) => ({
+      id: c.id,
+      userId: c.userId,
+      userName: c.userName || 'Anonymous',
+      content: c.text || c.content || '',
+      timestamp: c.createdAt,
+      likes: c.likes || 0,
+      likedByCurrentUser: false,
+    }));
 
     return {
       success: true,
-      data: {
-        items: result.data,
-        pagination: {
-          page: result.page,
-          limit: result.limit,
-          total: result.total,
-          totalPages: result.totalPages,
-        },
-      },
+      data: items,
     };
   }
 
-  async addCommentToContent(userId: string, contentId: string, text: string): Promise<{ success: boolean; data: any }> {
+  async addCommentToContent(
+    userId: string,
+    contentId: string,
+    text: string
+  ): Promise<{ success: boolean; data: any }> {
     const comment = await this.contentRepository.addComment(contentId, userId, text);
 
     return {
@@ -318,10 +334,7 @@ export class ContentService {
       const content = await this.prisma.contentItem.findMany({
         where: {
           status: 'published',
-          OR: [
-            { isExclusive: true },
-            { isPremiere: true },
-          ],
+          OR: [{ isExclusive: true }, { isPremiere: true }],
         },
         orderBy: { viewCount: 'desc' },
         take: 20,
@@ -391,10 +404,7 @@ export class ContentService {
       const content = await this.prisma.contentItem.findMany({
         where: {
           status: 'published',
-          OR: [
-            { isExclusive: true },
-            { isPremiere: true },
-          ],
+          OR: [{ isExclusive: true }, { isPremiere: true }],
         },
         orderBy: { viewCount: 'desc' },
         take,
@@ -437,6 +447,8 @@ export class ContentService {
     // Get user's watched content IDs and their universe
     const watchedContent = await this.prisma.watchHistory.findMany({
       where: { userId },
+      take: 100,
+      orderBy: { watchedAt: 'desc' },
     });
 
     const watchedContentIds = watchedContent.map((h) => h.contentId);
@@ -468,7 +480,10 @@ export class ContentService {
     };
   }
 
-  async createContent(userId: string, createContentDto: CreateContentDto): Promise<{ success: boolean; data: any }> {
+  async createContent(
+    userId: string,
+    createContentDto: CreateContentDto
+  ): Promise<{ success: boolean; data: any }> {
     const content = await this.contentRepository.create({
       ...createContentDto,
       creatorId: userId,
@@ -480,18 +495,26 @@ export class ContentService {
     };
   }
 
-  async updateContent(userId: string, id: string, updateContentDto: UpdateContentDto): Promise<{ success: boolean; data: any }> {
+  async updateContent(
+    userId: string,
+    id: string,
+    updateContentDto: UpdateContentDto,
+    userRole?: string
+  ): Promise<{ success: boolean; data: any }> {
     const content = await this.contentRepository.findById(id);
 
     if (!content) {
       throw new NotFoundException(`Content not found`);
     }
 
-    if (content.creatorId !== userId && content.universeId !== userId) {
-      throw new BadRequestException('Not authorized to update this content');
+    if (content.creatorId !== userId && userRole !== 'admin' && userRole !== 'moderator') {
+      throw new ForbiddenException('Not authorized to update this content');
     }
 
-    const updatedContent = await this.contentRepository.update(id, updateContentDto as Partial<Record<string, unknown>>);
+    const updatedContent = await this.contentRepository.update(
+      id,
+      updateContentDto as Partial<Record<string, unknown>>
+    );
 
     return {
       success: true,
@@ -499,15 +522,19 @@ export class ContentService {
     };
   }
 
-  async deleteContent(userId: string, id: string): Promise<{ success: boolean; data: any }> {
+  async deleteContent(
+    userId: string,
+    id: string,
+    userRole?: string
+  ): Promise<{ success: boolean; data: any }> {
     const content = await this.contentRepository.findById(id);
 
     if (!content) {
       throw new NotFoundException(`Content not found`);
     }
 
-    if (content.creatorId !== userId && content.universeId !== userId) {
-      throw new BadRequestException('Not authorized to delete this content');
+    if (content.creatorId !== userId && userRole !== 'admin' && userRole !== 'moderator') {
+      throw new ForbiddenException('Not authorized to delete this content');
     }
 
     await this.contentRepository.delete(id);
@@ -517,7 +544,11 @@ export class ContentService {
     };
   }
 
-  async publishContent(userId: string, id: string): Promise<{ success: boolean; data: any }> {
+  async publishContent(
+    userId: string,
+    id: string,
+    userRole?: string
+  ): Promise<{ success: boolean; data: any }> {
     const content = await this.prisma.contentItem.findUnique({
       where: { id },
     });
@@ -526,8 +557,8 @@ export class ContentService {
       throw new NotFoundException(`Content not found`);
     }
 
-    if (content.creatorId !== userId && content.universeId !== userId) {
-      throw new BadRequestException('Not authorized to publish this content');
+    if (content.creatorId !== userId && userRole !== 'admin' && userRole !== 'moderator') {
+      throw new ForbiddenException('Not authorized to publish this content');
     }
 
     if (content.status !== 'draft') {
@@ -560,7 +591,11 @@ export class ContentService {
     };
   }
 
-  async unpublishContent(userId: string, id: string): Promise<{ success: boolean; data: any }> {
+  async unpublishContent(
+    userId: string,
+    id: string,
+    userRole?: string
+  ): Promise<{ success: boolean; data: any }> {
     const content = await this.prisma.contentItem.findUnique({
       where: { id },
     });
@@ -569,8 +604,8 @@ export class ContentService {
       throw new NotFoundException(`Content not found`);
     }
 
-    if (content.creatorId !== userId && content.universeId !== userId) {
-      throw new BadRequestException('Not authorized to unpublish this content');
+    if (content.creatorId !== userId && userRole !== 'admin' && userRole !== 'moderator') {
+      throw new ForbiddenException('Not authorized to unpublish this content');
     }
 
     if (content.status !== 'published') {
@@ -596,7 +631,8 @@ export class ContentService {
   async createMediaAsset(
     userId: string,
     contentId: string,
-    createMediaAssetDto: CreateMediaAssetDto
+    createMediaAssetDto: CreateMediaAssetDto,
+    userRole?: string
   ): Promise<{ success: boolean; data: any }> {
     const content = await this.prisma.contentItem.findUnique({
       where: { id: contentId },
@@ -606,8 +642,8 @@ export class ContentService {
       throw new NotFoundException(`Content not found`);
     }
 
-    if (content.creatorId !== userId && content.universeId !== userId) {
-      throw new BadRequestException('Not authorized to add media asset to this content');
+    if (content.creatorId !== userId && userRole !== 'admin' && userRole !== 'moderator') {
+      throw new ForbiddenException('Not authorized to add media asset to this content');
     }
 
     const existingMediaAsset = await this.prisma.mediaAsset.findUnique({
@@ -635,7 +671,8 @@ export class ContentService {
   async updateMediaAsset(
     userId: string,
     contentId: string,
-    updateMediaAssetDto: UpdateMediaAssetDto
+    updateMediaAssetDto: UpdateMediaAssetDto,
+    userRole?: string
   ): Promise<{ success: boolean; data: any }> {
     const content = await this.prisma.contentItem.findUnique({
       where: { id: contentId },
@@ -645,8 +682,8 @@ export class ContentService {
       throw new NotFoundException(`Content not found`);
     }
 
-    if (content.creatorId !== userId && content.universeId !== userId) {
-      throw new BadRequestException('Not authorized to update media asset for this content');
+    if (content.creatorId !== userId && userRole !== 'admin' && userRole !== 'moderator') {
+      throw new ForbiddenException('Not authorized to update media asset for this content');
     }
 
     const mediaAsset = await this.prisma.mediaAsset.findUnique({
@@ -672,7 +709,11 @@ export class ContentService {
     };
   }
 
-  async deleteMediaAsset(userId: string, contentId: string): Promise<{ success: boolean; data: any }> {
+  async deleteMediaAsset(
+    userId: string,
+    contentId: string,
+    userRole?: string
+  ): Promise<{ success: boolean; data: any }> {
     const content = await this.prisma.contentItem.findUnique({
       where: { id: contentId },
     });
@@ -681,8 +722,8 @@ export class ContentService {
       throw new NotFoundException(`Content not found`);
     }
 
-    if (content.creatorId !== userId && content.universeId !== userId) {
-      throw new BadRequestException('Not authorized to delete media asset for this content');
+    if (content.creatorId !== userId && userRole !== 'admin' && userRole !== 'moderator') {
+      throw new ForbiddenException('Not authorized to delete media asset for this content');
     }
 
     const mediaAsset = await this.prisma.mediaAsset.findUnique({
@@ -729,7 +770,11 @@ export class ContentService {
     };
   }
 
-  async getSignedMediaUrl(userId: string, contentId: string, expiresIn: number = 3600): Promise<{ success: boolean; data: any }> {
+  async getSignedMediaUrl(
+    userId: string,
+    contentId: string,
+    expiresIn: number = 3600
+  ): Promise<{ success: boolean; data: any }> {
     const mediaAsset = await this.prisma.mediaAsset.findUnique({
       where: { contentItemId: contentId },
     });
@@ -983,7 +1028,11 @@ export class ContentService {
     };
   }
 
-  async updateTag(id: string, name?: string, description?: string): Promise<{ success: boolean; data: any }> {
+  async updateTag(
+    id: string,
+    name?: string,
+    description?: string
+  ): Promise<{ success: boolean; data: any }> {
     const tag = await this.prisma.tag.findUnique({
       where: { id },
     });
@@ -1036,7 +1085,12 @@ export class ContentService {
   }
 
   // Content categorization
-  async addCategoryToContent(userId: string, contentId: string, categoryId: string): Promise<{ success: boolean; data: any }> {
+  async addCategoryToContent(
+    userId: string,
+    contentId: string,
+    categoryId: string,
+    userRole?: string
+  ): Promise<{ success: boolean; data: any }> {
     const content = await this.prisma.contentItem.findUnique({
       where: { id: contentId },
     });
@@ -1045,8 +1099,8 @@ export class ContentService {
       throw new NotFoundException(`Content not found`);
     }
 
-    if (content.creatorId !== userId && content.universeId !== userId) {
-      throw new BadRequestException('Not authorized to modify this content');
+    if (content.creatorId !== userId && userRole !== 'admin' && userRole !== 'moderator') {
+      throw new ForbiddenException('Not authorized to modify this content');
     }
 
     const category = await this.prisma.category.findUnique({
@@ -1072,7 +1126,12 @@ export class ContentService {
     };
   }
 
-  async removeCategoryFromContent(userId: string, contentId: string, categoryId: string): Promise<{ success: boolean; data: any }> {
+  async removeCategoryFromContent(
+    userId: string,
+    contentId: string,
+    categoryId: string,
+    userRole?: string
+  ): Promise<{ success: boolean; data: any }> {
     const content = await this.prisma.contentItem.findUnique({
       where: { id: contentId },
     });
@@ -1081,8 +1140,8 @@ export class ContentService {
       throw new NotFoundException(`Content not found`);
     }
 
-    if (content.creatorId !== userId && content.universeId !== userId) {
-      throw new BadRequestException('Not authorized to modify this content');
+    if (content.creatorId !== userId && userRole !== 'admin' && userRole !== 'moderator') {
+      throw new ForbiddenException('Not authorized to modify this content');
     }
 
     await this.prisma.contentItem.update({
@@ -1100,7 +1159,12 @@ export class ContentService {
     };
   }
 
-  async addTagToContent(userId: string, contentId: string, tagId: string): Promise<{ success: boolean; data: any }> {
+  async addTagToContent(
+    userId: string,
+    contentId: string,
+    tagId: string,
+    userRole?: string
+  ): Promise<{ success: boolean; data: any }> {
     const content = await this.prisma.contentItem.findUnique({
       where: { id: contentId },
     });
@@ -1109,8 +1173,8 @@ export class ContentService {
       throw new NotFoundException(`Content not found`);
     }
 
-    if (content.creatorId !== userId && content.universeId !== userId) {
-      throw new BadRequestException('Not authorized to modify this content');
+    if (content.creatorId !== userId && userRole !== 'admin' && userRole !== 'moderator') {
+      throw new ForbiddenException('Not authorized to modify this content');
     }
 
     const tag = await this.prisma.tag.findUnique({
@@ -1136,7 +1200,12 @@ export class ContentService {
     };
   }
 
-  async removeTagFromContent(userId: string, contentId: string, tagId: string): Promise<{ success: boolean; data: any }> {
+  async removeTagFromContent(
+    userId: string,
+    contentId: string,
+    tagId: string,
+    userRole?: string
+  ): Promise<{ success: boolean; data: any }> {
     const content = await this.prisma.contentItem.findUnique({
       where: { id: contentId },
     });
@@ -1145,8 +1214,8 @@ export class ContentService {
       throw new NotFoundException(`Content not found`);
     }
 
-    if (content.creatorId !== userId && content.universeId !== userId) {
-      throw new BadRequestException('Not authorized to modify this content');
+    if (content.creatorId !== userId && userRole !== 'admin' && userRole !== 'moderator') {
+      throw new ForbiddenException('Not authorized to modify this content');
     }
 
     await this.prisma.contentItem.update({
@@ -1208,7 +1277,8 @@ export class ContentService {
     userId: string,
     contentId: string,
     relatedContentId: string,
-    relationshipType: string
+    relationshipType: string,
+    userRole?: string
   ): Promise<{ success: boolean; data: any }> {
     const content = await this.prisma.contentItem.findUnique({
       where: { id: contentId },
@@ -1218,8 +1288,8 @@ export class ContentService {
       throw new NotFoundException(`Content not found`);
     }
 
-    if (content.creatorId !== userId && content.universeId !== userId) {
-      throw new BadRequestException('Not authorized to modify this content');
+    if (content.creatorId !== userId && userRole !== 'admin' && userRole !== 'moderator') {
+      throw new ForbiddenException('Not authorized to modify this content');
     }
 
     const relatedContent = await this.prisma.contentItem.findUnique({
@@ -1256,7 +1326,12 @@ export class ContentService {
     };
   }
 
-  async removeContentRelationship(userId: string, contentId: string, relatedContentId: string): Promise<{ success: boolean; data: any }> {
+  async removeContentRelationship(
+    userId: string,
+    contentId: string,
+    relatedContentId: string,
+    userRole?: string
+  ): Promise<{ success: boolean; data: any }> {
     const content = await this.prisma.contentItem.findUnique({
       where: { id: contentId },
     });
@@ -1265,8 +1340,8 @@ export class ContentService {
       throw new NotFoundException(`Content not found`);
     }
 
-    if (content.creatorId !== userId && content.universeId !== userId) {
-      throw new BadRequestException('Not authorized to modify this content');
+    if (content.creatorId !== userId && userRole !== 'admin' && userRole !== 'moderator') {
+      throw new ForbiddenException('Not authorized to modify this content');
     }
 
     const relationship = await this.prisma.contentRelationship.findUnique({
@@ -1307,7 +1382,10 @@ export class ContentService {
     };
   }
 
-  async getContentByRelationship(contentId: string, relationshipType?: string): Promise<{ success: boolean; data: any }> {
+  async getContentByRelationship(
+    contentId: string,
+    relationshipType?: string
+  ): Promise<{ success: boolean; data: any }> {
     const where: Prisma.ContentRelationshipWhereInput = {
       contentId,
     };
@@ -1371,7 +1449,10 @@ export class ContentService {
     };
   }
 
-  async getTranscodingStatus(contentId: string, jobId: string): Promise<{ success: boolean; data: any }> {
+  async getTranscodingStatus(
+    contentId: string,
+    jobId: string
+  ): Promise<{ success: boolean; data: any }> {
     const mediaAsset = await this.prisma.mediaAsset.findUnique({
       where: { contentItemId: contentId },
     });
@@ -1421,7 +1502,10 @@ export class ContentService {
     };
   }
 
-  async checkContentAvailability(contentId: string, _userId?: string): Promise<{ success: boolean; data: any }> {
+  async checkContentAvailability(
+    contentId: string,
+    _userId?: string
+  ): Promise<{ success: boolean; data: any }> {
     const content = await this.prisma.contentItem.findUnique({
       where: { id: contentId },
       include: { universe: true },
@@ -1471,7 +1555,10 @@ export class ContentService {
     return { success: true, data: availability };
   }
 
-  async getContentByWindow(windowType?: string, includeExpired = false): Promise<{ success: boolean; data: any }> {
+  async getContentByWindow(
+    windowType?: string,
+    includeExpired = false
+  ): Promise<{ success: boolean; data: any }> {
     const now = new Date();
 
     const where: Prisma.ContentItemWhereInput = {
@@ -1554,7 +1641,8 @@ export class ContentService {
       windowType?: string;
       isExclusive?: boolean;
       isPremiere?: boolean;
-    }
+    },
+    userRole?: string
   ): Promise<{ success: boolean; data: any }> {
     const content = await this.prisma.contentItem.findUnique({
       where: { id: contentId },
@@ -1564,8 +1652,8 @@ export class ContentService {
       throw new NotFoundException(`Content not found`);
     }
 
-    if (content.creatorId !== userId) {
-      throw new BadRequestException('Not authorized to update this content');
+    if (content.creatorId !== userId && userRole !== 'admin' && userRole !== 'moderator') {
+      throw new ForbiddenException('Not authorized to update this content');
     }
 
     const updatedContent = await this.prisma.contentItem.update({

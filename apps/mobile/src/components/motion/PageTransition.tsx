@@ -48,9 +48,5 @@ export function PageTransition({
     transform: [{ translateY: translateY.value }],
   }));
 
-  return (
-    <Animated.View style={[style, animatedStyle]}>
-      {children}
-    </Animated.View>
-  );
+  return <Animated.View style={[style, animatedStyle]}>{children}</Animated.View>;
 }

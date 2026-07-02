@@ -67,7 +67,7 @@ export const walletApi = {
         limit: number;
         totalPages: number;
       }>
-    >(`/v1/wallet/transactions?page=${page}&limit=${limit}`)
+    >(`/v1/wallet/transactions?page=${page}&limit=${limit}`);
   },
 
   fundWallet: async (data: {
@@ -108,7 +108,7 @@ export const walletApi = {
         totalSpent: number;
         totalWithdrawn: number;
       }>
-    >('/v1/wallet/summary')
+    >('/v1/wallet/summary');
   },
 
   redeemReward: async (data: {

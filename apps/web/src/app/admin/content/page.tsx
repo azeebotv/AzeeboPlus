@@ -46,6 +46,7 @@ export default function AdminContentPage(): React.JSX.Element {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search content..."
+          aria-label="Search content"
           style={{
             flex: 1,
             minWidth: 200,
@@ -62,6 +63,9 @@ export default function AdminContentPage(): React.JSX.Element {
             <button
               key={type}
               onClick={() => setTypeFilter(type)}
+              role="radio"
+              aria-checked={typeFilter === type}
+              aria-label={`Filter by ${type}`}
               style={{
                 padding: '8px 16px',
                 borderRadius: 999,
@@ -113,7 +117,7 @@ export default function AdminContentPage(): React.JSX.Element {
               {item.thumbnail && (
                 <img
                   src={item.thumbnail}
-                  alt=""
+                  alt={item.title || 'Content thumbnail'}
                   style={{ width: '100%', height: 160, objectFit: 'cover' }}
                 />
               )}

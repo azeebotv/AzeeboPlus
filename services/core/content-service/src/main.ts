@@ -45,7 +45,10 @@ async function bootstrap(): Promise<void> {
   }
   const allowedOrigins = process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim());
   app.enableCors({
-    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+    origin: (
+      origin: string | undefined,
+      callback: (err: Error | null, allow?: boolean) => void
+    ) => {
       // Allow requests with no origin (server-to-server, curl, mobile apps)
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);

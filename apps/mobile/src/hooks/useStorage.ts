@@ -1,8 +1,6 @@
 import { useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Logger } from '@azeebo/shared-types';
-
-const logger = new Logger('useStorage');
+import { logger } from '../utils/logger';
 
 export function useStorage(): {
   getItem: (key: string) => Promise<string | null>;

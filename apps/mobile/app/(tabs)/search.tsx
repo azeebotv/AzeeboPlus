@@ -9,6 +9,7 @@ import {
   useColorScheme,
   ActivityIndicator,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { contentApi } from '../../src/api';
 import type { ContentItem } from '../../src/api/content';
@@ -60,14 +61,16 @@ export default function SearchScreen() {
         </View>
       </View>
       <View style={styles.contentInfo}>
-        <Text style={styles.contentTitle} numberOfLines={1}>{item.title}</Text>
+        <Text style={styles.contentTitle} numberOfLines={1}>
+          {item.title}
+        </Text>
         <Text style={styles.contentCreator}>{item.creator.name}</Text>
       </View>
     </TouchableOpacity>
   );
 
   return (
-    <View
+    <SafeAreaView
       style={[
         styles.container,
         { backgroundColor: colorScheme === 'dark' ? colors.bg.primary : '#ffffff' },
@@ -109,10 +112,7 @@ export default function SearchScreen() {
         {filters.map((filter) => (
           <TouchableOpacity
             key={filter.key}
-            style={[
-              styles.filterChip,
-              activeFilter === filter.key && styles.filterChipActive,
-            ]}
+            style={[styles.filterChip, activeFilter === filter.key && styles.filterChipActive]}
             onPress={() => setActiveFilter(filter.key)}
             accessibilityLabel={`Filter by ${filter.label}`}
             accessibilityRole="radio"
@@ -157,7 +157,7 @@ export default function SearchScreen() {
           showsVerticalScrollIndicator={false}
         />
       )}
-    </View>
+    </SafeAreaView>
   );
 }
 

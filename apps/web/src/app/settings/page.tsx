@@ -28,9 +28,11 @@ export default function SettingsPage(): React.JSX.Element {
 
   const handleSave = async () => {
     try {
-      await api.user.updatePreferences(settings);
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
+      const result = await api.user.updatePreferences(settings);
+      if (result.success) {
+        setSaved(true);
+        setTimeout(() => setSaved(false), 2000);
+      }
     } catch {
       /* ignore */
     }

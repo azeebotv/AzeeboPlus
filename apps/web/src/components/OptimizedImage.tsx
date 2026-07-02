@@ -33,9 +33,6 @@ export function OptimizedImage({
   placeholder = 'empty',
   blurDataURL,
 }: OptimizedImageProps) {
-  // Handle external URLs (need to be configured in next.config.js)
-  const isExternal = src.startsWith('http');
-
   return (
     <Image
       src={src}

@@ -37,19 +37,15 @@ class MobileLogger {
       const prefix = `[${entry.context}] ${entry.level.toUpperCase()}:`;
       switch (level) {
         case 'error':
-          // eslint-disable-next-line no-console
           console.error(prefix, message, data || '');
           break;
         case 'warn':
-          // eslint-disable-next-line no-console
           console.warn(prefix, message, data || '');
           break;
         case 'debug':
-          // eslint-disable-next-line no-console
           console.debug(prefix, message, data || '');
           break;
         default:
-          // eslint-disable-next-line no-console
           console.log(prefix, message, data || '');
       }
     }

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 
 @Injectable()
@@ -86,6 +86,11 @@ export class AdminService {
   }
 
   async updateContentStatus(contentId: string, status: string) {
+    const allowedStatuses = ['draft', 'published', 'pending', 'deleted', 'removed'];
+    if (!allowedStatuses.includes(status)) {
+      throw new BadRequestException(`Invalid status. Allowed: ${allowedStatuses.join(', ')}`);
+    }
+
     const content = await this.prisma.contentItem.findUnique({ where: { id: contentId } });
     if (!content) {
       throw new NotFoundException('Content not found');

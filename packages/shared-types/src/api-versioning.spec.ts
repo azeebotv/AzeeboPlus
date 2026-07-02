@@ -1,4 +1,10 @@
-import { ApiVersioningConfig, createVersionedResponse, API_VERSION_HEADER, DEFAULT_API_VERSION, API_VERSION_METADATA_KEY } from './api-versioning';
+import {
+  ApiVersioningConfig,
+  createVersionedResponse,
+  API_VERSION_HEADER,
+  DEFAULT_API_VERSION,
+  API_VERSION_METADATA_KEY,
+} from './api-versioning';
 
 describe('ApiVersioningConfig', () => {
   describe('parseVersion', () => {

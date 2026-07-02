@@ -18,7 +18,7 @@ export interface PinValidationResult {
 // Load pins from environment configuration
 const loadPinsFromConfig = (): CertificatePin[] => {
   const pins: CertificatePin[] = [];
-  const extras = Constants.expoConfig?.extra || {};
+  const extras = (Constants as any).expoConfig?.extra || {};
 
   // Production pins
   const prodPin = extras.CERT_PIN_PRODUCTION;
@@ -135,15 +135,9 @@ class CertificatePinningService {
     }
 
     // Normalize fingerprints: strip 'sha256/' prefix and uppercase for comparison
-    const normalizedFingerprint = certificateFingerprint
-      .replace(/^sha256\//i, '')
-      .toUpperCase();
-    const normalizedPrimary = pin.sha256Fingerprint
-      .replace(/^sha256\//i, '')
-      .toUpperCase();
-    const normalizedBackup = pin.backupPin
-      ?.replace(/^sha256\//i, '')
-      .toUpperCase();
+    const normalizedFingerprint = certificateFingerprint.replace(/^sha256\//i, '').toUpperCase();
+    const normalizedPrimary = pin.sha256Fingerprint.replace(/^sha256\//i, '').toUpperCase();
+    const normalizedBackup = pin.backupPin?.replace(/^sha256\//i, '').toUpperCase();
 
     const isPrimaryMatch = normalizedFingerprint === normalizedPrimary;
     const isBackupMatch = normalizedBackup && normalizedFingerprint === normalizedBackup;
@@ -154,8 +148,8 @@ class CertificatePinningService {
 
     logger.error(
       `Certificate pin mismatch for ${hostname}: ` +
-      `expected ${normalizedPrimary.substring(0, 16)}..., ` +
-      `got ${normalizedFingerprint.substring(0, 16)}...`
+        `expected ${normalizedPrimary.substring(0, 16)}..., ` +
+        `got ${normalizedFingerprint.substring(0, 16)}...`
     );
     return {
       isValid: false,
@@ -288,12 +282,12 @@ export function initializeCertificatePinning(): void {
   // Verify that native SSL pinning library is available
   try {
     require('react-native-ssl-pinning');
-    logger.info('Certificate pinning: native SSL pinning library detected');
+    logger.log('Certificate pinning: native SSL pinning library detected');
   } catch (_e) {
     logger.warn(
       'Certificate pinning: react-native-ssl-pinning NOT installed. ' +
-      'TLS-level pinning is not enforced. Install the library and configure ' +
-      'its Expo config plugin for full protection.'
+        'TLS-level pinning is not enforced. Install the library and configure ' +
+        'its Expo config plugin for full protection.'
     );
   }
 

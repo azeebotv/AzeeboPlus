@@ -5,13 +5,16 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
-  ActivityIndicator,
+  ScrollView,
   RefreshControl,
+  ActivityIndicator,
+  SafeAreaView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useAuth } from '../../src/contexts/AuthContext';
 import { walletApi } from '../../src/api';
 import { logger } from '../../src/utils/logger';
-import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
+import { LoadingState } from '../../src/components/StateContainers';
 
 interface Transaction {
   id: string;
@@ -35,6 +38,7 @@ type FilterType = 'all' | 'deposit' | 'withdrawal' | 'payment' | 'reward';
 
 export default function TransactionsScreen() {
   const router = useRouter();
+  const { isAuthenticated } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -43,24 +47,37 @@ export default function TransactionsScreen() {
   const [hasMore, setHasMore] = useState(true);
 
   useEffect(() => {
+    if (!isAuthenticated) {
+      router.replace('/(auth)/login');
+    }
+  }, [isAuthenticated, router]);
+
+  useEffect(() => {
     loadTransactions();
   }, [filter]);
 
   const loadTransactions = async (pageNum = 1) => {
     try {
-      const response = await walletApi.getTransactions({
-        page: pageNum,
-        limit: 20,
-        type: filter === 'all' ? undefined : filter,
-      });
+      const response = await walletApi.getTransactions(pageNum, 20);
 
       if (response.success && response.data) {
+        const mapped: Transaction[] = response.data.items.map((t) => ({
+          id: t.id,
+          type: (t.type === 'credit' ? 'deposit' : 'payment') as Transaction['type'],
+          amount: t.amount,
+          currency: t.currency,
+          status:
+            t.status === 'completed' ? 'completed' : t.status === 'failed' ? 'failed' : 'pending',
+          description: t.description || t.type,
+          reference: t.id,
+          createdAt: t.createdAt,
+        }));
         if (pageNum === 1) {
-          setTransactions(response.data.transactions);
+          setTransactions(mapped);
         } else {
-          setTransactions((prev) => [...prev, ...response.data.transactions]);
+          setTransactions((prev) => [...prev, ...mapped]);
         }
-        setHasMore(response.data.hasMore);
+        setHasMore(pageNum < response.data.totalPages);
       }
     } catch (error) {
       logger.error('Failed to load transactions', error);
@@ -139,7 +156,7 @@ export default function TransactionsScreen() {
   const renderTransaction = ({ item }: { item: Transaction }) => (
     <TouchableOpacity
       style={styles.transactionCard}
-      onPress={() => router.push(`/(tabs)/transactions/${item.id}`)}
+      onPress={() => router.push(`/transactions/${item.id}`)}
     >
       <View style={styles.transactionHeader}>
         <View style={styles.typeContainer}>
@@ -215,7 +232,7 @@ export default function TransactionsScreen() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
         refreshControl={
-          <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} colors={['#8B5CF6']} />
+          <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} colors={['#E8420A']} />
         }
         onEndReached={loadMore}
         onEndReachedThreshold={0.5}
@@ -228,7 +245,7 @@ export default function TransactionsScreen() {
         ListFooterComponent={
           hasMore && !isLoading ? (
             <View style={styles.footerLoader}>
-              <ActivityIndicator size="small" color="#8B5CF6" />
+              <ActivityIndicator size="small" color="#E8420A" />
             </View>
           ) : null
         }
@@ -237,12 +254,10 @@ export default function TransactionsScreen() {
   );
 }
 
-import { ScrollView } from 'react-native';
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#111827',
+    backgroundColor: '#1A0A0A',
   },
   header: {
     padding: 16,
@@ -266,11 +281,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: '#1F2937',
+    backgroundColor: '#2A2A2A',
     marginRight: 8,
   },
   filterButtonActive: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
   },
   filterText: {
     fontSize: 14,
@@ -285,7 +300,7 @@ const styles = StyleSheet.create({
     paddingBottom: 32,
   },
   transactionCard: {
-    backgroundColor: '#1F2937',
+    backgroundColor: '#2A2A2A',
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
@@ -347,7 +362,7 @@ const styles = StyleSheet.create({
   },
   loadingContainer: {
     flex: 1,
-    backgroundColor: '#111827',
+    backgroundColor: '#1A0A0A',
     justifyContent: 'center',
     alignItems: 'center',
   },

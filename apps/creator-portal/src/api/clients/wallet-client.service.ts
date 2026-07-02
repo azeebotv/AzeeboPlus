@@ -51,7 +51,8 @@ export class WalletClientService {
   private readonly walletServiceUrl: string;
 
   constructor(private readonly configService: ConfigService) {
-    this.walletServiceUrl = this.configService.get<string>('API_GATEWAY_URL') || 'http://localhost:3013';
+    this.walletServiceUrl =
+      this.configService.get<string>('API_GATEWAY_URL') || 'http://localhost:3013';
   }
 
   private async request<T>(

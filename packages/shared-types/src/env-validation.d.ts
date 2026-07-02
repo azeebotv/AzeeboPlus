@@ -1,10 +1,13 @@
 import { z } from 'zod';
-export declare const environmentSchema: z.ZodObject<{
-    NODE_ENV: z.ZodDefault<z.ZodEnum<{
-        development: "development";
-        production: "production";
-        test: "test";
-    }>>;
+export declare const environmentSchema: z.ZodObject<
+  {
+    NODE_ENV: z.ZodDefault<
+      z.ZodEnum<{
+        development: 'development';
+        production: 'production';
+        test: 'test';
+      }>
+    >;
     PORT: z.ZodDefault<z.ZodCoercedNumber<unknown>>;
     DATABASE_URL: z.ZodString;
     DATABASE_HOST: z.ZodDefault<z.ZodString>;
@@ -54,11 +57,15 @@ export declare const environmentSchema: z.ZodObject<{
     CDN_URL: z.ZodOptional<z.ZodString>;
     ALLOWED_ORIGINS: z.ZodDefault<z.ZodString>;
     ADMIN_EMAIL: z.ZodOptional<z.ZodString>;
-}, z.core.$strip>;
+  },
+  z.core.$strip
+>;
 export type EnvironmentVariables = z.infer<typeof environmentSchema>;
 export declare class EnvValidationError extends Error {
-    missing: string[];
-    invalid: string[];
-    constructor(missing: string[], invalid: string[]);
+  missing: string[];
+  invalid: string[];
+  constructor(missing: string[], invalid: string[]);
 }
-export declare function validateEnvironment(env: Record<string, string | undefined>): EnvironmentVariables;
+export declare function validateEnvironment(
+  env: Record<string, string | undefined>
+): EnvironmentVariables;

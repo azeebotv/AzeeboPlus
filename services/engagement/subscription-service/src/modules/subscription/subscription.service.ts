@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { CreateSubscriptionPlanDto } from './dto/create-subscription-plan.dto';
 import { SubscribeToPlanDto } from './dto/subscribe-to-plan.dto';
@@ -44,44 +44,55 @@ export class SubscriptionService {
       throw new NotFoundException(`Plan ${dto.planId} not found`);
     }
 
-    const existingSubscription = await this.prisma.subscription.findFirst({
-      where: {
-        userId,
-        status: 'active',
-      },
-    });
-
-    if (existingSubscription) {
-      await this.prisma.subscription.update({
-        where: { id: existingSubscription.id },
-        data: { status: 'cancelled' },
-      });
+    // Require payment reference from payment gateway
+    if (!dto.paymentReference) {
+      throw new BadRequestException(
+        'Payment reference is required. Please complete payment first.'
+      );
     }
 
-    const endDate = new Date();
-    endDate.setDate(endDate.getDate() + plan.duration);
+    const subscription = await this.prisma.$transaction(async (tx) => {
+      const existingSubscription = await tx.subscription.findFirst({
+        where: {
+          userId,
+          status: 'active',
+        },
+      });
 
-    const subscription = await this.prisma.subscription.create({
-      data: {
-        userId,
-        planId: dto.planId,
-        endDate,
-        autoRenew: dto.autoRenew ?? true,
-        paymentMethod: dto.paymentMethod,
-      },
-      include: {
-        plan: true,
-      },
-    });
+      if (existingSubscription) {
+        await tx.subscription.update({
+          where: { id: existingSubscription.id },
+          data: { status: 'cancelled' },
+        });
+      }
 
-    await this.prisma.subscriptionTransaction.create({
-      data: {
-        subscriptionId: subscription.id,
-        amount: plan.price,
-        currency: plan.currency,
-        status: 'completed',
-        description: `Subscription to ${plan.name}`,
-      },
+      const endDate = new Date();
+      endDate.setDate(endDate.getDate() + plan.duration);
+
+      const newSubscription = await tx.subscription.create({
+        data: {
+          userId,
+          planId: dto.planId,
+          endDate,
+          autoRenew: dto.autoRenew ?? true,
+          paymentMethod: dto.paymentMethod,
+        },
+        include: {
+          plan: true,
+        },
+      });
+
+      await tx.subscriptionTransaction.create({
+        data: {
+          subscriptionId: newSubscription.id,
+          amount: plan.price,
+          currency: plan.currency,
+          status: 'completed',
+          description: `Subscription to ${plan.name} - Payment ref: ${dto.paymentReference}`,
+        },
+      });
+
+      return newSubscription;
     });
 
     return subscription;

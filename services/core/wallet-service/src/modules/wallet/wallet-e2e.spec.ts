@@ -1,14 +1,21 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ValidationPipe, ExecutionContext } from '@nestjs/common';
+import { INestApplication, ValidationPipe, ExecutionContext, NestInterceptor } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { WalletModule } from './wallet.module';
 import { PrismaService } from '../database/prisma.service';
 import { WalletController } from './wallet.controller';
 import { WalletService } from './wallet.service';
-import { RateLimitGuard, RateLimitService } from '@azeebo/security';
+import { RateLimitGuard, RateLimitService, AdminGuard } from '@azeebo/security';
+import { CacheInterceptor, CacheService } from '../../cache';
 import { randomUUID } from 'crypto';
 
 class MockRateLimitGuard {
+  canActivate() {
+    return true;
+  }
+}
+
+class MockAdminGuard {
   canActivate() {
     return true;
   }
@@ -80,12 +87,25 @@ describe('Wallet E2E Tests - Webhooks, Retries, and Failures', () => {
         checkRateLimit: jest.fn().mockResolvedValue(true),
         incrementUsage: jest.fn().mockResolvedValue(0),
       })
+      .overrideProvider(CacheService)
+      .useValue({
+        get: jest.fn().mockResolvedValue(null),
+        set: jest.fn().mockResolvedValue(undefined),
+        delete: jest.fn().mockResolvedValue(undefined),
+      })
+      .overrideInterceptor(CacheInterceptor)
+      .useValue({ intercept: (_ctx: ExecutionContext, next: { handle: () => unknown }) => next.handle() })
       .overrideGuard(RateLimitGuard)
       .useClass(MockRateLimitGuard)
+      .overrideGuard(AdminGuard)
+      .useClass(MockAdminGuard)
       .compile();
 
     app = module.createNestApplication();
     app.useGlobalPipes(new ValidationPipe({ transform: true }));
+    app.useGlobalInterceptors({
+      intercept: (_ctx: ExecutionContext, next: { handle: () => unknown }) => next.handle(),
+    } as NestInterceptor);
     await app.init();
 
     walletService = module.get<WalletService>(WalletService);
@@ -748,7 +768,7 @@ describe('Wallet E2E Tests - Webhooks, Retries, and Failures', () => {
 
       const result = await walletService.processWebhook(webhookId, {
         event: 'charge.success',
-        data: { id: randomUUID(), amount: 50000 },
+        data: { id: randomUUID(), amount: 50000, metadata: { walletId: testWalletId, userId: testUserId } },
       });
 
       expect(result).toBeDefined();

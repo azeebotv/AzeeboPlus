@@ -394,7 +394,9 @@ export class CreatorsService {
     const profile = await this.prisma.creatorProfile.findUnique({
       where: { userId: creatorId },
       include: {
-        subscriptions: true,
+        subscriptions: {
+          where: { status: 'active' },
+        },
       },
     });
 
@@ -404,7 +406,11 @@ export class CreatorsService {
 
     return {
       success: true,
-      data: profile as unknown as Record<string, unknown>,
+      data: {
+        ...profile,
+        subscriberCount: (profile as any).subscriptions?.length || 0,
+        isSubscribed: false,
+      } as unknown as Record<string, unknown>,
     };
   }
 

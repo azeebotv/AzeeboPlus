@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { apiClient } from '../api/client';
 import { useAuth } from './AuthContext';
+import { Alert } from 'react-native';
 import { useStorage } from '../hooks/useStorage';
 
 interface UserSettings {
@@ -34,7 +35,7 @@ interface SettingsContextType {
   getSettings: () => Promise<void>;
   updateSettings: (settings: Partial<UserSettings>) => Promise<void>;
   updateProfile: (profile: Partial<UserSettings['account']>) => Promise<void>;
-  changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
+  changePassword: () => Promise<void>;
   deleteAccount: () => Promise<void>;
 }
 
@@ -45,7 +46,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { user, isAuthenticated, logout } = useAuth();
-  const { getItem, setItem, removeItem } = useStorage();
+  const { getItem: _getItem, setItem: _setItem, removeItem: _removeItem } = useStorage();
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -57,8 +58,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
     setError(null);
     try {
-      // TODO: Verify correct gateway endpoint — user-service may use /me/preferences or /users/me/settings
-      const response = await apiClient.get<UserSettings>('/user/settings');
+      const response = await apiClient.get<UserSettings>('/v1/users/me/preferences');
       setSettings(response);
     } catch (error: any) {
       setError(error.message || 'Failed to get settings');
@@ -71,8 +71,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
     setError(null);
     try {
-      // TODO: Verify correct gateway endpoint — user-service may use /me/preferences or /users/me/settings
-      const response = await apiClient.put<UserSettings>('/user/settings', newSettings);
+      const response = await apiClient.put<UserSettings>('/v1/users/me/preferences', newSettings);
       setSettings(response);
     } catch (error: any) {
       setError(error.message || 'Failed to update settings');
@@ -86,8 +85,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
     setError(null);
     try {
-      // TODO: Verify correct gateway endpoint — may need /users/me/profile
-      const response = await apiClient.put<UserSettings>('/user/profile', profile);
+      const response = await apiClient.put<UserSettings>('/v1/users/me', profile);
       setSettings(response);
     } catch (error: any) {
       setError(error.message || 'Failed to update profile');
@@ -97,14 +95,14 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const changePassword = async (currentPassword: string, newPassword: string) => {
+  const changePassword = async () => {
     setIsLoading(true);
     setError(null);
     try {
-      // TODO: Verify correct gateway endpoint — auth-service may expose /auth/change-password
-      await apiClient.post('/user/change-password', { currentPassword, newPassword });
+      await apiClient.post('/v1/auth/forgot-password', { email: user?.email });
+      Alert.alert('Check your email', 'A password reset link has been sent to your email address.');
     } catch (error: any) {
-      setError(error.message || 'Failed to change password');
+      setError(error.message || 'Failed to send password reset email');
       throw error;
     } finally {
       setIsLoading(false);
@@ -115,7 +113,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
     setError(null);
     try {
-      await apiClient.post('/user/delete-account');
+      await apiClient.delete('/v1/user/delete-account');
       await logout();
     } catch (error: any) {
       setError(error.message || 'Failed to delete account');

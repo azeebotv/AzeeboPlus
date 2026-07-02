@@ -32,10 +32,14 @@ describe('AnalyticsService', () => {
       count: jest.fn(),
       aggregate: jest.fn(),
     },
+    paymentIntent: {
+      count: jest.fn(),
+      aggregate: jest.fn(),
+    },
     subscription: {
       count: jest.fn(),
     },
-    $transaction: jest.fn((operations) => Promise.all(operations)),
+    $transaction: jest.fn((operations: unknown[]) => Promise.all(operations as Promise<unknown>[])),
     $queryRaw: jest.fn(),
   };
 
@@ -299,8 +303,8 @@ describe('AnalyticsService', () => {
 
   describe('getRevenueMetrics', () => {
     it('should return revenue metrics', async () => {
-      mockPrismaService.payment.count.mockResolvedValue(50);
-      mockPrismaService.payment.aggregate.mockResolvedValue({ _sum: { amount: 5000 } });
+      mockPrismaService.paymentIntent.count.mockResolvedValue(50);
+      mockPrismaService.paymentIntent.aggregate.mockResolvedValue({ _sum: { amount: 5000 } });
       mockPrismaService.subscription.count.mockResolvedValue(20);
 
       const result = await service.getRevenueMetrics('30d');
@@ -332,10 +336,11 @@ describe('AnalyticsService', () => {
       mockPrismaService.productEvent.count.mockResolvedValue(10000);
       mockPrismaService.productEvent.groupBy.mockResolvedValue([]);
       mockPrismaService.$queryRaw.mockResolvedValue([{ count: 50 }]);
-      mockPrismaService.payment.count.mockResolvedValue(100);
-      mockPrismaService.payment.aggregate.mockResolvedValue({ _sum: { amount: 5000 } });
+      mockPrismaService.paymentIntent.count.mockResolvedValue(100);
+      mockPrismaService.paymentIntent.aggregate.mockResolvedValue({ _sum: { amount: 5000 } });
       mockPrismaService.subscription.count.mockResolvedValue(50);
       mockPrismaService.universe.findMany.mockResolvedValue([]);
+      mockPrismaService.productEvent.findMany.mockResolvedValue([]);
 
       const result = await service.getDetailedDashboard();
 
@@ -349,8 +354,8 @@ describe('AnalyticsService', () => {
 
   describe('getKpis', () => {
     it('should return KPIs', async () => {
-      mockPrismaService.analyticsEvent.count.mockResolvedValue(5000);
-      mockPrismaService.analyticsEvent.groupBy.mockResolvedValue([]);
+      mockPrismaService.productEvent.count.mockResolvedValue(5000);
+      mockPrismaService.productEvent.groupBy.mockResolvedValue([]);
 
       const result = await service.getKpis('30d');
 
@@ -363,15 +368,18 @@ describe('AnalyticsService', () => {
   describe('getRealtime', () => {
     it('should return realtime statistics', async () => {
       mockPrismaService.productEvent.count.mockResolvedValue(100);
-      mockPrismaService.productEvent.groupBy.mockResolvedValue([{ userId: 'u1' }]);
+      mockPrismaService.productEvent.groupBy
+        .mockResolvedValueOnce([{ userId: 'u1', _count: { id: 5 } }])
+        .mockResolvedValueOnce([{ eventName: 'content_view', _count: { id: 80 } }]);
+      mockPrismaService.productEvent.findMany.mockResolvedValue([]);
       mockPrismaService.user.count.mockResolvedValue(50);
 
       const result = await service.getRealtime();
 
       expect(result.success).toBe(true);
-      expect(result.data!.activeUsers).toBeDefined();
-      expect(result.data!.eventsPerSecond).toBeDefined();
-      expect(result.data!.peakConcurrentUsers).toBeDefined();
+      expect(result.data!.eventsLast5Minutes).toBeDefined();
+      expect(result.data!.eventsLastHour).toBeDefined();
+      expect(result.data!.activeUsersLast5Minutes).toBeDefined();
     });
   });
 });

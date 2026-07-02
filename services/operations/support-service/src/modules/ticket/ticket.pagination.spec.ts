@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ExecutionContext } from '@nestjs/common';
+import { INestApplication, ExecutionContext, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
 import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard } from '@azeebo/security';
@@ -65,6 +65,13 @@ describe('Support Service Pagination Tests', () => {
       .compile();
 
     app = moduleFixture.createNestApplication();
+    app.useGlobalPipes(new ValidationPipe({ transform: true }));
+    app.use((req: any, _res: any, next: Function) => {
+      if (!req.user) {
+        req.user = { id: 'test-user-123', role: 'user' };
+      }
+      next();
+    });
     await app.init();
   });
 
@@ -93,13 +100,11 @@ describe('Support Service Pagination Tests', () => {
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
       expect(response.body.data).toBeDefined();
-      expect(response.body.pagination).toBeDefined();
-      expect(response.body.pagination.page).toBe(1);
-      expect(response.body.pagination.limit).toBe(20);
-      expect(response.body.pagination.total).toBe(50);
-      expect(response.body.pagination.totalPages).toBe(3);
-      expect(response.body.pagination.hasNextPage).toBe(true);
-      expect(response.body.pagination.hasPreviousPage).toBe(false);
+      expect(response.body.meta).toBeDefined();
+      expect(response.body.meta.page).toBe(1);
+      expect(response.body.meta.limit).toBe(20);
+      expect(response.body.meta.total).toBe(50);
+      expect(response.body.meta.totalPages).toBe(3);
     });
 
     it('should respect custom page parameter', async () => {
@@ -113,7 +118,7 @@ describe('Support Service Pagination Tests', () => {
         .set('Authorization', 'Bearer test-token');
 
       expect(response.status).toBe(200);
-      expect(response.body.pagination.page).toBe(3);
+      expect(response.body.meta.page).toBe(3);
       expect(mockTicketService.getTickets).toHaveBeenCalledWith(
         expect.objectContaining({ page: 3 })
       );
@@ -130,7 +135,7 @@ describe('Support Service Pagination Tests', () => {
         .set('Authorization', 'Bearer test-token');
 
       expect(response.status).toBe(200);
-      expect(response.body.pagination.limit).toBe(10);
+      expect(response.body.meta.limit).toBe(10);
       expect(mockTicketService.getTickets).toHaveBeenCalledWith(
         expect.objectContaining({ limit: 10 })
       );
@@ -200,8 +205,9 @@ describe('Support Service Pagination Tests', () => {
         .set('Authorization', 'Bearer test-token');
 
       expect(response.status).toBe(200);
-      expect(response.body.pagination.hasNextPage).toBe(true);
-      expect(response.body.pagination.hasPreviousPage).toBe(true);
+      expect(response.body.meta.page).toBe(2);
+      expect(response.body.meta.totalPages).toBe(3);
+      expect(response.body.meta.page < response.body.meta.totalPages).toBe(true);
     });
 
     it('should set hasNextPage false on last page', async () => {
@@ -215,8 +221,10 @@ describe('Support Service Pagination Tests', () => {
         .set('Authorization', 'Bearer test-token');
 
       expect(response.status).toBe(200);
-      expect(response.body.pagination.hasNextPage).toBe(false);
-      expect(response.body.pagination.hasPreviousPage).toBe(true);
+      expect(response.body.meta.page).toBe(3);
+      expect(response.body.meta.totalPages).toBe(3);
+      expect(response.body.meta.page < response.body.meta.totalPages).toBe(false);
+      expect(response.body.meta.page > 1).toBe(true);
     });
   });
 
@@ -233,8 +241,8 @@ describe('Support Service Pagination Tests', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
-      expect(response.body.pagination.page).toBe(1);
-      expect(response.body.pagination.total).toBe(25);
+      expect(response.body.meta.page).toBe(1);
+      expect(response.body.meta.total).toBe(25);
     });
 
     it('should support pagination for user tickets', async () => {
@@ -248,8 +256,8 @@ describe('Support Service Pagination Tests', () => {
         .set('Authorization', 'Bearer test-token');
 
       expect(response.status).toBe(200);
-      expect(response.body.pagination.page).toBe(2);
-      expect(response.body.pagination.limit).toBe(10);
+      expect(response.body.meta.page).toBe(2);
+      expect(response.body.meta.limit).toBe(10);
     });
 
     it('should filter user tickets by status', async () => {

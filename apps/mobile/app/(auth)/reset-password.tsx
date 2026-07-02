@@ -156,7 +156,7 @@ export default function ResetPasswordScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#111827',
+    backgroundColor: '#1A0A0A',
   },
   keyboardView: {
     flex: 1,
@@ -173,7 +173,7 @@ const styles = StyleSheet.create({
   logo: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#8B5CF6',
+    color: '#E8420A',
     marginBottom: 24,
   },
   title: {
@@ -191,7 +191,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   resetButton: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
@@ -216,7 +216,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   loginLink: {
-    color: '#8B5CF6',
+    color: '#E8420A',
     fontSize: 14,
     fontWeight: '600',
   },

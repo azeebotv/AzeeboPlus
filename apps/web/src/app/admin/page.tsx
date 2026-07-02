@@ -14,7 +14,7 @@ export default function AdminPage(): React.JSX.Element {
     revenue: 0,
     pendingReviews: 0,
   });
-  const [recentActivity, setRecentActivity] = useState<any[]>([]);
+  const [_recentActivity, setRecentActivity] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {

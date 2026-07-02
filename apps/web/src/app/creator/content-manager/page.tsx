@@ -31,9 +31,22 @@ export default function ContentManagerPage(): React.JSX.Element {
 
   const loadContent = async (): Promise<void> => {
     try {
-      const result = await apiFetch<ContentItem[]>('/v1/creator/content');
+      const result = await apiFetch<any>('/v1/content/me');
       if (result.success && result.data) {
-        setContent(result.data);
+        const items = Array.isArray(result.data) ? result.data : result.data.items || [];
+        setContent(
+          items.map((item: any) => ({
+            id: String(item.id),
+            title: String(item.title || ''),
+            description: String(item.description || ''),
+            thumbnail: String(item.thumbnail || ''),
+            status: String(item.status || 'draft') as ContentItem['status'],
+            views: Number(item.viewCount ?? item.views ?? 0),
+            earnings: Number(item.earnings ?? 0),
+            createdAt: String(item.createdAt || ''),
+            type: String(item.contentType || item.type || 'video') as ContentItem['type'],
+          }))
+        );
       }
     } catch (error) {
       webLogger.error('Failed to load content', error);
@@ -45,7 +58,7 @@ export default function ContentManagerPage(): React.JSX.Element {
   const handleDelete = async (id: string): Promise<void> => {
     if (!confirm('Are you sure you want to delete this content?')) return;
     try {
-      const result = await apiFetch(`/v1/creator/content/${id}`, { method: 'DELETE' });
+      const result = await apiFetch(`/v1/content/${id}`, { method: 'DELETE' });
       if (!result.success) throw new Error(result.message || 'Failed to delete content');
       loadContent();
       alert('Content deleted successfully');
@@ -56,7 +69,7 @@ export default function ContentManagerPage(): React.JSX.Element {
 
   const handlePublish = async (id: string): Promise<void> => {
     try {
-      const result = await apiFetch(`/v1/creator/content/${id}/publish`, { method: 'POST' });
+      const result = await apiFetch(`/v1/content/${id}/publish`, { method: 'POST' });
       if (!result.success) throw new Error(result.message || 'Failed to publish content');
       loadContent();
       alert('Content published successfully');
@@ -145,7 +158,7 @@ export default function ContentManagerPage(): React.JSX.Element {
             <h1 className="text-3xl font-bold text-white">Content Manager</h1>
           </div>
           <button
-            onClick={() => router.push('/creator/upload')}
+            onClick={() => router.push('/creator/drafts')}
             className="az-btn-primary"
             style={{ width: 'auto', paddingInline: '1.5rem' }}
           >
@@ -200,7 +213,7 @@ export default function ContentManagerPage(): React.JSX.Element {
             <h2 className="text-2xl font-bold text-white mb-2">No content yet</h2>
             <p className="text-white/50 mb-6">Start creating amazing content for your audience</p>
             <button
-              onClick={() => router.push('/creator/upload')}
+              onClick={() => router.push('/creator/drafts')}
               className="az-btn-primary"
               style={{ width: 'auto', paddingInline: '1.5rem' }}
             >
@@ -212,7 +225,7 @@ export default function ContentManagerPage(): React.JSX.Element {
             {filteredContent.map((item) => (
               <div
                 key={item.id}
-                onClick={() => router.push(`/creator/content-detail?id=${item.id}`)}
+                onClick={() => router.push('/creator/content-manager')}
                 className="az-glass overflow-hidden cursor-pointer transition-all hover:scale-[1.02]"
               >
                 <div className="relative">
@@ -231,7 +244,7 @@ export default function ContentManagerPage(): React.JSX.Element {
                       {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
                     </span>
                     <span className="text-sm text-white/50">
-                      {item.views.toLocaleString()} views
+                      {(item.views ?? 0).toLocaleString()} views
                     </span>
                   </div>
                 </div>
@@ -272,7 +285,7 @@ export default function ContentManagerPage(): React.JSX.Element {
                         </button>
                       )}
                       <button
-                        onClick={() => router.push(`/creator/content-detail?id=${item.id}`)}
+                        onClick={() => router.push('/creator/content-manager')}
                         className="px-4 py-2 rounded-full text-sm font-medium transition-colors"
                         style={{
                           border: '1px solid rgba(255,255,255,0.2)',

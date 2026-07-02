@@ -7,7 +7,7 @@ import Animated, {
   interpolate,
   Extrapolation,
 } from 'react-native-reanimated';
-import { colors, radius } from '../../theme';
+import { colors } from '../../theme';
 
 interface AnimatedProgressProps {
   progress: number;
@@ -37,11 +37,7 @@ export function AnimatedProgress({
   return (
     <View style={[styles.track, { height, borderRadius: height / 2 }, style]}>
       <Animated.View
-        style={[
-          styles.fill,
-          { backgroundColor: color, borderRadius: height / 2 },
-          fillStyle,
-        ]}
+        style={[styles.fill, { backgroundColor: color, borderRadius: height / 2 }, fillStyle]}
       />
     </View>
   );

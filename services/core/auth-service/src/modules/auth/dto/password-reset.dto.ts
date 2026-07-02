@@ -1,5 +1,6 @@
 import { IsEmail, IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { IsStrongPassword } from '@azeebo/validation';
 
 export class ForgotPasswordDto {
   @ApiProperty({ example: 'user@example.com' })
@@ -13,7 +14,7 @@ export class ResetPasswordDto {
   token!: string;
 
   @ApiProperty({ example: 'NewPassword123!' })
-  @IsString()
+  @IsStrongPassword()
   newPassword!: string;
 }
 

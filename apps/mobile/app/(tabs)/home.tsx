@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import { ActivityIndicator, StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/contexts/AuthContext';
 import GuestHomepage from '@/components/homepage/GuestHomepage';
 import AuthenticatedHomepage from '@/components/homepage/AuthenticatedHomepage';
@@ -20,20 +21,31 @@ export default function HomeTab() {
   // Loading state: minimal skeleton to avoid layout shift
   if (isLoading) {
     return (
-      <View style={styles.loadingContainer}>
+      <SafeAreaView style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#E8420A" />
-      </View>
+      </SafeAreaView>
     );
   }
 
   if (isAuthenticated) {
-    return <AuthenticatedHomepage />;
+    return (
+      <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
+        <AuthenticatedHomepage />
+      </SafeAreaView>
+    );
   }
 
-  return <GuestHomepage />;
+  return (
+    <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
+      <GuestHomepage />
+    </SafeAreaView>
+  );
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',

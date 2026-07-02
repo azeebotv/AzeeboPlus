@@ -61,4 +61,3 @@ import { ServiceAuthGuard } from '@azeebo/security';
   exports: [AuthGuard, JwtModule, AdminGuard],
 })
 export class AppModule {}
-

@@ -35,26 +35,36 @@ const staggerItem = {
 };
 
 export default function RealityPage(): React.JSX.Element {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated: _isAuthenticated } = useAuth();
   const [shows, setShows] = useState<ContentItem[]>([]);
   const [selectedShow, setSelectedShow] = useState<ContentItem | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [_error, setError] = useState<string | null>(null);
   const [contestants, setContestants] = useState<Contestant[]>([]);
   const maxVotes = Math.max(0, ...contestants.map((c) => c.votes));
 
-useEffect(() => {
-     let cancelled = false;
-     async function fetchShows() {
-       try {
-         setIsLoading(true);
-         setError(null);
-         // Use reality universe UUID to filter content
-         const response = await api.content.getContentByUniverse('u0000001-0000-0000-0000-000000000001', 12, 50);
+  useEffect(() => {
+    let cancelled = false;
+    async function fetchShows() {
+      try {
+        setIsLoading(true);
+        setError(null);
+        const universesRes = await api.universe.getUniverses();
         if (cancelled) return;
-if (response.success && response.data) {
-           const items = Array.isArray(response.data) ? response.data : (response.data as { items?: ContentItem[] }).items || [];
-           setShows(items);
+        const realityUniverse = universesRes.data?.find(
+          (u) => u.name?.toLowerCase() === 'reality'
+        );
+        if (!realityUniverse) {
+          setError('Reality universe not found');
+          return;
+        }
+        const response = await api.content.getContentByUniverse(realityUniverse.id, 12, 50);
+        if (cancelled) return;
+        if (response.success && response.data) {
+          const items = Array.isArray(response.data)
+            ? response.data
+            : (response.data as { items?: ContentItem[] }).items || [];
+          setShows(items);
           if (items.length > 0) setSelectedShow(items[0]);
         } else {
           setError(response.message || 'Failed to load reality shows');

@@ -70,6 +70,8 @@ export const paymentApi = {
   },
 
   getProviders: async (): Promise<ApiResponse<{ provider: string; name: string }[]>> => {
-    return apiClient.get<ApiResponse<{ provider: string; name: string }[]>>('/v1/payments/providers');
+    return apiClient.get<ApiResponse<{ provider: string; name: string }[]>>(
+      '/v1/payments/providers'
+    );
   },
 };

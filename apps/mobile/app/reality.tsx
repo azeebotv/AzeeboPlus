@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LoadingState, EmptyState, ErrorState } from '../src/components/StateContainers';
@@ -61,15 +62,29 @@ export default function RealityUniverseHome() {
     fetchData();
   }, []);
 
-  if (isLoading) return <LoadingState text="Loading reality shows..." />;
-  if (error) return <ErrorState description={error} onRetry={fetchData} />;
+  if (isLoading) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+        <LoadingState text="Loading reality shows..." />
+      </SafeAreaView>
+    );
+  }
+  if (error) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+        <ErrorState description={error} onRetry={fetchData} />
+      </SafeAreaView>
+    );
+  }
   if (!liveShows.length && !contestants.length && !featuredContent.length) {
     return (
-      <EmptyState
-        icon="🎭"
-        title="No shows available"
-        description="Check back later for reality shows"
-      />
+      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+        <EmptyState
+          icon="🎭"
+          title="No shows available"
+          description="Check back later for reality shows"
+        />
+      </SafeAreaView>
     );
   }
 
@@ -78,7 +93,7 @@ export default function RealityUniverseHome() {
       style={[styles.contestantCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
       onPress={() => router.push('/vote')}
     >
-      <View style={[styles.contestantRank, { backgroundColor: index < 3 ? '#8B5CF6' : '#4a4a4a' }]}>
+      <View style={[styles.contestantRank, { backgroundColor: index < 3 ? '#E8420A' : '#4a4a4a' }]}>
         <Text style={styles.contestantRankText}>#{index + 1}</Text>
       </View>
       <View style={styles.contestantImagePlaceholder}>
@@ -89,155 +104,141 @@ export default function RealityUniverseHome() {
     </TouchableOpacity>
   );
 
+  const featuredShow = liveShows[0];
+  const showName = featuredShow?.title || 'Reality Show';
+  const showSubtitle = featuredShow?.subtitle || '';
+  const viewerText = featuredShow?.viewers ? `${featuredShow.viewers} watching` : '';
+
   return (
-    <ScrollView style={[styles.container, { backgroundColor: isDark ? '#0a0a0a' : '#ffffff' }]}>
-      <View style={styles.header}>
-        <View style={styles.headerTop}>
-          <Text style={styles.universeLabel}>🎭 Reality</Text>
-          <TouchableOpacity style={styles.notificationBadge}>
-            <Text style={styles.bellIcon}>🔔</Text>
-            <View style={styles.badge} />
-          </TouchableOpacity>
-        </View>
-        <Text style={[styles.headerTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
-          Reality Universe
-        </Text>
-      </View>
-
-      <TouchableOpacity style={styles.liveShowCard} onPress={() => router.push('/reality/bbnaija')}>
-        <View style={styles.liveShowImagePlaceholder}>
-          <Text style={styles.playIcon}>▶️</Text>
-          <View style={styles.liveBadge}>
-            <View style={styles.liveDot} />
-            <Text style={styles.liveText}>LIVE</Text>
+    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+      <ScrollView style={[{ flex: 1 }, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+        <View style={styles.header}>
+          <View style={styles.headerTop}>
+            <Text style={styles.universeLabel}>🎭 Reality</Text>
+            <TouchableOpacity style={styles.notificationBadge}>
+              <Text style={styles.bellIcon}>🔔</Text>
+              <View style={styles.badge} />
+            </TouchableOpacity>
           </View>
-          <View style={styles.viewerCount}>
-            <Text style={styles.viewerIcon}>👁️</Text>
-            <Text style={styles.viewerText}>2.4M watching</Text>
-          </View>
-        </View>
-        <View style={styles.liveShowInfo}>
-          <Text style={[styles.liveShowTitle, { color: isDark ? '#fff' : '#000' }]}>
-            Big Brother Naija
+          <Text style={[styles.headerTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
+            Reality Universe
           </Text>
-          <Text style={styles.liveShowSubtitle}>Season 9 - Live Eviction</Text>
-          <TouchableOpacity style={styles.watchNowButton}>
-            <Text style={styles.watchNowText}>Watch Live</Text>
-          </TouchableOpacity>
         </View>
-      </TouchableOpacity>
 
-      <View style={styles.voteCTA}>
-        <View style={styles.voteCTAInfo}>
-          <Text style={styles.voteCTAIcon}>🗳️</Text>
-          <View>
-            <Text style={[styles.voteCTATitle, { color: isDark ? '#fff' : '#000' }]}>
-              Vote for Your Favorite
+        <TouchableOpacity style={styles.liveShowCard} onPress={() => router.push('/reality/show')}>
+          <View style={styles.liveShowImagePlaceholder}>
+            <Text style={styles.playIcon}>▶️</Text>
+            <View style={styles.liveBadge}>
+              <View style={styles.liveDot} />
+              <Text style={styles.liveText}>LIVE</Text>
+            </View>
+            {viewerText ? (
+              <View style={styles.viewerCount}>
+                <Text style={styles.viewerIcon}>👁️</Text>
+                <Text style={styles.viewerText}>{viewerText}</Text>
+              </View>
+            ) : null}
+          </View>
+          <View style={styles.liveShowInfo}>
+            <Text style={[styles.liveShowTitle, { color: isDark ? '#fff' : '#000' }]}>
+              {showName}
             </Text>
-            <Text style={styles.voteCTASubtitle}>Support your contestant</Text>
+            {showSubtitle ? <Text style={styles.liveShowSubtitle}>{showSubtitle}</Text> : null}
+            <TouchableOpacity style={styles.watchNowButton}>
+              <Text style={styles.watchNowText}>Watch Live</Text>
+            </TouchableOpacity>
           </View>
-        </View>
-        <TouchableOpacity style={styles.voteButton} onPress={() => router.push('/vote')}>
-          <Text style={styles.voteButtonText}>Vote Now</Text>
         </TouchableOpacity>
-      </View>
 
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
-            Leaderboard
-          </Text>
-          <TouchableOpacity onPress={() => router.push('/vote')}>
-            <Text style={styles.seeAllText}>See All</Text>
+        <View style={styles.voteCTA}>
+          <View style={styles.voteCTAInfo}>
+            <Text style={styles.voteCTAIcon}>🗳️</Text>
+            <View>
+              <Text style={[styles.voteCTATitle, { color: isDark ? '#fff' : '#000' }]}>
+                Vote for Your Favorite
+              </Text>
+              <Text style={styles.voteCTASubtitle}>Support your contestant</Text>
+            </View>
+          </View>
+          <TouchableOpacity style={styles.voteButton} onPress={() => router.push('/vote')}>
+            <Text style={styles.voteButtonText}>Vote Now</Text>
           </TouchableOpacity>
         </View>
-        <FlatList
-          data={contestants}
-          renderItem={renderContestantCard}
-          keyExtractor={(item) => item.id}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.contestantsList}
-        />
-      </View>
 
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
-            Featured Highlights
-          </Text>
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
+              Leaderboard
+            </Text>
+            <TouchableOpacity onPress={() => router.push('/vote')}>
+              <Text style={styles.seeAllText}>See All</Text>
+            </TouchableOpacity>
+          </View>
+          <FlatList
+            data={contestants}
+            renderItem={renderContestantCard}
+            keyExtractor={(item) => item.id}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.contestantsList}
+          />
         </View>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.highlightsList}
-        >
-          {featuredContent.map((item) => (
-            <TouchableOpacity
-              key={item.id}
-              style={[styles.highlightCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
-            >
-              <View style={styles.highlightThumbnail}>
-                <Text style={styles.playSmallIcon}>▶</Text>
-                <View style={styles.durationBadge}>
-                  <Text style={styles.durationText}>{item.duration}</Text>
+
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
+              Featured Highlights
+            </Text>
+          </View>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.highlightsList}
+          >
+            {featuredContent.map((item) => (
+              <TouchableOpacity
+                key={item.id}
+                style={[styles.highlightCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
+              >
+                <View style={styles.highlightThumbnail}>
+                  <Text style={styles.playSmallIcon}>▶</Text>
+                  <View style={styles.durationBadge}>
+                    <Text style={styles.durationText}>{item.duration}</Text>
+                  </View>
                 </View>
-              </View>
-              <Text style={[styles.highlightTitle, { color: isDark ? '#fff' : '#000' }]}>
-                {item.title}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </View>
-
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
-            Past Seasons
-          </Text>
+                <Text style={[styles.highlightTitle, { color: isDark ? '#fff' : '#000' }]}>
+                  {item.title}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
         </View>
-        <View style={styles.pastSeasonsList}>
-          {['Season 8', 'Season 7', 'Season 6', 'Season 5'].map((season, index) => (
-            <TouchableOpacity
-              key={season}
-              style={[styles.seasonCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
-            >
-              <View style={styles.seasonImagePlaceholder}>
-                <Text style={styles.seasonEmoji}>{['🏆', '🥈', '🥉', '🎖️'][index]}</Text>
-              </View>
-              <Text style={[styles.seasonTitle, { color: isDark ? '#fff' : '#000' }]}>
-                BBNaija {season}
-              </Text>
-              <Text style={styles.seasonSubtitle}>Highlights & Clips</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      </View>
 
-      <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/home')}>
-          <Text style={styles.navIcon}>🏠</Text>
-          <Text style={styles.navLabel}>Home</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/watch')}>
-          <Text style={styles.navIcon}>📺</Text>
-          <Text style={styles.navLabel}>Watch</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/vote')}>
-          <Text style={styles.navIcon}>🗳️</Text>
-          <Text style={[styles.navLabel, { color: '#8B5CF6' }]}>Vote</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/rewards')}>
-          <Text style={styles.navIcon}>⭐</Text>
-          <Text style={styles.navLabel}>Rewards</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/profile')}>
-          <Text style={styles.navIcon}>👤</Text>
-          <Text style={styles.navLabel}>Profile</Text>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
+              Past Seasons
+            </Text>
+          </View>
+          <View style={styles.pastSeasonsList}>
+            {['Season 8', 'Season 7', 'Season 6', 'Season 5'].map((season, index) => (
+              <TouchableOpacity
+                key={season}
+                style={[styles.seasonCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
+              >
+                <View style={styles.seasonImagePlaceholder}>
+                  <Text style={styles.seasonEmoji}>{['🏆', '🥈', '🥉', '🎖️'][index]}</Text>
+                </View>
+                <Text style={[styles.seasonTitle, { color: isDark ? '#fff' : '#000' }]}>
+                  {showName} {season}
+                </Text>
+                <Text style={styles.seasonSubtitle}>Highlights & Clips</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
@@ -373,7 +374,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#1a1a1a',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#8B5CF6',
+    borderColor: '#E8420A',
   },
   voteCTAInfo: {
     flexDirection: 'row',
@@ -392,7 +393,7 @@ const styles = StyleSheet.create({
     color: '#888',
   },
   voteButton: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 8,
@@ -417,7 +418,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   seeAllText: {
-    color: '#8B5CF6',
+    color: '#E8420A',
     fontSize: 14,
     fontWeight: '600',
   },
@@ -448,7 +449,7 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 8,
@@ -534,26 +535,6 @@ const styles = StyleSheet.create({
   },
   seasonSubtitle: {
     fontSize: 12,
-    color: '#888',
-  },
-  bottomNav: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingVertical: 12,
-    paddingBottom: 30,
-    backgroundColor: '#1a1a1a',
-    borderTopWidth: 1,
-    borderTopColor: '#2a2a2a',
-  },
-  navItem: {
-    alignItems: 'center',
-  },
-  navIcon: {
-    fontSize: 24,
-    marginBottom: 4,
-  },
-  navLabel: {
-    fontSize: 11,
     color: '#888',
   },
 });

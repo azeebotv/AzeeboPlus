@@ -105,10 +105,10 @@ export default function GamesUniverseHome() {
   );
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: isDark ? '#0a0a0a' : '#ffffff' }]}>
+    <ScrollView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
       <View style={styles.header}>
         <Text style={styles.universeLabel}>🎮 Games</Text>
-        <Text style={[styles.headerTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
+        <Text style={[styles.headerTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
           Game Universe
         </Text>
         <View style={styles.headerStats}>
@@ -166,7 +166,7 @@ export default function GamesUniverseHome() {
 
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
+          <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
             Trending Games
           </Text>
           <TouchableOpacity>
@@ -185,7 +185,7 @@ export default function GamesUniverseHome() {
 
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
+          <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
             Live Tournaments
           </Text>
         </View>
@@ -218,7 +218,7 @@ export default function GamesUniverseHome() {
 
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
+          <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
             Top Players This Week
           </Text>
         </View>
@@ -235,29 +235,6 @@ export default function GamesUniverseHome() {
             </View>
           ))}
         </View>
-      </View>
-
-      <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/home')}>
-          <Text style={styles.navIcon}>🏠</Text>
-          <Text style={styles.navLabel}>Home</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/watch')}>
-          <Text style={styles.navIcon}>📺</Text>
-          <Text style={styles.navLabel}>Watch</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/create')}>
-          <Text style={styles.navIcon}>✨</Text>
-          <Text style={styles.navLabel}>Create</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/rewards')}>
-          <Text style={styles.navIcon}>⭐</Text>
-          <Text style={styles.navLabel}>Rewards</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/profile')}>
-          <Text style={styles.navIcon}>👤</Text>
-          <Text style={styles.navLabel}>Profile</Text>
-        </TouchableOpacity>
       </View>
     </ScrollView>
   );
@@ -575,25 +552,5 @@ const styles = StyleSheet.create({
     color: '#DDA0DD',
     fontSize: 14,
     fontWeight: '600',
-  },
-  bottomNav: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingVertical: 12,
-    paddingBottom: 30,
-    backgroundColor: '#1a1a1a',
-    borderTopWidth: 1,
-    borderTopColor: '#2a2a2a',
-  },
-  navItem: {
-    alignItems: 'center',
-  },
-  navIcon: {
-    fontSize: 24,
-    marginBottom: 4,
-  },
-  navLabel: {
-    fontSize: 11,
-    color: '#888',
   },
 });

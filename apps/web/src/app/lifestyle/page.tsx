@@ -8,7 +8,7 @@ import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 
 export default function LifestylePage(): React.JSX.Element {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated: _isAuthenticated } = useAuth();
   const [events, setEvents] = useState<ContentItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -17,11 +17,17 @@ export default function LifestylePage(): React.JSX.Element {
     const fetchContent = async () => {
       try {
         setIsLoading(true);
-        const result = await api.content.getContentByUniverse('u0000001-0000-0000-0000-000000000003', 1, 20);
+        const result = await api.content.getContentByUniverse(
+          'u0000001-0000-0000-0000-000000000003',
+          1,
+          20
+        );
 
         if (result.success && result.data) {
           const items = Array.isArray(result.data) ? result.data : result.data.items || [];
           setEvents(items);
+        } else if (!result.success) {
+          setError(result.message || 'Failed to load lifestyle content.');
         }
       } catch (err) {
         webLogger.error('Failed to fetch lifestyle content', err);

@@ -7,6 +7,8 @@ import { JwtService } from '@nestjs/jwt';
 import { RedisService } from '../../common/services/redis.service';
 import { PrismaService } from '../database/prisma.service';
 import { AuthGuard } from '@nestjs/passport';
+import { RateLimitGuard } from '@azeebo/security';
+import { ConfigService } from '@nestjs/config';
 
 const mockAuthGuard = {
   canActivate: (context: ExecutionContext) => {
@@ -124,8 +126,15 @@ describe('Reality Controller Contract Tests', () => {
         sign: jest.fn().mockReturnValue('access-token-123'),
         verify: jest.fn().mockReturnValue({ sub: 'user-123', role: 'user' }),
       })
+      .overrideProvider(ConfigService)
+      .useValue({
+        get: jest.fn().mockReturnValue('test-value'),
+        getOrThrow: jest.fn().mockReturnValue('test-value'),
+      })
       .overrideGuard(AuthGuard('jwt'))
       .useValue(mockAuthGuard)
+      .overrideGuard(RateLimitGuard)
+      .useValue({ canActivate: jest.fn().mockReturnValue(true) })
       .compile();
 
     app = moduleFixture.createNestApplication();

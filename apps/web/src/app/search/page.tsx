@@ -1,7 +1,7 @@
 'use client';
-import React from 'react';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { apiFetch } from '../../lib/api';
 import AppHeader from '../../components/layout/AppHeader';
 import AppFooter from '../../components/layout/AppFooter';
 import { Skeleton } from '@/components/Skeleton';
@@ -31,7 +31,7 @@ interface HistoryItem {
 }
 
 export default function SearchPage(): React.JSX.Element {
-  const { user } = useAuth();
+  const { user: _user } = useAuth();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -81,10 +81,13 @@ export default function SearchPage(): React.JSX.Element {
       return;
     }
     try {
-      const response = await fetch(`/api/suggestions?q=${encodeURIComponent(searchQuery)}`);
-      if (response.ok) {
-        const data = await response.json();
-        setSuggestions(data.suggestions || []);
+      const response = await apiFetch<any>(
+        `/content/suggestions?q=${encodeURIComponent(searchQuery)}`
+      );
+      if (response.success && response.data) {
+        setSuggestions(
+          Array.isArray(response.data) ? response.data : response.data.suggestions || []
+        );
       }
     } catch {
       /* intentionally minimal */
@@ -115,21 +118,29 @@ export default function SearchPage(): React.JSX.Element {
           duration: filters.duration,
           sortBy: filters.sortBy,
         });
-        const response = await fetch(`/api/search?${params.toString()}`);
-        const data = await response.json();
-        setResults(data.results || []);
+        const response = await apiFetch<any>(`/content/search?${params.toString()}`);
+        if (response.success && response.data) {
+          const data = response.data;
+          setResults(Array.isArray(data) ? data : data.results || []);
+        } else {
+          setResults([]);
+        }
         const newHistoryItem = { query: searchQuery, timestamp: new Date() };
-        setSearchHistory((prev) =>
-          [newHistoryItem, ...prev.filter((item) => item.query !== searchQuery)].slice(0, 10)
-        );
-        localStorage.setItem('searchHistory', JSON.stringify(searchHistory));
+        setSearchHistory((prev) => {
+          const updated = [
+            newHistoryItem,
+            ...prev.filter((item) => item.query !== searchQuery),
+          ].slice(0, 10);
+          localStorage.setItem('searchHistory', JSON.stringify(updated));
+          return updated;
+        });
       } catch {
         // search failed silently
       } finally {
         setIsLoading(false);
       }
     },
-    [filters, searchHistory]
+    [filters]
   );
 
   const handleSubmit = (e: React.FormEvent) => {

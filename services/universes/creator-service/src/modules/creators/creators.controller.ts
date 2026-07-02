@@ -125,15 +125,6 @@ export class CreatorsController {
     return this.creatorsService.getMyProfile(req.user.sub);
   }
 
-  @Get(':creatorId')
-  @UseGuards(RateLimitGuard)
-  @RateLimit(200, 60000)
-  @ApiOperation({ summary: 'Get creator public profile' })
-  @ApiResponse({ status: 200, description: 'Creator profile' })
-  async getProfile(@Param('creatorId') creatorId: string): Promise<CreatorResponse> {
-    return this.creatorsService.getProfile(creatorId);
-  }
-
   @Patch('me')
   @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Update creator profile' })
@@ -144,6 +135,14 @@ export class CreatorsController {
     @Body() body: UpdateProfileBody
   ): Promise<CreatorResponse> {
     return this.creatorsService.updateProfile(req.user.sub, body);
+  }
+
+  @Get('channels')
+  @UseGuards(AuthGuard('jwt'))
+  @ApiOperation({ summary: 'List my channels' })
+  @ApiResponse({ status: 200, description: 'Channels list' })
+  async listChannels(@Request() req: { user: { sub: string } }): Promise<CreatorResponse> {
+    return this.creatorsService.listChannels(req.user.sub);
   }
 
   @Post('channels')
@@ -157,19 +156,20 @@ export class CreatorsController {
     return this.creatorsService.createChannel(req.user.sub, body);
   }
 
-  @Get('channels')
-  @UseGuards(AuthGuard('jwt'))
-  @ApiOperation({ summary: 'List my channels' })
-  @ApiResponse({ status: 200, description: 'Channels list' })
-  async listChannels(@Request() req: { user: { sub: string } }): Promise<CreatorResponse> {
-    return this.creatorsService.listChannels(req.user.sub);
-  }
-
   @Get('channels/:channelId')
   @ApiOperation({ summary: 'Get channel details' })
   @ApiResponse({ status: 200, description: 'Channel details' })
   async getChannel(@Param('channelId') channelId: string): Promise<CreatorResponse> {
     return this.creatorsService.getChannel(channelId);
+  }
+
+  @Get(':creatorId')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(200, 60000)
+  @ApiOperation({ summary: 'Get creator public profile' })
+  @ApiResponse({ status: 200, description: 'Creator profile' })
+  async getProfile(@Param('creatorId') creatorId: string): Promise<CreatorResponse> {
+    return this.creatorsService.getProfile(creatorId);
   }
 
   @Post('uploads')

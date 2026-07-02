@@ -1,7 +1,18 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { SuspensionService } from './suspension.service';
 import { PrismaService } from '../database/prisma.service';
+import { ConfigService } from '@nestjs/config';
 import { BadRequestException } from '@nestjs/common';
+
+jest.mock('@azeebo/api-client', () => ({
+  createApiClient: jest.fn().mockReturnValue({
+    get: jest.fn(),
+    post: jest.fn(),
+    put: jest.fn(),
+    delete: jest.fn(),
+  }),
+  noopTokenStorage: {},
+}));
 
 describe('SuspensionService', () => {
   let service: SuspensionService;
@@ -17,9 +28,17 @@ describe('SuspensionService', () => {
     },
   };
 
+  const mockConfigService = {
+    getOrThrow: jest.fn().mockReturnValue('http://mock-url'),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [SuspensionService, { provide: PrismaService, useValue: mockPrisma }],
+      providers: [
+        SuspensionService,
+        { provide: PrismaService, useValue: mockPrisma },
+        { provide: ConfigService, useValue: mockConfigService },
+      ],
     }).compile();
 
     service = module.get<SuspensionService>(SuspensionService);

@@ -117,7 +117,6 @@ INSERT INTO "user_preferences" (id, "userId", "darkMode", notifications, "conten
    ('d0000001-0000-0000-0000-000000000009', 'a0000001-0000-0000-0000-000000000009', false, '{}', '[]', '{"isPrivate":true,"showActivity":false,"allowMessages":false,"twoFactorEnabled":false}'),
    ('d0000001-0000-0000-0000-000000000010', 'a0000001-0000-0000-0000-000000000010', false, '{}', '[]', '{"isPrivate":false,"showActivity":true,"allowMessages":true,"twoFactorEnabled":false}')
 ON CONFLICT (id) DO UPDATE SET "darkMode" = EXCLUDED."darkMode", notifications = EXCLUDED.notifications, "contentPreferences" = EXCLUDED."contentPreferences", "privacySettings" = EXCLUDED."privacySettings";
-ON CONFLICT (id) DO UPDATE SET "darkMode" = EXCLUDED."darkMode", notifications = EXCLUDED.notifications, "contentPreferences" = EXCLUDED."contentPreferences", "privacySettings" = EXCLUDED."privacySettings";
 
 -- ============================================================================
 -- SECTION 6: UNIVERSES

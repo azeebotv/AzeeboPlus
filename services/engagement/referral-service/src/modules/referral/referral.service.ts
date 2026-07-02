@@ -219,13 +219,18 @@ export class ReferralService {
     };
   }
 
-  async completeReferral(referralId: string): Promise<ReferralResponse> {
+  async completeReferral(referralId: string, userId: string): Promise<ReferralResponse> {
     const referral = await this.prisma.referral.findUnique({
       where: { id: referralId },
     });
 
     if (!referral) {
       throw new NotFoundException('Referral not found');
+    }
+
+    // Only the referrer or referee can complete a referral
+    if (referral.referrerId !== userId && referral.referredId !== userId) {
+      throw new BadRequestException('Not authorized to complete this referral');
     }
 
     if (referral.status === 'completed') {

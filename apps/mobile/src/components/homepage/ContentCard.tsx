@@ -2,8 +2,12 @@ import React, { useCallback } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import Animated, { FadeInDown, useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
-import { Typography } from '@/theme';
+import Animated, {
+  FadeInDown,
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+} from 'react-native-reanimated';
 import type { ContentItem } from '@/api';
 
 const CARD_SIZES = {
@@ -23,7 +27,7 @@ interface ContentCardProps {
 
 export default function ContentCard({
   item,
-  sectionId,
+  sectionId: _sectionId,
   position,
   progress,
   showProgress = false,
@@ -46,7 +50,7 @@ export default function ContentCard({
   }, [scale]);
 
   const handlePress = useCallback(() => {
-    router.push(`/content/${item.id}`);
+    router.push(`/watch/${item.id}`);
   }, [router, item.id]);
 
   const { width, height } = CARD_SIZES[size];
@@ -74,11 +78,7 @@ export default function ContentCard({
           accessibilityLabel={`${t('content.watch')} ${item.title}`}
           accessibilityRole="button"
         >
-          <Image
-            source={{ uri: thumbnailSrc }}
-            style={styles.thumbnail}
-            resizeMode="cover"
-          />
+          <Image source={{ uri: thumbnailSrc }} style={styles.thumbnail} resizeMode="cover" />
 
           {/* Duration badge */}
           {item.duration ? (

@@ -129,33 +129,21 @@ export default function ContentRow({
   const trackScroll = (): void => {
     const el = scrollRef.current;
     if (!el) return;
-    const depth = Math.min(
-      1,
-      el.scrollLeft / (el.scrollWidth - el.clientWidth || 1)
-    );
+    const depth = Math.min(1, el.scrollLeft / (el.scrollWidth - el.clientWidth || 1));
     analytics.homepageSectionScrolled(sectionId, depth);
   };
 
   const skeletons = Array.from({ length: 6 });
 
   return (
-    <section
-      ref={sectionRef}
-      className="py-4 sm:py-6"
-      aria-labelledby={`row-${sectionId}`}
-    >
+    <section ref={sectionRef} className="py-4 sm:py-6" aria-labelledby={`row-${sectionId}`}>
       {/* Section header */}
       <div className="flex items-baseline justify-between mb-3 px-4 sm:px-6 lg:px-8">
         <div>
-          <h2
-            id={`row-${sectionId}`}
-            className="text-lg sm:text-xl font-bold text-white"
-          >
+          <h2 id={`row-${sectionId}`} className="text-lg sm:text-xl font-bold text-white">
             {title}
           </h2>
-          {subtitle && (
-            <p className="text-sm text-white/50 mt-0.5">{subtitle}</p>
-          )}
+          {subtitle && <p className="text-sm text-white/50 mt-0.5">{subtitle}</p>}
         </div>
         <div className="flex gap-2">
           <button
@@ -166,7 +154,13 @@ export default function ContentRow({
             aria-label={`Scroll ${title} left`}
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-              <path d="M10 3L5 8L10 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              <path
+                d="M10 3L5 8L10 13"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
             </svg>
           </button>
           <button
@@ -177,7 +171,13 @@ export default function ContentRow({
             aria-label={`Scroll ${title} right`}
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-              <path d="M6 3L11 8L6 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              <path
+                d="M6 3L11 8L6 13"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
             </svg>
           </button>
         </div>
@@ -237,7 +237,10 @@ export default function ContentRow({
         {isLoadingMore && (
           <div
             className="flex-shrink-0 flex items-center justify-center"
-            style={{ width: cardWidth, height: cardSize === 'sm' ? 224 : cardSize === 'lg' ? 400 : 310 }}
+            style={{
+              width: cardWidth,
+              height: cardSize === 'sm' ? 224 : cardSize === 'lg' ? 400 : 310,
+            }}
           >
             <div className="w-6 h-6 border-2 border-white/30 border-t-[var(--brand-orange)] rounded-full animate-spin" />
           </div>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LoadingState, EmptyState, ErrorState } from '../src/components/StateContainers';
@@ -33,7 +34,7 @@ interface TopRatedItem {
 
 export default function ComedyUniverseHome() {
   const colorScheme = useColorScheme();
-  const router = useRouter();
+  const _router = useRouter();
   const isDark = colorScheme === 'dark';
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -67,171 +68,164 @@ export default function ComedyUniverseHome() {
     fetchData();
   }, []);
 
-  if (isLoading) return <LoadingState text="Loading comedy clips..." />;
-  if (error) return <ErrorState description={error} onRetry={fetchData} />;
+  if (isLoading) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+        <LoadingState text="Loading comedy clips..." />
+      </SafeAreaView>
+    );
+  }
+  if (error) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+        <ErrorState description={error} onRetry={fetchData} />
+      </SafeAreaView>
+    );
+  }
   if (!trendingClips.length && !featuredCreators.length) {
     return (
-      <EmptyState
-        icon="😂"
-        title="No clips available"
-        description="Check back later for comedy content"
-      />
+      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+        <EmptyState
+          icon="😂"
+          title="No clips available"
+          description="Check back later for comedy content"
+        />
+      </SafeAreaView>
     );
   }
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: isDark ? '#0a0a0a' : '#ffffff' }]}>
-      <View style={styles.header}>
-        <Text style={styles.universeLabel}>😂 Comedy</Text>
-        <Text style={[styles.headerTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
-          Comedy Universe
-        </Text>
-      </View>
-
-      <View style={styles.categoryScroll}>
-        {categories.map((cat) => (
-          <TouchableOpacity key={cat.id} style={styles.categoryChip}>
-            <Text style={styles.categoryEmoji}>{cat.emoji}</Text>
-            <Text style={styles.categoryName}>{cat.name}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
-          Trending Clips
-        </Text>
-        <FlatList
-          data={trendingClips}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.trendingList}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              style={[styles.clipCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
-            >
-              <View style={styles.clipThumbnail}>
-                <Text style={styles.clipEmoji}>{item.emoji}</Text>
-                <View style={styles.durationBadge}>
-                  <Text style={styles.durationText}>{item.duration}</Text>
-                </View>
-                <View style={styles.viewsBadge}>
-                  <Text style={styles.viewsText}>👁️ {item.views}</Text>
-                </View>
-              </View>
-              <View style={styles.clipInfo}>
-                <Text
-                  style={[styles.clipTitle, { color: isDark ? '#fff' : '#000' }]}
-                  numberOfLines={2}
-                >
-                  {item.title}
-                </Text>
-                <View style={styles.clipMeta}>
-                  <Text style={styles.likeCount}>❤️ {item.likes}</Text>
-                </View>
-              </View>
-            </TouchableOpacity>
-          )}
-        />
-      </View>
-
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
-            Featured Creators
+    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+      <ScrollView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+        <View style={styles.header}>
+          <Text style={styles.universeLabel}>😂 Comedy</Text>
+          <Text style={[styles.headerTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
+            Comedy Universe
           </Text>
         </View>
-        <FlatList
-          data={featuredCreators}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.creatorsList}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              style={[styles.creatorCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
-            >
-              <View style={styles.creatorAvatar}>
-                <Text style={styles.creatorEmoji}>{item.emoji}</Text>
-              </View>
-              <Text style={[styles.creatorName, { color: isDark ? '#fff' : '#000' }]}>
-                {item.name}
-              </Text>
-              <Text style={styles.creatorFollowers}>{item.followers}</Text>
-              <TouchableOpacity style={styles.subscribeButton}>
-                <Text style={styles.subscribeText}>Subscribe</Text>
-              </TouchableOpacity>
-            </TouchableOpacity>
-          )}
-        />
-      </View>
 
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
-            Top Rated
-          </Text>
-          <TouchableOpacity>
-            <Text style={styles.seeAllText}>See All</Text>
-          </TouchableOpacity>
-        </View>
-        <View style={styles.topRatedGrid}>
-          {topRated.map((item) => (
-            <TouchableOpacity
-              key={item.id}
-              style={[styles.topRatedCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
-            >
-              <View style={styles.topRatedThumbnail}>
-                <Text style={styles.topRatedEmoji}>{item.emoji}</Text>
-                <View style={styles.ratingBadge}>
-                  <Text style={styles.ratingText}>⭐ {item.rating}</Text>
-                </View>
-              </View>
-              <Text style={[styles.topRatedTitle, { color: isDark ? '#fff' : '#000' }]}>
-                {item.title}
-              </Text>
+        <View style={styles.categoryScroll}>
+          {categories.map((cat) => (
+            <TouchableOpacity key={cat.id} style={styles.categoryChip}>
+              <Text style={styles.categoryEmoji}>{cat.emoji}</Text>
+              <Text style={styles.categoryName}>{cat.name}</Text>
             </TouchableOpacity>
           ))}
         </View>
-      </View>
 
-      <View style={styles.comedyPassSection}>
-        <View style={styles.comedyPassBanner}>
-          <Text style={styles.comedyPassEmoji}>🎭</Text>
-          <View style={styles.comedyPassInfo}>
-            <Text style={styles.comedyPassTitle}>Comedy Pass</Text>
-            <Text style={styles.comedyPassSubtitle}>All comedies from ₦1,500/month</Text>
-          </View>
-          <TouchableOpacity style={styles.comedyPassButton}>
-            <Text style={styles.comedyPassButtonText}>Get</Text>
-          </TouchableOpacity>
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
+            Trending Clips
+          </Text>
+          <FlatList
+            data={trendingClips}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.trendingList}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={[styles.clipCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
+              >
+                <View style={styles.clipThumbnail}>
+                  <Text style={styles.clipEmoji}>{item.emoji}</Text>
+                  <View style={styles.durationBadge}>
+                    <Text style={styles.durationText}>{item.duration}</Text>
+                  </View>
+                  <View style={styles.viewsBadge}>
+                    <Text style={styles.viewsText}>👁️ {item.views}</Text>
+                  </View>
+                </View>
+                <View style={styles.clipInfo}>
+                  <Text
+                    style={[styles.clipTitle, { color: isDark ? '#fff' : '#000' }]}
+                    numberOfLines={2}
+                  >
+                    {item.title}
+                  </Text>
+                  <View style={styles.clipMeta}>
+                    <Text style={styles.likeCount}>❤️ {item.likes}</Text>
+                  </View>
+                </View>
+              </TouchableOpacity>
+            )}
+          />
         </View>
-      </View>
 
-      <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/home')}>
-          <Text style={styles.navIcon}>🏠</Text>
-          <Text style={styles.navLabel}>Home</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/watch')}>
-          <Text style={styles.navIcon}>📺</Text>
-          <Text style={styles.navLabel}>Watch</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/create')}>
-          <Text style={styles.navIcon}>✨</Text>
-          <Text style={styles.navLabel}>Create</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/rewards')}>
-          <Text style={styles.navIcon}>⭐</Text>
-          <Text style={styles.navLabel}>Rewards</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/profile')}>
-          <Text style={styles.navIcon}>👤</Text>
-          <Text style={styles.navLabel}>Profile</Text>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
+              Featured Creators
+            </Text>
+          </View>
+          <FlatList
+            data={featuredCreators}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.creatorsList}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={[styles.creatorCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
+              >
+                <View style={styles.creatorAvatar}>
+                  <Text style={styles.creatorEmoji}>{item.emoji}</Text>
+                </View>
+                <Text style={[styles.creatorName, { color: isDark ? '#fff' : '#000' }]}>
+                  {item.name}
+                </Text>
+                <Text style={styles.creatorFollowers}>{item.followers}</Text>
+                <TouchableOpacity style={styles.subscribeButton}>
+                  <Text style={styles.subscribeText}>Subscribe</Text>
+                </TouchableOpacity>
+              </TouchableOpacity>
+            )}
+          />
+        </View>
+
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
+              Top Rated
+            </Text>
+            <TouchableOpacity>
+              <Text style={styles.seeAllText}>See All</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.topRatedGrid}>
+            {topRated.map((item) => (
+              <TouchableOpacity
+                key={item.id}
+                style={[styles.topRatedCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
+              >
+                <View style={styles.topRatedThumbnail}>
+                  <Text style={styles.topRatedEmoji}>{item.emoji}</Text>
+                  <View style={styles.ratingBadge}>
+                    <Text style={styles.ratingText}>⭐ {item.rating}</Text>
+                  </View>
+                </View>
+                <Text style={[styles.topRatedTitle, { color: isDark ? '#fff' : '#000' }]}>
+                  {item.title}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
+        <View style={styles.comedyPassSection}>
+          <View style={styles.comedyPassBanner}>
+            <Text style={styles.comedyPassEmoji}>🎭</Text>
+            <View style={styles.comedyPassInfo}>
+              <Text style={styles.comedyPassTitle}>Comedy Pass</Text>
+              <Text style={styles.comedyPassSubtitle}>All comedies from ₦1,500/month</Text>
+            </View>
+            <TouchableOpacity style={styles.comedyPassButton}>
+              <Text style={styles.comedyPassButtonText}>Get</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
@@ -479,25 +473,5 @@ const styles = StyleSheet.create({
     color: '#000',
     fontSize: 13,
     fontWeight: '600',
-  },
-  bottomNav: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingVertical: 12,
-    paddingBottom: 30,
-    backgroundColor: '#1a1a1a',
-    borderTopWidth: 1,
-    borderTopColor: '#2a2a2a',
-  },
-  navItem: {
-    alignItems: 'center',
-  },
-  navIcon: {
-    fontSize: 24,
-    marginBottom: 4,
-  },
-  navLabel: {
-    fontSize: 11,
-    color: '#888',
   },
 });

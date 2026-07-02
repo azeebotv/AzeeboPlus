@@ -1,13 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  FlatList,
-  ActivityIndicator,
-  Image,
-} from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, FlatList, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { contentApi } from '../../src/api';
@@ -85,10 +77,7 @@ export default function PublishedContentScreen() {
   };
 
   const renderContent = ({ item }: { item: PublishedItem }) => (
-    <TouchableOpacity
-      style={styles.card}
-      onPress={() => router.push(`/(creator)/content-detail?id=${item.id}`)}
-    >
+    <TouchableOpacity style={styles.card} onPress={() => router.push(`/(creator)/content-manager`)}>
       <Image source={{ uri: item.thumbnail }} style={styles.thumbnail} />
       <View style={styles.content}>
         <View style={styles.cardHeader}>
@@ -163,7 +152,7 @@ export default function PublishedContentScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#111827',
+    backgroundColor: '#1A0A0A',
   },
   loadingContainer: {
     flex: 1,
@@ -181,7 +170,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#1f2937',
+    borderBottomColor: 'rgba(255,255,255,0.08)',
   },
   backButton: {
     marginRight: 16,
@@ -222,7 +211,7 @@ const styles = StyleSheet.create({
   },
   card: {
     flexDirection: 'row',
-    backgroundColor: '#1f2937',
+    backgroundColor: '#2A2A2A',
     borderRadius: 12,
     marginBottom: 12,
     overflow: 'hidden',
@@ -254,7 +243,7 @@ const styles = StyleSheet.create({
   stats: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    backgroundColor: '#374151',
+    backgroundColor: 'rgba(255,255,255,0.2)',
     borderRadius: 8,
     padding: 8,
     marginBottom: 8,

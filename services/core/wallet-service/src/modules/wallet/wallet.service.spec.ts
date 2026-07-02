@@ -47,6 +47,9 @@ describe('WalletService', () => {
             walletTransaction: {
               create: jest.fn(),
               findMany: jest.fn(),
+              findUnique: jest.fn(),
+              findFirst: jest.fn(),
+              count: jest.fn(),
             },
             $transaction: jest.fn(),
             $queryRaw: jest.fn(),
@@ -245,7 +248,8 @@ describe('WalletService', () => {
 
       (prismaService.wallet.findUnique as jest.Mock)
         .mockResolvedValueOnce(mockWallet)
-        .mockResolvedValueOnce(recipientWallet);
+        .mockResolvedValueOnce(recipientWallet)
+        .mockResolvedValueOnce({ ...mockWallet, balance: 800 });
       (prismaService.wallet.update as jest.Mock)
         .mockResolvedValueOnce({ ...mockWallet, balance: 800 })
         .mockResolvedValueOnce({ ...recipientWallet, balance: 1200 });
@@ -295,10 +299,12 @@ describe('WalletService', () => {
         description: 'Test transaction',
         reference: 'ref-123',
         createdAt: new Date(),
+        updatedAt: new Date(),
+        metadata: null,
       };
 
       (prismaService.wallet.findUnique as jest.Mock).mockResolvedValue(mockWallet);
-      (prismaService.walletTransaction.findMany as jest.Mock).mockResolvedValue([mockTxn]);
+      (prismaService.walletTransaction.findFirst as jest.Mock).mockResolvedValue(mockTxn);
 
       const result = await service.getTransaction('user-123', 'txn-123');
 
@@ -320,7 +326,7 @@ describe('WalletService', () => {
       ];
 
       (prismaService.wallet.findUnique as jest.Mock).mockResolvedValue(mockWallet);
-      (prismaService.walletTransaction.findMany as jest.Mock).mockResolvedValue(mockTransactions);
+      (prismaService.$transaction as jest.Mock).mockResolvedValue([mockTransactions, 2]);
 
       const result = await service.getTransactions('user-123', 1, 20);
 
@@ -330,7 +336,7 @@ describe('WalletService', () => {
 
     it('should return empty array if no transactions', async () => {
       (prismaService.wallet.findUnique as jest.Mock).mockResolvedValue(mockWallet);
-      (prismaService.walletTransaction.findMany as jest.Mock).mockResolvedValue([]);
+      (prismaService.$transaction as jest.Mock).mockResolvedValue([[], 0]);
 
       const result = await service.getTransactions('user-123', 1, 20);
 

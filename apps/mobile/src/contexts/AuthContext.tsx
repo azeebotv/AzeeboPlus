@@ -1,4 +1,12 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  ReactNode,
+} from 'react';
 import { authApi, userApi, apiClient, type User, type ApiResponse } from '../api';
 import { useStorage } from '../hooks/useStorage';
 import { useSecureStorage } from '../hooks/useSecureStorage';
@@ -12,28 +20,61 @@ interface AuthContextType {
   register: (
     email: string,
     password: string,
-    displayName: string,
-    phone: string
+    name: string,
+    phone?: string
   ) => Promise<{ success: boolean; message?: string }>;
   logout: () => Promise<void>;
   forgotPassword: (email: string) => Promise<void>;
-  verifyOTP: (code: string) => Promise<{ success: boolean; message?: string }>;
+  verifyOTP: (code: string) => Promise<{ success: boolean; message?: string; user?: User }>;
   resendOTP: () => Promise<void>;
   refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const SESSION_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes inactivity timeout
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { getItem, setItem, removeItem } = useStorage();
-  // T-C06: Secure storage for JWT tokens (expo-secure-store with OS-level encryption)
-  const { getItem: getSecureItem, setItem: setSecureItem, removeItem: removeSecureItem } = useSecureStorage();
+  const {
+    getItem: getSecureItem,
+    setItem: setSecureItem,
+    removeItem: removeSecureItem,
+  } = useSecureStorage();
+
+  const sessionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const resetSessionTimer = useCallback(() => {
+    if (sessionTimerRef.current) {
+      clearTimeout(sessionTimerRef.current);
+    }
+    sessionTimerRef.current = setTimeout(async () => {
+      logger.warn('Session timed out due to inactivity');
+      await logout();
+    }, SESSION_TIMEOUT_MS);
+  }, []);
+
+  const clearSessionTimer = useCallback(() => {
+    if (sessionTimerRef.current) {
+      clearTimeout(sessionTimerRef.current);
+      sessionTimerRef.current = null;
+    }
+  }, []);
 
   useEffect(() => {
     checkAuth();
+    return () => clearSessionTimer();
   }, []);
+
+  useEffect(() => {
+    if (user) {
+      resetSessionTimer();
+      return () => clearSessionTimer();
+    }
+    return undefined;
+  }, [user, resetSessionTimer, clearSessionTimer]);
 
   const checkAuth = async () => {
     try {
@@ -82,9 +123,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const register = async (email: string, password: string, displayName: string, phone: string) => {
+  const register = async (email: string, password: string, name: string, phone?: string) => {
     try {
-      const response = await authApi.register({ email, password, name: displayName, phone });
+      const response = await authApi.register({ email, password, name, phone });
       if (response.success && response.data) {
         await handleAuthResponse(
           response as ApiResponse<{ access_token: string; refresh_token: string; user: User }>
@@ -104,7 +145,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       logger.error('Logout error', error);
     } finally {
-      // T-C06: Remove tokens from secure storage, user from regular storage
+      clearSessionTimer();
       await removeSecureItem('accessToken');
       await removeSecureItem('refreshToken');
       await removeItem('user');
@@ -121,10 +162,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const response = await authApi.verifyOTP(code);
       if (response.success && response.data) {
+        const data = response.data as { access_token: string; refresh_token: string; user: User };
         await handleAuthResponse(
           response as ApiResponse<{ access_token: string; refresh_token: string; user: User }>
         );
-        return { success: true };
+        return { success: true, user: data.user };
       }
       return { success: false, message: response.message || 'OTP verification failed' };
     } catch (error: any) {

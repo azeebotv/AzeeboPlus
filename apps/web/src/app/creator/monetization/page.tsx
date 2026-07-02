@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { api } from '@/lib/api';
+import { api, apiFetch } from '@/lib/api';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 
@@ -201,16 +201,32 @@ export default function MonetizationPage(): React.JSX.Element {
                   <p style={{ color: '#9A8A7A', fontSize: 13, marginTop: 2 }}>{setting.desc}</p>
                 </div>
                 <button
-                  onClick={() =>
+                  onClick={async () => {
+                    const newValue =
+                      !monetization.settings[setting.key as keyof typeof monetization.settings];
                     setMonetization({
                       ...monetization,
                       settings: {
                         ...monetization.settings,
-                        [setting.key]:
-                          !monetization.settings[setting.key as keyof typeof monetization.settings],
+                        [setting.key]: newValue,
                       },
-                    })
-                  }
+                    });
+                    try {
+                      await apiFetch('/v1/creators/monetization/settings', {
+                        method: 'PUT',
+                        body: JSON.stringify({ [setting.key]: newValue }),
+                      });
+                    } catch {
+                      // Revert on failure
+                      setMonetization({
+                        ...monetization,
+                        settings: {
+                          ...monetization.settings,
+                          [setting.key]: !newValue,
+                        },
+                      });
+                    }
+                  }}
                   style={{
                     width: 48,
                     height: 28,

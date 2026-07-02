@@ -40,9 +40,33 @@ export default function CreatorAnalyticsPage(): React.JSX.Element {
 
   const loadAnalytics = async (): Promise<void> => {
     try {
-      const result = await apiFetch<AnalyticsData>('/v1/creator/analytics');
+      const result = await apiFetch<any>(`/v1/creators/analytics?range=${timeRange}`);
       if (result.success && result.data) {
-        setAnalytics(result.data);
+        const d = result.data;
+        setAnalytics({
+          totalViews: Number(d.views ?? d.totalViews ?? 0),
+          totalLikes: Number(d.likes ?? d.totalLikes ?? 0),
+          totalFollowers: Number(d.followers ?? d.totalFollowers ?? 0),
+          totalEarnings: Number(d.earnings ?? d.totalEarnings ?? 0),
+          viewsGrowth: Number(d.viewsGrowth ?? 0),
+          followersGrowth: Number(d.followersGrowth ?? 0),
+          earningsGrowth: Number(d.earningsGrowth ?? 0),
+          topContent: Array.isArray(d.topContent)
+            ? d.topContent.map((c: any) => ({
+                id: String(c.id),
+                title: String(c.title || ''),
+                views: Number(c.views ?? c.viewCount ?? 0),
+                thumbnail: String(c.thumbnail || ''),
+              }))
+            : [],
+          demographics: d.demographics || {
+            ageGroups: [],
+            topCountries: [],
+            genderSplit: { male: 0, female: 0, other: 0 },
+          },
+          engagementMetrics: d.engagementMetrics ||
+            d.analytics || { avgWatchTime: 0, completionRate: 0, shareRate: 0, commentRate: 0 },
+        });
       }
     } catch (error) {
       webLogger.error('Failed to load analytics', error);

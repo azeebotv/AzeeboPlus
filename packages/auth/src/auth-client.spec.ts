@@ -10,9 +10,16 @@ function createMockStorage() {
   return {
     getAccessToken: jest.fn(async () => accessToken),
     getRefreshToken: jest.fn(async () => refreshToken),
-    setAccessToken: jest.fn(async (token: string) => { accessToken = token; }),
-    setRefreshToken: jest.fn(async (token: string) => { refreshToken = token; }),
-    clearTokens: jest.fn(async () => { accessToken = null; refreshToken = null; }),
+    setAccessToken: jest.fn(async (token: string) => {
+      accessToken = token;
+    }),
+    setRefreshToken: jest.fn(async (token: string) => {
+      refreshToken = token;
+    }),
+    clearTokens: jest.fn(async () => {
+      accessToken = null;
+      refreshToken = null;
+    }),
     _getAccessToken: () => accessToken,
     _getRefreshToken: () => refreshToken,
   };
@@ -87,7 +94,11 @@ describe('AuthClient', () => {
         }),
       });
 
-      const result = await client.register({ name: 'New', email: 'new@test.com', password: 'pass' });
+      const result = await client.register({
+        name: 'New',
+        email: 'new@test.com',
+        password: 'pass',
+      });
 
       expect(result.success).toBe(true);
       expect(storage.setAccessToken).toHaveBeenCalledWith('access-new');
@@ -202,10 +213,7 @@ describe('AuthClient', () => {
       });
 
       // Make two concurrent refresh calls
-      const [result1, result2] = await Promise.all([
-        client.refreshToken(),
-        client.refreshToken(),
-      ]);
+      const [result1, result2] = await Promise.all([client.refreshToken(), client.refreshToken()]);
 
       expect(result1.success).toBe(true);
       expect(result2.success).toBe(true);

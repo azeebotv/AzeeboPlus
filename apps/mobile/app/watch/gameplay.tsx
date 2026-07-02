@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import { apiClient } from '../../src/api';
@@ -52,6 +52,7 @@ export default function GameplayScreen() {
       const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [timeLeft]);
 
   const handleAnswer = (answer: string) => {
@@ -85,7 +86,7 @@ export default function GameplayScreen() {
       <View
         style={[
           styles.container,
-          { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' },
+          { backgroundColor: colorScheme === 'dark' ? '#1A0A0A' : '#ffffff' },
         ]}
       >
         <LoadingState text="Loading game..." />
@@ -98,7 +99,7 @@ export default function GameplayScreen() {
       <View
         style={[
           styles.container,
-          { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' },
+          { backgroundColor: colorScheme === 'dark' ? '#1A0A0A' : '#ffffff' },
         ]}
       >
         <ErrorState description={error} onRetry={fetchQuestions} />
@@ -111,7 +112,7 @@ export default function GameplayScreen() {
       <View
         style={[
           styles.container,
-          { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' },
+          { backgroundColor: colorScheme === 'dark' ? '#1A0A0A' : '#ffffff' },
         ]}
       >
         <EmptyState icon="🎮" title="No Games" description="No trivia games available right now." />
@@ -123,7 +124,7 @@ export default function GameplayScreen() {
     <ScrollView
       style={[
         styles.container,
-        { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' },
+        { backgroundColor: colorScheme === 'dark' ? '#1A0A0A' : '#ffffff' },
       ]}
     >
       <View style={styles.header}>
@@ -154,7 +155,7 @@ export default function GameplayScreen() {
         <>
           <View style={styles.questionSection}>
             <Text
-              style={[styles.question, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}
+              style={[styles.question, { color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A' }]}
             >
               {questions[currentQuestion].question}
             </Text>
@@ -287,7 +288,7 @@ const styles = StyleSheet.create({
     margin: 16,
     padding: 16,
     borderRadius: 12,
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     alignItems: 'center',
   },
   nextText: {
@@ -302,7 +303,7 @@ const styles = StyleSheet.create({
   resultsTitle: {
     fontSize: 28,
     fontWeight: '700',
-    color: '#8B5CF6',
+    color: '#E8420A',
     marginBottom: 24,
   },
   resultsScore: {
@@ -317,7 +318,7 @@ const styles = StyleSheet.create({
   scoreValue: {
     fontSize: 48,
     fontWeight: '700',
-    color: '#8B5CF6',
+    color: '#E8420A',
   },
   resultsStats: {
     flexDirection: 'row',
@@ -330,7 +331,7 @@ const styles = StyleSheet.create({
   resultStatValue: {
     fontSize: 28,
     fontWeight: '700',
-    color: '#8B5CF6',
+    color: '#E8420A',
     marginBottom: 4,
   },
   resultStatLabel: {
@@ -341,7 +342,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 48,
     paddingVertical: 16,
     borderRadius: 30,
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
   },
   playAgainText: {
     color: '#fff',

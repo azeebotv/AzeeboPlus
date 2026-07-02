@@ -1,10 +1,6 @@
 import React from 'react';
 import { StyleSheet, type ViewStyle, type StyleProp } from 'react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-} from 'react-native-reanimated';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { colors, radius, typography, spacing, shadows } from '../../theme';
 
 const AnimatedTouchable = Animated.createAnimatedComponent(
@@ -74,9 +70,7 @@ export function PulseButton({
           <Animated.View style={[styles.loadingDot, { opacity: 0.3 }]} />
         </Animated.View>
       ) : (
-        <Animated.Text style={[styles.text, styles[`${variant}Text`]]}>
-          {title}
-        </Animated.Text>
+        <Animated.Text style={[styles.text, styles[`${variant}Text`]]}>{title}</Animated.Text>
       )}
     </AnimatedTouchable>
   );

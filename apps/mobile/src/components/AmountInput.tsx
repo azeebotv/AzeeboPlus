@@ -137,7 +137,7 @@ const styles = StyleSheet.create({
   },
   currencySymbol: {
     fontSize: 18,
-    color: '#8B5CF6',
+    color: '#E8420A',
     fontWeight: '600',
     marginRight: 8,
   },
@@ -179,8 +179,8 @@ const styles = StyleSheet.create({
     borderColor: '#333',
   },
   presetButtonActive: {
-    backgroundColor: '#8B5CF6',
-    borderColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
+    borderColor: '#E8420A',
   },
   presetText: {
     color: '#fff',

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
 import { apiClient } from '../../src/api/client';
 
@@ -65,11 +66,27 @@ export default function MoviesUniverseHome() {
     fetchData();
   }, []);
 
-  if (isLoading) return <LoadingState text="Loading movies..." />;
-  if (error) return <ErrorState description={error} onRetry={fetchData} />;
+  if (isLoading)
+    return (
+      <SafeAreaView style={styles.container}>
+        <LoadingState text="Loading movies..." />
+      </SafeAreaView>
+    );
+  if (error)
+    return (
+      <SafeAreaView style={styles.container}>
+        <ErrorState description={error} onRetry={fetchData} />
+      </SafeAreaView>
+    );
   if (!featuredMovie && !trendingMovies.length) {
     return (
-      <EmptyState icon="🎬" title="No movies available" description="Check back later for movies" />
+      <SafeAreaView style={styles.container}>
+        <EmptyState
+          icon="🎬"
+          title="No movies available"
+          description="Check back later for movies"
+        />
+      </SafeAreaView>
     );
   }
 
@@ -93,177 +110,182 @@ export default function MoviesUniverseHome() {
   );
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: isDark ? '#0a0a0a' : '#ffffff' }]}>
-      <View style={styles.header}>
-        <Text style={styles.universeLabel}>🎬 Movies</Text>
-        <Text style={[styles.headerTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
-          Movie Universe
-        </Text>
-        <TouchableOpacity style={styles.searchButton} onPress={() => router.push('/(tabs)/search')}>
-          <Text style={styles.searchIcon}>🔍</Text>
-          <Text style={styles.searchPlaceholder}>Search movies...</Text>
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.passBanner}>
-        <View style={styles.passBannerContent}>
-          <Text style={styles.passBannerTitle}>🎥 Cinema Plus</Text>
-          <Text style={styles.passBannerSubtitle}>Unlimited movies from ₦4,500/month</Text>
-          <TouchableOpacity style={styles.passButton}>
-            <Text style={styles.passButtonText}>Get Pass</Text>
+    <SafeAreaView style={styles.container}>
+      <ScrollView style={[{ flex: 1 }, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+        <View style={styles.header}>
+          <Text style={styles.universeLabel}>🎬 Movies</Text>
+          <Text style={[styles.headerTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
+            Movie Universe
+          </Text>
+          <TouchableOpacity
+            style={styles.searchButton}
+            onPress={() => router.push('/(tabs)/search')}
+          >
+            <Text style={styles.searchIcon}>🔍</Text>
+            <Text style={styles.searchPlaceholder}>Search movies...</Text>
           </TouchableOpacity>
         </View>
-      </View>
 
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
-            Featured
-          </Text>
-        </View>
-        <TouchableOpacity
-          style={styles.featuredCard}
-          onPress={() => router.push(`/movies/${featuredMovie?.id ?? '1'}`)}
-        >
-          <View style={styles.featuredImagePlaceholder}>
-            <Text style={styles.featuredEmoji}>🎬</Text>
-            <View style={styles.featuredBadge}>
-              <Text style={styles.featuredBadgeText}>NEW</Text>
-            </View>
-            <View style={styles.featuredMeta}>
-              <Text style={styles.featuredRating}>⭐ {featuredMovie?.rating ?? '0.0'}</Text>
-              <Text style={styles.featuredDuration}>{featuredMovie?.duration ?? ''}</Text>
-            </View>
-          </View>
-          <View style={styles.featuredInfo}>
-            <Text style={[styles.featuredTitle, { color: isDark ? '#fff' : '#000' }]}>
-              {featuredMovie?.title ?? 'Featured Movie'}
-            </Text>
-            <Text style={styles.featuredGenre}>{featuredMovie?.genre ?? ''}</Text>
-            <View style={styles.featuredActions}>
-              <TouchableOpacity style={styles.playButton}>
-                <Text style={styles.playIcon}>▶</Text>
-                <Text style={styles.playText}>Watch</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.rentButton}>
-                <Text style={styles.rentText}>Rent ₦500</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
-            Trending Now
-          </Text>
-          <TouchableOpacity>
-            <Text style={styles.seeAllText}>See All</Text>
-          </TouchableOpacity>
-        </View>
-        <FlatList
-          data={trendingMovies}
-          renderItem={({ item }) => renderMovieCard(item, 'small')}
-          keyExtractor={(item) => item.id}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.horizontalList}
-        />
-      </View>
-
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
-            African Cinema
-          </Text>
-          <TouchableOpacity>
-            <Text style={styles.seeAllText}>See All</Text>
-          </TouchableOpacity>
-        </View>
-        <FlatList
-          data={africanCinema}
-          renderItem={({ item }) => renderMovieCard(item, 'small')}
-          keyExtractor={(item) => item.id}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.horizontalList}
-        />
-      </View>
-
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
-            Hollywood Hits
-          </Text>
-          <TouchableOpacity>
-            <Text style={styles.seeAllText}>See All</Text>
-          </TouchableOpacity>
-        </View>
-        <FlatList
-          data={hollywoodHits}
-          renderItem={({ item }) => renderMovieCard(item, 'small')}
-          keyExtractor={(item) => item.id}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.horizontalList}
-        />
-      </View>
-
-      <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
-          Available Passes
-        </Text>
-        <View style={styles.passesList}>
-          {passes.map((pass) => (
-            <TouchableOpacity key={pass.id} style={styles.passCard}>
-              <View style={styles.passHeader}>
-                <Text style={[styles.passName, { color: isDark ? '#fff' : '#000' }]}>
-                  {pass.name}
-                </Text>
-                <View style={styles.passPriceTag}>
-                  <Text style={styles.passPrice}>{pass.price}</Text>
-                  <Text style={styles.passPeriod}>{pass.period}</Text>
-                </View>
-              </View>
-              <View style={styles.passFeatures}>
-                {pass.features.map((feature, index) => (
-                  <Text key={index} style={styles.passFeature}>
-                    ✓ {feature}
-                  </Text>
-                ))}
-              </View>
-              <TouchableOpacity style={styles.subscribeButton}>
-                <Text style={styles.subscribeButtonText}>Subscribe</Text>
-              </TouchableOpacity>
+        <View style={styles.passBanner}>
+          <View style={styles.passBannerContent}>
+            <Text style={styles.passBannerTitle}>🎥 Cinema Plus</Text>
+            <Text style={styles.passBannerSubtitle}>Unlimited movies from ₦4,500/month</Text>
+            <TouchableOpacity style={styles.passButton}>
+              <Text style={styles.passButtonText}>Get Pass</Text>
             </TouchableOpacity>
-          ))}
+          </View>
         </View>
-      </View>
 
-      <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/home')}>
-          <Text style={styles.navIcon}>🏠</Text>
-          <Text style={styles.navLabel}>Home</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/watch')}>
-          <Text style={styles.navIcon}>📺</Text>
-          <Text style={[styles.navLabel, { color: '#FFEAA7' }]}>Watch</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/create')}>
-          <Text style={styles.navIcon}>✨</Text>
-          <Text style={styles.navLabel}>Create</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/rewards')}>
-          <Text style={styles.navIcon}>⭐</Text>
-          <Text style={styles.navLabel}>Rewards</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/profile')}>
-          <Text style={styles.navIcon}>👤</Text>
-          <Text style={styles.navLabel}>Profile</Text>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
+              Featured
+            </Text>
+          </View>
+          <TouchableOpacity
+            style={styles.featuredCard}
+            onPress={() => router.push(`/movies/${featuredMovie?.id ?? '1'}`)}
+          >
+            <View style={styles.featuredImagePlaceholder}>
+              <Text style={styles.featuredEmoji}>🎬</Text>
+              <View style={styles.featuredBadge}>
+                <Text style={styles.featuredBadgeText}>NEW</Text>
+              </View>
+              <View style={styles.featuredMeta}>
+                <Text style={styles.featuredRating}>⭐ {featuredMovie?.rating ?? '0.0'}</Text>
+                <Text style={styles.featuredDuration}>{featuredMovie?.duration ?? ''}</Text>
+              </View>
+            </View>
+            <View style={styles.featuredInfo}>
+              <Text style={[styles.featuredTitle, { color: isDark ? '#fff' : '#000' }]}>
+                {featuredMovie?.title ?? 'Featured Movie'}
+              </Text>
+              <Text style={styles.featuredGenre}>{featuredMovie?.genre ?? ''}</Text>
+              <View style={styles.featuredActions}>
+                <TouchableOpacity style={styles.playButton}>
+                  <Text style={styles.playIcon}>▶</Text>
+                  <Text style={styles.playText}>Watch</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.rentButton}>
+                  <Text style={styles.rentText}>Rent ₦500</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
+              Trending Now
+            </Text>
+            <TouchableOpacity>
+              <Text style={styles.seeAllText}>See All</Text>
+            </TouchableOpacity>
+          </View>
+          <FlatList
+            data={trendingMovies}
+            renderItem={({ item }) => renderMovieCard(item, 'small')}
+            keyExtractor={(item) => item.id}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.horizontalList}
+          />
+        </View>
+
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
+              African Cinema
+            </Text>
+            <TouchableOpacity>
+              <Text style={styles.seeAllText}>See All</Text>
+            </TouchableOpacity>
+          </View>
+          <FlatList
+            data={africanCinema}
+            renderItem={({ item }) => renderMovieCard(item, 'small')}
+            keyExtractor={(item) => item.id}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.horizontalList}
+          />
+        </View>
+
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
+              Hollywood Hits
+            </Text>
+            <TouchableOpacity>
+              <Text style={styles.seeAllText}>See All</Text>
+            </TouchableOpacity>
+          </View>
+          <FlatList
+            data={hollywoodHits}
+            renderItem={({ item }) => renderMovieCard(item, 'small')}
+            keyExtractor={(item) => item.id}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.horizontalList}
+          />
+        </View>
+
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
+            Available Passes
+          </Text>
+          <View style={styles.passesList}>
+            {passes.map((pass) => (
+              <TouchableOpacity key={pass.id} style={styles.passCard}>
+                <View style={styles.passHeader}>
+                  <Text style={[styles.passName, { color: isDark ? '#fff' : '#000' }]}>
+                    {pass.name}
+                  </Text>
+                  <View style={styles.passPriceTag}>
+                    <Text style={styles.passPrice}>{pass.price}</Text>
+                    <Text style={styles.passPeriod}>{pass.period}</Text>
+                  </View>
+                </View>
+                <View style={styles.passFeatures}>
+                  {pass.features.map((feature, index) => (
+                    <Text key={index} style={styles.passFeature}>
+                      ✓ {feature}
+                    </Text>
+                  ))}
+                </View>
+                <TouchableOpacity style={styles.subscribeButton}>
+                  <Text style={styles.subscribeButtonText}>Subscribe</Text>
+                </TouchableOpacity>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
+        <View style={styles.bottomNav}>
+          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/home')}>
+            <Text style={styles.navIcon}>🏠</Text>
+            <Text style={styles.navLabel}>Home</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/watch')}>
+            <Text style={styles.navIcon}>📺</Text>
+            <Text style={[styles.navLabel, { color: '#FFEAA7' }]}>Watch</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/create')}>
+            <Text style={styles.navIcon}>✨</Text>
+            <Text style={styles.navLabel}>Create</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/rewards')}>
+            <Text style={styles.navIcon}>⭐</Text>
+            <Text style={styles.navLabel}>Rewards</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/profile')}>
+            <Text style={styles.navIcon}>👤</Text>
+            <Text style={styles.navLabel}>Profile</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 

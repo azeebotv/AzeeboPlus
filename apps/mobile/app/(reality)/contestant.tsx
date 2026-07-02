@@ -125,7 +125,7 @@ export default function ContestantProfileScreen() {
     return (
       <SafeAreaView style={styles.container} edges={['top']}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#8B5CF6" />
+          <ActivityIndicator size="large" color="#E8420A" />
           <Text style={styles.loadingText}>Loading profile...</Text>
         </View>
       </SafeAreaView>
@@ -237,7 +237,7 @@ export default function ContestantProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#111827',
+    backgroundColor: '#1A0A0A',
   },
   loadingContainer: {
     flex: 1,
@@ -262,7 +262,7 @@ const styles = StyleSheet.create({
   backButton: {
     paddingHorizontal: 24,
     paddingVertical: 12,
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     borderRadius: 8,
   },
   backButtonText: {
@@ -291,7 +291,7 @@ const styles = StyleSheet.create({
   },
   profileContainer: {
     marginTop: -50,
-    backgroundColor: '#111827',
+    backgroundColor: '#1A0A0A',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingHorizontal: 24,
@@ -302,7 +302,7 @@ const styles = StyleSheet.create({
     height: 100,
     borderRadius: 50,
     borderWidth: 4,
-    borderColor: '#111827',
+    borderColor: 'rgba(255,255,255,0.2)',
     marginTop: -50,
   },
   header: {
@@ -320,7 +320,7 @@ const styles = StyleSheet.create({
   },
   statsContainer: {
     flexDirection: 'row',
-    backgroundColor: '#1f2937',
+    backgroundColor: '#2A2A2A',
     borderRadius: 12,
     padding: 16,
     marginTop: 24,
@@ -332,7 +332,7 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#8B5CF6',
+    color: '#E8420A',
   },
   statLabel: {
     fontSize: 12,
@@ -341,10 +341,10 @@ const styles = StyleSheet.create({
   },
   statDivider: {
     width: 1,
-    backgroundColor: '#374151',
+    backgroundColor: 'rgba(255,255,255,0.2)',
   },
   voteButton: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',
@@ -376,7 +376,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   socialButton: {
-    backgroundColor: '#1f2937',
+    backgroundColor: '#2A2A2A',
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderRadius: 8,

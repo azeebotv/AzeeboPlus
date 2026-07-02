@@ -30,15 +30,15 @@ export class GatewayAuthGuard implements CanActivate {
     /^\/(api\/)?(v\d+\/)?auth\/(login|signup|register|refresh|forgot-password|reset-password|verify-email|resend-verification|social\/(google|apple)(\/authorize)?|social\/callback|otp\/(send|verify))$/,
     /^\/(api\/)?(v\d+\/)?auth\/health$/,
     /^\/(health|ready|live)$/,
-    /^\/docs(\/.*)?$/,  // Swagger UI
-    /^\/routes$/,       // Route listing
-    /^\/api\/v\d+\/public\//,   // Public settings/universes (content-service)
-    /^\/api\/v\d+\/content\/(featured|trending)$/,  // Public content endpoints
+    /^\/docs(\/.*)?$/, // Swagger UI
+    /^\/routes$/, // Route listing
+    /^\/api\/v\d+\/public\//, // Public settings/universes (content-service)
+    /^\/api\/v\d+\/content\/(featured|trending)$/, // Public content endpoints
   ];
 
   constructor(
     private readonly reflector: Reflector,
-    private readonly configService: ConfigService,
+    private readonly configService: ConfigService
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -56,7 +56,7 @@ export class GatewayAuthGuard implements CanActivate {
     // Check if the path matches a known public pattern
     const requestPath = request.path || request.url;
     const isPublicPath = GatewayAuthGuard.PUBLIC_PATH_PATTERNS.some((pattern) =>
-      pattern.test(requestPath),
+      pattern.test(requestPath)
     );
 
     if (isPublicPath) {

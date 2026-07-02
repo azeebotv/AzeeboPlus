@@ -21,6 +21,7 @@ export default function SubscriptionPlansPage(): React.JSX.Element {
   const [currentPlan, setCurrentPlan] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [subscribing, setSubscribing] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isAuthenticated || !user) {
@@ -33,8 +34,8 @@ export default function SubscriptionPlansPage(): React.JSX.Element {
   const loadPlans = async () => {
     try {
       const [plansRes, statusRes] = await Promise.all([
-        apiFetch<any>('/subscriptions/plans'),
-        apiFetch<any>('/subscriptions/status'),
+        apiFetch<any>('/subscription/plans'),
+        apiFetch<any>('/subscription/current'),
       ]);
       if (plansRes.success && plansRes.data) {
         const data = plansRes.data as any;
@@ -45,7 +46,7 @@ export default function SubscriptionPlansPage(): React.JSX.Element {
         setCurrentPlan(status.planId || null);
       }
     } catch {
-      /* ignore */
+      setError('Failed to load subscription plans. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -54,8 +55,13 @@ export default function SubscriptionPlansPage(): React.JSX.Element {
   const handleSubscribe = async (planId: string) => {
     setSubscribing(planId);
     try {
-      await apiFetch<any>('/subscriptions', { method: 'POST', body: JSON.stringify({ planId }) });
-      setCurrentPlan(planId);
+      const result = await apiFetch<any>('/subscription/subscribe', {
+        method: 'POST',
+        body: JSON.stringify({ planId }),
+      });
+      if (result.success) {
+        setCurrentPlan(planId);
+      }
     } catch {
       /* ignore */
     }
@@ -95,6 +101,29 @@ export default function SubscriptionPlansPage(): React.JSX.Element {
                 animation: 'spin 0.8s linear infinite',
               }}
             />
+          </div>
+        ) : error ? (
+          <div style={{ textAlign: 'center', padding: 60 }}>
+            <p style={{ color: '#E8420A', marginBottom: 16 }}>{error}</p>
+            <button
+              onClick={() => {
+                setError(null);
+                setIsLoading(true);
+                loadPlans();
+              }}
+              style={{
+                padding: '10px 24px',
+                borderRadius: 8,
+                background: '#E8420A',
+                color: '#fff',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: 14,
+                fontWeight: 600,
+              }}
+            >
+              Try Again
+            </button>
           </div>
         ) : (
           <div

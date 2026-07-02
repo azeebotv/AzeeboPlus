@@ -124,7 +124,7 @@ export default function LiveChatScreen() {
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#8B5CF6" />
+        <ActivityIndicator size="large" color="#E8420A" />
         <Text style={styles.loadingText}>Loading live chat...</Text>
       </View>
     );
@@ -185,11 +185,11 @@ export default function LiveChatScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#111827',
+    backgroundColor: '#1A0A0A',
   },
   loadingContainer: {
     flex: 1,
-    backgroundColor: '#111827',
+    backgroundColor: '#1A0A0A',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -203,7 +203,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#374151',
+    borderBottomColor: 'rgba(255,255,255,0.2)',
   },
   headerTitle: {
     fontSize: 18,
@@ -211,7 +211,7 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   viewersBadge: {
-    backgroundColor: '#1F2937',
+    backgroundColor: '#2A2A2A',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
@@ -237,7 +237,7 @@ const styles = StyleSheet.create({
   username: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#8B5CF6',
+    color: '#E8420A',
     marginRight: 8,
   },
   badge: {
@@ -272,7 +272,7 @@ const styles = StyleSheet.create({
   reaction: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1F2937',
+    backgroundColor: '#2A2A2A',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
@@ -290,12 +290,12 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     padding: 12,
     borderTopWidth: 1,
-    borderTopColor: '#374151',
-    backgroundColor: '#1F2937',
+    borderTopColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: '#2A2A2A',
   },
   input: {
     flex: 1,
-    backgroundColor: '#374151',
+    backgroundColor: 'rgba(255,255,255,0.2)',
     borderRadius: 20,
     paddingHorizontal: 16,
     paddingVertical: 10,
@@ -304,7 +304,7 @@ const styles = StyleSheet.create({
     maxHeight: 100,
   },
   sendButton: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     borderRadius: 20,
     paddingHorizontal: 16,
     paddingVertical: 10,

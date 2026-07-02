@@ -139,7 +139,7 @@ export class AuthClient {
    * Stores tokens automatically on success.
    */
   async login(
-    request: LoginRequest,
+    request: LoginRequest
   ): Promise<AuthApiResponse<{ accessToken: string; refreshToken: string; user: AuthUser }>> {
     const response = await this.request<{
       accessToken: string;
@@ -164,7 +164,7 @@ export class AuthClient {
    * Stores tokens automatically on success.
    */
   async register(
-    request: RegisterRequest,
+    request: RegisterRequest
   ): Promise<AuthApiResponse<{ accessToken: string; refreshToken: string; user: AuthUser }>> {
     const response = await this.request<{
       accessToken: string;
@@ -228,10 +228,7 @@ export class AuthClient {
    * Make an authenticated API request.
    * Automatically attaches the access token.
    */
-  async request<T>(
-    endpoint: string,
-    options: RequestInit = {},
-  ): Promise<AuthApiResponse<T>> {
+  async request<T>(endpoint: string, options: RequestInit = {}): Promise<AuthApiResponse<T>> {
     const accessToken = await this.config.storage.getAccessToken();
 
     const headers: Record<string, string> = {
@@ -284,7 +281,7 @@ export class AuthClient {
    */
   private async requestWithAutoRefresh<T>(
     endpoint: string,
-    options: RequestInit = {},
+    options: RequestInit = {}
   ): Promise<AuthApiResponse<T>> {
     const response = await this.request<T>(endpoint, options);
 
@@ -382,11 +379,7 @@ export class AuthClient {
   /**
    * Log auth events for audit trail.
    */
-  private logEvent(
-    type: AuthEventType,
-    userId?: string,
-    metadata?: Record<string, unknown>,
-  ): void {
+  private logEvent(type: AuthEventType, userId?: string, metadata?: Record<string, unknown>): void {
     const event: AuthEvent = {
       type,
       timestamp: new Date(),

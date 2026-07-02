@@ -14,10 +14,7 @@ import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 
 import { SocialAuthService } from './social.service';
 import { RateLimitGuard, RateLimit } from '../../../common/guards/rate-limit.guard';
-import {
-  SocialAuthCallbackDto,
-  SocialAuthAuthorizeResponseDto,
-} from '../dto/social-auth.dto';
+import { SocialAuthCallbackDto, SocialAuthAuthorizeResponseDto } from '../dto/social-auth.dto';
 
 interface SocialLoginResponse {
   success: boolean;
@@ -96,9 +93,7 @@ export class SocialAuthController {
   @ApiResponse({ status: 400, description: 'Invalid state or missing parameters' })
   @ApiResponse({ status: 401, description: 'Invalid credentials' })
   @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
-  async socialCallback(
-    @Body() dto: SocialAuthCallbackDto
-  ): Promise<SocialLoginResponse> {
+  async socialCallback(@Body() dto: SocialAuthCallbackDto): Promise<SocialLoginResponse> {
     // Check for OAuth provider error
     if (dto.error) {
       this.logger.warn(`Social callback error from provider: ${dto.error}`);

@@ -24,7 +24,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { user, isAuthenticated } = useAuth();
+  const { user: _user, isAuthenticated } = useAuth();
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -125,7 +125,8 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       }
 
       const projectId =
-        Constants.expoConfig?.extra?.eas?.projectId ?? Constants.easConfig?.projectId;
+        (Constants as any).expoConfig?.extra?.eas?.projectId ??
+        (Constants as any).easConfig?.projectId;
       if (!projectId) {
         logger.warn('Project ID not found, skipping push token registration');
         return;

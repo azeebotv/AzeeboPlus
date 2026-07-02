@@ -1,6 +1,6 @@
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import axios from 'axios';
-import { createHmac } from 'crypto';
+import { createHmac, timingSafeEqual } from 'crypto';
 import { CircuitBreaker, CircuitBreakerOpenError } from '@azeebo/shared-types';
 
 interface PaystackInitializeResponse {
@@ -81,7 +81,9 @@ export class PaystackProvider {
   constructor() {
     this.apiKey = process.env.PAYSTACK_SECRET_KEY || '';
     if (!this.apiKey) {
-      this.logger.warn('PAYSTACK_SECRET_KEY is not configured — Paystack payments will be unavailable');
+      this.logger.warn(
+        'PAYSTACK_SECRET_KEY is not configured — Paystack payments will be unavailable'
+      );
     } else {
       this.logger.log('PaystackProvider initialized with circuit breaker');
     }
@@ -240,7 +242,10 @@ export class PaystackProvider {
       .update(JSON.stringify(payload))
       .digest('hex');
 
-    return hash === signature;
+    if (hash.length !== signature.length) {
+      return false;
+    }
+    return timingSafeEqual(Buffer.from(hash, 'utf8'), Buffer.from(signature, 'utf8'));
   }
 
   getCircuitBreakerStats(): CircuitBreakerStats {

@@ -1,10 +1,12 @@
 import { Controller, Post, Request, BadRequestException, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { AuthGuard } from '@nestjs/passport';
 
 import { OtpService } from './otp.service';
 import { RateLimitGuard } from '../../../common/guards/rate-limit.guard';
 
 interface OtpRequest {
+  user: { sub: string };
   body: {
     userId?: string;
     phoneNumber?: string;
@@ -18,32 +20,36 @@ export class OtpController {
   constructor(private readonly otpService: OtpService) {}
 
   @Post('send')
-  @UseGuards(RateLimitGuard)
+  @UseGuards(AuthGuard('jwt'), RateLimitGuard)
   @ApiOperation({ summary: 'Send OTP to user phone' })
   @ApiResponse({ status: 200, description: 'OTP sent successfully' })
   @ApiResponse({ status: 400, description: 'Invalid request' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   async sendOtp(@Request() req: OtpRequest): Promise<{ message: string }> {
-    const { userId, phoneNumber } = req.body;
+    const { phoneNumber } = req.body;
+    const userId = req.user.sub;
 
-    if (!userId || !phoneNumber) {
-      throw new BadRequestException('userId and phoneNumber are required');
+    if (!phoneNumber) {
+      throw new BadRequestException('phoneNumber is required');
     }
 
     return this.otpService.sendOtpToUser(userId, phoneNumber);
   }
 
   @Post('verify')
-  @UseGuards(RateLimitGuard)
+  @UseGuards(AuthGuard('jwt'), RateLimitGuard)
   @ApiOperation({ summary: 'Verify OTP code' })
   @ApiResponse({ status: 200, description: 'OTP verified successfully' })
   @ApiResponse({ status: 400, description: 'Invalid OTP' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   async verifyOtp(@Request() req: OtpRequest): Promise<{ success: boolean }> {
-    const { userId, code } = req.body;
+    const { code } = req.body;
+    const userId = req.user.sub;
 
-    if (!userId || !code) {
-      throw new BadRequestException('userId and code are required');
+    if (!code) {
+      throw new BadRequestException('code is required');
     }
 
     await this.otpService.verifyOtp(userId, code);

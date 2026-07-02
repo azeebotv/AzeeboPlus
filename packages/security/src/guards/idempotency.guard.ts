@@ -38,15 +38,13 @@ export class IdempotencyGuard implements CanActivate {
     const idempotencyKey = request.headers['idempotency-key'];
     if (!idempotencyKey || typeof idempotencyKey !== 'string') {
       throw new ConflictException(
-        'Missing Idempotency-Key header. All mutating requests must include a unique Idempotency-Key.',
+        'Missing Idempotency-Key header. All mutating requests must include a unique Idempotency-Key.'
       );
     }
 
     // Validate key format (UUID v4 preferred, but any non-empty string accepted)
     if (idempotencyKey.length < 8 || idempotencyKey.length > 255) {
-      throw new ConflictException(
-        'Idempotency-Key must be between 8 and 255 characters.',
-      );
+      throw new ConflictException('Idempotency-Key must be between 8 and 255 characters.');
     }
 
     // Attach to request for downstream Redis persistence

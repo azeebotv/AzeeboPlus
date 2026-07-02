@@ -1,7 +1,23 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication } from '@nestjs/common';
+import { INestApplication, UnauthorizedException } from '@nestjs/common';
 import request from 'supertest';
 import { GamesModule } from './games.module';
+import { GamesService } from './games.service';
+import { PrismaService } from '../database/prisma.service';
+import { ConfigService } from '@nestjs/config';
+import { RateLimitGuard } from '@azeebo/security';
+import { AuthGuard } from '@nestjs/passport';
+
+const mockAuthGuard = {
+  canActivate: (context: any) => {
+    const req = context.switchToHttp().getRequest();
+    if (!req.headers.authorization) {
+      throw new UnauthorizedException();
+    }
+    req.user = { sub: 'user-123', role: 'user' };
+    return true;
+  },
+};
 
 describe('Games Controller Contract Tests', () => {
   let app: INestApplication;
@@ -21,8 +37,22 @@ describe('Games Controller Contract Tests', () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [GamesModule],
     })
-      .overrideProvider(GamesModule)
+      .overrideProvider(GamesService)
       .useValue(mockGamesService)
+      .overrideProvider(PrismaService)
+      .useValue({
+        $connect: jest.fn().mockResolvedValue(undefined),
+        $disconnect: jest.fn().mockResolvedValue(undefined),
+      })
+      .overrideProvider(ConfigService)
+      .useValue({
+        get: jest.fn().mockReturnValue('test-value'),
+        getOrThrow: jest.fn().mockReturnValue('test-value'),
+      })
+      .overrideGuard(AuthGuard('jwt'))
+      .useValue(mockAuthGuard)
+      .overrideGuard(RateLimitGuard)
+      .useValue({ canActivate: jest.fn().mockReturnValue(true) })
       .compile();
 
     app = moduleFixture.createNestApplication();
@@ -86,7 +116,7 @@ describe('Games Controller Contract Tests', () => {
         .post('/v1/games/daily-challenge/submit')
         .set('Authorization', 'Bearer valid-token')
         .send({ answer: '4' })
-        .expect(200)
+        .expect(201)
         .expect((res) => {
           expect(res.body.success).toBe(true);
         });
@@ -123,7 +153,7 @@ describe('Games Controller Contract Tests', () => {
         .post('/v1/games/sessions/session-1/submit')
         .set('Authorization', 'Bearer valid-token')
         .send({ answer: 'wrong-answer' })
-        .expect(200)
+        .expect(201)
         .expect((res) => {
           expect(res.body.success).toBe(true);
         });

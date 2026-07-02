@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { LoadingState, EmptyState, ErrorState } from '../src/components/StateContainers';
 import { apiClient } from '../src/api/client';
 
@@ -67,166 +68,180 @@ export default function LifestyleUniverseHome() {
     fetchData();
   }, []);
 
-  if (isLoading) return <LoadingState text="Loading lifestyle content..." />;
-  if (error) return <ErrorState description={error} onRetry={fetchData} />;
+  if (isLoading)
+    return (
+      <SafeAreaView style={styles.container}>
+        <LoadingState text="Loading lifestyle content..." />
+      </SafeAreaView>
+    );
+  if (error)
+    return (
+      <SafeAreaView style={styles.container}>
+        <ErrorState description={error} onRetry={fetchData} />
+      </SafeAreaView>
+    );
   if (!featuredContent.length && !trendingNow.length) {
     return (
-      <EmptyState
-        icon="✨"
-        title="No content available"
-        description="Check back later for lifestyle stories"
-      />
+      <SafeAreaView style={styles.container}>
+        <EmptyState
+          icon="✨"
+          title="No content available"
+          description="Check back later for lifestyle stories"
+        />
+      </SafeAreaView>
     );
   }
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: isDark ? '#0a0a0a' : '#ffffff' }]}>
-      <View style={styles.header}>
-        <Text style={styles.universeLabel}>✨ Lifestyle</Text>
-        <Text style={[styles.headerTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
-          Lifestyle Universe
-        </Text>
-      </View>
-
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.categoriesScroll}
-      >
-        {categories.map((cat) => (
-          <TouchableOpacity key={cat.id} style={styles.categoryChip}>
-            <Text style={styles.categoryEmoji}>{cat.emoji}</Text>
-            <Text style={styles.categoryName}>{cat.name}</Text>
-            <Text style={styles.categoryCount}>{cat.count}</Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
-
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
-            Featured
+    <SafeAreaView style={styles.container}>
+      <ScrollView style={[{ flex: 1 }, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+        <View style={styles.header}>
+          <Text style={styles.universeLabel}>✨ Lifestyle</Text>
+          <Text style={[styles.headerTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
+            Lifestyle Universe
           </Text>
         </View>
-        <FlatList
-          data={featuredContent}
+
+        <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.featuredList}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              style={[styles.featuredCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
-            >
-              <View style={styles.featuredImagePlaceholder}>
-                <Text style={styles.featuredEmoji}>{item.emoji}</Text>
-                <View style={styles.durationBadge}>
-                  <Text style={styles.durationText}>{item.duration}</Text>
-                </View>
-              </View>
-              <View style={styles.featuredInfo}>
-                <Text style={styles.featuredCategory}>{item.category}</Text>
-                <Text
-                  style={[styles.featuredTitle, { color: isDark ? '#fff' : '#000' }]}
-                  numberOfLines={2}
-                >
-                  {item.title}
-                </Text>
-              </View>
-            </TouchableOpacity>
-          )}
-        />
-      </View>
-
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
-            Trending Now
-          </Text>
-          <TouchableOpacity>
-            <Text style={styles.seeAllText}>See All</Text>
-          </TouchableOpacity>
-        </View>
-        <View style={styles.trendingList}>
-          {trendingNow.map((item, index) => (
-            <TouchableOpacity
-              key={item.id}
-              style={[styles.trendingItem, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
-            >
-              <View style={styles.trendingRank}>
-                <Text style={styles.rankNumber}>{index + 1}</Text>
-              </View>
-              <View style={styles.trendingThumbnail}>
-                <Text style={styles.trendingEmoji}>{item.emoji}</Text>
-              </View>
-              <View style={styles.trendingInfo}>
-                <Text
-                  style={[styles.trendingTitle, { color: isDark ? '#fff' : '#000' }]}
-                  numberOfLines={1}
-                >
-                  {item.title}
-                </Text>
-                <Text style={styles.trendingViews}>👁️ {item.views}</Text>
-              </View>
+          contentContainerStyle={styles.categoriesScroll}
+        >
+          {categories.map((cat) => (
+            <TouchableOpacity key={cat.id} style={styles.categoryChip}>
+              <Text style={styles.categoryEmoji}>{cat.emoji}</Text>
+              <Text style={styles.categoryName}>{cat.name}</Text>
+              <Text style={styles.categoryCount}>{cat.count}</Text>
             </TouchableOpacity>
           ))}
-        </View>
-      </View>
+        </ScrollView>
 
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
-            Creators to Follow
-          </Text>
-        </View>
-        <FlatList
-          data={creatorsToFollow}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.creatorsList}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              style={[styles.creatorCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
-            >
-              <View style={styles.creatorAvatar}>
-                <Text style={styles.creatorAvatarEmoji}>{item.avatar}</Text>
-              </View>
-              <Text style={[styles.creatorName, { color: isDark ? '#fff' : '#000' }]}>
-                {item.name}
-              </Text>
-              <Text style={styles.creatorFollowers}>{item.followers}</Text>
-              <TouchableOpacity style={styles.followButton}>
-                <Text style={styles.followButtonText}>Follow</Text>
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
+              Featured
+            </Text>
+          </View>
+          <FlatList
+            data={featuredContent}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.featuredList}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={[styles.featuredCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
+              >
+                <View style={styles.featuredImagePlaceholder}>
+                  <Text style={styles.featuredEmoji}>{item.emoji}</Text>
+                  <View style={styles.durationBadge}>
+                    <Text style={styles.durationText}>{item.duration}</Text>
+                  </View>
+                </View>
+                <View style={styles.featuredInfo}>
+                  <Text style={styles.featuredCategory}>{item.category}</Text>
+                  <Text
+                    style={[styles.featuredTitle, { color: isDark ? '#fff' : '#000' }]}
+                    numberOfLines={2}
+                  >
+                    {item.title}
+                  </Text>
+                </View>
               </TouchableOpacity>
-            </TouchableOpacity>
-          )}
-        />
-      </View>
+            )}
+          />
+        </View>
 
-      <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/home')}>
-          <Text style={styles.navIcon}>🏠</Text>
-          <Text style={styles.navLabel}>Home</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/watch')}>
-          <Text style={styles.navIcon}>📺</Text>
-          <Text style={styles.navLabel}>Watch</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/create')}>
-          <Text style={styles.navIcon}>✨</Text>
-          <Text style={styles.navLabel}>Create</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/rewards')}>
-          <Text style={styles.navIcon}>⭐</Text>
-          <Text style={styles.navLabel}>Rewards</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/profile')}>
-          <Text style={styles.navIcon}>👤</Text>
-          <Text style={styles.navLabel}>Profile</Text>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
+              Trending Now
+            </Text>
+            <TouchableOpacity>
+              <Text style={styles.seeAllText}>See All</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.trendingList}>
+            {trendingNow.map((item, index) => (
+              <TouchableOpacity
+                key={item.id}
+                style={[styles.trendingItem, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
+              >
+                <View style={styles.trendingRank}>
+                  <Text style={styles.rankNumber}>{index + 1}</Text>
+                </View>
+                <View style={styles.trendingThumbnail}>
+                  <Text style={styles.trendingEmoji}>{item.emoji}</Text>
+                </View>
+                <View style={styles.trendingInfo}>
+                  <Text
+                    style={[styles.trendingTitle, { color: isDark ? '#fff' : '#000' }]}
+                    numberOfLines={1}
+                  >
+                    {item.title}
+                  </Text>
+                  <Text style={styles.trendingViews}>👁️ {item.views}</Text>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
+              Creators to Follow
+            </Text>
+          </View>
+          <FlatList
+            data={creatorsToFollow}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.creatorsList}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={[styles.creatorCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
+              >
+                <View style={styles.creatorAvatar}>
+                  <Text style={styles.creatorAvatarEmoji}>{item.avatar}</Text>
+                </View>
+                <Text style={[styles.creatorName, { color: isDark ? '#fff' : '#000' }]}>
+                  {item.name}
+                </Text>
+                <Text style={styles.creatorFollowers}>{item.followers}</Text>
+                <TouchableOpacity style={styles.followButton}>
+                  <Text style={styles.followButtonText}>Follow</Text>
+                </TouchableOpacity>
+              </TouchableOpacity>
+            )}
+          />
+        </View>
+
+        <View style={styles.bottomNav}>
+          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/home')}>
+            <Text style={styles.navIcon}>🏠</Text>
+            <Text style={styles.navLabel}>Home</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/watch')}>
+            <Text style={styles.navIcon}>📺</Text>
+            <Text style={styles.navLabel}>Watch</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/create')}>
+            <Text style={styles.navIcon}>✨</Text>
+            <Text style={styles.navLabel}>Create</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/rewards')}>
+            <Text style={styles.navIcon}>⭐</Text>
+            <Text style={styles.navLabel}>Rewards</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/profile')}>
+            <Text style={styles.navIcon}>👤</Text>
+            <Text style={styles.navLabel}>Profile</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 

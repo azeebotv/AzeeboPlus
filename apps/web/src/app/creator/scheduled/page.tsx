@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { api } from '@/lib/api';
+import { apiFetch } from '@/lib/api';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 
@@ -31,12 +31,19 @@ export default function ScheduledPage(): React.JSX.Element {
 
   const loadScheduled = async () => {
     try {
-      const response = await api.content.getMyContent({ status: 'scheduled' });
+      const response = await apiFetch<any>('/v1/content/me?status=scheduled');
       if (response.success && response.data) {
-        const items = Array.isArray(response.data)
-          ? response.data
-          : (response.data as any).items || [];
-        setScheduled(items as ScheduledContent[]);
+        const items = Array.isArray(response.data) ? response.data : response.data.items || [];
+        setScheduled(
+          items.map((item: any) => ({
+            id: String(item.id),
+            title: String(item.title || ''),
+            thumbnail: String(item.thumbnail || ''),
+            type: String(item.contentType || item.type || 'video'),
+            scheduledAt: String(item.scheduledAt || ''),
+            status: String(item.status || 'scheduled'),
+          }))
+        );
       }
     } catch {
       /* ignore */
@@ -48,7 +55,9 @@ export default function ScheduledPage(): React.JSX.Element {
   const handleCancel = async (id: string) => {
     if (!confirm('Cancel this scheduled content?')) return;
     try {
-      await api.content.updateContent(id, { status: 'draft' } as any);
+      const formData = new FormData();
+      formData.append('status', 'draft');
+      await apiFetch(`/v1/content/${id}`, { method: 'PUT', body: formData });
       setScheduled(scheduled.filter((s) => s.id !== id));
     } catch {
       /* ignore */

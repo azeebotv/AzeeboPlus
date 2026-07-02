@@ -9,8 +9,10 @@ import {
   ActivityIndicator,
   RefreshControl,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { messagingApi } from '../src/api';
+import { useAuth } from '../src/contexts/AuthContext';
 import { logger } from '../src/utils/logger';
 
 interface Conversation {
@@ -33,7 +35,8 @@ interface Message {
 }
 
 export default function MessagesScreen() {
-  const router = useRouter();
+  const _router = useRouter();
+  const { user } = useAuth();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -144,93 +147,102 @@ export default function MessagesScreen() {
 
   if (selectedConversation) {
     return (
-      <View style={styles.container}>
-        <View style={styles.chatHeader}>
-          <TouchableOpacity onPress={() => setSelectedConversation(null)} style={styles.backButton}>
-            <Text style={styles.backText}>←</Text>
-          </TouchableOpacity>
-          <View style={styles.chatHeaderInfo}>
-            <Text style={styles.chatHeaderName}>{selectedConversation.participantName}</Text>
-            <Text style={styles.chatHeaderStatus}>
-              {selectedConversation.isOnline ? 'Online' : 'Offline'}
-            </Text>
-          </View>
-        </View>
-
-        <FlatList
-          data={messages}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.messagesList}
-          renderItem={({ item }) => (
-            <View
-              style={[
-                styles.messageBubble,
-                item.senderId === 'me' ? styles.messageBubbleSent : styles.messageBubbleReceived,
-              ]}
+      <SafeAreaView style={styles.container}>
+        <View style={styles.container}>
+          <View style={styles.chatHeader}>
+            <TouchableOpacity
+              onPress={() => setSelectedConversation(null)}
+              style={styles.backButton}
             >
-              <Text
-                style={[
-                  styles.messageText,
-                  item.senderId === 'me' ? styles.messageTextSent : styles.messageTextReceived,
-                ]}
-              >
-                {item.content}
-              </Text>
-              <Text style={styles.messageTime}>
-                {new Date(item.timestamp).toLocaleTimeString([], {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                })}
+              <Text style={styles.backText}>←</Text>
+            </TouchableOpacity>
+            <View style={styles.chatHeaderInfo}>
+              <Text style={styles.chatHeaderName}>{selectedConversation.participantName}</Text>
+              <Text style={styles.chatHeaderStatus}>
+                {selectedConversation.isOnline ? 'Online' : 'Offline'}
               </Text>
             </View>
-          )}
-        />
+          </View>
 
-        <View style={styles.inputContainer}>
-          <TextInput
-            style={styles.input}
-            value={newMessage}
-            onChangeText={setNewMessage}
-            placeholder="Type a message..."
-            placeholderTextColor="#6B7280"
+          <FlatList
+            data={messages}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={styles.messagesList}
+            renderItem={({ item }) => (
+              <View
+                style={[
+                  styles.messageBubble,
+                  item.senderId === user?.id
+                    ? styles.messageBubbleSent
+                    : styles.messageBubbleReceived,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.messageText,
+                    item.senderId === user?.id
+                      ? styles.messageTextSent
+                      : styles.messageTextReceived,
+                  ]}
+                >
+                  {item.content}
+                </Text>
+                <Text style={styles.messageTime}>
+                  {new Date(item.timestamp).toLocaleTimeString([], {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                </Text>
+              </View>
+            )}
           />
-          <TouchableOpacity
-            style={[
-              styles.sendButton,
-              (!newMessage.trim() || isSending) && styles.sendButtonDisabled,
-            ]}
-            onPress={sendMessage}
-            disabled={!newMessage.trim() || isSending}
-          >
-            <Text style={styles.sendButtonText}>Send</Text>
-          </TouchableOpacity>
+
+          <View style={styles.inputContainer}>
+            <TextInput
+              style={styles.input}
+              value={newMessage}
+              onChangeText={setNewMessage}
+              placeholder="Type a message..."
+              placeholderTextColor="#6B7280"
+            />
+            <TouchableOpacity
+              style={[
+                styles.sendButton,
+                (!newMessage.trim() || isSending) && styles.sendButtonDisabled,
+              ]}
+              onPress={sendMessage}
+              disabled={!newMessage.trim() || isSending}
+            >
+              <Text style={styles.sendButtonText}>Send</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
+      </SafeAreaView>
     );
   }
 
   if (isLoading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#8B5CF6" />
+      <SafeAreaView style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#E8420A" />
         <Text style={styles.loadingText}>Loading messages...</Text>
-      </View>
+      </SafeAreaView>
     );
   }
 
   if (error) {
     return (
-      <View style={styles.errorContainer}>
+      <SafeAreaView style={styles.errorContainer}>
         <Text style={styles.errorText}>{error}</Text>
         <TouchableOpacity style={styles.retryButton} onPress={loadConversations}>
           <Text style={styles.retryButtonText}>Retry</Text>
         </TouchableOpacity>
-      </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Messages</Text>
       </View>
@@ -241,7 +253,7 @@ export default function MessagesScreen() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
         refreshControl={
-          <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} colors={['#8B5CF6']} />
+          <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} colors={['#E8420A']} />
         }
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
@@ -251,18 +263,18 @@ export default function MessagesScreen() {
           </View>
         }
       />
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#111827',
+    backgroundColor: '#1A0A0A',
   },
   loadingContainer: {
     flex: 1,
-    backgroundColor: '#111827',
+    backgroundColor: '#1A0A0A',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -287,7 +299,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#374151',
+    borderBottomColor: 'rgba(255,255,255,0.2)',
   },
   avatarContainer: {
     position: 'relative',
@@ -297,7 +309,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -315,7 +327,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     backgroundColor: '#10B981',
     borderWidth: 2,
-    borderColor: '#111827',
+    borderColor: 'rgba(255,255,255,0.2)',
   },
   conversationInfo: {
     flex: 1,
@@ -346,7 +358,7 @@ const styles = StyleSheet.create({
     color: '#9CA3AF',
   },
   unreadBadge: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     borderRadius: 10,
     minWidth: 20,
     height: 20,
@@ -366,14 +378,14 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingTop: 60,
     borderBottomWidth: 1,
-    borderBottomColor: '#374151',
+    borderBottomColor: 'rgba(255,255,255,0.2)',
   },
   backButton: {
     marginRight: 12,
   },
   backText: {
     fontSize: 24,
-    color: '#8B5CF6',
+    color: '#E8420A',
   },
   chatHeaderInfo: {
     flex: 1,
@@ -397,12 +409,12 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   messageBubbleSent: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     alignSelf: 'flex-end',
     borderBottomRightRadius: 4,
   },
   messageBubbleReceived: {
-    backgroundColor: '#1F2937',
+    backgroundColor: '#2A2A2A',
     alignSelf: 'flex-start',
     borderBottomLeftRadius: 4,
   },
@@ -427,12 +439,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 12,
     borderTopWidth: 1,
-    borderTopColor: '#374151',
-    backgroundColor: '#1F2937',
+    borderTopColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: '#2A2A2A',
   },
   input: {
     flex: 1,
-    backgroundColor: '#374151',
+    backgroundColor: 'rgba(255,255,255,0.2)',
     borderRadius: 20,
     paddingHorizontal: 16,
     paddingVertical: 10,
@@ -440,7 +452,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   sendButton: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     borderRadius: 20,
     paddingHorizontal: 16,
     paddingVertical: 10,
@@ -484,7 +496,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   retryButton: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,

@@ -5,6 +5,7 @@ import { PrismaService } from '../database/prisma.service';
 import { SearchController } from './search.controller';
 import { SearchService } from './search.service';
 import { SearchRepository } from './search.repository';
+import { RateLimitGuard } from '@azeebo/security';
 
 describe('Search Service Integration Tests', () => {
   let app: INestApplication;
@@ -43,7 +44,10 @@ describe('Search Service Integration Tests', () => {
           useValue: mockPrismaService,
         },
       ],
-    }).compile();
+    })
+      .overrideGuard(RateLimitGuard)
+      .useValue({ canActivate: jest.fn().mockReturnValue(true) })
+      .compile();
 
     app = moduleFixture.createNestApplication();
     await app.init();
@@ -78,7 +82,7 @@ describe('Search Service Integration Tests', () => {
       mockPrismaService.creatorProfile.findMany.mockResolvedValue([]);
       mockPrismaService.universe.findMany.mockResolvedValue([]);
 
-      const response = await request(app.getHttpServer()).get('/search?q=test');
+      const response = await request(app.getHttpServer()).get('/v1/search?q=test');
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -92,7 +96,7 @@ describe('Search Service Integration Tests', () => {
       mockPrismaService.creatorProfile.findMany.mockResolvedValue([]);
       mockPrismaService.universe.findMany.mockResolvedValue([]);
 
-      const response = await request(app.getHttpServer()).get('/search?q=nonexistent');
+      const response = await request(app.getHttpServer()).get('/v1/search?q=nonexistent');
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -122,7 +126,7 @@ describe('Search Service Integration Tests', () => {
       mockPrismaService.universe.findMany.mockResolvedValue([]);
 
       const response = await request(app.getHttpServer())
-        .get('/search?q=test')
+        .get('/v1/search?q=test')
         .query({ categories: 'cat-1' });
 
       expect(response.status).toBe(200);
@@ -130,7 +134,7 @@ describe('Search Service Integration Tests', () => {
     });
 
     it('should reject queries shorter than 2 characters', async () => {
-      const response = await request(app.getHttpServer()).get('/search?q=a');
+      const response = await request(app.getHttpServer()).get('/v1/search?q=a');
 
       expect(response.status).toBe(400);
     });
@@ -139,7 +143,7 @@ describe('Search Service Integration Tests', () => {
       mockPrismaService.contentItem.findMany.mockResolvedValue([]);
       mockPrismaService.contentItem.count.mockResolvedValue(0);
 
-      await request(app.getHttpServer()).get('/search?q=test');
+      await request(app.getHttpServer()).get('/v1/search?q=test');
 
       expect(mockPrismaService.contentItem.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -152,7 +156,7 @@ describe('Search Service Integration Tests', () => {
       mockPrismaService.contentItem.findMany.mockResolvedValue([]);
       mockPrismaService.contentItem.count.mockResolvedValue(0);
 
-      await request(app.getHttpServer()).get('/search?q=test').query({ sort: 'popular' });
+      await request(app.getHttpServer()).get('/v1/search?q=test').query({ sort: 'popular' });
 
       expect(mockPrismaService.contentItem.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -182,7 +186,7 @@ describe('Search Service Integration Tests', () => {
       mockPrismaService.universe.findMany.mockResolvedValue([]);
 
       const response = await request(app.getHttpServer())
-        .get('/search?q=test')
+        .get('/v1/search?q=test')
         .query({ page: 2, limit: 10 });
 
       expect(response.status).toBe(200);
@@ -199,7 +203,7 @@ describe('Search Service Integration Tests', () => {
       mockPrismaService.creatorProfile.findMany.mockResolvedValue([]);
       mockPrismaService.universe.findMany.mockResolvedValue([]);
 
-      await request(app.getHttpServer()).get('/search?q=test');
+      await request(app.getHttpServer()).get('/v1/search?q=test');
 
       expect(mockPrismaService.contentItem.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -219,7 +223,7 @@ describe('Search Service Integration Tests', () => {
 
       mockPrismaService.searchQueryLog.findMany.mockResolvedValue(mockSuggestions);
 
-      const response = await request(app.getHttpServer()).get('/search/suggestions?q=test');
+      const response = await request(app.getHttpServer()).get('/v1/search/suggestions?q=test');
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -236,7 +240,7 @@ describe('Search Service Integration Tests', () => {
 
       mockPrismaService.searchQueryLog.findMany.mockResolvedValue(mockTrending);
 
-      const response = await request(app.getHttpServer()).get('/search/trending');
+      const response = await request(app.getHttpServer()).get('/v1/search/trending');
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -248,7 +252,7 @@ describe('Search Service Integration Tests', () => {
     it('should handle database errors gracefully', async () => {
       mockPrismaService.contentItem.findMany.mockRejectedValue(new Error('Database error'));
 
-      const response = await request(app.getHttpServer()).get('/search?q=test');
+      const response = await request(app.getHttpServer()).get('/v1/search?q=test');
 
       expect(response.status).toBe(500);
     });
@@ -261,7 +265,7 @@ describe('Search Service Integration Tests', () => {
 
       const promises = Array(3)
         .fill(null)
-        .map(() => request(app.getHttpServer()).get('/search?q=test'));
+        .map(() => request(app.getHttpServer()).get('/v1/search?q=test'));
 
       const results = await Promise.all(promises);
 

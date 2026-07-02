@@ -6,31 +6,31 @@
 // ── Brand Colors ──────────────────────────────────────────────
 export const colors = {
   // Primary brand
-  primary: '#E8420A',       // Azeebo Orange — CTAs, logo accent, highlights
-  primaryDark: '#C83A08',   // Darker orange for pressed states
-  red: '#CC1C1C',           // Deep Red — buttons, active states, glow
-  redDark: '#B91818',       // Darker red for pressed states
+  primary: '#E8420A', // Azeebo Orange — CTAs, logo accent, highlights
+  primaryDark: '#C83A08', // Darker orange for pressed states
+  red: '#CC1C1C', // Deep Red — buttons, active states, glow
+  redDark: '#B91818', // Darker red for pressed states
 
   // Backgrounds
   bg: {
-    primary: '#0A0A0A',     // Near-black — main background
-    secondary: '#1A0A0A',   // Slightly warmer black — cards, surfaces
-    tertiary: '#2A1A1A',    // Elevated surface
-    surface: '#2A2A2A',     // Card backgrounds, input fields
+    primary: '#1A0A0A', // Warm near-black — main background
+    secondary: '#0A0A0A', // Cool near-black
+    tertiary: '#2A1A1A', // Elevated surface
+    surface: '#2A2A2A', // Card backgrounds, input fields
     surfaceInput: '#1E1E1E', // Input field backgrounds
     glass: 'rgba(255,255,255,0.08)', // Frosted glass panels
-    glassBorder: 'rgba(255,255,255,0.12)', // Glass panel borders
-    green: '#0D3B2E',       // Forest green — marketing/hero backgrounds
+    glassBorder: 'rgba(255,255,255,0.2)', // Glass panel borders
+    green: '#0D3B2E', // Forest green — marketing/hero backgrounds
   },
 
   // Text
   text: {
-    primary: '#FFFFFF',     // White — primary text
-    secondary: '#9A8A7A',   // Warm grey — secondary text
-    tertiary: '#6B5B4B',    // Muted grey — hints, captions
-    inverse: '#0A0A0A',     // Dark text on light backgrounds
-    accent: '#E8420A',      // Orange accent text
-    link: '#E8420A',        // Link color
+    primary: '#FFFFFF', // White — primary text
+    secondary: '#9A8A7A', // Warm grey — secondary text
+    tertiary: '#6B5B4B', // Muted grey — hints, captions
+    inverse: '#0A0A0A', // Dark text on light backgrounds
+    accent: '#E8420A', // Orange accent text
+    link: '#E8420A', // Link color
   },
 
   // Semantic
@@ -41,8 +41,8 @@ export const colors = {
 
   // Borders
   border: {
-    default: 'rgba(255,255,255,0.08)',
-    focus: '#CC1C1C',
+    default: 'rgba(255,255,255,0.2)',
+    focus: '#E8420A',
     subtle: 'rgba(255,255,255,0.04)',
   },
 
@@ -51,26 +51,65 @@ export const colors = {
     dark: 'rgba(10,10,10,0.85)',
     light: 'rgba(255,255,255,0.05)',
   },
+
+  // Dark shade scale (Tailwind gray)
+  dark: {
+    50: '#f8fafc',
+    100: '#f1f5f9',
+    200: '#e2e8f0',
+    300: '#cbd5e1',
+    400: '#94a3b8',
+    500: '#64748b',
+    600: '#475569',
+    700: '#334155',
+    800: '#1e293b',
+    900: '#030712',
+    950: '#0A0A0A',
+  },
+
+  // Light shade scale (Tailwind gray)
+  light: {
+    50: '#f9fafb',
+    100: '#f3f4f6',
+    200: '#e5e7eb',
+    300: '#d1d5db',
+    400: '#9ca3af',
+    500: '#6b7280',
+    600: '#4b5563',
+    700: '#374151',
+    800: '#1f2937',
+    900: '#111827',
+    950: '#030712',
+  },
+
+  // Accent metallics
+  accent: {
+    gold: '#F59E0B',
+    silver: '#9CA3AF',
+    bronze: '#CD7F32',
+  },
 } as const;
 
 // ── Universe Colors ───────────────────────────────────────────
 export const universeColors: Record<string, string> = {
-  reality: '#CC1C1C',
+  reality: '#8b5cf6',
   creators: '#E8420A',
-  lifestyle: '#0D3B2E',
-  vertical: '#8B5CF6',
-  movies: '#F59E0B',
-  games: '#3B82F6',
-  comedy: '#22C55E',
-  sports: '#EF4444',
-  music: '#EC4899',
+  creator: '#E8420A',
+  lifestyle: '#ec4899',
+  vertical: '#3b82f6',
+  movies: '#E8420A',
+  movie: '#E8420A',
+  games: '#06b6d4',
+  comedy: '#fbbf24',
+  sports: '#22c55e',
+  cinemaxis: '#0A1A3B',
 };
 
 // ── Typography ────────────────────────────────────────────────
 export const typography = {
   fontFamily: {
-    display: 'System',   // Montserrat equivalent via system bold
-    body: 'System',       // Inter equivalent via system
+    display: 'System', // Montserrat equivalent via system bold
+    body: 'System', // Inter equivalent via system
   },
   fontSize: {
     xs: 11,

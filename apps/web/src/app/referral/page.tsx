@@ -46,13 +46,19 @@ export default function ReferralPage(): React.JSX.Element {
       const referralsData = referrals?.data ?? {};
 
       setReferralData({
-        code: codeData.code ?? codeData.referralCode ?? '',
-        link: codeData.link ?? codeData.referralLink ?? '',
-        totalReferrals: statsData.totalReferrals ?? statsData.total ?? referralsData.total ?? 0,
-        successfulReferrals: statsData.successfulReferrals ?? statsData.successful ?? 0,
-        pendingReferrals: statsData.pendingReferrals ?? statsData.pending ?? 0,
-        totalEarned: statsData.totalEarned ?? statsData.earned ?? 0,
-        referrals: Array.isArray(referralsData.referrals) ? referralsData.referrals : Array.isArray(referralsData) ? referralsData : [],
+        code: String(codeData.code ?? codeData.referralCode ?? ''),
+        link: String(codeData.link ?? codeData.referralLink ?? ''),
+        totalReferrals: Number(
+          statsData.totalReferrals ?? statsData.total ?? referralsData.total ?? 0
+        ),
+        successfulReferrals: Number(statsData.successfulReferrals ?? statsData.successful ?? 0),
+        pendingReferrals: Number(statsData.pendingReferrals ?? statsData.pending ?? 0),
+        totalEarned: Number(statsData.totalEarned ?? statsData.earned ?? 0),
+        referrals: Array.isArray(referralsData.referrals)
+          ? referralsData.referrals
+          : Array.isArray(referralsData)
+            ? referralsData
+            : [],
       });
     } catch {
       /* ignore */

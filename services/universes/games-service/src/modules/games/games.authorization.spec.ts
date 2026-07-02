@@ -1,9 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication } from '@nestjs/common';
+import { INestApplication, UnauthorizedException } from '@nestjs/common';
 import request from 'supertest';
 import { AuthGuard } from '@nestjs/passport';
 import { GamesController } from './games.controller';
 import { GamesService } from './games.service';
+import { RateLimitGuard } from '@azeebo/security';
 
 describe('Games Service Authorization Tests', () => {
   let app: INestApplication;
@@ -29,7 +30,14 @@ describe('Games Service Authorization Tests', () => {
   };
 
   const createMockAuthGuard = (canActivate: boolean) => ({
-    canActivate: jest.fn().mockReturnValue(canActivate),
+    canActivate: jest.fn().mockImplementation((context: any) => {
+      if (!canActivate) {
+        throw new UnauthorizedException();
+      }
+      const req = context.switchToHttp().getRequest();
+      req.user = { sub: 'user-123', role: 'user' };
+      return true;
+    }),
   });
 
   beforeAll(async () => {
@@ -41,7 +49,12 @@ describe('Games Service Authorization Tests', () => {
           useValue: mockGamesService,
         },
       ],
-    }).compile();
+    })
+      .overrideGuard(AuthGuard('jwt'))
+      .useValue(createMockAuthGuard(true))
+      .overrideGuard(RateLimitGuard)
+      .useValue({ canActivate: jest.fn().mockReturnValue(true) })
+      .compile();
 
     app = moduleFixture.createNestApplication();
     await app.init();
@@ -55,7 +68,7 @@ describe('Games Service Authorization Tests', () => {
     jest.clearAllMocks();
   });
 
-  describe('Authorization - GET /daily-challenge', () => {
+  describe('Authorization - GET /v1/games/daily-challenge', () => {
     it('should allow authenticated users to access daily challenge', async () => {
       const mockAuthGuard = createMockAuthGuard(true);
 
@@ -68,13 +81,15 @@ describe('Games Service Authorization Tests', () => {
       })
         .overrideGuard(AuthGuard('jwt'))
         .useValue(mockAuthGuard)
+        .overrideGuard(RateLimitGuard)
+        .useValue({ canActivate: jest.fn().mockReturnValue(true) })
         .compile();
 
       const testApp = moduleFixture.createNestApplication();
       await testApp.init();
 
       const response = await request(testApp.getHttpServer())
-        .get('/daily-challenge')
+        .get('/v1/games/daily-challenge')
         .set('Authorization', 'Bearer valid-token');
 
       expect(response.status).toBe(200);
@@ -95,12 +110,14 @@ describe('Games Service Authorization Tests', () => {
       })
         .overrideGuard(AuthGuard('jwt'))
         .useValue(mockAuthGuard)
+        .overrideGuard(RateLimitGuard)
+        .useValue({ canActivate: jest.fn().mockReturnValue(true) })
         .compile();
 
       const testApp = moduleFixture.createNestApplication();
       await testApp.init();
 
-      const response = await request(testApp.getHttpServer()).get('/daily-challenge');
+      const response = await request(testApp.getHttpServer()).get('/v1/games/daily-challenge');
 
       expect(response.status).toBe(401);
 
@@ -119,13 +136,15 @@ describe('Games Service Authorization Tests', () => {
       })
         .overrideGuard(AuthGuard('jwt'))
         .useValue(mockAuthGuard)
+        .overrideGuard(RateLimitGuard)
+        .useValue({ canActivate: jest.fn().mockReturnValue(true) })
         .compile();
 
       const testApp = moduleFixture.createNestApplication();
       await testApp.init();
 
       const response = await request(testApp.getHttpServer())
-        .get('/daily-challenge')
+        .get('/v1/games/daily-challenge')
         .set('Authorization', 'Bearer invalid-token');
 
       expect(response.status).toBe(401);
@@ -134,7 +153,7 @@ describe('Games Service Authorization Tests', () => {
     });
   });
 
-  describe('Authorization - POST /daily-challenge/submit', () => {
+  describe('Authorization - POST /v1/games/daily-challenge/submit', () => {
     it('should allow authenticated users to submit answers', async () => {
       const mockAuthGuard = createMockAuthGuard(true);
 
@@ -147,17 +166,19 @@ describe('Games Service Authorization Tests', () => {
       })
         .overrideGuard(AuthGuard('jwt'))
         .useValue(mockAuthGuard)
+        .overrideGuard(RateLimitGuard)
+        .useValue({ canActivate: jest.fn().mockReturnValue(true) })
         .compile();
 
       const testApp = moduleFixture.createNestApplication();
       await testApp.init();
 
       const response = await request(testApp.getHttpServer())
-        .post('/daily-challenge/submit')
+        .post('/v1/games/daily-challenge/submit')
         .set('Authorization', 'Bearer valid-token')
         .send({ answer: 'A' });
 
-      expect(response.status).toBe(200);
+      expect(response.status).toBe(201);
       expect(response.body.success).toBe(true);
 
       await testApp.close();
@@ -175,13 +196,15 @@ describe('Games Service Authorization Tests', () => {
       })
         .overrideGuard(AuthGuard('jwt'))
         .useValue(mockAuthGuard)
+        .overrideGuard(RateLimitGuard)
+        .useValue({ canActivate: jest.fn().mockReturnValue(true) })
         .compile();
 
       const testApp = moduleFixture.createNestApplication();
       await testApp.init();
 
       const response = await request(testApp.getHttpServer())
-        .post('/daily-challenge/submit')
+        .post('/v1/games/daily-challenge/submit')
         .send({ answer: 'A' });
 
       expect(response.status).toBe(401);
@@ -201,17 +224,19 @@ describe('Games Service Authorization Tests', () => {
       })
         .overrideGuard(AuthGuard('jwt'))
         .useValue(mockAuthGuard)
+        .overrideGuard(RateLimitGuard)
+        .useValue({ canActivate: jest.fn().mockReturnValue(true) })
         .compile();
 
       const testApp = moduleFixture.createNestApplication();
       await testApp.init();
 
       const response = await request(testApp.getHttpServer())
-        .post('/daily-challenge/submit')
+        .post('/v1/games/daily-challenge/submit')
         .set('Authorization', 'Bearer valid-token')
         .send({});
 
-      expect([200, 400]).toContain(response.status);
+      expect([200, 201, 400]).toContain(response.status);
 
       await testApp.close();
     });

@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { api } from '@/lib/api';
+import { apiFetch } from '@/lib/api';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 
@@ -16,6 +16,7 @@ interface PublishedContent {
   views: number;
   likes: number;
   publishedAt: string;
+  createdAt: string;
   status: string;
 }
 
@@ -35,12 +36,24 @@ export default function PublishedPage(): React.JSX.Element {
 
   const loadContent = async () => {
     try {
-      const response = await api.content.getMyContent({ status: 'published' });
+      const response = await apiFetch<any>('/v1/content/me?status=published');
       if (response.success && response.data) {
-        const items = Array.isArray(response.data)
-          ? response.data
-          : (response.data as any).items || [];
-        setContent(items as PublishedContent[]);
+        const items = Array.isArray(response.data) ? response.data : response.data.items || [];
+        setContent(
+          items.map((item: any) => ({
+            id: String(item.id),
+            title: String(item.title || ''),
+            description: String(item.description || ''),
+            thumbnail: String(item.thumbnail || ''),
+            type: String(item.contentType || item.type || 'video'),
+            duration: Number(item.duration || 0),
+            views: Number(item.viewCount ?? item.views ?? 0),
+            likes: Number(item.likeCount ?? item.likes ?? 0),
+            publishedAt: String(item.publishedAt || item.createdAt || ''),
+            createdAt: String(item.createdAt || ''),
+            status: String(item.status || 'published'),
+          }))
+        );
       }
     } catch {
       /* ignore */

@@ -8,7 +8,7 @@ import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 
 export default function WalletPage(): React.JSX.Element {
-  const { user, isAuthenticated, isLoading: authIsLoading } = useAuth();
+  const { user: _user, isAuthenticated, isLoading: authIsLoading } = useAuth();
   const [balance, setBalance] = useState(0);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -29,7 +29,10 @@ export default function WalletPage(): React.JSX.Element {
           api.wallet.getTransactions(),
         ]);
         if (balanceRes.success && balanceRes.data) setBalance(balanceRes.data.balance);
-        if (transactionsRes.success && transactionsRes.data) setTransactions(transactionsRes.data.items);
+        if (transactionsRes.success && transactionsRes.data) {
+          const txData = transactionsRes.data;
+          setTransactions(Array.isArray(txData) ? txData : txData.items || []);
+        }
       } catch (err) {
         webLogger.error('Failed to fetch wallet data', err);
         setError('Failed to load wallet data. Please try again.');

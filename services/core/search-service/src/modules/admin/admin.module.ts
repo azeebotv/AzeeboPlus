@@ -5,7 +5,7 @@ import { AdminService } from './admin.service';
 import { DatabaseModule } from '../database/database.module';
 
 @Module({
-  imports: [DatabaseModule, JwtModule.register({})],
+  imports: [DatabaseModule, JwtModule.register({ secret: process.env.JWT_ACCESS_SECRET })],
   controllers: [AdminController],
   providers: [AdminService],
 })

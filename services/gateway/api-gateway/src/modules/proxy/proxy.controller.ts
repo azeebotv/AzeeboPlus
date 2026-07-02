@@ -81,10 +81,22 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
       { method: 'POST', path: '/mfa/enable', description: 'Enable MFA' },
       { method: 'POST', path: '/mfa/disable', description: 'Disable MFA' },
       { method: 'POST', path: '/social/google', description: 'Google OAuth login (legacy)' },
-      { method: 'GET', path: '/social/google/authorize', description: 'Initiate Google OAuth flow with state' },
+      {
+        method: 'GET',
+        path: '/social/google/authorize',
+        description: 'Initiate Google OAuth flow with state',
+      },
       { method: 'POST', path: '/social/apple', description: 'Apple OAuth login (legacy)' },
-      { method: 'GET', path: '/social/apple/authorize', description: 'Initiate Apple OAuth flow with state' },
-      { method: 'POST', path: '/social/callback', description: 'OAuth callback with state validation' },
+      {
+        method: 'GET',
+        path: '/social/apple/authorize',
+        description: 'Initiate Apple OAuth flow with state',
+      },
+      {
+        method: 'POST',
+        path: '/social/callback',
+        description: 'OAuth callback with state validation',
+      },
       { method: 'POST', path: '/social/unlink', description: 'Unlink social account' },
       { method: 'POST', path: '/otp/send', description: 'Send OTP' },
       { method: 'POST', path: '/otp/verify', description: 'Verify OTP' },
@@ -174,7 +186,11 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
       { method: 'GET', path: '/public/settings', description: 'Get public settings' },
       { method: 'GET', path: '/public/settings/:key', description: 'Get a public setting' },
       { method: 'GET', path: '/public/universes', description: 'Get enabled universes' },
-      { method: 'GET', path: '/public/universes/:name/features', description: 'Get universe features' },
+      {
+        method: 'GET',
+        path: '/public/universes/:name/features',
+        description: 'Get universe features',
+      },
     ],
   },
   {
@@ -890,7 +906,14 @@ export class ProxyController {
       res.json(cachedResponse);
       return;
     }
-    const response = await this.forwardRequest(req, res, route.targetUrl, version, requestId, route);
+    const response = await this.forwardRequest(
+      req,
+      res,
+      route.targetUrl,
+      version,
+      requestId,
+      route
+    );
     if (response && typeof response === 'object') {
       await this.cacheManager.set(cacheKey, response, CACHE_TTL_MS);
       res.setHeader(API_VERSION_HEADER, version);

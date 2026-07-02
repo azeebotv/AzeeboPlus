@@ -19,14 +19,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../src/contexts/AuthContext';
 import { authApi } from '../../src/api';
 import { logger } from '../../src/utils/logger';
-import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
-import { colors, typography, spacing, radius } from '../../src/theme';
-import {
-  PageTransition,
-  ScrollReveal,
-  StaggerGrid,
-  GlowCard,
-} from '../../src/components/motion';
+import { PageTransition, ScrollReveal, StaggerGrid, GlowCard } from '../../src/components/motion';
 
 const MENU_ITEMS = [
   { id: 'subscriptions', label: 'Subscriptions', icon: '📺', action: 'navigate' },
@@ -44,7 +37,7 @@ export default function ProfileScreen() {
   const [pushEnabled, setPushEnabled] = useState(true);
   const [emailEnabled, setEmailEnabled] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [_isRefreshing, setIsRefreshing] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editForm, setEditForm] = useState({
     name: user?.name || '',
@@ -135,7 +128,7 @@ export default function ProfileScreen() {
   if (!isAuthenticated) {
     return (
       <SafeAreaView
-        style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#000' : '#fff' }]}
+        style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#1A0A0A' : '#fff' }]}
         edges={['top']}
       >
         <View style={styles.unauthenticatedContainer}>
@@ -156,7 +149,7 @@ export default function ProfileScreen() {
 
   return (
     <SafeAreaView
-      style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#000' : '#fff' }]}
+      style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#1A0A0A' : '#fff' }]}
       edges={['top']}
     >
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -172,7 +165,7 @@ export default function ProfileScreen() {
           <ScrollReveal direction="up" delay={60}>
             <View style={styles.profileSection}>
               <GlowCard variant="strong" padding={0} style={styles.avatar}>
-                <View style={[styles.avatarInner, { backgroundColor: '#8B5CF6' }]}>
+                <View style={[styles.avatarInner, { backgroundColor: '#E8420A' }]}>
                   {user?.avatar ? (
                     <Text style={styles.avatarImage}>👤</Text>
                   ) : (
@@ -181,7 +174,9 @@ export default function ProfileScreen() {
                 </View>
               </GlowCard>
               <View style={styles.profileInfo}>
-                <Text style={[styles.displayName, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
+                <Text
+                  style={[styles.displayName, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}
+                >
                   {displayName}
                 </Text>
                 <Text style={styles.email}>{user?.email || 'user@example.com'}</Text>
@@ -205,8 +200,10 @@ export default function ProfileScreen() {
               ]}
             >
               <View style={styles.statItem}>
-                <Text style={[styles.statValue, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
-                  127
+                <Text
+                  style={[styles.statValue, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}
+                >
+                  {(user as any)?.watchHistoryCount ?? 0}
                 </Text>
                 <Text style={styles.statLabel}>Watched</Text>
               </View>
@@ -217,8 +214,10 @@ export default function ProfileScreen() {
                 ]}
               />
               <View style={styles.statItem}>
-                <Text style={[styles.statValue, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
-                  12
+                <Text
+                  style={[styles.statValue, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}
+                >
+                  {(user as any)?.savedListsCount ?? 0}
                 </Text>
                 <Text style={styles.statLabel}>Lists</Text>
               </View>
@@ -229,8 +228,10 @@ export default function ProfileScreen() {
                 ]}
               />
               <View style={styles.statItem}>
-                <Text style={[styles.statValue, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
-                  5
+                <Text
+                  style={[styles.statValue, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}
+                >
+                  {(user as any)?.reviewsCount ?? 0}
                 </Text>
                 <Text style={styles.statLabel}>Reviews</Text>
               </View>
@@ -239,7 +240,9 @@ export default function ProfileScreen() {
 
           <ScrollReveal direction="up" delay={180}>
             <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: colorScheme === 'dark' ? '#888' : '#666' }]}>
+              <Text
+                style={[styles.sectionTitle, { color: colorScheme === 'dark' ? '#888' : '#666' }]}
+              >
                 Preferences
               </Text>
               <GlowCard variant="subtle" padding={0}>
@@ -266,7 +269,7 @@ export default function ProfileScreen() {
                   <Switch
                     value={pushEnabled}
                     onValueChange={setPushEnabled}
-                    trackColor={{ false: '#333', true: '#8B5CF6' }}
+                    trackColor={{ false: '#333', true: '#E8420A' }}
                     thumbColor="#fff"
                   />
                 </View>
@@ -293,7 +296,7 @@ export default function ProfileScreen() {
                   <Switch
                     value={emailEnabled}
                     onValueChange={setEmailEnabled}
-                    trackColor={{ false: '#333', true: '#8B5CF6' }}
+                    trackColor={{ false: '#333', true: '#E8420A' }}
                     thumbColor="#fff"
                   />
                 </View>
@@ -303,7 +306,9 @@ export default function ProfileScreen() {
 
           <ScrollReveal direction="up" delay={240}>
             <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: colorScheme === 'dark' ? '#888' : '#666' }]}>
+              <Text
+                style={[styles.sectionTitle, { color: colorScheme === 'dark' ? '#888' : '#666' }]}
+              >
                 Account
               </Text>
               <StaggerGrid staggerDelay={40}>
@@ -317,7 +322,12 @@ export default function ProfileScreen() {
                     onPress={() => handleMenuPress(item)}
                   >
                     <Text style={styles.menuIcon}>{item.icon}</Text>
-                    <Text style={[styles.menuLabel, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
+                    <Text
+                      style={[
+                        styles.menuLabel,
+                        { color: colorScheme === 'dark' ? '#fff' : '#000' },
+                      ]}
+                    >
                       {item.label}
                     </Text>
                     <Text style={styles.menuArrow}>›</Text>
@@ -459,7 +469,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   loginButton: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     paddingHorizontal: 32,
     paddingVertical: 12,
     borderRadius: 24,
@@ -530,7 +540,7 @@ const styles = StyleSheet.create({
   },
   editButton: {
     alignSelf: 'flex-start',
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
@@ -700,7 +710,7 @@ const styles = StyleSheet.create({
   },
   saveButton: {
     flex: 1,
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     padding: 16,
     borderRadius: 12,
     alignItems: 'center',

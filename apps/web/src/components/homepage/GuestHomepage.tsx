@@ -22,15 +22,69 @@ type CategoryCard = {
 };
 
 const CATEGORY_CARDS: CategoryCard[] = [
-  { category: 'Reality', sub: 'Universe', descriptor: 'Reality TV & Shows', emoji: '\u{1F4FA}', side: 'left' },
-  { category: 'Vertical', sub: 'Universe', descriptor: 'Short-Form Content', emoji: '\u{1F4F1}', side: 'left' },
-  { category: 'Movie', sub: 'Universe', descriptor: 'Nollywood & Beyond', emoji: '\u{1F3AC}', side: 'left' },
-  { category: 'Creator', sub: 'Universe', descriptor: 'Vlogs & Livestreams', emoji: '\u{1F4E1}', side: 'right' },
-  { category: 'Cinemaxis', sub: 'Digital Cinema', descriptor: 'Premium Viewing', emoji: '\u{1F3A6}', side: 'right' },
-  { category: 'Comedy', sub: 'Universe', descriptor: 'Laughs & Skits', emoji: '\u{1F602}', side: 'right' },
-  { category: 'Sports', sub: 'Universe', descriptor: 'Live Matches & Highlights', emoji: '\u26BD', side: 'left' },
-  { category: 'Lifestyle', sub: 'Universe', descriptor: 'Culture & Heritage', emoji: '\u{1F3A8}', side: 'left' },
-  { category: 'Games', sub: 'Universe', descriptor: 'Play & Compete', emoji: '\u{1F3AE}', side: 'right' },
+  {
+    category: 'Reality',
+    sub: 'Universe',
+    descriptor: 'Reality TV & Shows',
+    emoji: '\u{1F4FA}',
+    side: 'left',
+  },
+  {
+    category: 'Vertical',
+    sub: 'Universe',
+    descriptor: 'Short-Form Content',
+    emoji: '\u{1F4F1}',
+    side: 'left',
+  },
+  {
+    category: 'Movie',
+    sub: 'Universe',
+    descriptor: 'Nollywood & Beyond',
+    emoji: '\u{1F3AC}',
+    side: 'left',
+  },
+  {
+    category: 'Creator',
+    sub: 'Universe',
+    descriptor: 'Vlogs & Livestreams',
+    emoji: '\u{1F4E1}',
+    side: 'right',
+  },
+  {
+    category: 'Cinemaxis',
+    sub: 'Digital Cinema',
+    descriptor: 'Premium Viewing',
+    emoji: '\u{1F3A6}',
+    side: 'right',
+  },
+  {
+    category: 'Comedy',
+    sub: 'Universe',
+    descriptor: 'Laughs & Skits',
+    emoji: '\u{1F602}',
+    side: 'right',
+  },
+  {
+    category: 'Sports',
+    sub: 'Universe',
+    descriptor: 'Live Matches & Highlights',
+    emoji: '\u26BD',
+    side: 'left',
+  },
+  {
+    category: 'Lifestyle',
+    sub: 'Universe',
+    descriptor: 'Culture & Heritage',
+    emoji: '\u{1F3A8}',
+    side: 'left',
+  },
+  {
+    category: 'Games',
+    sub: 'Universe',
+    descriptor: 'Play & Compete',
+    emoji: '\u{1F3AE}',
+    side: 'right',
+  },
 ];
 
 export default function GuestHomepage(): React.JSX.Element {
@@ -72,7 +126,7 @@ export default function GuestHomepage(): React.JSX.Element {
       try {
         const trending = await api.content.getTrendingContent(12);
         if (trending.success && trending.data) {
-          setTrendingContent(trending.data);
+          setTrendingContent(Array.isArray(trending.data) ? trending.data : []);
         }
       } catch {
         // Guest page gracefully degrades without content
@@ -149,7 +203,9 @@ export default function GuestHomepage(): React.JSX.Element {
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
               <p className="font-semibold text-white">Install {siteName}</p>
-              <p className="text-sm text-white/55 truncate">Get the app experience on your device</p>
+              <p className="text-sm text-white/55 truncate">
+                Get the app experience on your device
+              </p>
             </div>
             <div className="flex gap-2 flex-shrink-0">
               <button
@@ -225,27 +281,31 @@ export default function GuestHomepage(): React.JSX.Element {
               }}
             >
               <div className="grid grid-cols-3 gap-1.5 mb-4 sm:mb-5 opacity-90">
-                {['\u{1F3AC}', '\u{1F3A4}', '\u26BD', '\u{1F3AD}', '\u{1F3C6}', '\u{1F3B5}'].map((e, i) => (
-                  <motion.div
-                    key={i}
-                    className="rounded-md flex items-center justify-center text-base sm:text-lg"
-                    style={{
-                      width: 38,
-                      height: 38,
-                      background: 'rgba(255,255,255,0.08)',
-                      border: '1px solid rgba(255,255,255,0.12)',
-                    }}
-                    initial={{ opacity: 0, scale: 0.5 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.6 + i * 0.08, duration: 0.35 }}
-                  >
-                    {e}
-                  </motion.div>
-                ))}
+                {['\u{1F3AC}', '\u{1F3A4}', '\u26BD', '\u{1F3AD}', '\u{1F3C6}', '\u{1F3B5}'].map(
+                  (e, i) => (
+                    <motion.div
+                      key={i}
+                      className="rounded-md flex items-center justify-center text-base sm:text-lg"
+                      style={{
+                        width: 38,
+                        height: 38,
+                        background: 'rgba(255,255,255,0.08)',
+                        border: '1px solid rgba(255,255,255,0.12)',
+                      }}
+                      initial={{ opacity: 0, scale: 0.5 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.6 + i * 0.08, duration: 0.35 }}
+                    >
+                      {e}
+                    </motion.div>
+                  )
+                )}
               </div>
               <p className="az-headline text-white text-lg sm:text-xl leading-tight mb-1">Ekaabo</p>
               <p className="text-white/80 text-xs sm:text-sm font-semibold mb-1">Sannu Da Zuwa</p>
-              <p className="az-headline text-white text-base sm:text-lg leading-tight mb-4 sm:mb-5">Welcome</p>
+              <p className="az-headline text-white text-base sm:text-lg leading-tight mb-4 sm:mb-5">
+                Welcome
+              </p>
               <Link href="/auth/register">
                 <motion.button
                   type="button"
@@ -357,8 +417,8 @@ export default function GuestHomepage(): React.JSX.Element {
                 Unlock Exclusive Rewards
               </h3>
               <p className="text-sm sm:text-base lg:text-lg text-white/90 mb-6 sm:mb-8 max-w-xl mx-auto">
-                Join {siteName} today and get rewarded for every show you watch, every vote you cast,
-                and every share you make.
+                Join {siteName} today and get rewarded for every show you watch, every vote you
+                cast, and every share you make.
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
                 <Link href="/auth/register">

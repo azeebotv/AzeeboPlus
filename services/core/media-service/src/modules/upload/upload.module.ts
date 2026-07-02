@@ -8,7 +8,7 @@ import { PremiumContentService } from './premium-content.service';
 import { CommonModule } from '../../common/common.module';
 
 @Module({
-  imports: [ConfigModule, CommonModule, JwtModule.register({})],
+  imports: [ConfigModule, CommonModule, JwtModule.register({ secret: process.env.JWT_ACCESS_SECRET })],
   controllers: [UploadController],
   providers: [UploadService, S3Service, PremiumContentService],
   exports: [UploadService, S3Service, PremiumContentService],

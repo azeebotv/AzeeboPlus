@@ -9,9 +9,6 @@ const DEFAULT_EXPIRY_HOURS = 24;
 /** Default time-to-live for offline cache entries (15 minutes). */
 export const DEFAULT_CACHE_TTL_MS = 900_000;
 
-/** Default time-to-live for offline cache entries (15 minutes). */
-export const DEFAULT_CACHE_TTL_MS = 900_000;
-
 /** Keys whose values are redacted before persisting to unencrypted AsyncStorage. */
 const SENSITIVE_FIELD_PATTERNS: RegExp[] = [
   /token/i,
@@ -26,9 +23,7 @@ const SENSITIVE_FIELD_PATTERNS: RegExp[] = [
 ];
 
 /** Return a shallow copy with sensitive top-level values redacted. */
-function redactSensitiveFields(
-  data: Record<string, unknown>,
-): Record<string, unknown> {
+function redactSensitiveFields(data: Record<string, unknown>): Record<string, unknown> {
   const cleaned: Record<string, unknown> = {};
   const strippedKeys: string[] = [];
   for (const [k, v] of Object.entries(data)) {
@@ -39,7 +34,7 @@ function redactSensitiveFields(
     }
   }
   if (strippedKeys.length > 0) {
-    logger.warn('Stripped sensitive fields from offline cache', {
+    logger.warn('Stripped sensitive fields from offline cache', undefined, {
       keys: strippedKeys,
     });
   }
@@ -75,7 +70,7 @@ export class OfflineModeService {
     data: Record<string, unknown>,
     type: CachedContent['type'] = 'content',
     expiryHours: number = DEFAULT_EXPIRY_HOURS,
-    ttlMs: number = DEFAULT_CACHE_TTL_MS
+    _ttlMs: number = DEFAULT_CACHE_TTL_MS
   ): Promise<void> {
     try {
       const now = Date.now();
@@ -129,13 +124,16 @@ export class OfflineModeService {
   static async clearCache(key?: string): Promise<void> {
     try {
       if (key) {
-        await AsyncStorage.multiRemove([`${CACHE_PREFIX}${key}`, `${CACHE_EXPIRY_PREFIX}${key}`]);
+        await AsyncStorage.removeItem(`${CACHE_PREFIX}${key}`);
+        await AsyncStorage.removeItem(`${CACHE_EXPIRY_PREFIX}${key}`);
       } else {
         const keys = await AsyncStorage.getAllKeys();
         const cacheKeys = keys.filter(
           (k) => k.startsWith(CACHE_PREFIX) || k.startsWith(CACHE_EXPIRY_PREFIX)
         );
-        await AsyncStorage.multiRemove(cacheKeys);
+        for (const k of cacheKeys) {
+          await AsyncStorage.removeItem(k);
+        }
       }
     } catch (error) {
       logger.error('Failed to clear cache', error);

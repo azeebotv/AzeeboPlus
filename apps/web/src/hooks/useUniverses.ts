@@ -84,7 +84,14 @@ export function useUniverses(): UseUniversesReturn {
   const applySelection = useCallback((list: UniverseOption[], id: string | null) => {
     if (id) {
       const found = list.find((u) => u.id === id);
-      setSelectedId(found ? id : null);
+      // If the stored id doesn't match any universe, fall back to the first
+      if (found) {
+        setSelectedId(id);
+      } else if (list.length > 0) {
+        setSelectedId(list[0].id);
+      } else {
+        setSelectedId(null);
+      }
     } else if (list.length > 0) {
       // Default to first universe if nothing stored
       setSelectedId(list[0].id);
@@ -141,14 +148,17 @@ export function useUniverses(): UseUniversesReturn {
     fetchUniverses();
   }, [fetchUniverses]);
 
-  const select = useCallback((id: string) => {
-    setSelectedId(id);
-    writeStoredId(id);
-    const universe = universes.find((u) => u.id === id);
-    if (universe?.route) {
-      router.push(universe.route);
-    }
-  }, [universes, router]);
+  const select = useCallback(
+    (id: string) => {
+      setSelectedId(id);
+      writeStoredId(id);
+      const universe = universes.find((u) => u.id === id);
+      if (universe?.route) {
+        router.push(universe.route);
+      }
+    },
+    [universes, router]
+  );
 
   const refetch = useCallback(() => {
     // Clear cache before re-fetching

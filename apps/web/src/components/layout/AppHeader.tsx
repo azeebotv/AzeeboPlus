@@ -4,8 +4,8 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '../../context/AuthContext';
+import { useWallet } from '../../context/WalletContext';
 import BrandLogo from '../auth/BrandLogo';
-import { apiFetch } from '../../lib/api/base';
 
 /* ─── Constants ─── */
 
@@ -26,7 +26,12 @@ const UNIVERSE_OPTIONS = [
   { key: 'sports', label: 'Sports', href: '/sports' },
 ] as const;
 
-const PROFILE_MENU_ITEMS: { label: string; href: string; icon: 'user' | 'star' | 'wallet' | 'creator' | 'settings'; creatorOnly?: boolean }[] = [
+const PROFILE_MENU_ITEMS: {
+  label: string;
+  href: string;
+  icon: 'user' | 'star' | 'wallet' | 'creator' | 'settings';
+  creatorOnly?: boolean;
+}[] = [
   { label: 'Profile', href: '/profile', icon: 'user' },
   { label: 'Rewards', href: '/rewards', icon: 'star' },
   { label: 'Wallet', href: '/wallet', icon: 'wallet' },
@@ -64,32 +69,82 @@ function MenuIcon({ type }: { type: 'user' | 'star' | 'wallet' | 'creator' | 'se
   switch (type) {
     case 'user':
       return (
-        <svg className={cls} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+        <svg
+          className={cls}
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={1.8}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"
+          />
         </svg>
       );
     case 'star':
       return (
-        <svg className={cls} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
+        <svg
+          className={cls}
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={1.8}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z"
+          />
         </svg>
       );
     case 'wallet':
       return (
-        <svg className={cls} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a2.25 2.25 0 00-2.25-2.25H15a3 3 0 11-6 0H5.25A2.25 2.25 0 003 12m18 0v6a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 18v-6m18 0V9M3 12V9m18 0a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 9m18 0V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v3" />
+        <svg
+          className={cls}
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={1.8}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M21 12a2.25 2.25 0 00-2.25-2.25H15a3 3 0 11-6 0H5.25A2.25 2.25 0 003 12m18 0v6a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 18v-6m18 0V9M3 12V9m18 0a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 9m18 0V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v3"
+          />
         </svg>
       );
     case 'creator':
       return (
-        <svg className={cls} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" />
+        <svg
+          className={cls}
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={1.8}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z"
+          />
         </svg>
       );
     case 'settings':
       return (
-        <svg className={cls} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z" />
+        <svg
+          className={cls}
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={1.8}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z"
+          />
           <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
         </svg>
       );
@@ -98,8 +153,9 @@ function MenuIcon({ type }: { type: 'user' | 'star' | 'wallet' | 'creator' | 'se
 
 /* ─── AppHeader ─── */
 
-export default function AppHeader({ active }: { active?: string }) {
+export default function AppHeader({ active: _active }: { active?: string }) {
   const { user, isAuthenticated, logout } = useAuth();
+  const { balance } = useWallet();
   const pathname = usePathname();
   const router = useRouter();
   const isCreator = user?.role === 'creator' || user?.role === 'CREATOR';
@@ -131,7 +187,9 @@ export default function AppHeader({ active }: { active?: string }) {
   /* ─── Body scroll lock ─── */
   useEffect(() => {
     document.body.style.overflow = mobileMenuOpen ? 'hidden' : '';
-    return () => { document.body.style.overflow = ''; };
+    return () => {
+      document.body.style.overflow = '';
+    };
   }, [mobileMenuOpen]);
 
   /* ─── Close on route change ─── */
@@ -147,10 +205,23 @@ export default function AppHeader({ active }: { active?: string }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        if (searchOpen) { setSearchOpen(false); return; }
-        if (mobileMenuOpen) { setMobileMenuOpen(false); hamburgerRef.current?.focus(); return; }
-        if (profileOpen) { setProfileOpen(false); return; }
-        if (universesOpen) { setUniversesOpen(false); return; }
+        if (searchOpen) {
+          setSearchOpen(false);
+          return;
+        }
+        if (mobileMenuOpen) {
+          setMobileMenuOpen(false);
+          hamburgerRef.current?.focus();
+          return;
+        }
+        if (profileOpen) {
+          setProfileOpen(false);
+          return;
+        }
+        if (universesOpen) {
+          setUniversesOpen(false);
+          return;
+        }
       }
     };
     window.addEventListener('keydown', onKey);
@@ -160,8 +231,10 @@ export default function AppHeader({ active }: { active?: string }) {
   /* ─── Click outside for dropdowns ─── */
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (profileMenuRef.current && !profileMenuRef.current.contains(e.target as Node)) setProfileOpen(false);
-      if (universeDropdownRef.current && !universeDropdownRef.current.contains(e.target as Node)) setUniversesOpen(false);
+      if (profileMenuRef.current && !profileMenuRef.current.contains(e.target as Node))
+        setProfileOpen(false);
+      if (universeDropdownRef.current && !universeDropdownRef.current.contains(e.target as Node))
+        setUniversesOpen(false);
     };
     if (profileOpen || universesOpen) document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
@@ -210,10 +283,7 @@ export default function AppHeader({ active }: { active?: string }) {
         role="banner"
       >
         {/* ═══ Main Header Bar ═══ */}
-        <div
-          className="relative max-w-[1280px] mx-auto"
-          style={{ height: scrolled ? 56 : 68 }}
-        >
+        <div className="relative max-w-[1280px] mx-auto" style={{ height: scrolled ? 56 : 68 }}>
           {/* ─── 1. Brand Logo — pinned left ─── */}
           <div className="absolute left-4 sm:left-6 top-1/2 -translate-y-1/2 z-10">
             <Link
@@ -242,8 +312,12 @@ export default function AppHeader({ active }: { active?: string }) {
                           color: active ? '#fff' : 'rgba(255,255,255,0.55)',
                           background: active ? 'rgba(232,74,95,0.14)' : 'transparent',
                         }}
-                        onMouseEnter={(e) => { if (!active) e.currentTarget.style.color = 'rgba(255,255,255,0.85)'; }}
-                        onMouseLeave={(e) => { if (!active) e.currentTarget.style.color = 'rgba(255,255,255,0.55)'; }}
+                        onMouseEnter={(e) => {
+                          if (!active) e.currentTarget.style.color = 'rgba(255,255,255,0.85)';
+                        }}
+                        onMouseLeave={(e) => {
+                          if (!active) e.currentTarget.style.color = 'rgba(255,255,255,0.55)';
+                        }}
                       >
                         {link.label}
                         {active && (
@@ -269,8 +343,12 @@ export default function AppHeader({ active }: { active?: string }) {
                       color: universesOpen ? '#fff' : 'rgba(255,255,255,0.55)',
                       background: universesOpen ? 'rgba(232,74,95,0.14)' : 'transparent',
                     }}
-                    onMouseEnter={(e) => { e.currentTarget.style.color = 'rgba(255,255,255,0.85)'; }}
-                    onMouseLeave={(e) => { if (!universesOpen) e.currentTarget.style.color = 'rgba(255,255,255,0.55)'; }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.color = 'rgba(255,255,255,0.85)';
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!universesOpen) e.currentTarget.style.color = 'rgba(255,255,255,0.55)';
+                    }}
                     aria-label="Browse universes"
                     aria-expanded={universesOpen}
                     aria-haspopup="true"
@@ -307,11 +385,24 @@ export default function AppHeader({ active }: { active?: string }) {
                               color: active ? '#E8420A' : 'rgba(255,255,255,0.6)',
                               background: active ? 'rgba(232,74,95,0.1)' : 'transparent',
                             }}
-                            onMouseEnter={(e) => { if (!active) { e.currentTarget.style.color = '#fff'; e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; } }}
-                            onMouseLeave={(e) => { if (!active) { e.currentTarget.style.color = 'rgba(255,255,255,0.6)'; e.currentTarget.style.background = 'transparent'; } }}
+                            onMouseEnter={(e) => {
+                              if (!active) {
+                                e.currentTarget.style.color = '#fff';
+                                e.currentTarget.style.background = 'rgba(255,255,255,0.04)';
+                              }
+                            }}
+                            onMouseLeave={(e) => {
+                              if (!active) {
+                                e.currentTarget.style.color = 'rgba(255,255,255,0.6)';
+                                e.currentTarget.style.background = 'transparent';
+                              }
+                            }}
                             role="menuitem"
                           >
-                            <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: active ? '#E8420A' : 'transparent' }} />
+                            <span
+                              className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                              style={{ background: active ? '#E8420A' : 'transparent' }}
+                            />
                             {u.label}
                           </Link>
                         );
@@ -334,17 +425,28 @@ export default function AppHeader({ active }: { active?: string }) {
                   aria-label="Search"
                   aria-expanded={searchOpen}
                 >
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                    />
                   </svg>
                 </button>
 
                 {/* Wallet balance — desktop only */}
-                <div className="hidden sm:flex items-center gap-0 px-3 py-1.5 rounded-full text-xs font-medium border border-white/[0.06]"
+                <div
+                  className="hidden sm:flex items-center gap-0 px-3 py-1.5 rounded-full text-xs font-medium border border-white/[0.06]"
                   style={{ background: 'rgba(255,255,255,0.04)' }}
                 >
                   <span className="text-[#E8420A] font-semibold whitespace-nowrap">
-                    {formatBalance((user as any)?.balance ?? 0)}
+                    {formatBalance(balance?.balance ?? 0)}
                   </span>
                 </div>
 
@@ -370,7 +472,9 @@ export default function AppHeader({ active }: { active?: string }) {
                     >
                       {/* User info header */}
                       <div className="px-4 py-3 border-b border-white/[0.06]">
-                        <p className="text-sm font-semibold text-white truncate">{user?.displayName || user?.name}</p>
+                        <p className="text-sm font-semibold text-white truncate">
+                          {user?.displayName || user?.name}
+                        </p>
                         <p className="text-xs text-white/40 truncate">{user?.email}</p>
                       </div>
 
@@ -401,8 +505,18 @@ export default function AppHeader({ active }: { active?: string }) {
                             className="w-full text-left px-4 py-2 text-sm text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors flex items-center gap-2.5"
                             role="menuitem"
                           >
-                            <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+                            <svg
+                              className="w-4 h-4 flex-shrink-0"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                              strokeWidth={1.8}
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9"
+                              />
                             </svg>
                             Sign out
                           </button>
@@ -462,9 +576,15 @@ export default function AppHeader({ active }: { active?: string }) {
               aria-controls="mobile-drawer"
             >
               <div className="w-5 h-5 flex flex-col justify-center gap-[5px]">
-                <span className={`block h-[2px] w-5 rounded-full bg-current transition-all duration-300 origin-center ${mobileMenuOpen ? 'rotate-45 translate-y-[7px]' : ''}`} />
-                <span className={`block h-[2px] w-5 rounded-full bg-current transition-all duration-300 ${mobileMenuOpen ? 'opacity-0 scale-0' : ''}`} />
-                <span className={`block h-[2px] w-5 rounded-full bg-current transition-all duration-300 origin-center ${mobileMenuOpen ? '-rotate-45 -translate-y-[7px]' : ''}`} />
+                <span
+                  className={`block h-[2px] w-5 rounded-full bg-current transition-all duration-300 origin-center ${mobileMenuOpen ? 'rotate-45 translate-y-[7px]' : ''}`}
+                />
+                <span
+                  className={`block h-[2px] w-5 rounded-full bg-current transition-all duration-300 ${mobileMenuOpen ? 'opacity-0 scale-0' : ''}`}
+                />
+                <span
+                  className={`block h-[2px] w-5 rounded-full bg-current transition-all duration-300 origin-center ${mobileMenuOpen ? '-rotate-45 -translate-y-[7px]' : ''}`}
+                />
               </div>
             </button>
           </div>
@@ -474,15 +594,29 @@ export default function AppHeader({ active }: { active?: string }) {
         <div
           ref={searchOverlayRef}
           className={`overflow-hidden transition-all duration-300 ${searchOpen ? 'max-h-[120px]' : 'max-h-0'}`}
-          style={{ background: 'rgba(9,9,15,0.98)', borderTop: searchOpen ? '1px solid rgba(255,255,255,0.06)' : 'none' }}
+          style={{
+            background: 'rgba(9,9,15,0.98)',
+            borderTop: searchOpen ? '1px solid rgba(255,255,255,0.06)' : 'none',
+          }}
           role="search"
           aria-label="Site search"
         >
           <div className="max-w-[1280px] mx-auto px-4 sm:px-6 py-3">
             <form onSubmit={handleSearchSubmit}>
               <div className="relative">
-                <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/30" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                <svg
+                  className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/30"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                  aria-hidden="true"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
                 </svg>
                 <input
                   ref={searchInputRef}
@@ -500,7 +634,13 @@ export default function AppHeader({ active }: { active?: string }) {
                     className="absolute right-4 top-1/2 -translate-y-1/2 p-1 rounded-full text-white/30 hover:text-white hover:bg-white/10 transition-colors"
                     aria-label="Clear search"
                   >
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                    >
                       <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                     </svg>
                   </button>
@@ -519,7 +659,10 @@ export default function AppHeader({ active }: { active?: string }) {
         {/* Backdrop */}
         <div
           className="absolute inset-0 bg-black/60"
-          onClick={() => { setMobileMenuOpen(false); hamburgerRef.current?.focus(); }}
+          onClick={() => {
+            setMobileMenuOpen(false);
+            hamburgerRef.current?.focus();
+          }}
         />
 
         {/* Drawer panel */}
@@ -540,8 +683,19 @@ export default function AppHeader({ active }: { active?: string }) {
             {/* Search in mobile */}
             <form onSubmit={handleSearchSubmit} className="mb-4">
               <div className="relative">
-                <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                <svg
+                  className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                  aria-hidden="true"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
                 </svg>
                 <input
                   type="search"
@@ -568,7 +722,10 @@ export default function AppHeader({ active }: { active?: string }) {
                         background: active ? 'rgba(232,74,95,0.14)' : 'transparent',
                       }}
                     >
-                      <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: active ? '#E8420A' : 'transparent' }} />
+                      <span
+                        className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                        style={{ background: active ? '#E8420A' : 'transparent' }}
+                      />
                       {link.label}
                     </Link>
                   );
@@ -579,7 +736,9 @@ export default function AppHeader({ active }: { active?: string }) {
             {/* Universes section (authenticated only) */}
             {isAuthenticated && (
               <>
-                <p className="text-[11px] font-bold uppercase tracking-widest text-white/30 mb-2 px-3">Universes</p>
+                <p className="text-[11px] font-bold uppercase tracking-widest text-white/30 mb-2 px-3">
+                  Universes
+                </p>
                 <div className="space-y-0.5 mb-2">
                   {UNIVERSE_OPTIONS.map((u) => {
                     const active = isActive(u.href);
@@ -594,7 +753,10 @@ export default function AppHeader({ active }: { active?: string }) {
                           background: active ? 'rgba(232,74,95,0.14)' : 'transparent',
                         }}
                       >
-                        <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: active ? '#E8420A' : 'transparent' }} />
+                        <span
+                          className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                          style={{ background: active ? '#E8420A' : 'transparent' }}
+                        />
                         {u.label}
                       </Link>
                     );
@@ -609,7 +771,7 @@ export default function AppHeader({ active }: { active?: string }) {
             {isAuthenticated && (
               <div className="flex items-center gap-3 px-3 py-2.5 mb-2">
                 <span className="text-sm text-[#E8420A] font-semibold">
-                  {formatBalance((user as any)?.balance ?? 0)}
+                  {formatBalance(balance?.balance ?? 0)}
                 </span>
               </div>
             )}
@@ -636,7 +798,10 @@ export default function AppHeader({ active }: { active?: string }) {
             )}
             {isAuthenticated && (
               <button
-                onClick={() => { setMobileMenuOpen(false); logout(); }}
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  logout();
+                }}
                 className="w-full px-4 py-2.5 rounded-full text-sm font-medium text-red-400 border border-red-500/20 hover:bg-red-500/10 transition-colors text-center"
               >
                 Sign out

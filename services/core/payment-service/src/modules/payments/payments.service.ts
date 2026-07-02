@@ -5,6 +5,7 @@ import { InitializePaymentDto } from './dto/initialize-payment.dto';
 import { PaystackProvider } from './providers/paystack.provider';
 import { FlutterwaveProvider } from './providers/flutterwave.provider';
 import { WebhookRetryService } from './webhook-retry.service';
+import { RedisService } from '../../common/services/redis.service';
 import axios from 'axios';
 import { Prisma } from '@prisma/client';
 import {
@@ -39,6 +40,7 @@ export class PaymentsService {
     private readonly paystackProvider: PaystackProvider,
     private readonly flutterwaveProvider: FlutterwaveProvider,
     private readonly webhookRetryService: WebhookRetryService,
+    private readonly redisService: RedisService,
     private readonly configService: ConfigService
   ) {
     this.analyticsServiceBaseUrl = this.configService.getOrThrow<string>('ANALYTICS_SERVICE_URL');
@@ -577,30 +579,54 @@ export class PaymentsService {
       return;
     }
 
-    await this.creditWallet(
-      paymentIntent.userId,
-      toNumber(paymentIntent.amount.toString()),
-      `Payment for ${paymentIntent.description}`,
-      reference,
-      provider
-    );
+    // SECURITY: Use a distributed lock to prevent double-crediting from concurrent webhooks.
+    // This is critical because handlePaymentSuccess is not idempotent — it credits the wallet.
+    const lockKey = `payment_lock:${paymentIntent.id}`;
+    const lockAcquired = await this.redisService.setIfNotExists(lockKey, '1', 60);
+    if (!lockAcquired) {
+      this.logger.warn(
+        `Payment ${paymentIntent.id} is being processed by another request, skipping`
+      );
+      return;
+    }
 
-    await this.prisma.$transaction(async (tx) => {
-      await tx.paymentIntent.update({
+    try {
+      // Re-check status after acquiring lock (another request may have completed it)
+      const freshIntent = await this.prisma.paymentIntent.findUnique({
         where: { id: paymentIntent.id },
-        data: {
-          status: 'completed',
-          completedAt: new Date(),
-        },
       });
-    });
+      if (freshIntent?.status === 'completed') {
+        this.logger.log(`Payment ${paymentIntent.id} completed by another request, skipping`);
+        return;
+      }
 
-    await this.trackAnalyticsEvent('payment_success', paymentIntent.userId, {
-      paymentId: paymentIntent.id,
-      amount: Number(paymentIntent.amount),
-      provider,
-      providerReference: reference,
-    });
+      await this.creditWallet(
+        paymentIntent.userId,
+        toNumber(paymentIntent.amount.toString()),
+        `Payment for ${paymentIntent.description}`,
+        reference,
+        provider
+      );
+
+      await this.prisma.$transaction(async (tx) => {
+        await tx.paymentIntent.update({
+          where: { id: paymentIntent.id },
+          data: {
+            status: 'completed',
+            completedAt: new Date(),
+          },
+        });
+      });
+
+      await this.trackAnalyticsEvent('payment_success', paymentIntent.userId, {
+        paymentId: paymentIntent.id,
+        amount: Number(paymentIntent.amount),
+        provider,
+        providerReference: reference,
+      });
+    } finally {
+      await this.redisService.del(lockKey);
+    }
   }
 
   private async handlePaymentFailed(data: WebhookData, provider: PaymentProvider): Promise<void> {

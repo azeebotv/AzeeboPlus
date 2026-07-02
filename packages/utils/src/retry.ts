@@ -11,7 +11,9 @@ export interface RetryOptions {
   retryOn?: (error: Error, attempt: number) => boolean;
 }
 
-const DEFAULT_RETRY_OPTIONS: Required<Omit<RetryOptions, 'retryOn'>> & { retryOn?: (error: Error, attempt: number) => boolean } = {
+const DEFAULT_RETRY_OPTIONS: Required<Omit<RetryOptions, 'retryOn'>> & {
+  retryOn?: (error: Error, attempt: number) => boolean;
+} = {
   maxAttempts: 3,
   baseDelayMs: 100,
   jitterFactor: 0.3,
@@ -27,10 +29,7 @@ const DEFAULT_RETRY_OPTIONS: Required<Omit<RetryOptions, 'retryOn'>> & { retryOn
  * @returns The result of fn
  * @throws The last error if all attempts fail
  */
-export async function withRetry<T>(
-  fn: () => Promise<T>,
-  options: RetryOptions = {},
-): Promise<T> {
+export async function withRetry<T>(fn: () => Promise<T>, options: RetryOptions = {}): Promise<T> {
   const opts = { ...DEFAULT_RETRY_OPTIONS, ...options };
   let lastError: Error | undefined;
 

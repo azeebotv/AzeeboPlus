@@ -2,10 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { View, Text, StyleSheet, Dimensions, Image, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import Animated, {
-  FadeIn,
-  FadeOut,
-} from 'react-native-reanimated';
+import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import type { ContentItem } from '@/api';
@@ -17,10 +14,7 @@ interface HeroCarouselProps {
   autoRotateIntervalMs?: number;
 }
 
-export default function HeroCarousel({
-  slides,
-  autoRotateIntervalMs = 6000,
-}: HeroCarouselProps) {
+export default function HeroCarousel({ slides, autoRotateIntervalMs = 6000 }: HeroCarouselProps) {
   const router = useRouter();
   const { t } = useTranslation();
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -57,7 +51,7 @@ export default function HeroCarousel({
   const currentSlide = slides[currentIndex];
 
   const handleSlidePress = () => {
-    router.push(`/content/${currentSlide.id}`);
+    router.push(`/watch/${currentSlide.id}`);
   };
 
   return (
@@ -68,7 +62,12 @@ export default function HeroCarousel({
       onPointerEnter={() => setIsPaused(true)}
       onPointerLeave={() => setIsPaused(false)}
     >
-      <Animated.View key={currentSlide.id} entering={FadeIn.duration(500)} exiting={FadeOut.duration(500)} style={StyleSheet.absoluteFill}>
+      <Animated.View
+        key={currentSlide.id}
+        entering={FadeIn.duration(500)}
+        exiting={FadeOut.duration(500)}
+        style={StyleSheet.absoluteFill}
+      >
         <Image
           source={{
             uri:
@@ -153,10 +152,7 @@ export default function HeroCarousel({
         {slides.map((slide, index) => (
           <View
             key={slide.id}
-            style={[
-              styles.indicator,
-              index === currentIndex && styles.indicatorActive,
-            ]}
+            style={[styles.indicator, index === currentIndex && styles.indicatorActive]}
             accessibilityLabel={`${t('home.slide')} ${index + 1}: ${slide.title}`}
           />
         ))}

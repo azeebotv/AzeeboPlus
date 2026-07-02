@@ -39,7 +39,9 @@ export default function AddFundsPage(): React.JSX.Element {
           apiFetch<PaymentMethod[]>('/v1/wallet/payment-methods'),
         ]);
         if (pricingResult.success && pricingResult.data) setPricing(pricingResult.data);
-        if (methodsResult.success && methodsResult.data) setPaymentMethods(methodsResult.data);
+        if (methodsResult.success && methodsResult.data) {
+          setPaymentMethods(Array.isArray(methodsResult.data) ? methodsResult.data : []);
+        }
       } catch (error) {
         webLogger.error('Failed to load data', error);
       } finally {

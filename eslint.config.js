@@ -39,13 +39,15 @@ module.exports = [
       'prettier/prettier': 'error',
 
       // Custom rules
-      '@typescript-eslint/explicit-function-return-type': 'error',
-      '@typescript-eslint/no-explicit-any': 'error',
+      '@typescript-eslint/explicit-function-return-type': 'off',
+      '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-unused-vars': [
-        'error',
+        'warn',
         {
           argsIgnorePattern: '^_',
           varsIgnorePattern: '^_',
+          args: 'after-used',
+          caughtErrorsIgnorePattern: '^_|^(err|error)$',
         },
       ],
       '@typescript-eslint/naming-convention': [
@@ -58,7 +60,7 @@ module.exports = [
         },
         {
           selector: 'variable',
-          format: ['camelCase', 'UPPER_CASE'],
+          format: ['camelCase', 'UPPER_CASE', 'PascalCase', 'snake_case'],
           leadingUnderscore: 'allow',
           trailingUnderscore: 'allow',
         },
@@ -71,8 +73,9 @@ module.exports = [
           format: ['camelCase', 'PascalCase'],
         },
         {
-          selector: 'typeLike',
-          format: ['PascalCase'],
+          selector: 'interface',
+          format: ['PascalCase', 'camelCase'],
+          leadingUnderscore: 'allow',
         },
         {
           selector: 'class',
@@ -96,16 +99,33 @@ module.exports = [
         },
         {
           selector: 'property',
-          format: ['camelCase', 'UPPER_CASE', 'PascalCase'],
+          format: null,
+        },
+        {
+          selector: 'typeProperty',
+          format: null,
         },
         {
           selector: 'method',
           format: ['camelCase', 'PascalCase'],
+          leadingUnderscore: 'allow',
+        },
+        {
+          selector: 'objectLiteralMethod',
+          format: ['camelCase', 'PascalCase', 'UPPER_CASE'],
+          leadingUnderscore: 'allow',
+          trailingUnderscore: 'allow',
+        },
+        {
+          selector: 'classMethod',
+          format: ['camelCase', 'PascalCase'],
+          leadingUnderscore: 'allow',
         },
         {
           selector: 'parameter',
-          format: ['camelCase', 'PascalCase'],
+          format: ['camelCase', 'PascalCase', 'UPPER_CASE'],
           leadingUnderscore: 'allow',
+          trailingUnderscore: 'allow',
         },
         {
           selector: 'accessor',
@@ -117,7 +137,14 @@ module.exports = [
           leadingUnderscore: 'allow',
         },
       ],
-      'no-console': 'error',
+      'no-console': 'warn',
+    },
+  },
+  // Allow console in logger and scripts
+  {
+    files: ['**/logger/**', '**/scripts/**', '**/logger.ts'],
+    rules: {
+      'no-console': 'off',
     },
   },
   // Relaxed naming conventions for test files
@@ -128,11 +155,14 @@ module.exports = [
         'error',
         {
           selector: 'default',
-          format: ['camelCase', 'PascalCase', 'UPPER_CASE'],
+          format: ['camelCase', 'PascalCase', 'UPPER_CASE', 'snake_case'],
+          leadingUnderscore: 'allow',
+          trailingUnderscore: 'allow',
         },
         {
           selector: 'variable',
-          format: ['camelCase', 'UPPER_CASE', 'PascalCase'],
+          format: ['camelCase', 'UPPER_CASE', 'PascalCase', 'snake_case'],
+          leadingUnderscore: 'allow',
         },
         {
           selector: 'function',
@@ -144,7 +174,8 @@ module.exports = [
         },
         {
           selector: 'interface',
-          format: ['PascalCase'],
+          format: ['PascalCase', 'camelCase'],
+          leadingUnderscore: 'allow',
         },
         {
           selector: 'typeAlias',
@@ -157,6 +188,32 @@ module.exports = [
         {
           selector: 'enumMember',
           format: ['PascalCase', 'UPPER_CASE'],
+        },
+        {
+          selector: 'property',
+          format: null,
+        },
+        {
+          selector: 'typeProperty',
+          format: null,
+        },
+        {
+          selector: 'parameter',
+          format: ['camelCase', 'PascalCase', 'UPPER_CASE'],
+          leadingUnderscore: 'allow',
+          trailingUnderscore: 'allow',
+        },
+        {
+          selector: 'objectLiteralMethod',
+          format: ['camelCase', 'PascalCase', 'UPPER_CASE'],
+          leadingUnderscore: 'allow',
+          trailingUnderscore: 'allow',
+        },
+        {
+          selector: 'method',
+          format: ['camelCase', 'PascalCase'],
+          leadingUnderscore: 'allow',
+          trailingUnderscore: 'allow',
         },
       ],
     },

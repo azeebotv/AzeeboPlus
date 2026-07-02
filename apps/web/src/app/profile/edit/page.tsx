@@ -36,9 +36,16 @@ export default function ProfileEditPage(): React.JSX.Element {
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      await api.user.updateProfile(profile);
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
+      const result = await api.user.updateProfile({
+        name: profile.username,
+        displayName: profile.displayName,
+        email: profile.email,
+        avatar: profile.avatar,
+      } as any);
+      if (result.success) {
+        setSaved(true);
+        setTimeout(() => setSaved(false), 2000);
+      }
     } catch {
       /* ignore */
     }

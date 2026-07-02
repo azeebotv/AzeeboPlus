@@ -254,7 +254,7 @@ export default function ResetPasswordPage(): React.JSX.Element {
               <Spinner /> Resetting...
             </span>
           ) : (
-            'Send Recovery Link'
+            'Reset Password'
           )}
         </button>
 

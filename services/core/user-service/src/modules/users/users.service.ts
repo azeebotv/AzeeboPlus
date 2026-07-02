@@ -236,7 +236,7 @@ export class UsersService {
     });
 
     const universeCounts: Record<string, number> = {};
-    history.forEach((item) => {
+    history.forEach((item: { universe: string | null }) => {
       const universe = item.universe || 'unknown';
       universeCounts[universe] = (universeCounts[universe] || 0) + 1;
     });
@@ -441,7 +441,7 @@ export class UsersService {
       }),
     ]);
 
-    const followerIds = followingRecords.map((f) => f.followerId);
+    const followerIds = followingRecords.map((f: { followerId: string }) => f.followerId);
     const users = await this.prisma.user.findMany({
       where: { id: { in: followerIds } },
       select: { id: true, displayName: true, avatar: true },
@@ -452,7 +452,7 @@ export class UsersService {
     return {
       success: true,
       data: {
-        followers: followingRecords.map((f) => userMap.get(f.followerId)).filter(Boolean),
+        followers: followingRecords.map((f: { followerId: string }) => userMap.get(f.followerId)).filter(Boolean),
         pagination: {
           page,
           limit,
@@ -482,7 +482,7 @@ export class UsersService {
       }),
     ]);
 
-    const followingIds = followingRecords.map((f) => f.followingId);
+    const followingIds = followingRecords.map((f: { followingId: string }) => f.followingId);
     const users = await this.prisma.user.findMany({
       where: { id: { in: followingIds } },
       select: { id: true, displayName: true, avatar: true },
@@ -493,7 +493,7 @@ export class UsersService {
     return {
       success: true,
       data: {
-        following: followingRecords.map((f) => userMap.get(f.followingId)).filter(Boolean),
+        following: followingRecords.map((f: { followingId: string }) => userMap.get(f.followingId)).filter(Boolean),
         pagination: {
           page,
           limit,
@@ -584,7 +584,7 @@ export class UsersService {
 
     return {
       success: true,
-      data: history.map((item) => ({
+      data: history.map((item: { contentId: string; contentType: string; universe: string; watchedAt: Date }) => ({
         id: item.contentId,
         contentId: item.contentId,
         contentType: item.contentType,
@@ -603,7 +603,7 @@ export class UsersService {
 
     return {
       success: true,
-      data: affinity.map((item) => ({
+      data: affinity.map((item: { universeId: string; affinityScore: number; lastEngaged: Date }) => ({
         universeId: item.universeId,
         universeName: item.universeId,
         universeIcon: undefined,

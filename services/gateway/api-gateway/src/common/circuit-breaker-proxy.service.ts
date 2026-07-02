@@ -102,100 +102,103 @@ export class CircuitBreakerProxyService {
     const circuitBreaker = this.getCircuitBreaker(circuitKey);
     const tracer = trace.getTracer('api-gateway');
 
-    return await tracer.startActiveSpan(`proxy.${serviceName}`, { attributes: { 'http.method': method, 'http.url': target } }, async (span: Span) => {
-      try {
-        const result = await circuitBreaker.execute(async () => {
-          let lastError: Error | undefined;
+    return await tracer.startActiveSpan(
+      `proxy.${serviceName}`,
+      { attributes: { 'http.method': method, 'http.url': target } },
+      async (span: Span) => {
+        try {
+          const result = await circuitBreaker.execute(async () => {
+            let lastError: Error | undefined;
 
-          for (let attempt = 0; attempt <= DEFAULT_RETRY_CONFIG.retries; attempt++) {
-            try {
-              const fetchOptions: RequestInit = {
-                method,
-                headers,
-                signal: AbortSignal.timeout(timeout),
-              };
+            for (let attempt = 0; attempt <= DEFAULT_RETRY_CONFIG.retries; attempt++) {
+              try {
+                const fetchOptions: RequestInit = {
+                  method,
+                  headers,
+                  signal: AbortSignal.timeout(timeout),
+                };
 
-              if (body && method !== 'GET' && method !== 'HEAD') {
-                fetchOptions.body = JSON.stringify(body);
+                if (body && method !== 'GET' && method !== 'HEAD') {
+                  fetchOptions.body = JSON.stringify(body);
+                }
+
+                const response = await fetch(target, fetchOptions);
+
+                if (response.status >= 500 || response.status === 429) {
+                  throw new Error(`HTTP ${response.status}`);
+                }
+
+                const responseHeaders: Record<string, string> = {};
+                for (const [key, value] of response.headers.entries()) {
+                  responseHeaders[key] = value;
+                }
+
+                let responseData: unknown;
+                const contentType = response.headers.get('content-type');
+
+                if (contentType?.includes('application/json')) {
+                  responseData = await response.json();
+                } else if (contentType?.includes('text/')) {
+                  responseData = await response.text();
+                } else {
+                  responseData = await response.arrayBuffer();
+                }
+
+                span.setAttribute('http.status_code', response.status);
+                return {
+                  status: response.status,
+                  data: responseData,
+                  headers: responseHeaders,
+                };
+              } catch (retryError) {
+                lastError = retryError as Error;
+                const retryStatus =
+                  typeof retryError === 'object' && retryError !== null && 'status' in retryError
+                    ? (retryError as { status: number }).status
+                    : undefined;
+                const shouldRetry =
+                  attempt < DEFAULT_RETRY_CONFIG.retries && this.shouldRetryStatus(retryStatus);
+                if (!shouldRetry) {
+                  throw retryError;
+                }
+                const delay = calculateRetryDelay(attempt, DEFAULT_RETRY_CONFIG);
+                await new Promise((resolve) => setTimeout(resolve, delay));
               }
-
-              const response = await fetch(target, fetchOptions);
-
-              if (response.status >= 500 || response.status === 429) {
-                throw new Error(`HTTP ${response.status}`);
-              }
-
-              const responseHeaders: Record<string, string> = {};
-              for (const [key, value] of response.headers.entries()) {
-                responseHeaders[key] = value;
-              }
-
-              let responseData: unknown;
-              const contentType = response.headers.get('content-type');
-
-              if (contentType?.includes('application/json')) {
-                responseData = await response.json();
-              } else if (contentType?.includes('text/')) {
-                responseData = await response.text();
-              } else {
-                responseData = await response.arrayBuffer();
-              }
-
-              span.setAttribute('http.status_code', response.status);
-              return {
-                status: response.status,
-                data: responseData,
-                headers: responseHeaders,
-              };
-            } catch (retryError) {
-              lastError = retryError as Error;
-              const retryStatus =
-                typeof retryError === 'object' &&
-                retryError !== null &&
-                'status' in retryError
-                  ? (retryError as { status: number }).status
-                  : undefined;
-              const shouldRetry = attempt < DEFAULT_RETRY_CONFIG.retries && this.shouldRetryStatus(retryStatus);
-              if (!shouldRetry) {
-                throw retryError;
-              }
-              const delay = calculateRetryDelay(attempt, DEFAULT_RETRY_CONFIG);
-              await new Promise((resolve) => setTimeout(resolve, delay));
             }
-          }
-          throw lastError;
-        });
+            throw lastError;
+          });
 
-        return {
-          ...result,
-          circuitState: circuitBreaker.getState(),
-        };
-      } catch (error) {
-        span.setStatus({ code: SpanStatusCode.ERROR, message: (error as Error).message });
-        const currentStats = circuitBreaker.getStats();
-        this.logger.error(
-          `Circuit breaker error for ${serviceName}: ${(error as Error).message}`,
-          { requestId, stats: currentStats }
-        );
-
-        if (circuitBreaker.isOpen()) {
           return {
-            status: HttpStatus.SERVICE_UNAVAILABLE,
-            data: {
-              message: 'Service temporarily unavailable. Please try again later.',
-              retryAfter: currentStats.nextAttempt,
-              circuitState: CircuitState.OPEN,
-            },
-            headers: {},
-            circuitState: CircuitState.OPEN,
+            ...result,
+            circuitState: circuitBreaker.getState(),
           };
-        }
+        } catch (error) {
+          span.setStatus({ code: SpanStatusCode.ERROR, message: (error as Error).message });
+          const currentStats = circuitBreaker.getStats();
+          this.logger.error(
+            `Circuit breaker error for ${serviceName}: ${(error as Error).message}`,
+            { requestId, stats: currentStats }
+          );
 
-        throw error;
-      } finally {
-        span.end();
+          if (circuitBreaker.isOpen()) {
+            return {
+              status: HttpStatus.SERVICE_UNAVAILABLE,
+              data: {
+                message: 'Service temporarily unavailable. Please try again later.',
+                retryAfter: currentStats.nextAttempt,
+                circuitState: CircuitState.OPEN,
+              },
+              headers: {},
+              circuitState: CircuitState.OPEN,
+            };
+          }
+
+          throw error;
+        } finally {
+          span.end();
+        }
       }
-    });
+    );
   }
 
   private shouldRetryStatus(status: number | undefined): boolean {

@@ -42,6 +42,9 @@ export default function AdminAuditLogsPage(): React.JSX.Element {
           <button
             key={f}
             onClick={() => setFilter(f)}
+            role="radio"
+            aria-checked={filter === f}
+            aria-label={`Filter by ${f} category`}
             style={{
               padding: '8px 16px',
               borderRadius: 999,
@@ -97,8 +100,11 @@ export default function AdminAuditLogsPage(): React.JSX.Element {
                 </tr>
               </thead>
               <tbody>
-                {logs.map((log: any, i: number) => (
-                  <tr key={i} style={{ borderBottom: '1px solid #1A0A0A' }}>
+                {logs.map((log: any) => (
+                  <tr
+                    key={log.id || `${log.timestamp}-${log.userId}-${log.action}`}
+                    style={{ borderBottom: '1px solid #1A0A0A' }}
+                  >
                     <td style={{ padding: '10px 16px', color: '#6B5A4A', whiteSpace: 'nowrap' }}>
                       {new Date(log.timestamp || log.createdAt).toLocaleString()}
                     </td>

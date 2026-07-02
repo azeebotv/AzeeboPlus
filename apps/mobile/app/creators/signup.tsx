@@ -7,10 +7,10 @@ import {
   TouchableOpacity,
   TextInput,
   Alert,
-  ActivityIndicator,
 } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { creatorApi } from '../../src/api/creator';
 import { apiClient } from '../../src/api/client';
 import { logger } from '../../src/utils/logger';
@@ -116,197 +116,211 @@ export default function CreatorSignup() {
   };
 
   if (isLoadingOptions) {
-    return <LoadingState text="Loading options..." />;
+    return (
+      <SafeAreaView style={styles.container}>
+        <LoadingState text="Loading options..." />
+      </SafeAreaView>
+    );
   }
 
   if (optionsError) {
-    return <ErrorState description={optionsError} onRetry={fetchOptions} />;
+    return (
+      <SafeAreaView style={styles.container}>
+        <ErrorState description={optionsError} onRetry={fetchOptions} />
+      </SafeAreaView>
+    );
   }
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: isDark ? '#0a0a0a' : '#ffffff' }]}>
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-          <Text style={styles.backIcon}>←</Text>
-        </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
-          Become a Creator
-        </Text>
-      </View>
-
-      <View style={styles.progressBar}>
-        {[1, 2, 3].map((s) => (
-          <View key={s} style={[styles.progressItem, step >= s && styles.progressItemActive]}>
-            <View style={[styles.progressCircle, step >= s && styles.progressCircleActive]}>
-              <Text style={styles.progressNumber}>{s}</Text>
-            </View>
-            {s < 3 && <View style={[styles.progressLine, step > s && styles.progressLineActive]} />}
-          </View>
-        ))}
-      </View>
-
-      <View style={styles.content}>
-        {step === 1 && (
-          <View style={styles.stepContent}>
-            <Text style={[styles.stepTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
-              What's your category?
-            </Text>
-            <Text style={styles.stepDesc}>
-              Choose the category that best describes your content
-            </Text>
-            <View style={styles.optionsGrid}>
-              {categories.map((option) => (
-                <TouchableOpacity
-                  key={option.id}
-                  style={[
-                    styles.optionCard,
-                    { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' },
-                    selectedCategory === option.id && styles.optionCardActive,
-                  ]}
-                  onPress={() => setSelectedCategory(option.id)}
-                >
-                  <Text style={styles.optionEmoji}>{option.emoji}</Text>
-                  <Text style={[styles.optionLabel, { color: isDark ? '#fff' : '#000' }]}>
-                    {option.label}
-                  </Text>
-                  {selectedCategory === option.id && <View style={styles.checkmark} />}
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-        )}
-
-        {step === 2 && (
-          <View style={styles.stepContent}>
-            <Text style={[styles.stepTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
-              What type of content?
-            </Text>
-            <Text style={styles.stepDesc}>Select the type of content you plan to create</Text>
-            <View style={styles.optionsList}>
-              {contentTypes.map((option) => (
-                <TouchableOpacity
-                  key={option.id}
-                  style={[
-                    styles.optionListItem,
-                    { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' },
-                    selectedContentType === option.id && styles.optionListItemActive,
-                  ]}
-                  onPress={() => setSelectedContentType(option.id)}
-                >
-                  <Text style={[styles.optionListLabel, { color: isDark ? '#fff' : '#000' }]}>
-                    {option.label}
-                  </Text>
-                  {selectedContentType === option.id && <View style={styles.checkmark} />}
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-        )}
-
-        {step === 3 && (
-          <View style={styles.stepContent}>
-            <Text style={[styles.stepTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
-              Tell us about you
-            </Text>
-            <Text style={styles.stepDesc}>Complete your profile to get started</Text>
-
-            <View style={styles.formGroup}>
-              <Text style={[styles.label, { color: isDark ? '#fff' : '#000' }]}>Display Name</Text>
-              <TextInput
-                style={[
-                  styles.input,
-                  {
-                    backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5',
-                    color: isDark ? '#fff' : '#000',
-                  },
-                ]}
-                placeholder="Enter your display name"
-                placeholderTextColor="#888"
-                value={formData.displayName}
-                onChangeText={(text) => setFormData({ ...formData, displayName: text })}
-              />
-            </View>
-
-            <View style={styles.formGroup}>
-              <Text style={[styles.label, { color: isDark ? '#fff' : '#000' }]}>Bio</Text>
-              <TextInput
-                style={[
-                  styles.textArea,
-                  {
-                    backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5',
-                    color: isDark ? '#fff' : '#000',
-                  },
-                ]}
-                placeholder="Tell your audience about yourself"
-                placeholderTextColor="#888"
-                value={formData.bio}
-                onChangeText={(text) => setFormData({ ...formData, bio: text })}
-                multiline
-                numberOfLines={4}
-              />
-            </View>
-
-            <View style={styles.formGroup}>
-              <Text style={[styles.label, { color: isDark ? '#fff' : '#000' }]}>
-                Social Link (Optional)
-              </Text>
-              <TextInput
-                style={[
-                  styles.input,
-                  {
-                    backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5',
-                    color: isDark ? '#fff' : '#000',
-                  },
-                ]}
-                placeholder="Add your social media link"
-                placeholderTextColor="#888"
-                value={formData.socialLink}
-                onChangeText={(text) => setFormData({ ...formData, socialLink: text })}
-                keyboardType="url"
-              />
-            </View>
-
-            <View style={styles.formGroup}>
-              <Text style={[styles.label, { color: isDark ? '#fff' : '#000' }]}>
-                Goals (Optional)
-              </Text>
-              <TextInput
-                style={[
-                  styles.textArea,
-                  {
-                    backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5',
-                    color: isDark ? '#fff' : '#000',
-                  },
-                ]}
-                placeholder="What do you want to achieve as a creator?"
-                placeholderTextColor="#888"
-                value={formData.goals}
-                onChangeText={(text) => setFormData({ ...formData, goals: text })}
-                multiline
-                numberOfLines={3}
-              />
-            </View>
-          </View>
-        )}
-
-        <View style={styles.buttonBar}>
-          {step > 1 && (
-            <TouchableOpacity style={styles.backButtonMain} onPress={handleBack}>
-              <Text style={styles.backButtonMainText}>Back</Text>
-            </TouchableOpacity>
-          )}
-          <TouchableOpacity
-            style={[styles.nextButton, { flex: step > 1 ? 1 : 1 }]}
-            onPress={step === 3 ? handleSubmit : handleNext}
-            disabled={isSubmitting}
-          >
-            <Text style={styles.nextButtonText}>
-              {isSubmitting ? 'Submitting...' : step === 3 ? 'Submit Application' : 'Next'}
-            </Text>
+    <SafeAreaView style={styles.container}>
+      <ScrollView style={[{ flex: 1 }, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+            <Text style={styles.backIcon}>←</Text>
           </TouchableOpacity>
+          <Text style={[styles.headerTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
+            Become a Creator
+          </Text>
         </View>
-      </View>
-    </ScrollView>
+
+        <View style={styles.progressBar}>
+          {[1, 2, 3].map((s) => (
+            <View key={s} style={[styles.progressItem, step >= s && styles.progressItemActive]}>
+              <View style={[styles.progressCircle, step >= s && styles.progressCircleActive]}>
+                <Text style={styles.progressNumber}>{s}</Text>
+              </View>
+              {s < 3 && (
+                <View style={[styles.progressLine, step > s && styles.progressLineActive]} />
+              )}
+            </View>
+          ))}
+        </View>
+
+        <View style={styles.content}>
+          {step === 1 && (
+            <View style={styles.stepContent}>
+              <Text style={[styles.stepTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
+                What's your category?
+              </Text>
+              <Text style={styles.stepDesc}>
+                Choose the category that best describes your content
+              </Text>
+              <View style={styles.optionsGrid}>
+                {categories.map((option) => (
+                  <TouchableOpacity
+                    key={option.id}
+                    style={[
+                      styles.optionCard,
+                      { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' },
+                      selectedCategory === option.id && styles.optionCardActive,
+                    ]}
+                    onPress={() => setSelectedCategory(option.id)}
+                  >
+                    <Text style={styles.optionEmoji}>{option.emoji}</Text>
+                    <Text style={[styles.optionLabel, { color: isDark ? '#fff' : '#000' }]}>
+                      {option.label}
+                    </Text>
+                    {selectedCategory === option.id && <View style={styles.checkmark} />}
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          )}
+
+          {step === 2 && (
+            <View style={styles.stepContent}>
+              <Text style={[styles.stepTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
+                What type of content?
+              </Text>
+              <Text style={styles.stepDesc}>Select the type of content you plan to create</Text>
+              <View style={styles.optionsList}>
+                {contentTypes.map((option) => (
+                  <TouchableOpacity
+                    key={option.id}
+                    style={[
+                      styles.optionListItem,
+                      { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' },
+                      selectedContentType === option.id && styles.optionListItemActive,
+                    ]}
+                    onPress={() => setSelectedContentType(option.id)}
+                  >
+                    <Text style={[styles.optionListLabel, { color: isDark ? '#fff' : '#000' }]}>
+                      {option.label}
+                    </Text>
+                    {selectedContentType === option.id && <View style={styles.checkmark} />}
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          )}
+
+          {step === 3 && (
+            <View style={styles.stepContent}>
+              <Text style={[styles.stepTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
+                Tell us about you
+              </Text>
+              <Text style={styles.stepDesc}>Complete your profile to get started</Text>
+
+              <View style={styles.formGroup}>
+                <Text style={[styles.label, { color: isDark ? '#fff' : '#000' }]}>
+                  Display Name
+                </Text>
+                <TextInput
+                  style={[
+                    styles.input,
+                    {
+                      backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5',
+                      color: isDark ? '#fff' : '#000',
+                    },
+                  ]}
+                  placeholder="Enter your display name"
+                  placeholderTextColor="#888"
+                  value={formData.displayName}
+                  onChangeText={(text) => setFormData({ ...formData, displayName: text })}
+                />
+              </View>
+
+              <View style={styles.formGroup}>
+                <Text style={[styles.label, { color: isDark ? '#fff' : '#000' }]}>Bio</Text>
+                <TextInput
+                  style={[
+                    styles.textArea,
+                    {
+                      backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5',
+                      color: isDark ? '#fff' : '#000',
+                    },
+                  ]}
+                  placeholder="Tell your audience about yourself"
+                  placeholderTextColor="#888"
+                  value={formData.bio}
+                  onChangeText={(text) => setFormData({ ...formData, bio: text })}
+                  multiline
+                  numberOfLines={4}
+                />
+              </View>
+
+              <View style={styles.formGroup}>
+                <Text style={[styles.label, { color: isDark ? '#fff' : '#000' }]}>
+                  Social Link (Optional)
+                </Text>
+                <TextInput
+                  style={[
+                    styles.input,
+                    {
+                      backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5',
+                      color: isDark ? '#fff' : '#000',
+                    },
+                  ]}
+                  placeholder="Add your social media link"
+                  placeholderTextColor="#888"
+                  value={formData.socialLink}
+                  onChangeText={(text) => setFormData({ ...formData, socialLink: text })}
+                  keyboardType="url"
+                />
+              </View>
+
+              <View style={styles.formGroup}>
+                <Text style={[styles.label, { color: isDark ? '#fff' : '#000' }]}>
+                  Goals (Optional)
+                </Text>
+                <TextInput
+                  style={[
+                    styles.textArea,
+                    {
+                      backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5',
+                      color: isDark ? '#fff' : '#000',
+                    },
+                  ]}
+                  placeholder="What do you want to achieve as a creator?"
+                  placeholderTextColor="#888"
+                  value={formData.goals}
+                  onChangeText={(text) => setFormData({ ...formData, goals: text })}
+                  multiline
+                  numberOfLines={3}
+                />
+              </View>
+            </View>
+          )}
+
+          <View style={styles.buttonBar}>
+            {step > 1 && (
+              <TouchableOpacity style={styles.backButtonMain} onPress={handleBack}>
+                <Text style={styles.backButtonMainText}>Back</Text>
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity
+              style={[styles.nextButton, { flex: step > 1 ? 1 : 1 }]}
+              onPress={step === 3 ? handleSubmit : handleNext}
+              disabled={isSubmitting}
+            >
+              <Text style={styles.nextButtonText}>
+                {isSubmitting ? 'Submitting...' : step === 3 ? 'Submit Application' : 'Next'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
@@ -359,6 +373,7 @@ const styles = StyleSheet.create({
   progressCircleActive: {
     backgroundColor: '#4ECDC4',
   },
+  progressItemActive: {},
   progressNumber: {
     color: '#fff',
     fontSize: 14,

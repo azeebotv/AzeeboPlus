@@ -1,5 +1,4 @@
 import { Platform } from 'react-native';
-import { StripeProvider } from 'expo-payments-stripe';
 import * as SecureStore from 'expo-secure-store';
 import { logger } from './logger';
 
@@ -135,7 +134,7 @@ export class AppleGooglePayService {
     }
   }
 
-  private async confirmPayment(clientSecret: string): Promise<PaymentResult> {
+  private async confirmPayment(_clientSecret: string): Promise<PaymentResult> {
     try {
       // Note: useStripe() must be called from a React component, not a class method.
       // This service should be refactored to use a React hook wrapper.

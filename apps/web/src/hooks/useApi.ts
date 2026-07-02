@@ -164,7 +164,10 @@ export function useLocalStorage<T>(
 }
 
 export function useMediaQuery(query: string): boolean {
-  const [matches, setMatches] = useState<boolean>(false);
+  const [matches, setMatches] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    return window.matchMedia(query).matches;
+  });
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -172,10 +175,7 @@ export function useMediaQuery(query: string): boolean {
     }
 
     const media = window.matchMedia(query);
-
-    if (media.matches !== matches) {
-      setMatches(media.matches);
-    }
+    setMatches(media.matches);
 
     const listener = (): void => {
       setMatches(media.matches);
@@ -185,7 +185,7 @@ export function useMediaQuery(query: string): boolean {
     return (): void => {
       media.removeEventListener('change', listener);
     };
-  }, [matches, query]);
+  }, [query]);
 
   return matches;
 }

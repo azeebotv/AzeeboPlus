@@ -13,7 +13,6 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../src/contexts/AuthContext';
 import { notificationApi, type NotificationPreferences } from '../../src/api';
-import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
 import { logger } from '../../src/utils/logger';
 import { useBiometric } from '../../src/hooks/useBiometric';
 import Constants from 'expo-constants';
@@ -28,11 +27,11 @@ export default function SettingsScreen() {
     isAvailable,
     biometricType,
     isEnabled,
-    isLoading: isBiometricLoading,
+    isLoading: _isBiometricLoading,
     enableBiometrics,
     disableBiometrics,
   } = useBiometric();
-  const [isLoading, setIsLoading] = useState(false);
+  const [_isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isBiometricToggling, setIsBiometricToggling] = useState(false);
   const [preferences, setPreferences] = useState<NotificationPreferences>({
@@ -131,7 +130,7 @@ export default function SettingsScreen() {
           timestamp: Date.now(),
         });
 
-        const success = await enableBiometrics(credentials);
+        const success = await enableBiometrics(JSON.parse(credentials));
 
         if (success) {
           Alert.alert(
@@ -174,7 +173,7 @@ export default function SettingsScreen() {
   if (!isAuthenticated) {
     return (
       <SafeAreaView
-        style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#000' : '#fff' }]}
+        style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#1A0A0A' : '#fff' }]}
         edges={['top']}
       >
         <View style={styles.unauthenticatedContainer}>
@@ -189,7 +188,7 @@ export default function SettingsScreen() {
 
   return (
     <SafeAreaView
-      style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#000' : '#fff' }]}
+      style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#1A0A0A' : '#fff' }]}
       edges={['top']}
     >
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -201,7 +200,7 @@ export default function SettingsScreen() {
 
         {isSaving && (
           <View style={styles.savingIndicator}>
-            <ActivityIndicator size="small" color="#8B5CF6" />
+            <ActivityIndicator size="small" color="#E8420A" />
             <Text style={styles.savingText}>Saving...</Text>
           </View>
         )}
@@ -231,7 +230,7 @@ export default function SettingsScreen() {
             <Switch
               value={preferences.push}
               onValueChange={(value) => handleTogglePreference('push', value)}
-              trackColor={{ false: '#333', true: '#8B5CF6' }}
+              trackColor={{ false: '#333', true: '#E8420A' }}
               thumbColor="#fff"
             />
           </View>
@@ -256,7 +255,7 @@ export default function SettingsScreen() {
             <Switch
               value={preferences.email}
               onValueChange={(value) => handleTogglePreference('email', value)}
-              trackColor={{ false: '#333', true: '#8B5CF6' }}
+              trackColor={{ false: '#333', true: '#E8420A' }}
               thumbColor="#fff"
             />
           </View>
@@ -281,7 +280,7 @@ export default function SettingsScreen() {
             <Switch
               value={preferences.sms}
               onValueChange={(value) => handleTogglePreference('sms', value)}
-              trackColor={{ false: '#333', true: '#8B5CF6' }}
+              trackColor={{ false: '#333', true: '#E8420A' }}
               thumbColor="#fff"
             />
           </View>
@@ -316,12 +315,12 @@ export default function SettingsScreen() {
               </View>
             </View>
             {isBiometricToggling ? (
-              <ActivityIndicator size="small" color="#8B5CF6" />
+              <ActivityIndicator size="small" color="#E8420A" />
             ) : (
               <Switch
                 value={isEnabled}
                 onValueChange={handleBiometricToggle}
-                trackColor={{ false: '#333', true: '#8B5CF6' }}
+                trackColor={{ false: '#333', true: '#E8420A' }}
                 thumbColor="#fff"
                 disabled={!isAvailable || isBiometricToggling}
               />
@@ -351,7 +350,7 @@ export default function SettingsScreen() {
             <Switch
               value={preferences.types.newContent}
               onValueChange={() => handleToggleTypePreference('newContent')}
-              trackColor={{ false: '#333', true: '#8B5CF6' }}
+              trackColor={{ false: '#333', true: '#E8420A' }}
               thumbColor="#fff"
             />
           </View>
@@ -373,7 +372,7 @@ export default function SettingsScreen() {
             <Switch
               value={preferences.types.comments}
               onValueChange={() => handleToggleTypePreference('comments')}
-              trackColor={{ false: '#333', true: '#8B5CF6' }}
+              trackColor={{ false: '#333', true: '#E8420A' }}
               thumbColor="#fff"
             />
           </View>
@@ -395,7 +394,7 @@ export default function SettingsScreen() {
             <Switch
               value={preferences.types.likes}
               onValueChange={() => handleToggleTypePreference('likes')}
-              trackColor={{ false: '#333', true: '#8B5CF6' }}
+              trackColor={{ false: '#333', true: '#E8420A' }}
               thumbColor="#fff"
             />
           </View>
@@ -417,7 +416,7 @@ export default function SettingsScreen() {
             <Switch
               value={preferences.types.followers}
               onValueChange={() => handleToggleTypePreference('followers')}
-              trackColor={{ false: '#333', true: '#8B5CF6' }}
+              trackColor={{ false: '#333', true: '#E8420A' }}
               thumbColor="#fff"
             />
           </View>
@@ -439,7 +438,7 @@ export default function SettingsScreen() {
             <Switch
               value={preferences.types.system}
               onValueChange={() => handleToggleTypePreference('system')}
-              trackColor={{ false: '#333', true: '#8B5CF6' }}
+              trackColor={{ false: '#333', true: '#E8420A' }}
               thumbColor="#fff"
             />
           </View>
@@ -461,7 +460,7 @@ export default function SettingsScreen() {
             <Switch
               value={preferences.types.payments}
               onValueChange={() => handleToggleTypePreference('payments')}
-              trackColor={{ false: '#333', true: '#8B5CF6' }}
+              trackColor={{ false: '#333', true: '#E8420A' }}
               thumbColor="#fff"
             />
           </View>
@@ -568,7 +567,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   savingText: {
-    color: '#8B5CF6',
+    color: '#E8420A',
     fontSize: 14,
   },
   section: {

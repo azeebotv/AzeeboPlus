@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { WebhookSecurityService } from './webhook-security.service';
 import { RedisService } from '../../common/services/redis.service';
+import { ConfigService } from '@nestjs/config';
 import { createHmac } from 'crypto';
 
 describe('WebhookSecurityService', () => {
@@ -18,7 +19,11 @@ describe('WebhookSecurityService', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [WebhookSecurityService, { provide: RedisService, useValue: mockRedisService }],
+      providers: [
+        WebhookSecurityService,
+        { provide: RedisService, useValue: mockRedisService },
+        { provide: ConfigService, useValue: { get: jest.fn().mockImplementation((_key: string, defaultValue?: unknown) => defaultValue) } },
+      ],
     }).compile();
 
     service = module.get<WebhookSecurityService>(WebhookSecurityService);

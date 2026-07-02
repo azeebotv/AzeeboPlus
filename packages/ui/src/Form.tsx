@@ -38,7 +38,13 @@ export function Form<T extends FieldValues>({
 
   return (
     <form onSubmit={handleSubmit(onSubmit as never)} noValidate>
-      {children({ register, control: control as never, handleSubmit: handleSubmit as never, formState, errors })}
+      {children({
+        register,
+        control: control as never,
+        handleSubmit: handleSubmit as never,
+        formState,
+        errors,
+      })}
     </form>
   );
 }
@@ -73,10 +79,13 @@ export function Field<T extends FieldValues>({
         };
 
         if (children) {
-          return React.cloneElement(children as React.ReactElement<Record<string, unknown>>, {
-            ...inputProps,
-            className,
-          } as Record<string, unknown>);
+          return React.cloneElement(
+            children as React.ReactElement<Record<string, unknown>>,
+            {
+              ...inputProps,
+              className,
+            } as Record<string, unknown>
+          );
         }
 
         return <Input {...inputProps} label={label} className={className} />;

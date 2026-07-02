@@ -37,7 +37,7 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get('me')
-    @ApiOperation({ summary: 'Get current user profile' })
+  @ApiOperation({ summary: 'Get current user profile' })
   @ApiResponse({ status: 200, description: 'User profile' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getProfile(@Request() req: AuthenticatedRequest) {
@@ -56,7 +56,7 @@ export class UsersController {
   }
 
   @Get(':id')
-    @ApiOperation({ summary: 'Get user by ID' })
+  @ApiOperation({ summary: 'Get user by ID' })
   @ApiResponse({ status: 200, description: 'User profile' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'User not found' })
@@ -86,7 +86,7 @@ export class UsersController {
   }
 
   @Get(':id/followers')
-    @ApiOperation({ summary: 'Get user followers' })
+  @ApiOperation({ summary: 'Get user followers' })
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiResponse({ status: 200, description: 'User followers' })
@@ -96,7 +96,7 @@ export class UsersController {
   }
 
   @Get(':id/following')
-    @ApiOperation({ summary: 'Get users being followed' })
+  @ApiOperation({ summary: 'Get users being followed' })
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiResponse({ status: 200, description: 'Users being followed' })
@@ -106,7 +106,7 @@ export class UsersController {
   }
 
   @Get('me/preferences')
-    @ApiOperation({ summary: 'Get user preferences' })
+  @ApiOperation({ summary: 'Get user preferences' })
   @ApiResponse({ status: 200, description: 'User preferences' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getPreferences(@Request() req: AuthenticatedRequest): Promise<Record<string, unknown>> {
@@ -114,7 +114,7 @@ export class UsersController {
   }
 
   @Put('me/preferences')
-    @ApiOperation({ summary: 'Update user preferences' })
+  @ApiOperation({ summary: 'Update user preferences' })
   @ApiResponse({ status: 200, description: 'Preferences updated' })
   @ApiResponse({ status: 400, description: 'Invalid input' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -126,7 +126,7 @@ export class UsersController {
   }
 
   @Get('me/history')
-    @ApiOperation({ summary: 'Get user watch history' })
+  @ApiOperation({ summary: 'Get user watch history' })
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiResponse({ status: 200, description: 'Watch history' })
@@ -140,7 +140,7 @@ export class UsersController {
   }
 
   @Get('me/saved')
-    @ApiOperation({ summary: 'Get user saved items' })
+  @ApiOperation({ summary: 'Get user saved items' })
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiResponse({ status: 200, description: 'Saved items' })
@@ -154,7 +154,7 @@ export class UsersController {
   }
 
   @Post('me/saved')
-    @ApiOperation({ summary: 'Save an item' })
+  @ApiOperation({ summary: 'Save an item' })
   @ApiResponse({ status: 201, description: 'Item saved' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async saveItem(
@@ -165,7 +165,7 @@ export class UsersController {
   }
 
   @Delete('me/saved/:contentId')
-    @ApiOperation({ summary: 'Unsave an item' })
+  @ApiOperation({ summary: 'Unsave an item' })
   @ApiResponse({ status: 200, description: 'Item unsaved' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async unsaveItem(
@@ -176,7 +176,7 @@ export class UsersController {
   }
 
   @Get('watch-history')
-    @ApiOperation({ summary: 'Get watch history' })
+  @ApiOperation({ summary: 'Get watch history' })
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiResponse({ status: 200, description: 'Watch history' })
@@ -193,7 +193,7 @@ export class UsersController {
   }
 
   @Post('watch-history')
-    @ApiOperation({ summary: 'Add to watch history' })
+  @ApiOperation({ summary: 'Add to watch history' })
   @ApiResponse({ status: 201, description: 'Added to watch history' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async addToWatchHistory(
@@ -207,7 +207,7 @@ export class UsersController {
   }
 
   @Get('saved')
-    @ApiOperation({ summary: 'Get saved content' })
+  @ApiOperation({ summary: 'Get saved content' })
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiResponse({ status: 200, description: 'Saved content' })
@@ -224,7 +224,7 @@ export class UsersController {
   }
 
   @Post('saved')
-    @ApiOperation({ summary: 'Save content' })
+  @ApiOperation({ summary: 'Save content' })
   @ApiResponse({ status: 201, description: 'Content saved' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async saveContent(
@@ -238,7 +238,7 @@ export class UsersController {
   }
 
   @Delete('saved/:contentId')
-    @ApiOperation({ summary: 'Remove saved content' })
+  @ApiOperation({ summary: 'Remove saved content' })
   @ApiResponse({ status: 200, description: 'Saved content removed' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async removeSaved(
@@ -252,7 +252,7 @@ export class UsersController {
   }
 
   @Get('me/universe-affinity')
-    @ApiOperation({ summary: 'Get user universe affinity' })
+  @ApiOperation({ summary: 'Get user universe affinity' })
   @ApiResponse({ status: 200, description: 'Universe affinity' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getUniverseAffinity(@Request() req: AuthenticatedRequest): Promise<unknown> {
@@ -260,7 +260,7 @@ export class UsersController {
   }
 
   @Patch('me/universe-affinity')
-    @ApiOperation({ summary: 'Update user universe affinity' })
+  @ApiOperation({ summary: 'Update user universe affinity' })
   @ApiResponse({ status: 200, description: 'Universe affinity updated' })
   @ApiResponse({ status: 400, description: 'Invalid input' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })

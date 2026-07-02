@@ -15,4 +15,8 @@ export class SubscribeToPlanDto {
   @IsString()
   @IsOptional()
   paymentMethod?: string;
+
+  @ApiProperty({ example: 'pay_ref_abc123', description: 'Payment gateway reference' })
+  @IsString()
+  paymentReference!: string;
 }
