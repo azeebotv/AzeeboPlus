@@ -19,7 +19,7 @@ import { UsersService } from './users.service';
 import { UpdateUniverseAffinityDto } from './dto/update-universe-affinity.dto';
 import { UpdateUserProfileDto } from './dto/update-user-profile.dto';
 import { CompleteProfileSetupDto } from './dto/complete-profile-setup.dto';
-import { RateLimitGuard, RateLimit } from '@azeebo/security';
+import { RateLimitGuard, RateLimit, Public } from '@azeebo/security';
 
 interface AuthenticatedRequest {
   user: {
@@ -55,6 +55,7 @@ export class UsersController {
     return this.usersService.updateProfile(req.user.id, dto);
   }
 
+  @Public()
   @Get(':id')
   @ApiOperation({ summary: 'Get user by ID' })
   @ApiResponse({ status: 200, description: 'User profile' })
@@ -85,6 +86,7 @@ export class UsersController {
     return this.usersService.unfollowUser(req.user.id, id);
   }
 
+  @Public()
   @Get(':id/followers')
   @ApiOperation({ summary: 'Get user followers' })
   @ApiQuery({ name: 'page', required: false, type: Number })
@@ -95,6 +97,7 @@ export class UsersController {
     return this.usersService.getFollowers(id, Number(page), Number(limit));
   }
 
+  @Public()
   @Get(':id/following')
   @ApiOperation({ summary: 'Get users being followed' })
   @ApiQuery({ name: 'page', required: false, type: Number })

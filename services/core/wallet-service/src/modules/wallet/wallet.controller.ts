@@ -10,7 +10,6 @@ import {
   Param,
   UseInterceptors,
 } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
 import { PrismaService } from '../database/prisma.service';
 import { RateLimitGuard, RateLimit, AdminGuard } from '@azeebo/security';
@@ -45,8 +44,7 @@ export class WalletController {
   ) {}
 
   @Get()
-  @UseGuards(AuthGuard('jwt'))
-  @Cache({ key: 'wallet:balance:{userId}', ttl: 60 })
+  @Cache({ key: 'wallet:balance', ttl: 60 })
   @ApiOperation({ summary: 'Get wallet balance' })
   @ApiResponse({ status: 200, description: 'Wallet balance' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -55,8 +53,7 @@ export class WalletController {
   }
 
   @Get('transactions')
-  @UseGuards(AuthGuard('jwt'))
-  @Cache({ key: 'wallet:transactions:{userId}', ttl: 60 })
+  @Cache({ key: 'wallet:transactions', ttl: 60 })
   @ApiOperation({ summary: 'Get wallet transaction history' })
   @ApiResponse({ status: 200, description: 'Transaction history' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -70,8 +67,7 @@ export class WalletController {
   }
 
   @Get('summary')
-  @UseGuards(AuthGuard('jwt'))
-  @Cache({ key: 'wallet:summary:{userId}', ttl: 60 })
+  @Cache({ key: 'wallet:summary', ttl: 60 })
   @ApiOperation({ summary: 'Get wallet summary widget' })
   @ApiResponse({ status: 200, description: 'Wallet summary' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -80,7 +76,7 @@ export class WalletController {
   }
 
   @Post('fund')
-  @UseGuards(AuthGuard('jwt'), RateLimitGuard)
+  @UseGuards(RateLimitGuard)
   @RateLimit(10, 60000)
   @ApiOperation({ summary: 'Initialize wallet funding' })
   @ApiResponse({ status: 201, description: 'Payment intent created' })
@@ -94,7 +90,7 @@ export class WalletController {
   }
 
   @Post('redeem-reward')
-  @UseGuards(AuthGuard('jwt'), RateLimitGuard)
+  @UseGuards(RateLimitGuard)
   @RateLimit(10, 60000)
   @ApiOperation({ summary: 'Convert reward points to wallet balance' })
   @ApiResponse({ status: 200, description: 'Reward redeemed' })
@@ -108,7 +104,7 @@ export class WalletController {
   }
 
   @Post('bonus-credit')
-  @UseGuards(AuthGuard('jwt'), AdminGuard, RateLimitGuard)
+  @UseGuards(AdminGuard, RateLimitGuard)
   @RateLimit(10, 3600000)
   @ApiOperation({ summary: 'Add bonus credit to wallet' })
   @ApiResponse({ status: 200, description: 'Bonus credit added' })
@@ -134,7 +130,7 @@ export class WalletController {
   }
 
   @Post('promo-credit')
-  @UseGuards(AuthGuard('jwt'), AdminGuard, RateLimitGuard)
+  @UseGuards(AdminGuard, RateLimitGuard)
   @RateLimit(10, 3600000)
   @ApiOperation({ summary: 'Add promo credit to wallet' })
   @ApiResponse({ status: 200, description: 'Promo credit added' })
@@ -161,7 +157,6 @@ export class WalletController {
   }
 
   @Get('audit-trail')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get transaction audit trail' })
   @ApiResponse({ status: 200, description: 'Audit trail' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -185,7 +180,7 @@ export class WalletController {
   }
 
   @Post('debit')
-  @UseGuards(AuthGuard('jwt'), AdminGuard, RateLimitGuard)
+  @UseGuards(AdminGuard, RateLimitGuard)
   @RateLimit(50, 60000)
   @ApiOperation({ summary: 'Debit wallet (service-to-service)' })
   @ApiResponse({ status: 200, description: 'Wallet debited' })
@@ -201,7 +196,7 @@ export class WalletController {
   }
 
   @Post('credit')
-  @UseGuards(AuthGuard('jwt'), AdminGuard, RateLimitGuard)
+  @UseGuards(AdminGuard, RateLimitGuard)
   @RateLimit(50, 60000)
   @ApiOperation({ summary: 'Credit wallet (service-to-service)' })
   @ApiResponse({ status: 200, description: 'Wallet credited' })
@@ -216,7 +211,7 @@ export class WalletController {
   }
 
   @Post('withdraw')
-  @UseGuards(AuthGuard('jwt'), RateLimitGuard)
+  @UseGuards(RateLimitGuard)
   @RateLimit(5, 3600000)
   @ApiOperation({ summary: 'Withdraw funds from wallet' })
   @ApiResponse({ status: 200, description: 'Withdrawal initiated' })
@@ -230,7 +225,7 @@ export class WalletController {
   }
 
   @Post('transfer')
-  @UseGuards(AuthGuard('jwt'), RateLimitGuard)
+  @UseGuards(RateLimitGuard)
   @RateLimit(10, 3600000)
   @ApiOperation({ summary: 'Transfer funds to another user' })
   @ApiResponse({ status: 200, description: 'Transfer completed' })
@@ -244,7 +239,6 @@ export class WalletController {
   }
 
   @Get('transactions/:id')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get transaction details' })
   @ApiParam({ name: 'id', description: 'Transaction ID' })
   @ApiResponse({ status: 200, description: 'Transaction details' })

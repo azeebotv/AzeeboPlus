@@ -39,6 +39,7 @@ export class ContentController {
   // Static string GET routes (MUST come before :id parameterized routes)
   // ========================
 
+  @Public()
   @Get()
   @Cache({ key: 'content:list:{universe}', ttl: 600 })
   @UseGuards(RateLimitGuard)
@@ -54,6 +55,7 @@ export class ContentController {
     return result;
   }
 
+  @Public()
   @Get('home')
   @Cache({ key: 'content:home:{userId}', ttl: 300 })
   @UseGuards(RateLimitGuard)
@@ -64,6 +66,7 @@ export class ContentController {
     return this.contentService.getHomeFeed(req?.user?.sub);
   }
 
+  @Public()
   @Get('watch')
   @Cache({ key: 'content:watch:{userId}', ttl: 300 })
   @UseGuards(RateLimitGuard)
@@ -129,6 +132,7 @@ export class ContentController {
     return this.contentService.getPopularInRegion(limit);
   }
 
+  @Public()
   @Get('search')
   @Cache({ key: 'content:search:{q}', ttl: 600 })
   @UseGuards(RateLimitGuard)
@@ -328,6 +332,7 @@ export class ContentController {
     return this.contentService.listContent({ creatorId }, page, limit);
   }
 
+  @Public()
   @Get(':id')
   @Cache({ key: 'content:{id}', ttl: 300 })
   @UseGuards(RateLimitGuard)
@@ -339,6 +344,7 @@ export class ContentController {
     return this.contentService.getContent(id);
   }
 
+  @Public()
   @Get(':id/comments')
   @Cache({ key: 'content:{id}:comments', ttl: 120 })
   @ApiOperation({ summary: 'Get content comments' })
@@ -440,6 +446,7 @@ export class ContentController {
     return this.contentService.getContentRelationships(id);
   }
 
+  @Public()
   @Get(':id/related')
   @ApiOperation({ summary: 'Get related content' })
   @ApiResponse({ status: 200, description: 'Related content list' })
@@ -450,6 +457,7 @@ export class ContentController {
     return this.contentService.getContentByRelationship(id, type);
   }
 
+  @Public()
   @Get(':id/media')
   @ApiOperation({ summary: 'Get media asset for content' })
   @ApiResponse({ status: 200, description: 'Media asset details' })
