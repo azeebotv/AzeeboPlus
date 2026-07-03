@@ -266,7 +266,7 @@ export function createAdminMethods(client: RequestClient) {
 
     // Custom Reports
     getCustomReports: async (): Promise<ApiResponse<AdminReport[]>> => {
-      return client.request<AdminReport[]>('/api/v1/reports');
+      return client.request<AdminReport[]>('/api/v1/admin/reports');
     },
 
     createCustomReport: async (report: {
@@ -280,21 +280,21 @@ export function createAdminMethods(client: RequestClient) {
       dateRange: string;
       isPublic: boolean;
     }): Promise<ApiResponse<AdminReport>> => {
-      return client.request<AdminReport>('/api/v1/reports', {
+      return client.request<AdminReport>('/api/v1/admin/reports', {
         method: 'POST',
         body: JSON.stringify(report),
       });
     },
 
     executeReport: async (reportId: string): Promise<ApiResponse<AdminReport>> => {
-      return client.request<AdminReport>('/api/v1/reports/execute', {
+      return client.request<AdminReport>('/api/v1/admin/reports/execute', {
         method: 'POST',
         body: JSON.stringify({ reportId }),
       });
     },
 
     deleteCustomReport: async (reportId: string): Promise<ApiResponse<{ message: string }>> => {
-      return client.request<{ message: string }>(`/api/v1/reports/${reportId}`, {
+      return client.request<{ message: string }>(`/api/v1/admin/reports/${reportId}`, {
         method: 'DELETE',
       });
     },
