@@ -12,7 +12,7 @@ export function createCreatorMethods(client: RequestClient) {
     > => {
       return client.request<
         PaginatedResponse<User & { contentCount: number; subscriberCount: number }>
-      >(`/api/v1/creators?page=${page}&limit=${limit}`);
+      >(`/api/v1/creators/discover?page=${page}&limit=${limit}`);
     },
 
     getCreator: async (
