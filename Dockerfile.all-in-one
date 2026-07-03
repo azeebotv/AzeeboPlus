@@ -261,12 +261,19 @@ WORKDIR /app
 # Copy runtime skeleton from builder (workspace structure + built artifacts)
 COPY --from=builder /runtime /app
 
+# Fix nested standalone output: flatten apps/web/.next/standalone/apps/web/ -> apps/web/standalone/
+RUN if [ -d /app/apps/web/standalone/apps/web ] && [ ! -f /app/apps/web/standalone/server.js ]; then \
+      echo "Flattening nested standalone output..." && \
+      cp -r /app/apps/web/standalone/apps/web/* /app/apps/web/standalone/ && \
+      rm -rf /app/apps/web/standalone/apps && \
+      echo "Flattened to /app/apps/web/standalone/server.js"; \
+    fi
+
 # Verify critical files exist before proceeding
 RUN echo "==> Verifying critical build artifacts..." && \
     test -f /app/apps/web/standalone/server.js && echo "  OK: web-app standalone server.js" || \
       (echo "  ERROR: web-app standalone server.js MISSING!" && \
        echo "  Contents of /app/apps/web/:" && ls -la /app/apps/web/ 2>&1 && \
-       echo "  Contents of /app/apps/:" && ls -la /app/apps/ 2>&1 && \
        exit 1) && \
     test -f /app/services/core/auth-service/dist/main.js && echo "  OK: auth-service" || \
       (echo "  ERROR: auth-service/dist/main.js MISSING!" && exit 1) && \
