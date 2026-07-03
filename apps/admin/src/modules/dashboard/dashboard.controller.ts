@@ -39,4 +39,25 @@ export class DashboardController {
   async getRecentActivity(@Query('limit') limit = 20): Promise<unknown> {
     return this.dashboardService.getRecentActivity(Number(limit));
   }
+
+  @Get('platform-overview')
+  async getPlatformOverview(): Promise<unknown> {
+    return this.dashboardService.getPlatformOverview();
+  }
+
+  @Get('payment-gateways')
+  async getPaymentGateways() {
+    return [
+      { id: 'paystack', name: 'Paystack', isEnabled: true, mode: 'live' },
+      { id: 'flutterwave', name: 'Flutterwave', isEnabled: false, mode: 'test' },
+    ];
+  }
+
+  @Get('reality-shows')
+  async getRealityShows(
+    @Query('page') page = 1,
+    @Query('limit') limit = 20
+  ) {
+    return { items: [], total: 0, page: Number(page), limit: Number(limit), hasMore: false };
+  }
 }
