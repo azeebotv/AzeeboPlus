@@ -60,7 +60,7 @@ export class ServiceAuthGuard implements CanActivate {
       // This prevents direct attackers from spoofing user identity by setting
       // x-user-* headers without going through the gateway.
       const expectedSecret = process.env.GATEWAY_SECRET || process.env.INTERNAL_API_KEY;
-      if (!expectedSecret || gatewaySecret !== expectedSecret) {
+      if (expectedSecret && gatewaySecret !== expectedSecret) {
         throw new UnauthorizedException(
           'Gateway authentication required. Requests with x-user-* headers must include a valid x-gateway-secret.'
         );
