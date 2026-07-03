@@ -39,6 +39,7 @@ export default function SettingsPage(): React.JSX.Element {
     }
   };
 
+  if (authLoading) return <></>;
   if (!isAuthenticated || !user) return <></>;
 
   const toggleItems = [

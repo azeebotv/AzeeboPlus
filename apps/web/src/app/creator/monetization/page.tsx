@@ -47,6 +47,7 @@ export default function MonetizationPage(): React.JSX.Element {
     }
   };
 
+  if (authLoading) return <></>;
   if (!isAuthenticated || !user) return <></>;
 
   return (

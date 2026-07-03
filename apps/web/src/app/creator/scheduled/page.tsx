@@ -65,6 +65,7 @@ export default function ScheduledPage(): React.JSX.Element {
     }
   };
 
+  if (authLoading) return <></>;
   if (!isAuthenticated || !user) return <></>;
 
   return (

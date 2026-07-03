@@ -78,6 +78,7 @@ export default function ReferralPage(): React.JSX.Element {
     }
   };
 
+  if (authLoading) return <></>;
   if (!isAuthenticated || !user) return <></>;
 
   return (

@@ -54,6 +54,7 @@ export default function DevicesPage(): React.JSX.Element {
     }
   };
 
+  if (authLoading) return <></>;
   if (!isAuthenticated || !user) return <></>;
 
   const getDeviceIcon = (type: string) => {

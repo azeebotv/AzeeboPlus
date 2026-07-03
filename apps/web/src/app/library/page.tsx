@@ -120,6 +120,7 @@ export default function LibraryPage(): React.JSX.Element {
     [favorites, watchHistory, watchlist]
   );
 
+  if (authLoading) return <></>;
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen az-nollywood-bg">

@@ -69,6 +69,7 @@ export default function SubscriptionPlansPage(): React.JSX.Element {
     setSubscribing(null);
   };
 
+  if (authLoading) return <></>;
   if (!isAuthenticated || !user) return <></>;
 
   return (
