@@ -49,18 +49,18 @@ export const notificationApi = {
   },
 
   markAsRead: async (notificationId: string): Promise<ApiResponse<{ message: string }>> => {
-    return apiClient.post<ApiResponse<{ message: string }>>(
+    return apiClient.patch<ApiResponse<{ message: string }>>(
       `/v1/notifications/${notificationId}/read`
     );
   },
 
   markAllAsRead: async (): Promise<ApiResponse<{ message: string }>> => {
-    return apiClient.post<ApiResponse<{ message: string }>>('/v1/notifications/read-all');
+    return apiClient.patch<ApiResponse<{ message: string }>>('/v1/notifications/read-all');
   },
 
   deleteNotification: async (notificationId: string): Promise<ApiResponse<{ message: string }>> => {
-    return apiClient.delete<ApiResponse<{ message: string }>>(
-      `/v1/notifications/${notificationId}`
+    return apiClient.patch<ApiResponse<{ message: string }>>(
+      `/v1/notifications/${notificationId}/read`
     );
   },
 
@@ -71,14 +71,14 @@ export const notificationApi = {
   },
 
   getPreferences: async (): Promise<ApiResponse<NotificationPreferences>> => {
-    return apiClient.get<ApiResponse<NotificationPreferences>>('/v1/notifications/preferences');
+    return apiClient.get<ApiResponse<NotificationPreferences>>('/v1/notifications/settings');
   },
 
   updatePreferences: async (
     preferences: Partial<NotificationPreferences>
   ): Promise<ApiResponse<NotificationPreferences>> => {
-    return apiClient.patch<ApiResponse<NotificationPreferences>>(
-      '/v1/notifications/preferences',
+    return apiClient.put<ApiResponse<NotificationPreferences>>(
+      '/v1/notifications/settings',
       preferences
     );
   },

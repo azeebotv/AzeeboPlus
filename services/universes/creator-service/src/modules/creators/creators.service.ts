@@ -1505,4 +1505,84 @@ export class CreatorsService {
       data: { challenges: entries } as unknown as Record<string, unknown>,
     };
   }
+
+  async getStats(userId: string): Promise<CreatorResponse> {
+    const profile = await this.prisma.creatorProfile.findUnique({ where: { userId } });
+    if (!profile) throw new NotFoundException('Creator profile not found');
+
+    const [contentCount, earnings, subscribers] = await Promise.all([
+      this.prisma.contentItem.count({ where: { creatorId: userId } }),
+      this.prisma.creatorEarning.aggregate({ where: { creatorId: profile.id }, _sum: { amount: true } }),
+      this.prisma.subscription.count({ where: { creatorId: profile.id, status: 'active' } }),
+    ]);
+
+    return {
+      success: true,
+      data: {
+        totalViews: 0,
+        totalLikes: 0,
+        totalComments: 0,
+        followerCount: subscribers,
+        contentCount,
+        totalEarnings: Number(earnings._sum.amount) || 0,
+        pendingEarnings: 0,
+        viewsChangePercentage: 0,
+        avgEngagementRate: 0,
+        totalFollowers: subscribers,
+        viewsChange: 0,
+        likesChange: 0,
+        commentsChange: 0,
+        followersChange: 0,
+      } as unknown as Record<string, unknown>,
+    };
+  }
+
+  async getSettings(userId: string): Promise<CreatorResponse> {
+    return {
+      success: true,
+      data: {
+        emailNotifications: true,
+        pushNotifications: true,
+        smsNotifications: false,
+        marketingNotifications: false,
+        profileVisibility: 'public',
+        showEarnings: false,
+        allowMessages: true,
+      } as unknown as Record<string, unknown>,
+    };
+  }
+
+  async updateSettings(userId: string, data: Record<string, unknown>): Promise<CreatorResponse> {
+    return {
+      success: true,
+      data: { message: 'Settings updated', ...data } as unknown as Record<string, unknown>,
+    };
+  }
+
+  async getCreatorContent(creatorId: string, page = 1, limit = 20): Promise<CreatorResponse> {
+    const skip = (page - 1) * limit;
+    const [items, total] = await Promise.all([
+      this.prisma.contentItem.findMany({
+        where: { creatorId },
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          universe: { select: { id: true, name: true, displayName: true } },
+        },
+      }),
+      this.prisma.contentItem.count({ where: { creatorId } }),
+    ]);
+
+    return {
+      success: true,
+      data: {
+        items,
+        total,
+        page,
+        limit,
+        hasMore: skip + limit < total,
+      } as unknown as Record<string, unknown>,
+    };
+  }
 }

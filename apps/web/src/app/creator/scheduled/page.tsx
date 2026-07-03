@@ -58,7 +58,7 @@ export default function ScheduledPage(): React.JSX.Element {
     try {
       const formData = new FormData();
       formData.append('status', 'draft');
-      await apiFetch(`/v1/content/${id}`, { method: 'PUT', body: formData });
+      await apiFetch(`/v1/content/${id}`, { method: 'PATCH', body: formData });
       setScheduled(scheduled.filter((s) => s.id !== id));
     } catch {
       /* ignore */

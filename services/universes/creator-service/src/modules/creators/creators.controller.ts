@@ -332,4 +332,48 @@ export class CreatorsController {
   ): Promise<CreatorResponse> {
     return this.creatorsService.participateInChallenge(req.user.sub, challengeId, body.contentUrl);
   }
+
+  @Get('stats')
+  @UseGuards(AuthGuard('jwt'))
+  @ApiOperation({ summary: 'Get creator stats' })
+  async getStats(@Request() req: { user: { sub: string } }): Promise<CreatorResponse> {
+    return this.creatorsService.getStats(req.user.sub);
+  }
+
+  @Get('settings')
+  @UseGuards(AuthGuard('jwt'))
+  @ApiOperation({ summary: 'Get creator settings' })
+  async getSettings(@Request() req: { user: { sub: string } }): Promise<CreatorResponse> {
+    return this.creatorsService.getSettings(req.user.sub);
+  }
+
+  @Put('settings')
+  @UseGuards(AuthGuard('jwt'))
+  @ApiOperation({ summary: 'Update creator settings' })
+  async updateSettings(
+    @Request() req: { user: { sub: string } },
+    @Body() body: Record<string, unknown>
+  ): Promise<CreatorResponse> {
+    return this.creatorsService.updateSettings(req.user.sub, body);
+  }
+
+  @Get(':creatorId/content')
+  @ApiOperation({ summary: "Get creator's content" })
+  async getCreatorContent(
+    @Param('creatorId') creatorId: string,
+    @Query('page') page = 1,
+    @Query('limit') limit = 20
+  ): Promise<CreatorResponse> {
+    return this.creatorsService.getCreatorContent(creatorId, Number(page), Number(limit));
+  }
+
+  @Put('monetization/settings')
+  @UseGuards(AuthGuard('jwt'))
+  @ApiOperation({ summary: 'Update monetization settings' })
+  async updateMonetizationSettings(
+    @Request() req: { user: { sub: string } },
+    @Body() body: Record<string, unknown>
+  ): Promise<CreatorResponse> {
+    return this.creatorsService.updateSettings(req.user.sub, body);
+  }
 }
