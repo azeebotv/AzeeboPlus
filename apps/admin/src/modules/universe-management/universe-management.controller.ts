@@ -9,11 +9,17 @@ import {
   Query,
   UseGuards,
   Logger,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { UniverseManagementService } from './universe-management.service';
 import { CreateUniverseDto } from './dto/create-universe.dto';
 import { UpdateUniverseDto } from './dto/update-universe.dto';
 import { UniverseFeatureFlagDto } from './dto/universe-feature-flag.dto';
+import { QueryUniverseDto } from './dto/query-universe.dto';
+import { BulkToggleUniverseDto } from './dto/bulk-toggle-universe.dto';
+import { CloneUniverseDto } from './dto/clone-universe.dto';
+import { ImportUniversesBodyDto } from './dto/import-universe.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -27,13 +33,28 @@ export class UniverseManagementController {
   constructor(private readonly universeManagementService: UniverseManagementService) {}
 
   @Get()
-  async getAllUniverses() {
-    return this.universeManagementService.getAllUniverses();
+  async getAllUniverses(@Query() query: QueryUniverseDto) {
+    return this.universeManagementService.getAllUniverses(query);
+  }
+
+  @Get('stats')
+  async getStats() {
+    return this.universeManagementService.getStats();
   }
 
   @Get('enabled')
   async getEnabledUniverses() {
     return this.universeManagementService.getEnabledUniverses();
+  }
+
+  @Get('feature-flags')
+  async getAllFeatureFlags() {
+    return this.universeManagementService.getAllFeatureFlags();
+  }
+
+  @Get('relationships')
+  async getRelationships() {
+    return this.universeManagementService.getRelationships();
   }
 
   @Get('name/:name')
@@ -53,6 +74,11 @@ export class UniverseManagementController {
     return { universeName, featureKey, isEnabled };
   }
 
+  @Get('export/:id')
+  async exportUniverse(@Param('id') id: string) {
+    return this.universeManagementService.exportUniverse(id);
+  }
+
   @Get(':id')
   async getUniverseById(@Param('id') id: string) {
     return this.universeManagementService.getUniverseById(id);
@@ -64,16 +90,31 @@ export class UniverseManagementController {
     return this.universeManagementService.createUniverse(data);
   }
 
+  @Post('bulk/toggle')
+  @HttpCode(HttpStatus.OK)
+  async bulkToggle(@Body() data: BulkToggleUniverseDto) {
+    this.logger.log(`Bulk toggling ${data.ids.length} universes to ${data.isEnabled ? 'enabled' : 'disabled'}`);
+    return this.universeManagementService.bulkToggle(data);
+  }
+
+  @Post('import')
+  @HttpCode(HttpStatus.CREATED)
+  async importUniverses(@Body() data: ImportUniversesBodyDto) {
+    this.logger.log(`Importing ${data.universes.length} universes`);
+    return this.universeManagementService.importUniverses(data.universes);
+  }
+
+  @Post(':id/copy')
+  @HttpCode(HttpStatus.CREATED)
+  async cloneUniverse(@Param('id') id: string, @Body() data: CloneUniverseDto) {
+    this.logger.log(`Cloning universe ${id} to ${data.name}`);
+    return this.universeManagementService.cloneUniverse(id, data);
+  }
+
   @Put(':id')
   async updateUniverse(@Param('id') id: string, @Body() data: UpdateUniverseDto) {
     this.logger.log(`Updating universe: ${id}`);
     return this.universeManagementService.updateUniverse(id, data);
-  }
-
-  @Delete(':id')
-  async deleteUniverse(@Param('id') id: string) {
-    this.logger.log(`Deleting universe: ${id}`);
-    return this.universeManagementService.deleteUniverse(id);
   }
 
   @Put(':id/toggle')
@@ -86,6 +127,12 @@ export class UniverseManagementController {
   async updateFeatureFlag(@Param('id') id: string, @Body() data: UniverseFeatureFlagDto) {
     this.logger.log(`Updating feature flag ${data.featureKey} for universe ${id}`);
     return this.universeManagementService.updateFeatureFlag(id, data);
+  }
+
+  @Delete(':id')
+  async deleteUniverse(@Param('id') id: string) {
+    this.logger.log(`Deleting universe: ${id}`);
+    return this.universeManagementService.deleteUniverse(id);
   }
 
   @Delete(':id/feature-flags/:featureKey')
