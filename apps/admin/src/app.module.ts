@@ -15,6 +15,7 @@ import { ContentReviewModule } from './modules/content-review/content-review.mod
 import { EngagementAdminModule } from './modules/engagement-admin/engagement-admin.module';
 import { NotificationAdminModule } from './modules/notification-admin/notification-admin.module';
 import { ReportsAdminModule } from './modules/reports-admin/reports-admin.module';
+import { StubsModule } from './modules/stubs/stubs.module';
 import { ServiceAuthGuard } from '@azeebo/security';
 
 @Module({
@@ -36,6 +37,7 @@ import { ServiceAuthGuard } from '@azeebo/security';
     EngagementAdminModule,
     NotificationAdminModule,
     ReportsAdminModule,
+    StubsModule,
   ],
   providers: [
     {
