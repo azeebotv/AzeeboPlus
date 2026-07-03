@@ -220,6 +220,7 @@ export default function MessagesPage(): React.JSX.Element {
     conv.user.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  if (authLoading) return <></>;
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>

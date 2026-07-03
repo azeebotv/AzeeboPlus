@@ -48,6 +48,7 @@ export default function PrivacySecurityPage(): React.JSX.Element {
     setIsSaving(false);
   };
 
+  if (authLoading) return <></>;
   if (!isAuthenticated || !user) return <></>;
 
   const toggleItems = [

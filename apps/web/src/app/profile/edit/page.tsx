@@ -53,6 +53,7 @@ export default function ProfileEditPage(): React.JSX.Element {
     setIsSaving(false);
   };
 
+  if (authLoading) return <></>;
   if (!isAuthenticated || !user) return <></>;
 
   return (
