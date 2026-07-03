@@ -3,6 +3,7 @@ node_modules/
 .qoder/
 .dev-state/
 .logs/
+logs.txt
 
 # Prisma generated binaries and client
 **/libquery_engine-*.node
