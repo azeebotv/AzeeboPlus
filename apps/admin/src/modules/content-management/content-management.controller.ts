@@ -50,7 +50,7 @@ export class ContentManagementController {
   }
 
   @Get('stats')
-  async getStats() {
+  async getStats(): Promise<unknown> {
     return this.contentService.getStats();
   }
 
