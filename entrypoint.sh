@@ -238,6 +238,7 @@ MIGRATE_SERVICES=(
   "services/engagement/referral-service:referral-service:azeebo_referral:azeebo:${REFERRAL_DB_PASSWORD:-$POSTGRES_PASSWORD}"
   "services/engagement/subscription-service:subscription-service:azeebo_subscription:azeebo:${SUBSCRIPTION_DB_PASSWORD:-$POSTGRES_PASSWORD}"
   "apps/admin:admin-app:azeebo_admin:azeebo:${ADMIN_DB_PASSWORD:-$POSTGRES_PASSWORD}"
+  "apps/creator-portal:creator-portal-app:azeebo_creator_portal:azeebo:${CREATOR_PORTAL_DB_PASSWORD:-$POSTGRES_PASSWORD}"
 )
 
 # First: resolve any stuck/failed Prisma migrations (P3009) before deploying

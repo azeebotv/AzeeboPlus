@@ -166,7 +166,7 @@ export default function AdminContentPage(): React.JSX.Element {
         setTags(Array.isArray(d) ? d : d.items || []);
       }
       if (statsRes.status === 'fulfilled' && statsRes.value.success && statsRes.value.data) {
-        setStats(statsRes.value.data as ContentStats);
+        setStats(statsRes.value.data as unknown as ContentStats);
       }
       if (univRes.status === 'fulfilled' && univRes.value.success && univRes.value.data) {
         const d = univRes.value.data as any;
