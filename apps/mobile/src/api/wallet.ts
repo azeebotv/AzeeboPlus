@@ -40,7 +40,7 @@ export interface TransactionDetail {
 
 export const walletApi = {
   getBalance: async (): Promise<ApiResponse<WalletBalance>> => {
-    return apiClient.get<ApiResponse<WalletBalance>>('/v1/wallet/balance');
+    return apiClient.get<ApiResponse<WalletBalance>>('/v1/wallet');
   },
 
   getTransaction: async (id: string): Promise<ApiResponse<TransactionDetail>> => {

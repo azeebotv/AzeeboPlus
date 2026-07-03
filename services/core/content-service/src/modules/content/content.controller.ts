@@ -306,6 +306,28 @@ export class ContentController {
     return this.contentService.getContentByCategory(categoryId);
   }
 
+  @Get('me')
+  @UseGuards(AuthGuard('jwt'))
+  @ApiOperation({ summary: "Get current user's content" })
+  async getMyContent(
+    @Request() req: { user: { sub: string } },
+    @Query('status') status?: string,
+    @Query('page') page = 1,
+    @Query('limit') limit = 20
+  ): Promise<ContentResponse> {
+    return this.contentService.listContent({ creatorId: req.user.sub, status }, page, limit);
+  }
+
+  @Get('creator/:creatorId')
+  @ApiOperation({ summary: "Get creator's content" })
+  async getContentByCreator(
+    @Param('creatorId') creatorId: string,
+    @Query('page') page = 1,
+    @Query('limit') limit = 20
+  ): Promise<ContentResponse> {
+    return this.contentService.listContent({ creatorId }, page, limit);
+  }
+
   @Get(':id')
   @Cache({ key: 'content:{id}', ttl: 300 })
   @UseGuards(RateLimitGuard)

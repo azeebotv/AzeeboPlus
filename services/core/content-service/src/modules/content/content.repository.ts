@@ -32,14 +32,24 @@ export class ContentRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async findAll(
-    filters?: { universe?: string },
+    filters?: { universe?: string; creatorId?: string; status?: string },
     page: number = 1,
     limit: number = 20
   ): Promise<PaginatedResult<unknown>> {
-    const where: Record<string, unknown> = { status: 'published' };
+    const where: Record<string, unknown> = {};
+
+    if (filters?.status) {
+      where.status = filters.status;
+    } else {
+      where.status = 'published';
+    }
 
     if (filters?.universe) {
       where.universeId = filters.universe;
+    }
+
+    if (filters?.creatorId) {
+      where.creatorId = filters.creatorId;
     }
 
     const [data, total] = await Promise.all([

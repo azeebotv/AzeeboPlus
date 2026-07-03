@@ -43,7 +43,7 @@ export const paymentApi = {
   },
 
   verify: async (reference: string): Promise<ApiResponse<PaymentVerifyResponse>> => {
-    return apiClient.get<ApiResponse<PaymentVerifyResponse>>(`/v1/payments/verify/${reference}`);
+    return apiClient.post<ApiResponse<PaymentVerifyResponse>>(`/v1/payments/verify?reference=${reference}`);
   },
 
   getTransactions: async (
@@ -66,7 +66,7 @@ export const paymentApi = {
         limit: number;
         totalPages: number;
       }>
-    >(`/v1/payments/transactions?page=${page}&limit=${limit}`);
+    >(`/v1/payments/history?page=${page}&limit=${limit}`);
   },
 
   getProviders: async (): Promise<ApiResponse<{ provider: string; name: string }[]>> => {

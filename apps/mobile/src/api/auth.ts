@@ -77,7 +77,7 @@ export const authApi = {
   },
 
   updateProfile: async (data: Partial<User>): Promise<ApiResponse<User>> => {
-    return apiClient.patch<ApiResponse<User>>('/auth/me', data);
+    return apiClient.patch<ApiResponse<User>>('/users/me', data);
   },
 
   resetPassword: async (
@@ -107,6 +107,6 @@ export const authApi = {
   },
 
   selectRole: async (role: 'user' | 'creator' | 'both'): Promise<ApiResponse<{ role: string }>> => {
-    return apiClient.post<ApiResponse<{ role: string }>>('/auth/role', { role });
+    return apiClient.post<ApiResponse<{ role: string }>>('/auth/select-role', { role });
   },
 };

@@ -129,7 +129,7 @@ export class ContentService {
   }
 
   async listContent(
-    filters?: { universe?: string },
+    filters?: { universe?: string; creatorId?: string; status?: string },
     page?: number,
     limit?: number
   ): Promise<{ success: boolean; data: any }> {
