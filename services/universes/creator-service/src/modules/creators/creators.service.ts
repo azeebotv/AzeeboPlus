@@ -1567,9 +1567,6 @@ export class CreatorsService {
         skip,
         take: limit,
         orderBy: { createdAt: 'desc' },
-        include: {
-          universe: { select: { id: true, name: true, displayName: true } },
-        },
       }),
       this.prisma.contentItem.count({ where: { creatorId } }),
     ]);
