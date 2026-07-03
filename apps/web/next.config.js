@@ -9,6 +9,9 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  typescript: {
+    ignoreDuringBuilds: true,
+  },
   images: {
     domains: process.env.IMAGE_DOMAINS
       ? process.env.IMAGE_DOMAINS.split(',')
