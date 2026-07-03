@@ -5,7 +5,7 @@ import { api } from '@/lib/api';
 import AdminLayout from '@/components/layout/AdminLayout';
 
 export default function AdminSettingsPage(): React.JSX.Element {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, isLoading: authLoading } = useAuth();
   const [settings, setSettings] = useState({
     platformName: 'Azeebo+',
     maintenanceMode: false,
@@ -20,9 +20,10 @@ export default function AdminSettingsPage(): React.JSX.Element {
   const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (authLoading) return;
     if (!isAuthenticated || !user || user.role !== 'admin') return;
     loadSettings();
-  }, [isAuthenticated, user]);
+  }, [authLoading, isAuthenticated, user]);
 
   const loadSettings = async () => {
     try {

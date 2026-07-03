@@ -5,14 +5,15 @@ import { api } from '@/lib/api';
 import AdminLayout from '@/components/layout/AdminLayout';
 
 export default function AdminRealityPage(): React.JSX.Element {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, isLoading: authLoading } = useAuth();
   const [shows, setShows] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    if (authLoading) return;
     if (!isAuthenticated || !user || user.role !== 'admin') return;
     loadShows();
-  }, [isAuthenticated, user]);
+  }, [authLoading, isAuthenticated, user]);
 
   const loadShows = async () => {
     try {

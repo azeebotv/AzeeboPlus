@@ -5,14 +5,15 @@ import { api } from '@/lib/api';
 import AdminLayout from '@/components/layout/AdminLayout';
 
 export default function AdminOverviewPage(): React.JSX.Element {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, isLoading: authLoading } = useAuth();
   const [stats, setStats] = useState<any>({});
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    if (authLoading) return;
     if (!isAuthenticated || !user || user.role !== 'admin') return;
     loadStats();
-  }, [isAuthenticated, user]);
+  }, [authLoading, isAuthenticated, user]);
 
   const loadStats = async () => {
     try {

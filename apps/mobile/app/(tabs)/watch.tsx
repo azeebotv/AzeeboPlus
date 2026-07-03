@@ -20,13 +20,14 @@ import { ScrollReveal, PageTransition } from '../../src/components/motion';
 export default function WatchScreen() {
   const colorScheme = useColorScheme();
   const router = useRouter();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
 
   useEffect(() => {
+    if (authLoading) return;
     if (!isAuthenticated) {
       router.replace('/(auth)/login');
     }
-  }, [isAuthenticated, router]);
+  }, [authLoading, isAuthenticated, router]);
   const [content, setContent] = useState<ContentItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);

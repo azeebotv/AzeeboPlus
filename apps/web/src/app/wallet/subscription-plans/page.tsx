@@ -15,7 +15,7 @@ interface Plan {
 }
 
 export default function SubscriptionPlansPage(): React.JSX.Element {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, isLoading: authLoading } = useAuth();
   const router = useRouter();
   const [plans, setPlans] = useState<Plan[]>([]);
   const [currentPlan, setCurrentPlan] = useState<string | null>(null);
@@ -24,12 +24,13 @@ export default function SubscriptionPlansPage(): React.JSX.Element {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (authLoading) return;
     if (!isAuthenticated || !user) {
       router.push('/auth/login');
       return;
     }
     loadPlans();
-  }, [isAuthenticated, user, router]);
+  }, [authLoading, isAuthenticated, user, router]);
 
   const loadPlans = async () => {
     try {

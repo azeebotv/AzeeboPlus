@@ -7,7 +7,7 @@ import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 
 export default function DashboardOverviewPage(): React.JSX.Element {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, isLoading: authLoading } = useAuth();
   const router = useRouter();
   const [stats, setStats] = useState({
     totalViews: 0,
@@ -19,12 +19,13 @@ export default function DashboardOverviewPage(): React.JSX.Element {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    if (authLoading) return;
     if (!isAuthenticated || !user) {
       router.push('/auth/login');
       return;
     }
     loadDashboard();
-  }, [isAuthenticated, user, router]);
+  }, [authLoading, isAuthenticated, user, router]);
 
   const loadDashboard = async () => {
     try {
@@ -53,6 +54,8 @@ export default function DashboardOverviewPage(): React.JSX.Element {
       setIsLoading(false);
     }
   };
+
+  if (authLoading || (!isAuthenticated && !user)) return <></>;
 
   if (!isAuthenticated || !user) return <></>;
 

@@ -38,7 +38,7 @@ type FilterType = 'all' | 'deposit' | 'withdrawal' | 'payment' | 'reward';
 
 export default function TransactionsScreen() {
   const router = useRouter();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -47,14 +47,16 @@ export default function TransactionsScreen() {
   const [hasMore, setHasMore] = useState(true);
 
   useEffect(() => {
+    if (authLoading) return;
     if (!isAuthenticated) {
       router.replace('/(auth)/login');
     }
-  }, [isAuthenticated, router]);
+  }, [authLoading, isAuthenticated, router]);
 
   useEffect(() => {
+    if (authLoading || !isAuthenticated) return;
     loadTransactions();
-  }, [filter]);
+  }, [authLoading, isAuthenticated, filter]);
 
   const loadTransactions = async (pageNum = 1) => {
     try {

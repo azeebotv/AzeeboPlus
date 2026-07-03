@@ -16,18 +16,19 @@ interface Device {
 }
 
 export default function DevicesPage(): React.JSX.Element {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, isLoading: authLoading } = useAuth();
   const router = useRouter();
   const [devices, setDevices] = useState<Device[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    if (authLoading) return;
     if (!isAuthenticated || !user) {
       router.push('/auth/login');
       return;
     }
     loadDevices();
-  }, [isAuthenticated, user, router]);
+  }, [authLoading, isAuthenticated, user, router]);
 
   const loadDevices = async () => {
     try {

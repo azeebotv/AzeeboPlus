@@ -7,7 +7,7 @@ import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 
 export default function DashboardAnalyticsPage(): React.JSX.Element {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, isLoading: authLoading } = useAuth();
   const router = useRouter();
   const [analytics, setAnalytics] = useState({
     totalViews: 0,
@@ -21,12 +21,13 @@ export default function DashboardAnalyticsPage(): React.JSX.Element {
   const [period, setPeriod] = useState<'7d' | '30d' | '90d'>('30d');
 
   useEffect(() => {
+    if (authLoading) return;
     if (!isAuthenticated || !user) {
       router.push('/auth/login');
       return;
     }
     loadAnalytics();
-  }, [isAuthenticated, user, router, period]);
+  }, [authLoading, isAuthenticated, user, router, period]);
 
   const loadAnalytics = async () => {
     setIsLoading(true);
@@ -39,6 +40,8 @@ export default function DashboardAnalyticsPage(): React.JSX.Element {
       setIsLoading(false);
     }
   };
+
+  if (authLoading || (!isAuthenticated && !user)) return <></>;
 
   if (!isAuthenticated || !user) return <></>;
 

@@ -1,6 +1,7 @@
 'use client';
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../../context/AuthContext';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { apiFetch } from '@/lib/api';
 import { webLogger } from '@/lib/logger';
@@ -15,12 +16,18 @@ interface DashboardStats {
 }
 
 export default function CreatorDashboardPage(): React.JSX.Element {
-  const { user, isAuthenticated: _isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+  const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [stats, setStats] = useState<DashboardStats | null>(null);
 
   useEffect(() => {
+    if (authLoading) return;
+    if (!isAuthenticated || !user) {
+      router.push('/auth/login');
+      return;
+    }
     const fetchDashboard = async () => {
       try {
         setIsLoading(true);
@@ -34,7 +41,7 @@ export default function CreatorDashboardPage(): React.JSX.Element {
       }
     };
     fetchDashboard();
-  }, []);
+  }, [authLoading, isAuthenticated, user, router]);
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#1A0A0A' }}>

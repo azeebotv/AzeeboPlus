@@ -7,7 +7,7 @@ import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 
 export default function DashboardSettingsPage(): React.JSX.Element {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, isLoading: authLoading } = useAuth();
   const router = useRouter();
   const [settings, setSettings] = useState({
     notifications: { email: true, push: true, sms: false },
@@ -18,11 +18,12 @@ export default function DashboardSettingsPage(): React.JSX.Element {
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
+    if (authLoading) return;
     if (!isAuthenticated || !user) {
       router.push('/auth/login');
       return;
     }
-  }, [isAuthenticated, user, router]);
+  }, [authLoading, isAuthenticated, user, router]);
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -35,6 +36,8 @@ export default function DashboardSettingsPage(): React.JSX.Element {
     }
     setIsSaving(false);
   };
+
+  if (authLoading || (!isAuthenticated && !user)) return <></>;
 
   if (!isAuthenticated || !user) return <></>;
 

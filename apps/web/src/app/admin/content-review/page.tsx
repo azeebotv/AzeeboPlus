@@ -5,14 +5,15 @@ import { api } from '@/lib/api';
 import AdminLayout from '@/components/layout/AdminLayout';
 
 export default function AdminContentReviewPage(): React.JSX.Element {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, isLoading: authLoading } = useAuth();
   const [queue, setQueue] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    if (authLoading) return;
     if (!isAuthenticated || !user || user.role !== 'admin') return;
     loadQueue();
-  }, [isAuthenticated, user]);
+  }, [authLoading, isAuthenticated, user]);
 
   const loadQueue = async () => {
     try {

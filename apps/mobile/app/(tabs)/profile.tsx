@@ -32,7 +32,7 @@ const MENU_ITEMS = [
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { logout, user, isAuthenticated } = useAuth();
+  const { logout, user, isAuthenticated, isLoading: authLoading } = useAuth();
   const colorScheme = useColorScheme();
   const [pushEnabled, setPushEnabled] = useState(true);
   const [emailEnabled, setEmailEnabled] = useState(true);
@@ -124,6 +124,19 @@ export default function ProfileScreen() {
       Alert.alert(item.label, 'This feature is coming soon');
     }
   };
+
+  if (authLoading) {
+    return (
+      <SafeAreaView
+        style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#1A0A0A' : '#fff' }]}
+        edges={['top']}
+      >
+        <View style={styles.unauthenticatedContainer}>
+          <ActivityIndicator size="large" color="#E8420A" />
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   if (!isAuthenticated) {
     return (

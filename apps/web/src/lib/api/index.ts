@@ -25,7 +25,7 @@ const USER_KEY = 'azeebo_user';
 /** Set the middleware-readable auth cookie so protected routes don't redirect to login. */
 function setAuthCookie(value: string, maxAge: number = 7 * 24 * 60 * 60): void {
   if (typeof document !== 'undefined') {
-    const secure = process.env.NODE_ENV === 'production' ? '; Secure' : '';
+    const secure = window.location.protocol === 'https:' ? '; Secure' : '';
     document.cookie = `auth=${encodeURIComponent(value)}; path=/; max-age=${maxAge}; SameSite=Lax${secure}`;
   }
 }
@@ -108,11 +108,8 @@ class ApiClient {
           localStorage.setItem(ACCESS_TOKEN_KEY, response.data.access_token);
           localStorage.setItem(REFRESH_TOKEN_KEY, response.data.refresh_token);
 
-          // Update the middleware auth cookie
-          const storedUser = localStorage.getItem(USER_KEY);
-          if (storedUser) {
-            setAuthCookie(JSON.parse(storedUser).id);
-          }
+          // Update the middleware auth cookie with the new access token
+          setAuthCookie(response.data.access_token);
           return response.data;
         }
         return null;

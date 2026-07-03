@@ -18,7 +18,7 @@ import { useAuth } from '../../src/contexts/AuthContext';
 
 export default function WalletScreen() {
   const colorScheme = useColorScheme();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const {
     wallet,
     transactions,
@@ -131,6 +131,20 @@ export default function WalletScreen() {
   const getTransactionIcon = (type: string) => {
     return type === 'credit' ? '💰' : '💸';
   };
+
+  if (authLoading) {
+    return (
+      <SafeAreaView
+        style={[
+          styles.container,
+          styles.centered,
+          { backgroundColor: colorScheme === 'dark' ? '#1A0A0A' : '#fff' },
+        ]}
+      >
+        <ActivityIndicator size="large" color="#E8420A" />
+      </SafeAreaView>
+    );
+  }
 
   if (!isAuthenticated) {
     return (

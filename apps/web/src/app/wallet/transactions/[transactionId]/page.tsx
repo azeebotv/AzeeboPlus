@@ -8,18 +8,19 @@ import AppFooter from '@/components/layout/AppFooter';
 
 export default function TransactionDetailPage(): React.JSX.Element {
   const { transactionId } = useParams();
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, isLoading: authLoading } = useAuth();
   const router = useRouter();
   const [transaction, setTransaction] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    if (authLoading) return;
     if (!isAuthenticated || !user) {
       router.push('/auth/login');
       return;
     }
     loadTransaction();
-  }, [isAuthenticated, user, router, transactionId]);
+  }, [authLoading, isAuthenticated, user, router, transactionId]);
 
   const loadTransaction = async () => {
     try {
@@ -31,6 +32,8 @@ export default function TransactionDetailPage(): React.JSX.Element {
       setIsLoading(false);
     }
   };
+
+  if (authLoading || (!isAuthenticated && !user)) return <></>;
 
   if (!isAuthenticated || !user) return <></>;
 

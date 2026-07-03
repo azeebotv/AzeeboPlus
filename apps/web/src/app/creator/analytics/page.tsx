@@ -1,6 +1,7 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/api';
 import { webLogger } from '@/lib/logger';
 import AppHeader from '@/components/layout/AppHeader';
@@ -29,14 +30,20 @@ interface AnalyticsData {
 }
 
 export default function CreatorAnalyticsPage(): React.JSX.Element {
+  const { isAuthenticated, user, isLoading: authLoading } = useAuth();
   const router = useRouter();
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d' | 'all'>('30d');
 
   useEffect(() => {
+    if (authLoading) return;
+    if (!isAuthenticated || !user) {
+      router.push('/auth/login');
+      return;
+    }
     loadAnalytics();
-  }, [timeRange]);
+  }, [authLoading, isAuthenticated, user, router, timeRange]);
 
   const loadAnalytics = async (): Promise<void> => {
     try {

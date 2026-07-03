@@ -33,7 +33,7 @@ interface HistoryItem {
 
 export default function LibraryScreen() {
   const router = useRouter();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [activeTab, setActiveTab] = useState('watchlist');
   const [watchlist, setWatchlist] = useState<WatchlistItem[]>([]);
   const [history, setHistory] = useState<HistoryItem[]>([]);
@@ -41,10 +41,11 @@ export default function LibraryScreen() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (authLoading) return;
     if (!isAuthenticated) {
       router.replace('/(auth)/login');
     }
-  }, [isAuthenticated, router]);
+  }, [authLoading, isAuthenticated, router]);
 
   const fetchData = async () => {
     setIsLoading(true);

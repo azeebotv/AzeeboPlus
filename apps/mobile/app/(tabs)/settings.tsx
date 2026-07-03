@@ -22,7 +22,7 @@ const safeConstants = Constants as unknown as { expoConfig?: { version?: string;
 
 export default function SettingsScreen() {
   const colorScheme = useColorScheme();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const {
     isAvailable,
     biometricType,
@@ -169,6 +169,19 @@ export default function SettingsScreen() {
         return 'Biometric';
     }
   };
+
+  if (authLoading) {
+    return (
+      <SafeAreaView
+        style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#1A0A0A' : '#fff' }]}
+        edges={['top']}
+      >
+        <View style={styles.unauthenticatedContainer}>
+          <ActivityIndicator size="large" color="#E8420A" />
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   if (!isAuthenticated) {
     return (

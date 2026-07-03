@@ -1,7 +1,7 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import AppHeader from './AppHeader';
 
 const ADMIN_NAV = [
@@ -29,18 +29,41 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode;
 }): React.JSX.Element {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, isLoading } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    setIsMobile(window.innerWidth < 1024);
+    const handleResize = () => setIsMobile(window.innerWidth < 1024);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    if (isLoading) return;
+    if (!isAuthenticated || !user || user.role !== 'admin') {
+      router.push('/auth/login');
+    }
+  }, [isLoading, isAuthenticated, user, router]);
+
+  if (isLoading) {
+    return (
+      <div style={{ backgroundColor: '#1A0A0A', minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        <div style={{ width: 40, height: 40, border: '3px solid #2A1A1A', borderTopColor: '#E8420A', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+      </div>
+    );
+  }
 
   if (!isAuthenticated || !user || user.role !== 'admin') {
-    if (typeof window !== 'undefined') router.push('/auth/login');
     return <></>;
   }
 
   const isActive = (href: string) => {
-    if (href === '/admin') return window.location.pathname === '/admin';
-    return window.location.pathname.startsWith(href);
+    if (href === '/admin') return pathname === '/admin';
+    return pathname.startsWith(href);
   };
 
   return (
@@ -83,7 +106,7 @@ export default function AdminLayout({
             height: 'calc(100vh - 72px)',
             overflowY: 'auto',
             padding: '16px 12px',
-            ...(typeof window !== 'undefined' && window.innerWidth < 1024
+            ...(isMobile
               ? {
                   position: 'fixed' as const,
                   top: 72,

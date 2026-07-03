@@ -7,16 +7,17 @@ import AdminLayout from '@/components/layout/AdminLayout';
 
 export default function AdminUsersPage(): React.JSX.Element {
   const router = useRouter();
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, isLoading: authLoading } = useAuth();
   const [users, setUsers] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
 
   useEffect(() => {
+    if (authLoading) return;
     if (!isAuthenticated || !user || user.role !== 'admin') return;
     loadUsers();
-  }, [isAuthenticated, user]);
+  }, [authLoading, isAuthenticated, user]);
 
   const loadUsers = async () => {
     try {

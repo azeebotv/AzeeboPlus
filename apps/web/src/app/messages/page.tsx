@@ -31,7 +31,7 @@ interface Conversation {
 }
 
 export default function MessagesPage(): React.JSX.Element {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -48,6 +48,7 @@ export default function MessagesPage(): React.JSX.Element {
 
   useEffect(() => {
     const fetchConversations = async (): Promise<void> => {
+      if (authLoading) return;
       if (!isAuthenticated) return;
       try {
         setIsLoadingConversations(true);

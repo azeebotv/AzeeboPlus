@@ -5,7 +5,7 @@ import { api } from '@/lib/api';
 import AdminLayout from '@/components/layout/AdminLayout';
 
 export default function AdminNotificationsPage(): React.JSX.Element {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, isLoading: authLoading } = useAuth();
   const [notifications, setNotifications] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showSend, setShowSend] = useState(false);
@@ -17,9 +17,10 @@ export default function AdminNotificationsPage(): React.JSX.Element {
   });
 
   useEffect(() => {
+    if (authLoading) return;
     if (!isAuthenticated || !user || user.role !== 'admin') return;
     loadNotifications();
-  }, [isAuthenticated, user]);
+  }, [authLoading, isAuthenticated, user]);
 
   const loadNotifications = async () => {
     try {

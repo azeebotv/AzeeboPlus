@@ -5,7 +5,7 @@ import { api } from '@/lib/api';
 import AdminLayout from '@/components/layout/AdminLayout';
 
 export default function AdminEngagementPage(): React.JSX.Element {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, isLoading: authLoading } = useAuth();
   const [engagement, setEngagement] = useState({
     dailyActiveUsers: 0,
     monthlyActiveUsers: 0,
@@ -16,9 +16,10 @@ export default function AdminEngagementPage(): React.JSX.Element {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    if (authLoading) return;
     if (!isAuthenticated || !user || user.role !== 'admin') return;
     loadEngagement();
-  }, [isAuthenticated, user]);
+  }, [authLoading, isAuthenticated, user]);
 
   const loadEngagement = async () => {
     try {

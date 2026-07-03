@@ -8,14 +8,15 @@ export default function AdminPage(): React.JSX.Element {
   const { isAuthenticated, user } = useAuth();
   const [stats, setStats] = useState({
     totalUsers: 0,
-    totalCreators: 0,
+    dailyActiveUsers: 0,
     totalContent: 0,
-    activeSubscriptions: 0,
+    totalViews: 0,
     revenue: 0,
-    pendingReviews: 0,
+    newUsers: 0,
   });
   const [_recentActivity, setRecentActivity] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isAuthenticated || !user || user.role !== 'admin') return;
@@ -29,16 +30,16 @@ export default function AdminPage(): React.JSX.Element {
         const d = res.data as any;
         setStats({
           totalUsers: d.totalUsers || 0,
-          totalCreators: d.topCreators?.length || 0,
+          dailyActiveUsers: d.dailyActiveUsers || 0,
           totalContent: d.totalContent || 0,
-          activeSubscriptions: d.newUsers || 0,
+          totalViews: d.totalViews || 0,
           revenue: d.totalRevenue || 0,
-          pendingReviews: d.newContent || 0,
+          newUsers: d.newUsers || 0,
         });
         setRecentActivity(d.recentActivity || []);
       }
-    } catch {
-      /* ignore */
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load dashboard');
     } finally {
       setIsLoading(false);
     }
@@ -62,6 +63,11 @@ export default function AdminPage(): React.JSX.Element {
             }}
           />
         </div>
+      ) : error ? (
+        <div style={{ padding: 24, borderRadius: 16, border: '1px solid #CC1C1C', backgroundColor: 'rgba(204,28,28,0.1)' }}>
+          <p style={{ color: '#CC1C1C', fontWeight: 600 }}>Failed to load dashboard</p>
+          <p style={{ color: '#9A8A7A', fontSize: 14, marginTop: 8 }}>{error}</p>
+        </div>
       ) : (
         <>
           {/* Stats grid */}
@@ -81,9 +87,9 @@ export default function AdminPage(): React.JSX.Element {
                 color: '#E8420A',
               },
               {
-                label: 'Creators',
-                value: stats.totalCreators.toLocaleString(),
-                icon: '✨',
+                label: 'Daily Active',
+                value: stats.dailyActiveUsers.toLocaleString(),
+                icon: '📈',
                 color: '#0D3B2E',
               },
               {
@@ -93,9 +99,9 @@ export default function AdminPage(): React.JSX.Element {
                 color: '#CC1C1C',
               },
               {
-                label: 'Subscriptions',
-                value: stats.activeSubscriptions.toLocaleString(),
-                icon: '⭐',
+                label: 'Total Views',
+                value: stats.totalViews.toLocaleString(),
+                icon: '👁️',
                 color: '#F59E0B',
               },
               {
@@ -105,9 +111,9 @@ export default function AdminPage(): React.JSX.Element {
                 color: '#0D3B2E',
               },
               {
-                label: 'Pending Reviews',
-                value: stats.pendingReviews.toString(),
-                icon: '📋',
+                label: 'New Users',
+                value: stats.newUsers.toLocaleString(),
+                icon: '🆕',
                 color: '#E8420A',
               },
             ].map((stat, i) => (
