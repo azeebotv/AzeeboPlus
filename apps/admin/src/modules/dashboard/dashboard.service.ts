@@ -200,4 +200,47 @@ export class DashboardService {
       recentReports,
     };
   }
+
+  async getPlatformOverview() {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const weekAgo = new Date(today);
+    weekAgo.setDate(weekAgo.getDate() - 7);
+    const monthAgo = new Date(today);
+    monthAgo.setDate(monthAgo.getDate() - 30);
+
+    const [
+      totalUsers,
+      totalCreators,
+      totalContent,
+      publishedContent,
+      totalWallets,
+      revenueResult,
+      newUsersThisWeek,
+      reports,
+    ] = await Promise.all([
+      this.prisma.user.count(),
+      this.prisma.user.count({ where: { role: 'creator' } }),
+      this.prisma.contentItem.count(),
+      this.prisma.contentItem.count({ where: { status: 'published' } }),
+      this.prisma.wallet.count(),
+      this.prisma.walletTransaction.aggregate({
+        where: { type: 'credit', status: 'completed', createdAt: { gte: monthAgo } },
+        _sum: { amount: true },
+      }),
+      this.prisma.user.count({ where: { createdAt: { gte: weekAgo } } }),
+      this.prisma.report.count({ where: { status: 'pending' } }),
+    ]);
+
+    return {
+      totalUsers,
+      totalCreators,
+      totalContent,
+      publishedContent,
+      totalWallets,
+      monthlyRevenue: Number(revenueResult._sum.amount) || 0,
+      newUsersThisWeek,
+      pendingReports: reports,
+    };
+  }
 }

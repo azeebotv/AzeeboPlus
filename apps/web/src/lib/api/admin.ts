@@ -79,7 +79,7 @@ export function createAdminMethods(client: RequestClient) {
 
     // Platform Overview
     getPlatformOverview: async (): Promise<ApiResponse<PlatformOverview>> => {
-      return client.request<PlatformOverview>('/api/v1/admin/platform-overview');
+      return client.request<PlatformOverview>('/api/v1/admin/dashboard/platform-overview');
     },
 
     // Wallet Management
@@ -108,7 +108,7 @@ export function createAdminMethods(client: RequestClient) {
       limit = 20
     ): Promise<ApiResponse<PaginatedResponse<AdminCreator>>> => {
       return client.request<PaginatedResponse<AdminCreator>>(
-        `/api/v1/admin/creators?page=${page}&limit=${limit}`
+        `/api/v1/admin/users?page=${page}&limit=${limit}&role=creator`
       );
     },
 
@@ -116,15 +116,16 @@ export function createAdminMethods(client: RequestClient) {
       creatorId: string,
       status: string
     ): Promise<ApiResponse<{ message: string }>> => {
-      return client.request<{ message: string }>(`/api/v1/admin/creators/${creatorId}/status`, {
+      return client.request<{ message: string }>(`/api/v1/admin/users/${creatorId}/role`, {
         method: 'PUT',
-        body: JSON.stringify({ status }),
+        body: JSON.stringify({ role: status === 'approved' ? 'creator' : 'user' }),
       });
     },
 
     verifyCreator: async (creatorId: string): Promise<ApiResponse<{ message: string }>> => {
-      return client.request<{ message: string }>(`/api/v1/admin/creators/${creatorId}/verify`, {
-        method: 'POST',
+      return client.request<{ message: string }>(`/api/v1/admin/users/${creatorId}/role`, {
+        method: 'PUT',
+        body: JSON.stringify({ role: 'creator' }),
       });
     },
 
@@ -228,7 +229,7 @@ export function createAdminMethods(client: RequestClient) {
     },
 
     getNotificationStats: async (): Promise<ApiResponse<NotificationStats>> => {
-      return client.request<NotificationStats>('/api/v1/admin/notification-stats');
+      return client.request<NotificationStats>('/api/v1/admin/notifications/stats');
     },
 
     createNotificationTemplate: async (template: {

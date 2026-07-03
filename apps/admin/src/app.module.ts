@@ -10,6 +10,11 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { AuditModule } from './modules/audit/audit.module';
 import { UniverseManagementModule } from './modules/universe-management/universe-management.module';
 import { SystemSettingsModule } from './modules/system-settings/system-settings.module';
+import { WalletManagementModule } from './modules/wallet-management/wallet-management.module';
+import { ContentReviewModule } from './modules/content-review/content-review.module';
+import { EngagementAdminModule } from './modules/engagement-admin/engagement-admin.module';
+import { NotificationAdminModule } from './modules/notification-admin/notification-admin.module';
+import { ReportsAdminModule } from './modules/reports-admin/reports-admin.module';
 import { ServiceAuthGuard } from '@azeebo/security';
 
 @Module({
@@ -26,6 +31,11 @@ import { ServiceAuthGuard } from '@azeebo/security';
     AuditModule,
     UniverseManagementModule,
     SystemSettingsModule,
+    WalletManagementModule,
+    ContentReviewModule,
+    EngagementAdminModule,
+    NotificationAdminModule,
+    ReportsAdminModule,
   ],
   providers: [
     {
