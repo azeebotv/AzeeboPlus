@@ -41,7 +41,8 @@ export default function RealityPage(): React.JSX.Element {
   const [isLoading, setIsLoading] = useState(true);
   const [_error, setError] = useState<string | null>(null);
   const [contestants, setContestants] = useState<Contestant[]>([]);
-  const maxVotes = Math.max(0, ...contestants.map((c) => c.votes));
+  const safeContestants = contestants || [];
+  const maxVotes = Math.max(0, ...safeContestants.map((c) => c.votes));
 
   useEffect(() => {
     let cancelled = false;
@@ -63,8 +64,8 @@ export default function RealityPage(): React.JSX.Element {
         if (response.success && response.data) {
           const items = Array.isArray(response.data)
             ? response.data
-            : (response.data as { items?: ContentItem[] }).items || [];
-          setShows(items);
+            : (response.data as { items?: ContentItem[] })?.items || [];
+          setShows(items || []);
           if (items.length > 0) setSelectedShow(items[0]);
         } else {
           setError(response.message || 'Failed to load reality shows');
@@ -239,7 +240,7 @@ export default function RealityPage(): React.JSX.Element {
       </section>
 
       {/* Leaderboard */}
-      {contestants.length > 0 && (
+      {safeContestants.length > 0 && (
         <section className="py-10 sm:py-12" style={{ backgroundColor: '#0d0505' }}>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <ScrollReveal>
@@ -272,7 +273,7 @@ export default function RealityPage(): React.JSX.Element {
                     whileInView="visible"
                     viewport={{ once: true }}
                   >
-                    {contestants.map((contestant, index) => (
+                    {safeContestants.map((contestant, index) => (
                       <motion.div
                         key={contestant.id}
                         className="flex items-center gap-3 sm:gap-4"
