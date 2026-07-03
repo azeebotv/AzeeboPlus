@@ -7,7 +7,7 @@ import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 
 export default function ProfileEditPage(): React.JSX.Element {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, isLoading: authLoading } = useAuth();
   const router = useRouter();
   const [profile, setProfile] = useState({
     username: '',
@@ -20,6 +20,7 @@ export default function ProfileEditPage(): React.JSX.Element {
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
+    if (authLoading) return;
     if (!isAuthenticated || !user) {
       router.push('/auth/login');
       return;
@@ -31,7 +32,7 @@ export default function ProfileEditPage(): React.JSX.Element {
       bio: (user as any).bio || '',
       avatar: user.avatar || '',
     });
-  }, [isAuthenticated, user, router]);
+  }, [authLoading, isAuthenticated, user, router]);
 
   const handleSave = async () => {
     setIsSaving(true);

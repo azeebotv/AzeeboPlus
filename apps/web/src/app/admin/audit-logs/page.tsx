@@ -5,15 +5,16 @@ import { apiFetch } from '@/lib/api';
 import AdminLayout from '@/components/layout/AdminLayout';
 
 export default function AdminAuditLogsPage(): React.JSX.Element {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, isLoading: authLoading } = useAuth();
   const [logs, setLogs] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState('all');
 
   useEffect(() => {
+    if (authLoading) return;
     if (!isAuthenticated || !user || user.role !== 'admin') return;
     loadLogs();
-  }, [isAuthenticated, user, filter]);
+  }, [authLoading, isAuthenticated, user, filter]);
 
   const loadLogs = async () => {
     setIsLoading(true);

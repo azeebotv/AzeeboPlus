@@ -104,7 +104,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
       localStorage.setItem(REFRESH_TOKEN_KEY, newRefreshToken);
       localStorage.setItem(USER_KEY, JSON.stringify(userData));
-      setAuthCookie(userData.id);
+      setAuthCookie(accessToken);
     },
     []
   );
@@ -166,7 +166,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           api.setToken(storedAccessToken);
           setToken(storedAccessToken);
           setRefreshToken(storedRefreshToken);
-          setAuthCookie(storedUser ? JSON.parse(storedUser).id : '');
+          setAuthCookie(storedAccessToken);
         }
 
         if (storedAccessToken) {
@@ -189,7 +189,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               };
               setUser(userObj);
               localStorage.setItem(USER_KEY, JSON.stringify(userObj));
-              setAuthCookie(userObj.id);
+              if (storedAccessToken) setAuthCookie(storedAccessToken);
             } else {
               // Token invalid — try refresh
               const refreshed = await refreshAccessToken();
@@ -201,8 +201,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           } catch {
             // Network error — keep the stored session (offline support)
             // Set the auth cookie so middleware doesn't redirect to login
-            if (storedUser && !cancelled) {
-              setAuthCookie(JSON.parse(storedUser).id);
+            if (storedAccessToken && !cancelled) {
+              setAuthCookie(storedAccessToken);
             }
           }
         } else if (storedRefreshToken) {
@@ -346,6 +346,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         };
         setUser(userObj);
         localStorage.setItem(USER_KEY, JSON.stringify(userObj));
+        const currentToken = localStorage.getItem(ACCESS_TOKEN_KEY);
+        if (currentToken) setAuthCookie(currentToken);
       }
     } catch (error) {
       webLogger.error('Failed to refresh user', error);

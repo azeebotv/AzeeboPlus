@@ -32,7 +32,7 @@ const PROVIDER_META: Record<string, { description: string }> = {
 
 export default function PaymentScreen() {
   const router = useRouter();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const colorScheme = useColorScheme();
 
   const [selectedAmount, setSelectedAmount] = useState<number>(10);
@@ -140,6 +140,19 @@ export default function PaymentScreen() {
       setIsLoading(false);
     }
   };
+
+  if (authLoading) {
+    return (
+      <SafeAreaView
+        style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#000' : '#fff' }]}
+        edges={['top']}
+      >
+        <View style={styles.unauthenticatedContainer}>
+          <ActivityIndicator size="large" color="#E8420A" />
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   if (!isAuthenticated) {
     return (

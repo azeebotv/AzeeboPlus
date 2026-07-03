@@ -27,7 +27,7 @@ interface LibrarySection {
 }
 
 export default function LibraryPage(): React.JSX.Element {
-  const { user: _user, isAuthenticated } = useAuth();
+  const { user: _user, isAuthenticated, isLoading: authLoading } = useAuth();
   const [watchlist, setWatchlist] = useState<ContentItem[]>([]);
   const [watchHistory, setWatchHistory] = useState<ContentItem[]>([]);
   const [favorites, setFavorites] = useState<ContentItem[]>([]);
@@ -45,6 +45,7 @@ export default function LibraryPage(): React.JSX.Element {
 
   useEffect(() => {
     const fetchLibrary = async (): Promise<void> => {
+      if (authLoading) return;
       if (!isAuthenticated) return;
       try {
         setIsLoading(true);

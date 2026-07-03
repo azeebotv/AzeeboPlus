@@ -38,20 +38,22 @@ interface Referral {
 
 export default function ReferralScreen() {
   const router = useRouter();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [stats, setStats] = useState<ReferralStats | null>(null);
   const [referrals, setReferrals] = useState<Referral[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    if (authLoading) return;
     if (!isAuthenticated) {
       router.replace('/(auth)/login');
     }
-  }, [isAuthenticated, router]);
+  }, [authLoading, isAuthenticated, router]);
 
   useEffect(() => {
+    if (authLoading || !isAuthenticated) return;
     loadReferralData();
-  }, []);
+  }, [authLoading, isAuthenticated]);
 
   const loadReferralData = async () => {
     try {

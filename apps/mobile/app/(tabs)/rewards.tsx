@@ -44,7 +44,7 @@ interface RedeemOption {
 export default function RewardsScreen() {
   const colorScheme = useColorScheme();
   const router = useRouter();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [rewards, setRewards] = useState<RewardItem[]>([]);
   const [history, setHistory] = useState<RewardHistoryItem[]>([]);
   const [redeemOptions, setRedeemOptions] = useState<RedeemOption[]>([]);
@@ -55,10 +55,11 @@ export default function RewardsScreen() {
   const isDark = colorScheme === 'dark';
 
   useEffect(() => {
+    if (authLoading) return;
     if (!isAuthenticated) {
       router.replace('/(auth)/login');
     }
-  }, [isAuthenticated, router]);
+  }, [authLoading, isAuthenticated, router]);
 
   const fetchRewards = async () => {
     setIsLoading(true);
@@ -83,8 +84,9 @@ export default function RewardsScreen() {
   };
 
   useEffect(() => {
+    if (authLoading || !isAuthenticated) return;
     fetchRewards();
-  }, []);
+  }, [authLoading, isAuthenticated]);
 
   if (isLoading) {
     return (
