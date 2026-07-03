@@ -270,7 +270,26 @@ for entry in "${MIGRATE_SERVICES[@]}"; do
 done
 
 # ============================================================
-# 7b. Load demo content if DEMO_MODE is enabled
+# 7b. Clear databases if CLEAR_DB=1 and DEMO_MODE=1
+# ============================================================
+if [ "${DEMO_MODE:-false}" = "true" ] && [ "${CLEAR_DB:-0}" = "1" ]; then
+  echo "==> CLEAR_DB=1 — Dropping and recreating all service databases..."
+  for entry in "${MIGRATE_SERVICES[@]}"; do
+    IFS=':' read -r svc_dir svc_name db_name db_user db_pass <<< "$entry"
+    echo "    Clearing $db_name..."
+    PGPASSWORD="$db_pass" psql -h 127.0.0.1 -U "$db_user" -d postgres -t -A -c \
+      "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname='$db_name' AND pid <> pg_backend_pid();" >/dev/null 2>&1 || true
+    PGPASSWORD="$db_pass" psql -h 127.0.0.1 -U "$db_user" -d postgres -t -A -c \
+      "DROP DATABASE IF EXISTS \"$db_name\";" >/dev/null 2>&1 || true
+    PGPASSWORD="$db_pass" psql -h 127.0.0.1 -U "$db_user" -d postgres -t -A -c \
+      "CREATE DATABASE \"$db_name\";" >/dev/null 2>&1 || true
+    echo "    $db_name cleared."
+  done
+  echo "==> All databases cleared."
+fi
+
+# ============================================================
+# 7c. Load demo content if DEMO_MODE is enabled
 # ============================================================
 if [ "${DEMO_MODE:-false}" = "true" ]; then
   echo "==> DEMO_MODE enabled — loading demo content into all databases..."

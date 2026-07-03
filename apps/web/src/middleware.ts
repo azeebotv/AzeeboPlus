@@ -52,12 +52,10 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
   // Check if the user is authenticated using the 'auth' cookie.
-  // Validate the cookie has a non-empty value with basic JWT structure check
-  // to prevent bypass via client-set empty/fake cookies.
+  // The cookie contains the user ID set by AuthContext on login.
+  // Validate the cookie has a non-empty value to prevent bypass via empty cookies.
   const authCookie = request.cookies.get('auth');
-  const isAuthenticated = Boolean(
-    authCookie?.value && authCookie.value.length > 10 && authCookie.value.split('.').length === 3
-  );
+  const isAuthenticated = Boolean(authCookie?.value && authCookie.value.length > 0);
 
   // --- Homepage routing guards ---
   if (pathname === '/') {
