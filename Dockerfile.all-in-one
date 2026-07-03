@@ -277,6 +277,12 @@ RUN echo "==> Verifying critical build artifacts..." && \
 ENV CI=true
 RUN pnpm install --prod --frozen-lockfile --ignore-scripts
 
+# Verify standalone output survived pnpm install
+RUN test -f /app/apps/web/standalone/server.js && echo "  OK: server.js after pnpm install" || \
+    (echo "  FATAL: server.js MISSING after pnpm install!" && \
+     echo "  /app/apps/web/ contents:" && ls -la /app/apps/web/ 2>&1 && \
+     exit 1)
+
 # All post-install setup in a single layer:
 #   1. Symlink workspace packages (avoid duplicate node_modules copies)
 #   2. Remove orphaned pnpm packages (replaced by symlinks)
