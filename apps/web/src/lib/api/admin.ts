@@ -49,7 +49,7 @@ export function createAdminMethods(client: RequestClient) {
         newContent: number;
         topCreators: { id: string; name: string; contentCount: number; views: number }[];
         recentActivity: { id: string; action: string; user: string; time: string }[];
-      }>('/api/v1/admin/analytics');
+      }>('/api/v1/admin/dashboard/stats');
     },
 
     getUsers: async (page = 1, limit = 20): Promise<ApiResponse<PaginatedResponse<User>>> => {
