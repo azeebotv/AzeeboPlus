@@ -1512,6 +1512,12 @@ export class ProxyController {
         }
       }
 
+      // Inject gateway secret so downstream ServiceAuthGuard trusts x-user-* headers
+      const gatewaySecret = this.configService.get<string>('GATEWAY_SECRET');
+      if (gatewaySecret) {
+        headers['x-gateway-secret'] = gatewaySecret;
+      }
+
       const fetchOptions: RequestInit = {
         method: req.method,
         headers,

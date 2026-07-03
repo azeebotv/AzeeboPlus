@@ -1,5 +1,6 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { Public } from '@azeebo/security';
 import { RecommendationService } from './recommendation.service';
 
 @ApiTags('Recommendation')
@@ -7,6 +8,7 @@ import { RecommendationService } from './recommendation.service';
 export class RecommendationController {
   constructor(private readonly recommendationService: RecommendationService) {}
 
+  @Public()
   @Get('content')
   @ApiOperation({ summary: 'Get content recommendations' })
   @ApiResponse({ status: 200, description: 'Content recommendations with explainability' })
@@ -50,6 +52,7 @@ export class RecommendationController {
     );
   }
 
+  @Public()
   @Get('trending')
   @ApiOperation({ summary: 'Get trending content' })
   @ApiResponse({ status: 200, description: 'Trending content' })
@@ -71,6 +74,7 @@ export class RecommendationController {
     return this.recommendationService.getUserSegment(userId);
   }
 
+  @Public()
   @Get('creator-score')
   @ApiOperation({ summary: 'Get creator score' })
   @ApiResponse({ status: 200, description: 'Creator score and tier' })

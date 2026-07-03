@@ -13,7 +13,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
-import { RateLimitGuard, RateLimit } from '@azeebo/security';
+import { RateLimitGuard, RateLimit, Public } from '@azeebo/security';
 
 import { CreatorsService } from './creators.service';
 import { CreatorResponse } from './interfaces/creator-response.interface';
@@ -158,6 +158,7 @@ export class CreatorsController {
     return this.creatorsService.createChannel(req.user.sub, body);
   }
 
+  @Public()
   @Get('channels/:channelId')
   @ApiOperation({ summary: 'Get channel details' })
   @ApiResponse({ status: 200, description: 'Channel details' })
@@ -165,6 +166,7 @@ export class CreatorsController {
     return this.creatorsService.getChannel(channelId);
   }
 
+  @Public()
   @Get(':creatorId')
   @UseGuards(RateLimitGuard)
   @RateLimit(200, 60000)
@@ -207,6 +209,7 @@ export class CreatorsController {
     return this.creatorsService.listUploads(req.user.sub);
   }
 
+  @Public()
   @Get('discover')
   @UseGuards(RateLimitGuard)
   @RateLimit(100, 60000)
@@ -359,6 +362,7 @@ export class CreatorsController {
     return this.creatorsService.updateSettings(req.user.sub, body);
   }
 
+  @Public()
   @Get(':creatorId/content')
   @ApiOperation({ summary: "Get creator's content" })
   async getCreatorContent(

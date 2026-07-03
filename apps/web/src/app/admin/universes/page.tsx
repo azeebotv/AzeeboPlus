@@ -66,6 +66,7 @@ export default function AdminUniversesPage(): React.JSX.Element {
       const t = setTimeout(() => setToast(null), 3000);
       return () => clearTimeout(t);
     }
+    return () => {};
   }, [toast]);
 
   const loadUniverses = async () => {
