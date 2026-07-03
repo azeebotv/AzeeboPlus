@@ -136,6 +136,23 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
     ],
   },
   {
+    path: '/interactions',
+    envKey: 'USER_SERVICE_URL',
+    fallbackUrl: 'http://user-service:3001',
+    supportedVersions: ['1'],
+    defaultVersion: '1',
+    pathStrategy: 'no-prefix',
+    endpoints: [
+      { method: 'GET', path: '/watchlist', description: 'Get watchlist' },
+      { method: 'DELETE', path: '/watchlist/:contentId', description: 'Remove from watchlist' },
+      { method: 'GET', path: '/history', description: 'Get watch history' },
+      { method: 'DELETE', path: '/history/:contentId', description: 'Remove from history' },
+      { method: 'GET', path: '/favorites', description: 'Get favorites' },
+      { method: 'POST', path: '/favorites', description: 'Add to favorites' },
+      { method: 'DELETE', path: '/favorites/:contentId', description: 'Remove from favorites' },
+    ],
+  },
+  {
     path: '/wallet',
     envKey: 'WALLET_SERVICE_URL',
     fallbackUrl: 'http://wallet-service:3002',

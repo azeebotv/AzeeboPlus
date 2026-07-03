@@ -4,6 +4,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 
 import { UsersController } from './users.controller';
+import { InteractionsController } from './interactions.controller';
 import { UsersService } from './users.service';
 import { DatabaseModule } from '../database/database.module';
 import { UserDeletionController } from '../user/user-deletion.controller';
@@ -23,7 +24,7 @@ import { UserDeletionController } from '../user/user-deletion.controller';
       inject: [ConfigService],
     }),
   ],
-  controllers: [UsersController, UserDeletionController],
+  controllers: [UsersController, InteractionsController, UserDeletionController],
   providers: [UsersService],
   exports: [UsersService, DatabaseModule],
 })

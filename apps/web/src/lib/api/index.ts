@@ -196,7 +196,12 @@ class ApiClient {
             // Retry the original request with the new token
             return this.request<T>(endpoint, options, retryOptions, attempt);
           }
-          // Refresh failed — do NOT clear session here; let AuthContext handle cleanup
+          // Refresh failed — redirect to login page
+          if (typeof window !== 'undefined') {
+            const loginUrl = new URL('/auth/login', window.location.origin);
+            loginUrl.searchParams.set('redirect', window.location.pathname);
+            window.location.href = loginUrl.toString();
+          }
         }
 
         // T-M15: retry on standard retryable codes, but skip retry for auth/refresh
