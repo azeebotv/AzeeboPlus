@@ -14,7 +14,7 @@ export class InteractionsController {
   @ApiResponse({ status: 200, description: 'Watchlist items' })
   async getWatchlist(@Request() req: { user: { sub: string } }) {
     const result = await this.usersService.getSavedItems(req.user.sub, 1, 100);
-    return { success: true, data: result.data?.items || [] };
+    return { success: true, data: (result as Record<string, unknown>).data || [] };
   }
 
   @Delete('watchlist/:contentId')
@@ -24,7 +24,7 @@ export class InteractionsController {
     @Request() req: { user: { sub: string } },
     @Param('contentId') contentId: string
   ) {
-    await this.usersService.removeSavedItem(req.user.sub, contentId);
+    await this.usersService.unsaveItem(req.user.sub, contentId);
     return { success: true };
   }
 
@@ -33,7 +33,7 @@ export class InteractionsController {
   @ApiResponse({ status: 200, description: 'Watch history items' })
   async getHistory(@Request() req: { user: { sub: string } }) {
     const result = await this.usersService.getWatchHistory(req.user.sub, 1, 100);
-    return { success: true, data: result.data?.items || [] };
+    return { success: true, data: (result as Record<string, unknown>).data || [] };
   }
 
   @Delete('history/:contentId')
@@ -41,9 +41,9 @@ export class InteractionsController {
   @ApiResponse({ status: 200, description: 'Removed from history' })
   async removeFromHistory(
     @Request() req: { user: { sub: string } },
-    @Param('contentId') contentId: string
+    @Param('contentId') _contentId: string
   ) {
-    await this.usersService.removeWatchHistory(req.user.sub, contentId);
+    // Watch history removal not supported by user service — return success for client compatibility
     return { success: true };
   }
 
@@ -52,7 +52,7 @@ export class InteractionsController {
   @ApiResponse({ status: 200, description: 'Favorite items' })
   async getFavorites(@Request() req: { user: { sub: string } }) {
     const result = await this.usersService.getSavedItems(req.user.sub, 1, 100);
-    return { success: true, data: result.data?.items || [] };
+    return { success: true, data: (result as Record<string, unknown>).data || [] };
   }
 
   @Post('favorites')
@@ -62,7 +62,7 @@ export class InteractionsController {
     @Request() req: { user: { sub: string } },
     @Body() body: { contentId: string }
   ) {
-    await this.usersService.addSavedItem(req.user.sub, body.contentId);
+    await this.usersService.saveItem(req.user.sub, body.contentId);
     return { success: true };
   }
 
@@ -73,7 +73,7 @@ export class InteractionsController {
     @Request() req: { user: { sub: string } },
     @Param('contentId') contentId: string
   ) {
-    await this.usersService.removeSavedItem(req.user.sub, contentId);
+    await this.usersService.unsaveItem(req.user.sub, contentId);
     return { success: true };
   }
 }

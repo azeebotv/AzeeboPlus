@@ -80,11 +80,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       // T-C06: Read tokens from secure storage, user profile from regular storage
       const token = await getSecureItem('accessToken');
+      const refreshToken = await getSecureItem('refreshToken');
       const userData = await getItem('user');
 
       if (token && userData) {
         setUser(JSON.parse(userData));
         apiClient.setToken(token);
+        apiClient.setRefreshToken(refreshToken);
       }
     } catch (error) {
       logger.error('Auth check failed', error);
@@ -103,6 +105,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await setSecureItem('refreshToken', refresh_token);
       await setItem('user', JSON.stringify(userData));
       apiClient.setToken(access_token);
+      apiClient.setRefreshToken(refresh_token);
       setUser(userData);
     }
   };
