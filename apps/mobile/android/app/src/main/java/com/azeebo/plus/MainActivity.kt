@@ -1,4 +1,4 @@
-package com.anonymous.azeeboscripts
+package com.azeebo.plus
 
 import android.os.Build
 import android.os.Bundle

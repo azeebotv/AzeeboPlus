@@ -51,22 +51,18 @@
     },
     "plugins": [
       "expo-router",
-      "expo-secure-store",
-      [
-        "react-native-reanimated/plugin",
-        {
-          "globals": true
-        }
-      ]
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true
     },
+    "owner": "iamdeprof",
     "extra": {
       "apiBaseURL": "http://localhost:3013",
       "eas": {
-        "projectId": "your-eas-project-id"
-      }
+        "projectId": "3627eb83-fb81-4f76-bae5-668a14102705"
+      },
+      "router": {}
     }
   }
 }

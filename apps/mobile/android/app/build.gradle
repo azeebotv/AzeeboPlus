@@ -87,9 +87,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace 'com.anonymous.azeeboscripts'
+    namespace 'com.azeebo.plus'
     defaultConfig {
-        applicationId 'com.anonymous.azeeboscripts'
+        applicationId 'com.azeebo.plus'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
