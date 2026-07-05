@@ -1,4 +1,4 @@
-package com.anonymous.azeeboscripts
+package com.azeebo.plus
 
 import android.app.Application
 import android.content.res.Configuration
