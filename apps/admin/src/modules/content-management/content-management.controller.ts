@@ -9,12 +9,19 @@ import {
   Query,
   Body,
   UseGuards,
+  Req,
   Logger,
 } from '@nestjs/common';
+import { Request } from 'express';
 import { ContentManagementService } from './content-management.service';
+import { AuditLogService } from '../audit/audit.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
+
+interface AuthRequest extends Request {
+  user: { id: string; email: string; role: string };
+}
 
 @Controller('admin/content')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -22,7 +29,10 @@ import { Roles } from '../auth/decorators/roles.decorator';
 export class ContentManagementController {
   private readonly logger = new Logger(ContentManagementController.name);
 
-  constructor(private readonly contentService: ContentManagementService) {}
+  constructor(
+    private readonly contentService: ContentManagementService,
+    private readonly auditLogService: AuditLogService
+  ) {}
 
   // ─── Content CRUD ──────────────────────────────────────────────────────────
 
@@ -96,80 +106,176 @@ export class ContentManagementController {
   // ─── Content Mutations ─────────────────────────────────────────────────────
 
   @Post()
-  async createContent(@Body() body: Record<string, unknown>) {
+  async createContent(@Req() req: AuthRequest, @Body() body: Record<string, unknown>) {
     this.logger.log(`Creating content: ${body.title}`);
-    return this.contentService.createContent(body);
+    const result = await this.contentService.createContent(body);
+    await this.auditLogService.log({
+      actorId: req.user.id,
+      action: 'content.created',
+      targetType: 'content',
+      details: { title: body.title },
+      ipAddress: req.ip,
+    });
+    return result;
   }
 
   @Patch(':id')
-  async updateContent(@Param('id') id: string, @Body() body: Record<string, unknown>) {
+  async updateContent(@Param('id') id: string, @Req() req: AuthRequest, @Body() body: Record<string, unknown>) {
     this.logger.log(`Updating content: ${id}`);
-    return this.contentService.updateContent(id, body);
+    const result = await this.contentService.updateContent(id, body);
+    await this.auditLogService.log({
+      actorId: req.user.id,
+      action: 'content.updated',
+      targetType: 'content',
+      targetId: id,
+      ipAddress: req.ip,
+    });
+    return result;
   }
 
   @Delete(':id')
-  async deleteContent(@Param('id') id: string) {
+  async deleteContent(@Param('id') id: string, @Req() req: AuthRequest) {
     this.logger.log(`Soft-deleting content: ${id}`);
-    return this.contentService.deleteContent(id);
+    const result = await this.contentService.deleteContent(id);
+    await this.auditLogService.log({
+      actorId: req.user.id,
+      action: 'content.deleted',
+      targetType: 'content',
+      targetId: id,
+      ipAddress: req.ip,
+    });
+    return result;
   }
 
   @Post(':id/publish')
-  async publishContent(@Param('id') id: string) {
+  async publishContent(@Param('id') id: string, @Req() req: AuthRequest) {
     this.logger.log(`Publishing content: ${id}`);
-    return this.contentService.publishContent(id);
+    const result = await this.contentService.publishContent(id);
+    await this.auditLogService.log({
+      actorId: req.user.id,
+      action: 'content.published',
+      targetType: 'content',
+      targetId: id,
+      ipAddress: req.ip,
+    });
+    return result;
   }
 
   @Post(':id/unpublish')
-  async unpublishContent(@Param('id') id: string) {
+  async unpublishContent(@Param('id') id: string, @Req() req: AuthRequest) {
     this.logger.log(`Unpublishing content: ${id}`);
-    return this.contentService.unpublishContent(id);
+    const result = await this.contentService.unpublishContent(id);
+    await this.auditLogService.log({
+      actorId: req.user.id,
+      action: 'content.unpublished',
+      targetType: 'content',
+      targetId: id,
+      ipAddress: req.ip,
+    });
+    return result;
   }
 
   // ─── Bulk Operations ───────────────────────────────────────────────────────
 
   @Post('bulk/status')
-  async bulkUpdateStatus(@Body() body: { ids: string[]; status: string }) {
+  async bulkUpdateStatus(@Req() req: AuthRequest, @Body() body: { ids: string[]; status: string }) {
     this.logger.log(`Bulk updating status for ${body.ids.length} items`);
-    return this.contentService.bulkUpdateStatus(body.ids, body.status);
+    const result = await this.contentService.bulkUpdateStatus(body.ids, body.status);
+    await this.auditLogService.log({
+      actorId: req.user.id,
+      action: 'content.bulk_status_updated',
+      targetType: 'content',
+      details: { count: body.ids.length, status: body.status },
+      ipAddress: req.ip,
+    });
+    return result;
   }
 
   @Post('bulk/delete')
-  async bulkDelete(@Body() body: { ids: string[] }) {
+  async bulkDelete(@Req() req: AuthRequest, @Body() body: { ids: string[] }) {
     this.logger.log(`Bulk soft-deleting ${body.ids.length} items`);
-    return this.contentService.bulkDelete(body.ids);
+    const result = await this.contentService.bulkDelete(body.ids);
+    await this.auditLogService.log({
+      actorId: req.user.id,
+      action: 'content.bulk_deleted',
+      targetType: 'content',
+      details: { count: body.ids.length },
+      ipAddress: req.ip,
+    });
+    return result;
   }
 
   // ─── Category CRUD ─────────────────────────────────────────────────────────
 
   @Post('categories')
-  async createCategory(@Body() body: Record<string, unknown>) {
+  async createCategory(@Req() req: AuthRequest, @Body() body: Record<string, unknown>) {
     this.logger.log(`Creating category: ${body.name}`);
-    return this.contentService.createCategory(body);
+    const result = await this.contentService.createCategory(body);
+    await this.auditLogService.log({
+      actorId: req.user.id,
+      action: 'content.category.created',
+      targetType: 'category',
+      details: { name: body.name },
+      ipAddress: req.ip,
+    });
+    return result;
   }
 
   @Put('categories/:id')
-  async updateCategory(@Param('id') id: string, @Body() body: Record<string, unknown>) {
+  async updateCategory(@Param('id') id: string, @Req() req: AuthRequest, @Body() body: Record<string, unknown>) {
     this.logger.log(`Updating category: ${id}`);
-    return this.contentService.updateCategory(id, body);
+    const result = await this.contentService.updateCategory(id, body);
+    await this.auditLogService.log({
+      actorId: req.user.id,
+      action: 'content.category.updated',
+      targetType: 'category',
+      targetId: id,
+      ipAddress: req.ip,
+    });
+    return result;
   }
 
   @Delete('categories/:id')
-  async deleteCategory(@Param('id') id: string) {
+  async deleteCategory(@Param('id') id: string, @Req() req: AuthRequest) {
     this.logger.log(`Deleting category: ${id}`);
-    return this.contentService.deleteCategory(id);
+    const result = await this.contentService.deleteCategory(id);
+    await this.auditLogService.log({
+      actorId: req.user.id,
+      action: 'content.category.deleted',
+      targetType: 'category',
+      targetId: id,
+      ipAddress: req.ip,
+    });
+    return result;
   }
 
   // ─── Tag CRUD ──────────────────────────────────────────────────────────────
 
   @Post('tags')
-  async createTag(@Body() body: Record<string, unknown>) {
+  async createTag(@Req() req: AuthRequest, @Body() body: Record<string, unknown>) {
     this.logger.log(`Creating tag: ${body.name}`);
-    return this.contentService.createTag(body);
+    const result = await this.contentService.createTag(body);
+    await this.auditLogService.log({
+      actorId: req.user.id,
+      action: 'content.tag.created',
+      targetType: 'tag',
+      details: { name: body.name },
+      ipAddress: req.ip,
+    });
+    return result;
   }
 
   @Delete('tags/:id')
-  async deleteTag(@Param('id') id: string) {
+  async deleteTag(@Param('id') id: string, @Req() req: AuthRequest) {
     this.logger.log(`Deleting tag: ${id}`);
-    return this.contentService.deleteTag(id);
+    const result = await this.contentService.deleteTag(id);
+    await this.auditLogService.log({
+      actorId: req.user.id,
+      action: 'content.tag.deleted',
+      targetType: 'tag',
+      targetId: id,
+      ipAddress: req.ip,
+    });
+    return result;
   }
 }

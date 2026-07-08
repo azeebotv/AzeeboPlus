@@ -5,6 +5,8 @@ import { RateLimitGuard, RateLimit } from '@azeebo/security';
 
 import { GamesService } from './games.service';
 import { GameResponse } from './interfaces/game-response.interface';
+import { SubmitAnswerDto } from './dto/submit-answer.dto';
+import { StartSessionDto } from './dto/start-session.dto';
 
 @ApiTags('Games')
 @Controller('v1/games')
@@ -27,7 +29,7 @@ export class GamesController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async submitDailyChallenge(
     @Request() req: { user: { sub: string } },
-    @Body() body: { answer: string }
+    @Body() body: SubmitAnswerDto
   ): Promise<GameResponse> {
     return this.gamesService.submitDailyChallenge(req.user.sub, body.answer);
   }
@@ -48,7 +50,7 @@ export class GamesController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async startSession(
     @Request() req: { user: { sub: string } },
-    @Body() body: { challengeId: string }
+    @Body() body: StartSessionDto
   ): Promise<GameResponse> {
     return this.gamesService.startSession(req.user.sub, body.challengeId);
   }
@@ -61,7 +63,7 @@ export class GamesController {
   async submitAnswer(
     @Request() req: { user: { sub: string } },
     @Param('sessionId') sessionId: string,
-    @Body() body: { answer: string }
+    @Body() body: SubmitAnswerDto
   ): Promise<GameResponse> {
     return this.gamesService.submitAnswer(req.user.sub, sessionId, body.answer);
   }

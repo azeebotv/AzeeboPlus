@@ -11,11 +11,6 @@
     "baseUrl": "./",
     "incremental": true,
     "types": ["node", "jest"],
-    "strictNullChecks": false,
-    "noImplicitAny": false,
-    "strictBindCallApply": false,
-    "forceConsistentCasingInFileNames": false,
-    "noFallthroughCasesInSwitch": false,
     "paths": {}
   },
   "include": ["src/**/*"],

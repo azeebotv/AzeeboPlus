@@ -1,10 +1,12 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../../context/AuthContext';
 import { apiFetch } from '@/lib/api';
-import { webLogger } from '@/lib/logger';
+
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
+import { Skeleton, ErrorState } from '@azeebo/ui/web';
 
 interface Reward {
   id: string;
@@ -26,78 +28,108 @@ interface Achievement {
   target: number;
 }
 
+interface Mission {
+  id: string;
+  title: string;
+  description: string;
+  points: number;
+  image?: string;
+  isActive: boolean;
+  type: string;
+}
+
+interface Badge {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  points: number;
+}
+
+interface RewardsBalance {
+  balance?: number;
+  points?: number;
+}
+
+interface RedeemResult {
+  success: boolean;
+}
+
 export default function RewardsPage(): React.JSX.Element {
   const { isAuthenticated: _isAuthenticated } = useAuth();
-  const [rewards, setRewards] = useState<Reward[]>([]);
-  const [achievements, setAchievements] = useState<Achievement[]>([]);
-  const [userPoints, setUserPoints] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchRewards = async () => {
-      try {
-        setIsLoading(true);
-        const [rewardsRes, achievementsRes, balanceRes] = await Promise.all([
-          apiFetch<any>('/rewards/missions'),
-          apiFetch<any>('/rewards/badges'),
-          apiFetch<any>('/rewards/balance'),
-        ]);
-        if (rewardsRes.success && rewardsRes.data) {
-          const missions = Array.isArray(rewardsRes.data)
-            ? rewardsRes.data
-            : rewardsRes.data.missions || [];
-          setRewards(
-            missions.map((m: any) => ({
-              id: String(m.id),
-              title: String(m.title || ''),
-              description: String(m.description || ''),
-              points: Number(m.points || 0),
-              image: m.image,
-              isAvailable: Boolean(m.isActive),
-              category: String(m.type || 'mission'),
-            }))
-          );
-        }
-        if (achievementsRes.success && achievementsRes.data) {
-          const badges = Array.isArray(achievementsRes.data)
-            ? achievementsRes.data
-            : achievementsRes.data.badges || [];
-          setAchievements(
-            badges.map((b: any) => ({
-              id: String(b.id),
-              name: String(b.name || ''),
-              description: String(b.description || ''),
-              unlocked: true,
-              icon: String(b.icon || '🏅'),
-              progress: Number(b.points || 0),
-              target: Number(b.points || 1),
-            }))
-          );
-        }
-        if (balanceRes.success && balanceRes.data)
-          setUserPoints(Number(balanceRes.data.balance || balanceRes.data.points || 0));
-      } catch (err) {
-        webLogger.error('Failed to fetch rewards', err);
-        setError('Failed to load rewards. Please try again.');
-      } finally {
-        setIsLoading(false);
+  const missionsQuery = useQuery({
+    queryKey: ['rewards', 'missions'],
+    queryFn: async () => {
+      const res = await apiFetch<{ missions: Mission[] } | Mission[]>('/rewards/missions');
+      if (res.success && res.data) {
+        const missions = Array.isArray(res.data)
+          ? res.data
+          : (res.data as { missions: Mission[] }).missions || [];
+        return missions.map((m: Mission) => ({
+          id: String(m.id),
+          title: String(m.title || ''),
+          description: String(m.description || ''),
+          points: Number(m.points || 0),
+          image: m.image,
+          isAvailable: Boolean(m.isActive),
+          category: String(m.type || 'mission'),
+        }));
       }
-    };
-    fetchRewards();
-  }, []);
+      return [];
+    },
+    staleTime: 60000,
+  });
+
+  const badgesQuery = useQuery({
+    queryKey: ['rewards', 'badges'],
+    queryFn: async () => {
+      const res = await apiFetch<{ badges: Badge[] } | Badge[]>('/rewards/badges');
+      if (res.success && res.data) {
+        const badges = Array.isArray(res.data)
+          ? res.data
+          : (res.data as { badges: Badge[] }).badges || [];
+        return badges.map((b: Badge) => ({
+          id: String(b.id),
+          name: String(b.name || ''),
+          description: String(b.description || ''),
+          unlocked: true,
+          icon: String(b.icon || '🏅'),
+          progress: Number(b.points || 0),
+          target: Number(b.points || 1),
+        }));
+      }
+      return [];
+    },
+    staleTime: 60000,
+  });
+
+  const balanceQuery = useQuery({
+    queryKey: ['rewards', 'balance'],
+    queryFn: async () => {
+      const res = await apiFetch<RewardsBalance>('/rewards/balance');
+      if (res.success && res.data)
+        return Number(res.data.balance || res.data.points || 0);
+      return 0;
+    },
+    staleTime: 60000,
+  });
+
+  const rewards = missionsQuery.data ?? [];
+  const achievements = badgesQuery.data ?? [];
+  const userPoints = balanceQuery.data ?? 0;
+  const isLoading = missionsQuery.isLoading || badgesQuery.isLoading || balanceQuery.isLoading;
+  const error = missionsQuery.error?.message || badgesQuery.error?.message || balanceQuery.error?.message || null;
 
   const handleClaimReward = async (rewardId: string): Promise<void> => {
     try {
-      const result = await apiFetch(`/rewards/redeem`, {
+      const result = await apiFetch<RedeemResult>('/rewards/redeem', {
         method: 'POST',
         body: JSON.stringify({ rewardId }),
       });
       if (result.success) {
         alert('Reward claimed successfully!');
-        setRewards((prev) =>
-          prev.map((r) => (r.id === rewardId ? { ...r, isAvailable: false } : r))
-        );
+        missionsQuery.refetch();
       }
     } catch (err) {
       alert('Failed to claim reward');
@@ -120,18 +152,27 @@ export default function RewardsPage(): React.JSX.Element {
           </div>
         </div>
 
-        {error && <div className="az-glass p-4 mb-6 text-center text-white/60">{error}</div>}
+        {error && (
+          <ErrorState
+            title="Failed to load rewards"
+            description={error}
+            buttonText="Retry"
+            onButtonPress={() => {
+              missionsQuery.refetch();
+              badgesQuery.refetch();
+              balanceQuery.refetch();
+            }}
+          />
+        )}
 
         <section className="mb-12">
           <h2 className="text-2xl font-bold text-white mb-6">Available Rewards</h2>
           {isLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {[1, 2, 3].map((i) => (
-                <div
-                  key={i}
-                  className="az-glass h-64 animate-pulse"
-                  style={{ backgroundColor: '#2A2A2A' }}
-                />
+                <div key={i} className="az-glass h-64">
+                  <Skeleton height="100%" borderRadius="0" />
+                </div>
               ))}
             </div>
           ) : rewards.length > 0 ? (

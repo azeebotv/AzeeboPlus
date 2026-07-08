@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -14,27 +14,24 @@ import { realityApi } from '../../src/api';
 import { apiClient } from '../../src/api/client';
 import { useWallet } from '../../src/contexts/WalletContext';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
+import { votePackages as defaultVotePackages } from '../../src/config/prices';
+import type { Contestant, RealityShow } from '../../src/types/api';
 
-const VOTE_PACKAGES = [
-  { id: '1', votes: 100, price: 100, bonus: 0 },
-  { id: '2', votes: 500, price: 450, bonus: 50 },
-  { id: '3', votes: 1000, price: 850, bonus: 150 },
-  { id: '4', votes: 5000, price: 4000, bonus: 1000 },
-];
+const VOTE_PACKAGES = defaultVotePackages.reality;
 
 export default function RealityShowPage() {
   const colorScheme = useColorScheme();
   const router = useRouter();
   const isDark = colorScheme === 'dark';
   const { wallet } = useWallet();
-  const [contestants, setContestants] = useState<any[]>([]);
-  const [chatMessages, _setChatMessages] = useState<any[]>([]);
-  const [selectedContestant, setSelectedContestant] = useState<any | null>(null);
+  const [contestants, setContestants] = useState<Contestant[]>([]);
+  const [chatMessages, _setChatMessages] = useState<{ id: string; user: string; message: string; color: string }[]>([]);
+  const [selectedContestant, setSelectedContestant] = useState<Contestant | null>(null);
   const [selectedPackage, setSelectedPackage] = useState(VOTE_PACKAGES[0]);
   const [quantity, setQuantity] = useState(1);
   const [chatMessage, setChatMessage] = useState('');
   const [showVoting, setShowVoting] = useState(false);
-  const [showData, setShowData] = useState<any>(null);
+  const [showData, setShowData] = useState<RealityShow | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const walletBalance = wallet?.balance || 0;
@@ -56,7 +53,7 @@ export default function RealityShowPage() {
       setError(null);
       const [contestantsRes, showRes] = await Promise.all([
         realityApi.getContestants('current'),
-        apiClient.get<any>('/v1/reality/shows/current').catch(() => null),
+        apiClient.get<RealityShow>('/v1/reality/shows/current').catch(() => null),
       ]);
       if (contestantsRes.success && contestantsRes.data) {
         setContestants(contestantsRes.data);
@@ -126,7 +123,7 @@ export default function RealityShowPage() {
       <View style={styles.quickVoteBar}>
         <Text style={styles.quickVoteLabel}>Quick Vote:</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          {contestants.slice(0, 4).map((contestant: any) => (
+          {contestants.slice(0, 4).map((contestant: Contestant) => (
             <TouchableOpacity
               key={contestant.id}
               style={styles.quickVoteButton}
@@ -152,7 +149,7 @@ export default function RealityShowPage() {
             />
           ) : (
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              {contestants.map((contestant: any) => (
+              {contestants.map((contestant: Contestant) => (
                 <TouchableOpacity
                   key={contestant.id}
                   style={[
@@ -201,7 +198,7 @@ export default function RealityShowPage() {
             Live Chat
           </Text>
           <View style={styles.chatMessages}>
-            {chatMessages.map((msg: any) => (
+            {chatMessages.map((msg: { id: string; user: string; message: string; color: string }) => (
               <View key={msg.id} style={styles.chatMessage}>
                 <Text style={[styles.chatUser, { color: msg.color }]}>{msg.user}:</Text>
                 <Text style={styles.chatText}>{msg.message}</Text>

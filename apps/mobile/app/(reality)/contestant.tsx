@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -108,8 +108,9 @@ export default function ContestantProfileScreen() {
         `Your ${isSuper ? 'Super ' : ''}vote for ${contestant?.name} has been submitted!`
       );
       loadContestant();
-    } catch (error: any) {
-      Alert.alert('Error', error?.message || 'Failed to submit vote');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to submit vote';
+      Alert.alert('Error', message);
     } finally {
       setIsVoting(false);
     }

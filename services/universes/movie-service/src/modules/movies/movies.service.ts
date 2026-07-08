@@ -1,12 +1,33 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
 import { MovieResponse } from './interfaces/movie-response.interface';
+import { CacheService, cacheKey } from '@azeebo/shared-services';
+import axios from 'axios';
+import { randomUUID } from 'crypto';
 
 @Injectable()
 export class MoviesService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly logger = new Logger(MoviesService.name);
+  private readonly walletServiceBaseUrl: string;
+  private readonly rentalFee: number;
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly cache: CacheService,
+    private readonly configService: ConfigService
+  ) {
+    this.walletServiceBaseUrl = this.configService.getOrThrow<string>('WALLET_SERVICE_URL');
+    this.rentalFee = this.configService.get<number>('MOVIE_RENTAL_FEE', 500);
+  }
 
   async listMovies(): Promise<MovieResponse> {
+    const cacheK = cacheKey('movie', 'movies:list');
+    const cached = await this.cache.get<MovieResponse['data']>(cacheK);
+    if (cached) {
+      return { success: true, data: cached };
+    }
+
     const movies = await this.prisma.movie.findMany({
       include: {
         creator: true,
@@ -23,13 +44,22 @@ export class MoviesService {
       take: 50,
     });
 
+    const result = movies as unknown as MovieResponse['data'];
+    await this.cache.set(cacheK, result, 300);
+
     return {
       success: true,
-      data: movies as unknown as MovieResponse['data'],
+      data: result,
     };
   }
 
   async getMovie(movieId: string): Promise<MovieResponse> {
+    const cacheK = cacheKey('movie', `movie:${movieId}`);
+    const cached = await this.cache.get<MovieResponse['data']>(cacheK);
+    if (cached) {
+      return { success: true, data: cached };
+    }
+
     const movie = await this.prisma.movie.findUnique({
       where: { id: movieId },
       include: {
@@ -48,9 +78,12 @@ export class MoviesService {
       throw new NotFoundException(`Movie not found`);
     }
 
+    const result = movie as unknown as MovieResponse['data'];
+    await this.cache.set(cacheK, result, 300);
+
     return {
       success: true,
-      data: movie as unknown as MovieResponse['data'],
+      data: result,
     };
   }
 
@@ -65,21 +98,78 @@ export class MoviesService {
       throw new BadRequestException('Movie already rented');
     }
 
-    const rental = await this.prisma.rental.create({
-      data: {
-        userId,
-        movieId,
-        status: 'active',
-      },
+    const movie = await this.prisma.movie.findUnique({
+      where: { id: movieId },
     });
 
-    return {
-      success: true,
-      data: {
-        rentalId: rental.id,
-        message: 'Movie rented successfully',
-      },
-    };
+    if (!movie) {
+      throw new NotFoundException('Movie not found');
+    }
+
+    const wallet = await this.prisma.wallet.findUnique({ where: { userId } });
+    if (!wallet) {
+      throw new NotFoundException('Wallet not found for user');
+    }
+
+    if (Number(wallet.balance) < this.rentalFee) {
+      throw new BadRequestException('Insufficient wallet balance for rental');
+    }
+
+    const idempotencyKey = randomUUID();
+
+    try {
+      await axios.post(
+        `${this.walletServiceBaseUrl}/wallet/debit`,
+        {
+          walletId: wallet.id,
+          amount: this.rentalFee,
+          description: `Movie rental: ${movie.title}`,
+          idempotencyKey,
+        },
+        { timeout: 10000 }
+      );
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to process payment';
+      throw new BadRequestException(errorMessage);
+    }
+
+    try {
+      const rental = await this.prisma.rental.create({
+        data: {
+          userId,
+          movieId,
+          status: 'active',
+        },
+      });
+
+      await this.cache.invalidate('movie:*');
+
+      return {
+        success: true,
+        data: {
+          rentalId: rental.id,
+          fee: this.rentalFee,
+          message: 'Movie rented successfully',
+        },
+      };
+    } catch (dbError) {
+      await axios
+        .post(
+          `${this.walletServiceBaseUrl}/wallet/credit`,
+          {
+            walletId: wallet.id,
+            amount: this.rentalFee,
+            description: `Compensation for failed rental: ${idempotencyKey}`,
+            reference: `compensate:${idempotencyKey}`,
+          },
+          { timeout: 10000 }
+        )
+        .catch((compensateError: unknown) => {
+          this.logger.error('Failed to compensate wallet after rental failure:', compensateError);
+        });
+      const errorMessage = dbError instanceof Error ? dbError.message : 'Failed to create rental';
+      throw new BadRequestException(errorMessage);
+    }
   }
 
   async listPremieres(): Promise<MovieResponse> {

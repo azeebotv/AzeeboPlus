@@ -1,6 +1,7 @@
-import { Controller, Get, Post, Body, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, UseGuards, Request } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
+import { RateLimitGuard, RateLimit } from '@azeebo/security';
 
 import { SportsService } from './sports.service';
 import { SportsResponse } from './interfaces/sports-response.interface';
@@ -8,6 +9,8 @@ import { CreatePredictionDto, EnterContestDto } from './dto/prediction.dto';
 
 @ApiTags('Sports')
 @Controller('v1/sports')
+@UseGuards(RateLimitGuard)
+@RateLimit(100, 60000)
 export class SportsController {
   constructor(private readonly sportsService: SportsService) {}
 
@@ -35,8 +38,8 @@ export class SportsController {
   @Get('fixtures/:id')
   @ApiOperation({ summary: 'Get fixture details' })
   @ApiResponse({ status: 200, description: 'Fixture details' })
-  async getFixtureDetails(): Promise<SportsResponse> {
-    return this.sportsService.getEvents();
+  async getFixtureDetails(@Param('id') id: string): Promise<SportsResponse> {
+    return this.sportsService.getEventById(id);
   }
 
   @Get('predictions')

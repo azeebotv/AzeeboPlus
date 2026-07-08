@@ -1,5 +1,6 @@
-import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
+import { CanActivate, ExecutionContext, Injectable, Optional, UnauthorizedException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import { JwtService } from '@nestjs/jwt';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 
 /**
@@ -23,7 +24,10 @@ import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
  */
 @Injectable()
 export class ServiceAuthGuard implements CanActivate {
-  constructor(private readonly reflector: Reflector) {}
+  constructor(
+    private readonly reflector: Reflector,
+    @Optional() private readonly jwtService?: JwtService,
+  ) {}
 
   canActivate(context: ExecutionContext): boolean {
     // 1. Check @Public() decorator on class or method
@@ -60,25 +64,51 @@ export class ServiceAuthGuard implements CanActivate {
       // This prevents direct attackers from spoofing user identity by setting
       // x-user-* headers without going through the gateway.
       const expectedSecret = process.env.GATEWAY_SECRET || process.env.INTERNAL_API_KEY;
-      if (expectedSecret && gatewaySecret !== expectedSecret) {
+      if (!expectedSecret) {
+        // No gateway secret configured — do not trust forwarded headers.
+        // Require direct JWT authentication instead.
+        throw new UnauthorizedException(
+          'Gateway authentication not configured. Requests with x-user-* headers require a valid x-gateway-secret.'
+        );
+      }
+      if (gatewaySecret !== expectedSecret) {
         throw new UnauthorizedException(
           'Gateway authentication required. Requests with x-user-* headers must include a valid x-gateway-secret.'
         );
       }
 
       request.user = {
-        id: userId,
+        sub: userId,
         role: userRole || 'user',
         email: userEmail || '',
       };
     } else if (authHeader) {
-      // For direct access with Bearer token, set minimal user context
-      // (Full JWT validation should happen at the gateway level)
-      request.user = {
-        id: 'token-authenticated',
-        role: 'user',
-        email: '',
-      };
+      const [type, token] = authHeader.split(' ');
+
+      if (type !== 'Bearer' || !token) {
+        throw new UnauthorizedException('Invalid authorization header format.');
+      }
+
+      if (!this.jwtService) {
+        throw new UnauthorizedException(
+          'JWT verification unavailable. This service does not have JwtModule configured for direct token authentication.'
+        );
+      }
+
+      try {
+        const payload = this.jwtService.verify<{ sub: string; role?: string; email?: string }>(token, {
+          audience: 'azeebo-api',
+          issuer: 'azeebo-auth',
+        });
+
+        request.user = {
+          sub: payload.sub,
+          role: payload.role || 'user',
+          email: payload.email || '',
+        };
+      } catch {
+        throw new UnauthorizedException('Invalid or expired token.');
+      }
     }
 
     return true;

@@ -34,7 +34,7 @@ export class AuditLogService {
           timestamp: entry.timestamp,
         },
       });
-    } catch (error) {
+    } catch (error: unknown) {
       this.logger.error('Failed to create audit log:', error);
     }
   }

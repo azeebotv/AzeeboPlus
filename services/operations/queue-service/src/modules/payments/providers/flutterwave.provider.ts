@@ -1,4 +1,5 @@
 import { Injectable, BadRequestException, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 import { createHmac, timingSafeEqual } from 'crypto';
 
@@ -28,10 +29,11 @@ interface FlutterwaveVerifyResponse {
 export class FlutterwaveProvider {
   private readonly logger = new Logger(FlutterwaveProvider.name);
   private readonly apiKey: string;
-  private readonly baseUrl = 'https://api.flutterwave.com/v3';
+  private readonly baseUrl: string;
 
-  constructor() {
-    this.apiKey = process.env.FLUTTERWAVE_SECRET_KEY || '';
+  constructor(private readonly configService: ConfigService) {
+    this.apiKey = this.configService.get<string>('FLUTTERWAVE_SECRET_KEY') || '';
+    this.baseUrl = this.configService.get<string>('FLUTTERWAVE_API_URL', 'https://api.flutterwave.com/v3');
     if (!this.apiKey) {
       this.logger.warn(
         'FLUTTERWAVE_SECRET_KEY is not configured — Flutterwave payments will be unavailable'
@@ -102,7 +104,7 @@ export class FlutterwaveProvider {
           amount,
           currency: currency || 'NGN',
           redirect_url:
-            process.env.FLUTTERWAVE_CALLBACK_URL || 'https://api.azeebo.plus/payments/webhook',
+            process.env.FLUTTERWAVE_CALLBACK_URL || 'http://localhost:3003/webhooks/flutterwave',
           customer: {
             email: `user-${userId}@azeebo.plus`,
             name: `User ${userId}`,
@@ -224,9 +226,6 @@ export class FlutterwaveProvider {
     const hash = createHmac('sha256', this.apiKey).update(JSON.stringify(payload)).digest('hex');
 
     // Timing-safe comparison to prevent timing attacks
-    if (hash.length !== signature.length) {
-      return false;
-    }
     return timingSafeEqual(Buffer.from(hash), Buffer.from(signature));
   }
 }

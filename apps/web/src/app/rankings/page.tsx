@@ -1,9 +1,11 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api';
-import { webLogger } from '@/lib/logger';
+
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
+import { Skeleton, ErrorState } from '@azeebo/ui/web';
 
 interface RankingEntry {
   userId: string;
@@ -30,49 +32,51 @@ interface RankingData {
 }
 
 export default function RankingsPage(): React.JSX.Element {
-  const [categories, setCategories] = useState<RankingCategory[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('overall');
-  const [rankingData, setRankingData] = useState<RankingData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchRankings = async (): Promise<void> => {
-      try {
-        setIsLoading(true);
-        const [categoriesResult, rankingsResult] = await Promise.all([
-          apiFetch<RankingCategory[]>('/engagement/rankings'),
-          apiFetch<any>(`/engagement/leaderboard?timePeriod=weekly&category=${selectedCategory}`),
-        ]);
-        if (categoriesResult.success && categoriesResult.data) {
-          const cats = Array.isArray(categoriesResult.data) ? categoriesResult.data : [];
-          setCategories(cats);
-        }
-        if (rankingsResult.success && rankingsResult.data) {
-          const data = rankingsResult.data;
-          const entries = Array.isArray(data) ? data : data.items || [];
-          setRankingData({
-            category: selectedCategory,
-            entries: entries.map((e: any) => ({
-              userId: String(e.userId),
-              displayName: String(e.displayName || e.user?.displayName || 'Unknown'),
-              avatar: String(e.avatar || ''),
-              score: Number(e.score || 0),
-              rank: Number(e.rank || 0),
-              change: Number(e.change || 0),
-              level: Number(e.level || 0),
-            })),
-            totalParticipants: Number(data.totalParticipants || entries.length),
-            lastUpdated: String(data.lastUpdated || new Date().toISOString()),
-          });
-        }
-      } catch (error) {
-        webLogger.error('Failed to fetch rankings', error);
-      } finally {
-        setIsLoading(false);
+  const categoriesQuery = useQuery({
+    queryKey: ['rankings', 'categories'],
+    queryFn: async () => {
+      const res = await apiFetch<RankingCategory[]>('/engagement/rankings');
+      if (res.success && res.data) {
+        return Array.isArray(res.data) ? res.data : [];
       }
-    };
-    fetchRankings();
-  }, [selectedCategory]);
+      return [];
+    },
+    staleTime: 300000,
+  });
+
+  const rankingsQuery = useQuery({
+    queryKey: ['rankings', selectedCategory],
+    queryFn: async () => {
+      const res = await apiFetch<{ success: boolean; data: RankingEntry[] | { items?: RankingEntry[]; totalParticipants?: number; lastUpdated?: string } }>(`/engagement/leaderboard?timePeriod=weekly&category=${selectedCategory}`);
+      if (res.success && res.data) {
+        const data = res.data;
+        const entries = Array.isArray(data) ? data : data.items || [];
+        return {
+          category: selectedCategory,
+          entries: entries.map((e) => ({
+            userId: String(e.userId),
+            displayName: String(e.displayName || (e as unknown as { user?: { displayName?: string } }).user?.displayName || 'Unknown'),
+            avatar: String(e.avatar || ''),
+            score: Number(e.score || 0),
+            rank: Number(e.rank || 0),
+            change: Number(e.change || 0),
+            level: Number(e.level || 0),
+          })),
+          totalParticipants: Number(data.totalParticipants || entries.length),
+          lastUpdated: String(data.lastUpdated || new Date().toISOString()),
+        };
+      }
+      return null;
+    },
+    staleTime: 30000,
+  });
+
+  const categories = categoriesQuery.data ?? [];
+  const rankingData = rankingsQuery.data ?? null;
+  const isLoading = categoriesQuery.isLoading || rankingsQuery.isLoading;
+  const error = categoriesQuery.error?.message || rankingsQuery.error?.message || null;
 
   const getRankBadge = (rank: number): { emoji: string; color: string } => {
     switch (rank) {
@@ -143,13 +147,18 @@ export default function RankingsPage(): React.JSX.Element {
         {isLoading ? (
           <div className="space-y-4">
             {[1, 2, 3, 4, 5].map((i) => (
-              <div
-                key={i}
-                className="az-glass h-20 animate-pulse"
-                style={{ backgroundColor: '#2A2A2A' }}
-              />
+              <div key={i} className="az-glass h-20">
+                <Skeleton height="100%" borderRadius="16px" />
+              </div>
             ))}
           </div>
+        ) : error ? (
+          <ErrorState
+            title="Failed to load rankings"
+            description={error}
+            buttonText="Retry"
+            onButtonPress={() => rankingsQuery.refetch()}
+          />
         ) : (
           rankingData && (
             <>

@@ -51,7 +51,7 @@ Azeebo+ Reality Service - Manages reality TV shows, voting, contestants, and use
 
 ```bash
 # Install dependencies
-pnpm install
+ppnpm install
 
 # Generate Prisma client
 pnpm prisma:generate
@@ -60,13 +60,13 @@ pnpm prisma:generate
 pnpm prisma:migrate
 
 # Start development server
-pnpm start:dev
+ppnpm start:dev
 
 # Build for production
 pnpm build
 
 # Start production server
-pnpm start
+ppnpm start
 ```
 
 ## API Routes

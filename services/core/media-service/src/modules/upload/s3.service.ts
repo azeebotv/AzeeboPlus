@@ -62,8 +62,8 @@ export class S3Service {
     this.s3Client = new S3Client({
       region: this.region,
       credentials: {
-        accessKeyId: this.configService.get<string>('AWS_ACCESS_KEY_ID') || '',
-        secretAccessKey: this.configService.get<string>('AWS_SECRET_ACCESS_KEY') || '',
+        accessKeyId: this.configService.getOrThrow<string>('AWS_ACCESS_KEY_ID'),
+        secretAccessKey: this.configService.getOrThrow<string>('AWS_SECRET_ACCESS_KEY'),
       },
     });
 
@@ -131,7 +131,7 @@ export class S3Service {
           })
         );
       });
-    } catch (error) {
+    } catch (error: unknown) {
       if (error instanceof CircuitBreakerOpenError) {
         this.logger.warn(`S3 circuit breaker open: ${error.message}`);
         throw new BadRequestException(
@@ -166,7 +166,7 @@ export class S3Service {
       const { fileTypeFromBuffer } = await import('file-type');
       const result = await fileTypeFromBuffer(buffer);
       return result?.mime;
-    } catch (error) {
+    } catch (error: unknown) {
       this.logger.warn(`Failed to sniff MIME type: ${(error as Error).message}`);
       return undefined;
     }
@@ -204,7 +204,7 @@ export class S3Service {
       } else if (mimeType.startsWith('audio/')) {
         return await this.extractAudioDuration(buffer);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       this.logger.warn(`Failed to extract duration: ${(error as Error).message}`);
     }
     return undefined;
@@ -230,7 +230,7 @@ export class S3Service {
       });
 
       return url;
-    } catch (error) {
+    } catch (error: unknown) {
       if (error instanceof CircuitBreakerOpenError) {
         this.logger.warn(`S3 circuit breaker open: ${error.message}`);
         throw new BadRequestException(
@@ -263,7 +263,7 @@ export class S3Service {
       });
 
       return { uploadUrl, key };
-    } catch (error) {
+    } catch (error: unknown) {
       if (error instanceof CircuitBreakerOpenError) {
         this.logger.warn(`S3 circuit breaker open: ${error.message}`);
         throw new BadRequestException(
@@ -285,7 +285,7 @@ export class S3Service {
           })
         );
       });
-    } catch (error) {
+    } catch (error: unknown) {
       if (error instanceof CircuitBreakerOpenError) {
         this.logger.warn(`S3 circuit breaker open: ${error.message}`);
         throw new BadRequestException(
@@ -314,7 +314,7 @@ export class S3Service {
         lastModified: response.LastModified,
         metadata: response.Metadata,
       };
-    } catch (error) {
+    } catch (error: unknown) {
       if (error instanceof CircuitBreakerOpenError) {
         this.logger.warn(`S3 circuit breaker open: ${error.message}`);
         throw new BadRequestException(
@@ -347,7 +347,7 @@ export class S3Service {
           try {
             await this.deleteFile(item.Key || '');
             deletedCount++;
-          } catch (error) {
+          } catch (error: unknown) {
             this.logger.error(
               `Failed to delete orphaned file ${item.Key}: ${(error as Error).message}`
             );

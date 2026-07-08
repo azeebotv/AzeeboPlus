@@ -31,6 +31,7 @@ export default function EpisodesPage(): React.JSX.Element {
   const [seasons, setSeasons] = useState<Season[]>([]);
   const [selectedSeason, setSelectedSeason] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchEpisodes = async () => {
@@ -43,78 +44,11 @@ export default function EpisodesPage(): React.JSX.Element {
         if (result.success && result.data) {
           setSeasons(result.data.seasons || []);
         } else {
-          const PLACEHOLDER_THUMBNAIL = 'https://picsum.photos/seed/ep-placeholder/400/225';
-          const mockSeasons: Season[] = [
-            {
-              seasonNumber: 1,
-              episodes: [
-                {
-                  id: 'ep1',
-                  title: 'Pilot Episode',
-                  description: 'The journey begins...',
-                  episodeNumber: 1,
-                  seasonNumber: 1,
-                  duration: 3600,
-                  thumbnail: PLACEHOLDER_THUMBNAIL,
-                  releaseDate: '2026-01-15',
-                  isLocked: false,
-                },
-                {
-                  id: 'ep2',
-                  title: 'The First Challenge',
-                  description: 'Contestants face their first task',
-                  episodeNumber: 2,
-                  seasonNumber: 1,
-                  duration: 3600,
-                  thumbnail: PLACEHOLDER_THUMBNAIL,
-                  releaseDate: '2026-01-22',
-                  isLocked: false,
-                },
-                {
-                  id: 'ep3',
-                  title: 'Alliance Forming',
-                  description: 'New alliances are formed',
-                  episodeNumber: 3,
-                  seasonNumber: 1,
-                  duration: 3600,
-                  thumbnail: PLACEHOLDER_THUMBNAIL,
-                  releaseDate: '2026-01-29',
-                  isLocked: true,
-                },
-                {
-                  id: 'ep4',
-                  title: 'Mid-Season Twist',
-                  description: 'A surprise twist changes everything',
-                  episodeNumber: 4,
-                  seasonNumber: 1,
-                  duration: 3600,
-                  thumbnail: PLACEHOLDER_THUMBNAIL,
-                  releaseDate: '2026-02-05',
-                  isLocked: true,
-                },
-              ],
-            },
-            {
-              seasonNumber: 2,
-              episodes: [
-                {
-                  id: 'ep5',
-                  title: 'Season 2 Premiere',
-                  description: 'New contestants, new drama',
-                  episodeNumber: 1,
-                  seasonNumber: 2,
-                  duration: 3600,
-                  thumbnail: PLACEHOLDER_THUMBNAIL,
-                  releaseDate: '2026-03-01',
-                  isLocked: true,
-                },
-              ],
-            },
-          ];
-          setSeasons(mockSeasons);
+          setError(result.message || 'Failed to load episodes');
         }
-      } catch (error) {
-        webLogger.error('Failed to load episodes', error);
+      } catch (err) {
+        webLogger.error('Failed to load episodes', err);
+        setError(err instanceof Error ? err.message : 'Failed to load episodes');
       } finally {
         setIsLoading(false);
       }

@@ -1,10 +1,11 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api';
-import { webLogger } from '@/lib/logger';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
+import { Skeleton, ErrorState } from '@azeebo/ui/web';
 
 interface ContentItem {
   id: string;
@@ -20,63 +21,41 @@ interface ContentItem {
 
 export default function ContentManagerPage(): React.JSX.Element {
   const router = useRouter();
-  const [content, setContent] = useState<ContentItem[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const queryClient = useQueryClient();
   const [filter, setFilter] = useState<'all' | 'draft' | 'published' | 'archived'>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
 
-  useEffect(() => {
-    loadContent();
-  }, []);
-
-  const loadContent = async (): Promise<void> => {
-    try {
-      const result = await apiFetch<any>('/v1/content/me');
+  const { data: content = [], isLoading, error } = useQuery({
+    queryKey: ['creator', 'content'],
+    queryFn: async () => {
+      const result = await apiFetch<{ success: boolean; data: ContentItem[] | { items?: ContentItem[] } }>('/v1/content/me');
       if (result.success && result.data) {
         const items = Array.isArray(result.data) ? result.data : result.data.items || [];
-        setContent(
-          items.map((item: any) => ({
-            id: String(item.id),
-            title: String(item.title || ''),
-            description: String(item.description || ''),
-            thumbnail: String(item.thumbnail || ''),
-            status: String(item.status || 'draft') as ContentItem['status'],
-            views: Number(item.viewCount ?? item.views ?? 0),
-            earnings: Number(item.earnings ?? 0),
-            createdAt: String(item.createdAt || ''),
-            type: String(item.contentType || item.type || 'video') as ContentItem['type'],
-          }))
-        );
+        return items.map((item) => ({
+          id: String(item.id),
+          title: String(item.title || ''),
+          description: String(item.description || ''),
+          thumbnail: String(item.thumbnail || ''),
+          status: String(item.status || 'draft') as ContentItem['status'],
+          views: Number(item.viewCount ?? item.views ?? 0),
+          earnings: Number(item.earnings ?? 0),
+          createdAt: String(item.createdAt || ''),
+          type: String(item.contentType || item.type || 'video') as ContentItem['type'],
+        }));
       }
-    } catch (error) {
-      webLogger.error('Failed to load content', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+      return [];
+    },
+  });
 
-  const handleDelete = async (id: string): Promise<void> => {
-    if (!confirm('Are you sure you want to delete this content?')) return;
-    try {
-      const result = await apiFetch(`/v1/content/${id}`, { method: 'DELETE' });
-      if (!result.success) throw new Error(result.message || 'Failed to delete content');
-      loadContent();
-      alert('Content deleted successfully');
-    } catch (error) {
-      alert(error instanceof Error ? error.message : 'Failed to delete content');
-    }
-  };
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => apiFetch(`/v1/content/${id}`, { method: 'DELETE' }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['creator', 'content'] }),
+  });
 
-  const handlePublish = async (id: string): Promise<void> => {
-    try {
-      const result = await apiFetch(`/v1/content/${id}/publish`, { method: 'POST' });
-      if (!result.success) throw new Error(result.message || 'Failed to publish content');
-      loadContent();
-      alert('Content published successfully');
-    } catch (error) {
-      alert(error instanceof Error ? error.message : 'Failed to publish content');
-    }
-  };
+  const publishMutation = useMutation({
+    mutationFn: (id: string) => apiFetch(`/v1/content/${id}/publish`, { method: 'POST' }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['creator', 'content'] }),
+  });
 
   const getStatusStyle = (status: string): { color: string } => {
     switch (status) {
@@ -119,17 +98,36 @@ export default function ContentManagerPage(): React.JSX.Element {
     return (
       <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
         <AppHeader />
-        <div
-          className="flex items-center justify-center"
-          style={{ minHeight: 'calc(100vh - 200px)' }}
-        >
-          <div className="text-center">
-            <div
-              className="animate-spin rounded-full h-12 w-12 mx-auto"
-              style={{ border: '3px solid rgba(255,255,255,0.1)', borderTopColor: '#E8420A' }}
-            />
-            <p className="mt-4 text-white/60">Loading content...</p>
+        <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <Skeleton width="120px" height="20px" className="mb-2" />
+              <Skeleton width="180px" height="32px" />
+            </div>
           </div>
+          <div className="space-y-4">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="az-glass overflow-hidden flex">
+                <Skeleton width="160px" height="160px" />
+                <div className="flex-1 p-4">
+                  <Skeleton width="60%" height="20px" className="mb-2" />
+                  <Skeleton width="40%" height="14px" className="mb-4" />
+                  <Skeleton width="80px" height="14px" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+        <AppHeader />
+        <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+          <ErrorState title="Failed to load content" description="Please try again later" onButtonPress={() => router.refresh()} />
         </div>
       </div>
     );
@@ -277,7 +275,7 @@ export default function ContentManagerPage(): React.JSX.Element {
                     <div className="flex items-center gap-2">
                       {item.status === 'draft' && (
                         <button
-                          onClick={() => handlePublish(item.id)}
+                          onClick={() => publishMutation.mutate(item.id)}
                           className="px-4 py-2 rounded-full text-sm font-medium text-white transition-colors"
                           style={{ backgroundColor: '#22C55E' }}
                         >
@@ -296,7 +294,7 @@ export default function ContentManagerPage(): React.JSX.Element {
                         Edit
                       </button>
                       <button
-                        onClick={() => handleDelete(item.id)}
+                        onClick={() => { if (confirm('Are you sure you want to delete this content?')) deleteMutation.mutate(item.id); }}
                         className="px-3 py-2 rounded-full text-sm transition-colors"
                         style={{ backgroundColor: 'rgba(239,68,68,0.2)', color: '#EF4444' }}
                       >

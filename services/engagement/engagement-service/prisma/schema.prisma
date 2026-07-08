@@ -43,6 +43,7 @@ model Prediction {
   @@index([userId])
   @@index([contentId])
   @@index([isCorrect])
+  @@index([createdAt])
   @@map("predictions")
 }
 

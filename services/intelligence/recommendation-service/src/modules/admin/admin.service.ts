@@ -1,26 +1,32 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { ApiResponseWrapper } from '@azeebo/shared-types';
 
 @Injectable()
 export class AdminService {
+  private readonly logger = new Logger(AdminService.name);
   constructor(private readonly prisma: PrismaService) {}
 
   async getStats() {
-    const now = new Date();
-    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    try {
+      const now = new Date();
+      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-    const [totalRequests, recommendationsToday] = await Promise.all([
-      this.prisma.recommendationLog.count(),
-      this.prisma.recommendationLog.count({
-        where: { timestamp: { gte: todayStart } },
-      }),
-    ]);
+      const [totalRequests, recommendationsToday] = await Promise.all([
+        this.prisma.recommendationLog.count(),
+        this.prisma.recommendationLog.count({
+          where: { timestamp: { gte: todayStart } },
+        }),
+      ]);
 
-    return ApiResponseWrapper.success({
-      totalRequests,
-      recommendationsToday,
-    });
+      return ApiResponseWrapper.success({
+        totalRequests,
+        recommendationsToday,
+      });
+    } catch (error) {
+      this.logger.error(`getStats failed: ${error.message}`, error.stack);
+      return ApiResponseWrapper.error(error.message);
+    }
   }
 
   async getModels() {

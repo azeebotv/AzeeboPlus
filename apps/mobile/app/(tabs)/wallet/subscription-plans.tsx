@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -86,8 +86,9 @@ export default function SubscriptionPlansScreen() {
               Alert.alert('Success', 'Subscription activated!', [
                 { text: 'OK', onPress: () => loadData() },
               ]);
-            } catch (error: any) {
-              Alert.alert('Error', error?.message || 'Failed to subscribe. Please try again.');
+            } catch (error: unknown) {
+              const message = error instanceof Error ? error.message : 'Failed to subscribe. Please try again.';
+              Alert.alert('Error', message);
             } finally {
               setIsSubscribing(null);
             }
@@ -114,7 +115,7 @@ export default function SubscriptionPlansScreen() {
               Alert.alert('Success', 'Subscription cancelled', [
                 { text: 'OK', onPress: () => loadData() },
               ]);
-            } catch (error: any) {
+            } catch (error: unknown) {
               Alert.alert('Error', 'Failed to cancel subscription');
             }
           },

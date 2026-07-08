@@ -43,7 +43,7 @@ export const paymentApi = {
   },
 
   verify: async (reference: string): Promise<ApiResponse<PaymentVerifyResponse>> => {
-    return apiClient.post<ApiResponse<PaymentVerifyResponse>>(`/v1/payments/verify?reference=${reference}`);
+    return apiClient.post<ApiResponse<PaymentVerifyResponse>>('/v1/payments/verify', { reference });
   },
 
   getTransactions: async (

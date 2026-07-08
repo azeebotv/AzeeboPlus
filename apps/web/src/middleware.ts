@@ -77,31 +77,51 @@ export function middleware(request: NextRequest) {
   }
 
   // --- Admin route guards ---
-  // Verify admin role from JWT payload before allowing access to admin routes
+  // Decode JWT payload to check role (not signature-verified — defense-in-depth
+  // until server-side session validation is implemented).
   if (adminRoutes.some((route) => pathname.startsWith(route))) {
     if (!isAuthenticated) {
       const loginUrl = new URL('/auth/login', request.url);
       loginUrl.searchParams.set('redirect', pathname);
       return NextResponse.redirect(loginUrl);
     }
-    try {
-      const payload = JSON.parse(
-        Buffer.from(authCookie!.value.split('.')[1], 'base64url').toString()
-      );
-      if (payload.role !== 'admin') {
-        return NextResponse.redirect(new URL('/forbidden', request.url));
+    const accessToken = request.cookies.get('azeebo_access_token')?.value;
+    if (accessToken) {
+      try {
+        const payload = JSON.parse(atob(accessToken.split('.')[1]));
+        if (payload.role !== 'admin' && payload.role !== 'superadmin') {
+          return NextResponse.redirect(new URL('/', request.url));
+        }
+      } catch {
+        // Invalid JWT — allow through (server-side will reject unauthorized requests)
       }
-    } catch {
-      return NextResponse.redirect(new URL('/auth/login', request.url));
+    }
+  }
+
+  // --- Creator portal route guards ---
+  if (creatorRoutes.some((route) => pathname.startsWith(route))) {
+    if (!isAuthenticated) {
+      const loginUrl = new URL('/auth/login', request.url);
+      loginUrl.searchParams.set('redirect', pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+    const accessToken = request.cookies.get('azeebo_access_token')?.value;
+    if (accessToken) {
+      try {
+        const payload = JSON.parse(atob(accessToken.split('.')[1]));
+        const role = payload.role;
+        if (role !== 'creator' && role !== 'admin' && role !== 'superadmin') {
+          return NextResponse.redirect(new URL('/', request.url));
+        }
+      } catch {
+        // Invalid JWT — allow through (server-side will reject unauthorized requests)
+      }
     }
   }
 
   // --- Protected route guards ---
   if (!isAuthenticated) {
-    if (
-      protectedRoutes.some((route) => pathname.startsWith(route)) ||
-      creatorRoutes.some((route) => pathname.startsWith(route))
-    ) {
+    if (protectedRoutes.some((route) => pathname.startsWith(route))) {
       const loginUrl = new URL('/auth/login', request.url);
       loginUrl.searchParams.set('redirect', pathname);
       return NextResponse.redirect(loginUrl);

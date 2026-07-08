@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -206,7 +206,7 @@ const styles = StyleSheet.create({
     color: colors.text.primary,
   },
   logoPlus: {
-    color: colors.primary,
+    color: colors.primary[500],
   },
   subtitle: {
     fontSize: typography.fontSize.lg,

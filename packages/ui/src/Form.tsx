@@ -29,8 +29,7 @@ export function Form<T extends FieldValues>({
 }: FormProps<T>) {
   const form = useForm<T>({
     ...props,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    resolver: schema ? zodResolver(schema as any) : undefined,
+    resolver: schema ? zodResolver(schema as z.ZodType<unknown>) : undefined,
   });
 
   const { register, control, handleSubmit, formState } = form;
@@ -175,8 +174,7 @@ export function FormErrorMessageList({ errors, className = '' }: FormErrorMessag
 
 export function useFormValidation<T extends FieldValues>(schema: FormSchema<T>) {
   const form = useForm<T>({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    resolver: zodResolver(schema as any),
+    resolver: zodResolver(schema as z.ZodType<unknown>),
   });
 
   return form;

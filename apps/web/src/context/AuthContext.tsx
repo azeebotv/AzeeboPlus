@@ -10,7 +10,7 @@ import React, {
   ReactNode,
 } from 'react';
 // useRouter is not needed — auth redirects use window.location for full page reloads
-import { api, User, AuthResponse } from '../lib/api';
+import { api, User, AuthResponse, setAuthCookie, clearAuthCookie } from '../lib/api';
 import { webLogger } from '@/lib/logger';
 
 interface AuthContextType {
@@ -62,20 +62,13 @@ const ACCESS_TOKEN_KEY = 'azeebo_access_token';
 const REFRESH_TOKEN_KEY = 'azeebo_refresh_token';
 const USER_KEY = 'azeebo_user';
 
-/**
- * Set a persistent cookie that the Next.js middleware can read.
- * This cookie is set on login/logout to signal auth status to the middleware.
- * It's NOT httpOnly because the middleware needs to read it in the Edge runtime.
- */
-function setAuthCookie(value: string, maxAge: number = 7 * 24 * 60 * 60): void {
-  const secure = window.location.protocol === 'https:' ? '; Secure' : '';
-  document.cookie = `auth=${encodeURIComponent(value)}; path=/; max-age=${maxAge}; SameSite=Lax${secure}`;
-}
-
-function clearAuthCookie(): void {
-  const secure = window.location.protocol === 'https:' ? '; Secure' : '';
-  document.cookie = `auth=; path=/; max-age=0; SameSite=Lax${secure}`;
-}
+// SECURITY NOTE: Access and refresh tokens are stored in localStorage, which is
+// accessible to any JavaScript running on the page (XSS vulnerability). This is
+// a known limitation. The mitigation is that the `auth` cookie used by middleware
+// contains only the access token (not the refresh token), and server-side APIs
+// verify the JWT signature. Future improvement: migrate to HttpOnly cookies to
+// prevent XSS theft of tokens entirely. For now, strong CSP headers and XSS
+// prevention are critical to protect against token theft.
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -122,6 +115,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         // Update React state (localStorage is already updated by attemptRefresh)
         setToken(data.access_token);
         setRefreshToken(data.refresh_token);
+        setAuthCookie(data.access_token);
 
         return true;
       }
@@ -158,7 +152,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
         // Immediately set stored user to avoid flash of unauthenticated content
         if (storedUser && !cancelled) {
-          setUser(JSON.parse(storedUser));
+          try {
+            const parsed = JSON.parse(storedUser);
+            if (!parsed.id || !parsed.email) throw new Error('Invalid user data');
+            setUser(parsed);
+          } catch {
+            localStorage.removeItem(USER_KEY);
+            setUser(null);
+          }
         }
 
         // Set the API token so requests work immediately
@@ -266,10 +267,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         handleAuthResponse(response.data);
         return { success: true };
       } else {
-        const r = response as any;
+        const r = response as { message?: string; code?: string; details?: { fieldErrors?: Record<string, string[]> } };
         return {
           success: false,
-          message: response.message,
+          message: r.message ?? response.message,
           code: r.code,
           fieldErrors: r.details?.fieldErrors,
         };
@@ -299,10 +300,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         handleAuthResponse(response.data);
         return { success: true };
       } else {
-        const r = response as any;
+        const r = response as { message?: string; code?: string; details?: { fieldErrors?: Record<string, string[]> } };
         return {
           success: false,
-          message: response.message,
+          message: r.message ?? response.message,
           code: r.code,
           fieldErrors: r.details?.fieldErrors,
         };

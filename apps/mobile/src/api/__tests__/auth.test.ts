@@ -31,7 +31,10 @@ describe('Mobile Auth API', () => {
 
       const result = await authApi.login({ email: 'a@b.com', password: 'pass' });
 
-      expect(mockedClient.post).toHaveBeenCalledWith('/v1/auth/login', { email: 'a@b.com', password: 'pass' });
+      expect(mockedClient.post).toHaveBeenCalledWith('/v1/auth/login', {
+        email: 'a@b.com',
+        password: 'pass',
+      });
       expect(result).toEqual(mockResponse);
     });
 
@@ -50,7 +53,11 @@ describe('Mobile Auth API', () => {
 
       await authApi.register({ name: 'Test', email: 'a@b.com', password: 'pass' });
 
-      expect(mockedClient.post).toHaveBeenCalledWith('/v1/auth/register', { name: 'Test', email: 'a@b.com', password: 'pass' });
+      expect(mockedClient.post).toHaveBeenCalledWith('/v1/auth/register', {
+        name: 'Test',
+        email: 'a@b.com',
+        password: 'pass',
+      });
     });
   });
 
@@ -70,7 +77,9 @@ describe('Mobile Auth API', () => {
 
       await authApi.forgotPassword('a@b.com');
 
-      expect(mockedClient.post).toHaveBeenCalledWith('/v1/auth/forgot-password', { email: 'a@b.com' });
+      expect(mockedClient.post).toHaveBeenCalledWith('/v1/auth/forgot-password', {
+        email: 'a@b.com',
+      });
     });
   });
 
@@ -80,7 +89,10 @@ describe('Mobile Auth API', () => {
 
       await authApi.resetPassword('token123', 'newPass');
 
-      expect(mockedClient.post).toHaveBeenCalledWith('/v1/auth/reset-password', { token: 'token123', newPassword: 'newPass' });
+      expect(mockedClient.post).toHaveBeenCalledWith('/v1/auth/reset-password', {
+        token: 'token123',
+        newPassword: 'newPass',
+      });
     });
   });
 
@@ -90,7 +102,9 @@ describe('Mobile Auth API', () => {
 
       await authApi.verifyEmail('verify-token');
 
-      expect(mockedClient.post).toHaveBeenCalledWith('/v1/auth/verify-email', { token: 'verify-token' });
+      expect(mockedClient.post).toHaveBeenCalledWith('/v1/auth/verify-email', {
+        token: 'verify-token',
+      });
     });
   });
 
@@ -106,7 +120,10 @@ describe('Mobile Auth API', () => {
 
   describe('updateProfile', () => {
     it('should PUT to /v1/users/me', async () => {
-      mockedClient.put.mockResolvedValue({ success: true, data: { id: '1', name: 'Updated' } } as any);
+      mockedClient.put.mockResolvedValue({
+        success: true,
+        data: { id: '1', name: 'Updated' },
+      } as any);
 
       await authApi.updateProfile({ name: 'Updated' });
 
@@ -120,17 +137,25 @@ describe('Mobile Auth API', () => {
 
       await authApi.changePassword('oldPass', 'newPass');
 
-      expect(mockedClient.put).toHaveBeenCalledWith('/v1/users/me/password', { currentPassword: 'oldPass', newPassword: 'newPass' });
+      expect(mockedClient.put).toHaveBeenCalledWith('/v1/users/me/password', {
+        currentPassword: 'oldPass',
+        newPassword: 'newPass',
+      });
     });
   });
 
   describe('refreshToken', () => {
     it('should POST to /v1/auth/refresh', async () => {
-      mockedClient.post.mockResolvedValue({ success: true, data: { accessToken: 'new-tok' } } as any);
+      mockedClient.post.mockResolvedValue({
+        success: true,
+        data: { accessToken: 'new-tok' },
+      } as any);
 
       await authApi.refreshToken('old-ref');
 
-      expect(mockedClient.post).toHaveBeenCalledWith('/v1/auth/refresh', { refreshToken: 'old-ref' });
+      expect(mockedClient.post).toHaveBeenCalledWith('/v1/auth/refresh', {
+        refreshToken: 'old-ref',
+      });
     });
   });
 });

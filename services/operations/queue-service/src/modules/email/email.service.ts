@@ -1,4 +1,4 @@
-import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
+import { Injectable, OnModuleInit, Logger, BadRequestException } from '@nestjs/common';
 import * as sgMail from '@sendgrid/mail';
 import * as Handlebars from 'handlebars';
 import { ConfigService } from '@nestjs/config';
@@ -167,6 +167,11 @@ export class EmailService implements OnModuleInit {
   }
 
   addTemplate(name: string, template: string) {
+    // NOTE: Templates should be validated/sanitized before registration to prevent XSS.
+    // Consider using a DOMPurify or sanitize-html post-processing step on rendered output.
+    if (!name || name.includes('{{')) {
+      throw new BadRequestException('Invalid template name');
+    }
     this.templates[name] = Handlebars.compile(template);
   }
 

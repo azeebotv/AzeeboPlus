@@ -163,7 +163,7 @@ export class AppealService {
       resourceId: id,
       actorType: 'admin',
       actorId: decidedBy,
-      previousState: { status: 'PENDING' },
+      previousState: { status: appeal.status },
       newState: { status: decision, decision: notes },
       metadata: {
         resourceId: appeal.resourceId,

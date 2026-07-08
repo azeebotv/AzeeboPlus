@@ -23,9 +23,9 @@ export interface CacheOptions {
  */
 export const Cache = (options: CacheOptions) => {
   return (
-    target: any,
+    target: object,
     propertyKey?: string | symbol,
-    descriptor?: TypedPropertyDescriptor<any>
+    descriptor?: TypedPropertyDescriptor<(...args: unknown[]) => Promise<unknown>>
   ) => {
     if (descriptor) {
       SetMetadata(CACHE_KEY_METADATA, options.key)(descriptor.value);

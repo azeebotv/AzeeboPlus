@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { CacheModule } from '@azeebo/shared-services';
 
 import { UsersController } from './users.controller';
 import { InteractionsController } from './interactions.controller';
@@ -13,12 +14,13 @@ import { UserDeletionController } from '../user/user-deletion.controller';
   imports: [
     DatabaseModule,
     PassportModule,
+    CacheModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
         secret: configService.get<string>('JWT_ACCESS_SECRET'),
         signOptions: {
-          expiresIn: configService.get('JWT_EXPIRES_IN', '30m') as any,
+          expiresIn: configService.get('JWT_EXPIRES_IN', '30m') as string | number,
         },
       }),
       inject: [ConfigService],

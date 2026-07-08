@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { View, Text, StyleSheet, Dimensions, Image, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -6,6 +6,7 @@ import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import type { ContentItem } from '@/api';
+import { colors } from '@/theme';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -96,7 +97,12 @@ export default function HeroCarousel({ slides, autoRotateIntervalMs = 6000 }: He
       />
 
       {/* Content */}
-      <Pressable style={styles.content} onPress={handleSlidePress}>
+      <Pressable
+        style={styles.content}
+        onPress={handleSlidePress}
+        accessibilityLabel={`${t('home.watch')} ${currentSlide.title}`}
+        accessibilityRole="button"
+      >
         {/* Universe badge */}
         {currentSlide.universe?.name ? (
           <View style={styles.universeBadge}>
@@ -166,7 +172,7 @@ const styles = StyleSheet.create({
     width: SCREEN_WIDTH,
     height: Math.min(Dimensions.get('window').height * 0.55, 420),
     overflow: 'hidden',
-    backgroundColor: '#0D3B2E',
+    backgroundColor: colors.bg.green,
   },
   backgroundImage: {
     width: '100%',
@@ -187,14 +193,14 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   universeBadgeText: {
-    color: '#E8420A',
+    color: colors.primary[500],
     fontSize: 11,
     fontWeight: '700',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   title: {
-    color: '#fff',
+    color: colors.text.primary,
     fontSize: 26,
     fontWeight: '800',
     lineHeight: 32,
@@ -214,14 +220,14 @@ const styles = StyleSheet.create({
   watchButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#E8420A',
+    backgroundColor: colors.primary[500],
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 24,
     gap: 6,
   },
   watchButtonText: {
-    color: '#fff',
+    color: colors.text.primary,
     fontSize: 14,
     fontWeight: '700',
   },
@@ -258,7 +264,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.4)',
   },
   indicatorActive: {
-    backgroundColor: '#E8420A',
+    backgroundColor: colors.primary[500],
     width: 12,
     height: 8,
     borderRadius: 4,

@@ -5,6 +5,9 @@ module.exports = {
   transform: {
     '^.+\\.(t|j)s$': 'ts-jest',
   },
+  moduleNameMapper: {
+    '^@azeebo/(.*)$': '<rootDir>/../../../../packages/$1/dist',
+  },
   transformIgnorePatterns: [
     'node_modules/(?!uuid)',
   ],

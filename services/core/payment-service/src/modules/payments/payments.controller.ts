@@ -122,7 +122,7 @@ export class PaymentsController {
     @Request() req: { user: { sub: string } },
     @Body() initializePaymentDto: InitializePaymentDto
   ): Promise<InitializePaymentResponse> {
-    return this.paymentsService.initializePayment(req.user.sub, initializePaymentDto);
+    return this.paymentsService.initializePayment(req.user.id, initializePaymentDto);
   }
 
   @Post('verify')
@@ -184,7 +184,7 @@ export class PaymentsController {
     @Request() req: { user: { sub: string } },
     @Body() verifyPaymentDto: VerifyPaymentDto
   ): Promise<VerifyPaymentResponse> {
-    return this.paymentsService.verifyPayment(req.user.sub, verifyPaymentDto.transactionId);
+    return this.paymentsService.verifyPayment(req.user.id, verifyPaymentDto.transactionId);
   }
 
   @Get('history')
@@ -236,7 +236,7 @@ export class PaymentsController {
   async getPaymentHistory(
     @Request() req: { user: { sub: string } }
   ): Promise<TransactionHistoryResponse> {
-    return this.paymentsService.getPaymentHistory(req.user.sub);
+    return this.paymentsService.getPaymentHistory(req.user.id);
   }
 
   @Get(':id')
@@ -276,7 +276,7 @@ export class PaymentsController {
     @Request() req: { user: { sub: string } },
     @Param('id') id: string
   ): Promise<PaymentResponse> {
-    return this.paymentsService.getPayment(req.user.sub, id);
+    return this.paymentsService.getPayment(req.user.id, id);
   }
 
   @Post('webhook')
@@ -312,7 +312,7 @@ export class PaymentsController {
     @Body() requestRefundDto: RequestRefundDto
   ): Promise<PaymentResponse> {
     return this.paymentsService.requestRefund(
-      req.user.sub,
+      req.user.id,
       requestRefundDto.transactionId,
       requestRefundDto.reason
     );

@@ -1,9 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
 import { apiClient } from '../../src/api/client';
+import { ApiResponse } from '../../src/types/api';
+
+type ListResponse<T> = T[] | ApiResponse<T[]>;
 
 interface GameData {
   id: string;
@@ -51,11 +54,11 @@ export default function GamesUniverseHome() {
     setError(null);
     try {
       const [featuredRes, trendingRes, tournamentsRes, catsRes, playersRes] = await Promise.all([
-        apiClient.get<any>('/v1/games/featured'),
-        apiClient.get<any>('/v1/games/trending'),
-        apiClient.get<any>('/v1/games/tournaments'),
-        apiClient.get<any>('/v1/games/categories'),
-        apiClient.get<any>('/v1/games/leaderboard'),
+        apiClient.get<ListResponse<GameData>>('/v1/games/featured'),
+        apiClient.get<ListResponse<GameData>>('/v1/games/trending'),
+        apiClient.get<ListResponse<TournamentData>>('/v1/games/tournaments'),
+        apiClient.get<ListResponse<CategoryData>>('/v1/games/categories'),
+        apiClient.get<ListResponse<PlayerData>>('/v1/games/leaderboard'),
       ]);
       const featured = Array.isArray(featuredRes)
         ? featuredRes[0]

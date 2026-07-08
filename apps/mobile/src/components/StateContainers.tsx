@@ -1,21 +1,18 @@
-import React from 'react';
-import { View, Text, ActivityIndicator, StyleSheet, TouchableOpacity } from 'react-native';
-import { colors, radius, typography, spacing, shadows } from '../theme';
+import {
+  LoadingState as UILoadingState,
+  EmptyState as UIEmptyState,
+  ErrorState as UIErrorState,
+  SuccessState as UISuccessState,
+} from '@azeebo/ui';
+import { View, StyleSheet } from 'react-native';
+import { colors, radius, spacing } from '../theme';
 
 interface LoadingStateProps {
   text?: string;
 }
 
 export const LoadingState: React.FC<LoadingStateProps> = ({ text = 'Loading...' }) => (
-  <View
-    style={styles.container}
-    accessibilityRole="alert"
-    accessibilityLabel={`Loading: ${text}`}
-    accessibilityLiveRegion="polite"
-  >
-    <ActivityIndicator size="large" color={colors.primary} />
-    <Text style={styles.text}>{text}</Text>
-  </View>
+  <UILoadingState title={text} />
 );
 
 interface EmptyStateProps {
@@ -33,27 +30,13 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
   actionLabel,
   onAction,
 }) => (
-  <View
-    style={styles.container}
-    accessibilityRole="none"
-    accessibilityLabel={`Empty state: ${title}. ${description || ''}`}
-  >
-    <Text style={styles.icon} accessibilityElementsHidden>
-      {icon}
-    </Text>
-    <Text style={styles.title}>{title}</Text>
-    {description && <Text style={styles.description}>{description}</Text>}
-    {actionLabel && onAction && (
-      <TouchableOpacity
-        style={styles.retryButton}
-        onPress={onAction}
-        accessibilityRole="button"
-        accessibilityLabel={actionLabel}
-      >
-        <Text style={styles.retryButtonText}>{actionLabel}</Text>
-      </TouchableOpacity>
-    )}
-  </View>
+  <UIEmptyState
+    icon={icon}
+    title={title}
+    description={description}
+    buttonText={actionLabel}
+    onButtonPress={onAction}
+  />
 );
 
 interface ErrorStateProps {
@@ -64,32 +47,17 @@ interface ErrorStateProps {
 }
 
 export const ErrorState: React.FC<ErrorStateProps> = ({
-  title = 'Something went wrong',
+  title,
   description,
   onRetry,
   actionLabel,
 }) => (
-  <View
-    style={styles.container}
-    accessibilityRole="alert"
-    accessibilityLabel={`Error: ${title}. ${description || ''}`}
-  >
-    <Text style={styles.icon} accessibilityElementsHidden>
-      ❌
-    </Text>
-    <Text style={styles.title}>{title}</Text>
-    {description && <Text style={styles.description}>{description}</Text>}
-    {onRetry && (
-      <TouchableOpacity
-        style={styles.retryButton}
-        onPress={onRetry}
-        accessibilityRole="button"
-        accessibilityLabel={actionLabel || 'Retry'}
-      >
-        <Text style={styles.retryButtonText}>{actionLabel || 'Retry'}</Text>
-      </TouchableOpacity>
-    )}
-  </View>
+  <UIErrorState
+    title={title}
+    description={description}
+    buttonText={actionLabel}
+    onButtonPress={onRetry}
+  />
 );
 
 interface SuccessStateProps {
@@ -101,34 +69,17 @@ interface SuccessStateProps {
 }
 
 export const SuccessState: React.FC<SuccessStateProps> = ({
-  icon = '✅',
   title,
   description,
   onAction,
-  actionText = 'Continue',
+  actionText,
 }) => (
-  <View
-    style={styles.container}
-    accessibilityRole="text"
-    accessibilityLabel={`Success: ${title}. ${description || ''}`}
-    accessibilityLiveRegion="polite"
-  >
-    <Text style={styles.icon} accessibilityElementsHidden>
-      {icon}
-    </Text>
-    <Text style={styles.title}>{title}</Text>
-    {description && <Text style={styles.description}>{description}</Text>}
-    {onAction && (
-      <TouchableOpacity
-        style={styles.retryButton}
-        onPress={onAction}
-        accessibilityRole="button"
-        accessibilityLabel={actionText}
-      >
-        <Text style={styles.retryButtonText}>{actionText}</Text>
-      </TouchableOpacity>
-    )}
-  </View>
+  <UISuccessState
+    title={title}
+    description={description}
+    buttonText={actionText}
+    onButtonPress={onAction}
+  />
 );
 
 interface ContentCardSkeletonProps {
@@ -146,51 +97,6 @@ export const ContentCardSkeleton: React.FC<ContentCardSkeletonProps> = ({ style 
 );
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 24,
-  },
-  icon: {
-    fontSize: 64,
-    marginBottom: 16,
-  },
-  title: {
-    fontSize: typography.fontSize.xl,
-    fontWeight: typography.fontWeight.bold,
-    color: colors.text.primary,
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  description: {
-    fontSize: typography.fontSize.base,
-    color: colors.text.secondary,
-    textAlign: 'center',
-    marginBottom: 24,
-  },
-  text: {
-    fontSize: typography.fontSize.md,
-    color: colors.text.secondary,
-    marginTop: 16,
-  },
-  retryButton: {
-    backgroundColor: colors.primary,
-    paddingHorizontal: 32,
-    paddingVertical: 12,
-    borderRadius: radius.pill,
-    marginTop: 16,
-    minHeight: 48,
-    minWidth: 120,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...shadows.red,
-  },
-  retryButtonText: {
-    color: '#FFFFFF',
-    fontSize: typography.fontSize.md,
-    fontWeight: typography.fontWeight.semibold,
-  },
   skeletonCard: {
     flexDirection: 'row',
     backgroundColor: colors.bg.glass,

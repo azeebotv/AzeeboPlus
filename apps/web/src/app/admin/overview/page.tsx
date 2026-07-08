@@ -1,30 +1,26 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React from 'react';
+import { useRouter } from 'next/navigation';
+import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/context/AuthContext';
 import { api } from '@/lib/api';
 import AdminLayout from '@/components/layout/AdminLayout';
+import { Skeleton, ErrorState } from '@azeebo/ui/web';
 
 export default function AdminOverviewPage(): React.JSX.Element {
+  const router = useRouter();
   const { isAuthenticated, user, isLoading: authLoading } = useAuth();
-  const [stats, setStats] = useState<any>({});
-  const [isLoading, setIsLoading] = useState(true);
+  const isEnabled = !authLoading && !!isAuthenticated && !!user && user.role === 'admin';
 
-  useEffect(() => {
-    if (authLoading) return;
-    if (!isAuthenticated || !user || user.role !== 'admin') return;
-    loadStats();
-  }, [authLoading, isAuthenticated, user]);
-
-  const loadStats = async () => {
-    try {
+  const { data: stats = {}, isLoading, error } = useQuery({
+    queryKey: ['admin', 'platform-overview'],
+    queryFn: async () => {
       const response = await api.admin.getPlatformOverview();
-      if (response.success && response.data) setStats(response.data);
-    } catch {
-      /* ignore */
-    } finally {
-      setIsLoading(false);
-    }
-  };
+      if (response.success && response.data) return response.data as Record<string, number | string>;
+      return {};
+    },
+    enabled: isEnabled,
+  });
 
   return (
     <AdminLayout>
@@ -32,18 +28,16 @@ export default function AdminOverviewPage(): React.JSX.Element {
       <p style={{ color: '#9A8A7A', marginBottom: 32 }}>Detailed platform statistics and metrics</p>
 
       {isLoading ? (
-        <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}>
-          <div
-            style={{
-              width: 40,
-              height: 40,
-              border: '3px solid #2A1A1A',
-              borderTopColor: '#E8420A',
-              borderRadius: '50%',
-              animation: 'spin 0.8s linear infinite',
-            }}
-          />
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 16 }}>
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="az-glass" style={{ padding: 20, borderRadius: 16 }}>
+              <Skeleton width="60%" height="12px" className="mb-2" />
+              <Skeleton width="40%" height="22px" />
+            </div>
+          ))}
         </div>
+      ) : error ? (
+        <ErrorState title="Failed to load overview" description="Please try again later" onButtonPress={() => router.refresh()} />
       ) : (
         <div
           style={{
@@ -52,7 +46,7 @@ export default function AdminOverviewPage(): React.JSX.Element {
             gap: 16,
           }}
         >
-          {Object.entries(stats).map(([key, value]: [string, any]) => (
+          {Object.entries(stats).map(([key, value]) => (
             <div key={key} className="az-glass" style={{ padding: 20, borderRadius: 16 }}>
               <p
                 style={{

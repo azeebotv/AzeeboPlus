@@ -46,7 +46,7 @@ export default function RecommendationsPage(): React.JSX.Element {
       setError(null);
       const params = new URLSearchParams({ page: String(pageNum), limit: '12' });
       if (filter !== 'all') params.set('category', filter);
-      const response = await apiFetch<any>(`/v1/recommendation/content?${params.toString()}`);
+      const response = await apiFetch<{ success: boolean; data: ContentItem[] | { items?: ContentItem[] } }>(`/v1/recommendation/content?${params.toString()}`);
       if (response.success && response.data) {
         const data = Array.isArray(response.data) ? response.data : response.data.items || [];
         setRecommendations((prev) => (pageNum === 1 ? data : [...prev, ...data]));

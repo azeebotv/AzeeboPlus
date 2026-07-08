@@ -26,7 +26,8 @@ export class AdminController {
     @Query('limit') limit?: number,
     @Query('currency') currency?: string
   ) {
-    return this.adminService.getAllWallets({ page, limit, currency });
+    const clampedLimit = Math.min(100, Math.max(1, Number(limit) || 20));
+    return this.adminService.getAllWallets({ page, limit: clampedLimit, currency });
   }
 
   @Get('wallets/:walletId')
@@ -58,6 +59,7 @@ export class AdminController {
     @Query('limit') limit?: number,
     @Query('type') type?: string
   ) {
-    return this.adminService.getTransactionsByWalletId(walletId, { page, limit, type });
+    const clampedLimit = Math.min(100, Math.max(1, Number(limit) || 20));
+    return this.adminService.getTransactionsByWalletId(walletId, { page, limit: clampedLimit, type });
   }
 }

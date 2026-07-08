@@ -1,0 +1,54 @@
+// =============================================================================
+// Media Service — Prisma Schema
+// =============================================================================
+// NOTE: This service primarily uses S3 for file storage and Redis for
+// transcoding job tracking. This schema provides persistent metadata
+// storage for media assets and upload audit trails.
+// =============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model MediaUpload {
+  id            String   @id @default(uuid())
+  userId        String
+  filename      String
+  originalName  String
+  mimetype      String
+  size          Int // Max ~2GB; use BigInt if larger files are needed
+  key           String
+  cdnUrl        String?
+  folder        String
+  status        String   @default("uploaded") // uploaded, processing, completed, failed
+  metadata      Json?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("media_uploads")
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model TranscodingJob {
+  id            String   @id @default(uuid())
+  uploadId      String?
+  sourceKey     String
+  status        String   @default("pending") // pending, processing, completed, failed
+  progress      Int      @default(0)
+  outputKeys    Json?
+  error         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("transcoding_jobs")
+  @@index([status])
+  @@index([uploadId])
+}

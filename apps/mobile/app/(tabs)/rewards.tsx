@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useColorScheme } from 'react-native';
@@ -75,9 +75,9 @@ export default function RewardsScreen() {
       setRewards(Array.isArray(rewardsRes) ? rewardsRes : []);
       setHistory(Array.isArray(historyRes) ? historyRes : []);
       setRedeemOptions(Array.isArray(redeemRes) ? redeemRes : []);
-    } catch (err: any) {
+    } catch (err: unknown) {
       logger.error('Failed to load rewards:', err);
-      setError(err.message || 'Failed to load rewards');
+      setError(err instanceof Error ? err.message : 'Failed to load rewards');
     } finally {
       setIsLoading(false);
     }

@@ -1,4 +1,3 @@
-import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 

@@ -2,6 +2,7 @@ import { Controller, Get, Post, Delete, Param, Body, UseGuards, Request } from '
 import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { UsersService } from './users.service';
+import { ContentIdDto } from './dto/content-id.dto';
 
 @ApiTags('Interactions')
 @Controller('interactions')
@@ -13,7 +14,7 @@ export class InteractionsController {
   @ApiOperation({ summary: 'Get user watchlist' })
   @ApiResponse({ status: 200, description: 'Watchlist items' })
   async getWatchlist(@Request() req: { user: { sub: string } }) {
-    const result = await this.usersService.getSavedItems(req.user.sub, 1, 100);
+    const result = await this.usersService.getSavedItems(req.user.id, 1, 100);
     return { success: true, data: (result as Record<string, unknown>).data || [] };
   }
 
@@ -24,7 +25,7 @@ export class InteractionsController {
     @Request() req: { user: { sub: string } },
     @Param('contentId') contentId: string
   ) {
-    await this.usersService.unsaveItem(req.user.sub, contentId);
+    await this.usersService.unsaveItem(req.user.id, contentId);
     return { success: true };
   }
 
@@ -32,7 +33,7 @@ export class InteractionsController {
   @ApiOperation({ summary: 'Get watch history' })
   @ApiResponse({ status: 200, description: 'Watch history items' })
   async getHistory(@Request() req: { user: { sub: string } }) {
-    const result = await this.usersService.getWatchHistory(req.user.sub, 1, 100);
+    const result = await this.usersService.getWatchHistory(req.user.id, 1, 100);
     return { success: true, data: (result as Record<string, unknown>).data || [] };
   }
 
@@ -51,7 +52,7 @@ export class InteractionsController {
   @ApiOperation({ summary: 'Get user favorites' })
   @ApiResponse({ status: 200, description: 'Favorite items' })
   async getFavorites(@Request() req: { user: { sub: string } }) {
-    const result = await this.usersService.getSavedItems(req.user.sub, 1, 100);
+    const result = await this.usersService.getSavedItems(req.user.id, 1, 100);
     return { success: true, data: (result as Record<string, unknown>).data || [] };
   }
 
@@ -60,9 +61,9 @@ export class InteractionsController {
   @ApiResponse({ status: 201, description: 'Added to favorites' })
   async addFavorite(
     @Request() req: { user: { sub: string } },
-    @Body() body: { contentId: string }
+    @Body() body: ContentIdDto
   ) {
-    await this.usersService.saveItem(req.user.sub, body.contentId);
+    await this.usersService.saveItem(req.user.id, body.contentId);
     return { success: true };
   }
 
@@ -73,7 +74,7 @@ export class InteractionsController {
     @Request() req: { user: { sub: string } },
     @Param('contentId') contentId: string
   ) {
-    await this.usersService.unsaveItem(req.user.sub, contentId);
+    await this.usersService.unsaveItem(req.user.id, contentId);
     return { success: true };
   }
 }

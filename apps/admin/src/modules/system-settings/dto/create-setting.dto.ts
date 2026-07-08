@@ -1,6 +1,7 @@
 import { IsString, IsOptional, IsBoolean, IsObject, IsArray, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Prisma } from '../../../generated/prisma';
 
 export class CreateSettingDto {
   @ApiProperty({ description: 'Unique key identifier for the setting' })
@@ -9,7 +10,7 @@ export class CreateSettingDto {
 
   @ApiProperty({ description: 'Setting value (can be any JSON-serializable value)' })
   @IsObject()
-  value!: any;
+  value!: Prisma.InputJsonValue;
 
   @ApiProperty({ description: 'Category for grouping settings', default: 'general' })
   @IsOptional()
@@ -131,7 +132,7 @@ export class SubscriptionPlanDto {
   @ApiPropertyOptional({ description: 'Plan limits' })
   @IsOptional()
   @IsObject()
-  limits?: Record<string, any>;
+  limits?: Record<string, Prisma.InputJsonValue>;
 
   @ApiPropertyOptional({ description: 'Whether plan is active' })
   @IsOptional()
@@ -397,7 +398,7 @@ export class IntegrationSettingsDto {
   @ApiPropertyOptional({ description: 'Additional config' })
   @IsOptional()
   @IsObject()
-  config?: Record<string, any>;
+  config?: Record<string, Prisma.InputJsonValue>;
 }
 
 export class ComplianceSettingsDto {
@@ -631,7 +632,7 @@ export class BulkCreateSettingsDto {
 export class ImportSettingsDto {
   @ApiProperty({ description: 'Settings to import (JSON)' })
   @IsObject()
-  data!: Record<string, any>;
+  data!: Record<string, Record<string, { value?: Prisma.InputJsonValue; description?: string; isPublic?: boolean }>>;
 
   @ApiPropertyOptional({ description: 'Merge strategy: replace or merge' })
   @IsOptional()
@@ -652,7 +653,7 @@ export class SaveDraftDto {
 
   @ApiProperty({ description: 'Draft value' })
   @IsObject()
-  value!: any;
+  value!: Prisma.InputJsonValue;
 
   @ApiPropertyOptional({ description: 'Draft category' })
   @IsOptional()

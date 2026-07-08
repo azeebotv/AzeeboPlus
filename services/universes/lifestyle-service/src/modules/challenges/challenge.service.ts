@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 
 export interface CreateChallengeInput {
@@ -20,32 +20,38 @@ export interface ChallengeSubmissionInput {
 
 @Injectable()
 export class ChallengeService {
+  private readonly logger = new Logger(ChallengeService.name);
   constructor(private prisma: PrismaService) {}
 
   async getChallenges(page = 1, limit = 20, type?: string, status?: string) {
-    const skip = (page - 1) * limit;
-    const where: Record<string, unknown> = {};
-    if (type) where.type = type;
-    if (status) where.status = status;
+    try {
+      const skip = (page - 1) * limit;
+      const where: Record<string, unknown> = {};
+      if (type) where.type = type;
+      if (status) where.status = status;
 
-    const [challenges, total] = await Promise.all([
-      this.prisma.challenge.findMany({
-        where,
-        include: { createdBy: { select: { displayName: true, avatarUrl: true } } },
-        orderBy: { createdAt: 'desc' },
-        skip,
-        take: limit,
-      }),
-      this.prisma.challenge.count({ where }),
-    ]);
+      const [challenges, total] = await Promise.all([
+        this.prisma.challenge.findMany({
+          where,
+          include: { createdBy: { select: { displayName: true, avatarUrl: true } } },
+          orderBy: { createdAt: 'desc' },
+          skip,
+          take: limit,
+        }),
+        this.prisma.challenge.count({ where }),
+      ]);
 
-    return {
-      success: true,
-      data: {
-        challenges,
-        pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
-      },
-    };
+      return {
+        success: true,
+        data: {
+          challenges,
+          pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+        },
+      };
+    } catch (error) {
+      this.logger.error(`Failed to get challenges: ${error.message}`, error.stack);
+      return { success: false, error: error.message };
+    }
   }
 
   async getChallenge(id: string) {

@@ -21,11 +21,6 @@ export class RateLimitGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    // Skip rate limiting in development (or when NODE_ENV is not set)
-    if (!process.env.NODE_ENV || process.env.NODE_ENV === 'development') {
-      return true;
-    }
-
     const request = context.switchToHttp().getRequest<Request>();
     const response = context.switchToHttp().getResponse<Response>();
 
@@ -77,15 +72,19 @@ export class RateLimitGuard implements CanActivate {
   }
 
   private getClientIp(request: Request): string {
-    const forwardedFor = request.headers['x-forwarded-for'];
-    const forwardedForIp =
-      typeof forwardedFor === 'string' ? forwardedFor.split(',')[0] : undefined;
-    const realIp = request.headers['x-real-ip'];
-    const realIpString = typeof realIp === 'string' ? realIp : undefined;
+    const hasGatewaySecret = !!request.headers['x-gateway-secret'];
 
-    return (
-      request.ip || request.socket.remoteAddress || forwardedForIp || realIpString || 'unknown'
-    );
+    if (hasGatewaySecret) {
+      const forwardedFor = request.headers['x-forwarded-for'];
+      const forwardedForIp =
+        typeof forwardedFor === 'string' ? forwardedFor.split(',')[0] : undefined;
+      const realIp = request.headers['x-real-ip'];
+      const realIpString = typeof realIp === 'string' ? realIp : undefined;
+
+      return forwardedForIp || realIpString || request.ip || request.socket.remoteAddress || 'unknown';
+    }
+
+    return request.ip || request.socket.remoteAddress || 'unknown';
   }
 
   private generateKey(ip: string, path: string): string {

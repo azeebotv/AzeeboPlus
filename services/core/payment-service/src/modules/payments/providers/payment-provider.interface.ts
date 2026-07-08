@@ -21,5 +21,5 @@ export interface PaymentProvider {
   initializePayment(amount: number, currency: string, userId: string): Promise<InitializeResult>;
   verifyPayment(reference: string): Promise<VerifyResult>;
   processRefund(transactionId: string, reason: string): Promise<RefundResult>;
-  verifyWebhookSignature(payload: Record<string, unknown>, signature: string): Promise<boolean>;
+  verifyWebhookSignature(rawBody: string, signature: string): Promise<boolean>;
 }

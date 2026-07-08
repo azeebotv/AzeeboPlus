@@ -45,9 +45,9 @@ PGCONF
 
 # Configure pg_hba.conf for local connections
 cat > "$POSTGRES_DATA/pg_hba.conf" << PGHBA
-local   all   all                 trust
-host    all   all  127.0.0.1/32   trust
-host    all   all  ::1/128        trust
+local   all   all                 md5
+host    all   all  127.0.0.1/32   md5
+host    all   all  ::1/128        md5
 PGHBA
 
 # ============================================================
@@ -70,11 +70,12 @@ done
 # 3. Create superuser and default database
 # ============================================================
 echo "==> Configuring PostgreSQL user and database..."
-su - postgres -c "psql -c \"ALTER USER postgres WITH PASSWORD '$POSTGRES_PASSWORD';\"" || true
-su - postgres -c "psql -c \"SELECT 1 FROM pg_roles WHERE rolname='$POSTGRES_USER'\" | grep -q 1" || \
-  su - postgres -c "psql -c \"CREATE USER $POSTGRES_USER WITH SUPERUSER PASSWORD '$POSTGRES_PASSWORD';\""
-su - postgres -c "psql -c \"SELECT 1 FROM pg_database WHERE datname='$POSTGRES_DB'\" | grep -q 1" || \
-  su - postgres -c "psql -c \"CREATE DATABASE $POSTGRES_DB OWNER $POSTGRES_USER;\""
+export PGPASSWORD="$POSTGRES_PASSWORD"
+su - postgres -c "psql -v ON_ERROR_STOP=0 -c \"ALTER USER postgres WITH PASSWORD '${POSTGRES_PASSWORD}'\"" || true
+su - postgres -c "psql -v ON_ERROR_STOP=0 -t -A -c \"SELECT 1 FROM pg_roles WHERE rolname='${POSTGRES_USER}'\" | grep -q 1" || \
+  su - postgres -c "psql -c \"CREATE USER ${POSTGRES_USER} WITH SUPERUSER PASSWORD '${POSTGRES_PASSWORD}'\""
+su - postgres -c "psql -v ON_ERROR_STOP=0 -t -A -c \"SELECT 1 FROM pg_database WHERE datname='${POSTGRES_DB}'\" | grep -q 1" || \
+  su - postgres -c "psql -c \"CREATE DATABASE ${POSTGRES_DB} OWNER ${POSTGRES_USER}\""
 
 # ============================================================
 # 4. Create all service databases
@@ -192,7 +193,7 @@ azeebo_creator_portal = host=127.0.0.1 port=5432 dbname=azeebo_creator_portal
 [pgbouncer]
 listen_addr = 0.0.0.0
 listen_port = 6432
-auth_type = trust
+auth_type = scram-sha-256
 pool_mode = transaction
 max_client_conn = 500
 default_pool_size = 20
@@ -205,6 +206,15 @@ stats_users = $POSTGRES_USER
 unix_socket_dir = /var/run/pgbouncer
 PGBOUNCERINI
 chown -R pgbouncer:pgbouncer /var/run/pgbouncer
+
+# Generate PgBouncer userlist from PostgreSQL password hashes
+echo "    Generating PgBouncer userlist..."
+su - postgres -c "psql -d postgres -t -A -c \"SELECT '\" || rolname || '\" \"' || password || '\"' FROM pg_authid WHERE rolname != 'postgres' AND rolname != '$POSTGRES_USER' AND password IS NOT NULL;\"" > /etc/pgbouncer/userlist.txt 2>/dev/null || true
+# Also add the superuser
+su - postgres -c "psql -d postgres -t -A -c \"SELECT '\" || rolname || '\" \"' || password || '\"' FROM pg_authid WHERE rolname = '$POSTGRES_USER' AND password IS NOT NULL;\"" >> /etc/pgbouncer/userlist.txt 2>/dev/null || true
+chown pgbouncer:pgbouncer /etc/pgbouncer/userlist.txt
+chmod 600 /etc/pgbouncer/userlist.txt
+echo "    PgBouncer userlist generated."
 
 # ============================================================
 # 7. Run Prisma migrations

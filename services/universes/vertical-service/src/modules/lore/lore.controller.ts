@@ -1,7 +1,10 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, Query } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { AuthGuard } from '@nestjs/passport';
+import { AdminGuard } from '@azeebo/security';
 import { LoreService } from './lore.service';
 import { CreateLoreData } from './lore.service';
+import { UpdateLoreDto } from './dto/update-lore.dto';
 
 @ApiTags('Lore')
 @Controller('v1/vertical/lore')
@@ -44,6 +47,7 @@ export class LoreController {
   }
 
   @Post()
+  @UseGuards(AuthGuard('jwt'), AdminGuard)
   @ApiOperation({ summary: 'Create lore entry' })
   @ApiResponse({ status: 201, description: 'Entry created' })
   async createEntry(@Body() body: CreateLoreData): Promise<unknown> {
@@ -51,16 +55,18 @@ export class LoreController {
   }
 
   @Patch(':id')
+  @UseGuards(AuthGuard('jwt'), AdminGuard)
   @ApiOperation({ summary: 'Update lore entry' })
   @ApiResponse({ status: 200, description: 'Entry updated' })
   async updateEntry(
     @Param('id') id: string,
-    @Body() body: Record<string, unknown>
+    @Body() body: UpdateLoreDto
   ): Promise<unknown> {
     return this.loreService.updateEntry(id, body);
   }
 
   @Delete(':id')
+  @UseGuards(AuthGuard('jwt'), AdminGuard)
   @ApiOperation({ summary: 'Delete lore entry' })
   @ApiResponse({ status: 200, description: 'Entry deleted' })
   async deleteEntry(@Param('id') id: string): Promise<unknown> {

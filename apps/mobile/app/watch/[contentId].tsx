@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -82,8 +82,9 @@ export default function WatchScreen() {
       if (relatedResponse.success && relatedResponse.data) {
         setRelatedContent(relatedResponse.data.filter((item) => item.id !== contentId));
       }
-    } catch (err: any) {
-      setError(err.message || 'Failed to load content');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to load content';
+      setError(message);
     } finally {
       setIsLoading(false);
     }

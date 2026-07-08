@@ -17,6 +17,7 @@
     "prisma:migrate": "prisma migrate dev"
   },
   "dependencies": {
+    "@azeebo/error-handling": "workspace:*",
     "@azeebo/logger": "workspace:*",
     "@azeebo/security": "workspace:*",
     "@azeebo/shared-types": "workspace:*",
@@ -33,7 +34,6 @@
     "@nestjs/throttler": "^6.5.0",
     "@prisma/client": "^6.19.3",
     "axios": "^1.18.0",
-    "bcrypt": "^6.0.0",
     "body-parser": "^2.3.0",
     "check-disk-space": "^3.4.0",
     "class-transformer": "^0.5.1",
@@ -47,7 +47,6 @@
   },
   "devDependencies": {
     "@nestjs/testing": "^11.1.27",
-    "@types/bcrypt": "^6.0.0",
     "@types/body-parser": "^1.19.6",
     "@types/express": "^5.0.6",
     "@types/jest": "^29.5.0",

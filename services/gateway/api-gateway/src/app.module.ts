@@ -6,6 +6,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { HealthModule } from './modules/health/health.module';
 import { ProxyModule } from './modules/proxy/proxy.module';
 import { GatewayAuthGuard } from './guards/gateway-auth.guard';
+import { AuthThrottlerGuard } from './guards/auth-throttler.guard';
 import { LegacyRedirectMiddleware } from './common/legacy-redirect.middleware';
 import { CsrfMiddleware } from './common/csrf.middleware';
 
@@ -31,8 +32,8 @@ import { CsrfMiddleware } from './common/csrf.middleware';
       throttlers: [
         // Global rate limit
         {
-          ttl: parseInt(process.env.RATE_LIMIT_TTL || '60', 10) * 1000,
-          limit: parseInt(process.env.RATE_LIMIT_MAX || '1000', 10),
+          ttl: (parseInt(process.env.RATE_LIMIT_TTL || '60', 10) || 60) * 1000,
+          limit: parseInt(process.env.RATE_LIMIT_MAX || '1000', 10) || 1000,
         },
       ],
     }),
@@ -44,6 +45,10 @@ import { CsrfMiddleware } from './common/csrf.middleware';
       provide: APP_GUARD,
       useClass: GatewayAuthGuard,
     },
+    {
+      provide: APP_GUARD,
+      useClass: AuthThrottlerGuard,
+    },
   ],
 })
 export class AppModule implements NestModule {
@@ -54,8 +59,12 @@ export class AppModule implements NestModule {
       .exclude(
         { path: 'api/v1/auth/(.*)', method: RequestMethod.ALL },
         { path: 'api/auth/(.*)', method: RequestMethod.ALL },
-        { path: 'api/v1/users/(.*)', method: RequestMethod.ALL },
-        { path: 'api/users/(.*)', method: RequestMethod.ALL },
+        { path: 'api/v1/users/(.*)', method: RequestMethod.GET },
+        { path: 'api/v1/users/(.*)', method: RequestMethod.HEAD },
+        { path: 'api/v1/users/(.*)', method: RequestMethod.OPTIONS },
+        { path: 'api/users/(.*)', method: RequestMethod.GET },
+        { path: 'api/users/(.*)', method: RequestMethod.HEAD },
+        { path: 'api/users/(.*)', method: RequestMethod.OPTIONS },
         { path: 'api/health', method: RequestMethod.ALL },
         { path: 'api/routes', method: RequestMethod.ALL },
         { path: '(.*)', method: RequestMethod.GET }

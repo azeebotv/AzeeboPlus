@@ -5,6 +5,7 @@ import { RateLimitGuard, RateLimit } from '@azeebo/security';
 
 import { ComedyService } from './comedy.service';
 import { ComedyResponse } from './interfaces/comedy-response.interface';
+import { SubmitChallengeDto } from './dto/submit-challenge.dto';
 
 @ApiTags('Comedy')
 @Controller('v1/comedy')
@@ -41,7 +42,7 @@ export class ComedyController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async submitChallenge(
     @Request() req: { user: { sub: string } },
-    @Body() body: { challengeId: string; clipUrl: string }
+    @Body() body: SubmitChallengeDto
   ): Promise<ComedyResponse> {
     return this.comedyService.submitChallenge(req.user.sub, body);
   }

@@ -8,5 +8,7 @@ export {
   BadRequestError,
   ConflictError,
   TooManyRequestsError,
+  UnprocessableEntityError,
+  ServiceUnavailableError,
 } from './types';
 export type { ErrorResponse, ApiError } from './types';

@@ -38,6 +38,7 @@ interface MetricStorage {
   summary?: { sum: number; count: number };
 }
 
+/** In-process metrics service supporting counters, gauges, histograms, and periodic export. */
 @Injectable()
 export class MetricsService implements OnModuleInit, OnModuleDestroy {
   private metrics: Map<string, Metric> = new Map();
@@ -48,6 +49,9 @@ export class MetricsService implements OnModuleInit, OnModuleDestroy {
   private readonly DEFAULT_BUCKETS = [0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10];
 
   onModuleInit() {
+    if (this.flushInterval) {
+      clearInterval(this.flushInterval);
+    }
     this.flushInterval = setInterval(() => this.export(), 10000);
     this.registerDefaultMetrics();
   }
@@ -172,7 +176,10 @@ export class MetricsService implements OnModuleInit, OnModuleDestroy {
 
     storage.histogram.sum += value;
     storage.histogram.count += 1;
-    storage.histogram.values.push(value);
+    // Keep at most 10000 values to prevent memory leaks
+    if (storage.histogram.values.length < 10000) {
+      storage.histogram.values.push(value);
+    }
   }
 
   private resetHistogram(name: string, labels: Record<string, string>): void {
@@ -312,6 +319,7 @@ export class MetricsService implements OnModuleInit, OnModuleDestroy {
             });
           }
         }
+        storage.histogram.values = [];
       }
     }
 

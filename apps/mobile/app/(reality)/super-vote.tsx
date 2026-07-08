@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -14,6 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { contentApi, walletApi } from '../../src/api';
 import { logger } from '../../src/utils/logger';
 import { LoadingState, ErrorState } from '../../src/components/StateContainers';
+import { votePackages as defaultVotePackages } from '../../src/config/prices';
 
 interface Contestant {
   id: string;
@@ -45,37 +46,7 @@ export default function SuperVoteScreen() {
   const [isVoting, setIsVoting] = useState(false);
   const [walletBalance, setWalletBalance] = useState(0);
 
-  const votePackages: VotePackage[] = [
-    {
-      id: 'pkg1',
-      name: 'Single Vote',
-      votes: 1,
-      price: 100,
-      description: '1 Super Vote (2x weight)',
-    },
-    {
-      id: 'pkg2',
-      name: 'Power Pack',
-      votes: 5,
-      price: 450,
-      description: '5 Super Votes (2x weight each)',
-      isPopular: true,
-    },
-    {
-      id: 'pkg3',
-      name: 'Ultimate Pack',
-      votes: 10,
-      price: 800,
-      description: '10 Super Votes (2x weight each)',
-    },
-    {
-      id: 'pkg4',
-      name: 'Mega Pack',
-      votes: 25,
-      price: 1800,
-      description: '25 Super Votes (2x weight each)',
-    },
-  ];
+  const votePackages: VotePackage[] = defaultVotePackages.superVote;
 
   useEffect(() => {
     loadData();
@@ -165,7 +136,7 @@ export default function SuperVoteScreen() {
           },
         ]
       );
-    } catch (error: any) {
+    } catch (error: unknown) {
       Alert.alert('Error', error?.message || 'Failed to submit super vote');
     } finally {
       setIsVoting(false);

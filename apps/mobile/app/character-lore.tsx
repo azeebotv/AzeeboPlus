@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useColorScheme } from 'react-native';
@@ -147,7 +147,7 @@ export default function CharacterLoreScreen() {
                       <View
                         style={[
                           styles.statBarFill,
-                          { width: `${stat.value}%` as any, backgroundColor: character.background },
+                          { width: `${stat.value}%` as unknown as number, backgroundColor: character.background },
                         ]}
                       />
                     </View>

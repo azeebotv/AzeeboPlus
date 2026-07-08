@@ -62,6 +62,8 @@ export class WalletClientService {
     const url = `${this.walletServiceUrl}${endpoint}`;
     const parsedUrl = new URL(url);
     const protocol = parsedUrl.protocol === 'https:' ? https : http;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10_000);
 
     return new Promise((resolve, reject) => {
       const req = protocol.request(
@@ -74,6 +76,7 @@ export class WalletClientService {
             'Content-Type': 'application/json',
             ...options.headers,
           },
+          signal: controller.signal as AbortSignal,
         },
         (res) => {
           let data = '';
@@ -81,6 +84,7 @@ export class WalletClientService {
             data += chunk;
           });
           res.on('end', () => {
+            clearTimeout(timeout);
             try {
               const response = JSON.parse(data);
               resolve(response);
@@ -94,12 +98,17 @@ export class WalletClientService {
       );
 
       req.on('error', (error) => {
-        reject(
-          new HttpException(
-            `Wallet Service error: ${error.message}`,
-            HttpStatus.SERVICE_UNAVAILABLE
-          )
-        );
+        clearTimeout(timeout);
+        if (error.name === 'AbortError') {
+          reject(new HttpException('Wallet Service request timed out', HttpStatus.GATEWAY_TIMEOUT));
+        } else {
+          reject(
+            new HttpException(
+              `Wallet Service error: ${error.message}`,
+              HttpStatus.SERVICE_UNAVAILABLE
+            )
+          );
+        }
       });
 
       if (options.body) {

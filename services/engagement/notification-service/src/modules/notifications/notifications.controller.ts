@@ -38,7 +38,19 @@ export class NotificationsController {
     @Query('page') page = 1,
     @Query('limit') limit = 20
   ): Promise<NotificationResponse> {
-    return this.notificationsService.getNotifications(req.user.sub, Number(page), Number(limit));
+    const validPage = Math.max(1, Number(page) || 1);
+    const validLimit = Math.min(100, Math.max(1, Number(limit) || 20));
+    return this.notificationsService.getNotifications(req.user.sub, validPage, validLimit);
+  }
+
+  @Patch('read-all')
+  @UseGuards(AuthGuard('jwt'), RateLimitGuard)
+  @RateLimit(10, 60000)
+  @ApiOperation({ summary: 'Mark all notifications as read' })
+  @ApiResponse({ status: 200, description: 'All notifications marked as read' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async markAllAsRead(@Request() req: { user: { sub: string } }): Promise<NotificationResponse> {
+    return this.notificationsService.markAllAsRead(req.user.sub);
   }
 
   @Patch(':id/read')
@@ -55,16 +67,6 @@ export class NotificationsController {
     return this.notificationsService.markAsRead(req.user.sub, id);
   }
 
-  @Patch('read-all')
-  @UseGuards(AuthGuard('jwt'), RateLimitGuard)
-  @RateLimit(10, 60000)
-  @ApiOperation({ summary: 'Mark all notifications as read' })
-  @ApiResponse({ status: 200, description: 'All notifications marked as read' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async markAllAsRead(@Request() req: { user: { sub: string } }): Promise<NotificationResponse> {
-    return this.notificationsService.markAllAsRead(req.user.sub);
-  }
-
   @Put('preferences')
   @UseGuards(AuthGuard('jwt'), RateLimitGuard)
   @RateLimit(10, 60000)
@@ -78,7 +80,12 @@ export class NotificationsController {
   ): Promise<NotificationResponse> {
     return this.notificationsService.updatePreferences(
       req.user.sub,
-      updatePreferencesDto as Record<string, boolean>
+      {
+        ...(updatePreferencesDto.email !== undefined && { email: updatePreferencesDto.email }),
+        ...(updatePreferencesDto.push !== undefined && { push: updatePreferencesDto.push }),
+        ...(updatePreferencesDto.sms !== undefined && { sms: updatePreferencesDto.sms }),
+        ...(updatePreferencesDto.inApp !== undefined && { inApp: updatePreferencesDto.inApp }),
+      }
     );
   }
 
@@ -131,7 +138,7 @@ export class NotificationsController {
     return this.notificationsService.getPushTokens(req.user.sub);
   }
 
-  @Delete('push-tokens/:token')
+  @Delete('push-tokens/:tokenId')
   @UseGuards(AuthGuard('jwt'), RateLimitGuard)
   @RateLimit(10, 60000)
   @ApiOperation({ summary: 'Delete push notification token' })
@@ -140,8 +147,8 @@ export class NotificationsController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async deletePushToken(
     @Request() req: { user: { sub: string } },
-    @Param('token') token: string
+    @Param('tokenId') tokenId: string
   ): Promise<NotificationResponse> {
-    return this.notificationsService.deletePushToken(req.user.sub, token);
+    return this.notificationsService.deletePushTokenById(req.user.sub, tokenId);
   }
 }

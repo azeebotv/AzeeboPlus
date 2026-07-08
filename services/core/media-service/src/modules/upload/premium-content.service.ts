@@ -140,7 +140,7 @@ export class PremiumContentService {
         contentId: urlData.contentId,
         userId: urlData.userId,
       };
-    } catch (error) {
+    } catch (error: unknown) {
       this.logger.error(`Error validating URL token: ${(error as Error).message}`);
       return {
         valid: false,
@@ -159,7 +159,7 @@ export class PremiumContentService {
   }
 
   async invalidateAllUserUrls(userId: string): Promise<number> {
-    const keys = await this.redisService.keys(`${this.redisKeyPrefix}*`);
+    const keys = await this.redisService.scanKeys(`${this.redisKeyPrefix}*`);
     let invalidatedCount = 0;
 
     for (const key of keys) {
@@ -171,7 +171,7 @@ export class PremiumContentService {
             await this.redisService.del(key);
             invalidatedCount++;
           }
-        } catch (error) {
+        } catch (error: unknown) {
           this.logger.warn(`Error parsing URL data for key ${key}: ${(error as Error).message}`);
         }
       }

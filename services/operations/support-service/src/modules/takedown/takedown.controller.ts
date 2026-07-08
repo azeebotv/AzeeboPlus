@@ -36,7 +36,7 @@ export class TakedownController {
     const takedown = await this.takedownService.createTakedown({
       ticketId: dto.ticketId,
       contentId: dto.contentId,
-      reportedBy: req.user.id,
+      reportedBy: req.user.sub,
       reason: dto.reason,
       evidence: dto.evidence,
     });
@@ -83,7 +83,7 @@ export class TakedownController {
     const takedown = await this.takedownService.decideTakedown(
       id,
       dto.decision,
-      req.user.id,
+      req.user.sub,
       dto.notes
     );
     return ApiResponseWrapper.success({ takedown });

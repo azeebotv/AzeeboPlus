@@ -1,8 +1,10 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
+import { Spinner, ErrorState } from '@azeebo/ui/web';
 
 interface LeaderboardEntry {
   rank: number;
@@ -15,28 +17,24 @@ interface LeaderboardEntry {
 }
 
 export default function LeaderboardPage(): React.JSX.Element {
-  const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [timeframe, setTimeframe] = useState<'weekly' | 'monthly' | 'allTime'>('weekly');
 
-  useEffect(() => {
-    loadLeaderboard();
-  }, [timeframe]);
-
-  const loadLeaderboard = async () => {
-    setIsLoading(true);
-    try {
-      const response = await apiFetch<any>(`/engagement/leaderboard?timePeriod=${timeframe}`);
+  const leaderboardQuery = useQuery({
+    queryKey: ['leaderboard', timeframe],
+    queryFn: async () => {
+      const response = await apiFetch<{ success: boolean; data: LeaderboardEntry[] | { items?: LeaderboardEntry[] } }>(`/engagement/leaderboard?timePeriod=${timeframe}`);
       if (response.success && response.data) {
-        const data = response.data as any;
-        setEntries(Array.isArray(data) ? data : data.items || []);
+        const data = response.data;
+        return Array.isArray(data) ? data : data.items || [];
       }
-    } catch {
-      /* ignore */
-    } finally {
-      setIsLoading(false);
-    }
-  };
+      return [];
+    },
+    staleTime: 30000,
+  });
+
+  const entries = leaderboardQuery.data ?? [];
+  const isLoading = leaderboardQuery.isLoading;
+  const error = leaderboardQuery.error?.message || null;
 
   const getRankStyle = (rank: number): { bg: string; color: string } => {
     if (rank === 1)
@@ -98,17 +96,15 @@ export default function LeaderboardPage(): React.JSX.Element {
 
         {isLoading ? (
           <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}>
-            <div
-              style={{
-                width: 40,
-                height: 40,
-                border: '3px solid #2A1A1A',
-                borderTopColor: '#E8420A',
-                borderRadius: '50%',
-                animation: 'spin 0.8s linear infinite',
-              }}
-            />
+            <Spinner size="lg" color="#E8420A" />
           </div>
+        ) : error ? (
+          <ErrorState
+            title="Failed to load leaderboard"
+            description={error}
+            buttonText="Retry"
+            onButtonPress={() => leaderboardQuery.refetch()}
+          />
         ) : entries.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '60px 0' }}>
             <div style={{ fontSize: 48, marginBottom: 16 }}>🏆</div>
@@ -161,7 +157,7 @@ export default function LeaderboardPage(): React.JSX.Element {
                     {entry.avatar ? (
                       <img
                         src={entry.avatar}
-                        alt=""
+                        alt={entry.displayName}
                         style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                       />
                     ) : (

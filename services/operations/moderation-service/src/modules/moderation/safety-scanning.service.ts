@@ -274,7 +274,7 @@ export class SafetyScanningService {
 
     try {
       const response = await axios.post(
-        `${this.contentSafetyApiConfig.endpoint}?key=${this.contentSafetyApiConfig.apiKey}`,
+        this.contentSafetyApiConfig.endpoint,
         {
           requests: [
             {
@@ -283,7 +283,10 @@ export class SafetyScanningService {
             },
           ],
         },
-        { timeout: this.contentSafetyApiConfig.timeout }
+        {
+          headers: { key: this.contentSafetyApiConfig.apiKey },
+          timeout: this.contentSafetyApiConfig.timeout,
+        }
       );
 
       const annotations = response.data.responses[0].safeSearchAnnotation;

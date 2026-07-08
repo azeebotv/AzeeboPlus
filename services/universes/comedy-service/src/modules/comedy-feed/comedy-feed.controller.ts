@@ -1,5 +1,6 @@
-import { Controller, Get, Post, Body, Param, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Query, UseGuards, Request } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { AuthGuard } from '@nestjs/passport';
 import { ComedyFeedService } from './comedy-feed.service';
 
 @ApiTags('Comedy Feed')
@@ -47,10 +48,14 @@ export class ComedyFeedController {
   }
 
   @Post('specials/:id/like')
+  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Like/unlike special' })
   @ApiResponse({ status: 200, description: 'Result' })
-  async likeSpecial(@Param('id') id: string, @Body() body: { userId: string }): Promise<unknown> {
-    return this.comedyFeedService.likeSpecial(body.userId, id);
+  async likeSpecial(
+    @Param('id') id: string,
+    @Request() req: { user: { id: string } }
+  ): Promise<unknown> {
+    return this.comedyFeedService.likeSpecial(req.user.sub, id);
   }
 
   @Get('clips/:id')
@@ -61,36 +66,33 @@ export class ComedyFeedController {
   }
 
   @Post('clips/:id/like')
+  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Like/unlike clip' })
   @ApiResponse({ status: 200, description: 'Result' })
-  async likeClip(@Param('id') id: string, @Body() body: { userId: string }): Promise<unknown> {
-    return this.comedyFeedService.likeClip(body.userId, id);
+  async likeClip(
+    @Param('id') id: string,
+    @Request() req: { user: { id: string } }
+  ): Promise<unknown> {
+    return this.comedyFeedService.likeClip(req.user.sub, id);
   }
 
   @Post('clips/:id/comment')
+  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Comment on clip' })
   @ApiResponse({ status: 200, description: 'Comment added' })
   async comment(
     @Param('id') id: string,
-    @Body() body: { userId: string; text: string }
+    @Body() body: { text: string },
+    @Request() req: { user: { id: string } }
   ): Promise<unknown> {
-    return this.comedyFeedService.commentOnClip(body.userId, id, body.text);
+    return this.comedyFeedService.commentOnClip(req.user.sub, id, body.text);
   }
 
   @Post('trends/record')
+  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Record trends (admin)' })
   @ApiResponse({ status: 200, description: 'Recorded' })
   async recordTrends(@Body() body: { period?: string }): Promise<unknown> {
     return this.comedyFeedService.recordTrend(body.period || 'daily');
   }
-
-  // @Post('specials/:id/rate')
-  // @ApiOperation({ summary: 'Rate a special' })
-  // @ApiResponse({ status: 200, description: 'Rating submitted' })
-  // async rateSpecial(
-  //   @Param('id') id: string,
-  //   @Body() body: { userId: string; rating: number }
-  // ): Promise<unknown> {
-  //   return this.comedyFeedService.rateSpecial(body.userId, id, body.rating);
-  // }
 }

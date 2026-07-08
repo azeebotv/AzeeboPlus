@@ -1,5 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
+import axios from 'axios';
+import { randomUUID } from 'crypto';
 
 interface FilmmakerProject {
   id: string;
@@ -46,7 +49,15 @@ interface FilmmakerResponse {
 
 @Injectable()
 export class FilmmakerService {
-  constructor(private prisma: PrismaService) {}
+  private readonly logger = new Logger(FilmmakerService.name);
+  private readonly walletServiceBaseUrl: string;
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly configService: ConfigService
+  ) {
+    this.walletServiceBaseUrl = this.configService.getOrThrow<string>('WALLET_SERVICE_URL');
+  }
 
   private formatProject(project: Record<string, unknown>): FilmmakerProject {
     return {
@@ -227,43 +238,87 @@ export class FilmmakerService {
       throw new NotFoundException(`Project not found: ${projectId}`);
     }
 
+    const wallet = await this.prisma.wallet.findUnique({ where: { userId } });
+    if (!wallet) {
+      throw new NotFoundException('Wallet not found');
+    }
+
+    if (Number(wallet.balance) < amount) {
+      throw new BadRequestException('Insufficient balance');
+    }
+
+    const idempotencyKey = randomUUID();
+
+    try {
+      await axios.post(
+        `${this.walletServiceBaseUrl}/wallet/debit`,
+        {
+          walletId: wallet.id,
+          amount,
+          description: `Back project: ${project.title}`,
+          idempotencyKey,
+        },
+        { timeout: 10000 }
+      );
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to process payment';
+      throw new BadRequestException(errorMessage);
+    }
+
     const existingBacker = await this.prisma.filmmakerBacker.findUnique({
       where: { projectId_userId: { projectId, userId } },
     });
 
-    if (existingBacker) {
-      const _updated = await this.prisma.filmmakerBacker.update({
-        where: { id: existingBacker.id },
-        data: { amount: { increment: amount } },
+    try {
+      if (existingBacker) {
+        await this.prisma.filmmakerBacker.update({
+          where: { id: existingBacker.id },
+          data: { amount: { increment: amount } },
+        });
+
+        await this.prisma.filmmakerProject.update({
+          where: { id: projectId },
+          data: { fundingRaised: { increment: amount } },
+        });
+      } else {
+        await this.prisma.filmmakerBacker.create({
+          data: {
+            projectId,
+            userId,
+            amount,
+            status: 'active',
+          },
+        });
+
+        await this.prisma.filmmakerProject.update({
+          where: { id: projectId },
+          data: { fundingRaised: { increment: amount } },
+        });
+      }
+
+      const backerCount = await this.prisma.filmmakerBacker.count({
+        where: { projectId },
       });
 
-      await this.prisma.filmmakerProject.update({
-        where: { id: projectId },
-        data: { fundingRaised: { increment: amount } },
-      });
-
-      return { success: true, data: { message: 'Backing updated', backerCount: 0 } };
+      return { success: true, data: { message: 'Backed successfully', backerCount } };
+    } catch (dbError) {
+      await axios
+        .post(
+          `${this.walletServiceBaseUrl}/wallet/credit`,
+          {
+            walletId: wallet.id,
+            amount,
+            description: `Compensation for failed backing: ${idempotencyKey}`,
+            reference: `compensate:${idempotencyKey}`,
+          },
+          { timeout: 10000 }
+        )
+        .catch((compensateError: unknown) => {
+          this.logger.error('Failed to compensate wallet after backing failure:', compensateError);
+        });
+      const errorMessage = dbError instanceof Error ? dbError.message : 'Failed to back project';
+      throw new BadRequestException(errorMessage);
     }
-
-    await this.prisma.filmmakerBacker.create({
-      data: {
-        projectId,
-        userId,
-        amount,
-        status: 'active',
-      },
-    });
-
-    await this.prisma.filmmakerProject.update({
-      where: { id: projectId },
-      data: { fundingRaised: { increment: amount } },
-    });
-
-    const backerCount = await this.prisma.filmmakerBacker.count({
-      where: { projectId },
-    });
-
-    return { success: true, data: { message: 'Backed successfully', backerCount } };
   }
 
   async getBackers(projectId: string, page = 1, limit = 50): Promise<FilmmakerResponse> {

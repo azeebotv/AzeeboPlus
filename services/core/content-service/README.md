@@ -14,7 +14,7 @@ The Content Service manages all content operations for the Azeebo+ platform. It 
 
 ## Technology Stack
 
-- **Framework**: NestJS 10.x
+- **Framework**: NestJS 11.x
 - **Language**: TypeScript
 - **Database**: PostgreSQL with Prisma ORM
 - **Cache**: Redis
@@ -24,7 +24,7 @@ The Content Service manages all content operations for the Azeebo+ platform. It 
 
 ### Prerequisites
 
-- Node.js 20+
+- Node.js 22+
 - PostgreSQL 15+
 - Redis
 - Elasticsearch (optional)
@@ -32,15 +32,15 @@ The Content Service manages all content operations for the Azeebo+ platform. It 
 ### Installation
 
 ```bash
-npm install
-npm run prisma:generate
-npm run prisma:migrate
+pnpm install
+pnpm run prisma:generate
+pnpm run prisma:migrate
 ```
 
 ### Running the Service
 
 ```bash
-npm run start:dev
+pnpm run start:dev
 ```
 
 ## API Endpoints
@@ -79,7 +79,7 @@ npm run start:dev
 ## Configuration
 
 ```bash
-PORT=3015
+PORT=3004
 DATABASE_URL="postgresql://user:password@localhost:5432/content"
 REDIS_URL="redis://localhost:6379"
 JWT_SECRET="your-secret"
@@ -95,7 +95,7 @@ JWT_SECRET="your-secret"
 ## Testing
 
 ```bash
-npm test
+pnpm test
 ```
 
 **Last Updated:** 2026-05-19

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -14,6 +14,7 @@ import { supportApi } from '../src/api/support';
 import { apiClient } from '../src/api';
 import { logger } from '../src/utils/logger';
 import { LoadingState, ErrorState } from '../src/components/StateContainers';
+import { colors } from '../src/theme';
 
 const categories = ['Account', 'Payment', 'Content', 'Technical', 'Creator'];
 
@@ -42,9 +43,10 @@ export default function SupportScreen() {
           '/support/faq'
         );
       setFaqData(Array.isArray(data) ? data : []);
-    } catch (err: any) {
+    } catch (err: unknown) {
       logger.error('Failed to load FAQ:', err);
-      setError(err.message || 'Failed to load FAQ');
+      const message = err instanceof Error ? err.message : 'Failed to load FAQ';
+      setError(message);
     } finally {
       setIsLoading(false);
     }
@@ -59,7 +61,7 @@ export default function SupportScreen() {
       <SafeAreaView
         style={[
           styles.container,
-          { backgroundColor: colorScheme === 'dark' ? '#1A0A0A' : '#ffffff' },
+          { backgroundColor: colorScheme === 'dark' ? colors.bg.primary : colors.text.primary },
         ]}
       >
         <LoadingState text="Loading support..." />
@@ -72,7 +74,7 @@ export default function SupportScreen() {
       <SafeAreaView
         style={[
           styles.container,
-          { backgroundColor: colorScheme === 'dark' ? '#1A0A0A' : '#ffffff' },
+          { backgroundColor: colorScheme === 'dark' ? colors.bg.primary : colors.text.primary },
         ]}
       >
         <ErrorState description={error} onRetry={fetchFAQ} />
@@ -124,18 +126,18 @@ export default function SupportScreen() {
     <SafeAreaView
       style={[
         styles.container,
-        { backgroundColor: colorScheme === 'dark' ? '#1A0A0A' : '#ffffff' },
+        { backgroundColor: colorScheme === 'dark' ? colors.bg.primary : colors.text.primary },
       ]}
     >
       <View
         style={[
           styles.container,
-          { backgroundColor: colorScheme === 'dark' ? '#1A0A0A' : '#ffffff' },
+          { backgroundColor: colorScheme === 'dark' ? colors.bg.primary : colors.text.primary },
         ]}
       >
         <ScrollView style={styles.scrollView}>
           <View style={styles.header}>
-            <Text style={[styles.title, { color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A' }]}>
+            <Text style={[styles.title, { color: colorScheme === 'dark' ? colors.text.primary : colors.bg.primary }]}>
               How can we help you? 👋
             </Text>
             <Text style={styles.subtitle}>
@@ -154,14 +156,16 @@ export default function SupportScreen() {
                 key={index}
                 style={[
                   styles.quickLinkCard,
-                  { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' },
+                  { backgroundColor: colorScheme === 'dark' ? colors.bg.secondary : colors.light[50] },
                 ]}
+                accessibilityLabel={item.label}
+                accessibilityRole="button"
               >
                 <Text style={styles.quickLinkIcon}>{item.icon}</Text>
                 <Text
                   style={[
                     styles.quickLinkLabel,
-                    { color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A' },
+                    { color: colorScheme === 'dark' ? colors.text.primary : colors.bg.primary },
                   ]}
                 >
                   {item.label}
@@ -174,7 +178,7 @@ export default function SupportScreen() {
             <Text
               style={[
                 styles.sectionTitle,
-                { color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A' },
+                { color: colorScheme === 'dark' ? colors.text.primary : colors.bg.primary },
               ]}
             >
               Frequently Asked Questions
@@ -184,15 +188,18 @@ export default function SupportScreen() {
                 key={faq.id}
                 style={[
                   styles.faqCard,
-                  { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' },
+                  { backgroundColor: colorScheme === 'dark' ? colors.bg.secondary : colors.light[50] },
                 ]}
                 onPress={() => toggleFAQ(faq.id)}
+                accessibilityLabel={`Frequently asked question: ${faq.question}`}
+                accessibilityRole="button"
+                accessibilityState={{ expanded: expandedFAQ === faq.id }}
               >
                 <View style={styles.faqHeader}>
                   <Text
                     style={[
                       styles.faqQuestion,
-                      { color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A' },
+                      { color: colorScheme === 'dark' ? colors.text.primary : colors.bg.primary },
                     ]}
                   >
                     {faq.question}
@@ -208,7 +215,7 @@ export default function SupportScreen() {
             <Text
               style={[
                 styles.sectionTitle,
-                { color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A' },
+                { color: colorScheme === 'dark' ? colors.text.primary : colors.bg.primary },
               ]}
             >
               Contact Support
@@ -218,14 +225,14 @@ export default function SupportScreen() {
               <View
                 style={[
                   styles.successCard,
-                  { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' },
+                  { backgroundColor: colorScheme === 'dark' ? colors.bg.secondary : colors.light[50] },
                 ]}
               >
                 <Text style={styles.successIcon}>✅</Text>
                 <Text
                   style={[
                     styles.successTitle,
-                    { color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A' },
+                    { color: colorScheme === 'dark' ? colors.text.primary : colors.bg.primary },
                   ]}
                 >
                   Ticket Submitted!
@@ -234,6 +241,8 @@ export default function SupportScreen() {
                 <TouchableOpacity
                   onPress={() => setFormSubmitted(false)}
                   style={styles.resubmitButton}
+                  accessibilityLabel="Submit another ticket"
+                  accessibilityRole="button"
                 >
                   <Text style={styles.resubmitButtonText}>Submit Another Ticket</Text>
                 </TouchableOpacity>
@@ -244,7 +253,7 @@ export default function SupportScreen() {
                   <Text
                     style={[
                       styles.label,
-                      { color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A' },
+                      { color: colorScheme === 'dark' ? colors.text.primary : colors.bg.primary },
                     ]}
                   >
                     Subject
@@ -253,14 +262,14 @@ export default function SupportScreen() {
                     style={[
                       styles.input,
                       {
-                        backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5',
-                        color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A',
+                        backgroundColor: colorScheme === 'dark' ? colors.bg.secondary : colors.light[50],
+                        color: colorScheme === 'dark' ? colors.text.primary : colors.bg.primary,
                       },
                     ]}
                     value={formData.subject}
                     onChangeText={(value) => handleInputChange('subject', value)}
                     placeholder="Brief description of your issue"
-                    placeholderTextColor="#888"
+                    placeholderTextColor={colors.text.secondary}
                   />
                 </View>
 
@@ -268,7 +277,7 @@ export default function SupportScreen() {
                   <Text
                     style={[
                       styles.label,
-                      { color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A' },
+                      { color: colorScheme === 'dark' ? colors.text.primary : colors.bg.primary },
                     ]}
                   >
                     Category
@@ -282,6 +291,9 @@ export default function SupportScreen() {
                           styles.categoryButton,
                           formData.category === cat && styles.categoryButtonSelected,
                         ]}
+                        accessibilityLabel={`Select ${cat} category`}
+                        accessibilityRole="button"
+                        accessibilityState={{ selected: formData.category === cat }}
                       >
                         <Text
                           style={[
@@ -300,7 +312,7 @@ export default function SupportScreen() {
                   <Text
                     style={[
                       styles.label,
-                      { color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A' },
+                      { color: colorScheme === 'dark' ? colors.text.primary : colors.bg.primary },
                     ]}
                   >
                     Message
@@ -309,21 +321,21 @@ export default function SupportScreen() {
                     style={[
                       styles.textArea,
                       {
-                        backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5',
-                        color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A',
+                        backgroundColor: colorScheme === 'dark' ? colors.bg.secondary : colors.light[50],
+                        color: colorScheme === 'dark' ? colors.text.primary : colors.bg.primary,
                       },
                     ]}
                     value={formData.message}
                     onChangeText={(value) => handleInputChange('message', value)}
                     placeholder="Tell us more about your issue..."
-                    placeholderTextColor="#888"
+                    placeholderTextColor={colors.text.secondary}
                     multiline
                     numberOfLines={6}
                     textAlignVertical="top"
                   />
                 </View>
 
-                <TouchableOpacity onPress={handleSubmit} style={styles.submitButton}>
+                <TouchableOpacity onPress={handleSubmit} style={styles.submitButton} accessibilityLabel="Submit support ticket" accessibilityRole="button">
                   <Text style={styles.submitButtonText}>📤 Submit Ticket</Text>
                 </TouchableOpacity>
               </View>
@@ -354,7 +366,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 16,
-    color: '#888',
+    color: colors.text.secondary,
     textAlign: 'center',
   },
   quickLinks: {
@@ -404,15 +416,15 @@ const styles = StyleSheet.create({
   },
   faqToggle: {
     fontSize: 20,
-    color: '#888',
+    color: colors.text.secondary,
   },
   faqAnswer: {
     marginTop: 12,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: '#e5e5e5',
+    borderTopColor: colors.light[200],
     fontSize: 14,
-    color: '#666',
+    color: colors.text.tertiary,
     lineHeight: 1.6,
   },
   form: {
@@ -445,28 +457,28 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 20,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: colors.light[100],
   },
   categoryButtonSelected: {
-    backgroundColor: '#E8420A',
+    backgroundColor: colors.primary[500],
   },
   categoryButtonText: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#333',
+    color: colors.dark[700],
   },
   categoryButtonTextSelected: {
-    color: '#ffffff',
+    color: colors.text.primary,
   },
   submitButton: {
-    backgroundColor: '#E8420A',
+    backgroundColor: colors.primary[500],
     padding: 16,
     borderRadius: 12,
     alignItems: 'center',
     marginTop: 8,
   },
   submitButtonText: {
-    color: '#ffffff',
+    color: colors.text.primary,
     fontSize: 16,
     fontWeight: '600',
   },
@@ -486,18 +498,18 @@ const styles = StyleSheet.create({
   },
   successSubtitle: {
     fontSize: 16,
-    color: '#888',
+    color: colors.text.secondary,
     marginBottom: 24,
     textAlign: 'center',
   },
   resubmitButton: {
-    backgroundColor: '#E8420A',
+    backgroundColor: colors.primary[500],
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 8,
   },
   resubmitButtonText: {
-    color: '#ffffff',
+    color: colors.text.primary,
     fontSize: 16,
     fontWeight: '600',
   },

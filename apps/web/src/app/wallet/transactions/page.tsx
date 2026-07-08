@@ -32,7 +32,7 @@ export default function TransactionsPage(): React.JSX.Element {
         `/v1/wallet/transactions?${params.toString()}`
       );
       if (result.success && result.data) {
-        const txList = Array.isArray(result.data) ? result.data : (result.data as any)?.items || [];
+        const txList = Array.isArray(result.data) ? result.data : result.data?.items || [];
         setTransactions(txList);
       }
     } catch (error) {

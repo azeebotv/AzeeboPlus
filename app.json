@@ -1,5 +1,6 @@
 {
+  "name": "Azeebo+",
   "android": {
-    "package": "com.anonymous.azeeboscripts"
+    "package": "com.azeebo.plus"
   }
 }

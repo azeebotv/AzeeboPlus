@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
 import { apiClient } from '../../src/api/client';
+import { moviePassPrice, rentPrice } from '../../src/config/prices';
+import type { Movie, SubscriptionPlan } from '../../src/types/api';
 
 interface MovieItem {
   id: string;
@@ -41,11 +43,11 @@ export default function MoviesUniverseHome() {
     setError(null);
     try {
       const [featuredRes, trendingRes, africanRes, hollywoodRes, passesRes] = await Promise.all([
-        apiClient.get<any>('/v1/movies/featured'),
-        apiClient.get<any>('/v1/movies/trending'),
-        apiClient.get<any>('/v1/movies/african'),
-        apiClient.get<any>('/v1/movies/hollywood'),
-        apiClient.get<any>('/v1/movies/passes'),
+        apiClient.get<Movie>('/v1/movies/featured'),
+        apiClient.get<Movie[]>('/v1/movies/trending'),
+        apiClient.get<Movie[]>('/v1/movies/african'),
+        apiClient.get<Movie[]>('/v1/movies/hollywood'),
+        apiClient.get<SubscriptionPlan[]>('/v1/movies/passes'),
       ]);
       const featured = Array.isArray(featuredRes)
         ? featuredRes[0]
@@ -129,7 +131,7 @@ export default function MoviesUniverseHome() {
         <View style={styles.passBanner}>
           <View style={styles.passBannerContent}>
             <Text style={styles.passBannerTitle}>🎥 Cinema Plus</Text>
-            <Text style={styles.passBannerSubtitle}>Unlimited movies from ₦4,500/month</Text>
+            <Text style={styles.passBannerSubtitle}>Unlimited movies from {moviePassPrice.label}</Text>
             <TouchableOpacity style={styles.passButton}>
               <Text style={styles.passButtonText}>Get Pass</Text>
             </TouchableOpacity>
@@ -167,7 +169,7 @@ export default function MoviesUniverseHome() {
                   <Text style={styles.playText}>Watch</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.rentButton}>
-                  <Text style={styles.rentText}>Rent ₦500</Text>
+                  <Text style={styles.rentText}>Rent ₦{rentPrice.toLocaleString()}</Text>
                 </TouchableOpacity>
               </View>
             </View>

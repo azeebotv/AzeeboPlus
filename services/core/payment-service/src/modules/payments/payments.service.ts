@@ -6,6 +6,7 @@ import { PaystackProvider } from './providers/paystack.provider';
 import { FlutterwaveProvider } from './providers/flutterwave.provider';
 import { WebhookRetryService } from './webhook-retry.service';
 import { RedisService } from '../../common/services/redis.service';
+import { CacheService, cacheKey } from '@azeebo/shared-services';
 import axios from 'axios';
 import { Prisma } from '@prisma/client';
 import {
@@ -41,6 +42,7 @@ export class PaymentsService {
     private readonly flutterwaveProvider: FlutterwaveProvider,
     private readonly webhookRetryService: WebhookRetryService,
     private readonly redisService: RedisService,
+    private readonly cache: CacheService,
     private readonly configService: ConfigService
   ) {
     this.analyticsServiceBaseUrl = this.configService.getOrThrow<string>('ANALYTICS_SERVICE_URL');
@@ -65,7 +67,7 @@ export class PaymentsService {
         metadata,
         timestamp: new Date().toISOString(),
       });
-    } catch (error) {
+    } catch (error: unknown) {
       this.logger.warn('Failed to track analytics event:', error);
     }
   }
@@ -86,7 +88,7 @@ export class PaymentsService {
         provider,
         providerRef: reference,
       });
-    } catch (error) {
+    } catch (error: unknown) {
       this.logger.error(`Failed to credit wallet for user ${userId}:`, error);
       throw error;
     }
@@ -108,7 +110,7 @@ export class PaymentsService {
         provider,
         providerRef: reference,
       });
-    } catch (error) {
+    } catch (error: unknown) {
       this.logger.error(`Failed to debit wallet for user ${userId}:`, error);
       throw error;
     }
@@ -160,6 +162,7 @@ export class PaymentsService {
         currency: currency || 'NGN',
         status: 'pending',
         description,
+        // Prisma.InputJsonValue cast is required because Prisma's JSON type is overly restrictive
         metadata: (metadata || {}) as Prisma.InputJsonValue,
         idempotencyKey,
       },
@@ -268,6 +271,8 @@ export class PaymentsService {
           providerReference: paymentIntent.providerReference,
         });
 
+        await this.cache.invalidate(`payment:history:${userId}`);
+
         return {
           success: true,
           data: {
@@ -298,6 +303,10 @@ export class PaymentsService {
   }
 
   async getPaymentHistory(userId: string): Promise<TransactionHistoryResponse> {
+    const cacheK = cacheKey('payment', `history:${userId}`);
+    const cached = await this.cache.get<TransactionHistoryResponse>(cacheK);
+    if (cached) return cached;
+
     const payments = await this.prisma.paymentIntent.findMany({
       where: { userId },
       orderBy: { createdAt: 'desc' },
@@ -314,7 +323,7 @@ export class PaymentsService {
       createdAt: payment.createdAt.toISOString(),
     }));
 
-    return {
+    const result: TransactionHistoryResponse = {
       success: true,
       data: {
         transactions,
@@ -323,6 +332,9 @@ export class PaymentsService {
         limit: 50,
       },
     };
+
+    await this.cache.set(cacheK, result, 60);
+    return result;
   }
 
   async getPayment(userId: string, paymentId: string): Promise<PaymentResponse> {
@@ -412,7 +424,7 @@ export class PaymentsService {
 
       await this.saveWebhookEvent(eventId, provider, event, body, 'success');
       return { success: true, data: {} };
-    } catch (error) {
+    } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       this.logger.error(`Failed to process webhook event ${event}:`, error);
       await this.saveWebhookEvent(eventId, provider, event, body, 'failed', errorMessage);
@@ -441,12 +453,13 @@ export class PaymentsService {
           eventId,
           provider,
           type,
+          // Prisma.InputJsonValue cast is required because Prisma's JSON type is overly restrictive
           payload: payload as Prisma.InputJsonValue,
           result,
           failureReason,
         },
       });
-    } catch (error) {
+    } catch (error: unknown) {
       this.logger.warn(`Failed to save webhook event ${eventId}:`, error);
     }
   }
@@ -540,6 +553,8 @@ export class PaymentsService {
         reason,
       });
 
+      await this.cache.invalidate(`payment:history:${userId}`);
+
       return {
         success: true,
         data: {
@@ -624,6 +639,8 @@ export class PaymentsService {
         provider,
         providerReference: reference,
       });
+
+      await this.cache.invalidate(`payment:history:${paymentIntent.userId}`);
     } finally {
       await this.redisService.del(lockKey);
     }
@@ -686,70 +703,5 @@ export class PaymentsService {
         },
       });
     }
-  }
-
-  async createPaymentIntent(
-    params: { userId: string; amount: number; currency: string; description: string },
-    idempotencyKey?: string
-  ): Promise<InitializePaymentResponse> {
-    const { userId, amount, currency, description } = params;
-
-    if (amount <= 0) {
-      throw new BadRequestException('Amount must be greater than 0');
-    }
-
-    if (currency === 'NGN' && amount < this.MIN_PAYMENT_AMOUNT_NGN) {
-      throw new BadRequestException(
-        `Minimum payment amount for NGN is ${this.MIN_PAYMENT_AMOUNT_NGN}`
-      );
-    }
-
-    if (idempotencyKey) {
-      const existingPayment = await this.prisma.paymentIntent.findUnique({
-        where: { idempotencyKey },
-      });
-      if (existingPayment) {
-        const existingStatus =
-          existingPayment.status === 'processing' ? 'pending' : existingPayment.status;
-        return {
-          success: true,
-          data: {
-            paymentId: existingPayment.id,
-            provider: 'paystack',
-            checkoutUrl: '',
-            reference: existingPayment.providerReference || '',
-            amount: toNumber(existingPayment.amount.toString()),
-            currency: existingPayment.currency,
-            status: existingStatus as 'pending' | 'completed' | 'failed',
-            createdAt: existingPayment.createdAt.toISOString(),
-          },
-        };
-      }
-    }
-
-    const paymentIntent = await this.prisma.paymentIntent.create({
-      data: {
-        userId,
-        amount,
-        currency: currency || 'NGN',
-        status: 'pending',
-        description,
-        idempotencyKey,
-      },
-    });
-
-    return {
-      success: true,
-      data: {
-        paymentId: paymentIntent.id,
-        provider: 'paystack',
-        checkoutUrl: '',
-        reference: paymentIntent.providerReference || '',
-        amount,
-        currency: currency || 'NGN',
-        status: 'pending',
-        createdAt: paymentIntent.createdAt.toISOString(),
-      },
-    };
   }
 }

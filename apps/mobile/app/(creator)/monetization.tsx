@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -74,8 +74,9 @@ export default function MonetizationSettingsScreen() {
     try {
       await contentApi.updateMonetizationSettings(settings);
       Alert.alert('Success', 'Monetization settings updated successfully');
-    } catch (error: any) {
-      Alert.alert('Error', error?.message || 'Failed to update settings');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to update settings';
+      Alert.alert('Error', message);
     } finally {
       setIsSaving(false);
     }

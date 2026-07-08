@@ -1,5 +1,6 @@
-import { Controller, Get, Post, Delete, Body, Param, Query } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Body, Param, Query, UseGuards, Request } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { AuthGuard } from '@nestjs/passport';
 import { CinemaPassService } from './cinema-pass.service';
 
 @ApiTags('Cinema Pass')
@@ -22,37 +23,41 @@ export class CinemaPassController {
   }
 
   @Get('user/subscriptions')
+  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get user subscriptions' })
   @ApiResponse({ status: 200, description: 'Subscriptions list' })
-  async getUserSubscriptions(@Query('userId') userId: string): Promise<unknown> {
-    return this.cinemaPassService.getUserSubscriptions(userId);
+  async getUserSubscriptions(@Request() req: { user: { sub: string } }): Promise<unknown> {
+    return this.cinemaPassService.getUserSubscriptions(req.user.sub);
   }
 
   @Post('subscribe')
+  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Subscribe to a pass' })
   @ApiResponse({ status: 201, description: 'Subscribed' })
   async subscribe(
-    @Body() body: { userId: string; passId: string; autoRenew?: boolean }
+    @Body() body: { passId: string; autoRenew?: boolean },
+    @Request() req: { user: { sub: string } }
   ): Promise<unknown> {
-    return this.cinemaPassService.subscribe(body.userId, body.passId, body.autoRenew);
+    return this.cinemaPassService.subscribe(req.user.sub, body.passId, body.autoRenew);
   }
 
   @Delete('cancel')
+  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Cancel subscription' })
   @ApiResponse({ status: 200, description: 'Cancelled' })
   async cancelSubscription(
-    @Query('userId') userId: string,
-    @Query('passId') passId: string
+    @Query('passId') passId: string,
+    @Request() req: { user: { sub: string } }
   ): Promise<unknown> {
-    return this.cinemaPassService.cancelSubscription(userId, passId);
+    return this.cinemaPassService.cancelSubscription(req.user.sub, passId);
   }
 
   @Get('access/:movieId')
   @ApiOperation({ summary: 'Check access to movie' })
   @ApiResponse({ status: 200, description: 'Access status' })
   async checkAccess(
-    @Query('userId') userId: string,
-    @Param('movieId') movieId: string
+    @Param('movieId') movieId: string,
+    @Query('userId') userId: string
   ): Promise<unknown> {
     return this.cinemaPassService.checkAccess(userId, movieId);
   }

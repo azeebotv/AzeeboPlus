@@ -54,6 +54,7 @@ export interface ApiError {
   path?: string; // Request path that caused the error
 }
 
+/** Base application error class with HTTP status code and structured error details. */
 export class AppError extends Error {
   constructor(
     public statusCode: number,
@@ -63,47 +64,78 @@ export class AppError extends Error {
   ) {
     super(message);
     this.name = 'AppError';
+    Object.setPrototypeOf(this, AppError.prototype);
   }
 }
 
+/** Error thrown when a requested resource is not found (404). */
 export class NotFoundError extends AppError {
   constructor(resource: string, id: string) {
     super(404, 'Not Found', `${resource} with id ${id} not found`);
+    Object.setPrototypeOf(this, NotFoundError.prototype);
   }
 }
 
+/** Error thrown when authentication is required but not provided (401). */
 export class UnauthorizedError extends AppError {
   constructor(message: string = 'Unauthorized') {
     super(401, 'Unauthorized', message);
+    Object.setPrototypeOf(this, UnauthorizedError.prototype);
   }
 }
 
+/** Error thrown when the user lacks permission for the requested action (403). */
 export class ForbiddenError extends AppError {
   constructor(message: string = 'Forbidden') {
     super(403, 'Forbidden', message);
+    Object.setPrototypeOf(this, ForbiddenError.prototype);
   }
 }
 
+/** Error thrown when input validation fails (422), with per-field error details. */
 export class ValidationError extends AppError {
   constructor(details: Record<string, string[]>) {
     super(422, 'Validation Error', 'Input validation failed', details);
+    Object.setPrototypeOf(this, ValidationError.prototype);
   }
 }
 
+/** Error thrown for malformed or invalid requests (400). */
 export class BadRequestError extends AppError {
   constructor(message: string) {
     super(400, 'Bad Request', message);
+    Object.setPrototypeOf(this, BadRequestError.prototype);
   }
 }
 
+/** Error thrown when a request conflicts with the current state (409). */
 export class ConflictError extends AppError {
   constructor(message: string) {
     super(409, 'Conflict', message);
+    Object.setPrototypeOf(this, ConflictError.prototype);
   }
 }
 
+/** Error thrown when rate limit is exceeded (429), with optional retry-after hint. */
 export class TooManyRequestsError extends AppError {
   constructor(message: string = 'Too many requests', retryAfter?: number) {
     super(429, 'Too Many Requests', message, retryAfter ? { retryAfter } : undefined);
+    Object.setPrototypeOf(this, TooManyRequestsError.prototype);
+  }
+}
+
+/** Error thrown when the request is well-formed but semantically invalid (422). */
+export class UnprocessableEntityError extends AppError {
+  constructor(message: string = 'Unprocessable entity', details?: unknown) {
+    super(422, 'UNPROCESSABLE_ENTITY', message, details as Record<string, unknown> | undefined);
+    Object.setPrototypeOf(this, UnprocessableEntityError.prototype);
+  }
+}
+
+/** Error thrown when a dependent service is temporarily unavailable (503). */
+export class ServiceUnavailableError extends AppError {
+  constructor(message: string = 'Service unavailable', details?: unknown) {
+    super(503, 'SERVICE_UNAVAILABLE', message, details as Record<string, unknown> | undefined);
+    Object.setPrototypeOf(this, ServiceUnavailableError.prototype);
   }
 }

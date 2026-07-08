@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { randomUUID } from 'crypto';
 import { PrismaService } from '../database/prisma.service';
 import {
   SupportTicketCategory,
@@ -39,6 +40,8 @@ export interface PaginatedTickets {
   total: number;
 }
 
+// NOTE: Legacy repository — duplicates ticket.repository.ts functionality.
+// Should be consolidated into the canonical ticket module and removed.
 @Injectable()
 export class SupportRepository {
   constructor(private prisma: PrismaService) {}
@@ -52,7 +55,7 @@ export class SupportRepository {
 
     const ticket = await this.prisma.supportTicket.create({
       data: {
-        id: `ticket-${Date.now()}`,
+        id: `ticket-${randomUUID()}`,
         userId: data.userId,
         subject: data.title,
         description: data.description,
@@ -160,7 +163,7 @@ export class SupportRepository {
   async addReply(ticketId: string, userId: string, message: string): Promise<TicketReply> {
     const reply = await this.prisma.supportMessage.create({
       data: {
-        id: `reply-${Date.now()}`,
+        id: `reply-${randomUUID()}`,
         ticketId,
         senderId: userId,
         senderType: 'USER',

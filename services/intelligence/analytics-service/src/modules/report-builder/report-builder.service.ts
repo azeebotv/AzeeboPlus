@@ -457,6 +457,18 @@ export class ReportBuilderService {
     return query;
   }
 
+  // Prisma groupBy with dynamic fields requires type assertions due to Prisma's typing limitations
+  private async dynamicGroupBy(
+    options: { by: string[]; _count?: Record<string, boolean>; _sum?: Record<string, boolean>; _avg?: Record<string, boolean>; _min?: Record<string, boolean>; _max?: Record<string, boolean>; where?: Record<string, unknown>; orderBy?: Record<string, unknown>; take?: number; skip?: number }
+  ): Promise<Record<string, unknown>[]> {
+    // Using unknown cast because Prisma's groupBy typing doesn't support dynamic field arrays
+    const result = await this.prisma.productEvent.groupBy({
+      ...options,
+      by: options.by as [string, ...string[]],
+    });
+    return result as Record<string, unknown>[];
+  }
+
   // Field name mapping from snake_case (used in queries) to camelCase (Prisma model)
   private readonly FIELD_MAPPING: Record<string, string> = {
     event_name: 'eventName',
@@ -497,8 +509,8 @@ export class ReportBuilderService {
         if (query._count) {
           const countKeys = Object.keys(query._count);
           const countField = this.mapFieldName(countKeys[0]);
-          const result: any[] = await (this.prisma.productEvent.groupBy as any)({
-            by: groupByFields.length > 0 ? groupByFields : undefined,
+          const result = await this.dynamicGroupBy({
+            by: groupByFields.length > 0 ? groupByFields : [],
             where,
             _count: { [countField]: true },
             orderBy,
@@ -521,8 +533,8 @@ export class ReportBuilderService {
         if (query._sum) {
           const sumKeys = Object.keys(query._sum);
           const sumField = this.mapFieldName(sumKeys[0]);
-          const result: any[] = await (this.prisma.productEvent.groupBy as any)({
-            by: groupByFields.length > 0 ? groupByFields : undefined,
+          const result = await this.dynamicGroupBy({
+            by: groupByFields.length > 0 ? groupByFields : [],
             where,
             _sum: { [sumField]: true },
             orderBy,
@@ -545,8 +557,8 @@ export class ReportBuilderService {
         if (query._avg) {
           const avgKeys = Object.keys(query._avg);
           const avgField = this.mapFieldName(avgKeys[0]);
-          const result: any[] = await (this.prisma.productEvent.groupBy as any)({
-            by: groupByFields.length > 0 ? groupByFields : undefined,
+          const result = await this.dynamicGroupBy({
+            by: groupByFields.length > 0 ? groupByFields : [],
             where,
             _avg: { [avgField]: true },
             orderBy,
@@ -569,8 +581,8 @@ export class ReportBuilderService {
         if (query._min) {
           const minKeys = Object.keys(query._min);
           const minField = this.mapFieldName(minKeys[0]);
-          const result: any[] = await (this.prisma.productEvent.groupBy as any)({
-            by: groupByFields.length > 0 ? groupByFields : undefined,
+          const result = await this.dynamicGroupBy({
+            by: groupByFields.length > 0 ? groupByFields : [],
             where,
             _min: { [minField]: true },
             orderBy,
@@ -593,8 +605,8 @@ export class ReportBuilderService {
         if (query._max) {
           const maxKeys = Object.keys(query._max);
           const maxField = this.mapFieldName(maxKeys[0]);
-          const result: any[] = await (this.prisma.productEvent.groupBy as any)({
-            by: groupByFields.length > 0 ? groupByFields : undefined,
+          const result = await this.dynamicGroupBy({
+            by: groupByFields.length > 0 ? groupByFields : [],
             where,
             _max: { [maxField]: true },
             orderBy,
@@ -641,6 +653,12 @@ export class ReportBuilderService {
     'metadata',
     'created_at',
     'updated_at',
+    'session_id',
+    'platform',
+    'app_version',
+    'experiment_flags',
+    'timestamp',
+    'eventName',
   ]);
 
   // Allowlist of valid order directions

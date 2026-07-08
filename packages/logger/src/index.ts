@@ -37,6 +37,7 @@ export interface StructuredLogEntry {
   [key: string]: unknown;
 }
 
+/** Extracts the current OpenTelemetry trace and span IDs from the active span. */
 export function getTraceContext(): { traceId?: string; spanId?: string } {
   const span = trace.getActiveSpan();
   if (!span) return {};
@@ -47,6 +48,7 @@ export function getTraceContext(): { traceId?: string; spanId?: string } {
   };
 }
 
+/** JSON structured logger that outputs machine-parseable log entries with trace context. */
 export class StructuredLogger implements LoggerService {
   private readonly serviceName: string;
 
@@ -89,7 +91,18 @@ export class StructuredLogger implements LoggerService {
       ...context,
     };
 
-    const output = JSON.stringify(entry);
+    let output: string;
+    try {
+      output = JSON.stringify(entry);
+    } catch {
+      output = JSON.stringify({
+        timestamp: entry.timestamp,
+        level: entry.level,
+        message: entry.message,
+        service: entry.service,
+        error: 'Failed to serialize log entry',
+      });
+    }
 
     switch (level) {
       case 'error':
@@ -102,6 +115,7 @@ export class StructuredLogger implements LoggerService {
   }
 }
 
+/** Factory function to create a StructuredLogger for the given service. */
 export function createLogger(serviceName: string): StructuredLogger {
   return new StructuredLogger(serviceName);
 }

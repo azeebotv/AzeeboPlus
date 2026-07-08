@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -132,7 +132,7 @@ export default function SearchScreen() {
 
       {isSearching ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.primary} />
+          <ActivityIndicator size="large" color={colors.primary[500]} />
           <Text style={styles.loadingText}>Searching...</Text>
         </View>
       ) : !hasSearched ? (
@@ -212,7 +212,7 @@ const styles = StyleSheet.create({
   },
   filterChipActive: {
     backgroundColor: 'rgba(232,66,10,0.15)',
-    borderColor: colors.primary,
+    borderColor: colors.primary[500],
   },
   filterChipText: {
     fontSize: typography.fontSize.sm,
@@ -220,7 +220,7 @@ const styles = StyleSheet.create({
     fontWeight: typography.fontWeight.medium,
   },
   filterChipTextActive: {
-    color: colors.primary,
+    color: colors.primary[500],
     fontWeight: typography.fontWeight.semibold,
   },
   loadingContainer: {

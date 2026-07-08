@@ -1,4 +1,5 @@
 import { Controller, Get } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { Public } from '@azeebo/security';
 import {
   HealthCheck,
@@ -9,6 +10,7 @@ import {
 import { PrismaService } from '../database/prisma.service';
 
 @Public()
+@ApiTags('Health')
 @Controller('health')
 export class HealthController {
   constructor(

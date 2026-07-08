@@ -13,12 +13,15 @@ import {
 } from '@nestjs/common';
 import { CreatorService, ContentItem } from './creator.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
 
 interface AuthRequest extends Request {
   user: { id: string; email: string; role: string };
 }
 
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles('creator')
 @Controller('creator')
 export class CreatorController {
   constructor(private readonly creatorService: CreatorService) {}

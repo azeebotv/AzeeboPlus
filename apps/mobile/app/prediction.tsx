@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -13,6 +13,7 @@ import { useColorScheme } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { colors } from '../src/theme';
 import { engagementApi, PredictionResult } from '../src/api/engagement';
+import type { RealityShow } from '../src/types/api';
 import { walletApi } from '../src/api/wallet';
 import { apiClient } from '../src/api/client';
 import { logger } from '../src/utils/logger';
@@ -38,7 +39,7 @@ export default function PredictionScreen() {
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [betSuccess, setBetSuccess] = useState(false);
   const [prediction, setPrediction] = useState<PredictionResult | null>(null);
-  const [showData, setShowData] = useState<any>(null);
+  const [showData, setShowData] = useState<RealityShow | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -56,7 +57,7 @@ export default function PredictionScreen() {
       const [predictionRes, walletRes, showRes] = await Promise.all([
         engagementApi.getPredictionResults(predictionId || 'default'),
         walletApi.getBalance(),
-        apiClient.get<any>('/v1/reality/shows/current').catch(() => null),
+        apiClient.get<RealityShow>('/v1/reality/shows/current').catch(() => null),
       ]);
 
       if (predictionRes.success && predictionRes.data) {

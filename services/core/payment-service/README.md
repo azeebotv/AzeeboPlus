@@ -14,7 +14,7 @@ The Payment Service handles all payment processing for the Azeebo+ platform. It 
 
 ## Technology Stack
 
-- **Framework**: NestJS 10.x
+- **Framework**: NestJS 11.x
 - **Language**: TypeScript
 - **Database**: PostgreSQL with Prisma ORM
 - **Payment Providers**: Paystack, Flutterwave
@@ -24,21 +24,21 @@ The Payment Service handles all payment processing for the Azeebo+ platform. It 
 
 ### Prerequisites
 
-- Node.js 20+
+- Node.js 22+
 - PostgreSQL 15+
 
 ### Installation
 
 ```bash
-npm install
-npm run prisma:generate
-npm run prisma:migrate
+pnpm install
+pnpm run prisma:generate
+pnpm run prisma:migrate
 ```
 
 ### Running the Service
 
 ```bash
-npm run start:dev
+pnpm run start:dev
 ```
 
 ## API Endpoints
@@ -70,7 +70,7 @@ npm run start:dev
 ## Configuration
 
 ```bash
-PORT=3014
+PORT=3003
 DATABASE_URL="postgresql://user:password@localhost:5432/payments"
 JWT_SECRET="your-secret"
 
@@ -89,7 +89,7 @@ FLUTTERWAVE_SECRET="flutterwave-secret"
 ## Testing
 
 ```bash
-npm test
+pnpm test
 ```
 
 **Last Updated:** 2026-05-19

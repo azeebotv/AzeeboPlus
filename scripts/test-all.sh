@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -euo pipefail
 
 echo "=== Signup ==="
 SIGNUP=$(curl -s -X POST "http://localhost:3013/api/v1/auth/signup" \

@@ -26,7 +26,6 @@ model CultureStory {
   updatedAt   DateTime @updatedAt
 
   category    StoryCategory? @relation(fields: [categoryId], references: [id])
-  author      User          @relation(fields: [authorId], references: [id])
   comments    StoryComment[]
 
   @@index([categoryId])
@@ -53,7 +52,6 @@ model StoryComment {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  author    User          @relation(fields: [authorId], references: [id])
   story     CultureStory  @relation(fields: [storyId], references: [id], onDelete: Cascade)
   parent    StoryComment? @relation("CommentReplies", fields: [parentId], references: [id])
   replies   StoryComment[] @relation("CommentReplies")
@@ -86,7 +84,6 @@ model Event {
   updatedAt   DateTime @updatedAt
 
   category    EventCategory? @relation(fields: [categoryId], references: [id])
-  creator     User           @relation(fields: [creatorId], references: [id])
   rsvps       EventRsvp[]
 
   @@index([categoryId])
@@ -116,44 +113,11 @@ model EventRsvp {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  user      User     @relation(fields: [userId], references: [id])
   event     Event   @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
   @@unique([userId, eventId])
   @@index([eventId])
   @@index([userId])
-}
-
-/// NOTE: This User model is duplicated from auth-service for local relation support.
-/// Consider removing this and using userId: String references instead (see creator-service pattern).
-/// The canonical User definition is in packages/shared-types/prisma/user.prisma
-model User {
-  id            String    @id @default(uuid())
-  email         String    @unique
-  username      String    @unique
-  displayName   String?
-  avatarUrl     String?
-  role          String    @default("user")
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-
-  stories           CultureStory[]
-  storyComments     StoryComment[]
-  events            Event[]
-  eventRsvps        EventRsvp[]
-  savedItems        SavedItem[]
-  shareRecords      ShareRecord[]
-  cityGuideEntries  CityGuideEntry[]
-  musicEntries      MusicEntry[]
-  celebrityEntries  CelebrityEntry[]
-  nightlifeEntries  NightlifeEntry[]
-  influencerEntries InfluencerEntry[]
-  challenges        Challenge[]
-  challengeSubmissions ChallengeSubmission[]
-  polls             Poll[]
-  pollVotes         PollVote[]
-  quizzes           Quiz[]
-  quizAttempts      QuizAttempt[]
 }
 
 model SavedItem {
@@ -163,8 +127,6 @@ model SavedItem {
   itemId    String
   note      String?
   createdAt DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, itemType, itemId])
   @@index([userId])
@@ -178,8 +140,6 @@ model ShareRecord {
   itemId    String
   platform  String
   createdAt DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([itemType, itemId])
@@ -210,12 +170,12 @@ model CityGuideEntry {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  createdBy User   @relation(fields: [createdById], references: [id])
   tags      CityGuideTag[]
 
   @@index([type])
   @@index([city])
   @@index([status])
+  @@index([createdById])
 }
 
 model CityGuideTag {
@@ -245,11 +205,10 @@ model MusicEntry {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  createdBy User @relation(fields: [createdById], references: [id])
-
   @@index([type])
   @@index([genre])
   @@index([status])
+  @@index([createdById])
 }
 
 model CelebrityEntry {
@@ -270,12 +229,12 @@ model CelebrityEntry {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  createdBy User    @relation(fields: [createdById], references: [id])
   news      CelebrityNews[]
 
   @@index([profession])
   @@index([status])
   @@index([isFeatured])
+  @@index([createdById])
 }
 
 model CelebrityNews {
@@ -320,11 +279,10 @@ model NightlifeEntry {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  createdBy User @relation(fields: [createdById], references: [id])
-
   @@index([type])
   @@index([city])
   @@index([status])
+  @@index([createdById])
 }
 
 model InfluencerEntry {
@@ -346,12 +304,12 @@ model InfluencerEntry {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  user           User                  @relation(fields: [userId], references: [id])
   collaborations InfluencerCollaboration[]
 
   @@index([category])
   @@index([status])
   @@index([isVerified])
+  @@index([userId])
 }
 
 model InfluencerCollaboration {
@@ -389,13 +347,13 @@ model Challenge {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  createdBy    User              @relation(fields: [createdById], references: [id])
   submissions  ChallengeSubmission[]
 
   @@index([type])
   @@index([status])
   @@index([startDate])
   @@index([endDate])
+  @@index([createdById])
 }
 
 model ChallengeSubmission {
@@ -410,7 +368,6 @@ model ChallengeSubmission {
   updatedAt   DateTime @updatedAt
 
   challenge Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
-  user      User      @relation(fields: [userId], references: [id])
 
   @@unique([challengeId, userId])
   @@index([challengeId])
@@ -431,7 +388,6 @@ model Poll {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  createdBy User        @relation(fields: [createdById], references: [id])
   options   PollOption[]
   votes     PollVote[]
 
@@ -462,7 +418,6 @@ model PollVote {
 
   poll        Poll      @relation(fields: [pollId], references: [id], onDelete: Cascade)
   option      PollOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([pollId, userId])
   @@index([pollId])
@@ -485,13 +440,13 @@ model Quiz {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  createdBy   User          @relation(fields: [createdById], references: [id])
   questions   QuizQuestion[]
   attempts    QuizAttempt[]
 
   @@index([category])
   @@index([difficulty])
   @@index([status])
+  @@index([createdById])
 }
 
 model QuizQuestion {
@@ -522,7 +477,6 @@ model QuizAttempt {
   updatedAt   DateTime @updatedAt
 
   quiz        Quiz        @relation(fields: [quizId], references: [id], onDelete: Cascade)
-  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([quizId])
   @@index([userId])

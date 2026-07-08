@@ -1,11 +1,7 @@
-import { IsString, IsNumber, Min, IsOptional } from 'class-validator';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsNumber, Min, IsOptional } from 'class-validator';
+import { ApiPropertyOptional } from '@nestjs/swagger';
 
 export class JoinTournamentDto {
-  @ApiProperty()
-  @IsString()
-  userId!: string;
-
   @ApiPropertyOptional()
   @IsNumber()
   @Min(0)
@@ -13,11 +9,7 @@ export class JoinTournamentDto {
 }
 
 export class SubmitScoreDto {
-  @ApiProperty()
-  @IsString()
-  userId!: string;
-
-  @ApiProperty()
+  @ApiPropertyOptional()
   @IsNumber()
   @Min(0)
   score!: number;

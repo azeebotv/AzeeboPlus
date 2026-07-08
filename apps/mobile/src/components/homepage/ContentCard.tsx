@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -8,6 +8,7 @@ import Animated, {
   useAnimatedStyle,
   withSpring,
 } from 'react-native-reanimated';
+import { colors } from '@/theme';
 import type { ContentItem } from '@/api';
 
 const CARD_SIZES = {
@@ -107,7 +108,10 @@ export default function ContentCard({
               }}
             >
               <View
-                style={[styles.progressBarFill, { width: `${Math.round(progress * 100)}%` as any }]}
+                style={[
+                  styles.progressBarFill,
+                  { width: `${Math.round(progress * 100)}%` as unknown as number },
+                ]}
               />
             </View>
           ) : null}
@@ -149,7 +153,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   durationText: {
-    color: '#fff',
+    color: colors.text.primary,
     fontSize: 10,
     fontWeight: '600',
   },
@@ -175,7 +179,7 @@ const styles = StyleSheet.create({
   },
   progressBarFill: {
     height: '100%',
-    backgroundColor: '#E8420A',
+    backgroundColor: colors.primary[500],
     borderRadius: 2,
   },
   titleContainer: {
@@ -183,7 +187,7 @@ const styles = StyleSheet.create({
     marginTop: 6,
   },
   title: {
-    color: '#fff',
+    color: colors.text.primary,
     fontSize: 13,
     fontWeight: '600',
     lineHeight: 17,

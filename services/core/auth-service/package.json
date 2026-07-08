@@ -18,6 +18,7 @@
     "prisma:studio": "prisma studio"
   },
   "dependencies": {
+    "@azeebo/error-handling": "workspace:*",
     "@azeebo/logger": "workspace:*",
     "@azeebo/security": "workspace:*",
     "@azeebo/shared-types": "workspace:*",
@@ -41,7 +42,7 @@
     "qrcode": "^1.5.4",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",
-    "speakeasy": "^2.0.0"
+    "otpauth": "^9.4.1"
   },
   "devDependencies": {
     "@nestjs/testing": "^11.1.27",
@@ -51,7 +52,7 @@
     "@types/node": "^25.9.3",
     "@types/passport-jwt": "^4.0.1",
     "@types/qrcode": "^1.5.6",
-    "@types/speakeasy": "^2.0.10",
+
     "@types/supertest": "^7.2.0",
     "eslint": "^10.5.0",
     "eslint-config-prettier": "^10.1.8",

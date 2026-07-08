@@ -15,7 +15,7 @@ The Authentication Service handles all user authentication and authorization for
 
 ## Technology Stack
 
-- **Framework**: NestJS 10.x
+- **Framework**: NestJS 11.x
 - **Language**: TypeScript
 - **Database**: PostgreSQL with Prisma ORM
 - **JWT**: JsonWebToken
@@ -25,7 +25,7 @@ The Authentication Service handles all user authentication and authorization for
 
 ### Prerequisites
 
-- Node.js 20+
+- Node.js 22+
 - PostgreSQL 15+
 - Redis (for rate limiting)
 
@@ -33,24 +33,24 @@ The Authentication Service handles all user authentication and authorization for
 
 ```bash
 # Install dependencies
-npm install
+pnpm install
 
 # Generate Prisma client
-npm run prisma:generate
+pnpm run prisma:generate
 
 # Run migrations
-npm run prisma:migrate
+pnpm run prisma:migrate
 ```
 
 ### Running the Service
 
 ```bash
 # Development mode
-npm run start:dev
+pnpm run start:dev
 
 # Production mode
-npm run build
-npm start
+pnpm run build
+pnpm start
 ```
 
 ## API Endpoints
@@ -109,13 +109,13 @@ npm start
 
 ```bash
 # Server
-PORT=3010
+PORT=3000
 
 # Database
 DATABASE_URL="postgresql://user:password@localhost:5432/auth"
 
 # JWT
-JWT_SECRET="your-jwt-secret-key"
+JWT_ACCESS_SECRET="your-jwt-secret-key"
 JWT_EXPIRES_IN="15m"
 JWT_REFRESH_EXPIRES_IN="7d"
 
@@ -142,10 +142,10 @@ SMTP_PASS="password"
 
 ```bash
 # Run all tests
-npm test
+pnpm test
 
 # Run tests with coverage
-npm test:cov
+ppnpm test:cov
 ```
 
 ## Deployment
@@ -154,7 +154,7 @@ npm test:cov
 
 ```bash
 docker build -t azeebo/auth-service .
-docker run -p 3010:3010 azeebo/auth-service
+docker run -p 3000:3000 azeebo/auth-service
 ```
 
 ## License

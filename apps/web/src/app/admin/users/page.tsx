@@ -1,46 +1,49 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/context/AuthContext';
 import { api } from '@/lib/api';
 import AdminLayout from '@/components/layout/AdminLayout';
+import { Skeleton, ErrorState } from '@azeebo/ui/web';
+
+interface AdminUserItem {
+  id: string;
+  username: string;
+  email: string;
+  role: string;
+  createdAt: string;
+  isActive: boolean;
+}
 
 export default function AdminUsersPage(): React.JSX.Element {
   const router = useRouter();
   const { isAuthenticated, user, isLoading: authLoading } = useAuth();
-  const [users, setUsers] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
+  const isEnabled = !authLoading && !!isAuthenticated && !!user && user.role === 'admin';
 
-  useEffect(() => {
-    if (authLoading) return;
-    if (!isAuthenticated || !user || user.role !== 'admin') return;
-    loadUsers();
-  }, [authLoading, isAuthenticated, user]);
-
-  const loadUsers = async () => {
-    try {
+  const { data: users = [], isLoading, error } = useQuery({
+    queryKey: ['admin', 'users'],
+    queryFn: async () => {
       const response = await api.admin.getUsers();
       if (response.success && response.data) {
-        const data = response.data as any;
-        setUsers(Array.isArray(data) ? data : data.items || []);
+        const data = response.data as unknown as AdminUserItem[] | { items: AdminUserItem[] };
+        return Array.isArray(data) ? data : data.items || [];
       }
-    } catch {
-      /* ignore */
-    } finally {
-      setIsLoading(false);
-    }
-  };
+      return [];
+    },
+    enabled: isEnabled,
+  });
 
-  const filtered = users.filter((u) => {
+  const filtered = useMemo(() => users.filter((u) => {
     const matchSearch =
       !search ||
       u.username?.toLowerCase().includes(search.toLowerCase()) ||
       u.email?.toLowerCase().includes(search.toLowerCase());
     const matchRole = roleFilter === 'all' || u.role === roleFilter;
     return matchSearch && matchRole;
-  });
+  }), [users, search, roleFilter]);
 
   return (
     <AdminLayout>
@@ -106,18 +109,20 @@ export default function AdminUsersPage(): React.JSX.Element {
       </div>
 
       {isLoading ? (
-        <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}>
-          <div
-            style={{
-              width: 40,
-              height: 40,
-              border: '3px solid #2A1A1A',
-              borderTopColor: '#E8420A',
-              borderRadius: '50%',
-              animation: 'spin 0.8s linear infinite',
-            }}
-          />
+        <div className="az-glass" style={{ borderRadius: 16, overflow: 'hidden' }}>
+          <div style={{ padding: 16 }}>
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} style={{ display: 'flex', gap: 16, padding: '12px 0', borderBottom: '1px solid #1A0A0A' }}>
+                <Skeleton width="120px" height="14px" />
+                <Skeleton width="60px" height="14px" />
+                <Skeleton width="80px" height="14px" />
+                <Skeleton width="50px" height="14px" />
+              </div>
+            ))}
+          </div>
         </div>
+      ) : error ? (
+        <ErrorState title="Failed to load users" description="Please try again later" onButtonPress={() => router.refresh()} />
       ) : (
         <div className="az-glass" style={{ borderRadius: 16, overflow: 'hidden' }}>
           <div style={{ overflowX: 'auto' }}>

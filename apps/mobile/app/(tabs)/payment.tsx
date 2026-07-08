@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -16,14 +16,12 @@ import { useRouter } from 'expo-router';
 import { paymentApi } from '../../src/api/payment';
 import { useAuth } from '../../src/contexts/AuthContext';
 import { LoadingState, ErrorState } from '../../src/components/StateContainers';
+import { paymentPresetAmounts } from '../../src/config/prices';
 
-const PAYMENT_AMOUNTS = [
-  { value: 500, label: '₦500' },
-  { value: 1000, label: '₦1,000' },
-  { value: 2500, label: '₦2,500' },
-  { value: 5000, label: '₦5,000' },
-  { value: 10000, label: '₦10,000' },
-];
+const PAYMENT_AMOUNTS = paymentPresetAmounts.map((value) => ({
+  value,
+  label: `₦${value.toLocaleString()}`,
+}));
 
 const PROVIDER_META: Record<string, { description: string }> = {
   paystack: { description: 'Secure card payments' },
@@ -55,7 +53,7 @@ export default function PaymentScreen() {
           setSelectedProvider(res.data[0].provider);
         }
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       setProvidersError(err.message || 'Failed to load payment providers');
     } finally {
       setIsLoadingProviders(false);
@@ -134,7 +132,7 @@ export default function PaymentScreen() {
       } else {
         Alert.alert('Error', response.message || 'Failed to initialize payment');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       Alert.alert('Error', error.message || 'Failed to initialize payment');
     } finally {
       setIsLoading(false);

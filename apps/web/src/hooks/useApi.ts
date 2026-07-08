@@ -89,9 +89,9 @@ export function useMutation<T, P = unknown>(
         setData(result);
         return result;
       } catch (err) {
-        const error = err instanceof Error ? err : new Error('An error occurred');
-        setError(error);
-        throw error;
+        const apiError = err instanceof Error ? err : new Error('An error occurred');
+        setError(apiError);
+        throw apiError;
       } finally {
         setIsLoading(false);
       }

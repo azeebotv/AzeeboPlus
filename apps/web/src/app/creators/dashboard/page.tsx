@@ -1,12 +1,13 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useAuth } from '../../../context/AuthContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useQuery } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api';
-import { webLogger } from '@/lib/logger';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
+import { Skeleton, ErrorState } from '@azeebo/ui/web';
 
 interface DashboardStats {
   totalViews: number;
@@ -18,30 +19,17 @@ interface DashboardStats {
 export default function CreatorDashboardPage(): React.JSX.Element {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const isEnabled = !authLoading && !!isAuthenticated && !!user;
 
-  useEffect(() => {
-    if (authLoading) return;
-    if (!isAuthenticated || !user) {
-      router.push('/auth/login');
-      return;
-    }
-    const fetchDashboard = async () => {
-      try {
-        setIsLoading(true);
-        const result = await apiFetch<DashboardStats>('/v1/creators/stats');
-        if (result.success && result.data) setStats(result.data);
-      } catch (err) {
-        webLogger.error('Failed to fetch creator dashboard stats', err);
-        setError('Failed to load dashboard. Please try again.');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchDashboard();
-  }, [authLoading, isAuthenticated, user, router]);
+  const { data: stats, isLoading, error } = useQuery({
+    queryKey: ['creator', 'dashboard-stats'],
+    queryFn: async () => {
+      const result = await apiFetch<{ success: boolean; data: DashboardStats }>('/v1/creators/stats');
+      if (result.success && result.data) return result.data;
+      return null;
+    },
+    enabled: isEnabled,
+  });
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#1A0A0A' }}>
@@ -66,18 +54,8 @@ export default function CreatorDashboardPage(): React.JSX.Element {
           >
             {Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className="az-glass" style={{ padding: 20, borderRadius: 16 }}>
-                <div
-                  style={{
-                    backgroundColor: '#2A1A1A',
-                    borderRadius: 8,
-                    height: 16,
-                    width: '60%',
-                    marginBottom: 12,
-                  }}
-                />
-                <div
-                  style={{ backgroundColor: '#2A1A1A', borderRadius: 8, height: 28, width: '40%' }}
-                />
+                <Skeleton width="60%" height="16px" className="mb-3" />
+                <Skeleton width="40%" height="28px" />
               </div>
             ))}
           </div>
@@ -86,10 +64,7 @@ export default function CreatorDashboardPage(): React.JSX.Element {
             className="az-glass"
             style={{ padding: 40, borderRadius: 16, textAlign: 'center', marginBottom: 32 }}
           >
-            <p style={{ color: '#CC1C1C', marginBottom: 16 }}>{error}</p>
-            <button onClick={() => window.location.reload()} className="az-btn-primary">
-              Retry
-            </button>
+            <ErrorState title="Failed to load dashboard" description="Please try again later" onButtonPress={() => router.refresh()} />
           </div>
         ) : stats ? (
           <div

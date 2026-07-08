@@ -36,7 +36,7 @@ export class DisputeController {
   async createDispute(@Request() req: AuthenticatedRequest, @Body() dto: CreateDisputeDto) {
     const dispute = await this.disputeService.createDispute({
       ticketId: dto.ticketId,
-      creatorId: req.user.id,
+      creatorId: req.user.sub,
       payoutId: dto.payoutId,
       amount: new Prisma.Decimal(dto.amount),
       reason: dto.reason,
@@ -61,7 +61,7 @@ export class DisputeController {
   @Get('my')
   @ApiOperation({ summary: 'Get my disputes (creator)' })
   async getMyDisputes(@Request() req: AuthenticatedRequest, @Query() query: DisputeQueryDto) {
-    const result = await this.disputeService.getCreatorDisputes(req.user.id, query);
+    const result = await this.disputeService.getCreatorDisputes(req.user.sub, query);
     return ApiResponseWrapper.paginated(
       result.disputes,
       result.meta.page,
@@ -89,7 +89,7 @@ export class DisputeController {
     const dispute = await this.disputeService.resolveDispute(
       id,
       dto.resolution,
-      req.user.id,
+      req.user.sub,
       dto.notes,
       dto.compensation ? new Prisma.Decimal(dto.compensation) : undefined
     );

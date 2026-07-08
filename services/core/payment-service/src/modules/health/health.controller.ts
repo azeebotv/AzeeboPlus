@@ -1,4 +1,5 @@
-import { Controller, Get, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Get, HttpCode, HttpStatus, HttpException } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { Public } from '@azeebo/security';
 import { PrismaService } from '../database/prisma.service';
 import {
@@ -8,6 +9,7 @@ import {
 } from './interfaces/health.interfaces';
 
 @Public()
+@ApiTags('Health')
 @Controller('health')
 export class HealthController {
   private readonly externalServices: ExternalService[] = [
@@ -112,12 +114,11 @@ export class HealthController {
         latency,
         message: 'Database connection active',
       };
-    } catch (error) {
-      return {
-        status: 'unhealthy',
-        latency: -1,
-        message: error instanceof Error ? error.message : 'Database connection failed',
-      };
+    } catch (error: unknown) {
+      throw new HttpException(
+        { status: 'error', db: 'disconnected' },
+        HttpStatus.SERVICE_UNAVAILABLE
+      );
     }
   }
 
@@ -147,8 +148,7 @@ export class HealthController {
 
   private async checkDisk(): Promise<ComponentStatus> {
     try {
-      const checkDiskSpaceModule = await import('check-disk-space');
-      const checkDiskSpace = (checkDiskSpaceModule as any).default as (
+      const checkDiskSpace = (await import('check-disk-space')).default as (
         path: string
       ) => Promise<{ size: number; free: number }>;
       const diskSpace = await checkDiskSpace('/');
@@ -206,7 +206,7 @@ export class HealthController {
             latency: number;
             message: string;
           };
-        } catch (error) {
+        } catch (error: unknown) {
           return {
             ...service,
             status: 'unhealthy' as const,

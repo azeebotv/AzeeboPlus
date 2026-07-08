@@ -1,10 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
 import { apiClient } from '../../src/api/client';
+import { ApiResponse } from '../../src/types/api';
+
+type ListResponse<T> = T[] | ApiResponse<T[]>;
 
 interface CreatorData {
   id: string;
@@ -51,10 +54,10 @@ export default function CreatorUniverseHome() {
     setError(null);
     try {
       const [creatorsRes, contentRes, catsRes, cardsRes] = await Promise.all([
-        apiClient.get<any>('/v1/creators/featured'),
-        apiClient.get<any>('/v1/creators/trending'),
-        apiClient.get<any>('/v1/creators/categories'),
-        apiClient.get<any>('/v1/creators/cards'),
+        apiClient.get<ListResponse<CreatorData>>('/v1/creators/featured'),
+        apiClient.get<ListResponse<TrendingContentItem>>('/v1/creators/trending'),
+        apiClient.get<ListResponse<CategoryData>>('/v1/creators/categories'),
+        apiClient.get<ListResponse<CreatorCardData>>('/v1/creators/cards'),
       ]);
       setFeaturedCreators(Array.isArray(creatorsRes) ? creatorsRes : (creatorsRes?.data ?? []));
       setTrendingContent(Array.isArray(contentRes) ? contentRes : (contentRes?.data ?? []));
