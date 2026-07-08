@@ -156,6 +156,9 @@ export class ChargebackService {
         this.logger.log(`Chargeback lost: payment ${chargeback.paymentId}`);
       } catch (error) {
         this.logger.error(`Failed to update payment service: ${(error as Error).message}`);
+        throw new BadRequestException(
+          `Failed to update payment service for chargeback ${id}. Requires manual intervention.`
+        );
       }
     }
 
@@ -183,7 +186,7 @@ export class ChargebackService {
       resourceId: id,
       actorType: 'admin',
       actorId: resolvedBy,
-      previousState: { status: 'PENDING' },
+      previousState: { status: chargeback.status },
       newState: { status: resolution, resolution: resolutionText },
       metadata: {
         paymentId: chargeback.paymentId,

@@ -9,11 +9,11 @@ import {
   UseGuards,
   Request,
 } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 
 import { MessagingService } from './messaging.service';
 import { CreateConversationDto, SendMessageDto, MarkAsReadDto } from './dto/messaging.dto';
+import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard, RateLimit } from '@azeebo/security';
 import { User } from '@azeebo/shared-types';
 
@@ -33,7 +33,7 @@ export class MessagingController {
   @ApiOperation({ summary: 'Get all conversations for current user' })
   @ApiResponse({ status: 200, description: 'List of conversations' })
   async getConversations(@Request() req: AuthRequest) {
-    return this.messagingService.getConversations(req.user.id);
+    return this.messagingService.getConversations(req.user.sub);
   }
 
   @Get('conversations/:conversationId/messages')
@@ -47,7 +47,7 @@ export class MessagingController {
     @Query('offset') offset = 0
   ) {
     return this.messagingService.getMessages(
-      req.user.id,
+      req.user.sub,
       conversationId,
       Number(limit),
       Number(offset)
@@ -59,7 +59,7 @@ export class MessagingController {
   @ApiOperation({ summary: 'Create a new conversation' })
   @ApiResponse({ status: 201, description: 'Conversation created' })
   async createConversation(@Request() req: AuthRequest, @Body() dto: CreateConversationDto) {
-    return this.messagingService.createConversation(req.user.id, dto);
+    return this.messagingService.createConversation(req.user.sub, dto);
   }
 
   @Post('conversations/:conversationId/messages')
@@ -71,7 +71,7 @@ export class MessagingController {
     @Param('conversationId') conversationId: string,
     @Body() dto: SendMessageDto
   ) {
-    return this.messagingService.sendMessage(req.user.id, conversationId, dto);
+    return this.messagingService.sendMessage(req.user.sub, conversationId, dto);
   }
 
   @Post('conversations/:conversationId/read')
@@ -83,7 +83,7 @@ export class MessagingController {
     @Param('conversationId') conversationId: string,
     @Body() dto: MarkAsReadDto
   ) {
-    return this.messagingService.markAsRead(req.user.id, conversationId, dto.messageId);
+    return this.messagingService.markAsRead(req.user.sub, conversationId, dto.messageId);
   }
 
   @Delete('conversations/:conversationId')
@@ -94,6 +94,6 @@ export class MessagingController {
     @Request() req: AuthRequest,
     @Param('conversationId') conversationId: string
   ) {
-    return this.messagingService.deleteConversation(req.user.id, conversationId);
+    return this.messagingService.deleteConversation(req.user.sub, conversationId);
   }
 }

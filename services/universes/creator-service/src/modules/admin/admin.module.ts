@@ -10,10 +10,10 @@ import { CreatorsModule } from '../creators/creators.module';
     CreatorsModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
-      useFactory: async (configService: ConfigService): Promise<any> => ({
+      useFactory: async (configService: ConfigService): Promise<Record<string, unknown>> => ({
         secret: configService.get<string>('JWT_ACCESS_SECRET'),
         signOptions: {
-          expiresIn: configService.get('JWT_EXPIRES_IN', '30m') as any,
+          expiresIn: configService.get('JWT_EXPIRES_IN', '30m') as string | number,
         },
       }),
       inject: [ConfigService],

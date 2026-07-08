@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { colors } from '../theme';
 
@@ -44,7 +44,7 @@ export function PasswordStrengthMeter({ password, onStrengthChange }: PasswordSt
         break;
       case 3:
         label = 'Fair';
-        color = '#F39C12';
+        color = colors.warning[500];
         break;
       case 4:
         label = 'Strong';
@@ -113,7 +113,7 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 4,
     borderRadius: 2,
-    backgroundColor: '#333',
+    backgroundColor: colors.bg.tertiary,
   },
   label: {
     fontSize: 12,
@@ -130,7 +130,7 @@ const styles = StyleSheet.create({
   },
   requirementIcon: {
     fontSize: 12,
-    color: '#666',
+    color: colors.text.secondary,
     width: 16,
     textAlign: 'center',
   },
@@ -139,9 +139,9 @@ const styles = StyleSheet.create({
   },
   requirementText: {
     fontSize: 12,
-    color: '#888',
+    color: colors.text.tertiary,
   },
   requirementTextMet: {
-    color: '#fff',
+    color: colors.text.primary,
   },
 });

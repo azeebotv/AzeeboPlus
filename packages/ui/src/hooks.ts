@@ -88,15 +88,18 @@ export function useLocalStorage<T>(
   key: string,
   initialValue: T
 ): [T, (value: T | ((val: T) => T)) => void] {
-  if (typeof window !== 'undefined') {
-    const isSensitive = SENSITIVE_KEY_PATTERNS.some((pattern) => pattern.test(key));
-    if (isSensitive) {
-      console.warn(
-        `useLocalStorage: Key "${key}" appears to contain sensitive data. ` +
-          'Consider using a secure storage strategy instead of localStorage.'
-      );
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const isSensitive = SENSITIVE_KEY_PATTERNS.some((pattern) => pattern.test(key));
+      if (isSensitive) {
+        console.warn(
+          `useLocalStorage: Key "${key}" appears to contain sensitive data. ` +
+            'Consider using a secure storage strategy instead of localStorage.'
+        );
+      }
     }
-  }
+  }, [key]);
+
   const [storedValue, setStoredValue] = useState<T>(() => {
     if (typeof window === 'undefined') {
       return initialValue;

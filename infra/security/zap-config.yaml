@@ -1,0 +1,111 @@
+---
+# OWASP ZAP Scan Configuration for Azeebo+ API Gateway
+# Used by zaproxy/action-full-scan in GitHub Actions
+
+# Global settings
+global:
+  # Maximum number of alerts per rule (0 = no limit)
+  maxAlertsPerRule: 0
+  # Max scan duration in minutes
+  maxScanDurationInMins: 60
+
+# Context configuration for authenticated scanning
+contexts:
+  - name: "Azeebo+ API Context"
+    urls:
+      - "https://api.azeeboplus.com"
+    # Include all API endpoints under /api
+    includePaths:
+      - "https://api.azeeboplus.com/api/.*"
+    # Exclude non-API paths
+    excludePaths:
+      - "https://api.azeeboplus.com/health"
+      - "https://api.azeeboplus.com/live"
+      - ".*\\.js$"
+      - ".*\\.css$"
+      - ".*\\.png$"
+      - ".*\\.jpg$"
+      - ".*\\.ico$"
+      - ".*\\.woff$"
+      - ".*\\.woff2$"
+      - ".*\\.ttf$"
+    # Authentication method: Bearer token via header
+    authentication:
+      method: "header"
+      parameters:
+        authorization: "Bearer {{ZAP_AUTH_TOKEN}}"
+      verification:
+        method: "response"
+        loggedInRegex: "\\{\\s*\"user\"\\s*:"
+        loggedOutRegex: "Unauthorized|Invalid token"
+
+# Scan policy configuration
+scanner:
+  # Alert thresholds - raise threshold = ignore low severity
+  alertThreshold:
+    high: "medium"
+    medium: "low"
+    low: "off"
+    informational: "off"
+
+  # Strength: how many requests per attack point (low = faster, high = more thorough)
+  strength: "standard"
+
+# Spider configuration
+spider:
+  maxDepth: 10
+  maxChildren: 0
+  parseComments: true
+  parseSitemap: true
+  parseRobotsTxt: true
+  postForm: true
+  maxDuration: 10
+  # API-specific: only follow API paths
+  subtreeOnly: true
+
+# AJAX Spider for SPA endpoints
+ajaxSpider:
+  enabled: false
+
+# Active scan configuration
+activeScan:
+  maxRuleDurationInMins: 10
+  maxScanDurationInMins: 60
+  # Threads for active scanning
+  threadPerHost: 5
+
+# Passive scan configuration
+passiveScan:
+  maxAlertsPerRule: 0
+
+# Replacer rules - add API authentication
+replacer:
+  rules:
+    - description: "Add Authorization header"
+      enabled: true
+      matchType: "REQ_HEADER"
+      matchRegex: false
+      searchString: "Authorization"
+      replacementString: "Bearer {{ZAP_AUTH_TOKEN}}"
+      initiator: ""
+
+# Alert filters - suppress expected/known low-risk alerts
+alertFilters:
+  # Ignore informational alerts in CI
+  - ruleId: ""
+    contextId: 0
+    targetId: 0
+    newRisk: ""
+    uri: ""
+    enabled: false
+
+# Report configuration
+report:
+  template: "Traditional HTML"
+  reportDir: "/zap/wrk"
+  reportTitle: "Azeebo+ API Security Scan"
+
+# Online scan settings (for use with zaproxy Docker action)
+online:
+  # Timezone for scan scheduling
+  maxAlertsPerRule: 0

@@ -39,7 +39,7 @@ model SupportTicket {
   id          String               @id @default(uuid())
   userId      String
   orderId     String?
-  ticketId    String               @unique @default(uuid())
+  ticketId    String               @unique @default(uuid()) // Kept for backwards compatibility; prefer using `id` for internal references
   category    SupportTicketCategory
   priority    SupportTicketPriority @default(MEDIUM)
   status      SupportTicketStatus   @default(OPEN)
@@ -66,11 +66,17 @@ model SupportTicket {
   @@map("support_tickets")
 }
 
+enum SenderType {
+  USER
+  AGENT
+  SYSTEM
+}
+
 model SupportMessage {
-  id        String   @id @default(uuid())
-  ticketId  String
-  senderId  String
-  senderType String
+  id         String     @id @default(uuid())
+  ticketId   String
+  senderId   String
+  senderType SenderType
   message   String
   isInternal Boolean @default(false)
   createdAt DateTime @default(now())
@@ -78,6 +84,7 @@ model SupportMessage {
   ticket SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
 
   @@index([ticketId])
+  @@index([senderId])
   @@map("support_messages")
 }
 

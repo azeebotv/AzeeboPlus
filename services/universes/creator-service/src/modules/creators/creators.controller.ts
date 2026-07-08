@@ -17,7 +17,7 @@ import { RateLimitGuard, RateLimit, Public } from '@azeebo/security';
 
 import { CreatorsService } from './creators.service';
 import { CreatorResponse } from './interfaces/creator-response.interface';
-import { RolesGuard, Roles } from '@azeebo/shared-services';
+import { RolesGuard, Roles, Pagination } from '@azeebo/shared-services';
 import {
   SubmitDocumentsDto,
   UploadRequestDto,

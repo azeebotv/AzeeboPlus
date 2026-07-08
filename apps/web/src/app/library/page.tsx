@@ -1,11 +1,12 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Skeleton, ErrorState } from '@azeebo/ui/web';
 import { useAuth } from '../../context/AuthContext';
 import { apiFetch } from '../../lib/api';
 import AppHeader from '../../components/layout/AppHeader';
 import AppFooter from '../../components/layout/AppFooter';
-import { Skeleton } from '@/components/Skeleton';
 
 interface ContentItem {
   id: string;
@@ -20,83 +21,102 @@ interface ContentItem {
   addedAt?: string;
 }
 
-interface LibrarySection {
-  id: string;
-  name: string;
-  items: ContentItem[];
+interface LibraryData {
+  watchlist: ContentItem[];
+  history: ContentItem[];
+  favorites: ContentItem[];
 }
 
 export default function LibraryPage(): React.JSX.Element {
   const { user: _user, isAuthenticated, isLoading: authLoading } = useAuth();
-  const [watchlist, setWatchlist] = useState<ContentItem[]>([]);
-  const [watchHistory, setWatchHistory] = useState<ContentItem[]>([]);
-  const [favorites, setFavorites] = useState<ContentItem[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const queryClient = useQueryClient();
   const [activeSection, setActiveSection] = useState<'watchlist' | 'history' | 'favorites'>(
     'watchlist'
   );
-  const [error, setError] = useState<string | null>(null);
 
-  const sections: LibrarySection[] = [
+  const {
+    data,
+    isLoading,
+    error,
+    refetch,
+  } = useQuery<LibraryData, Error>({
+    queryKey: ['library'],
+    queryFn: async () => {
+      const [watchlistRes, historyRes, favoritesRes] = await Promise.all([
+        apiFetch<ContentItem[]>('/interactions/watchlist'),
+        apiFetch<ContentItem[]>('/interactions/history'),
+        apiFetch<ContentItem[]>('/interactions/favorites'),
+      ]);
+      return {
+        watchlist:
+          watchlistRes.success && watchlistRes.data
+            ? Array.isArray(watchlistRes.data)
+              ? watchlistRes.data
+              : []
+            : [],
+        history:
+          historyRes.success && historyRes.data
+            ? Array.isArray(historyRes.data)
+              ? historyRes.data
+              : []
+            : [],
+        favorites:
+          favoritesRes.success && favoritesRes.data
+            ? Array.isArray(favoritesRes.data)
+              ? favoritesRes.data
+              : []
+            : [],
+      };
+    },
+    staleTime: 60000,
+    enabled: isAuthenticated && !authLoading,
+  });
+
+  const watchlist = data?.watchlist ?? [];
+  const watchHistory = data?.history ?? [];
+  const favorites = data?.favorites ?? [];
+
+  const sections = [
     { id: 'watchlist', name: 'Watchlist', items: watchlist },
     { id: 'history', name: 'Watch History', items: watchHistory },
     { id: 'favorites', name: 'Favorites', items: favorites },
   ];
 
-  useEffect(() => {
-    const fetchLibrary = async (): Promise<void> => {
-      if (authLoading) return;
-      if (!isAuthenticated) return;
-      try {
-        setIsLoading(true);
-        setError(null);
-        const [watchlistRes, historyRes, favoritesRes] = await Promise.all([
-          apiFetch<any>('/interactions/watchlist'),
-          apiFetch<any>('/interactions/history'),
-          apiFetch<any>('/interactions/favorites'),
-        ]);
-        if (watchlistRes.success && watchlistRes.data)
-          setWatchlist(Array.isArray(watchlistRes.data) ? watchlistRes.data : []);
-        if (historyRes.success && historyRes.data)
-          setWatchHistory(Array.isArray(historyRes.data) ? historyRes.data : []);
-        if (favoritesRes.success && favoritesRes.data)
-          setFavorites(Array.isArray(favoritesRes.data) ? favoritesRes.data : []);
-      } catch (err) {
-        setError('Failed to load library');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchLibrary();
-  }, [isAuthenticated]);
-
   const removeFromWatchlist = useCallback(async (contentId: string) => {
     try {
-      const response = await apiFetch<any>(`/interactions/watchlist/${contentId}`, {
+      const response = await apiFetch<{ removed: boolean }>(`/interactions/watchlist/${contentId}`, {
         method: 'DELETE',
       });
-      if (response.success) setWatchlist((prev) => prev.filter((item) => item.id !== contentId));
+      if (response.success) {
+        queryClient.setQueryData<LibraryData>(['library'], (old) =>
+          old ? { ...old, watchlist: old.watchlist.filter((item) => item.id !== contentId) } : old
+        );
+      }
     } catch (err) {
       /* intentionally minimal */
     }
-  }, []);
+  }, [queryClient]);
 
   const removeFromHistory = useCallback(async (contentId: string) => {
     try {
-      const response = await apiFetch<any>(`/interactions/history/${contentId}`, {
+      const response = await apiFetch<{ removed: boolean }>(`/interactions/history/${contentId}`, {
         method: 'DELETE',
       });
-      if (response.success) setWatchHistory((prev) => prev.filter((item) => item.id !== contentId));
+      if (response.success) {
+        queryClient.setQueryData<LibraryData>(['library'], (old) =>
+          old ? { ...old, history: old.history.filter((item) => item.id !== contentId) } : old
+        );
+      }
     } catch (err) {
       /* intentionally minimal */
     }
-  }, []);
+  }, [queryClient]);
 
   const toggleFavorite = useCallback(
     async (contentId: string) => {
       try {
         const isFavorited = favorites.some((item) => item.id === contentId);
-        const response = await apiFetch<any>(
+        const response = await apiFetch<{ favorited: boolean }>(
           isFavorited ? `/interactions/favorites/${contentId}` : '/interactions/favorites',
           {
             method: isFavorited ? 'DELETE' : 'POST',
@@ -104,20 +124,24 @@ export default function LibraryPage(): React.JSX.Element {
           }
         );
         if (response.success) {
-          if (isFavorited) {
-            setFavorites((prev) => prev.filter((item) => item.id !== contentId));
-          } else {
+          queryClient.setQueryData<LibraryData>(['library'], (old) => {
+            if (!old) return old;
+            if (isFavorited) {
+              return { ...old, favorites: old.favorites.filter((item) => item.id !== contentId) };
+            }
             const item =
-              watchlist.find((i) => i.id === contentId) ||
-              watchHistory.find((i) => i.id === contentId);
-            if (item) setFavorites((prev) => [...prev, item]);
-          }
+              old.watchlist.find((i) => i.id === contentId) ||
+              old.history.find((i) => i.id === contentId);
+            return item
+              ? { ...old, favorites: [...old.favorites, item] }
+              : old;
+          });
         }
       } catch (err) {
         /* intentionally minimal */
       }
     },
-    [favorites, watchHistory, watchlist]
+    [favorites, queryClient]
   );
 
   if (authLoading) return <></>;
@@ -196,24 +220,16 @@ export default function LibraryPage(): React.JSX.Element {
           {error ? (
             <motion.div
               key="error"
-              className="az-glass p-8 sm:p-10 text-center"
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
               transition={{ duration: 0.3 }}
             >
-              <span className="text-4xl mb-4 block">&#x26A0;&#xFE0F;</span>
-              <h3 className="text-lg font-bold text-white mb-2">Error</h3>
-              <p className="text-white/50 text-sm">{error}</p>
-              <motion.button
-                onClick={() => window.location.reload()}
-                className="az-btn-primary mt-4"
-                style={{ width: 'auto', paddingInline: '1.5rem' }}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                Try Again
-              </motion.button>
+              <ErrorState
+                title="Failed to load library"
+                description={error.message}
+                onButtonPress={() => refetch()}
+              />
             </motion.div>
           ) : isLoading ? (
             <motion.div

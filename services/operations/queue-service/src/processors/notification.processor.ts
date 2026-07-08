@@ -41,19 +41,18 @@ export class NotificationProcessor extends WorkerHost {
   async process(job: Job<NotificationJobData>): Promise<void> {
     this.logger.log(`Processing notification job ${job.id} (attempt ${job.attemptsMade + 1})`);
 
-    this.currentJobData = job.data;
     const { userId, type, title, message, data } = job.data;
 
     try {
       switch (type) {
         case 'push':
-          await this.sendPushNotification(userId, title, message, data);
+          await this.sendPushNotification(job.data);
           break;
         case 'email':
-          await this.sendEmail(userId, title, message, data);
+          await this.sendEmail(job.data);
           break;
         case 'sms':
-          await this.sendSms(userId, message, data);
+          await this.sendSms(job.data);
           break;
         default:
           this.logger.warn(`Unknown notification type: ${type}`);
@@ -70,51 +69,39 @@ export class NotificationProcessor extends WorkerHost {
     }
   }
 
-  private async sendPushNotification(
-    userId: string,
-    title: string,
-    message: string,
-    data?: Record<string, string>
-  ): Promise<void> {
+  private async sendPushNotification(jobData: NotificationJobData): Promise<void> {
+    const { userId, title, message, data, pushTokens } = jobData;
     this.logger.log(`Sending push notification to ${userId}: ${title}`);
-    const pushTokens = this.currentJobData?.pushTokens ?? [];
-    for (const token of pushTokens) {
+    for (const token of pushTokens ?? []) {
       await this.firebaseService.sendPushNotification(token, title, message, data);
     }
   }
 
-  private async sendEmail(
-    userId: string,
-    subject: string,
-    body: string,
-    data?: Record<string, string>
-  ): Promise<void> {
-    this.logger.log(`Sending email to ${userId}: ${subject}`);
-    const email = this.currentJobData?.email;
+  private async sendEmail(jobData: NotificationJobData): Promise<void> {
+    const { userId, title, message, email } = jobData;
+    this.logger.log(`Sending email to ${userId}: ${title}`);
     if (email) {
-      await this.emailService.sendCustomEmail(email, subject, `<p>${body}</p>`);
+      const escapedBody = message
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#x27;');
+      await this.emailService.sendCustomEmail(email, title, `<p>${escapedBody}</p>`);
     } else {
       this.logger.warn(`No email address in payload for user ${userId}; skipping email`);
     }
   }
 
-  private async sendSms(
-    userId: string,
-    message: string,
-    data?: Record<string, string>
-  ): Promise<void> {
+  private async sendSms(jobData: NotificationJobData): Promise<void> {
+    const { userId, message, phone } = jobData;
     this.logger.log(`Sending SMS to ${userId}`);
-    const phone = this.currentJobData?.phone;
     if (phone) {
       await this.smsService.sendSms(phone, message);
     } else {
       this.logger.warn(`No phone number in payload for user ${userId}; skipping SMS`);
     }
   }
-
-  // Holds the current job's payload so private helpers can access contact info
-  // without querying another service's canonical data.
-  private currentJobData: NotificationJobData | null = null;
 
   @OnWorkerEvent('active')
   onActive(job: Job) {
@@ -130,7 +117,7 @@ export class NotificationProcessor extends WorkerHost {
   onFailed(job: Job, error: Error) {
     this.logger.error(
       `Job ${job.id} failed after ${job.attemptsMade + 1} attempts: ${error.message}`,
-      { jobId: job.id, error: error.stack, attemptsMade: job.attemptsMade }
+      { jobId: job.id, error: error.message, attemptsMade: job.attemptsMade }
     );
   }
 
@@ -151,6 +138,6 @@ export class NotificationProcessor extends WorkerHost {
 
   @OnWorkerEvent('error')
   onError(error: Error) {
-    this.logger.error(`Worker encountered an error: ${error.message}`, { stack: error.stack });
+    this.logger.error(`Worker encountered an error: ${error.message}`, { stack: error.message });
   }
 }

@@ -1,5 +1,6 @@
-import { Controller, Get, Post, Body, Param, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Query, UseGuards, Request } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { AuthGuard } from '@nestjs/passport';
 import { GameCatalogService } from './game-catalog.service';
 
 @ApiTags('Game Catalog')
@@ -41,30 +42,32 @@ export class GameCatalogController {
   }
 
   @Post(':gameId/start')
+  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Start a game' })
   @ApiResponse({ status: 201, description: 'Game started' })
   async startGame(
     @Param('gameId') gameId: string,
-    @Body() body: { userId: string }
+    @Request() req: { user: { id: string } }
   ): Promise<unknown> {
-    return this.gameCatalogService.startGame(body.userId, gameId);
+    return this.gameCatalogService.startGame(req.user.sub, gameId);
   }
 
   @Post('answer')
+  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Submit answer' })
   @ApiResponse({ status: 200, description: 'Answer result' })
   async submitAnswer(
     @Body()
     body: {
-      userId: string;
       sessionId: string;
       questionId: string;
       answer: string;
       timeTaken: number;
-    }
+    },
+    @Request() req: { user: { id: string } }
   ): Promise<unknown> {
     return this.gameCatalogService.submitAnswer(
-      body.userId,
+      req.user.sub,
       body.sessionId,
       body.questionId,
       body.answer,
@@ -73,12 +76,13 @@ export class GameCatalogController {
   }
 
   @Post(':sessionId/complete')
+  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Complete game' })
   @ApiResponse({ status: 200, description: 'Game completed' })
   async completeGame(
     @Param('sessionId') sessionId: string,
-    @Body() body: { userId: string }
+    @Request() req: { user: { id: string } }
   ): Promise<unknown> {
-    return this.gameCatalogService.completeGame(body.userId, sessionId);
+    return this.gameCatalogService.completeGame(req.user.sub, sessionId);
   }
 }

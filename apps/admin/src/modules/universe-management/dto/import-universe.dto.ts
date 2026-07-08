@@ -14,7 +14,7 @@ export class ImportUniverseFeatureFlagDto {
   @ApiProperty({ description: 'Additional metadata', required: false })
   @IsOptional()
   @IsObject()
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export class ImportUniverseDto {
@@ -54,7 +54,7 @@ export class ImportUniverseDto {
   @ApiProperty({ description: 'Additional metadata', required: false })
   @IsOptional()
   @IsObject()
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 
   @ApiProperty({ description: 'Feature flags to import', required: false, type: [ImportUniverseFeatureFlagDto] })
   @IsOptional()

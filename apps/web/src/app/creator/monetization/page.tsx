@@ -1,38 +1,35 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useRouter } from 'next/navigation';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/context/AuthContext';
 import { api, apiFetch } from '@/lib/api';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
+import { Skeleton, ErrorState } from '@azeebo/ui/web';
+
+interface MonetizationData {
+  eligibility: { isEligible: boolean; requirements: string[] };
+  earnings: { totalEarned: number; pendingPayout: number; paidOut: number };
+  settings: { enableSuperTips: boolean; enableSponsoredContent: boolean; minPayoutAmount: number };
+}
 
 export default function MonetizationPage(): React.JSX.Element {
   const { isAuthenticated, user, isLoading: authLoading } = useAuth();
   const router = useRouter();
-  const [monetization, setMonetization] = useState({
-    eligibility: { isEligible: false, requirements: [] as string[] },
-    earnings: { totalEarned: 0, pendingPayout: 0, paidOut: 0 },
-    settings: { enableSuperTips: false, enableSponsoredContent: false, minPayoutAmount: 5000 },
-  });
+  const queryClient = useQueryClient();
+  const isEnabled = !authLoading && !!isAuthenticated && !!user;
 
-  useEffect(() => {
-    if (authLoading) return;
-    if (!isAuthenticated || !user) {
-      router.push('/auth/login');
-      return;
-    }
-    loadMonetization();
-  }, [authLoading, isAuthenticated, user, router]);
-
-  const loadMonetization = async () => {
-    try {
+  const { data: monetization, isLoading, error } = useQuery({
+    queryKey: ['creator', 'monetization'],
+    queryFn: async () => {
       const response = await api.creator.getStats();
       if (response.success && response.data) {
-        const d = response.data as any;
-        setMonetization({
+        const d = response.data as { totalEarnings?: number; totalViews?: number; pendingEarnings?: number };
+        return {
           eligibility: {
-            isEligible: d.totalEarnings > 0,
-            requirements: d.totalViews < 1000 ? ['Reach 1,000 views'] : [],
+            isEligible: (d.totalEarnings || 0) > 0,
+            requirements: (d.totalViews || 0) < 1000 ? ['Reach 1,000 views'] : [],
           },
           earnings: {
             totalEarned: d.totalEarnings || 0,
@@ -40,15 +37,79 @@ export default function MonetizationPage(): React.JSX.Element {
             paidOut: 0,
           },
           settings: { enableSuperTips: true, enableSponsoredContent: false, minPayoutAmount: 5000 },
+        } as MonetizationData;
+      }
+      return { eligibility: { isEligible: false, requirements: [] }, earnings: { totalEarned: 0, pendingPayout: 0, paidOut: 0 }, settings: { enableSuperTips: false, enableSponsoredContent: false, minPayoutAmount: 5000 } } as MonetizationData;
+    },
+    enabled: isEnabled,
+  });
+
+  const toggleSetting = useMutation({
+    mutationFn: ({ key, value }: { key: string; value: boolean }) =>
+      apiFetch('/v1/creators/monetization/settings', {
+        method: 'PUT',
+        body: JSON.stringify({ [key]: value }),
+      }),
+    onMutate: async ({ key, value }) => {
+      await queryClient.cancelQueries({ queryKey: ['creator', 'monetization'] });
+      const previous = queryClient.getQueryData<MonetizationData>(['creator', 'monetization']);
+      if (previous) {
+        queryClient.setQueryData<MonetizationData>(['creator', 'monetization'], {
+          ...previous,
+          settings: { ...previous.settings, [key]: value },
         });
       }
-    } catch {
-      /* ignore */
-    }
-  };
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(['creator', 'monetization'], context.previous);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['creator', 'monetization'] });
+    },
+  });
 
   if (authLoading) return <></>;
   if (!isAuthenticated || !user) return <></>;
+
+  if (isLoading) {
+    return (
+      <div style={{ backgroundColor: '#1A0A0A', minHeight: '100vh', color: '#F5F0EB' }}>
+        <AppHeader />
+        <main style={{ paddingTop: 100, paddingBottom: 60, maxWidth: 800, margin: '0 auto', padding: '100px 24px 60px' }}>
+          <div style={{ marginBottom: 32 }}>
+            <Skeleton width="120px" height="20px" className="mb-4" />
+            <Skeleton width="200px" height="32px" />
+          </div>
+          <div className="az-glass" style={{ padding: 24, borderRadius: 20, marginBottom: 20 }}>
+            <Skeleton width="180px" height="20px" className="mb-4" />
+            <Skeleton width="100%" height="60px" borderRadius="12px" />
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 20 }}>
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="az-glass" style={{ padding: 20, borderRadius: 16 }}>
+                <Skeleton width="80px" height="14px" className="mb-2" />
+                <Skeleton width="100px" height="24px" />
+              </div>
+            ))}
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (error || !monetization) {
+    return (
+      <div style={{ backgroundColor: '#1A0A0A', minHeight: '100vh', color: '#F5F0EB' }}>
+        <AppHeader />
+        <main style={{ paddingTop: 100, paddingBottom: 60, maxWidth: 800, margin: '0 auto', padding: '100px 24px 60px' }}>
+          <ErrorState title="Failed to load monetization" description="Please try again later" onButtonPress={() => router.refresh()} />
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div style={{ backgroundColor: '#1A0A0A', minHeight: '100vh', color: '#F5F0EB' }}>
@@ -203,31 +264,9 @@ export default function MonetizationPage(): React.JSX.Element {
                   <p style={{ color: '#9A8A7A', fontSize: 13, marginTop: 2 }}>{setting.desc}</p>
                 </div>
                 <button
-                  onClick={async () => {
-                    const newValue =
-                      !monetization.settings[setting.key as keyof typeof monetization.settings];
-                    setMonetization({
-                      ...monetization,
-                      settings: {
-                        ...monetization.settings,
-                        [setting.key]: newValue,
-                      },
-                    });
-                    try {
-                      await apiFetch('/v1/creators/monetization/settings', {
-                        method: 'PUT',
-                        body: JSON.stringify({ [setting.key]: newValue }),
-                      });
-                    } catch {
-                      // Revert on failure
-                      setMonetization({
-                        ...monetization,
-                        settings: {
-                          ...monetization.settings,
-                          [setting.key]: !newValue,
-                        },
-                      });
-                    }
+                  onClick={() => {
+                    const newValue = !monetization.settings[setting.key as keyof typeof monetization.settings];
+                    toggleSetting.mutate({ key: setting.key, value: newValue });
                   }}
                   style={{
                     width: 48,

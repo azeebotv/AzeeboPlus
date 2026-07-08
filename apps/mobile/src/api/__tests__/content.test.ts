@@ -52,7 +52,13 @@ describe('Mobile Content API', () => {
   it('searchContent should build search params', async () => {
     mockedClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } } as any);
 
-    await contentApi.searchContent({ query: 'nollywood', universeId: 'movie', sortBy: 'popular', page: 1, limit: 10 });
+    await contentApi.searchContent({
+      query: 'nollywood',
+      universeId: 'movie',
+      sortBy: 'popular',
+      page: 1,
+      limit: 10,
+    });
 
     expect(mockedClient.get).toHaveBeenCalledWith(expect.stringContaining('/v1/content/search?'));
     const callUrl = mockedClient.get.mock.calls[0][0] as string;
@@ -87,7 +93,10 @@ describe('Mobile Content API', () => {
   });
 
   it('getSignedUrl should GET /v1/content/:id/media/signed-url', async () => {
-    mockedClient.get.mockResolvedValue({ success: true, data: { url: 'https://signed.example.com' } } as any);
+    mockedClient.get.mockResolvedValue({
+      success: true,
+      data: { url: 'https://signed.example.com' },
+    } as any);
 
     await contentApi.getSignedUrl('c1');
 

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { Prisma } from '../../generated/prisma';
 import { PrismaService } from '../../database/prisma.service';
 import { AuditLogService } from '../audit/audit.service';
@@ -102,7 +102,12 @@ export class UserManagementService {
     };
   }
 
-  async updateUserRole(userId: string, newRole: string, actorId?: string): Promise<unknown> {
+  async updateUserRole(userId: string, newRole: string, actorId?: string, ipAddress?: string, userAgent?: string): Promise<unknown> {
+    const allowedRoles = ['user', 'creator', 'admin', 'superadmin'];
+    if (!allowedRoles.includes(newRole)) {
+      throw new BadRequestException('Invalid role');
+    }
+
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
     });
@@ -123,6 +128,8 @@ export class UserManagementService {
       targetType: 'user',
       targetId: userId,
       details: { oldRole, newRole },
+      ipAddress,
+      userAgent,
     });
 
     return {
@@ -140,7 +147,9 @@ export class UserManagementService {
     userId: string,
     reason: string,
     suspendedBy: string,
-    durationDays?: number
+    durationDays?: number,
+    ipAddress?: string,
+    userAgent?: string
   ): Promise<unknown> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
@@ -182,6 +191,8 @@ export class UserManagementService {
       targetType: 'user',
       targetId: userId,
       details: { reason, durationDays },
+      ipAddress,
+      userAgent,
     });
 
     return {
@@ -201,7 +212,7 @@ export class UserManagementService {
     };
   }
 
-  async revokeSuspension(userId: string, revokedBy: string, reason: string): Promise<unknown> {
+  async revokeSuspension(userId: string, revokedBy: string, reason: string, ipAddress?: string, userAgent?: string): Promise<unknown> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
     });
@@ -246,6 +257,8 @@ export class UserManagementService {
       targetType: 'user',
       targetId: userId,
       details: { reason },
+      ipAddress,
+      userAgent,
     });
 
     return {
@@ -297,7 +310,7 @@ export class UserManagementService {
     };
   }
 
-  async deleteUser(userId: string, actorId?: string): Promise<unknown> {
+  async deleteUser(userId: string, actorId?: string, ipAddress?: string, userAgent?: string): Promise<unknown> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
     });
@@ -308,7 +321,7 @@ export class UserManagementService {
 
     await this.prisma.user.update({
       where: { id: userId },
-      data: { role: 'deleted' },
+      data: { isDeleted: true, deletedAt: new Date() },
     });
 
     await this.auditService.log({
@@ -317,6 +330,8 @@ export class UserManagementService {
       targetType: 'user',
       targetId: userId,
       details: { email: user.email, displayName: user.displayName },
+      ipAddress,
+      userAgent,
     });
 
     return {

@@ -108,6 +108,27 @@ export class SportsService {
     };
   }
 
+  async getEventById(id: string): Promise<SportsResponse> {
+    const event = await this.prisma.sportsEvent.findUnique({
+      where: { id },
+      include: {
+        teams: true,
+        _count: {
+          select: { predictions: true },
+        },
+      },
+    });
+
+    if (!event) {
+      throw new NotFoundException('Event not found');
+    }
+
+    return {
+      success: true,
+      data: { event },
+    };
+  }
+
   async getPredictions(): Promise<SportsResponse> {
     const predictions = await this.prisma.predictionMarket.findMany({
       where: { status: 'active' },
@@ -138,6 +159,10 @@ export class SportsService {
 
     if (event.status !== 'upcoming') {
       throw new BadRequestException('Predictions are only allowed for upcoming events');
+    }
+
+    if (event.startsAt && new Date(event.startsAt) < new Date()) {
+      throw new BadRequestException('Event has already started');
     }
 
     const existingEntry = await this.prisma.predictionEntry.findFirst({
@@ -174,7 +199,7 @@ export class SportsService {
         idempotencyKey,
       }, { timeout: 10000 })
       .catch((error: unknown) => {
-        const errorMessage = error instanceof Error ? error.message : 'Failed to debit wallet';
+        const errorMessage = error instanceof Error ? (error as Error).message : 'Failed to debit wallet';
         throw new BadRequestException(errorMessage);
       });
 
@@ -220,7 +245,7 @@ export class SportsService {
             compensateError
           );
         });
-      const errorMessage = error instanceof Error ? error.message : 'Failed to submit prediction';
+      const errorMessage = error instanceof Error ? (error as Error).message : 'Failed to submit prediction';
       throw new BadRequestException(errorMessage);
     }
   }
@@ -300,6 +325,10 @@ export class SportsService {
       throw new BadRequestException('Contest is not active');
     }
 
+    if (contest.endsAt && new Date(contest.endsAt) < new Date()) {
+      throw new BadRequestException('Contest has already ended');
+    }
+
     const existingEntry = await this.prisma.contestEntry.findFirst({
       where: {
         userId,
@@ -337,7 +366,7 @@ export class SportsService {
         idempotencyKey,
       }, { timeout: 10000 })
       .catch((error: unknown) => {
-        const errorMessage = error instanceof Error ? error.message : 'Failed to debit wallet';
+        const errorMessage = error instanceof Error ? (error as Error).message : 'Failed to debit wallet';
         throw new BadRequestException(errorMessage);
       });
 
@@ -377,7 +406,7 @@ export class SportsService {
         .catch((compensateError: unknown) => {
           this.logger.error('Failed to compensate wallet:', compensateError);
         });
-      const errorMessage = error instanceof Error ? error.message : 'Failed to enter contest';
+      const errorMessage = error instanceof Error ? (error as Error).message : 'Failed to enter contest';
       throw new BadRequestException(errorMessage);
     }
   }
@@ -394,42 +423,66 @@ export class SportsService {
       throw new NotFoundException('Event not found');
     }
 
-    if (event.status !== 'upcoming') {
-      throw new BadRequestException('Event is not upcoming');
+    if (event.status !== 'completed') {
+      throw new BadRequestException('Event must be completed before resolving predictions');
     }
+
+    await this.prisma.sportsEvent.update({
+      where: { id: eventId },
+      data: { status: 'resolved' },
+    });
 
     const predictions = await this.prisma.predictionEntry.findMany({
       where: { eventId },
     });
 
-    let correctCount = 0;
-    let incorrectCount = 0;
+    const correctPredictions = predictions.filter(
+      (p) => JSON.stringify(p.prediction) === JSON.stringify(correctPrediction),
+    );
+    const incorrectPredictions = predictions.filter(
+      (p) => JSON.stringify(p.prediction) !== JSON.stringify(correctPrediction),
+    );
 
-    for (const prediction of predictions) {
-      const isCorrect = JSON.stringify(prediction.prediction) === JSON.stringify(correctPrediction);
+    await this.prisma.$transaction([
+      ...correctPredictions.map((p) =>
+        this.prisma.predictionEntry.update({
+          where: { id: p.id },
+          data: { points: 100 },
+        }),
+      ),
+      ...incorrectPredictions.map((p) =>
+        this.prisma.predictionEntry.update({
+          where: { id: p.id },
+          data: { points: 0 },
+        }),
+      ),
+    ]);
 
-      await this.prisma.predictionEntry.update({
-        where: { id: prediction.id },
-        data: {
-          points: isCorrect ? 100 : 0,
-        },
-      });
+    const wallets = await this.prisma.wallet.findMany({
+      where: { userId: { in: correctPredictions.map((p) => p.userId) } },
+    });
+    const walletMap = new Map(wallets.map((w) => [w.userId, w]));
 
-      if (isCorrect) {
-        correctCount++;
-        const wallet = await this.prisma.wallet.findUnique({
-          where: { userId: prediction.userId },
-        });
+    const rewardAmount = 100;
+    await Promise.all(
+      correctPredictions.map(async (prediction) => {
+        const wallet = walletMap.get(prediction.userId);
         if (wallet) {
-          const rewardAmount = 100;
           await axios
-            .post(`${this.walletServiceBaseUrl}/wallet/credit`, {
-              walletId: wallet.id,
-              amount: rewardAmount,
-              description: `Correct prediction reward for event ${eventId}`,
-            }, { timeout: 10000 })
+            .post(
+              `${this.walletServiceBaseUrl}/wallet/credit`,
+              {
+                walletId: wallet.id,
+                amount: rewardAmount,
+                description: `Correct prediction reward for event ${eventId}`,
+              },
+              { timeout: 10000 },
+            )
             .catch((error: unknown) => {
-              this.logger.error(`Failed to credit reward to user ${prediction.userId}:`, error);
+              this.logger.error(
+                `Failed to credit reward to user ${prediction.userId}:`,
+                error,
+              );
             });
         }
 
@@ -438,24 +491,17 @@ export class SportsService {
           eventId,
           reward: 100,
         });
-      } else {
-        incorrectCount++;
-      }
-    }
-
-    await this.prisma.sportsEvent.update({
-      where: { id: eventId },
-      data: { status: 'completed' },
-    });
+      }),
+    );
 
     return {
       success: true,
       data: {
         eventId,
         totalPredictions: predictions.length,
-        correctCount,
-        incorrectCount,
-        message: `Event resolved: ${correctCount} correct, ${incorrectCount} incorrect`,
+        correctCount: correctPredictions.length,
+        incorrectCount: incorrectPredictions.length,
+        message: `Event resolved: ${correctPredictions.length} correct, ${incorrectPredictions.length} incorrect`,
       },
     };
   }

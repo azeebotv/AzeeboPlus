@@ -1,8 +1,11 @@
-import { Controller, Get, Logger } from '@nestjs/common';
-import { Public } from '@azeebo/security';
+import { Controller, Get, Logger, UseGuards } from '@nestjs/common';
+import { Public, RateLimitGuard, RateLimit } from '@azeebo/security';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { PrismaService } from '../database/prisma.service';
 
+@ApiTags('Public')
 @Public()
+@UseGuards(RateLimitGuard)
 @Controller('v1/public')
 export class PublicController {
   private readonly logger = new Logger(PublicController.name);
@@ -10,6 +13,9 @@ export class PublicController {
   constructor(private readonly prisma: PrismaService) {}
 
   @Get('universes')
+  @RateLimit(100, 60000)
+  @ApiOperation({ summary: 'Get enabled universes' })
+  @ApiResponse({ status: 200, description: 'Universes retrieved successfully' })
   async getEnabledUniverses() {
     try {
       const universes = await this.prisma.universe.findMany({
@@ -44,7 +50,7 @@ export class PublicController {
           })),
         })),
       };
-    } catch (error) {
+    } catch (error: unknown) {
       this.logger.error('Failed to fetch enabled universes', error);
       return {
         success: false,
@@ -55,13 +61,16 @@ export class PublicController {
   }
 
   @Get('settings')
+  @RateLimit(100, 60000)
+  @ApiOperation({ summary: 'Get public system settings' })
+  @ApiResponse({ status: 200, description: 'Settings retrieved successfully' })
   async getPublicSettings() {
     try {
       const settings = await this.prisma.systemSettings.findMany({
         where: { isPublic: true },
       });
 
-      const settingsMap: Record<string, any> = {};
+      const settingsMap: Record<string, unknown> = {};
       settings.forEach((setting) => {
         settingsMap[setting.key] = setting.value;
       });
@@ -70,7 +79,7 @@ export class PublicController {
         success: true,
         data: settingsMap,
       };
-    } catch (error) {
+    } catch (error: unknown) {
       this.logger.error('Failed to fetch public settings', error);
       return {
         success: false,
@@ -81,6 +90,10 @@ export class PublicController {
   }
 
   @Get('settings/:key')
+  @RateLimit(100, 60000)
+  @ApiOperation({ summary: 'Get a public setting by key' })
+  @ApiResponse({ status: 200, description: 'Setting retrieved successfully' })
+  @ApiResponse({ status: 404, description: 'Setting not found or not public' })
   async getPublicSetting(key: string) {
     try {
       const setting = await this.prisma.systemSettings.findFirst({
@@ -104,7 +117,7 @@ export class PublicController {
           value: setting.value,
         },
       };
-    } catch (error) {
+    } catch (error: unknown) {
       this.logger.error(`Failed to fetch setting ${key}`, error);
       return {
         success: false,
@@ -115,6 +128,10 @@ export class PublicController {
   }
 
   @Get('universes/:name/features')
+  @RateLimit(100, 60000)
+  @ApiOperation({ summary: 'Get feature flags for a universe' })
+  @ApiResponse({ status: 200, description: 'Features retrieved successfully' })
+  @ApiResponse({ status: 404, description: 'Universe not found or disabled' })
   async getUniverseFeatures(name: string) {
     try {
       const universe = await this.prisma.universe.findUnique({
@@ -137,7 +154,7 @@ export class PublicController {
         };
       }
 
-      const features: Record<string, any> = {};
+      const features: Record<string, unknown> = {};
       universe.featureFlags.forEach((flag) => {
         features[flag.featureKey] = {
           enabled: true,
@@ -152,7 +169,7 @@ export class PublicController {
           features,
         },
       };
-    } catch (error) {
+    } catch (error: unknown) {
       this.logger.error(`Failed to fetch features for universe ${name}`, error);
       return {
         success: false,

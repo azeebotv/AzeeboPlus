@@ -1,72 +1,99 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/api';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
+import { Spinner, ErrorState } from '@azeebo/ui/web';
+
+interface ReferralCode {
+  code?: string;
+  referralCode?: string;
+  link?: string;
+  referralLink?: string;
+}
+
+interface ReferralStats {
+  totalReferrals?: number;
+  total?: number;
+  successfulReferrals?: number;
+  successful?: number;
+  pendingReferrals?: number;
+  pending?: number;
+  totalEarned?: number;
+  earned?: number;
+}
+
+interface ReferralEntry {
+  username?: string;
+  email?: string;
+  joinedAt?: string;
+  createdAt?: string;
+  status: string;
+}
+
+interface ReferralsList {
+  referrals?: ReferralEntry[];
+  total?: number;
+}
 
 export default function ReferralPage(): React.JSX.Element {
   const { isAuthenticated, user, isLoading: authLoading } = useAuth();
   const router = useRouter();
-  const [referralData, setReferralData] = useState({
-    code: '',
-    link: '',
-    totalReferrals: 0,
-    successfulReferrals: 0,
-    pendingReferrals: 0,
-    totalEarned: 0,
-    referrals: [] as any[],
-  });
-  const [isLoading, setIsLoading] = useState(true);
   const [copied, setCopied] = useState(false);
 
-  useEffect(() => {
-    if (authLoading) return;
-    if (!isAuthenticated || !user) {
-      router.push('/auth/login');
-      return;
-    }
-    loadReferralData();
-  }, [authLoading, isAuthenticated, user, router]);
+  const codeQuery = useQuery({
+    queryKey: ['referral', 'code'],
+    queryFn: async () => {
+      const res = await apiFetch<ReferralCode>('/referrals/code');
+      return res.data ?? {};
+    },
+    staleTime: 300000,
+  });
 
-  const loadReferralData = async () => {
-    try {
-      const [codeRes, statsRes, referralsRes] = await Promise.allSettled([
-        apiFetch<any>('/referrals/code'),
-        apiFetch<any>('/referrals/stats'),
-        apiFetch<any>('/referrals'),
-      ]);
+  const statsQuery = useQuery({
+    queryKey: ['referral', 'stats'],
+    queryFn: async () => {
+      const res = await apiFetch<ReferralStats>('/referrals/stats');
+      return res.data ?? {};
+    },
+    staleTime: 60000,
+  });
 
-      const code = codeRes.status === 'fulfilled' ? codeRes.value : null;
-      const stats = statsRes.status === 'fulfilled' ? statsRes.value : null;
-      const referrals = referralsRes.status === 'fulfilled' ? referralsRes.value : null;
+  const referralsQuery = useQuery({
+    queryKey: ['referral', 'list'],
+    queryFn: async () => {
+      const res = await apiFetch<ReferralsList>('/referrals');
+      const data = res.data ?? {};
+      return Array.isArray(data.referrals)
+        ? data.referrals
+        : Array.isArray(data as unknown as ReferralEntry[])
+          ? (data as unknown as ReferralEntry[])
+          : [];
+    },
+    staleTime: 60000,
+  });
 
-      const codeData = code?.data ?? {};
-      const statsData = stats?.data ?? {};
-      const referralsData = referrals?.data ?? {};
+  const codeData = codeQuery.data ?? {};
+  const statsData = statsQuery.data ?? {};
+  const referrals = referralsQuery.data ?? [];
 
-      setReferralData({
-        code: String(codeData.code ?? codeData.referralCode ?? ''),
-        link: String(codeData.link ?? codeData.referralLink ?? ''),
-        totalReferrals: Number(
-          statsData.totalReferrals ?? statsData.total ?? referralsData.total ?? 0
-        ),
-        successfulReferrals: Number(statsData.successfulReferrals ?? statsData.successful ?? 0),
-        pendingReferrals: Number(statsData.pendingReferrals ?? statsData.pending ?? 0),
-        totalEarned: Number(statsData.totalEarned ?? statsData.earned ?? 0),
-        referrals: Array.isArray(referralsData.referrals)
-          ? referralsData.referrals
-          : Array.isArray(referralsData)
-            ? referralsData
-            : [],
-      });
-    } catch {
-      /* ignore */
-    } finally {
-      setIsLoading(false);
-    }
+  const referralData = {
+    code: String(codeData.code ?? codeData.referralCode ?? ''),
+    link: String(codeData.link ?? codeData.referralLink ?? ''),
+    totalReferrals: Number(
+      statsData.totalReferrals ?? statsData.total ?? referrals.length ?? 0
+    ),
+    successfulReferrals: Number(statsData.successfulReferrals ?? statsData.successful ?? 0),
+    pendingReferrals: Number(statsData.pendingReferrals ?? statsData.pending ?? 0),
+    totalEarned: Number(statsData.totalEarned ?? statsData.earned ?? 0),
+    referrals,
   };
+
+  const isLoading = authLoading || codeQuery.isLoading || statsQuery.isLoading || referralsQuery.isLoading;
+  const error = codeQuery.error?.message || statsQuery.error?.message || referralsQuery.error?.message || null;
 
   const copyToClipboard = async () => {
     try {
@@ -100,17 +127,19 @@ export default function ReferralPage(): React.JSX.Element {
 
         {isLoading ? (
           <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}>
-            <div
-              style={{
-                width: 40,
-                height: 40,
-                border: '3px solid #2A1A1A',
-                borderTopColor: '#E8420A',
-                borderRadius: '50%',
-                animation: 'spin 0.8s linear infinite',
-              }}
-            />
+            <Spinner size="lg" color="#E8420A" />
           </div>
+        ) : error ? (
+          <ErrorState
+            title="Failed to load referral data"
+            description={error}
+            buttonText="Retry"
+            onButtonPress={() => {
+              codeQuery.refetch();
+              statsQuery.refetch();
+              referralsQuery.refetch();
+            }}
+          />
         ) : (
           <>
             {/* Referral code card */}
@@ -249,7 +278,7 @@ export default function ReferralPage(): React.JSX.Element {
               <div className="az-glass" style={{ padding: 24, borderRadius: 20 }}>
                 <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16 }}>Your Referrals</h2>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {referralData.referrals.map((ref: any, i: number) => (
+                  {referralData.referrals.map((ref: ReferralEntry, i: number) => (
                     <div
                       key={i}
                       style={{
@@ -263,7 +292,7 @@ export default function ReferralPage(): React.JSX.Element {
                       <div>
                         <p style={{ fontWeight: 600, fontSize: 14 }}>{ref.username || ref.email}</p>
                         <p style={{ color: '#9A8A7A', fontSize: 12 }}>
-                          {new Date(ref.joinedAt || ref.createdAt).toLocaleDateString()}
+                          {new Date(ref.joinedAt || ref.createdAt || '').toLocaleDateString()}
                         </p>
                       </div>
                       <span

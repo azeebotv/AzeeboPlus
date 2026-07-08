@@ -16,13 +16,13 @@ DO $$
 DECLARE
   db_name TEXT;
   db_names TEXT[] := ARRAY[
-    'auth_db', 'user_db', 'wallet_db', 'payment_db', 'content_db', 'search_db',
-    'media_db', 'notification_db', 'reward_db', 'engagement_db', 'messaging_db',
-    'referral_db', 'subscription_db', 'analytics_db', 'recommendation_db',
-    'reality_db', 'movie_db', 'comedy_db', 'games_db', 'sports_db',
-    'lifestyle_db', 'vertical_db', 'creator_db',
-    'queue_db', 'support_db', 'moderation_db',
-    'admin_db', 'creator_portal_db'
+    'azeebo_auth', 'azeebo_user', 'azeebo_wallet', 'azeebo_payment', 'azeebo_content', 'azeebo_search',
+    'azeebo_media', 'azeebo_notification', 'azeebo_reward', 'azeebo_engagement', 'azeebo_messaging',
+    'azeebo_referral', 'azeebo_subscription', 'azeebo_analytics', 'azeebo_recommendation',
+    'azeebo_reality', 'azeebo_movie', 'azeebo_comedy', 'azeebo_games', 'azeebo_sports',
+    'azeebo_lifestyle', 'azeebo_vertical', 'azeebo_creator',
+    'azeebo_queue', 'azeebo_support', 'azeebo_moderation',
+    'azeebo_admin', 'azeebo_creator_portal'
   ];
   current_user_name TEXT;
 BEGIN

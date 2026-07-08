@@ -20,6 +20,45 @@ export interface ContentTrend {
   drafts: number;
 }
 
+export interface TopContentItem {
+  id: string;
+  title: string;
+  viewCount: number;
+  creator: string;
+  universe: string;
+}
+
+export interface TopCreatorItem {
+  id: string;
+  displayName: string;
+  avatar: string | null;
+  contentCount: number;
+  totalViews: number;
+}
+
+export interface RecentActivityData {
+  recentUsers: {
+    id: string;
+    displayName: string;
+    email: string;
+    createdAt: Date;
+    role: string;
+  }[];
+  recentContent: {
+    id: string;
+    title: string;
+    status: string;
+    createdAt: Date;
+    creator: { displayName: string };
+  }[];
+  recentReports: {
+    id: string;
+    type: string;
+    reason: string;
+    createdAt: Date;
+  }[];
+}
+
 @Injectable()
 export class DashboardService {
   constructor(private readonly prisma: PrismaService) {}
@@ -113,7 +152,7 @@ export class DashboardService {
     }));
   }
 
-  async getTopContent(limit = 10): Promise<unknown> {
+  async getTopContent(limit = 10): Promise<TopContentItem[]> {
     const content = await this.prisma.contentItem.findMany({
       where: { status: 'published' },
       orderBy: { viewCount: 'desc' },
@@ -133,7 +172,7 @@ export class DashboardService {
     }));
   }
 
-  async getTopCreators(limit = 10): Promise<unknown> {
+  async getTopCreators(limit = 10): Promise<TopCreatorItem[]> {
     const creators = await this.prisma.user.findMany({
       where: { role: 'creator' },
       include: {
@@ -157,7 +196,7 @@ export class DashboardService {
       .sort((a, b) => b.totalViews - a.totalViews);
   }
 
-  async getRecentActivity(_limit = 20): Promise<unknown> {
+  async getRecentActivity(_limit = 20): Promise<RecentActivityData> {
     const [recentUsers, recentContent, recentReports] = await Promise.all([
       this.prisma.user.findMany({
         orderBy: { createdAt: 'desc' },

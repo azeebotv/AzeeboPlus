@@ -181,7 +181,7 @@ export default function AuthenticatedHomepage({
           const fallbackGroups: RecommendationGroup[] = [];
           if (forYou.status === 'fulfilled' && forYou.value.success && forYou.value.data) {
             const items = Array.isArray(forYou.value.data)
-              ? forYou.value.data.map((r: any) => r.content || r)
+              ? forYou.value.data.map((r: ContentItem & { content?: ContentItem }) => r.content || r)
               : [];
             fallbackGroups.push({
               title: 'Top picks for you',
@@ -191,7 +191,7 @@ export default function AuthenticatedHomepage({
           }
           if (trending.status === 'fulfilled' && trending.value.success && trending.value.data) {
             const items = Array.isArray(trending.value.data)
-              ? trending.value.data.map((r: any) => r.content || r)
+              ? trending.value.data.map((r: ContentItem & { content?: ContentItem }) => r.content || r)
               : [];
             fallbackGroups.push({
               title: 'Popular right now',

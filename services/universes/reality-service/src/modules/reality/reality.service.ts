@@ -11,6 +11,7 @@ import { Prisma } from '@prisma/client';
 import { RealityResponse } from './interfaces/reality-response.interface';
 import axios from 'axios';
 import { randomUUID } from 'crypto';
+import { CacheService, cacheKey } from '@azeebo/shared-services';
 
 interface VoteWithQuantity {
   contestantId: string;
@@ -37,7 +38,8 @@ export class RealityService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly configService: ConfigService
+    private readonly configService: ConfigService,
+    private readonly cache: CacheService
   ) {
     this.walletServiceBaseUrl = this.configService.getOrThrow<string>('WALLET_SERVICE_URL');
     this.analyticsServiceBaseUrl = this.configService.getOrThrow<string>('ANALYTICS_SERVICE_URL');
@@ -99,6 +101,12 @@ export class RealityService {
   ];
 
   async listShows(): Promise<RealityResponse> {
+    const cacheK = cacheKey('reality', 'shows:list');
+    const cached = await this.cache.get<{ shows: unknown }>(cacheK);
+    if (cached) {
+      return { success: true, data: cached };
+    }
+
     const shows = await this.prisma.realityShow.findMany({
       include: {
         seasons: true,
@@ -113,13 +121,22 @@ export class RealityService {
       orderBy: { createdAt: 'desc' },
     });
 
+    const result = { shows: shows as unknown };
+    await this.cache.set(cacheK, result, 30);
+
     return {
       success: true,
-      data: { shows: shows as unknown },
+      data: result,
     };
   }
 
   async getShow(showId: string): Promise<RealityResponse> {
+    const cacheK = cacheKey('reality', `show:${showId}`);
+    const cached = await this.cache.get<{ show: unknown }>(cacheK);
+    if (cached) {
+      return { success: true, data: cached };
+    }
+
     const show = await this.prisma.realityShow.findUnique({
       where: { id: showId },
       include: {
@@ -140,9 +157,12 @@ export class RealityService {
       throw new NotFoundException(`Show not found`);
     }
 
+    const result = { show: show as unknown };
+    await this.cache.set(cacheK, result, 30);
+
     return {
       success: true,
-      data: { show: show as unknown },
+      data: result,
     };
   }
 
@@ -168,6 +188,12 @@ export class RealityService {
   }
 
   async listContestants(showId: string): Promise<RealityResponse> {
+    const cacheK = cacheKey('reality', `contestants:${showId}`);
+    const cached = await this.cache.get<{ contestants: unknown }>(cacheK);
+    if (cached) {
+      return { success: true, data: cached };
+    }
+
     const contestants = await this.prisma.contestant.findMany({
       where: { showId },
       include: {
@@ -182,9 +208,12 @@ export class RealityService {
       orderBy: { name: 'asc' },
     });
 
+    const result = { contestants: contestants as unknown };
+    await this.cache.set(cacheK, result, 30);
+
     return {
       success: true,
-      data: { contestants: contestants as unknown },
+      data: result,
     };
   }
 
@@ -251,6 +280,7 @@ export class RealityService {
       return newVote;
     });
 
+    await this.cache.invalidate(`reality:*`);
     await this.trackAnalyticsEvent('vote_submitted', userId, {
       voteId: vote.id,
       contestantId,
@@ -317,6 +347,7 @@ export class RealityService {
         });
       });
 
+      await this.cache.invalidate(`reality:*`);
       await this.trackAnalyticsEvent('supervote_submitted', userId, {
         supervoteId: supervote.id,
         contestantId,
@@ -483,6 +514,7 @@ export class RealityService {
         return createdVotes;
       });
 
+      await this.cache.invalidate(`reality:*`);
       await this.trackAnalyticsEvent('vote_submitted', userId, {
         voteIds: votes.map((v) => v.id),
         contestantId,
@@ -741,6 +773,8 @@ export class RealityService {
       data,
     });
 
+    await this.cache.invalidate(`reality:*`);
+
     return {
       success: true,
       data: {
@@ -757,6 +791,7 @@ export class RealityService {
     }
 
     await this.prisma.realityShow.delete({ where: { id: showId } });
+    await this.cache.invalidate(`reality:*`);
 
     return {
       success: true,
@@ -985,6 +1020,23 @@ export class RealityService {
       throw new NotFoundException('Reward account not found');
     }
 
+    const existingClaim = await this.prisma.pointsLedger.findFirst({
+      where: {
+        userId,
+        reason: `Reward for participation in show ${showId}`,
+      },
+    });
+
+    if (existingClaim) {
+      return {
+        success: true,
+        data: {
+          pointsEarned: 0,
+          message: 'Reward already claimed for this show',
+        },
+      };
+    }
+
     const votes = await this.prisma.vote.count({ where: { userId, showId } });
     const supervotes = await this.prisma.supervote.count({ where: { userId, showId } });
 
@@ -1034,15 +1086,6 @@ export class RealityService {
       having: { id: { _count: { gt: 10 } } },
     });
 
-    const ipVotes = await this.prisma.$queryRaw<Array<{ ip_address: string; vote_count: bigint }>>`
-      SELECT ip_address, COUNT(*) as vote_count
-      FROM "Vote"
-      WHERE "showId" = ${showId}
-        AND "createdAt" >= ${thirtyMinutesAgo}
-      GROUP BY ip_address
-      HAVING COUNT(*) > 5
-    `;
-
     const concentration = await this.prisma.contestant.findMany({
       where: { showId },
       include: {
@@ -1060,18 +1103,16 @@ export class RealityService {
 
     const fraudIndicators = {
       rapidVoters: suspiciousPatterns.length,
-      ipConcentration: ipVotes.length,
       topContestantConcentration: concentrationScores.filter((c) => c.isSuspicious).length,
       riskLevel: 'low' as 'low' | 'medium' | 'high' | 'critical',
     };
 
     if (
       fraudIndicators.rapidVoters > 5 ||
-      fraudIndicators.ipConcentration > 3 ||
       fraudIndicators.topContestantConcentration > 0
     ) {
       fraudIndicators.riskLevel = 'high';
-    } else if (fraudIndicators.rapidVoters > 0 || fraudIndicators.ipConcentration > 0) {
+    } else if (fraudIndicators.rapidVoters > 0) {
       fraudIndicators.riskLevel = 'medium';
     }
 
@@ -1080,7 +1121,6 @@ export class RealityService {
       data: {
         fraudIndicators,
         suspiciousUsers: suspiciousPatterns.map((p) => p.userId),
-        suspiciousIps: ipVotes.map((v) => v.ip_address),
         concentrationScores,
       },
     };

@@ -22,7 +22,7 @@ import { AddBonusCreditDto } from './dto/add-bonus-credit.dto';
 import { AddPromoCreditDto } from './dto/add-promo-credit.dto';
 import { DebitWalletDto, CreditWalletDto } from './dto/wallet-operation.dto';
 import { WithdrawWalletDto, TransferWalletDto } from './dto/withdraw-transfer.dto';
-import { WalletResponse } from './interfaces/wallet-response.interface';
+import { ApiResponseWrapper } from '@azeebo/shared-types';
 
 interface AuthenticatedRequest {
   user: {
@@ -48,8 +48,9 @@ export class WalletController {
   @ApiOperation({ summary: 'Get wallet balance' })
   @ApiResponse({ status: 200, description: 'Wallet balance' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getBalance(@Request() req: AuthenticatedRequest): Promise<WalletResponse> {
-    return this.walletService.getBalance(req.user.id);
+  async getBalance(@Request() req: AuthenticatedRequest) {
+    const result = await this.walletService.getBalance(req.user.id);
+    return ApiResponseWrapper.success((result as { data: unknown }).data);
   }
 
   @Get('transactions')
@@ -62,8 +63,13 @@ export class WalletController {
     @Query('page') page = 1,
     @Query('limit') limit = 20,
     @Query('cursor') cursor?: string
-  ): Promise<WalletResponse> {
-    return this.walletService.getTransactions(req.user.id, Number(page), Number(limit), cursor);
+  ) {
+    const result = await this.walletService.getTransactions(req.user.id, Number(page), Number(limit), cursor);
+    const data = (result as { data: unknown }).data;
+    if (Array.isArray(data)) {
+      return ApiResponseWrapper.paginated(data, Number(page), Number(limit), data.length);
+    }
+    return ApiResponseWrapper.success(data);
   }
 
   @Get('summary')
@@ -71,8 +77,9 @@ export class WalletController {
   @ApiOperation({ summary: 'Get wallet summary widget' })
   @ApiResponse({ status: 200, description: 'Wallet summary' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getSummary(@Request() req: AuthenticatedRequest): Promise<WalletResponse> {
-    return this.walletService.getSummary(req.user.id);
+  async getSummary(@Request() req: AuthenticatedRequest) {
+    const result = await this.walletService.getSummary(req.user.id);
+    return ApiResponseWrapper.success((result as { data: unknown }).data);
   }
 
   @Post('fund')
@@ -85,8 +92,9 @@ export class WalletController {
   async fundWallet(
     @Request() req: AuthenticatedRequest,
     @Body() fundWalletDto: FundWalletDto
-  ): Promise<WalletResponse> {
-    return this.walletService.initializeFunding(req.user.id, fundWalletDto);
+  ) {
+    const result = await this.walletService.initializeFunding(req.user.id, fundWalletDto);
+    return ApiResponseWrapper.created((result as { data: unknown }).data);
   }
 
   @Post('redeem-reward')
@@ -99,8 +107,9 @@ export class WalletController {
   async redeemReward(
     @Request() req: AuthenticatedRequest,
     @Body() redeemRewardDto: RedeemRewardDto
-  ): Promise<WalletResponse> {
-    return this.walletService.redeemReward(req.user.id, redeemRewardDto.points);
+  ) {
+    const result = await this.walletService.redeemReward(req.user.id, redeemRewardDto.points);
+    return ApiResponseWrapper.success((result as { data: unknown }).data);
   }
 
   @Post('bonus-credit')
@@ -113,7 +122,7 @@ export class WalletController {
   async addBonusCredit(
     @Request() req: AuthenticatedRequest,
     @Body() addBonusCreditDto: AddBonusCreditDto
-  ): Promise<WalletResponse> {
+  ) {
     const wallet = await this.prisma.wallet.findUnique({
       where: { userId: req.user.id },
     });
@@ -122,11 +131,12 @@ export class WalletController {
       throw new NotFoundException(`Wallet not found for user ${req.user.id}`);
     }
 
-    return this.walletService.addBonusCredit(
+    const result = await this.walletService.addBonusCredit(
       wallet.id,
       addBonusCreditDto.amount,
       addBonusCreditDto.reason
     );
+    return ApiResponseWrapper.success((result as { data: unknown }).data);
   }
 
   @Post('promo-credit')
@@ -139,7 +149,7 @@ export class WalletController {
   async addPromoCredit(
     @Request() req: AuthenticatedRequest,
     @Body() addPromoCreditDto: AddPromoCreditDto
-  ): Promise<WalletResponse> {
+  ) {
     const wallet = await this.prisma.wallet.findUnique({
       where: { userId: req.user.id },
     });
@@ -148,12 +158,13 @@ export class WalletController {
       throw new NotFoundException(`Wallet not found for user ${req.user.id}`);
     }
 
-    return this.walletService.addPromoCredit(
+    const result = await this.walletService.addPromoCredit(
       wallet.id,
       addPromoCreditDto.amount,
       addPromoCreditDto.promoCode,
       new Date(addPromoCreditDto.expiresAt)
     );
+    return ApiResponseWrapper.success((result as { data: unknown }).data);
   }
 
   @Get('audit-trail')
@@ -164,7 +175,7 @@ export class WalletController {
     @Request() req: AuthenticatedRequest,
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string
-  ): Promise<WalletResponse> {
+  ) {
     const wallet = await this.prisma.wallet.findUnique({
       where: { userId: req.user.id },
     });
@@ -176,7 +187,8 @@ export class WalletController {
     const start = startDate ? new Date(startDate) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
     const end = endDate ? new Date(endDate) : new Date();
 
-    return this.walletService.getTransactionAuditTrail(wallet.id, start, end);
+    const result = await this.walletService.getTransactionAuditTrail(wallet.id, start, end);
+    return ApiResponseWrapper.success((result as { data: unknown }).data);
   }
 
   @Post('debit')
@@ -185,14 +197,15 @@ export class WalletController {
   @ApiOperation({ summary: 'Debit wallet (service-to-service)' })
   @ApiResponse({ status: 200, description: 'Wallet debited' })
   @ApiResponse({ status: 400, description: 'Invalid input or insufficient balance' })
-  async debitWallet(@Body() body: DebitWalletDto): Promise<WalletResponse> {
-    return this.walletService.debitBalance(
+  async debitWallet(@Body() body: DebitWalletDto) {
+    const result = await this.walletService.debitBalance(
       body.walletId,
       body.amount,
       body.description,
       undefined,
       body.idempotencyKey
     );
+    return ApiResponseWrapper.success((result as { data: unknown }).data);
   }
 
   @Post('credit')
@@ -201,13 +214,14 @@ export class WalletController {
   @ApiOperation({ summary: 'Credit wallet (service-to-service)' })
   @ApiResponse({ status: 200, description: 'Wallet credited' })
   @ApiResponse({ status: 400, description: 'Invalid input' })
-  async creditWallet(@Body() body: CreditWalletDto): Promise<WalletResponse> {
-    return this.walletService.creditBalance(
+  async creditWallet(@Body() body: CreditWalletDto) {
+    const result = await this.walletService.creditBalance(
       body.walletId,
       body.amount,
       body.description,
       body.idempotencyKey
     );
+    return ApiResponseWrapper.success((result as { data: unknown }).data);
   }
 
   @Post('withdraw')
@@ -220,8 +234,9 @@ export class WalletController {
   async withdraw(
     @Request() req: AuthenticatedRequest,
     @Body() withdrawDto: WithdrawWalletDto
-  ): Promise<WalletResponse> {
-    return this.walletService.withdraw(req.user.id, withdrawDto);
+  ) {
+    const result = await this.walletService.withdraw(req.user.id, withdrawDto);
+    return ApiResponseWrapper.success((result as { data: unknown }).data);
   }
 
   @Post('transfer')
@@ -234,8 +249,9 @@ export class WalletController {
   async transfer(
     @Request() req: AuthenticatedRequest,
     @Body() transferDto: TransferWalletDto
-  ): Promise<WalletResponse> {
-    return this.walletService.transfer(req.user.id, transferDto);
+  ) {
+    const result = await this.walletService.transfer(req.user.id, transferDto);
+    return ApiResponseWrapper.success((result as { data: unknown }).data);
   }
 
   @Get('transactions/:id')
@@ -247,7 +263,8 @@ export class WalletController {
   async getTransaction(
     @Request() req: AuthenticatedRequest,
     @Param('id') id: string
-  ): Promise<WalletResponse> {
-    return this.walletService.getTransaction(req.user.id, id);
+  ) {
+    const result = await this.walletService.getTransaction(req.user.id, id);
+    return ApiResponseWrapper.success((result as { data: unknown }).data);
   }
 }

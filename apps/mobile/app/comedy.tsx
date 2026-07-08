@@ -1,10 +1,14 @@
-import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useQuery } from '@tanstack/react-query';
 import { LoadingState, EmptyState, ErrorState } from '../src/components/StateContainers';
 import { apiClient } from '../src/api/client';
+import { comedySubscription } from '../src/config/prices';
+import { ApiResponse } from '../src/types/api';
+
+type ListResponse<T> = T[] | ApiResponse<T[]>;
 
 interface ClipItem {
   id: string;
@@ -34,39 +38,52 @@ interface TopRatedItem {
 
 export default function ComedyUniverseHome() {
   const colorScheme = useColorScheme();
-  const _router = useRouter();
+  
   const isDark = colorScheme === 'dark';
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [trendingClips, setTrendingClips] = useState<ClipItem[]>([]);
-  const [featuredCreators, setFeaturedCreators] = useState<CreatorItem[]>([]);
-  const [categories, setCategories] = useState<CategoryItem[]>([]);
-  const [topRated, setTopRated] = useState<TopRatedItem[]>([]);
 
-  const fetchData = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const [clipsRes, creatorsRes, categoriesRes, topRes] = await Promise.all([
-        apiClient.get<any>('/v1/comedy/clips'),
-        apiClient.get<any>('/v1/comedy/creators'),
-        apiClient.get<any>('/v1/comedy/categories'),
-        apiClient.get<any>('/v1/comedy/top-rated'),
-      ]);
-      setTrendingClips(Array.isArray(clipsRes) ? clipsRes : (clipsRes?.data ?? []));
-      setFeaturedCreators(Array.isArray(creatorsRes) ? creatorsRes : (creatorsRes?.data ?? []));
-      setCategories(Array.isArray(categoriesRes) ? categoriesRes : (categoriesRes?.data ?? []));
-      setTopRated(Array.isArray(topRes) ? topRes : (topRes?.data ?? []));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const clipsQuery = useQuery({
+    queryKey: ['comedy', 'clips'],
+    queryFn: async () => {
+      const res = await apiClient.get<ListResponse<ClipItem>>('/v1/comedy/clips');
+      return Array.isArray(res) ? res : (res?.data ?? []);
+    },
+    staleTime: 60_000,
+  });
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  const creatorsQuery = useQuery({
+    queryKey: ['comedy', 'creators'],
+    queryFn: async () => {
+      const res = await apiClient.get<ListResponse<CreatorItem>>('/v1/comedy/creators');
+      return Array.isArray(res) ? res : (res?.data ?? []);
+    },
+    staleTime: 60_000,
+  });
+
+  const categoriesQuery = useQuery({
+    queryKey: ['comedy', 'categories'],
+    queryFn: async () => {
+      const res = await apiClient.get<ListResponse<CategoryItem>>('/v1/comedy/categories');
+      return Array.isArray(res) ? res : (res?.data ?? []);
+    },
+    staleTime: 60_000,
+  });
+
+  const topRatedQuery = useQuery({
+    queryKey: ['comedy', 'top-rated'],
+    queryFn: async () => {
+      const res = await apiClient.get<ListResponse<TopRatedItem>>('/v1/comedy/top-rated');
+      return Array.isArray(res) ? res : (res?.data ?? []);
+    },
+    staleTime: 60_000,
+  });
+
+  const isLoading = clipsQuery.isLoading || creatorsQuery.isLoading || categoriesQuery.isLoading || topRatedQuery.isLoading;
+  const error = clipsQuery.error?.message || creatorsQuery.error?.message || categoriesQuery.error?.message || topRatedQuery.error?.message;
+
+  const trendingClips = clipsQuery.data ?? [];
+  const featuredCreators = creatorsQuery.data ?? [];
+  const categories = categoriesQuery.data ?? [];
+  const topRated = topRatedQuery.data ?? [];
 
   if (isLoading) {
     return (
@@ -78,7 +95,15 @@ export default function ComedyUniverseHome() {
   if (error) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
-        <ErrorState description={error} onRetry={fetchData} />
+        <ErrorState
+          description={error}
+          onRetry={() => {
+            clipsQuery.refetch();
+            creatorsQuery.refetch();
+            categoriesQuery.refetch();
+            topRatedQuery.refetch();
+          }}
+        />
       </SafeAreaView>
     );
   }
@@ -106,7 +131,7 @@ export default function ComedyUniverseHome() {
 
         <View style={styles.categoryScroll}>
           {categories.map((cat) => (
-            <TouchableOpacity key={cat.id} style={styles.categoryChip}>
+            <TouchableOpacity key={cat.id} style={styles.categoryChip} accessibilityLabel={`Filter by ${cat.name}`} accessibilityRole="button">
               <Text style={styles.categoryEmoji}>{cat.emoji}</Text>
               <Text style={styles.categoryName}>{cat.name}</Text>
             </TouchableOpacity>
@@ -126,6 +151,8 @@ export default function ComedyUniverseHome() {
             renderItem={({ item }) => (
               <TouchableOpacity
                 style={[styles.clipCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
+                accessibilityLabel={`Watch ${item.title}`}
+                accessibilityRole="button"
               >
                 <View style={styles.clipThumbnail}>
                   <Text style={styles.clipEmoji}>{item.emoji}</Text>
@@ -167,6 +194,8 @@ export default function ComedyUniverseHome() {
             renderItem={({ item }) => (
               <TouchableOpacity
                 style={[styles.creatorCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
+                accessibilityLabel={`View creator ${item.name}`}
+                accessibilityRole="button"
               >
                 <View style={styles.creatorAvatar}>
                   <Text style={styles.creatorEmoji}>{item.emoji}</Text>
@@ -175,7 +204,7 @@ export default function ComedyUniverseHome() {
                   {item.name}
                 </Text>
                 <Text style={styles.creatorFollowers}>{item.followers}</Text>
-                <TouchableOpacity style={styles.subscribeButton}>
+                <TouchableOpacity style={styles.subscribeButton} accessibilityLabel={`Subscribe to ${item.name}`} accessibilityRole="button">
                   <Text style={styles.subscribeText}>Subscribe</Text>
                 </TouchableOpacity>
               </TouchableOpacity>
@@ -188,7 +217,7 @@ export default function ComedyUniverseHome() {
             <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
               Top Rated
             </Text>
-            <TouchableOpacity>
+            <TouchableOpacity accessibilityLabel="See all top rated" accessibilityRole="button">
               <Text style={styles.seeAllText}>See All</Text>
             </TouchableOpacity>
           </View>
@@ -197,6 +226,8 @@ export default function ComedyUniverseHome() {
               <TouchableOpacity
                 key={item.id}
                 style={[styles.topRatedCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
+                accessibilityLabel={`View ${item.title}`}
+                accessibilityRole="button"
               >
                 <View style={styles.topRatedThumbnail}>
                   <Text style={styles.topRatedEmoji}>{item.emoji}</Text>
@@ -217,9 +248,9 @@ export default function ComedyUniverseHome() {
             <Text style={styles.comedyPassEmoji}>🎭</Text>
             <View style={styles.comedyPassInfo}>
               <Text style={styles.comedyPassTitle}>Comedy Pass</Text>
-              <Text style={styles.comedyPassSubtitle}>All comedies from ₦1,500/month</Text>
+              <Text style={styles.comedyPassSubtitle}>All comedies from {comedySubscription.label}</Text>
             </View>
-            <TouchableOpacity style={styles.comedyPassButton}>
+            <TouchableOpacity style={styles.comedyPassButton} accessibilityLabel="Get Comedy Pass" accessibilityRole="button">
               <Text style={styles.comedyPassButtonText}>Get</Text>
             </TouchableOpacity>
           </View>

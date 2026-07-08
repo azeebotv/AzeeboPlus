@@ -1,47 +1,45 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../../context/AuthContext';
 import Link from 'next/link';
 import { api, Transaction } from '@/lib/api';
-import { webLogger } from '@/lib/logger';
+import { Skeleton, ErrorState } from '@azeebo/ui/web';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 
 export default function WalletPage(): React.JSX.Element {
-  const { user: _user, isAuthenticated, isLoading: authIsLoading } = useAuth();
-  const [balance, setBalance] = useState(0);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { isAuthenticated, isLoading: authIsLoading } = useAuth();
 
-  useEffect(() => {
-    if (authIsLoading) return;
-    if (!isAuthenticated) {
-      setIsLoading(false);
-      return;
-    }
+  const balanceQuery = useQuery({
+    queryKey: ['wallet-balance'],
+    queryFn: async () => {
+      const res = await api.wallet.getBalance();
+      if (res.success && res.data) return res.data.balance;
+      throw new Error(res.message || 'Failed to load wallet balance');
+    },
+    enabled: !authIsLoading && isAuthenticated,
+    staleTime: 30000,
+  });
 
-    const fetchWallet = async () => {
-      try {
-        setIsLoading(true);
-        const [balanceRes, transactionsRes] = await Promise.all([
-          api.wallet.getBalance(),
-          api.wallet.getTransactions(),
-        ]);
-        if (balanceRes.success && balanceRes.data) setBalance(balanceRes.data.balance);
-        if (transactionsRes.success && transactionsRes.data) {
-          const txData = transactionsRes.data;
-          setTransactions(Array.isArray(txData) ? txData : txData.items || []);
-        }
-      } catch (err) {
-        webLogger.error('Failed to fetch wallet data', err);
-        setError('Failed to load wallet data. Please try again.');
-      } finally {
-        setIsLoading(false);
+  const transactionsQuery = useQuery({
+    queryKey: ['wallet-transactions'],
+    queryFn: async () => {
+      const res = await api.wallet.getTransactions();
+      if (res.success && res.data) {
+        const txData = res.data;
+        return Array.isArray(txData) ? txData : txData.items || [];
       }
-    };
-    fetchWallet();
-  }, [authIsLoading, isAuthenticated]);
+      throw new Error(res.message || 'Failed to load transactions');
+    },
+    enabled: !authIsLoading && isAuthenticated,
+    staleTime: 30000,
+  });
+
+  const balance = balanceQuery.data ?? 0;
+  const transactions: Transaction[] = transactionsQuery.data ?? [];
+  const isLoading = authIsLoading || balanceQuery.isLoading || transactionsQuery.isLoading;
+  const error = balanceQuery.error?.message || transactionsQuery.error?.message || null;
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
@@ -54,22 +52,17 @@ export default function WalletPage(): React.JSX.Element {
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {isLoading ? (
-            <div
-              className="h-[200px] animate-pulse"
-              style={{ backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: '1rem' }}
-            />
+            <Skeleton height="200px" borderRadius="1rem" className="bg-white/10" />
           ) : error ? (
-            <div className="text-center">
-              <p className="text-white/80 mb-4">{error}</p>
-              <button
-                type="button"
-                onClick={() => window.location.reload()}
-                className="px-6 py-3 rounded-full text-sm font-semibold transition-colors"
-                style={{ backgroundColor: 'white', color: '#CC1C1C' }}
-              >
-                Retry
-              </button>
-            </div>
+            <ErrorState
+              title="Failed to load wallet"
+              description={error}
+              buttonText="Retry"
+              onButtonPress={() => {
+                balanceQuery.refetch();
+                transactionsQuery.refetch();
+              }}
+            />
           ) : (
             <div className="text-center">
               <p className="text-white/80 mb-2">Your Wallet Balance</p>
@@ -121,11 +114,7 @@ export default function WalletPage(): React.JSX.Element {
             {isLoading ? (
               <div className="space-y-4">
                 {[1, 2, 3].map((i) => (
-                  <div
-                    key={i}
-                    className="h-16 animate-pulse rounded-lg"
-                    style={{ backgroundColor: '#2A2A2A' }}
-                  />
+                  <Skeleton key={i} height="64px" borderRadius="0.5rem" />
                 ))}
               </div>
             ) : transactions.length > 0 ? (

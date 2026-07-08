@@ -342,6 +342,16 @@ export function gatewayPath(endpoint: string): string {
 
 const ACCESS_TOKEN_KEY = 'azeebo_access_token';
 
+function getCookie(name: string): string | null {
+  if (typeof document === 'undefined') return null;
+  const match = document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]*)'));
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
+const CSRF_HEADER = 'X-CSRF-Token';
+const CSRF_COOKIE = '_csrf';
+const STATE_CHANGING_METHODS = ['POST', 'PUT', 'PATCH', 'DELETE'];
+
 export async function apiFetch<T>(
   endpoint: string,
   options: RequestInit = {}
@@ -355,6 +365,14 @@ export async function apiFetch<T>(
 
   if (storedToken) {
     headers['Authorization'] = `Bearer ${storedToken}`;
+  }
+
+  const method = (options.method || 'GET').toUpperCase();
+  if (STATE_CHANGING_METHODS.includes(method)) {
+    const csrfToken = getCookie(CSRF_COOKIE);
+    if (csrfToken) {
+      headers[CSRF_HEADER] = csrfToken;
+    }
   }
 
   try {
@@ -383,7 +401,7 @@ export async function apiFetch<T>(
         details: data.details,
         timestamp: data.timestamp,
         path: data.path,
-      } as any;
+      } as ApiError;
     }
 
     return {
@@ -396,7 +414,7 @@ export async function apiFetch<T>(
       success: false,
       message: 'Network error. Please check your connection.',
       error: error instanceof Error ? error.message : 'Unknown error',
-      status: 0,
-    } as any;
+      statusCode: 0,
+    } as ApiError;
   }
 }

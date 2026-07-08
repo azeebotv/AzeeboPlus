@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -64,9 +64,10 @@ export default function SportsPredictionPage() {
       setMatchInfo(matchRes);
       setPredictionOptions(Array.isArray(optsRes) ? optsRes : []);
       setScoreOptions(Array.isArray(scoresRes) ? scoresRes : []);
-    } catch (err: any) {
+    } catch (err: unknown) {
       logger.error('Failed to load prediction data:', err);
-      setError(err.message || 'Failed to load prediction data');
+      const message = err instanceof Error ? err.message : 'Failed to load prediction data';
+      setError(message);
     } finally {
       setIsLoading(false);
     }
@@ -175,9 +176,10 @@ export default function SportsPredictionPage() {
               Alert.alert('Success', 'Your prediction has been placed!', [
                 { text: 'OK', onPress: () => router.back() },
               ]);
-            } catch (error: any) {
+            } catch (error: unknown) {
               logger.error('Failed to place prediction:', error);
-              Alert.alert('Error', error.message || 'Failed to place prediction');
+              const message = error instanceof Error ? error.message : 'Failed to place prediction';
+              Alert.alert('Error', message);
             }
           },
         },

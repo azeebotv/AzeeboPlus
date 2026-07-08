@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { randomUUID } from 'crypto';
+import { AsyncLocalStorage } from 'async_hooks';
 
 export interface Span {
   traceId: string;
@@ -33,6 +34,8 @@ export interface TracingConfig {
 export class TracingService {
   private readonly config: Required<TracingConfig>;
   private readonly activeSpans: Map<string, Span> = new Map();
+  private static readonly MAX_ACTIVE_SPANS = 10000;
+  private readonly asyncLocalStorage = new AsyncLocalStorage<TraceContext>();
   private exporters: Array<(span: Span) => void> = [];
 
   constructor(config?: Partial<TracingConfig>) {
@@ -92,7 +95,14 @@ export class TracingService {
       status: 'started',
     };
 
+    if (this.activeSpans.size >= TracingService.MAX_ACTIVE_SPANS) {
+      const oldestKey = this.activeSpans.keys().next().value;
+      if (oldestKey !== undefined) {
+        this.activeSpans.delete(oldestKey);
+      }
+    }
     this.activeSpans.set(span.spanId, span);
+    this.asyncLocalStorage.enterWith({ traceId: span.traceId, spanId: span.spanId, parentId: span.parentId });
     return span;
   }
 
@@ -151,7 +161,7 @@ export class TracingService {
   }
 
   getCurrentTraceContext(): TraceContext | undefined {
-    return undefined;
+    return this.asyncLocalStorage.getStore();
   }
 
   addExporter(exporter: (span: Span) => void): void {

@@ -1,10 +1,13 @@
-import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useQuery } from '@tanstack/react-query';
 import { LoadingState, EmptyState, ErrorState } from '../src/components/StateContainers';
 import { apiClient } from '../src/api/client';
+import { ApiResponse } from '../src/types/api';
+
+type ListResponse<T> = T[] | ApiResponse<T[]>;
 
 interface LiveMatch {
   id: string;
@@ -39,37 +42,50 @@ export default function SportsUniverseHome() {
   const colorScheme = useColorScheme();
   const router = useRouter();
   const isDark = colorScheme === 'dark';
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [liveMatches, setLiveMatches] = useState<LiveMatch[]>([]);
-  const [upcomingMatches, setUpcomingMatches] = useState<UpcomingMatch[]>([]);
-  const [categories, setCategories] = useState<SportCategory[]>([]);
-  const [predictionLeagues, setPredictionLeagues] = useState<PredictionLeague[]>([]);
 
-  const fetchData = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const [liveRes, upcomingRes, catsRes, leaguesRes] = await Promise.all([
-        apiClient.get<any>('/v1/sports/live'),
-        apiClient.get<any>('/v1/sports/upcoming'),
-        apiClient.get<any>('/v1/sports/categories'),
-        apiClient.get<any>('/v1/sports/prediction-leagues'),
-      ]);
-      setLiveMatches(Array.isArray(liveRes) ? liveRes : (liveRes?.data ?? []));
-      setUpcomingMatches(Array.isArray(upcomingRes) ? upcomingRes : (upcomingRes?.data ?? []));
-      setCategories(Array.isArray(catsRes) ? catsRes : (catsRes?.data ?? []));
-      setPredictionLeagues(Array.isArray(leaguesRes) ? leaguesRes : (leaguesRes?.data ?? []));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const liveQuery = useQuery({
+    queryKey: ['sports', 'live'],
+    queryFn: async () => {
+      const res = await apiClient.get<ListResponse<LiveMatch>>('/v1/sports/live');
+      return Array.isArray(res) ? res : (res?.data ?? []);
+    },
+    staleTime: 30_000,
+  });
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  const upcomingQuery = useQuery({
+    queryKey: ['sports', 'upcoming'],
+    queryFn: async () => {
+      const res = await apiClient.get<ListResponse<UpcomingMatch>>('/v1/sports/upcoming');
+      return Array.isArray(res) ? res : (res?.data ?? []);
+    },
+    staleTime: 60_000,
+  });
+
+  const categoriesQuery = useQuery({
+    queryKey: ['sports', 'categories'],
+    queryFn: async () => {
+      const res = await apiClient.get<ListResponse<SportCategory>>('/v1/sports/categories');
+      return Array.isArray(res) ? res : (res?.data ?? []);
+    },
+    staleTime: 60_000,
+  });
+
+  const leaguesQuery = useQuery({
+    queryKey: ['sports', 'prediction-leagues'],
+    queryFn: async () => {
+      const res = await apiClient.get<ListResponse<PredictionLeague>>('/v1/sports/prediction-leagues');
+      return Array.isArray(res) ? res : (res?.data ?? []);
+    },
+    staleTime: 60_000,
+  });
+
+  const isLoading = liveQuery.isLoading || upcomingQuery.isLoading || categoriesQuery.isLoading || leaguesQuery.isLoading;
+  const error = liveQuery.error?.message || upcomingQuery.error?.message || categoriesQuery.error?.message || leaguesQuery.error?.message;
+
+  const liveMatches = liveQuery.data ?? [];
+  const upcomingMatches = upcomingQuery.data ?? [];
+  const categories = categoriesQuery.data ?? [];
+  const predictionLeagues = leaguesQuery.data ?? [];
 
   if (isLoading) {
     return (
@@ -81,7 +97,15 @@ export default function SportsUniverseHome() {
   if (error) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
-        <ErrorState description={error} onRetry={fetchData} />
+        <ErrorState
+          description={error}
+          onRetry={() => {
+            liveQuery.refetch();
+            upcomingQuery.refetch();
+            categoriesQuery.refetch();
+            leaguesQuery.refetch();
+          }}
+        />
       </SafeAreaView>
     );
   }
@@ -109,7 +133,7 @@ export default function SportsUniverseHome() {
 
         <View style={styles.categoryScroll}>
           {categories.map((cat) => (
-            <TouchableOpacity key={cat.id} style={styles.categoryChip}>
+            <TouchableOpacity key={cat.id} style={styles.categoryChip} accessibilityLabel={`Filter by ${cat.name}`} accessibilityRole="button">
               <Text style={styles.categoryEmoji}>{cat.emoji}</Text>
               <Text style={styles.categoryName}>{cat.name}</Text>
             </TouchableOpacity>
@@ -127,6 +151,8 @@ export default function SportsUniverseHome() {
                 key={match.id}
                 style={[styles.matchCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
                 onPress={() => router.push('/sports/prediction')}
+                accessibilityLabel={`${match.home} vs ${match.away}`}
+                accessibilityRole="button"
               >
                 <View style={styles.matchLeague}>
                   <Text style={styles.leagueName}>{match.league}</Text>
@@ -155,10 +181,10 @@ export default function SportsUniverseHome() {
                   </View>
                 </View>
                 <View style={styles.matchActions}>
-                  <TouchableOpacity style={styles.watchButton}>
+                  <TouchableOpacity style={styles.watchButton} accessibilityLabel={`Watch ${match.home} vs ${match.away} live`} accessibilityRole="button">
                     <Text style={styles.watchButtonText}>Watch Live</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity style={styles.predictButton}>
+                  <TouchableOpacity style={styles.predictButton} accessibilityLabel={`Predict outcome for ${match.home} vs ${match.away}`} accessibilityRole="button">
                     <Text style={styles.predictButtonText}>Predict</Text>
                   </TouchableOpacity>
                 </View>
@@ -172,7 +198,7 @@ export default function SportsUniverseHome() {
             <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
               Upcoming Matches
             </Text>
-            <TouchableOpacity>
+            <TouchableOpacity accessibilityLabel="See all upcoming matches" accessibilityRole="button">
               <Text style={styles.seeAllText}>See All</Text>
             </TouchableOpacity>
           </View>
@@ -182,6 +208,8 @@ export default function SportsUniverseHome() {
                 key={match.id}
                 style={[styles.upcomingCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
                 onPress={() => router.push('/sports/prediction')}
+                accessibilityLabel={`${match.home} vs ${match.away} on ${match.date}`}
+                accessibilityRole="button"
               >
                 <Text style={styles.upcomingEmoji}>{match.emoji}</Text>
                 <View style={styles.upcomingInfo}>
@@ -191,7 +219,7 @@ export default function SportsUniverseHome() {
                   <Text style={styles.upcomingDate}>{match.date}</Text>
                   <Text style={styles.upcomingLeague}>{match.league}</Text>
                 </View>
-                <TouchableOpacity style={styles.remindButton}>
+                <TouchableOpacity style={styles.remindButton} accessibilityLabel={`Set reminder for ${match.home} vs ${match.away}`} accessibilityRole="button">
                   <Text style={styles.remindIcon}>🔔</Text>
                 </TouchableOpacity>
               </TouchableOpacity>
@@ -211,6 +239,8 @@ export default function SportsUniverseHome() {
                 key={league.id}
                 style={[styles.predictionCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
                 onPress={() => router.push('/sports/prediction')}
+                accessibilityLabel={`${league.name} prediction league`}
+                accessibilityRole="button"
               >
                 <View style={styles.predictionInfo}>
                   <Text style={[styles.predictionName, { color: isDark ? '#fff' : '#000' }]}>
@@ -221,7 +251,7 @@ export default function SportsUniverseHome() {
                     <Text style={styles.predictionPrize}>🏆 {league.prize}</Text>
                   </View>
                 </View>
-                <TouchableOpacity style={styles.joinButton}>
+                <TouchableOpacity style={styles.joinButton} accessibilityLabel={`Join ${league.name}`} accessibilityRole="button">
                   <Text style={styles.joinButtonText}>Join</Text>
                 </TouchableOpacity>
               </TouchableOpacity>

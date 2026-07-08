@@ -1,61 +1,72 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 
 @Injectable()
 export class IntelligenceService {
+  private readonly logger = new Logger(IntelligenceService.name);
   constructor(private prisma: PrismaService) {}
 
   async getPersonalization(userId: string): Promise<{ success: boolean; data?: unknown }> {
-    const [watchHistory, preferences, rewardAccount] = await Promise.all([
-      this.prisma.watchHistory.findMany({
-        where: { userId },
-        orderBy: { watchedAt: 'desc' },
-        take: 100,
-      }),
-      this.prisma.user.findUnique({
-        where: { id: userId },
-        select: { preferences: true },
-      }),
-      this.prisma.rewardAccount.findUnique({
-        where: { userId },
-      }),
-    ]);
+    try {
+      const [watchHistory, preferences, rewardAccount] = await Promise.all([
+        this.prisma.watchHistory.findMany({
+          where: { userId },
+          orderBy: { watchedAt: 'desc' },
+          take: 100,
+        }),
+        this.prisma.user.findUnique({
+          where: { id: userId },
+          select: { preferences: true },
+        }),
+        this.prisma.rewardAccount.findUnique({
+          where: { userId },
+        }),
+      ]);
 
-    const contentIds = watchHistory.map((h) => h.contentId);
-    const watchedContent = await this.prisma.contentItem.findMany({
-      where: { id: { in: contentIds } },
-      include: { universe: true },
-    });
+      const contentIds = watchHistory.map((h) => h.contentId);
+      const watchedContent = await this.prisma.contentItem.findMany({
+        where: { id: { in: contentIds } },
+        include: { universe: true },
+      });
 
-    const universePreferences = watchedContent.reduce(
-      (acc, c) => {
-        const universe = c.universe?.name || 'unknown';
-        acc[universe] = (acc[universe] || 0) + 1;
-        return acc;
-      },
-      {} as Record<string, number>
-    );
+      const universePreferences = watchedContent.reduce(
+        (acc, c) => {
+          const universe = c.universe?.name || 'unknown';
+          acc[universe] = (acc[universe] || 0) + 1;
+          return acc;
+        },
+        {} as Record<string, number>
+      );
 
-    const topUniverses = Object.entries(universePreferences)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 3)
-      .map(([name]) => name);
+      const topUniverses = Object.entries(universePreferences)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 3)
+        .map(([name]) => name);
 
-    return {
-      success: true,
-      data: {
-        userId,
-        topUniverses,
-        recentCategories: [],
-        engagementLevel: rewardAccount ? 'active' : 'new',
-        preferences: preferences?.preferences || {},
-      },
-    };
+      return {
+        success: true,
+        data: {
+          userId,
+          topUniverses,
+          recentCategories: [],
+          engagementLevel: rewardAccount ? 'active' : 'new',
+          preferences: preferences?.preferences || {},
+        },
+      };
+    } catch (error) {
+      this.logger.error(`getPersonalization failed: ${error.message}`, error.stack);
+      return { success: false, error: error.message };
+    }
   }
 
   async getAudienceSegments(): Promise<{ success: boolean; data?: unknown }> {
-    const segments = await this.prisma.audienceSegment.findMany();
-    return { success: true, data: segments };
+    try {
+      const segments = await this.prisma.audienceSegment.findMany();
+      return { success: true, data: segments };
+    } catch (error) {
+      this.logger.error(`getAudienceSegments failed: ${error.message}`, error.stack);
+      return { success: false, error: error.message };
+    }
   }
 
   async createAudienceSegment(
@@ -63,166 +74,232 @@ export class IntelligenceService {
     segmentType: 'behavioral' | 'demographic' | 'firmographic',
     criteria: Record<string, unknown>
   ): Promise<{ success: boolean; data?: { id: string } }> {
-    const users = await this.prisma.user.findMany({
-      where: criteria as Record<string, string>,
-    });
+    try {
+      const ALLOWED_CRITERIA_FIELDS = [
+        'universe',
+        'category',
+        'minViewCount',
+        'maxViewCount',
+        'minWatchTime',
+        'maxWatchTime',
+        'engagementLevel',
+        'signupDateFrom',
+        'signupDateTo',
+        'lastActiveFrom',
+        'lastActiveTo',
+        'platform',
+      ];
 
-    const segment = await this.prisma.audienceSegment.create({
-      data: {
-        name,
-        segmentType,
-        criteria: JSON.stringify(criteria),
-        size: users.length,
-      },
-    });
+      const criteriaKeys = Object.keys(criteria);
+      const invalidKeys = criteriaKeys.filter((key) => !ALLOWED_CRITERIA_FIELDS.includes(key));
+      if (invalidKeys.length > 0) {
+        throw new BadRequestException(
+          `Invalid criteria fields: ${invalidKeys.join(', ')}. Allowed: ${ALLOWED_CRITERIA_FIELDS.join(', ')}`
+        );
+      }
 
-    return { success: true, data: { id: segment.id } };
+      // Map UI-facing criteria fields to Prisma User model fields
+      // NOTE: 'universe', 'platform', and 'lastActiveAt' do not exist on the User model.
+      // They are stored in the segment criteria JSON and evaluated at query time.
+      const where: Record<string, unknown> = {};
+      if (criteria.signupDateFrom || criteria.signupDateTo) {
+        where.createdAt = {};
+        if (criteria.signupDateFrom) (where.createdAt as Record<string, unknown>).gte = new Date(criteria.signupDateFrom as string);
+        if (criteria.signupDateTo) (where.createdAt as Record<string, unknown>).lte = new Date(criteria.signupDateTo as string);
+      }
+      // Behavioral criteria (minViewCount, maxViewCount, minWatchTime, maxWatchTime, engagementLevel)
+      // require joins on engagement tables and cannot be directly mapped to User model fields.
+      // These are stored in the segment criteria JSON and evaluated at query time.
+
+      const users = await this.prisma.user.findMany({
+        where: where as Record<string, string>,
+      });
+
+      const segment = await this.prisma.audienceSegment.create({
+        data: {
+          name,
+          segmentType,
+          criteria: JSON.stringify(criteria),
+          size: users.length,
+        },
+      });
+
+      return { success: true, data: { id: segment.id } };
+    } catch (error) {
+      this.logger.error(`createAudienceSegment failed: ${error.message}`, error.stack);
+      return { success: false, error: error.message };
+    }
   }
 
   async getCreatorScores(universe?: string): Promise<{ success: boolean; data?: unknown }> {
-    const scores = await this.prisma.creatorScore.findMany({
-      orderBy: { overallScore: 'desc' },
-      take: 100,
-    });
+    try {
+      const scores = await this.prisma.creatorScore.findMany({
+        orderBy: { overallScore: 'desc' },
+        take: 100,
+      });
 
-    return { success: true, data: scores };
+      return { success: true, data: scores };
+    } catch (error) {
+      this.logger.error(`getCreatorScores failed: ${error.message}`, error.stack);
+      return { success: false, error: error.message };
+    }
   }
 
   async calculateCreatorScore(creatorId: string): Promise<{ success: boolean; data?: unknown }> {
-    const contentItems = await this.prisma.contentItem.findMany({
-      where: { creatorId },
-    });
+    try {
+      const contentItems = await this.prisma.contentItem.findMany({
+        where: { creatorId },
+      });
 
-    const totalViews = contentItems.reduce(
-      (sum: number, c: { viewCount: number }) => sum + c.viewCount,
-      0
-    );
-    const engagementScore = Math.min(100, totalViews / 10);
-    const growthScore = Math.min(100, contentItems.length * 5);
-    const monetizationScore = 0;
-    const overallScore = engagementScore * 0.5 + growthScore * 0.3 + monetizationScore * 0.2;
+      const totalViews = contentItems.reduce(
+        (sum: number, c: { viewCount: number }) => sum + c.viewCount,
+        0
+      );
+      const engagementScore = Math.min(100, totalViews / 10);
+      const growthScore = Math.min(100, contentItems.length * 5);
+      const monetizationScore = 0;
+      const overallScore = engagementScore * 0.5 + growthScore * 0.3 + monetizationScore * 0.2;
 
-    const score = await this.prisma.creatorScore.upsert({
-      where: { creatorId },
-      create: {
-        creatorId,
-        engagementScore,
-        growthScore,
-        monetizationScore,
-        overallScore,
-        lastUpdated: new Date(),
-      },
-      update: {
-        engagementScore,
-        growthScore,
-        monetizationScore,
-        overallScore,
-        lastUpdated: new Date(),
-      },
-    });
+      const score = await this.prisma.creatorScore.upsert({
+        where: { creatorId },
+        create: {
+          creatorId,
+          engagementScore,
+          growthScore,
+          monetizationScore,
+          overallScore,
+          lastUpdated: new Date(),
+        },
+        update: {
+          engagementScore,
+          growthScore,
+          monetizationScore,
+          overallScore,
+          lastUpdated: new Date(),
+        },
+      });
 
-    return { success: true, data: score };
+      return { success: true, data: score };
+    } catch (error) {
+      this.logger.error(`calculateCreatorScore failed: ${error.message}`, error.stack);
+      return { success: false, error: error.message };
+    }
   }
 
   async getChurnRisks(threshold = 0.5): Promise<{ success: boolean; data?: unknown }> {
-    const risks = await this.prisma.churnRisk.findMany({
-      where: { churnProbability: { gte: threshold } },
-      orderBy: { churnProbability: 'desc' },
-      take: 100,
-    });
+    try {
+      const risks = await this.prisma.churnRisk.findMany({
+        where: { churnProbability: { gte: threshold } },
+        orderBy: { churnProbability: 'desc' },
+        take: 100,
+      });
 
-    return { success: true, data: risks };
+      return { success: true, data: risks };
+    } catch (error) {
+      this.logger.error(`getChurnRisks failed: ${error.message}`, error.stack);
+      return { success: false, error: error.message };
+    }
   }
 
   async calculateChurnRisk(userId: string): Promise<{ success: boolean; data?: unknown }> {
-    const [user, rewardAccount, watchHistory] = await Promise.all([
-      this.prisma.user.findUnique({ where: { id: userId } }),
-      this.prisma.rewardAccount.findUnique({ where: { userId } }),
-      this.prisma.watchHistory.findMany({
+    try {
+      const [user, rewardAccount, watchHistory] = await Promise.all([
+        this.prisma.user.findUnique({ where: { id: userId } }),
+        this.prisma.rewardAccount.findUnique({ where: { userId } }),
+        this.prisma.watchHistory.findMany({
+          where: { userId },
+          orderBy: { watchedAt: 'desc' },
+          take: 30,
+        }),
+      ]);
+
+      if (!user) {
+        return { success: true, data: { error: 'User not found' } };
+      }
+
+      const lastActivity = watchHistory[0]?.watchedAt;
+      const daysSinceActivity = lastActivity
+        ? Math.floor((Date.now() - lastActivity.getTime()) / (1000 * 60 * 60 * 24))
+        : 999;
+
+      const factors: Record<string, number> = {};
+      let riskScore = 0;
+
+      if (daysSinceActivity > 30) {
+        factors.daysSinceLastActivity = 0.5;
+        riskScore += 0.5;
+      } else if (daysSinceActivity > 14) {
+        factors.daysSinceLastActivity = 0.3;
+        riskScore += 0.3;
+      } else if (daysSinceActivity > 7) {
+        factors.daysSinceLastActivity = 0.1;
+        riskScore += 0.1;
+      }
+
+      if (!rewardAccount) {
+        factors.noRewardAccount = 0.2;
+        riskScore += 0.2;
+      }
+
+      const watchFrequency = watchHistory.length;
+      if (watchFrequency < 5) {
+        factors.lowWatchFrequency = 0.3;
+        riskScore += 0.3;
+      }
+
+      let riskLevel: 'low' | 'medium' | 'high' | 'critical';
+      if (riskScore >= 0.7) riskLevel = 'critical';
+      else if (riskScore >= 0.5) riskLevel = 'high';
+      else if (riskScore >= 0.3) riskLevel = 'medium';
+      else riskLevel = 'low';
+
+      const predictedChurnAt =
+        riskLevel === 'critical'
+          ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+          : riskLevel === 'high'
+            ? new Date(Date.now() + 14 * 24 * 60 * 60 * 1000)
+            : null;
+
+      const churnRisk = await this.prisma.churnRisk.upsert({
         where: { userId },
-        orderBy: { watchedAt: 'desc' },
-        take: 30,
-      }),
-    ]);
+        create: {
+          userId,
+          riskLevel,
+          churnProbability: riskScore,
+          factors: JSON.stringify(factors),
+          lastActivityAt: lastActivity || null,
+          predictedChurnAt,
+        },
+        update: {
+          riskLevel,
+          churnProbability: riskScore,
+          factors: JSON.stringify(factors),
+          lastActivityAt: lastActivity || null,
+          predictedChurnAt,
+        },
+      });
 
-    if (!user) {
-      return { success: true, data: { error: 'User not found' } };
+      return { success: true, data: churnRisk };
+    } catch (error) {
+      this.logger.error(`calculateChurnRisk failed: ${error.message}`, error.stack);
+      return { success: false, error: error.message };
     }
-
-    const lastActivity = watchHistory[0]?.watchedAt;
-    const daysSinceActivity = lastActivity
-      ? Math.floor((Date.now() - lastActivity.getTime()) / (1000 * 60 * 60 * 24))
-      : 999;
-
-    const factors: Record<string, number> = {};
-    let riskScore = 0;
-
-    if (daysSinceActivity > 30) {
-      factors.daysSinceLastActivity = 0.5;
-      riskScore += 0.5;
-    } else if (daysSinceActivity > 14) {
-      factors.daysSinceLastActivity = 0.3;
-      riskScore += 0.3;
-    } else if (daysSinceActivity > 7) {
-      factors.daysSinceLastActivity = 0.1;
-      riskScore += 0.1;
-    }
-
-    if (!rewardAccount) {
-      factors.noRewardAccount = 0.2;
-      riskScore += 0.2;
-    }
-
-    const watchFrequency = watchHistory.length;
-    if (watchFrequency < 5) {
-      factors.lowWatchFrequency = 0.3;
-      riskScore += 0.3;
-    }
-
-    let riskLevel: 'low' | 'medium' | 'high' | 'critical';
-    if (riskScore >= 0.7) riskLevel = 'critical';
-    else if (riskScore >= 0.5) riskLevel = 'high';
-    else if (riskScore >= 0.3) riskLevel = 'medium';
-    else riskLevel = 'low';
-
-    const predictedChurnAt =
-      riskLevel === 'critical'
-        ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
-        : riskLevel === 'high'
-          ? new Date(Date.now() + 14 * 24 * 60 * 60 * 1000)
-          : null;
-
-    const churnRisk = await this.prisma.churnRisk.upsert({
-      where: { userId },
-      create: {
-        userId,
-        riskLevel,
-        churnProbability: riskScore,
-        factors: JSON.stringify(factors),
-        lastActivityAt: lastActivity || null,
-        predictedChurnAt,
-      },
-      update: {
-        riskLevel,
-        churnProbability: riskScore,
-        factors: JSON.stringify(factors),
-        lastActivityAt: lastActivity || null,
-        predictedChurnAt,
-      },
-    });
-
-    return { success: true, data: churnRisk };
   }
 
   async getFraudDetections(status?: string): Promise<{ success: boolean; data?: unknown }> {
-    const where = status ? { status } : {};
-    const detections = await this.prisma.fraudDetection.findMany({
-      where,
-      orderBy: { createdAt: 'desc' },
-      take: 100,
-    });
+    try {
+      const where = status ? { status } : {};
+      const detections = await this.prisma.fraudDetection.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        take: 100,
+      });
 
-    return { success: true, data: detections };
+      return { success: true, data: detections };
+    } catch (error) {
+      this.logger.error(`getFraudDetections failed: ${error.message}`, error.stack);
+      return { success: false, error: error.message };
+    }
   }
 
   async detectFraud(
@@ -231,16 +308,21 @@ export class IntelligenceService {
     severity: 'low' | 'medium' | 'high' | 'critical',
     details: Record<string, unknown>
   ): Promise<{ success: boolean; data?: { id: string } }> {
-    const detection = await this.prisma.fraudDetection.create({
-      data: {
-        userId,
-        eventType,
-        severity,
-        details: JSON.stringify(details),
-      },
-    });
+    try {
+      const detection = await this.prisma.fraudDetection.create({
+        data: {
+          userId,
+          eventType,
+          severity,
+          details: JSON.stringify(details),
+        },
+      });
 
-    return { success: true, data: { id: detection.id } };
+      return { success: true, data: { id: detection.id } };
+    } catch (error) {
+      this.logger.error(`detectFraud failed: ${error.message}`, error.stack);
+      return { success: false, error: error.message };
+    }
   }
 
   async reviewFraudDetection(
@@ -248,276 +330,301 @@ export class IntelligenceService {
     reviewedBy: string,
     status: 'confirmed' | 'cleared'
   ): Promise<{ success: boolean; data?: { message: string } }> {
-    await this.prisma.fraudDetection.update({
-      where: { id: detectionId },
-      data: { status, reviewedBy, reviewedAt: new Date() },
-    });
+    try {
+      await this.prisma.fraudDetection.update({
+        where: { id: detectionId },
+        data: { status, reviewedBy, reviewedAt: new Date() },
+      });
 
-    return { success: true, data: { message: `Detection ${status}` } };
+      return { success: true, data: { message: `Detection ${status}` } };
+    } catch (error) {
+      this.logger.error(`reviewFraudDetection failed: ${error.message}`, error.stack);
+      return { success: false, error: error.message };
+    }
   }
 
   async getRetentionMetrics(dateRange?: {
     from: Date;
     to: Date;
   }): Promise<{ success: boolean; data?: unknown }> {
-    const where = dateRange ? { createdAt: { gte: dateRange.from, lte: dateRange.to } } : {};
+    try {
+      const where = dateRange ? { createdAt: { gte: dateRange.from, lte: dateRange.to } } : {};
 
-    const [totalUsers, activeUsers, retentionByWeek] = await Promise.all([
-      this.prisma.user.count({ where }),
-      this.prisma.productEvent.groupBy({
-        by: ['userId'],
-        where: { timestamp: dateRange ? { gte: dateRange.from, lte: dateRange.to } : undefined },
-      }),
-      this.prisma.$queryRaw<unknown[]>`
-        SELECT
-          DATE_TRUNC('week', "createdAt") as week,
-          COUNT(*) FILTER (WHERE "lastLoginAt" >= NOW() - INTERVAL '7 days') as retained,
-          COUNT(*) as total
-        FROM "reward_accounts"
-        GROUP BY DATE_TRUNC('week', "createdAt")
-        ORDER BY week DESC
-        LIMIT 12
-      `,
-    ]);
+      const [totalUsers, activeUsers, retentionByWeek] = await Promise.all([
+        this.prisma.user.count({ where }),
+        this.prisma.productEvent.groupBy({
+          by: ['userId'],
+          where: { timestamp: dateRange ? { gte: dateRange.from, lte: dateRange.to } : undefined },
+        }),
+        this.prisma.$queryRaw<unknown[]>`
+          SELECT
+            DATE_TRUNC('week', "createdAt") as week,
+            COUNT(*) FILTER (WHERE "lastLoginAt" >= NOW() - INTERVAL '7 days') as retained,
+            COUNT(*) as total
+          FROM "reward_accounts"
+          GROUP BY DATE_TRUNC('week', "createdAt")
+          ORDER BY week DESC
+          LIMIT 12
+        `,
+      ]);
 
-    return {
-      success: true,
-      data: {
-        totalUsers,
-        activeUsers: activeUsers.length,
-        retentionRate: totalUsers > 0 ? (activeUsers.length / totalUsers) * 100 : 0,
-        retentionByWeek,
-      },
-    };
+      return {
+        success: true,
+        data: {
+          totalUsers,
+          activeUsers: activeUsers.length,
+          retentionRate: totalUsers > 0 ? (activeUsers.length / totalUsers) * 100 : 0,
+          retentionByWeek,
+        },
+      };
+    } catch (error) {
+      this.logger.error(`getRetentionMetrics failed: ${error.message}`, error.stack);
+      return { success: false, error: error.message };
+    }
   }
 
   async getCrossUniverseRecommendations(
     userId: string
   ): Promise<{ success: boolean; data?: unknown }> {
-    const [watchHistory, rewardAccount] = await Promise.all([
-      this.prisma.watchHistory.findMany({
-        where: { userId },
-        orderBy: { watchedAt: 'desc' },
-        take: 50,
-      }),
-      this.prisma.rewardAccount.findUnique({ where: { userId } }),
-    ]);
+    try {
+      const [watchHistory, rewardAccount] = await Promise.all([
+        this.prisma.watchHistory.findMany({
+          where: { userId },
+          orderBy: { watchedAt: 'desc' },
+          take: 50,
+        }),
+        this.prisma.rewardAccount.findUnique({ where: { userId } }),
+      ]);
 
-    const contentIds = watchHistory.map((w) => w.contentId);
+      const contentIds = watchHistory.map((w) => w.contentId);
 
-    const watchedContent = await this.prisma.contentItem.findMany({
-      where: { id: { in: contentIds } },
-      include: { universe: true },
-    });
-
-    const contentById = new Map(watchedContent.map((c) => [c.id, c]));
-
-    const universePreferences: Record<string, number> = {};
-    for (const history of watchHistory) {
-      const content = contentById.get(history.contentId);
-      if (content?.universe?.name) {
-        universePreferences[content.universe.name] =
-          (universePreferences[content.universe.name] || 0) + 1;
-      }
-    }
-
-    const topUniverses = Object.entries(universePreferences)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 3)
-      .map(([name]) => name);
-
-    const allUniverses = [
-      'reality',
-      'creator',
-      'lifestyle',
-      'games',
-      'comedy',
-      'sports',
-      'movie',
-      'vertical',
-    ];
-    const unexploredUniverses = allUniverses.filter((u) => !topUniverses.includes(u));
-
-    const recommendedContent: Record<string, unknown[]> = {};
-
-    for (const universe of unexploredUniverses.slice(0, 3)) {
-      const content = await this.prisma.contentItem.findMany({
-        where: { universe: { name: universe } },
-        orderBy: { viewCount: 'desc' },
-        take: 5,
+      const watchedContent = await this.prisma.contentItem.findMany({
+        where: { id: { in: contentIds } },
         include: { universe: true },
       });
-      if (content.length > 0) {
-        recommendedContent[universe] = content.map((c) => ({
-          id: c.id,
-          title: c.title,
-          universe: c.universe?.displayName,
-          viewCount: c.viewCount,
-        }));
-      }
-    }
 
-    return {
-      success: true,
-      data: {
-        userId,
-        primaryUniverses: topUniverses,
-        recommendedContent,
-        engagementLevel: rewardAccount ? 'active' : 'new',
-        recommendationReason: 'Based on your viewing patterns, you might enjoy these universes',
-      },
-    };
+      const contentById = new Map(watchedContent.map((c) => [c.id, c]));
+
+      const universePreferences: Record<string, number> = {};
+      for (const history of watchHistory) {
+        const content = contentById.get(history.contentId);
+        if (content?.universe?.name) {
+          universePreferences[content.universe.name] =
+            (universePreferences[content.universe.name] || 0) + 1;
+        }
+      }
+
+      const topUniverses = Object.entries(universePreferences)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 3)
+        .map(([name]) => name);
+
+      const allUniverses = [
+        'reality',
+        'creator',
+        'lifestyle',
+        'games',
+        'comedy',
+        'sports',
+        'movie',
+        'vertical',
+      ];
+      const unexploredUniverses = allUniverses.filter((u) => !topUniverses.includes(u));
+
+      const recommendedContent: Record<string, unknown[]> = {};
+
+      for (const universe of unexploredUniverses.slice(0, 3)) {
+        const content = await this.prisma.contentItem.findMany({
+          where: { universe: { name: universe } },
+          orderBy: { viewCount: 'desc' },
+          take: 5,
+          include: { universe: true },
+        });
+        if (content.length > 0) {
+          recommendedContent[universe] = content.map((c) => ({
+            id: c.id,
+            title: c.title,
+            universe: c.universe?.displayName,
+            viewCount: c.viewCount,
+          }));
+        }
+      }
+
+      return {
+        success: true,
+        data: {
+          userId,
+          primaryUniverses: topUniverses,
+          recommendedContent,
+          engagementLevel: rewardAccount ? 'active' : 'new',
+          recommendationReason: 'Based on your viewing patterns, you might enjoy these universes',
+        },
+      };
+    } catch (error) {
+      this.logger.error(`getCrossUniverseRecommendations failed: ${error.message}`, error.stack);
+      return { success: false, error: error.message };
+    }
   }
 
   async analyzeFraudPatterns(): Promise<{ success: boolean; data?: unknown }> {
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    try {
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    const rapidVoteEvents = await this.prisma.productEvent.findMany({
-      where: {
-        eventName: { in: ['vote_submitted', 'supervote_submitted'] },
-        timestamp: { gte: thirtyDaysAgo },
-      },
-      select: { userId: true, sessionId: true },
-    });
+      const rapidVoteEvents = await this.prisma.productEvent.findMany({
+        where: {
+          eventName: { in: ['vote_submitted', 'supervote_submitted'] },
+          timestamp: { gte: thirtyDaysAgo },
+        },
+        select: { userId: true, sessionId: true },
+      });
 
-    const voteByUserSession = new Map<string, number>();
-    for (const event of rapidVoteEvents) {
-      if (event.userId && event.sessionId) {
-        const key = `${event.userId}-${event.sessionId}`;
-        voteByUserSession.set(key, (voteByUserSession.get(key) || 0) + 1);
+      const voteByUserSession = new Map<string, number>();
+      for (const event of rapidVoteEvents) {
+        if (event.userId && event.sessionId) {
+          const key = `${event.userId}-${event.sessionId}`;
+          voteByUserSession.set(key, (voteByUserSession.get(key) || 0) + 1);
+        }
       }
-    }
-    const rapidVotes = Array.from(voteByUserSession.values()).filter((count) => count > 20).length;
+      const rapidVotes = Array.from(voteByUserSession.values()).filter((count) => count > 20).length;
 
-    const rapidPredictionEvents = await this.prisma.productEvent.count({
-      where: {
-        eventName: 'prediction_placed',
-        timestamp: { gte: thirtyDaysAgo },
-      },
-    });
-
-    const failedPaymentCount = await this.prisma.paymentIntent.count({
-      where: {
-        status: 'failed',
-        createdAt: { gte: thirtyDaysAgo },
-      },
-    });
-
-    const suspiciousSessionCount = await this.prisma.productEvent
-      .groupBy({
-        by: ['sessionId'],
-        where: { timestamp: { gte: thirtyDaysAgo } },
-        _count: true,
-      })
-      .then((results) => results.filter((r) => r._count > 500).length);
-
-    const patterns = [];
-
-    if (rapidVotes > 0) {
-      patterns.push({
-        type: 'rapid_voting',
-        severity: 'high',
-        description: 'Users submitting unusually high number of votes in short sessions',
-        affectedCount: rapidVotes,
+      const rapidPredictionEvents = await this.prisma.productEvent.count({
+        where: {
+          eventName: 'prediction_placed',
+          timestamp: { gte: thirtyDaysAgo },
+        },
       });
-    }
 
-    if (rapidPredictionEvents > 50) {
-      patterns.push({
-        type: 'rapid_predictions',
-        severity: 'high',
-        description: 'Users placing unusually high number of predictions',
-        affectedCount: rapidPredictionEvents,
+      const failedPaymentCount = await this.prisma.paymentIntent.count({
+        where: {
+          status: 'failed',
+          createdAt: { gte: thirtyDaysAgo },
+        },
       });
-    }
 
-    if (failedPaymentCount > 3) {
-      patterns.push({
-        type: 'payment_abuse',
-        severity: 'critical',
-        description: 'Users with multiple failed payment attempts',
-        affectedCount: failedPaymentCount,
-      });
-    }
+      const suspiciousSessionCount = await this.prisma.productEvent
+        .groupBy({
+          by: ['sessionId'],
+          where: { timestamp: { gte: thirtyDaysAgo } },
+          _count: true,
+        })
+        .then((results) => results.filter((r) => r._count > 500).length);
 
-    if (suspiciousSessionCount > 0) {
-      patterns.push({
-        type: 'session_manipulation',
-        severity: 'medium',
-        description: 'Sessions with unusually high event counts',
-        affectedCount: suspiciousSessionCount,
-      });
-    }
+      const patterns = [];
 
-    return {
-      success: true,
-      data: {
-        analyzedPeriod: '30 days',
-        patternsDetected: patterns.length,
-        patterns,
-        requiresReview: patterns.filter((p) => p.severity === 'critical' || p.severity === 'high')
-          .length,
-      },
-    };
+      if (rapidVotes > 0) {
+        patterns.push({
+          type: 'rapid_voting',
+          severity: 'high',
+          description: 'Users submitting unusually high number of votes in short sessions',
+          affectedCount: rapidVotes,
+        });
+      }
+
+      if (rapidPredictionEvents > 50) {
+        patterns.push({
+          type: 'rapid_predictions',
+          severity: 'high',
+          description: 'Users placing unusually high number of predictions',
+          affectedCount: rapidPredictionEvents,
+        });
+      }
+
+      if (failedPaymentCount > 3) {
+        patterns.push({
+          type: 'payment_abuse',
+          severity: 'critical',
+          description: 'Users with multiple failed payment attempts',
+          affectedCount: failedPaymentCount,
+        });
+      }
+
+      if (suspiciousSessionCount > 0) {
+        patterns.push({
+          type: 'session_manipulation',
+          severity: 'medium',
+          description: 'Sessions with unusually high event counts',
+          affectedCount: suspiciousSessionCount,
+        });
+      }
+
+      return {
+        success: true,
+        data: {
+          analyzedPeriod: '30 days',
+          patternsDetected: patterns.length,
+          patterns,
+          requiresReview: patterns.filter((p) => p.severity === 'critical' || p.severity === 'high')
+            .length,
+        },
+      };
+    } catch (error) {
+      this.logger.error(`analyzeFraudPatterns failed: ${error.message}`, error.stack);
+      return { success: false, error: error.message };
+    }
   }
 
   async getSegmentationInsights(): Promise<{ success: boolean; data?: unknown }> {
-    const [userCount, activeUsers, contentInteractions] = await Promise.all([
-      this.prisma.user.count(),
-      this.prisma.productEvent.groupBy({
+    try {
+      const [userCount, activeUsers, contentInteractions] = await Promise.all([
+        this.prisma.user.count(),
+        this.prisma.productEvent.groupBy({
+          by: ['userId'],
+          where: { timestamp: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } },
+        }),
+        this.prisma.productEvent.groupBy({
+          by: ['eventName'],
+          where: { timestamp: { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } },
+          _count: true,
+        }),
+      ]);
+
+      const userEngagementScores = await this.prisma.productEvent.groupBy({
         by: ['userId'],
-        where: { timestamp: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } },
-      }),
-      this.prisma.productEvent.groupBy({
-        by: ['eventName'],
         where: { timestamp: { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } },
         _count: true,
-      }),
-    ]);
+      });
 
-    const userEngagementScores = await this.prisma.productEvent.groupBy({
-      by: ['userId'],
-      where: { timestamp: { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } },
-      _count: true,
-    });
+      const totalInteractions = userEngagementScores.reduce((sum, u) => sum + u._count, 0);
+      const avgInteractionsPerUser = userCount > 0 ? totalInteractions / userCount : 0;
 
-    const totalInteractions = userEngagementScores.reduce((sum, u) => sum + u._count, 0);
-    const avgInteractionsPerUser = userCount > 0 ? totalInteractions / userCount : 0;
+      const highlyEngaged = userEngagementScores.filter(
+        (u) => u._count > avgInteractionsPerUser * 1.5
+      ).length;
+      const moderatelyEngaged = userEngagementScores.filter(
+        (u) => u._count > avgInteractionsPerUser * 0.5 && u._count <= avgInteractionsPerUser * 1.5
+      ).length;
+      const lowEngagement = userCount - highlyEngaged - moderatelyEngaged;
 
-    const highlyEngaged = userEngagementScores.filter(
-      (u) => u._count > avgInteractionsPerUser * 1.5
-    ).length;
-    const moderatelyEngaged = userEngagementScores.filter(
-      (u) => u._count > avgInteractionsPerUser * 0.5 && u._count <= avgInteractionsPerUser * 1.5
-    ).length;
-    const lowEngagement = userCount - highlyEngaged - moderatelyEngaged;
+      const engagementDistribution = {
+        highlyEngaged,
+        moderatelyEngaged,
+        lowEngagement: Math.max(0, lowEngagement),
+      };
 
-    const engagementDistribution = {
-      highlyEngaged,
-      moderatelyEngaged,
-      lowEngagement: Math.max(0, lowEngagement),
-    };
+      const topEvents = contentInteractions
+        .sort((a, b) => b._count - a._count)
+        .slice(0, 5)
+        .map((e) => ({ event: e.eventName, count: e._count }));
 
-    const topEvents = contentInteractions
-      .sort((a, b) => b._count - a._count)
-      .slice(0, 5)
-      .map((e) => ({ event: e.eventName, count: e._count }));
-
-    return {
-      success: true,
-      data: {
-        totalUsers: userCount,
-        activeUsers: activeUsers.length,
-        engagementRate: userCount > 0 ? (activeUsers.length / userCount) * 100 : 0,
-        engagementDistribution,
-        topEvents,
-        insights: [
-          `Active users represent ${userCount > 0 ? ((activeUsers.length / userCount) * 100).toFixed(1) : 0}% of total users`,
-          `Most popular interaction: ${topEvents[0]?.event || 'N/A'}`,
-          `${engagementDistribution.highlyEngaged} users are highly engaged`,
-        ],
-      },
-    };
+      return {
+        success: true,
+        data: {
+          totalUsers: userCount,
+          activeUsers: activeUsers.length,
+          engagementRate: userCount > 0 ? (activeUsers.length / userCount) * 100 : 0,
+          engagementDistribution,
+          topEvents,
+          insights: [
+            `Active users represent ${userCount > 0 ? ((activeUsers.length / userCount) * 100).toFixed(1) : 0}% of total users`,
+            `Most popular interaction: ${topEvents[0]?.event || 'N/A'}`,
+            `${engagementDistribution.highlyEngaged} users are highly engaged`,
+          ],
+        },
+      };
+    } catch (error) {
+      this.logger.error(`getSegmentationInsights failed: ${error.message}`, error.stack);
+      return { success: false, error: error.message };
+    }
   }
 }

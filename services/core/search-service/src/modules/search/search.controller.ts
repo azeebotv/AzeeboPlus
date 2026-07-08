@@ -8,20 +8,22 @@ import {
   Query,
   HttpCode,
   HttpStatus,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
-import { RateLimitGuard, RateLimit, Public } from '@azeebo/security';
+import { RateLimitGuard, RateLimit } from '@azeebo/security';
 
 import { SearchService } from './search.service';
 import { SearchResponse } from './interfaces/search-response.interface';
+import { LogSearchDto } from './dto/log-search.dto';
 
 @ApiTags('Search')
 @Controller('v1/search')
+@UseGuards(AuthGuard('jwt'))
 export class SearchController {
   constructor(private readonly searchService: SearchService) {}
 
-  @Public()
   @Get()
   @UseGuards(RateLimitGuard)
   @RateLimit(30, 60000)
@@ -51,7 +53,6 @@ export class SearchController {
     });
   }
 
-  @Public()
   @Get('faceted')
   @ApiOperation({ summary: 'Search with faceted filtering' })
   @ApiResponse({ status: 200, description: 'Search results with facets' })
@@ -75,7 +76,6 @@ export class SearchController {
     });
   }
 
-  @Public()
   @Get('suggestions')
   @UseGuards(RateLimitGuard)
   @RateLimit(60, 60000)
@@ -85,7 +85,6 @@ export class SearchController {
     return this.searchService.getSuggestions(query);
   }
 
-  @Public()
   @Get('trending')
   @UseGuards(RateLimitGuard)
   @RateLimit(30, 60000)
@@ -95,7 +94,6 @@ export class SearchController {
     return this.searchService.getTrending();
   }
 
-  @Public()
   @Get('facets')
   @ApiOperation({ summary: 'Get search facets' })
   @ApiResponse({ status: 200, description: 'Search facets' })
@@ -114,8 +112,12 @@ export class SearchController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async logSearch(
     @Request() req: { user: { id: string; sub: string } },
-    @Body() body: { query: string; resultsCount?: number }
+    @Body() body: LogSearchDto
   ): Promise<{ success: boolean }> {
-    return this.searchService.logSearch(req.user.id, body.query, body.resultsCount ?? 0);
+    const userId = req.user?.id;
+    if (!userId) {
+      throw new UnauthorizedException();
+    }
+    return this.searchService.logSearch(userId, body.query, body.resultsCount ?? 0);
   }
 }

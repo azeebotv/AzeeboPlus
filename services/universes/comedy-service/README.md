@@ -19,7 +19,7 @@ Azeebo+ Comedy Service - Manages comedy content, shows, and feeds.
 
 ```bash
 # Install dependencies
-pnpm install
+ppnpm install
 
 # Generate Prisma client
 pnpm prisma:generate
@@ -28,7 +28,7 @@ pnpm prisma:generate
 pnpm prisma:migrate
 
 # Start development server
-pnpm start:dev
+ppnpm start:dev
 ```
 
 ## API Routes

@@ -16,14 +16,42 @@ import { MediaService } from '../media/media.service';
 import { TranscodingService } from '../media/transcoding.service';
 import { ContentRepository } from './content.repository';
 import { RedisService } from '../../cache/redis.service';
-import axios from 'axios';
+import { ContentFeedService } from './content-feed.service';
+import { ContentModerationService } from './content-moderation.service';
+import { ContentRelationshipService } from './content-relationship.service';
+import { ContentCategoryService } from './content-category.service';
+import { ContentIngestionService } from './content-ingestion.service';
+
+type ContentWithUniverse = Prisma.ContentItemGetPayload<{ include: { universe: true } }>;
+type ContentWithUniverseCategories = Prisma.ContentItemGetPayload<{ include: { universe: true; categories: true } }>;
+type ContentWithUniverseTags = Prisma.ContentItemGetPayload<{ include: { universe: true; tags: true } }>;
+type ContentWithAll = Prisma.ContentItemGetPayload<{ include: { universe: true; mediaAsset: true; categories: true; tags: true } }>;
+type ContentWithUniverseMediaAsset = Prisma.ContentItemGetPayload<{ include: { universe: true; mediaAsset: true } }>;
+type MediaAssetWithContentItem = Prisma.MediaAssetGetPayload<{ include: { contentItem: true } }>;
+type ContentRelationshipWithContent = Prisma.ContentRelationshipGetPayload<{ include: { content: true; relatedContent: true } }>;
+type ContentRelationshipWithRelatedUniverse = Prisma.ContentRelationshipGetPayload<{ include: { relatedContent: { include: { universe: true } } } }>;
+type ContentItemModel = Prisma.ContentItemGetPayload<{}>;
+type CategoryModel = Prisma.CategoryGetPayload<{}>;
+type TagModel = Prisma.TagGetPayload<{}>;
+type CommentModel = Prisma.CommentGetPayload<{}>;
+type MediaAssetModel = Prisma.MediaAssetGetPayload<{}>;
+type TranscodingJobResult = { jobId: string; status: string; message: string };
+type TranscodingStatusResult = { jobId: string; status: string; progress: number };
+type ModerationStatusResult = { reports: number; openReports: number; moderationCases: number; currentStatus: string };
+type ContentAvailabilityResult = {
+  isAvailable: boolean;
+  reason: string;
+  windowType: string;
+  releaseDate: Date | null;
+  streamingReleaseDate: Date | null;
+  windowEndDate: Date | null;
+  isExclusive: boolean;
+  isPremiere: boolean;
+};
 
 @Injectable()
 export class ContentService {
   private readonly logger = new Logger(ContentService.name);
-  private readonly moderationServiceUrl: string;
-  private readonly safetyScanEnabled: boolean;
-  private readonly cacheTTL: number;
 
   constructor(
     private readonly prisma: PrismaService,
@@ -31,807 +59,72 @@ export class ContentService {
     private readonly mediaService: MediaService,
     private readonly transcodingService: TranscodingService,
     private readonly configService: ConfigService,
-    private readonly redisService: RedisService
-  ) {
-    this.moderationServiceUrl = this.configService.get<string>(
-      'MODERATION_SERVICE_URL',
-      'http://moderation-service:3022'
-    );
-    this.safetyScanEnabled = this.configService.get<boolean>('SAFETY_SCAN_ENABLED', true);
-    this.cacheTTL = this.configService.get<number>('CONTENT_CACHE_TTL', 300);
+    private readonly redisService: RedisService,
+    private readonly contentFeedService: ContentFeedService,
+    private readonly contentModerationService: ContentModerationService,
+    private readonly contentRelationshipService: ContentRelationshipService,
+    private readonly contentCategoryService: ContentCategoryService,
+    private readonly contentIngestionService: ContentIngestionService
+  ) {}
+
+  private canModifyContent(userId: string, userRole: string | undefined, creatorId: string): boolean {
+    return creatorId === userId || userRole === 'admin' || userRole === 'moderator';
   }
 
-  private async checkContentSafety(
+  // Feed/Discovery methods - delegated to ContentFeedService
+
+  async getHomeFeed(userId?: string): Promise<{
+    success: boolean;
+    data: {
+      trending: ContentWithUniverse[];
+      recommended: ContentWithUniverse[];
+      latest: ContentWithUniverse[];
+    };
+  }> {
+    return this.contentFeedService.getHomeFeed(userId);
+  }
+
+  async getWatchFeed(_userId?: string): Promise<{ success: boolean; data: ContentWithUniverse[] }> {
+    return this.contentFeedService.getWatchFeed(_userId);
+  }
+
+  async getFeatured(): Promise<{ success: boolean; data: ContentWithUniverse[] }> {
+    return this.contentFeedService.getFeatured();
+  }
+
+  async getTrending(): Promise<{ success: boolean; data: ContentWithUniverse[] }> {
+    return this.contentFeedService.getTrending();
+  }
+
+  async getNewReleases(limit?: number): Promise<{ success: boolean; data: ContentWithUniverse[] }> {
+    return this.contentFeedService.getNewReleases(limit);
+  }
+
+  async getFeaturedSlides(limit?: number): Promise<{ success: boolean; data: ContentWithUniverse[] }> {
+    return this.contentFeedService.getFeaturedSlides(limit);
+  }
+
+  async getPopularInRegion(limit?: number): Promise<{ success: boolean; data: ContentWithUniverse[] }> {
+    return this.contentFeedService.getPopularInRegion(limit);
+  }
+
+  async getRecommended(userId: string): Promise<{ success: boolean; data: ContentWithUniverse[] }> {
+    return this.contentFeedService.getRecommended(userId);
+  }
+
+  // Moderation methods - delegated to ContentModerationService
+
+  async checkContentSafety(
     contentId: string
   ): Promise<{ isSafe: boolean; issues: string[]; scanId?: string }> {
-    if (!this.safetyScanEnabled) {
-      this.logger.warn('Safety scanning is disabled, skipping safety check');
-      return { isSafe: true, issues: [] };
-    }
-
-    try {
-      const content = await this.prisma.contentItem.findUnique({
-        where: { id: contentId },
-        include: { mediaAsset: true },
-      });
-
-      if (!content?.mediaAsset?.originalUrl) {
-        this.logger.warn(`No media asset found for content ${contentId}, skipping scan`);
-        return { isSafe: true, issues: [] };
-      }
-
-      const response = await axios.post(`${this.moderationServiceUrl}/api/moderation/scan`, {
-        contentId,
-        mediaUrl: content.mediaAsset.originalUrl,
-        scanTypes: ['malware', 'content_safety'],
-      }, { timeout: 10000 });
-
-      const result = response.data;
-
-      if (!result.success) {
-        return { isSafe: false, issues: ['Safety scan failed'], scanId: result.data?.scanId };
-      }
-
-      const scanResult = result.data;
-
-      if (scanResult.result === 'blocked') {
-        return {
-          isSafe: false,
-          issues: [`Content blocked due to: ${scanResult.threatLevel || 'safety concerns'}`],
-          scanId: scanResult.scanId,
-        };
-      }
-
-      if (scanResult.result === 'flagged') {
-        return {
-          isSafe: false,
-          issues: [`Content flagged: ${scanResult.threatLevel || 'potential issue'}`],
-          scanId: scanResult.scanId,
-        };
-      }
-
-      return { isSafe: true, issues: [], scanId: scanResult.scanId };
-    } catch (error) {
-      this.logger.error(`Safety scan failed for content ${contentId}: ${(error as Error).message}`);
-      throw new BadRequestException('Safety scan failed, please try again later');
-    }
+    return this.contentModerationService.checkContentSafety(contentId);
   }
 
   async scanContentForSafety(contentId: string): Promise<{
     success: boolean;
     data: { scanId: string; result: string; threatLevel?: string; categories?: string[] };
   }> {
-    const content = await this.prisma.contentItem.findUnique({
-      where: { id: contentId },
-      include: { mediaAsset: true },
-    });
-
-    if (!content) {
-      throw new NotFoundException('Content not found');
-    }
-
-    if (!content.mediaAsset?.originalUrl) {
-      throw new BadRequestException('Content has no media asset to scan');
-    }
-
-    try {
-      const response = await axios.post(`${this.moderationServiceUrl}/api/moderation/scan`, {
-        contentId,
-        mediaUrl: content.mediaAsset.originalUrl,
-        scanTypes: ['malware', 'content_safety'],
-      }, { timeout: 10000 });
-
-      return response.data;
-    } catch (error) {
-      this.logger.error(`Safety scan failed for content ${contentId}: ${(error as Error).message}`);
-      throw new BadRequestException('Safety scan failed, please try again later');
-    }
-  }
-
-  async listContent(
-    filters?: { universe?: string; creatorId?: string; status?: string },
-    page?: number,
-    limit?: number
-  ): Promise<{ success: boolean; data: any }> {
-    const result = await this.contentRepository.findAll(filters, page || 1, limit || 20);
-
-    return {
-      success: true,
-      data: {
-        items: result.data,
-        pagination: {
-          page: result.page,
-          limit: result.limit,
-          total: result.total,
-          totalPages: result.totalPages,
-        },
-      },
-    };
-  }
-
-  async getHomeFeed(userId?: string): Promise<{ success: boolean; data: any }> {
-    const cacheKey = `home-feed:${userId || 'anonymous'}`;
-
-    // Try to get from cache first
-    const cached = await this.redisService.get(cacheKey);
-    if (cached) {
-      return JSON.parse(cached);
-    }
-
-    const contentSelect = {
-      id: true,
-      title: true,
-      slug: true,
-      description: true,
-      thumbnailUrl: true,
-      type: true,
-      status: true,
-      viewCount: true,
-      createdAt: true,
-      universe: {
-        select: {
-          id: true,
-          name: true,
-          slug: true,
-        },
-      },
-    };
-
-    const watchedContentIds = userId
-      ? (
-          await this.prisma.watchHistory.findMany({
-            where: { userId },
-            select: { contentId: true },
-          })
-        ).map((h) => h.contentId)
-      : [];
-
-    const [trending, recommended, latest] = await Promise.all([
-      this.prisma.contentItem.findMany({
-        where: { status: 'published' },
-        select: contentSelect,
-        orderBy: { viewCount: 'desc' },
-        take: 10,
-      }),
-      userId
-        ? this.prisma.contentItem.findMany({
-            where: {
-              status: 'published',
-              id: { notIn: watchedContentIds },
-            },
-            select: contentSelect,
-            orderBy: { viewCount: 'desc' },
-            take: 10,
-          })
-        : [],
-      this.prisma.contentItem.findMany({
-        where: { status: 'published' },
-        select: contentSelect,
-        orderBy: { createdAt: 'desc' },
-        take: 10,
-      }),
-    ]);
-
-    const result = {
-      success: true,
-      data: {
-        trending,
-        recommended,
-        latest,
-      },
-    };
-
-    // Cache for 5 minutes
-    await this.redisService.set(cacheKey, JSON.stringify(result), this.cacheTTL);
-
-    return result;
-  }
-
-  async getWatchFeed(_userId?: string): Promise<{ success: boolean; data: any }> {
-    const content = await this.prisma.contentItem.findMany({
-      where: { status: 'published' },
-      select: {
-        id: true,
-        title: true,
-        description: true,
-        thumbnail: true,
-        status: true,
-        viewCount: true,
-        createdAt: true,
-        universe: {
-          select: {
-            id: true,
-            name: true,
-            displayName: true,
-          },
-        },
-      },
-      orderBy: { viewCount: 'desc' },
-      take: 50,
-    });
-
-    return {
-      success: true,
-      data: content,
-    };
-  }
-
-  async getContent(id: string): Promise<{ success: boolean; data: any }> {
-    const content = await this.contentRepository.findById(id);
-
-    if (!content) {
-      throw new NotFoundException(`Content not found`);
-    }
-
-    // Increment view count
-    await this.prisma.contentItem.update({
-      where: { id },
-      data: { viewCount: { increment: 1 } },
-    });
-
-    return {
-      success: true,
-      data: content,
-    };
-  }
-
-  async searchContent(query: string): Promise<{ success: boolean; data: any }> {
-    const result = await this.contentRepository.search(query);
-
-    return {
-      success: true,
-      data: result.data,
-    };
-  }
-
-  async getContentComments(
-    contentId: string,
-    page?: number,
-    limit?: number
-  ): Promise<{ success: boolean; data: any }> {
-    const result = await this.contentRepository.getComments(contentId, page || 1, limit || 20);
-
-    const items = result.data.map((c: any) => ({
-      id: c.id,
-      userId: c.userId,
-      userName: c.userName || 'Anonymous',
-      content: c.text || c.content || '',
-      timestamp: c.createdAt,
-      likes: c.likes || 0,
-      likedByCurrentUser: false,
-    }));
-
-    return {
-      success: true,
-      data: items,
-    };
-  }
-
-  async addCommentToContent(
-    userId: string,
-    contentId: string,
-    text: string
-  ): Promise<{ success: boolean; data: any }> {
-    const comment = await this.contentRepository.addComment(contentId, userId, text);
-
-    return {
-      success: true,
-      data: comment,
-    };
-  }
-
-  async getContentAnalytics(contentId: string): Promise<{ success: boolean; data: any }> {
-    const analytics = await this.contentRepository.getAnalytics(contentId);
-
-    return {
-      success: true,
-      data: analytics,
-    };
-  }
-
-  async getFeatured(): Promise<{ success: boolean; data: any }> {
-    try {
-      const content = await this.prisma.contentItem.findMany({
-        where: {
-          status: 'published',
-          OR: [{ isExclusive: true }, { isPremiere: true }],
-        },
-        orderBy: { viewCount: 'desc' },
-        take: 20,
-        include: { universe: true },
-      });
-
-      // If no exclusive/premiere content, fall back to top viewed
-      if (content.length === 0) {
-        const fallback = await this.prisma.contentItem.findMany({
-          where: { status: 'published' },
-          orderBy: { viewCount: 'desc' },
-          take: 6,
-          include: { universe: true },
-        });
-        return { success: true, data: fallback };
-      }
-
-      return { success: true, data: content };
-    } catch {
-      return { success: true, data: [] };
-    }
-  }
-
-  async getTrending(): Promise<{ success: boolean; data: any }> {
-    try {
-      const content = await this.prisma.contentItem.findMany({
-        where: { status: 'published' },
-        orderBy: { viewCount: 'desc' },
-        take: 20,
-        include: { universe: true },
-      });
-
-      return {
-        success: true,
-        data: content,
-      };
-    } catch {
-      return {
-        success: true,
-        data: [],
-      };
-    }
-  }
-
-  async getNewReleases(limit?: number): Promise<{ success: boolean; data: any }> {
-    try {
-      const take = Math.min(limit || 12, 50);
-      const content = await this.prisma.contentItem.findMany({
-        where: {
-          status: 'published',
-          releaseDate: { not: null },
-        },
-        orderBy: { releaseDate: 'desc' },
-        take,
-        include: { universe: true },
-      });
-
-      return { success: true, data: content };
-    } catch {
-      return { success: true, data: [] };
-    }
-  }
-
-  async getFeaturedSlides(limit?: number): Promise<{ success: boolean; data: any }> {
-    try {
-      const take = Math.min(limit || 5, 10);
-      const content = await this.prisma.contentItem.findMany({
-        where: {
-          status: 'published',
-          OR: [{ isExclusive: true }, { isPremiere: true }],
-        },
-        orderBy: { viewCount: 'desc' },
-        take,
-        include: { universe: true },
-      });
-
-      if (content.length === 0) {
-        const fallback = await this.prisma.contentItem.findMany({
-          where: { status: 'published' },
-          orderBy: { viewCount: 'desc' },
-          take,
-          include: { universe: true },
-        });
-        return { success: true, data: fallback };
-      }
-
-      return { success: true, data: content };
-    } catch {
-      return { success: true, data: [] };
-    }
-  }
-
-  async getPopularInRegion(limit?: number): Promise<{ success: boolean; data: any }> {
-    try {
-      const take = Math.min(limit || 12, 50);
-      const content = await this.prisma.contentItem.findMany({
-        where: { status: 'published' },
-        orderBy: { viewCount: 'desc' },
-        take,
-        include: { universe: true },
-      });
-
-      return { success: true, data: content };
-    } catch {
-      return { success: true, data: [] };
-    }
-  }
-
-  async getRecommended(userId: string): Promise<{ success: boolean; data: any }> {
-    // Get user's watched content IDs and their universe
-    const watchedContent = await this.prisma.watchHistory.findMany({
-      where: { userId },
-      take: 100,
-      orderBy: { watchedAt: 'desc' },
-    });
-
-    const watchedContentIds = watchedContent.map((h) => h.contentId);
-
-    // Get the content items to find their universe IDs
-    const watchedContentItems = await this.prisma.contentItem.findMany({
-      where: { id: { in: watchedContentIds } },
-      select: { id: true, universeId: true },
-    });
-
-    const watchedUniverseIds = watchedContentItems.map((c) => c.universeId).filter((id) => id);
-
-    const content = await this.prisma.contentItem.findMany({
-      where: {
-        status: 'published',
-        universeId: { in: watchedUniverseIds.length ? watchedUniverseIds : undefined },
-        id: {
-          notIn: watchedContentIds,
-        },
-      },
-      orderBy: { viewCount: 'desc' },
-      take: 20,
-      include: { universe: true },
-    });
-
-    return {
-      success: true,
-      data: content,
-    };
-  }
-
-  async createContent(
-    userId: string,
-    createContentDto: CreateContentDto
-  ): Promise<{ success: boolean; data: any }> {
-    const content = await this.contentRepository.create({
-      ...createContentDto,
-      creatorId: userId,
-    });
-
-    return {
-      success: true,
-      data: content,
-    };
-  }
-
-  async updateContent(
-    userId: string,
-    id: string,
-    updateContentDto: UpdateContentDto,
-    userRole?: string
-  ): Promise<{ success: boolean; data: any }> {
-    const content = await this.contentRepository.findById(id);
-
-    if (!content) {
-      throw new NotFoundException(`Content not found`);
-    }
-
-    if (content.creatorId !== userId && userRole !== 'admin' && userRole !== 'moderator') {
-      throw new ForbiddenException('Not authorized to update this content');
-    }
-
-    const updatedContent = await this.contentRepository.update(
-      id,
-      updateContentDto as Partial<Record<string, unknown>>
-    );
-
-    return {
-      success: true,
-      data: updatedContent,
-    };
-  }
-
-  async deleteContent(
-    userId: string,
-    id: string,
-    userRole?: string
-  ): Promise<{ success: boolean; data: any }> {
-    const content = await this.contentRepository.findById(id);
-
-    if (!content) {
-      throw new NotFoundException(`Content not found`);
-    }
-
-    if (content.creatorId !== userId && userRole !== 'admin' && userRole !== 'moderator') {
-      throw new ForbiddenException('Not authorized to delete this content');
-    }
-
-    await this.contentRepository.delete(id);
-    return {
-      success: true,
-      data: { message: 'Content soft deleted successfully' },
-    };
-  }
-
-  async publishContent(
-    userId: string,
-    id: string,
-    userRole?: string
-  ): Promise<{ success: boolean; data: any }> {
-    const content = await this.prisma.contentItem.findUnique({
-      where: { id },
-    });
-
-    if (!content) {
-      throw new NotFoundException(`Content not found`);
-    }
-
-    if (content.creatorId !== userId && userRole !== 'admin' && userRole !== 'moderator') {
-      throw new ForbiddenException('Not authorized to publish this content');
-    }
-
-    if (content.status !== 'draft') {
-      throw new BadRequestException('Content is already published or pending');
-    }
-
-    const safetyResult = await this.checkContentSafety(id);
-
-    if (!safetyResult.isSafe) {
-      throw new ForbiddenException({
-        message: 'Content failed safety scan',
-        issues: safetyResult.issues,
-        scanId: safetyResult.scanId,
-      });
-    }
-
-    const publishedContent = await this.prisma.contentItem.update({
-      where: { id },
-      data: {
-        status: 'published',
-        publishedAt: new Date(),
-        updatedAt: new Date(),
-      },
-      include: { universe: true },
-    });
-
-    return {
-      success: true,
-      data: publishedContent,
-    };
-  }
-
-  async unpublishContent(
-    userId: string,
-    id: string,
-    userRole?: string
-  ): Promise<{ success: boolean; data: any }> {
-    const content = await this.prisma.contentItem.findUnique({
-      where: { id },
-    });
-
-    if (!content) {
-      throw new NotFoundException(`Content not found`);
-    }
-
-    if (content.creatorId !== userId && userRole !== 'admin' && userRole !== 'moderator') {
-      throw new ForbiddenException('Not authorized to unpublish this content');
-    }
-
-    if (content.status !== 'published') {
-      throw new BadRequestException('Content is not published');
-    }
-
-    const unpublishedContent = await this.prisma.contentItem.update({
-      where: { id },
-      data: {
-        status: 'draft',
-        publishedAt: null,
-        updatedAt: new Date(),
-      },
-      include: { universe: true },
-    });
-
-    return {
-      success: true,
-      data: unpublishedContent,
-    };
-  }
-
-  async createMediaAsset(
-    userId: string,
-    contentId: string,
-    createMediaAssetDto: CreateMediaAssetDto,
-    userRole?: string
-  ): Promise<{ success: boolean; data: any }> {
-    const content = await this.prisma.contentItem.findUnique({
-      where: { id: contentId },
-    });
-
-    if (!content) {
-      throw new NotFoundException(`Content not found`);
-    }
-
-    if (content.creatorId !== userId && userRole !== 'admin' && userRole !== 'moderator') {
-      throw new ForbiddenException('Not authorized to add media asset to this content');
-    }
-
-    const existingMediaAsset = await this.prisma.mediaAsset.findUnique({
-      where: { contentItemId: contentId },
-    });
-
-    if (existingMediaAsset) {
-      throw new BadRequestException('Content already has a media asset');
-    }
-
-    const mediaAsset = await this.prisma.mediaAsset.create({
-      data: {
-        ...createMediaAssetDto,
-        contentItemId: contentId,
-      } as any,
-      include: { contentItem: true },
-    });
-
-    return {
-      success: true,
-      data: mediaAsset,
-    };
-  }
-
-  async updateMediaAsset(
-    userId: string,
-    contentId: string,
-    updateMediaAssetDto: UpdateMediaAssetDto,
-    userRole?: string
-  ): Promise<{ success: boolean; data: any }> {
-    const content = await this.prisma.contentItem.findUnique({
-      where: { id: contentId },
-    });
-
-    if (!content) {
-      throw new NotFoundException(`Content not found`);
-    }
-
-    if (content.creatorId !== userId && userRole !== 'admin' && userRole !== 'moderator') {
-      throw new ForbiddenException('Not authorized to update media asset for this content');
-    }
-
-    const mediaAsset = await this.prisma.mediaAsset.findUnique({
-      where: { contentItemId: contentId },
-    });
-
-    if (!mediaAsset) {
-      throw new NotFoundException(`Media asset not found`);
-    }
-
-    const updatedMediaAsset = await this.prisma.mediaAsset.update({
-      where: { id: mediaAsset.id },
-      data: {
-        ...updateMediaAssetDto,
-        updatedAt: new Date(),
-      } as Prisma.MediaAssetUpdateInput,
-      include: { contentItem: true },
-    });
-
-    return {
-      success: true,
-      data: updatedMediaAsset,
-    };
-  }
-
-  async deleteMediaAsset(
-    userId: string,
-    contentId: string,
-    userRole?: string
-  ): Promise<{ success: boolean; data: any }> {
-    const content = await this.prisma.contentItem.findUnique({
-      where: { id: contentId },
-    });
-
-    if (!content) {
-      throw new NotFoundException(`Content not found`);
-    }
-
-    if (content.creatorId !== userId && userRole !== 'admin' && userRole !== 'moderator') {
-      throw new ForbiddenException('Not authorized to delete media asset for this content');
-    }
-
-    const mediaAsset = await this.prisma.mediaAsset.findUnique({
-      where: { contentItemId: contentId },
-    });
-
-    if (!mediaAsset) {
-      throw new NotFoundException(`Media asset not found`);
-    }
-
-    await this.prisma.mediaAsset.delete({
-      where: { id: mediaAsset.id },
-    });
-
-    return {
-      success: true,
-      data: { message: 'Media asset deleted successfully' },
-    };
-  }
-
-  async getMediaAsset(contentId: string): Promise<{ success: boolean; data: any }> {
-    const mediaAsset = await this.prisma.mediaAsset.findUnique({
-      where: { contentItemId: contentId },
-      include: { contentItem: true },
-    });
-
-    if (!mediaAsset) {
-      throw new NotFoundException(`Media asset not found`);
-    }
-
-    // Generate signed URLs for media assets
-    const signedOriginalUrl = await this.mediaService.getMediaUrl(mediaAsset.originalUrl);
-    const signedThumbnailUrl = mediaAsset.thumbnailUrl
-      ? await this.mediaService.getMediaUrl(mediaAsset.thumbnailUrl)
-      : null;
-
-    return {
-      success: true,
-      data: {
-        ...mediaAsset,
-        originalUrl: signedOriginalUrl,
-        thumbnailUrl: signedThumbnailUrl,
-      },
-    };
-  }
-
-  async getSignedMediaUrl(
-    userId: string,
-    contentId: string,
-    expiresIn: number = 3600
-  ): Promise<{ success: boolean; data: any }> {
-    const mediaAsset = await this.prisma.mediaAsset.findUnique({
-      where: { contentItemId: contentId },
-    });
-
-    if (!mediaAsset) {
-      throw new NotFoundException(`Media asset not found`);
-    }
-
-    const signedUrl = await this.mediaService.getMediaUrl(mediaAsset.originalUrl, expiresIn);
-
-    return {
-      success: true,
-      data: {
-        signedUrl,
-        expiresIn,
-        mediaAssetId: mediaAsset.id,
-      },
-    };
-  }
-
-  async generateThumbnail(
-    contentId: string,
-    options?: {
-      width?: number;
-      height?: number;
-      quality?: number;
-    }
-  ): Promise<{ success: boolean; data: any }> {
-    const mediaAsset = await this.prisma.mediaAsset.findUnique({
-      where: { contentItemId: contentId },
-    });
-
-    if (!mediaAsset) {
-      throw new NotFoundException(`Media asset not found`);
-    }
-
-    const thumbnailUrl = await this.mediaService.generateThumbnail(mediaAsset.originalUrl, {
-      width: options?.width || 300,
-      height: options?.height || 200,
-      quality: options?.quality,
-    });
-
-    // Update the media asset with the new thumbnail URL
-    await this.prisma.mediaAsset.update({
-      where: { id: mediaAsset.id },
-      data: {
-        thumbnailUrl,
-      },
-    });
-
-    return {
-      success: true,
-      data: {
-        thumbnailUrl,
-        mediaAssetId: mediaAsset.id,
-      },
-    };
+    return this.contentModerationService.scanContentForSafety(contentId);
   }
 
   async reportContent(
@@ -841,114 +134,62 @@ export class ContentService {
       type: string;
       reason: string;
     }
-  ): Promise<{ success: boolean; data: any }> {
-    const content = await this.prisma.contentItem.findUnique({
-      where: { id: contentId },
-    });
-
-    if (!content) {
-      throw new NotFoundException(`Content not found`);
-    }
-
-    try {
-      const response = await fetch(`${this.moderationServiceUrl}/moderation/report`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          reportingUserId: userId,
-          type: reportData.type,
-          contentId,
-          reason: reportData.reason,
-        }),
-      });
-
-      if (!response.ok) {
-        this.logger.warn(`Moderation service returned ${response.status} for content report`);
-      }
-
-      const result = await response.json();
-      return {
-        success: true,
-        data: {
-          reportId: result.data?.reportId || `report_${Date.now()}`,
-          message: 'Content reported successfully',
-        },
-      };
-    } catch (error) {
-      this.logger.error(
-        `Failed to report content to moderation service: ${(error as Error).message}`
-      );
-      throw new BadRequestException('Failed to submit report. Please try again later.');
-    }
+  ): Promise<{ success: boolean; data: { reportId: string; message: string } }> {
+    return this.contentModerationService.reportContent(userId, contentId, reportData);
   }
 
-  async getContentModerationStatus(contentId: string): Promise<{ success: boolean; data: any }> {
-    try {
-      const response = await fetch(
-        `${this.moderationServiceUrl}/moderation/content/${contentId}/status`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-
-      if (!response.ok) {
-        if (response.status === 404) {
-          return {
-            success: true,
-            data: {
-              reports: 0,
-              openReports: 0,
-              moderationCases: 0,
-              currentStatus: 'none',
-            },
-          };
-        }
-        this.logger.warn(`Moderation service returned ${response.status} for status check`);
-      }
-
-      const result = await response.json();
-      return result;
-    } catch (error) {
-      this.logger.error(`Failed to get moderation status: ${(error as Error).message}`);
-      return {
-        success: true,
-        data: {
-          reports: 0,
-          openReports: 0,
-          moderationCases: 0,
-          currentStatus: 'unknown',
-        },
-      };
-    }
+  async getContentModerationStatus(contentId: string): Promise<{
+    success: boolean;
+    data: ModerationStatusResult;
+  }> {
+    return this.contentModerationService.getContentModerationStatus(contentId);
   }
 
-  // Category management
+  // Relationship methods - delegated to ContentRelationshipService
+
+  async addContentRelationship(
+    userId: string,
+    contentId: string,
+    relatedContentId: string,
+    relationshipType: string,
+    userRole?: string
+  ): Promise<{ success: boolean; data: ContentRelationshipWithContent }> {
+    return this.contentRelationshipService.addContentRelationship(userId, contentId, relatedContentId, relationshipType, userRole);
+  }
+
+  async removeContentRelationship(
+    userId: string,
+    contentId: string,
+    relatedContentId: string,
+    userRole?: string
+  ): Promise<{ success: boolean; data: { message: string } }> {
+    return this.contentRelationshipService.removeContentRelationship(userId, contentId, relatedContentId, userRole);
+  }
+
+  async getContentRelationships(contentId: string): Promise<{
+    success: boolean;
+    data: ContentRelationshipWithRelatedUniverse[];
+  }> {
+    return this.contentRelationshipService.getContentRelationships(contentId);
+  }
+
+  async getContentByRelationship(
+    contentId: string,
+    relationshipType?: string
+  ): Promise<{ success: boolean; data: ContentWithUniverseMediaAsset[] }> {
+    return this.contentRelationshipService.getContentByRelationship(contentId, relationshipType);
+  }
+
+  // Category/Tag methods - delegated to ContentCategoryService
+
   async createCategory(
     name: string,
     slug: string,
     description?: string,
     icon?: string,
     color?: string
-  ): Promise<{ success: boolean; data: any }> {
-    const category = await this.prisma.category.create({
-      data: {
-        name,
-        slug,
-        description,
-        icon,
-        color,
-      },
-    });
-
-    return {
-      success: true,
-      data: category,
-    };
+  ): Promise<{ success: boolean; data: CategoryModel }> {
+    return this.contentCategoryService.createCategory(name, slug, description, icon, color);
   }
 
   async updateCategory(
@@ -958,172 +199,45 @@ export class ContentService {
     description?: string,
     icon?: string,
     color?: string
-  ): Promise<{ success: boolean; data: any }> {
-    const category = await this.prisma.category.findUnique({
-      where: { id },
-    });
-
-    if (!category) {
-      throw new NotFoundException(`Category not found`);
-    }
-
-    const updatedCategory = await this.prisma.category.update({
-      where: { id },
-      data: {
-        name: name || category.name,
-        slug: slug || category.slug,
-        description: description !== undefined ? description : category.description,
-        icon: icon !== undefined ? icon : category.icon,
-        color: color !== undefined ? color : category.color,
-        updatedAt: new Date(),
-      },
-    });
-
-    return {
-      success: true,
-      data: updatedCategory,
-    };
+  ): Promise<{ success: boolean; data: CategoryModel }> {
+    return this.contentCategoryService.updateCategory(id, name, slug, description, icon, color);
   }
 
-  async deleteCategory(id: string): Promise<{ success: boolean; data: any }> {
-    const category = await this.prisma.category.findUnique({
-      where: { id },
-    });
-
-    if (!category) {
-      throw new NotFoundException(`Category not found`);
-    }
-
-    await this.prisma.category.delete({
-      where: { id },
-    });
-
-    return {
-      success: true,
-      data: { message: 'Category deleted successfully' },
-    };
+  async deleteCategory(id: string): Promise<{ success: boolean; data: { message: string } }> {
+    return this.contentCategoryService.deleteCategory(id);
   }
 
-  async getCategories(): Promise<{ success: boolean; data: any }> {
-    const categories = await this.prisma.category.findMany();
-
-    return {
-      success: true,
-      data: categories,
-    };
+  async getCategories(): Promise<{ success: boolean; data: CategoryModel[] }> {
+    return this.contentCategoryService.getCategories();
   }
 
-  // Tag management
-  async createTag(name: string, description?: string): Promise<{ success: boolean; data: any }> {
-    const tag = await this.prisma.tag.create({
-      data: {
-        name,
-        description,
-      },
-    });
-
-    return {
-      success: true,
-      data: tag,
-    };
+  async createTag(name: string, description?: string): Promise<{ success: boolean; data: TagModel }> {
+    return this.contentCategoryService.createTag(name, description);
   }
 
   async updateTag(
     id: string,
     name?: string,
     description?: string
-  ): Promise<{ success: boolean; data: any }> {
-    const tag = await this.prisma.tag.findUnique({
-      where: { id },
-    });
-
-    if (!tag) {
-      throw new NotFoundException(`Tag not found`);
-    }
-
-    const updatedTag = await this.prisma.tag.update({
-      where: { id },
-      data: {
-        name: name || tag.name,
-        description: description !== undefined ? description : tag.description,
-        updatedAt: new Date(),
-      },
-    });
-
-    return {
-      success: true,
-      data: updatedTag,
-    };
+  ): Promise<{ success: boolean; data: TagModel }> {
+    return this.contentCategoryService.updateTag(id, name, description);
   }
 
-  async deleteTag(id: string): Promise<{ success: boolean; data: any }> {
-    const tag = await this.prisma.tag.findUnique({
-      where: { id },
-    });
-
-    if (!tag) {
-      throw new NotFoundException(`Tag not found`);
-    }
-
-    await this.prisma.tag.delete({
-      where: { id },
-    });
-
-    return {
-      success: true,
-      data: { message: 'Tag deleted successfully' },
-    };
+  async deleteTag(id: string): Promise<{ success: boolean; data: { message: string } }> {
+    return this.contentCategoryService.deleteTag(id);
   }
 
-  async getTags(): Promise<{ success: boolean; data: any }> {
-    const tags = await this.prisma.tag.findMany();
-
-    return {
-      success: true,
-      data: tags,
-    };
+  async getTags(): Promise<{ success: boolean; data: TagModel[] }> {
+    return this.contentCategoryService.getTags();
   }
 
-  // Content categorization
   async addCategoryToContent(
     userId: string,
     contentId: string,
     categoryId: string,
     userRole?: string
-  ): Promise<{ success: boolean; data: any }> {
-    const content = await this.prisma.contentItem.findUnique({
-      where: { id: contentId },
-    });
-
-    if (!content) {
-      throw new NotFoundException(`Content not found`);
-    }
-
-    if (content.creatorId !== userId && userRole !== 'admin' && userRole !== 'moderator') {
-      throw new ForbiddenException('Not authorized to modify this content');
-    }
-
-    const category = await this.prisma.category.findUnique({
-      where: { id: categoryId },
-    });
-
-    if (!category) {
-      throw new NotFoundException(`Category not found`);
-    }
-
-    await this.prisma.contentItem.update({
-      where: { id: contentId },
-      data: {
-        categories: {
-          connect: { id: categoryId },
-        },
-      },
-    });
-
-    return {
-      success: true,
-      data: { message: 'Category added to content successfully' },
-    };
+  ): Promise<{ success: boolean; data: { message: string } }> {
+    return this.contentCategoryService.addCategoryToContent(userId, contentId, categoryId, userRole);
   }
 
   async removeCategoryFromContent(
@@ -1131,32 +245,8 @@ export class ContentService {
     contentId: string,
     categoryId: string,
     userRole?: string
-  ): Promise<{ success: boolean; data: any }> {
-    const content = await this.prisma.contentItem.findUnique({
-      where: { id: contentId },
-    });
-
-    if (!content) {
-      throw new NotFoundException(`Content not found`);
-    }
-
-    if (content.creatorId !== userId && userRole !== 'admin' && userRole !== 'moderator') {
-      throw new ForbiddenException('Not authorized to modify this content');
-    }
-
-    await this.prisma.contentItem.update({
-      where: { id: contentId },
-      data: {
-        categories: {
-          disconnect: { id: categoryId },
-        },
-      },
-    });
-
-    return {
-      success: true,
-      data: { message: 'Category removed from content successfully' },
-    };
+  ): Promise<{ success: boolean; data: { message: string } }> {
+    return this.contentCategoryService.removeCategoryFromContent(userId, contentId, categoryId, userRole);
   }
 
   async addTagToContent(
@@ -1164,40 +254,8 @@ export class ContentService {
     contentId: string,
     tagId: string,
     userRole?: string
-  ): Promise<{ success: boolean; data: any }> {
-    const content = await this.prisma.contentItem.findUnique({
-      where: { id: contentId },
-    });
-
-    if (!content) {
-      throw new NotFoundException(`Content not found`);
-    }
-
-    if (content.creatorId !== userId && userRole !== 'admin' && userRole !== 'moderator') {
-      throw new ForbiddenException('Not authorized to modify this content');
-    }
-
-    const tag = await this.prisma.tag.findUnique({
-      where: { id: tagId },
-    });
-
-    if (!tag) {
-      throw new NotFoundException(`Tag not found`);
-    }
-
-    await this.prisma.contentItem.update({
-      where: { id: contentId },
-      data: {
-        tags: {
-          connect: { id: tagId },
-        },
-      },
-    });
-
-    return {
-      success: true,
-      data: { message: 'Tag added to content successfully' },
-    };
+  ): Promise<{ success: boolean; data: { message: string } }> {
+    return this.contentCategoryService.addTagToContent(userId, contentId, tagId, userRole);
   }
 
   async removeTagFromContent(
@@ -1205,216 +263,652 @@ export class ContentService {
     contentId: string,
     tagId: string,
     userRole?: string
-  ): Promise<{ success: boolean; data: any }> {
-    const content = await this.prisma.contentItem.findUnique({
-      where: { id: contentId },
-    });
-
-    if (!content) {
-      throw new NotFoundException(`Content not found`);
-    }
-
-    if (content.creatorId !== userId && userRole !== 'admin' && userRole !== 'moderator') {
-      throw new ForbiddenException('Not authorized to modify this content');
-    }
-
-    await this.prisma.contentItem.update({
-      where: { id: contentId },
-      data: {
-        tags: {
-          disconnect: { id: tagId },
-        },
-      },
-    });
-
-    return {
-      success: true,
-      data: { message: 'Tag removed from content successfully' },
-    };
+  ): Promise<{ success: boolean; data: { message: string } }> {
+    return this.contentCategoryService.removeTagFromContent(userId, contentId, tagId, userRole);
   }
 
-  // Get content by category or tag
-  async getContentByCategory(categoryId: string): Promise<{ success: boolean; data: any }> {
-    const content = await this.prisma.contentItem.findMany({
-      where: {
-        status: 'published',
-        categories: {
-          some: {
-            id: categoryId,
+  async getContentByCategory(categoryId: string): Promise<{ success: boolean; data: ContentWithUniverseCategories[] }> {
+    return this.contentCategoryService.getContentByCategory(categoryId);
+  }
+
+  async getContentByTag(tagId: string): Promise<{ success: boolean; data: ContentWithUniverseTags[] }> {
+    return this.contentCategoryService.getContentByTag(tagId);
+  }
+
+  // Ingestion methods - delegated to ContentIngestionService
+
+  async ingestShortFormContent(
+    userId: string,
+    createContentDto: CreateContentDto,
+    options?: { isExclusive?: boolean; windowType?: 'basic' | 'standard' | 'premium' }
+  ): Promise<{ success: boolean; data: ContentWithUniverse }> {
+    return this.contentIngestionService.ingestShortFormContent(userId, createContentDto, options);
+  }
+
+  async ingestLongFormContent(
+    userId: string,
+    createContentDto: CreateContentDto,
+    options?: { isPremiere?: boolean; windowType?: 'standard' | 'premium' }
+  ): Promise<{ success: boolean; data: ContentWithUniverse }> {
+    return this.contentIngestionService.ingestLongFormContent(userId, createContentDto, options);
+  }
+
+  async ingestClipContent(
+    userId: string,
+    createContentDto: CreateContentDto,
+    parentContentId: string,
+    clipStartTime: number,
+    clipEndTime: number
+  ): Promise<{ success: boolean; data: ContentWithUniverse }> {
+    return this.contentIngestionService.ingestClipContent(userId, createContentDto, parentContentId, clipStartTime, clipEndTime);
+  }
+
+  async ingestEpisodeContent(
+    userId: string,
+    createContentDto: CreateContentDto,
+    seasonNumber: number,
+    episodeNumber: number,
+    seriesId?: string
+  ): Promise<{ success: boolean; data: ContentWithUniverse }> {
+    return this.contentIngestionService.ingestEpisodeContent(userId, createContentDto, seasonNumber, episodeNumber, seriesId);
+  }
+
+  async ingestMovieContent(
+    userId: string,
+    createContentDto: CreateContentDto,
+    options?: { isPremiere?: boolean; isExclusive?: boolean; windowType?: 'standard' | 'premium' }
+  ): Promise<{ success: boolean; data: ContentWithUniverse }> {
+    return this.contentIngestionService.ingestMovieContent(userId, createContentDto, options);
+  }
+
+  async ingestGameContent(
+    userId: string,
+    createContentDto: CreateContentDto,
+    options?: { difficulty?: 'easy' | 'medium' | 'hard'; gameType?: string }
+  ): Promise<{ success: boolean; data: ContentWithUniverse }> {
+    return this.contentIngestionService.ingestGameContent(userId, createContentDto, options);
+  }
+
+  async ingestSportsHighlightContent(
+    userId: string,
+    createContentDto: CreateContentDto,
+    gameDate: Date,
+    teams: string[],
+    highlightType: string
+  ): Promise<{ success: boolean; data: ContentWithUniverse }> {
+    return this.contentIngestionService.ingestSportsHighlightContent(userId, createContentDto, gameDate, teams, highlightType);
+  }
+
+  async ingestCreatorUpload(
+    userId: string,
+    createContentDto: CreateContentDto,
+    options?: { contentSubtype?: 'video' | 'audio' | 'image' | 'article' }
+  ): Promise<{ success: boolean; data: ContentWithUniverse }> {
+    return this.contentIngestionService.ingestCreatorUpload(userId, createContentDto, options);
+  }
+
+  // Core content methods - kept in this service
+
+  async listContent(
+    filters?: { universe?: string; creatorId?: string; status?: string },
+    page?: number,
+    limit?: number
+  ): Promise<{ success: boolean; data: { items: ContentWithUniverse[]; pagination: { page: number; limit: number; total: number; totalPages: number } } }> {
+    try {
+      const result = await this.contentRepository.findAll(filters, page || 1, limit || 20);
+
+      return {
+        success: true,
+        data: {
+          items: result.data as ContentWithUniverse[],
+          pagination: {
+            page: result.page,
+            limit: result.limit,
+            total: result.total,
+            totalPages: result.totalPages,
           },
         },
-      },
-      include: { universe: true, categories: true },
-    });
-
-    return {
-      success: true,
-      data: content,
-    };
+      };
+    } catch (error: unknown) {
+      this.logger.error(`Failed to list content: ${error}`);
+      return { success: false, error: { code: 'LIST_CONTENT_FAILED', message: 'Failed to list content' } } as never;
+    }
   }
 
-  async getContentByTag(tagId: string): Promise<{ success: boolean; data: any }> {
-    const content = await this.prisma.contentItem.findMany({
-      where: {
-        status: 'published',
-        tags: {
-          some: {
-            id: tagId,
-          },
+  async getContent(id: string): Promise<{ success: boolean; data: ContentWithAll }> {
+    try {
+      const content = await this.contentRepository.findById(id) as ContentWithAll | null;
+
+      if (!content) {
+        throw new NotFoundException(`Content not found`);
+      }
+
+      await this.prisma.contentItem.update({
+        where: { id },
+        data: { viewCount: { increment: 1 } },
+      });
+
+      return {
+        success: true,
+        data: content,
+      };
+    } catch (error: unknown) {
+      if (error instanceof NotFoundException) throw error;
+      this.logger.error(`Failed to get content: ${error}`);
+      return { success: false, error: { code: 'GET_CONTENT_FAILED', message: 'Failed to retrieve content' } } as never;
+    }
+  }
+
+  async searchContent(query: string): Promise<{ success: boolean; data: ContentWithUniverse[] }> {
+    try {
+      const result = await this.contentRepository.search(query);
+
+      return {
+        success: true,
+        data: result.data as ContentWithUniverse[],
+      };
+    } catch (error: unknown) {
+      this.logger.error(`Failed to search content: ${error}`);
+      return { success: false, error: { code: 'SEARCH_CONTENT_FAILED', message: 'Failed to search content' } } as never;
+    }
+  }
+
+  async createContent(
+    userId: string,
+    createContentDto: CreateContentDto
+  ): Promise<{ success: boolean; data: ContentWithUniverse }> {
+    try {
+      const content = await this.contentRepository.create({
+        ...createContentDto,
+        creatorId: userId,
+      }) as ContentWithUniverse;
+
+      return {
+        success: true,
+        data: content,
+      };
+    } catch (error: unknown) {
+      this.logger.error(`Failed to create content: ${error}`);
+      return { success: false, error: { code: 'CREATE_CONTENT_FAILED', message: 'Failed to create content' } } as never;
+    }
+  }
+
+  async updateContent(
+    userId: string,
+    id: string,
+    updateContentDto: UpdateContentDto,
+    userRole?: string
+  ): Promise<{ success: boolean; data: ContentWithUniverse }> {
+    try {
+      const content = await this.contentRepository.findById(id);
+
+      if (!content) {
+        throw new NotFoundException(`Content not found`);
+      }
+
+      if (!this.canModifyContent(userId, userRole, content.creatorId)) {
+        throw new ForbiddenException('Not authorized to update this content');
+      }
+
+      const updatedContent = await this.contentRepository.update(
+        id,
+        updateContentDto as Partial<Record<string, unknown>>
+      ) as ContentWithUniverse;
+
+      return {
+        success: true,
+        data: updatedContent,
+      };
+    } catch (error: unknown) {
+      if (error instanceof NotFoundException || error instanceof ForbiddenException) throw error;
+      this.logger.error(`Failed to update content: ${error}`);
+      return { success: false, error: { code: 'UPDATE_CONTENT_FAILED', message: 'Failed to update content' } } as never;
+    }
+  }
+
+  async deleteContent(
+    userId: string,
+    id: string,
+    userRole?: string
+  ): Promise<{ success: boolean; data: { message: string } }> {
+    try {
+      const content = await this.contentRepository.findById(id);
+
+      if (!content) {
+        throw new NotFoundException(`Content not found`);
+      }
+
+      if (!this.canModifyContent(userId, userRole, content.creatorId)) {
+        throw new ForbiddenException('Not authorized to delete this content');
+      }
+
+      await this.contentRepository.delete(id);
+      return {
+        success: true,
+        data: { message: 'Content soft deleted successfully' },
+      };
+    } catch (error: unknown) {
+      if (error instanceof NotFoundException || error instanceof ForbiddenException) throw error;
+      this.logger.error(`Failed to delete content: ${error}`);
+      return { success: false, error: { code: 'DELETE_CONTENT_FAILED', message: 'Failed to delete content' } };
+    }
+  }
+
+  async publishContent(
+    userId: string,
+    id: string,
+    userRole?: string
+  ): Promise<{ success: boolean; data: ContentWithUniverse }> {
+    try {
+      const content = await this.prisma.contentItem.findUnique({
+        where: { id },
+      });
+
+      if (!content) {
+        throw new NotFoundException(`Content not found`);
+      }
+
+      if (!this.canModifyContent(userId, userRole, content.creatorId)) {
+        throw new ForbiddenException('Not authorized to publish this content');
+      }
+
+      if (content.status !== 'draft') {
+        throw new BadRequestException('Content is already published or pending');
+      }
+
+      const safetyResult = await this.checkContentSafety(id);
+
+      if (!safetyResult.isSafe) {
+        throw new ForbiddenException({
+          message: 'Content failed safety scan',
+          issues: safetyResult.issues,
+          scanId: safetyResult.scanId,
+        });
+      }
+
+      const publishedContent = await this.prisma.contentItem.update({
+        where: { id },
+        data: {
+          status: 'published',
+          publishedAt: new Date(),
+          updatedAt: new Date(),
         },
-      },
-      include: { universe: true, tags: true },
-    });
+        include: { universe: true },
+      });
 
-    return {
-      success: true,
-      data: content,
-    };
+      return {
+        success: true,
+        data: publishedContent,
+      };
+    } catch (error: unknown) {
+      if (error instanceof NotFoundException || error instanceof ForbiddenException || error instanceof BadRequestException) throw error;
+      this.logger.error(`Failed to publish content: ${error}`);
+      return { success: false, error: { code: 'PUBLISH_CONTENT_FAILED', message: 'Failed to publish content' } } as never;
+    }
   }
 
-  // Content relationships
-  async addContentRelationship(
+  async unpublishContent(
+    userId: string,
+    id: string,
+    userRole?: string
+  ): Promise<{ success: boolean; data: ContentWithUniverse }> {
+    try {
+      const content = await this.prisma.contentItem.findUnique({
+        where: { id },
+      });
+
+      if (!content) {
+        throw new NotFoundException(`Content not found`);
+      }
+
+      if (!this.canModifyContent(userId, userRole, content.creatorId)) {
+        throw new ForbiddenException('Not authorized to unpublish this content');
+      }
+
+      if (content.status !== 'published') {
+        throw new BadRequestException('Content is not published');
+      }
+
+      const unpublishedContent = await this.prisma.contentItem.update({
+        where: { id },
+        data: {
+          status: 'draft',
+          publishedAt: null,
+          updatedAt: new Date(),
+        },
+        include: { universe: true },
+      });
+
+      return {
+        success: true,
+        data: unpublishedContent,
+      };
+    } catch (error: unknown) {
+      if (error instanceof NotFoundException || error instanceof ForbiddenException || error instanceof BadRequestException) throw error;
+      this.logger.error(`Failed to unpublish content: ${error}`);
+      return { success: false, error: { code: 'UNPUBLISH_CONTENT_FAILED', message: 'Failed to unpublish content' } } as never;
+    }
+  }
+
+  async createMediaAsset(
     userId: string,
     contentId: string,
-    relatedContentId: string,
-    relationshipType: string,
+    createMediaAssetDto: CreateMediaAssetDto,
     userRole?: string
-  ): Promise<{ success: boolean; data: any }> {
-    const content = await this.prisma.contentItem.findUnique({
-      where: { id: contentId },
-    });
+  ): Promise<{ success: boolean; data: MediaAssetWithContentItem }> {
+    try {
+      const content = await this.prisma.contentItem.findUnique({
+        where: { id: contentId },
+      });
 
-    if (!content) {
-      throw new NotFoundException(`Content not found`);
+      if (!content) {
+        throw new NotFoundException(`Content not found`);
+      }
+
+      if (!this.canModifyContent(userId, userRole, content.creatorId)) {
+        throw new ForbiddenException('Not authorized to add media asset to this content');
+      }
+
+      const existingMediaAsset = await this.prisma.mediaAsset.findUnique({
+        where: { contentItemId: contentId },
+      });
+
+      if (existingMediaAsset) {
+        throw new BadRequestException('Content already has a media asset');
+      }
+
+      const mediaAsset = await this.prisma.mediaAsset.create({
+        data: {
+          ...createMediaAssetDto,
+          contentItemId: contentId,
+        } as Prisma.MediaAssetUncheckedCreateInput,
+        include: { contentItem: true },
+      });
+
+      return {
+        success: true,
+        data: mediaAsset,
+      };
+    } catch (error: unknown) {
+      if (error instanceof NotFoundException || error instanceof ForbiddenException || error instanceof BadRequestException) throw error;
+      this.logger.error(`Failed to create media asset: ${error}`);
+      return { success: false, error: { code: 'CREATE_MEDIA_ASSET_FAILED', message: 'Failed to create media asset' } } as never;
     }
-
-    if (content.creatorId !== userId && userRole !== 'admin' && userRole !== 'moderator') {
-      throw new ForbiddenException('Not authorized to modify this content');
-    }
-
-    const relatedContent = await this.prisma.contentItem.findUnique({
-      where: { id: relatedContentId },
-    });
-
-    if (!relatedContent) {
-      throw new NotFoundException(`Related content not found`);
-    }
-
-    const existingRelationship = await this.prisma.contentRelationship.findUnique({
-      where: { contentId_relatedContentId: { contentId, relatedContentId } },
-    });
-
-    if (existingRelationship) {
-      throw new BadRequestException('Relationship already exists');
-    }
-
-    const relationship = await this.prisma.contentRelationship.create({
-      data: {
-        contentId,
-        relatedContentId,
-        type: relationshipType,
-      },
-      include: {
-        content: true,
-        relatedContent: true,
-      },
-    });
-
-    return {
-      success: true,
-      data: relationship,
-    };
   }
 
-  async removeContentRelationship(
+  async updateMediaAsset(
     userId: string,
     contentId: string,
-    relatedContentId: string,
+    updateMediaAssetDto: UpdateMediaAssetDto,
     userRole?: string
-  ): Promise<{ success: boolean; data: any }> {
-    const content = await this.prisma.contentItem.findUnique({
-      where: { id: contentId },
-    });
+  ): Promise<{ success: boolean; data: MediaAssetWithContentItem }> {
+    try {
+      const content = await this.prisma.contentItem.findUnique({
+        where: { id: contentId },
+      });
 
-    if (!content) {
-      throw new NotFoundException(`Content not found`);
+      if (!content) {
+        throw new NotFoundException(`Content not found`);
+      }
+
+      if (!this.canModifyContent(userId, userRole, content.creatorId)) {
+        throw new ForbiddenException('Not authorized to update media asset for this content');
+      }
+
+      const mediaAsset = await this.prisma.mediaAsset.findUnique({
+        where: { contentItemId: contentId },
+      });
+
+      if (!mediaAsset) {
+        throw new NotFoundException(`Media asset not found`);
+      }
+
+      const updatedMediaAsset = await this.prisma.mediaAsset.update({
+        where: { id: mediaAsset.id },
+        data: {
+          ...updateMediaAssetDto,
+          updatedAt: new Date(),
+        } as Prisma.MediaAssetUpdateInput,
+        include: { contentItem: true },
+      });
+
+      return {
+        success: true,
+        data: updatedMediaAsset,
+      };
+    } catch (error: unknown) {
+      if (error instanceof NotFoundException || error instanceof ForbiddenException) throw error;
+      this.logger.error(`Failed to update media asset: ${error}`);
+      return { success: false, error: { code: 'UPDATE_MEDIA_ASSET_FAILED', message: 'Failed to update media asset' } } as never;
     }
-
-    if (content.creatorId !== userId && userRole !== 'admin' && userRole !== 'moderator') {
-      throw new ForbiddenException('Not authorized to modify this content');
-    }
-
-    const relationship = await this.prisma.contentRelationship.findUnique({
-      where: { contentId_relatedContentId: { contentId, relatedContentId } },
-    });
-
-    if (!relationship) {
-      throw new NotFoundException(`Relationship not found`);
-    }
-
-    await this.prisma.contentRelationship.delete({
-      where: { id: relationship.id },
-    });
-
-    return {
-      success: true,
-      data: { message: 'Relationship removed successfully' },
-    };
   }
 
-  async getContentRelationships(contentId: string): Promise<{ success: boolean; data: any }> {
-    const relationships = await this.prisma.contentRelationship.findMany({
-      where: {
-        contentId,
-      },
-      include: {
-        relatedContent: {
-          include: {
-            universe: true,
-          },
-        },
-      },
-    });
-
-    return {
-      success: true,
-      data: relationships,
-    };
-  }
-
-  async getContentByRelationship(
+  async deleteMediaAsset(
+    userId: string,
     contentId: string,
-    relationshipType?: string
-  ): Promise<{ success: boolean; data: any }> {
-    const where: Prisma.ContentRelationshipWhereInput = {
-      contentId,
-    };
+    userRole?: string
+  ): Promise<{ success: boolean; data: { message: string } }> {
+    try {
+      const content = await this.prisma.contentItem.findUnique({
+        where: { id: contentId },
+      });
 
-    if (relationshipType) {
-      where.type = relationshipType;
+      if (!content) {
+        throw new NotFoundException(`Content not found`);
+      }
+
+      if (!this.canModifyContent(userId, userRole, content.creatorId)) {
+        throw new ForbiddenException('Not authorized to delete media asset for this content');
+      }
+
+      const mediaAsset = await this.prisma.mediaAsset.findUnique({
+        where: { contentItemId: contentId },
+      });
+
+      if (!mediaAsset) {
+        throw new NotFoundException(`Media asset not found`);
+      }
+
+      await this.prisma.mediaAsset.delete({
+        where: { id: mediaAsset.id },
+      });
+
+      return {
+        success: true,
+        data: { message: 'Media asset deleted successfully' },
+      };
+    } catch (error: unknown) {
+      if (error instanceof NotFoundException || error instanceof ForbiddenException) throw error;
+      this.logger.error(`Failed to delete media asset: ${error}`);
+      return { success: false, error: { code: 'DELETE_MEDIA_ASSET_FAILED', message: 'Failed to delete media asset' } };
     }
+  }
 
-    const relationships = await this.prisma.contentRelationship.findMany({
-      where,
-      include: {
-        relatedContent: {
-          include: {
-            universe: true,
-            mediaAsset: true,
-          },
+  async getMediaAsset(contentId: string): Promise<{
+    success: boolean;
+    data: MediaAssetWithContentItem & { originalUrl: string; thumbnailUrl: string | null };
+  }> {
+    try {
+      const mediaAsset = await this.prisma.mediaAsset.findUnique({
+        where: { contentItemId: contentId },
+        include: { contentItem: true },
+      });
+
+      if (!mediaAsset) {
+        throw new NotFoundException(`Media asset not found`);
+      }
+
+      const signedOriginalUrl = await this.mediaService.getMediaUrl(mediaAsset.originalUrl);
+      const signedThumbnailUrl = mediaAsset.thumbnailUrl
+        ? await this.mediaService.getMediaUrl(mediaAsset.thumbnailUrl)
+        : null;
+
+      return {
+        success: true,
+        data: {
+          ...mediaAsset,
+          originalUrl: signedOriginalUrl,
+          thumbnailUrl: signedThumbnailUrl,
         },
-      },
-    });
+      };
+    } catch (error: unknown) {
+      if (error instanceof NotFoundException) throw error;
+      this.logger.error(`Failed to get media asset: ${error}`);
+      return { success: false, error: { code: 'GET_MEDIA_ASSET_FAILED', message: 'Failed to retrieve media asset' } } as never;
+    }
+  }
 
-    const relatedContent = relationships.map((r) => r.relatedContent);
+  async getSignedMediaUrl(
+    userId: string,
+    contentId: string,
+    expiresIn: number = 3600
+  ): Promise<{ success: boolean; data: { signedUrl: string; expiresIn: number; mediaAssetId: string } }> {
+    try {
+      const mediaAsset = await this.prisma.mediaAsset.findUnique({
+        where: { contentItemId: contentId },
+      });
 
-    return {
-      success: true,
-      data: relatedContent,
-    };
+      if (!mediaAsset) {
+        throw new NotFoundException(`Media asset not found`);
+      }
+
+      const signedUrl = await this.mediaService.getMediaUrl(mediaAsset.originalUrl, expiresIn);
+
+      return {
+        success: true,
+        data: {
+          signedUrl,
+          expiresIn,
+          mediaAssetId: mediaAsset.id,
+        },
+      };
+    } catch (error: unknown) {
+      if (error instanceof NotFoundException) throw error;
+      this.logger.error(`Failed to get signed media url: ${error}`);
+      return { success: false, error: { code: 'GET_SIGNED_URL_FAILED', message: 'Failed to get signed media URL' } } as never;
+    }
+  }
+
+  async generateThumbnail(
+    contentId: string,
+    options?: {
+      width?: number;
+      height?: number;
+      quality?: number;
+    }
+  ): Promise<{ success: boolean; data: { thumbnailUrl: string; mediaAssetId: string } }> {
+    try {
+      const mediaAsset = await this.prisma.mediaAsset.findUnique({
+        where: { contentItemId: contentId },
+      });
+
+      if (!mediaAsset) {
+        throw new NotFoundException(`Media asset not found`);
+      }
+
+      const thumbnailUrl = await this.mediaService.generateThumbnail(mediaAsset.originalUrl, {
+        width: options?.width || 300,
+        height: options?.height || 200,
+        quality: options?.quality,
+      });
+
+      await this.prisma.mediaAsset.update({
+        where: { id: mediaAsset.id },
+        data: {
+          thumbnailUrl,
+        },
+      });
+
+      return {
+        success: true,
+        data: {
+          thumbnailUrl,
+          mediaAssetId: mediaAsset.id,
+        },
+      };
+    } catch (error: unknown) {
+      if (error instanceof NotFoundException) throw error;
+      this.logger.error(`Failed to generate thumbnail: ${error}`);
+      return { success: false, error: { code: 'GENERATE_THUMBNAIL_FAILED', message: 'Failed to generate thumbnail' } } as never;
+    }
+  }
+
+  async getContentComments(
+    contentId: string,
+    page?: number,
+    limit?: number
+  ): Promise<{
+    success: boolean;
+    data: {
+      id: string;
+      userId: string;
+      userName: string;
+      content: string;
+      timestamp: Date;
+      likes: number;
+      likedByCurrentUser: boolean;
+    }[];
+  }> {
+    try {
+      const result = await this.contentRepository.getComments(contentId, page || 1, limit || 20);
+
+      const items = result.data.map((c: { id: string; userId: string; text: string; createdAt: Date; userName?: string; content?: string; likes?: number }) => ({
+        id: c.id,
+        userId: c.userId,
+        userName: c.userName || 'Anonymous',
+        content: c.text || c.content || '',
+        timestamp: c.createdAt,
+        likes: c.likes || 0,
+        likedByCurrentUser: false,
+      }));
+
+      return {
+        success: true,
+        data: items,
+      };
+    } catch (error: unknown) {
+      this.logger.error(`Failed to get content comments: ${error}`);
+      return { success: false, error: { code: 'GET_COMMENTS_FAILED', message: 'Failed to retrieve content comments' } } as never;
+    }
+  }
+
+  async addCommentToContent(
+    userId: string,
+    contentId: string,
+    text: string
+  ): Promise<{ success: boolean; data: { id: string; contentId: string; userId: string; text: string; createdAt: Date } }> {
+    try {
+      const comment = await this.contentRepository.addComment(contentId, userId, text);
+
+      return {
+        success: true,
+        data: comment,
+      };
+    } catch (error: unknown) {
+      this.logger.error(`Failed to add comment to content: ${error}`);
+      return { success: false, error: { code: 'ADD_COMMENT_FAILED', message: 'Failed to add comment' } } as never;
+    }
+  }
+
+  async getContentAnalytics(contentId: string): Promise<{
+    success: boolean;
+    data: { contentId: string; viewCount: number; likeCount: number; commentCount: number; watchTime: number };
+  }> {
+    try {
+      const analytics = await this.contentRepository.getAnalytics(contentId);
+
+      return {
+        success: true,
+        data: analytics,
+      };
+    } catch (error: unknown) {
+      this.logger.error(`Failed to get content analytics: ${error}`);
+      return { success: false, error: { code: 'GET_ANALYTICS_FAILED', message: 'Failed to retrieve content analytics' } } as never;
+    }
   }
 
   // Media transcoding
+
   async startTranscoding(
     contentId: string,
     options?: {
@@ -1422,51 +916,57 @@ export class ContentService {
       resolutions?: string[];
       bitrates?: number[];
     }
-  ): Promise<{ success: boolean; data: any }> {
-    const mediaAsset = await this.prisma.mediaAsset.findUnique({
-      where: { contentItemId: contentId },
-    });
+  ): Promise<{ success: boolean; data: TranscodingJobResult }> {
+    try {
+      const mediaAsset = await this.prisma.mediaAsset.findUnique({
+        where: { contentItemId: contentId },
+      });
 
-    if (!mediaAsset) {
-      throw new NotFoundException(`Media asset not found`);
+      if (!mediaAsset) {
+        throw new NotFoundException(`Media asset not found`);
+      }
+
+      const job = await this.transcodingService.startTranscodingJob(
+        mediaAsset.id,
+        mediaAsset.originalUrl,
+        options
+      );
+
+      return {
+        success: true,
+        data: job,
+      };
+    } catch (error: unknown) {
+      if (error instanceof NotFoundException) throw error;
+      this.logger.error(`Failed to start transcoding: ${error}`);
+      return { success: false, error: { code: 'START_TRANSCODING_FAILED', message: 'Failed to start transcoding' } } as never;
     }
-
-    const job = await this.transcodingService.startTranscodingJob(
-      mediaAsset.id,
-      mediaAsset.originalUrl,
-      options
-    );
-
-    // In a real implementation, we would save the job ID to the media asset
-    // await this.prisma.mediaAsset.update({
-    //   where: { id: mediaAsset.id },
-    //   data: { transcodingJobId: job.jobId },
-    // });
-
-    return {
-      success: true,
-      data: job,
-    };
   }
 
   async getTranscodingStatus(
     contentId: string,
     jobId: string
-  ): Promise<{ success: boolean; data: any }> {
-    const mediaAsset = await this.prisma.mediaAsset.findUnique({
-      where: { contentItemId: contentId },
-    });
+  ): Promise<{ success: boolean; data: TranscodingStatusResult }> {
+    try {
+      const mediaAsset = await this.prisma.mediaAsset.findUnique({
+        where: { contentItemId: contentId },
+      });
 
-    if (!mediaAsset) {
-      throw new NotFoundException(`Media asset not found`);
+      if (!mediaAsset) {
+        throw new NotFoundException(`Media asset not found`);
+      }
+
+      const status = await this.transcodingService.getTranscodingJobStatus(jobId) as TranscodingStatusResult;
+
+      return {
+        success: true,
+        data: status,
+      };
+    } catch (error: unknown) {
+      if (error instanceof NotFoundException) throw error;
+      this.logger.error(`Failed to get transcoding status: ${error}`);
+      return { success: false, error: { code: 'GET_TRANSCODING_STATUS_FAILED', message: 'Failed to get transcoding status' } } as never;
     }
-
-    const status = await this.transcodingService.getTranscodingJobStatus(jobId);
-
-    return {
-      success: true,
-      data: status,
-    };
   }
 
   async getTranscodedMediaUrl(
@@ -1475,159 +975,191 @@ export class ContentService {
     format: string,
     resolution: string,
     expiresIn: number = 3600
-  ): Promise<{ success: boolean; data: any }> {
-    const mediaAsset = await this.prisma.mediaAsset.findUnique({
-      where: { contentItemId: contentId },
-    });
+  ): Promise<{
+    success: boolean;
+    data: { url: string; expiresIn: number; format: string; resolution: string };
+  }> {
+    try {
+      const mediaAsset = await this.prisma.mediaAsset.findUnique({
+        where: { contentItemId: contentId },
+      });
 
-    if (!mediaAsset) {
-      throw new NotFoundException(`Media asset not found`);
-    }
+      if (!mediaAsset) {
+        throw new NotFoundException(`Media asset not found`);
+      }
 
-    const url = await this.transcodingService.getTranscodedMediaUrl(
-      jobId,
-      format,
-      resolution,
-      expiresIn
-    );
-
-    return {
-      success: true,
-      data: {
-        url,
-        expiresIn,
+      const url = await this.transcodingService.getTranscodedMediaUrl(
+        jobId,
         format,
         resolution,
-      },
-    };
+        expiresIn
+      );
+
+      return {
+        success: true,
+        data: {
+          url,
+          expiresIn,
+          format,
+          resolution,
+        },
+      };
+    } catch (error: unknown) {
+      if (error instanceof NotFoundException) throw error;
+      this.logger.error(`Failed to get transcoded media url: ${error}`);
+      return { success: false, error: { code: 'GET_TRANSCODED_URL_FAILED', message: 'Failed to get transcoded media URL' } } as never;
+    }
   }
+
+  // Content windowing
 
   async checkContentAvailability(
     contentId: string,
     _userId?: string
-  ): Promise<{ success: boolean; data: any }> {
-    const content = await this.prisma.contentItem.findUnique({
-      where: { id: contentId },
-      include: { universe: true },
-    });
+  ): Promise<{ success: boolean; data: ContentAvailabilityResult }> {
+    try {
+      const content = await this.prisma.contentItem.findUnique({
+        where: { id: contentId },
+        include: { universe: true },
+      });
 
-    if (!content) {
-      throw new NotFoundException(`Content not found`);
-    }
+      if (!content) {
+        throw new NotFoundException(`Content not found`);
+      }
 
-    const now = new Date();
-    const availability = {
-      isAvailable: false,
-      reason: '',
-      windowType: content.windowType,
-      releaseDate: content.releaseDate,
-      streamingReleaseDate: content.streamingReleaseDate,
-      windowEndDate: content.windowEndDate,
-      isExclusive: content.isExclusive,
-      isPremiere: content.isPremiere,
-    };
+      const now = new Date();
+      const availability = {
+        isAvailable: false,
+        reason: '',
+        windowType: content.windowType,
+        releaseDate: content.releaseDate,
+        streamingReleaseDate: content.streamingReleaseDate,
+        windowEndDate: content.windowEndDate,
+        isExclusive: content.isExclusive,
+        isPremiere: content.isPremiere,
+      };
 
-    if (content.status !== 'published') {
-      availability.reason = 'Content is not published';
+      if (content.status !== 'published') {
+        availability.reason = 'Content is not published';
+        return { success: true, data: availability };
+      }
+
+      if (content.windowEndDate && now > content.windowEndDate) {
+        availability.reason = 'Content window has expired';
+        return { success: true, data: availability };
+      }
+
+      if (content.streamingReleaseDate && now < content.streamingReleaseDate) {
+        availability.reason = `Content streaming begins on ${content.streamingReleaseDate.toISOString()}`;
+        return { success: true, data: availability };
+      }
+
+      if (content.windowEndDate) {
+        const daysRemaining = Math.ceil(
+          (content.windowEndDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+        );
+        availability.reason = `Content available for ${daysRemaining} more days`;
+      } else {
+        availability.reason = 'Content is available';
+      }
+
+      availability.isAvailable = true;
       return { success: true, data: availability };
+    } catch (error: unknown) {
+      if (error instanceof NotFoundException) throw error;
+      this.logger.error(`Failed to check content availability: ${error}`);
+      return { success: false, error: { code: 'CHECK_AVAILABILITY_FAILED', message: 'Failed to check content availability' } } as never;
     }
-
-    if (content.windowEndDate && now > content.windowEndDate) {
-      availability.reason = 'Content window has expired';
-      return { success: true, data: availability };
-    }
-
-    if (content.streamingReleaseDate && now < content.streamingReleaseDate) {
-      availability.reason = `Content streaming begins on ${content.streamingReleaseDate.toISOString()}`;
-      return { success: true, data: availability };
-    }
-
-    if (content.windowEndDate) {
-      const daysRemaining = Math.ceil(
-        (content.windowEndDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
-      );
-      availability.reason = `Content available for ${daysRemaining} more days`;
-    } else {
-      availability.reason = 'Content is available';
-    }
-
-    availability.isAvailable = true;
-    return { success: true, data: availability };
   }
 
   async getContentByWindow(
     windowType?: string,
     includeExpired = false
-  ): Promise<{ success: boolean; data: any }> {
-    const now = new Date();
+  ): Promise<{ success: boolean; data: ContentWithUniverse[] | Record<string, ContentWithUniverse[]> }> {
+    try {
+      const now = new Date();
 
-    const where: Prisma.ContentItemWhereInput = {
-      status: 'published',
-    };
+      const where: Prisma.ContentItemWhereInput = {
+        status: 'published',
+      };
 
-    if (!includeExpired) {
-      where.OR = [{ windowEndDate: null }, { windowEndDate: { gt: now } }];
+      if (!includeExpired) {
+        where.OR = [{ windowEndDate: null }, { windowEndDate: { gt: now } }];
+      }
+
+      if (windowType) {
+        where.windowType = windowType;
+      }
+
+      const content = await this.prisma.contentItem.findMany({
+        where,
+        include: { universe: true },
+        orderBy: { streamingReleaseDate: 'desc' },
+      });
+
+      const windows: Record<string, typeof content> = {
+        premium: content.filter((c) => c.windowType === 'premium'),
+        standard: content.filter((c) => c.windowType === 'standard'),
+        basic: content.filter((c) => c.windowType === 'basic'),
+        all: content,
+      };
+
+      return {
+        success: true,
+        data: windowType ? windows[windowType] || [] : windows,
+      };
+    } catch (error: unknown) {
+      this.logger.error(`Failed to get content by window: ${error}`);
+      return { success: false, error: { code: 'GET_CONTENT_BY_WINDOW_FAILED', message: 'Failed to get content by window' } } as never;
     }
-
-    if (windowType) {
-      where.windowType = windowType;
-    }
-
-    const content = await this.prisma.contentItem.findMany({
-      where,
-      include: { universe: true },
-      orderBy: { streamingReleaseDate: 'desc' },
-    });
-
-    const windows: Record<string, typeof content> = {
-      premium: content.filter((c) => c.windowType === 'premium'),
-      standard: content.filter((c) => c.windowType === 'standard'),
-      basic: content.filter((c) => c.windowType === 'basic'),
-      all: content,
-    };
-
-    return {
-      success: true,
-      data: windowType ? windows[windowType] || [] : windows,
-    };
   }
 
-  async getPremieres(): Promise<{ success: boolean; data: any }> {
-    const now = new Date();
+  async getPremieres(): Promise<{ success: boolean; data: ContentWithUniverse[] }> {
+    try {
+      const now = new Date();
 
-    const content = await this.prisma.contentItem.findMany({
-      where: {
-        status: 'published',
-        isPremiere: true,
-        OR: [{ windowEndDate: null }, { windowEndDate: { gt: now } }],
-      },
-      include: { universe: true },
-      orderBy: { streamingReleaseDate: 'desc' },
-    });
+      const content = await this.prisma.contentItem.findMany({
+        where: {
+          status: 'published',
+          isPremiere: true,
+          OR: [{ windowEndDate: null }, { windowEndDate: { gt: now } }],
+        },
+        include: { universe: true },
+        orderBy: { streamingReleaseDate: 'desc' },
+      });
 
-    return {
-      success: true,
-      data: content,
-    };
+      return {
+        success: true,
+        data: content,
+      };
+    } catch (error: unknown) {
+      this.logger.error(`Failed to get premieres: ${error}`);
+      return { success: false, error: { code: 'GET_PREMIERES_FAILED', message: 'Failed to get premieres' } } as never;
+    }
   }
 
-  async getExclusiveContent(): Promise<{ success: boolean; data: any }> {
-    const now = new Date();
+  async getExclusiveContent(): Promise<{ success: boolean; data: ContentWithUniverse[] }> {
+    try {
+      const now = new Date();
 
-    const content = await this.prisma.contentItem.findMany({
-      where: {
-        status: 'published',
-        isExclusive: true,
-        OR: [{ windowEndDate: null }, { windowEndDate: { gt: now } }],
-      },
-      include: { universe: true },
-      orderBy: { streamingReleaseDate: 'desc' },
-    });
+      const content = await this.prisma.contentItem.findMany({
+        where: {
+          status: 'published',
+          isExclusive: true,
+          OR: [{ windowEndDate: null }, { windowEndDate: { gt: now } }],
+        },
+        include: { universe: true },
+        orderBy: { streamingReleaseDate: 'desc' },
+      });
 
-    return {
-      success: true,
-      data: content,
-    };
+      return {
+        success: true,
+        data: content,
+      };
+    } catch (error: unknown) {
+      this.logger.error(`Failed to get exclusive content: ${error}`);
+      return { success: false, error: { code: 'GET_EXCLUSIVE_FAILED', message: 'Failed to get exclusive content' } } as never;
+    }
   }
 
   async updateContentWindow(
@@ -1643,259 +1175,37 @@ export class ContentService {
       isPremiere?: boolean;
     },
     userRole?: string
-  ): Promise<{ success: boolean; data: any }> {
-    const content = await this.prisma.contentItem.findUnique({
-      where: { id: contentId },
-    });
+  ): Promise<{ success: boolean; data: ContentWithUniverse }> {
+    try {
+      const content = await this.prisma.contentItem.findUnique({
+        where: { id: contentId },
+      });
 
-    if (!content) {
-      throw new NotFoundException(`Content not found`);
+      if (!content) {
+        throw new NotFoundException(`Content not found`);
+      }
+
+      if (!this.canModifyContent(userId, userRole, content.creatorId)) {
+        throw new ForbiddenException('Not authorized to update this content');
+      }
+
+      const updatedContent = await this.prisma.contentItem.update({
+        where: { id: contentId },
+        data: {
+          ...windowData,
+          updatedAt: new Date(),
+        },
+        include: { universe: true },
+      });
+
+      return {
+        success: true,
+        data: updatedContent,
+      };
+    } catch (error: unknown) {
+      if (error instanceof NotFoundException || error instanceof ForbiddenException) throw error;
+      this.logger.error(`Failed to update content window: ${error}`);
+      return { success: false, error: { code: 'UPDATE_WINDOW_FAILED', message: 'Failed to update content window' } } as never;
     }
-
-    if (content.creatorId !== userId && userRole !== 'admin' && userRole !== 'moderator') {
-      throw new ForbiddenException('Not authorized to update this content');
-    }
-
-    const updatedContent = await this.prisma.contentItem.update({
-      where: { id: contentId },
-      data: {
-        ...windowData,
-        updatedAt: new Date(),
-      },
-      include: { universe: true },
-    });
-
-    return {
-      success: true,
-      data: updatedContent,
-    };
-  }
-  async ingestShortFormContent(
-    userId: string,
-    createContentDto: CreateContentDto,
-    options?: { isExclusive?: boolean; windowType?: 'basic' | 'standard' | 'premium' }
-  ): Promise<{ success: boolean; data: any }> {
-    const content = await this.prisma.contentItem.create({
-      data: {
-        ...createContentDto,
-        creatorId: userId,
-        status: 'draft',
-        isExclusive: options?.isExclusive || false,
-        windowType: options?.windowType || 'basic',
-        metadata: {
-          ...createContentDto.metadata,
-          contentCategory: 'short-form',
-        },
-      },
-      include: { universe: true },
-    });
-
-    return {
-      success: true,
-      data: content,
-    };
-  }
-
-  async ingestLongFormContent(
-    userId: string,
-    createContentDto: CreateContentDto,
-    options?: { isPremiere?: boolean; windowType?: 'standard' | 'premium' }
-  ): Promise<{ success: boolean; data: any }> {
-    const content = await this.prisma.contentItem.create({
-      data: {
-        ...createContentDto,
-        creatorId: userId,
-        status: 'draft',
-        isPremiere: options?.isPremiere || false,
-        windowType: options?.windowType || 'standard',
-        metadata: {
-          ...createContentDto.metadata,
-          contentCategory: 'long-form',
-        },
-      },
-      include: { universe: true },
-    });
-
-    return {
-      success: true,
-      data: content,
-    };
-  }
-
-  async ingestClipContent(
-    userId: string,
-    createContentDto: CreateContentDto,
-    parentContentId: string,
-    clipStartTime: number,
-    clipEndTime: number
-  ): Promise<{ success: boolean; data: any }> {
-    const parentContent = await this.prisma.contentItem.findUnique({
-      where: { id: parentContentId },
-    });
-
-    if (!parentContent) {
-      throw new NotFoundException('Parent content not found');
-    }
-
-    const content = await this.prisma.contentItem.create({
-      data: {
-        ...createContentDto,
-        creatorId: userId,
-        status: 'draft',
-        windowType: parentContent.windowType,
-        metadata: {
-          ...createContentDto.metadata,
-          contentCategory: 'clip',
-          parentContentId,
-          clipStartTime,
-          clipEndTime,
-        },
-      },
-      include: { universe: true },
-    });
-
-    return {
-      success: true,
-      data: content,
-    };
-  }
-
-  async ingestEpisodeContent(
-    userId: string,
-    createContentDto: CreateContentDto,
-    seasonNumber: number,
-    episodeNumber: number,
-    seriesId?: string
-  ): Promise<{ success: boolean; data: any }> {
-    const content = await this.prisma.contentItem.create({
-      data: {
-        ...createContentDto,
-        creatorId: userId,
-        status: 'draft',
-        metadata: {
-          ...createContentDto.metadata,
-          contentCategory: 'episode',
-          seasonNumber,
-          episodeNumber,
-          seriesId,
-        },
-      },
-      include: { universe: true },
-    });
-
-    return {
-      success: true,
-      data: content,
-    };
-  }
-
-  async ingestMovieContent(
-    userId: string,
-    createContentDto: CreateContentDto,
-    options?: { isPremiere?: boolean; isExclusive?: boolean; windowType?: 'standard' | 'premium' }
-  ): Promise<{ success: boolean; data: any }> {
-    const content = await this.prisma.contentItem.create({
-      data: {
-        ...createContentDto,
-        creatorId: userId,
-        status: 'draft',
-        isPremiere: options?.isPremiere || false,
-        isExclusive: options?.isExclusive || false,
-        windowType: options?.windowType || 'premium',
-        metadata: {
-          ...createContentDto.metadata,
-          contentCategory: 'movie',
-        },
-      },
-      include: { universe: true },
-    });
-
-    return {
-      success: true,
-      data: content,
-    };
-  }
-
-  async ingestGameContent(
-    userId: string,
-    createContentDto: CreateContentDto,
-    options?: { difficulty?: 'easy' | 'medium' | 'hard'; gameType?: string }
-  ): Promise<{ success: boolean; data: any }> {
-    const content = await this.prisma.contentItem.create({
-      data: {
-        ...createContentDto,
-        creatorId: userId,
-        status: 'draft',
-        metadata: {
-          ...createContentDto.metadata,
-          contentCategory: 'game',
-          difficulty: options?.difficulty || 'medium',
-          gameType: options?.gameType,
-        },
-      },
-      include: { universe: true },
-    });
-
-    return {
-      success: true,
-      data: content,
-    };
-  }
-
-  async ingestSportsHighlightContent(
-    userId: string,
-    createContentDto: CreateContentDto,
-    gameDate: Date,
-    teams: string[],
-    highlightType: string
-  ): Promise<{ success: boolean; data: any }> {
-    const content = await this.prisma.contentItem.create({
-      data: {
-        ...createContentDto,
-        creatorId: userId,
-        status: 'draft',
-        windowType: 'basic',
-        metadata: {
-          ...createContentDto.metadata,
-          contentCategory: 'sports-highlight',
-          gameDate: gameDate.toISOString(),
-          teams,
-          highlightType,
-        },
-      },
-      include: { universe: true },
-    });
-
-    return {
-      success: true,
-      data: content,
-    };
-  }
-
-  async ingestCreatorUpload(
-    userId: string,
-    createContentDto: CreateContentDto,
-    options?: { contentSubtype?: 'video' | 'audio' | 'image' | 'article' }
-  ): Promise<{ success: boolean; data: any }> {
-    const content = await this.prisma.contentItem.create({
-      data: {
-        ...createContentDto,
-        creatorId: userId,
-        status: 'draft',
-        windowType: 'basic',
-        metadata: {
-          ...createContentDto.metadata,
-          contentCategory: 'creator-upload',
-          contentSubtype: options?.contentSubtype || 'video',
-          uploadedByCreator: true,
-        },
-      },
-      include: { universe: true },
-    });
-
-    return {
-      success: true,
-      data: content,
-    };
   }
 }

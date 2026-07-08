@@ -5,7 +5,7 @@
 # Called by Nixpacks during the build phase.
 # Order: libs first (dependency order), then services, then apps.
 # ============================================================
-set -e
+set -euo pipefail
 
 echo "==> Building libraries..."
 

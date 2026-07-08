@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -57,7 +57,7 @@ export default function EpisodePlayerScreen() {
       const response = await contentApi.getEpisode(episodeId);
 
       if (response.success && response.data) {
-        setEpisode(response.data as any);
+        setEpisode(response.data as Episode);
       }
     } catch (error) {
       logger.error('Failed to load episode', error);
@@ -121,8 +121,9 @@ export default function EpisodePlayerScreen() {
         isSuperVote: isSuper,
       });
       Alert.alert('Success', `Your ${isSuper ? 'Super ' : ''}vote has been submitted!`);
-    } catch (error: any) {
-      Alert.alert('Error', error?.message || 'Failed to submit vote');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to submit vote';
+      Alert.alert('Error', message);
     }
   };
 
@@ -142,7 +143,7 @@ export default function EpisodePlayerScreen() {
       <SafeAreaView style={styles.container} edges={['top']}>
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>Episode not found</Text>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <TouchableOpacity style={styles.backButton} onPress={() => router.back()} accessibilityLabel="Go back" accessibilityRole="button">
             <Text style={styles.backButtonText}>Go Back</Text>
           </TouchableOpacity>
         </View>
@@ -155,7 +156,7 @@ export default function EpisodePlayerScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.playerContainer}>
-        <TouchableOpacity style={styles.backButtonAbsolute} onPress={() => router.back()}>
+        <TouchableOpacity style={styles.backButtonAbsolute} onPress={() => router.back()} accessibilityLabel="Go back" accessibilityRole="button">
           <Text style={styles.backButtonText}>←</Text>
         </TouchableOpacity>
 
@@ -172,7 +173,7 @@ export default function EpisodePlayerScreen() {
               <View style={styles.playingBar3} />
             </View>
           ) : (
-            <TouchableOpacity style={styles.playButton} onPress={handlePlayPause}>
+            <TouchableOpacity style={styles.playButton} onPress={handlePlayPause} accessibilityLabel="Play" accessibilityRole="button">
               <Text style={styles.playButtonText}>▶</Text>
             </TouchableOpacity>
           )}
@@ -190,25 +191,25 @@ export default function EpisodePlayerScreen() {
           </View>
 
           <View style={styles.controls}>
-            <TouchableOpacity style={styles.controlButton} onPress={() => handleSeek(-10)}>
+            <TouchableOpacity style={styles.controlButton} onPress={() => handleSeek(-10)} accessibilityLabel="Seek backward 10 seconds" accessibilityRole="button">
               <Text style={styles.controlButtonText}>⏪</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.controlButtonLarge} onPress={handlePlayPause}>
+            <TouchableOpacity style={styles.controlButtonLarge} onPress={handlePlayPause} accessibilityLabel={isPlaying ? 'Pause' : 'Play'} accessibilityRole="button">
               <Text style={styles.controlButtonTextLarge}>{isPlaying ? '⏸' : '▶'}</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.controlButton} onPress={() => handleSeek(10)}>
+            <TouchableOpacity style={styles.controlButton} onPress={() => handleSeek(10)} accessibilityLabel="Seek forward 10 seconds" accessibilityRole="button">
               <Text style={styles.controlButtonText}>⏩</Text>
             </TouchableOpacity>
           </View>
 
           <View style={styles.actionButtons}>
-            <TouchableOpacity style={styles.actionButton} onPress={() => setShowSubtitles(true)}>
+            <TouchableOpacity style={styles.actionButton} onPress={() => setShowSubtitles(true)} accessibilityLabel="Open subtitles" accessibilityRole="button">
               <Text style={styles.actionButtonText}>💬 Subtitles</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.actionButton} onPress={handleVote}>
+            <TouchableOpacity style={styles.actionButton} onPress={handleVote} accessibilityLabel="Vote for contestant" accessibilityRole="button">
               <Text style={styles.actionButtonText}>🗳 Vote</Text>
             </TouchableOpacity>
           </View>
@@ -230,7 +231,7 @@ export default function EpisodePlayerScreen() {
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Select Subtitles</Text>
-              <TouchableOpacity onPress={() => setShowSubtitles(false)}>
+              <TouchableOpacity onPress={() => setShowSubtitles(false)} accessibilityLabel="Close subtitles menu" accessibilityRole="button">
                 <Text style={styles.modalClose}>✕</Text>
               </TouchableOpacity>
             </View>
@@ -242,6 +243,9 @@ export default function EpisodePlayerScreen() {
                   setSelectedSubtitle(null);
                   setShowSubtitles(false);
                 }}
+                accessibilityLabel="Turn subtitles off"
+                accessibilityRole="button"
+                accessibilityState={{ selected: !selectedSubtitle }}
               >
                 <Text style={styles.subtitleText}>Off</Text>
                 {!selectedSubtitle && <Text style={styles.subtitleCheck}>✓</Text>}
@@ -255,6 +259,9 @@ export default function EpisodePlayerScreen() {
                     setSelectedSubtitle(subtitle.language);
                     setShowSubtitles(false);
                   }}
+                  accessibilityLabel={`Enable ${subtitle.language} subtitles`}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: selectedSubtitle === subtitle.language }}
                 >
                   <Text style={styles.subtitleText}>{subtitle.language}</Text>
                   {selectedSubtitle === subtitle.language && (

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -44,9 +44,10 @@ export default function ComedyClipPlayer() {
       } else {
         setError('No comedy clip available');
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       logger.error('Failed to load clip:', err);
-      setError(err.message || 'Failed to load clip');
+      const message = err instanceof Error ? err.message : 'Failed to load clip';
+      setError(message);
     } finally {
       setIsLoading(false);
     }

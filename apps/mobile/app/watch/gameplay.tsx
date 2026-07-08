@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -35,9 +35,10 @@ export default function GameplayScreen() {
       } else {
         setError('No game questions available');
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       logger.error('Failed to load game:', err);
-      setError(err.message || 'Failed to load game');
+      const message = err instanceof Error ? err.message : 'Failed to load game';
+      setError(message);
     } finally {
       setIsLoading(false);
     }
@@ -128,7 +129,7 @@ export default function GameplayScreen() {
       ]}
     >
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()} accessibilityLabel="Go back" accessibilityRole="button">
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
         <View style={styles.headerStats}>
@@ -167,6 +168,9 @@ export default function GameplayScreen() {
                 key={option}
                 onPress={() => handleAnswer(option)}
                 disabled={selectedAnswer !== null}
+                accessibilityLabel={`Answer: ${option}`}
+                accessibilityRole="button"
+                accessibilityState={{ disabled: selectedAnswer !== null }}
                 style={[
                   styles.optionButton,
                   selectedAnswer === option && isCorrect && { backgroundColor: '#22C55E' },
@@ -187,7 +191,7 @@ export default function GameplayScreen() {
           </View>
 
           {selectedAnswer && (
-            <TouchableOpacity onPress={handleNext} style={styles.nextButton}>
+            <TouchableOpacity onPress={handleNext} style={styles.nextButton} accessibilityLabel={currentQuestion < questions.length - 1 ? 'Next question' : 'See results'} accessibilityRole="button">
               <Text style={styles.nextText}>
                 {currentQuestion < questions.length - 1 ? 'Next Question' : 'See Results'}
               </Text>
@@ -213,7 +217,7 @@ export default function GameplayScreen() {
               <Text style={styles.resultStatLabel}>Questions</Text>
             </View>
           </View>
-          <TouchableOpacity onPress={handlePlayAgain} style={styles.playAgainButton}>
+          <TouchableOpacity onPress={handlePlayAgain} style={styles.playAgainButton} accessibilityLabel="Play again" accessibilityRole="button">
             <Text style={styles.playAgainText}>Play Again</Text>
           </TouchableOpacity>
         </View>

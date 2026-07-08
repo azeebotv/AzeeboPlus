@@ -1,10 +1,24 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
 import { Prisma } from '@prisma/client';
+import { createApiClient, noopTokenStorage } from '@azeebo/api-client';
 
 @Injectable()
 export class DisputeService {
-  constructor(private prisma: PrismaService) {}
+  private readonly logger = new Logger(DisputeService.name);
+  private readonly walletServiceClient;
+
+  constructor(
+    private prisma: PrismaService,
+    private configService: ConfigService
+  ) {
+    this.walletServiceClient = createApiClient({
+      baseUrl: this.configService.getOrThrow<string>('WALLET_SERVICE_URL'),
+      timeout: 30000,
+      tokenStorage: noopTokenStorage,
+    });
+  }
 
   async createDispute(data: {
     ticketId: string;
@@ -54,6 +68,26 @@ export class DisputeService {
     notes?: string,
     compensation?: Prisma.Decimal
   ) {
+    const dispute = await this.prisma.payoutDispute.findUnique({ where: { id } });
+    if (!dispute) {
+      throw new NotFoundException('Dispute not found');
+    }
+
+    if (resolution === 'APPROVED' && compensation) {
+      try {
+        await this.walletServiceClient.post('/api/wallet/credit', {
+          userId: dispute.creatorId,
+          amount: compensation.toNumber(),
+          currency: dispute.currency,
+          description: `Dispute compensation for payout ${dispute.payoutId}`,
+          reference: `dispute-${id}`,
+          transactionType: 'dispute_compensation',
+        });
+      } catch (error) {
+        this.logger.error(`Failed to credit wallet for dispute ${id}: ${(error as Error).message}`);
+      }
+    }
+
     return this.prisma.payoutDispute.update({
       where: { id },
       data: {

@@ -1,10 +1,14 @@
-import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useQuery } from '@tanstack/react-query';
 import { LoadingState, EmptyState, ErrorState } from '../src/components/StateContainers';
 import { apiClient } from '../src/api/client';
+import { verticalSubscription } from '../src/config/prices';
+import { ApiResponse } from '../src/types/api';
+
+type ListResponse<T> = T[] | ApiResponse<T[]>;
 
 interface FeaturedSeries {
   id: string;
@@ -29,34 +33,40 @@ export default function VerticalUniverseHome() {
   const colorScheme = useColorScheme();
   const router = useRouter();
   const isDark = colorScheme === 'dark';
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [featuredSeries, setFeaturedSeries] = useState<FeaturedSeries[]>([]);
-  const [verticalContent, setVerticalContent] = useState<VerticalItem[]>([]);
-  const [genres, setGenres] = useState<GenreItem[]>([]);
 
-  const fetchData = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const [seriesRes, contentRes, genresRes] = await Promise.all([
-        apiClient.get<any>('/v1/vertical/featured'),
-        apiClient.get<any>('/v1/vertical/series'),
-        apiClient.get<any>('/v1/vertical/genres'),
-      ]);
-      setFeaturedSeries(Array.isArray(seriesRes) ? seriesRes : (seriesRes?.data ?? []));
-      setVerticalContent(Array.isArray(contentRes) ? contentRes : (contentRes?.data ?? []));
-      setGenres(Array.isArray(genresRes) ? genresRes : (genresRes?.data ?? []));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const featuredQuery = useQuery({
+    queryKey: ['vertical', 'featured'],
+    queryFn: async () => {
+      const res = await apiClient.get<ListResponse<FeaturedSeries>>('/v1/vertical/featured');
+      return Array.isArray(res) ? res : (res?.data ?? []);
+    },
+    staleTime: 60_000,
+  });
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  const seriesQuery = useQuery({
+    queryKey: ['vertical', 'series'],
+    queryFn: async () => {
+      const res = await apiClient.get<ListResponse<VerticalItem>>('/v1/vertical/series');
+      return Array.isArray(res) ? res : (res?.data ?? []);
+    },
+    staleTime: 60_000,
+  });
+
+  const genresQuery = useQuery({
+    queryKey: ['vertical', 'genres'],
+    queryFn: async () => {
+      const res = await apiClient.get<ListResponse<GenreItem>>('/v1/vertical/genres');
+      return Array.isArray(res) ? res : (res?.data ?? []);
+    },
+    staleTime: 60_000,
+  });
+
+  const isLoading = featuredQuery.isLoading || seriesQuery.isLoading || genresQuery.isLoading;
+  const error = featuredQuery.error?.message || seriesQuery.error?.message || genresQuery.error?.message;
+
+  const featuredSeries = featuredQuery.data ?? [];
+  const verticalContent = seriesQuery.data ?? [];
+  const genres = genresQuery.data ?? [];
 
   if (isLoading)
     return (
@@ -67,7 +77,14 @@ export default function VerticalUniverseHome() {
   if (error)
     return (
       <SafeAreaView style={styles.container}>
-        <ErrorState description={error} onRetry={fetchData} />
+        <ErrorState
+          description={error}
+          onRetry={() => {
+            featuredQuery.refetch();
+            seriesQuery.refetch();
+            genresQuery.refetch();
+          }}
+        />
       </SafeAreaView>
     );
   if (!featuredSeries.length && !verticalContent.length) {
@@ -95,7 +112,7 @@ export default function VerticalUniverseHome() {
 
         <View style={styles.genreScroll}>
           {genres.map((genre) => (
-            <TouchableOpacity key={genre.id} style={styles.genreChip}>
+            <TouchableOpacity key={genre.id} style={styles.genreChip} accessibilityLabel={`Filter by ${genre.name}`} accessibilityRole="button">
               <Text style={styles.genreEmoji}>{genre.emoji}</Text>
               <Text style={styles.genreName}>{genre.name}</Text>
             </TouchableOpacity>
@@ -115,6 +132,8 @@ export default function VerticalUniverseHome() {
             renderItem={({ item }) => (
               <TouchableOpacity
                 style={[styles.featuredCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
+                accessibilityLabel={`Watch ${item.title}`}
+                accessibilityRole="button"
               >
                 <View style={styles.featuredImagePlaceholder}>
                   <Text style={styles.featuredEmoji}>{item.emoji}</Text>
@@ -127,7 +146,7 @@ export default function VerticalUniverseHome() {
                     {item.title}
                   </Text>
                   <Text style={styles.featuredSeason}>{item.season}</Text>
-                  <TouchableOpacity style={styles.watchButton}>
+                  <TouchableOpacity style={styles.watchButton} accessibilityLabel={`Watch ${item.title}`} accessibilityRole="button">
                     <Text style={styles.watchButtonText}>Watch</Text>
                   </TouchableOpacity>
                 </View>
@@ -141,7 +160,7 @@ export default function VerticalUniverseHome() {
             <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
               Nigerian Series
             </Text>
-            <TouchableOpacity>
+            <TouchableOpacity accessibilityLabel="See all Nigerian series" accessibilityRole="button">
               <Text style={styles.seeAllText}>See All</Text>
             </TouchableOpacity>
           </View>
@@ -150,6 +169,8 @@ export default function VerticalUniverseHome() {
               <TouchableOpacity
                 key={item.id}
                 style={[styles.verticalCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
+                accessibilityLabel={`Watch ${item.title}`}
+                accessibilityRole="button"
               >
                 <View style={styles.verticalThumbnail}>
                   <Text style={styles.verticalEmoji}>{item.emoji}</Text>
@@ -175,8 +196,8 @@ export default function VerticalUniverseHome() {
           <View style={styles.passBanner}>
             <View style={styles.passContent}>
               <Text style={styles.passTitle}>🎬 Vertical Pass</Text>
-              <Text style={styles.passSubtitle}>Access all Nigerian series from ₦2,000/month</Text>
-              <TouchableOpacity style={styles.passButton}>
+              <Text style={styles.passSubtitle}>Access all Nigerian series from {verticalSubscription.label}</Text>
+              <TouchableOpacity style={styles.passButton} accessibilityLabel="Get Vertical Pass" accessibilityRole="button">
                 <Text style={styles.passButtonText}>Get Pass</Text>
               </TouchableOpacity>
             </View>
@@ -184,23 +205,23 @@ export default function VerticalUniverseHome() {
         </View>
 
         <View style={styles.bottomNav}>
-          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/home')}>
+          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/home')} accessibilityLabel="Go to Home" accessibilityRole="button">
             <Text style={styles.navIcon}>🏠</Text>
             <Text style={styles.navLabel}>Home</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/watch')}>
+          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/watch')} accessibilityLabel="Go to Watch" accessibilityRole="button">
             <Text style={styles.navIcon}>📺</Text>
             <Text style={styles.navLabel}>Watch</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/create')}>
+          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/create')} accessibilityLabel="Go to Create" accessibilityRole="button">
             <Text style={styles.navIcon}>✨</Text>
             <Text style={styles.navLabel}>Create</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/rewards')}>
+          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/rewards')} accessibilityLabel="Go to Rewards" accessibilityRole="button">
             <Text style={styles.navIcon}>⭐</Text>
             <Text style={styles.navLabel}>Rewards</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/profile')}>
+          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/profile')} accessibilityLabel="Go to Profile" accessibilityRole="button">
             <Text style={styles.navIcon}>👤</Text>
             <Text style={styles.navLabel}>Profile</Text>
           </TouchableOpacity>

@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
@@ -15,7 +15,7 @@ interface JwtPayload {
 }
 
 interface ValidatedUser {
-  userId: string;
+  sub: string;
   email: string;
   role: string;
 }
@@ -38,15 +38,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: JwtPayload): Promise<ValidatedUser> {
-    const expectedAudience = this.configService.get<string>('JWT_AUDIENCE');
-    const tokenAudience = Array.isArray(payload.aud) ? payload.aud : [payload.aud];
-
-    if (expectedAudience && !tokenAudience.includes(expectedAudience)) {
-      throw new UnauthorizedException('Invalid token audience');
-    }
-
     return {
-      userId: payload.sub,
+      sub: payload.sub,
       email: payload.email,
       role: payload.role,
     };

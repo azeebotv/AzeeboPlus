@@ -380,6 +380,11 @@ export class ContentManagementService {
     if (!ids.length) throw new BadRequestException('ids array is required');
     if (!status) throw new BadRequestException('status is required');
 
+    const allowedStatuses = ['draft', 'published', 'archived'];
+    if (!allowedStatuses.includes(status)) {
+      throw new BadRequestException('Invalid status');
+    }
+
     const result = await this.prisma.$transaction(async (tx) => {
       const items = await tx.contentItem.findMany({ where: { id: { in: ids } } });
 

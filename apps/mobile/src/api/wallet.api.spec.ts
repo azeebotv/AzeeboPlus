@@ -15,7 +15,7 @@ describe('Wallet API Client', () => {
   });
 
   describe('getBalance', () => {
-    it('should call GET /v1/wallet/balance', async () => {
+    it('should call GET /v1/wallet', async () => {
       const mockResponse = {
         success: true,
         data: { balance: 1000, currency: 'NGN', pendingBalance: 0 },
@@ -27,7 +27,7 @@ describe('Wallet API Client', () => {
 
       const result = await walletApi.getBalance();
 
-      expect(apiClient.get).toHaveBeenCalledWith('/v1/wallet/balance');
+      expect(apiClient.get).toHaveBeenCalledWith('/v1/wallet');
       expect(result).toEqual(mockResponse);
     });
   });

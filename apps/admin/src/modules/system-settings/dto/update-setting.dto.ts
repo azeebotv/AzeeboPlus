@@ -1,11 +1,12 @@
 import { IsString, IsOptional, IsBoolean, IsObject, IsArray } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Prisma } from '../../../generated/prisma';
 
 export class UpdateSettingDto {
   @ApiPropertyOptional({ description: 'Setting value (can be any JSON-serializable value)' })
   @IsOptional()
   @IsObject()
-  value?: any;
+  value?: Prisma.InputJsonValue;
 
   @ApiPropertyOptional({ description: 'Category for grouping settings' })
   @IsOptional()
@@ -127,7 +128,7 @@ export class UpdateSubscriptionPlanDto {
   @ApiPropertyOptional({ description: 'Plan limits' })
   @IsOptional()
   @IsObject()
-  limits?: Record<string, any>;
+  limits?: Record<string, Prisma.InputJsonValue>;
 
   @ApiPropertyOptional({ description: 'Whether plan is active' })
   @IsOptional()
@@ -379,7 +380,7 @@ export class UpdateIntegrationDto {
   @ApiPropertyOptional({ description: 'Additional config' })
   @IsOptional()
   @IsObject()
-  config?: Record<string, any>;
+  config?: Record<string, Prisma.InputJsonValue>;
 }
 
 export class UpdateComplianceDto {

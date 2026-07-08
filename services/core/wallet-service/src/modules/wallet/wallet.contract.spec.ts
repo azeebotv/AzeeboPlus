@@ -1,18 +1,18 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ExecutionContext, NestInterceptor } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import request from 'supertest';
 import { WalletController } from './wallet.controller';
 import { WalletService } from './wallet.service';
 import { PrismaService } from '../database/prisma.service';
 import { CacheService, CacheInterceptor } from '../../cache';
-import { AuthGuard } from '@nestjs/passport';
-import { RateLimitGuard, AdminGuard } from '@azeebo/security';
+import { RateLimitGuard, AdminGuard, ServiceAuthGuard } from '@azeebo/security';
 import { ConfigService } from '@nestjs/config';
 
 class MockAuthGuard {
   canActivate(context: ExecutionContext) {
     const request = context.switchToHttp().getRequest();
-    request.user = { sub: 'user-123' };
+    request.user = { id: 'user-123', sub: 'user-123' };
     return true;
   }
 }
@@ -116,9 +116,10 @@ describe('Wallet Controller Contract Tests', () => {
         }},
         { provide: CacheService, useValue: { get: jest.fn(), set: jest.fn(), del: jest.fn() } },
         { provide: ConfigService, useValue: { get: jest.fn((k: string, d?: unknown) => d) } },
+        { provide: APP_GUARD, useClass: ServiceAuthGuard },
       ],
     })
-      .overrideGuard(AuthGuard('jwt'))
+      .overrideGuard(ServiceAuthGuard)
       .useClass(MockAuthGuard)
       .overrideGuard(RateLimitGuard)
       .useClass(MockRateLimitGuard)
@@ -129,6 +130,7 @@ describe('Wallet Controller Contract Tests', () => {
       .compile();
 
     app = moduleFixture.createNestApplication();
+    app.useGlobalInterceptors({ intercept: (_ctx: ExecutionContext, next: { handle: () => unknown }) => next.handle() } as NestInterceptor);
     app.setGlobalPrefix('v1');
     await app.init();
   });

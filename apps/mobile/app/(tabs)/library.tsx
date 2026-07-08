@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, FlatList } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../src/contexts/AuthContext';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
-import { contentApi } from '../../src/api';
+import { useSavedContent, useRecentContent } from '../../src/hooks/useContentQuery';
 
 const TABS = [
   { id: 'watchlist', label: 'Watchlist', emoji: '📋' },
@@ -13,89 +13,50 @@ const TABS = [
   { id: 'purchases', label: 'Purchases', emoji: '🛒' },
 ];
 
-interface WatchlistItem {
-  id: string;
-  title: string;
-  thumbnail: string;
-  savedAt: string;
-  type: string;
-}
-
-interface HistoryItem {
-  id: string;
-  contentId: string;
-  title: string;
-  thumbnail: string;
-  watchedAt: string;
-  progress: number;
-  duration: number;
-}
-
 export default function LibraryScreen() {
   const router = useRouter();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [activeTab, setActiveTab] = useState('watchlist');
-  const [watchlist, setWatchlist] = useState<WatchlistItem[]>([]);
-  const [history, setHistory] = useState<HistoryItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (authLoading) return;
-    if (!isAuthenticated) {
-      router.replace('/(auth)/login');
-    }
-  }, [authLoading, isAuthenticated, router]);
+  const { data: savedData, isLoading: savedLoading, error: savedError, refetch: refetchSaved } = useSavedContent(1, 50);
+  const { data: historyData, isLoading: historyLoading, error: historyError, refetch: refetchHistory } = useRecentContent(1, 50);
 
-  const fetchData = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const [savedRes, historyRes] = await Promise.all([
-        contentApi.getSavedContent(1, 50),
-        contentApi.getWatchHistory(1, 50),
-      ]);
-      if (savedRes.success && savedRes.data) {
-        setWatchlist(
-          savedRes.data.items.map((item) => ({
-            id: item.id,
-            title: item.title,
-            thumbnail: item.thumbnail,
-            savedAt: item.createdAt,
-            type: item.contentType ?? 'content',
-          }))
-        );
-      }
-      if (historyRes.success && historyRes.data) {
-        setHistory(
-          historyRes.data.items.map((item) => ({
-            id: item.id,
-            contentId: item.id,
-            title: item.title,
-            thumbnail: item.thumbnail,
-            watchedAt: item.updatedAt,
-            progress: 0,
-            duration: item.duration ?? 0,
-          }))
-        );
-      }
-    } catch (err: any) {
-      setError(err.message || 'Failed to load library');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const isLoading = savedLoading || historyLoading;
+  const error = savedError?.message || historyError?.message || null;
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  const watchlist = (savedData?.items ?? []).map((item) => ({
+    id: item.id,
+    title: item.title,
+    thumbnail: item.thumbnail,
+    savedAt: item.createdAt,
+    type: item.contentType ?? 'content',
+  }));
+
+  const history = (historyData?.items ?? []).map((item) => ({
+    id: item.id,
+    contentId: item.id,
+    title: item.title,
+    thumbnail: item.thumbnail,
+    watchedAt: item.updatedAt,
+    progress: 0,
+    duration: item.duration ?? 0,
+  }));
 
   if (isLoading) {
     return <LoadingState text="Loading your library..." />;
   }
 
   if (error) {
-    return <ErrorState title="Failed to load library" description={error} onRetry={fetchData} />;
+    return (
+      <ErrorState
+        title="Failed to load library"
+        description={error}
+        onRetry={() => {
+          refetchSaved();
+          refetchHistory();
+        }}
+      />
+    );
   }
 
   const renderTab = (tab: (typeof TABS)[0]) => (
@@ -129,7 +90,7 @@ export default function LibraryScreen() {
         renderItem={({ item }) => (
           <TouchableOpacity
             style={styles.itemCard}
-            onPress={() => router.push(`/watch/${(item as any).contentId || item.id}`)}
+            onPress={() => router.push(`/watch/${(item as { contentId?: string; id: string }).contentId || item.id}`)}
           >
             <View style={styles.itemThumbnail}>
               <Text style={styles.itemEmoji}>📺</Text>

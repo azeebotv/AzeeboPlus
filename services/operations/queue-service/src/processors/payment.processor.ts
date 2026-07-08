@@ -124,7 +124,7 @@ export class PaymentProcessor extends WorkerHost {
       {
         jobId: job.id,
         transactionId: job.data.transactionId,
-        error: error.stack,
+        error: error.message,
         attemptsMade: job.attemptsMade,
       }
     );
@@ -148,7 +148,7 @@ export class PaymentProcessor extends WorkerHost {
   @OnWorkerEvent('error')
   onError(error: Error) {
     this.logger.error(`Payment worker encountered an error: ${error.message}`, {
-      stack: error.stack,
+      stack: error.message,
     });
   }
 }

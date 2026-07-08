@@ -1,5 +1,6 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
+import { CacheService, cacheKey } from '@azeebo/shared-services';
 import { Prisma } from '@prisma/client';
 import { SearchResponse } from './interfaces/search-response.interface';
 
@@ -31,7 +32,16 @@ interface Facets {
 
 @Injectable()
 export class SearchService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly logger = new Logger(SearchService.name);
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly cache: CacheService,
+  ) {}
+
+  private escapeRegex(str: string): string {
+    return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
 
   async search(query: string, filters?: FacetedFilters): Promise<SearchResponse> {
     if (!query || query.length < 2) {
@@ -40,12 +50,21 @@ export class SearchService {
 
     const page = filters?.page || 1;
     const limit = filters?.limit || 20;
+
+    // Check cache
+    const filterKey = JSON.stringify(filters || {});
+    const cacheK = cacheKey('search', `results:${query}:${page}:${filterKey}`);
+    const cached = await this.cache.get<SearchResponse>(cacheK);
+    if (cached) return cached;
+
     const skip = (page - 1) * limit;
+
+    const escapedQuery = this.escapeRegex(query);
 
     const whereCondition: Prisma.ContentItemWhereInput = {
       OR: [
-        { title: { contains: query, mode: 'insensitive' } },
-        { description: { contains: query, mode: 'insensitive' } },
+        { title: { contains: escapedQuery, mode: 'insensitive' } },
+        { description: { contains: escapedQuery, mode: 'insensitive' } },
       ],
       status: 'published',
       ...(filters?.universe ? { universeId: filters.universe } : {}),
@@ -71,11 +90,7 @@ export class SearchService {
             },
           }
         : {}),
-      ...(filters?.contentType && filters.contentType.length > 0
-        ? {
-            contentType: { in: filters.contentType },
-          }
-        : {}),
+
       ...(filters?.dateRange
         ? {
             createdAt: {
@@ -90,7 +105,6 @@ export class SearchService {
       createdAt?: 'asc' | 'desc';
       viewCount?: 'asc' | 'desc';
       title?: 'asc' | 'desc';
-      averageRating?: 'asc' | 'desc';
     } = { createdAt: 'desc' };
     if (filters?.sort) {
       switch (filters.sort) {
@@ -107,87 +121,91 @@ export class SearchService {
           orderBy = { title: 'asc' };
           break;
         case 'rating':
-          orderBy = { averageRating: 'desc' };
+          orderBy = { viewCount: 'desc' };
           break;
       }
     }
 
-    const [contentItems, contentTotal] = await Promise.all([
-      this.prisma.contentItem.findMany({
-        where: whereCondition,
-        skip,
-        take: limit,
-        orderBy,
-        include: {
-          creator: true,
-          universe: true,
-          categories: true,
-          tags: true,
-        },
-      }),
-      this.prisma.contentItem.count({ where: whereCondition }),
-    ]);
+    try {
+      const [contentItems, contentTotal] = await Promise.all([
+        this.prisma.contentItem.findMany({
+          where: whereCondition,
+          skip,
+          take: limit,
+          orderBy,
+          include: {
+            creator: true,
+            universe: true,
+            categories: true,
+            tags: true,
+          },
+        }),
+        this.prisma.contentItem.count({ where: whereCondition }),
+      ]);
 
-    const creators = await this.prisma.creatorProfile.findMany({
-      where: {
-        bio: { contains: query, mode: 'insensitive' },
-      },
-      take: Math.min(limit, 20),
-      include: { user: true },
-    });
-
-    const universes = await this.prisma.universe.findMany({
-      where: {
-        OR: [
-          { name: { contains: query, mode: 'insensitive' } },
-          { displayName: { contains: query, mode: 'insensitive' } },
-        ],
-      },
-      take: Math.min(limit, 10),
-    });
-
-    return {
-      success: true,
-      data: {
-        query,
-        results: {
-          content: contentItems.map((item) => ({
-            id: item.id,
-            title: item.title,
-            description: item.description,
-            contentType:
-              ((item as unknown as Record<string, unknown>).contentType as string) || 'unknown',
-            status: item.status,
-            viewCount: item.viewCount || 0,
-            averageRating:
-              ((item as unknown as Record<string, unknown>).averageRating as number) || 0,
-            createdAt: item.createdAt,
-            updatedAt: item.updatedAt,
-          })),
-          creators: creators.map((creator) => ({
-            id: creator.id,
-            bio: creator.bio,
-            user: {
-              id: creator.userId,
-              username: creator.user?.displayName || '',
-              email: creator.user?.email || '',
-            },
-          })),
-          universes: universes.map((uni) => ({
-            id: uni.id,
-            name: uni.name,
-            displayName: uni.displayName,
-          })),
+      const creators = await this.prisma.creatorProfile.findMany({
+        where: {
+          bio: { contains: escapedQuery, mode: 'insensitive' },
         },
-        total: contentTotal + creators.length + universes.length,
-        pagination: {
-          page,
-          limit,
-          total: contentTotal,
-          totalPages: Math.ceil(contentTotal / limit),
+        take: Math.min(limit, 20),
+        include: { user: true },
+      });
+
+      const universes = await this.prisma.universe.findMany({
+        where: {
+          OR: [
+            { name: { contains: escapedQuery, mode: 'insensitive' } },
+            { displayName: { contains: escapedQuery, mode: 'insensitive' } },
+          ],
         },
-      },
-    };
+        take: Math.min(limit, 10),
+      });
+
+      const result: SearchResponse = {
+        success: true,
+        data: {
+          query,
+          results: {
+            content: contentItems.map((item) => ({
+              id: item.id,
+              title: item.title,
+              description: item.description,
+              status: item.status,
+              viewCount: item.viewCount || 0,
+              createdAt: item.createdAt,
+              updatedAt: item.updatedAt,
+            })),
+            creators: creators.map((creator) => ({
+              id: creator.id,
+              bio: creator.bio,
+              user: {
+                id: creator.userId,
+                username: creator.user?.displayName || '',
+                email: creator.user?.email || '',
+              },
+            })),
+            universes: universes.map((uni) => ({
+              id: uni.id,
+              name: uni.name,
+              displayName: uni.displayName,
+            })),
+          },
+          total: contentTotal + creators.length + universes.length,
+          pagination: {
+            page,
+            limit,
+            total: contentTotal,
+            totalPages: Math.ceil(contentTotal / limit),
+          },
+        },
+      };
+
+      await this.cache.set(cacheK, result, 600);
+      return result;
+    } catch (error: unknown) {
+      this.logger.error('Failed to perform search', error);
+      throw new BadRequestException('Failed to perform search');
+    }
   }
 
   async searchWithFacets(query: string, filters?: FacetedFilters): Promise<SearchResponse> {
@@ -195,97 +213,102 @@ export class SearchService {
       throw new BadRequestException('Search query must be at least 2 characters');
     }
 
+    const escapedQuery = this.escapeRegex(query);
+
     const baseCondition: Prisma.ContentItemWhereInput = {
       OR: [
-        { title: { contains: query, mode: 'insensitive' } },
-        { description: { contains: query, mode: 'insensitive' } },
+        { title: { contains: escapedQuery, mode: 'insensitive' } },
+        { description: { contains: escapedQuery, mode: 'insensitive' } },
       ],
       status: 'published',
     };
 
-    const [contentItems, facets] = await Promise.all([
-      this.prisma.contentItem.findMany({
+    try {
+      const [contentItems, facets] = await Promise.all([
+        this.prisma.contentItem.findMany({
+          where: {
+            ...baseCondition,
+            ...(filters?.universe ? { universeId: filters.universe } : {}),
+            ...(filters?.categories && filters.categories.length > 0
+              ? {
+                  categories: { some: { id: { in: filters.categories } } },
+                }
+              : {}),
+            ...(filters?.tags && filters.tags.length > 0
+              ? {
+                  tags: { some: { id: { in: filters.tags } } },
+                }
+              : {}),
+          },
+          take: 50,
+          orderBy: { createdAt: 'desc' },
+          include: { creator: true, universe: true, categories: true, tags: true },
+        }),
+        this.computeFacets(query),
+      ]);
+
+      const creators = await this.prisma.creatorProfile.findMany({
+        where: { bio: { contains: escapedQuery, mode: 'insensitive' } },
+        take: 20,
+        include: { user: true },
+      });
+
+      const universes = await this.prisma.universe.findMany({
         where: {
-          ...baseCondition,
-          ...(filters?.universe ? { universeId: filters.universe } : {}),
-          ...(filters?.categories && filters.categories.length > 0
-            ? {
-                categories: { some: { id: { in: filters.categories } } },
-              }
-            : {}),
-          ...(filters?.tags && filters.tags.length > 0
-            ? {
-                tags: { some: { id: { in: filters.tags } } },
-              }
-            : {}),
+          OR: [
+            { name: { contains: escapedQuery, mode: 'insensitive' } },
+            { displayName: { contains: escapedQuery, mode: 'insensitive' } },
+          ],
         },
-        take: 50,
-        orderBy: { createdAt: 'desc' },
-        include: { creator: true, universe: true, categories: true, tags: true },
-      }),
-      this.computeFacets(query),
-    ]);
+        take: 10,
+      });
 
-    const creators = await this.prisma.creatorProfile.findMany({
-      where: { bio: { contains: query, mode: 'insensitive' } },
-      take: 20,
-      include: { user: true },
-    });
-
-    const universes = await this.prisma.universe.findMany({
-      where: {
-        OR: [
-          { name: { contains: query, mode: 'insensitive' } },
-          { displayName: { contains: query, mode: 'insensitive' } },
-        ],
-      },
-      take: 10,
-    });
-
-    return {
-      success: true,
-      data: {
-        query,
-        results: {
-          content: contentItems.map((item) => ({
-            id: item.id,
-            title: item.title,
-            description: item.description,
-            contentType:
-              ((item as unknown as Record<string, unknown>).contentType as string) || 'unknown',
-            status: item.status,
-            viewCount: item.viewCount || 0,
-            averageRating:
-              ((item as unknown as Record<string, unknown>).averageRating as number) || 0,
-            createdAt: item.createdAt,
-            updatedAt: item.updatedAt,
-          })),
-          creators: creators.map((creator) => ({
-            id: creator.id,
-            bio: creator.bio,
-            user: {
-              id: creator.userId,
-              username: creator.user?.displayName || '',
-              email: creator.user?.email || '',
-            },
-          })),
-          universes: universes.map((uni) => ({
-            id: uni.id,
-            name: uni.name,
-            displayName: uni.displayName,
-          })),
+      return {
+        success: true,
+        data: {
+          query,
+          results: {
+            content: contentItems.map((item) => ({
+              id: item.id,
+              title: item.title,
+              description: item.description,
+              status: item.status,
+              viewCount: item.viewCount || 0,
+              createdAt: item.createdAt,
+              updatedAt: item.updatedAt,
+            })),
+            creators: creators.map((creator) => ({
+              id: creator.id,
+              bio: creator.bio,
+              user: {
+                id: creator.userId,
+                username: creator.user?.displayName || '',
+                email: creator.user?.email || '',
+              },
+            })),
+            universes: universes.map((uni) => ({
+              id: uni.id,
+              name: uni.name,
+              displayName: uni.displayName,
+            })),
+          },
+          total: contentItems.length + creators.length + universes.length,
+          facets,
         },
-        total: contentItems.length + creators.length + universes.length,
-        facets,
-      },
-    };
+      };
+    } catch (error: unknown) {
+      this.logger.error('Failed to search with facets', error);
+      throw new BadRequestException('Failed to perform faceted search');
+    }
   }
 
   private async computeFacets(query: string): Promise<Facets> {
+    const escapedQuery = this.escapeRegex(query);
+
     const baseCondition: Prisma.ContentItemWhereInput = {
       OR: [
-        { title: { contains: query, mode: 'insensitive' } },
-        { description: { contains: query, mode: 'insensitive' } },
+        { title: { contains: escapedQuery, mode: 'insensitive' } },
+        { description: { contains: escapedQuery, mode: 'insensitive' } },
       ],
       status: 'published',
     };
@@ -338,12 +361,20 @@ export class SearchService {
 
   private async getDateRangeFacets(baseCondition: Prisma.ContentItemWhereInput): Promise<Facet[]> {
     const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+    const sevenDaysAgo = new Date(startOfToday);
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    const oneMonthAgo = new Date(startOfToday);
+    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+    const oneYearAgo = new Date(startOfToday);
+    oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+
     const ranges = [
-      { label: 'Today', start: new Date(now.setHours(0, 0, 0, 0)) },
-      { label: 'This Week', start: new Date(now.setDate(now.getDate() - 7)) },
-      { label: 'This Month', start: new Date(now.setMonth(now.getMonth() - 1)) },
-      { label: 'This Year', start: new Date(now.setFullYear(now.getFullYear() - 1)) },
-      { label: 'Older', start: new Date(0), end: new Date(now.setFullYear(now.getFullYear() - 1)) },
+      { label: 'Today', start: startOfToday },
+      { label: 'This Week', start: sevenDaysAgo },
+      { label: 'This Month', start: oneMonthAgo },
+      { label: 'This Year', start: oneYearAgo },
+      { label: 'Older', start: new Date(0), end: oneYearAgo },
     ];
 
     const dateFacets: Facet[] = [];
@@ -368,35 +399,52 @@ export class SearchService {
       throw new BadRequestException('Search query must be at least 1 character');
     }
 
-    const suggestions = await this.prisma.searchQueryLog.findMany({
-      where: {
-        query: { contains: query, mode: 'insensitive' },
-      },
-      select: { query: true, count: true },
-      orderBy: { count: 'desc' },
-      take: 10,
-    });
+    const cacheK = cacheKey('search', `suggestions:${query}`);
+    const cached = await this.cache.get<SearchResponse>(cacheK);
+    if (cached) return cached;
 
-    return {
-      success: true,
-      data: {
-        suggestions: suggestions.map((s) => s.query),
-      },
-    };
+    try {
+      const suggestions = await this.prisma.searchQueryLog.findMany({
+        where: {
+          query: { contains: this.escapeRegex(query), mode: 'insensitive' },
+        },
+        select: { query: true, count: true },
+        orderBy: { count: 'desc' },
+        take: 10,
+      });
+
+      const result: SearchResponse = {
+        success: true,
+        data: {
+          suggestions: suggestions.map((s) => s.query),
+        },
+      };
+
+      await this.cache.set(cacheK, result, 300);
+      return result;
+    } catch (error: unknown) {
+      this.logger.error('Failed to fetch search suggestions', error);
+      throw new BadRequestException('Failed to fetch search suggestions');
+    }
   }
 
   async getTrending(): Promise<SearchResponse> {
-    const trending = await this.prisma.searchQueryLog.findMany({
-      orderBy: { count: 'desc' },
-      take: 20,
-    });
+    try {
+      const trending = await this.prisma.searchQueryLog.findMany({
+        orderBy: { count: 'desc' },
+        take: 20,
+      });
 
-    return {
-      success: true,
-      data: {
-        trending: trending.map((t) => ({ query: t.query, count: t.count })),
-      },
-    };
+      return {
+        success: true,
+        data: {
+          trending: trending.map((t) => ({ query: t.query, count: t.count })),
+        },
+      };
+    } catch (error: unknown) {
+      this.logger.error('Failed to fetch trending searches', error);
+      throw new BadRequestException('Failed to fetch trending searches');
+    }
   }
 
   async getFacets(query?: string, universe?: string): Promise<SearchResponse> {
@@ -406,121 +454,118 @@ export class SearchService {
       ...(query
         ? {
             OR: [
-              { title: { contains: query, mode: 'insensitive' } },
-              { description: { contains: query, mode: 'insensitive' } },
+              { title: { contains: this.escapeRegex(query), mode: 'insensitive' } },
+              { description: { contains: this.escapeRegex(query), mode: 'insensitive' } },
             ],
           }
         : {}),
     };
 
-    const [universes, categories, tags] = await Promise.all([
-      this.prisma.universe.findMany({
-        select: {
-          id: true,
-          name: true,
-          displayName: true,
-          _count: {
-            select: {
-              contentItems: {
-                where: contentWhere,
+    try {
+      const [universes, categories, tags] = await Promise.all([
+        this.prisma.universe.findMany({
+          select: {
+            id: true,
+            name: true,
+            displayName: true,
+            _count: {
+              select: {
+                contentItems: {
+                  where: contentWhere,
+                },
               },
             },
           },
-        },
-      }),
-      this.prisma.category.findMany({
-        select: {
-          id: true,
-          name: true,
-          slug: true,
-          _count: {
-            select: {
-              contentItems: {
-                where: contentWhere,
+        }),
+        this.prisma.category.findMany({
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            _count: {
+              select: {
+                contentItems: {
+                  where: contentWhere,
+                },
               },
             },
           },
-        },
-      }),
-      this.prisma.tag.findMany({
-        select: {
-          id: true,
-          name: true,
-          _count: {
-            select: {
-              contentItems: {
-                where: contentWhere,
+        }),
+        this.prisma.tag.findMany({
+          select: {
+            id: true,
+            name: true,
+            _count: {
+              select: {
+                contentItems: {
+                  where: contentWhere,
+                },
               },
             },
           },
-        },
-        orderBy: {
-          contentItems: {
-            _count: 'desc',
+          orderBy: {
+            contentItems: {
+              _count: 'desc',
+            },
           },
-        },
-        take: 50,
-      }),
-    ]);
+          take: 50,
+        }),
+      ]);
 
-    type UniverseWithCount = (typeof universes)[number];
-    type CategoryWithCount = (typeof categories)[number];
-    type TagWithCount = (typeof tags)[number];
+      type UniverseWithCount = (typeof universes)[number];
+      type CategoryWithCount = (typeof categories)[number];
+      type TagWithCount = (typeof tags)[number];
 
-    return {
-      success: true,
-      data: {
-        facets: {
-          universes: universes
-            .filter((u: UniverseWithCount) => u._count.contentItems > 0)
-            .map((u) => ({ id: u.id, name: u.name, count: u._count.contentItems })),
-          categories: categories
-            .filter((c: CategoryWithCount) => c._count.contentItems > 0)
-            .map((c) => ({ id: c.id, name: c.name, count: c._count.contentItems })),
-          tags: tags
-            .filter((t: TagWithCount) => t._count.contentItems > 0)
-            .map((t) => ({ id: t.id, name: t.name, count: t._count.contentItems })),
-          contentTypes: [],
-          dateRanges: [],
+      return {
+        success: true,
+        data: {
+          facets: {
+            universes: universes
+              .filter((u: UniverseWithCount) => u._count.contentItems > 0)
+              .map((u) => ({ id: u.id, name: u.name, count: u._count.contentItems })),
+            categories: categories
+              .filter((c: CategoryWithCount) => c._count.contentItems > 0)
+              .map((c) => ({ id: c.id, name: c.name, count: c._count.contentItems })),
+            tags: tags
+              .filter((t: TagWithCount) => t._count.contentItems > 0)
+              .map((t) => ({ id: t.id, name: t.name, count: t._count.contentItems })),
+            contentTypes: [],
+            dateRanges: [],
+          },
         },
-      },
-    };
+      };
+    } catch (error: unknown) {
+      this.logger.error('Failed to fetch facets', error);
+      throw new BadRequestException('Failed to fetch facets');
+    }
   }
 
   async logSearch(userId: string, query: string, resultsCount: number): Promise<SearchResponse> {
-    let searchQuery = await this.prisma.searchQueryLog.findUnique({
-      where: { query },
-    });
-
-    if (searchQuery) {
-      searchQuery = await this.prisma.searchQueryLog.update({
+    try {
+      const searchQuery = await this.prisma.searchQueryLog.upsert({
         where: { query },
+        update: { count: { increment: 1 }, lastSearchAt: new Date() },
+        create: { query, count: 1, lastSearchAt: new Date() },
+      });
+
+      await this.prisma.userSearch.create({
         data: {
-          count: { increment: 1 },
-          lastSearchAt: new Date(),
+          userId,
+          queryId: searchQuery.id,
+          resultsCount,
         },
       });
-    } else {
-      searchQuery = await this.prisma.searchQueryLog.create({
-        data: {
-          query,
-          count: 1,
-          lastSearchAt: new Date(),
-        },
-      });
+
+      // Invalidate suggestions cache since search log affects trending
+      await this.cache.delete(cacheKey('search', `suggestions:${query}`));
+
+      return {
+        success: true,
+        data: { message: 'Search logged' },
+      };
+    } catch (error: unknown) {
+      this.logger.error('Failed to log search', error);
+      throw new BadRequestException('Failed to log search');
     }
-
-    await this.prisma.userSearch.create({
-      data: {
-        userId,
-        queryId: searchQuery.id,
-        resultsCount,
-      },
-    });
-
-    return {
-      success: true,
-      data: { message: 'Search logged' },
-    };
   }
 }

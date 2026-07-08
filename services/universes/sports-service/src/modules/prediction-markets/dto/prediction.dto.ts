@@ -22,11 +22,6 @@ export class SubmitPredictionDto {
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
-  userId!: string;
-
-  @ApiProperty()
-  @IsString()
-  @IsNotEmpty()
   predictionId!: string;
 
   @ApiProperty()

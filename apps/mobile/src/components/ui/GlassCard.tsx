@@ -1,4 +1,3 @@
-import React from 'react';
 import { StyleSheet, type ViewStyle, type StyleProp } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { colors, radius, shadows, spring } from '../../theme';

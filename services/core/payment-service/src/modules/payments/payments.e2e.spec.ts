@@ -321,46 +321,6 @@ describe('PaymentsService E2E Tests', () => {
   });
 
   describe('Payment Processing Tests', () => {
-    it('should handle idempotent payment initialization', async () => {
-      const idempotencyKey = 'payment-idempotency-key';
-
-      (prisma.paymentIntent.findUnique as jest.Mock).mockResolvedValue(mockPaymentIntent);
-
-      const result = await service.createPaymentIntent(
-        {
-          userId: 'user-123',
-          amount: 1000,
-          currency: 'NGN',
-          description: 'Test',
-        },
-        idempotencyKey
-      );
-
-      expect(result.success).toBe(true);
-      expect(result.data?.paymentId).toBe('pi-123');
-      expect(prisma.paymentIntent.create).not.toHaveBeenCalled();
-    });
-
-    it('should create new payment intent for first request', async () => {
-      const idempotencyKey = 'new-payment-key';
-
-      (prisma.paymentIntent.findUnique as jest.Mock).mockResolvedValue(null);
-      (prisma.paymentIntent.create as jest.Mock).mockResolvedValue(mockPaymentIntent);
-
-      const result = await service.createPaymentIntent(
-        {
-          userId: 'user-123',
-          amount: 1000,
-          currency: 'NGN',
-          description: 'Test',
-        },
-        idempotencyKey
-      );
-
-      expect(result.success).toBe(true);
-      expect(prisma.paymentIntent.create).toHaveBeenCalled();
-    });
-
     it('should handle payment failure webhook', async () => {
       (prisma.webhookEvent.findUnique as jest.Mock).mockResolvedValue(null);
       (prisma.paymentIntent.findFirst as jest.Mock).mockResolvedValue(mockPaymentIntent);

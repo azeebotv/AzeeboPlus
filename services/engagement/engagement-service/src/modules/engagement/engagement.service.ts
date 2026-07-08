@@ -1,5 +1,9 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
+import { CacheService, cacheKey } from '@azeebo/shared-services';
+
+const ALLOWED_TIME_PERIODS = ['daily', 'weekly', 'monthly', 'allTime'] as const;
+const ALLOWED_CATEGORIES = ['all', 'gaming', 'content', 'social', 'predictions'] as const;
 
 interface LeaderboardEntryData {
   id: string;
@@ -37,126 +41,178 @@ interface RankingData {
 export class EngagementService {
   private readonly logger = new Logger(EngagementService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly cache: CacheService
+  ) {}
 
   async getLeaderboard(timePeriod = 'weekly', category = 'all', limit = 50) {
-    const entries = await this.prisma.leaderboardEntry.findMany({
-      where: {
-        timePeriod,
-        category,
-      },
-      orderBy: {
-        score: 'desc',
-      },
-      take: limit,
-    });
+    if (!(ALLOWED_TIME_PERIODS as readonly string[]).includes(timePeriod)) {
+      throw new BadRequestException(`Invalid timePeriod. Allowed: ${ALLOWED_TIME_PERIODS.join(', ')}`);
+    }
+    if (!(ALLOWED_CATEGORIES as readonly string[]).includes(category)) {
+      throw new BadRequestException(`Invalid category. Allowed: ${ALLOWED_CATEGORIES.join(', ')}`);
+    }
 
-    return {
-      success: true,
-      data: entries.map((entry: LeaderboardEntryData, index: number) => ({
-        id: entry.id,
-        userId: entry.userId,
-        displayName: entry.displayName,
-        avatar: entry.avatar,
-        score: entry.score,
-        rank: index + 1,
-        category: entry.category,
-        timePeriod: entry.timePeriod,
-      })),
-    };
+    try {
+      const cacheK = cacheKey('engagement', `leaderboard:${timePeriod}:${category}:${limit}`);
+      const cached = await this.cache.get(cacheK);
+      if (cached) return cached;
+
+      const entries = await this.prisma.leaderboardEntry.findMany({
+        where: {
+          timePeriod,
+          category,
+        },
+        orderBy: {
+          score: 'desc',
+        },
+        take: limit,
+      });
+
+      const result = {
+        success: true,
+        data: entries.map((entry: LeaderboardEntryData, index: number) => ({
+          id: entry.id,
+          userId: entry.userId,
+          displayName: entry.displayName,
+          avatar: entry.avatar,
+          score: entry.score,
+          rank: index + 1,
+          category: entry.category,
+          timePeriod: entry.timePeriod,
+        })),
+      };
+
+      await this.cache.set(cacheK, result, 60);
+      return result;
+    } catch (error) {
+      this.logger.error(`getLeaderboard failed: ${error.message}`, error.stack);
+      return { success: false, error: error.message };
+    }
   }
 
   async getRankings() {
-    const categories = ['all', 'gaming', 'content', 'social', 'predictions'];
-    const rankings = await Promise.all(
-      categories.map(async (category) => {
-        const entries = await this.prisma.ranking.findMany({
-          where: { category },
-          orderBy: { score: 'desc' },
-          take: 10,
-        });
+    try {
+      const categories = ['all', 'gaming', 'content', 'social', 'predictions'];
+      const rankings = await Promise.all(
+        categories.map(async (category) => {
+          const entries = await this.prisma.ranking.findMany({
+            where: { category },
+            orderBy: { score: 'desc' },
+            take: 10,
+          });
 
-        return {
-          category,
-          rankings: entries.map((entry: RankingData, index: number) => ({
-            id: entry.id,
-            userId: entry.userId,
-            displayName: entry.displayName,
-            avatar: entry.avatar,
-            score: entry.score,
-            rank: index + 1,
-          })),
-        };
-      })
-    );
+          return {
+            category,
+            rankings: entries.map((entry: RankingData, index: number) => ({
+              id: entry.id,
+              userId: entry.userId,
+              displayName: entry.displayName,
+              avatar: entry.avatar,
+              score: entry.score,
+              rank: index + 1,
+            })),
+          };
+        })
+      );
 
-    return {
-      success: true,
-      data: rankings,
-    };
+      return {
+        success: true,
+        data: rankings,
+      };
+    } catch (error) {
+      this.logger.error(`getRankings failed: ${error.message}`, error.stack);
+      return { success: false, error: error.message };
+    }
   }
 
   async getPredictionResults(userId: string, contentId: string) {
-    const predictions = await this.prisma.prediction.findMany({
-      where: {
-        userId,
-        contentId,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
-
-    const totalPoints = predictions.reduce(
-      (sum: number, p: PredictionData) => sum + (p.points || 0),
-      0
-    );
-    const correctCount = predictions.filter((p: PredictionData) => p.isCorrect).length;
-
-    return {
-      success: true,
-      data: {
-        predictions: predictions.map((p: PredictionData) => ({
-          id: p.id,
-          prediction: p.prediction,
-          points: p.points,
-          isCorrect: p.isCorrect,
-          result: p.result,
-          createdAt: p.createdAt.toISOString(),
-        })),
-        summary: {
-          totalPredictions: predictions.length,
-          correctPredictions: correctCount,
-          accuracy: predictions.length > 0 ? (correctCount / predictions.length) * 100 : 0,
-          totalPoints,
+    try {
+      const predictions = await this.prisma.prediction.findMany({
+        where: {
+          userId,
+          contentId,
         },
-      },
-    };
+        orderBy: {
+          createdAt: 'desc',
+        },
+      });
+
+      const totalPoints = predictions.reduce(
+        (sum: number, p: PredictionData) => sum + (p.points || 0),
+        0
+      );
+      const correctCount = predictions.filter((p: PredictionData) => p.isCorrect).length;
+
+      return {
+        success: true,
+        data: {
+          predictions: predictions.map((p: PredictionData) => ({
+            id: p.id,
+            prediction: p.prediction,
+            points: p.points,
+            isCorrect: p.isCorrect,
+            result: p.result,
+            createdAt: p.createdAt.toISOString(),
+          })),
+          summary: {
+            totalPredictions: predictions.length,
+            correctPredictions: correctCount,
+            accuracy: predictions.length > 0 ? (correctCount / predictions.length) * 100 : 0,
+            totalPoints,
+          },
+        },
+      };
+    } catch (error) {
+      this.logger.error(`getPredictionResults failed: ${error.message}`, error.stack);
+      return { success: false, error: error.message };
+    }
   }
 
-  async submitPrediction(userId: string, contentId: string, prediction: string, points: number) {
-    const newPrediction = await this.prisma.prediction.create({
-      data: {
-        userId,
-        contentId,
-        prediction,
-        points,
-      },
+  async submitPrediction(userId: string, contentId: string, prediction: string) {
+    const existing = await this.prisma.prediction.findFirst({
+      where: { userId, contentId },
     });
+    if (existing) {
+      throw new BadRequestException('Prediction already submitted');
+    }
 
-    this.logger.log(`Prediction submitted by user ${userId} for content ${contentId}`);
+    try {
+      const serverPoints = 10;
 
-    return {
-      success: true,
-      data: {
-        id: newPrediction.id,
-        prediction: newPrediction.prediction,
-        points: newPrediction.points,
-        createdAt: newPrediction.createdAt.toISOString(),
-      },
-    };
+      const newPrediction = await this.prisma.prediction.create({
+        data: {
+          userId,
+          contentId,
+          prediction,
+          points: serverPoints,
+        },
+      });
+
+      await this.cache.invalidate(`engagement:predictions:${userId}`);
+
+      this.logger.log(`Prediction submitted by user ${userId} for content ${contentId}`);
+
+      return {
+        success: true,
+        data: {
+          id: newPrediction.id,
+          prediction: newPrediction.prediction,
+          points: newPrediction.points,
+          createdAt: newPrediction.createdAt.toISOString(),
+        },
+      };
+    } catch (error) {
+      this.logger.error(`submitPrediction failed: ${error.message}`, error.stack);
+      return { success: false, error: error.message };
+    }
   }
 
+  /**
+   * Internal-only method. Should not be called directly by external consumers.
+   * Only used by reward-service and engagement orchestration.
+   */
   async updateLeaderboard(
     userId: string,
     displayName: string,
@@ -165,38 +221,45 @@ export class EngagementService {
     category: string,
     timePeriod: string
   ) {
-    const existing = await this.prisma.leaderboardEntry.findUnique({
-      where: {
-        userId_category_timePeriod: {
-          userId,
-          category,
-          timePeriod,
+    try {
+      const existing = await this.prisma.leaderboardEntry.findUnique({
+        where: {
+          userId_category_timePeriod: {
+            userId,
+            category,
+            timePeriod,
+          },
         },
-      },
-    });
+      });
 
-    if (existing) {
-      await this.prisma.leaderboardEntry.update({
-        where: { id: existing.id },
-        data: {
-          score: { increment: score },
-          displayName,
-          avatar,
-        },
-      });
-    } else {
-      await this.prisma.leaderboardEntry.create({
-        data: {
-          userId,
-          displayName,
-          avatar,
-          score,
-          category,
-          timePeriod,
-        },
-      });
+      if (existing) {
+        await this.prisma.leaderboardEntry.update({
+          where: { id: existing.id },
+          data: {
+            score: { increment: score },
+            displayName,
+            avatar,
+          },
+        });
+      } else {
+        await this.prisma.leaderboardEntry.create({
+          data: {
+            userId,
+            displayName,
+            avatar,
+            score,
+            category,
+            timePeriod,
+          },
+        });
+      }
+
+      await this.cache.invalidate(`engagement:leaderboard:*`);
+
+      return { success: true, message: 'Leaderboard updated' };
+    } catch (error) {
+      this.logger.error(`updateLeaderboard failed: ${error.message}`, error.stack);
+      return { success: false, error: error.message };
     }
-
-    return { success: true, message: 'Leaderboard updated' };
   }
 }

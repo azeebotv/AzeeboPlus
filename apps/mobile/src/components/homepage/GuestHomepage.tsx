@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { View, Text, ScrollView, StyleSheet, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -8,23 +8,25 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { api } from '@/api';
 import type { ContentItem } from '@/api';
+import { colors, universeColors } from '@/theme';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { BrandButton } from '@/components/ui/BrandButton';
 import { AmbientGlow } from '@/components/motion/AmbientGlow';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
+import { logger } from '@/utils/logger';
 import HeroCarousel from './HeroCarousel';
 import ContentRow from './ContentRow';
 
 const CATEGORY_CARDS = [
-  { category: 'Reality', sub: 'The real you wants to play', emoji: '\u{1F4FA}', color: '#E8420A' },
-  { category: 'Vertical', sub: "Dive into what's trending", emoji: '\u{1F4F1}', color: '#CC1C1C' },
-  { category: 'Movie', sub: 'Nollywood & Beyond', emoji: '\u{1F3AC}', color: '#E8420A' },
-  { category: 'Creator', sub: 'Watch. Follow. Repeat.', emoji: '\u{1F4E1}', color: '#3B2D0D' },
-  { category: 'Cinemaxis', sub: 'Explore Cinemaxis', emoji: '\u{1F3A5}', color: '#0A1A3B' },
-  { category: 'Comedy', sub: 'Laugh Out Loud', emoji: '\u{1F602}', color: '#3B3B0D' },
-  { category: 'Sports', sub: 'Live & Loud', emoji: '\u26BD', color: '#0D2E3B' },
-  { category: 'Lifestyle', sub: 'Elevate your lifestyle', emoji: '\u{1F3A8}', color: '#2E0D3B' },
-  { category: 'Games', sub: 'Play & Win', emoji: '\u{1F3AE}', color: '#0D3B1A' },
+  { category: 'Reality', sub: 'The real you wants to play', emoji: '\u{1F4FA}', color: colors.primary[500] },
+  { category: 'Vertical', sub: "Dive into what's trending", emoji: '\u{1F4F1}', color: colors.red },
+  { category: 'Movie', sub: 'Nollywood & Beyond', emoji: '\u{1F3AC}', color: colors.primary[500] },
+  { category: 'Creator', sub: 'Watch. Follow. Repeat.', emoji: '\u{1F4E1}', color: colors.bg.tertiary },
+  { category: 'Cinemaxis', sub: 'Explore Cinemaxis', emoji: '\u{1F3A5}', color: colors.bg.secondary },
+  { category: 'Comedy', sub: 'Laugh Out Loud', emoji: '\u{1F602}', color: colors.bg.tertiary },
+  { category: 'Sports', sub: 'Live & Loud', emoji: '\u26BD', color: colors.bg.secondary },
+  { category: 'Lifestyle', sub: 'Elevate your lifestyle', emoji: '\u{1F3A8}', color: universeColors.lifestyle },
+  { category: 'Games', sub: 'Play & Win', emoji: '\u{1F3AE}', color: universeColors.games },
 ];
 
 export default function GuestHomepage() {
@@ -35,38 +37,51 @@ export default function GuestHomepage() {
   const [hasOTAUpdate, setHasOTAUpdate] = useState(false);
 
   useEffect(() => {
+    let cancelled = false;
+
+    const checkForOTAUpdate = async () => {
+      try {
+        if (!Updates.channel || !__DEV__) return;
+        const update = await Updates.checkForUpdateAsync();
+        if (!cancelled && update.isAvailable) setHasOTAUpdate(true);
+      } catch (error) {
+        if (!cancelled) logger.error('Failed to check for OTA update:', error);
+      }
+    };
+
+    const loadGuestContent = async () => {
+      try {
+        const [featured, trending] = await Promise.allSettled([
+          api.content.getFeaturedContent(5),
+          api.content.getTrendingContent(12),
+        ]);
+        if (cancelled) return;
+        if (featured.status === 'fulfilled' && featured.value.success && featured.value.data) {
+          setFeaturedContent(featured.value.data);
+        }
+        if (trending.status === 'fulfilled' && trending.value.success && trending.value.data) {
+          setTrendingContent(trending.value.data);
+        }
+      } catch (error) {
+        if (!cancelled) logger.error('Failed to load guest content:', error);
+      }
+    };
+
     checkForOTAUpdate();
     loadGuestContent();
+    return () => { cancelled = true; };
   }, []);
-
-  const checkForOTAUpdate = async () => {
-    try {
-      if (!Updates.channel || !__DEV__) return;
-      const update = await Updates.checkForUpdateAsync();
-      if (update.isAvailable) setHasOTAUpdate(true);
-    } catch {}
-  };
-
-  const loadGuestContent = async () => {
-    try {
-      const [featured, trending] = await Promise.allSettled([
-        api.content.getFeaturedContent(5),
-        api.content.getTrendingContent(12),
-      ]);
-      if (featured.status === 'fulfilled' && featured.value.success && featured.value.data) {
-        setFeaturedContent(featured.value.data);
-      }
-      if (trending.status === 'fulfilled' && trending.value.success && trending.value.data) {
-        setTrendingContent(trending.value.data);
-      }
-    } catch {}
-  };
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       {/* OTA Update Banner */}
       {hasOTAUpdate ? (
-        <Pressable style={styles.updateBanner} onPress={() => Updates.reloadAsync()}>
+        <Pressable
+          style={styles.updateBanner}
+          onPress={() => Updates.reloadAsync()}
+          accessibilityLabel={t('home.installNow')}
+          accessibilityRole="button"
+        >
           <Ionicons name="arrow-up-circle" size={18} color="#1A0A0A" />
           <Text style={styles.updateBannerText}>{t('home.newUpdate')}</Text>
           <Text style={styles.updateBannerLink}>{t('home.installNow')}</Text>
@@ -140,7 +155,7 @@ export default function GuestHomepage() {
         {/* Rewards CTA Section */}
         <ScrollReveal>
           <LinearGradient
-            colors={['#CC1C1C', '#E8420A']}
+            colors={[colors.red, colors.primary[500]]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.rewardsCard}
@@ -167,20 +182,22 @@ export default function GuestHomepage() {
             <Text style={styles.sectionTitle}>{t('home.exploreByUniverse')}</Text>
             <View style={styles.universeGrid}>
               {[
-                { name: 'Movie', icon: '\u{1F3AC}', href: '/movies', color: '#E8420A' },
-                { name: 'Comedy', icon: '\u{1F602}', href: '/comedy', color: '#fbbf24' },
-                { name: 'Sports', icon: '\u26BD', href: '/sports', color: '#22c55e' },
-                { name: 'Reality', icon: '\u{1F4FA}', href: '/reality', color: '#8b5cf6' },
-                { name: 'Lifestyle', icon: '\u{1F3A8}', href: '/lifestyle', color: '#ec4899' },
-                { name: 'Vertical', icon: '\u{1F4F1}', href: '/vertical', color: '#3b82f6' },
-                { name: 'Games', icon: '\u{1F3AE}', href: '/games', color: '#06b6d4' },
-                { name: 'Creator', icon: '\u{1F4E1}', href: '/creators', color: '#f97316' },
-                { name: 'Cinemaxis', icon: '\u{1F3A6}', href: '/cinemaxis', color: '#a855f7' },
+                { name: 'Movie', icon: '\u{1F3AC}', href: '/movies', color: colors.primary[500] },
+                { name: 'Comedy', icon: '\u{1F602}', href: '/comedy', color: universeColors.comedy },
+                { name: 'Sports', icon: '\u26BD', href: '/sports', color: universeColors.sports },
+                { name: 'Reality', icon: '\u{1F4FA}', href: '/reality', color: universeColors.reality },
+                { name: 'Lifestyle', icon: '\u{1F3A8}', href: '/lifestyle', color: universeColors.lifestyle },
+                { name: 'Vertical', icon: '\u{1F4F1}', href: '/vertical', color: universeColors.vertical },
+                { name: 'Games', icon: '\u{1F3AE}', href: '/games', color: universeColors.games },
+                { name: 'Creator', icon: '\u{1F4E1}', href: '/creators', color: universeColors.creators },
+                { name: 'Cinemaxis', icon: '\u{1F3A6}', href: '/cinemaxis', color: universeColors.comedy },
               ].map((u) => (
                 <Pressable
                   key={u.name}
                   style={styles.universeCard}
-                  onPress={() => router.push(u.href as any)}
+                  onPress={() => router.push(u.href as string)}
+                  accessibilityLabel={`${t('home.explore')} ${u.name}`}
+                  accessibilityRole="button"
                 >
                   <View style={[styles.universeIcon, { backgroundColor: `${u.color}22` }]}>
                     <Text style={styles.universeEmoji}>{u.icon}</Text>
@@ -204,19 +221,19 @@ const styles = StyleSheet.create({
   updateBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fbbf24',
+    backgroundColor: colors.warning[500],
     paddingVertical: 10,
     paddingHorizontal: 16,
     gap: 8,
   },
   updateBannerText: {
-    color: '#1A0A0A',
+    color: colors.bg.primary,
     fontSize: 13,
     fontWeight: '600',
     flex: 1,
   },
   updateBannerLink: {
-    color: '#1A0A0A',
+    color: colors.bg.primary,
     fontSize: 13,
     fontWeight: '800',
     textDecorationLine: 'underline',
@@ -225,7 +242,7 @@ const styles = StyleSheet.create({
     minHeight: 400,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#0D3B2E',
+    backgroundColor: colors.bg.green,
     paddingTop: 40,
     paddingBottom: 30,
     paddingHorizontal: 20,
@@ -239,19 +256,19 @@ const styles = StyleSheet.create({
     marginBottom: 30,
   },
   heroGreeting: {
-    color: '#fff',
+    color: colors.text.primary,
     fontSize: 30,
     fontWeight: '800',
     marginBottom: 4,
   },
   heroGreetingSecondary: {
-    color: '#fff',
+    color: colors.text.primary,
     fontSize: 16,
     fontWeight: '600',
     marginBottom: 4,
   },
   heroTitle: {
-    color: '#E8420A',
+    color: colors.primary[500],
     fontSize: 26,
     fontWeight: '800',
     marginBottom: 12,
@@ -293,7 +310,7 @@ const styles = StyleSheet.create({
     fontSize: 22,
   },
   categoryTitle: {
-    color: '#fff',
+    color: colors.text.primary,
     fontSize: 12,
     fontWeight: '700',
   },
@@ -324,14 +341,14 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   rewardsBadgeText: {
-    color: '#fff',
+    color: colors.text.primary,
     fontSize: 10,
     fontWeight: '700',
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
   rewardsTitle: {
-    color: '#fff',
+    color: colors.text.primary,
     fontSize: 24,
     fontWeight: '800',
     marginBottom: 8,
@@ -349,7 +366,7 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
   },
   sectionTitle: {
-    color: '#fff',
+    color: colors.text.primary,
     fontSize: 22,
     fontWeight: '800',
     marginBottom: 16,
@@ -381,7 +398,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
   },
   universeName: {
-    color: '#fff',
+    color: colors.text.primary,
     fontSize: 14,
     fontWeight: '600',
   },

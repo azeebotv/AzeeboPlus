@@ -1,4 +1,3 @@
-import React from 'react';
 import { View, Text, StyleSheet, ScrollView, useColorScheme } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -71,7 +70,7 @@ const legalContent: Record<
 
 export default function LegalPage() {
   const colorScheme = useColorScheme();
-  const _router = useRouter();
+  
   const { type } = useLocalSearchParams<{ type: 'privacy' | 'terms' }>();
 
   const content = legalContent[type || 'privacy'];

@@ -1,23 +1,29 @@
 {
   "name": "@azeebo/test-utils",
   "version": "1.0.0",
+  "private": true,
   "description": "Shared testing utilities for Azeebo services",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "watch": "tsc --watch"
+    "clean": "rm -rf dist",
+    "watch": "tsc --watch",
+    "test": "jest",
+    "lint": "eslint src --fix"
   },
   "dependencies": {
-    "@faker-js/faker": "^10.4.0",
     "@nestjs/common": "^11.1.27",
     "@nestjs/core": "^11.1.27",
     "@nestjs/testing": "^11.1.27",
     "@prisma/client": "^6.19.0",
-    "axios-mock-adapter": "^2.1.0",
-    "graphql-redis-subscriptions": "^2.7.0",
-    "ioredis-mock": "^8.13.1",
-    "prismock": "^1.35.4"
+    "ioredis-mock": "^8.13.1"
   },
   "devDependencies": {
     "@types/node": "^25.9.3",

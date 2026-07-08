@@ -27,7 +27,8 @@ export class AdminController {
     @Query('role') role?: string,
     @Query('status') status?: string
   ) {
-    return this.adminService.getUsers({ page, limit, role, status });
+    const clampedLimit = Math.min(100, Math.max(1, Number(limit) || 20));
+    return this.adminService.getUsers({ page, limit: clampedLimit, role, status });
   }
 
   @Get('users/:id')

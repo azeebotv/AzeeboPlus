@@ -13,7 +13,8 @@ set -euo pipefail
 POSTGRES_CONTAINER="${POSTGRES_CONTAINER:-azeebo_postgres}"
 POSTGRES_DB="${POSTGRES_DB:-azeebo_plus_dev}"
 POSTGRES_USER="${POSTGRES_USER:-postgres}"
-OUT_FILE="${OUT_FILE:-/Users/deprof/www/azeebo+/infra/config/pgbouncer_userlist.txt}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+OUT_FILE="${OUT_FILE:-$SCRIPT_DIR/../config/pgbouncer_userlist.txt}"
 TMP="$(mktemp)"
 trap 'rm -f "$TMP"' EXIT
 

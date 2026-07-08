@@ -6,6 +6,13 @@ import { api } from '@/lib/api';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 
+interface CreatorEarningsTransaction {
+  description?: string;
+  date?: string;
+  createdAt?: string;
+  amount: number;
+}
+
 export default function DashboardEarningsPage(): React.JSX.Element {
   const { isAuthenticated, user, isLoading: authLoading } = useAuth();
   const router = useRouter();
@@ -14,7 +21,7 @@ export default function DashboardEarningsPage(): React.JSX.Element {
     totalEarned: 0,
     pendingPayout: 0,
     paidOut: 0,
-    recentTransactions: [] as any[],
+    recentTransactions: [] as CreatorEarningsTransaction[],
   });
   const [isLoading, setIsLoading] = useState(true);
 
@@ -31,11 +38,10 @@ export default function DashboardEarningsPage(): React.JSX.Element {
     try {
       const response = await api.creator.getStats();
       if (response.success && response.data) {
-        const d = response.data as any;
         setEarnings({
-          balance: d.totalEarnings || 0,
-          totalEarned: d.totalEarnings || 0,
-          pendingPayout: d.pendingEarnings || 0,
+          balance: response.data.totalEarnings || 0,
+          totalEarned: response.data.totalEarnings || 0,
+          pendingPayout: response.data.pendingEarnings || 0,
           paidOut: 0,
           recentTransactions: [],
         });
@@ -179,7 +185,7 @@ export default function DashboardEarningsPage(): React.JSX.Element {
                 </p>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {earnings.recentTransactions.map((tx: any, i: number) => (
+                  {earnings.recentTransactions.map((tx, i) => (
                     <div
                       key={i}
                       style={{
@@ -196,7 +202,7 @@ export default function DashboardEarningsPage(): React.JSX.Element {
                           {tx.description || 'Earning'}
                         </p>
                         <p style={{ color: '#9A8A7A', fontSize: 12 }}>
-                          {new Date(tx.date || tx.createdAt).toLocaleDateString()}
+                          {new Date(tx.date || tx.createdAt || '').toLocaleDateString()}
                         </p>
                       </div>
                       <span style={{ fontWeight: 700, color: '#0D3B2E' }}>

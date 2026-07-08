@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -13,6 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../src/contexts/AuthContext';
+import { colors } from '../../src/theme';
 
 export default function OTPVerificationScreen() {
   const router = useRouter();
@@ -144,7 +145,7 @@ export default function OTPVerificationScreen() {
             disabled={isLoading}
           >
             {isLoading ? (
-              <ActivityIndicator color="#fff" />
+              <ActivityIndicator color={colors.text.primary} />
             ) : (
               <Text style={styles.verifyButtonText}>Verify</Text>
             )}
@@ -168,7 +169,7 @@ export default function OTPVerificationScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: colors.text.primary,
   },
   content: {
     flex: 1,
@@ -182,12 +183,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#333',
+    color: colors.dark[700],
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: '#666',
+    color: colors.text.tertiary,
     textAlign: 'center',
   },
   otpContainer: {
@@ -199,30 +200,30 @@ const styles = StyleSheet.create({
     width: 48,
     height: 56,
     borderWidth: 2,
-    borderColor: '#ddd',
+    borderColor: colors.light[300],
     borderRadius: 12,
     textAlign: 'center',
     fontSize: 24,
     fontWeight: '600',
     marginHorizontal: 4,
-    backgroundColor: '#f9f9f9',
+    backgroundColor: colors.light[50],
   },
   otpInputFilled: {
-    borderColor: '#007AFF',
-    backgroundColor: '#fff',
+    borderColor: colors.primary[500],
+    backgroundColor: colors.text.primary,
   },
   verifyButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: colors.primary[500],
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',
     marginBottom: 16,
   },
   verifyButtonDisabled: {
-    backgroundColor: '#ccc',
+    backgroundColor: colors.light[300],
   },
   verifyButtonText: {
-    color: '#fff',
+    color: colors.text.primary,
     fontSize: 18,
     fontWeight: '600',
   },
@@ -234,17 +235,17 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   resendButtonText: {
-    color: '#007AFF',
+    color: colors.primary[500],
     fontSize: 16,
   },
   errorContainer: {
-    backgroundColor: '#FEE2E2',
+    backgroundColor: colors.error[100],
     borderRadius: 12,
     padding: 12,
     marginBottom: 16,
   },
   errorText: {
-    color: '#DC2626',
+    color: colors.error[500],
     fontSize: 14,
     textAlign: 'center',
   },

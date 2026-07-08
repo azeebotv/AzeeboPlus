@@ -44,6 +44,10 @@ COPY packages/internal-clients/package.json packages/internal-clients/
 COPY packages/test-utils/package.json packages/test-utils/
 COPY packages/contract-tests/package.json packages/contract-tests/
 COPY packages/ui/package.json packages/ui/
+COPY packages/http-client/package.json packages/http-client/
+COPY packages/event-bus/package.json packages/event-bus/
+COPY packages/opentelemetry/package.json packages/opentelemetry/
+COPY packages/shared-queue/package.json packages/shared-queue/
 COPY services/core/auth-service/package.json services/core/auth-service/
 COPY services/core/user-service/package.json services/core/user-service/
 COPY services/core/wallet-service/package.json services/core/wallet-service/
@@ -397,9 +401,14 @@ RUN rm -f /etc/nginx/sites-enabled/default && chmod +x /entrypoint.sh && \
     echo '<!DOCTYPE html><html><head><title>Azeebo+ is starting</title><style>body{font-family:sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;background:#0a0a0a;color:#fff}c{text-align:center}h1{font-size:1.5rem;margin-bottom:.5rem}p{color:#888;font-size:.9rem}</style></head><body><c><h1>Azeebo+ is starting up</h1><p>This usually takes 2-3 minutes on first boot. Please wait and refresh.</p></c></body></html>' > /usr/share/nginx/html/50x.html && \
     rm -rf /var/cache/apt /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-EXPOSE 80 443 3013 4000 4014 4016 5432 6379 6432
+RUN useradd -r -s /bin/false -u 65532 nodejs && \
+    chown -R nodejs:nodejs /app
+
+EXPOSE 80 443 3013 4000 4014 4016
 
 HEALTHCHECK --interval=30s --timeout=10s --retries=5 --start-period=300s \
   CMD curl -f http://localhost:80/health || exit 1
+
+USER nodejs
 
 ENTRYPOINT ["/entrypoint.sh"]

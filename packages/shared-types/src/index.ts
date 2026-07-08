@@ -1,10 +1,10 @@
 // Standard API Response Type (BE-005)
 // NOTE: ApiResponse<T> and ApiError are defined at the end of this file.
-// This comment documents the canonical shape for reference:
 // ApiResponse<T>: { success, data?, error?: ApiError, meta?: PaginationMeta }
 // ApiError: { code, message, details? }
 
 // Permission types
+/** Union of all granular permission strings used across the platform. */
 export type Permission =
   | 'user:read'
   | 'user:write'
@@ -22,6 +22,7 @@ export type Permission =
 
 export const PERMISSIONS_KEY = 'permissions';
 
+/** Maps each user role to its default set of permissions. */
 export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
   user: ['user:read', 'content:read'],
   creator: ['user:read', 'user:write', 'content:read', 'content:write', 'analytics:view'],
@@ -71,6 +72,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
 };
 
 // User types
+/** Core user profile entity. */
 export interface User {
   id: string;
   email: string;
@@ -82,6 +84,7 @@ export interface User {
   updatedAt: Date;
 }
 
+/** All supported user roles in the platform. */
 export type UserRole =
   | 'user'
   | 'creator'
@@ -92,6 +95,7 @@ export type UserRole =
   | 'sponsor_manager';
 
 // Auth types
+/** Response shape returned by login and register endpoints. */
 export interface AuthResponse {
   success: boolean;
   data?: {
@@ -130,6 +134,7 @@ export interface MfaVerifyRequest {
 }
 
 // Content types
+/** Universal content entity shared across all universes. */
 export interface ContentItem {
   id: string;
   type: ContentType;
@@ -153,7 +158,10 @@ export interface ContentItem {
   tags?: { id: string; name: string }[];
 }
 
+/** Supported content media types. */
 export type ContentType = 'video' | 'audio' | 'image' | 'article' | 'document';
+
+/** Platform universe categories. */
 export type Universe =
   | 'reality'
   | 'creator'
@@ -187,6 +195,7 @@ export interface ContentUpdateRequest extends Partial<ContentCreateRequest> {
 }
 
 // Wallet types
+/** User wallet with balance and bonus/promo sub-accounts. */
 export interface Wallet {
   id: string;
   userId: string;
@@ -265,6 +274,7 @@ export interface RewardRedeemRequest {
 }
 
 // Payment types
+/** Payment intent representing a pending or completed financial transaction. */
 export interface PaymentIntent {
   id: string;
   userId: string;
@@ -307,6 +317,7 @@ export interface PaymentWebhookPayload {
 }
 
 // Notification types
+/** User notification entity. */
 export interface Notification {
   id: string;
   userId: string;
@@ -524,36 +535,26 @@ export interface ModerationDecisionRequest {
 }
 
 // API Response types
-export interface ApiResponse<T> {
-  success: boolean;
-  data?: T;
-  error?: ApiError;
-  meta?: PaginationMeta;
-}
+/** Key-value metadata for paginated list responses. */
+export type { ApiResponse, ApiError, PaginationMeta } from './api-response-types';
 
-export interface ApiError {
-  code: string;
-  message: string;
-  details?: Record<string, unknown>;
-}
-
-export interface PaginationMeta {
-  page: number;
-  limit: number;
-  total: number;
-  totalPages: number;
-}
-
+/** Wrapper factory and helpers for building consistent API responses. */
 export {
   ApiResponseWrapper,
+/** Creates a successful API response with data. */
   createSuccessResponse,
+  /** Creates an error API response with an ApiError. */
   createErrorResponse,
+  /** Creates a paginated API response with meta. */
   createPaginatedResponse,
+  /** Creates a 201 Created API response. */
   createCreatedResponse,
+  /** Creates a 204 No Content API response. */
   createNoContentResponse,
 } from './api-response';
 
 // Circuit Breaker types and utilities
+/** Circuit breaker for preventing cascading failures in service calls. */
 export {
   CircuitBreaker,
   CircuitBreakerOpenError,
@@ -577,11 +578,34 @@ export { environmentSchema, validateEnvironment } from './env-validation';
 export type { EnvironmentVariables } from './env-validation';
 
 // Pricing constants and utilities
-export { DEFAULT_PRICING, getPricing } from './pricing';
+export { getPricing } from './pricing';
 export type { PricingPlan, WalletPricing, ContentPricing } from './pricing';
 
 // Secret Validation
+/** Validates environment variables and secrets at service startup. */
 export { validateStartup, isPlaceholderSecret, validateNoPlaceholders } from './secret-validation';
+
+// Data Classification types
+export {
+  DataClassification,
+  PiiCategory,
+  ConsentType,
+  AuditLogEntry,
+} from './data-classification';
+export type {
+  DataClassificationMetadata,
+  UserDataExport,
+  UserDataDeletionRequest,
+  RetentionPolicy,
+} from './data-classification';
+
+// Privacy Policy types
+export type {
+  PrivacyPolicy,
+  PrivacyPolicySection,
+  PrivacyPolicyAcceptance,
+  ConsentAuditLog,
+} from './privacy-policy';
 
 // Universe-specific types
 export interface UniverseKpi {
@@ -679,6 +703,7 @@ export interface FanContest {
 }
 
 // Subscription types
+/** User subscription with tier, status, and billing period. */
 export interface Subscription {
   id: string;
   userId: string;
@@ -701,4 +726,14 @@ export interface SubscriptionCreateRequest {
 
 export interface SubscriptionCancelRequest {
   immediately: boolean;
+}
+
+// Token Storage interface (canonical definition)
+/** Platform-specific token storage adapter for persisting auth tokens. */
+export interface TokenStorage {
+  getAccessToken(): Promise<string | null>;
+  getRefreshToken(): Promise<string | null>;
+  setAccessToken(token: string): Promise<void>;
+  setRefreshToken(token: string): Promise<void>;
+  clearTokens(): Promise<void>;
 }

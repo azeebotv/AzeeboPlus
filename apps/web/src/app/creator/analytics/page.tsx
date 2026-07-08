@@ -1,11 +1,12 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/api';
-import { webLogger } from '@/lib/logger';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
+import { Skeleton, ErrorState } from '@azeebo/ui/web';
 
 interface AnalyticsData {
   totalViews: number;
@@ -32,25 +33,16 @@ interface AnalyticsData {
 export default function CreatorAnalyticsPage(): React.JSX.Element {
   const { isAuthenticated, user, isLoading: authLoading } = useAuth();
   const router = useRouter();
-  const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d' | 'all'>('30d');
+  const isEnabled = !authLoading && !!isAuthenticated && !!user;
 
-  useEffect(() => {
-    if (authLoading) return;
-    if (!isAuthenticated || !user) {
-      router.push('/auth/login');
-      return;
-    }
-    loadAnalytics();
-  }, [authLoading, isAuthenticated, user, router, timeRange]);
-
-  const loadAnalytics = async (): Promise<void> => {
-    try {
-      const result = await apiFetch<any>(`/v1/creators/analytics?range=${timeRange}`);
+  const { data: analytics, isLoading, error } = useQuery({
+    queryKey: ['creator', 'analytics', timeRange],
+    queryFn: async () => {
+      const result = await apiFetch<{ success: boolean; data: Record<string, unknown> }>(`/v1/creators/analytics?range=${timeRange}`);
       if (result.success && result.data) {
         const d = result.data;
-        setAnalytics({
+        return {
           totalViews: Number(d.views ?? d.totalViews ?? 0),
           totalLikes: Number(d.likes ?? d.totalLikes ?? 0),
           totalFollowers: Number(d.followers ?? d.totalFollowers ?? 0),
@@ -59,7 +51,7 @@ export default function CreatorAnalyticsPage(): React.JSX.Element {
           followersGrowth: Number(d.followersGrowth ?? 0),
           earningsGrowth: Number(d.earningsGrowth ?? 0),
           topContent: Array.isArray(d.topContent)
-            ? d.topContent.map((c: any) => ({
+            ? d.topContent.map((c: Record<string, unknown>) => ({
                 id: String(c.id),
                 title: String(c.title || ''),
                 views: Number(c.views ?? c.viewCount ?? 0),
@@ -73,14 +65,12 @@ export default function CreatorAnalyticsPage(): React.JSX.Element {
           },
           engagementMetrics: d.engagementMetrics ||
             d.analytics || { avgWatchTime: 0, completionRate: 0, shareRate: 0, commentRate: 0 },
-        });
+        } as AnalyticsData;
       }
-    } catch (error) {
-      webLogger.error('Failed to load analytics', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+      return null;
+    },
+    enabled: isEnabled,
+  });
 
   const formatNumber = (num: number): string => {
     if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
@@ -92,40 +82,30 @@ export default function CreatorAnalyticsPage(): React.JSX.Element {
     return (
       <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
         <AppHeader />
-        <div
-          className="flex items-center justify-center"
-          style={{ minHeight: 'calc(100vh - 200px)' }}
-        >
-          <div className="text-center">
-            <div
-              className="animate-spin rounded-full h-12 w-12 mx-auto"
-              style={{ border: '3px solid rgba(255,255,255,0.1)', borderTopColor: '#E8420A' }}
-            />
-            <p className="mt-4 text-white/60">Loading analytics...</p>
+        <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+          <div className="mb-8">
+            <Skeleton width="120px" height="20px" className="mb-4" />
+            <Skeleton width="200px" height="32px" />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="az-glass p-6">
+                <Skeleton width="60%" height="32px" className="mb-2" />
+                <Skeleton width="40%" height="16px" />
+              </div>
+            ))}
           </div>
         </div>
       </div>
     );
   }
 
-  if (!analytics) {
+  if (error || !analytics) {
     return (
       <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
         <AppHeader />
-        <div
-          className="flex items-center justify-center"
-          style={{ minHeight: 'calc(100vh - 200px)' }}
-        >
-          <div className="text-center">
-            <p className="text-white mb-4">Failed to load analytics</p>
-            <button
-              onClick={loadAnalytics}
-              className="az-btn-primary"
-              style={{ width: 'auto', paddingInline: '1.5rem' }}
-            >
-              Retry
-            </button>
-          </div>
+        <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+          <ErrorState title="Failed to load analytics" description="Please try again later" onButtonPress={() => router.refresh()} />
         </div>
       </div>
     );

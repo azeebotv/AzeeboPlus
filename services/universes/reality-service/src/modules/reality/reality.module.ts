@@ -6,6 +6,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { RealityController } from './reality.controller';
 import { RealityService } from './reality.service';
 import { DatabaseModule } from '../database/database.module';
+import { RedisService } from '../../common/services/redis.service';
 
 @Module({
   imports: [
@@ -16,14 +17,14 @@ import { DatabaseModule } from '../database/database.module';
       useFactory: async (configService: ConfigService) => ({
         secret: configService.getOrThrow<string>('JWT_ACCESS_SECRET'),
         signOptions: {
-          expiresIn: configService.get('JWT_EXPIRES_IN', '30m') as any,
+          expiresIn: configService.get('JWT_EXPIRES_IN', '30m'),
         },
       }),
       inject: [ConfigService],
     }),
   ],
   controllers: [RealityController],
-  providers: [RealityService],
+  providers: [RealityService, RedisService],
   exports: [RealityService, DatabaseModule],
 })
 export class RealityModule {}

@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { CacheModule } from '@azeebo/shared-services';
 
 import { NotificationsController } from './notifications.controller';
 import { NotificationsService } from './notifications.service';
@@ -17,12 +18,13 @@ import { SmsModule } from '../sms/sms.module';
     EmailModule,
     SmsModule,
     PassportModule,
+    CacheModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
         secret: configService.get<string>('JWT_ACCESS_SECRET'),
         signOptions: {
-          expiresIn: configService.get('JWT_EXPIRES_IN', '30m') as any,
+          expiresIn: configService.get('JWT_EXPIRES_IN', '30m') as string | number,
         },
       }),
       inject: [ConfigService],

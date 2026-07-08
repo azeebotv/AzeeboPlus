@@ -1,5 +1,12 @@
-import React from 'react';
-import { RefreshControl, ScrollView, FlatList, SectionList } from 'react-native';
+import {
+  RefreshControl,
+  ScrollView,
+  FlatList,
+  SectionList,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
+import { colors } from '../theme';
 import { logger } from '../utils/logger';
 
 interface PullToRefreshProps {
@@ -9,16 +16,16 @@ interface PullToRefreshProps {
   tintColor?: string;
   titleColor?: string;
   title?: string;
-  style?: any;
-  contentContainerStyle?: any;
+  style?: StyleProp<ViewStyle>;
+  contentContainerStyle?: StyleProp<ViewStyle>;
 }
 
 export function PullToRefreshScrollView({
   refreshing,
   onRefresh,
   children,
-  tintColor = '#007AFF',
-  titleColor = '#666666',
+  tintColor = colors.primary[500],
+  titleColor = colors.text.secondary,
   title = 'Refreshing...',
   style,
   contentContainerStyle,
@@ -50,11 +57,11 @@ interface PullToRefreshFlatListProps<T> {
   keyExtractor: (item: T, index: number) => string;
   refreshing: boolean;
   onRefresh: () => void;
-  ListEmptyComponent?: React.ComponentType<any> | React.ReactElement | null;
-  ListHeaderComponent?: React.ComponentType<any> | React.ReactElement | null;
-  ListFooterComponent?: React.ComponentType<any> | React.ReactElement | null;
+  ListEmptyComponent?: React.ComponentType<Record<string, unknown>> | React.ReactElement | null;
+  ListHeaderComponent?: React.ComponentType<Record<string, unknown>> | React.ReactElement | null;
+  ListFooterComponent?: React.ComponentType<Record<string, unknown>> | React.ReactElement | null;
   numColumns?: number;
-  contentContainerStyle?: any;
+  contentContainerStyle?: StyleProp<ViewStyle>;
   showsVerticalScrollIndicator?: boolean;
   tintColor?: string;
   titleColor?: string;
@@ -73,8 +80,8 @@ export function PullToRefreshFlatList<T>({
   numColumns = 1,
   contentContainerStyle,
   showsVerticalScrollIndicator = true,
-  tintColor = '#007AFF',
-  titleColor = '#666666',
+  tintColor = colors.primary[500],
+  titleColor = colors.text.secondary,
   title = 'Refreshing...',
 }: PullToRefreshFlatListProps<T>): React.ReactElement {
   return (
@@ -122,15 +129,10 @@ interface PullToRefreshSectionListProps<T, SectionT> {
   keyExtractor: (item: T, index: number) => string;
   refreshing: boolean;
   onRefresh: () => void;
-  ListEmptyComponent?: React.ComponentType<any> | React.ReactElement | null;
+  ListEmptyComponent?: React.ComponentType<Record<string, unknown>> | React.ReactElement | null;
   tintColor?: string;
   titleColor?: string;
   title?: string;
-}
-
-interface SectionListData<T, _SectionT> {
-  data: T[];
-  [key: string]: any;
 }
 
 export function PullToRefreshSectionList<T, SectionT>({
@@ -141,8 +143,8 @@ export function PullToRefreshSectionList<T, SectionT>({
   refreshing,
   onRefresh,
   ListEmptyComponent,
-  tintColor = '#007AFF',
-  titleColor = '#666666',
+  tintColor = colors.primary[500],
+  titleColor = colors.text.secondary,
   title = 'Refreshing...',
 }: PullToRefreshSectionListProps<T, SectionT>): React.ReactElement {
   return (

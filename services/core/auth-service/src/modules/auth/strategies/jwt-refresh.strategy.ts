@@ -26,7 +26,7 @@ export class JwtRefreshStrategy extends PassportStrategy(Strategy, 'jwt-refresh'
       audience: configService.get<string>('JWT_AUDIENCE') || 'azeebo-api',
       issuer: configService.get<string>('JWT_ISSUER') || 'azeebo-auth',
       passReqToCallback: true,
-    } as any);
+    } as Record<string, unknown>);
   }
 
   async validate(req: Request, payload: JwtPayload): Promise<RefreshTokenPayload> {

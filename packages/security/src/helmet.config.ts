@@ -70,7 +70,7 @@ export function createHelmetConfig(
     xDnsPrefetchControl: { allow: !!config.xDnsPrefetchControl },
     frameguard: config.xFrameOptions ? { action: 'deny' } : { action: 'allow' },
     xPermittedCrossDomainPolicies: {
-      permittedPolicies: config.xPermittedCrossDomainPolicies ? 'none' : 'none',
+      permittedPolicies: config.xPermittedCrossDomainPolicies ? 'all' : 'none',
     },
     hidePoweredBy: !config.xPoweredBy,
   };

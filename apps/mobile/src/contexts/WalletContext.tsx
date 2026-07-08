@@ -1,4 +1,11 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  ReactNode,
+} from 'react';
 import { walletApi, type WalletBalance, type Transaction } from '../api';
 import { useAuth } from './AuthContext';
 
@@ -35,14 +42,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const { isAuthenticated } = useAuth();
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      getWallet();
-      getTransactions();
-    }
-  }, [isAuthenticated]);
-
-  const getWallet = async () => {
+  const getWallet = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
@@ -50,14 +50,15 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       if (response.success && response.data) {
         setWallet(response.data);
       }
-    } catch (error: any) {
-      setError(error.message || 'Failed to get wallet');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      setError(message || 'Failed to get wallet');
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  const getTransactions = async () => {
+  const getTransactions = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
@@ -65,12 +66,20 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       if (response.success && response.data) {
         setTransactions(response.data.items);
       }
-    } catch (error: any) {
-      setError(error.message || 'Failed to get transactions');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      setError(message || 'Failed to get transactions');
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      getWallet();
+      getTransactions();
+    }
+  }, [isAuthenticated, getWallet, getTransactions]);
 
   const fundWallet = async (
     amount: number,
@@ -86,9 +95,10 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         return { success: true, authorizationUrl: response.data.authorizationUrl };
       }
       return { success: false, message: response.message || 'Failed to initiate payment' };
-    } catch (error: any) {
-      setError(error.message || 'Failed to fund wallet');
-      return { success: false, message: error.message || 'Failed to fund wallet' };
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      setError(message || 'Failed to fund wallet');
+      return { success: false, message };
     } finally {
       setIsLoading(false);
     }
@@ -105,9 +115,10 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         return { success: true };
       }
       return { success: false, message: response.message || 'Failed to withdraw funds' };
-    } catch (error: any) {
-      setError(error.message || 'Failed to withdraw funds');
-      return { success: false, message: error.message || 'Failed to withdraw funds' };
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      setError(message || 'Failed to withdraw funds');
+      return { success: false, message };
     } finally {
       setIsLoading(false);
     }
@@ -124,9 +135,10 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         return { success: true };
       }
       return { success: false, message: response.message || 'Failed to transfer funds' };
-    } catch (error: any) {
-      setError(error.message || 'Failed to transfer funds');
-      return { success: false, message: error.message || 'Failed to transfer funds' };
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      setError(message || 'Failed to transfer funds');
+      return { success: false, message };
     } finally {
       setIsLoading(false);
     }

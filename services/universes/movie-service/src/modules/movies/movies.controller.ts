@@ -15,7 +15,7 @@ import { RateLimitGuard, RateLimit } from '@azeebo/security';
 
 import { MoviesService } from './movies.service';
 import { MovieResponse } from './interfaces/movie-response.interface';
-import { RolesGuard, Roles } from '@azeebo/shared-services';
+import { RolesGuard, Roles, Pagination } from '@azeebo/shared-services';
 import { AddToWatchlistDto } from './dto/watchlist.dto';
 
 @ApiTags('Movies')

@@ -79,11 +79,21 @@ export class ContentRepository {
   }
 
   async create(data: CreateContentDto & { creatorId: string }): Promise<Record<string, unknown>> {
+    const createData = {
+      title: data.title,
+      description: data.description,
+      type: data.type,
+      universeId: data.universeId,
+      creatorId: data.creatorId,
+      status: 'draft' as const,
+      ...(data.thumbnail && { thumbnail: data.thumbnail }),
+      ...(data.mediaUrl && { mediaUrl: data.mediaUrl }),
+      ...(data.isPremium !== undefined && { isPremium: data.isPremium }),
+      ...(data.tags && { tags: data.tags }),
+    };
+
     return this.prisma.contentItem.create({
-      data: {
-        ...data,
-        status: 'draft',
-      } as any,
+      data: createData,
       include: { universe: true },
     });
   }

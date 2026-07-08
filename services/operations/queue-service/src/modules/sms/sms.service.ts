@@ -98,16 +98,25 @@ export class SmsService implements OnModuleInit {
 
     try {
       const fromNumber = this.configService.get('TWILIO_PHONE_NUMBER');
+      const BATCH_SIZE = 10;
+      const BATCH_DELAY_MS = 200;
+
       await this.circuitBreaker.execute(async () => {
-        await Promise.all(
-          numbers.map((number) =>
-            this.client!.messages.create({
-              body: message,
-              from: fromNumber,
-              to: number,
-            })
-          )
-        );
+        for (let i = 0; i < numbers.length; i += BATCH_SIZE) {
+          const batch = numbers.slice(i, i + BATCH_SIZE);
+          await Promise.all(
+            batch.map((number) =>
+              this.client!.messages.create({
+                body: message,
+                from: fromNumber,
+                to: number,
+              })
+            )
+          );
+          if (i + BATCH_SIZE < numbers.length) {
+            await new Promise((resolve) => setTimeout(resolve, BATCH_DELAY_MS));
+          }
+        }
       });
 
       this.logger.log(`Bulk SMS sent to ${numbers.length} numbers`);

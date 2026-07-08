@@ -23,7 +23,7 @@ export class WebhookRetryService implements OnModuleInit, OnModuleDestroy {
     this.retryInterval = setInterval(async () => {
       try {
         await this.processPendingRetries();
-      } catch (error) {
+      } catch (error: unknown) {
         this.logger.error('Error processing webhook retries:', error);
       }
     }, 60000);
@@ -138,7 +138,7 @@ export class WebhookRetryService implements OnModuleInit, OnModuleDestroy {
         data: { status: 'completed', updatedAt: new Date() },
       });
       this.logger.log(`Successfully processed retry for event ${retry.eventId}`);
-    } catch (error) {
+    } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       this.logger.error(`Failed to process retry ${retry.id}: ${errorMessage}`);
       await this.scheduleRetry(

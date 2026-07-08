@@ -5,6 +5,12 @@
   "description": "Shared API client for Azeebo+",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "lint": "eslint src --fix",
@@ -12,6 +18,7 @@
     "test": "jest"
   },
   "dependencies": {
+    "@azeebo/http-client": "workspace:*",
     "@azeebo/shared-types": "workspace:*",
     "axios": "^1.18.0"
   },

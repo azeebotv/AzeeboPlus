@@ -15,6 +15,14 @@ interface Device {
   location?: string;
 }
 
+interface DeviceListResponse {
+  devices?: Device[];
+}
+
+interface RemoveDeviceResult {
+  removed: boolean;
+}
+
 export default function DevicesPage(): React.JSX.Element {
   const { isAuthenticated, user, isLoading: authLoading } = useAuth();
   const router = useRouter();
@@ -32,10 +40,10 @@ export default function DevicesPage(): React.JSX.Element {
 
   const loadDevices = async () => {
     try {
-      const response = await apiFetch<any>('/auth/devices');
+      const response = await apiFetch<DeviceListResponse | Device[]>('/auth/devices');
       if (response.success && response.data) {
-        const data = response.data as any;
-        setDevices(Array.isArray(data) ? data : data.devices || []);
+        const data = response.data;
+        setDevices(Array.isArray(data) ? data : (data as DeviceListResponse).devices || []);
       }
     } catch {
       /* ignore */
@@ -47,7 +55,7 @@ export default function DevicesPage(): React.JSX.Element {
   const handleRemove = async (deviceId: string) => {
     if (!confirm('Remove this device?')) return;
     try {
-      await apiFetch<any>(`/auth/devices/${deviceId}`, { method: 'DELETE' });
+      await apiFetch<RemoveDeviceResult>(`/auth/devices/${deviceId}`, { method: 'DELETE' });
       setDevices(devices.filter((d) => d.id !== deviceId));
     } catch {
       /* ignore */

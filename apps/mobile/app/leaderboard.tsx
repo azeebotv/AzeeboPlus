@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   View,
   Text,
@@ -10,8 +10,8 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useQuery } from '@tanstack/react-query';
 import { engagementApi } from '../src/api';
-import { logger } from '../src/utils/logger';
 import { LoadingState, ErrorState } from '../src/components/StateContainers';
 
 interface LeaderboardEntry {
@@ -33,37 +33,26 @@ type Category = 'overall' | 'predictions' | 'voting' | 'engagement';
 
 export default function LeaderboardScreen() {
   const router = useRouter();
-  const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [isRefreshing, setIsRefreshing] = useState(false);
   const [timePeriod, setTimePeriod] = useState<TimePeriod>('weekly');
   const [category, setCategory] = useState<Category>('overall');
 
-  useEffect(() => {
-    loadLeaderboard();
-  }, [timePeriod, category]);
-
-  const loadLeaderboard = async () => {
-    try {
-      setError(null);
+  const {
+    data: entries = [],
+    isLoading,
+    error,
+    refetch,
+    isRefetching,
+  } = useQuery({
+    queryKey: ['leaderboard', timePeriod, category],
+    queryFn: async () => {
       const response = await engagementApi.getLeaderboard(timePeriod, category);
-      if (response.success && response.data) {
-        setEntries(response.data as unknown as LeaderboardEntry[]);
+      if (!response.success || !response.data) {
+        throw new Error(response.message || 'Failed to load leaderboard');
       }
-    } catch (error) {
-      logger.error('Failed to load leaderboard:', error);
-      setError('Failed to load leaderboard. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const onRefresh = async () => {
-    setIsRefreshing(true);
-    await loadLeaderboard();
-    setIsRefreshing(false);
-  };
+      return response.data as unknown as LeaderboardEntry[];
+    },
+    staleTime: 30_000,
+  });
 
   const getRankIcon = (rank: number): string => {
     switch (rank) {
@@ -102,7 +91,7 @@ export default function LeaderboardScreen() {
   if (error) {
     return (
       <SafeAreaView style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-        <ErrorState description={error} onRetry={loadLeaderboard} />
+        <ErrorState description={error instanceof Error ? error.message : 'Failed to load leaderboard'} onRetry={() => refetch()} />
       </SafeAreaView>
     );
   }
@@ -113,7 +102,7 @@ export default function LeaderboardScreen() {
         style={{ flex: 1 }}
         contentContainerStyle={styles.content}
         refreshControl={
-          <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} colors={['#E8420A']} />
+          <RefreshControl refreshing={isRefetching} onRefresh={() => refetch()} colors={['#E8420A']} />
         }
       >
         <View style={styles.header}>
@@ -177,7 +166,7 @@ export default function LeaderboardScreen() {
             <TouchableOpacity
               key={entry.userId}
               style={[styles.listItem, entry.isCurrentUser && styles.listItemCurrentUser]}
-              onPress={() => router.push(`/(tabs)/profile?userId=${entry.userId}` as any)}
+              onPress={() => router.push(`/(tabs)/profile?userId=${entry.userId}` as const)}
             >
               <Text style={[styles.rankText, { color: getRankColor(entry.rank) }]}>
                 {getRankIcon(entry.rank)}

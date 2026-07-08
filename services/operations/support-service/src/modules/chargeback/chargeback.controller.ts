@@ -42,7 +42,7 @@ export class ChargebackController {
     const chargeback = await this.chargebackService.createChargeback({
       ticketId: dto.ticketId,
       paymentId: dto.paymentId,
-      userId: req.user.id,
+      userId: req.user.sub,
       amount: new Prisma.Decimal(dto.amount),
       reason: dto.reason,
     });
@@ -65,7 +65,7 @@ export class ChargebackController {
   @Get('my')
   @ApiOperation({ summary: 'Get my chargebacks' })
   async getMyChargebacks(@Request() req: AuthenticatedRequest, @Query() query: ChargebackQueryDto) {
-    const result = await this.chargebackService.getUserChargebacks(req.user.id, query);
+    const result = await this.chargebackService.getUserChargebacks(req.user.sub, query);
     return ApiResponseWrapper.paginated(
       result.chargebacks,
       result.meta.page,
@@ -100,7 +100,7 @@ export class ChargebackController {
     const chargeback = await this.chargebackService.resolveChargeback(
       id,
       dto.resolution,
-      req.user.id,
+      req.user.sub,
       dto.evidence
     );
     return ApiResponseWrapper.success({ chargeback });

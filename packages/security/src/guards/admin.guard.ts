@@ -19,7 +19,7 @@ export class AdminGuard implements CanActivate {
     private jwtService: JwtService,
     @Optional() private options?: AdminGuardOptions
   ) {
-    this.allowedRoles = this.options?.allowedRoles ?? ['ADMIN'];
+    this.allowedRoles = this.options?.allowedRoles ?? ['admin', 'ADMIN'];
   }
 
   canActivate(context: ExecutionContext): boolean {
@@ -43,7 +43,7 @@ export class AdminGuard implements CanActivate {
       });
       request.user = payload;
 
-      if (!payload.role || !this.allowedRoles.includes(payload.role)) {
+      if (!payload.role || !this.allowedRoles.some(role => role.toLowerCase() === payload.role!.toLowerCase())) {
         throw new ForbiddenException('Insufficient permissions');
       }
 

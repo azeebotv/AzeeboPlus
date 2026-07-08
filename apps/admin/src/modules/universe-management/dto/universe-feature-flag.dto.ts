@@ -13,5 +13,5 @@ export class UniverseFeatureFlagDto {
   @ApiProperty({ description: 'Additional metadata for the feature flag', required: false })
   @IsOptional()
   @IsObject()
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }

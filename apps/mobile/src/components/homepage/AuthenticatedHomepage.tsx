@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -11,8 +11,10 @@ import type {
   UserUniverseEngagement,
   HomepageRecommendationGroup,
 } from '@/api';
+import { colors } from '@/theme';
 import { BrandButton } from '@/components/ui/BrandButton';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
+import { logger } from '@/utils/logger';
 import HeroCarousel from './HeroCarousel';
 import ContentRow from './ContentRow';
 
@@ -61,41 +63,48 @@ export default function AuthenticatedHomepage({
 
   // --- Section 1: Hero Slides ---
   useEffect(() => {
+    let cancelled = false;
     const loadSlides = async () => {
       try {
         const response = await api.homepageEngagement.getFeaturedSlides(5);
-        if (response.success && response.data) {
+        if (!cancelled && response.success && response.data) {
           setFeaturedSlides(response.data);
         }
-      } catch {}
+      } catch (error) {
+        if (!cancelled) logger.error('Failed to load featured slides:', error);
+      }
     };
     loadSlides();
+    return () => { cancelled = true; };
   }, []);
 
   // --- Section 2: Recently Watched (with infinite scroll) ---
   const HISTORY_PAGE_SIZE = 10;
 
-  const loadRecentlyWatched = useCallback(async () => {
+  const loadRecentlyWatched = useCallback(async (cancelled?: boolean) => {
     try {
       const response = await api.homepageEngagement.getRecentlyWatched(
         HISTORY_PAGE_SIZE,
         recentlyWatchedOffset
       );
-      if (response.success && response.data) {
+      if (!cancelled && response.success && response.data) {
         const newItems = response.data.items || [];
         setRecentlyWatched((prev) =>
           recentlyWatchedOffset === 0 ? newItems : [...prev, ...newItems]
         );
         setHasMoreHistory(response.data.hasMore);
       }
-    } catch {
+    } catch (error) {
+      if (!cancelled) logger.error('Failed to load recently watched:', error);
     } finally {
-      setIsLoadingHistory(false);
+      if (!cancelled) setIsLoadingHistory(false);
     }
   }, [recentlyWatchedOffset]);
 
   useEffect(() => {
-    loadRecentlyWatched();
+    let cancelled = false;
+    loadRecentlyWatched(cancelled);
+    return () => { cancelled = true; };
   }, []);
 
   const loadMoreHistory = useCallback(async () => {
@@ -110,7 +119,9 @@ export default function AuthenticatedHomepage({
         setRecentlyWatched((prev) => [...prev, ...(response.data?.items || [])]);
         setHasMoreHistory(response.data.hasMore);
       }
-    } catch {}
+    } catch (error) {
+      logger.error('Failed to load more history:', error);
+    }
   }, [recentlyWatchedOffset]);
 
   const recentlyWatchedProgressMap: Record<string, number> = {};
@@ -120,9 +131,11 @@ export default function AuthenticatedHomepage({
 
   // --- Section 3: Universe-Specific Content ---
   useEffect(() => {
+    let cancelled = false;
     const loadUniverseContent = async () => {
       try {
         const engagementResponse = await api.homepageEngagement.getUniverseEngagement();
+        if (cancelled) return;
         if (!engagementResponse.success || !engagementResponse.data) {
           setIsLoadingUniverses(false);
           return;
@@ -145,7 +158,8 @@ export default function AuthenticatedHomepage({
               universeIcon: ue.universeIcon,
               items: contentResponse.success ? contentResponse.data || [] : [],
             };
-          } catch {
+          } catch (error) {
+            if (!cancelled) logger.error(`Failed to load content for universe ${ue.universeName}:`, error);
             return {
               universeId: ue.universeId,
               universeName: ue.universeName,
@@ -156,24 +170,30 @@ export default function AuthenticatedHomepage({
         });
 
         const sections = await Promise.all(contentPromises);
-        setUniverseSections(sections.filter((s: UniverseSection) => s.items.length > 0));
-      } catch {
+        if (!cancelled) {
+          setUniverseSections(sections.filter((s: UniverseSection) => s.items.length > 0));
+        }
+      } catch (error) {
+        if (!cancelled) logger.error('Failed to load universe content:', error);
       } finally {
-        setIsLoadingUniverses(false);
+        if (!cancelled) setIsLoadingUniverses(false);
       }
     };
     loadUniverseContent();
+    return () => { cancelled = true; };
   }, []);
 
   // --- Section 4: Personalized Recommendations ---
   useEffect(() => {
+    let cancelled = false;
     const loadRecommendations = async () => {
       try {
         const response = await api.homepageEngagement.getPersonalizedRecommendations();
-        if (response.success && response.data) {
+        if (!cancelled && response.success && response.data) {
           setRecommendationGroups(response.data);
         }
       } catch {
+        if (cancelled) return;
         // Fallback to generic recommendations
         try {
           const [forYou, trending] = await Promise.allSettled([
@@ -181,32 +201,37 @@ export default function AuthenticatedHomepage({
             api.recommendation.getTrending(12),
           ]);
 
+          if (cancelled) return;
           const fallbackGroups: HomepageRecommendationGroup[] = [];
           if (forYou.status === 'fulfilled' && forYou.value.success && forYou.value.data) {
             fallbackGroups.push({
               title: t('home.topPicksForYou'),
               reason: t('home.basedOnHistory'),
-              items: forYou.value.data.map((r: any) => r.content),
+              items: forYou.value.data,
             });
           }
           if (trending.status === 'fulfilled' && trending.value.success && trending.value.data) {
             fallbackGroups.push({
               title: t('home.popularRightNow'),
               reason: t('home.trendingAcrossPlatform'),
-              items: trending.value.data.map((r: any) => r.content),
+              items: trending.value.data,
             });
           }
           setRecommendationGroups(fallbackGroups);
-        } catch {}
+        } catch (error) {
+          if (!cancelled) logger.error('Failed to load fallback recommendations:', error);
+        }
       } finally {
-        setIsLoadingRecommendations(false);
+        if (!cancelled) setIsLoadingRecommendations(false);
       }
     };
     loadRecommendations();
+    return () => { cancelled = true; };
   }, []);
 
   // --- Section 5: Supplementary ---
   useEffect(() => {
+    let cancelled = false;
     const loadSupplementary = async () => {
       try {
         const [trendingRes, continueRes, newRes, popularRes] = await Promise.allSettled([
@@ -216,6 +241,7 @@ export default function AuthenticatedHomepage({
           api.homepageEngagement.getPopularInRegion(12),
         ]);
 
+        if (cancelled) return;
         if (
           trendingRes.status === 'fulfilled' &&
           trendingRes.value.success &&
@@ -240,12 +266,14 @@ export default function AuthenticatedHomepage({
         ) {
           setPopularInRegion(popularRes.value.data);
         }
-      } catch {
+      } catch (error) {
+        if (!cancelled) logger.error('Failed to load supplementary content:', error);
       } finally {
-        setIsLoadingSupplementary(false);
+        if (!cancelled) setIsLoadingSupplementary(false);
       }
     };
     loadSupplementary();
+    return () => { cancelled = true; };
   }, []);
 
   return (
@@ -355,7 +383,7 @@ export default function AuthenticatedHomepage({
       {/* Referral CTA */}
       <ScrollReveal>
         <LinearGradient
-          colors={['#CC1C1C', '#E8420A']}
+          colors={[colors.red, colors.primary[500]]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.referralCard}
@@ -386,7 +414,7 @@ const styles = StyleSheet.create({
     paddingBottom: 4,
   },
   greeting: {
-    color: '#fff',
+    color: colors.text.primary,
     fontSize: 24,
     fontWeight: '800',
   },
@@ -402,7 +430,7 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   referralTitle: {
-    color: '#fff',
+    color: colors.text.primary,
     fontSize: 22,
     fontWeight: '800',
     marginBottom: 8,

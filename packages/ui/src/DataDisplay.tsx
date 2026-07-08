@@ -83,7 +83,7 @@ export function Table<T>({
 
   const getKey = (row: T, index: number) => {
     if (getRowKey) return getRowKey(row);
-    const id = (row as any)?.id;
+    const id = (row as Record<string, unknown>)?.id;
     if (id != null) return id;
     return index;
   };

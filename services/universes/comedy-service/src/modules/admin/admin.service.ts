@@ -1,49 +1,65 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 
 @Injectable()
 export class AdminService {
+  private readonly logger = new Logger(AdminService.name);
   constructor(private prisma: PrismaService) {}
 
   async getStats() {
-    const [totalClips, totalComedians, totalSpecials, clipsByViews] = await Promise.all([
-      this.prisma.comedyClip.count(),
-      this.prisma.comedianProfile.count(),
-      this.prisma.comedySpecial.count(),
-      this.prisma.comedyClip.aggregate({ _sum: { viewCount: true } }),
-    ]);
+    try {
+      const [totalClips, totalComedians, totalSpecials, clipsByViews] = await Promise.all([
+        this.prisma.comedyClip.count(),
+        this.prisma.comedianProfile.count(),
+        this.prisma.comedySpecial.count(),
+        this.prisma.comedyClip.aggregate({ _sum: { viewCount: true } }),
+      ]);
 
-    return {
-      totalClips,
-      totalComedians,
-      totalSpecials,
-      totalClipViews: clipsByViews._sum.viewCount || 0,
-    };
+      return {
+        totalClips,
+        totalComedians,
+        totalSpecials,
+        totalClipViews: clipsByViews._sum.viewCount || 0,
+      };
+    } catch (error) {
+      this.logger.error(`Failed to get stats: ${error.message}`, error.stack);
+      return { success: false, error: error.message };
+    }
   }
 
   async getClips(options?: { page?: number; limit?: number }) {
-    const page = options?.page || 1;
-    const limit = options?.limit || 20;
-    const skip = (page - 1) * limit;
+    try {
+      const page = options?.page || 1;
+      const limit = options?.limit || 20;
+      const skip = (page - 1) * limit;
 
-    const [clips, total] = await Promise.all([
-      this.prisma.comedyClip.findMany({ skip, take: limit, orderBy: { createdAt: 'desc' } }),
-      this.prisma.comedyClip.count(),
-    ]);
+      const [clips, total] = await Promise.all([
+        this.prisma.comedyClip.findMany({ skip, take: limit, orderBy: { createdAt: 'desc' } }),
+        this.prisma.comedyClip.count(),
+      ]);
 
-    return { clips, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+      return { clips, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+    } catch (error) {
+      this.logger.error(`Failed to get clips: ${error.message}`, error.stack);
+      return { success: false, error: error.message };
+    }
   }
 
   async getComedians(options?: { page?: number; limit?: number }) {
-    const page = options?.page || 1;
-    const limit = options?.limit || 20;
-    const skip = (page - 1) * limit;
+    try {
+      const page = options?.page || 1;
+      const limit = options?.limit || 20;
+      const skip = (page - 1) * limit;
 
-    const [comedians, total] = await Promise.all([
-      this.prisma.comedianProfile.findMany({ skip, take: limit, orderBy: { createdAt: 'desc' } }),
-      this.prisma.comedianProfile.count(),
-    ]);
+      const [comedians, total] = await Promise.all([
+        this.prisma.comedianProfile.findMany({ skip, take: limit, orderBy: { createdAt: 'desc' } }),
+        this.prisma.comedianProfile.count(),
+      ]);
 
-    return { comedians, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+      return { comedians, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+    } catch (error) {
+      this.logger.error(`Failed to get comedians: ${error.message}`, error.stack);
+      return { success: false, error: error.message };
+    }
   }
 }

@@ -1,8 +1,11 @@
 'use client';
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useRouter } from 'next/navigation';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/context/AuthContext';
 import { api } from '@/lib/api';
 import AdminLayout from '@/components/layout/AdminLayout';
+import { Skeleton, ErrorState } from '@azeebo/ui/web';
 import type { AdminUniverse, FeatureFlag } from '@/lib/admin-types';
 
 type SortKey = 'name' | 'contentCount' | 'status' | 'sortOrder';
@@ -31,9 +34,9 @@ const EMPTY_FORM: UniverseFormData = {
 };
 
 export default function AdminUniversesPage(): React.JSX.Element {
+  const router = useRouter();
   const { isAuthenticated, user, isLoading: authLoading } = useAuth();
-  const [universes, setUniverses] = useState<AdminUniverse[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [sortKey, setSortKey] = useState<SortKey>('sortOrder');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
@@ -45,7 +48,6 @@ export default function AdminUniversesPage(): React.JSX.Element {
   const [isSaving, setIsSaving] = useState(false);
   const [toast, setToast] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
-  const [stats, setStats] = useState<Record<string, unknown> | null>(null);
   const [showStats, setShowStats] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [importData, setImportData] = useState('');
@@ -55,11 +57,32 @@ export default function AdminUniversesPage(): React.JSX.Element {
   const [newFeatureEnabled, setNewFeatureEnabled] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    if (authLoading) return;
-    if (!isAuthenticated || !user || user.role !== 'admin') return;
-    loadUniverses();
-  }, [authLoading, isAuthenticated, user]);
+  const isEnabled = !authLoading && !!isAuthenticated && !!user && user.role === 'admin';
+
+  const { data: universes = [], isLoading, error } = useQuery({
+    queryKey: ['admin', 'universes'],
+    queryFn: async () => {
+      const response = await api.admin.getAllUniverses();
+      if (response.success && response.data) {
+        const data = response.data as AdminUniverse[] | { items: AdminUniverse[] };
+        return Array.isArray(data) ? data : data.items || [];
+      }
+      return [];
+    },
+    enabled: isEnabled,
+  });
+
+  const { data: stats } = useQuery({
+    queryKey: ['admin', 'universe-stats'],
+    queryFn: async () => {
+      const response = await api.admin.getUniverseStats();
+      if (response.success && response.data) {
+        return response.data as Record<string, unknown>;
+      }
+      return null;
+    },
+    enabled: isEnabled && showStats,
+  });
 
   useEffect(() => {
     if (toast) {
@@ -68,32 +91,6 @@ export default function AdminUniversesPage(): React.JSX.Element {
     }
     return () => {};
   }, [toast]);
-
-  const loadUniverses = async () => {
-    setIsLoading(true);
-    try {
-      const response = await api.admin.getAllUniverses();
-      if (response.success && response.data) {
-        const data = response.data as unknown;
-        setUniverses(Array.isArray(data) ? data : (data as any).items || []);
-      }
-    } catch {
-      /* ignore */
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const loadStats = async () => {
-    try {
-      const response = await api.admin.getUniverseStats();
-      if (response.success && response.data) {
-        setStats(response.data as Record<string, unknown>);
-      }
-    } catch {
-      /* ignore */
-    }
-  };
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
@@ -108,7 +105,7 @@ export default function AdminUniversesPage(): React.JSX.Element {
       let cmp = 0;
       if (sortKey === 'name') cmp = a.displayName.localeCompare(b.displayName);
       else if (sortKey === 'contentCount')
-        cmp = ((a as any).contentCount || 0) - ((b as any).contentCount || 0);
+        cmp = (a.contentCount || 0) - (b.contentCount || 0);
       else if (sortKey === 'status') cmp = (a.isEnabled ? 1 : 0) - (b.isEnabled ? 1 : 0);
       else if (sortKey === 'sortOrder') cmp = a.sortOrder - b.sortOrder;
       return sortDir === 'asc' ? cmp : -cmp;
@@ -126,9 +123,7 @@ export default function AdminUniversesPage(): React.JSX.Element {
   const handleToggleUniverse = async (id: string, currentEnabled: boolean) => {
     try {
       await api.admin.toggleUniverse(id, !currentEnabled);
-      setUniverses((prev) =>
-        prev.map((u) => (u.id === id ? { ...u, isEnabled: !currentEnabled } : u))
-      );
+      queryClient.invalidateQueries({ queryKey: ['admin', 'universes'] });
       toggleToast('success', `Universe ${currentEnabled ? 'disabled' : 'enabled'}`);
     } catch {
       toggleToast('error', 'Failed to toggle universe');
@@ -140,10 +135,8 @@ export default function AdminUniversesPage(): React.JSX.Element {
     if (ids.length === 0) return;
     try {
       await api.admin.bulkToggleUniverses(ids, isEnabled);
-      setUniverses((prev) =>
-        prev.map((u) => (selectedIds.has(u.id) ? { ...u, isEnabled } : u))
-      );
       setSelectedIds(new Set());
+      queryClient.invalidateQueries({ queryKey: ['admin', 'universes'] });
       toggleToast('success', `${ids.length} universes ${isEnabled ? 'enabled' : 'disabled'}`);
     } catch {
       toggleToast('error', 'Failed to bulk toggle');
@@ -197,7 +190,7 @@ export default function AdminUniversesPage(): React.JSX.Element {
           metadata,
         });
         if (res.success && res.data) {
-          setUniverses((prev) => [...prev, res.data as AdminUniverse]);
+          queryClient.invalidateQueries({ queryKey: ['admin', 'universes'] });
           toggleToast('success', 'Universe created');
         }
       } else if (editingUniverseId) {
@@ -211,9 +204,7 @@ export default function AdminUniversesPage(): React.JSX.Element {
           metadata,
         });
         if (res.success && res.data) {
-          setUniverses((prev) =>
-            prev.map((u) => (u.id === editingUniverseId ? (res.data as AdminUniverse) : u))
-          );
+          queryClient.invalidateQueries({ queryKey: ['admin', 'universes'] });
           toggleToast('success', 'Universe updated');
         }
       }
@@ -228,8 +219,8 @@ export default function AdminUniversesPage(): React.JSX.Element {
   const handleDelete = async (id: string) => {
     try {
       await api.admin.deleteUniverse(id);
-      setUniverses((prev) => prev.filter((u) => u.id !== id));
       setConfirmDelete(null);
+      queryClient.invalidateQueries({ queryKey: ['admin', 'universes'] });
       toggleToast('success', 'Universe deleted');
     } catch {
       toggleToast('error', 'Failed to delete universe');
@@ -242,7 +233,7 @@ export default function AdminUniversesPage(): React.JSX.Element {
         displayName: `${u.displayName} (Copy)`,
       });
       if (res.success && res.data) {
-        setUniverses((prev) => [...prev, res.data as AdminUniverse]);
+        queryClient.invalidateQueries({ queryKey: ['admin', 'universes'] });
         toggleToast('success', `Cloned "${u.displayName}"`);
       }
     } catch {
@@ -314,7 +305,7 @@ export default function AdminUniversesPage(): React.JSX.Element {
         );
         setImportOpen(false);
         setImportData('');
-        loadUniverses();
+        queryClient.invalidateQueries({ queryKey: ['admin', 'universes'] });
       }
     } catch {
       toggleToast('error', 'Invalid JSON or import failed');
@@ -361,7 +352,7 @@ export default function AdminUniversesPage(): React.JSX.Element {
         ],
       };
       setFeatureModalUniverse(updated);
-      setUniverses((prev) => prev.map((u) => (u.id === updated.id ? updated : u)));
+      queryClient.invalidateQueries({ queryKey: ['admin', 'universes'] });
       setNewFeatureKey('');
       setNewFeatureEnabled(true);
       toggleToast('success', 'Feature flag added');
@@ -382,7 +373,7 @@ export default function AdminUniversesPage(): React.JSX.Element {
       );
       const updated = { ...featureModalUniverse, featureFlags: flags };
       setFeatureModalUniverse(updated);
-      setUniverses((prev) => prev.map((u) => (u.id === updated.id ? updated : u)));
+      queryClient.invalidateQueries({ queryKey: ['admin', 'universes'] });
     } catch {
       toggleToast('error', 'Failed to toggle feature flag');
     }
@@ -397,7 +388,7 @@ export default function AdminUniversesPage(): React.JSX.Element {
       );
       const updated = { ...featureModalUniverse, featureFlags: flags };
       setFeatureModalUniverse(updated);
-      setUniverses((prev) => prev.map((u) => (u.id === updated.id ? updated : u)));
+      queryClient.invalidateQueries({ queryKey: ['admin', 'universes'] });
       toggleToast('success', 'Feature flag deleted');
     } catch {
       toggleToast('error', 'Failed to delete feature flag');
@@ -483,10 +474,7 @@ export default function AdminUniversesPage(): React.JSX.Element {
           </div>
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             <button
-              onClick={() => {
-                setShowStats(!showStats);
-                if (!stats) loadStats();
-              }}
+              onClick={() => setShowStats(!showStats)}
               style={{
                 padding: '8px 16px',
                 borderRadius: 10,
@@ -754,18 +742,23 @@ export default function AdminUniversesPage(): React.JSX.Element {
         )}
 
         {isLoading ? (
-          <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}>
-            <div
-              style={{
-                width: 40,
-                height: 40,
-                border: '3px solid #2A1A1A',
-                borderTopColor: '#E8420A',
-                borderRadius: '50%',
-                animation: 'spin 0.8s linear infinite',
-              }}
-            />
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="az-glass" style={{ padding: 20, borderRadius: 16 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                  <Skeleton width="32px" height="32px" borderRadius="50%" />
+                  <div style={{ flex: 1 }}>
+                    <Skeleton width="120px" height="16px" className="mb-1" />
+                    <Skeleton width="80px" height="12px" />
+                  </div>
+                </div>
+                <Skeleton width="100%" height="40px" className="mb-3" />
+                <Skeleton width="80%" height="12px" />
+              </div>
+            ))}
           </div>
+        ) : error ? (
+          <ErrorState title="Failed to load universes" description="Please try again later" onButtonPress={() => router.refresh()} />
         ) : (
           <>
             <div style={{ marginBottom: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -951,7 +944,7 @@ export default function AdminUniversesPage(): React.JSX.Element {
                         color: '#E8420A',
                       }}
                     >
-                      {(u as any).contentCount || 0} items
+                      {u.contentCount || 0} items
                     </span>
                     <span
                       style={{

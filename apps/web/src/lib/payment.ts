@@ -38,25 +38,42 @@ export interface PaymentCallbacks {
 
 class PaymentService {
   private provider: PaymentProvider = 'paystack';
-  private callbacks: PaymentCallbacks = {};
+  private activePayments: Map<string, PaymentCallbacks> = new Map();
 
   setProvider(provider: PaymentProvider): void {
     this.provider = provider;
   }
 
   setCallbacks(callbacks: PaymentCallbacks): void {
-    this.callbacks = callbacks;
+    if (this.activePayments.size > 0) {
+      throw new Error('Cannot change callbacks while a payment is in progress');
+    }
+    // Store in activePayments for the next payment
+    this.activePayments.set('__default__', callbacks);
+  }
+
+  private getCallbacks(reference: string): PaymentCallbacks {
+    return this.activePayments.get(reference) || this.activePayments.get('__default__') || {};
+  }
+
+  private storeCallbacks(reference: string, callbacks: PaymentCallbacks): void {
+    this.activePayments.set(reference, callbacks);
+  }
+
+  private removeCallbacks(reference: string): void {
+    this.activePayments.delete(reference);
   }
 
   async initializePayment(
     amount: number,
     email: string,
-    metadata?: Record<string, string>
+    metadata?: Record<string, string>,
+    currency: string = 'NGN'
   ): Promise<PaymentInitResponse | null> {
     try {
       const response = await api.payment.initialize({
         amount,
-        currency: 'NGN',
+        currency,
         email,
         metadata,
       });
@@ -66,31 +83,41 @@ class PaymentService {
       }
       return null;
     } catch (error) {
-      this.callbacks.onFailure?.('Failed to initialize payment');
+      const ref = metadata?.reference || '__pending__';
+      this.getCallbacks(ref).onFailure?.('Failed to initialize payment');
       return null;
     }
   }
 
   async verifyPayment(reference: string): Promise<PaymentVerifyResponse | null> {
+    const callbacks = this.getCallbacks(reference);
     try {
       const response = await api.payment.verify(reference);
 
       if (response.success && response.data) {
         if (response.data.status === 'success') {
-          this.callbacks.onSuccess?.(response.data);
+          callbacks.onSuccess?.(response.data);
         } else if (response.data.status === 'failed') {
-          this.callbacks.onFailure?.('Payment failed');
+          callbacks.onFailure?.('Payment failed');
         }
         return response.data;
       }
       return null;
     } catch (error) {
-      this.callbacks.onFailure?.('Failed to verify payment');
+      callbacks.onFailure?.('Failed to verify payment');
       return null;
     }
   }
 
-  async initiatePaystackPayment(paymentData: PaystackPaymentData): Promise<void> {
+  async initiatePaystackPayment(
+    paymentData: PaystackPaymentData,
+    callbacks?: PaymentCallbacks
+  ): Promise<() => void> {
+    const reference = paymentData.reference;
+    if (callbacks) {
+      this.storeCallbacks(reference, callbacks);
+    }
+
     const popup = window.open(
       paymentData.authorizationUrl,
       'paystack_popup',
@@ -98,29 +125,37 @@ class PaymentService {
     );
 
     if (!popup) {
-      this.callbacks.onFailure?.('Popup blocked. Please allow popups for this site.');
-      return;
+      this.getCallbacks(reference).onFailure?.('Popup blocked. Please allow popups for this site.');
+      return () => {};
     }
+
+    let popupClosed = false;
 
     const poll = setInterval(async () => {
       try {
-        if (popup.closed) {
+        if (popup.closed && !popupClosed) {
+          popupClosed = true;
           clearInterval(poll);
-          this.callbacks.onClose?.();
+          this.getCallbacks(reference).onClose?.();
+          this.removeCallbacks(reference);
           return;
         }
 
+        if (popupClosed) return;
+
         const response = await this.verifyPayment(paymentData.reference);
         if (response && response.status === 'success') {
+          popupClosed = true;
           clearInterval(poll);
           popup.close();
+          this.removeCallbacks(reference);
         }
       } catch (error) {
         // Polling error is intentionally minimal
       }
     }, 3000);
 
-    setTimeout(
+    const timeoutId = setTimeout(
       () => {
         clearInterval(poll);
         if (!popup.closed) {
@@ -129,9 +164,25 @@ class PaymentService {
       },
       10 * 60 * 1000
     );
+
+    return () => {
+      clearInterval(poll);
+      clearTimeout(timeoutId);
+      if (!popup.closed) {
+        popup.close();
+      }
+    };
   }
 
-  async initiateFlutterwavePayment(paymentData: FlutterwavePaymentData): Promise<void> {
+  async initiateFlutterwavePayment(
+    paymentData: FlutterwavePaymentData,
+    callbacks?: PaymentCallbacks
+  ): Promise<() => void> {
+    const reference = paymentData.reference;
+    if (callbacks) {
+      this.storeCallbacks(reference, callbacks);
+    }
+
     const popup = window.open(
       paymentData.authorizationUrl,
       'flutterwave_popup',
@@ -139,29 +190,37 @@ class PaymentService {
     );
 
     if (!popup) {
-      this.callbacks.onFailure?.('Popup blocked. Please allow popups for this site.');
-      return;
+      this.getCallbacks(reference).onFailure?.('Popup blocked. Please allow popups for this site.');
+      return () => {};
     }
+
+    let popupClosed = false;
 
     const poll = setInterval(async () => {
       try {
-        if (popup.closed) {
+        if (popup.closed && !popupClosed) {
+          popupClosed = true;
           clearInterval(poll);
-          this.callbacks.onClose?.();
+          this.getCallbacks(reference).onClose?.();
+          this.removeCallbacks(reference);
           return;
         }
 
+        if (popupClosed) return;
+
         const response = await this.verifyPayment(paymentData.reference);
         if (response && response.status === 'success') {
+          popupClosed = true;
           clearInterval(poll);
           popup.close();
+          this.removeCallbacks(reference);
         }
       } catch (error) {
         // Polling error is intentionally minimal
       }
     }, 3000);
 
-    setTimeout(
+    const timeoutId = setTimeout(
       () => {
         clearInterval(poll);
         if (!popup.closed) {
@@ -170,43 +229,53 @@ class PaymentService {
       },
       10 * 60 * 1000
     );
+
+    return () => {
+      clearInterval(poll);
+      clearTimeout(timeoutId);
+      if (!popup.closed) {
+        popup.close();
+      }
+    };
   }
 
   async processPayment(
     amount: number,
     email: string,
-    metadata?: Record<string, string>
-  ): Promise<boolean> {
-    const paymentData = await this.initializePayment(amount, email, metadata);
+    metadata?: Record<string, string>,
+    currency: string = 'NGN'
+  ): Promise<(() => void) | false> {
+    const paymentData = await this.initializePayment(amount, email, metadata, currency);
 
     if (!paymentData) {
-      this.callbacks.onFailure?.('Failed to initialize payment');
+      const callbacks = this.activePayments.get('__default__') || {};
+      callbacks.onFailure?.('Failed to initialize payment');
       return false;
     }
 
+    const reference = paymentData.reference;
+
     if (this.provider === 'paystack') {
-      await this.initiatePaystackPayment({
-        reference: paymentData.reference,
+      return this.initiatePaystackPayment({
+        reference,
         authorizationUrl: paymentData.authorizationUrl || '',
         accessCode: paymentData.accessCode,
         amount,
-        currency: 'NGN',
+        currency,
         email,
         metadata,
       });
     } else {
-      await this.initiateFlutterwavePayment({
-        reference: paymentData.reference,
+      return this.initiateFlutterwavePayment({
+        reference,
         authorizationUrl: paymentData.authorizationUrl || '',
         txRef: paymentData.reference,
         amount,
-        currency: 'NGN',
+        currency,
         email,
         metadata,
       });
     }
-
-    return true;
   }
 
   async getPaymentProviders(): Promise<{ provider: string; name: string }[]> {

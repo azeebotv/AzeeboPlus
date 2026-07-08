@@ -11,14 +11,17 @@ import {
   Request,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Public } from '@azeebo/security';
+import { Public, RateLimitGuard, RateLimit } from '@azeebo/security';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { WebhookService, WebhookPayload } from './webhook.service';
 import { WebhookSecurityService } from './webhook-security.service';
 import { PaystackWebhookGuard } from './guards/paystack-webhook.guard';
 import { FlutterwaveWebhookGuard } from './guards/flutterwave-webhook.guard';
 import { ApiResponseWrapper } from '@azeebo/shared-types';
 
+@ApiTags('Webhooks')
 @Public()
+@UseGuards(RateLimitGuard)
 @Controller('webhooks')
 export class WebhookController {
   private readonly logger = new Logger(WebhookController.name);
@@ -33,8 +36,12 @@ export class WebhookController {
   }
 
   @Post('paystack')
+  @RateLimit(100, 60000)
   @UseGuards(PaystackWebhookGuard)
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Handle Paystack webhook' })
+  @ApiResponse({ status: 200, description: 'Webhook processed successfully' })
+  @ApiResponse({ status: 400, description: 'Invalid webhook signature or payload' })
   async handlePaystackWebhook(
     @Body() payload: WebhookPayload,
     @Headers('x-paystack-signature') signature: string,
@@ -94,18 +101,22 @@ export class WebhookController {
 
       this.logger.log(`Paystack webhook processed successfully: ${reference}`);
       return ApiResponseWrapper.success({ received: true });
-    } catch (error) {
+    } catch (error: unknown) {
       this.logger.error(
         `Paystack webhook processing failed: ${reference}`,
-        error instanceof Error ? error.stack : undefined
+        error instanceof Error ? error.message : undefined
       );
       throw error;
     }
   }
 
   @Post('flutterwave')
+  @RateLimit(100, 60000)
   @UseGuards(FlutterwaveWebhookGuard)
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Handle Flutterwave webhook' })
+  @ApiResponse({ status: 200, description: 'Webhook processed successfully' })
+  @ApiResponse({ status: 400, description: 'Invalid webhook signature or payload' })
   async handleFlutterwaveWebhook(
     @Body() payload: WebhookPayload,
     @Headers('verif-hash') signature: string,
@@ -167,10 +178,10 @@ export class WebhookController {
 
       this.logger.log(`Flutterwave webhook processed successfully: ${reference}`);
       return ApiResponseWrapper.success({ received: true });
-    } catch (error) {
+    } catch (error: unknown) {
       this.logger.error(
         `Flutterwave webhook processing failed: ${reference}`,
-        error instanceof Error ? error.stack : undefined
+        error instanceof Error ? error.message : undefined
       );
       throw error;
     }

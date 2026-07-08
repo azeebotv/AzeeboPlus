@@ -1,12 +1,13 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
-import { useAuth } from '../../context/AuthContext';
 import Link from 'next/link';
 import { api, ContentItem } from '../../lib/api';
-import { webLogger } from '../../lib/logger';
+import { Skeleton } from '@azeebo/ui/web';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
+import { OptimizedImage } from '@/components/OptimizedImage';
 import { AmbientGlow } from '@/components/motion/AmbientGlow';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { StaggerGrid } from '@/components/motion/StaggerGrid';
@@ -35,78 +36,55 @@ const staggerItem = {
 };
 
 export default function RealityPage(): React.JSX.Element {
-  const { isAuthenticated: _isAuthenticated } = useAuth();
-  const [shows, setShows] = useState<ContentItem[]>([]);
-  const [selectedShow, setSelectedShow] = useState<ContentItem | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [_error, setError] = useState<string | null>(null);
-  const [contestants, setContestants] = useState<Contestant[]>([]);
+  const universesQuery = useQuery({
+    queryKey: ['universes'],
+    queryFn: async () => {
+      const res = await api.universe.getUniverses();
+      if (res.data) return res.data;
+      throw new Error(res.message || 'Failed to load universes');
+    },
+    staleTime: 300000,
+  });
+
+  const realityUniverse = universesQuery.data?.find((u) => u.name?.toLowerCase() === 'reality');
+
+  const showsQuery = useQuery({
+    queryKey: ['reality-shows', realityUniverse?.id],
+    queryFn: async () => {
+      if (!realityUniverse?.id) throw new Error('Reality universe not found');
+      const res = await api.content.getContentByUniverse(realityUniverse.id, 12, 50);
+      if (res.success && res.data) {
+        const items = Array.isArray(res.data)
+          ? res.data
+          : (res.data as { items?: ContentItem[] })?.items || [];
+        return items || [];
+      }
+      throw new Error(res.message || 'Failed to load reality shows');
+    },
+    enabled: !!realityUniverse?.id,
+    staleTime: 60000,
+  });
+
+  const shows = showsQuery.data ?? [];
+  const selectedShow = shows[0] ?? null;
+
+  const contestantsQuery = useQuery({
+    queryKey: ['reality-contestants', selectedShow?.id],
+    queryFn: async () => {
+      if (!selectedShow?.id) throw new Error('No show selected');
+      const res = await api.reality.getContestants(selectedShow.id);
+      if (res.success && res.data) return res.data;
+      throw new Error(res.message || 'Failed to load contestants');
+    },
+    enabled: !!selectedShow?.id,
+    staleTime: 30000,
+  });
+
+  const contestants: Contestant[] = contestantsQuery.data ?? [];
   const safeContestants = contestants || [];
   const maxVotes = Math.max(0, ...safeContestants.map((c) => c.votes));
 
-  useEffect(() => {
-    let cancelled = false;
-    async function fetchShows() {
-      try {
-        setIsLoading(true);
-        setError(null);
-        const universesRes = await api.universe.getUniverses();
-        if (cancelled) return;
-        const realityUniverse = universesRes.data?.find(
-          (u) => u.name?.toLowerCase() === 'reality'
-        );
-        if (!realityUniverse) {
-          setError('Reality universe not found');
-          return;
-        }
-        const response = await api.content.getContentByUniverse(realityUniverse.id, 12, 50);
-        if (cancelled) return;
-        if (response.success && response.data) {
-          const items = Array.isArray(response.data)
-            ? response.data
-            : (response.data as { items?: ContentItem[] })?.items || [];
-          setShows(items || []);
-          if (items.length > 0) setSelectedShow(items[0]);
-        } else {
-          setError(response.message || 'Failed to load reality shows');
-        }
-      } catch (err) {
-        if (cancelled) return;
-        const message = err instanceof Error ? err.message : 'An unexpected error occurred';
-        setError(message);
-        webLogger.error('Failed to load reality shows', { error: message });
-      } finally {
-        if (!cancelled) setIsLoading(false);
-      }
-    }
-    fetchShows();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-    async function fetchContestants() {
-      if (!selectedShow) {
-        setContestants([]);
-        return;
-      }
-      try {
-        const response = await api.reality.getContestants(selectedShow.id);
-        if (cancelled) return;
-        if (response.success && response.data) setContestants(response.data);
-      } catch (err) {
-        if (cancelled) return;
-        const message = err instanceof Error ? err.message : 'An unexpected error occurred';
-        webLogger.error('Failed to load contestants', { error: message });
-      }
-    }
-    fetchContestants();
-    return () => {
-      cancelled = true;
-    };
-  }, [selectedShow]);
+  const isLoading = universesQuery.isLoading || showsQuery.isLoading;
 
   return (
     <div className="min-h-screen az-nollywood-bg">
@@ -115,19 +93,13 @@ export default function RealityPage(): React.JSX.Element {
       {/* Hero Section */}
       <section className="relative">
         {isLoading ? (
-          <div
-            className="h-[400px] sm:h-[500px] az-shimmer"
-            style={{ backgroundColor: '#2A2A2A' }}
-          />
+          <Skeleton height="400px" className="sm:h-[500px] rounded-none" />
         ) : selectedShow ? (
           <div className="relative h-[400px] sm:h-[500px]">
-            <motion.img
+            <OptimizedImage
               src={selectedShow.thumbnail}
               alt={selectedShow.title}
               className="w-full h-full object-cover"
-              initial={{ scale: 1.1, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-[#1A0A0A] via-[#1A0A0A]/50 to-transparent" />
             <AmbientGlow color="rgba(204,28,28,0.3)" size={500} className="bottom-0 right-0" />
@@ -202,7 +174,7 @@ export default function RealityPage(): React.JSX.Element {
             <Link key={show.id} href={`/watch/${show.id}`}>
               <GlowCard universe="reality" className="overflow-hidden">
                 <div className="relative">
-                  <img
+                  <OptimizedImage
                     src={show.thumbnail}
                     alt={show.title}
                     className="w-full h-44 sm:h-48 object-cover"

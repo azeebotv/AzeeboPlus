@@ -1,10 +1,13 @@
-import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useQuery } from '@tanstack/react-query';
 import { LoadingState, EmptyState, ErrorState } from '../src/components/StateContainers';
 import { apiClient } from '../src/api/client';
+import { ApiResponse } from '../src/types/api';
+
+type ListResponse<T> = T[] | ApiResponse<T[]>;
 
 interface LiveShow {
   id: string;
@@ -33,34 +36,40 @@ export default function RealityUniverseHome() {
   const colorScheme = useColorScheme();
   const router = useRouter();
   const isDark = colorScheme === 'dark';
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [liveShows, setLiveShows] = useState<LiveShow[]>([]);
-  const [contestants, setContestants] = useState<Contestant[]>([]);
-  const [featuredContent, setFeaturedContent] = useState<FeaturedItem[]>([]);
 
-  const fetchData = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const [showsRes, contestantsRes, featuredRes] = await Promise.all([
-        apiClient.get<any>('/v1/reality/shows'),
-        apiClient.get<any>('/v1/reality/contestants'),
-        apiClient.get<any>('/v1/reality/featured'),
-      ]);
-      setLiveShows(Array.isArray(showsRes) ? showsRes : (showsRes?.data ?? []));
-      setContestants(Array.isArray(contestantsRes) ? contestantsRes : (contestantsRes?.data ?? []));
-      setFeaturedContent(Array.isArray(featuredRes) ? featuredRes : (featuredRes?.data ?? []));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const showsQuery = useQuery({
+    queryKey: ['reality', 'shows'],
+    queryFn: async () => {
+      const res = await apiClient.get<ListResponse<LiveShow>>('/v1/reality/shows');
+      return Array.isArray(res) ? res : (res?.data ?? []);
+    },
+    staleTime: 60_000,
+  });
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  const contestantsQuery = useQuery({
+    queryKey: ['reality', 'contestants'],
+    queryFn: async () => {
+      const res = await apiClient.get<ListResponse<Contestant>>('/v1/reality/contestants');
+      return Array.isArray(res) ? res : (res?.data ?? []);
+    },
+    staleTime: 60_000,
+  });
+
+  const featuredQuery = useQuery({
+    queryKey: ['reality', 'featured'],
+    queryFn: async () => {
+      const res = await apiClient.get<ListResponse<FeaturedItem>>('/v1/reality/featured');
+      return Array.isArray(res) ? res : (res?.data ?? []);
+    },
+    staleTime: 60_000,
+  });
+
+  const isLoading = showsQuery.isLoading || contestantsQuery.isLoading || featuredQuery.isLoading;
+  const error = showsQuery.error?.message || contestantsQuery.error?.message || featuredQuery.error?.message;
+
+  const liveShows = showsQuery.data ?? [];
+  const contestants = contestantsQuery.data ?? [];
+  const featuredContent = featuredQuery.data ?? [];
 
   if (isLoading) {
     return (
@@ -72,7 +81,14 @@ export default function RealityUniverseHome() {
   if (error) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
-        <ErrorState description={error} onRetry={fetchData} />
+        <ErrorState
+          description={error}
+          onRetry={() => {
+            showsQuery.refetch();
+            contestantsQuery.refetch();
+            featuredQuery.refetch();
+          }}
+        />
       </SafeAreaView>
     );
   }

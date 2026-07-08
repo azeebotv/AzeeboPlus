@@ -15,7 +15,7 @@ import { AdminGuard } from '@azeebo/security';
       useFactory: async (configService: ConfigService) => ({
         secret: configService.getOrThrow<string>('JWT_ACCESS_SECRET'),
         signOptions: {
-          expiresIn: configService.get('JWT_EXPIRES_IN', '1h') as any,
+          expiresIn: configService.get('JWT_EXPIRES_IN', '1h') as string | number,
         },
       }),
       inject: [ConfigService],

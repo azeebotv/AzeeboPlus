@@ -1,229 +1,240 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
-
-export interface QuizQuestionInput {
-  question: string;
-  options: string[];
-  correctAnswer: string;
-  explanation?: string;
-  points?: number;
-}
-
-export interface CreateQuizInput {
-  title: string;
-  description?: string;
-  coverImage?: string;
-  category?: string;
-  difficulty?: string;
-  timeLimit?: number;
-  status?: string;
-  questions: QuizQuestionInput[];
-}
+import { CreateQuizDto, QuizQuestionDto } from './dto/create-quiz.dto';
 
 @Injectable()
 export class QuizService {
+  private readonly logger = new Logger(QuizService.name);
+
   constructor(private prisma: PrismaService) {}
 
   async getQuizzes(page = 1, limit = 20, category?: string, difficulty?: string) {
-    const skip = (page - 1) * limit;
-    const where: Record<string, unknown> = { status: 'published' };
-    if (category) where.category = category;
-    if (difficulty) where.difficulty = difficulty;
+    try {
+      const skip = (page - 1) * limit;
+      const where: Record<string, unknown> = { status: 'published' };
+      if (category) where.category = category;
+      if (difficulty) where.difficulty = difficulty;
 
-    const [quizzes, total] = await Promise.all([
-      this.prisma.quiz.findMany({
-        where,
-        include: { createdBy: { select: { displayName: true, avatarUrl: true } } },
-        orderBy: { playCount: 'desc' },
-        skip,
-        take: limit,
-      }),
-      this.prisma.quiz.count({ where }),
-    ]);
+      const [quizzes, total] = await Promise.all([
+        this.prisma.quiz.findMany({
+          where,
+          include: { createdBy: { select: { displayName: true, avatarUrl: true } } },
+          orderBy: { playCount: 'desc' },
+          skip,
+          take: limit,
+        }),
+        this.prisma.quiz.count({ where }),
+      ]);
 
-    return {
-      success: true,
-      data: {
-        quizzes,
-        pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
-      },
-    };
+      return {
+        success: true,
+        data: {
+          quizzes,
+          pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+        },
+      };
+    } catch (error) {
+      this.logger.error(`Failed to fetch quizzes: ${error}`);
+      return { success: false, error: { code: 'FETCH_ERROR', message: 'Failed to fetch quizzes' } };
+    }
   }
 
   async getQuiz(id: string) {
-    const quiz = await this.prisma.quiz.findUnique({
-      where: { id },
-      include: {
-        createdBy: { select: { displayName: true, avatarUrl: true } },
-        questions: { orderBy: { order: 'asc' } },
-      },
-    });
+    try {
+      const quiz = await this.prisma.quiz.findUnique({
+        where: { id },
+        include: {
+          createdBy: { select: { displayName: true, avatarUrl: true } },
+          questions: { orderBy: { order: 'asc' } },
+        },
+      });
 
-    if (!quiz) {
-      throw new NotFoundException('Quiz not found');
+      if (!quiz) {
+        throw new NotFoundException('Quiz not found');
+      }
+
+      const { questions: _rawQuestions, ...quizWithoutQuestions } = quiz;
+
+      return {
+        success: true,
+        data: {
+          quiz: quizWithoutQuestions,
+        },
+      };
+    } catch (error) {
+      if (error instanceof NotFoundException) throw error;
+      this.logger.error(`Failed to fetch quiz ${id}: ${error}`);
+      return { success: false, error: { code: 'FETCH_ERROR', message: 'Failed to fetch quiz' } };
     }
-
-    const sanitizedQuestions = quiz.questions.map((q) => ({
-      id: q.id,
-      question: q.question,
-      options: q.options,
-      order: q.order,
-      points: q.points,
-    }));
-
-    return {
-      success: true,
-      data: {
-        quiz: { ...quiz, questions: sanitizedQuestions },
-      },
-    };
   }
 
-  async createQuiz(userId: string, data: CreateQuizInput) {
-    const slug = data.title
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/(^-|-$)/g, '');
+  async createQuiz(userId: string, data: CreateQuizDto) {
+    try {
+      const slug = data.title
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '');
 
-    const quiz = await this.prisma.quiz.create({
-      data: {
-        title: data.title,
-        slug,
-        description: data.description,
-        coverImage: data.coverImage,
-        category: data.category,
-        difficulty: data.difficulty || 'easy',
-        timeLimit: data.timeLimit,
-        status: data.status || 'draft',
-        createdById: userId,
-        questions: {
-          create: data.questions.map((q: QuizQuestionInput, index: number) => ({
-            question: q.question,
-            options: q.options,
-            correctAnswer: parseInt(q.correctAnswer),
-            explanation: q.explanation,
-            points: q.points || 10,
-            order: index,
-          })),
+      const quiz = await this.prisma.quiz.create({
+        data: {
+          title: data.title,
+          slug,
+          description: data.description,
+          coverImage: data.coverImage,
+          category: data.category,
+          difficulty: data.difficulty || 'easy',
+          timeLimit: data.timeLimit,
+          status: data.status || 'draft',
+          createdById: userId,
+          questions: {
+            create: data.questions.map((q: QuizQuestionDto, index: number) => ({
+              question: q.question,
+              options: q.options,
+              correctAnswer: parseInt(q.correctAnswer),
+              explanation: q.explanation,
+              points: q.points || 10,
+              order: index,
+            })),
+          },
         },
-      },
-      include: { questions: true },
-    });
+        include: { questions: true },
+      });
 
-    return { success: true, data: { quiz } };
+      return { success: true, data: { quiz } };
+    } catch (error) {
+      this.logger.error(`Failed to create quiz: ${error}`);
+      return { success: false, error: { code: 'CREATE_ERROR', message: 'Failed to create quiz' } };
+    }
   }
 
   async startQuiz(quizId: string, userId: string) {
-    const quiz = await this.prisma.quiz.findUnique({
-      where: { id: quizId },
-      include: { questions: { orderBy: { order: 'asc' } } },
-    });
+    try {
+      const quiz = await this.prisma.quiz.findUnique({
+        where: { id: quizId },
+        include: { questions: { orderBy: { order: 'asc' } } },
+      });
 
-    if (!quiz) {
-      throw new NotFoundException('Quiz not found');
+      if (!quiz) {
+        throw new NotFoundException('Quiz not found');
+      }
+
+      if (quiz.status !== 'published') {
+        throw new BadRequestException('Quiz is not available');
+      }
+
+      const attempt = await this.prisma.quizAttempt.create({
+        data: {
+          quizId,
+          userId,
+          totalQuestions: quiz.questions.length,
+        },
+      });
+
+      const sanitizedQuestions = quiz.questions.map((q) => ({
+        id: q.id,
+        question: q.question,
+        options: q.options,
+        order: q.order,
+        points: q.points,
+      }));
+
+      return {
+        success: true,
+        data: {
+          attemptId: attempt.id,
+          questions: sanitizedQuestions,
+          timeLimit: quiz.timeLimit,
+        },
+      };
+    } catch (error) {
+      if (error instanceof NotFoundException || error instanceof BadRequestException) throw error;
+      this.logger.error(`Failed to start quiz ${quizId}: ${error}`);
+      return { success: false, error: { code: 'START_ERROR', message: 'Failed to start quiz' } };
     }
-
-    if (quiz.status !== 'published') {
-      throw new BadRequestException('Quiz is not available');
-    }
-
-    const attempt = await this.prisma.quizAttempt.create({
-      data: {
-        quizId,
-        userId,
-        totalQuestions: quiz.questions.length,
-      },
-    });
-
-    const sanitizedQuestions = quiz.questions.map((q) => ({
-      id: q.id,
-      question: q.question,
-      options: q.options,
-      order: q.order,
-      points: q.points,
-    }));
-
-    return {
-      success: true,
-      data: {
-        attemptId: attempt.id,
-        questions: sanitizedQuestions,
-        timeLimit: quiz.timeLimit,
-      },
-    };
   }
 
   async submitQuiz(attemptId: string, answers: Record<string, string>) {
-    const attempt = await this.prisma.quizAttempt.findUnique({
-      where: { id: attemptId },
-      include: { quiz: { include: { questions: true } } },
-    });
+    try {
+      const attempt = await this.prisma.quizAttempt.findUnique({
+        where: { id: attemptId },
+        include: { quiz: { include: { questions: true } } },
+      });
 
-    if (!attempt) {
-      throw new NotFoundException('Quiz attempt not found');
-    }
-
-    if (attempt.completedAt) {
-      throw new BadRequestException('Quiz already submitted');
-    }
-
-    let score = 0;
-    const questionResults = attempt.quiz.questions.map((q) => {
-      const userAnswer = answers[q.id];
-      const isCorrect = userAnswer === String(q.correctAnswer);
-      if (isCorrect) {
-        score += q.points;
+      if (!attempt) {
+        throw new NotFoundException('Quiz attempt not found');
       }
+
+      if (attempt.completedAt) {
+        throw new BadRequestException('Quiz already submitted');
+      }
+
+      let score = 0;
+      const questionResults = attempt.quiz.questions.map((q) => {
+        const userAnswer = answers[q.id];
+        const isCorrect = userAnswer === String(q.correctAnswer);
+        if (isCorrect) {
+          score += q.points;
+        }
+        return {
+          questionId: q.id,
+          correct: isCorrect,
+          userAnswer,
+          correctAnswer: q.correctAnswer,
+        };
+      });
+
+      await this.prisma.quizAttempt.update({
+        where: { id: attemptId },
+        data: {
+          score,
+          answers: questionResults,
+          completedAt: new Date(),
+        },
+      });
+
+      await this.prisma.quiz.update({
+        where: { id: attempt.quizId },
+        data: { playCount: { increment: 1 } },
+      });
+
       return {
-        questionId: q.id,
-        correct: isCorrect,
-        userAnswer,
-        correctAnswer: q.correctAnswer,
+        success: true,
+        data: {
+          score,
+          totalQuestions: attempt.totalQuestions,
+          correctAnswers: questionResults.filter((r) => r.correct).length,
+          results: questionResults,
+        },
       };
-    });
-
-    await this.prisma.quizAttempt.update({
-      where: { id: attemptId },
-      data: {
-        score,
-        answers: questionResults,
-        completedAt: new Date(),
-      },
-    });
-
-    await this.prisma.quiz.update({
-      where: { id: attempt.quizId },
-      data: { playCount: { increment: 1 } },
-    });
-
-    return {
-      success: true,
-      data: {
-        score,
-        totalQuestions: attempt.totalQuestions,
-        correctAnswers: questionResults.filter((r) => r.correct).length,
-        results: questionResults,
-      },
-    };
+    } catch (error) {
+      if (error instanceof NotFoundException || error instanceof BadRequestException) throw error;
+      this.logger.error(`Failed to submit quiz attempt ${attemptId}: ${error}`);
+      return { success: false, error: { code: 'SUBMIT_ERROR', message: 'Failed to submit quiz' } };
+    }
   }
 
   async getLeaderboard(quizId: string, limit = 10) {
-    const attempts = await this.prisma.quizAttempt.findMany({
-      where: { quizId, completedAt: { not: null } },
-      include: { user: { select: { displayName: true, avatarUrl: true } } },
-      orderBy: [{ score: 'desc' }, { completedAt: 'asc' }],
-      take: limit,
-    });
+    try {
+      const attempts = await this.prisma.quizAttempt.findMany({
+        where: { quizId, completedAt: { not: null } },
+        include: { user: { select: { displayName: true, avatarUrl: true } } },
+        orderBy: [{ score: 'desc' }, { completedAt: 'asc' }],
+        take: limit,
+      });
 
-    return {
-      success: true,
-      data: {
-        leaderboard: attempts.map((a) => ({
-          user: a.user,
-          score: a.score,
-          completedAt: a.completedAt,
-        })),
-      },
-    };
+      return {
+        success: true,
+        data: {
+          leaderboard: attempts.map((a) => ({
+            user: a.user,
+            score: a.score,
+            completedAt: a.completedAt,
+          })),
+        },
+      };
+    } catch (error) {
+      this.logger.error(`Failed to fetch leaderboard for quiz ${quizId}: ${error}`);
+      return { success: false, error: { code: 'LEADERBOARD_ERROR', message: 'Failed to fetch leaderboard' } };
+    }
   }
 }

@@ -6,6 +6,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ComedyController } from './comedy.controller';
 import { ComedyService } from './comedy.service';
 import { DatabaseModule } from '../database/database.module';
+import { RedisService } from '../../common/services/redis.service';
 
 @Module({
   imports: [
@@ -16,14 +17,14 @@ import { DatabaseModule } from '../database/database.module';
       useFactory: async (configService: ConfigService) => ({
         secret: configService.get<string>('JWT_ACCESS_SECRET'),
         signOptions: {
-          expiresIn: configService.get('JWT_EXPIRES_IN', '30m') as any,
+          expiresIn: configService.get('JWT_EXPIRES_IN', '30m'),
         },
       }),
       inject: [ConfigService],
     }),
   ],
   controllers: [ComedyController],
-  providers: [ComedyService],
+  providers: [ComedyService, RedisService],
   exports: [ComedyService, DatabaseModule],
 })
 export class ComedyModule {}

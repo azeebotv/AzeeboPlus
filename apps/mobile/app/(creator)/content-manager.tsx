@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -83,8 +83,9 @@ export default function ContentManagerScreen() {
               await contentApi.deleteContent(id);
               loadContent();
               Alert.alert('Success', 'Content deleted successfully');
-            } catch (error: any) {
-              Alert.alert('Error', error?.message || 'Failed to delete content');
+            } catch (error: unknown) {
+              const message = error instanceof Error ? error.message : 'Failed to delete content';
+              Alert.alert('Error', message);
             }
           },
         },
@@ -97,8 +98,9 @@ export default function ContentManagerScreen() {
       await contentApi.publishContent(id);
       loadContent();
       Alert.alert('Success', 'Content published successfully');
-    } catch (error: any) {
-      Alert.alert('Error', error?.message || 'Failed to publish content');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to publish content';
+      Alert.alert('Error', message);
     }
   };
 

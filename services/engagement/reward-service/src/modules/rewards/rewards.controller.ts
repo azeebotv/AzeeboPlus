@@ -11,12 +11,14 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
+import { RateLimitGuard, RateLimit, ServiceAuthGuard } from '@azeebo/security';
 
 import { RewardsService } from './rewards.service';
 import { RedeemRewardDto } from './dto/redeem-reward.dto';
 import { RewardResponse } from './interfaces/reward-response.interface';
 
 @ApiTags('Rewards')
+@UseGuards(RateLimitGuard)
 @Controller('v1/rewards')
 export class RewardsController {
   constructor(private readonly rewardsService: RewardsService) {}
@@ -58,6 +60,7 @@ export class RewardsController {
   }
 
   @Post('redeem')
+  @RateLimit(30, 60000)
   @UseGuards(AuthGuard('jwt'))
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Redeem reward' })
@@ -81,16 +84,17 @@ export class RewardsController {
   }
 
   @Post('earn')
-  @UseGuards(AuthGuard('jwt'))
+  @RateLimit(30, 60000)
+  @UseGuards(AuthGuard('jwt'), ServiceAuthGuard)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Earn points for activity' })
   @ApiResponse({ status: 200, description: 'Points earned' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async earnPoints(
     @Request() req: { user: { sub: string } },
-    @Body() body: { activity: string; amount?: number }
+    @Body() body: { activity: string }
   ): Promise<RewardResponse> {
-    return this.rewardsService.earnPoints(req.user.sub, body.activity, body.amount);
+    return this.rewardsService.earnPoints(req.user.sub, body.activity);
   }
 
   @Get('balance')

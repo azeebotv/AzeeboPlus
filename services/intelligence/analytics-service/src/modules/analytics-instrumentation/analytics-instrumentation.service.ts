@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 
 export interface AnalyticsEvent {
@@ -67,66 +67,75 @@ export const EVENT_NAMES = {
 
 @Injectable()
 export class AnalyticsInstrumentationService {
+  private readonly logger = new Logger(AnalyticsInstrumentationService.name);
   constructor(private prisma: PrismaService) {}
 
   async track(event: AnalyticsEvent): Promise<{ id: string }> {
-    const eventRecord = await this.prisma.productEvent.create({
-      data: {
-        eventName: event.eventName,
-        userId: event.userId,
-        sessionId: event.sessionId,
-        platform: event.platform,
-        universe: event.universe,
-        timestamp: event.timestamp || new Date(),
-        appVersion: event.appVersion,
-        experimentFlags: event.experimentFlags ? JSON.stringify(event.experimentFlags) : undefined,
-        metadata: event.metadata ? JSON.stringify(event.metadata) : undefined,
-      },
-    });
-
-    if (event.deviceInfo) {
-      await this.prisma.deviceInfo.create({
+    try {
+      const eventRecord = await this.prisma.productEvent.create({
         data: {
-          productEventId: eventRecord.id,
-          deviceType: event.deviceInfo.deviceType,
-          os: event.deviceInfo.os,
-          osVersion: event.deviceInfo.osVersion,
-          browser: event.deviceInfo.browser,
-          browserVersion: event.deviceInfo.browserVersion,
-          appVersion: event.deviceInfo.appVersion,
-          screenWidth: event.deviceInfo.screenWidth,
-          screenHeight: event.deviceInfo.screenHeight,
-          language: event.deviceInfo.language,
-          timezone: event.deviceInfo.timezone,
-          userAgent: event.deviceInfo.userAgent,
+          eventName: event.eventName,
+          userId: event.userId,
+          sessionId: event.sessionId,
+          platform: event.platform,
+          universe: event.universe,
+          timestamp: event.timestamp || new Date(),
+          appVersion: event.appVersion,
+          experimentFlags: event.experimentFlags ?? undefined,
+          metadata: event.metadata ?? undefined,
         },
       });
-    }
 
-    return { id: eventRecord.id };
+      if (event.deviceInfo) {
+        await this.prisma.deviceInfo.create({
+          data: {
+            productEventId: eventRecord.id,
+            deviceType: event.deviceInfo.deviceType,
+            os: event.deviceInfo.os,
+            osVersion: event.deviceInfo.osVersion,
+            browser: event.deviceInfo.browser,
+            browserVersion: event.deviceInfo.browserVersion,
+            appVersion: event.deviceInfo.appVersion,
+            screenWidth: event.deviceInfo.screenWidth,
+            screenHeight: event.deviceInfo.screenHeight,
+            language: event.deviceInfo.language,
+            timezone: event.deviceInfo.timezone,
+            userAgent: event.deviceInfo.userAgent,
+          },
+        });
+      }
+
+      return { id: eventRecord.id };
+    } catch (error) {
+      this.logger.error(`track failed: ${error.message}`, error.stack);
+      return { success: false, error: error.message } as unknown as { id: string };
+    }
   }
 
   async trackBatch(events: AnalyticsEvent[]): Promise<{ ingested: number }> {
-    const results = await this.prisma.$transaction(
-      events.map((event) =>
-        this.prisma.productEvent.create({
-          data: {
-            eventName: event.eventName,
-            userId: event.userId,
-            sessionId: event.sessionId,
-            platform: event.platform,
-            universe: event.universe,
-            timestamp: event.timestamp || new Date(),
-            appVersion: event.appVersion,
-            experimentFlags: event.experimentFlags
-              ? JSON.stringify(event.experimentFlags)
-              : undefined,
-            metadata: event.metadata ? JSON.stringify(event.metadata) : undefined,
-          },
-        })
-      )
-    );
-    return { ingested: results.length };
+    try {
+      const results = await this.prisma.$transaction(
+        events.map((event) =>
+          this.prisma.productEvent.create({
+            data: {
+              eventName: event.eventName,
+              userId: event.userId,
+              sessionId: event.sessionId,
+              platform: event.platform,
+              universe: event.universe,
+              timestamp: event.timestamp || new Date(),
+              appVersion: event.appVersion,
+              experimentFlags: event.experimentFlags ?? undefined,
+              metadata: event.metadata ?? undefined,
+            },
+          })
+        )
+      );
+      return { ingested: results.length };
+    } catch (error) {
+      this.logger.error(`trackBatch failed: ${error.message}`, error.stack);
+      return { success: false, error: error.message } as unknown as { ingested: number };
+    }
   }
 
   async trackScreenView(

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
   View,
   Text,
@@ -68,7 +68,7 @@ export default function RegisterScreen() {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <AmbientGlow color={colors.primary} />
+      <AmbientGlow color={colors.primary[500]} />
 
       <ScrollView
         contentContainerStyle={styles.scrollContent}
@@ -197,7 +197,7 @@ const styles = StyleSheet.create({
     color: colors.text.primary,
   },
   logoPlus: {
-    color: colors.primary,
+    color: colors.primary[500],
   },
   subtitle: {
     fontSize: typography.fontSize.lg,
@@ -212,7 +212,7 @@ const styles = StyleSheet.create({
   },
   stepIndicator: {
     fontSize: typography.fontSize.xs,
-    color: colors.primary,
+    color: colors.primary[500],
     marginTop: spacing.md,
     fontWeight: typography.fontWeight.semibold,
     textTransform: 'uppercase',

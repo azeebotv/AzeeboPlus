@@ -45,8 +45,10 @@ model Referral {
   @@map("referrals")
   @@index([referrerId])
   @@index([referredId])
+  @@index([referralCodeId])
   @@index([status])
   @@index([createdAt])
+  @@index([referrerId, createdAt])
 }
 
 model ReferralReward {

@@ -4,6 +4,23 @@ import { useAuth } from '@/context/AuthContext';
 import { api } from '@/lib/api';
 import AdminLayout from '@/components/layout/AdminLayout';
 
+interface AdminDashboardActivity {
+  id: string;
+  action: string;
+  user: string;
+  time: string;
+}
+
+interface AdminDashboardData {
+  totalUsers: number;
+  totalContent: number;
+  totalViews: number;
+  dailyActiveUsers: number;
+  totalRevenue: number;
+  newUsers: number;
+  recentActivity: AdminDashboardActivity[];
+}
+
 export default function AdminPage(): React.JSX.Element {
   const { isAuthenticated, user } = useAuth();
   const [stats, setStats] = useState({
@@ -14,7 +31,7 @@ export default function AdminPage(): React.JSX.Element {
     revenue: 0,
     newUsers: 0,
   });
-  const [_recentActivity, setRecentActivity] = useState<any[]>([]);
+  const [_recentActivity, setRecentActivity] = useState<AdminDashboardActivity[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -27,7 +44,7 @@ export default function AdminPage(): React.JSX.Element {
     try {
       const res = await api.admin.getDashboard();
       if (res.success && res.data) {
-        const d = res.data as any;
+        const d = res.data as AdminDashboardData;
         setStats({
           totalUsers: d.totalUsers || 0,
           dailyActiveUsers: d.dailyActiveUsers || 0,

@@ -24,7 +24,7 @@ export class CronTasksService {
       });
 
       this.logger.log(`Expired ${result.count} stale payment intents`);
-    } catch (error) {
+    } catch (error: unknown) {
       this.logger.error('Failed to cleanup stale payment intents', error);
     }
   }
@@ -46,12 +46,12 @@ export class CronTasksService {
       });
 
       this.logger.log(`Marked ${result.count} stale webhook retries as expired`);
-    } catch (error) {
+    } catch (error: unknown) {
       this.logger.error('Failed to cleanup stale webhook retries', error);
     }
   }
 
-  async generatePaymentMetrics(): Promise<object> {
+  async generatePaymentMetrics(): Promise<Record<string, unknown>> {
     this.logger.log('Generating payment metrics...');
 
     try {
@@ -102,9 +102,9 @@ export class CronTasksService {
         },
         generatedAt: new Date().toISOString(),
       };
-    } catch (error) {
+    } catch (error: unknown) {
       this.logger.error('Failed to generate payment metrics', error);
-      return {};
+      return { error: 'Failed to generate metrics', generatedAt: new Date().toISOString() };
     }
   }
 }

@@ -74,7 +74,7 @@ export class WebhookService {
       }
 
       await this.markEventProcessed(eventId, 'paystack', payload.type, 'success', rawPayload);
-    } catch (error) {
+    } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       this.logger.error(`Failed to process Paystack event ${eventId}: ${errorMessage}`);
       await this.markEventProcessed(
@@ -121,7 +121,7 @@ export class WebhookService {
       }
 
       await this.markEventProcessed(eventId, 'flutterwave', payload.type, 'success', rawPayload);
-    } catch (error) {
+    } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       this.logger.error(`Failed to process Flutterwave event ${eventId}: ${errorMessage}`);
       await this.markEventProcessed(

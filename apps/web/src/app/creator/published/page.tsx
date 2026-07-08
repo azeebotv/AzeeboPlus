@@ -1,10 +1,12 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useRouter } from 'next/navigation';
+import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/api';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
+import { Skeleton, ErrorState } from '@azeebo/ui/web';
 
 interface PublishedContent {
   id: string;
@@ -23,48 +25,34 @@ interface PublishedContent {
 export default function PublishedPage(): React.JSX.Element {
   const { isAuthenticated, user, isLoading: authLoading } = useAuth();
   const router = useRouter();
-  const [content, setContent] = useState<PublishedContent[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const isEnabled = !authLoading && !!isAuthenticated && !!user;
 
-  useEffect(() => {
-    if (authLoading) return;
-    if (!isAuthenticated || !user) {
-      router.push('/auth/login');
-      return;
-    }
-    loadContent();
-  }, [authLoading, isAuthenticated, user, router]);
-
-  const loadContent = async () => {
-    try {
-      const response = await apiFetch<any>('/v1/content/me?status=published');
+  const { data: content = [], isLoading, error } = useQuery({
+    queryKey: ['creator', 'published'],
+    queryFn: async () => {
+      const response = await apiFetch<{ success: boolean; data: PublishedContent[] | { items?: PublishedContent[] } }>('/v1/content/me?status=published');
       if (response.success && response.data) {
         const items = Array.isArray(response.data) ? response.data : response.data.items || [];
-        setContent(
-          items.map((item: any) => ({
-            id: String(item.id),
-            title: String(item.title || ''),
-            description: String(item.description || ''),
-            thumbnail: String(item.thumbnail || ''),
-            type: String(item.contentType || item.type || 'video'),
-            duration: Number(item.duration || 0),
-            views: Number(item.viewCount ?? item.views ?? 0),
-            likes: Number(item.likeCount ?? item.likes ?? 0),
-            publishedAt: String(item.publishedAt || item.createdAt || ''),
-            createdAt: String(item.createdAt || ''),
-            status: String(item.status || 'published'),
-          }))
-        );
+        return items.map((item) => ({
+          id: String(item.id),
+          title: String(item.title || ''),
+          description: String(item.description || ''),
+          thumbnail: String(item.thumbnail || ''),
+          type: String(item.contentType || item.type || 'video'),
+          duration: Number(item.duration || 0),
+          views: Number(item.viewCount ?? item.views ?? 0),
+          likes: Number(item.likeCount ?? item.likes ?? 0),
+          publishedAt: String(item.publishedAt || item.createdAt || ''),
+          createdAt: String(item.createdAt || ''),
+          status: String(item.status || 'published'),
+        }));
       }
-    } catch {
-      /* ignore */
-    } finally {
-      setIsLoading(false);
-    }
-  };
+      return [];
+    },
+    enabled: isEnabled,
+  });
 
   if (authLoading || (!isAuthenticated && !user)) return <></>;
-
   if (!isAuthenticated || !user) return <></>;
 
   return (
@@ -101,18 +89,19 @@ export default function PublishedPage(): React.JSX.Element {
         </div>
 
         {isLoading ? (
-          <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}>
-            <div
-              style={{
-                width: 40,
-                height: 40,
-                border: '3px solid #2A1A1A',
-                borderTopColor: '#E8420A',
-                borderRadius: '50%',
-                animation: 'spin 0.8s linear infinite',
-              }}
-            />
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16 }}>
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="az-glass" style={{ borderRadius: 16, overflow: 'hidden' }}>
+                <Skeleton width="100%" height="160px" />
+                <div style={{ padding: 16 }}>
+                  <Skeleton width="80%" height="16px" className="mb-2" />
+                  <Skeleton width="60%" height="12px" />
+                </div>
+              </div>
+            ))}
           </div>
+        ) : error ? (
+          <ErrorState title="Failed to load published content" description="Please try again later" onButtonPress={() => router.refresh()} />
         ) : content.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '60px 0' }}>
             <div style={{ fontSize: 48, marginBottom: 16 }}>🎬</div>

@@ -17,12 +17,15 @@ describe('Mobile Wallet API', () => {
     jest.clearAllMocks();
   });
 
-  it('getBalance should GET /v1/wallet/balance', async () => {
-    mockedClient.get.mockResolvedValue({ success: true, data: { balance: 5000, currency: 'NGN' } } as any);
+  it('getBalance should GET /v1/wallet', async () => {
+    mockedClient.get.mockResolvedValue({
+      success: true,
+      data: { balance: 5000, currency: 'NGN' },
+    } as any);
 
     const result = await walletApi.getBalance();
 
-    expect(mockedClient.get).toHaveBeenCalledWith('/v1/wallet/balance');
+    expect(mockedClient.get).toHaveBeenCalledWith('/v1/wallet');
     expect(result.data).toEqual({ balance: 5000, currency: 'NGN' });
   });
 
@@ -35,7 +38,10 @@ describe('Mobile Wallet API', () => {
   });
 
   it('getTransaction should GET /v1/wallet/transactions/:id', async () => {
-    mockedClient.get.mockResolvedValue({ success: true, data: { id: 'tx1', type: 'credit' } } as any);
+    mockedClient.get.mockResolvedValue({
+      success: true,
+      data: { id: 'tx1', type: 'credit' },
+    } as any);
 
     await walletApi.getTransaction('tx1');
 
@@ -43,15 +49,25 @@ describe('Mobile Wallet API', () => {
   });
 
   it('fundWallet should POST to /v1/wallet/fund', async () => {
-    mockedClient.post.mockResolvedValue({ success: true, data: { authorizationUrl: 'https://pay.com', reference: 'ref-123' } } as any);
+    mockedClient.post.mockResolvedValue({
+      success: true,
+      data: { authorizationUrl: 'https://pay.com', reference: 'ref-123' },
+    } as any);
 
     await walletApi.fundWallet({ amount: 1000, provider: 'paystack', email: 'a@b.com' });
 
-    expect(mockedClient.post).toHaveBeenCalledWith('/v1/wallet/fund', { amount: 1000, provider: 'paystack', email: 'a@b.com' });
+    expect(mockedClient.post).toHaveBeenCalledWith('/v1/wallet/fund', {
+      amount: 1000,
+      provider: 'paystack',
+      email: 'a@b.com',
+    });
   });
 
   it('withdraw should POST to /v1/wallet/withdraw', async () => {
-    mockedClient.post.mockResolvedValue({ success: true, data: { message: 'Withdrawal initiated' } } as any);
+    mockedClient.post.mockResolvedValue({
+      success: true,
+      data: { message: 'Withdrawal initiated' },
+    } as any);
 
     await walletApi.withdraw({ amount: 500, bankCode: '001', accountNumber: '1234567890' });
 
@@ -63,7 +79,10 @@ describe('Mobile Wallet API', () => {
   });
 
   it('getSummary should GET /v1/wallet/summary', async () => {
-    mockedClient.get.mockResolvedValue({ success: true, data: { balance: 5000, totalFunded: 10000 } } as any);
+    mockedClient.get.mockResolvedValue({
+      success: true,
+      data: { balance: 5000, totalFunded: 10000 },
+    } as any);
 
     await walletApi.getSummary();
 
@@ -71,7 +90,10 @@ describe('Mobile Wallet API', () => {
   });
 
   it('redeemReward should POST to /v1/wallet/redeem-reward', async () => {
-    mockedClient.post.mockResolvedValue({ success: true, data: { message: 'Redeemed', creditedAmount: 500 } } as any);
+    mockedClient.post.mockResolvedValue({
+      success: true,
+      data: { message: 'Redeemed', creditedAmount: 500 },
+    } as any);
 
     await walletApi.redeemReward({ points: 1000 });
 

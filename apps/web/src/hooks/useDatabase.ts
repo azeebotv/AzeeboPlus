@@ -2,79 +2,9 @@ import { useState, useEffect } from 'react';
 import { api } from '@/lib/api';
 import { webLogger } from '@/lib/logger';
 
-interface Universe {
-  id: string;
-  name: string;
-  displayName: string;
-  description?: string;
-  icon?: string;
-  color?: string;
-  metadata?: Record<string, unknown>;
-  featureFlags: {
-    key: string;
-    metadata?: Record<string, unknown>;
-  }[];
-}
-
-interface UseUniversesReturn {
-  universes: Universe[];
-  isLoading: boolean;
-  error: string | null;
-  getUniverse: (name: string) => Universe | undefined;
-  isUniverseEnabled: (name: string) => boolean;
-  hasFeature: (universeName: string, featureKey: string) => boolean;
-}
-
-export function useUniverses(): UseUniversesReturn {
-  const [universes, setUniverses] = useState<Universe[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchUniverses = async (): Promise<void> => {
-      try {
-        setIsLoading(true);
-        const response = await api.request<Universe[]>('/v1/public/universes');
-
-        if (response.success && response.data) {
-          setUniverses(response.data);
-        } else {
-          setError(response.message || 'Failed to fetch universes');
-        }
-      } catch (err: unknown) {
-        webLogger.error('Failed to fetch universes', err);
-        setError(err instanceof Error ? err.message : 'Failed to fetch universes');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchUniverses();
-  }, []);
-
-  const getUniverse = (name: string): Universe | undefined => {
-    return universes.find((u) => u.name === name);
-  };
-
-  const isUniverseEnabled = (name: string): boolean => {
-    return universes.some((u) => u.name === name);
-  };
-
-  const hasFeature = (universeName: string, featureKey: string): boolean => {
-    const universe = getUniverse(universeName);
-    if (!universe) return false;
-    return universe.featureFlags.some((flag) => flag.key === featureKey);
-  };
-
-  return {
-    universes,
-    isLoading,
-    error,
-    getUniverse,
-    isUniverseEnabled,
-    hasFeature,
-  };
-}
+// Re-export the canonical useUniverses hook from useUniverses.ts
+// This file is kept for backwards compatibility.
+export { useUniverses } from './useUniverses';
 
 interface UseSettingsReturn {
   settings: Record<string, unknown>;

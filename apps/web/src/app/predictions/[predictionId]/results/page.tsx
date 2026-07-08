@@ -8,7 +8,15 @@ import AppFooter from '@/components/layout/AppFooter';
 export default function PredictionResultsPage(): React.JSX.Element {
   const { predictionId } = useParams();
   const router = useRouter();
-  const [results, setResults] = useState<any>(null);
+  interface PredictionResults {
+    title?: string;
+    description?: string;
+    correctAnswer?: string;
+    options?: Array<{ text: string; votes: number }>;
+    totalVotes?: number;
+  }
+
+  const [results, setResults] = useState<PredictionResults | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -17,7 +25,7 @@ export default function PredictionResultsPage(): React.JSX.Element {
 
   const loadResults = async () => {
     try {
-      const response = await apiFetch<any>(`/engagement/predictions/${predictionId}/results`);
+      const response = await apiFetch<{ success: boolean; data: PredictionResults }>(`/engagement/predictions/${predictionId}/results`);
       if (response.success && response.data) setResults(response.data);
     } catch {
       /* ignore */
@@ -105,7 +113,7 @@ export default function PredictionResultsPage(): React.JSX.Element {
                   Results Breakdown
                 </h2>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  {results.options.map((opt: any, i: number) => {
+                  {results.options.map((opt, i) => {
                     const pct =
                       results.totalVotes > 0
                         ? Math.round((opt.votes / results.totalVotes) * 100)

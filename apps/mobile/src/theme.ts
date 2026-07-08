@@ -6,7 +6,7 @@
 // ── Brand Colors ──────────────────────────────────────────────
 export const colors = {
   // Primary brand
-  primary: '#E8420A', // Azeebo Orange — CTAs, logo accent, highlights
+  primaryColor: '#E8420A', // Azeebo Orange — CTAs, logo accent, highlights
   primaryDark: '#C83A08', // Darker orange for pressed states
   red: '#CC1C1C', // Deep Red — buttons, active states, glow
   redDark: '#B91818', // Darker red for pressed states
@@ -34,10 +34,31 @@ export const colors = {
   },
 
   // Semantic
-  success: '#22C55E',
-  warning: '#F59E0B',
-  error: '#CC1C1C',
-  info: '#3B82F6',
+  primary: {
+    50: '#FEF3EC', 100: '#FDE2D1', 200: '#FBC5A3', 300: '#F89E6B',
+    400: '#F46E2E', 500: '#E8420A', 600: '#C83A08', 700: '#A33007',
+    800: '#7E2505', 900: '#5A1A03',
+  },
+  success: {
+    50: '#F0FDF4', 100: '#DCFCE7', 200: '#BBF7D0', 300: '#86EFAC',
+    400: '#4ADE80', 500: '#22C55E', 600: '#16A34A', 700: '#15803D',
+    800: '#166534', 900: '#14532D',
+  },
+  warning: {
+    50: '#FFFBEB', 100: '#FEF3C7', 200: '#FDE68A', 300: '#FCD34D',
+    400: '#FBBF24', 500: '#F59E0B', 600: '#D97706', 700: '#B45309',
+    800: '#92400E', 900: '#78350F',
+  },
+  error: {
+    50: '#FEF2F2', 100: '#FEE2E2', 200: '#FECACA', 300: '#FCA5A5',
+    400: '#F87171', 500: '#CC1C1C', 600: '#B91818', 700: '#991B1B',
+    800: '#7F1D1D', 900: '#611111',
+  },
+  info: {
+    50: '#EFF6FF', 100: '#DBEAFE', 200: '#BFDBFE', 300: '#93C5FD',
+    400: '#60A5FA', 500: '#3B82F6', 600: '#2563EB', 700: '#1D4ED8',
+    800: '#1E40AF', 900: '#1E3A8A',
+  },
 
   // Borders
   border: {
@@ -88,6 +109,14 @@ export const colors = {
     silver: '#9CA3AF',
     bronze: '#CD7F32',
   },
+} as const;
+
+// ── Agbala Path Colors ────────────────────────────────────────
+export const pathColors = {
+  warrior: '#C41E3A',
+  sage: '#1E90FF',
+  trickster: '#FFD700',
+  healer: '#32CD32',
 } as const;
 
 // ── Universe Colors ───────────────────────────────────────────

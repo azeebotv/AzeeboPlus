@@ -31,7 +31,6 @@ export class GatewayAuthGuard implements CanActivate {
     /^\/(api\/)?(v\d+\/)?auth\/health$/,
     /^\/(health|ready|live)$/,
     /^\/docs(\/.*)?$/, // Swagger UI
-    /^\/routes$/, // Route listing
     /^\/api\/v\d+\/public\//, // Public settings/universes (content-service)
     /^\/api\/v\d+\/content\/(featured|trending)$/, // Public content endpoints
   ];

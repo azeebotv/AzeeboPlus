@@ -1,6 +1,7 @@
 import { Controller, Post, Get, Body, Param, Put, UseGuards, Request } from '@nestjs/common';
-import { AuthGuard } from '../../common/guards/auth.guard';
+import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard, RateLimit } from '@azeebo/security';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { SupportService } from './support.service';
 import { ApiResponseWrapper } from '@azeebo/shared-types';
 
@@ -20,13 +21,22 @@ interface AuthRequest extends Request {
   };
 }
 
+// NOTE: Legacy controller — duplicates ticket.controller.ts / ticket.service.ts functionality.
+// Should be consolidated into the canonical ticket module and removed.
+@ApiTags('Support (Legacy)')
 @Controller('support')
+@UseGuards(AuthGuard('jwt'))
 export class SupportController {
   constructor(private readonly supportService: SupportService) {}
 
   @Post('tickets')
-  @UseGuards(AuthGuard, RateLimitGuard)
+  @UseGuards(RateLimitGuard)
+  @ApiBearerAuth()
   @RateLimit(5, 60000)
+  @ApiOperation({ summary: 'Create a support ticket' })
+  @ApiResponse({ status: 201, description: 'Ticket created successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   async createTicket(@Request() req: AuthRequest, @Body() body: CreateTicketDto) {
     const userId = req.user.sub;
     const ticket = await this.supportService.createTicket(userId, body);
@@ -34,7 +44,10 @@ export class SupportController {
   }
 
   @Get('tickets')
-  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get user support tickets' })
+  @ApiResponse({ status: 200, description: 'Tickets retrieved successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getTickets(@Request() req: AuthRequest) {
     const userId = req.user.sub;
     const tickets = await this.supportService.getTickets(userId);
@@ -42,7 +55,10 @@ export class SupportController {
   }
 
   @Get('tickets/:id')
-  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get a support ticket by ID' })
+  @ApiResponse({ status: 200, description: 'Ticket retrieved successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getTicketById(@Request() req: AuthRequest, @Param('id') id: string) {
     const userId = req.user.sub;
     const ticket = await this.supportService.getTicketById(userId, id);
@@ -50,7 +66,10 @@ export class SupportController {
   }
 
   @Put('tickets/:id')
-  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Update a support ticket' })
+  @ApiResponse({ status: 200, description: 'Ticket updated successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async updateTicket(
     @Request() req: AuthRequest,
     @Param('id') id: string,
@@ -62,7 +81,10 @@ export class SupportController {
   }
 
   @Post('tickets/:id/reply')
-  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Reply to a support ticket' })
+  @ApiResponse({ status: 201, description: 'Reply added successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async addReply(@Request() req: AuthRequest, @Param('id') id: string, @Body() body: ReplyDto) {
     const userId = req.user.sub;
     const reply = await this.supportService.addReply(userId, id, body.message);
@@ -70,7 +92,10 @@ export class SupportController {
   }
 
   @Put('tickets/:id/close')
-  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Close a support ticket' })
+  @ApiResponse({ status: 200, description: 'Ticket closed successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async closeTicket(@Request() req: AuthRequest, @Param('id') id: string) {
     const userId = req.user.sub;
     const ticket = await this.supportService.closeTicket(userId, id);

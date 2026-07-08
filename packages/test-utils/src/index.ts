@@ -1,15 +1,16 @@
 import { randomUUID } from 'crypto';
+import { PrismaClient } from '@prisma/client';
 
+export * from './integration-test-utils';
+
+/** Test database wrapper providing setup, teardown, and seed helpers for integration tests. */
 export class TestDatabase {
-  private prisma: any;
+  private prisma: PrismaClient;
 
-  constructor(prismaClient?: any) {
+  constructor(prismaClient?: PrismaClient) {
     if (prismaClient) {
       this.prisma = prismaClient;
     } else {
-      // Dynamic import - requires prisma generate to have been run
-
-      const { PrismaClient } = require('@prisma/client');
       this.prisma = new PrismaClient({
         datasourceUrl: process.env.TEST_DATABASE_URL,
       });
@@ -37,7 +38,11 @@ export class TestDatabase {
     ];
 
     for (const table of tables) {
-      await this.prisma.$executeRawUnsafe(`DELETE FROM "${table}" CASCADE;`);
+      try {
+        await this.prisma.$executeRawUnsafe(`DELETE FROM "${table}" CASCADE;`);
+      } catch {
+        // Table may not exist in this service's database — skip silently
+      }
     }
   }
 
@@ -71,6 +76,7 @@ export class TestDatabase {
   }
 }
 
+/** In-memory mock of the auth service for unit and integration tests. */
 export class MockAuthService {
   private users: Map<string, { userId: string; roles: string[] }> = new Map();
 
@@ -83,6 +89,7 @@ export class MockAuthService {
   }
 }
 
+/** In-memory mock of the wallet service for testing debit/credit flows. */
 export class MockWalletService {
   private wallets: Map<string, { balance: number; userId: string }> = new Map();
 
@@ -111,16 +118,23 @@ export class MockWalletService {
   }
 }
 
+/**
+ * Generates a base64-encoded token for test purposes only.
+ * This is NOT a real JWT — it is a base64-encoded JSON object.
+ * Do not use for security-sensitive tests that verify JWT signatures.
+ */
 export const generateTestJwt = (userId: string, roles: string[] = ['user']): string => {
   return Buffer.from(JSON.stringify({ userId, roles, exp: Date.now() + 3600000 })).toString(
     'base64'
   );
 };
 
+/** Generates a unique idempotency key for test requests. */
 export const generateIdempotencyKey = (): string => {
   return randomUUID();
 };
 
+/** Creates a mock Axios response object for testing HTTP clients. */
 export const mockAxiosResponse = <T>(data: T, status: number = 200) => ({
   data,
   status,
@@ -129,6 +143,7 @@ export const mockAxiosResponse = <T>(data: T, status: number = 200) => ({
   config: {},
 });
 
+/** Creates a full test context with database, auth, and wallet mocks plus setup/teardown. */
 export const createTestContext = () => {
   const db = new TestDatabase();
   const auth = new MockAuthService();
@@ -149,49 +164,68 @@ export const createTestContext = () => {
   };
 };
 
-export const testUserPayload = {
-  id: randomUUID(),
-  email: 'test@example.com',
-  displayName: 'Test User',
-  roles: ['user'],
-  createdAt: new Date().toISOString(),
-};
+/** Returns a sample user payload for test assertions. */
+export function testUserPayload() {
+  return {
+    id: randomUUID(),
+    email: 'test@example.com',
+    displayName: 'Test User',
+    roles: ['user'],
+    createdAt: new Date().toISOString(),
+  };
+}
 
-export const testWalletPayload = {
-  id: randomUUID(),
-  userId: testUserPayload.id,
-  balance: '100000',
-  currency: 'NGN',
-  createdAt: new Date().toISOString(),
-  updatedAt: new Date().toISOString(),
-};
+/** Returns a sample wallet payload for test assertions. */
+export function testWalletPayload(userId?: string) {
+  const uid = userId || testUserPayload().id;
+  return {
+    id: randomUUID(),
+    userId: uid,
+    balance: '100000',
+    currency: 'NGN',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+}
 
-export const testVotePayload = {
-  id: randomUUID(),
-  userId: testUserPayload.id,
-  showId: randomUUID(),
-  contestantId: randomUUID(),
-  amount: 100,
-  isSuperVote: false,
-  createdAt: new Date().toISOString(),
-};
+/** Returns a sample vote payload for test assertions. */
+export function testVotePayload(userId?: string) {
+  const uid = userId || testUserPayload().id;
+  return {
+    id: randomUUID(),
+    userId: uid,
+    showId: randomUUID(),
+    contestantId: randomUUID(),
+    amount: 100,
+    isSuperVote: false,
+    createdAt: new Date().toISOString(),
+  };
+}
 
-export const testPaymentPayload = {
-  id: randomUUID(),
-  userId: testUserPayload.id,
-  amount: 50000,
-  currency: 'NGN',
-  status: 'completed',
-  provider: 'paystack',
-  createdAt: new Date().toISOString(),
-  updatedAt: new Date().toISOString(),
-};
+/** Returns a sample payment payload for test assertions. */
+export function testPaymentPayload(userId?: string) {
+  const uid = userId || testUserPayload().id;
+  return {
+    id: randomUUID(),
+    userId: uid,
+    amount: 50000,
+    currency: 'NGN',
+    status: 'completed',
+    provider: 'paystack',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+}
 
-export const testAnalyticsEventPayload = {
-  id: randomUUID(),
-  eventName: 'screen_view',
-  userId: testUserPayload.id,
-  universe: 'reality',
-  metadata: { screen: 'home' },
-  timestamp: new Date().toISOString(),
-};
+/** Returns a sample analytics event payload for test assertions. */
+export function testAnalyticsEventPayload(userId?: string) {
+  const uid = userId || testUserPayload().id;
+  return {
+    id: randomUUID(),
+    eventName: 'screen_view',
+    userId: uid,
+    universe: 'reality',
+    metadata: { screen: 'home' },
+    timestamp: new Date().toISOString(),
+  };
+}

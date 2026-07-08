@@ -8,6 +8,8 @@ interface AnalyticsEvent {
   timestamp: Date;
 }
 
+const MAX_BUFFER_SIZE = 100;
+
 class Analytics {
   private events: AnalyticsEvent[] = [];
   private isDevelopment = process.env.NODE_ENV === 'development';
@@ -23,11 +25,14 @@ class Analytics {
       properties: {
         ...properties,
         environment: process.env.NODE_ENV,
-        url: typeof window !== 'undefined' ? window.location.href : undefined,
+        url: typeof window !== 'undefined' ? window.location.pathname : undefined,
       },
       timestamp: new Date(),
     };
 
+    if (this.events.length >= MAX_BUFFER_SIZE) {
+      this.events.shift();
+    }
     this.events.push(event);
 
     if (typeof window !== 'undefined' && window.dataLayer) {

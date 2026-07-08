@@ -1,4 +1,5 @@
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 import { createHmac, timingSafeEqual } from 'crypto';
 import { CircuitBreaker, CircuitBreakerOpenError } from '@azeebo/shared-types';
@@ -75,11 +76,12 @@ interface CircuitBreakerStats {
 export class PaystackProvider {
   private readonly logger = new Logger(PaystackProvider.name);
   private readonly apiKey: string;
-  private readonly baseUrl = 'https://api.paystack.co';
+  private readonly baseUrl: string;
   private readonly circuitBreaker: CircuitBreaker;
 
-  constructor() {
-    this.apiKey = process.env.PAYSTACK_SECRET_KEY || '';
+  constructor(private readonly configService: ConfigService) {
+    this.apiKey = this.configService.get<string>('PAYSTACK_SECRET_KEY') || '';
+    this.baseUrl = this.configService.get<string>('PAYSTACK_API_URL', 'https://api.paystack.co');
     if (!this.apiKey) {
       this.logger.warn(
         'PAYSTACK_SECRET_KEY is not configured — Paystack payments will be unavailable'
@@ -115,7 +117,7 @@ export class PaystackProvider {
               app: 'azeebo-plus',
             },
             callback_url:
-              process.env.PAYSTACK_CALLBACK_URL || 'https://api.azeebo.plus/payments/webhook',
+              process.env.PAYSTACK_CALLBACK_URL || 'http://localhost:3003/webhooks/paystack',
           },
           {
             headers: {
@@ -137,7 +139,7 @@ export class PaystackProvider {
       });
 
       return result;
-    } catch (error) {
+    } catch (error: unknown) {
       if (error instanceof CircuitBreakerOpenError) {
         this.logger.warn(`Paystack circuit breaker open: ${error.message}`);
         throw new Error('Payment service temporarily unavailable. Please try again later.');
@@ -178,7 +180,7 @@ export class PaystackProvider {
       });
 
       return result;
-    } catch (error) {
+    } catch (error: unknown) {
       if (error instanceof CircuitBreakerOpenError) {
         this.logger.warn(`Paystack circuit breaker open: ${error.message}`);
         throw new Error('Payment verification temporarily unavailable. Please try again later.');
@@ -221,7 +223,7 @@ export class PaystackProvider {
       });
 
       return result;
-    } catch (error) {
+    } catch (error: unknown) {
       if (error instanceof CircuitBreakerOpenError) {
         this.logger.warn(`Paystack circuit breaker open: ${error.message}`);
         throw new Error('Refund service temporarily unavailable. Please try again later.');
@@ -231,16 +233,11 @@ export class PaystackProvider {
     }
   }
 
-  async verifyWebhookSignature(
-    payload: Record<string, unknown>,
-    signature: string
-  ): Promise<boolean> {
+  async verifyWebhookSignature(rawBody: string, signature: string): Promise<boolean> {
     if (!this.apiKey) {
       return false;
     }
-    const hash: string = createHmac('sha512', this.apiKey)
-      .update(JSON.stringify(payload))
-      .digest('hex');
+    const hash: string = createHmac('sha512', this.apiKey).update(rawBody).digest('hex');
 
     if (hash.length !== signature.length) {
       return false;

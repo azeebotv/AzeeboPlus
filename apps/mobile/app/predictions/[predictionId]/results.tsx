@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -32,7 +32,7 @@ interface PredictionResult {
 }
 
 export default function PredictionResultsScreen() {
-  const _router = useRouter();
+  
   const params = useLocalSearchParams();
   const predictionId = params.predictionId as string;
 
@@ -48,7 +48,7 @@ export default function PredictionResultsScreen() {
     try {
       const response = await realityApi.getPredictionResults(predictionId);
       if (response.success && response.data) {
-        setResult(response.data as any);
+        setResult(response.data as PredictionResult);
       }
     } catch (error) {
       logger.error('Failed to load prediction results', error);

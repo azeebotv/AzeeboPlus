@@ -1,8 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ExecutionContext, NestInterceptor, UnauthorizedException } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import request from 'supertest';
-import { AuthGuard } from '@nestjs/passport';
-import { RateLimitGuard, AdminGuard } from '@azeebo/security';
+import { RateLimitGuard, AdminGuard, ServiceAuthGuard } from '@azeebo/security';
 import { WalletController } from './wallet.controller';
 import { WalletService } from './wallet.service';
 import { PrismaService } from '../database/prisma.service';
@@ -122,9 +122,10 @@ describe('Wallet Service Authorization Tests', () => {
       providers: [
         { provide: WalletService, useValue: mockWalletService },
         { provide: PrismaService, useValue: {} },
+        { provide: APP_GUARD, useClass: ServiceAuthGuard },
       ],
     })
-      .overrideGuard(AuthGuard('jwt'))
+      .overrideGuard(ServiceAuthGuard)
       .useValue(mockAuthGuard)
       .overrideGuard(RateLimitGuard)
       .useValue(createMockRateLimitGuard())
@@ -135,6 +136,7 @@ describe('Wallet Service Authorization Tests', () => {
       .compile();
 
     const testApp = moduleFixture.createNestApplication();
+    testApp.useGlobalInterceptors({ intercept: (_ctx: ExecutionContext, next: { handle: () => unknown }) => next.handle() } as NestInterceptor);
     return testApp;
   };
 
@@ -305,10 +307,9 @@ describe('Wallet Service Authorization Tests', () => {
         providers: [
           { provide: WalletService, useValue: mockWalletService },
           { provide: PrismaService, useValue: {} },
+          { provide: APP_GUARD, useValue: mockAuthGuard },
         ],
       })
-        .overrideGuard(AuthGuard('jwt'))
-        .useValue(mockAuthGuard)
         .overrideGuard(RateLimitGuard)
         .useValue(createMockRateLimitGuard())
         .overrideGuard(AdminGuard)
@@ -318,6 +319,7 @@ describe('Wallet Service Authorization Tests', () => {
         .compile();
 
       const testApp = moduleFixture.createNestApplication();
+      testApp.useGlobalInterceptors({ intercept: (_ctx: ExecutionContext, next: { handle: () => unknown }) => next.handle() } as NestInterceptor);
       await testApp.init();
 
       const response = await request(testApp.getHttpServer())
@@ -338,10 +340,9 @@ describe('Wallet Service Authorization Tests', () => {
         providers: [
           { provide: WalletService, useValue: mockWalletService },
           { provide: PrismaService, useValue: {} },
+          { provide: APP_GUARD, useValue: mockAuthGuard },
         ],
       })
-        .overrideGuard(AuthGuard('jwt'))
-        .useValue(mockAuthGuard)
         .overrideGuard(RateLimitGuard)
         .useValue(createMockRateLimitGuard())
         .overrideGuard(AdminGuard)

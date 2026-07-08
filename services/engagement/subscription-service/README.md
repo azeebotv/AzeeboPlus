@@ -25,7 +25,7 @@ Azeebo+ Subscription Service - Manages subscription plans, user subscriptions, a
 
 ```bash
 # Install dependencies
-pnpm install
+ppnpm install
 
 # Generate Prisma client
 pnpm prisma:generate
@@ -34,7 +34,7 @@ pnpm prisma:generate
 pnpm prisma:migrate
 
 # Start development server
-pnpm start:dev
+ppnpm start:dev
 ```
 
 ## API Routes
