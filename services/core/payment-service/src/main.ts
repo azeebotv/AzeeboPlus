@@ -71,8 +71,8 @@ async function bootstrap(): Promise<void> {
       .build();
 
     const document = SwaggerModule.createDocument(app, swaggerConfig);
-    SwaggerModule.setup('api/docs', app, document);
-    Logger.log('Swagger documentation enabled at /api/docs');
+    SwaggerModule.setup('docs', app, document);
+    Logger.log('Swagger documentation enabled at /docs');
   }
 
   // Versioning disabled: controllers already prefix routes with 'v1/' manually

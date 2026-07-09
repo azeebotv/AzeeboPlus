@@ -1,5 +1,5 @@
-import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 
@@ -17,63 +17,70 @@ export default function OnboardingWelcomeScreen() {
   }, [fadeAnim]);
 
   return (
-    <Animated.View
+    <SafeAreaView
       style={[
         styles.container,
-        { backgroundColor: colorScheme === 'dark' ? '#000000' : '#ffffff', opacity: fadeAnim },
+        { backgroundColor: colorScheme === 'dark' ? '#1A0A0A' : '#ffffff' },
       ]}
     >
-      <View style={styles.content}>
-        <View style={styles.animationContainer}>
-          <View style={styles.ring1} />
-          <View style={styles.ring2} />
-          <View style={styles.ring3} />
-          <Text style={styles.animationIcon}>🎬</Text>
+      <Animated.View
+        style={[
+          styles.container,
+          { backgroundColor: colorScheme === 'dark' ? '#1A0A0A' : '#ffffff', opacity: fadeAnim },
+        ]}
+      >
+        <View style={styles.content}>
+          <View style={styles.animationContainer}>
+            <View style={styles.ring1} />
+            <View style={styles.ring2} />
+            <View style={styles.ring3} />
+            <Text style={styles.animationIcon}>🎬</Text>
+          </View>
+
+          <Text style={[styles.title, { color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A' }]}>
+            Welcome to Azeebo+
+          </Text>
+
+          <Text style={styles.description}>
+            Discover endless entertainment across 8 amazing universes. Reality shows, creators,
+            movies, games, and more!
+          </Text>
+
+          <View style={styles.features}>
+            {[
+              { icon: '🎭', label: 'Reality' },
+              { icon: '🎤', label: 'Creators' },
+              { icon: '✨', label: 'Lifestyle' },
+              { icon: '🏰', label: 'Vertical' },
+            ].map((feature, index) => (
+              <View key={index} style={styles.featureItem}>
+                <Text style={styles.featureIcon}>{feature.icon}</Text>
+                <Text
+                  style={[
+                    styles.featureLabel,
+                    { color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A' },
+                  ]}
+                >
+                  {feature.label}
+                </Text>
+              </View>
+            ))}
+          </View>
         </View>
 
-        <Text style={[styles.title, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
-          Welcome to Azeebo+
-        </Text>
-
-        <Text style={styles.description}>
-          Discover endless entertainment across 8 amazing universes. Reality shows, creators,
-          movies, games, and more!
-        </Text>
-
-        <View style={styles.features}>
-          {[
-            { icon: '🎭', label: 'Reality' },
-            { icon: '🎤', label: 'Creators' },
-            { icon: '✨', label: 'Lifestyle' },
-            { icon: '🏰', label: 'Vertical' },
-          ].map((feature, index) => (
-            <View key={index} style={styles.featureItem}>
-              <Text style={styles.featureIcon}>{feature.icon}</Text>
-              <Text
-                style={[
-                  styles.featureLabel,
-                  { color: colorScheme === 'dark' ? '#ffffff' : '#000000' },
-                ]}
-              >
-                {feature.label}
-              </Text>
-            </View>
-          ))}
+        <View style={styles.bottomActions}>
+          <TouchableOpacity
+            onPress={() => router.push('/(auth)/onboarding-interests')}
+            style={styles.primaryButton}
+          >
+            <Text style={styles.primaryButtonText}>Get Started</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => router.replace('/(auth)/login')}>
+            <Text style={styles.secondaryButtonText}>Sign In</Text>
+          </TouchableOpacity>
         </View>
-      </View>
-
-      <View style={styles.bottomActions}>
-        <TouchableOpacity
-          onPress={() => router.push('/(auth)/onboarding-interests')}
-          style={styles.primaryButton}
-        >
-          <Text style={styles.primaryButtonText}>Get Started</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => router.replace('/(auth)/login')}>
-          <Text style={styles.secondaryButtonText}>Sign In</Text>
-        </TouchableOpacity>
-      </View>
-    </Animated.View>
+      </Animated.View>
+    </SafeAreaView>
   );
 }
 
@@ -100,7 +107,7 @@ const styles = StyleSheet.create({
     bottom: '20%',
     borderRadius: 100,
     borderWidth: 2,
-    borderColor: '#8B5CF6',
+    borderColor: '#E8420A',
     opacity: 0.3,
   },
   ring2: {
@@ -167,7 +174,7 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   primaryButton: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     padding: 16,
     borderRadius: 12,
     alignItems: 'center',
@@ -178,7 +185,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   secondaryButtonText: {
-    color: '#8B5CF6',
+    color: '#E8420A',
     fontSize: 16,
     fontWeight: '500',
     textAlign: 'center',

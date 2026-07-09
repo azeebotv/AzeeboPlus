@@ -6,27 +6,42 @@ import { api } from '@/lib/api';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 
+interface CreatorAnalyticsTopContent {
+  title: string;
+  views: number;
+}
+
+interface CreatorAnalytics {
+  totalViews: number;
+  totalWatchTime: number;
+  averageViewDuration: number;
+  subscriberGrowth: number;
+  topContent: CreatorAnalyticsTopContent[];
+  demographics: { ageGroups: unknown[]; regions: unknown[] };
+}
+
 export default function DashboardAnalyticsPage(): React.JSX.Element {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, isLoading: authLoading } = useAuth();
   const router = useRouter();
-  const [analytics, setAnalytics] = useState({
+  const [analytics, setAnalytics] = useState<CreatorAnalytics>({
     totalViews: 0,
     totalWatchTime: 0,
     averageViewDuration: 0,
     subscriberGrowth: 0,
-    topContent: [] as any[],
-    demographics: { ageGroups: [] as any[], regions: [] as any[] },
+    topContent: [],
+    demographics: { ageGroups: [], regions: [] },
   });
   const [isLoading, setIsLoading] = useState(true);
   const [period, setPeriod] = useState<'7d' | '30d' | '90d'>('30d');
 
   useEffect(() => {
+    if (authLoading) return;
     if (!isAuthenticated || !user) {
       router.push('/auth/login');
       return;
     }
     loadAnalytics();
-  }, [isAuthenticated, user, router, period]);
+  }, [authLoading, isAuthenticated, user, router, period]);
 
   const loadAnalytics = async () => {
     setIsLoading(true);
@@ -39,6 +54,8 @@ export default function DashboardAnalyticsPage(): React.JSX.Element {
       setIsLoading(false);
     }
   };
+
+  if (authLoading || (!isAuthenticated && !user)) return <></>;
 
   if (!isAuthenticated || !user) return <></>;
 
@@ -160,7 +177,7 @@ export default function DashboardAnalyticsPage(): React.JSX.Element {
               <div className="az-glass" style={{ padding: 24, borderRadius: 20 }}>
                 <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16 }}>Top Content</h2>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {analytics.topContent.map((item: any, i: number) => (
+                  {analytics.topContent.map((item, i) => (
                     <div
                       key={i}
                       style={{

@@ -1,38 +1,35 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
+import { AuthGuard } from '@nestjs/passport';
+import { AdminGuard } from '@azeebo/security';
 import { ApiResponseWrapper } from '@azeebo/shared-types';
+import { SupportDashboardService } from './support-dashboard.service';
 
 @ApiTags('Support Dashboard')
 @Controller('support/dashboard')
 @ApiBearerAuth()
+@UseGuards(AuthGuard('jwt'), AdminGuard)
 export class SupportDashboardController {
+  constructor(private readonly dashboardService: SupportDashboardService) {}
+
   @Get('stats')
   @ApiOperation({ summary: 'Get support dashboard stats (admin)' })
   async getStats() {
-    return ApiResponseWrapper.success({
-      openTickets: 0,
-      pendingRefunds: 0,
-      pendingChargebacks: 0,
-      pendingAppeals: 0,
-      pendingTakedowns: 0,
-      pendingDisputes: 0,
-      activeSuspensions: 0,
-    });
+    const stats = await this.dashboardService.getStats();
+    return ApiResponseWrapper.success(stats);
   }
 
   @Get('recent')
   @ApiOperation({ summary: 'Get recent support activity (admin)' })
   async getRecentActivity() {
-    return ApiResponseWrapper.success({ activities: [] });
+    const result = await this.dashboardService.getRecentActivity();
+    return ApiResponseWrapper.success(result);
   }
 
   @Get('sla-metrics')
   @ApiOperation({ summary: 'Get SLA metrics (admin)' })
   async getSlaMetrics() {
-    return ApiResponseWrapper.success({
-      avgResponseTime: 0,
-      avgResolutionTime: 0,
-      slaCompliance: 0,
-    });
+    const metrics = await this.dashboardService.getSlaMetrics();
+    return ApiResponseWrapper.success(metrics);
   }
 }

@@ -1,4 +1,4 @@
-export type { User, AuthResponse, ApiResponse } from './auth';
+export type { User, AuthResponse, ApiResponse, Device } from './auth';
 export type { ContentItem, PaginatedResponse } from './content';
 export type { WalletBalance, Transaction } from './wallet';
 export type { Notification, NotificationPreferences } from './notification';
@@ -30,3 +30,43 @@ export { referralApi } from './referral';
 export { creatorApi } from './creator';
 export { supportApi } from './support';
 export { apiClient } from './client';
+
+// Unified API object for convenience
+import { authApi } from './auth';
+import { contentApi } from './content';
+import { walletApi } from './wallet';
+import { paymentApi } from './payment';
+import { notificationApi } from './notification';
+import { mediaApi } from './media';
+import { universeApi } from './universe';
+import { userApi } from './user';
+import { subscriptionApi } from './subscription';
+import { messagingApi, chatApi } from './messaging';
+import { engagementApi, realityApi, homepageEngagementApi } from './engagement';
+import { referralApi } from './referral';
+import { creatorApi } from './creator';
+import { supportApi } from './support';
+
+export const api = {
+  auth: authApi,
+  content: contentApi,
+  wallet: walletApi,
+  payment: paymentApi,
+  notification: notificationApi,
+  media: mediaApi,
+  universe: universeApi,
+  user: userApi,
+  subscription: subscriptionApi,
+  messaging: messagingApi,
+  chat: chatApi,
+  engagement: engagementApi,
+  reality: realityApi,
+  homepageEngagement: homepageEngagementApi,
+  referral: referralApi,
+  creator: creatorApi,
+  support: supportApi,
+  recommendation: {
+    getForYou: (limit: number) => homepageEngagementApi.getNewReleases(limit),
+    getTrending: (limit: number) => contentApi.getTrendingContent(limit),
+  },
+};

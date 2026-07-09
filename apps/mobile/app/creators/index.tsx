@@ -1,9 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
 import { apiClient } from '../../src/api/client';
+import { ApiResponse } from '../../src/types/api';
+
+type ListResponse<T> = T[] | ApiResponse<T[]>;
 
 interface CreatorData {
   id: string;
@@ -50,10 +54,10 @@ export default function CreatorUniverseHome() {
     setError(null);
     try {
       const [creatorsRes, contentRes, catsRes, cardsRes] = await Promise.all([
-        apiClient.get<any>('/v1/creators/featured'),
-        apiClient.get<any>('/v1/creators/trending'),
-        apiClient.get<any>('/v1/creators/categories'),
-        apiClient.get<any>('/v1/creators/cards'),
+        apiClient.get<ListResponse<CreatorData>>('/v1/creators/featured'),
+        apiClient.get<ListResponse<TrendingContentItem>>('/v1/creators/trending'),
+        apiClient.get<ListResponse<CategoryData>>('/v1/creators/categories'),
+        apiClient.get<ListResponse<CreatorCardData>>('/v1/creators/cards'),
       ]);
       setFeaturedCreators(Array.isArray(creatorsRes) ? creatorsRes : (creatorsRes?.data ?? []));
       setTrendingContent(Array.isArray(contentRes) ? contentRes : (contentRes?.data ?? []));
@@ -70,175 +74,189 @@ export default function CreatorUniverseHome() {
     fetchData();
   }, []);
 
-  if (isLoading) return <LoadingState text="Loading creators..." />;
-  if (error) return <ErrorState description={error} onRetry={fetchData} />;
+  if (isLoading)
+    return (
+      <SafeAreaView style={styles.container}>
+        <LoadingState text="Loading creators..." />
+      </SafeAreaView>
+    );
+  if (error)
+    return (
+      <SafeAreaView style={styles.container}>
+        <ErrorState description={error} onRetry={fetchData} />
+      </SafeAreaView>
+    );
   if (!featuredCreators.length && !trendingContent.length) {
     return (
-      <EmptyState
-        icon="🎤"
-        title="No creators available"
-        description="Check back later for creator content"
-      />
+      <SafeAreaView style={styles.container}>
+        <EmptyState
+          icon="🎤"
+          title="No creators available"
+          description="Check back later for creator content"
+        />
+      </SafeAreaView>
     );
   }
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: isDark ? '#0a0a0a' : '#ffffff' }]}>
-      <View style={styles.header}>
-        <Text style={styles.universeLabel}>🎤 Creators</Text>
-        <Text style={[styles.headerTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
-          Creator Universe
-        </Text>
-      </View>
-
-      <View style={styles.createButtonBar}>
-        <TouchableOpacity
-          style={styles.createButton}
-          onPress={() => router.push('/creators/signup')}
-        >
-          <Text style={styles.createIcon}>✨</Text>
-          <Text style={styles.createText}>Start Creating</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.dashboardButton}
-          onPress={() => router.push('/creators/dashboard')}
-        >
-          <Text style={styles.dashboardIcon}>📊</Text>
-          <Text style={styles.dashboardText}>Dashboard</Text>
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.categoriesSection}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.categoriesList}
-        >
-          {categories.map((category) => (
-            <TouchableOpacity key={category.id} style={styles.categoryButton}>
-              <Text style={styles.categoryEmoji}>{category.emoji}</Text>
-              <Text style={styles.categoryName}>{category.name}</Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </View>
-
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
-            Featured Creators
+    <SafeAreaView style={styles.container}>
+      <ScrollView style={[{ flex: 1 }, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+        <View style={styles.header}>
+          <Text style={styles.universeLabel}>🎤 Creators</Text>
+          <Text style={[styles.headerTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
+            Creator Universe
           </Text>
-          <TouchableOpacity>
-            <Text style={styles.seeAllText}>See All</Text>
+        </View>
+
+        <View style={styles.createButtonBar}>
+          <TouchableOpacity
+            style={styles.createButton}
+            onPress={() => router.push('/creators/signup')}
+          >
+            <Text style={styles.createIcon}>✨</Text>
+            <Text style={styles.createText}>Start Creating</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.dashboardButton}
+            onPress={() => router.push('/creators/dashboard')}
+          >
+            <Text style={styles.dashboardIcon}>📊</Text>
+            <Text style={styles.dashboardText}>Dashboard</Text>
           </TouchableOpacity>
         </View>
-        <FlatList
-          data={featuredCreators}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.creatorsList}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              style={[styles.creatorCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
-            >
-              <View style={styles.creatorAvatar}>
-                <Text style={styles.creatorAvatarEmoji}>{item.avatar}</Text>
-                {item.verified && <View style={styles.verifiedBadge} />}
-              </View>
-              <Text style={[styles.creatorName, { color: isDark ? '#fff' : '#000' }]}>
-                {item.name}
-              </Text>
-              <View style={styles.creatorStats}>
-                <Text style={styles.creatorStat}>{item.followers}</Text>
-                <Text style={styles.creatorStatSeparator}>•</Text>
-                <Text style={styles.creatorStat}>{item.content}</Text>
-              </View>
-              <TouchableOpacity style={styles.followButton}>
-                <Text style={styles.followText}>Follow</Text>
-              </TouchableOpacity>
-            </TouchableOpacity>
-          )}
-        />
-      </View>
 
-      <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
-          Trending Content
-        </Text>
-        <View style={styles.contentGrid}>
-          {trendingContent.map((item) => (
-            <TouchableOpacity
-              key={item.id}
-              style={[styles.contentCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
-            >
-              <View style={styles.contentThumbnail}>
-                <Text style={styles.contentThumbnailEmoji}>{item.thumbnail}</Text>
-                <View style={styles.contentViews}>
-                  <Text style={styles.viewIcon}>👁️</Text>
-                  <Text style={styles.viewCount}>{item.views}</Text>
+        <View style={styles.categoriesSection}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.categoriesList}
+          >
+            {categories.map((category) => (
+              <TouchableOpacity key={category.id} style={styles.categoryButton}>
+                <Text style={styles.categoryEmoji}>{category.emoji}</Text>
+                <Text style={styles.categoryName}>{category.name}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
+              Featured Creators
+            </Text>
+            <TouchableOpacity>
+              <Text style={styles.seeAllText}>See All</Text>
+            </TouchableOpacity>
+          </View>
+          <FlatList
+            data={featuredCreators}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.creatorsList}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={[styles.creatorCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
+              >
+                <View style={styles.creatorAvatar}>
+                  <Text style={styles.creatorAvatarEmoji}>{item.avatar}</Text>
+                  {item.verified && <View style={styles.verifiedBadge} />}
                 </View>
-              </View>
-              <View style={styles.contentInfo}>
-                <Text
-                  style={[styles.contentTitle, { color: isDark ? '#fff' : '#000' }]}
-                  numberOfLines={2}
-                >
-                  {item.title}
+                <Text style={[styles.creatorName, { color: isDark ? '#fff' : '#000' }]}>
+                  {item.name}
                 </Text>
-                <View style={styles.contentMeta}>
-                  <Text style={styles.creatorTag}>{item.creator}</Text>
-                  <Text style={styles.likeCount}>❤️ {item.likes}</Text>
+                <View style={styles.creatorStats}>
+                  <Text style={styles.creatorStat}>{item.followers}</Text>
+                  <Text style={styles.creatorStatSeparator}>•</Text>
+                  <Text style={styles.creatorStat}>{item.content}</Text>
                 </View>
-              </View>
-            </TouchableOpacity>
-          ))}
-        </View>
-      </View>
-
-      <View style={styles.cardsSection}>
-        <View style={styles.cardsRow}>
-          {creatorCards.map((card) => (
-            <TouchableOpacity
-              key={card.id}
-              style={[styles.infoCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
-            >
-              <Text style={styles.cardEmoji}>{card.emoji}</Text>
-              <Text style={[styles.cardTitle, { color: isDark ? '#fff' : '#000' }]}>
-                {card.title}
-              </Text>
-              <Text style={styles.cardDesc}>{card.description}</Text>
-              <TouchableOpacity style={styles.cardButton}>
-                <Text style={styles.cardButtonText}>{card.action}</Text>
+                <TouchableOpacity style={styles.followButton}>
+                  <Text style={styles.followText}>Follow</Text>
+                </TouchableOpacity>
               </TouchableOpacity>
-            </TouchableOpacity>
-          ))}
+            )}
+          />
         </View>
-      </View>
 
-      <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/home')}>
-          <Text style={styles.navIcon}>🏠</Text>
-          <Text style={styles.navLabel}>Home</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/watch')}>
-          <Text style={styles.navIcon}>📺</Text>
-          <Text style={styles.navLabel}>Watch</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/create')}>
-          <Text style={styles.navIcon}>✨</Text>
-          <Text style={[styles.navLabel, { color: '#4ECDC4' }]}>Create</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/rewards')}>
-          <Text style={styles.navIcon}>⭐</Text>
-          <Text style={styles.navLabel}>Rewards</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/profile')}>
-          <Text style={styles.navIcon}>👤</Text>
-          <Text style={styles.navLabel}>Profile</Text>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
+            Trending Content
+          </Text>
+          <View style={styles.contentGrid}>
+            {trendingContent.map((item) => (
+              <TouchableOpacity
+                key={item.id}
+                style={[styles.contentCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
+              >
+                <View style={styles.contentThumbnail}>
+                  <Text style={styles.contentThumbnailEmoji}>{item.thumbnail}</Text>
+                  <View style={styles.contentViews}>
+                    <Text style={styles.viewIcon}>👁️</Text>
+                    <Text style={styles.viewCount}>{item.views}</Text>
+                  </View>
+                </View>
+                <View style={styles.contentInfo}>
+                  <Text
+                    style={[styles.contentTitle, { color: isDark ? '#fff' : '#000' }]}
+                    numberOfLines={2}
+                  >
+                    {item.title}
+                  </Text>
+                  <View style={styles.contentMeta}>
+                    <Text style={styles.creatorTag}>{item.creator}</Text>
+                    <Text style={styles.likeCount}>❤️ {item.likes}</Text>
+                  </View>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
+        <View style={styles.cardsSection}>
+          <View style={styles.cardsRow}>
+            {creatorCards.map((card) => (
+              <TouchableOpacity
+                key={card.id}
+                style={[styles.infoCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
+              >
+                <Text style={styles.cardEmoji}>{card.emoji}</Text>
+                <Text style={[styles.cardTitle, { color: isDark ? '#fff' : '#000' }]}>
+                  {card.title}
+                </Text>
+                <Text style={styles.cardDesc}>{card.description}</Text>
+                <TouchableOpacity style={styles.cardButton}>
+                  <Text style={styles.cardButtonText}>{card.action}</Text>
+                </TouchableOpacity>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
+        <View style={styles.bottomNav}>
+          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/home')}>
+            <Text style={styles.navIcon}>🏠</Text>
+            <Text style={styles.navLabel}>Home</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/watch')}>
+            <Text style={styles.navIcon}>📺</Text>
+            <Text style={styles.navLabel}>Watch</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/create')}>
+            <Text style={styles.navIcon}>✨</Text>
+            <Text style={[styles.navLabel, { color: '#4ECDC4' }]}>Create</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/rewards')}>
+            <Text style={styles.navIcon}>⭐</Text>
+            <Text style={styles.navLabel}>Rewards</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/profile')}>
+            <Text style={styles.navIcon}>👤</Text>
+            <Text style={styles.navLabel}>Profile</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 

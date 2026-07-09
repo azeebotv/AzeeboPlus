@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Query, UseGuards, Request } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard, RateLimit } from '@azeebo/security';
@@ -8,6 +8,7 @@ import { JoinContestDto, SubmitContestScoreDto } from './dto/contest.dto';
 
 @ApiTags('Fan Contests')
 @ApiBearerAuth()
+@UseGuards(AuthGuard('jwt'))
 @Controller('v1/sports/fan-contests')
 export class FanContestsController {
   constructor(private readonly fanContestsService: FanContestsService) {}
@@ -33,18 +34,20 @@ export class FanContestsController {
   @ApiOperation({ summary: 'Enter contest' })
   async enterContest(
     @Param('id') contestId: string,
-    @Body() body: JoinContestDto
+    @Body() body: JoinContestDto,
+    @Request() req: { user: { id: string } }
   ): Promise<unknown> {
-    return this.fanContestsService.enterContest(body.userId, contestId, body.entryData);
+    return this.fanContestsService.enterContest(req.user.sub, contestId, body.entryData);
   }
 
   @Post(':id/score')
   @ApiOperation({ summary: 'Update entry score' })
   async updateScore(
     @Param('id') contestId: string,
-    @Body() body: SubmitContestScoreDto
+    @Body() body: SubmitContestScoreDto,
+    @Request() req: { user: { id: string } }
   ): Promise<unknown> {
-    return this.fanContestsService.updateEntryScore(body.userId, contestId, body.score);
+    return this.fanContestsService.updateEntryScore(req.user.sub, contestId, body.score);
   }
 
   @Get(':id/leaderboard')
@@ -69,7 +72,7 @@ export class FanContestsController {
   }
 
   @Post(':id/end')
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles('ADMIN', 'MODERATOR')
   @ApiOperation({ summary: 'End contest (admin)' })
   async endContest(@Param('id') contestId: string): Promise<unknown> {

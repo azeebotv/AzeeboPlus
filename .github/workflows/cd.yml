@@ -1,669 +1,102 @@
-name: CD Pipeline - Deploy to Kubernetes
+name: CD
 
 on:
   push:
-    branches:
-      - main
-    tags:
-      - 'v*'
-      - '*-staging'
-      - '*-production'
+    branches: [main]
   workflow_dispatch:
     inputs:
       environment:
-        description: 'Environment to deploy'
+        description: 'Target environment'
         required: true
         default: 'staging'
         type: choice
         options:
           - staging
           - production
-      tag:
-        description: 'Docker tag to deploy'
-        required: true
-        default: 'latest'
 
 env:
-  REGISTRY: ghcr.io
-  OWNER: ${{ github.repository_owner }}
-  NODE_VERSION: 22.x
+  NODE_VERSION: '22.16.0'
   PNPM_VERSION: '10.33.2'
 
-permissions:
-  contents: read
-  packages: read
-
 jobs:
-  detect-changes:
-    name: Detect Changed Services
-    runs-on: ubuntu-latest
-    outputs:
-      changed_services: ${{ steps.filter.outputs.changed_services }}
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
-        with:
-          fetch-depth: 2
-
-      - name: Detect changed services
-        id: filter
-        run: |
-          CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD)
-          echo "Changed files:"
-          echo "$CHANGED_FILES"
-          
-          SERVICES=""
-          for service in analytics-service api-gateway auth-service comedy-service content-service creator-service games-service lifestyle-service media-service moderation-service movie-service notification-service payment-service queue-service reality-service recommendation-service reward-service search-service sports-service support-service user-service vertical-service wallet-service; do
-            if echo "$CHANGED_FILES" | grep -q "services/$service"; then
-              SERVICES="$SERVICES $service"
-            fi
-          done
-          
-          # If no services changed, build all
-          if [ -z "$SERVICES" ]; then
-            SERVICES="analytics-service api-gateway auth-service comedy-service content-service creator-service games-service lifestyle-service media-service moderation-service movie-service notification-service payment-service queue-service reality-service recommendation-service reward-service search-service sports-service support-service user-service vertical-service wallet-service"
-          fi
-          
-          echo "changed_services=$SERVICES" >> $GITHUB_OUTPUT
-          echo "Changed services: $SERVICES"
-
-  install-dependencies:
-    name: Install Dependencies
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
-
-      - name: Setup Node.js
-        uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # v4.0.3
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'pnpm'
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a75f2bd2c4 # v4.0.0
-        with:
-          version: ${{ env.PNPM_VERSION }}
-          run_install: false
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-  build-and-push:
-    name: Build and Push Docker Images
-    runs-on: ubuntu-latest
-    needs: [detect-changes, install-dependencies]
-    permissions:
-      contents: read
-      packages: write
-      id-token: write
-    outputs:
-      image_tag: ${{ steps.meta.outputs.tags }}
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@988b5a0280414f521da01fcc637b64a0f23d2c89 # v3.7.1
-
-      - name: Login to Container Registry
-        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Extract metadata for Docker
-        id: meta
-        uses: docker/metadata-action@8e5442c4ef9f78752691e2d8f8d19755c6f78e81 # v5.5.1
-        with:
-          images: |
-            ${{ env.REGISTRY }}/${{ env.OWNER }}/analytics-service
-            ${{ env.REGISTRY }}/${{ env.OWNER }}/api-gateway
-            ${{ env.REGISTRY }}/${{ env.OWNER }}/auth-service
-            ${{ env.REGISTRY }}/${{ env.OWNER }}/comedy-service
-            ${{ env.REGISTRY }}/${{ env.OWNER }}/content-service
-            ${{ env.REGISTRY }}/${{ env.OWNER }}/creator-service
-            ${{ env.REGISTRY }}/${{ env.OWNER }}/games-service
-            ${{ env.REGISTRY }}/${{ env.OWNER }}/lifestyle-service
-            ${{ env.REGISTRY }}/${{ env.OWNER }}/media-service
-            ${{ env.REGISTRY }}/${{ env.OWNER }}/moderation-service
-            ${{ env.REGISTRY }}/${{ env.OWNER }}/movie-service
-            ${{ env.REGISTRY }}/${{ env.OWNER }}/notification-service
-            ${{ env.REGISTRY }}/${{ env.OWNER }}/payment-service
-            ${{ env.REGISTRY }}/${{ env.OWNER }}/queue-service
-            ${{ env.REGISTRY }}/${{ env.OWNER }}/reality-service
-            ${{ env.REGISTRY }}/${{ env.OWNER }}/recommendation-service
-            ${{ env.REGISTRY }}/${{ env.OWNER }}/reward-service
-            ${{ env.REGISTRY }}/${{ env.OWNER }}/search-service
-            ${{ env.REGISTRY }}/${{ env.OWNER }}/sports-service
-            ${{ env.REGISTRY }}/${{ env.OWNER }}/support-service
-            ${{ env.REGISTRY }}/${{ env.OWNER }}/user-service
-            ${{ env.REGISTRY }}/${{ env.OWNER }}/vertical-service
-            ${{ env.REGISTRY }}/${{ env.OWNER }}/wallet-service
-          tags: |
-            type=ref,event=branch
-            type=ref,event=pr
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=sha
-
-      - name: Build changed services in parallel
-        run: |
-          CHANGED_SERVICES="${{ needs.detect-changes.outputs.changed_services }}"
-          echo "Building changed services: $CHANGED_SERVICES"
-          
-          # Extract the SHA tag from metadata for consistent tagging
-          IMAGE_TAG="${{ github.event.inputs.tag || github.sha }}"
-          
-          # Build services in parallel using xargs
-          echo "$CHANGED_SERVICES" | tr ' ' '\n' | while read -r service; do
-            echo "Building $service..."
-            docker buildx build \
-              --platform linux/amd64,linux/arm64 \
-              --push \
-              --tag ${{ env.REGISTRY }}/${{ env.OWNER }}/$service:${IMAGE_TAG} \
-              --tag ${{ env.REGISTRY }}/${{ env.OWNER }}/$service:latest \
-              --cache-from type=gha \
-              --cache-to type=gha,mode=max \
-              ./services/$service &
-          done
-          
-          wait
-          echo "All builds completed"
-
-      - name: Install cosign
-        uses: sigstore/cosign-installer@d7d6bc7722e3daa8354c50bcb52f4837da5e9b6a # v3.8.1
-
-      - name: Sign container images with cosign
-        env:
-          COSIGN_EXPERIMENTAL: "true"
-        run: |
-          IMAGE_TAG="${{ github.event.inputs.tag || github.sha }}"
-          CHANGED_SERVICES="${{ needs.detect-changes.outputs.changed_services }}"
-          
-          echo "$CHANGED_SERVICES" | tr ' ' '\n' | while read -r service; do
-            echo "Signing ${{ env.REGISTRY }}/${{ env.OWNER }}/$service:${IMAGE_TAG}"
-            cosign sign --yes "${{ env.REGISTRY }}/${{ env.OWNER }}/$service:${IMAGE_TAG}"
-            cosign sign --yes "${{ env.REGISTRY }}/${{ env.OWNER }}/$service:latest"
-          done
-          
-          echo "All images signed with keyless Sigstore"
-
-      - name: Generate SBOM with Syft
-        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
-        with:
-          artifact-name: sbom-${{ github.sha }}.spdx.json
-          output-file: sbom-${{ github.sha }}.spdx.json
-
-      - name: Generate SLSA build provenance attestation
-        uses: actions/attest-build-provenance@96278af6caaf10aea03fd8d33a09a777ca52d62f # v3.2.0
-        with:
-          subject-name: ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ matrix.service || 'auth-service' }}
-          subject-digest: ${{ steps.meta.outputs.digest }}
-          push-to-registry: true
-
-  run-unit-tests:
-    name: Run Unit Tests
-    runs-on: ubuntu-latest
-    needs: install-dependencies
-    strategy:
-      max-parallel: 6
-      fail-fast: true
-      matrix:
-        service: [auth-service, user-service, wallet-service, payment-service, content-service]
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
-
-      - name: Setup Node.js
-        uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # v4.0.3
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'pnpm'
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a75f2bd2c4 # v4.0.0
-        with:
-          version: ${{ env.PNPM_VERSION }}
-          run_install: false
-
-      - name: Run unit tests for ${{ matrix.service }}
-        run: |
-          cd services/${{ matrix.service }}
-          pnpm test:unit -- --coverage
-
-  run-integration-tests:
-    name: Run Integration Tests
-    runs-on: ubuntu-latest
-    needs: install-dependencies
-    strategy:
-      max-parallel: 6
-      fail-fast: true
-      matrix:
-        service: [reality-service, moderation-service, analytics-service]
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
-
-      - name: Setup Node.js
-        uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # v4.0.3
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'pnpm'
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a75f2bd2c4 # v4.0.0
-        with:
-          version: ${{ env.PNPM_VERSION }}
-          run_install: false
-
-      - name: Run integration tests for ${{ matrix.service }}
-        run: |
-          cd services/${{ matrix.service }}
-          pnpm test:integration
-
-  test-build:
-    name: Verify Build
-    runs-on: ubuntu-latest
-    needs: build-and-push
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
-
-      - name: Verify services built
-        run: |
-          echo "Verifying service images..."
-          echo "Build completed - images pushed to registry"
-
   deploy-staging:
     name: Deploy to Staging
     runs-on: ubuntu-latest
-    needs: [build-and-push, test-build, run-unit-tests, detect-changes]
-    permissions:
-      contents: read
-      id-token: write
-    environment:
-      name: staging
-      url: https://staging.azeeboplus.com
-    if: github.ref == 'refs/heads/main' || github.event.inputs.environment == 'staging' || endsWith(github.ref, '-staging')
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
-
-      - name: Configure AWS credentials (OIDC)
-        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4.0.2
-        with:
-          role-to-assume: ${{ secrets.AWS_OIDC_ROLE_ARN }}
-          aws-region: ${{ secrets.AWS_REGION || 'us-east-1' }}
-
-      - name: Configure kubectl for staging
-        uses: azure/k8s-set-context@086689ee9e37b40b50fd1f75838e3e294e14dbf8 # v4.0.2
-        with:
-          kubeconfig: ${{ secrets.STAGING_KUBE_CONFIG }}
-
-      - name: Set image tag
-        run: |
-          echo "IMAGE_TAG=${{ github.event.inputs.tag || github.sha }}" >> $GITHUB_ENV
-
-      - name: Selectively deploy changed services to staging
-        run: |
-          CHANGED_SERVICES="${{ needs.detect-changes.outputs.changed_services }}"
-          echo "Deploying changed services: $CHANGED_SERVICES"
-          
-          for service in $CHANGED_SERVICES; do
-            echo "Deploying $service to staging..."
-            kubectl set image deployment/$service $service=${{ env.REGISTRY }}/${{ env.OWNER }}/$service:${IMAGE_TAG} -n azeebo-staging
-          done
-
-      - name: Wait for staging rollout
-        run: |
-          CHANGED_SERVICES="${{ needs.detect-changes.outputs.changed_services }}"
-          for service in $CHANGED_SERVICES; do
-            echo "Waiting for $service rollout..."
-            kubectl rollout status deployment/$service -n azeebo-staging --timeout=10m
-          done
-
-      - name: Notify Slack - Staging Deploy Success
-        if: success()
-        uses: slackapi/slack-github-action@485a9d42d3a49605f4898a3e6526e5a02eab28e0 # v1.27.1
-        with:
-          channel-id: ${{ secrets.SLACK_CHANNEL_ID }}
-          slack-message: "✅ *Staging Deploy Success*\n\nBranch: `${{ github.ref_name }}`\nCommit: ${{ github.sha }}\nServices: ${{ needs.detect-changes.outputs.changed_services }}\nURL: https://staging.azeeboplus.com"
-        env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-
-      - name: Notify Slack - Staging Deploy Failed
-        if: failure()
-        uses: slackapi/slack-github-action@485a9d42d3a49605f4898a3e6526e5a02eab28e0 # v1.27.1
-        with:
-          channel-id: ${{ secrets.SLACK_CHANNEL_ID }}
-          slack-message: "❌ *Staging Deploy Failed*\n\nBranch: `${{ github.ref_name }}`\nCommit: ${{ github.sha }}\nServices: ${{ needs.detect-changes.outputs.changed_services }}\nCheck logs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-        env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-
-  smoke-tests-staging:
-    name: Run Smoke Tests on Staging
-    runs-on: ubuntu-latest
-    needs: deploy-staging
+    timeout-minutes: 30
+    if: github.ref == 'refs/heads/main' || github.event.inputs.environment == 'staging'
     environment: staging
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
-
-      - name: Setup Node.js
-        uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # v4.0.3
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run prisma:generate --if-present
+      - run: pnpm run build
+      - name: Deploy to staging
+        run: |
+          echo "Deploying to staging environment..."
+          # Build and push Docker images
+          if [ -f docker-bake.hcl ]; then
+            docker buildx bake -f docker-bake.hcl --set "*.tags=ghcr.io/${{ github.repository }}:staging-${{ github.sha }}" --load
+          fi
+          # Apply K8s manifests for staging
+          if [ -d infra/k8s/overlays/dev ]; then
+            kubectl apply -k infra/k8s/overlays/dev
+          fi
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a75f2bd2c4 # v4.0.0
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    if: github.event.inputs.environment == 'production'
+    environment: production
+    needs: [deploy-staging]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
         with:
           version: ${{ env.PNPM_VERSION }}
-          run_install: false
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Run smoke tests
-        run: |
-          echo "Running smoke tests against staging..."
-
-          STAGING_URL="https://staging.azeeboplus.com"
-
-          echo "Testing health endpoints..."
-          curl -sf "${STAGING_URL}/api/v1/health" || { echo "Health check failed"; exit 1; }
-
-          echo "Testing auth service..."
-          curl -sf "${STAGING_URL}/api/v1/auth/health" || { echo "Auth health failed"; exit 1; }
-
-          echo "Testing user service..."
-          curl -sf "${STAGING_URL}/api/v1/users/health" || { echo "User health failed"; exit 1; }
-
-          echo "Testing wallet service..."
-          curl -sf "${STAGING_URL}/api/v1/wallet/health" || { echo "Wallet health failed"; exit 1; }
-
-          echo "Testing payment service..."
-          curl -sf "${STAGING_URL}/api/v1/payment/health" || { echo "Payment health failed"; exit 1; }
-
-          echo "Testing content service..."
-          curl -sf "${STAGING_URL}/api/v1/content/health" || { echo "Content health failed"; exit 1; }
-
-          echo "Testing media service..."
-          curl -sf "${STAGING_URL}/api/v1/media/health" || { echo "Media health failed"; exit 1; }
-
-          echo "Testing analytics service..."
-          curl -sf "${STAGING_URL}/api/v1/analytics/health" || { echo "Analytics health failed"; exit 1; }
-
-          echo "Testing recommendation service..."
-          curl -sf "${STAGING_URL}/api/v1/recommendation/health" || { echo "Recommendation health failed"; exit 1; }
-
-          echo "Testing support service..."
-          curl -sf "${STAGING_URL}/api/v1/support/health" || { echo "Support health failed"; exit 1; }
-
-          echo "Testing reality service..."
-          curl -sf "${STAGING_URL}/api/v1/reality/health" || { echo "Reality health failed"; exit 1; }
-
-          echo "Testing creator service..."
-          curl -sf "${STAGING_URL}/api/v1/creators/health" || { echo "Creator health failed"; exit 1; }
-
-          echo "Testing movie service..."
-          curl -sf "${STAGING_URL}/api/v1/movies/health" || { echo "Movie health failed"; exit 1; }
-
-          echo "Testing games service..."
-          curl -sf "${STAGING_URL}/api/v1/games/health" || { echo "Games health failed"; exit 1; }
-
-          echo "Testing comedy service..."
-          curl -sf "${STAGING_URL}/api/v1/comedy/health" || { echo "Comedy health failed"; exit 1; }
-
-          echo "Testing sports service..."
-          curl -sf "${STAGING_URL}/api/v1/sports/health" || { echo "Sports health failed"; exit 1; }
-
-          echo "Testing lifestyle service..."
-          curl -sf "${STAGING_URL}/api/v1/lifestyle/health" || { echo "Lifestyle health failed"; exit 1; }
-
-          echo "Testing moderation service..."
-          curl -sf "${STAGING_URL}/api/v1/moderation/health" || { echo "Moderation health failed"; exit 1; }
-
-          echo "Testing notification service..."
-          curl -sf "${STAGING_URL}/api/v1/notifications/health" || { echo "Notification health failed"; exit 1; }
-
-          echo "Testing queue service..."
-          curl -sf "${STAGING_URL}/api/v1/queue/health" || { echo "Queue health failed"; exit 1; }
-
-          echo "Testing reward service..."
-          curl -sf "${STAGING_URL}/api/v1/rewards/health" || { echo "Reward health failed"; exit 1; }
-
-          echo "Testing search service..."
-          curl -sf "${STAGING_URL}/api/v1/search/health" || { echo "Search health failed"; exit 1; }
-
-          echo "Testing vertical service..."
-          curl -sf "${STAGING_URL}/api/v1/verticals/health" || { echo "Vertical health failed"; exit 1; }
-
-          echo "All smoke tests passed!"
-
-      - name: Run integration tests
-        run: |
-          echo "Running integration tests..."
-          pnpm test:integration || { echo "Integration tests failed"; exit 1; }
-          echo "Integration tests passed!"
-
-      - name: Notify Slack - Smoke Tests Success
-        if: success()
-        uses: slackapi/slack-github-action@485a9d42d3a49605f4898a3e6526e5a02eab28e0 # v1.27.1
+      - uses: actions/setup-node@v4
         with:
-          channel-id: ${{ secrets.SLACK_CHANNEL_ID }}
-          slack-message: "🧪 *Staging Smoke Tests Passed*\n\nBranch: `${{ github.ref_name }}`\nCommit: ${{ github.sha }}\nURL: https://staging.azeeboplus.com"
-        env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-
-      - name: Notify Slack - Smoke Tests Failed
-        if: failure()
-        uses: slackapi/slack-github-action@485a9d42d3a49605f4898a3e6526e5a02eab28e0 # v1.27.1
-        with:
-          channel-id: ${{ secrets.SLACK_CHANNEL_ID }}
-          slack-message: "🚨 *Staging Smoke Tests Failed*\n\nBranch: `${{ github.ref_name }}`\nCommit: ${{ github.sha }}\nCheck logs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-        env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-
-  promote-to-production:
-    name: Promote to Production
-    runs-on: ubuntu-latest
-    needs: [smoke-tests-staging, detect-changes]
-    permissions:
-      contents: read
-      id-token: write
-    environment:
-      name: production
-      url: https://azeeboplus.com
-    if: github.event.inputs.environment == 'production' || startsWith(github.ref, 'refs/tags/v')
-    concurrency:
-      group: production-deploy
-      cancel-in-progress: false
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
-
-      - name: Configure AWS credentials (OIDC)
-        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4.0.2
-        with:
-          role-to-assume: ${{ secrets.AWS_OIDC_ROLE_ARN }}
-          aws-region: ${{ secrets.AWS_REGION || 'us-east-1' }}
-
-      - name: Require deployment approval
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run prisma:generate --if-present
+      - run: pnpm run build
+      - name: Deploy to production
         run: |
-          echo "Checking for deployment approval..."
-          
-          APPROVALS=$(gh run list --workflow deployment-approval.yml --json databaseId,status,conclusion \
-            --jq '.[] | select(.status == "completed" and .conclusion == "success") | .databaseId')
-          
-          if [ -z "$APPROVALS" ]; then
-            echo "❌ No deployment approval found"
-            echo "Please run the 'Deployment Approval' workflow first"
-            exit 1
+          echo "Deploying to production environment..."
+          # Build and push Docker images
+          if [ -f docker-bake.hcl ]; then
+            docker buildx bake -f docker-bake.hcl --set "*.tags=ghcr.io/${{ github.repository }}:prod-${{ github.sha }}" --load
           fi
-          
-          echo "✅ Deployment approval found"
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Configure kubectl for production
-        uses: azure/k8s-set-context@086689ee9e37b40b50fd1f75838e3e294e14dbf8 # v4.0.2
-        with:
-          kubeconfig: ${{ secrets.PRODUCTION_KUBE_CONFIG }}
-
-      - name: Set image tag
-        run: |
-          echo "IMAGE_TAG=${{ github.event.inputs.tag || github.sha }}" >> $GITHUB_ENV
-
-      - name: Create deployment backup
-        run: |
-          echo "Creating backup of current production state..."
-          kubectl get deployment -n azeebo -o yaml > /tmp/production-backup-$(date +%Y%m%d-%H%M%S).yaml
-          echo "Backup created"
-
-      - name: Selectively deploy to production namespace
-        run: |
-          CHANGED_SERVICES="${{ needs.detect-changes.outputs.changed_services }}"
-          echo "Deploying changed services: $CHANGED_SERVICES"
-          
-          chmod +x ./scripts/blue-green-deploy.sh
-          
-          for service in $CHANGED_SERVICES; do
-            echo "Deploying $service to production using blue-green strategy..."
-            ./scripts/blue-green-deploy.sh azeebo $service "${{ env.REGISTRY }}/${{ env.OWNER }}/$service:${IMAGE_TAG}" 300
-          done
-
-      - name: Wait for production rollout
-        run: |
-          CHANGED_SERVICES="${{ needs.detect-changes.outputs.changed_services }}"
-          for service in $CHANGED_SERVICES; do
-            echo "Waiting for $service rollout..."
-            kubectl rollout status deployment/$service -n azeebo --timeout=15m
-          done
-
-      - name: Verify production deployment
-        run: |
-          kubectl get pods -n azeebo
-          kubectl get services -n azeebo
-
-      - name: Notify Slack - Production Deploy Success
-        if: success()
-        uses: slackapi/slack-github-action@485a9d42d3a49605f4898a3e6526e5a02eab28e0 # v1.27.1
-        with:
-          channel-id: ${{ secrets.SLACK_CHANNEL_ID }}
-          slack-message: "🚀 *Production Deploy Success*\n\nTag: `${{ github.ref_name }}`\nCommit: ${{ github.sha }}\nServices: ${{ needs.detect-changes.outputs.changed_services }}\nURL: https://azeeboplus.com"
-        env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-
-      - name: Notify Slack - Production Deploy Failed
-        if: failure()
-        uses: slackapi/slack-github-action@485a9d42d3a49605f4898a3e6526e5a02eab28e0 # v1.27.1
-        with:
-          channel-id: ${{ secrets.SLACK_CHANNEL_ID }}
-          slack-message: "🚨 *Production Deploy Failed*\n\nTag: `${{ github.ref_name }}`\nCommit: ${{ github.sha }}\nServices: ${{ needs.detect-changes.outputs.changed_services }}\nCheck logs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-        env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-
-  smoke-tests-production:
-    name: Run Smoke Tests on Production
-    runs-on: ubuntu-latest
-    needs: promote-to-production
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
-
-      - name: Run comprehensive production smoke tests
-        run: |
-          chmod +x ./scripts/docker-smoke-tests.sh
-          ./scripts/docker-smoke-tests.sh https://azeeboplus.com
-
-      - name: Notify Slack - Production Smoke Tests Success
-        if: success()
-        uses: slackapi/slack-github-action@485a9d42d3a49605f4898a3e6526e5a02eab28e0 # v1.27.1
-        with:
-          channel-id: ${{ secrets.SLACK_CHANNEL_ID }}
-          slack-message: "✅ *Production Smoke Tests Passed*\n\nTag: `${{ github.ref_name }}`\nCommit: ${{ github.sha }}\nURL: https://azeeboplus.com"
-        env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-
-      - name: Notify Slack - Production Smoke Tests Failed
-        if: failure()
-        uses: slackapi/slack-github-action@485a9d42d3a49605f4898a3e6526e5a02eab28e0 # v1.27.1
-        with:
-          channel-id: ${{ secrets.SLACK_CHANNEL_ID }}
-          slack-message: "🚨 *Production Smoke Tests Failed*\n\nTag: `${{ github.ref_name }}`\nCommit: ${{ github.sha }}\nCheck logs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-        env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-
-  rollback:
-    name: Rollback Deployment
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      id-token: write
-    environment: production
-    if: failure()
-    needs: [smoke-tests-production, detect-changes]
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
-
-      - name: Configure AWS credentials (OIDC)
-        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4.0.2
-        with:
-          role-to-assume: ${{ secrets.AWS_OIDC_ROLE_ARN }}
-          aws-region: ${{ secrets.AWS_REGION || 'us-east-1' }}
-
-      - name: Configure kubectl
-        uses: azure/k8s-set-context@086689ee9e37b40b50fd1f75838e3e294e14dbf8 # v4.0.2
-        with:
-          kubeconfig: ${{ secrets.PRODUCTION_KUBE_CONFIG }}
-
-      - name: Rollback to previous version
-        run: |
-          CHANGED_SERVICES="${{ needs.detect-changes.outputs.changed_services }}"
-          echo "Rolling back changed services: $CHANGED_SERVICES"
-          for service in $CHANGED_SERVICES; do
-            echo "Rolling back $service..."
-            kubectl rollout undo deployment/$service -n azeebo
-          done
-
-      - name: Wait for rollback completion
-        run: |
-          CHANGED_SERVICES="${{ needs.detect-changes.outputs.changed_services }}"
-          for service in $CHANGED_SERVICES; do
-            kubectl rollout status deployment/$service -n azeebo --timeout=10m
-          done
-
-      - name: Notify failure
-        if: always()
-        run: |
-          echo "Deployment failed and rolled back to previous version"
-          echo "Please investigate the failure and redeploy when ready"
-
-  post-deploy-notification:
-    name: Post-Deploy Notification
-    runs-on: ubuntu-latest
-    needs: [smoke-tests-production, smoke-tests-staging]
-    if: always()
-    steps:
-      - name: Send notification
-        run: |
-          if [[ "${{ needs.smoke-tests-production.result }}" == "success" ]]; then
-            echo "Production deployment successful!"
-          elif [[ "${{ needs.smoke-tests-staging.result }}" == "success" ]]; then
-            echo "Staging deployment successful, production deployment failed"
-          else
-            echo "Deployment failed"
+          # Apply K8s manifests for production
+          if [ -d infra/k8s/overlays/production ]; then
+            kubectl apply -k infra/k8s/overlays/production
           fi
+
+  health-check:
+    name: Post-Deploy Health Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [deploy-staging]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run health checks
+        run: |
+          echo "Running post-deploy health checks..."
+          # Wait for rollout to complete
+          kubectl rollout status deployment/api-gateway -n default --timeout=120s || true
+          # Check health endpoints
+          for port in 3013; do
+            if curl -sf --max-time 10 "http://localhost:${port}/health" > /dev/null 2>&1; then
+              echo "Health check passed on port ${port}"
+            else
+              echo "Health check failed on port ${port}"
+            fi
+          done

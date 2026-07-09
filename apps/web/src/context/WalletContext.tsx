@@ -1,6 +1,6 @@
 'use client';
 
-import React, {
+import {
   createContext,
   useContext,
   useEffect,
@@ -45,13 +45,14 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const isRefreshing = useRef<boolean>(false);
+  const isRefreshingBalance = useRef<boolean>(false);
+  const isRefreshingTransactions = useRef<boolean>(false);
 
   const refreshBalance = useCallback(async (): Promise<void> => {
-    if (!isAuthenticated || isRefreshing.current) return;
+    if (!isAuthenticated || isRefreshingBalance.current) return;
 
     try {
-      isRefreshing.current = true;
+      isRefreshingBalance.current = true;
       setIsLoading(true);
       setError(null);
       const response = await api.wallet.getBalance();
@@ -63,28 +64,29 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     } catch (err) {
       setError('Failed to fetch wallet balance');
     } finally {
-      isRefreshing.current = false;
+      isRefreshingBalance.current = false;
       setIsLoading(false);
     }
   }, [isAuthenticated]);
 
   const refreshTransactions = useCallback(async (): Promise<void> => {
-    if (!isAuthenticated || isRefreshing.current) return;
+    if (!isAuthenticated || isRefreshingTransactions.current) return;
 
     try {
-      isRefreshing.current = true;
+      isRefreshingTransactions.current = true;
       setIsLoading(true);
       setError(null);
       const response = await api.wallet.getTransactions(1, 20);
       if (response.success && response.data) {
-        setTransactions(response.data.items);
+        const txData = response.data;
+        setTransactions(Array.isArray(txData) ? txData : txData.items || []);
       } else {
         setError(response.message || 'Failed to fetch transactions');
       }
     } catch (err) {
       setError('Failed to fetch transactions');
     } finally {
-      isRefreshing.current = false;
+      isRefreshingTransactions.current = false;
       setIsLoading(false);
     }
   }, [isAuthenticated]);

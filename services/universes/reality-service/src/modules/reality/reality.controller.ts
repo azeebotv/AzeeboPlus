@@ -12,11 +12,11 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
-import { RateLimitGuard, RateLimit } from '@azeebo/security';
+import { RateLimitGuard, RateLimit, AdminGuard } from '@azeebo/security';
 
 import { RealityService } from './reality.service';
 import { RealityResponse } from './interfaces/reality-response.interface';
-import { RolesGuard, Roles } from '@azeebo/shared-services';
+import { RolesGuard, Roles, Pagination } from '@azeebo/shared-services';
 import { CastVoteDto, BuyVoteDto, MakePredictionDto } from './dto/vote.dto';
 import {
   CreateShowDto,
@@ -106,7 +106,7 @@ export class RealityController {
   }
 
   @Put('episodes/:episodeId')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), AdminGuard)
   @ApiOperation({ summary: 'Update episode' })
   @ApiResponse({ status: 200, description: 'Episode updated' })
   @ApiResponse({ status: 400, description: 'Invalid input' })
@@ -118,7 +118,7 @@ export class RealityController {
   }
 
   @Delete('episodes/:episodeId')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), AdminGuard)
   @ApiOperation({ summary: 'Delete episode' })
   @ApiResponse({ status: 200, description: 'Episode deleted' })
   async deleteEpisode(@Param('episodeId') episodeId: string): Promise<RealityResponse> {
@@ -126,7 +126,7 @@ export class RealityController {
   }
 
   @Post('shows/:showId/seasons')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), AdminGuard)
   @ApiOperation({ summary: 'Create season' })
   @ApiResponse({ status: 201, description: 'Season created' })
   @ApiResponse({ status: 400, description: 'Invalid input' })
@@ -145,7 +145,7 @@ export class RealityController {
   }
 
   @Post('shows/:showId/contestants')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), AdminGuard)
   @ApiOperation({ summary: 'Create contestant' })
   @ApiResponse({ status: 201, description: 'Contestant created' })
   @ApiResponse({ status: 400, description: 'Invalid input' })
@@ -157,7 +157,7 @@ export class RealityController {
   }
 
   @Put('contestants/:contestantId')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), AdminGuard)
   @ApiOperation({ summary: 'Update contestant' })
   @ApiResponse({ status: 200, description: 'Contestant updated' })
   @ApiResponse({ status: 400, description: 'Invalid input' })
@@ -169,7 +169,7 @@ export class RealityController {
   }
 
   @Delete('contestants/:contestantId')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), AdminGuard)
   @ApiOperation({ summary: 'Delete contestant' })
   @ApiResponse({ status: 200, description: 'Contestant deleted' })
   async deleteContestant(@Param('contestantId') contestantId: string): Promise<RealityResponse> {
@@ -184,7 +184,7 @@ export class RealityController {
   }
 
   @Get('shows/:showId/analytics')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), AdminGuard)
   @ApiOperation({ summary: 'Get show analytics' })
   @ApiResponse({ status: 200, description: 'Show analytics' })
   async getShowAnalytics(@Param('showId') showId: string): Promise<RealityResponse> {
@@ -202,14 +202,15 @@ export class RealityController {
     @Param('showId') showId: string,
     @Body() body: { contestantId: string }
   ): Promise<RealityResponse> {
-    return this.realityService.submitVote(req.user.sub, {
+    return this.realityService.submitVote(req.user.id, {
       contestantId: body.contestantId,
       showId,
     });
   }
 
   @Post('votes')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), RateLimitGuard)
+  @RateLimit(50, 60000)
   @ApiOperation({ summary: 'Submit vote' })
   @ApiResponse({ status: 201, description: 'Vote submitted' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -217,22 +218,24 @@ export class RealityController {
     @Request() req: { user: { sub: string } },
     @Body() body: CastVoteDto
   ): Promise<RealityResponse> {
-    return this.realityService.submitVote(req.user.sub, body);
+    return this.realityService.submitVote(req.user.id, body);
   }
 
   @Post('votes/quantity')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), RateLimitGuard)
+  @RateLimit(50, 60000)
   @ApiOperation({ summary: 'Submit multiple votes with quantity selector' })
   @ApiResponse({ status: 201, description: 'Votes submitted' })
   async submitVotesWithQuantity(
     @Request() req: { user: { sub: string } },
     @Body() body: BuyVoteDto
   ): Promise<RealityResponse> {
-    return this.realityService.submitVotesWithQuantity(req.user.sub, body);
+    return this.realityService.submitVotesWithQuantity(req.user.id, body);
   }
 
   @Post('supervotes')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), RateLimitGuard)
+  @RateLimit(50, 60000)
   @ApiOperation({ summary: 'Submit supervote' })
   @ApiResponse({ status: 201, description: 'Supervote submitted' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -240,11 +243,12 @@ export class RealityController {
     @Request() req: { user: { sub: string } },
     @Body() body: CastVoteDto
   ): Promise<RealityResponse> {
-    return this.realityService.submitSupervote(req.user.sub, body);
+    return this.realityService.submitSupervote(req.user.id, body);
   }
 
   @Post('predictions')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), RateLimitGuard)
+  @RateLimit(50, 60000)
   @ApiOperation({ summary: 'Submit prediction' })
   @ApiResponse({ status: 201, description: 'Prediction submitted' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -252,7 +256,7 @@ export class RealityController {
     @Request() req: { user: { sub: string } },
     @Body() body: MakePredictionDto
   ): Promise<RealityResponse> {
-    return this.realityService.submitPrediction(req.user.sub, body);
+    return this.realityService.submitPrediction(req.user.id, body);
   }
 
   @Get('predictions/:showId')
@@ -264,13 +268,13 @@ export class RealityController {
     @Request() req: { user: { sub: string } },
     @Param('showId') showId: string
   ): Promise<RealityResponse> {
-    return this.realityService.getPredictionDashboard(req.user.sub, showId);
+    return this.realityService.getPredictionDashboard(req.user.id, showId);
   }
 
   @Get('clips')
   @ApiOperation({ summary: 'Get reality clips feed' })
   @ApiResponse({ status: 200, description: 'Clips feed' })
-  async getClips(@Query('showId') showId?: string): Promise<RealityResponse> {
+  async getClips(@Query('showId') showId?: string, @Pagination() pagination?: { page: number; limit: number }): Promise<RealityResponse> {
     return this.realityService.getClips(showId);
   }
 
@@ -279,7 +283,7 @@ export class RealityController {
   @ApiOperation({ summary: 'Get wallet balance for voting' })
   @ApiResponse({ status: 200, description: 'Wallet balance' })
   async getWalletBalance(@Request() req: { user: { sub: string } }): Promise<RealityResponse> {
-    return this.realityService.getWalletBalance(req.user.sub);
+    return this.realityService.getWalletBalance(req.user.id);
   }
 
   @Get('pricing')
@@ -304,7 +308,7 @@ export class RealityController {
     @Request() req: { user: { sub: string } },
     @Param('extraId') extraId: string
   ): Promise<RealityResponse> {
-    return this.realityService.purchasePremiumExtra(req.user.sub, extraId);
+    return this.realityService.purchasePremiumExtra(req.user.id, extraId);
   }
 
   @Post('rewards/:showId/confirm')
@@ -315,11 +319,11 @@ export class RealityController {
     @Request() req: { user: { sub: string } },
     @Param('showId') showId: string
   ): Promise<RealityResponse> {
-    return this.realityService.confirmReward(req.user.sub, showId);
+    return this.realityService.confirmReward(req.user.id, showId);
   }
 
   @Get('admin/dashboard')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), AdminGuard)
   @ApiOperation({ summary: 'Admin dashboard' })
   @ApiResponse({ status: 200, description: 'Admin dashboard data' })
   async getAdminDashboard(): Promise<RealityResponse> {
@@ -327,7 +331,7 @@ export class RealityController {
   }
 
   @Get('shows/:showId/fraud/votes')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), AdminGuard)
   @ApiOperation({ summary: 'Detect vote fraud for a show' })
   @ApiResponse({ status: 200, description: 'Vote fraud detection results' })
   async detectVoteFraud(@Param('showId') showId: string): Promise<RealityResponse> {
@@ -335,7 +339,7 @@ export class RealityController {
   }
 
   @Get('shows/:showId/fraud/supervotes')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), AdminGuard)
   @ApiOperation({ summary: 'Detect supervote fraud for a show' })
   @ApiResponse({ status: 200, description: 'Supervote fraud detection results' })
   async detectSupervoteFraud(@Param('showId') showId: string): Promise<RealityResponse> {
@@ -343,7 +347,7 @@ export class RealityController {
   }
 
   @Get('shows/:showId/fraud/predictions')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), AdminGuard)
   @ApiOperation({ summary: 'Detect prediction fraud for a show' })
   @ApiResponse({ status: 200, description: 'Prediction fraud detection results' })
   async detectPredictionFraud(@Param('showId') showId: string): Promise<RealityResponse> {
@@ -351,7 +355,7 @@ export class RealityController {
   }
 
   @Get('shows/:showId/fraud/assessment')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), AdminGuard)
   @ApiOperation({ summary: 'Get overall fraud assessment for a show' })
   @ApiResponse({ status: 200, description: 'Overall fraud assessment' })
   async getOverallFraudAssessment(@Param('showId') showId: string): Promise<RealityResponse> {

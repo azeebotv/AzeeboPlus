@@ -6,7 +6,7 @@ import { api } from '@/lib/api';
 import AdminLayout from '@/components/layout/AdminLayout';
 
 export default function ReportBuilderPage(): React.JSX.Element {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated: _isAuthenticated, user: _user } = useAuth();
   const router = useRouter();
   const [config, setConfig] = useState({
     title: '',

@@ -1,9 +1,18 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Alert,
+  ActivityIndicator,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { subscriptionApi } from '../src/api';
 import { logger } from '../src/utils/logger';
-import { LoadingState, ErrorState, EmptyState } from '../src/components/StateContainers';
+import { LoadingState, ErrorState } from '../src/components/StateContainers';
 
 interface PremiumPlan {
   id: string;
@@ -18,13 +27,14 @@ interface PremiumPlan {
 
 interface PremiumStatus {
   isPremium: boolean;
+  subscriptionId?: string;
   planName?: string;
   expiresAt?: string;
   autoRenew: boolean;
 }
 
 export default function PremiumAccessScreen() {
-  const router = useRouter();
+  
   const [plans, setPlans] = useState<PremiumPlan[]>([]);
   const [status, setStatus] = useState<PremiumStatus | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -44,7 +54,15 @@ export default function PremiumAccessScreen() {
 
       if (plansResponse.success && plansResponse.data) {
         setPlans(
-          plansResponse.data.map((plan: any) => ({
+          plansResponse.data.map((plan: {
+            id: string;
+            name: string;
+            description: string;
+            price: number;
+            duration: number;
+            features: string[];
+            tier: string;
+          }) => ({
             id: plan.id,
             name: plan.name,
             description: plan.description,
@@ -60,6 +78,7 @@ export default function PremiumAccessScreen() {
         const sub = statusResponse.data;
         setStatus({
           isPremium: sub.status === 'active',
+          subscriptionId: sub.id,
           planName: sub.plan?.name,
           expiresAt: sub.endDate,
           autoRenew: sub.autoRenew,
@@ -82,8 +101,9 @@ export default function PremiumAccessScreen() {
           { text: 'OK', onPress: () => loadPremiumData() },
         ]);
       }
-    } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to subscribe');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to subscribe';
+      Alert.alert('Error', message);
     } finally {
       setIsPurchasing(false);
     }
@@ -100,8 +120,8 @@ export default function PremiumAccessScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
-              if (status?.planName) {
-                await subscriptionApi.cancelSubscription(status.planName);
+              if (status?.subscriptionId) {
+                await subscriptionApi.cancelSubscription(status.subscriptionId);
               }
               Alert.alert('Success', 'Subscription cancelled');
               loadPremiumData();
@@ -129,103 +149,105 @@ export default function PremiumAccessScreen() {
 
   if (isLoading) {
     return (
-      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+      <SafeAreaView style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
         <LoadingState text="Loading premium plans..." />
-      </View>
+      </SafeAreaView>
     );
   }
 
   if (error) {
     return (
-      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+      <SafeAreaView style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
         <ErrorState description={error} onRetry={loadPremiumData} />
-      </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Premium Access</Text>
-        <Text style={styles.subtitle}>Unlock exclusive content and features</Text>
-      </View>
-
-      {status?.isPremium && (
-        <View style={styles.activeCard}>
-          <View style={styles.activeHeader}>
-            <Text style={styles.activeIcon}>👑</Text>
-            <View style={styles.activeInfo}>
-              <Text style={styles.activeTitle}>Premium Active</Text>
-              <Text style={styles.activePlan}>{status.planName}</Text>
-            </View>
-          </View>
-          <Text style={styles.expiresText}>
-            Expires: {status.expiresAt ? new Date(status.expiresAt).toLocaleDateString() : 'N/A'}
-          </Text>
-          <View style={styles.autoRenewRow}>
-            <Text style={styles.autoRenewLabel}>Auto-renew</Text>
-            <Text style={styles.autoRenewValue}>{status.autoRenew ? 'On' : 'Off'}</Text>
-          </View>
-          {status.autoRenew && (
-            <TouchableOpacity style={styles.cancelButton} onPress={handleCancel}>
-              <Text style={styles.cancelButtonText}>Cancel Subscription</Text>
-            </TouchableOpacity>
-          )}
+    <SafeAreaView style={styles.container}>
+      <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Premium Access</Text>
+          <Text style={styles.subtitle}>Unlock exclusive content and features</Text>
         </View>
-      )}
 
-      <View style={styles.plansSection}>
-        <Text style={styles.plansTitle}>Choose Your Plan</Text>
-        {plans.map((plan) => (
-          <TouchableOpacity
-            key={plan.id}
-            style={[styles.planCard, plan.isPopular && styles.planCardPopular]}
-            onPress={() => handleSubscribe(plan.id)}
-            disabled={isPurchasing}
-          >
-            {plan.isPopular && (
-              <View style={styles.popularBadge}>
-                <Text style={styles.popularText}>Most Popular</Text>
+        {status?.isPremium && (
+          <View style={styles.activeCard}>
+            <View style={styles.activeHeader}>
+              <Text style={styles.activeIcon}>👑</Text>
+              <View style={styles.activeInfo}>
+                <Text style={styles.activeTitle}>Premium Active</Text>
+                <Text style={styles.activePlan}>{status.planName}</Text>
               </View>
+            </View>
+            <Text style={styles.expiresText}>
+              Expires: {status.expiresAt ? new Date(status.expiresAt).toLocaleDateString() : 'N/A'}
+            </Text>
+            <View style={styles.autoRenewRow}>
+              <Text style={styles.autoRenewLabel}>Auto-renew</Text>
+              <Text style={styles.autoRenewValue}>{status.autoRenew ? 'On' : 'Off'}</Text>
+            </View>
+            {status.autoRenew && (
+              <TouchableOpacity style={styles.cancelButton} onPress={handleCancel}>
+                <Text style={styles.cancelButtonText}>Cancel Subscription</Text>
+              </TouchableOpacity>
             )}
-            <View style={styles.planHeader}>
-              <Text style={styles.planName}>{plan.name}</Text>
-              <View style={styles.priceContainer}>
-                <Text style={styles.price}>₦{plan.price.toLocaleString()}</Text>
-                <Text style={styles.duration}>{getDurationLabel(plan.duration)}</Text>
-              </View>
-            </View>
-            <Text style={styles.planDescription}>{plan.description}</Text>
-            <View style={styles.featuresList}>
-              {plan.features.map((feature, index) => (
-                <View key={index} style={styles.featureItem}>
-                  <Text style={styles.featureIcon}>✓</Text>
-                  <Text style={styles.featureText}>{feature}</Text>
-                </View>
-              ))}
-            </View>
+          </View>
+        )}
+
+        <View style={styles.plansSection}>
+          <Text style={styles.plansTitle}>Choose Your Plan</Text>
+          {plans.map((plan) => (
             <TouchableOpacity
-              style={[styles.subscribeButton, plan.isPopular && styles.subscribeButtonPopular]}
+              key={plan.id}
+              style={[styles.planCard, plan.isPopular && styles.planCardPopular]}
               onPress={() => handleSubscribe(plan.id)}
               disabled={isPurchasing}
             >
-              {isPurchasing ? (
-                <ActivityIndicator size="small" color="#FFFFFF" />
-              ) : (
-                <Text style={styles.subscribeButtonText}>Subscribe Now</Text>
+              {plan.isPopular && (
+                <View style={styles.popularBadge}>
+                  <Text style={styles.popularText}>Most Popular</Text>
+                </View>
               )}
+              <View style={styles.planHeader}>
+                <Text style={styles.planName}>{plan.name}</Text>
+                <View style={styles.priceContainer}>
+                  <Text style={styles.price}>₦{plan.price.toLocaleString()}</Text>
+                  <Text style={styles.duration}>{getDurationLabel(plan.duration)}</Text>
+                </View>
+              </View>
+              <Text style={styles.planDescription}>{plan.description}</Text>
+              <View style={styles.featuresList}>
+                {plan.features.map((feature, index) => (
+                  <View key={index} style={styles.featureItem}>
+                    <Text style={styles.featureIcon}>✓</Text>
+                    <Text style={styles.featureText}>{feature}</Text>
+                  </View>
+                ))}
+              </View>
+              <TouchableOpacity
+                style={[styles.subscribeButton, plan.isPopular && styles.subscribeButtonPopular]}
+                onPress={() => handleSubscribe(plan.id)}
+                disabled={isPurchasing}
+              >
+                {isPurchasing ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <Text style={styles.subscribeButtonText}>Subscribe Now</Text>
+                )}
+              </TouchableOpacity>
             </TouchableOpacity>
-          </TouchableOpacity>
-        ))}
-      </View>
-    </ScrollView>
+          ))}
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#111827',
+    backgroundColor: '#1A0A0A',
   },
   content: {
     padding: 16,
@@ -245,7 +267,7 @@ const styles = StyleSheet.create({
     color: '#9CA3AF',
   },
   activeCard: {
-    backgroundColor: '#1F2937',
+    backgroundColor: '#2A2A2A',
     borderRadius: 16,
     padding: 20,
     marginBottom: 24,
@@ -313,17 +335,17 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   planCard: {
-    backgroundColor: '#1F2937',
+    backgroundColor: '#2A2A2A',
     borderRadius: 16,
     padding: 20,
     marginBottom: 16,
   },
   planCardPopular: {
     borderWidth: 2,
-    borderColor: '#8B5CF6',
+    borderColor: '#E8420A',
   },
   popularBadge: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     alignSelf: 'flex-start',
     paddingHorizontal: 12,
     paddingVertical: 6,
@@ -353,7 +375,7 @@ const styles = StyleSheet.create({
   price: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#8B5CF6',
+    color: '#E8420A',
   },
   duration: {
     fontSize: 14,
@@ -384,13 +406,13 @@ const styles = StyleSheet.create({
     color: '#E5E7EB',
   },
   subscribeButton: {
-    backgroundColor: '#374151',
+    backgroundColor: 'rgba(255,255,255,0.2)',
     borderRadius: 12,
     paddingVertical: 14,
     alignItems: 'center',
   },
   subscribeButtonPopular: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
   },
   subscribeButtonText: {
     color: '#FFFFFF',

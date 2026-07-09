@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/api';
@@ -15,26 +15,35 @@ interface Device {
   location?: string;
 }
 
+interface DeviceListResponse {
+  devices?: Device[];
+}
+
+interface RemoveDeviceResult {
+  removed: boolean;
+}
+
 export default function DevicesPage(): React.JSX.Element {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, isLoading: authLoading } = useAuth();
   const router = useRouter();
   const [devices, setDevices] = useState<Device[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    if (authLoading) return;
     if (!isAuthenticated || !user) {
       router.push('/auth/login');
       return;
     }
     loadDevices();
-  }, [isAuthenticated, user, router]);
+  }, [authLoading, isAuthenticated, user, router]);
 
   const loadDevices = async () => {
     try {
-      const response = await apiFetch<any>('/auth/devices');
+      const response = await apiFetch<DeviceListResponse | Device[]>('/auth/devices');
       if (response.success && response.data) {
-        const data = response.data as any;
-        setDevices(Array.isArray(data) ? data : data.devices || []);
+        const data = response.data;
+        setDevices(Array.isArray(data) ? data : (data as DeviceListResponse).devices || []);
       }
     } catch {
       /* ignore */
@@ -46,13 +55,14 @@ export default function DevicesPage(): React.JSX.Element {
   const handleRemove = async (deviceId: string) => {
     if (!confirm('Remove this device?')) return;
     try {
-      await apiFetch<any>(`/auth/devices/${deviceId}`, { method: 'DELETE' });
+      await apiFetch<RemoveDeviceResult>(`/auth/devices/${deviceId}`, { method: 'DELETE' });
       setDevices(devices.filter((d) => d.id !== deviceId));
     } catch {
       /* ignore */
     }
   };
 
+  if (authLoading) return <></>;
   if (!isAuthenticated || !user) return <></>;
 
   const getDeviceIcon = (type: string) => {

@@ -5,6 +5,8 @@ import { RateLimitGuard, RateLimit } from '@azeebo/security';
 
 import { GamesService } from './games.service';
 import { GameResponse } from './interfaces/game-response.interface';
+import { SubmitAnswerDto } from './dto/submit-answer.dto';
+import { StartSessionDto } from './dto/start-session.dto';
 
 @ApiTags('Games')
 @Controller('v1/games')
@@ -27,9 +29,9 @@ export class GamesController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async submitDailyChallenge(
     @Request() req: { user: { sub: string } },
-    @Body() body: { answer: string }
+    @Body() body: SubmitAnswerDto
   ): Promise<GameResponse> {
-    return this.gamesService.submitDailyChallenge(req.user.sub, body.answer);
+    return this.gamesService.submitDailyChallenge(req.user.id, body.answer);
   }
 
   @Get('daily-challenge')
@@ -38,7 +40,7 @@ export class GamesController {
   @ApiResponse({ status: 200, description: 'Daily challenge' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getDailyChallenge(@Request() req: { user: { sub: string } }): Promise<GameResponse> {
-    return this.gamesService.getDailyChallenge(req.user.sub);
+    return this.gamesService.getDailyChallenge(req.user.id);
   }
 
   @Post('sessions')
@@ -48,9 +50,9 @@ export class GamesController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async startSession(
     @Request() req: { user: { sub: string } },
-    @Body() body: { challengeId: string }
+    @Body() body: StartSessionDto
   ): Promise<GameResponse> {
-    return this.gamesService.startSession(req.user.sub, body.challengeId);
+    return this.gamesService.startSession(req.user.id, body.challengeId);
   }
 
   @Post('sessions/:sessionId/submit')
@@ -61,9 +63,9 @@ export class GamesController {
   async submitAnswer(
     @Request() req: { user: { sub: string } },
     @Param('sessionId') sessionId: string,
-    @Body() body: { answer: string }
+    @Body() body: SubmitAnswerDto
   ): Promise<GameResponse> {
-    return this.gamesService.submitAnswer(req.user.sub, sessionId, body.answer);
+    return this.gamesService.submitAnswer(req.user.id, sessionId, body.answer);
   }
 
   @Get('leaderboard')
@@ -91,6 +93,6 @@ export class GamesController {
     @Request() req: { user: { sub: string } },
     @Param('tournamentId') tournamentId: string
   ): Promise<GameResponse> {
-    return this.gamesService.enterTournament(req.user.sub, tournamentId);
+    return this.gamesService.enterTournament(req.user.id, tournamentId);
   }
 }

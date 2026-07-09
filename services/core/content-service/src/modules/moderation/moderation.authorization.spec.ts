@@ -4,33 +4,25 @@ import request from 'supertest';
 import { AuthGuard } from '@nestjs/passport';
 import { ModerationController } from './moderation.controller';
 import { ModerationService } from './moderation.service';
-
-class MockRolesGuard implements CanActivate {
-  canActivate(context: ExecutionContext) {
-    const req = context.switchToHttp().getRequest();
-    const userRole = req.user?.role;
-    if (!userRole) return false;
-    if (userRole === 'admin') return true;
-    return false;
-  }
-}
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { Reflector } from '@nestjs/core';
 
 describe('Moderation Authorization Tests', () => {
   let app: INestApplication;
-  let mockModerationService: Partial<ModerationService>;
+  let mockModerationService: Record<string, jest.Mock>;
 
   beforeEach(async () => {
     mockModerationService = {
       scanContent: jest
         .fn()
         .mockResolvedValue({ success: true, data: { contentId: 'content-1', status: 'scanning' } }),
-      assessContentRisk: jest.fn().mockResolvedValue({ success: true, data: { riskScore: 0.2 } }),
+      getRiskAssessment: jest.fn().mockResolvedValue({ success: true, data: { riskScore: 0.2 } }),
       getContentScans: jest.fn().mockResolvedValue({ success: true, data: [] }),
-      createModerationCase: jest
+      createCase: jest
         .fn()
         .mockResolvedValue({ success: true, data: { caseId: 'case-1' } }),
       getCases: jest.fn().mockResolvedValue({ success: true, data: [], pagination: {} }),
-      getCase: jest.fn().mockResolvedValue({ success: true, data: { id: 'case-1' } }),
+      getCaseById: jest.fn().mockResolvedValue({ success: true, data: { id: 'case-1' } }),
       resolveCase: jest
         .fn()
         .mockResolvedValue({ success: true, data: { caseId: 'case-1', status: 'resolved' } }),
@@ -45,22 +37,25 @@ describe('Moderation Authorization Tests', () => {
           provide: ModerationService,
           useValue: mockModerationService,
         },
+        Reflector,
       ],
     })
       .overrideGuard(AuthGuard('jwt'))
       .useValue({
-        canActivate: jest.fn((context) => {
+        canActivate: jest.fn((context: ExecutionContext) => {
           const req = context.switchToHttp().getRequest();
-          return !!req.user;
+          const role = req.headers['x-user-role'];
+          req.user = { userId: 'user-1', role: role || 'user' };
+          return true;
         }),
       })
-      .overrideGuard(MockRolesGuard)
+      .overrideGuard(RolesGuard)
       .useValue({
-        canActivate: jest.fn((context) => {
+        canActivate: jest.fn((context: ExecutionContext) => {
           const req = context.switchToHttp().getRequest();
-          const userRole = req.user?.role;
-          if (!userRole) return false;
-          if (userRole === 'admin') return true;
+          const role = req.user?.role;
+          if (!role) return false;
+          if (role === 'admin' || role === 'moderator') return true;
           return false;
         }),
       })
@@ -93,33 +88,7 @@ describe('Moderation Authorization Tests', () => {
     });
 
     it('should allow moderator to create moderation case', async () => {
-      const moduleFixture: TestingModule = await Test.createTestingModule({
-        controllers: [ModerationController],
-        providers: [
-          {
-            provide: ModerationService,
-            useValue: mockModerationService,
-          },
-        ],
-      })
-        .overrideGuard(AuthGuard('jwt'))
-        .useValue({
-          canActivate: jest.fn(() => true),
-        })
-        .overrideGuard(MockRolesGuard)
-        .useValue({
-          canActivate: jest.fn((context) => {
-            const req = context.switchToHttp().getRequest();
-            const userRole = req.user?.role;
-            return userRole === 'moderator' || userRole === 'admin';
-          }),
-        })
-        .compile();
-
-      const modApp = moduleFixture.createNestApplication();
-      await modApp.init();
-
-      const response = await request(modApp.getHttpServer())
+      const response = await request(app.getHttpServer())
         .post('/v1/moderation/cases')
         .send({
           contentId: 'content-1',
@@ -129,10 +98,10 @@ describe('Moderation Authorization Tests', () => {
           policyCategory: 'nsfw',
           description: 'Inappropriate content',
         })
-        .set('Authorization', 'Bearer valid-token');
+        .set('Authorization', 'Bearer valid-token')
+        .set('X-User-Role', 'moderator');
 
       expect(response.status).toBe(201);
-      await modApp.close();
     });
 
     it('should deny user access to create moderation case', async () => {
@@ -175,7 +144,7 @@ describe('Moderation Authorization Tests', () => {
     it('should allow admin to resolve moderation case', async () => {
       const response = await request(app.getHttpServer())
         .patch('/v1/moderation/cases/case-1/resolve')
-        .send({ decision: 'approve', note: 'Content is appropriate' })
+        .send({ resolution: 'resolved', notes: 'Content is appropriate' })
         .set('Authorization', 'Bearer valid-token')
         .set('X-User-Role', 'admin');
 
@@ -185,7 +154,7 @@ describe('Moderation Authorization Tests', () => {
     it('should deny creator access to resolve moderation case', async () => {
       const response = await request(app.getHttpServer())
         .patch('/v1/moderation/cases/case-1/resolve')
-        .send({ decision: 'approve', note: 'Content is appropriate' })
+        .send({ resolution: 'resolved', notes: 'Content is appropriate' })
         .set('Authorization', 'Bearer valid-token');
 
       expect(response.status).toBe(403);

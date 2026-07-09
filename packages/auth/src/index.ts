@@ -9,8 +9,8 @@ export type {
   AuthEventType,
   LoginRequest,
   RegisterRequest,
-  TokenStorage,
 } from './auth-client';
+export type { TokenStorage } from '@azeebo/shared-types';
 
 export { ProtectedRoute, ProtectedAuthProvider, useProtectedAuth } from './web/ProtectedRoute';
 export type {

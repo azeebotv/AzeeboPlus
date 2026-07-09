@@ -1,11 +1,11 @@
 'use client';
-import React from 'react';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { Skeleton, ErrorState } from '@azeebo/ui/web';
 import { useAuth } from '../../context/AuthContext';
 import { apiFetch } from '../../lib/api';
 import AppHeader from '../../components/layout/AppHeader';
 import AppFooter from '../../components/layout/AppFooter';
-import { Skeleton } from '@/components/Skeleton';
 
 interface Notification {
   id: string;
@@ -13,65 +13,83 @@ interface Notification {
   title: string;
   message: string;
   timestamp: string;
-  read: boolean;
+  readAt: string | null;
   metadata?: Record<string, unknown>;
 }
 
+interface RawNotification {
+  id: string;
+  type: string;
+  title: string;
+  message: string;
+  timestamp?: string;
+  createdAt?: string;
+  readAt: string | null;
+  metadata?: Record<string, unknown>;
+}
+
+interface NotificationListResponse {
+  notifications?: RawNotification[];
+}
+
+interface MarkReadResult {
+  success: boolean;
+}
+
 export default function NotificationsPage(): React.JSX.Element {
-  const { user } = useAuth();
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { user: _user } = useAuth();
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<'all' | 'unread' | 'mentions'>('all');
 
-  useEffect(() => {
-    const fetchNotifications = async (): Promise<void> => {
-      try {
-        setIsLoading(true);
-        setError(null);
-        const response = await apiFetch<any>('/notifications');
-        if (response.success && response.data) {
-          const notificationsData = Array.isArray(response.data) ? response.data : [];
-          setNotifications(
-            notificationsData.map((n: any) => ({
-              id: String(n.id),
-              type: String(n.type || 'system'),
-              title: String(n.title || ''),
-              message: String(n.message || ''),
-              timestamp: String(n.timestamp || n.createdAt || ''),
-              read: Boolean(n.read),
-              metadata: n.metadata,
-            }))
-          );
-        }
-      } catch (err) {
-        setError('Failed to load notifications');
-      } finally {
-        setIsLoading(false);
+  const {
+    data: notifications = [],
+    isLoading,
+    error,
+    refetch,
+  } = useQuery<Notification[], Error>({
+    queryKey: ['notifications'],
+    queryFn: async () => {
+      const response = await apiFetch<NotificationListResponse | Notification[]>('/notifications');
+      if (response.success && response.data) {
+        const notificationsData = Array.isArray(response.data)
+          ? response.data
+          : (response.data as NotificationListResponse).notifications || [];
+        return notificationsData.map((n: RawNotification) => ({
+          id: String(n.id),
+          type: String(n.type || 'system'),
+          title: String(n.title || ''),
+          message: String(n.message || ''),
+          timestamp: String(n.timestamp || n.createdAt || ''),
+          readAt: n.readAt ?? null,
+          metadata: n.metadata,
+        }));
       }
-    };
-    fetchNotifications();
-  }, []);
+      throw new Error('Failed to load notifications');
+    },
+    staleTime: 60000,
+  });
 
   const markAsRead = useCallback(async (notificationId: string) => {
     try {
-      await apiFetch<any>(`/notifications/${notificationId}/read`, { method: 'PUT' });
-      setNotifications((prev) =>
-        prev.map((n) => (n.id === notificationId ? { ...n, read: true } : n))
+      await apiFetch<MarkReadResult>(`/notifications/${notificationId}/read`, { method: 'PATCH' });
+      queryClient.setQueryData<Notification[]>(['notifications'], (old) =>
+        old?.map((n) => (n.id === notificationId ? { ...n, readAt: new Date().toISOString() } : n))
       );
     } catch (err) {
       /* intentionally minimal */
     }
-  }, []);
+  }, [queryClient]);
 
   const markAllAsRead = useCallback(async () => {
     try {
-      await apiFetch<any>('/notifications/read-all', { method: 'PUT' });
-      setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+      await apiFetch<MarkReadResult>('/notifications/read-all', { method: 'PATCH' });
+      queryClient.setQueryData<Notification[]>(['notifications'], (old) =>
+        old?.map((n) => ({ ...n, readAt: new Date().toISOString() }))
+      );
     } catch (err) {
       /* intentionally minimal */
     }
-  }, []);
+  }, [queryClient]);
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
@@ -91,12 +109,12 @@ export default function NotificationsPage(): React.JSX.Element {
   };
 
   const filteredNotifications = notifications.filter((n) => {
-    if (activeTab === 'unread') return !n.read;
+    if (activeTab === 'unread') return !n.readAt;
     if (activeTab === 'mentions') return n.type === 'mention';
     return true;
   });
 
-  const unreadCount = notifications.filter((n) => !n.read).length;
+  const unreadCount = notifications.filter((n) => !n.readAt).length;
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
@@ -162,18 +180,11 @@ export default function NotificationsPage(): React.JSX.Element {
             ))}
           </div>
         ) : error ? (
-          <div className="az-glass p-8 text-center">
-            <span className="text-4xl mb-4 block">&#x26A0;&#xFE0F;</span>
-            <h3 className="text-lg font-bold text-white mb-2">Error</h3>
-            <p className="text-white/50 text-sm">{error}</p>
-            <button
-              onClick={() => window.location.reload()}
-              className="az-btn-primary mt-4"
-              style={{ width: 'auto', paddingInline: '1.5rem' }}
-            >
-              Try Again
-            </button>
-          </div>
+          <ErrorState
+            title="Failed to load notifications"
+            description={error.message}
+            onButtonPress={() => refetch()}
+          />
         ) : filteredNotifications.length === 0 ? (
           <div className="az-glass p-12 text-center">
             <span className="text-5xl mb-4 block">&#x1F514;</span>
@@ -195,8 +206,8 @@ export default function NotificationsPage(): React.JSX.Element {
                   key={notification.id}
                   role="listitem"
                   onClick={() => markAsRead(notification.id)}
-                  className={`az-glass p-4 flex items-start gap-3 cursor-pointer hover:bg-white/5 transition-colors ${!notification.read ? 'border-l-2' : ''}`}
-                  style={!notification.read ? { borderLeftColor: color } : {}}
+                  className={`az-glass p-4 flex items-start gap-3 cursor-pointer hover:bg-white/5 transition-colors ${!notification.readAt ? 'border-l-2' : ''}`}
+                  style={!notification.readAt ? { borderLeftColor: color } : {}}
                 >
                   <div
                     className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
@@ -206,7 +217,7 @@ export default function NotificationsPage(): React.JSX.Element {
                   </div>
                   <div className="flex-1 min-w-0">
                     <h4
-                      className={`text-sm font-medium ${!notification.read ? 'text-white' : 'text-white/70'}`}
+                      className={`text-sm font-medium ${!notification.readAt ? 'text-white' : 'text-white/70'}`}
                     >
                       {notification.title}
                     </h4>
@@ -217,7 +228,7 @@ export default function NotificationsPage(): React.JSX.Element {
                       {new Date(notification.timestamp).toLocaleString()}
                     </p>
                   </div>
-                  {!notification.read && (
+                  {!notification.readAt && (
                     <div
                       className="w-2 h-2 rounded-full mt-2 flex-shrink-0"
                       style={{ background: '#E8420A' }}

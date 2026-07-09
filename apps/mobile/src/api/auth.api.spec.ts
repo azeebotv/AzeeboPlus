@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
+import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 import { authApi } from './auth';
 import { apiClient } from './client';
 
@@ -26,7 +26,9 @@ describe('Auth API Client', () => {
         },
       };
 
-      (apiClient.post as jest.Mock).mockResolvedValue(mockResponse);
+      (apiClient.post as unknown as jest.MockedFunction<typeof apiClient.post>).mockResolvedValue(
+        mockResponse as never
+      );
 
       const result = await authApi.login('test@example.com', 'password123');
 
@@ -49,7 +51,9 @@ describe('Auth API Client', () => {
         },
       };
 
-      (apiClient.post as jest.Mock).mockResolvedValue(mockResponse);
+      (apiClient.post as unknown as jest.MockedFunction<typeof apiClient.post>).mockResolvedValue(
+        mockResponse as never
+      );
 
       const result = await authApi.register({
         email: 'test@example.com',
@@ -70,7 +74,9 @@ describe('Auth API Client', () => {
     it('should call POST /auth/forgot-password with email', async () => {
       const mockResponse = { success: true, message: 'Password reset email sent' };
 
-      (apiClient.post as jest.Mock).mockResolvedValue(mockResponse);
+      (apiClient.post as unknown as jest.MockedFunction<typeof apiClient.post>).mockResolvedValue(
+        mockResponse as never
+      );
 
       const result = await authApi.forgotPassword('test@example.com');
 
@@ -85,7 +91,9 @@ describe('Auth API Client', () => {
     it('should call POST /auth/reset-password with token and new password', async () => {
       const mockResponse = { success: true, message: 'Password reset successfully' };
 
-      (apiClient.post as jest.Mock).mockResolvedValue(mockResponse);
+      (apiClient.post as unknown as jest.MockedFunction<typeof apiClient.post>).mockResolvedValue(
+        mockResponse as never
+      );
 
       const result = await authApi.resetPassword('test-token', 'newPassword123');
 
@@ -101,7 +109,9 @@ describe('Auth API Client', () => {
     it('should call POST /auth/verify-email with token', async () => {
       const mockResponse = { success: true, message: 'Email verified successfully' };
 
-      (apiClient.post as jest.Mock).mockResolvedValue(mockResponse);
+      (apiClient.post as unknown as jest.MockedFunction<typeof apiClient.post>).mockResolvedValue(
+        mockResponse as never
+      );
 
       const result = await authApi.verifyEmail('test-token');
 
@@ -114,7 +124,9 @@ describe('Auth API Client', () => {
     it('should call POST /auth/resend-verification with email', async () => {
       const mockResponse = { success: true, message: 'Verification email sent' };
 
-      (apiClient.post as jest.Mock).mockResolvedValue(mockResponse);
+      (apiClient.post as unknown as jest.MockedFunction<typeof apiClient.post>).mockResolvedValue(
+        mockResponse as never
+      );
 
       const result = await authApi.resendVerification('test@example.com');
 
@@ -132,7 +144,9 @@ describe('Auth API Client', () => {
         data: { id: '1', email: 'test@example.com', name: 'Test User', role: 'user' },
       };
 
-      (apiClient.get as jest.Mock).mockResolvedValue(mockResponse);
+      (apiClient.get as unknown as jest.MockedFunction<typeof apiClient.get>).mockResolvedValue(
+        mockResponse as never
+      );
 
       const result = await authApi.getProfile();
 
@@ -152,7 +166,9 @@ describe('Auth API Client', () => {
         },
       };
 
-      (apiClient.post as jest.Mock).mockResolvedValue(mockResponse);
+      (apiClient.post as unknown as jest.MockedFunction<typeof apiClient.post>).mockResolvedValue(
+        mockResponse as never
+      );
 
       const result = await authApi.verifyOTP('123456');
 
@@ -165,7 +181,9 @@ describe('Auth API Client', () => {
     it('should call POST /auth/otp/send', async () => {
       const mockResponse = { success: true, message: 'OTP sent' };
 
-      (apiClient.post as jest.Mock).mockResolvedValue(mockResponse);
+      (apiClient.post as unknown as jest.MockedFunction<typeof apiClient.post>).mockResolvedValue(
+        mockResponse as never
+      );
 
       const result = await authApi.resendOTP();
 

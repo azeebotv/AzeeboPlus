@@ -1,22 +1,10 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
-
-export interface PollOptionInput {
-  text: string;
-  imageUrl?: string;
-}
-
-export interface CreatePollInput {
-  title: string;
-  description?: string;
-  coverImage?: string;
-  status?: string;
-  expiresAt?: string;
-  options: PollOptionInput[];
-}
+import { CreatePollDto, PollOptionDto } from './dto/create-poll.dto';
 
 @Injectable()
 export class PollService {
+  private readonly logger = new Logger(PollService.name);
   constructor(private prisma: PrismaService) {}
 
   async getPolls(page = 1, limit = 20, status?: string) {
@@ -24,27 +12,32 @@ export class PollService {
     const where: Record<string, unknown> = {};
     if (status) where.status = status;
 
-    const [polls, total] = await Promise.all([
-      this.prisma.poll.findMany({
-        where,
-        include: {
-          createdBy: { select: { displayName: true, avatarUrl: true } },
-          options: { orderBy: { voteCount: 'desc' } },
-        },
-        orderBy: { createdAt: 'desc' },
-        skip,
-        take: limit,
-      }),
-      this.prisma.poll.count({ where }),
-    ]);
+    try {
+      const [polls, total] = await Promise.all([
+        this.prisma.poll.findMany({
+          where,
+          include: {
+            createdBy: { select: { displayName: true, avatarUrl: true } },
+            options: { orderBy: { voteCount: 'desc' } },
+          },
+          orderBy: { createdAt: 'desc' },
+          skip,
+          take: limit,
+        }),
+        this.prisma.poll.count({ where }),
+      ]);
 
-    return {
-      success: true,
-      data: {
-        polls,
-        pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
-      },
-    };
+      return {
+        success: true,
+        data: {
+          polls,
+          pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+        },
+      };
+    } catch (error) {
+      this.logger.error(`Failed to fetch polls: ${error}`);
+      return { success: false, error: { code: 'FETCH_ERROR', message: 'Failed to fetch polls' } };
+    }
   }
 
   async getPoll(id: string) {
@@ -63,32 +56,37 @@ export class PollService {
     return { success: true, data: { poll } };
   }
 
-  async createPoll(userId: string, data: CreatePollInput) {
+  async createPoll(userId: string, data: CreatePollDto) {
     const slug = data.title
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/(^-|-$)/g, '');
 
-    const poll = await this.prisma.poll.create({
-      data: {
-        title: data.title,
-        slug,
-        description: data.description,
-        coverImage: data.coverImage,
-        status: data.status || 'draft',
-        expiresAt: data.expiresAt ? new Date(data.expiresAt) : null,
-        createdById: userId,
-        options: {
-          create: data.options.map((option: PollOptionInput) => ({
-            text: option.text,
-            imageUrl: option.imageUrl,
-          })),
+    try {
+      const poll = await this.prisma.poll.create({
+        data: {
+          title: data.title,
+          slug,
+          description: data.description,
+          coverImage: data.coverImage,
+          status: data.status || 'draft',
+          expiresAt: data.expiresAt ? new Date(data.expiresAt) : null,
+          createdById: userId,
+          options: {
+            create: data.options.map((option: PollOptionDto) => ({
+              text: option.text,
+              imageUrl: option.imageUrl,
+            })),
+          },
         },
-      },
-      include: { options: true },
-    });
+        include: { options: true },
+      });
 
-    return { success: true, data: { poll } };
+      return { success: true, data: { poll } };
+    } catch (error) {
+      this.logger.error(`Failed to create poll: ${error}`);
+      return { success: false, error: { code: 'CREATE_ERROR', message: 'Failed to create poll' } };
+    }
   }
 
   async votePoll(pollId: string, userId: string, optionId: string) {
@@ -122,22 +120,27 @@ export class PollService {
       throw new NotFoundException('Option not found');
     }
 
-    await this.prisma.$transaction(async (tx) => {
-      await tx.pollVote.create({
-        data: { pollId, optionId, userId },
+    try {
+      await this.prisma.$transaction(async (tx) => {
+        await tx.pollVote.create({
+          data: { pollId, optionId, userId },
+        });
+
+        await tx.pollOption.update({
+          where: { id: optionId },
+          data: { voteCount: { increment: 1 } },
+        });
+
+        await tx.poll.update({
+          where: { id: pollId },
+          data: { totalVotes: { increment: 1 } },
+        });
       });
 
-      await tx.pollOption.update({
-        where: { id: optionId },
-        data: { voteCount: { increment: 1 } },
-      });
-
-      await tx.poll.update({
-        where: { id: pollId },
-        data: { totalVotes: { increment: 1 } },
-      });
-    });
-
-    return { success: true, data: { message: 'Vote recorded' } };
+      return { success: true, data: { message: 'Vote recorded' } };
+    } catch (error) {
+      this.logger.error(`Failed to record vote: ${error}`);
+      return { success: false, error: { code: 'VOTE_ERROR', message: 'Failed to record vote' } };
+    }
   }
 }

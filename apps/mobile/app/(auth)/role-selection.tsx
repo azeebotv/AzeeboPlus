@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-// import { authApi } from '@/src/api/auth';
+import { authApi } from '../../src/api';
 
 export default function RoleSelectionScreen() {
   const [isLoading, setIsLoading] = useState(false);
@@ -12,13 +13,7 @@ export default function RoleSelectionScreen() {
     setIsLoading(true);
     setError(null);
     try {
-      // In a real app, you would send this to your backend to set the user's role
-      // For now, we'll just store it locally and navigate to profile setup
-      // await api.auth.setRole({ role });
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Navigate to profile setup
+      await authApi.selectRole(role);
       router.replace('/(auth)/profile-setup' as never);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to select role');
@@ -29,18 +24,18 @@ export default function RoleSelectionScreen() {
 
   if (isLoading) {
     return (
-      <View style={styles.container}>
+      <SafeAreaView style={styles.container}>
         <Text style={styles.loadingText}>Loading...</Text>
-      </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Select Your Role</Text>
+        <Text style={styles.title}>Select Your Azeebo+ Role</Text>
         <Text style={styles.subtitle}>
-          Are you here to watch content, create content, or both?
+          Your curated home for Nigerian contents, community and creation.
         </Text>
       </View>
 
@@ -51,11 +46,12 @@ export default function RoleSelectionScreen() {
           disabled={isLoading}
         >
           <View style={styles.optionIcon}>
-            <Text style={styles.iconText}>👀</Text>
+            <Text style={styles.iconText}>👨‍👩‍👧‍👦</Text>
           </View>
           <View style={styles.optionText}>
-            <Text style={styles.optionTitle}>Viewer</Text>
-            <Text style={styles.optionDescription}>Watch shows, vote, and enjoy content</Text>
+            <Text style={styles.optionTitle}>Regular User</Text>
+            <Text style={styles.optionDescription}>Enjoy premium Nigerian contents</Text>
+            <Text style={styles.optionSub}>Discover music, movie, creator and entertainment</Text>
           </View>
         </Pressable>
 
@@ -65,11 +61,12 @@ export default function RoleSelectionScreen() {
           disabled={isLoading}
         >
           <View style={styles.optionIcon}>
-            <Text style={styles.iconText}>🎥</Text>
+            <Text style={styles.iconText}>🎬</Text>
           </View>
           <View style={styles.optionText}>
             <Text style={styles.optionTitle}>Creator</Text>
-            <Text style={styles.optionDescription}>Upload content, engage with fans, and earn</Text>
+            <Text style={styles.optionDescription}>Build your audience and brand</Text>
+            <Text style={styles.optionSub}>Showcase your talent, reach millions and connect</Text>
           </View>
         </Pressable>
 
@@ -79,11 +76,12 @@ export default function RoleSelectionScreen() {
           disabled={isLoading}
         >
           <View style={styles.optionIcon}>
-            <Text style={styles.iconText}>👀🎥</Text>
+            <Text style={styles.iconText}>💻</Text>
           </View>
           <View style={styles.optionText}>
-            <Text style={styles.optionTitle}>Both</Text>
-            <Text style={styles.optionDescription}>Watch and create content</Text>
+            <Text style={styles.optionTitle}>Creator & User</Text>
+            <Text style={styles.optionDescription}>Experience the best of both worlds</Text>
+            <Text style={styles.optionSub}>Consume content and create your journey</Text>
           </View>
         </Pressable>
       </View>
@@ -93,14 +91,14 @@ export default function RoleSelectionScreen() {
           <Text style={styles.errorText}>{error}</Text>
         </View>
       )}
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#1A0A0A',
     padding: 24,
     justifyContent: 'center',
   },
@@ -111,17 +109,17 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: '600',
-    color: '#111827',
+    color: '#FFFFFF',
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: '#6b7280',
+    color: '#9A8A7A',
     textAlign: 'center',
   },
   loadingText: {
     fontSize: 18,
-    color: '#6b7280',
+    color: '#9A8A7A',
     textAlign: 'center',
   },
   options: {
@@ -130,11 +128,11 @@ const styles = StyleSheet.create({
   optionButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f9fafb',
+    backgroundColor: 'rgba(255,255,255,0.05)',
     borderRadius: 12,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: 'rgba(255,255,255,0.1)',
   },
   optionButtonDisabled: {
     opacity: 0.6,
@@ -155,7 +153,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
-    backgroundColor: '#fff',
+    backgroundColor: 'rgba(255,255,255,0.08)',
   },
   iconText: {
     fontSize: 20,
@@ -166,23 +164,28 @@ const styles = StyleSheet.create({
   optionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#111827',
+    color: '#FFFFFF',
     marginBottom: 4,
   },
   optionDescription: {
     fontSize: 14,
-    color: '#6b7280',
+    color: '#F5F0EB',
+  },
+  optionSub: {
+    fontSize: 12,
+    color: '#9A8A7A',
+    marginTop: 2,
   },
   error: {
     marginTop: 24,
     padding: 16,
-    backgroundColor: '#fee2e2',
+    backgroundColor: 'rgba(220,38,38,0.15)',
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#fecaca',
+    borderColor: 'rgba(220,38,38,0.3)',
   },
   errorText: {
-    color: '#dc2626',
+    color: '#EF4444',
     textAlign: 'center',
   },
 });

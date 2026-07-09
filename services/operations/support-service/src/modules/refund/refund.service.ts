@@ -4,6 +4,9 @@ import { PrismaService } from '../database/prisma.service';
 import { Prisma } from '@prisma/client';
 import { createApiClient, ApiClient, noopTokenStorage } from '@azeebo/api-client';
 
+// NOTE: All API clients below use noopTokenStorage for inter-service communication.
+// This should be replaced with proper service-to-service auth tokens (e.g., JWT or
+// shared secret via ServiceAuthGuard) to ensure authenticated and authorized requests.
 @Injectable()
 export class RefundService {
   private readonly logger = new Logger(RefundService.name);
@@ -102,12 +105,35 @@ export class RefundService {
   }
 
   async processRefund(id: string, processedBy: string, refundReference: string) {
-    const refund = await this.prisma.refund.findUnique({
-      where: { id },
+    const refund = await this.prisma.$transaction(async (tx) => {
+      const locked = await tx.$queryRaw<
+        { id: string; status: string }[]
+      >`SELECT id, status FROM "Refund" WHERE id = ${id} FOR UPDATE`;
+
+      if (!locked || locked.length === 0) {
+        throw new NotFoundException('Refund not found');
+      }
+
+      if (locked[0].status === 'COMPLETED') {
+        this.logger.log(`Refund ${id} already processed, skipping (idempotent)`);
+        return tx.refund.findUnique({ where: { id } });
+      }
+
+      await tx.refund.update({
+        where: { id },
+        data: { status: 'PROCESSING' },
+      });
+
+      return tx.refund.findUnique({ where: { id } });
     });
 
     if (!refund) {
       throw new NotFoundException('Refund not found');
+    }
+
+    if (refund.status === 'COMPLETED') {
+      this.logger.log(`Refund ${id} already processed, skipping (idempotent)`);
+      return refund;
     }
 
     try {
@@ -132,7 +158,7 @@ export class RefundService {
       this.logger.log(
         `Refund processed: payment ${refund.paymentId}, wallet txn: ${walletData?.id}`
       );
-    } catch (error) {
+    } catch (_err) {
       this.logger.error(`Failed to process refund ${id}: ${(error as Error).message}`);
       throw new BadRequestException('Failed to process refund');
     }
@@ -183,7 +209,7 @@ export class RefundService {
         ...event,
         timestamp: new Date().toISOString(),
       });
-    } catch (error) {
+    } catch (_err) {
       this.logger.error(`Failed to create audit event: ${(error as Error).message}`);
     }
   }
@@ -222,7 +248,7 @@ export class RefundService {
           priority: 'high',
         });
       }
-    } catch (error) {
+    } catch (_err) {
       this.logger.error(`Failed to send refund notification: ${(error as Error).message}`);
     }
   }

@@ -1,5 +1,6 @@
-import { Controller, Get, Post, Patch, Body, Param, Query, Request } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Body, Param, Query, Request, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
+import { RateLimitGuard, RateLimit, AdminGuard } from '@azeebo/security';
 import { TicketService } from './ticket.service';
 import { CreateTicketDto, AddMessageDto, TicketQueryDto, UpdateStatusDto } from './dto/ticket.dto';
 import { ApiResponseWrapper } from '@azeebo/shared-types';
@@ -12,11 +13,13 @@ interface AuthenticatedRequest {
 }
 
 @ApiTags('Support Tickets')
-@Controller('support')
+@Controller('support/tickets')
 export class TicketController {
   constructor(private ticketService: TicketService) {}
 
-  @Post('tickets')
+  @Post('/')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(5, 3600000)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Create a new support ticket' })
   async createTicket(@Request() req: AuthenticatedRequest, @Body() dto: CreateTicketDto) {
@@ -31,7 +34,8 @@ export class TicketController {
     return ApiResponseWrapper.success({ ticket });
   }
 
-  @Get('tickets')
+  @Get('/')
+  @UseGuards(AdminGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get all tickets (admin)' })
   async getTickets(@Query() query: TicketQueryDto) {
@@ -44,7 +48,7 @@ export class TicketController {
     );
   }
 
-  @Get('tickets/my')
+  @Get('/my')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get my support tickets' })
   async getMyTickets(@Request() req: AuthenticatedRequest, @Query() query: TicketQueryDto) {
@@ -57,18 +61,22 @@ export class TicketController {
     );
   }
 
-  @Get('tickets/:id')
+  @Get('/:id')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get ticket by ID' })
-  async getTicket(@Param('id') id: string) {
+  async getTicket(@Request() req: AuthenticatedRequest, @Param('id') id: string) {
     const ticket = await this.ticketService.getTicketById(id);
     if (!ticket) {
       return ApiResponseWrapper.error('TICKET_NOT_FOUND', 'Support ticket not found');
     }
+    if (ticket.userId !== req.user.id && req.user.role?.toLowerCase() !== 'admin') {
+      return ApiResponseWrapper.error('FORBIDDEN', 'You do not have access to this ticket');
+    }
     return ApiResponseWrapper.success({ ticket });
   }
 
-  @Patch('tickets/:id/status')
+  @Patch('/:id/status')
+  @UseGuards(AdminGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Update ticket status (admin)' })
   async updateStatus(@Param('id') id: string, @Body() dto: UpdateStatusDto) {
@@ -76,7 +84,7 @@ export class TicketController {
     return ApiResponseWrapper.success({ ticket });
   }
 
-  @Post('tickets/:id/messages')
+  @Post('/:id/messages')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Add message to ticket' })
   async addMessage(
@@ -84,18 +92,20 @@ export class TicketController {
     @Param('id') id: string,
     @Body() dto: AddMessageDto
   ) {
-    const senderType = req.user.role === 'admin' ? 'ADMIN' : 'USER';
+    const senderType = req.user.role === 'admin' || req.user.role === 'ADMIN' ? 'ADMIN' : 'USER';
+    const isInternal = req.user.role === 'admin' || req.user.role === 'ADMIN' ? dto.isInternal : false;
     const message = await this.ticketService.addMessage(
       id,
       req.user.id,
       senderType,
       dto.message,
-      dto.isInternal
+      isInternal
     );
     return ApiResponseWrapper.success({ message });
   }
 
-  @Post('tickets/:id/assign')
+  @Post('/:id/assign')
+  @UseGuards(AdminGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Assign ticket to admin (admin)' })
   async assignTicket(@Param('id') id: string, @Body('assignedTo') assignedTo: string) {
@@ -103,7 +113,8 @@ export class TicketController {
     return ApiResponseWrapper.success({ ticket });
   }
 
-  @Post('tickets/:id/escalate')
+  @Post('/:id/escalate')
+  @UseGuards(AdminGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Escalate ticket (admin)' })
   async escalateTicket(@Param('id') id: string) {
@@ -111,7 +122,8 @@ export class TicketController {
     return ApiResponseWrapper.success({ ticket });
   }
 
-  @Post('tickets/:id/close')
+  @Post('/:id/close')
+  @UseGuards(AdminGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Close ticket (admin)' })
   async closeTicket(@Param('id') id: string) {

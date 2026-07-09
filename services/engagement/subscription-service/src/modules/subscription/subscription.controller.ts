@@ -11,11 +11,12 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
-import { RateLimitGuard, RateLimit } from '@azeebo/security';
+import { RateLimitGuard, RateLimit, AdminGuard } from '@azeebo/security';
 
 import { SubscriptionService } from './subscription.service';
 import { CreateSubscriptionPlanDto } from './dto/create-subscription-plan.dto';
 import { SubscribeToPlanDto } from './dto/subscribe-to-plan.dto';
+import type { SubscriptionPlan, Subscription } from '../../prisma/client';
 
 interface AuthenticatedRequest {
   user: {
@@ -29,28 +30,33 @@ export class SubscriptionController {
   constructor(private readonly subscriptionService: SubscriptionService) {}
 
   @Get('plans')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(30, 60000)
   @ApiOperation({ summary: 'Get all subscription plans' })
   @ApiResponse({ status: 200, description: 'List of subscription plans' })
-  async getPlans(): Promise<any> {
+  async getPlans(): Promise<SubscriptionPlan[]> {
     return this.subscriptionService.getPlans();
   }
 
   @Get('plans/:id')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(30, 60000)
   @ApiOperation({ summary: 'Get subscription plan by ID' })
   @ApiResponse({ status: 200, description: 'Subscription plan details' })
   @ApiResponse({ status: 404, description: 'Plan not found' })
-  async getPlanById(@Param('id') id: string): Promise<any> {
+  async getPlanById(@Param('id') id: string): Promise<SubscriptionPlan> {
     return this.subscriptionService.getPlanById(id);
   }
 
   @Post('plans')
-  @UseGuards(AuthGuard('jwt'), RateLimitGuard)
+  @UseGuards(AuthGuard('jwt'), AdminGuard, RateLimitGuard)
   @RateLimit(5, 3600000)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Create a new subscription plan (admin)' })
+  @ApiOperation({ summary: 'Create a new subscription plan (admin only)' })
   @ApiResponse({ status: 201, description: 'Plan created' })
   @ApiResponse({ status: 400, description: 'Invalid input' })
-  async createPlan(@Body() dto: CreateSubscriptionPlanDto): Promise<any> {
+  @ApiResponse({ status: 403, description: 'Forbidden - admin only' })
+  async createPlan(@Body() dto: CreateSubscriptionPlanDto): Promise<SubscriptionPlan> {
     return this.subscriptionService.createPlan(dto);
   }
 
@@ -65,8 +71,8 @@ export class SubscriptionController {
   async subscribe(
     @Request() req: AuthenticatedRequest,
     @Body() dto: SubscribeToPlanDto
-  ): Promise<any> {
-    return this.subscriptionService.subscribe(req.user.sub, dto);
+  ): Promise<Subscription> {
+    return this.subscriptionService.subscribe(req.user.id, dto);
   }
 
   @Get('current')
@@ -75,8 +81,8 @@ export class SubscriptionController {
   @ApiOperation({ summary: 'Get current user subscription' })
   @ApiResponse({ status: 200, description: 'Current subscription' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getCurrentSubscription(@Request() req: AuthenticatedRequest): Promise<any> {
-    return this.subscriptionService.getCurrentSubscription(req.user.sub);
+  async getCurrentSubscription(@Request() req: AuthenticatedRequest): Promise<Subscription | null> {
+    return this.subscriptionService.getCurrentSubscription(req.user.id);
   }
 
   @Delete(':id')
@@ -90,8 +96,8 @@ export class SubscriptionController {
   async cancelSubscription(
     @Request() req: AuthenticatedRequest,
     @Param('id') id: string
-  ): Promise<any> {
-    return this.subscriptionService.cancelSubscription(req.user.sub, id);
+  ): Promise<Subscription> {
+    return this.subscriptionService.cancelSubscription(req.user.id, id);
   }
 
   @Get('history')
@@ -104,11 +110,17 @@ export class SubscriptionController {
     @Request() req: AuthenticatedRequest,
     @Query('page') page = 1,
     @Query('limit') limit = 20
-  ): Promise<any> {
+  ): Promise<{
+    subscriptions: Subscription[];
+    pagination: { page: number; limit: number; total: number; totalPages: number };
+  }> {
+    const safePage = Math.max(1, Math.floor(Number(page) || 1));
+    const safeLimit = Math.min(100, Math.max(1, Math.floor(Number(limit) || 20)));
+
     return this.subscriptionService.getSubscriptionHistory(
-      req.user.sub,
-      Number(page),
-      Number(limit)
+      req.user.id,
+      safePage,
+      safeLimit
     );
   }
 }

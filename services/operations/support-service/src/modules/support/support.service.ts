@@ -7,6 +7,8 @@ interface CreateTicketInput {
   priority: 'low' | 'medium' | 'high';
 }
 
+// NOTE: Legacy service — duplicates ticket.service.ts functionality.
+// Should be consolidated into the canonical ticket module and removed.
 @Injectable()
 export class SupportService {
   constructor(private readonly supportRepository: SupportRepository) {}

@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsEnum } from 'class-validator';
+import { IsString, IsOptional, IsEnum, IsNotEmpty, IsNumber } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export enum ShowStatus {
@@ -11,6 +11,7 @@ export enum ShowStatus {
 export class CreateShowDto {
   @ApiProperty()
   @IsString()
+  @IsNotEmpty()
   title!: string;
 
   @ApiProperty({ required: false })
@@ -20,6 +21,7 @@ export class CreateShowDto {
 
   @ApiProperty()
   @IsString()
+  @IsNotEmpty()
   thumbnail!: string;
 
   @ApiProperty({ required: false })
@@ -29,6 +31,7 @@ export class CreateShowDto {
 
   @ApiProperty()
   @IsString()
+  @IsNotEmpty()
   universeId!: string;
 }
 
@@ -62,10 +65,11 @@ export class UpdateShowDto {
 export class CreateEpisodeDto {
   @ApiProperty()
   @IsString()
+  @IsNotEmpty()
   title!: string;
 
   @ApiProperty()
-  @IsString()
+  @IsNumber()
   number!: number;
 
   @ApiProperty({ required: false })
@@ -122,10 +126,11 @@ export class UpdateEpisodeDto {
 export class CreateSeasonDto {
   @ApiProperty()
   @IsString()
+  @IsNotEmpty()
   title!: string;
 
   @ApiProperty()
-  @IsString()
+  @IsNumber()
   number!: number;
 
   @ApiProperty({ required: false })
@@ -145,6 +150,7 @@ export class CreateSeasonDto {
 export class CreateContestantDto {
   @ApiProperty()
   @IsString()
+  @IsNotEmpty()
   name!: string;
 
   @ApiProperty({ required: false })

@@ -60,7 +60,7 @@ export class ChallengeController {
     @Request() req: { user: { sub: string } },
     @Body() data: CreateChallengeInput
   ) {
-    return this.challengeService.createChallenge(req.user.sub, data);
+    return this.challengeService.createChallenge(req.user.id, data);
   }
 
   @Post(':id/submit')
@@ -75,7 +75,7 @@ export class ChallengeController {
     @Param('id') challengeId: string,
     @Body() data: ChallengeSubmissionInput
   ) {
-    return this.challengeService.submitToChallenge(challengeId, req.user.sub, data);
+    return this.challengeService.submitToChallenge(challengeId, req.user.id, data);
   }
 
   @Post('submissions/:id/vote')
@@ -88,6 +88,6 @@ export class ChallengeController {
     @Request() req: { user: { sub: string } },
     @Param('id') submissionId: string
   ) {
-    return this.challengeService.voteSubmission(submissionId, req.user.sub);
+    return this.challengeService.voteSubmission(submissionId, req.user.id);
   }
 }

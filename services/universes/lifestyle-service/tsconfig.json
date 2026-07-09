@@ -9,6 +9,7 @@
     "sourceMap": true,
     "outDir": "./dist",
     "incremental": true,
+    "types": ["jest", "node"],
     "paths": {
       "@prisma/client": ["./src/prisma/client"],
       "@azeebo/*": ["../../../packages/*/dist"],

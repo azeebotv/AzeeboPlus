@@ -1,9 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useQuery } from '@tanstack/react-query';
 import { LoadingState, EmptyState, ErrorState } from '../src/components/StateContainers';
 import { apiClient } from '../src/api/client';
+import { ApiResponse } from '../src/types/api';
+
+type ListResponse<T> = T[] | ApiResponse<T[]>;
 
 interface LiveMatch {
   id: string;
@@ -38,204 +42,224 @@ export default function SportsUniverseHome() {
   const colorScheme = useColorScheme();
   const router = useRouter();
   const isDark = colorScheme === 'dark';
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [liveMatches, setLiveMatches] = useState<LiveMatch[]>([]);
-  const [upcomingMatches, setUpcomingMatches] = useState<UpcomingMatch[]>([]);
-  const [categories, setCategories] = useState<SportCategory[]>([]);
-  const [predictionLeagues, setPredictionLeagues] = useState<PredictionLeague[]>([]);
 
-  const fetchData = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const [liveRes, upcomingRes, catsRes, leaguesRes] = await Promise.all([
-        apiClient.get<any>('/v1/sports/live'),
-        apiClient.get<any>('/v1/sports/upcoming'),
-        apiClient.get<any>('/v1/sports/categories'),
-        apiClient.get<any>('/v1/sports/prediction-leagues'),
-      ]);
-      setLiveMatches(Array.isArray(liveRes) ? liveRes : (liveRes?.data ?? []));
-      setUpcomingMatches(Array.isArray(upcomingRes) ? upcomingRes : (upcomingRes?.data ?? []));
-      setCategories(Array.isArray(catsRes) ? catsRes : (catsRes?.data ?? []));
-      setPredictionLeagues(Array.isArray(leaguesRes) ? leaguesRes : (leaguesRes?.data ?? []));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const liveQuery = useQuery({
+    queryKey: ['sports', 'live'],
+    queryFn: async () => {
+      const res = await apiClient.get<ListResponse<LiveMatch>>('/v1/sports/live');
+      return Array.isArray(res) ? res : (res?.data ?? []);
+    },
+    staleTime: 30_000,
+  });
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  const upcomingQuery = useQuery({
+    queryKey: ['sports', 'upcoming'],
+    queryFn: async () => {
+      const res = await apiClient.get<ListResponse<UpcomingMatch>>('/v1/sports/upcoming');
+      return Array.isArray(res) ? res : (res?.data ?? []);
+    },
+    staleTime: 60_000,
+  });
 
-  if (isLoading) return <LoadingState text="Loading sports events..." />;
-  if (error) return <ErrorState description={error} onRetry={fetchData} />;
+  const categoriesQuery = useQuery({
+    queryKey: ['sports', 'categories'],
+    queryFn: async () => {
+      const res = await apiClient.get<ListResponse<SportCategory>>('/v1/sports/categories');
+      return Array.isArray(res) ? res : (res?.data ?? []);
+    },
+    staleTime: 60_000,
+  });
+
+  const leaguesQuery = useQuery({
+    queryKey: ['sports', 'prediction-leagues'],
+    queryFn: async () => {
+      const res = await apiClient.get<ListResponse<PredictionLeague>>('/v1/sports/prediction-leagues');
+      return Array.isArray(res) ? res : (res?.data ?? []);
+    },
+    staleTime: 60_000,
+  });
+
+  const isLoading = liveQuery.isLoading || upcomingQuery.isLoading || categoriesQuery.isLoading || leaguesQuery.isLoading;
+  const error = liveQuery.error?.message || upcomingQuery.error?.message || categoriesQuery.error?.message || leaguesQuery.error?.message;
+
+  const liveMatches = liveQuery.data ?? [];
+  const upcomingMatches = upcomingQuery.data ?? [];
+  const categories = categoriesQuery.data ?? [];
+  const predictionLeagues = leaguesQuery.data ?? [];
+
+  if (isLoading) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+        <LoadingState text="Loading sports events..." />
+      </SafeAreaView>
+    );
+  }
+  if (error) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+        <ErrorState
+          description={error}
+          onRetry={() => {
+            liveQuery.refetch();
+            upcomingQuery.refetch();
+            categoriesQuery.refetch();
+            leaguesQuery.refetch();
+          }}
+        />
+      </SafeAreaView>
+    );
+  }
   if (!liveMatches.length && !upcomingMatches.length) {
     return (
-      <EmptyState
-        icon="⚽"
-        title="No events available"
-        description="Check back later for sports events"
-      />
+      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+        <EmptyState
+          icon="⚽"
+          title="No events available"
+          description="Check back later for sports events"
+        />
+      </SafeAreaView>
     );
   }
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: isDark ? '#0a0a0a' : '#ffffff' }]}>
-      <View style={styles.header}>
-        <Text style={styles.universeLabel}>⚽ Sports</Text>
-        <Text style={[styles.headerTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
-          Sports Universe
-        </Text>
-      </View>
-
-      <View style={styles.categoryScroll}>
-        {categories.map((cat) => (
-          <TouchableOpacity key={cat.id} style={styles.categoryChip}>
-            <Text style={styles.categoryEmoji}>{cat.emoji}</Text>
-            <Text style={styles.categoryName}>{cat.name}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      <View style={styles.liveSection}>
-        <View style={styles.liveHeader}>
-          <View style={styles.liveDot} />
-          <Text style={styles.liveText}>LIVE NOW</Text>
-        </View>
-        <View style={styles.liveMatches}>
-          {liveMatches.map((match) => (
-            <TouchableOpacity
-              key={match.id}
-              style={[styles.matchCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
-              onPress={() => router.push('/sports/prediction')}
-            >
-              <View style={styles.matchLeague}>
-                <Text style={styles.leagueName}>{match.league}</Text>
-                <View style={styles.liveBadge}>
-                  <View style={styles.liveIndicator} />
-                  <Text style={styles.liveBadgeText}>{match.time}</Text>
-                </View>
-              </View>
-              <View style={styles.matchTeams}>
-                <View style={styles.teamInfo}>
-                  <Text style={styles.teamEmoji}>🔵</Text>
-                  <Text style={[styles.teamName, { color: isDark ? '#fff' : '#000' }]}>
-                    {match.home}
-                  </Text>
-                </View>
-                <View style={styles.scoreDisplay}>
-                  <Text style={[styles.scoreText, { color: isDark ? '#fff' : '#000' }]}>
-                    {match.score}
-                  </Text>
-                </View>
-                <View style={[styles.teamInfo, styles.teamInfoRight]}>
-                  <Text style={[styles.teamName, { color: isDark ? '#fff' : '#000' }]}>
-                    {match.away}
-                  </Text>
-                  <Text style={styles.teamEmoji}>🔴</Text>
-                </View>
-              </View>
-              <View style={styles.matchActions}>
-                <TouchableOpacity style={styles.watchButton}>
-                  <Text style={styles.watchButtonText}>Watch Live</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.predictButton}>
-                  <Text style={styles.predictButtonText}>Predict</Text>
-                </TouchableOpacity>
-              </View>
-            </TouchableOpacity>
-          ))}
-        </View>
-      </View>
-
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
-            Upcoming Matches
-          </Text>
-          <TouchableOpacity>
-            <Text style={styles.seeAllText}>See All</Text>
-          </TouchableOpacity>
-        </View>
-        <View style={styles.upcomingList}>
-          {upcomingMatches.map((match) => (
-            <TouchableOpacity
-              key={match.id}
-              style={[styles.upcomingCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
-              onPress={() => router.push('/sports/prediction')}
-            >
-              <Text style={styles.upcomingEmoji}>{match.emoji}</Text>
-              <View style={styles.upcomingInfo}>
-                <Text style={[styles.upcomingTeams, { color: isDark ? '#fff' : '#000' }]}>
-                  {match.home} vs {match.away}
-                </Text>
-                <Text style={styles.upcomingDate}>{match.date}</Text>
-                <Text style={styles.upcomingLeague}>{match.league}</Text>
-              </View>
-              <TouchableOpacity style={styles.remindButton}>
-                <Text style={styles.remindIcon}>🔔</Text>
-              </TouchableOpacity>
-            </TouchableOpacity>
-          ))}
-        </View>
-      </View>
-
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
-            Prediction Leagues
+    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+      <ScrollView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+        <View style={styles.header}>
+          <Text style={styles.universeLabel}>⚽ Sports</Text>
+          <Text style={[styles.headerTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
+            Sports Universe
           </Text>
         </View>
-        <View style={styles.predictionList}>
-          {predictionLeagues.map((league) => (
-            <TouchableOpacity
-              key={league.id}
-              style={[styles.predictionCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
-              onPress={() => router.push('/sports/prediction')}
-            >
-              <View style={styles.predictionInfo}>
-                <Text style={[styles.predictionName, { color: isDark ? '#fff' : '#000' }]}>
-                  {league.name}
-                </Text>
-                <View style={styles.predictionMeta}>
-                  <Text style={styles.predictionParticipants}>👥 {league.participants}</Text>
-                  <Text style={styles.predictionPrize}>🏆 {league.prize}</Text>
-                </View>
-              </View>
-              <TouchableOpacity style={styles.joinButton}>
-                <Text style={styles.joinButtonText}>Join</Text>
-              </TouchableOpacity>
+
+        <View style={styles.categoryScroll}>
+          {categories.map((cat) => (
+            <TouchableOpacity key={cat.id} style={styles.categoryChip} accessibilityLabel={`Filter by ${cat.name}`} accessibilityRole="button">
+              <Text style={styles.categoryEmoji}>{cat.emoji}</Text>
+              <Text style={styles.categoryName}>{cat.name}</Text>
             </TouchableOpacity>
           ))}
         </View>
-      </View>
 
-      <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/home')}>
-          <Text style={styles.navIcon}>🏠</Text>
-          <Text style={styles.navLabel}>Home</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/watch')}>
-          <Text style={styles.navIcon}>📺</Text>
-          <Text style={styles.navLabel}>Watch</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/create')}>
-          <Text style={styles.navIcon}>✨</Text>
-          <Text style={styles.navLabel}>Create</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/rewards')}>
-          <Text style={styles.navIcon}>⭐</Text>
-          <Text style={styles.navLabel}>Rewards</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/profile')}>
-          <Text style={styles.navIcon}>👤</Text>
-          <Text style={styles.navLabel}>Profile</Text>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
+        <View style={styles.liveSection}>
+          <View style={styles.liveHeader}>
+            <View style={styles.liveDot} />
+            <Text style={styles.liveText}>LIVE NOW</Text>
+          </View>
+          <View style={styles.liveMatches}>
+            {liveMatches.map((match) => (
+              <TouchableOpacity
+                key={match.id}
+                style={[styles.matchCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
+                onPress={() => router.push('/sports/prediction')}
+                accessibilityLabel={`${match.home} vs ${match.away}`}
+                accessibilityRole="button"
+              >
+                <View style={styles.matchLeague}>
+                  <Text style={styles.leagueName}>{match.league}</Text>
+                  <View style={styles.liveBadge}>
+                    <View style={styles.liveIndicator} />
+                    <Text style={styles.liveBadgeText}>{match.time}</Text>
+                  </View>
+                </View>
+                <View style={styles.matchTeams}>
+                  <View style={styles.teamInfo}>
+                    <Text style={styles.teamEmoji}>🔵</Text>
+                    <Text style={[styles.teamName, { color: isDark ? '#fff' : '#000' }]}>
+                      {match.home}
+                    </Text>
+                  </View>
+                  <View style={styles.scoreDisplay}>
+                    <Text style={[styles.scoreText, { color: isDark ? '#fff' : '#000' }]}>
+                      {match.score}
+                    </Text>
+                  </View>
+                  <View style={[styles.teamInfo, styles.teamInfoRight]}>
+                    <Text style={[styles.teamName, { color: isDark ? '#fff' : '#000' }]}>
+                      {match.away}
+                    </Text>
+                    <Text style={styles.teamEmoji}>🔴</Text>
+                  </View>
+                </View>
+                <View style={styles.matchActions}>
+                  <TouchableOpacity style={styles.watchButton} accessibilityLabel={`Watch ${match.home} vs ${match.away} live`} accessibilityRole="button">
+                    <Text style={styles.watchButtonText}>Watch Live</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.predictButton} accessibilityLabel={`Predict outcome for ${match.home} vs ${match.away}`} accessibilityRole="button">
+                    <Text style={styles.predictButtonText}>Predict</Text>
+                  </TouchableOpacity>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
+              Upcoming Matches
+            </Text>
+            <TouchableOpacity accessibilityLabel="See all upcoming matches" accessibilityRole="button">
+              <Text style={styles.seeAllText}>See All</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.upcomingList}>
+            {upcomingMatches.map((match) => (
+              <TouchableOpacity
+                key={match.id}
+                style={[styles.upcomingCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
+                onPress={() => router.push('/sports/prediction')}
+                accessibilityLabel={`${match.home} vs ${match.away} on ${match.date}`}
+                accessibilityRole="button"
+              >
+                <Text style={styles.upcomingEmoji}>{match.emoji}</Text>
+                <View style={styles.upcomingInfo}>
+                  <Text style={[styles.upcomingTeams, { color: isDark ? '#fff' : '#000' }]}>
+                    {match.home} vs {match.away}
+                  </Text>
+                  <Text style={styles.upcomingDate}>{match.date}</Text>
+                  <Text style={styles.upcomingLeague}>{match.league}</Text>
+                </View>
+                <TouchableOpacity style={styles.remindButton} accessibilityLabel={`Set reminder for ${match.home} vs ${match.away}`} accessibilityRole="button">
+                  <Text style={styles.remindIcon}>🔔</Text>
+                </TouchableOpacity>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
+              Prediction Leagues
+            </Text>
+          </View>
+          <View style={styles.predictionList}>
+            {predictionLeagues.map((league) => (
+              <TouchableOpacity
+                key={league.id}
+                style={[styles.predictionCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
+                onPress={() => router.push('/sports/prediction')}
+                accessibilityLabel={`${league.name} prediction league`}
+                accessibilityRole="button"
+              >
+                <View style={styles.predictionInfo}>
+                  <Text style={[styles.predictionName, { color: isDark ? '#fff' : '#000' }]}>
+                    {league.name}
+                  </Text>
+                  <View style={styles.predictionMeta}>
+                    <Text style={styles.predictionParticipants}>👥 {league.participants}</Text>
+                    <Text style={styles.predictionPrize}>🏆 {league.prize}</Text>
+                  </View>
+                </View>
+                <TouchableOpacity style={styles.joinButton} accessibilityLabel={`Join ${league.name}`} accessibilityRole="button">
+                  <Text style={styles.joinButtonText}>Join</Text>
+                </TouchableOpacity>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
@@ -502,25 +526,5 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 12,
     fontWeight: '600',
-  },
-  bottomNav: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingVertical: 12,
-    paddingBottom: 30,
-    backgroundColor: '#1a1a1a',
-    borderTopWidth: 1,
-    borderTopColor: '#2a2a2a',
-  },
-  navItem: {
-    alignItems: 'center',
-  },
-  navIcon: {
-    fontSize: 24,
-    marginBottom: 4,
-  },
-  navLabel: {
-    fontSize: 11,
-    color: '#888',
   },
 });

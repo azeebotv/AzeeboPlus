@@ -1,12 +1,10 @@
 import { Tabs, useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-} from 'react-native-reanimated';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { colors, typography, spacing, radius, shadows, spring } from '../../src/theme';
+import { useWallet } from '../../src/contexts/WalletContext';
+import { useNotification } from '../../src/contexts/NotificationContext';
 
 interface TabIconProps {
   name: string;
@@ -76,13 +74,10 @@ function CreateButton({ onPress }: { onPress: () => void }) {
   );
 }
 
-function HeaderUtilities({
-  router,
-}: {
-  router: ReturnType<typeof useRouter>;
-}) {
-  const [notificationCount] = useState(3);
-  const [walletBalance] = useState('2,500');
+function HeaderUtilities({ router }: { router: ReturnType<typeof useRouter> }) {
+  const { wallet } = useWallet();
+  const { unreadCount } = useNotification();
+  const walletBalance = wallet?.balance?.toLocaleString() ?? '0';
   const [isLive] = useState(true);
 
   return (
@@ -124,13 +119,13 @@ function HeaderUtilities({
         <TouchableOpacity
           style={styles.headerButton}
           onPress={() => router.push('/notifications')}
-          accessibilityLabel={`${notificationCount} notifications`}
+          accessibilityLabel={`${unreadCount} notifications`}
           accessibilityRole="button"
         >
           <Text style={styles.headerButtonText}>♡</Text>
-          {notificationCount > 0 && (
+          {unreadCount > 0 && (
             <View style={styles.notificationBadge}>
-              <Text style={styles.notificationText}>{notificationCount}</Text>
+              <Text style={styles.notificationText}>{unreadCount}</Text>
             </View>
           )}
         </TouchableOpacity>
@@ -168,11 +163,11 @@ export default function TabsLayout() {
             paddingBottom: 24,
             paddingTop: 8,
           },
-          tabBarActiveTintColor: colors.primary,
+          tabBarActiveTintColor: colors.primary[500],
           tabBarInactiveTintColor: colors.text.tertiary,
           tabBarLabelStyle: {
             fontSize: typography.fontSize.xs,
-            fontWeight: typography.fontWeight.semibold as any,
+            fontWeight: typography.fontWeight.semibold as unknown as string,
             marginTop: 4,
           },
         }}
@@ -181,14 +176,18 @@ export default function TabsLayout() {
           name="home"
           options={{
             title: 'Home',
-            tabBarIcon: ({ focused }: { focused: boolean }) => <TabIcon name="home" focused={focused} />,
+            tabBarIcon: ({ focused }: { focused: boolean }) => (
+              <TabIcon name="home" focused={focused} />
+            ),
           }}
         />
         <Tabs.Screen
           name="watch"
           options={{
             title: 'Watch',
-            tabBarIcon: ({ focused }: { focused: boolean }) => <TabIcon name="watch" focused={focused} />,
+            tabBarIcon: ({ focused }: { focused: boolean }) => (
+              <TabIcon name="watch" focused={focused} />
+            ),
           }}
         />
         <Tabs.Screen
@@ -202,14 +201,18 @@ export default function TabsLayout() {
           name="rewards"
           options={{
             title: 'Rewards',
-            tabBarIcon: ({ focused }: { focused: boolean }) => <TabIcon name="rewards" focused={focused} />,
+            tabBarIcon: ({ focused }: { focused: boolean }) => (
+              <TabIcon name="rewards" focused={focused} />
+            ),
           }}
         />
         <Tabs.Screen
           name="profile"
           options={{
             title: 'Profile',
-            tabBarIcon: ({ focused }: { focused: boolean }) => <TabIcon name="profile" focused={focused} />,
+            tabBarIcon: ({ focused }: { focused: boolean }) => (
+              <TabIcon name="profile" focused={focused} />
+            ),
           }}
         />
       </Tabs>
@@ -242,7 +245,7 @@ const styles = StyleSheet.create({
     letterSpacing: -0.5,
   },
   logoPlus: {
-    color: colors.primary,
+    color: colors.primary[500],
   },
   liveIndicator: {
     flexDirection: 'row',
@@ -271,9 +274,9 @@ const styles = StyleSheet.create({
   },
   headerButton: {
     position: 'relative',
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
@@ -286,7 +289,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: -4,
     right: -4,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primary[500],
     paddingHorizontal: 4,
     paddingVertical: 1,
     borderRadius: 4,
@@ -317,10 +320,10 @@ const styles = StyleSheet.create({
     marginLeft: spacing.xs,
   },
   avatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: colors.primary,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.primary[500],
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -339,7 +342,7 @@ const styles = StyleSheet.create({
   },
   iconFocused: {
     opacity: 1,
-    color: colors.primary,
+    color: colors.primary[500],
   },
   createButton: {
     alignItems: 'center',

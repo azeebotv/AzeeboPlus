@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication } from '@nestjs/common';
+import { INestApplication, HttpException, HttpStatus } from '@nestjs/common';
 import request from 'supertest';
 import { Reflector } from '@nestjs/core';
 import { RateLimitGuard } from '@azeebo/security';
@@ -7,7 +7,16 @@ import { SearchController } from './search.controller';
 import { SearchService } from './search.service';
 
 const mockRateLimitGuard = {
-  canActivate: jest.fn().mockReturnValue(true),
+  canActivate: jest.fn().mockImplementation(() => {
+    throw new HttpException(
+      {
+        statusCode: HttpStatus.TOO_MANY_REQUESTS,
+        message: 'Too many requests',
+        error: 'Too Many Requests',
+      },
+      HttpStatus.TOO_MANY_REQUESTS
+    );
+  }),
 };
 
 describe('Search Service Rate Limiting Tests', () => {
@@ -36,13 +45,12 @@ describe('Search Service Rate Limiting Tests', () => {
           provide: SearchService,
           useValue: mockSearchService,
         },
-        {
-          provide: RateLimitGuard,
-          useValue: mockRateLimitGuard,
-        },
         Reflector,
       ],
-    }).compile();
+    })
+      .overrideGuard(RateLimitGuard)
+      .useValue(mockRateLimitGuard)
+      .compile();
 
     app = moduleFixture.createNestApplication();
     await app.init();
@@ -54,43 +62,52 @@ describe('Search Service Rate Limiting Tests', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockRateLimitGuard.canActivate.mockReturnValue(true);
+    mockRateLimitGuard.canActivate.mockImplementation(() => true);
   });
 
   describe('Rate Limiting - GET /search', () => {
     it('should allow requests within rate limit', async () => {
-      mockRateLimitGuard.canActivate.mockReturnValue(true);
+      mockRateLimitGuard.canActivate.mockImplementation(() => true);
 
-      const response = await request(app.getHttpServer()).get('/search?q=test');
+      const response = await request(app.getHttpServer()).get('/v1/search?q=test');
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
     });
 
     it('should reject requests exceeding rate limit', async () => {
-      mockRateLimitGuard.canActivate.mockReturnValue(false);
+      mockRateLimitGuard.canActivate.mockImplementation(() => {
+        throw new HttpException(
+          {
+            statusCode: HttpStatus.TOO_MANY_REQUESTS,
+            message: 'Too many requests',
+            error: 'Too Many Requests',
+          },
+          HttpStatus.TOO_MANY_REQUESTS
+        );
+      });
 
-      const response = await request(app.getHttpServer()).get('/search?q=test');
+      const response = await request(app.getHttpServer()).get('/v1/search?q=test');
 
       expect(response.status).toBe(429);
       expect(response.body.message).toContain('Too many requests');
     });
 
     it('should include rate limit headers in response', async () => {
-      const response = await request(app.getHttpServer()).get('/search?q=test');
+      const response = await request(app.getHttpServer()).get('/v1/search?q=test');
 
       expect(response.headers).toBeDefined();
     });
 
     it('should apply rate limit per IP address', async () => {
-      mockRateLimitGuard.canActivate.mockReturnValue(true);
+      mockRateLimitGuard.canActivate.mockImplementation(() => true);
 
       const response1 = await request(app.getHttpServer())
-        .get('/search?q=test')
+        .get('/v1/search?q=test')
         .set('X-Forwarded-For', '192.168.1.1');
 
       const response2 = await request(app.getHttpServer())
-        .get('/search?q=test')
+        .get('/v1/search?q=test')
         .set('X-Forwarded-For', '192.168.1.2');
 
       expect(response1.status).toBe(200);
@@ -100,18 +117,27 @@ describe('Search Service Rate Limiting Tests', () => {
 
   describe('Rate Limiting - GET /search/suggestions', () => {
     it('should allow requests within rate limit', async () => {
-      mockRateLimitGuard.canActivate.mockReturnValue(true);
+      mockRateLimitGuard.canActivate.mockImplementation(() => true);
 
-      const response = await request(app.getHttpServer()).get('/search/suggestions?q=test');
+      const response = await request(app.getHttpServer()).get('/v1/search/suggestions?q=test');
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
     });
 
     it('should reject requests exceeding rate limit', async () => {
-      mockRateLimitGuard.canActivate.mockReturnValue(false);
+      mockRateLimitGuard.canActivate.mockImplementation(() => {
+        throw new HttpException(
+          {
+            statusCode: HttpStatus.TOO_MANY_REQUESTS,
+            message: 'Too many requests',
+            error: 'Too Many Requests',
+          },
+          HttpStatus.TOO_MANY_REQUESTS
+        );
+      });
 
-      const response = await request(app.getHttpServer()).get('/search/suggestions?q=test');
+      const response = await request(app.getHttpServer()).get('/v1/search/suggestions?q=test');
 
       expect(response.status).toBe(429);
     });
@@ -119,18 +145,27 @@ describe('Search Service Rate Limiting Tests', () => {
 
   describe('Rate Limiting - GET /search/trending', () => {
     it('should allow requests within rate limit', async () => {
-      mockRateLimitGuard.canActivate.mockReturnValue(true);
+      mockRateLimitGuard.canActivate.mockImplementation(() => true);
 
-      const response = await request(app.getHttpServer()).get('/search/trending');
+      const response = await request(app.getHttpServer()).get('/v1/search/trending');
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
     });
 
     it('should reject requests exceeding rate limit', async () => {
-      mockRateLimitGuard.canActivate.mockReturnValue(false);
+      mockRateLimitGuard.canActivate.mockImplementation(() => {
+        throw new HttpException(
+          {
+            statusCode: HttpStatus.TOO_MANY_REQUESTS,
+            message: 'Too many requests',
+            error: 'Too Many Requests',
+          },
+          HttpStatus.TOO_MANY_REQUESTS
+        );
+      });
 
-      const response = await request(app.getHttpServer()).get('/search/trending');
+      const response = await request(app.getHttpServer()).get('/v1/search/trending');
 
       expect(response.status).toBe(429);
     });

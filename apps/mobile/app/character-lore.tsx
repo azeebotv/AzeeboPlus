@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView } from 'react-native';
+import { useState, useEffect, useCallback } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useColorScheme } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { colors } from '../src/theme';
@@ -72,20 +73,13 @@ export default function CharacterLoreScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView
-        style={[
-          styles.scrollView,
-          { backgroundColor: isDark ? colors.bg.primary : '#FFFFFF' },
-        ]}
+        style={[styles.scrollView, { backgroundColor: isDark ? colors.bg.primary : '#FFFFFF' }]}
       >
         <View style={styles.header}>
           <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
             <Text style={styles.backIcon}>←</Text>
           </TouchableOpacity>
-          <Text
-            style={[styles.headerTitle, { color: colors.text.primary }]}
-          >
-            Character Lore
-          </Text>
+          <Text style={[styles.headerTitle, { color: colors.text.primary }]}>Character Lore</Text>
           <View style={styles.shareButton}>
             <Text style={styles.shareIcon}>📤</Text>
           </View>
@@ -116,14 +110,7 @@ export default function CharacterLoreScreen() {
         {activeTab === 'story' && (
           <View style={styles.storySection}>
             <View style={styles.storyCard}>
-              <Text
-                style={[
-                  styles.sectionTitle,
-                  { color: colors.text.primary },
-                ]}
-              >
-                Story
-              </Text>
+              <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>Story</Text>
               <Text
                 style={[
                   styles.storyText,
@@ -139,14 +126,7 @@ export default function CharacterLoreScreen() {
         {activeTab === 'stats' && (
           <View style={styles.statsSection}>
             <View style={styles.statsCard}>
-              <Text
-                style={[
-                  styles.sectionTitle,
-                  { color: colors.text.primary },
-                ]}
-              >
-                Attributes
-              </Text>
+              <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>Attributes</Text>
               <View style={styles.statsList}>
                 {character.stats.map((stat, index) => (
                   <View key={index} style={styles.statItem}>
@@ -159,12 +139,7 @@ export default function CharacterLoreScreen() {
                       >
                         {stat.label}
                       </Text>
-                      <Text
-                        style={[
-                          styles.statValue,
-                          { color: colors.text.primary },
-                        ]}
-                      >
+                      <Text style={[styles.statValue, { color: colors.text.primary }]}>
                         {stat.value}
                       </Text>
                     </View>
@@ -172,7 +147,7 @@ export default function CharacterLoreScreen() {
                       <View
                         style={[
                           styles.statBarFill,
-                          { width: `${stat.value}%`, backgroundColor: character.background },
+                          { width: `${stat.value}%` as unknown as number, backgroundColor: character.background },
                         ]}
                       />
                     </View>
@@ -186,12 +161,7 @@ export default function CharacterLoreScreen() {
         {activeTab === 'relationships' && (
           <View style={styles.relationshipsSection}>
             <View style={styles.relationshipsCard}>
-              <Text
-                style={[
-                  styles.sectionTitle,
-                  { color: colors.text.primary },
-                ]}
-              >
+              <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>
                 Relationships
               </Text>
               <View style={styles.relationshipsList}>
@@ -201,12 +171,7 @@ export default function CharacterLoreScreen() {
                       <Text style={styles.relAvatarText}>{rel.avatar}</Text>
                     </View>
                     <View style={styles.relInfo}>
-                      <Text
-                        style={[
-                          styles.relName,
-                          { color: colors.text.primary },
-                        ]}
-                      >
+                      <Text style={[styles.relName, { color: colors.text.primary }]}>
                         {rel.name}
                       </Text>
                       <Text style={styles.relType}>{rel.type}</Text>
@@ -222,12 +187,7 @@ export default function CharacterLoreScreen() {
         {activeTab === 'lore' && (
           <View style={styles.loreSection}>
             <View style={styles.loreCard}>
-              <Text
-                style={[
-                  styles.sectionTitle,
-                  { color: colors.text.primary },
-                ]}
-              >
+              <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>
                 Lore Chapters
               </Text>
               <View style={styles.loreList}>

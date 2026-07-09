@@ -342,14 +342,21 @@ export function gatewayPath(endpoint: string): string {
 
 const ACCESS_TOKEN_KEY = 'azeebo_access_token';
 
+function getCookie(name: string): string | null {
+  if (typeof document === 'undefined') return null;
+  const match = document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]*)'));
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
+const CSRF_HEADER = 'X-CSRF-Token';
+const CSRF_COOKIE = '_csrf';
+const STATE_CHANGING_METHODS = ['POST', 'PUT', 'PATCH', 'DELETE'];
+
 export async function apiFetch<T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<ApiResponse<T>> {
-  const storedToken =
-    typeof window !== 'undefined'
-      ? localStorage.getItem(ACCESS_TOKEN_KEY)
-      : null;
+  const storedToken = typeof window !== 'undefined' ? localStorage.getItem(ACCESS_TOKEN_KEY) : null;
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -358,6 +365,14 @@ export async function apiFetch<T>(
 
   if (storedToken) {
     headers['Authorization'] = `Bearer ${storedToken}`;
+  }
+
+  const method = (options.method || 'GET').toUpperCase();
+  if (STATE_CHANGING_METHODS.includes(method)) {
+    const csrfToken = getCookie(CSRF_COOKIE);
+    if (csrfToken) {
+      headers[CSRF_HEADER] = csrfToken;
+    }
   }
 
   try {
@@ -386,20 +401,20 @@ export async function apiFetch<T>(
         details: data.details,
         timestamp: data.timestamp,
         path: data.path,
-      } as any;
+      } as ApiError;
     }
 
     return {
       success: true,
-      data: data.data || data,
+      data: data.data !== undefined ? data.data : data,
       message: data.message,
     };
   } catch (error) {
     return {
       success: false,
       message: 'Network error. Please check your connection.',
-      error: error instanceof Error ? error.message : 'Unknown error',
-      status: 0,
-    } as any;
+      error: error instanceof Error ? (error as Error).message : 'Unknown error',
+      statusCode: 0,
+    } as ApiError;
   }
 }

@@ -129,6 +129,8 @@ MIGRATE_SERVICES=(
   "services/engagement/messaging-service:messaging-service:messaging_db:messaging_user:${MESSAGING_DB_PASSWORD}"
   "services/engagement/referral-service:referral-service:referral_db:referral_user:${REFERRAL_DB_PASSWORD}"
   "services/engagement/subscription-service:subscription-service:subscription_db:subscription_user:${SUBSCRIPTION_DB_PASSWORD}"
+  "apps/admin:admin-app:admin_db:${DB_USER}:${ADMIN_DB_PASSWORD}"
+  "apps/creator-portal:creator-portal-app:creator_portal_db:${DB_USER}:${CREATOR_PORTAL_DB_PASSWORD}"
 )
 
 for entry in "${MIGRATE_SERVICES[@]}"; do

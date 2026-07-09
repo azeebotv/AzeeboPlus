@@ -6,9 +6,20 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import UniverseDropdown from '../UniverseDropdown';
+
+// Mock Next.js navigation
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: vi.fn(),
+    replace: vi.fn(),
+    refresh: vi.fn(),
+    back: vi.fn(),
+    forward: vi.fn(),
+    prefetch: vi.fn(),
+  }),
+}));
 
 // Mock the hook
 vi.mock('../../../hooks/useUniverses', () => ({
@@ -67,9 +78,15 @@ describe('UniverseDropdown', () => {
       expect(screen.getByText('All')).toBeTruthy();
     });
 
-    it('shows error toast when using fallback data', () => {
+    it('shows error toast when using fallback data', async () => {
       setup({ error: 'Network error' });
       render(<UniverseDropdown />);
+
+      // Open the dropdown so the error toast inside the listbox is visible
+      fireEvent.click(screen.getByRole('combobox'));
+      await waitFor(() => {
+        expect(screen.getByRole('listbox')).toBeTruthy();
+      });
 
       expect(screen.getByText('Using fallback data')).toBeTruthy();
     });
@@ -202,7 +219,8 @@ describe('UniverseDropdown', () => {
         expect(screen.getByRole('listbox')).toBeTruthy();
       });
 
-      const movieOption = screen.getByText('Movies').closest('[role="option"]');
+      const listbox = screen.getByRole('listbox');
+      const movieOption = within(listbox).getByText('Movies').closest('[role="option"]');
       expect(movieOption?.getAttribute('aria-selected')).toBe('true');
     });
   });
@@ -290,7 +308,7 @@ describe('UniverseDropdown', () => {
       fireEvent.keyDown(listbox, { key: 'ArrowDown' });
       fireEvent.keyDown(listbox, { key: 'Home' });
 
-      const firstOption = screen.getByText('Movies').closest('[role="option"]');
+      const firstOption = within(listbox).getByText('Movies').closest('[role="option"]');
       expect(document.activeElement).toBe(firstOption);
     });
 

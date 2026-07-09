@@ -106,7 +106,7 @@ export function createContentMethods(client: RequestClient) {
       });
 
       return client.request<ContentItem>(`/api/v1/content/${contentId}`, {
-        method: 'PUT',
+        method: 'PATCH',
         body: formData,
         // Don't set Content-Type for FormData, let browser set it
       });

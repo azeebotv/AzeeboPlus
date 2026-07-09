@@ -4,6 +4,7 @@ import { PrismaService } from '../database/prisma.service';
 import { PaystackProvider } from '../payments/providers/paystack.provider';
 import { FlutterwaveProvider } from '../payments/providers/flutterwave.provider';
 import { WebhookRetryService } from '../payments/webhook-retry.service';
+import { RedisService } from '../../common/services/redis.service';
 import { BadRequestException } from '@nestjs/common';
 import { Decimal } from '@prisma/client/runtime/library';
 import axios from 'axios';
@@ -50,6 +51,14 @@ describe('PaymentsService', () => {
       scheduleRetry: jest.fn(),
     };
 
+    const redisService = {
+      setIfNotExists: jest.fn().mockResolvedValue(true),
+      del: jest.fn().mockResolvedValue(1),
+      get: jest.fn().mockResolvedValue(null),
+      set: jest.fn().mockResolvedValue(undefined),
+      exists: jest.fn().mockResolvedValue(false),
+    };
+
     (axios.post as jest.Mock).mockResolvedValue({ data: { success: true } });
 
     const module: TestingModule = await Test.createTestingModule({
@@ -70,6 +79,26 @@ describe('PaymentsService', () => {
         {
           provide: WebhookRetryService,
           useValue: webhookRetryService,
+        },
+        {
+          provide: RedisService,
+          useValue: redisService,
+        },
+        {
+          provide: require('@nestjs/config').ConfigService,
+          useValue: {
+            getOrThrow: jest.fn((key: string) => {
+              const config: Record<string, string> = {
+                ANALYTICS_SERVICE_URL: 'http://localhost:3001',
+                WALLET_SERVICE_URL: 'http://localhost:3002',
+              };
+              return config[key];
+            }),
+            get: jest.fn((key: string, defaultValue?: unknown) => {
+              if (key === 'MIN_PAYMENT_AMOUNT_NGN') return 100;
+              return defaultValue;
+            }),
+          },
         },
       ],
     }).compile();

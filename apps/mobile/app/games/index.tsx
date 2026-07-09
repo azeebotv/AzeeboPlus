@@ -1,9 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
 import { apiClient } from '../../src/api/client';
+import { ApiResponse } from '../../src/types/api';
+
+type ListResponse<T> = T[] | ApiResponse<T[]>;
 
 interface GameData {
   id: string;
@@ -51,11 +54,11 @@ export default function GamesUniverseHome() {
     setError(null);
     try {
       const [featuredRes, trendingRes, tournamentsRes, catsRes, playersRes] = await Promise.all([
-        apiClient.get<any>('/v1/games/featured'),
-        apiClient.get<any>('/v1/games/trending'),
-        apiClient.get<any>('/v1/games/tournaments'),
-        apiClient.get<any>('/v1/games/categories'),
-        apiClient.get<any>('/v1/games/leaderboard'),
+        apiClient.get<ListResponse<GameData>>('/v1/games/featured'),
+        apiClient.get<ListResponse<GameData>>('/v1/games/trending'),
+        apiClient.get<ListResponse<TournamentData>>('/v1/games/tournaments'),
+        apiClient.get<ListResponse<CategoryData>>('/v1/games/categories'),
+        apiClient.get<ListResponse<PlayerData>>('/v1/games/leaderboard'),
       ]);
       const featured = Array.isArray(featuredRes)
         ? featuredRes[0]
@@ -105,10 +108,10 @@ export default function GamesUniverseHome() {
   );
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: isDark ? '#0a0a0a' : '#ffffff' }]}>
+    <ScrollView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
       <View style={styles.header}>
         <Text style={styles.universeLabel}>🎮 Games</Text>
-        <Text style={[styles.headerTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
+        <Text style={[styles.headerTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
           Game Universe
         </Text>
         <View style={styles.headerStats}>
@@ -166,7 +169,7 @@ export default function GamesUniverseHome() {
 
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
+          <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
             Trending Games
           </Text>
           <TouchableOpacity>
@@ -185,7 +188,7 @@ export default function GamesUniverseHome() {
 
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
+          <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
             Live Tournaments
           </Text>
         </View>
@@ -218,7 +221,7 @@ export default function GamesUniverseHome() {
 
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
+          <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
             Top Players This Week
           </Text>
         </View>
@@ -235,29 +238,6 @@ export default function GamesUniverseHome() {
             </View>
           ))}
         </View>
-      </View>
-
-      <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/home')}>
-          <Text style={styles.navIcon}>🏠</Text>
-          <Text style={styles.navLabel}>Home</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/watch')}>
-          <Text style={styles.navIcon}>📺</Text>
-          <Text style={styles.navLabel}>Watch</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/create')}>
-          <Text style={styles.navIcon}>✨</Text>
-          <Text style={styles.navLabel}>Create</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/rewards')}>
-          <Text style={styles.navIcon}>⭐</Text>
-          <Text style={styles.navLabel}>Rewards</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/profile')}>
-          <Text style={styles.navIcon}>👤</Text>
-          <Text style={styles.navLabel}>Profile</Text>
-        </TouchableOpacity>
       </View>
     </ScrollView>
   );
@@ -575,25 +555,5 @@ const styles = StyleSheet.create({
     color: '#DDA0DD',
     fontSize: 14,
     fontWeight: '600',
-  },
-  bottomNav: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingVertical: 12,
-    paddingBottom: 30,
-    backgroundColor: '#1a1a1a',
-    borderTopWidth: 1,
-    borderTopColor: '#2a2a2a',
-  },
-  navItem: {
-    alignItems: 'center',
-  },
-  navIcon: {
-    fontSize: 24,
-    marginBottom: 4,
-  },
-  navLabel: {
-    fontSize: 11,
-    color: '#888',
   },
 });

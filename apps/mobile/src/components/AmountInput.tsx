@@ -1,4 +1,3 @@
-import React from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { colors } from '../theme';
 
@@ -83,6 +82,8 @@ export function AmountInput({
                   styles.presetButton,
                   value === amount.toString() && styles.presetButtonActive,
                 ]}
+                accessibilityLabel={`Select ${currencySymbol}${amount.toLocaleString('en-NG')}`}
+                accessibilityRole="button"
                 onPress={() => handlePresetPress(amount)}
               >
                 <Text
@@ -120,16 +121,16 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 14,
-    color: '#fff',
+    color: colors.text.primary,
     marginBottom: 8,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1a1a1a',
+    backgroundColor: colors.bg.surface,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#333',
+    borderColor: colors.border.default,
     paddingHorizontal: 16,
   },
   inputError: {
@@ -137,7 +138,7 @@ const styles = StyleSheet.create({
   },
   currencySymbol: {
     fontSize: 18,
-    color: '#8B5CF6',
+    color: colors.primary[500],
     fontWeight: '600',
     marginRight: 8,
   },
@@ -145,7 +146,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 16,
     fontSize: 18,
-    color: '#fff',
+    color: colors.text.primary,
     fontWeight: '600',
   },
   errorText: {
@@ -155,7 +156,7 @@ const styles = StyleSheet.create({
   },
   formattedAmount: {
     fontSize: 12,
-    color: '#888',
+    color: colors.text.secondary,
     marginTop: 4,
     textAlign: 'right',
   },
@@ -164,7 +165,7 @@ const styles = StyleSheet.create({
   },
   presetsLabel: {
     fontSize: 12,
-    color: '#888',
+    color: colors.text.secondary,
     marginBottom: 8,
   },
   presetsScroll: {
@@ -174,21 +175,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 8,
-    backgroundColor: '#1a1a1a',
+    backgroundColor: colors.bg.surface,
     borderWidth: 1,
-    borderColor: '#333',
+    borderColor: colors.border.default,
   },
   presetButtonActive: {
-    backgroundColor: '#8B5CF6',
-    borderColor: '#8B5CF6',
+    backgroundColor: colors.primary[500],
+    borderColor: colors.primary[500],
   },
   presetText: {
-    color: '#fff',
+    color: colors.text.primary,
     fontSize: 14,
     fontWeight: '500',
   },
   presetTextActive: {
-    color: '#fff',
+    color: colors.text.primary,
   },
   limitsContainer: {
     flexDirection: 'row',
@@ -197,6 +198,6 @@ const styles = StyleSheet.create({
   },
   limitText: {
     fontSize: 11,
-    color: '#666',
+    color: colors.text.tertiary,
   },
 });

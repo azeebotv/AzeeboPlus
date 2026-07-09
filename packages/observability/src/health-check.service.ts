@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { RedisService } from '@azeebo/shared-services';
 
 export interface HealthCheckResult {
   status: 'healthy' | 'degraded' | 'unhealthy';
@@ -26,6 +27,7 @@ export interface HealthMetrics {
   lastError?: string;
 }
 
+/** Service for performing liveness, readiness, and component health checks. */
 @Injectable()
 export class HealthCheckService {
   private readonly startTime: number;
@@ -33,7 +35,7 @@ export class HealthCheckService {
   private errorCount = 0;
   private lastError?: string;
 
-  constructor() {
+  constructor(private readonly redisService?: RedisService) {
     this.startTime = Date.now();
   }
 
@@ -121,7 +123,7 @@ export class HealthCheckService {
   }
 
   async checkDatabase(prisma: {
-    $queryRaw: (query: TemplateStringsArray, ...values: any[]) => Promise<any>;
+    $queryRaw: (query: TemplateStringsArray, ...values: unknown[]) => Promise<unknown>;
   }): Promise<{ status: 'up' | 'down' | 'degraded'; message?: string; latencyMs?: number }> {
     const start = Date.now();
     try {
@@ -137,19 +139,21 @@ export class HealthCheckService {
   }
 
   async checkRedis(
-    redisUrl?: string
+    _redisUrl?: string
   ): Promise<{ status: 'up' | 'down' | 'degraded'; message?: string; latencyMs?: number }> {
     const start = Date.now();
-    try {
-      if (!redisUrl) {
-        return { status: 'up', latencyMs: 0, message: 'Redis not configured' };
-      }
 
-      const response = await fetch(`${redisUrl}/ping`, { signal: AbortSignal.timeout(5000) });
-      if (response.ok) {
+    if (!this.redisService) {
+      return { status: 'up', latencyMs: 0, message: 'Redis not configured' };
+    }
+
+    try {
+      const client = await this.redisService.getClient();
+      const pong = await client.ping();
+      if (pong === 'PONG') {
         return { status: 'up', latencyMs: Date.now() - start };
       }
-      return { status: 'down', message: 'Redis ping failed', latencyMs: Date.now() - start };
+      return { status: 'down', message: `Unexpected PING response: ${pong}`, latencyMs: Date.now() - start };
     } catch (error) {
       return {
         status: 'down',

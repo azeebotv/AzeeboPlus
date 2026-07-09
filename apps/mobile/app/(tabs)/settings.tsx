@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   View,
   Text,
@@ -11,10 +11,9 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../src/contexts/AuthContext';
 import { notificationApi, type NotificationPreferences } from '../../src/api';
-import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
-import { logger } from '../../src/utils/logger';
 import { useBiometric } from '../../src/hooks/useBiometric';
 import Constants from 'expo-constants';
 
@@ -23,19 +22,48 @@ const safeConstants = Constants as unknown as { expoConfig?: { version?: string;
 
 export default function SettingsScreen() {
   const colorScheme = useColorScheme();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+  const queryClient = useQueryClient();
   const {
     isAvailable,
     biometricType,
     isEnabled,
-    isLoading: isBiometricLoading,
+    isLoading: _isBiometricLoading,
     enableBiometrics,
     disableBiometrics,
   } = useBiometric();
-  const [isLoading, setIsLoading] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
   const [isBiometricToggling, setIsBiometricToggling] = useState(false);
-  const [preferences, setPreferences] = useState<NotificationPreferences>({
+
+  const {
+    data: preferences,
+    isLoading: isPreferencesLoading,
+  } = useQuery({
+    queryKey: ['notification', 'preferences'],
+    queryFn: async () => {
+      const response = await notificationApi.getPreferences();
+      if (!response.success || !response.data) {
+        throw new Error(response.message || 'Failed to fetch preferences');
+      }
+      return response.data as NotificationPreferences;
+    },
+    enabled: isAuthenticated,
+    staleTime: 60_000,
+  });
+
+  const updatePreferencesMutation = useMutation({
+    mutationFn: async (prefs: NotificationPreferences) => {
+      const response = await notificationApi.updatePreferences(prefs);
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to save preferences');
+      }
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notification', 'preferences'] });
+    },
+  });
+
+  const currentPreferences = preferences ?? {
     email: true,
     push: true,
     sms: true,
@@ -47,68 +75,40 @@ export default function SettingsScreen() {
       system: true,
       payments: true,
     },
-  });
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      fetchPreferences();
-    }
-  }, [isAuthenticated]);
-
-  const fetchPreferences = async () => {
-    setIsLoading(true);
-    try {
-      const response = await notificationApi.getPreferences();
-      if (response.success && response.data) {
-        setPreferences(response.data);
-      }
-    } catch (error) {
-      logger.error('Failed to fetch preferences', error);
-    } finally {
-      setIsLoading(false);
-    }
   };
 
   const handleTogglePreference = async (key: keyof NotificationPreferences, value?: boolean) => {
     if (key === 'types') return;
 
     const newValue =
-      value !== undefined ? value : !preferences[key as keyof NotificationPreferences];
+      value !== undefined ? value : !currentPreferences[key as keyof NotificationPreferences];
     const updatedPreferences = {
-      ...preferences,
+      ...currentPreferences,
       [key]: newValue,
     };
-    setPreferences(updatedPreferences);
 
-    await savePreferences(updatedPreferences);
+    updatePreferencesMutation.mutate(updatedPreferences, {
+      onError: (error: Error) => {
+        Alert.alert('Error', error.message || 'Failed to save preferences');
+      },
+    });
   };
 
   const handleToggleTypePreference = async (typeKey: keyof NotificationPreferences['types']) => {
     const updatedTypes = {
-      ...preferences.types,
-      [typeKey]: !preferences.types[typeKey],
+      ...currentPreferences.types,
+      [typeKey]: !currentPreferences.types[typeKey],
     };
     const updatedPreferences = {
-      ...preferences,
+      ...currentPreferences,
       types: updatedTypes,
     };
-    setPreferences(updatedPreferences);
 
-    await savePreferences(updatedPreferences);
-  };
-
-  const savePreferences = async (prefs: NotificationPreferences) => {
-    setIsSaving(true);
-    try {
-      const response = await notificationApi.updatePreferences(prefs);
-      if (!response.success) {
-        Alert.alert('Error', response.message || 'Failed to save preferences');
-      }
-    } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to save preferences');
-    } finally {
-      setIsSaving(false);
-    }
+    updatePreferencesMutation.mutate(updatedPreferences, {
+      onError: (error: Error) => {
+        Alert.alert('Error', error.message || 'Failed to save preferences');
+      },
+    });
   };
 
   const handleBiometricToggle = async (value: boolean) => {
@@ -131,7 +131,7 @@ export default function SettingsScreen() {
           timestamp: Date.now(),
         });
 
-        const success = await enableBiometrics(credentials);
+        const success = await enableBiometrics(JSON.parse(credentials));
 
         if (success) {
           Alert.alert(
@@ -171,10 +171,23 @@ export default function SettingsScreen() {
     }
   };
 
+  if (authLoading) {
+    return (
+      <SafeAreaView
+        style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#1A0A0A' : '#fff' }]}
+        edges={['top']}
+      >
+        <View style={styles.unauthenticatedContainer}>
+          <ActivityIndicator size="large" color="#E8420A" />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   if (!isAuthenticated) {
     return (
       <SafeAreaView
-        style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#000' : '#fff' }]}
+        style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#1A0A0A' : '#fff' }]}
         edges={['top']}
       >
         <View style={styles.unauthenticatedContainer}>
@@ -189,7 +202,7 @@ export default function SettingsScreen() {
 
   return (
     <SafeAreaView
-      style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#000' : '#fff' }]}
+      style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#1A0A0A' : '#fff' }]}
       edges={['top']}
     >
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -199,9 +212,9 @@ export default function SettingsScreen() {
           </Text>
         </View>
 
-        {isSaving && (
+        {updatePreferencesMutation.isPending && (
           <View style={styles.savingIndicator}>
-            <ActivityIndicator size="small" color="#8B5CF6" />
+            <ActivityIndicator size="small" color="#E8420A" />
             <Text style={styles.savingText}>Saving...</Text>
           </View>
         )}
@@ -229,9 +242,9 @@ export default function SettingsScreen() {
               </View>
             </View>
             <Switch
-              value={preferences.push}
+              value={currentPreferences.push}
               onValueChange={(value) => handleTogglePreference('push', value)}
-              trackColor={{ false: '#333', true: '#8B5CF6' }}
+              trackColor={{ false: '#333', true: '#E8420A' }}
               thumbColor="#fff"
             />
           </View>
@@ -254,9 +267,9 @@ export default function SettingsScreen() {
               </View>
             </View>
             <Switch
-              value={preferences.email}
+              value={currentPreferences.email}
               onValueChange={(value) => handleTogglePreference('email', value)}
-              trackColor={{ false: '#333', true: '#8B5CF6' }}
+              trackColor={{ false: '#333', true: '#E8420A' }}
               thumbColor="#fff"
             />
           </View>
@@ -279,9 +292,9 @@ export default function SettingsScreen() {
               </View>
             </View>
             <Switch
-              value={preferences.sms}
+              value={currentPreferences.sms}
               onValueChange={(value) => handleTogglePreference('sms', value)}
-              trackColor={{ false: '#333', true: '#8B5CF6' }}
+              trackColor={{ false: '#333', true: '#E8420A' }}
               thumbColor="#fff"
             />
           </View>
@@ -316,12 +329,12 @@ export default function SettingsScreen() {
               </View>
             </View>
             {isBiometricToggling ? (
-              <ActivityIndicator size="small" color="#8B5CF6" />
+              <ActivityIndicator size="small" color="#E8420A" />
             ) : (
               <Switch
                 value={isEnabled}
                 onValueChange={handleBiometricToggle}
-                trackColor={{ false: '#333', true: '#8B5CF6' }}
+                trackColor={{ false: '#333', true: '#E8420A' }}
                 thumbColor="#fff"
                 disabled={!isAvailable || isBiometricToggling}
               />
@@ -349,9 +362,9 @@ export default function SettingsScreen() {
               </Text>
             </View>
             <Switch
-              value={preferences.types.newContent}
+              value={currentPreferences.types.newContent}
               onValueChange={() => handleToggleTypePreference('newContent')}
-              trackColor={{ false: '#333', true: '#8B5CF6' }}
+              trackColor={{ false: '#333', true: '#E8420A' }}
               thumbColor="#fff"
             />
           </View>
@@ -371,9 +384,9 @@ export default function SettingsScreen() {
               </Text>
             </View>
             <Switch
-              value={preferences.types.comments}
+              value={currentPreferences.types.comments}
               onValueChange={() => handleToggleTypePreference('comments')}
-              trackColor={{ false: '#333', true: '#8B5CF6' }}
+              trackColor={{ false: '#333', true: '#E8420A' }}
               thumbColor="#fff"
             />
           </View>
@@ -393,9 +406,9 @@ export default function SettingsScreen() {
               </Text>
             </View>
             <Switch
-              value={preferences.types.likes}
+              value={currentPreferences.types.likes}
               onValueChange={() => handleToggleTypePreference('likes')}
-              trackColor={{ false: '#333', true: '#8B5CF6' }}
+              trackColor={{ false: '#333', true: '#E8420A' }}
               thumbColor="#fff"
             />
           </View>
@@ -415,9 +428,9 @@ export default function SettingsScreen() {
               </Text>
             </View>
             <Switch
-              value={preferences.types.followers}
+              value={currentPreferences.types.followers}
               onValueChange={() => handleToggleTypePreference('followers')}
-              trackColor={{ false: '#333', true: '#8B5CF6' }}
+              trackColor={{ false: '#333', true: '#E8420A' }}
               thumbColor="#fff"
             />
           </View>
@@ -437,9 +450,9 @@ export default function SettingsScreen() {
               </Text>
             </View>
             <Switch
-              value={preferences.types.system}
+              value={currentPreferences.types.system}
               onValueChange={() => handleToggleTypePreference('system')}
-              trackColor={{ false: '#333', true: '#8B5CF6' }}
+              trackColor={{ false: '#333', true: '#E8420A' }}
               thumbColor="#fff"
             />
           </View>
@@ -459,9 +472,9 @@ export default function SettingsScreen() {
               </Text>
             </View>
             <Switch
-              value={preferences.types.payments}
+              value={currentPreferences.types.payments}
               onValueChange={() => handleToggleTypePreference('payments')}
-              trackColor={{ false: '#333', true: '#8B5CF6' }}
+              trackColor={{ false: '#333', true: '#E8420A' }}
               thumbColor="#fff"
             />
           </View>
@@ -568,7 +581,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   savingText: {
-    color: '#8B5CF6',
+    color: '#E8420A',
     fontSize: 14,
   },
   section: {

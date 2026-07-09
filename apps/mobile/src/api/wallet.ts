@@ -40,7 +40,7 @@ export interface TransactionDetail {
 
 export const walletApi = {
   getBalance: async (): Promise<ApiResponse<WalletBalance>> => {
-    return apiClient.get<ApiResponse<WalletBalance>>('/v1/wallet/balance');
+    return apiClient.get<ApiResponse<WalletBalance>>('/v1/wallet');
   },
 
   getTransaction: async (id: string): Promise<ApiResponse<TransactionDetail>> => {
@@ -67,7 +67,7 @@ export const walletApi = {
         limit: number;
         totalPages: number;
       }>
-    >(`/v1/wallet/transactions?page=${page}&limit=${limit}`)
+    >(`/v1/wallet/transactions?page=${page}&limit=${limit}`);
   },
 
   fundWallet: async (data: {
@@ -77,6 +77,16 @@ export const walletApi = {
   }): Promise<ApiResponse<{ authorizationUrl: string; reference: string }>> => {
     return apiClient.post<ApiResponse<{ authorizationUrl: string; reference: string }>>(
       '/v1/wallet/fund',
+      data
+    );
+  },
+
+  verifyBankAccount: async (data: {
+    bankCode: string;
+    accountNumber: string;
+  }): Promise<ApiResponse<{ accountName: string; accountNumber: string }>> => {
+    return apiClient.post<ApiResponse<{ accountName: string; accountNumber: string }>>(
+      '/v1/wallet/verify-bank-account',
       data
     );
   },
@@ -108,7 +118,7 @@ export const walletApi = {
         totalSpent: number;
         totalWithdrawn: number;
       }>
-    >('/v1/wallet/summary')
+    >('/v1/wallet/summary');
   },
 
   redeemReward: async (data: {

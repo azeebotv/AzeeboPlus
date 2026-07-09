@@ -1,9 +1,11 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api';
-import { webLogger } from '@/lib/logger';
+
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
+import { Spinner, ErrorState } from '@azeebo/ui/web';
 
 interface PremiumPlan {
   id: string;
@@ -18,69 +20,76 @@ interface PremiumPlan {
 
 interface PremiumStatus {
   isPremium: boolean;
+  subscriptionId?: string;
   planName?: string;
   expiresAt?: string;
   autoRenew: boolean;
 }
 
 export default function PremiumAccessPage(): React.JSX.Element {
-  const [plans, setPlans] = useState<PremiumPlan[]>([]);
-  const [status, setStatus] = useState<PremiumStatus | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [isPurchasing, setIsPurchasing] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
-  useEffect(() => {
-    loadPremiumData();
-  }, []);
-
-  const loadPremiumData = async (): Promise<void> => {
-    try {
-      const [plansResult, statusResult] = await Promise.all([
-        apiFetch<
-          Array<{
-            id: string;
-            name: string;
-            description: string;
-            price: number;
-            duration: number;
-            features: string[];
-            tier: string;
-          }>
-        >('/v1/subscription/plans'),
-        apiFetch<{ status: string; plan?: { name: string }; endDate: string; autoRenew: boolean }>(
-          '/v1/subscription/current'
-        ),
-      ]);
-
-      if (plansResult.success && plansResult.data) {
-        setPlans(
-          plansResult.data.map((plan) => ({
-            id: plan.id,
-            name: plan.name,
-            description: plan.description,
-            price: plan.price,
-            duration: plan.duration === 7 ? 'weekly' : plan.duration === 30 ? 'monthly' : 'yearly',
-            features: plan.features,
-            isPopular: plan.tier === 'premium',
-          }))
-        );
+  const plansQuery = useQuery({
+    queryKey: ['premium', 'plans'],
+    queryFn: async () => {
+      const res = await apiFetch<
+        Array<{
+          id: string;
+          name: string;
+          description: string;
+          price: number;
+          duration: number;
+          features: string[];
+          tier: string;
+        }>
+      >('/v1/subscription/plans');
+      if (res.success && res.data) {
+        return res.data.map((plan) => ({
+          id: plan.id,
+          name: plan.name,
+          description: plan.description,
+          price: plan.price,
+          duration: plan.duration === 7 ? 'weekly' : plan.duration === 30 ? 'monthly' : 'yearly' as 'weekly' | 'monthly' | 'yearly',
+          features: plan.features,
+          isPopular: plan.tier === 'premium',
+        }));
       }
+      return [];
+    },
+    staleTime: 300000,
+  });
 
-      if (statusResult.success && statusResult.data) {
-        const sub = statusResult.data;
-        setStatus({
+  const statusQuery = useQuery({
+    queryKey: ['premium', 'status'],
+    queryFn: async () => {
+      const res = await apiFetch<{
+        id: string;
+        status: string;
+        plan?: { name: string };
+        endDate: string;
+        autoRenew: boolean;
+      }>('/v1/subscription/current');
+      if (res.success && res.data) {
+        const sub = res.data;
+        return {
           isPremium: sub.status === 'active',
+          subscriptionId: sub.id,
           planName: sub.plan?.name,
           expiresAt: sub.endDate,
           autoRenew: sub.autoRenew,
-        });
+        };
       }
-    } catch (error) {
-      webLogger.error('Failed to load premium data:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+      return null;
+    },
+    staleTime: 60000,
+  });
+
+  const plans = plansQuery.data ?? [];
+  const status = statusQuery.data ?? null;
+  const isLoading = plansQuery.isLoading || statusQuery.isLoading;
+  const error = plansQuery.error?.message || statusQuery.error?.message || null;
 
   const handleSubscribe = async (planId: string): Promise<void> => {
     setIsPurchasing(true);
@@ -91,30 +100,33 @@ export default function PremiumAccessPage(): React.JSX.Element {
       });
 
       if (result.success) {
-        alert('You are now a premium member!');
-        loadPremiumData();
+        setToast({ message: 'You are now a premium member!', type: 'success' });
+        queryClient.invalidateQueries({ queryKey: ['premium'] });
       }
     } catch (error: unknown) {
-      alert(error instanceof Error ? error.message : 'Failed to subscribe');
+      setToast({ message: error instanceof Error ? error.message : 'Failed to subscribe', type: 'error' });
     } finally {
       setIsPurchasing(false);
     }
   };
 
   const handleCancel = async (): Promise<void> => {
-    if (!confirm('Are you sure you want to cancel your premium subscription?')) return;
+    if (!status?.subscriptionId) {
+      setToast({ message: 'No active subscription found to cancel', type: 'error' });
+      return;
+    }
 
     try {
-      const result = await apiFetch('/v1/subscription/cancel', {
+      const result = await apiFetch(`/v1/subscription/${status.subscriptionId}`, {
         method: 'DELETE',
       });
 
       if (result.success) {
-        alert('Subscription cancelled');
-        loadPremiumData();
+        setToast({ message: 'Subscription cancelled', type: 'success' });
+        queryClient.invalidateQueries({ queryKey: ['premium'] });
       }
     } catch (error) {
-      alert('Failed to cancel subscription');
+      setToast({ message: 'Failed to cancel subscription', type: 'error' });
     }
   };
 
@@ -140,13 +152,33 @@ export default function PremiumAccessPage(): React.JSX.Element {
           style={{ minHeight: 'calc(100vh - 200px)' }}
         >
           <div className="text-center">
-            <div
-              className="animate-spin rounded-full h-12 w-12 mx-auto"
-              style={{ border: '3px solid rgba(255,255,255,0.1)', borderTopColor: '#E8420A' }}
-            />
+            <Spinner size="lg" color="#E8420A" />
             <p className="mt-4 text-white/60">Loading premium plans...</p>
           </div>
         </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
+        <AppHeader />
+        <div
+          className="flex items-center justify-center"
+          style={{ minHeight: 'calc(100vh - 200px)' }}
+        >
+          <ErrorState
+            title="Failed to load premium plans"
+            description={error}
+            buttonText="Retry"
+            onButtonPress={() => {
+              plansQuery.refetch();
+              statusQuery.refetch();
+            }}
+          />
+        </div>
+        <AppFooter />
       </div>
     );
   }
@@ -257,6 +289,20 @@ export default function PremiumAccessPage(): React.JSX.Element {
       </div>
 
       <AppFooter />
+
+      {toast && (
+        <div
+          className="fixed bottom-6 right-6 z-50 px-6 py-3 rounded-xl shadow-lg transition-all"
+          style={{
+            backgroundColor: toast.type === 'success' ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)',
+            border: `1px solid ${toast.type === 'success' ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)'}`,
+            color: toast.type === 'success' ? '#22C55E' : '#EF4444',
+          }}
+          role="alert"
+        >
+          {toast.message}
+        </div>
+      )}
     </div>
   );
 }

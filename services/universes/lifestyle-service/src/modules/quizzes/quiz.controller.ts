@@ -13,7 +13,9 @@ import {
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 
-import { QuizService, CreateQuizInput } from './quiz.service';
+import { QuizService } from './quiz.service';
+import { CreateQuizDto } from './dto/create-quiz.dto';
+import { SubmitQuizDto } from './dto/submit-quiz.dto';
 
 @ApiTags('Quizzes')
 @Controller('quizzes')
@@ -51,8 +53,8 @@ export class QuizController {
   @ApiOperation({ summary: 'Create a quiz' })
   @ApiResponse({ status: 201, description: 'Quiz created' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async createQuiz(@Request() req: { user: { sub: string } }, @Body() data: CreateQuizInput) {
-    return this.quizService.createQuiz(req.user.sub, data);
+  async createQuiz(@Request() req: { user: { sub: string } }, @Body() data: CreateQuizDto) {
+    return this.quizService.createQuiz(req.user.id, data);
   }
 
   @Post(':id/start')
@@ -63,7 +65,7 @@ export class QuizController {
   @ApiResponse({ status: 400, description: 'Invalid request' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async startQuiz(@Request() req: { user: { sub: string } }, @Param('id') quizId: string) {
-    return this.quizService.startQuiz(quizId, req.user.sub);
+    return this.quizService.startQuiz(quizId, req.user.id);
   }
 
   @Post('attempts/:attemptId/submit')
@@ -76,7 +78,7 @@ export class QuizController {
   async submitQuiz(
     @Request() req: { user: { sub: string } },
     @Param('attemptId') attemptId: string,
-    @Body() body: { answers: Record<string, string> }
+    @Body() body: SubmitQuizDto
   ) {
     return this.quizService.submitQuiz(attemptId, body.answers);
   }

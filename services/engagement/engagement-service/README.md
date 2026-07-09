@@ -22,7 +22,7 @@ Azeebo+ Engagement Service - Tracks user engagement, leaderboards, rankings, and
 
 ```bash
 # Install dependencies
-pnpm install
+ppnpm install
 
 # Generate Prisma client
 pnpm prisma:generate
@@ -31,7 +31,7 @@ pnpm prisma:generate
 pnpm prisma:migrate
 
 # Start development server
-pnpm start:dev
+ppnpm start:dev
 ```
 
 ## API Routes

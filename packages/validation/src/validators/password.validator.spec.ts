@@ -3,7 +3,7 @@ import { validate } from 'class-validator';
 
 class TestDto {
   @IsStrongPassword()
-  password: string;
+  password!: string;
 }
 
 describe('IsStrongPassword', () => {

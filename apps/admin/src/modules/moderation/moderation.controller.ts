@@ -1,6 +1,7 @@
 import { Controller, Get, Post, Put, Param, Query, Body, UseGuards, Req } from '@nestjs/common';
 import { Request } from 'express';
 import { ModerationService } from './moderation.service';
+import { AuditLogService } from '../audit/audit.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -13,7 +14,10 @@ interface AuthRequest extends Request {
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('admin')
 export class ModerationController {
-  constructor(private readonly moderationService: ModerationService) {}
+  constructor(
+    private readonly moderationService: ModerationService,
+    private readonly auditLogService: AuditLogService
+  ) {}
 
   @Get('reports')
   async getReports(
@@ -47,7 +51,16 @@ export class ModerationController {
     @Body() body: { action: string; reason: string }
   ): Promise<unknown> {
     const adminId = req.user.id;
-    return this.moderationService.resolveReport(id, body.action, body.reason, adminId);
+    const result = await this.moderationService.resolveReport(id, body.action, body.reason, adminId);
+    await this.auditLogService.log({
+      actorId: adminId,
+      action: 'moderation.report.resolved',
+      targetType: 'report',
+      targetId: id,
+      details: { action: body.action, reason: body.reason },
+      ipAddress: req.ip,
+    });
+    return result;
   }
 
   @Put('reports/:id/dismiss')
@@ -57,7 +70,16 @@ export class ModerationController {
     @Body() body: { reason: string }
   ): Promise<unknown> {
     const adminId = req.user.id;
-    return this.moderationService.dismissReport(id, body.reason, adminId);
+    const result = await this.moderationService.dismissReport(id, body.reason, adminId);
+    await this.auditLogService.log({
+      actorId: adminId,
+      action: 'moderation.report.dismissed',
+      targetType: 'report',
+      targetId: id,
+      details: { reason: body.reason },
+      ipAddress: req.ip,
+    });
+    return result;
   }
 
   @Post('safety-action')
@@ -73,7 +95,7 @@ export class ModerationController {
     }
   ): Promise<unknown> {
     const adminId = req.user.id;
-    return this.moderationService.takeSafetyAction(
+    const result = await this.moderationService.takeSafetyAction(
       body.targetId,
       body.targetType,
       body.actionType,
@@ -81,6 +103,15 @@ export class ModerationController {
       adminId,
       body.duration
     );
+    await this.auditLogService.log({
+      actorId: adminId,
+      action: 'moderation.safety_action.taken',
+      targetType: body.targetType,
+      targetId: body.targetId,
+      details: { actionType: body.actionType, reason: body.reason, duration: body.duration },
+      ipAddress: req.ip,
+    });
+    return result;
   }
 
   @Get('safety-actions')

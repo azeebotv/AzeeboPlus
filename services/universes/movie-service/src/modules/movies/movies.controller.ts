@@ -15,7 +15,7 @@ import { RateLimitGuard, RateLimit } from '@azeebo/security';
 
 import { MoviesService } from './movies.service';
 import { MovieResponse } from './interfaces/movie-response.interface';
-import { RolesGuard, Roles } from '@azeebo/shared-services';
+import { RolesGuard, Roles, Pagination } from '@azeebo/shared-services';
 import { AddToWatchlistDto } from './dto/watchlist.dto';
 
 @ApiTags('Movies')
@@ -31,6 +31,46 @@ export class MoviesController {
   @ApiResponse({ status: 200, description: 'Movie catalog' })
   async listMovies(): Promise<MovieResponse> {
     return this.moviesService.listMovies();
+  }
+
+  @Get('premieres')
+  @ApiOperation({ summary: 'Premieres list' })
+  @ApiResponse({ status: 200, description: 'Premieres list' })
+  async listPremieres(): Promise<MovieResponse> {
+    return this.moviesService.listPremieres();
+  }
+
+  @Get('watchlist')
+  @UseGuards(AuthGuard('jwt'))
+  @ApiOperation({ summary: 'User watchlist' })
+  @ApiResponse({ status: 200, description: 'Watchlist' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async getWatchlist(@Request() req: { user: { sub: string } }): Promise<MovieResponse> {
+    return this.moviesService.getWatchlist(req.user.id);
+  }
+
+  @Post('watchlist')
+  @UseGuards(AuthGuard('jwt'))
+  @ApiOperation({ summary: 'Add to watchlist' })
+  @ApiResponse({ status: 201, description: 'Added to watchlist' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async addToWatchlist(
+    @Request() req: { user: { sub: string } },
+    @Body() body: AddToWatchlistDto
+  ): Promise<MovieResponse> {
+    return this.moviesService.addToWatchlist(req.user.id, body.movieId);
+  }
+
+  @Delete('watchlist/:movieId')
+  @UseGuards(AuthGuard('jwt'))
+  @ApiOperation({ summary: 'Remove from watchlist' })
+  @ApiResponse({ status: 200, description: 'Removed from watchlist' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async removeFromWatchlist(
+    @Request() req: { user: { sub: string } },
+    @Param('movieId') movieId: string
+  ): Promise<MovieResponse> {
+    return this.moviesService.removeFromWatchlist(req.user.id, movieId);
   }
 
   @Get(':movieId')
@@ -52,47 +92,7 @@ export class MoviesController {
     @Request() req: { user: { sub: string } },
     @Param('movieId') movieId: string
   ): Promise<MovieResponse> {
-    return this.moviesService.rentMovie(req.user.sub, movieId);
-  }
-
-  @Get('premieres')
-  @ApiOperation({ summary: 'Premieres list' })
-  @ApiResponse({ status: 200, description: 'Premieres list' })
-  async listPremieres(): Promise<MovieResponse> {
-    return this.moviesService.listPremieres();
-  }
-
-  @Get('watchlist')
-  @UseGuards(AuthGuard('jwt'))
-  @ApiOperation({ summary: 'User watchlist' })
-  @ApiResponse({ status: 200, description: 'Watchlist' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getWatchlist(@Request() req: { user: { sub: string } }): Promise<MovieResponse> {
-    return this.moviesService.getWatchlist(req.user.sub);
-  }
-
-  @Post('watchlist')
-  @UseGuards(AuthGuard('jwt'))
-  @ApiOperation({ summary: 'Add to watchlist' })
-  @ApiResponse({ status: 201, description: 'Added to watchlist' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async addToWatchlist(
-    @Request() req: { user: { sub: string } },
-    @Body() body: AddToWatchlistDto
-  ): Promise<MovieResponse> {
-    return this.moviesService.addToWatchlist(req.user.sub, body.movieId);
-  }
-
-  @Delete('watchlist/:movieId')
-  @UseGuards(AuthGuard('jwt'))
-  @ApiOperation({ summary: 'Remove from watchlist' })
-  @ApiResponse({ status: 200, description: 'Removed from watchlist' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async removeFromWatchlist(
-    @Request() req: { user: { sub: string } },
-    @Param('movieId') movieId: string
-  ): Promise<MovieResponse> {
-    return this.moviesService.removeFromWatchlist(req.user.sub, movieId);
+    return this.moviesService.rentMovie(req.user.id, movieId);
   }
 
   @Get('me/library')
@@ -101,7 +101,7 @@ export class MoviesController {
   @ApiResponse({ status: 200, description: 'Library' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getLibrary(@Request() req: { user: { sub: string } }): Promise<MovieResponse> {
-    return this.moviesService.getLibrary(req.user.sub);
+    return this.moviesService.getLibrary(req.user.id);
   }
 
   @Post(':movieId/viewing-windows')

@@ -2,8 +2,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { AuthService } from './auth.service';
 import { AuthRepository } from './auth.repository';
 import { RedisService } from '../../common/services/redis.service';
+import { OtpService } from './otp/otp.service';
 import { JwtService } from '@nestjs/jwt';
-import { ConflictException, UnauthorizedException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { ConflictException, UnauthorizedException, BadRequestException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 
 jest.mock('bcrypt');
@@ -52,6 +54,7 @@ describe('AuthService', () => {
             findById: jest.fn().mockResolvedValue(null),
             create: jest.fn().mockResolvedValue(mockUser),
             update: jest.fn().mockResolvedValue(mockUser),
+            updatePassword: jest.fn().mockResolvedValue(mockUser),
             createSession: jest.fn().mockResolvedValue(mockSession),
             findSessionByUserId: jest.fn().mockResolvedValue(null),
             deleteSessionByUserId: jest.fn().mockResolvedValue(0),
@@ -73,6 +76,7 @@ describe('AuthService', () => {
             }),
             unlinkSocialAccount: jest.fn().mockResolvedValue(0),
             verifyEmail: jest.fn().mockResolvedValue(mockUser),
+            updateRole: jest.fn().mockResolvedValue(mockUser),
           },
         },
         {
@@ -93,6 +97,31 @@ describe('AuthService', () => {
             decode: jest
               .fn()
               .mockReturnValue({ jti: 'token-123', exp: Math.floor(Date.now() / 1000) + 3600 }),
+          },
+        },
+        {
+          provide: OtpService,
+          useValue: {
+            generateOtp: jest.fn().mockResolvedValue({ otp: '123456', expiresAt: new Date() }),
+            verifyOtp: jest.fn().mockResolvedValue(true),
+            sendOtpToUser: jest.fn().mockResolvedValue({ message: 'OTP sent' }),
+          },
+        },
+        {
+          provide: ConfigService,
+          useValue: {
+            get: jest.fn().mockImplementation((key: string, defaultValue?: unknown) => {
+              const config: Record<string, unknown> = {
+                SALT_ROUNDS: 10,
+                JWT_EXPIRES_IN: '30m',
+                JWT_REFRESH_EXPIRES_IN: '7d',
+                REFRESH_TOKEN_EXPIRY_DAYS: 7,
+                MAX_FAILED_ATTEMPTS: 5,
+                LOCKOUT_DURATION_SECONDS: 900,
+                OTP_EXPIRY: 300,
+              };
+              return config[key] ?? defaultValue;
+            }),
           },
         },
       ],
@@ -268,7 +297,7 @@ describe('AuthService', () => {
 
   describe('validateToken', () => {
     it('should return user for valid token', async () => {
-      (jwtService.verify as jest.Mock).mockReturnValue({ jti: 'token-123', sub: 'user-123' });
+      (jwtService.verify as jest.Mock).mockReturnValue({ jti: 'token-123', sub: 'user-123', type: 'access' });
       (redisService.get as jest.Mock).mockResolvedValue(null);
       (authRepository.findById as jest.Mock).mockResolvedValue(mockUser);
 
@@ -279,7 +308,7 @@ describe('AuthService', () => {
     });
 
     it('should return null for revoked token', async () => {
-      (jwtService.verify as jest.Mock).mockReturnValue({ jti: 'token-123', sub: 'user-123' });
+      (jwtService.verify as jest.Mock).mockReturnValue({ jti: 'token-123', sub: 'user-123', type: 'access' });
       (redisService.get as jest.Mock).mockResolvedValue('1');
 
       const result = await service.validateToken('revoked-token');
@@ -326,7 +355,8 @@ describe('AuthService', () => {
       (redisService.get as jest.Mock).mockResolvedValue(userId);
       (redisService.del as jest.Mock).mockResolvedValue(1);
       (bcrypt.hash as jest.Mock).mockResolvedValue('newHashedPassword');
-      (authRepository.update as jest.Mock).mockResolvedValue(mockUser);
+      (authRepository.findById as jest.Mock).mockResolvedValue(mockUser);
+      (authRepository.updatePassword as jest.Mock).mockResolvedValue(mockUser);
 
       const result = await service.resetPassword({
         token: 'valid-reset-token',
@@ -336,7 +366,7 @@ describe('AuthService', () => {
       expect(result.success).toBe(true);
       expect(redisService.get).toHaveBeenCalledWith('password_reset:valid-reset-token');
       expect(redisService.del).toHaveBeenCalled();
-      expect(authRepository.update).toHaveBeenCalledWith(userId, { password: 'newHashedPassword' });
+      expect(authRepository.updatePassword).toHaveBeenCalledWith(userId, 'newHashedPassword');
     });
 
     it('should fail with invalid or expired token', async () => {
@@ -344,7 +374,7 @@ describe('AuthService', () => {
 
       await expect(
         service.resetPassword({ token: 'invalid-token', newPassword: 'NewPassword123!' })
-      ).rejects.toThrow(UnauthorizedException);
+      ).rejects.toThrow(BadRequestException);
     });
   });
 
@@ -353,6 +383,7 @@ describe('AuthService', () => {
       const userId = 'user-123';
       (redisService.get as jest.Mock).mockResolvedValue(userId);
       (redisService.del as jest.Mock).mockResolvedValue(1);
+      (authRepository.findById as jest.Mock).mockResolvedValue(mockUser);
       (authRepository.verifyEmail as jest.Mock).mockResolvedValue(mockUser);
 
       const result = await service.verifyEmail({ token: 'valid-verification-token' });
@@ -367,7 +398,7 @@ describe('AuthService', () => {
       (redisService.get as jest.Mock).mockResolvedValue(null);
 
       await expect(service.verifyEmail({ token: 'invalid-token' })).rejects.toThrow(
-        UnauthorizedException
+        BadRequestException
       );
     });
   });
@@ -380,7 +411,7 @@ describe('AuthService', () => {
       const result = await service.resendVerification({ email: 'test@example.com' });
 
       expect(result.success).toBe(true);
-      expect(result.message).toContain('verification email');
+      expect(result.message).toContain('verification');
       expect(redisService.set).toHaveBeenCalled();
     });
 

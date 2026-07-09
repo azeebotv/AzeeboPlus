@@ -18,7 +18,9 @@ export interface PinValidationResult {
 // Load pins from environment configuration
 const loadPinsFromConfig = (): CertificatePin[] => {
   const pins: CertificatePin[] = [];
-  const extras = Constants.expoConfig?.extra || {};
+  const extras =
+    (((Constants as Record<string, unknown>).expoConfig as Record<string, unknown>)
+      ?.extra as Record<string, string>) || {};
 
   // Production pins
   const prodPin = extras.CERT_PIN_PRODUCTION;
@@ -135,15 +137,9 @@ class CertificatePinningService {
     }
 
     // Normalize fingerprints: strip 'sha256/' prefix and uppercase for comparison
-    const normalizedFingerprint = certificateFingerprint
-      .replace(/^sha256\//i, '')
-      .toUpperCase();
-    const normalizedPrimary = pin.sha256Fingerprint
-      .replace(/^sha256\//i, '')
-      .toUpperCase();
-    const normalizedBackup = pin.backupPin
-      ?.replace(/^sha256\//i, '')
-      .toUpperCase();
+    const normalizedFingerprint = certificateFingerprint.replace(/^sha256\//i, '').toUpperCase();
+    const normalizedPrimary = pin.sha256Fingerprint.replace(/^sha256\//i, '').toUpperCase();
+    const normalizedBackup = pin.backupPin?.replace(/^sha256\//i, '').toUpperCase();
 
     const isPrimaryMatch = normalizedFingerprint === normalizedPrimary;
     const isBackupMatch = normalizedBackup && normalizedFingerprint === normalizedBackup;
@@ -154,8 +150,8 @@ class CertificatePinningService {
 
     logger.error(
       `Certificate pin mismatch for ${hostname}: ` +
-      `expected ${normalizedPrimary.substring(0, 16)}..., ` +
-      `got ${normalizedFingerprint.substring(0, 16)}...`
+        `expected ${normalizedPrimary.substring(0, 16)}..., ` +
+        `got ${normalizedFingerprint.substring(0, 16)}...`
     );
     return {
       isValid: false,
@@ -266,8 +262,8 @@ class CertificatePinningService {
 
       return response;
     } catch (error) {
-      if (error instanceof Error && error.message.includes('certificate')) {
-        throw new Error(`Certificate validation failed for ${url}: ${error.message}`);
+      if (error instanceof Error && (error as Error).message.includes('certificate')) {
+        throw new Error(`Certificate validation failed for ${url}: ${(error as Error).message}`);
       }
       throw error;
     }
@@ -288,12 +284,12 @@ export function initializeCertificatePinning(): void {
   // Verify that native SSL pinning library is available
   try {
     require('react-native-ssl-pinning');
-    logger.info('Certificate pinning: native SSL pinning library detected');
+    logger.log('Certificate pinning: native SSL pinning library detected');
   } catch (_e) {
     logger.warn(
       'Certificate pinning: react-native-ssl-pinning NOT installed. ' +
-      'TLS-level pinning is not enforced. Install the library and configure ' +
-      'its Expo config plugin for full protection.'
+        'TLS-level pinning is not enforced. Install the library and configure ' +
+        'its Expo config plugin for full protection.'
     );
   }
 

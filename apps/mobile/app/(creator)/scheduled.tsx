@@ -1,13 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  FlatList,
-  ActivityIndicator,
-  Image,
-} from 'react-native';
+import { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, FlatList, Image } from 'react-native';
 import { useRouter, type Href } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { contentApi } from '../../src/api';
@@ -102,7 +94,7 @@ export default function ScheduledPostsScreen() {
   const renderPost = ({ item }: { item: ScheduledPost }) => (
     <TouchableOpacity
       style={styles.card}
-      onPress={() => router.push(`/(creator)/content-detail?id=${item.id}` as Href)}
+      onPress={() => router.push(`/(creator)/upload?id=${item.id}` as Href)}
     >
       <Image source={{ uri: item.thumbnail }} style={styles.thumbnail} />
       <View style={styles.content}>
@@ -172,7 +164,7 @@ export default function ScheduledPostsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#111827',
+    backgroundColor: '#1A0A0A',
   },
   loadingContainer: {
     flex: 1,
@@ -190,7 +182,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#1f2937',
+    borderBottomColor: 'rgba(255,255,255,0.08)',
   },
   backButton: {
     marginRight: 16,
@@ -231,7 +223,7 @@ const styles = StyleSheet.create({
   },
   card: {
     flexDirection: 'row',
-    backgroundColor: '#1f2937',
+    backgroundColor: '#2A2A2A',
     borderRadius: 12,
     marginBottom: 12,
     overflow: 'hidden',

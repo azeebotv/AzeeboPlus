@@ -75,7 +75,7 @@ jobs:
       - name: Rollback all services
         if: inputs.service == ''
         run: |
-          SERVICES="analytics-service api-gateway auth-service comedy-service content-service creator-service games-service lifestyle-service media-service moderation-service movie-service notification-service payment-service queue-service reality-service recommendation-service reward-service search-service sports-service support-service user-service vertical-service wallet-service"
+          SERVICES="analytics-service api-gateway auth-service comedy-service content-service creator-service engagement-service games-service lifestyle-service media-service messaging-service moderation-service movie-service notification-service payment-service queue-service reality-service recommendation-service referral-service reward-service search-service sports-service subscription-service support-service user-service vertical-service wallet-service"
           
           for service in $SERVICES; do
             echo "Rolling back $service to ${{ inputs.target_tag }}..."

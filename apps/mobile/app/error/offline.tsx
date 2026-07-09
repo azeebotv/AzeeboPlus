@@ -1,4 +1,3 @@
-import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 
@@ -10,12 +9,12 @@ export default function OfflineScreen() {
     <View
       style={[
         styles.container,
-        { backgroundColor: colorScheme === 'dark' ? '#000000' : '#ffffff' },
+        { backgroundColor: colorScheme === 'dark' ? '#1A0A0A' : '#ffffff' },
       ]}
     >
       <View style={styles.content}>
         <Text style={styles.icon}>📡</Text>
-        <Text style={[styles.title, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
+        <Text style={[styles.title, { color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A' }]}>
           No Internet Connection
         </Text>
         <Text style={styles.description}>Please check your network settings and try again.</Text>
@@ -64,7 +63,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   primaryButton: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     padding: 16,
     borderRadius: 12,
     alignItems: 'center',

@@ -40,7 +40,7 @@ export class AdminService {
     const limit = options?.limit || 20;
     const skip = (page - 1) * limit;
 
-    const uploadKeys = await this.redisService.keys('media:upload:*');
+    const uploadKeys = await this.redisService.scanKeys('media:upload:*');
     const total = uploadKeys.length;
 
     const paginatedKeys = uploadKeys.slice(skip, skip + limit);

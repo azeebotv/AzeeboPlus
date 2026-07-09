@@ -1,4 +1,5 @@
 import { Controller, Get } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { Public } from '@azeebo/security';
 import {
   HealthCheck,
@@ -7,6 +8,7 @@ import {
   HealthIndicatorResult,
 } from '@nestjs/terminus';
 
+@ApiTags('Health')
 @Controller()
 @Public()
 export class HealthController {

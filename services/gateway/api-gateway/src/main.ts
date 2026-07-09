@@ -4,21 +4,19 @@ import { ValidationPipe, Logger } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import helmet from 'helmet';
+import cookieParser from 'cookie-parser';
 import { LoggingInterceptor } from '@azeebo/logger';
 import { GlobalExceptionFilter } from '@azeebo/error-handling';
+import { validateEnvironment } from '@azeebo/shared-types';
 
 async function bootstrap(): Promise<void> {
-  if (!process.env.JWT_ACCESS_SECRET) {
-    Logger.error('JWT_ACCESS_SECRET environment variable is required');
-    process.exit(1);
-  }
+  validateEnvironment(process.env);
 
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     bodyParser: false,
   });
 
   // Cookie parsing for CSRF protection and auth cookies
-  const cookieParser = require('cookie-parser');
   app.use(cookieParser());
 
   // Body size limits to prevent memory exhaustion attacks (SEC-010)
@@ -33,6 +31,7 @@ async function bootstrap(): Promise<void> {
       contentSecurityPolicy: {
         directives: {
           defaultSrc: ["'self'"],
+          scriptSrc: ["'self'"],
           styleSrc: ["'self'"],
           imgSrc: ["'self'", 'data:', 'https:'],
         },
@@ -59,11 +58,16 @@ async function bootstrap(): Promise<void> {
     'https://app.azeeboplus.com',
     'https://creator.azeeboplus.com',
     'https://admin.azeeboplus.com',
-    'http://localhost:3000',
-    'http://localhost:4000',
-    'http://localhost:4014',
-    'http://localhost:4016',
   ];
+
+  if (process.env.NODE_ENV !== 'production') {
+    allowedOrigins.push(
+      'http://localhost:3000',
+      'http://localhost:4000',
+      'http://localhost:4014',
+      'http://localhost:4016'
+    );
+  }
 
   // Accept env-var overrides for additional origins
   const originsEnv = process.env.ALLOWED_ORIGINS || process.env.CORS_ORIGIN;
@@ -77,9 +81,14 @@ async function bootstrap(): Promise<void> {
   }
 
   app.enableCors({
-    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
-      // Allow requests with no origin (server-to-server, curl, mobile apps)
-      if (!origin || allowedOrigins.includes(origin)) {
+    origin: (
+      origin: string | undefined,
+      callback: (err: Error | null, allow?: boolean) => void
+    ) => {
+      // Allow requests with no origin only in development (server-to-server, curl, mobile apps)
+      if (!origin) {
+        callback(null, process.env.NODE_ENV !== 'production');
+      } else if (allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
         callback(new Error('Not allowed by CORS'));

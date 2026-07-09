@@ -155,8 +155,8 @@ describe('UsersService', () => {
       const result = await service.getWatchHistory('user-123', 1, 20);
 
       expect(result.success).toBe(true);
-      expect(result.data).toHaveProperty('items', mockHistory);
-      expect((result.data as Record<string, unknown>).pagination).toHaveProperty('total', 10);
+      expect(result.data).toEqual(mockHistory);
+      expect((result.pagination as Record<string, unknown>).total).toBe(10);
     });
   });
 
@@ -173,7 +173,7 @@ describe('UsersService', () => {
       const result = await service.getSavedItems('user-123', 1, 20);
 
       expect(result.success).toBe(true);
-      expect(result.data).toHaveProperty('items', mockSavedItems);
+      expect(result.data).toEqual(mockSavedItems);
     });
   });
 

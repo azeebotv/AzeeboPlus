@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { webLogger } from '@/lib/logger';
+import { apiFetch } from '@/lib/api';
 import BrandLogo from '@/components/auth/BrandLogo';
 import { Alert, Spinner } from '@/components/auth/FormBits';
 
@@ -48,7 +49,13 @@ export default function RoleSelectionPage(): React.JSX.Element {
     setError(null);
     setActive(role);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const result = await apiFetch('/v1/auth/select-role', {
+        method: 'POST',
+        body: JSON.stringify({ role }),
+      });
+      if (!result.success) {
+        throw new Error(result.message || 'Failed to select role');
+      }
       router.push('/auth/profile-setup');
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to select role';

@@ -74,8 +74,6 @@ export const metadata: Metadata = {
   manifest: '/site.webmanifest',
 };
 
-export const dynamic = 'force-dynamic';
-
 export default function RootLayout({ children }: { children: React.ReactNode }): React.JSX.Element {
   return (
     <html lang="en" suppressHydrationWarning data-scroll-behavior="smooth">

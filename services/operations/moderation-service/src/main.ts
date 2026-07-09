@@ -56,7 +56,7 @@ async function bootstrap(): Promise<void> {
       .setDescription('Azeebo+ Moderation Service API')
       .setVersion('1.0.0')
       .addTag('moderation')
-      .addServer('http://localhost:3013', 'API Gateway')
+      .addServer('http://localhost:3022', 'API Gateway')
       .build();
     const document = SwaggerModule.createDocument(app, config);
     SwaggerModule.setup('docs', app, document);

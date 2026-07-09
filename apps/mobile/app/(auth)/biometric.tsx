@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   Alert,
   useColorScheme,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useBiometric } from '../../src/hooks/useBiometric';
 import { useAuth } from '../../src/contexts/AuthContext';
@@ -45,7 +46,7 @@ export default function BiometricAuthScreen() {
       const result = await authenticateWithStoredCredentials();
 
       if (result.success) {
-        router.replace('/(tabs)/home')
+        router.replace('/(tabs)/home');
       } else {
         Alert.alert(
           'Authentication Failed',
@@ -77,7 +78,7 @@ export default function BiometricAuthScreen() {
         timestamp: Date.now(),
       });
 
-      const success = await enableBiometrics(credentials);
+      const success = await enableBiometrics(JSON.parse(credentials));
 
       if (success) {
         Alert.alert(
@@ -129,19 +130,21 @@ export default function BiometricAuthScreen() {
 
   if (isLoading) {
     return (
-      <View
-        style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#000' : '#fff' }]}
+      <SafeAreaView
+        style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#1A0A0A' : '#fff' }]}
       >
-        <ActivityIndicator size="large" color="#8B5CF6" />
+        <ActivityIndicator size="large" color="#E8420A" />
         <Text style={[styles.loadingText, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}>
           Initializing biometric authentication...
         </Text>
-      </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#000' : '#fff' }]}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#1A0A0A' : '#fff' }]}
+    >
       <View style={styles.content}>
         <View style={styles.iconContainer}>
           <Text style={styles.biometricIcon}>{getBiometricIcon()}</Text>
@@ -223,7 +226,7 @@ export default function BiometricAuthScreen() {
           </Text>
         </View>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -246,7 +249,7 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: '#8B5CF620',
+    backgroundColor: '#E8420A20',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 32,
@@ -267,14 +270,14 @@ const styles = StyleSheet.create({
     lineHeight: 24,
   },
   errorContainer: {
-    backgroundColor: '#FF3B3020',
+    backgroundColor: '#CC1C1C20',
     borderRadius: 12,
     padding: 16,
     marginBottom: 24,
     width: '100%',
   },
   errorText: {
-    color: '#FF3B30',
+    color: '#CC1C1C',
     fontSize: 14,
     textAlign: 'center',
   },
@@ -283,7 +286,7 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   primaryButton: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     borderRadius: 12,
     padding: 16,
     flexDirection: 'row',
@@ -312,7 +315,7 @@ const styles = StyleSheet.create({
     borderColor: '#333',
   },
   secondaryButtonText: {
-    color: '#8B5CF6',
+    color: '#E8420A',
     fontSize: 16,
     fontWeight: '600',
   },

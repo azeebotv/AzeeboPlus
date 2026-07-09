@@ -3,7 +3,7 @@ import React from 'react';
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useAuth } from '../../../context/AuthContext';
 import { apiFetch } from '../../../lib/api';
-import { trapFocus, announceToScreenReader } from '../../../lib/keyboard';
+import { announceToScreenReader } from '../../../lib/keyboard';
 import AppHeader from '../../../components/layout/AppHeader';
 import AppFooter from '../../../components/layout/AppFooter';
 
@@ -29,6 +29,17 @@ interface Comment {
   likedByCurrentUser: boolean;
 }
 
+interface RawComment {
+  id: string;
+  userId: string;
+  userName: string;
+  content: string;
+  timestamp?: string;
+  createdAt?: string;
+  likes: number;
+  likedByCurrentUser: boolean;
+}
+
 export default function WatchPageClient({ id }: { id: string }): React.JSX.Element {
   const { user } = useAuth();
   const [content, setContent] = useState<Content | null>(null);
@@ -45,18 +56,24 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
   const [isLiked, setIsLiked] = useState<boolean>(false);
   const [isDisliked, setIsDisliked] = useState<boolean>(false);
   const [likeCount, setLikeCount] = useState<number>(0);
-  const [dislikeCount, setDislikeCount] = useState<number>(0);
+  const [_dislikeCount, setDislikeCount] = useState<number>(0);
   const [isSubscribed, setIsSubscribed] = useState<boolean>(false);
   const [subscriberCount, setSubscriberCount] = useState<number>(0);
   const [showDescription, setShowDescription] = useState<boolean>(false);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
-  const [isPiP, setIsPiP] = useState<boolean>(false);
+  const [_isPiP, setIsPiP] = useState<boolean>(false);
   const [playbackRate, setPlaybackRate] = useState<number>(1);
   const [showSettings, setShowSettings] = useState<boolean>(false);
-  const [isBuffering, setIsBuffering] = useState<boolean>(false);
+  const [isBuffering, _setIsBuffering] = useState<boolean>(false);
   const [showShareModal, setShowShareModal] = useState<boolean>(false);
   const [showReportModal, setShowReportModal] = useState<boolean>(false);
   const [isReporting, setIsReporting] = useState<boolean>(false);
+  const [retryCount, setRetryCount] = useState<number>(0);
+
+  const handleRetry = useCallback(() => {
+    setError(null);
+    setRetryCount((c) => c + 1);
+  }, []);
 
   const videoRef = useRef<HTMLDivElement>(null);
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -74,9 +91,10 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
       try {
         setIsLoading(true);
         setError(null);
-        const response = await apiFetch<any>(`/content/${id}`);
+        const response = await apiFetch<Content & { creatorId?: string; creatorName?: string; creatorAvatar?: string; likeCount?: number; dislikeCount?: number }>(`/content/${id}`);
         if (response.success && response.data) {
           const data = response.data;
+          const creatorId = data.creatorId || data.creator?.id || 'unknown';
           setContent({
             id: data.id || id,
             title: data.title || 'Untitled Content',
@@ -86,24 +104,44 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
             category: data.category || 'General',
             universe: data.universe || { id: 'unknown', name: 'General' },
             creator: data.creator || {
-              id: 'unknown',
-              name: 'Unknown Creator',
-              avatar: '/images/default-avatar.jpg',
+              id: creatorId,
+              name: data.creatorName || 'Unknown Creator',
+              avatar: data.creatorAvatar || '/images/default-avatar.jpg',
             },
             rating: data.rating || 0,
           });
-          if (data.rating) {
-            const fullStars = Math.floor(data.rating);
-            const decimalPart = data.rating - fullStars;
-            setLikeCount(Math.floor(decimalPart * 1000));
-            setDislikeCount(Math.floor((1 - decimalPart) * 1000));
+          if (data.duration) {
+            setDuration(data.duration);
           }
-          if (data.creator?.id) {
+          setLikeCount(data.likeCount || 0);
+          setDislikeCount(data.dislikeCount || 0);
+          if (creatorId && creatorId !== 'unknown') {
             try {
-              const creatorResponse = await apiFetch<any>(`/creators/${data.creator.id}`);
+              const creatorResponse = await apiFetch<{ subscriberCount?: number; isSubscribed?: boolean; displayName?: string; name?: string; avatarUrl?: string; avatar?: string }>(`/creators/${creatorId}`);
               if (creatorResponse.success && creatorResponse.data) {
-                setSubscriberCount(creatorResponse.data.subscriberCount || 0);
-                setIsSubscribed(creatorResponse.data.isSubscribed || false);
+                const creatorData = creatorResponse.data;
+                setSubscriberCount(creatorData.subscriberCount || 0);
+                setIsSubscribed(creatorData.isSubscribed || false);
+                setContent((prev) =>
+                  prev
+                    ? {
+                        ...prev,
+                        creator: {
+                          id: creatorId,
+                          name:
+                            creatorData.displayName ||
+                            creatorData.name ||
+                            prev.creator?.name ||
+                            'Unknown Creator',
+                          avatar:
+                            creatorData.avatarUrl ||
+                            creatorData.avatar ||
+                            prev.creator?.avatar ||
+                            '/images/default-avatar.jpg',
+                        },
+                      }
+                    : prev
+                );
               }
             } catch {
               /* intentionally minimal */
@@ -120,21 +158,21 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
     };
 
     if (id) fetchContent();
-  }, [id]);
+  }, [id, retryCount]);
 
   useEffect(() => {
     const loadComments = async (): Promise<void> => {
       try {
-        const response = await apiFetch<any>(`/content/${id}/comments`);
+        const response = await apiFetch<RawComment[]>(`/content/${id}/comments`);
         if (response.success && response.data) {
           const commentsData = Array.isArray(response.data) ? response.data : [];
           setComments(
-            commentsData.map((c: any) => ({
+            commentsData.map((c: RawComment) => ({
               id: String(c.id),
               userId: String(c.userId),
               userName: String(c.userName || 'Anonymous'),
               content: String(c.content),
-              timestamp: new Date(c.timestamp || c.createdAt),
+              timestamp: new Date(c.timestamp || c.createdAt || ''),
               likes: Number(c.likes || 0),
               likedByCurrentUser: Boolean(c.likedByCurrentUser),
             }))
@@ -174,7 +212,7 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
 
   const toggleMute = useCallback((): void => {
     setIsMuted(!isMuted);
-    announceToScreenReader(isMuted ? 'Volume muted' : 'Volume unmuted');
+    announceToScreenReader(isMuted ? 'Volume unmuted' : 'Volume muted');
   }, [isMuted]);
 
   const handleProgressChange = useCallback(
@@ -245,7 +283,7 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
   const toggleSubscribe = useCallback(async (): Promise<void> => {
     try {
       if (!user || !content?.creator?.id) return;
-      const response = await apiFetch<any>(`/creators/subscribe/${content.creator.id}`, {
+      const response = await apiFetch<{ subscribed: boolean }>(`/creators/subscribe/${content.creator.id}`, {
         method: 'POST',
       });
       if (response.success) {
@@ -261,22 +299,22 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
   const handleAddComment = useCallback(async (): Promise<void> => {
     if (!user || !newComment.trim()) return;
     try {
-      const response = await apiFetch<any>(`/content/${id}/comments`, {
+      const response = await apiFetch<Comment>(`/content/${id}/comments`, {
         method: 'POST',
         body: JSON.stringify({ content: newComment }),
       });
       if (response.success) {
         setNewComment('');
-        const commentsResponse = await apiFetch<any>(`/content/${id}/comments`);
+        const commentsResponse = await apiFetch<RawComment[]>(`/content/${id}/comments`);
         if (commentsResponse.success && commentsResponse.data) {
           const commentsData = Array.isArray(commentsResponse.data) ? commentsResponse.data : [];
           setComments(
-            commentsData.map((c: any) => ({
+            commentsData.map((c: RawComment) => ({
               id: String(c.id),
               userId: String(c.userId),
               userName: String(c.userName || 'Anonymous'),
               content: String(c.content),
-              timestamp: new Date(c.timestamp || c.createdAt),
+              timestamp: new Date(c.timestamp || c.createdAt || ''),
               likes: Number(c.likes || 0),
               likedByCurrentUser: Boolean(c.likedByCurrentUser),
             }))
@@ -320,7 +358,7 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
     async (reason: string, details: string): Promise<void> => {
       try {
         setIsReporting(true);
-        const response = await apiFetch<any>('/moderation/report', {
+        const response = await apiFetch<{ reported: boolean }>('/moderation/report', {
           method: 'POST',
           body: JSON.stringify({ targetId: id, targetType: 'content', reason, details }),
         });
@@ -436,7 +474,7 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
             <h2 className="text-xl font-bold text-white mb-2">Error Loading Content</h2>
             <p className="text-white/50">{error || 'Content not found'}</p>
             <button
-              onClick={() => window.location.reload()}
+              onClick={handleRetry}
               className="az-btn-primary mt-6"
               style={{ width: 'auto', paddingInline: '2rem' }}
             >
@@ -778,11 +816,8 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
                 style={{ border: '1px solid rgba(255,255,255,0.1)' }}
               >
                 <div>
-                  <span className="text-sm font-medium text-white">
-                    {content.category || 'Uncategorized'}
-                  </span>
                   <span className="text-sm text-white/50 ml-2">
-                    {formatTime(duration || 100)} views
+                    {content.category || 'Uncategorized'}
                   </span>
                 </div>
                 <svg
@@ -905,13 +940,13 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
                         </div>
                         <p className="text-sm text-white/70 mt-1">{comment.content}</p>
                         <div className="flex items-center gap-4 mt-2">
-                          <button className="flex items-center gap-1 text-xs text-white/40 hover:text-white transition-colors">
+                          <button className="flex items-center gap-1 text-xs text-white/40 hover:text-white transition-colors" aria-label={`Like comment, ${comment.likes} likes`}>
                             <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
                               <path d="M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z" />
                             </svg>
                             {comment.likes}
                           </button>
-                          <button className="text-xs text-white/40 hover:text-white transition-colors">
+                          <button className="text-xs text-white/40 hover:text-white transition-colors" aria-label={`Reply to ${comment.userName}`}>
                             Reply
                           </button>
                         </div>
@@ -955,6 +990,7 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
               <button
                 onClick={() => handleShare('twitter')}
                 className="az-glass flex items-center justify-center gap-2 p-3 rounded-xl hover:bg-white/5 transition-colors text-white font-medium text-sm"
+                aria-label="Share on Twitter"
               >
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
@@ -964,6 +1000,7 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
               <button
                 onClick={() => handleShare('facebook')}
                 className="az-glass flex items-center justify-center gap-2 p-3 rounded-xl hover:bg-white/5 transition-colors text-white font-medium text-sm"
+                aria-label="Share on Facebook"
               >
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />

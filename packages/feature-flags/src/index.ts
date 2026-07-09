@@ -1,5 +1,6 @@
 import Redis from 'ioredis';
-import { randomBytes } from 'crypto';
+import { createHash } from 'crypto';
+import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
 
 export interface FeatureFlag {
   key: string;
@@ -17,6 +18,7 @@ export interface FeatureFlagConfig {
   prefix?: string;
 }
 
+/** Service for managing feature flags backed by Redis, with percentage rollouts and user targeting. */
 export class FeatureFlagService {
   private redis: Redis;
   private prefix: string;
@@ -52,8 +54,13 @@ export class FeatureFlagService {
         const hash = this.hashUserId(userId, key);
         return hash < flag.rolloutPercentage;
       }
-      const roll = (randomBytes(1)[0] / 256) * 100;
-      return roll < flag.rolloutPercentage;
+      // For anonymous users, derive a stable rollout bucket from a hash of
+      // the flag key combined with a request-scoped anonymous id. This avoids
+      // the non-determinism of randomBytes while still giving each anonymous
+      // visitor a consistent experience across requests.
+      const anonId = process.env.ANONYMOUS_ID || '';
+      const bucket = this.hashUserId(anonId || key, key);
+      return bucket < flag.rolloutPercentage;
     }
 
     return true;
@@ -104,7 +111,7 @@ export class FeatureFlagService {
   }
 
   async listFlags(): Promise<FeatureFlag[]> {
-    const keys = await this.redis.keys(`${this.prefix}*`);
+    const keys = await this.scanKeys(`${this.prefix}*`);
     const flags: FeatureFlag[] = [];
 
     for (const key of keys) {
@@ -119,6 +126,17 @@ export class FeatureFlagService {
     }
 
     return flags;
+  }
+
+  private async scanKeys(pattern: string, count = 100): Promise<string[]> {
+    const keys: string[] = [];
+    let cursor = '0';
+    do {
+      const [nextCursor, batch] = await this.redis.scan(cursor, 'MATCH', pattern, 'COUNT', count);
+      cursor = nextCursor;
+      keys.push(...batch);
+    } while (cursor !== '0');
+    return keys;
   }
 
   async getAllFlagsWithDefaults(): Promise<FeatureFlag[]> {
@@ -139,14 +157,8 @@ export class FeatureFlagService {
   }
 
   private hashUserId(userId: string, key: string): number {
-    let hash = 0;
-    const str = `${userId}:${key}`;
-    for (let i = 0; i < str.length; i++) {
-      const char = str.charCodeAt(i);
-      hash = (hash << 5) - hash + char;
-      hash = hash & hash;
-    }
-    return Math.abs(hash % 100);
+    const hash = createHash('sha256').update(`${userId}:${key}`).digest('hex');
+    return parseInt(hash.slice(0, 8), 16) % 100;
   }
 
   async onModuleDestroy(): Promise<void> {
@@ -154,17 +166,35 @@ export class FeatureFlagService {
   }
 }
 
-export class FeatureFlagGuard {
+/** Guard that checks feature flag state to allow or deny access. */
+@Injectable()
+export class FeatureFlagGuard implements CanActivate {
   constructor(private featureFlagService: FeatureFlagService) {}
 
-  async canActivate(flagKey: string, userId?: string): Promise<boolean> {
+  async canActivate(context: ExecutionContext): Promise<boolean> {
+    const request = context.switchToHttp().getRequest();
+    const flagKey = request.headers['x-feature-flag'] as string;
+    const userId = request.user?.id as string | undefined;
+
+    if (!flagKey) {
+      return true;
+    }
+
     return this.featureFlagService.isEnabled(flagKey, userId);
   }
 }
 
+/** Factory function to create a FeatureFlagService instance. */
 export const createFeatureFlagService = (config?: FeatureFlagConfig): FeatureFlagService => {
   return new FeatureFlagService(config);
 };
+
+/** NestJS module for registering feature flag service and guard providers. */
+export class FeatureFlagModule {
+  static register(config: FeatureFlagConfig) {
+    return createFeatureFlagModule(config);
+  }
+}
 
 export const createFeatureFlagModule = (config: FeatureFlagConfig) => {
   return {
@@ -183,9 +213,3 @@ export const createFeatureFlagModule = (config: FeatureFlagConfig) => {
     exports: [FeatureFlagService, FeatureFlagGuard],
   };
 };
-
-export class FeatureFlagModule {
-  static register(config: FeatureFlagConfig) {
-    return createFeatureFlagModule(config);
-  }
-}

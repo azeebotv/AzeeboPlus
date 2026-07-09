@@ -72,6 +72,12 @@ export interface UseUniversesReturn {
   select: (id: string) => void;
   /** Manually re-fetch universes from the API */
   refetch: () => void;
+  /** Get a universe by name */
+  getUniverse: (name: string) => UniverseOption | undefined;
+  /** Check if a universe is enabled */
+  isUniverseEnabled: (name: string) => boolean;
+  /** Check if a universe has a specific feature */
+  hasFeature: (universeName: string, featureKey: string) => boolean;
 }
 
 export function useUniverses(): UseUniversesReturn {
@@ -84,7 +90,14 @@ export function useUniverses(): UseUniversesReturn {
   const applySelection = useCallback((list: UniverseOption[], id: string | null) => {
     if (id) {
       const found = list.find((u) => u.id === id);
-      setSelectedId(found ? id : null);
+      // If the stored id doesn't match any universe, fall back to the first
+      if (found) {
+        setSelectedId(id);
+      } else if (list.length > 0) {
+        setSelectedId(list[0].id);
+      } else {
+        setSelectedId(null);
+      }
     } else if (list.length > 0) {
       // Default to first universe if nothing stored
       setSelectedId(list[0].id);
@@ -141,14 +154,17 @@ export function useUniverses(): UseUniversesReturn {
     fetchUniverses();
   }, [fetchUniverses]);
 
-  const select = useCallback((id: string) => {
-    setSelectedId(id);
-    writeStoredId(id);
-    const universe = universes.find((u) => u.id === id);
-    if (universe?.route) {
-      router.push(universe.route);
-    }
-  }, [universes, router]);
+  const select = useCallback(
+    (id: string) => {
+      setSelectedId(id);
+      writeStoredId(id);
+      const universe = universes.find((u) => u.id === id);
+      if (universe?.route) {
+        router.push(universe.route);
+      }
+    },
+    [universes, router]
+  );
 
   const refetch = useCallback(() => {
     // Clear cache before re-fetching
@@ -162,7 +178,29 @@ export function useUniverses(): UseUniversesReturn {
 
   const selected = universes.find((u) => u.id === selectedId) ?? null;
 
-  return { universes, selected, isLoading, error, select, refetch };
+  const getUniverse = useCallback(
+    (name: string) => universes.find((u) => u.name === name || u.id === name),
+    [universes]
+  );
+
+  const isUniverseEnabled = useCallback(
+    (name: string) => {
+      const universe = getUniverse(name);
+      return universe !== undefined;
+    },
+    [getUniverse]
+  );
+
+  const hasFeature = useCallback(
+    (_universeName: string, _featureKey: string) => {
+      // Feature flags are not yet available in the new API response.
+      // Default to true for backwards compatibility.
+      return true;
+    },
+    []
+  );
+
+  return { universes, selected, isLoading, error, select, refetch, getUniverse, isUniverseEnabled, hasFeature };
 }
 
 /**

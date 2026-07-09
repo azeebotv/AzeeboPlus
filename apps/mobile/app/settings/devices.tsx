@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,32 +8,31 @@ import {
   ActivityIndicator,
   Alert,
   RefreshControl,
+  SafeAreaView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { authApi } from '../../src/api';
+import { authApi, type Device } from '../../src/api';
+import { useAuth } from '../../src/contexts/AuthContext';
 import { logger } from '../../src/utils/logger';
-
-interface Device {
-  id: string;
-  name: string;
-  type: string;
-  os: string;
-  browser: string;
-  lastActive: string;
-  location: string;
-  isCurrent: boolean;
-  ip: string;
-}
 
 export default function DeviceManagementScreen() {
   const router = useRouter();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [devices, setDevices] = useState<Device[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
-    loadDevices();
-  }, []);
+    if (!authLoading && !isAuthenticated) {
+      router.replace('/(auth)/login');
+    }
+  }, [authLoading, isAuthenticated, router]);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadDevices();
+    }
+  }, [isAuthenticated]);
 
   const loadDevices = async () => {
     try {
@@ -99,15 +98,20 @@ export default function DeviceManagementScreen() {
                 </View>
               )}
             </View>
-            <Text style={styles.deviceMeta}>
-              {item.os} • {item.browser}
-            </Text>
+            {item.os || item.browser ? (
+              <Text style={styles.deviceMeta}>
+                {item.os ?? 'Unknown OS'} • {item.browser ?? 'Unknown browser'}
+              </Text>
+            ) : null}
             <Text style={styles.deviceMeta}>
               Last active: {new Date(item.lastActive).toLocaleString()}
             </Text>
-            <Text style={styles.deviceMeta}>
-              Location: {item.location} • IP: {item.ip}
-            </Text>
+            {(item.location || item.ip) && (
+              <Text style={styles.deviceMeta}>
+                {item.location ? `Location: ${item.location}` : ''}
+                {item.ip ? ` • IP: ${item.ip}` : ''}
+              </Text>
+            )}
           </View>
         </View>
         {!item.isCurrent && (
@@ -121,18 +125,28 @@ export default function DeviceManagementScreen() {
 
   if (isLoading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#8B5CF6" />
+      <SafeAreaView style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#E8420A" />
         <Text style={styles.loadingText}>Loading devices...</Text>
-      </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Device Management</Text>
-        <Text style={styles.subtitle}>Manage your active sessions and devices</Text>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.back()}
+          accessibilityLabel="Back"
+          accessibilityRole="button"
+        >
+          <Text style={styles.backButtonText}>←</Text>
+        </TouchableOpacity>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.title}>Device Management</Text>
+          <Text style={styles.subtitle}>Manage your active sessions and devices</Text>
+        </View>
       </View>
 
       <View style={styles.warningBanner}>
@@ -148,7 +162,12 @@ export default function DeviceManagementScreen() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
         refreshControl={
-          <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} colors={['#8B5CF6']} />
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={onRefresh}
+            colors={['#E8420A']}
+            tintColor="#E8420A"
+          />
         }
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
@@ -158,18 +177,18 @@ export default function DeviceManagementScreen() {
           </View>
         }
       />
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#111827',
+    backgroundColor: '#1A0A0A',
   },
   loadingContainer: {
     flex: 1,
-    backgroundColor: '#111827',
+    backgroundColor: '#1A0A0A',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -178,8 +197,19 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   header: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
     padding: 16,
     paddingTop: 60,
+    gap: 12,
+  },
+  backButton: {
+    paddingVertical: 4,
+    paddingRight: 8,
+  },
+  backButtonText: {
+    fontSize: 24,
+    color: '#9CA3AF',
   },
   title: {
     fontSize: 24,
@@ -192,9 +222,9 @@ const styles = StyleSheet.create({
     color: '#9CA3AF',
   },
   warningBanner: {
-    backgroundColor: '#F59E0B1A',
+    backgroundColor: 'rgba(245,158,11,0.1)',
     borderWidth: 1,
-    borderColor: '#F59E0B33',
+    borderColor: 'rgba(245,158,11,0.2)',
     marginHorizontal: 16,
     marginBottom: 16,
     padding: 12,
@@ -208,15 +238,15 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   deviceCard: {
-    backgroundColor: '#1F2937',
+    backgroundColor: '#2A2A2A',
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#374151',
+    borderColor: 'rgba(255,255,255,0.2)',
   },
   deviceCardCurrent: {
-    borderColor: '#8B5CF6',
+    borderColor: '#E8420A',
   },
   deviceHeader: {
     flexDirection: 'row',
@@ -246,7 +276,7 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   currentBadge: {
-    backgroundColor: '#8B5CF620',
+    backgroundColor: 'rgba(232,66,10,0.12)',
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 12,
@@ -254,7 +284,7 @@ const styles = StyleSheet.create({
   currentBadgeText: {
     fontSize: 10,
     fontWeight: '600',
-    color: '#8B5CF6',
+    color: '#E8420A',
   },
   deviceMeta: {
     fontSize: 12,
@@ -262,7 +292,7 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   revokeButton: {
-    backgroundColor: '#EF444420',
+    backgroundColor: 'rgba(239,68,68,0.12)',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 6,

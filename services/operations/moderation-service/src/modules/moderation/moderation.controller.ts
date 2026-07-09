@@ -1,17 +1,20 @@
 import { Controller, Get, Post, Body, UseGuards, Request, Param, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
+import { RateLimitGuard, RateLimit, AdminGuard } from '@azeebo/security';
 
 import { ModerationService } from './moderation.service';
 import { ModerationResponse } from './interfaces/moderation-response.interface';
 import { CreateReportDto, EscalateCaseDto, ScanContentDto } from './dto/moderation.dto';
 
 @ApiTags('Moderation')
+@UseGuards(RateLimitGuard)
 @Controller('v1/moderation')
 export class ModerationController {
   constructor(private readonly moderationService: ModerationService) {}
 
   @Post('report')
+  @RateLimit(20, 60000)
   @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Report content or user' })
   @ApiResponse({ status: 201, description: 'Report created' })
@@ -21,7 +24,7 @@ export class ModerationController {
     @Request() req: { user: { sub: string } },
     @Body() body: CreateReportDto
   ): Promise<ModerationResponse> {
-    return this.moderationService.reportContent(req.user.sub, body);
+    return this.moderationService.reportContent(req.user.id, body);
   }
 
   @Get('report-types')
@@ -32,6 +35,7 @@ export class ModerationController {
   }
 
   @Post('appeal')
+  @RateLimit(20, 60000)
   @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Submit appeal' })
   @ApiResponse({ status: 201, description: 'Appeal created' })
@@ -41,24 +45,26 @@ export class ModerationController {
     @Request() req: { user: { sub: string } },
     @Body() body: EscalateCaseDto
   ): Promise<ModerationResponse> {
-    return this.moderationService.submitAppeal(req.user.sub, body);
+    return this.moderationService.submitAppeal(req.user.id, body);
   }
 
   @Get('queue')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), AdminGuard)
   @ApiOperation({ summary: 'Get moderation queue' })
   @ApiResponse({ status: 200, description: 'Moderation queue' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - admin only' })
   async getQueue(@Request() req: { user: { sub: string } }): Promise<ModerationResponse> {
-    return this.moderationService.getQueue(req.user.sub);
+    return this.moderationService.getQueue(req.user.id);
   }
 
   @Get('trust-score/:userId')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), AdminGuard)
   @ApiOperation({ summary: 'Get user trust score' })
   @ApiResponse({ status: 200, description: 'Trust score' })
   @ApiResponse({ status: 404, description: 'User not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - admin only' })
   async getTrustScore(
     @Param('userId') userId: string
   ): Promise<{ success: boolean; data: { userId: string; trustScore: number } }> {
@@ -67,11 +73,13 @@ export class ModerationController {
   }
 
   @Post('safety-action')
-  @UseGuards(AuthGuard('jwt'))
+  @RateLimit(20, 60000)
+  @UseGuards(AuthGuard('jwt'), AdminGuard)
   @ApiOperation({ summary: 'Take safety action' })
   @ApiResponse({ status: 200, description: 'Safety action taken' })
   @ApiResponse({ status: 400, description: 'Invalid input' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - admin only' })
   @ApiResponse({ status: 404, description: 'Target not found' })
   async takeSafetyAction(
     @Request() req: { user: { sub: string } },
@@ -84,14 +92,15 @@ export class ModerationController {
       duration?: number;
     }
   ): Promise<ModerationResponse> {
-    return this.moderationService.takeSafetyAction(req.user.sub, body);
+    return this.moderationService.takeSafetyAction(req.user.id, body);
   }
 
   @Get('safety-actions')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), AdminGuard)
   @ApiOperation({ summary: 'Get safety actions' })
   @ApiResponse({ status: 200, description: 'Safety actions' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - admin only' })
   async getSafetyActions(
     @Request() req: { user: { sub: string } },
     @Query('targetType') targetType?: 'content' | 'user',
@@ -99,7 +108,7 @@ export class ModerationController {
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string
   ): Promise<ModerationResponse> {
-    return this.moderationService.getSafetyActions(req.user.sub, {
+    return this.moderationService.getSafetyActions(req.user.id, {
       targetType,
       actionType,
       startDate,
@@ -117,7 +126,8 @@ export class ModerationController {
   }
 
   @Post('scan')
-  @UseGuards(AuthGuard('jwt'))
+  @RateLimit(20, 60000)
+  @UseGuards(AuthGuard('jwt'), AdminGuard)
   @ApiOperation({ summary: 'Scan content media for safety issues' })
   @ApiResponse({ status: 200, description: 'Scan result' })
   @ApiResponse({ status: 400, description: 'Invalid input' })

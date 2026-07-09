@@ -1,4 +1,3 @@
-import React from 'react';
 import { View, Text, StyleSheet, useColorScheme } from 'react-native';
 
 export default function MaintenanceScreen() {
@@ -8,12 +7,12 @@ export default function MaintenanceScreen() {
     <View
       style={[
         styles.container,
-        { backgroundColor: colorScheme === 'dark' ? '#000000' : '#ffffff' },
+        { backgroundColor: colorScheme === 'dark' ? '#1A0A0A' : '#ffffff' },
       ]}
     >
       <View style={styles.content}>
         <Text style={styles.icon}>🛠️</Text>
-        <Text style={[styles.title, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
+        <Text style={[styles.title, { color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A' }]}>
           Down for Maintenance
         </Text>
         <Text style={styles.description}>

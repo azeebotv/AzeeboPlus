@@ -85,6 +85,7 @@ model PaymentIntent {
   updatedAt        DateTime  @updatedAt
   idempotencyKey   String?   @unique
   refundAmount     Decimal? @db.Decimal(18, 2)
+  version          Int       @default(0)
 
   refunds Refund[]
 

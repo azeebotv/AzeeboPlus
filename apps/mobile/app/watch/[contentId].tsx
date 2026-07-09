@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -82,8 +82,9 @@ export default function WatchScreen() {
       if (relatedResponse.success && relatedResponse.data) {
         setRelatedContent(relatedResponse.data.filter((item) => item.id !== contentId));
       }
-    } catch (err: any) {
-      setError(err.message || 'Failed to load content');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to load content';
+      setError(message);
     } finally {
       setIsLoading(false);
     }
@@ -254,7 +255,7 @@ export default function WatchScreen() {
         </View>
 
         <View style={styles.creatorSection}>
-          <View style={[styles.creatorAvatar, { backgroundColor: '#8B5CF6' }]}>
+          <View style={[styles.creatorAvatar, { backgroundColor: '#E8420A' }]}>
             <Text style={styles.creatorInitial}>{content.creator?.name?.charAt(0) || 'A'}</Text>
           </View>
           <View style={styles.creatorInfo}>
@@ -340,7 +341,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   playOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -356,7 +357,7 @@ const styles = StyleSheet.create({
     fontSize: 32,
   },
   controlsOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     justifyContent: 'space-between',
     padding: 12,
     backgroundColor: 'rgba(0,0,0,0.3)',
@@ -424,7 +425,7 @@ const styles = StyleSheet.create({
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     borderRadius: 2,
   },
   contentInfo: {
@@ -504,7 +505,7 @@ const styles = StyleSheet.create({
     color: '#666',
   },
   subscribeButton: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 20,

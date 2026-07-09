@@ -1,6 +1,4 @@
-'use client';
-
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   View,
   Text,
@@ -15,23 +13,33 @@ import {
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useWallet } from '../../src/contexts/WalletContext';
 import { useAuth } from '../../src/contexts/AuthContext';
-import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
+import { useWalletBalance, useWalletTransactions, useFundWallet, useWithdraw } from '../../src/hooks/useWalletQuery';
 
-export default function WalletScreen(): JSX.Element {
+export default function WalletScreen() {
   const colorScheme = useColorScheme();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+
   const {
-    wallet,
-    transactions,
-    isLoading,
-    error,
-    getWallet,
-    getTransactions,
-    fundWallet,
-    withdraw,
-  } = useWallet();
+    data: wallet,
+    isLoading: walletLoading,
+    error: walletError,
+    refetch: refetchWallet,
+  } = useWalletBalance();
+
+  const {
+    data: transactionsData,
+    isLoading: transactionsLoading,
+    error: transactionsError,
+    refetch: refetchTransactions,
+  } = useWalletTransactions(1, 50);
+
+  const fundMutation = useFundWallet();
+  const withdrawMutation = useWithdraw();
+
+  const transactions = transactionsData?.items ?? [];
+  const isLoading = walletLoading || transactionsLoading;
+  const error = walletError?.message || transactionsError?.message || null;
 
   const [refreshing, setRefreshing] = useState(false);
   const [showFundModal, setShowFundModal] = useState(false);
@@ -40,18 +48,10 @@ export default function WalletScreen(): JSX.Element {
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [bankCode, setBankCode] = useState('');
   const [accountNumber, setAccountNumber] = useState('');
-  const [isProcessing, setIsProcessing] = useState(false);
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      getWallet();
-      getTransactions();
-    }
-  }, [isAuthenticated]);
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await Promise.all([getWallet(), getTransactions()]);
+    await Promise.all([refetchWallet(), refetchTransactions()]);
     setRefreshing(false);
   };
 
@@ -67,20 +67,13 @@ export default function WalletScreen(): JSX.Element {
       return;
     }
 
-    setIsProcessing(true);
     try {
-      const result = await fundWallet(amount, 'paystack', user.email);
-      if (result.success && result.authorizationUrl) {
-        Alert.alert('Success', 'Payment initiated. Complete payment to fund wallet.');
-        setShowFundModal(false);
-        setFundAmount('');
-      } else {
-        Alert.alert('Error', result.message || 'Failed to initiate payment');
-      }
-    } catch (err: any) {
-      Alert.alert('Error', err.message || 'Failed to fund wallet');
-    } finally {
-      setIsProcessing(false);
+      await fundMutation.mutateAsync({ amount, provider: 'paystack', email: user.email });
+      Alert.alert('Success', 'Payment initiated. Complete payment to fund wallet.');
+      setShowFundModal(false);
+      setFundAmount('');
+    } catch (err: unknown) {
+      Alert.alert('Error', err instanceof Error ? err.message : 'Failed to fund wallet');
     }
   };
 
@@ -96,29 +89,22 @@ export default function WalletScreen(): JSX.Element {
       return;
     }
 
-    setIsProcessing(true);
     try {
-      const result = await withdraw(amount, bankCode, accountNumber);
-      if (result.success) {
-        Alert.alert('Success', 'Withdrawal initiated successfully');
-        setShowWithdrawModal(false);
-        setWithdrawAmount('');
-        setBankCode('');
-        setAccountNumber('');
-      } else {
-        Alert.alert('Error', result.message || 'Failed to initiate withdrawal');
-      }
-    } catch (err: any) {
-      Alert.alert('Error', err.message || 'Failed to withdraw funds');
-    } finally {
-      setIsProcessing(false);
+      await withdrawMutation.mutateAsync({ amount, bankCode, accountNumber });
+      Alert.alert('Success', 'Withdrawal initiated successfully');
+      setShowWithdrawModal(false);
+      setWithdrawAmount('');
+      setBankCode('');
+      setAccountNumber('');
+    } catch (err: unknown) {
+      Alert.alert('Error', err instanceof Error ? err.message : 'Failed to withdraw funds');
     }
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('en-NG', {
       style: 'currency',
-      currency: wallet?.currency || 'USD',
+      currency: 'NGN',
     }).format(amount);
   };
 
@@ -135,13 +121,27 @@ export default function WalletScreen(): JSX.Element {
     return type === 'credit' ? '💰' : '💸';
   };
 
+  if (authLoading) {
+    return (
+      <SafeAreaView
+        style={[
+          styles.container,
+          styles.centered,
+          { backgroundColor: colorScheme === 'dark' ? '#1A0A0A' : '#fff' },
+        ]}
+      >
+        <ActivityIndicator size="large" color="#E8420A" />
+      </SafeAreaView>
+    );
+  }
+
   if (!isAuthenticated) {
     return (
       <SafeAreaView
         style={[
           styles.container,
           styles.centered,
-          { backgroundColor: colorScheme === 'dark' ? '#000' : '#fff' },
+          { backgroundColor: colorScheme === 'dark' ? '#1A0A0A' : '#fff' },
         ]}
       >
         <Text style={styles.lockIcon}>🔒</Text>
@@ -154,13 +154,13 @@ export default function WalletScreen(): JSX.Element {
 
   return (
     <SafeAreaView
-      style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#000' : '#fff' }]}
+      style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#1A0A0A' : '#fff' }]}
     >
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#8B5CF6" />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#E8420A" />
         }
       >
         <View style={styles.header}>
@@ -173,16 +173,16 @@ export default function WalletScreen(): JSX.Element {
         {error && (
           <View style={styles.errorContainer}>
             <Text style={styles.errorText}>{error}</Text>
-            <TouchableOpacity onPress={onRefresh}>
+            <TouchableOpacity onPress={onRefresh} accessibilityLabel="Retry loading wallet">
               <Text style={styles.retryText}>Tap to retry</Text>
             </TouchableOpacity>
           </View>
         )}
 
-        <View style={[styles.balanceCard, { backgroundColor: '#8B5CF6' }]}>
+        <View style={[styles.balanceCard, { backgroundColor: '#E8420A' }]}>
           <Text style={styles.balanceLabel}>Available Balance</Text>
           <Text style={styles.balanceAmount}>
-            {wallet ? formatCurrency(wallet.balance) : '$0.00'}
+            {wallet ? formatCurrency(wallet.balance) : '₦0.00'}
           </Text>
           {wallet?.pendingBalance && wallet.pendingBalance > 0 && (
             <Text style={styles.pendingBalance}>
@@ -192,11 +192,11 @@ export default function WalletScreen(): JSX.Element {
         </View>
 
         <View style={styles.actionButtons}>
-          <TouchableOpacity style={styles.actionButton} onPress={() => setShowFundModal(true)}>
+          <TouchableOpacity style={styles.actionButton} onPress={() => setShowFundModal(true)} accessibilityLabel="Fund Wallet">
             <Text style={styles.actionIcon}>💎</Text>
             <Text style={styles.actionLabel}>Fund Wallet</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.actionButton} onPress={() => setShowWithdrawModal(true)}>
+          <TouchableOpacity style={styles.actionButton} onPress={() => setShowWithdrawModal(true)} accessibilityLabel="Withdraw">
             <Text style={styles.actionIcon}>🏦</Text>
             <Text style={styles.actionLabel}>Withdraw</Text>
           </TouchableOpacity>
@@ -208,7 +208,7 @@ export default function WalletScreen(): JSX.Element {
           </Text>
 
           {isLoading && transactions.length === 0 ? (
-            <ActivityIndicator size="large" color="#8B5CF6" style={styles.loader} />
+            <ActivityIndicator size="large" color="#E8420A" style={styles.loader} />
           ) : transactions.length === 0 ? (
             <View style={styles.emptyState}>
               <Text style={styles.emptyIcon}>📭</Text>
@@ -284,7 +284,7 @@ export default function WalletScreen(): JSX.Element {
             </Text>
 
             <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Amount (USD)</Text>
+              <Text style={styles.inputLabel}>Amount (NGN)</Text>
               <TextInput
                 style={[
                   styles.input,
@@ -298,17 +298,19 @@ export default function WalletScreen(): JSX.Element {
                 keyboardType="decimal-pad"
                 value={fundAmount}
                 onChangeText={setFundAmount}
+                accessibilityLabel="Enter amount to fund"
               />
             </View>
 
             <View style={styles.quickAmounts}>
-              {[10, 25, 50, 100].map((amount) => (
+              {[1000, 2000, 5000, 10000].map((amount) => (
                 <TouchableOpacity
                   key={amount}
                   style={styles.quickAmountButton}
                   onPress={() => setFundAmount(amount.toString())}
+                  accessibilityLabel={`Fund ₦${amount.toLocaleString()}`}
                 >
-                  <Text style={styles.quickAmountText}>${amount}</Text>
+                  <Text style={styles.quickAmountText}>₦{amount.toLocaleString()}</Text>
                 </TouchableOpacity>
               ))}
             </View>
@@ -320,7 +322,8 @@ export default function WalletScreen(): JSX.Element {
                   { borderColor: colorScheme === 'dark' ? '#333' : '#eee' },
                 ]}
                 onPress={() => setShowFundModal(false)}
-                disabled={isProcessing}
+                disabled={fundMutation.isPending}
+                accessibilityLabel="Cancel fund wallet"
               >
                 <Text
                   style={[
@@ -334,9 +337,10 @@ export default function WalletScreen(): JSX.Element {
               <TouchableOpacity
                 style={styles.confirmButton}
                 onPress={handleFundWallet}
-                disabled={isProcessing}
+                disabled={fundMutation.isPending}
+                accessibilityLabel="Continue to fund wallet"
               >
-                {isProcessing ? (
+                {fundMutation.isPending ? (
                   <ActivityIndicator color="#fff" size="small" />
                 ) : (
                   <Text style={styles.confirmButtonText}>Continue</Text>
@@ -365,7 +369,7 @@ export default function WalletScreen(): JSX.Element {
             </Text>
 
             <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Amount (USD)</Text>
+              <Text style={styles.inputLabel}>Amount (NGN)</Text>
               <TextInput
                 style={[
                   styles.input,
@@ -379,6 +383,7 @@ export default function WalletScreen(): JSX.Element {
                 keyboardType="decimal-pad"
                 value={withdrawAmount}
                 onChangeText={setWithdrawAmount}
+                accessibilityLabel="Enter amount to withdraw"
               />
             </View>
 
@@ -396,6 +401,7 @@ export default function WalletScreen(): JSX.Element {
                 placeholderTextColor="#666"
                 value={bankCode}
                 onChangeText={setBankCode}
+                accessibilityLabel="Enter bank code"
               />
             </View>
 
@@ -414,6 +420,7 @@ export default function WalletScreen(): JSX.Element {
                 keyboardType="number-pad"
                 value={accountNumber}
                 onChangeText={setAccountNumber}
+                accessibilityLabel="Enter account number"
               />
             </View>
 
@@ -424,7 +431,8 @@ export default function WalletScreen(): JSX.Element {
                   { borderColor: colorScheme === 'dark' ? '#333' : '#eee' },
                 ]}
                 onPress={() => setShowWithdrawModal(false)}
-                disabled={isProcessing}
+                disabled={withdrawMutation.isPending}
+                accessibilityLabel="Cancel withdrawal"
               >
                 <Text
                   style={[
@@ -438,9 +446,10 @@ export default function WalletScreen(): JSX.Element {
               <TouchableOpacity
                 style={styles.confirmButton}
                 onPress={handleWithdraw}
-                disabled={isProcessing}
+                disabled={withdrawMutation.isPending}
+                accessibilityLabel="Confirm withdrawal"
               >
-                {isProcessing ? (
+                {withdrawMutation.isPending ? (
                   <ActivityIndicator color="#fff" size="small" />
                 ) : (
                   <Text style={styles.confirmButtonText}>Withdraw</Text>
@@ -499,7 +508,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   retryText: {
-    color: '#8B5CF6',
+    color: '#E8420A',
     fontSize: 14,
     textAlign: 'center',
     marginTop: 8,
@@ -654,7 +663,7 @@ const styles = StyleSheet.create({
   quickAmountText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#8B5CF6',
+    color: '#E8420A',
   },
   modalButtons: {
     flexDirection: 'row',
@@ -674,7 +683,7 @@ const styles = StyleSheet.create({
   },
   confirmButton: {
     flex: 1,
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     padding: 16,
     borderRadius: 12,
     alignItems: 'center',

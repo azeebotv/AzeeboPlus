@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -13,7 +13,8 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { contentApi, walletApi } from '../../src/api';
 import { logger } from '../../src/utils/logger';
-import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
+import { LoadingState, ErrorState } from '../../src/components/StateContainers';
+import { votePackages as defaultVotePackages } from '../../src/config/prices';
 
 interface Contestant {
   id: string;
@@ -45,37 +46,7 @@ export default function SuperVoteScreen() {
   const [isVoting, setIsVoting] = useState(false);
   const [walletBalance, setWalletBalance] = useState(0);
 
-  const votePackages: VotePackage[] = [
-    {
-      id: 'pkg1',
-      name: 'Single Vote',
-      votes: 1,
-      price: 100,
-      description: '1 Super Vote (2x weight)',
-    },
-    {
-      id: 'pkg2',
-      name: 'Power Pack',
-      votes: 5,
-      price: 450,
-      description: '5 Super Votes (2x weight each)',
-      isPopular: true,
-    },
-    {
-      id: 'pkg3',
-      name: 'Ultimate Pack',
-      votes: 10,
-      price: 800,
-      description: '10 Super Votes (2x weight each)',
-    },
-    {
-      id: 'pkg4',
-      name: 'Mega Pack',
-      votes: 25,
-      price: 1800,
-      description: '25 Super Votes (2x weight each)',
-    },
-  ];
+  const votePackages: VotePackage[] = defaultVotePackages.superVote;
 
   useEffect(() => {
     loadData();
@@ -165,7 +136,7 @@ export default function SuperVoteScreen() {
           },
         ]
       );
-    } catch (error: any) {
+    } catch (error: unknown) {
       Alert.alert('Error', error?.message || 'Failed to submit super vote');
     } finally {
       setIsVoting(false);
@@ -279,7 +250,7 @@ export default function SuperVoteScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#111827',
+    backgroundColor: '#1A0A0A',
   },
   loadingContainer: {
     flex: 1,
@@ -297,7 +268,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#1f2937',
+    borderBottomColor: 'rgba(255,255,255,0.08)',
   },
   backButton: {
     marginRight: 16,
@@ -316,7 +287,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 14,
-    color: '#8B5CF6',
+    color: '#E8420A',
   },
   balanceContainer: {
     alignItems: 'flex-end',
@@ -341,7 +312,7 @@ const styles = StyleSheet.create({
   },
   contestantCard: {
     width: 140,
-    backgroundColor: '#1f2937',
+    backgroundColor: '#2A2A2A',
     borderRadius: 12,
     padding: 12,
     marginRight: 12,
@@ -349,7 +320,7 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   contestantCardSelected: {
-    borderColor: '#8B5CF6',
+    borderColor: '#E8420A',
   },
   contestantAvatar: {
     width: 80,
@@ -368,7 +339,7 @@ const styles = StyleSheet.create({
     color: '#9CA3AF',
   },
   packageCard: {
-    backgroundColor: '#1f2937',
+    backgroundColor: '#2A2A2A',
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
@@ -376,17 +347,17 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   packageCardSelected: {
-    borderColor: '#8B5CF6',
+    borderColor: '#E8420A',
   },
   packageCardPopular: {
-    borderColor: '#8B5CF6',
+    borderColor: '#E8420A',
     backgroundColor: '#2d1f5e',
   },
   popularBadge: {
     position: 'absolute',
     top: -10,
     right: 12,
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 12,
@@ -414,14 +385,14 @@ const styles = StyleSheet.create({
   packagePrice: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#8B5CF6',
+    color: '#E8420A',
   },
   footer: {
     padding: 24,
     paddingBottom: 32,
   },
   voteButton: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',

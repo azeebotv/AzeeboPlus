@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-export function GET(request: NextRequest) {
+export function GET(_request: NextRequest) {
   const manifest = {
     name: 'Azeebo+ - Premium Content Streaming',
     short_name: 'Azeebo+',

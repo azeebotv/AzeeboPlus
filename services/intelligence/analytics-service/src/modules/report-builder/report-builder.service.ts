@@ -75,9 +75,9 @@ export class ReportBuilderService {
         success: true,
         data: report,
       };
-    } catch (error) {
+    } catch (_err) {
       throw new BadRequestException(
-        `Failed to create report: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Failed to create report: ${error instanceof Error ? (error as Error).message : 'Unknown error'}`
       );
     }
   }
@@ -100,12 +100,12 @@ export class ReportBuilderService {
         success: true,
         data: report,
       };
-    } catch (error) {
+    } catch (_err) {
       if (error instanceof NotFoundException) {
         throw error;
       }
       throw new BadRequestException(
-        `Failed to get report: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Failed to get report: ${error instanceof Error ? (error as Error).message : 'Unknown error'}`
       );
     }
   }
@@ -139,9 +139,9 @@ export class ReportBuilderService {
         success: true,
         data: reports,
       };
-    } catch (error) {
+    } catch (_err) {
       throw new BadRequestException(
-        `Failed to list reports: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Failed to list reports: ${error instanceof Error ? (error as Error).message : 'Unknown error'}`
       );
     }
   }
@@ -221,7 +221,7 @@ export class ReportBuilderService {
           generatedAt: new Date(),
         },
       };
-    } catch (error) {
+    } catch (_err) {
       const executionTime = Date.now() - startTime;
 
       if (error instanceof NotFoundException || error instanceof BadRequestException) {
@@ -230,7 +230,7 @@ export class ReportBuilderService {
 
       return {
         success: false,
-        error: `Failed to execute report: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        error: `Failed to execute report: ${error instanceof Error ? (error as Error).message : 'Unknown error'}`,
         metadata: {
           totalRows: 0,
           executionTime,
@@ -267,13 +267,17 @@ export class ReportBuilderService {
           ...(dto.category && { category: dto.category }),
           ...(dto.metrics && { metrics: dto.metrics as unknown as Prisma.InputJsonValue }),
           ...(dto.dimensions && { dimensions: dto.dimensions as unknown as Prisma.InputJsonValue }),
-          ...(dto.filters !== undefined && { filters: dto.filters as unknown as Prisma.InputJsonValue }),
+          ...(dto.filters !== undefined && {
+            filters: dto.filters as unknown as Prisma.InputJsonValue,
+          }),
           ...(dto.dateField && { dateField: dto.dateField }),
           ...(dto.dateRange && { dateRange: dto.dateRange }),
           ...(dto.startDate && { startDate: new Date(dto.startDate) }),
           ...(dto.endDate && { endDate: new Date(dto.endDate) }),
           ...(dto.isPublic !== undefined && { isPublic: dto.isPublic }),
-          ...(dto.chartConfig && { chartConfig: dto.chartConfig as unknown as Prisma.InputJsonValue }),
+          ...(dto.chartConfig && {
+            chartConfig: dto.chartConfig as unknown as Prisma.InputJsonValue,
+          }),
         } as unknown as Prisma.CustomReportUpdateInput,
       });
 
@@ -281,12 +285,12 @@ export class ReportBuilderService {
         success: true,
         data: updated,
       };
-    } catch (error) {
+    } catch (_err) {
       if (error instanceof NotFoundException) {
         throw error;
       }
       throw new BadRequestException(
-        `Failed to update report: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Failed to update report: ${error instanceof Error ? (error as Error).message : 'Unknown error'}`
       );
     }
   }
@@ -313,12 +317,12 @@ export class ReportBuilderService {
         success: true,
         message: 'Report deleted successfully',
       };
-    } catch (error) {
+    } catch (_err) {
       if (error instanceof NotFoundException) {
         throw error;
       }
       throw new BadRequestException(
-        `Failed to delete report: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Failed to delete report: ${error instanceof Error ? (error as Error).message : 'Unknown error'}`
       );
     }
   }
@@ -351,12 +355,12 @@ export class ReportBuilderService {
         success: true,
         data: executions,
       };
-    } catch (error) {
+    } catch (_err) {
       if (error instanceof NotFoundException) {
         throw error;
       }
       throw new BadRequestException(
-        `Failed to get execution history: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Failed to get execution history: ${error instanceof Error ? (error as Error).message : 'Unknown error'}`
       );
     }
   }
@@ -453,6 +457,18 @@ export class ReportBuilderService {
     return query;
   }
 
+  // Prisma groupBy with dynamic fields requires type assertions due to Prisma's typing limitations
+  private async dynamicGroupBy(
+    options: { by: string[]; _count?: Record<string, boolean>; _sum?: Record<string, boolean>; _avg?: Record<string, boolean>; _min?: Record<string, boolean>; _max?: Record<string, boolean>; where?: Record<string, unknown>; orderBy?: Record<string, unknown>; take?: number; skip?: number }
+  ): Promise<Record<string, unknown>[]> {
+    // Using unknown cast because Prisma's groupBy typing doesn't support dynamic field arrays
+    const result = await this.prisma.productEvent.groupBy({
+      ...options,
+      by: options.by as [string, ...string[]],
+    });
+    return result as Record<string, unknown>[];
+  }
+
   // Field name mapping from snake_case (used in queries) to camelCase (Prisma model)
   private readonly FIELD_MAPPING: Record<string, string> = {
     event_name: 'eventName',
@@ -493,8 +509,8 @@ export class ReportBuilderService {
         if (query._count) {
           const countKeys = Object.keys(query._count);
           const countField = this.mapFieldName(countKeys[0]);
-          const result: any[] = await (this.prisma.productEvent.groupBy as any)({
-            by: (groupByFields.length > 0 ? groupByFields : undefined),
+          const result = await this.dynamicGroupBy({
+            by: groupByFields.length > 0 ? groupByFields : [],
             where,
             _count: { [countField]: true },
             orderBy,
@@ -517,8 +533,8 @@ export class ReportBuilderService {
         if (query._sum) {
           const sumKeys = Object.keys(query._sum);
           const sumField = this.mapFieldName(sumKeys[0]);
-          const result: any[] = await (this.prisma.productEvent.groupBy as any)({
-            by: (groupByFields.length > 0 ? groupByFields : undefined),
+          const result = await this.dynamicGroupBy({
+            by: groupByFields.length > 0 ? groupByFields : [],
             where,
             _sum: { [sumField]: true },
             orderBy,
@@ -541,8 +557,8 @@ export class ReportBuilderService {
         if (query._avg) {
           const avgKeys = Object.keys(query._avg);
           const avgField = this.mapFieldName(avgKeys[0]);
-          const result: any[] = await (this.prisma.productEvent.groupBy as any)({
-            by: (groupByFields.length > 0 ? groupByFields : undefined),
+          const result = await this.dynamicGroupBy({
+            by: groupByFields.length > 0 ? groupByFields : [],
             where,
             _avg: { [avgField]: true },
             orderBy,
@@ -565,8 +581,8 @@ export class ReportBuilderService {
         if (query._min) {
           const minKeys = Object.keys(query._min);
           const minField = this.mapFieldName(minKeys[0]);
-          const result: any[] = await (this.prisma.productEvent.groupBy as any)({
-            by: (groupByFields.length > 0 ? groupByFields : undefined),
+          const result = await this.dynamicGroupBy({
+            by: groupByFields.length > 0 ? groupByFields : [],
             where,
             _min: { [minField]: true },
             orderBy,
@@ -589,8 +605,8 @@ export class ReportBuilderService {
         if (query._max) {
           const maxKeys = Object.keys(query._max);
           const maxField = this.mapFieldName(maxKeys[0]);
-          const result: any[] = await (this.prisma.productEvent.groupBy as any)({
-            by: (groupByFields.length > 0 ? groupByFields : undefined),
+          const result = await this.dynamicGroupBy({
+            by: groupByFields.length > 0 ? groupByFields : [],
             where,
             _max: { [maxField]: true },
             orderBy,
@@ -621,9 +637,9 @@ export class ReportBuilderService {
       });
 
       return results as Record<string, unknown>[];
-    } catch (error) {
+    } catch (_err) {
       throw new BadRequestException(
-        `Query execution failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Query execution failed: ${error instanceof Error ? (error as Error).message : 'Unknown error'}`
       );
     }
   }
@@ -637,6 +653,12 @@ export class ReportBuilderService {
     'metadata',
     'created_at',
     'updated_at',
+    'session_id',
+    'platform',
+    'app_version',
+    'experiment_flags',
+    'timestamp',
+    'eventName',
   ]);
 
   // Allowlist of valid order directions

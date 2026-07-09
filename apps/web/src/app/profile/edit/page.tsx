@@ -2,12 +2,12 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { api } from '@/lib/api';
+import { api, type User } from '@/lib/api';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 
 export default function ProfileEditPage(): React.JSX.Element {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, isLoading: authLoading } = useAuth();
   const router = useRouter();
   const [profile, setProfile] = useState({
     username: '',
@@ -20,6 +20,7 @@ export default function ProfileEditPage(): React.JSX.Element {
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
+    if (authLoading) return;
     if (!isAuthenticated || !user) {
       router.push('/auth/login');
       return;
@@ -28,23 +29,31 @@ export default function ProfileEditPage(): React.JSX.Element {
       username: user.name || '',
       email: user.email || '',
       displayName: user.name || '',
-      bio: (user as any).bio || '',
+      bio: (user as User & { bio?: string }).bio || '',
       avatar: user.avatar || '',
     });
-  }, [isAuthenticated, user, router]);
+  }, [authLoading, isAuthenticated, user, router]);
 
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      await api.user.updateProfile(profile);
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
+      const result = await api.user.updateProfile({
+        name: profile.username,
+        displayName: profile.displayName,
+        email: profile.email,
+        avatar: profile.avatar,
+      } as { name: string; displayName: string; email: string; avatar: string; bio?: string });
+      if (result.success) {
+        setSaved(true);
+        setTimeout(() => setSaved(false), 2000);
+      }
     } catch {
       /* ignore */
     }
     setIsSaving(false);
   };
 
+  if (authLoading) return <></>;
   if (!isAuthenticated || !user) return <></>;
 
   return (
@@ -152,7 +161,7 @@ export default function ProfileEditPage(): React.JSX.Element {
                 </label>
                 <input
                   type={field.type}
-                  value={(profile as any)[field.key]}
+                  value={(profile as Record<string, string>)[field.key]}
                   onChange={(e) => setProfile({ ...profile, [field.key]: e.target.value })}
                   style={{
                     width: '100%',

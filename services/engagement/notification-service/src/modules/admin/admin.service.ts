@@ -8,35 +8,40 @@ export class AdminService {
   constructor(private readonly prisma: PrismaService) {}
 
   async getStats() {
-    const totalSent = await this.prisma.notification.count();
-    const unread = await this.prisma.notification.count({
-      where: { readAt: null },
-    });
-    const read = await this.prisma.notification.count({
-      where: { readAt: { not: null } },
-    });
+    try {
+      const totalSent = await this.prisma.notification.count();
+      const unread = await this.prisma.notification.count({
+        where: { readAt: null },
+      });
+      const read = await this.prisma.notification.count({
+        where: { readAt: { not: null } },
+      });
 
-    const typeBreakdown = await this.prisma.notification.groupBy({
-      by: ['type'],
-      _count: { id: true },
-    });
+      const typeBreakdown = await this.prisma.notification.groupBy({
+        by: ['type'],
+        _count: { id: true },
+      });
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const sentToday = await this.prisma.notification.count({
-      where: { createdAt: { gte: today } },
-    });
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const sentToday = await this.prisma.notification.count({
+        where: { createdAt: { gte: today } },
+      });
 
-    return {
-      totalSent,
-      unread,
-      read,
-      sentToday,
-      byType: typeBreakdown.map((t) => ({
-        type: t.type,
-        count: t._count.id,
-      })),
-    };
+      return {
+        totalSent,
+        unread,
+        read,
+        sentToday,
+        byType: typeBreakdown.map((t) => ({
+          type: t.type,
+          count: t._count.id,
+        })),
+      };
+    } catch (error) {
+      this.logger.error(`getStats failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: (error as Error).message };
+    }
   }
 
   async getNotifications(options?: {
@@ -45,44 +50,49 @@ export class AdminService {
     type?: string;
     status?: string;
   }) {
-    const page = options?.page || 1;
-    const limit = options?.limit || 20;
-    const skip = (page - 1) * limit;
+    try {
+      const page = options?.page || 1;
+      const limit = options?.limit || 20;
+      const skip = (page - 1) * limit;
 
-    const where: Record<string, unknown> = {};
-    if (options?.type) {
-      where.type = options.type;
-    }
-    if (options?.status === 'read') {
-      where.readAt = { not: null };
-    } else if (options?.status === 'unread') {
-      where.readAt = null;
-    }
+      const where: Record<string, unknown> = {};
+      if (options?.type) {
+        where.type = options.type;
+      }
+      if (options?.status === 'read') {
+        where.readAt = { not: null };
+      } else if (options?.status === 'unread') {
+        where.readAt = null;
+      }
 
-    const [notifications, total] = await Promise.all([
-      this.prisma.notification.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy: { createdAt: 'desc' },
-        include: {
-          user: {
-            select: { id: true, displayName: true, email: true },
+      const [notifications, total] = await Promise.all([
+        this.prisma.notification.findMany({
+          where,
+          skip,
+          take: limit,
+          orderBy: { createdAt: 'desc' },
+          include: {
+            user: {
+              select: { id: true, displayName: true, email: true },
+            },
           },
-        },
-      }),
-      this.prisma.notification.count({ where }),
-    ]);
+        }),
+        this.prisma.notification.count({ where }),
+      ]);
 
-    return {
-      notifications,
-      meta: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-      },
-    };
+      return {
+        notifications,
+        meta: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        },
+      };
+    } catch (error) {
+      this.logger.error(`getNotifications failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: (error as Error).message };
+    }
   }
 
   async sendSystemNotification(body: {
@@ -91,51 +101,52 @@ export class AdminService {
     type?: string;
     userIds?: string[];
   }) {
-    const { title, message, type, userIds } = body;
+    try {
+      const { title, message, type, userIds } = body;
 
-    if (userIds && userIds.length > 0) {
-      const notifications = await this.prisma.$transaction(
-        userIds.map((userId) =>
-          this.prisma.notification.create({
-            data: {
-              userId,
-              title,
-              message,
-              type: type || 'system',
-            },
-          })
-        )
-      );
+      if (userIds && userIds.length > 0) {
+        const notifications = await this.prisma.$transaction(
+          userIds.map((userId) =>
+            this.prisma.notification.create({
+              data: {
+                userId,
+                title,
+                message,
+                type: type || 'system',
+              },
+            })
+          )
+        );
 
-      this.logger.log(`Sent system notification to ${notifications.length} users`);
-      return { sentCount: notifications.length, userIds };
+        this.logger.log(`Sent system notification to ${notifications.length} users`);
+        return { sentCount: notifications.length, userIds };
+      }
+
+      const allUsers = await this.prisma.user.findMany({
+        select: { id: true },
+      });
+
+      const batchSize = 1000;
+      let sentCount = 0;
+
+      for (let i = 0; i < allUsers.length; i += batchSize) {
+        const batch = allUsers.slice(i, i + batchSize);
+        await this.prisma.notification.createMany({
+          data: batch.map((user) => ({
+            userId: user.id,
+            title,
+            message,
+            type: type || 'system',
+          })),
+        });
+        sentCount += batch.length;
+      }
+
+      this.logger.log(`Sent system notification to all ${sentCount} users`);
+      return { sentCount, broadcast: true };
+    } catch (error) {
+      this.logger.error(`sendSystemNotification failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: (error as Error).message };
     }
-
-    const allUsers = await this.prisma.user.findMany({
-      select: { id: true },
-    });
-
-    const batchSize = 100;
-    let sentCount = 0;
-
-    for (let i = 0; i < allUsers.length; i += batchSize) {
-      const batch = allUsers.slice(i, i + batchSize);
-      await this.prisma.$transaction(
-        batch.map((user) =>
-          this.prisma.notification.create({
-            data: {
-              userId: user.id,
-              title,
-              message,
-              type: type || 'system',
-            },
-          })
-        )
-      );
-      sentCount += batch.length;
-    }
-
-    this.logger.log(`Sent system notification to all ${sentCount} users`);
-    return { sentCount, broadcast: true };
   }
 }

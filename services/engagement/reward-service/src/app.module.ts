@@ -6,6 +6,7 @@ import { AdminModule } from './modules/admin/admin.module';
 import { DatabaseModule } from './modules/database/database.module';
 import { HealthModule } from './modules/health/health.module';
 import { ServiceAuthGuard } from '@azeebo/security';
+import { CacheModule } from '@azeebo/shared-services';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { ServiceAuthGuard } from '@azeebo/security';
     RewardsModule,
     AdminModule,
     HealthModule,
+    CacheModule,
   ],
   providers: [
     {
@@ -26,4 +28,3 @@ import { ServiceAuthGuard } from '@azeebo/security';
   ],
 })
 export class AppModule {}
-

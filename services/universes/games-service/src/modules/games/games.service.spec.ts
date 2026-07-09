@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { GamesService } from './games.service';
 import { PrismaService } from '../database/prisma.service';
+import { ConfigService } from '@nestjs/config';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 import axios from 'axios';
 
@@ -29,6 +30,13 @@ describe('GamesService', () => {
             },
             question: { findUnique: jest.fn() },
             tournamentEntry: { findUnique: jest.fn(), create: jest.fn() },
+          },
+        },
+        {
+          provide: ConfigService,
+          useValue: {
+            get: jest.fn().mockReturnValue('test-value'),
+            getOrThrow: jest.fn().mockReturnValue('test-value'),
           },
         },
       ],

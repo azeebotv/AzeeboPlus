@@ -44,8 +44,9 @@ export default function ResultsPage(): React.JSX.Element {
       try {
         const result = await apiFetch<EpisodeResult[]>(`/v1/content/${contentId}/results`);
         if (result.success && result.data) {
-          setResults(result.data);
-          if (result.data.length > 0) setSelectedEpisode(result.data[0].id);
+          const items = Array.isArray(result.data) ? result.data : [];
+          setResults(items);
+          if (items.length > 0) setSelectedEpisode(items[0].id);
         }
       } catch (error) {
         webLogger.error('Failed to load results', error);
@@ -200,7 +201,7 @@ export default function ResultsPage(): React.JSX.Element {
             <div>
               <h3 className="text-xl font-semibold text-white mb-4">Full Rankings</h3>
               <div className="space-y-3">
-                {selectedResult.contestants
+                {[...selectedResult.contestants]
                   .sort((a, b) => a.rank - b.rank)
                   .map((contestant) => (
                     <div

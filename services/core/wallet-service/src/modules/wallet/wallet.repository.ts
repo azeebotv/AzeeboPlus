@@ -113,13 +113,18 @@ export class WalletRepository {
     if (!wallet) {
       throw new Error('Wallet not found');
     }
+    const totalTransactions = await this.prisma.walletTransaction.count({
+      where: { walletId: wallet.id },
+    });
+    const aggregations = await this.prisma.walletTransaction.aggregate({
+      where: { walletId: wallet.id, status: 'completed' },
+      _sum: { amount: true },
+      _count: true,
+    });
     return {
-      totalBalance:
-        Number(wallet.balance) + Number(wallet.bonusBalance) + Number(wallet.promoBalance),
-      totalEarnings: 50000,
-      totalSpent: 20000,
-      totalTransactions: 15,
-      monthlyActivity: [{ month: 'January', income: 10000, expense: 5000 }],
+      balance: wallet.balance || 0,
+      totalTransactions,
+      totalEarnings: aggregations._sum.amount || 0,
     };
   }
 

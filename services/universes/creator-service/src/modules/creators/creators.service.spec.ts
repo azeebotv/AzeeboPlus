@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { CreatorsService } from './creators.service';
 import { PrismaService } from '../database/prisma.service';
+import { ConfigService } from '@nestjs/config';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 import axios from 'axios';
 
@@ -73,6 +74,22 @@ describe('CreatorsService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         CreatorsService,
+        {
+          provide: ConfigService,
+          useValue: {
+            getOrThrow: jest.fn((key: string) => {
+              if (key === 'WALLET_SERVICE_URL') return 'http://wallet-service';
+              if (key === 'MEDIA_SERVICE_URL') return 'http://media-service';
+              if (key === 'ANALYTICS_SERVICE_URL') return 'http://analytics-service';
+              return '';
+            }),
+            get: jest.fn((key: string, defaultValue?: string) => {
+              if (key === 'MINIMUM_PAYOUT') return '5000';
+              if (key === 'JWT_EXPIRES_IN') return '30m';
+              return defaultValue;
+            }),
+          },
+        },
         {
           provide: PrismaService,
           useValue: {

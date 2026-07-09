@@ -13,12 +13,14 @@ import { ResponseWrapperInterceptor, ResponseSanitizationInterceptor } from '@az
 import { MetricsModule } from './modules/metrics/metrics.module';
 import { RateLimiterModule } from '@azeebo/security';
 import { ServiceAuthGuard } from '@azeebo/security';
+import { RedisModule } from './common/redis.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    RedisModule,
     RateLimiterModule.forRoot(),
     ThrottlerModule.forRoot([
       {
@@ -51,4 +53,3 @@ import { ServiceAuthGuard } from '@azeebo/security';
   ],
 })
 export class AppModule {}
-

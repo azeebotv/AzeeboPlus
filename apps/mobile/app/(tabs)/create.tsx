@@ -1,20 +1,24 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Image,
   Alert,
   TextInput,
   useColorScheme,
 } from 'react-native';
-import { mediaApi } from '../../src/api/media';
-import { contentApi } from '../../src/api/content';
-import { universeApi } from '../../src/api';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { universeApi, contentApi } from '../../src/api';
 import { logger } from '../../src/utils/logger';
 import { LoadingState, ErrorState } from '../../src/components/StateContainers';
+
+interface UniverseOption {
+  id: string;
+  name: string;
+  icon: string;
+}
 
 const uploadOptions = [
   { id: 'video', name: 'Video', icon: '📹', color: '#FF6B6B' },
@@ -22,9 +26,6 @@ const uploadOptions = [
   { id: 'live', name: 'Live Stream', icon: '🎥', color: '#45B7D1' },
   { id: 'story', name: 'Story', icon: '📖', color: '#96CEB4' },
 ];
-
-// TODO: Replace with actual file picker and upload implementation
-const PLACEHOLDER_MEDIA_URL = 'https://placehold.co/600x400/1a1a1a/8B5CF6?text=Media+Upload';
 
 export default function CreateScreen() {
   const colorScheme = useColorScheme();
@@ -46,15 +47,15 @@ export default function CreateScreen() {
       const res = await universeApi.getUniverses();
       if (res.success && res.data) {
         setUniverseOptions(
-          res.data.items.map((u: any) => ({
-            id: u.slug || u.id,
-            name: u.name,
+          res.data.items.map((u: Record<string, unknown>) => ({
+            id: (u.slug || u.id) as string,
+            name: u.name as string,
             icon: '🌐',
           }))
         );
       }
-    } catch (err: any) {
-      setUniversesError(err.message || 'Failed to load universes');
+    } catch (err: unknown) {
+      setUniversesError(err instanceof Error ? err.message : 'Failed to load universes');
     } finally {
       setIsLoadingUniverses(false);
     }
@@ -76,11 +77,25 @@ export default function CreateScreen() {
 
     setIsUploading(true);
     try {
-      Alert.alert(
-        'Coming Soon',
-        'File upload will be available in the next update. Please use the web app to upload content.'
-      );
-      return;
+      const result = await contentApi.createContent({
+        title: title.trim(),
+        description: description.trim() || undefined,
+        universe: selectedUniverse,
+        contentType: selectedType,
+      });
+
+      if (result.success) {
+        Alert.alert(
+          'Success',
+          'Content created! Note: File upload is not yet available in the mobile app. Please use the web app to upload media files.',
+          [{ text: 'OK' }]
+        );
+        setTitle('');
+        setDescription('');
+        setSelectedUniverse(null);
+      } else {
+        Alert.alert('Error', result.error || 'Failed to create content');
+      }
     } catch (err) {
       logger.error('Failed to upload content:', err);
       Alert.alert('Error', 'Failed to upload content. Please try again.');
@@ -90,212 +105,237 @@ export default function CreateScreen() {
   };
 
   if (isLoadingUniverses) {
-    return <LoadingState text="Loading universe options..." />;
+    return (
+      <SafeAreaView
+        style={[
+          styles.safeArea,
+          { backgroundColor: colorScheme === 'dark' ? '#1A0A0A' : '#ffffff' },
+        ]}
+      >
+        <LoadingState text="Loading universe options..." />
+      </SafeAreaView>
+    );
   }
 
   if (universesError) {
     return (
-      <ErrorState
-        title="Failed to load content options"
-        description={universesError}
-        onRetry={fetchUniverses}
-      />
+      <SafeAreaView
+        style={[
+          styles.safeArea,
+          { backgroundColor: colorScheme === 'dark' ? '#1A0A0A' : '#ffffff' },
+        ]}
+      >
+        <ErrorState
+          title="Failed to load content options"
+          description={universesError}
+          onRetry={fetchUniverses}
+        />
+      </SafeAreaView>
     );
   }
 
   return (
-    <ScrollView
-      style={[
-        styles.container,
-        { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' },
-      ]}
+    <SafeAreaView
+      style={[styles.safeArea, { backgroundColor: colorScheme === 'dark' ? '#1A0A0A' : '#ffffff' }]}
     >
-      <View style={styles.header}>
-        <Text
-          style={[styles.headerTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}
-        >
-          Create
-        </Text>
-      </View>
-
-      <View style={styles.uploadTypeSection}>
-        <Text
-          style={[styles.sectionLabel, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}
-        >
-          Select Type
-        </Text>
-        <View style={styles.uploadOptionsGrid}>
-          {uploadOptions.map((option) => (
-            <TouchableOpacity
-              key={option.id}
-              onPress={() => setSelectedType(option.id)}
-              style={[
-                styles.uploadOption,
-                selectedType === option.id && {
-                  borderColor: option.color,
-                  backgroundColor: `${option.color}20`,
-                },
-              ]}
-            >
-              <Text style={styles.uploadIcon}>{option.icon}</Text>
-              <Text
-                style={[
-                  styles.uploadName,
-                  { color: colorScheme === 'dark' ? '#ffffff' : '#000000' },
-                ]}
-              >
-                {option.name}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      </View>
-
-      <View style={styles.uploadArea}>
-        <TouchableOpacity style={styles.uploadButton}>
-          <Text style={styles.uploadIconLarge}>📤</Text>
+      <ScrollView
+        style={[
+          styles.container,
+          { backgroundColor: colorScheme === 'dark' ? '#1A0A0A' : '#ffffff' },
+        ]}
+      >
+        <View style={styles.header}>
           <Text
-            style={[styles.uploadText, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}
+            style={[styles.headerTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A' }]}
           >
-            Upload{' '}
-            {selectedType === 'video' ? 'Video' : selectedType === 'image' ? 'Image' : 'Content'}
+            Create
           </Text>
-          <Text style={styles.uploadHint}>
-            {selectedType === 'video'
-              ? 'MP4, MOV, AVI - up to 500MB'
-              : selectedType === 'image'
-                ? 'JPG, PNG, GIF - up to 50MB'
-                : 'Choose file'}
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.formSection}>
-        <View style={styles.formGroup}>
-          <Text
-            style={[styles.formLabel, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}
-          >
-            Title
-          </Text>
-          <TextInput
-            style={[
-              styles.formInput,
-              {
-                backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5',
-                color: colorScheme === 'dark' ? '#ffffff' : '#000000',
-              },
-            ]}
-            placeholder="Enter title..."
-            placeholderTextColor="#888"
-            value={title}
-            onChangeText={setTitle}
-          />
         </View>
 
-        <View style={styles.formGroup}>
+        <View style={styles.uploadTypeSection}>
           <Text
-            style={[styles.formLabel, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}
+            style={[styles.sectionLabel, { color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A' }]}
           >
-            Description
+            Select Type
           </Text>
-          <TextInput
-            style={[
-              styles.formInput,
-              {
-                backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5',
-                color: colorScheme === 'dark' ? '#ffffff' : '#000000',
-              },
-            ]}
-            placeholder="Add description..."
-            placeholderTextColor="#888"
-            value={description}
-            onChangeText={setDescription}
-            multiline
-            numberOfLines={3}
-          />
-        </View>
-
-        <View style={styles.formGroup}>
-          <Text
-            style={[styles.formLabel, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}
-          >
-            Universe
-          </Text>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.universeScroll}
-          >
-            {universeOptions.map((universe) => (
+          <View style={styles.uploadOptionsGrid}>
+            {uploadOptions.map((option) => (
               <TouchableOpacity
-                key={universe.id}
-                onPress={() =>
-                  setSelectedUniverse(selectedUniverse === universe.id ? null : universe.id)
-                }
+                key={option.id}
+                onPress={() => setSelectedType(option.id)}
                 style={[
-                  styles.universeButton,
-                  selectedUniverse === universe.id && { backgroundColor: '#8B5CF6' },
+                  styles.uploadOption,
+                  selectedType === option.id && {
+                    borderColor: option.color,
+                    backgroundColor: `${option.color}20`,
+                  },
                 ]}
               >
-                <Text style={styles.universeIcon}>{universe.icon}</Text>
+                <Text style={styles.uploadIcon}>{option.icon}</Text>
                 <Text
                   style={[
-                    styles.universeName,
-                    selectedUniverse === universe.id && { color: '#ffffff' },
+                    styles.uploadName,
+                    { color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A' },
                   ]}
                 >
-                  {universe.name}
+                  {option.name}
                 </Text>
               </TouchableOpacity>
             ))}
-          </ScrollView>
+          </View>
         </View>
-      </View>
 
-      <View style={styles.privacySection}>
-        <Text
-          style={[styles.sectionLabel, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}
-        >
-          Privacy Settings
-        </Text>
-        <View style={styles.privacyOptions}>
-          {['Public', 'Private', 'Unlisted'].map((option) => (
-            <TouchableOpacity
-              key={option}
-              style={[styles.privacyButton, option === 'Public' && { backgroundColor: '#8B5CF6' }]}
+        <View style={styles.uploadArea}>
+          <View style={styles.uploadButton}>
+            <Text style={styles.uploadIconLarge}>📤</Text>
+            <Text
+              style={[styles.uploadText, { color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A' }]}
             >
-              <Text style={[styles.privacyText, option === 'Public' && { color: '#ffffff' }]}>
-                {option}
-              </Text>
-            </TouchableOpacity>
-          ))}
+              {selectedType === 'video' ? 'Video' : selectedType === 'image' ? 'Image' : 'Content'}{' '}
+              Upload
+            </Text>
+            <Text style={styles.uploadHint}>
+              File upload is currently only available on the web app.
+            </Text>
+            <Text style={styles.uploadHint}>Use the web app to upload media files.</Text>
+          </View>
         </View>
-      </View>
 
-      <TouchableOpacity
-        onPress={handleUpload}
-        disabled={isUploading}
-        style={[styles.submitButton, isUploading && { backgroundColor: '#ccc' }]}
-      >
-        <Text style={styles.submitButtonText}>{isUploading ? 'Uploading...' : 'Publish'}</Text>
-      </TouchableOpacity>
+        <View style={styles.formSection}>
+          <View style={styles.formGroup}>
+            <Text
+              style={[styles.formLabel, { color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A' }]}
+            >
+              Title
+            </Text>
+            <TextInput
+              style={[
+                styles.formInput,
+                {
+                  backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5',
+                  color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A',
+                },
+              ]}
+              placeholder="Enter title..."
+              placeholderTextColor="#888"
+              value={title}
+              onChangeText={setTitle}
+            />
+          </View>
 
-      <View style={styles.tipsSection}>
-        <Text style={[styles.tipsTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
-          💡 Tips for Creators
-        </Text>
-        <View style={styles.tipsList}>
-          <Text style={styles.tipItem}>• Use high-quality video for better engagement</Text>
-          <Text style={styles.tipItem}>• Add relevant tags to reach more viewers</Text>
-          <Text style={styles.tipItem}>• Engage with your audience in comments</Text>
-          <Text style={styles.tipItem}>• Post consistently to build your following</Text>
+          <View style={styles.formGroup}>
+            <Text
+              style={[styles.formLabel, { color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A' }]}
+            >
+              Description
+            </Text>
+            <TextInput
+              style={[
+                styles.formInput,
+                {
+                  backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5',
+                  color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A',
+                },
+              ]}
+              placeholder="Add description..."
+              placeholderTextColor="#888"
+              value={description}
+              onChangeText={setDescription}
+              multiline
+              numberOfLines={3}
+            />
+          </View>
+
+          <View style={styles.formGroup}>
+            <Text
+              style={[styles.formLabel, { color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A' }]}
+            >
+              Universe
+            </Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.universeScroll}
+            >
+              {universeOptions.map((universe) => (
+                <TouchableOpacity
+                  key={universe.id}
+                  onPress={() =>
+                    setSelectedUniverse(selectedUniverse === universe.id ? null : universe.id)
+                  }
+                  style={[
+                    styles.universeButton,
+                    selectedUniverse === universe.id && { backgroundColor: '#E8420A' },
+                  ]}
+                >
+                  <Text style={styles.universeIcon}>{universe.icon}</Text>
+                  <Text
+                    style={[
+                      styles.universeName,
+                      selectedUniverse === universe.id && { color: '#ffffff' },
+                    ]}
+                  >
+                    {universe.name}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
         </View>
-      </View>
-    </ScrollView>
+
+        <View style={styles.privacySection}>
+          <Text
+            style={[styles.sectionLabel, { color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A' }]}
+          >
+            Privacy Settings
+          </Text>
+          <View style={styles.privacyOptions}>
+            {['Public', 'Private', 'Unlisted'].map((option) => (
+              <TouchableOpacity
+                key={option}
+                style={[
+                  styles.privacyButton,
+                  option === 'Public' && { backgroundColor: '#E8420A' },
+                ]}
+              >
+                <Text style={[styles.privacyText, option === 'Public' && { color: '#ffffff' }]}>
+                  {option}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
+        <TouchableOpacity
+          onPress={handleUpload}
+          disabled={isUploading}
+          style={[styles.submitButton, isUploading && { backgroundColor: '#ccc' }]}
+        >
+          <Text style={styles.submitButtonText}>{isUploading ? 'Uploading...' : 'Publish'}</Text>
+        </TouchableOpacity>
+
+        <View style={styles.tipsSection}>
+          <Text
+            style={[styles.tipsTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A' }]}
+          >
+            💡 Tips for Creators
+          </Text>
+          <View style={styles.tipsList}>
+            <Text style={styles.tipItem}>• Use high-quality video for better engagement</Text>
+            <Text style={styles.tipItem}>• Add relevant tags to reach more viewers</Text>
+            <Text style={styles.tipItem}>• Engage with your audience in comments</Text>
+            <Text style={styles.tipItem}>• Post consistently to build your following</Text>
+          </View>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+  },
   container: {
     flex: 1,
     paddingHorizontal: 16,
@@ -345,7 +385,7 @@ const styles = StyleSheet.create({
   uploadButton: {
     borderWidth: 2,
     borderStyle: 'dashed',
-    borderColor: '#8B5CF6',
+    borderColor: '#E8420A',
     borderRadius: 16,
     padding: 32,
     alignItems: 'center',
@@ -422,7 +462,7 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   submitButton: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     padding: 16,
     borderRadius: 12,
     alignItems: 'center',

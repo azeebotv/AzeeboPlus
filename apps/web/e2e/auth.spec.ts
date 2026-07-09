@@ -16,7 +16,7 @@ test.describe('Authentication Flow', () => {
     await expect(page.locator('h1')).toContainText(/sign up|register|create/i);
     await expect(page.locator('input[type="email"]')).toBeVisible();
     await expect(page.locator('input[type="password"]')).toBeVisible();
-    await expect(page.locator('input[name="displayName"]')).toBeVisible();
+    await expect(page.locator('input[name="name"]')).toBeVisible();
   });
 
   test('should navigate from login to register', async ({ page }) => {

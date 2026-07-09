@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prod-resource-limits
+  namespace: azeebo
+  labels:
+    app.kubernetes.io/part-of: azeebo-plus
+    environment: production
+data:
+  # Critical services - higher resources for auth, wallet, payment, api-gateway
+  critical-requests-memory: "256Mi"
+  critical-requests-cpu: "250m"
+  critical-limits-memory: "512Mi"
+  critical-limits-cpu: "500m"
+  # Standard services - all other microservices
+  standard-requests-memory: "256Mi"
+  standard-requests-cpu: "200m"
+  standard-limits-memory: "512Mi"
+  standard-limits-cpu: "400m"

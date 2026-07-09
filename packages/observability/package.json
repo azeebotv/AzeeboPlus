@@ -1,16 +1,26 @@
 {
   "name": "@azeebo/observability",
   "version": "1.0.0",
+  "private": true,
   "description": "Observability package for Azeebo+ services",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
   "scripts": {
     "build": "tsc -p tsconfig.json",
+    "clean": "rm -rf dist",
     "test": "jest",
-    "test:cov": "jest --coverage"
+    "test:cov": "jest --coverage",
+    "lint": "eslint src --fix"
   },
   "dependencies": {},
   "peerDependencies": {
+    "@azeebo/shared-services": "workspace:*",
     "@nestjs/common": "^11.1.27",
     "@nestjs/config": "^4.0.4"
   },

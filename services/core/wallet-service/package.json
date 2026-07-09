@@ -17,6 +17,7 @@
     "prisma:migrate": "prisma migrate dev"
   },
   "dependencies": {
+    "@azeebo/error-handling": "workspace:*",
     "@azeebo/logger": "workspace:*",
     "@azeebo/security": "workspace:*",
     "@azeebo/shared-services": "workspace:*",

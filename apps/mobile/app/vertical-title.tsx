@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { apiClient } from '../src/api/client';
 import { LoadingState, ErrorState } from '../src/components/StateContainers';
 
@@ -98,176 +99,186 @@ export default function VerticalTitleScreen() {
   }, [fetchData]);
 
   if (isLoading) {
-    return <LoadingState text="Loading title..." />;
+    return (
+      <SafeAreaView style={styles.container}>
+        <LoadingState text="Loading title..." />
+      </SafeAreaView>
+    );
   }
 
   if (error || !titleData) {
-    return <ErrorState description={error || 'Title not found'} onRetry={fetchData} />;
+    return (
+      <SafeAreaView style={styles.container}>
+        <ErrorState description={error || 'Title not found'} onRetry={fetchData} />
+      </SafeAreaView>
+    );
   }
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: isDark ? '#0a0a0a' : '#ffffff' }]}>
-      <View style={styles.heroSection}>
-        <Image
-          source={{ uri: titleData.thumbnail || PLACEHOLDER_IMAGE }}
-          style={styles.heroImage}
-        />
-        <View style={styles.heroOverlay}>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-            <Text style={styles.backIcon}>←</Text>
-          </TouchableOpacity>
-          <View style={styles.heroContent}>
-            <View style={styles.badges}>
-              <View style={styles.genreBadge}>
-                <Text style={styles.genreText}>{titleData.genre}</Text>
+    <SafeAreaView style={styles.container}>
+      <ScrollView style={[{ flex: 1 }, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+        <View style={styles.heroSection}>
+          <Image
+            source={{ uri: titleData.thumbnail || PLACEHOLDER_IMAGE }}
+            style={styles.heroImage}
+          />
+          <View style={styles.heroOverlay}>
+            <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+              <Text style={styles.backIcon}>←</Text>
+            </TouchableOpacity>
+            <View style={styles.heroContent}>
+              <View style={styles.badges}>
+                <View style={styles.genreBadge}>
+                  <Text style={styles.genreText}>{titleData.genre}</Text>
+                </View>
+                <View style={styles.ratingBadge}>
+                  <Text style={styles.ratingText}>⭐ {titleData.rating}</Text>
+                </View>
               </View>
-              <View style={styles.ratingBadge}>
-                <Text style={styles.ratingText}>⭐ {titleData.rating}</Text>
+              <Text style={styles.heroTitle}>{titleData.title}</Text>
+              <View style={styles.metaRow}>
+                <Text style={styles.metaText}>{titleData.year}</Text>
+                <Text style={styles.metaDot}>•</Text>
+                <Text style={styles.metaText}>{titleData.seasons} Seasons</Text>
+                <Text style={styles.metaDot}>•</Text>
+                <Text style={styles.metaText}>{titleData.episodes} Episodes</Text>
               </View>
-            </View>
-            <Text style={styles.heroTitle}>{titleData.title}</Text>
-            <View style={styles.metaRow}>
-              <Text style={styles.metaText}>{titleData.year}</Text>
-              <Text style={styles.metaDot}>•</Text>
-              <Text style={styles.metaText}>{titleData.seasons} Seasons</Text>
-              <Text style={styles.metaDot}>•</Text>
-              <Text style={styles.metaText}>{titleData.episodes} Episodes</Text>
             </View>
           </View>
         </View>
-      </View>
 
-      <View style={styles.actions}>
-        <TouchableOpacity
-          style={[styles.followButton, isFollowing && styles.followButtonActive]}
-          onPress={() => setIsFollowing(!isFollowing)}
-        >
-          <Text style={[styles.followButtonText, isFollowing && styles.followButtonTextActive]}>
-            {isFollowing ? '✓ Following' : '+ Follow'}
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.watchButton}>
-          <Text style={styles.watchButtonText}>▶ Watch Now</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.shareButton}>
-          <Text style={styles.shareIcon}>↗️</Text>
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.tabsContainer}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.tabs}
-        >
-          {tabs.map((tab) => (
-            <TouchableOpacity
-              key={tab.id}
-              style={[styles.tab, activeTab === tab.id && styles.tabActive]}
-              onPress={() => setActiveTab(tab.id)}
-            >
-              <Text style={[styles.tabText, activeTab === tab.id && styles.tabTextActive]}>
-                {tab.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </View>
-
-      <View style={styles.content}>
-        {activeTab === 'overview' && (
-          <View>
-            <Text
-              style={[
-                styles.statusBadge,
-                { color: titleData.status === 'Ongoing' ? '#10B981' : '#888' },
-              ]}
-            >
-              {titleData.status}
+        <View style={styles.actions}>
+          <TouchableOpacity
+            style={[styles.followButton, isFollowing && styles.followButtonActive]}
+            onPress={() => setIsFollowing(!isFollowing)}
+          >
+            <Text style={[styles.followButtonText, isFollowing && styles.followButtonTextActive]}>
+              {isFollowing ? '✓ Following' : '+ Follow'}
             </Text>
-            <Text style={[styles.synopsis, { color: isDark ? '#ffffff' : '#000000' }]}>
-              {titleData.synopsis}
-            </Text>
-            <View style={styles.castSection}>
-              <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
-                Cast
-              </Text>
-              <View style={styles.castList}>
-                {titleData.cast.map((actor, index) => (
-                  <View key={index} style={styles.castItem}>
-                    <View style={styles.castAvatar}>
-                      <Text style={styles.castAvatarText}>{actor[0]}</Text>
-                    </View>
-                    <Text style={styles.castName}>{actor}</Text>
-                  </View>
-                ))}
-              </View>
-            </View>
-          </View>
-        )}
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.watchButton}>
+            <Text style={styles.watchButtonText}>▶ Watch Now</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.shareButton}>
+            <Text style={styles.shareIcon}>↗️</Text>
+          </TouchableOpacity>
+        </View>
 
-        {activeTab === 'characters' && (
-          <View style={styles.charactersList}>
-            {characters.map((character) => (
-              <TouchableOpacity key={character.id} style={styles.characterCard}>
-                <View style={styles.characterAvatar}>
-                  <Text style={styles.characterAvatarText}>{character.avatar}</Text>
-                </View>
-                <View style={styles.characterInfo}>
-                  <Text style={[styles.characterName, { color: isDark ? '#ffffff' : '#000000' }]}>
-                    {character.name}
-                  </Text>
-                  <Text style={styles.characterRole}>{character.role}</Text>
-                  <Text style={styles.characterActor}>Played by {character.actor}</Text>
-                  <Text style={styles.characterDescription}>{character.description}</Text>
-                </View>
+        <View style={styles.tabsContainer}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.tabs}
+          >
+            {tabs.map((tab) => (
+              <TouchableOpacity
+                key={tab.id}
+                style={[styles.tab, activeTab === tab.id && styles.tabActive]}
+                onPress={() => setActiveTab(tab.id)}
+              >
+                <Text style={[styles.tabText, activeTab === tab.id && styles.tabTextActive]}>
+                  {tab.label}
+                </Text>
               </TouchableOpacity>
             ))}
-          </View>
-        )}
+          </ScrollView>
+        </View>
 
-        {activeTab === 'lore' && (
-          <View style={styles.loreList}>
-            {loreData.map((item) => (
-              <View key={item.id} style={styles.loreCard}>
-                <View style={styles.loreIcon}>
-                  <Text style={styles.loreIconText}>{item.icon}</Text>
-                </View>
-                <View style={styles.loreContent}>
-                  <Text style={[styles.loreTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
-                    {item.title}
-                  </Text>
-                  <Text style={styles.loreText}>{item.content}</Text>
+        <View style={styles.content}>
+          {activeTab === 'overview' && (
+            <View>
+              <Text
+                style={[
+                  styles.statusBadge,
+                  { color: titleData.status === 'Ongoing' ? '#10B981' : '#888' },
+                ]}
+              >
+                {titleData.status}
+              </Text>
+              <Text style={[styles.synopsis, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
+                {titleData.synopsis}
+              </Text>
+              <View style={styles.castSection}>
+                <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
+                  Cast
+                </Text>
+                <View style={styles.castList}>
+                  {titleData.cast.map((actor, index) => (
+                    <View key={index} style={styles.castItem}>
+                      <View style={styles.castAvatar}>
+                        <Text style={styles.castAvatarText}>{actor[0]}</Text>
+                      </View>
+                      <Text style={styles.castName}>{actor}</Text>
+                    </View>
+                  ))}
                 </View>
               </View>
-            ))}
-          </View>
-        )}
+            </View>
+          )}
 
-        {activeTab === 'timeline' && (
-          <View style={styles.timeline}>
-            {timeline.map((item, index) => (
-              <View key={item.id} style={styles.timelineItem}>
-                <View style={styles.timelineMarker}>
-                  <View style={styles.timelineDot} />
-                  {index < timeline.length - 1 && <View style={styles.timelineLine} />}
-                </View>
-                <View style={styles.timelineContent}>
-                  <View style={styles.timelineHeader}>
-                    <Text style={styles.timelineEpisode}>{item.episode}</Text>
-                    <Text style={styles.timelineYear}>{item.year}</Text>
+          {activeTab === 'characters' && (
+            <View style={styles.charactersList}>
+              {characters.map((character) => (
+                <TouchableOpacity key={character.id} style={styles.characterCard}>
+                  <View style={styles.characterAvatar}>
+                    <Text style={styles.characterAvatarText}>{character.avatar}</Text>
                   </View>
-                  <Text style={[styles.timelineTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
-                    {item.title}
-                  </Text>
-                  <Text style={styles.timelineDescription}>{item.description}</Text>
+                  <View style={styles.characterInfo}>
+                    <Text style={[styles.characterName, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
+                      {character.name}
+                    </Text>
+                    <Text style={styles.characterRole}>{character.role}</Text>
+                    <Text style={styles.characterActor}>Played by {character.actor}</Text>
+                    <Text style={styles.characterDescription}>{character.description}</Text>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+
+          {activeTab === 'lore' && (
+            <View style={styles.loreList}>
+              {loreData.map((item) => (
+                <View key={item.id} style={styles.loreCard}>
+                  <View style={styles.loreIcon}>
+                    <Text style={styles.loreIconText}>{item.icon}</Text>
+                  </View>
+                  <View style={styles.loreContent}>
+                    <Text style={[styles.loreTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
+                      {item.title}
+                    </Text>
+                    <Text style={styles.loreText}>{item.content}</Text>
+                  </View>
                 </View>
-              </View>
-            ))}
-          </View>
-        )}
-      </View>
-    </ScrollView>
+              ))}
+            </View>
+          )}
+
+          {activeTab === 'timeline' && (
+            <View style={styles.timeline}>
+              {timeline.map((item, index) => (
+                <View key={item.id} style={styles.timelineItem}>
+                  <View style={styles.timelineMarker}>
+                    <View style={styles.timelineDot} />
+                    {index < timeline.length - 1 && <View style={styles.timelineLine} />}
+                  </View>
+                  <View style={styles.timelineContent}>
+                    <View style={styles.timelineHeader}>
+                      <Text style={styles.timelineEpisode}>{item.episode}</Text>
+                      <Text style={styles.timelineYear}>{item.year}</Text>
+                    </View>
+                    <Text style={[styles.timelineTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
+                      {item.title}
+                    </Text>
+                    <Text style={styles.timelineDescription}>{item.description}</Text>
+                  </View>
+                </View>
+              ))}
+            </View>
+          )}
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
@@ -317,7 +328,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   genreBadge: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 4,
@@ -369,7 +380,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#333',
   },
   followButtonActive: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
   },
   followButtonText: {
     color: '#fff',
@@ -379,7 +390,7 @@ const styles = StyleSheet.create({
   followButtonTextActive: {},
   watchButton: {
     flex: 1,
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     paddingVertical: 10,
     borderRadius: 8,
     alignItems: 'center',
@@ -417,7 +428,7 @@ const styles = StyleSheet.create({
     borderBottomColor: 'transparent',
   },
   tabActive: {
-    borderBottomColor: '#8B5CF6',
+    borderBottomColor: '#E8420A',
   },
   tabText: {
     color: '#888',
@@ -425,7 +436,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   tabTextActive: {
-    color: '#8B5CF6',
+    color: '#E8420A',
   },
   content: {
     padding: 16,
@@ -465,7 +476,7 @@ const styles = StyleSheet.create({
   castAvatarText: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#8B5CF6',
+    color: '#E8420A',
   },
   castName: {
     fontSize: 12,
@@ -503,7 +514,7 @@ const styles = StyleSheet.create({
   },
   characterRole: {
     fontSize: 12,
-    color: '#8B5CF6',
+    color: '#E8420A',
     fontWeight: '600',
     marginBottom: 4,
   },
@@ -531,7 +542,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 12,
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -563,7 +574,7 @@ const styles = StyleSheet.create({
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
   },
   timelineLine: {
     width: 2,
@@ -582,7 +593,7 @@ const styles = StyleSheet.create({
   },
   timelineEpisode: {
     fontSize: 12,
-    color: '#8B5CF6',
+    color: '#E8420A',
     fontWeight: '600',
   },
   timelineYear: {

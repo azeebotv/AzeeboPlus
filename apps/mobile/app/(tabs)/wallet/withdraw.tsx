@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -13,9 +13,10 @@ import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AmountInput } from '../../../src/components/AmountInput';
 import { walletApi } from '../../../src/api';
-import { LoadingState, ErrorState, EmptyState } from '../../../src/components/StateContainers';
+import { LoadingState, ErrorState } from '../../../src/components/StateContainers';
+import { walletPresetAmounts, walletLimits } from '../../../src/config/prices';
 
-const PRESET_AMOUNTS = [500, 1000, 2000, 5000, 10000];
+const PRESET_AMOUNTS = walletPresetAmounts;
 
 export default function WithdrawFundsScreen() {
   const router = useRouter();
@@ -38,7 +39,7 @@ export default function WithdrawFundsScreen() {
       if (res.success && res.data) {
         setBalance(res.data.balance);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       setBalanceError(err.message || 'Failed to load balance');
     } finally {
       setIsLoadingBalance(false);
@@ -61,8 +62,8 @@ export default function WithdrawFundsScreen() {
 
     if (!amount || isNaN(numAmount)) {
       newErrors.amount = 'Please enter a valid amount';
-    } else if (numAmount < 500) {
-      newErrors.amount = 'Minimum withdrawal is ₦500';
+    } else if (numAmount < walletLimits.minimumWithdrawal) {
+      newErrors.amount = `Minimum withdrawal is ₦${walletLimits.minimumWithdrawal.toLocaleString()}`;
     }
 
     if (!bankName.trim()) {
@@ -91,9 +92,21 @@ export default function WithdrawFundsScreen() {
 
     setIsVerifying(true);
     try {
-      setAccountName('John Doe');
-      setErrors((prev) => ({ ...prev, accountName: undefined }));
-    } catch (error: any) {
+      const result = await walletApi.verifyBankAccount({
+        bankCode: bankName,
+        accountNumber,
+      });
+      if (result.success && result.data) {
+        setAccountName(result.data.accountName);
+        setErrors((prev) => ({ ...prev, accountName: undefined }));
+      } else {
+        setAccountName('');
+        setErrors((prev) => ({
+          ...prev,
+          accountName: result.error?.message || 'Could not verify account',
+        }));
+      }
+    } catch {
       Alert.alert('Error', 'Failed to verify account');
     } finally {
       setIsVerifying(false);
@@ -124,7 +137,7 @@ export default function WithdrawFundsScreen() {
               Alert.alert('Success', 'Withdrawal request submitted!', [
                 { text: 'OK', onPress: () => router.back() },
               ]);
-            } catch (error: any) {
+            } catch (error: unknown) {
               Alert.alert('Error', error?.message || 'Failed to withdraw funds. Please try again.');
             } finally {
               setIsLoading(false);
@@ -298,7 +311,7 @@ export default function WithdrawFundsScreen() {
           <View style={styles.infoCard}>
             <Text style={styles.infoTitle}>ℹ️ Information</Text>
             <Text style={styles.infoText}>
-              • Minimum withdrawal: ₦500{'\n'}• Processing time: 1-3 business days{'\n'}• Withdrawal
+              • Minimum withdrawal: ₦{walletLimits.minimumWithdrawal.toLocaleString()}{'\n'}• Processing time: 1-3 business days{'\n'}• Withdrawal
               fees may apply{'\n'}• Ensure account details are correct
             </Text>
           </View>
@@ -311,7 +324,7 @@ export default function WithdrawFundsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#111827',
+    backgroundColor: '#1A0A0A',
   },
   scrollContent: {
     paddingHorizontal: 24,
@@ -385,8 +398,8 @@ const styles = StyleSheet.create({
     borderColor: '#333',
   },
   presetButtonSelected: {
-    backgroundColor: '#8B5CF6',
-    borderColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
+    borderColor: '#E8420A',
   },
   presetText: {
     color: '#F3F4F6',
@@ -404,7 +417,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   verifyButton: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     borderRadius: 12,
     paddingHorizontal: 20,
     justifyContent: 'center',
@@ -418,7 +431,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   withdrawButton: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
@@ -434,7 +447,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   balanceCard: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     borderRadius: 12,
     padding: 20,
     marginBottom: 24,

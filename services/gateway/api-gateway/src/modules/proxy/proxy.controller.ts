@@ -16,13 +16,17 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
+import { ApiTags } from '@nestjs/swagger';
+import { AuthGuard } from '@nestjs/passport';
+import { AdminGuard } from '@azeebo/security';
 import { AuthThrottlerGuard } from '../../guards/auth-throttler.guard';
 import { Request, Response } from 'express';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { ConfigService } from '@nestjs/config';
 import { ApiVersioningConfig, API_VERSION_HEADER, DEFAULT_API_VERSION } from '@azeebo/shared-types';
-import { randomUUID } from 'crypto';
+import { createHash, randomUUID } from 'crypto';
+import { CircuitBreakerProxyService } from '../../common/circuit-breaker-proxy.service';
 
 const CACHE_TTL_MS = 300_000; // 5 minutes
 
@@ -69,7 +73,7 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
     endpoints: [
       { method: 'POST', path: '/signup', description: 'Register new user' },
       { method: 'POST', path: '/login', description: 'Login with email/password' },
-      { method: 'DELETE', path: '/logout', description: 'Logout (invalidate tokens)' },
+      { method: 'POST', path: '/logout', description: 'Logout (invalidate tokens)' },
       { method: 'POST', path: '/refresh', description: 'Refresh access token' },
       { method: 'POST', path: '/forgot-password', description: 'Request password reset' },
       { method: 'POST', path: '/reset-password', description: 'Reset password with token' },
@@ -81,10 +85,22 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
       { method: 'POST', path: '/mfa/enable', description: 'Enable MFA' },
       { method: 'POST', path: '/mfa/disable', description: 'Disable MFA' },
       { method: 'POST', path: '/social/google', description: 'Google OAuth login (legacy)' },
-      { method: 'GET', path: '/social/google/authorize', description: 'Initiate Google OAuth flow with state' },
+      {
+        method: 'GET',
+        path: '/social/google/authorize',
+        description: 'Initiate Google OAuth flow with state',
+      },
       { method: 'POST', path: '/social/apple', description: 'Apple OAuth login (legacy)' },
-      { method: 'GET', path: '/social/apple/authorize', description: 'Initiate Apple OAuth flow with state' },
-      { method: 'POST', path: '/social/callback', description: 'OAuth callback with state validation' },
+      {
+        method: 'GET',
+        path: '/social/apple/authorize',
+        description: 'Initiate Apple OAuth flow with state',
+      },
+      {
+        method: 'POST',
+        path: '/social/callback',
+        description: 'OAuth callback with state validation',
+      },
       { method: 'POST', path: '/social/unlink', description: 'Unlink social account' },
       { method: 'POST', path: '/otp/send', description: 'Send OTP' },
       { method: 'POST', path: '/otp/verify', description: 'Verify OTP' },
@@ -115,12 +131,33 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
       { method: 'DELETE', path: '/me/saved/:contentId', description: 'Remove saved content' },
       { method: 'GET', path: '/me/universe-affinity', description: 'Get universe affinity' },
       { method: 'PATCH', path: '/me/universe-affinity', description: 'Update universe affinity' },
+      { method: 'GET', path: '/me/universes', description: 'Get user universes' },
+      { method: 'GET', path: '/me/continue-watching', description: 'Get continue watching' },
+      { method: 'GET', path: '/me/privacy-settings', description: 'Get privacy settings' },
+      { method: 'PUT', path: '/me/privacy-settings', description: 'Update privacy settings' },
       { method: 'GET', path: '/:id', description: 'Get user by ID' },
       { method: 'GET', path: '/:id/content', description: "Get user's content" },
       { method: 'POST', path: '/:id/follow', description: 'Follow a user' },
       { method: 'DELETE', path: '/:id/follow', description: 'Unfollow a user' },
       { method: 'GET', path: '/:id/followers', description: "Get user's followers" },
       { method: 'GET', path: '/:id/following', description: 'Get users being followed' },
+    ],
+  },
+  {
+    path: '/interactions',
+    envKey: 'USER_SERVICE_URL',
+    fallbackUrl: 'http://user-service:3001',
+    supportedVersions: ['1'],
+    defaultVersion: '1',
+    pathStrategy: 'no-prefix',
+    endpoints: [
+      { method: 'GET', path: '/watchlist', description: 'Get watchlist' },
+      { method: 'DELETE', path: '/watchlist/:contentId', description: 'Remove from watchlist' },
+      { method: 'GET', path: '/history', description: 'Get watch history' },
+      { method: 'DELETE', path: '/history/:contentId', description: 'Remove from history' },
+      { method: 'GET', path: '/favorites', description: 'Get favorites' },
+      { method: 'POST', path: '/favorites', description: 'Add to favorites' },
+      { method: 'DELETE', path: '/favorites/:contentId', description: 'Remove from favorites' },
     ],
   },
   {
@@ -174,7 +211,11 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
       { method: 'GET', path: '/public/settings', description: 'Get public settings' },
       { method: 'GET', path: '/public/settings/:key', description: 'Get a public setting' },
       { method: 'GET', path: '/public/universes', description: 'Get enabled universes' },
-      { method: 'GET', path: '/public/universes/:name/features', description: 'Get universe features' },
+      {
+        method: 'GET',
+        path: '/public/universes/:name/features',
+        description: 'Get universe features',
+      },
     ],
   },
   {
@@ -190,9 +231,14 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
       { method: 'GET', path: '/watch', description: 'Get watch hub feed' },
       { method: 'GET', path: '/search', description: 'Search content' },
       { method: 'GET', path: '/trending', description: 'Get trending content' },
+      { method: 'GET', path: '/new-releases', description: 'Get new releases' },
+      { method: 'GET', path: '/featured-slides', description: 'Get featured slides' },
+      { method: 'GET', path: '/popular-region', description: 'Get popular in region' },
       { method: 'GET', path: '/featured', description: 'Get featured content' },
       { method: 'GET', path: '/accessible', description: 'Get accessible content for user' },
       { method: 'GET', path: '/recommended', description: 'Get recommended content' },
+      { method: 'GET', path: '/me', description: "Get current user's content" },
+      { method: 'GET', path: '/creator/:creatorId', description: "Get creator's content" },
       { method: 'GET', path: '/:id', description: 'Get content details' },
       { method: 'POST', path: '/', description: 'Create content (creators)' },
       { method: 'PATCH', path: '/:id', description: 'Update content' },
@@ -315,8 +361,10 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
       { method: 'GET', path: '/dashboard/engagement', description: 'Get engagement metrics' },
       { method: 'GET', path: '/dashboard/growth', description: 'Get growth metrics' },
       { method: 'GET', path: '/dashboard/financial', description: 'Get financial metrics' },
+      { method: 'GET', path: '/dashboard/platform-overview', description: 'Get platform overview' },
       { method: 'GET', path: '/users', description: 'List users' },
       { method: 'GET', path: '/users/:id', description: 'Get user details' },
+      { method: 'PUT', path: '/users/:id/role', description: 'Update user role' },
       { method: 'PATCH', path: '/users/:id/status', description: 'Update user status' },
       { method: 'GET', path: '/content', description: 'List content for moderation' },
       { method: 'GET', path: '/content/:id', description: 'Get content details' },
@@ -324,14 +372,238 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
       { method: 'GET', path: '/analytics/overview', description: 'Get analytics overview' },
       { method: 'GET', path: '/analytics/revenue', description: 'Get revenue analytics' },
       { method: 'GET', path: '/analytics/users', description: 'Get user analytics' },
+      { method: 'GET', path: '/wallets', description: 'List wallets' },
+      { method: 'GET', path: '/wallets/stats', description: 'Get wallet stats' },
+      { method: 'GET', path: '/wallets/:id/transactions', description: 'Get wallet transactions' },
+      { method: 'GET', path: '/content-review', description: 'Get content review queue' },
+      { method: 'POST', path: '/content-review/:id/approve', description: 'Approve content' },
+      { method: 'POST', path: '/content-review/:id/reject', description: 'Reject content' },
+      { method: 'GET', path: '/engagement/metrics', description: 'Get engagement metrics' },
+      { method: 'GET', path: '/engagement/trends', description: 'Get engagement trends' },
+      { method: 'GET', path: '/notifications/stats', description: 'Get notification stats' },
+      { method: 'GET', path: '/notifications', description: 'Get admin notifications' },
+      { method: 'GET', path: '/notification-templates', description: 'Get notification templates' },
+      {
+        method: 'POST',
+        path: '/notification-templates',
+        description: 'Create notification template',
+      },
+      {
+        method: 'PUT',
+        path: '/notification-templates/:id',
+        description: 'Update notification template',
+      },
+      { method: 'GET', path: '/payment-gateways', description: 'Get payment gateways' },
+      {
+        method: 'PUT',
+        path: '/payment-gateways/:id/toggle',
+        description: 'Toggle payment gateway',
+      },
+      {
+        method: 'PUT',
+        path: '/payment-gateways/:id/mode',
+        description: 'Update payment gateway mode',
+      },
+      { method: 'GET', path: '/reality-shows', description: 'Get reality shows' },
+      {
+        method: 'PUT',
+        path: '/reality-shows/:id/status',
+        description: 'Update reality show status',
+      },
+      { method: 'GET', path: '/reports', description: 'Get reports' },
+      { method: 'POST', path: '/reports', description: 'Create report' },
+      { method: 'POST', path: '/reports/execute', description: 'Execute report' },
+      { method: 'DELETE', path: '/reports/:id', description: 'Delete report' },
       { method: 'GET', path: '/config', description: 'Get platform config' },
       { method: 'PATCH', path: '/config', description: 'Update platform config' },
       { method: 'GET', path: '/audit-logs', description: 'Get audit logs' },
-      { method: 'GET', path: '/notifications', description: 'Get admin notifications' },
+      { method: 'GET', path: '/audit-logs/actor/:actorId', description: 'Get audit logs by actor' },
+      {
+        method: 'GET',
+        path: '/audit-logs/target/:targetType/:targetId',
+        description: 'Get audit logs by target',
+      },
+      { method: 'PUT', path: '/wallets/:walletId/status', description: 'Update wallet status' },
       { method: 'GET', path: '/moderation/queue', description: 'Get moderation queue' },
       { method: 'PATCH', path: '/moderation/:id', description: 'Update moderation status' },
       { method: 'GET', path: '/support/tickets', description: 'Get support tickets' },
       { method: 'PATCH', path: '/support/tickets/:id', description: 'Update ticket' },
+      { method: 'GET', path: '/universes', description: 'List universes' },
+      { method: 'GET', path: '/universes/:id', description: 'Get universe by ID' },
+      { method: 'GET', path: '/universes/name/:name', description: 'Get universe by name' },
+      { method: 'GET', path: '/universes/enabled', description: 'Get enabled universes' },
+      {
+        method: 'GET',
+        path: '/universes/check/:universeName/:featureKey',
+        description: 'Check feature flag',
+      },
+      { method: 'POST', path: '/universes', description: 'Create universe' },
+      { method: 'PUT', path: '/universes/:id', description: 'Update universe' },
+      { method: 'DELETE', path: '/universes/:id', description: 'Delete universe' },
+      { method: 'PUT', path: '/universes/:id/toggle', description: 'Toggle universe enabled' },
+      { method: 'PUT', path: '/universes/:id/feature-flags', description: 'Update feature flag' },
+      {
+        method: 'DELETE',
+        path: '/universes/:id/feature-flags/:featureKey',
+        description: 'Delete feature flag',
+      },
+      { method: 'GET', path: '/settings', description: 'Get all settings' },
+      { method: 'GET', path: '/settings/public', description: 'Get public settings' },
+      { method: 'GET', path: '/settings/map', description: 'Get settings map' },
+      {
+        method: 'GET',
+        path: '/settings/category/:category',
+        description: 'Get settings by category',
+      },
+      { method: 'GET', path: '/settings/value/:key', description: 'Get setting value' },
+      { method: 'GET', path: '/settings/:key', description: 'Get setting by key' },
+      { method: 'POST', path: '/settings', description: 'Create setting' },
+      { method: 'PUT', path: '/settings/:key', description: 'Update setting' },
+      { method: 'DELETE', path: '/settings/:key', description: 'Delete setting' },
+      { method: 'POST', path: '/settings/bulk', description: 'Bulk create settings' },
+      { method: 'PUT', path: '/settings/bulk', description: 'Bulk update settings' },
+      { method: 'GET', path: '/settings/export', description: 'Export all settings' },
+      { method: 'POST', path: '/settings/import', description: 'Import settings' },
+      { method: 'POST', path: '/settings/save-draft', description: 'Save settings draft' },
+      { method: 'GET', path: '/settings/draft/:key', description: 'Get settings draft' },
+      { method: 'DELETE', path: '/settings/draft/:key', description: 'Delete settings draft' },
+      { method: 'GET', path: '/settings/:key/history', description: 'Get setting version history' },
+      { method: 'GET', path: '/settings/branding', description: 'Get branding settings' },
+      { method: 'PUT', path: '/settings/branding', description: 'Update branding settings' },
+      {
+        method: 'GET',
+        path: '/settings/subscriptions/plans',
+        description: 'List subscription plans',
+      },
+      {
+        method: 'POST',
+        path: '/settings/subscriptions/plans',
+        description: 'Create subscription plan',
+      },
+      {
+        method: 'PUT',
+        path: '/settings/subscriptions/plans/:id',
+        description: 'Update subscription plan',
+      },
+      {
+        method: 'DELETE',
+        path: '/settings/subscriptions/plans/:id',
+        description: 'Delete subscription plan',
+      },
+      { method: 'GET', path: '/settings/site', description: 'Get site settings' },
+      { method: 'PUT', path: '/settings/site', description: 'Update site settings' },
+      { method: 'GET', path: '/settings/access/roles', description: 'Get RBAC roles' },
+      {
+        method: 'PUT',
+        path: '/settings/access/roles/:role',
+        description: 'Update role permissions',
+      },
+      { method: 'GET', path: '/settings/access/admins', description: 'List admin users' },
+      { method: 'POST', path: '/settings/access/admins', description: 'Create admin user' },
+      { method: 'DELETE', path: '/settings/access/admins/:id', description: 'Remove admin user' },
+      { method: 'GET', path: '/settings/performance', description: 'Get performance settings' },
+      { method: 'PUT', path: '/settings/performance', description: 'Update performance settings' },
+      { method: 'GET', path: '/settings/notifications', description: 'Get notification settings' },
+      {
+        method: 'PUT',
+        path: '/settings/notifications',
+        description: 'Update notification settings',
+      },
+      {
+        method: 'GET',
+        path: '/settings/notifications/templates',
+        description: 'List email templates',
+      },
+      {
+        method: 'POST',
+        path: '/settings/notifications/templates',
+        description: 'Create email template',
+      },
+      {
+        method: 'PUT',
+        path: '/settings/notifications/templates/:id',
+        description: 'Update email template',
+      },
+      {
+        method: 'DELETE',
+        path: '/settings/notifications/templates/:id',
+        description: 'Delete email template',
+      },
+      { method: 'GET', path: '/settings/integrations', description: 'List integrations' },
+      {
+        method: 'PUT',
+        path: '/settings/integrations/:provider',
+        description: 'Update integration',
+      },
+      {
+        method: 'POST',
+        path: '/settings/integrations/:provider/test',
+        description: 'Test integration',
+      },
+      { method: 'GET', path: '/settings/compliance', description: 'Get compliance settings' },
+      { method: 'PUT', path: '/settings/compliance', description: 'Update compliance settings' },
+      {
+        method: 'GET',
+        path: '/settings/compliance/data-retention',
+        description: 'Get data retention',
+      },
+      {
+        method: 'PUT',
+        path: '/settings/compliance/data-retention',
+        description: 'Update data retention',
+      },
+      { method: 'GET', path: '/settings/localization', description: 'Get localization settings' },
+      {
+        method: 'PUT',
+        path: '/settings/localization',
+        description: 'Update localization settings',
+      },
+      { method: 'GET', path: '/settings/security', description: 'Get security settings' },
+      { method: 'PUT', path: '/settings/security', description: 'Update security settings' },
+      { method: 'GET', path: '/settings/security/ip-rules', description: 'Get IP rules' },
+      { method: 'PUT', path: '/settings/security/ip-rules', description: 'Update IP rules' },
+      { method: 'GET', path: '/content-management', description: 'List all content' },
+      { method: 'GET', path: '/content-management/stats', description: 'Content statistics' },
+      { method: 'GET', path: '/content-management/categories', description: 'List categories' },
+      { method: 'POST', path: '/content-management/categories', description: 'Create category' },
+      { method: 'PUT', path: '/content-management/categories/:id', description: 'Update category' },
+      {
+        method: 'DELETE',
+        path: '/content-management/categories/:id',
+        description: 'Delete category',
+      },
+      { method: 'GET', path: '/content-management/tags', description: 'List tags' },
+      { method: 'POST', path: '/content-management/tags', description: 'Create tag' },
+      { method: 'DELETE', path: '/content-management/tags/:id', description: 'Delete tag' },
+      {
+        method: 'GET',
+        path: '/content-management/versions/:id',
+        description: 'Content version history',
+      },
+      { method: 'GET', path: '/content-management/audit', description: 'Content audit logs' },
+      {
+        method: 'POST',
+        path: '/content-management/bulk/status',
+        description: 'Bulk update status',
+      },
+      { method: 'POST', path: '/content-management/bulk/delete', description: 'Bulk soft delete' },
+      { method: 'GET', path: '/content-management/:id', description: 'Get content by ID' },
+      { method: 'POST', path: '/content-management', description: 'Create content' },
+      { method: 'PATCH', path: '/content-management/:id', description: 'Update content' },
+      { method: 'DELETE', path: '/content-management/:id', description: 'Delete content' },
+      { method: 'POST', path: '/content-management/:id/publish', description: 'Publish content' },
+      {
+        method: 'POST',
+        path: '/content-management/:id/unpublish',
+        description: 'Unpublish content',
+      },
+      { method: 'GET', path: '/universes/stats', description: 'Universe statistics' },
+      { method: 'GET', path: '/universes/feature-flags', description: 'All feature flags' },
+      { method: 'GET', path: '/universes/relationships', description: 'Universe relationships' },
+      { method: 'GET', path: '/universes/export/:id', description: 'Export universe' },
+      { method: 'POST', path: '/universes/import', description: 'Import universes' },
+      { method: 'POST', path: '/universes/bulk/toggle', description: 'Bulk toggle universes' },
+      { method: 'POST', path: '/universes/:id/copy', description: 'Clone universe' },
     ],
   },
   {
@@ -377,6 +649,15 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
       { method: 'POST', path: '/uploads', description: 'Create upload' },
       { method: 'GET', path: '/uploads', description: 'List own uploads' },
       { method: 'GET', path: '/discover', description: 'Creator discovery' },
+      { method: 'GET', path: '/stats', description: 'Get creator stats' },
+      { method: 'GET', path: '/settings', description: 'Get creator settings' },
+      { method: 'PUT', path: '/settings', description: 'Update creator settings' },
+      { method: 'GET', path: '/:creatorId/content', description: "Get creator's content" },
+      {
+        method: 'PUT',
+        path: '/monetization/settings',
+        description: 'Update monetization settings',
+      },
       { method: 'POST', path: '/tips/:creatorId', description: 'Send tip to creator' },
       { method: 'POST', path: '/subscribe/:creatorId', description: 'Subscribe to creator' },
       { method: 'DELETE', path: '/subscribe/:creatorId', description: 'Cancel subscription' },
@@ -657,7 +938,7 @@ export const SERVICE_CONFIGS: ServiceRouteConfig[] = [
     ],
   },
 ];
-
+@ApiTags('Gateway')
 @Controller('api')
 @UseGuards(AuthThrottlerGuard)
 export class ProxyController {
@@ -667,7 +948,8 @@ export class ProxyController {
 
   constructor(
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
-    private configService: ConfigService
+    private configService: ConfigService,
+    private circuitBreakerProxyService: CircuitBreakerProxyService
   ) {
     this.UPSTREAM_TIMEOUT = this.configService.get<number>('UPSTREAM_TIMEOUT', 30000);
   }
@@ -680,49 +962,7 @@ export class ProxyController {
     @Req() req: Request,
     @Res() res: Response
   ): Promise<void> {
-    const requestId = (req.headers[this.REQUEST_ID_HEADER.toLowerCase()] as string) || randomUUID();
-
-    const route = this.findRoute(service);
-    if (!route) {
-      res.setHeader(this.REQUEST_ID_HEADER, requestId);
-      res.status(HttpStatus.NOT_FOUND).json({ message: 'Service not found' });
-      return;
-    }
-
-    if (!this.validateVersion(version, route)) {
-      res.setHeader(this.REQUEST_ID_HEADER, requestId);
-      res.status(HttpStatus.NOT_FOUND).json({
-        message: `API version ${version} not supported for this service`,
-        supportedVersions: route.supportedVersions,
-        defaultVersion: route.defaultVersion,
-      });
-      return;
-    }
-
-    const cacheKey = this.buildCacheKey(req, version);
-    const cachedResponse = await this.cacheManager.get(cacheKey);
-
-    if (cachedResponse) {
-      res.setHeader(API_VERSION_HEADER, version);
-      res.setHeader(this.REQUEST_ID_HEADER, requestId);
-      res.json(cachedResponse);
-      return;
-    }
-
-    const response = await this.forwardRequest(
-      req,
-      res,
-      route.targetUrl,
-      version,
-      requestId,
-      route
-    );
-    if (response && typeof response === 'object') {
-      await this.cacheManager.set(cacheKey, response, CACHE_TTL_MS);
-      res.setHeader(API_VERSION_HEADER, version);
-      res.setHeader(this.REQUEST_ID_HEADER, requestId);
-      res.json(response);
-    }
+    return this.proxyRequest('GET', version, service, req.params['path'] || '', req, res);
   }
 
   @Post(':version/:service/*path')
@@ -733,28 +973,7 @@ export class ProxyController {
     @Req() req: Request,
     @Res() res: Response
   ): Promise<void> {
-    const requestId = (req.headers[this.REQUEST_ID_HEADER.toLowerCase()] as string) || randomUUID();
-
-    const route = this.findRoute(service);
-    if (!route) {
-      res.setHeader(this.REQUEST_ID_HEADER, requestId);
-      res.status(HttpStatus.NOT_FOUND).json({ message: 'Service not found' });
-      return;
-    }
-
-    if (!this.validateVersion(version, route)) {
-      res.setHeader(this.REQUEST_ID_HEADER, requestId);
-      res.status(HttpStatus.NOT_FOUND).json({
-        message: `API version ${version} not supported for this service`,
-        supportedVersions: route.supportedVersions,
-        defaultVersion: route.defaultVersion,
-      });
-      return;
-    }
-
-    res.setHeader(API_VERSION_HEADER, version);
-    res.setHeader(this.REQUEST_ID_HEADER, requestId);
-    await this.forwardRequest(req, res, route.targetUrl, version, requestId, route);
+    return this.proxyRequest('POST', version, service, req.params['path'] || '', req, res);
   }
 
   @Put(':version/:service/*path')
@@ -765,28 +984,7 @@ export class ProxyController {
     @Req() req: Request,
     @Res() res: Response
   ): Promise<void> {
-    const requestId = (req.headers[this.REQUEST_ID_HEADER.toLowerCase()] as string) || randomUUID();
-
-    const route = this.findRoute(service);
-    if (!route) {
-      res.setHeader(this.REQUEST_ID_HEADER, requestId);
-      res.status(HttpStatus.NOT_FOUND).json({ message: 'Service not found' });
-      return;
-    }
-
-    if (!this.validateVersion(version, route)) {
-      res.setHeader(this.REQUEST_ID_HEADER, requestId);
-      res.status(HttpStatus.NOT_FOUND).json({
-        message: `API version ${version} not supported for this service`,
-        supportedVersions: route.supportedVersions,
-        defaultVersion: route.defaultVersion,
-      });
-      return;
-    }
-
-    res.setHeader(API_VERSION_HEADER, version);
-    res.setHeader(this.REQUEST_ID_HEADER, requestId);
-    await this.forwardRequest(req, res, route.targetUrl, version, requestId, route);
+    return this.proxyRequest('PUT', version, service, req.params['path'] || '', req, res);
   }
 
   @Patch(':version/:service/*path')
@@ -797,28 +995,7 @@ export class ProxyController {
     @Req() req: Request,
     @Res() res: Response
   ): Promise<void> {
-    const requestId = (req.headers[this.REQUEST_ID_HEADER.toLowerCase()] as string) || randomUUID();
-
-    const route = this.findRoute(service);
-    if (!route) {
-      res.setHeader(this.REQUEST_ID_HEADER, requestId);
-      res.status(HttpStatus.NOT_FOUND).json({ message: 'Service not found' });
-      return;
-    }
-
-    if (!this.validateVersion(version, route)) {
-      res.setHeader(this.REQUEST_ID_HEADER, requestId);
-      res.status(HttpStatus.NOT_FOUND).json({
-        message: `API version ${version} not supported for this service`,
-        supportedVersions: route.supportedVersions,
-        defaultVersion: route.defaultVersion,
-      });
-      return;
-    }
-
-    res.setHeader(API_VERSION_HEADER, version);
-    res.setHeader(this.REQUEST_ID_HEADER, requestId);
-    await this.forwardRequest(req, res, route.targetUrl, version, requestId, route);
+    return this.proxyRequest('PATCH', version, service, req.params['path'] || '', req, res);
   }
 
   @Delete(':version/:service/*path')
@@ -829,34 +1006,8 @@ export class ProxyController {
     @Req() req: Request,
     @Res() res: Response
   ): Promise<void> {
-    const requestId = (req.headers[this.REQUEST_ID_HEADER.toLowerCase()] as string) || randomUUID();
-
-    const route = this.findRoute(service);
-    if (!route) {
-      res.setHeader(this.REQUEST_ID_HEADER, requestId);
-      res.status(HttpStatus.NOT_FOUND).json({ message: 'Service not found' });
-      return;
-    }
-
-    if (!this.validateVersion(version, route)) {
-      res.setHeader(this.REQUEST_ID_HEADER, requestId);
-      res.status(HttpStatus.NOT_FOUND).json({
-        message: `API version ${version} not supported for this service`,
-        supportedVersions: route.supportedVersions,
-        defaultVersion: route.defaultVersion,
-      });
-      return;
-    }
-
-    res.setHeader(API_VERSION_HEADER, version);
-    res.setHeader(this.REQUEST_ID_HEADER, requestId);
-    await this.forwardRequest(req, res, route.targetUrl, version, requestId, route);
+    return this.proxyRequest('DELETE', version, service, req.params['path'] || '', req, res);
   }
-
-  // Root-path handlers for /:version/:service (no sub-path required)
-  // Express/NestJS requires *path to match at least something, so /api/v1/wallet
-  // doesn't match /:version/:service/*path — it falls through to /:service/*path
-  // with service="v1". These handlers fix that by explicitly matching root paths.
 
   @Get(':version/:service')
   @HttpCode(HttpStatus.OK)
@@ -866,37 +1017,7 @@ export class ProxyController {
     @Req() req: Request,
     @Res() res: Response
   ): Promise<void> {
-    const requestId = (req.headers[this.REQUEST_ID_HEADER.toLowerCase()] as string) || randomUUID();
-    const route = this.findRoute(service);
-    if (!route) {
-      res.setHeader(this.REQUEST_ID_HEADER, requestId);
-      res.status(HttpStatus.NOT_FOUND).json({ message: 'Service not found' });
-      return;
-    }
-    if (!this.validateVersion(version, route)) {
-      res.setHeader(this.REQUEST_ID_HEADER, requestId);
-      res.status(HttpStatus.NOT_FOUND).json({
-        message: `API version ${version} not supported for this service`,
-        supportedVersions: route.supportedVersions,
-        defaultVersion: route.defaultVersion,
-      });
-      return;
-    }
-    const cacheKey = this.buildCacheKey(req, version);
-    const cachedResponse = await this.cacheManager.get(cacheKey);
-    if (cachedResponse) {
-      res.setHeader(API_VERSION_HEADER, version);
-      res.setHeader(this.REQUEST_ID_HEADER, requestId);
-      res.json(cachedResponse);
-      return;
-    }
-    const response = await this.forwardRequest(req, res, route.targetUrl, version, requestId, route);
-    if (response && typeof response === 'object') {
-      await this.cacheManager.set(cacheKey, response, CACHE_TTL_MS);
-      res.setHeader(API_VERSION_HEADER, version);
-      res.setHeader(this.REQUEST_ID_HEADER, requestId);
-      res.json(response);
-    }
+    return this.proxyRequest('GET', version, service, '', req, res);
   }
 
   @Post(':version/:service')
@@ -907,25 +1028,7 @@ export class ProxyController {
     @Req() req: Request,
     @Res() res: Response
   ): Promise<void> {
-    const requestId = (req.headers[this.REQUEST_ID_HEADER.toLowerCase()] as string) || randomUUID();
-    const route = this.findRoute(service);
-    if (!route) {
-      res.setHeader(this.REQUEST_ID_HEADER, requestId);
-      res.status(HttpStatus.NOT_FOUND).json({ message: 'Service not found' });
-      return;
-    }
-    if (!this.validateVersion(version, route)) {
-      res.setHeader(this.REQUEST_ID_HEADER, requestId);
-      res.status(HttpStatus.NOT_FOUND).json({
-        message: `API version ${version} not supported for this service`,
-        supportedVersions: route.supportedVersions,
-        defaultVersion: route.defaultVersion,
-      });
-      return;
-    }
-    res.setHeader(API_VERSION_HEADER, version);
-    res.setHeader(this.REQUEST_ID_HEADER, requestId);
-    await this.forwardRequest(req, res, route.targetUrl, version, requestId, route);
+    return this.proxyRequest('POST', version, service, '', req, res);
   }
 
   @Put(':version/:service')
@@ -936,25 +1039,7 @@ export class ProxyController {
     @Req() req: Request,
     @Res() res: Response
   ): Promise<void> {
-    const requestId = (req.headers[this.REQUEST_ID_HEADER.toLowerCase()] as string) || randomUUID();
-    const route = this.findRoute(service);
-    if (!route) {
-      res.setHeader(this.REQUEST_ID_HEADER, requestId);
-      res.status(HttpStatus.NOT_FOUND).json({ message: 'Service not found' });
-      return;
-    }
-    if (!this.validateVersion(version, route)) {
-      res.setHeader(this.REQUEST_ID_HEADER, requestId);
-      res.status(HttpStatus.NOT_FOUND).json({
-        message: `API version ${version} not supported for this service`,
-        supportedVersions: route.supportedVersions,
-        defaultVersion: route.defaultVersion,
-      });
-      return;
-    }
-    res.setHeader(API_VERSION_HEADER, version);
-    res.setHeader(this.REQUEST_ID_HEADER, requestId);
-    await this.forwardRequest(req, res, route.targetUrl, version, requestId, route);
+    return this.proxyRequest('PUT', version, service, '', req, res);
   }
 
   @Patch(':version/:service')
@@ -965,25 +1050,7 @@ export class ProxyController {
     @Req() req: Request,
     @Res() res: Response
   ): Promise<void> {
-    const requestId = (req.headers[this.REQUEST_ID_HEADER.toLowerCase()] as string) || randomUUID();
-    const route = this.findRoute(service);
-    if (!route) {
-      res.setHeader(this.REQUEST_ID_HEADER, requestId);
-      res.status(HttpStatus.NOT_FOUND).json({ message: 'Service not found' });
-      return;
-    }
-    if (!this.validateVersion(version, route)) {
-      res.setHeader(this.REQUEST_ID_HEADER, requestId);
-      res.status(HttpStatus.NOT_FOUND).json({
-        message: `API version ${version} not supported for this service`,
-        supportedVersions: route.supportedVersions,
-        defaultVersion: route.defaultVersion,
-      });
-      return;
-    }
-    res.setHeader(API_VERSION_HEADER, version);
-    res.setHeader(this.REQUEST_ID_HEADER, requestId);
-    await this.forwardRequest(req, res, route.targetUrl, version, requestId, route);
+    return this.proxyRequest('PATCH', version, service, '', req, res);
   }
 
   @Delete(':version/:service')
@@ -994,25 +1061,7 @@ export class ProxyController {
     @Req() req: Request,
     @Res() res: Response
   ): Promise<void> {
-    const requestId = (req.headers[this.REQUEST_ID_HEADER.toLowerCase()] as string) || randomUUID();
-    const route = this.findRoute(service);
-    if (!route) {
-      res.setHeader(this.REQUEST_ID_HEADER, requestId);
-      res.status(HttpStatus.NOT_FOUND).json({ message: 'Service not found' });
-      return;
-    }
-    if (!this.validateVersion(version, route)) {
-      res.setHeader(this.REQUEST_ID_HEADER, requestId);
-      res.status(HttpStatus.NOT_FOUND).json({
-        message: `API version ${version} not supported for this service`,
-        supportedVersions: route.supportedVersions,
-        defaultVersion: route.defaultVersion,
-      });
-      return;
-    }
-    res.setHeader(API_VERSION_HEADER, version);
-    res.setHeader(this.REQUEST_ID_HEADER, requestId);
-    await this.forwardRequest(req, res, route.targetUrl, version, requestId, route);
+    return this.proxyRequest('DELETE', version, service, '', req, res);
   }
 
   @Get(':service/*path')
@@ -1022,44 +1071,12 @@ export class ProxyController {
     @Req() req: Request,
     @Res() res: Response
   ): Promise<void> {
-    const requestId = (req.headers[this.REQUEST_ID_HEADER.toLowerCase()] as string) || randomUUID();
-
-    const route = this.findRoute(service);
-    if (!route) {
-      res.setHeader(this.REQUEST_ID_HEADER, requestId);
-      res.status(HttpStatus.NOT_FOUND).json({ message: 'Service not found' });
-      return;
-    }
-
     const version = ApiVersioningConfig.parseVersion(
       req.headers[API_VERSION_HEADER.toLowerCase()] as string
     );
-    const validatedVersion = this.validateVersion(version, route) ? version : route.defaultVersion;
-
-    const cacheKey = this.buildCacheKey(req, validatedVersion);
-    const cachedResponse = await this.cacheManager.get(cacheKey);
-
-    if (cachedResponse) {
-      res.setHeader(API_VERSION_HEADER, validatedVersion);
-      res.setHeader(this.REQUEST_ID_HEADER, requestId);
-      res.json(cachedResponse);
-      return;
-    }
-
-    const response = await this.forwardRequest(
-      req,
-      res,
-      route.targetUrl,
-      validatedVersion,
-      requestId,
-      route
-    );
-    if (response && typeof response === 'object') {
-      await this.cacheManager.set(cacheKey, response, CACHE_TTL_MS);
-      res.setHeader(API_VERSION_HEADER, validatedVersion);
-      res.setHeader(this.REQUEST_ID_HEADER, requestId);
-      res.json(response);
-    }
+    const route = this.findRoute(service);
+    const validatedVersion = route && this.validateVersion(version, route) ? version : route?.defaultVersion || version;
+    return this.proxyRequest('GET', validatedVersion, service, req.params['path'] || '', req, res);
   }
 
   @Post(':service/*path')
@@ -1069,23 +1086,12 @@ export class ProxyController {
     @Req() req: Request,
     @Res() res: Response
   ): Promise<void> {
-    const requestId = (req.headers[this.REQUEST_ID_HEADER.toLowerCase()] as string) || randomUUID();
-
-    const route = this.findRoute(service);
-    if (!route) {
-      res.setHeader(this.REQUEST_ID_HEADER, requestId);
-      res.status(HttpStatus.NOT_FOUND).json({ message: 'Service not found' });
-      return;
-    }
-
     const version = ApiVersioningConfig.parseVersion(
       req.headers[API_VERSION_HEADER.toLowerCase()] as string
     );
-    const validatedVersion = this.validateVersion(version, route) ? version : route.defaultVersion;
-
-    res.setHeader(API_VERSION_HEADER, validatedVersion);
-    res.setHeader(this.REQUEST_ID_HEADER, requestId);
-    await this.forwardRequest(req, res, route.targetUrl, validatedVersion, requestId, route);
+    const route = this.findRoute(service);
+    const validatedVersion = route && this.validateVersion(version, route) ? version : route?.defaultVersion || version;
+    return this.proxyRequest('POST', validatedVersion, service, req.params['path'] || '', req, res);
   }
 
   @Put(':service/*path')
@@ -1095,23 +1101,12 @@ export class ProxyController {
     @Req() req: Request,
     @Res() res: Response
   ): Promise<void> {
-    const requestId = (req.headers[this.REQUEST_ID_HEADER.toLowerCase()] as string) || randomUUID();
-
-    const route = this.findRoute(service);
-    if (!route) {
-      res.setHeader(this.REQUEST_ID_HEADER, requestId);
-      res.status(HttpStatus.NOT_FOUND).json({ message: 'Service not found' });
-      return;
-    }
-
     const version = ApiVersioningConfig.parseVersion(
       req.headers[API_VERSION_HEADER.toLowerCase()] as string
     );
-    const validatedVersion = this.validateVersion(version, route) ? version : route.defaultVersion;
-
-    res.setHeader(API_VERSION_HEADER, validatedVersion);
-    res.setHeader(this.REQUEST_ID_HEADER, requestId);
-    await this.forwardRequest(req, res, route.targetUrl, validatedVersion, requestId, route);
+    const route = this.findRoute(service);
+    const validatedVersion = route && this.validateVersion(version, route) ? version : route?.defaultVersion || version;
+    return this.proxyRequest('PUT', validatedVersion, service, req.params['path'] || '', req, res);
   }
 
   @Patch(':service/*path')
@@ -1121,23 +1116,12 @@ export class ProxyController {
     @Req() req: Request,
     @Res() res: Response
   ): Promise<void> {
-    const requestId = (req.headers[this.REQUEST_ID_HEADER.toLowerCase()] as string) || randomUUID();
-
-    const route = this.findRoute(service);
-    if (!route) {
-      res.setHeader(this.REQUEST_ID_HEADER, requestId);
-      res.status(HttpStatus.NOT_FOUND).json({ message: 'Service not found' });
-      return;
-    }
-
     const version = ApiVersioningConfig.parseVersion(
       req.headers[API_VERSION_HEADER.toLowerCase()] as string
     );
-    const validatedVersion = this.validateVersion(version, route) ? version : route.defaultVersion;
-
-    res.setHeader(API_VERSION_HEADER, validatedVersion);
-    res.setHeader(this.REQUEST_ID_HEADER, requestId);
-    await this.forwardRequest(req, res, route.targetUrl, validatedVersion, requestId, route);
+    const route = this.findRoute(service);
+    const validatedVersion = route && this.validateVersion(version, route) ? version : route?.defaultVersion || version;
+    return this.proxyRequest('PATCH', validatedVersion, service, req.params['path'] || '', req, res);
   }
 
   @Delete(':service/*path')
@@ -1147,26 +1131,16 @@ export class ProxyController {
     @Req() req: Request,
     @Res() res: Response
   ): Promise<void> {
-    const requestId = (req.headers[this.REQUEST_ID_HEADER.toLowerCase()] as string) || randomUUID();
-
-    const route = this.findRoute(service);
-    if (!route) {
-      res.setHeader(this.REQUEST_ID_HEADER, requestId);
-      res.status(HttpStatus.NOT_FOUND).json({ message: 'Service not found' });
-      return;
-    }
-
     const version = ApiVersioningConfig.parseVersion(
       req.headers[API_VERSION_HEADER.toLowerCase()] as string
     );
-    const validatedVersion = this.validateVersion(version, route) ? version : route.defaultVersion;
-
-    res.setHeader(API_VERSION_HEADER, validatedVersion);
-    res.setHeader(this.REQUEST_ID_HEADER, requestId);
-    await this.forwardRequest(req, res, route.targetUrl, validatedVersion, requestId, route);
+    const route = this.findRoute(service);
+    const validatedVersion = route && this.validateVersion(version, route) ? version : route?.defaultVersion || version;
+    return this.proxyRequest('DELETE', validatedVersion, service, req.params['path'] || '', req, res);
   }
 
   @Get('routes')
+  @UseGuards(AuthGuard('jwt'), AdminGuard)
   @Header('Content-Type', 'application/json')
   getRoutes(): {
     success: boolean;
@@ -1207,6 +1181,9 @@ export class ProxyController {
   private validateVersion(version: string, route: ServiceRoute): boolean {
     // Strip 'v' prefix from version (e.g., 'v1' -> '1')
     const normalizedVersion = version.startsWith('v') ? version.substring(1) : version;
+    if (!/^\d+$/.test(normalizedVersion)) {
+      return false;
+    }
     return route.supportedVersions.includes(normalizedVersion);
   }
 
@@ -1214,7 +1191,15 @@ export class ProxyController {
     const authHeader = req.headers.authorization || '';
     const userId = this.extractUserIdFromAuth(authHeader);
     const normalizedVersion = version.startsWith('v') ? version.substring(1) : version;
-    const cacheKeyBase = `proxy:${req.method}:${req.url}:v${normalizedVersion}`;
+
+    const urlObj = new URL(req.url, 'http://localhost');
+    const sortedParams = [...urlObj.searchParams.entries()]
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
+      .join('&');
+    const normalizedUrl = sortedParams ? `${urlObj.pathname}?${sortedParams}` : urlObj.pathname;
+
+    const cacheKeyBase = `proxy:${req.method}:${normalizedUrl}:v${normalizedVersion}`;
 
     if (userId && this.isUserSpecificEndpoint(req.path)) {
       return `${cacheKeyBase}:user:${userId}`;
@@ -1224,10 +1209,12 @@ export class ProxyController {
   }
 
   /**
-   * Extract user ID from JWT header FOR CACHE PARTITIONING ONLY.
-   * WARNING: This does NOT verify the JWT signature. Do NOT use for authorization.
+   * Extract a stable cache key from the JWT header FOR CACHE PARTITIONING ONLY.
+   * WARNING: This does NOT decode or verify the JWT signature. Do NOT use for authorization.
    * Authentication is handled by upstream services via GatewayAuthGuard.
-   * We only use this for cache keying to separate cached responses between users.
+   * We use a SHA-256 hash of the token to avoid exposing unverified claims and to prevent
+   * cache poisoning via forged tokens (an attacker would need the signing key to produce
+   * a hash that collides with a legitimate user's token hash).
    */
   private extractUserIdFromAuth(authHeader: string): string | null {
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -1236,20 +1223,7 @@ export class ProxyController {
 
     try {
       const token = authHeader.substring(7);
-      const tokenParts = token.split('.');
-
-      // JWT must have exactly 3 parts
-      if (tokenParts.length !== 3) {
-        return null;
-      }
-
-      // Base64 decode the payload (second part)
-      const payloadBase64 = tokenParts[1];
-      const payloadJson = Buffer.from(payloadBase64, 'base64url').toString('utf8');
-      const payload = JSON.parse(payloadJson);
-
-      // Extract user ID from common claims
-      return payload.sub || payload.userId || payload.id || null;
+      return createHash('sha256').update(token).digest('hex');
     } catch {
       // Gracefully fail without leaking errors - just don't use cache partitioning
       return null;
@@ -1269,6 +1243,53 @@ export class ProxyController {
     return userSpecificPatterns.some((pattern) => path.includes(pattern));
   }
 
+  private async proxyRequest(
+    method: string,
+    version: string,
+    service: string,
+    path: string,
+    req: Request,
+    res: Response
+  ): Promise<void> {
+    const requestId = (req.headers[this.REQUEST_ID_HEADER.toLowerCase()] as string) || randomUUID();
+
+    const route = this.findRoute(service);
+    if (!route) {
+      res.setHeader(this.REQUEST_ID_HEADER, requestId);
+      res.status(HttpStatus.NOT_FOUND).json({ message: 'Service not found' });
+      return;
+    }
+
+    if (!this.validateVersion(version, route)) {
+      res.setHeader(this.REQUEST_ID_HEADER, requestId);
+      res.status(HttpStatus.NOT_FOUND).json({
+        message: `API version ${version} not supported for this service`,
+        supportedVersions: route.supportedVersions,
+        defaultVersion: route.defaultVersion,
+      });
+      return;
+    }
+
+    const cacheKey = this.buildCacheKey(req, version);
+
+    if (method === 'GET') {
+      const cachedResponse = await this.cacheManager.get(cacheKey);
+      if (cachedResponse) {
+        res.setHeader(API_VERSION_HEADER, version);
+        res.setHeader(this.REQUEST_ID_HEADER, requestId);
+        res.json(cachedResponse);
+        return;
+      }
+    }
+
+    res.setHeader(API_VERSION_HEADER, version);
+    res.setHeader(this.REQUEST_ID_HEADER, requestId);
+    const response = await this.forwardRequest(req, res, route.targetUrl, version, requestId, route);
+    if (method === 'GET' && response && typeof response === 'object' && !res.headersSent) {
+      await this.cacheManager.set(cacheKey, response, CACHE_TTL_MS);
+    }
+  }
+
   private async forwardRequest(
     req: Request,
     res: Response,
@@ -1278,6 +1299,19 @@ export class ProxyController {
     route: ServiceRoute
   ): Promise<unknown> {
     const service = req.params['service'];
+
+    // Admin role check BEFORE any upstream communication (SEC: fail-fast authorization)
+    if (service === 'admin') {
+      const user =
+        (req.user as { role?: string } | undefined) ??
+        ((req as unknown as Record<string, unknown>)['user'] as { role?: string } | undefined);
+      if (!user || (user.role !== 'admin' && user.role !== 'superadmin')) {
+        this.logger.warn(`Admin access denied for request [${requestId}]`);
+        res.status(HttpStatus.FORBIDDEN).json({ message: 'Admin access required' });
+        return null;
+      }
+    }
+
     const rawPathParam = req.params['path'] || req.params[0] || '';
     const rawPath = Array.isArray(rawPathParam) ? rawPathParam.join('/') : rawPathParam;
     // Strip query string from path (captured by *path wildcard)
@@ -1320,43 +1354,52 @@ export class ProxyController {
       }
     }
 
-    const target = `${targetUrl}${targetPath}`;
-    this.logger.log(`Forwarding request to ${target}`);
+    this.logger.log(`Forwarding ${req.method} ${targetPath} to ${targetUrl} [${requestId}]`);
 
     try {
       const headers: Record<string, string> = {};
       headers[API_VERSION_HEADER] = version;
       headers[this.REQUEST_ID_HEADER] = requestId;
 
-      const skipHeaders = [
-        'host',
-        'connection',
-        'content-length',
-        'origin',
-        'referer',
-        API_VERSION_HEADER.toLowerCase(),
-        this.REQUEST_ID_HEADER.toLowerCase(),
+      const ALLOWED_HEADERS = [
+        'content-type',
+        'accept',
+        'accept-language',
+        'accept-encoding',
+        'authorization',
+        'x-request-id',
+        'x-correlation-id',
       ];
 
-      for (const [key, value] of Object.entries(req.headers)) {
-        if (typeof value === 'string' && !skipHeaders.includes(key.toLowerCase())) {
+      for (const key of ALLOWED_HEADERS) {
+        const value = req.headers[key];
+        if (typeof value === 'string') {
           headers[key] = value;
         }
       }
 
-      const fetchOptions: RequestInit = {
-        method: req.method,
-        headers,
-        signal: AbortSignal.timeout(this.UPSTREAM_TIMEOUT),
-      };
-
-      if (req.method !== 'GET' && req.method !== 'HEAD' && req.body) {
-        fetchOptions.body = JSON.stringify(req.body);
+      // Inject gateway secret so downstream ServiceAuthGuard trusts x-user-* headers
+      const gatewaySecret = this.configService.get<string>('GATEWAY_SECRET');
+      if (gatewaySecret) {
+        headers['x-gateway-secret'] = gatewaySecret;
       }
 
-      const response = await fetch(target, fetchOptions);
+      const cleanTargetPath = targetPath.split('?')[0];
 
-      for (const [key, value] of response.headers.entries()) {
+      const proxyResponse = await this.circuitBreakerProxyService.proxyRequest({
+        method: req.method,
+        targetUrl,
+        path: cleanTargetPath,
+        headers,
+        body: req.body,
+        queryString: queryString || undefined,
+        timeout: this.UPSTREAM_TIMEOUT,
+        requestId,
+      });
+
+      const skipHeaders = ['transfer-encoding', 'connection', 'keep-alive', 'content-encoding'];
+
+      for (const [key, value] of Object.entries(proxyResponse.headers)) {
         if (!skipHeaders.includes(key.toLowerCase())) {
           res.setHeader(key, value);
         }
@@ -1365,33 +1408,33 @@ export class ProxyController {
       res.setHeader(this.REQUEST_ID_HEADER, requestId);
 
       const statusToForward = [200, 201, 204, 400, 401, 403, 404, 409, 422, 429, 500, 502, 503];
-      if (statusToForward.includes(response.status)) {
-        res.status(response.status);
+      if (statusToForward.includes(proxyResponse.status)) {
+        res.status(proxyResponse.status);
       } else {
         res.status(HttpStatus.OK);
       }
 
-      const contentType = response.headers.get('content-type');
+      const data = proxyResponse.data;
 
-      if (contentType && contentType.includes('application/json')) {
-        const data = await response.json();
+      if (typeof data === 'string') {
+        res.send(data);
+        return null;
+      } else if (data instanceof ArrayBuffer) {
+        res.send(Buffer.from(data));
+        return null;
+      } else if (data instanceof Uint8Array) {
+        res.send(Buffer.from(data.buffer, data.byteOffset, data.byteLength));
+        return null;
+      } else {
         if (req.method === 'GET') {
           return data;
         }
         res.json(data);
-        return data;
-      } else if (contentType && contentType.includes('text/')) {
-        const text = await response.text();
-        res.send(text);
-        return null;
-      } else {
-        const buffer = await response.arrayBuffer();
-        res.send(Buffer.from(buffer));
         return null;
       }
     } catch (error) {
       this.logger.error(
-        `Failed to forward request to ${target} [${requestId}]: ${(error as Error).message}`
+        `Failed to forward request to ${targetUrl}${targetPath} [${requestId}]: ${(error as Error).message}`
       );
       if (!res.headersSent) {
         res.setHeader(this.REQUEST_ID_HEADER, requestId);
@@ -1400,7 +1443,7 @@ export class ProxyController {
           requestId,
           ...(process.env.NODE_ENV === 'production'
             ? {}
-            : { error: error instanceof Error ? error.message : 'Unknown error' }),
+            : { error: error instanceof Error ? (error as Error).message : 'Unknown error' }),
         });
       }
       return null;

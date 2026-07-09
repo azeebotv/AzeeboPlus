@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/api';
@@ -38,6 +38,47 @@ export default function ProfileSetupPage(): React.JSX.Element {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [success, setSuccess] = useState<boolean>(false);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState<boolean>(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      setError('Please select an image file');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setError('Image must be less than 5MB');
+      return;
+    }
+
+    setIsUploadingAvatar(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const result = await apiFetch('/v1/media/upload', {
+        method: 'POST',
+        body: formData,
+        headers: {},
+      });
+
+      const data = result.data as { url?: string } | undefined;
+      if (result.success && data?.url) {
+        setAvatarUrl(data.url);
+      } else {
+        throw new Error(result.message || 'Failed to upload image');
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to upload image';
+      setError(message);
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  }, []);
 
   const toggleInterest = useCallback((interest: string): void => {
     setSelectedInterests((prev) =>
@@ -62,6 +103,7 @@ export default function ProfileSetupPage(): React.JSX.Element {
           displayName: displayName.trim() || fullName.trim(),
           fullName: fullName.trim(),
           username: username.trim() || undefined,
+          avatarUrl: avatarUrl || undefined,
           email,
           phone: phone || undefined,
           location: location || undefined,
@@ -151,19 +193,35 @@ export default function ProfileSetupPage(): React.JSX.Element {
           <div className="az-glass p-6 flex flex-col items-center text-center h-fit">
             <div className="relative mb-4">
               <div
-                className="rounded-full flex items-center justify-center font-bold text-white"
+                className="rounded-full flex items-center justify-center font-bold text-white overflow-hidden"
                 style={{
                   width: 120,
                   height: 120,
                   fontSize: 48,
-                  background: 'linear-gradient(135deg, #0D3B2E, #1A0A0A)',
+                  background: avatarUrl
+                    ? 'transparent'
+                    : 'linear-gradient(135deg, #0D3B2E, #1A0A0A)',
                   border: '2px solid rgba(255,255,255,0.2)',
                 }}
               >
-                {profileInitial}
+                {isUploadingAvatar ? (
+                  <Spinner />
+                ) : avatarUrl ? (
+                  <img src={avatarUrl} alt="Profile" className="w-full h-full object-cover" />
+                ) : (
+                  profileInitial
+                )}
               </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleFileSelect}
+              />
               <span
-                className="absolute bottom-1 left-1/2 -translate-x-1/2 text-xs font-bold text-white whitespace-nowrap px-3 py-1"
+                onClick={() => fileInputRef.current?.click()}
+                className="absolute bottom-1 left-1/2 -translate-x-1/2 text-xs font-bold text-white whitespace-nowrap px-3 py-1 cursor-pointer"
                 style={{ background: '#CC1C1C', borderRadius: 999 }}
               >
                 Change profile picture
@@ -334,7 +392,7 @@ export default function ProfileSetupPage(): React.JSX.Element {
                     <Spinner /> Setting up...
                   </span>
                 ) : (
-                  'Continue to Interests'
+                  'Complete Profile Setup'
                 )}
               </button>
               <button

@@ -1,17 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  StyleSheet,
-  ActivityIndicator,
-  TouchableOpacity,
-} from 'react-native';
+import { useState, useEffect } from 'react';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import { useRouter, type Href } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { contentApi } from '../../src/api';
 import { logger } from '../../src/utils/logger';
-import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
+import { LoadingState, ErrorState } from '../../src/components/StateContainers';
 
 interface EarningsData {
   totalEarnings: number;
@@ -181,7 +174,7 @@ export default function EarningsDashboardScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#111827',
+    backgroundColor: '#1A0A0A',
   },
   loadingContainer: {
     flex: 1,
@@ -204,7 +197,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   retryButton: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,
@@ -220,7 +213,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#1f2937',
+    borderBottomColor: 'rgba(255,255,255,0.08)',
   },
   backButton: {
     marginRight: 16,
@@ -239,7 +232,7 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   balanceCard: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     borderRadius: 16,
     padding: 24,
     alignItems: 'center',
@@ -264,7 +257,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   withdrawButtonText: {
-    color: '#8B5CF6',
+    color: '#E8420A',
     fontSize: 16,
     fontWeight: '600',
   },
@@ -275,7 +268,7 @@ const styles = StyleSheet.create({
   },
   statCard: {
     width: '48%',
-    backgroundColor: '#1f2937',
+    backgroundColor: '#2A2A2A',
     borderRadius: 12,
     padding: 16,
   },
@@ -299,7 +292,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   revenueCard: {
-    backgroundColor: '#1f2937',
+    backgroundColor: '#2A2A2A',
     borderRadius: 12,
     padding: 16,
   },
@@ -309,7 +302,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#374151',
+    borderBottomColor: 'rgba(255,255,255,0.2)',
   },
   revenueLabel: {
     fontSize: 14,
@@ -324,7 +317,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#1f2937',
+    backgroundColor: '#2A2A2A',
     borderRadius: 12,
     padding: 16,
     marginBottom: 8,

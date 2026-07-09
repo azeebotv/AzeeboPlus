@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import Animated, {
@@ -15,14 +15,14 @@ import { AccessibilityInfo } from 'react-native';
 import { colors, typography, spacing, shadows } from '../src/theme';
 import { BrandButton } from '../src/components/ui';
 import { AmbientGlow, FadeIn, ScrollReveal } from '../src/components/motion';
+import { useAuth } from '../src/contexts/AuthContext';
 
-const AnimatedTouchable = Animated.createAnimatedComponent(
-  require('react-native').TouchableOpacity
-);
+const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 
 export default function SplashScreen() {
   const colorScheme = useColorScheme();
   const router = useRouter();
+  const { isAuthenticated, isLoading } = useAuth();
   const [progress, setProgress] = useState(0);
   const [showContent, setShowContent] = useState(false);
 
@@ -65,13 +65,18 @@ export default function SplashScreen() {
   }, [featuresOpacity, featuresTranslate, logoOpacity, logoScale, ringRotation]);
 
   useEffect(() => {
-    if (!showContent) return;
+    if (!showContent || isLoading) return;
     const interval = setInterval(() => {
       setProgress((prev) => {
         if (prev >= 100) {
           clearInterval(interval);
           setTimeout(() => {
-            router.replace('/(auth)/login');
+            // Route based on actual auth state instead of always going to login
+            if (isAuthenticated) {
+              router.replace('/(tabs)');
+            } else {
+              router.replace('/(auth)/login');
+            }
           }, 400);
           return 100;
         }
@@ -80,7 +85,7 @@ export default function SplashScreen() {
     }, 30);
 
     return () => clearInterval(interval);
-  }, [showContent, router]);
+  }, [showContent, isLoading, isAuthenticated, router]);
 
   const logoAnimatedStyle = useAnimatedStyle(() => ({
     opacity: interpolate(logoOpacity.value, [0, 1], [0, 1], Extrapolation.CLAMP),
@@ -110,7 +115,7 @@ export default function SplashScreen() {
         { backgroundColor: colorScheme === 'dark' ? colors.bg.primary : '#ffffff' },
       ]}
     >
-      <AmbientGlow color={colors.primary} size={250} intensity={0.08} />
+      <AmbientGlow color={colors.primary[500]} size={250} intensity={0.08} />
 
       <Animated.View style={logoAnimatedStyle}>
         <View style={styles.logoContainer}>
@@ -121,7 +126,7 @@ export default function SplashScreen() {
           <Text
             style={[
               styles.appName,
-              { color: colorScheme === 'dark' ? colors.text.primary : '#000000' },
+              { color: colorScheme === 'dark' ? colors.text.primary : '#1A0A0A' },
             ]}
           >
             Azeebo
@@ -150,7 +155,7 @@ export default function SplashScreen() {
 
         <View style={styles.progressContainer}>
           <View style={styles.progressBar}>
-            <View style={[styles.progressFill, { width: `${progress}%` as any }]} />
+            <View style={[styles.progressFill, { width: `${progress}%` as unknown as number }]} />
           </View>
         </View>
 
@@ -209,7 +214,7 @@ const styles = StyleSheet.create({
   logoPlus: {
     fontSize: 28,
     fontWeight: '700',
-    color: colors.primary,
+    color: colors.primary[500],
     marginTop: -16,
   },
   appName: {
@@ -219,7 +224,7 @@ const styles = StyleSheet.create({
     color: colors.text.primary,
   },
   appNamePlus: {
-    color: colors.primary,
+    color: colors.primary[500],
   },
   appTagline: {
     fontSize: typography.fontSize.base,
@@ -257,7 +262,7 @@ const styles = StyleSheet.create({
   },
   progressFill: {
     height: '100%',
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primary[500],
     borderRadius: 2,
   },
   bottomLinks: {

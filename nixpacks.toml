@@ -17,7 +17,7 @@
 # ============================================================
 
 [phases.setup]
-nixPkgs = ["nodejs_20", "postgresql", "redis"]
+nixPkgs = ["nodejs_22", "postgresql", "redis"]
 
 [phases.install]
 cmds = [

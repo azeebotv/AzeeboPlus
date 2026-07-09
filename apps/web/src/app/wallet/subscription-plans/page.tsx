@@ -14,38 +14,50 @@ interface Plan {
   isPopular?: boolean;
 }
 
+interface SubscriptionStatus {
+  planId: string | null;
+  status: string;
+}
+
+interface SubscribeResult {
+  success: boolean;
+  planId: string;
+}
+
 export default function SubscriptionPlansPage(): React.JSX.Element {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, isLoading: authLoading } = useAuth();
   const router = useRouter();
   const [plans, setPlans] = useState<Plan[]>([]);
   const [currentPlan, setCurrentPlan] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [subscribing, setSubscribing] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (authLoading) return;
     if (!isAuthenticated || !user) {
       router.push('/auth/login');
       return;
     }
     loadPlans();
-  }, [isAuthenticated, user, router]);
+  }, [authLoading, isAuthenticated, user, router]);
 
   const loadPlans = async () => {
     try {
       const [plansRes, statusRes] = await Promise.all([
-        apiFetch<any>('/subscriptions/plans'),
-        apiFetch<any>('/subscriptions/status'),
+        apiFetch<Plan[]>('/subscription/plans'),
+        apiFetch<SubscriptionStatus>('/subscription/current'),
       ]);
       if (plansRes.success && plansRes.data) {
-        const data = plansRes.data as any;
-        setPlans(Array.isArray(data) ? data : data.plans || []);
+        const data = plansRes.data;
+        setPlans(Array.isArray(data) ? data : []);
       }
       if (statusRes.success && statusRes.data) {
-        const status = statusRes.data as any;
+        const status = statusRes.data;
         setCurrentPlan(status.planId || null);
       }
     } catch {
-      /* ignore */
+      setError('Failed to load subscription plans. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -54,14 +66,20 @@ export default function SubscriptionPlansPage(): React.JSX.Element {
   const handleSubscribe = async (planId: string) => {
     setSubscribing(planId);
     try {
-      await apiFetch<any>('/subscriptions', { method: 'POST', body: JSON.stringify({ planId }) });
-      setCurrentPlan(planId);
+      const result = await apiFetch<SubscribeResult>('/subscription/subscribe', {
+        method: 'POST',
+        body: JSON.stringify({ planId }),
+      });
+      if (result.success) {
+        setCurrentPlan(planId);
+      }
     } catch {
       /* ignore */
     }
     setSubscribing(null);
   };
 
+  if (authLoading) return <></>;
   if (!isAuthenticated || !user) return <></>;
 
   return (
@@ -95,6 +113,29 @@ export default function SubscriptionPlansPage(): React.JSX.Element {
                 animation: 'spin 0.8s linear infinite',
               }}
             />
+          </div>
+        ) : error ? (
+          <div style={{ textAlign: 'center', padding: 60 }}>
+            <p style={{ color: '#E8420A', marginBottom: 16 }}>{error}</p>
+            <button
+              onClick={() => {
+                setError(null);
+                setIsLoading(true);
+                loadPlans();
+              }}
+              style={{
+                padding: '10px 24px',
+                borderRadius: 8,
+                background: '#E8420A',
+                color: '#fff',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: 14,
+                fontWeight: 600,
+              }}
+            >
+              Try Again
+            </button>
           </div>
         ) : (
           <div

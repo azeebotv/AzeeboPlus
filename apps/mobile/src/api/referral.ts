@@ -34,12 +34,12 @@ export const referralApi = {
   },
 
   async getReferralByCode(code: string): Promise<ApiResponse<Referral>> {
-    const response = await apiClient.get<Referral>(`/v1/referrals/code/${code}`);
+    const response = await apiClient.get<Referral>(`/v1/referrals/code?code=${code}`);
     return { success: true, data: response };
   },
 
   async generateReferralCode(): Promise<ApiResponse<{ code: string }>> {
-    const response = await apiClient.post<{ code: string }>('/v1/referrals/generate-code');
+    const response = await apiClient.post<{ code: string }>('/v1/referrals/generate');
     return { success: true, data: response };
   },
 };

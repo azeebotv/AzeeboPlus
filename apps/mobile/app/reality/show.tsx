@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,34 +6,32 @@ import {
   ScrollView,
   TouchableOpacity,
   TextInput,
-  FlatList,
-  ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import { realityApi } from '../../src/api';
+import { apiClient } from '../../src/api/client';
 import { useWallet } from '../../src/contexts/WalletContext';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
+import { votePackages as defaultVotePackages } from '../../src/config/prices';
+import type { Contestant, RealityShow } from '../../src/types/api';
 
-const VOTE_PACKAGES = [
-  { id: '1', votes: 100, price: 100, bonus: 0 },
-  { id: '2', votes: 500, price: 450, bonus: 50 },
-  { id: '3', votes: 1000, price: 850, bonus: 150 },
-  { id: '4', votes: 5000, price: 4000, bonus: 1000 },
-];
+const VOTE_PACKAGES = defaultVotePackages.reality;
 
 export default function RealityShowPage() {
   const colorScheme = useColorScheme();
   const router = useRouter();
   const isDark = colorScheme === 'dark';
   const { wallet } = useWallet();
-  const [contestants, setContestants] = useState<any[]>([]);
-  const [chatMessages, setChatMessages] = useState<any[]>([]);
-  const [selectedContestant, setSelectedContestant] = useState<any | null>(null);
+  const [contestants, setContestants] = useState<Contestant[]>([]);
+  const [chatMessages, _setChatMessages] = useState<{ id: string; user: string; message: string; color: string }[]>([]);
+  const [selectedContestant, setSelectedContestant] = useState<Contestant | null>(null);
   const [selectedPackage, setSelectedPackage] = useState(VOTE_PACKAGES[0]);
   const [quantity, setQuantity] = useState(1);
   const [chatMessage, setChatMessage] = useState('');
   const [showVoting, setShowVoting] = useState(false);
+  const [showData, setShowData] = useState<RealityShow | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const walletBalance = wallet?.balance || 0;
@@ -46,13 +44,22 @@ export default function RealityShowPage() {
     loadShowData();
   }, []);
 
+  const showName = showData?.name || 'Reality Show';
+  const viewerCount = showData?.viewerCount ? `${showData.viewerCount}` : '';
+
   const loadShowData = async () => {
     try {
       setIsLoading(true);
       setError(null);
-      const contestantsRes = await realityApi.getContestants('current');
+      const [contestantsRes, showRes] = await Promise.all([
+        realityApi.getContestants('current'),
+        apiClient.get<RealityShow>('/v1/reality/shows/current').catch(() => null),
+      ]);
       if (contestantsRes.success && contestantsRes.data) {
         setContestants(contestantsRes.data);
+      }
+      if (showRes) {
+        setShowData(Array.isArray(showRes) ? showRes[0] : (showRes?.data?.[0] ?? showRes));
       }
     } catch (err) {
       setError('Failed to load show data');
@@ -69,7 +76,7 @@ export default function RealityShowPage() {
 
   const handleVote = () => {
     if (!selectedContestant || !canAfford) return;
-    alert(`Voted ${totalVotes} times for ${selectedContestant.name}!`);
+    Alert.alert('Vote', `Voted ${totalVotes} times for ${selectedContestant.name}!`);
     setSelectedContestant(null);
     setShowVoting(false);
   };
@@ -83,13 +90,13 @@ export default function RealityShowPage() {
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: isDark ? '#0a0a0a' : '#ffffff' }]}>
+    <View style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
         <View style={styles.headerInfo}>
-          <Text style={styles.showTitle}>Big Brother Naija</Text>
+          <Text style={styles.showTitle}>{showName}</Text>
           <View style={styles.liveIndicator}>
             <View style={styles.liveDot} />
             <Text style={styles.liveText}>LIVE</Text>
@@ -104,17 +111,19 @@ export default function RealityShowPage() {
         <View style={styles.videoPlaceholder}>
           <Text style={styles.playIcon}>▶️</Text>
           <Text style={styles.liveStreamText}>Live Stream</Text>
-          <View style={styles.viewerBadge}>
-            <Text style={styles.viewerIcon}>👁️</Text>
-            <Text style={styles.viewerCount}>2.4M</Text>
-          </View>
+          {viewerCount ? (
+            <View style={styles.viewerBadge}>
+              <Text style={styles.viewerIcon}>👁️</Text>
+              <Text style={styles.viewerCount}>{viewerCount}</Text>
+            </View>
+          ) : null}
         </View>
       </View>
 
       <View style={styles.quickVoteBar}>
         <Text style={styles.quickVoteLabel}>Quick Vote:</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          {contestants.slice(0, 4).map((contestant: any) => (
+          {contestants.slice(0, 4).map((contestant: Contestant) => (
             <TouchableOpacity
               key={contestant.id}
               style={styles.quickVoteButton}
@@ -129,14 +138,18 @@ export default function RealityShowPage() {
 
       <View style={styles.contentArea}>
         <View style={styles.contestantsSection}>
-          <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
+          <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
             Contestants
           </Text>
           {contestants.length === 0 ? (
-            <EmptyState title="No contestants" description="No contestants available yet." />
+            <EmptyState
+              title="No contestants"
+              description="No contestants available yet."
+              icon="people-outline"
+            />
           ) : (
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              {contestants.map((contestant: any) => (
+              {contestants.map((contestant: Contestant) => (
                 <TouchableOpacity
                   key={contestant.id}
                   style={[
@@ -181,11 +194,11 @@ export default function RealityShowPage() {
         </View>
 
         <View style={styles.chatSection}>
-          <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
+          <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
             Live Chat
           </Text>
           <View style={styles.chatMessages}>
-            {chatMessages.map((msg: any) => (
+            {chatMessages.map((msg: { id: string; user: string; message: string; color: string }) => (
               <View key={msg.id} style={styles.chatMessage}>
                 <Text style={[styles.chatUser, { color: msg.color }]}>{msg.user}:</Text>
                 <Text style={styles.chatText}>{msg.message}</Text>
@@ -349,7 +362,7 @@ const styles = StyleSheet.create({
   },
   videoContainer: {
     aspectRatio: 16 / 9,
-    backgroundColor: '#000',
+    backgroundColor: '#1A0A0A',
   },
   videoPlaceholder: {
     flex: 1,
@@ -410,7 +423,7 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     color: '#fff',
     fontSize: 12,
     fontWeight: '700',
@@ -447,7 +460,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 6,
@@ -487,7 +500,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     paddingVertical: 12,
     borderRadius: 10,
     gap: 8,
@@ -558,7 +571,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -617,7 +630,7 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   packageCardSelected: {
-    borderColor: '#8B5CF6',
+    borderColor: '#E8420A',
   },
   packageVotes: {
     color: '#fff',
@@ -625,7 +638,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   packagePrice: {
-    color: '#8B5CF6',
+    color: '#E8420A',
     fontSize: 14,
     fontWeight: '600',
   },
@@ -683,7 +696,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   voteNowButton: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     paddingVertical: 14,
     borderRadius: 10,
     alignItems: 'center',

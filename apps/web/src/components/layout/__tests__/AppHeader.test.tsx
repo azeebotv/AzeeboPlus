@@ -16,9 +16,10 @@ import { render, screen, fireEvent, waitFor, within } from '@testing-library/rea
 
 /* ─── Hoisted mock variables (accessible inside vi.mock factories) ─── */
 
-const { mockUseAuth, mockPush } = vi.hoisted(() => ({
+const { mockUseAuth, mockPush, mockUseWallet } = vi.hoisted(() => ({
   mockUseAuth: vi.fn(),
   mockPush: vi.fn(),
+  mockUseWallet: vi.fn(),
 }));
 
 /* ─── Mocks ─── */
@@ -30,7 +31,9 @@ vi.mock('next/navigation', () => ({
 
 vi.mock('next/link', () => ({
   default: ({ href, children, ...props }: any) => (
-    <a href={href} {...props}>{children}</a>
+    <a href={href} {...props}>
+      {children}
+    </a>
   ),
 }));
 
@@ -40,10 +43,15 @@ vi.mock('../../auth/BrandLogo', () => ({
 
 vi.mock('../../../lib/api/base', () => ({
   apiFetch: vi.fn(),
+  resolvedApiUrl: 'http://localhost:3000',
 }));
 
 vi.mock('../../../context/AuthContext', () => ({
   useAuth: () => mockUseAuth(),
+}));
+
+vi.mock('../../../context/WalletContext', () => ({
+  useWallet: () => mockUseWallet(),
 }));
 
 /* ─── Import component AFTER mocks ─── */
@@ -77,6 +85,13 @@ function renderHeader(authOverrides: Record<string, any> = {}) {
     refreshUser: vi.fn(),
   };
   mockUseAuth.mockReturnValue({ ...defaults, ...authOverrides });
+  mockUseWallet.mockReturnValue({
+    balance: { available: 0, pending: 0, currency: 'NGN' },
+    transactions: [],
+    isLoading: false,
+    error: null,
+    refreshBalance: vi.fn(),
+  });
   return render(<AppHeader />);
 }
 
@@ -336,23 +351,31 @@ describe('AppHeader', () => {
 
   describe('wallet balance', () => {
     it('formats large amounts with M suffix', () => {
-      renderHeader({ user: makeUser({ balance: 1500000 }) });
+      mockUseAuth.mockReturnValue({ user: makeUser(), token: 'tok', refreshToken: 'ref', isLoading: false, isAuthenticated: true, login: vi.fn(), register: vi.fn(), logout: vi.fn().mockResolvedValue(undefined), updateUser: vi.fn(), refreshUser: vi.fn() });
+      mockUseWallet.mockReturnValue({ balance: { balance: 1500000, available: 1500000, pending: 0, currency: 'NGN' }, transactions: [], isLoading: false, error: null, refreshBalance: vi.fn() });
+      render(<AppHeader />);
       // Balance appears in desktop chip and mobile drawer
       expect(screen.getAllByText('₦1.5M').length).toBeGreaterThanOrEqual(1);
     });
 
     it('formats thousands with k suffix', () => {
-      renderHeader({ user: makeUser({ balance: 4200 }) });
+      mockUseAuth.mockReturnValue({ user: makeUser(), token: 'tok', refreshToken: 'ref', isLoading: false, isAuthenticated: true, login: vi.fn(), register: vi.fn(), logout: vi.fn().mockResolvedValue(undefined), updateUser: vi.fn(), refreshUser: vi.fn() });
+      mockUseWallet.mockReturnValue({ balance: { balance: 4200, available: 4200, pending: 0, currency: 'NGN' }, transactions: [], isLoading: false, error: null, refreshBalance: vi.fn() });
+      render(<AppHeader />);
       expect(screen.getAllByText('₦4.2k').length).toBeGreaterThanOrEqual(1);
     });
 
     it('formats exact thousands without decimal', () => {
-      renderHeader({ user: makeUser({ balance: 10000 }) });
+      mockUseAuth.mockReturnValue({ user: makeUser(), token: 'tok', refreshToken: 'ref', isLoading: false, isAuthenticated: true, login: vi.fn(), register: vi.fn(), logout: vi.fn().mockResolvedValue(undefined), updateUser: vi.fn(), refreshUser: vi.fn() });
+      mockUseWallet.mockReturnValue({ balance: { balance: 10000, available: 10000, pending: 0, currency: 'NGN' }, transactions: [], isLoading: false, error: null, refreshBalance: vi.fn() });
+      render(<AppHeader />);
       expect(screen.getAllByText('₦10k').length).toBeGreaterThanOrEqual(1);
     });
 
     it('formats small amounts normally', () => {
-      renderHeader({ user: makeUser({ balance: 500 }) });
+      mockUseAuth.mockReturnValue({ user: makeUser(), token: 'tok', refreshToken: 'ref', isLoading: false, isAuthenticated: true, login: vi.fn(), register: vi.fn(), logout: vi.fn().mockResolvedValue(undefined), updateUser: vi.fn(), refreshUser: vi.fn() });
+      mockUseWallet.mockReturnValue({ balance: { balance: 500, available: 500, pending: 0, currency: 'NGN' }, transactions: [], isLoading: false, error: null, refreshBalance: vi.fn() });
+      render(<AppHeader />);
       expect(screen.getAllByText('₦500').length).toBeGreaterThanOrEqual(1);
     });
   });

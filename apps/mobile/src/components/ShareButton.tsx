@@ -1,6 +1,6 @@
-import React from 'react';
 import { TouchableOpacity, StyleSheet, ViewStyle } from 'react-native';
 import { NativeShareService, ShareContent } from '../utils/nativeShare';
+import { colors } from '../theme';
 
 interface ShareButtonProps {
   content: ShareContent;
@@ -14,7 +14,7 @@ export function ShareButton({
   content,
   onShareComplete,
   style,
-  iconColor = '#ffffff',
+  iconColor = colors.text.primary,
   size = 24,
 }: ShareButtonProps): React.ReactElement {
   const handleShare = async () => {

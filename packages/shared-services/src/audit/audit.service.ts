@@ -212,7 +212,13 @@ export class AuditService {
       errorMessage: log.errorMessage ?? undefined,
       metadata:
         typeof log.metadata === 'string'
-          ? JSON.parse(log.metadata)
+          ? (() => {
+              try {
+                return JSON.parse(log.metadata);
+              } catch {
+                return undefined;
+              }
+            })()
           : (log.metadata as Record<string, unknown> | undefined),
     };
   }

@@ -17,7 +17,7 @@ export function SeoMeta({
   image,
   noIndex = false,
 }: SeoMetaProps): React.JSX.Element {
-  const pathname = usePathname();
+  const _pathname = usePathname();
   const { getSetting } = useSettings();
   const siteName = getSetting('site_name', 'Azeebo+');
 

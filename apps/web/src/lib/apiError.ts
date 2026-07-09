@@ -75,7 +75,7 @@ interface ErrorWithResponse {
 
 export function handleApiError(error: ErrorWithResponse): string {
   if (error instanceof ApiError) {
-    return error.message;
+    return (error as Error).message;
   }
 
   if (error instanceof NetworkError) {
@@ -83,7 +83,7 @@ export function handleApiError(error: ErrorWithResponse): string {
   }
 
   if (error instanceof ValidationError) {
-    return error.message;
+    return (error as Error).message;
   }
 
   if (error instanceof AuthenticationError) {

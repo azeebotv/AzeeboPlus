@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
 
 export interface AlertRule {
   id: string;
@@ -31,15 +31,18 @@ export interface MetricSample {
 }
 
 @Injectable()
-export class AnomalyDetectionService {
+export class AnomalyDetectionService implements OnModuleDestroy {
   private readonly logger = new Logger('AnomalyDetection');
   private readonly rules: Map<string, AlertRule> = new Map();
   private readonly metricHistory: Map<string, MetricSample[]> = new Map();
   private readonly lastAlertTime: Map<string, number> = new Map();
   private readonly alertCallbacks: Array<(alert: AlertEvent) => void> = [];
+  private readonly STALE_RETENTION_MS = 24 * 60 * 60 * 1000; // 24 hours
+  private cleanupInterval: ReturnType<typeof setInterval> | null = null;
 
   constructor() {
     this.initializeDefaultRules();
+    this.startPeriodicCleanup();
   }
 
   private initializeDefaultRules(): void {
@@ -135,6 +138,27 @@ export class AnomalyDetectionService {
     ];
 
     defaultRules.forEach((rule) => this.addRule(rule));
+  }
+
+  private startPeriodicCleanup(): void {
+    this.cleanupInterval = setInterval(() => {
+      const cutoff = Date.now() - this.STALE_RETENTION_MS;
+      for (const [metric, samples] of this.metricHistory) {
+        const filtered = samples.filter((s) => s.timestamp.getTime() > cutoff);
+        if (filtered.length === 0) {
+          this.metricHistory.delete(metric);
+        } else {
+          this.metricHistory.set(metric, filtered);
+        }
+      }
+    }, 6 * 60 * 60 * 1000); // Run every 6 hours
+  }
+
+  onModuleDestroy(): void {
+    if (this.cleanupInterval) {
+      clearInterval(this.cleanupInterval);
+      this.cleanupInterval = null;
+    }
   }
 
   addRule(rule: AlertRule): void {

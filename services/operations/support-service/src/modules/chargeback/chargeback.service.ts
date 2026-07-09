@@ -138,7 +138,7 @@ export class ChargebackService {
         this.logger.log(
           `Chargeback won: payment ${chargeback.paymentId}, wallet txn: ${walletData?.id}`
         );
-      } catch (error) {
+      } catch (_err) {
         this.logger.error(
           `Failed to process chargeback resolution ${id}: ${(error as Error).message}`
         );
@@ -154,8 +154,11 @@ export class ChargebackService {
           evidence,
         });
         this.logger.log(`Chargeback lost: payment ${chargeback.paymentId}`);
-      } catch (error) {
+      } catch (_err) {
         this.logger.error(`Failed to update payment service: ${(error as Error).message}`);
+        throw new BadRequestException(
+          `Failed to update payment service for chargeback ${id}. Requires manual intervention.`
+        );
       }
     }
 
@@ -183,7 +186,7 @@ export class ChargebackService {
       resourceId: id,
       actorType: 'admin',
       actorId: resolvedBy,
-      previousState: { status: 'PENDING' },
+      previousState: { status: chargeback.status },
       newState: { status: resolution, resolution: resolutionText },
       metadata: {
         paymentId: chargeback.paymentId,
@@ -207,7 +210,7 @@ export class ChargebackService {
   }) {
     try {
       await this.auditServiceClient.post('/api/moderation/audit', event);
-    } catch (error) {
+    } catch (_err) {
       this.logger.error(`Failed to create audit event: ${(error as Error).message}`);
     }
   }

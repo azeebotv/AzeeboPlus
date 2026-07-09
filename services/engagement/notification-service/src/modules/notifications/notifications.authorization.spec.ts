@@ -1,7 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication } from '@nestjs/common';
-import * as request from 'supertest';
+import { INestApplication, ExecutionContext, UnauthorizedException } from '@nestjs/common';
+import request from 'supertest';
 import { AuthGuard } from '@nestjs/passport';
+import { RateLimitGuard } from '@azeebo/security';
 import { NotificationsController } from './notifications.controller';
 import { NotificationsService } from './notifications.service';
 import { PrismaService } from '../database/prisma.service';
@@ -24,7 +25,18 @@ describe('NotificationsController (Authorization)', () => {
     user: { findUnique: jest.fn(), update: jest.fn() },
   };
 
-  beforeEach(async () => {
+  const createMockAuthGuard = (canActivate: boolean) => ({
+    canActivate: jest.fn().mockImplementation((context: ExecutionContext) => {
+      if (!canActivate) {
+        throw new UnauthorizedException();
+      }
+      const request = context.switchToHttp().getRequest();
+      request.user = { sub: 'user-123' };
+      return true;
+    }),
+  });
+
+  const buildModule = async (authGuardReturnValue: boolean) => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [NotificationsController],
       providers: [
@@ -33,8 +45,16 @@ describe('NotificationsController (Authorization)', () => {
       ],
     })
       .overrideGuard(AuthGuard('jwt'))
-      .useValue({ canActivate: () => true })
+      .useValue(createMockAuthGuard(authGuardReturnValue))
+      .overrideGuard(RateLimitGuard)
+      .useValue({ canActivate: jest.fn().mockReturnValue(true) })
       .compile();
+
+    return module;
+  };
+
+  beforeEach(async () => {
+    const module = await buildModule(true);
 
     app = module.createNestApplication();
     notificationsService = module.get<NotificationsService>(NotificationsService);
@@ -57,7 +77,7 @@ describe('NotificationsController (Authorization)', () => {
     });
 
     const response = await request(app.getHttpServer())
-      .get('/notifications')
+      .get('/v1/notifications')
       .set('Authorization', 'Bearer valid-token');
 
     expect(response.status).toBe(200);
@@ -71,7 +91,7 @@ describe('NotificationsController (Authorization)', () => {
     });
 
     const response = await request(app.getHttpServer())
-      .patch('/notifications/123/read')
+      .patch('/v1/notifications/123/read')
       .set('Authorization', 'Bearer valid-token');
 
     expect(response.status).toBe(200);
@@ -85,10 +105,10 @@ describe('NotificationsController (Authorization)', () => {
     });
 
     const response = await request(app.getHttpServer())
-      .post('/notifications/read-all')
+      .patch('/v1/notifications/read-all')
       .set('Authorization', 'Bearer valid-token');
 
-    expect(response.status).toBe(201);
+    expect(response.status).toBe(200);
     expect(response.body.success).toBe(true);
   });
 
@@ -99,7 +119,7 @@ describe('NotificationsController (Authorization)', () => {
     });
 
     const response = await request(app.getHttpServer())
-      .get('/notifications/unread-count')
+      .get('/v1/notifications/unread-count')
       .set('Authorization', 'Bearer valid-token');
 
     expect(response.status).toBe(200);
@@ -113,7 +133,7 @@ describe('NotificationsController (Authorization)', () => {
     });
 
     const response = await request(app.getHttpServer())
-      .get('/notifications/preferences')
+      .get('/v1/notifications/settings')
       .set('Authorization', 'Bearer valid-token');
 
     expect(response.status).toBe(200);
@@ -127,7 +147,7 @@ describe('NotificationsController (Authorization)', () => {
     });
 
     const response = await request(app.getHttpServer())
-      .put('/notifications/preferences')
+      .put('/v1/notifications/preferences')
       .set('Authorization', 'Bearer valid-token')
       .send({ email: true, sms: false });
 
@@ -136,22 +156,15 @@ describe('NotificationsController (Authorization)', () => {
   });
 
   it('should reject unauthenticated requests', async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      controllers: [NotificationsController],
-      providers: [
-        { provide: NotificationsService, useValue: mockNotificationsService },
-        { provide: PrismaService, useValue: mockPrismaService },
-      ],
-    })
-      .overrideGuard(AuthGuard('jwt'))
-      .useValue({ canActivate: () => false })
-      .compile();
+    await app.close();
+
+    const module = await buildModule(false);
 
     const testApp = module.createNestApplication();
     await testApp.init();
 
     const response = await request(testApp.getHttpServer())
-      .get('/notifications')
+      .get('/v1/notifications')
       .set('Authorization', 'Bearer invalid-token');
 
     expect(response.status).toBe(401);

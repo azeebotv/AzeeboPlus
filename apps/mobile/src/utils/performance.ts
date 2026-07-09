@@ -44,7 +44,7 @@ class PerformanceMonitor {
     };
   }
 
-  private report(metric: WebVitalsMetrics): void {
+  report(metric: WebVitalsMetrics): void {
     this.listeners.forEach((handler) => handler(metric));
   }
 
@@ -251,7 +251,7 @@ export function useImageOptimization(src?: string) {
     img.src = src;
 
     img.onload = () => setIsLoaded(true);
-    img.onerror = (e) => setError(new Error('Failed to load image'));
+    img.onerror = (_e) => setError(new Error('Failed to load image'));
   }, [src]);
 
   const optimizedSrc = useCallback(() => {
@@ -321,6 +321,7 @@ export function createRenderTimer(componentName: string): {
 }
 
 declare const performance: {
+  now: () => number;
   mark: (name: string) => void;
   measure: (name: string, startMark: string, endMark: string) => void;
   getEntriesByName: (name: string) => { duration: number }[];

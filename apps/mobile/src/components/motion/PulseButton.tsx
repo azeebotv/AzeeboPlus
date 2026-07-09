@@ -1,10 +1,5 @@
-import React from 'react';
 import { StyleSheet, type ViewStyle, type StyleProp } from 'react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-} from 'react-native-reanimated';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { colors, radius, typography, spacing, shadows } from '../../theme';
 
 const AnimatedTouchable = Animated.createAnimatedComponent(
@@ -74,9 +69,7 @@ export function PulseButton({
           <Animated.View style={[styles.loadingDot, { opacity: 0.3 }]} />
         </Animated.View>
       ) : (
-        <Animated.Text style={[styles.text, styles[`${variant}Text`]]}>
-          {title}
-        </Animated.Text>
+        <Animated.Text style={[styles.text, styles[`${variant}Text`]]}>{title}</Animated.Text>
       )}
     </AnimatedTouchable>
   );
@@ -98,7 +91,7 @@ const styles = StyleSheet.create({
     ...shadows.red,
   },
   primaryText: {
-    color: '#FFFFFF',
+    color: colors.text.primary,
     fontSize: typography.fontSize.md,
     fontWeight: typography.fontWeight.bold,
   },
@@ -108,7 +101,7 @@ const styles = StyleSheet.create({
     borderColor: colors.red,
   },
   secondaryText: {
-    color: colors.primary,
+    color: colors.primary[500],
     fontSize: typography.fontSize.md,
     fontWeight: typography.fontWeight.semibold,
   },
@@ -134,6 +127,6 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.text.primary,
   },
 });

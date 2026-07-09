@@ -1,14 +1,13 @@
 'use client';
-import React from 'react';
 
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
+import { useQuery } from '@tanstack/react-query';
 import { api } from '../../lib/api';
-import { focusNextElement, announceToScreenReader } from '../../lib/keyboard';
+import { announceToScreenReader } from '../../lib/keyboard';
 import AppHeader from '../../components/layout/AppHeader';
 import AppFooter from '../../components/layout/AppFooter';
-import { Skeleton } from '@/components/Skeleton';
-import { AmbientGlow } from '@/components/motion/AmbientGlow';
+import { Skeleton, ErrorState } from '@azeebo/ui/web';
 
 interface ContentItem {
   id: string;
@@ -29,12 +28,8 @@ interface ContentResponse {
 }
 
 export default function BrowsePage(): React.JSX.Element {
-  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
-  const [universes, setUniverses] = useState<{ id: string; name: string; icon?: string }[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [selectedUniverse, setSelectedUniverse] = useState<string | null>(null);
-  const [content, setContent] = useState<ContentItem[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [selectedUniverseId, setSelectedUniverseId] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<string>('Popular');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [minRating, setMinRating] = useState<number>(0);
@@ -110,82 +105,83 @@ export default function BrowsePage(): React.JSX.Element {
     if (title) announceToScreenReader(`Focused: ${title}`);
   }, []);
 
-  useEffect(() => {
-    const fetchCategories = async (): Promise<void> => {
-      try {
-        const response = await api.content.getCategories();
-        if (response.success && response.data) setCategories(response.data);
-      } catch {
-        /* intentionally minimal */
+  const categoriesQuery = useQuery({
+    queryKey: ['browse', 'categories'],
+    queryFn: async () => {
+      const response = await api.content.getCategories();
+      if (response.success && response.data) {
+        return Array.isArray(response.data) ? response.data : [];
       }
-    };
-    const fetchUniverses = async (): Promise<void> => {
-      try {
-        const response = await api.universe.getUniverses();
-        if (response.success && response.data) setUniverses(response.data);
-      } catch {
-        /* intentionally minimal */
-      }
-    };
-    fetchCategories();
-    fetchUniverses();
-  }, []);
+      return [];
+    },
+    staleTime: 300000,
+  });
 
-  useEffect(() => {
-    const fetchContent = async (): Promise<void> => {
-      try {
-        setIsLoading(true);
-        let response;
-        if (selectedUniverse) response = await api.content.getContentByUniverse(selectedUniverse);
-        else if (selectedCategory)
-          response = await api.content.getContentByCategory(selectedCategory);
-        else response = await api.content.getFeaturedContent();
-
-        if (response.success && response.data) {
-          const data = response.data;
-          let items: ContentItem[] = Array.isArray(data)
-            ? data
-            : (data as ContentResponse).items || [];
-          if (searchQuery) {
-            const q = searchQuery.toLowerCase();
-            items = items.filter(
-              (item) =>
-                item.title.toLowerCase().includes(q) ||
-                item.description?.toLowerCase().includes(q) ||
-                item.creator?.name.toLowerCase().includes(q)
-            );
-          }
-          if (minRating > 0) items = items.filter((item) => (item.rating || 0) >= minRating);
-          items = items.filter((item) => (item.duration || 0) <= maxDuration * 60);
-          if (selectedLanguage !== 'all')
-            items = items.filter((item) => item.language === selectedLanguage);
-          if (selectedYear !== 'all')
-            items = items.filter((item) => item.year?.toString() === selectedYear);
-          if (sortBy === 'Rating')
-            items = [...items].sort((a, b) => (b.rating || 0) - (a.rating || 0));
-          else if (sortBy === 'Newest')
-            items = [...items].sort((a, b) => (b.year || 0) - (a.year || 0));
-          else if (sortBy === 'A-Z')
-            items = [...items].sort((a, b) => a.title.localeCompare(b.title));
-          setContent(items);
-        }
-      } catch {
-        /* intentionally minimal */
-      } finally {
-        setIsLoading(false);
+  const universesQuery = useQuery({
+    queryKey: ['browse', 'universes'],
+    queryFn: async () => {
+      const response = await api.universe.getUniverses();
+      if (response.success && response.data) {
+        return Array.isArray(response.data) ? response.data : [];
       }
-    };
-    fetchContent();
-  }, [
-    selectedCategory,
-    selectedUniverse,
-    searchQuery,
-    minRating,
-    maxDuration,
-    selectedLanguage,
-    selectedYear,
-    sortBy,
-  ]);
+      return [];
+    },
+    staleTime: 300000,
+  });
+
+  const contentQuery = useQuery({
+    queryKey: ['browse', 'content', selectedCategory, selectedUniverseId],
+    queryFn: async () => {
+      let response;
+      if (selectedUniverseId)
+        response = await api.content.getContentByUniverse(selectedUniverseId);
+      else if (selectedCategory)
+        response = await api.content.getContentByCategory(selectedCategory);
+      else response = await api.content.getFeaturedContent();
+
+      if (response.success && response.data) {
+        const data = response.data;
+        let items: ContentItem[] = Array.isArray(data)
+          ? data
+          : (data as ContentResponse).items || [];
+        return items;
+      }
+      return [];
+    },
+    staleTime: 30000,
+  });
+
+  const categories = categoriesQuery.data ?? [];
+  const universes = universesQuery.data ?? [];
+  const rawContent = contentQuery.data ?? [];
+  const isLoading = categoriesQuery.isLoading || universesQuery.isLoading || contentQuery.isLoading;
+  const error = categoriesQuery.error?.message || universesQuery.error?.message || contentQuery.error?.message || null;
+
+  const content = (() => {
+    let items = [...rawContent];
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      items = items.filter(
+        (item) =>
+          item.title.toLowerCase().includes(q) ||
+          item.description?.toLowerCase().includes(q) ||
+          item.creator?.name.toLowerCase().includes(q)
+      );
+    }
+    if (minRating > 0) items = items.filter((item) => (item.rating || 0) >= minRating);
+    items = items.filter((item) => (item.duration || 0) <= maxDuration * 60);
+    if (selectedLanguage !== 'all')
+      items = items.filter((item) => item.language === selectedLanguage);
+    if (selectedYear !== 'all')
+      items = items.filter((item) => item.year?.toString() === selectedYear);
+    if (sortBy === 'Rating')
+      items = [...items].sort((a, b) => (b.rating || 0) - (a.rating || 0));
+    else if (sortBy === 'Newest')
+      items = [...items].sort((a, b) => (b.year || 0) - (a.year || 0));
+    else if (sortBy === 'A-Z')
+      items = [...items].sort((a, b) => a.title.localeCompare(b.title));
+    return items;
+  })();
 
   const clearFilters = () => {
     setSearchQuery('');
@@ -194,7 +190,7 @@ export default function BrowsePage(): React.JSX.Element {
     setSelectedLanguage('all');
     setSelectedYear('all');
     setSelectedCategory(null);
-    setSelectedUniverse(null);
+    setSelectedUniverseId(null);
     setSortBy('Popular');
   };
 
@@ -226,6 +222,17 @@ export default function BrowsePage(): React.JSX.Element {
           </p>
           <h1 className="az-headline text-white text-3xl sm:text-4xl">Browse Content</h1>
         </motion.div>
+
+        {error && (
+          <div className="mb-6">
+            <ErrorState
+              title="Failed to load content"
+              description={error}
+              buttonText="Retry"
+              onButtonPress={() => contentQuery.refetch()}
+            />
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 sm:gap-8">
           {/* Sidebar */}
@@ -438,12 +445,12 @@ export default function BrowsePage(): React.JSX.Element {
               >
                 <li>
                   <button
-                    onClick={() => setSelectedUniverse(null)}
+                    onClick={() => setSelectedUniverseId(null)}
                     onKeyDown={(e) => handleUniverseKeyDown(e, 0)}
-                    aria-selected={!selectedUniverse}
-                    className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${!selectedUniverse ? 'text-white' : 'text-white/60 hover:text-white hover:bg-white/5'}`}
+                    aria-selected={!selectedUniverseId}
+                    className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${!selectedUniverseId ? 'text-white' : 'text-white/60 hover:text-white hover:bg-white/5'}`}
                     style={
-                      !selectedUniverse
+                      !selectedUniverseId
                         ? { background: 'linear-gradient(135deg, #E8420A, #CC1C1C)' }
                         : {}
                     }
@@ -454,12 +461,12 @@ export default function BrowsePage(): React.JSX.Element {
                 {universes.map((universe, index) => (
                   <li key={universe.id}>
                     <button
-                      onClick={() => setSelectedUniverse(universe.id)}
+                      onClick={() => setSelectedUniverseId(universe.id)}
                       onKeyDown={(e) => handleUniverseKeyDown(e, index + 1)}
-                      aria-selected={selectedUniverse === universe.id}
-                      className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${selectedUniverse === universe.id ? 'text-white' : 'text-white/60 hover:text-white hover:bg-white/5'}`}
+                      aria-selected={selectedUniverseId === universe.id}
+                      className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${selectedUniverseId === universe.id ? 'text-white' : 'text-white/60 hover:text-white hover:bg-white/5'}`}
                       style={
-                        selectedUniverse === universe.id
+                        selectedUniverseId === universe.id
                           ? { background: 'linear-gradient(135deg, #E8420A, #CC1C1C)' }
                           : {}
                       }
@@ -486,8 +493,8 @@ export default function BrowsePage(): React.JSX.Element {
                 <h2 className="text-xl font-bold text-white">
                   {selectedCategory
                     ? categories.find((c) => c.id === selectedCategory)?.name
-                    : selectedUniverse
-                      ? universes.find((u) => u.id === selectedUniverse)?.name
+                    : selectedUniverseId
+                      ? universes.find((u) => u.id === selectedUniverseId)?.name
                       : 'All Content'}
                 </h2>
                 <p className="text-sm text-white/50 mt-0.5">

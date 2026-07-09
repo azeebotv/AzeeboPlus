@@ -1,9 +1,22 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication } from '@nestjs/common';
+import { INestApplication, ExecutionContext } from '@nestjs/common';
 import request from 'supertest';
-import { MediaModule } from './media.module';
-import { MediaRepository } from './media.repository';
-import { JwtService } from '@nestjs/jwt';
+import { UploadModule } from '../upload/upload.module';
+import { UploadService } from '../upload/upload.service';
+import { S3Service } from '../upload/s3.service';
+import { PremiumContentService } from '../upload/premium-content.service';
+import { RedisService } from '../../common/services/redis.service';
+import { FileValidationService } from '../../common/services/file-validation.service';
+import { AuthGuard } from '@nestjs/passport';
+import { ResponseWrapperInterceptor } from '@azeebo/logger';
+
+class MockAuthGuard {
+  canActivate(context: ExecutionContext) {
+    const request = context.switchToHttp().getRequest();
+    request.user = { sub: 'user-123' };
+    return true;
+  }
+}
 
 describe('Media Controller Contract Tests', () => {
   let app: INestApplication;
@@ -12,45 +25,83 @@ describe('Media Controller Contract Tests', () => {
     process.env.JWT_ACCESS_SECRET = 'test-jwt-secret';
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [MediaModule],
+      imports: [UploadModule],
     })
-      .overrideProvider(MediaRepository)
+      .overrideProvider(UploadService)
       .useValue({
-        upload: jest.fn(),
-        findById: jest.fn(),
-        delete: jest.fn(),
-        listByUserId: jest.fn(),
-        generateUploadUrl: jest.fn(),
+        uploadImage: jest.fn(),
+        uploadVideo: jest.fn(),
+        uploadAudio: jest.fn(),
+        uploadDocument: jest.fn(),
+        uploadThumbnail: jest.fn(),
+        uploadAvatar: jest.fn(),
+        uploadBanner: jest.fn(),
+        getPresignedDownloadUrl: jest.fn(),
+        getPresignedUploadUrl: jest.fn(),
+        deleteFile: jest.fn(),
+        getFileMetadata: jest.fn(),
       })
+      .overrideProvider(S3Service)
+      .useValue({
+        uploadFile: jest.fn(),
+        getSignedDownloadUrl: jest.fn(),
+        getSignedUploadUrl: jest.fn(),
+        deleteFile: jest.fn(),
+        getFileMetadata: jest.fn(),
+        generateKey: jest.fn(),
+        cleanupOrphanedFiles: jest.fn(),
+      })
+      .overrideProvider(PremiumContentService)
+      .useValue({
+        generatePremiumUrl: jest.fn(),
+        generateCdnPremiumUrl: jest.fn(),
+        validatePremiumUrl: jest.fn(),
+        invalidatePremiumUrl: jest.fn(),
+        invalidateAllUserUrls: jest.fn(),
+        getUrlAnalytics: jest.fn(),
+      })
+      .overrideProvider(RedisService)
+      .useValue({
+        get: jest.fn(),
+        set: jest.fn(),
+        del: jest.fn(),
+        keys: jest.fn(),
+      })
+      .overrideProvider(FileValidationService)
+      .useValue({
+        validateFile: jest.fn(),
+        validatePresignedUpload: jest.fn(),
+      })
+      .overrideGuard(AuthGuard('jwt'))
+      .useClass(MockAuthGuard)
       .compile();
 
     app = moduleFixture.createNestApplication();
+    app.useGlobalInterceptors(new ResponseWrapperInterceptor());
     await app.init();
   });
 
   afterAll(async () => {
-    await app.close();
+    if (app) {
+      await app.close();
+    }
   });
 
-  describe('POST /media/upload', () => {
-    it('should upload media', async () => {
-      const mediaRepository = app.get(MediaRepository);
-      const jwtService = app.get(JwtService);
+  describe('POST /media/upload/image', () => {
+    it('should upload image', async () => {
+      const uploadService = app.get(UploadService);
 
-      jest.spyOn(jwtService, 'verify').mockReturnValue({ sub: 'user-123' });
-      jest.spyOn(mediaRepository, 'upload').mockResolvedValue({
-        id: 'media-123',
-        userId: 'user-123',
-        fileName: 'test.jpg',
-        mimeType: 'image/jpeg',
-        fileSize: 1024,
+      jest.spyOn(uploadService, 'uploadImage').mockResolvedValue({
+        key: 'images/test.jpg',
         url: 'https://storage.example.com/test.jpg',
-        thumbnailUrl: 'https://storage.example.com/test_thumb.jpg',
-        createdAt: new Date(),
+        cdnUrl: 'https://cdn.example.com/test.jpg',
+        filename: 'test.jpg',
+        mimetype: 'image/jpeg',
+        size: 1024,
       });
 
       const response = await request(app.getHttpServer())
-        .post('/media/upload')
+        .post('/media/upload/image')
         .set('Authorization', 'Bearer valid-token')
         .attach('file', Buffer.from('test'), 'test.jpg');
 
@@ -58,71 +109,55 @@ describe('Media Controller Contract Tests', () => {
       expect(response.body).toEqual({
         success: true,
         data: expect.objectContaining({
-          id: 'media-123',
+          key: 'images/test.jpg',
           url: expect.any(String),
         }),
       });
     });
   });
 
-  describe('GET /media/:id', () => {
-    it('should get media details', async () => {
-      const mediaRepository = app.get(MediaRepository);
+  describe('GET /media/metadata', () => {
+    it('should get file metadata', async () => {
+      const uploadService = app.get(UploadService);
 
-      jest.spyOn(mediaRepository, 'findById').mockResolvedValue({
-        id: 'media-123',
-        userId: 'user-123',
-        fileName: 'test.jpg',
-        mimeType: 'image/jpeg',
-        url: 'https://storage.example.com/test.jpg',
-        createdAt: new Date(),
+      jest.spyOn(uploadService, 'getFileMetadata').mockResolvedValue({
+        contentType: 'image/jpeg',
+        contentLength: 1024,
+        lastModified: new Date(),
+        metadata: {},
       });
-
-      const response = await request(app.getHttpServer()).get('/media/media-123');
-
-      expect(response.status).toBe(200);
-      expect(response.body).toEqual({
-        success: true,
-        data: expect.objectContaining({
-          id: 'media-123',
-          url: expect.any(String),
-        }),
-      });
-    });
-
-    it('should return not found', async () => {
-      const mediaRepository = app.get(MediaRepository);
-
-      jest.spyOn(mediaRepository, 'findById').mockResolvedValue(null);
-
-      const response = await request(app.getHttpServer()).get('/media/nonexistent');
-
-      expect(response.status).toBe(404);
-      expect(response.body).toEqual({
-        success: false,
-        error: expect.objectContaining({
-          code: 'NOT_FOUND',
-        }),
-      });
-    });
-  });
-
-  describe('DELETE /media/:id', () => {
-    it('should delete media', async () => {
-      const mediaRepository = app.get(MediaRepository);
-      const jwtService = app.get(JwtService);
-
-      jest.spyOn(jwtService, 'verify').mockReturnValue({ sub: 'user-123' });
-      jest.spyOn(mediaRepository, 'delete').mockResolvedValue(1);
 
       const response = await request(app.getHttpServer())
-        .delete('/media/media-123')
+        .get('/media/metadata?key=images/test.jpg')
         .set('Authorization', 'Bearer valid-token');
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual({
         success: true,
-        data: expect.any(Object),
+        data: expect.objectContaining({
+          contentType: 'image/jpeg',
+          contentLength: 1024,
+        }),
+      });
+    });
+  });
+
+  describe('DELETE /media/:key', () => {
+    it('should delete file', async () => {
+      const uploadService = app.get(UploadService);
+
+      jest.spyOn(uploadService, 'deleteFile').mockResolvedValue(undefined);
+
+      const response = await request(app.getHttpServer())
+        .delete('/media/images%2Ftest.jpg')
+        .set('Authorization', 'Bearer valid-token');
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({
+        success: true,
+        data: expect.objectContaining({
+          message: 'File deleted successfully',
+        }),
       });
     });
   });

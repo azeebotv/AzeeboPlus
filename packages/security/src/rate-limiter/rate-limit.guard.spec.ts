@@ -75,9 +75,9 @@ describe('RateLimitGuard', () => {
 
       try {
         await guard.canActivate(context);
-      } catch (error) {
+      } catch (error: unknown) {
         expect(error).toBeInstanceOf(HttpException);
-        expect(error.getStatus()).toBe(HttpStatus.TOO_MANY_REQUESTS);
+        expect((error as HttpException).getStatus()).toBe(HttpStatus.TOO_MANY_REQUESTS);
       }
     });
 

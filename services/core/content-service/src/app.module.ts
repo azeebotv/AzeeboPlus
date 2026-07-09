@@ -48,4 +48,3 @@ import { JwtStrategy } from './modules/auth/jwt.strategy';
   ],
 })
 export class AppModule {}
-

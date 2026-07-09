@@ -106,9 +106,7 @@ export default function UniverseDropdown({
           if (!isOpen) {
             setIsOpen(true);
           } else {
-            setHighlightedIndex((prev) =>
-              prev < universes.length - 1 ? prev + 1 : 0
-            );
+            setHighlightedIndex((prev) => (prev < universes.length - 1 ? prev + 1 : 0));
           }
           break;
         case 'ArrowUp':
@@ -117,9 +115,7 @@ export default function UniverseDropdown({
           if (!isOpen) {
             setIsOpen(true);
           } else {
-            setHighlightedIndex((prev) =>
-              prev > 0 ? prev - 1 : universes.length - 1
-            );
+            setHighlightedIndex((prev) => (prev > 0 ? prev - 1 : universes.length - 1));
           }
           break;
         default:
@@ -135,16 +131,12 @@ export default function UniverseDropdown({
         case 'ArrowDown':
         case 'ArrowRight':
           e.preventDefault();
-          setHighlightedIndex((prev) =>
-            prev < universes.length - 1 ? prev + 1 : 0
-          );
+          setHighlightedIndex((prev) => (prev < universes.length - 1 ? prev + 1 : 0));
           break;
         case 'ArrowUp':
         case 'ArrowLeft':
           e.preventDefault();
-          setHighlightedIndex((prev) =>
-            prev > 0 ? prev - 1 : universes.length - 1
-          );
+          setHighlightedIndex((prev) => (prev > 0 ? prev - 1 : universes.length - 1));
           break;
         case 'Home':
           e.preventDefault();
@@ -360,8 +352,18 @@ export default function UniverseDropdown({
 
           {error && universes.length > 0 && (
             <div className="mx-3 mb-2 px-2 py-1.5 rounded-lg text-[11px] text-amber-400 bg-amber-400/10 flex items-center gap-1.5">
-              <svg className="w-3 h-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              <svg
+                className="w-3 h-3 flex-shrink-0"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                />
               </svg>
               <span className="truncate">Using fallback data</span>
             </div>

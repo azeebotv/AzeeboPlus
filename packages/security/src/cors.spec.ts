@@ -90,14 +90,12 @@ describe('configureCors', () => {
       const callback = jest.fn();
       originCallback('https://evil.com', callback);
       // CORS callback receives Error as first arg, no second arg on rejection
-      expect(callback).toHaveBeenCalledWith(
-        expect.any(Error)
-      );
+      expect(callback).toHaveBeenCalledWith(expect.any(Error));
       const errorArg = callback.mock.calls[0][0];
       expect(errorArg.message).toContain('Not allowed by CORS');
     });
 
-    it('should reject missing origin', () => {
+    it('should allow missing origin for server-to-server requests', () => {
       configureCors(mockApp as any, {
         allowedOrigins: ['https://azeeboplus.com'],
       });
@@ -105,12 +103,7 @@ describe('configureCors', () => {
       const originCallback = mockApp.enableCors.mock.calls[0][0].origin;
       const callback = jest.fn();
       originCallback(undefined, callback);
-      // CORS callback receives Error as first arg, no second arg on rejection
-      expect(callback).toHaveBeenCalledWith(
-        expect.any(Error)
-      );
-      const errorArg = callback.mock.calls[0][0];
-      expect(errorArg.message).toContain('missing origin');
+      expect(callback).toHaveBeenCalledWith(null, true);
     });
   });
 });

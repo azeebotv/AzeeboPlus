@@ -1,6 +1,8 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, Query } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { AuthGuard } from '@nestjs/passport';
 import { MusicService } from './music.service';
+import { UpdateMusicDto } from './dto/update-music.dto';
 
 interface CreateMusicData {
   title: string;
@@ -70,6 +72,7 @@ export class MusicController {
   }
 
   @Post()
+  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Create music entry' })
   @ApiResponse({ status: 201, description: 'Entry created' })
   async createEntry(@Body() body: CreateMusicData): Promise<unknown> {
@@ -77,16 +80,18 @@ export class MusicController {
   }
 
   @Patch(':id')
+  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Update music entry' })
   @ApiResponse({ status: 200, description: 'Entry updated' })
   async updateEntry(
     @Param('id') id: string,
-    @Body() body: Record<string, unknown>
+    @Body() body: UpdateMusicDto
   ): Promise<unknown> {
     return this.musicService.updateEntry(id, body);
   }
 
   @Delete(':id')
+  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Delete music entry' })
   @ApiResponse({ status: 200, description: 'Entry deleted' })
   async deleteEntry(@Param('id') id: string): Promise<unknown> {

@@ -39,4 +39,9 @@ export class DashboardController {
   async getRecentActivity(@Query('limit') limit = 20): Promise<unknown> {
     return this.dashboardService.getRecentActivity(Number(limit));
   }
+
+  @Get('platform-overview')
+  async getPlatformOverview(): Promise<unknown> {
+    return this.dashboardService.getPlatformOverview();
+  }
 }

@@ -8,15 +8,18 @@ import {
   HttpCode,
   HttpStatus,
   Query,
+  Param,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
+import { RateLimitGuard, RateLimit, ServiceAuthGuard } from '@azeebo/security';
 
 import { ReferralService } from './referral.service';
 import { GenerateReferralCodeDto, ApplyReferralCodeDto, GetReferralsDto } from './dto/referral.dto';
 import { ReferralResponse } from './interfaces/referral-response.interface';
 
 @ApiTags('Referrals')
+@UseGuards(RateLimitGuard)
 @Controller('referrals')
 export class ReferralController {
   constructor(private readonly referralService: ReferralService) {}
@@ -27,10 +30,11 @@ export class ReferralController {
   @ApiResponse({ status: 200, description: 'Referral code' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getReferralCode(@Request() req: { user: { sub: string } }): Promise<ReferralResponse> {
-    return this.referralService.getReferralCode(req.user.sub);
+    return this.referralService.getReferralCode(req.user.id);
   }
 
   @Post('generate')
+  @RateLimit(10, 3600000)
   @UseGuards(AuthGuard('jwt'))
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Generate a new referral code' })
@@ -40,10 +44,11 @@ export class ReferralController {
     @Request() req: { user: { sub: string } },
     @Body() generateDto: GenerateReferralCodeDto
   ): Promise<ReferralResponse> {
-    return this.referralService.generateReferralCode(req.user.sub, generateDto);
+    return this.referralService.generateReferralCode(req.user.id, generateDto);
   }
 
   @Post('apply')
+  @RateLimit(10, 3600000)
   @UseGuards(AuthGuard('jwt'))
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Apply a referral code' })
@@ -55,7 +60,7 @@ export class ReferralController {
     @Request() req: { user: { sub: string } },
     @Body() applyDto: ApplyReferralCodeDto
   ): Promise<ReferralResponse> {
-    return this.referralService.applyReferralCode(req.user.sub, applyDto);
+    return this.referralService.applyReferralCode(req.user.id, applyDto);
   }
 
   @Get()
@@ -68,7 +73,7 @@ export class ReferralController {
     @Query('page') page?: number,
     @Query('limit') limit?: number
   ): Promise<ReferralResponse> {
-    return this.referralService.getReferrals(req.user.sub, Number(page) || 1, Number(limit) || 20);
+    return this.referralService.getReferrals(req.user.id, Number(page) || 1, Number(limit) || 20);
   }
 
   @Get('stats')
@@ -77,21 +82,23 @@ export class ReferralController {
   @ApiResponse({ status: 200, description: 'Referral statistics' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getStats(@Request() req: { user: { sub: string } }): Promise<ReferralResponse> {
-    return this.referralService.getStats(req.user.sub);
+    return this.referralService.getStats(req.user.id);
   }
 
   @Post('complete/:referralId')
-  @UseGuards(AuthGuard('jwt'))
+  @RateLimit(10, 3600000)
+  @UseGuards(AuthGuard('jwt'), ServiceAuthGuard)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Complete a referral' })
   @ApiResponse({ status: 200, description: 'Referral completed' })
   @ApiResponse({ status: 400, description: 'Invalid request' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - not authorized' })
   @ApiResponse({ status: 404, description: 'Referral not found' })
   async completeReferral(
     @Request() req: { user: { sub: string } },
-    @Query('referralId') referralId: string
+    @Param('referralId') referralId: string
   ): Promise<ReferralResponse> {
-    return this.referralService.completeReferral(referralId);
+    return this.referralService.completeReferral(referralId, req.user.id);
   }
 }

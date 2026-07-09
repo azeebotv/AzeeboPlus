@@ -62,6 +62,7 @@ export class NativeShareService {
       }
 
       try {
+        // @ts-expect-error navigator is a web-only global
         await navigator.clipboard.writeText(
           `${content.title}\n\n${content.message}\n\n${content.url || ''}`
         );

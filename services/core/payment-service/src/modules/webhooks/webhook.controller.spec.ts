@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { WebhookController } from './webhook.controller';
 import { WebhookService, WebhookPayload } from './webhook.service';
 import { WebhookSecurityService } from './webhook-security.service';
+import { ConfigService } from '@nestjs/config';
 import { BadRequestException } from '@nestjs/common';
 
 describe('WebhookController', () => {
@@ -29,6 +30,7 @@ describe('WebhookController', () => {
       providers: [
         { provide: WebhookSecurityService, useValue: mockWebhookSecurity },
         { provide: WebhookService, useValue: mockWebhookService },
+        { provide: ConfigService, useValue: { get: jest.fn().mockReturnValue(30000) } },
       ],
     }).compile();
 
@@ -95,6 +97,7 @@ describe('WebhookController', () => {
     });
 
     it('should process valid webhook successfully', async () => {
+      process.env.PAYSTACK_WEBHOOK_SECRET = 'test-secret';
       mockWebhookSecurity.isDuplicate.mockResolvedValue(false);
       mockWebhookSecurity.verifyPaystackSignature.mockReturnValue(true);
       mockWebhookSecurity.isReplay.mockResolvedValue(false);
@@ -115,7 +118,7 @@ describe('WebhookController', () => {
     const validPayload: WebhookPayload = {
       id: 'evt-456',
       type: 'charge.completed',
-      data: { tx_ref: 'test-ref', created_at: new Date().toISOString() },
+      data: { txRef: 'test-ref', created_at: new Date().toISOString() },
     };
 
     const mockReq = {
@@ -168,6 +171,7 @@ describe('WebhookController', () => {
     });
 
     it('should process valid webhook successfully', async () => {
+      process.env.FLUTTERWAVE_WEBHOOK_SECRET = 'test-secret';
       mockWebhookSecurity.isDuplicate.mockResolvedValue(false);
       mockWebhookSecurity.verifyFlutterwaveSignature.mockReturnValue(true);
       mockWebhookSecurity.isReplay.mockResolvedValue(false);

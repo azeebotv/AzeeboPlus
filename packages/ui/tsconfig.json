@@ -9,9 +9,9 @@
     "sourceMap": true,
     "outDir": "./dist",
     "rootDir": "./src",
-    "types": ["node"],
+    "types": ["node", "jest", "@testing-library/jest-dom"],
     "paths": {}
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "src/**/*.stories.tsx", "src/**/*.stories.ts"]
+  "exclude": ["node_modules", "dist", "src/**/*.stories.tsx", "src/**/*.stories.ts", "src/**/*.spec.tsx", "src/**/*.spec.ts"]
 }

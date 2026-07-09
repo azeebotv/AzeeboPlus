@@ -3,20 +3,19 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
 import { ComedyResponse } from './interfaces/comedy-response.interface';
 import axios from 'axios';
-
-interface ChallengeBody {
-  challengeId: string;
-  clipUrl: string;
-}
+import { RedisService } from '../../common/services/redis.service';
+import { SubmitChallengeDto } from './dto/submit-challenge.dto';
 
 @Injectable()
 export class ComedyService {
   private readonly logger = new Logger(ComedyService.name);
   private readonly analyticsServiceBaseUrl: string;
+  private readonly cachePrefix = 'comedy';
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly configService: ConfigService
+    private readonly configService: ConfigService,
+    private readonly redisService: RedisService
   ) {
     this.analyticsServiceBaseUrl = this.configService.getOrThrow<string>('ANALYTICS_SERVICE_URL');
   }
@@ -40,6 +39,12 @@ export class ComedyService {
   }
 
   async getClips(): Promise<ComedyResponse> {
+    const cacheKey = `${this.cachePrefix}:clips:list`;
+    const cached = await this.redisService.get(cacheKey);
+    if (cached) {
+      return { success: true, data: JSON.parse(cached) };
+    }
+
     const clips = await this.prisma.comedyClip.findMany({
       include: {
         comedian: true,
@@ -51,6 +56,8 @@ export class ComedyService {
       orderBy: { createdAt: 'desc' },
       take: 50,
     });
+
+    await this.redisService.set(cacheKey, JSON.stringify({ clips }), 300);
 
     return {
       success: true,
@@ -94,7 +101,7 @@ export class ComedyService {
     };
   }
 
-  async submitChallenge(userId: string, body: ChallengeBody): Promise<ComedyResponse> {
+  async submitChallenge(userId: string, body: SubmitChallengeDto): Promise<ComedyResponse> {
     const challenge = await this.prisma.comedyChallenge.findUnique({
       where: { id: body.challengeId },
     });

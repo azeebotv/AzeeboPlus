@@ -7,10 +7,11 @@ export class RequestIdMiddleware implements NestMiddleware {
   private readonly logger = new Logger(RequestIdMiddleware.name);
 
   use(req: Request, res: Response, next: NextFunction): void {
-    const requestId = (req.headers['x-request-id'] as string) || randomUUID();
-    req.headers['x-request-id'] = requestId;
-    res.setHeader('X-Request-ID', requestId);
-    this.logger.debug(`Request ID: ${requestId}`);
+    const raw = (req.headers['x-request-id'] as string) || '';
+    const sanitized = /^[a-zA-Z0-9\-_]{1,255}$/.test(raw) ? raw.substring(0, 255) : randomUUID();
+    req.headers['x-request-id'] = sanitized;
+    res.setHeader('X-Request-ID', sanitized);
+    this.logger.debug(`Request ID: ${sanitized}`);
     next();
   }
 }

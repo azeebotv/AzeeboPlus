@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { SafetyScanningService, ScanRequest, ScanResult } from './safety-scanning.service';
+import { CacheService, cacheKey } from '@azeebo/shared-services';
 import type {
   ModerationCase,
   Appeal,
@@ -23,6 +24,8 @@ export interface ResolveCaseRequest {
   resolverId: string;
   action: string;
   reason: string;
+  resolution?: string;
+  notes?: string;
 }
 
 export interface CreateAppealRequest {
@@ -99,7 +102,8 @@ export class ModerationService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly safetyScanningService: SafetyScanningService
+    private readonly safetyScanningService: SafetyScanningService,
+    private readonly cache: CacheService
   ) {}
 
   async createCase(request: CreateCaseRequest): Promise<ModerationCase> {
@@ -131,15 +135,24 @@ export class ModerationService {
   }
 
   async getCase(caseId: string): Promise<ModerationCase | null> {
-    return this.prisma.moderationCase.findUnique({
+    const cacheK = cacheKey('moderation', `cases:${caseId}`);
+    const cached = await this.cache.get<ModerationCase>(cacheK);
+    if (cached) return cached;
+
+    const result = await this.prisma.moderationCase.findUnique({
       where: { id: caseId },
       include: {
         report: true,
-        user: true,
-        resolvedByUser: true,
+        user: { select: { id: true, displayName: true, avatar: true, email: true } },
+        resolvedByUser: { select: { id: true, displayName: true, avatar: true, email: true } },
         Appeal: true,
       },
     });
+
+    if (result) {
+      await this.cache.set(cacheK, result, 120);
+    }
+    return result;
   }
 
   async listCases(filters?: {
@@ -155,7 +168,7 @@ export class ModerationService {
     return this.prisma.moderationCase.findMany({
       where,
       orderBy: { createdAt: 'desc' },
-      include: { report: true, user: true },
+      include: { report: true, user: { select: { id: true, displayName: true, avatar: true, email: true } } },
     });
   }
 
@@ -178,6 +191,8 @@ export class ModerationService {
         resolutionAction: request.action,
         resolutionReason: request.reason,
         resolvedAt: new Date(),
+        resolution: request.resolution,
+        notes: request.notes,
       },
     });
 
@@ -193,14 +208,34 @@ export class ModerationService {
     });
 
     if (request.action === 'suspend' || request.action === 'ban') {
-      await this.updateTrustScore({
-        userId: moderationCase.userId,
-        newScore: Math.max(0, (await this.getTrustScore(moderationCase.userId)) - 50),
-        reason: `Moderation action: ${request.action}`,
-        metadata: { caseId: request.caseId },
+      const { oldScore, newScore } = await this.prisma.$transaction(async (tx) => {
+        const before = await tx.user.findUnique({
+          where: { id: moderationCase.userId },
+          select: { trustScore: true },
+        });
+        const oldScore = before?.trustScore ?? 100;
+        const newScore = Math.max(0, oldScore - 50);
+        await tx.user.update({
+          where: { id: moderationCase.userId },
+          data: { trustScore: newScore },
+        });
+        return { oldScore, newScore };
       });
+
+      await this.createAuditEvent({
+        action: 'update',
+        resourceType: 'trust_score',
+        resourceId: moderationCase.userId,
+        actorType: 'system',
+        details: { reason: `Moderation action: ${request.action}`, change: newScore - oldScore },
+        previousState: { trustScore: oldScore },
+        newState: { trustScore: newScore },
+      });
+
+      await this.cache.invalidate(`moderation:trust:${moderationCase.userId}`);
     }
 
+    await this.cache.invalidate(`moderation:cases:${request.caseId}`);
     return updatedCase;
   }
 
@@ -231,6 +266,8 @@ export class ModerationService {
       data: { status: 'appealed' },
     });
 
+    await this.cache.invalidate(`moderation:cases:${request.caseId}`);
+
     await this.createAuditEvent({
       action: 'create',
       resourceType: 'appeal',
@@ -254,7 +291,7 @@ export class ModerationService {
         reason: body.reason,
       });
       return { success: true, data: appeal };
-    } catch (error) {
+    } catch (_err) {
       const err = error as Error;
       return { success: false, error: { code: 'APPEAL_SUBMISSION_FAILED', message: err.message } };
     }
@@ -288,12 +325,33 @@ export class ModerationService {
         data: { status: 'resolved', resolutionAction: 'appeal_upheld' },
       });
 
-      await this.updateTrustScore({
-        userId: appeal.userId,
-        newScore: Math.min(100, (await this.getTrustScore(appeal.userId)) + 25),
-        reason: 'Appeal successful',
-        metadata: { appealId: request.appealId },
+      await this.cache.invalidate(`moderation:cases:${appeal.caseId}`);
+
+      const { oldScore, newScore } = await this.prisma.$transaction(async (tx) => {
+        const before = await tx.user.findUnique({
+          where: { id: appeal.userId },
+          select: { trustScore: true },
+        });
+        const oldScore = before?.trustScore ?? 100;
+        const newScore = Math.min(100, oldScore + 25);
+        await tx.user.update({
+          where: { id: appeal.userId },
+          data: { trustScore: newScore },
+        });
+        return { oldScore, newScore };
       });
+
+      await this.createAuditEvent({
+        action: 'update',
+        resourceType: 'trust_score',
+        resourceId: appeal.userId,
+        actorType: 'system',
+        details: { reason: 'Appeal successful', change: newScore - oldScore },
+        previousState: { trustScore: oldScore },
+        newState: { trustScore: newScore },
+      });
+
+      await this.cache.invalidate(`moderation:trust:${appeal.userId}`);
     }
 
     await this.createAuditEvent({
@@ -312,6 +370,28 @@ export class ModerationService {
     userId: string,
     body: { type: string; contentId?: string; userId?: string; reason: string }
   ): Promise<ModerationResponse> {
+    const cooldownHours = 24;
+    const cooldownDate = new Date(Date.now() - cooldownHours * 60 * 60 * 1000);
+
+    const existingReport = await this.prisma.report.findFirst({
+      where: {
+        reportingUserId: userId,
+        ...(body.contentId ? { contentId: body.contentId } : {}),
+        ...(body.userId ? { userId: body.userId } : {}),
+        createdAt: { gte: cooldownDate },
+      },
+    });
+
+    if (existingReport) {
+      return {
+        success: true,
+        data: {
+          reportId: existingReport.id,
+          message: 'You have already reported this content recently. The existing report is being reviewed.',
+        },
+      } as ModerationResponse;
+    }
+
     try {
       const report = await this.prisma.report.create({
         data: {
@@ -333,8 +413,10 @@ export class ModerationService {
         details: { type: body.type, reason: body.reason },
       });
 
+      await this.cache.invalidate('moderation:reports:*');
+
       return { success: true, data: report };
-    } catch (error) {
+    } catch (_err) {
       const err = error as Error;
       return { success: false, error: { code: 'REPORT_CREATION_FAILED', message: err.message } };
     }
@@ -347,7 +429,7 @@ export class ModerationService {
   async getQueue(moderatorId: string): Promise<ModerationResponse> {
     const assignments = await this.prisma.reviewerAssignment.findMany({
       where: { reviewerId: moderatorId, status: 'active' },
-      include: { case: { include: { report: true, user: true } } },
+      include: { case: { include: { report: true, user: { select: { id: true, displayName: true, avatar: true, email: true } } } } },
     });
 
     const cases = assignments.map((a) => a.case);
@@ -399,7 +481,7 @@ export class ModerationService {
         duration: body.duration,
       });
       return { success: true, data: safetyAction };
-    } catch (error) {
+    } catch (_err) {
       const err = error as Error;
       return { success: false, error: { code: 'SAFETY_ACTION_FAILED', message: err.message } };
     }
@@ -484,15 +566,23 @@ export class ModerationService {
       newState: { trustScore: request.newScore },
     });
 
+    await this.cache.invalidate(`moderation:trust:${request.userId}`);
+
     return historyRecord;
   }
 
   async getTrustScore(userId: string): Promise<number> {
+    const cacheK = cacheKey('moderation', `trust:${userId}`);
+    const cached = await this.cache.get<number>(cacheK);
+    if (cached !== null && cached !== undefined) return cached;
+
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       select: { trustScore: true },
     });
-    return user?.trustScore || 100;
+    const score = user?.trustScore || 100;
+    await this.cache.set(cacheK, score, 300);
+    return score;
   }
 
   async getTrustScoreHistory(userId: string): Promise<TrustScoreHistory[]> {
@@ -596,7 +686,11 @@ export class ModerationService {
   async getReport(reportId: string): Promise<Report | null> {
     return this.prisma.report.findUnique({
       where: { id: reportId },
-      include: { reportingUser: true, reportedUser: true, content: true },
+      include: {
+        reportingUser: { select: { id: true, displayName: true, avatar: true, email: true } },
+        reportedUser: { select: { id: true, displayName: true, avatar: true, email: true } },
+        content: true,
+      },
     });
   }
 
@@ -605,16 +699,23 @@ export class ModerationService {
     type?: string;
     reportingUserId?: string;
   }): Promise<Report[]> {
+    const cacheK = cacheKey('moderation', `reports:list:${JSON.stringify(filters || {})}`);
+    const cached = await this.cache.get<Report[]>(cacheK);
+    if (cached) return cached;
+
     const where: Record<string, unknown> = {};
     if (filters?.status) where.status = filters.status;
     if (filters?.type) where.type = filters.type;
     if (filters?.reportingUserId) where.reportingUserId = filters.reportingUserId;
 
-    return this.prisma.report.findMany({
+    const result = await this.prisma.report.findMany({
       where,
       orderBy: { createdAt: 'desc' },
-      include: { reportingUser: true, content: true },
+      include: { reportingUser: { select: { id: true, displayName: true, avatar: true, email: true } }, content: true },
     });
+
+    await this.cache.set(cacheK, result, 120);
+    return result;
   }
 
   async updateReportStatus(reportId: string, status: string): Promise<Report> {
@@ -642,6 +743,8 @@ export class ModerationService {
       newState: { status },
     });
 
+    await this.cache.invalidate('moderation:reports:*');
+
     return updatedReport;
   }
 
@@ -667,7 +770,7 @@ export class ModerationService {
       }
 
       return { success: true, data: scan };
-    } catch (error) {
+    } catch (_err) {
       const err = error as Error;
       return { success: false, error: { code: 'SCAN_FETCH_FAILED', message: err.message } };
     }
@@ -688,7 +791,7 @@ export class ModerationService {
       }
 
       const latestScan = scans[0];
-      const isSafe = latestScan.result === 'clean' || latestScan.status === 'completed';
+      const isSafe = latestScan.result === 'clean';
 
       return {
         success: true,
@@ -705,7 +808,7 @@ export class ModerationService {
           scanCount: scans.length,
         },
       };
-    } catch (error) {
+    } catch (_err) {
       const err = error as Error;
       return { success: false, error: { code: 'SAFETY_CHECK_FAILED', message: err.message } };
     }

@@ -34,6 +34,7 @@ export interface MissionData {
   points: number;
   type: string;
   isActive: boolean;
+  isCompleted: boolean;
 }
 
 export interface RewardData {

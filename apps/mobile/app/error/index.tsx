@@ -1,4 +1,3 @@
-import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 
@@ -10,12 +9,12 @@ export default function ErrorScreen() {
     <View
       style={[
         styles.container,
-        { backgroundColor: colorScheme === 'dark' ? '#000000' : '#ffffff' },
+        { backgroundColor: colorScheme === 'dark' ? '#1A0A0A' : '#ffffff' },
       ]}
     >
       <View style={styles.content}>
         <Text style={styles.icon}>⚠️</Text>
-        <Text style={[styles.title, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
+        <Text style={[styles.title, { color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A' }]}>
           Something went wrong
         </Text>
         <Text style={styles.description}>
@@ -69,7 +68,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   primaryButton: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     padding: 16,
     borderRadius: 12,
     alignItems: 'center',
@@ -84,10 +83,10 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: '#8B5CF6',
+    borderColor: '#E8420A',
   },
   secondaryButtonText: {
-    color: '#8B5CF6',
+    color: '#E8420A',
     fontSize: 16,
     fontWeight: '600',
   },

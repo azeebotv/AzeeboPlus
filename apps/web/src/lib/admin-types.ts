@@ -153,6 +153,7 @@ export interface AdminUniverse {
   color?: string;
   isEnabled: boolean;
   sortOrder: number;
+  contentCount?: number;
   metadata?: Record<string, unknown>;
   featureFlags?: FeatureFlag[];
   createdAt: string;

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,8 @@ import {
   Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useAuth } from '../../src/contexts/AuthContext';
 import { referralApi } from '../../src/api';
 import { logger } from '../../src/utils/logger';
 
@@ -36,13 +38,22 @@ interface Referral {
 
 export default function ReferralScreen() {
   const router = useRouter();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [stats, setStats] = useState<ReferralStats | null>(null);
   const [referrals, setReferrals] = useState<Referral[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    if (authLoading) return;
+    if (!isAuthenticated) {
+      router.replace('/(auth)/login');
+    }
+  }, [authLoading, isAuthenticated, router]);
+
+  useEffect(() => {
+    if (authLoading || !isAuthenticated) return;
     loadReferralData();
-  }, []);
+  }, [authLoading, isAuthenticated]);
 
   const loadReferralData = async () => {
     try {
@@ -81,123 +92,119 @@ export default function ReferralScreen() {
   const copyReferralCode = async () => {
     if (!stats) return;
 
-    try {
-      await Share.share({
-        message: `My AZEEBO+ referral code: ${stats.referralCode}`,
-      });
-    } catch (error) {
-      Alert.alert('Code copied!', `Your referral code ${stats.referralCode} has been copied`);
-    }
+    Alert.alert('Referral code', `Your referral code: ${stats.referralCode}`);
   };
 
   if (isLoading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#8B5CF6" />
+      <SafeAreaView style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#E8420A" />
         <Text style={styles.loadingText}>Loading referral data...</Text>
-      </View>
+      </SafeAreaView>
     );
   }
 
   if (!stats) {
     return (
-      <View style={styles.container}>
+      <SafeAreaView style={styles.container}>
         <Text style={styles.errorText}>Failed to load referral data</Text>
-      </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Referral Program</Text>
-        <Text style={styles.subtitle}>Invite friends and earn rewards</Text>
-      </View>
+    <SafeAreaView style={styles.container}>
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.content}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Referral Program</Text>
+          <Text style={styles.subtitle}>Invite friends and earn rewards</Text>
+        </View>
 
-      <View style={styles.codeCard}>
-        <Text style={styles.codeLabel}>Your Referral Code</Text>
-        <View style={styles.codeContainer}>
-          <Text style={styles.codeText}>{stats.referralCode}</Text>
-          <TouchableOpacity style={styles.copyButton} onPress={copyReferralCode}>
-            <Text style={styles.copyButtonText}>Copy</Text>
+        <View style={styles.codeCard}>
+          <Text style={styles.codeLabel}>Your Referral Code</Text>
+          <View style={styles.codeContainer}>
+            <Text style={styles.codeText}>{stats.referralCode}</Text>
+            <TouchableOpacity style={styles.copyButton} onPress={copyReferralCode}>
+              <Text style={styles.copyButtonText}>Copy</Text>
+            </TouchableOpacity>
+          </View>
+          <TouchableOpacity style={styles.shareButton} onPress={shareReferralLink}>
+            <Text style={styles.shareButtonText}>Share Referral Link</Text>
           </TouchableOpacity>
         </View>
-        <TouchableOpacity style={styles.shareButton} onPress={shareReferralLink}>
-          <Text style={styles.shareButtonText}>Share Referral Link</Text>
-        </TouchableOpacity>
-      </View>
 
-      <View style={styles.statsGrid}>
-        <View style={styles.statCard}>
-          <Text style={styles.statValue}>{stats.totalReferrals}</Text>
-          <Text style={styles.statLabel}>Total Referrals</Text>
-        </View>
-        <View style={styles.statCard}>
-          <Text style={styles.statValue}>{stats.successfulReferrals}</Text>
-          <Text style={styles.statLabel}>Successful</Text>
-        </View>
-        <View style={styles.statCard}>
-          <Text style={styles.statValue}>{stats.commissionRate}%</Text>
-          <Text style={styles.statLabel}>Commission</Text>
-        </View>
-        <View style={styles.statCard}>
-          <Text style={[styles.statValue, styles.earningsValue]}>
-            ₦{stats.totalEarnings.toLocaleString()}
-          </Text>
-          <Text style={styles.statLabel}>Total Earnings</Text>
-        </View>
-      </View>
-
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Your Referrals</Text>
-        {referrals.length === 0 ? (
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyIcon}>👥</Text>
-            <Text style={styles.emptyText}>No referrals yet</Text>
-            <Text style={styles.emptySubtext}>Share your code to start earning</Text>
+        <View style={styles.statsGrid}>
+          <View style={styles.statCard}>
+            <Text style={styles.statValue}>{stats.totalReferrals}</Text>
+            <Text style={styles.statLabel}>Total Referrals</Text>
           </View>
-        ) : (
-          referrals.map((referral) => (
-            <View key={referral.id} style={styles.referralCard}>
-              <View style={styles.referralHeader}>
-                <View style={styles.referralInfo}>
-                  <Text style={styles.referralName}>{referral.displayName}</Text>
-                  <Text style={styles.referralDate}>
-                    Joined {new Date(referral.joinedAt).toLocaleDateString()}
-                  </Text>
-                </View>
-                <View
-                  style={[
-                    styles.statusBadge,
-                    referral.status === 'rewarded'
-                      ? styles.statusBadgeSuccess
-                      : referral.status === 'active'
-                        ? styles.statusBadgeActive
-                        : styles.statusBadgePending,
-                  ]}
-                >
-                  <Text style={styles.statusText}>
-                    {referral.status.charAt(0).toUpperCase() + referral.status.slice(1)}
-                  </Text>
-                </View>
-              </View>
-              {referral.earningsGenerated > 0 && (
-                <Text style={styles.earningsText}>
-                  Earned: ₦{referral.earningsGenerated.toLocaleString()}
-                </Text>
-              )}
+          <View style={styles.statCard}>
+            <Text style={styles.statValue}>{stats.successfulReferrals}</Text>
+            <Text style={styles.statLabel}>Successful</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Text style={styles.statValue}>{stats.commissionRate}%</Text>
+            <Text style={styles.statLabel}>Commission</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Text style={[styles.statValue, styles.earningsValue]}>
+              ₦{stats.totalEarnings.toLocaleString()}
+            </Text>
+            <Text style={styles.statLabel}>Total Earnings</Text>
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Your Referrals</Text>
+          {referrals.length === 0 ? (
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyIcon}>👥</Text>
+              <Text style={styles.emptyText}>No referrals yet</Text>
+              <Text style={styles.emptySubtext}>Share your code to start earning</Text>
             </View>
-          ))
-        )}
-      </View>
-    </ScrollView>
+          ) : (
+            referrals.map((referral) => (
+              <View key={referral.id} style={styles.referralCard}>
+                <View style={styles.referralHeader}>
+                  <View style={styles.referralInfo}>
+                    <Text style={styles.referralName}>{referral.displayName}</Text>
+                    <Text style={styles.referralDate}>
+                      Joined {new Date(referral.joinedAt).toLocaleDateString()}
+                    </Text>
+                  </View>
+                  <View
+                    style={[
+                      styles.statusBadge,
+                      referral.status === 'rewarded'
+                        ? styles.statusBadgeSuccess
+                        : referral.status === 'active'
+                          ? styles.statusBadgeActive
+                          : styles.statusBadgePending,
+                    ]}
+                  >
+                    <Text style={styles.statusText}>
+                      {referral.status.charAt(0).toUpperCase() + referral.status.slice(1)}
+                    </Text>
+                  </View>
+                </View>
+                {referral.earningsGenerated > 0 && (
+                  <Text style={styles.earningsText}>
+                    Earned: ₦{referral.earningsGenerated.toLocaleString()}
+                  </Text>
+                )}
+              </View>
+            ))
+          )}
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#111827',
+    backgroundColor: '#1A0A0A',
   },
   content: {
     padding: 16,
@@ -205,7 +212,7 @@ const styles = StyleSheet.create({
   },
   loadingContainer: {
     flex: 1,
-    backgroundColor: '#111827',
+    backgroundColor: '#1A0A0A',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -232,7 +239,7 @@ const styles = StyleSheet.create({
     color: '#9CA3AF',
   },
   codeCard: {
-    backgroundColor: '#1F2937',
+    backgroundColor: '#2A2A2A',
     borderRadius: 16,
     padding: 20,
     marginBottom: 20,
@@ -246,7 +253,7 @@ const styles = StyleSheet.create({
   codeContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#374151',
+    backgroundColor: 'rgba(255,255,255,0.2)',
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
@@ -256,12 +263,12 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#8B5CF6',
+    color: '#E8420A',
     textAlign: 'center',
     letterSpacing: 4,
   },
   copyButton: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 8,
@@ -272,7 +279,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   shareButton: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     borderRadius: 12,
     paddingVertical: 14,
     width: '100%',
@@ -292,7 +299,7 @@ const styles = StyleSheet.create({
   statCard: {
     flex: 1,
     minWidth: '45%',
-    backgroundColor: '#1F2937',
+    backgroundColor: '#2A2A2A',
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
@@ -300,7 +307,7 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#8B5CF6',
+    color: '#E8420A',
     marginBottom: 4,
   },
   earningsValue: {
@@ -337,7 +344,7 @@ const styles = StyleSheet.create({
     color: '#6B7280',
   },
   referralCard: {
-    backgroundColor: '#1F2937',
+    backgroundColor: '#2A2A2A',
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
@@ -370,7 +377,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#10B98120',
   },
   statusBadgeActive: {
-    backgroundColor: '#8B5CF620',
+    backgroundColor: '#E8420A20',
   },
   statusBadgePending: {
     backgroundColor: '#F59E0B20',

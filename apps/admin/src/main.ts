@@ -1,7 +1,9 @@
 // src/main.ts
 import { NestFactory } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import helmet from 'helmet';
+import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
 
 // Ensure required env vars are present early
@@ -10,8 +12,10 @@ if (!process.env.JWT_ACCESS_SECRET) {
 }
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
   const logger = new Logger('AdminApp');
+
+  app.use(cookieParser());
 
   // Security middlewares — aligned with @azeebo/security package
   app.use(
@@ -53,7 +57,10 @@ async function bootstrap() {
   ];
 
   app.enableCors({
-    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+    origin: (
+      origin: string | undefined,
+      callback: (err: Error | null, allow?: boolean) => void
+    ) => {
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
@@ -62,7 +69,7 @@ async function bootstrap() {
     },
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     credentials: true,
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-Request-ID'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-Request-ID', 'X-CSRF-Token'],
     exposedHeaders: ['X-Total-Count', 'X-Page-Count', 'X-Request-ID'],
     maxAge: 86400,
   });

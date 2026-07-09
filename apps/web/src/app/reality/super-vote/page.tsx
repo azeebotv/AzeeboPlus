@@ -72,13 +72,23 @@ export default function SuperVotePage(): React.JSX.Element {
   useEffect(() => {
     const loadData = async () => {
       try {
+        if (!episodeId) {
+          setIsLoading(false);
+          return;
+        }
         const [contestantsResult, walletResult] = await Promise.all([
           apiFetch<Contestant[]>(`/v1/content/${episodeId}/contestants`),
-          apiFetch<{ balance: number }>('/v1/wallet/balance'),
+          apiFetch<{ balance: number }>('/v1/wallet'),
         ]);
         if (contestantsResult.success && contestantsResult.data)
-          setContestants(contestantsResult.data);
-        if (walletResult.success && walletResult.data) setWalletBalance(walletResult.data.balance);
+          setContestants(Array.isArray(contestantsResult.data) ? contestantsResult.data : []);
+        if (walletResult.success && walletResult.data) {
+          const balance =
+            typeof walletResult.data === 'object' && 'balance' in walletResult.data
+              ? (walletResult.data as { balance: number }).balance
+              : 0;
+          setWalletBalance(balance || 0);
+        }
       } catch (error) {
         webLogger.error('Failed to load data', error);
       } finally {

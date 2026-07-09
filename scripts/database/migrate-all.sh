@@ -1,9 +1,9 @@
 #!/bin/bash
-set -e
+set -euo pipefail
 
 echo "Running Prisma migrations for all services..."
 
-for service in services/*/; do
+for service in services/*/*/; do
   if [ -f "$service/prisma/schema.prisma" ]; then
     service_name=$(basename "$service")
     echo "Migrating $service_name..."

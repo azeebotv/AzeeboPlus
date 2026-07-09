@@ -13,10 +13,15 @@ describe('UsersService Integration', () => {
   const mockUser: User = {
     id: 'user-123',
     email: 'test@example.com',
+    password: '',
     displayName: 'Test User',
     avatar: null,
     role: 'user',
     preferences: { interests: ['reality', 'sports'] },
+    isVerified: false,
+    mfaEnabled: false,
+    mfaSecret: null,
+    mfaBackupCodes: null,
     createdAt: new Date(),
     updatedAt: new Date(),
   };

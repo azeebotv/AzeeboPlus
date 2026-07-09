@@ -1,38 +1,33 @@
 'use client';
-import React, { useEffect, useState } from 'react';
-import { useAuth } from '../../context/AuthContext';
+import React from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { Skeleton, ErrorState } from '@azeebo/ui/web';
 import Link from 'next/link';
 import { api, ContentItem } from '@/lib/api';
-import { webLogger } from '@/lib/logger';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 
 export default function VerticalPage(): React.JSX.Element {
-  const { isAuthenticated } = useAuth();
-  const [series, setSeries] = useState<ContentItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchContent = async () => {
-      try {
-        setIsLoading(true);
-        const result = await api.content.getContentByUniverse('vertical', 1, 20);
-
-        if (result.success && result.data) {
-          const items = Array.isArray(result.data) ? result.data : result.data.items || [];
-          setSeries(items);
-        }
-      } catch (err) {
-        webLogger.error('Failed to fetch vertical content', err);
-        setError('Failed to load content. Please try again.');
-      } finally {
-        setIsLoading(false);
+  const {
+    data: series = [],
+    isLoading,
+    error,
+    refetch,
+  } = useQuery<ContentItem[], Error>({
+    queryKey: ['vertical-content'],
+    queryFn: async () => {
+      const result = await api.content.getContentByUniverse(
+        'u0000001-0000-0000-0000-000000000009',
+        1,
+        20
+      );
+      if (result.success && result.data) {
+        return Array.isArray(result.data) ? result.data : result.data.items || [];
       }
-    };
-
-    fetchContent();
-  }, []);
+      throw new Error(result.message || 'Failed to load content.');
+    },
+    staleTime: 60000,
+  });
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
@@ -41,20 +36,14 @@ export default function VerticalPage(): React.JSX.Element {
       {/* Hero Section */}
       <section className="relative">
         {isLoading ? (
-          <div className="h-[500px] animate-pulse" style={{ backgroundColor: '#2A2A2A' }} />
+          <Skeleton height="500px" borderRadius="0px" />
         ) : error ? (
           <div className="h-[500px] flex items-center justify-center">
-            <div className="text-center">
-              <p className="text-lg mb-4 text-white/60">{error}</p>
-              <button
-                type="button"
-                onClick={() => window.location.reload()}
-                className="az-btn-primary"
-                style={{ width: 'auto', paddingInline: '1.5rem' }}
-              >
-                Retry
-              </button>
-            </div>
+            <ErrorState
+              title="Failed to load content"
+              description={error.message}
+              onButtonPress={() => refetch()}
+            />
           </div>
         ) : series.length > 0 ? (
           <div className="relative h-[500px]">
@@ -124,16 +113,10 @@ export default function VerticalPage(): React.JSX.Element {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {Array.from({ length: 6 }).map((_, i) => (
               <div key={i} className="az-glass overflow-hidden">
-                <div className="h-60 animate-pulse" style={{ backgroundColor: '#2A2A2A' }} />
+                <Skeleton height="240px" borderRadius="0px" />
                 <div className="p-4 space-y-3">
-                  <div
-                    className="h-5 w-3/4 animate-pulse rounded"
-                    style={{ backgroundColor: '#2A2A2A' }}
-                  />
-                  <div
-                    className="h-4 w-1/2 animate-pulse rounded"
-                    style={{ backgroundColor: '#2A2A2A' }}
-                  />
+                  <Skeleton height="20px" width="75%" />
+                  <Skeleton height="16px" width="50%" />
                 </div>
               </div>
             ))}

@@ -4,7 +4,7 @@ import { AdminService } from './admin.service';
 import { AdminGuard } from '@azeebo/security';
 
 @ApiTags('Admin - Vertical Service')
-@Controller('admin')
+@Controller('v1/vertical/admin')
 @UseGuards(AdminGuard)
 export class AdminController {
   constructor(private readonly adminService: AdminService) {}

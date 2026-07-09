@@ -17,6 +17,7 @@ docs/
 docx/
 infra/
 scripts/
+!scripts/demo-content/
 ci/
 .github/
 .qoder/

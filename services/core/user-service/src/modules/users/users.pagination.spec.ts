@@ -1,8 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ExecutionContext } from '@nestjs/common';
+import { INestApplication, ExecutionContext, VersioningType } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import request from 'supertest';
-import { AuthGuard } from '@nestjs/passport';
-import { RateLimitGuard } from '@azeebo/security';
+import { RateLimitGuard, ServiceAuthGuard } from '@azeebo/security';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
 
@@ -39,7 +39,7 @@ describe('User Service Pagination Tests', () => {
   const mockAuthGuard = {
     canActivate: (context: ExecutionContext) => {
       const request = context.switchToHttp().getRequest();
-      request.user = { sub: 'test-user-123' };
+      request.user = { id: 'test-user-123', sub: 'test-user-123', role: 'user' };
       return true;
     },
   };
@@ -56,15 +56,20 @@ describe('User Service Pagination Tests', () => {
           provide: UsersService,
           useValue: mockUsersService,
         },
+        {
+          provide: APP_GUARD,
+          useClass: ServiceAuthGuard,
+        },
       ],
     })
-      .overrideGuard(AuthGuard('jwt'))
+      .overrideGuard(ServiceAuthGuard)
       .useValue(mockAuthGuard)
       .overrideGuard(RateLimitGuard)
       .useValue(mockRateLimitGuard)
       .compile();
 
     app = moduleFixture.createNestApplication();
+    app.enableVersioning({ type: VersioningType.URI, prefix: 'v', defaultVersion: '1' });
     await app.init();
   });
 

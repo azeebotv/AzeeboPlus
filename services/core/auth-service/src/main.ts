@@ -33,7 +33,7 @@ async function bootstrap(): Promise<void> {
   try {
     validateEnvironment(process.env);
     Logger.log('Environment variables validated successfully');
-  } catch (error: unknown) {
+  } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     Logger.error('Environment validation failed:', errorMessage);
     process.exit(1);
@@ -72,6 +72,7 @@ async function bootstrap(): Promise<void> {
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
+      forbidNonWhitelisted: true,
       transform: true,
       errorHttpStatusCode: 422,
     })

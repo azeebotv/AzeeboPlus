@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication } from '@nestjs/common';
+import { INestApplication, UnauthorizedException, HttpException, HttpStatus, ExecutionContext } from '@nestjs/common';
 import request from 'supertest';
 import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard } from '@azeebo/security';
@@ -7,7 +7,11 @@ import { NotificationsController } from './notifications.controller';
 import { NotificationsService } from './notifications.service';
 
 const mockAuthGuard = {
-  canActivate: jest.fn().mockReturnValue(true),
+  canActivate: jest.fn().mockImplementation((context: ExecutionContext) => {
+    const request = context.switchToHttp().getRequest();
+    request.user = { sub: 'user-123', email: 'test@example.com', role: 'user' };
+    return true;
+  }),
 };
 
 const mockRateLimitGuard = {
@@ -67,18 +71,12 @@ describe('Notification Service Rate Limiting & Pagination Tests', () => {
           provide: NotificationsService,
           useValue: mockNotificationsService,
         },
-        {
-          provide: 'JWT',
-          useValue: mockAuthGuard,
-        },
-        {
-          provide: RateLimitGuard,
-          useValue: mockRateLimitGuard,
-        },
       ],
     })
       .overrideGuard(AuthGuard('jwt'))
       .useValue(mockAuthGuard)
+      .overrideGuard(RateLimitGuard)
+      .useValue(mockRateLimitGuard)
       .compile();
 
     app = moduleFixture.createNestApplication();
@@ -91,14 +89,18 @@ describe('Notification Service Rate Limiting & Pagination Tests', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockAuthGuard.canActivate.mockReturnValue(true);
+    mockAuthGuard.canActivate.mockImplementation((context: ExecutionContext) => {
+      const request = context.switchToHttp().getRequest();
+      request.user = { sub: 'user-123', email: 'test@example.com', role: 'user' };
+      return true;
+    });
     mockRateLimitGuard.canActivate.mockReturnValue(true);
   });
 
-  describe('Rate Limiting - GET /notifications', () => {
+  describe('Rate Limiting - GET /v1/notifications', () => {
     it('should allow requests within rate limit', async () => {
       const response = await request(app.getHttpServer())
-        .get('/notifications')
+        .get('/v1/notifications')
         .set('Authorization', 'Bearer test-token');
 
       expect(response.status).toBe(200);
@@ -106,28 +108,35 @@ describe('Notification Service Rate Limiting & Pagination Tests', () => {
     });
 
     it('should reject requests exceeding rate limit', async () => {
-      mockRateLimitGuard.canActivate.mockReturnValue(false);
+      mockRateLimitGuard.canActivate.mockImplementation(() => {
+        throw new HttpException(
+          { statusCode: HttpStatus.TOO_MANY_REQUESTS, message: 'Too many requests' },
+          HttpStatus.TOO_MANY_REQUESTS
+        );
+      });
 
       const response = await request(app.getHttpServer())
-        .get('/notifications')
+        .get('/v1/notifications')
         .set('Authorization', 'Bearer test-token');
 
       expect(response.status).toBe(429);
     });
 
     it('should require authentication', async () => {
-      mockAuthGuard.canActivate.mockReturnValue(false);
+      mockAuthGuard.canActivate.mockImplementation(() => {
+        throw new UnauthorizedException();
+      });
 
-      const response = await request(app.getHttpServer()).get('/notifications');
+      const response = await request(app.getHttpServer()).get('/v1/notifications');
 
       expect(response.status).toBe(401);
     });
   });
 
-  describe('Pagination - GET /notifications', () => {
+  describe('Pagination - GET /v1/notifications', () => {
     it('should return paginated results with default page/limit', async () => {
       const response = await request(app.getHttpServer())
-        .get('/notifications')
+        .get('/v1/notifications')
         .set('Authorization', 'Bearer test-token');
 
       expect(response.status).toBe(200);
@@ -154,7 +163,7 @@ describe('Notification Service Rate Limiting & Pagination Tests', () => {
       });
 
       const response = await request(app.getHttpServer())
-        .get('/notifications?page=3')
+        .get('/v1/notifications?page=3')
         .set('Authorization', 'Bearer test-token');
 
       expect(response.status).toBe(200);
@@ -180,7 +189,7 @@ describe('Notification Service Rate Limiting & Pagination Tests', () => {
       });
 
       const response = await request(app.getHttpServer())
-        .get('/notifications?limit=50')
+        .get('/v1/notifications?limit=50')
         .set('Authorization', 'Bearer test-token');
 
       expect(response.status).toBe(200);
@@ -205,7 +214,7 @@ describe('Notification Service Rate Limiting & Pagination Tests', () => {
       });
 
       const response = await request(app.getHttpServer())
-        .get('/notifications?limit=1000')
+        .get('/v1/notifications?limit=1000')
         .set('Authorization', 'Bearer test-token');
 
       expect(response.status).toBe(200);
@@ -230,7 +239,7 @@ describe('Notification Service Rate Limiting & Pagination Tests', () => {
       });
 
       const response = await request(app.getHttpServer())
-        .get('/notifications?page=2')
+        .get('/v1/notifications?page=2')
         .set('Authorization', 'Bearer test-token');
 
       expect(response.body.data.pagination.hasNextPage).toBe(true);

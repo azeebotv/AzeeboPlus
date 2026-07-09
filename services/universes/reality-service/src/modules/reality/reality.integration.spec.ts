@@ -2,6 +2,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ConflictException, BadRequestException, NotFoundException } from '@nestjs/common';
 import { RealityService } from './reality.service';
 import { PrismaService } from '../database/prisma.service';
+import { ConfigService } from '@nestjs/config';
+import { RedisService } from '../../common/services/redis.service';
 import axios from 'axios';
 
 jest.mock('axios');
@@ -53,6 +55,33 @@ describe('RealityService Integration - Cross-Service Communication', () => {
         {
           provide: PrismaService,
           useValue: mockPrismaService,
+        },
+        {
+          provide: ConfigService,
+          useValue: {
+            get: jest.fn().mockImplementation((key: string, defaultValue?: unknown) => {
+              const config: Record<string, unknown> = {
+                SUPERVOTE_COST: 10,
+                VOTE_COST: 1,
+              };
+              return config[key] ?? defaultValue;
+            }),
+            getOrThrow: jest.fn().mockImplementation((key: string) => {
+              const config: Record<string, string> = {
+                WALLET_SERVICE_URL: 'http://wallet-service',
+                ANALYTICS_SERVICE_URL: 'http://analytics-service',
+              };
+              return config[key];
+            }),
+          },
+        },
+        {
+          provide: RedisService,
+          useValue: {
+            get: jest.fn().mockResolvedValue(null),
+            set: jest.fn().mockResolvedValue('OK'),
+            del: jest.fn().mockResolvedValue(1),
+          },
         },
       ],
     }).compile();
@@ -130,7 +159,8 @@ describe('RealityService Integration - Cross-Service Communication', () => {
         expect.objectContaining({
           amount: 10,
           description: expect.stringContaining(contestantId),
-        })
+        }),
+        expect.objectContaining({ timeout: 10000 })
       );
     });
 
@@ -209,7 +239,8 @@ describe('RealityService Integration - Cross-Service Communication', () => {
         expect.stringContaining('/wallet/credit'),
         expect.objectContaining({
           description: expect.stringContaining('Compensation'),
-        })
+        }),
+        expect.objectContaining({ timeout: 10000 })
       );
     });
 
@@ -253,7 +284,8 @@ describe('RealityService Integration - Cross-Service Communication', () => {
           eventName: 'vote_submitted',
           userId: 'user-1',
           universe: 'reality',
-        })
+        }),
+        expect.objectContaining({ timeout: 10000 })
       );
     });
 
@@ -292,9 +324,10 @@ describe('RealityService Integration - Cross-Service Communication', () => {
       expect(mockedAxios.post).toHaveBeenCalledWith(
         expect.stringContaining('/analytics/track'),
         expect.objectContaining({
-          eventName: 'prediction_submitted',
+          eventName: 'prediction_placed',
           userId: 'user-1',
-        })
+        }),
+        expect.objectContaining({ timeout: 10000 })
       );
     });
   });

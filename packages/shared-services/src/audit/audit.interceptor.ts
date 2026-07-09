@@ -52,7 +52,9 @@ export class AuditInterceptor implements NestInterceptor {
               ipAddress,
               userAgent: userAgent ?? '',
               status: 'success',
-              newValue: typeof data === 'object' ? JSON.stringify(data) : undefined,
+              newValue: typeof data === 'object'
+                ? JSON.stringify(data).slice(0, 1000)
+                : undefined,
             });
           } catch (error) {
             this.logger.error('Failed to log audit entry:', error);

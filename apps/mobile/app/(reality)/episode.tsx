@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -14,18 +14,6 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { contentApi } from '../../src/api';
 import { logger } from '../../src/utils/logger';
-
-// eslint-disable-next-line @typescript-eslint/no-namespace
-declare global {
-  namespace NodeJS {
-    interface Global {
-      setTimeout: typeof setTimeout;
-      clearTimeout: typeof clearTimeout;
-      setInterval: typeof setInterval;
-      clearInterval: typeof clearInterval;
-    }
-  }
-}
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -44,7 +32,7 @@ export default function EpisodePlayerScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const episodeId = params.id as string;
-  const contentId = params.contentId as string;
+  const _contentId = params.contentId as string;
 
   const [episode, setEpisode] = useState<Episode | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -69,7 +57,7 @@ export default function EpisodePlayerScreen() {
       const response = await contentApi.getEpisode(episodeId);
 
       if (response.success && response.data) {
-        setEpisode(response.data);
+        setEpisode(response.data as Episode);
       }
     } catch (error) {
       logger.error('Failed to load episode', error);
@@ -133,8 +121,9 @@ export default function EpisodePlayerScreen() {
         isSuperVote: isSuper,
       });
       Alert.alert('Success', `Your ${isSuper ? 'Super ' : ''}vote has been submitted!`);
-    } catch (error: any) {
-      Alert.alert('Error', error?.message || 'Failed to submit vote');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to submit vote';
+      Alert.alert('Error', message);
     }
   };
 
@@ -142,7 +131,7 @@ export default function EpisodePlayerScreen() {
     return (
       <SafeAreaView style={styles.container} edges={['top']}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#8B5CF6" />
+          <ActivityIndicator size="large" color="#E8420A" />
           <Text style={styles.loadingText}>Loading episode...</Text>
         </View>
       </SafeAreaView>
@@ -154,7 +143,7 @@ export default function EpisodePlayerScreen() {
       <SafeAreaView style={styles.container} edges={['top']}>
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>Episode not found</Text>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <TouchableOpacity style={styles.backButton} onPress={() => router.back()} accessibilityLabel="Go back" accessibilityRole="button">
             <Text style={styles.backButtonText}>Go Back</Text>
           </TouchableOpacity>
         </View>
@@ -167,7 +156,7 @@ export default function EpisodePlayerScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.playerContainer}>
-        <TouchableOpacity style={styles.backButtonAbsolute} onPress={() => router.back()}>
+        <TouchableOpacity style={styles.backButtonAbsolute} onPress={() => router.back()} accessibilityLabel="Go back" accessibilityRole="button">
           <Text style={styles.backButtonText}>←</Text>
         </TouchableOpacity>
 
@@ -184,7 +173,7 @@ export default function EpisodePlayerScreen() {
               <View style={styles.playingBar3} />
             </View>
           ) : (
-            <TouchableOpacity style={styles.playButton} onPress={handlePlayPause}>
+            <TouchableOpacity style={styles.playButton} onPress={handlePlayPause} accessibilityLabel="Play" accessibilityRole="button">
               <Text style={styles.playButtonText}>▶</Text>
             </TouchableOpacity>
           )}
@@ -202,25 +191,25 @@ export default function EpisodePlayerScreen() {
           </View>
 
           <View style={styles.controls}>
-            <TouchableOpacity style={styles.controlButton} onPress={() => handleSeek(-10)}>
+            <TouchableOpacity style={styles.controlButton} onPress={() => handleSeek(-10)} accessibilityLabel="Seek backward 10 seconds" accessibilityRole="button">
               <Text style={styles.controlButtonText}>⏪</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.controlButtonLarge} onPress={handlePlayPause}>
+            <TouchableOpacity style={styles.controlButtonLarge} onPress={handlePlayPause} accessibilityLabel={isPlaying ? 'Pause' : 'Play'} accessibilityRole="button">
               <Text style={styles.controlButtonTextLarge}>{isPlaying ? '⏸' : '▶'}</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.controlButton} onPress={() => handleSeek(10)}>
+            <TouchableOpacity style={styles.controlButton} onPress={() => handleSeek(10)} accessibilityLabel="Seek forward 10 seconds" accessibilityRole="button">
               <Text style={styles.controlButtonText}>⏩</Text>
             </TouchableOpacity>
           </View>
 
           <View style={styles.actionButtons}>
-            <TouchableOpacity style={styles.actionButton} onPress={() => setShowSubtitles(true)}>
+            <TouchableOpacity style={styles.actionButton} onPress={() => setShowSubtitles(true)} accessibilityLabel="Open subtitles" accessibilityRole="button">
               <Text style={styles.actionButtonText}>💬 Subtitles</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.actionButton} onPress={handleVote}>
+            <TouchableOpacity style={styles.actionButton} onPress={handleVote} accessibilityLabel="Vote for contestant" accessibilityRole="button">
               <Text style={styles.actionButtonText}>🗳 Vote</Text>
             </TouchableOpacity>
           </View>
@@ -242,7 +231,7 @@ export default function EpisodePlayerScreen() {
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Select Subtitles</Text>
-              <TouchableOpacity onPress={() => setShowSubtitles(false)}>
+              <TouchableOpacity onPress={() => setShowSubtitles(false)} accessibilityLabel="Close subtitles menu" accessibilityRole="button">
                 <Text style={styles.modalClose}>✕</Text>
               </TouchableOpacity>
             </View>
@@ -254,6 +243,9 @@ export default function EpisodePlayerScreen() {
                   setSelectedSubtitle(null);
                   setShowSubtitles(false);
                 }}
+                accessibilityLabel="Turn subtitles off"
+                accessibilityRole="button"
+                accessibilityState={{ selected: !selectedSubtitle }}
               >
                 <Text style={styles.subtitleText}>Off</Text>
                 {!selectedSubtitle && <Text style={styles.subtitleCheck}>✓</Text>}
@@ -267,6 +259,9 @@ export default function EpisodePlayerScreen() {
                     setSelectedSubtitle(subtitle.language);
                     setShowSubtitles(false);
                   }}
+                  accessibilityLabel={`Enable ${subtitle.language} subtitles`}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: selectedSubtitle === subtitle.language }}
                 >
                   <Text style={styles.subtitleText}>{subtitle.language}</Text>
                   {selectedSubtitle === subtitle.language && (
@@ -285,7 +280,7 @@ export default function EpisodePlayerScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: '#1A0A0A',
   },
   loadingContainer: {
     flex: 1,
@@ -310,7 +305,7 @@ const styles = StyleSheet.create({
   backButton: {
     paddingHorizontal: 24,
     paddingVertical: 12,
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     borderRadius: 8,
   },
   backButtonText: {
@@ -336,7 +331,7 @@ const styles = StyleSheet.create({
   videoPlaceholder: {
     width: screenWidth,
     height: screenWidth * 0.5625,
-    backgroundColor: '#111827',
+    backgroundColor: '#1A0A0A',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -360,17 +355,17 @@ const styles = StyleSheet.create({
   playingBar1: {
     width: 4,
     height: 20,
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
   },
   playingBar2: {
     width: 4,
     height: 30,
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
   },
   playingBar3: {
     width: 4,
     height: 25,
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
   },
   playButton: {
     width: 80,
@@ -386,7 +381,7 @@ const styles = StyleSheet.create({
   },
   controlsContainer: {
     flex: 1,
-    backgroundColor: '#111827',
+    backgroundColor: '#1A0A0A',
     paddingHorizontal: 24,
     paddingTop: 24,
   },
@@ -395,13 +390,13 @@ const styles = StyleSheet.create({
   },
   progressTrack: {
     height: 4,
-    backgroundColor: '#1f2937',
+    backgroundColor: '#2A2A2A',
     borderRadius: 2,
     marginBottom: 8,
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     borderRadius: 2,
   },
   timeContainer: {
@@ -423,7 +418,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#1f2937',
+    backgroundColor: '#2A2A2A',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -431,7 +426,7 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -450,7 +445,7 @@ const styles = StyleSheet.create({
   actionButton: {
     flex: 1,
     paddingVertical: 12,
-    backgroundColor: '#1f2937',
+    backgroundColor: '#2A2A2A',
     borderRadius: 8,
     alignItems: 'center',
   },
@@ -461,7 +456,7 @@ const styles = StyleSheet.create({
   },
   episodeInfo: {
     borderTopWidth: 1,
-    borderTopColor: '#1f2937',
+    borderTopColor: 'rgba(255,255,255,0.08)',
     paddingTop: 16,
   },
   episodeTitle: {
@@ -481,7 +476,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: '#1f2937',
+    backgroundColor: '#2A2A2A',
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
     maxHeight: '50%',
@@ -492,7 +487,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#374151',
+    borderBottomColor: 'rgba(255,255,255,0.2)',
   },
   modalTitle: {
     color: '#F3F4F6',
@@ -509,14 +504,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#374151',
+    borderBottomColor: 'rgba(255,255,255,0.2)',
   },
   subtitleText: {
     color: '#F3F4F6',
     fontSize: 16,
   },
   subtitleCheck: {
-    color: '#8B5CF6',
+    color: '#E8420A',
     fontSize: 20,
     fontWeight: 'bold',
   },

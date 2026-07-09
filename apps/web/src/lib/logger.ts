@@ -6,7 +6,7 @@
 
 type LogLevel = 'log' | 'warn' | 'error' | 'debug';
 
-interface LogEntry {
+interface _LogEntry {
   timestamp: string;
   level: LogLevel;
   message: string;
@@ -21,8 +21,14 @@ class WebLogger {
     this.serviceName = serviceName;
   }
 
-  private write(_level: LogLevel, _message: string, _data?: unknown): void {
-    // Logging disabled — no console output in dev or prod
+  private write(level: LogLevel, message: string, data?: unknown): void {
+    const timestamp = new Date().toISOString();
+    const prefix = `[${timestamp}] [${level.toUpperCase()}] [${this.serviceName}]`;
+    const args = data !== undefined ? [prefix, message, data] : [prefix, message];
+    if (level === 'error') console.error(...args);
+    else if (level === 'warn') console.warn(...args);
+    else if (level === 'debug') console.debug(...args);
+    else console.log(...args);
   }
 
   log(message: string, data?: unknown): void {

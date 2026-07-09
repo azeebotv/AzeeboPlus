@@ -25,8 +25,8 @@ export const MAX_LIMIT = 100;
 export const Pagination = createParamDecorator(
   (_data: unknown, ctx: ExecutionContext): PaginationOptions => {
     const request = ctx.switchToHttp().getRequest();
-    const page = parseInt(request.query.page) || DEFAULT_PAGE;
-    const limit = Math.min(parseInt(request.query.limit) || DEFAULT_LIMIT, MAX_LIMIT);
+    const page = Math.max(1, parseInt(request.query.page) || DEFAULT_PAGE);
+    const limit = Math.max(1, Math.min(parseInt(request.query.limit) || DEFAULT_LIMIT, MAX_LIMIT));
     const offset = (page - 1) * limit;
 
     return {

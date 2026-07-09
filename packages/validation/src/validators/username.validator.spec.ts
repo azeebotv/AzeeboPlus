@@ -3,7 +3,7 @@ import { validate } from 'class-validator';
 
 class TestDto {
   @IsValidUsername()
-  username: string;
+  username!: string;
 }
 
 describe('IsValidUsername', () => {

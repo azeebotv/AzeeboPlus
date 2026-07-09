@@ -41,7 +41,6 @@ export type DesignTokens = {
   transitions: typeof transitions;
   zIndex: typeof zIndex;
   themes: typeof themes;
-  gradients: typeof gradients;
 };
 
 export const colors = {
@@ -163,17 +162,6 @@ export const spacing = {
   '4xl': 64,
 };
 
-export const spacingNative = {
-  xs: 4,
-  sm: 8,
-  md: 12,
-  lg: 16,
-  xl: 24,
-  '2xl': 32,
-  '3xl': 48,
-  '4xl': 64,
-};
-
 export const typography = {
   fontSizes: {
     xs: 10,
@@ -201,26 +189,6 @@ export const typography = {
     normal: 1.5,
     relaxed: 1.75,
   },
-};
-
-export const fontSizeNative = {
-  xs: 10,
-  sm: 12,
-  base: 14,
-  md: 16,
-  lg: 18,
-  xl: 20,
-  '2xl': 24,
-  '3xl': 28,
-  '4xl': 32,
-};
-
-export const fontWeightNative = {
-  thin: '300' as const,
-  normal: '400' as const,
-  medium: '500' as const,
-  semibold: '600' as const,
-  bold: '700' as const,
 };
 
 export const borderRadius = {
@@ -286,102 +254,7 @@ export const themes = {
   },
 };
 
-export const gradients = {
-  primary: 'linear-gradient(135deg, #8B5CF6 0%, #6366F1 100%)',
-  brand: 'linear-gradient(135deg, #6366F1 0%, #EC4899 100%)',
-  gold: 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)',
-  success: 'linear-gradient(135deg, #22C55E 0%, #16A34A 100%)',
-  dark: 'linear-gradient(180deg, #1a1a1a 0%, #0a0a0a 100%)',
-};
-
-/**
- * Generates CSS custom properties string for use in stylesheets
- * Usage: inject into :root or html selector
- */
-export function generateCSSVariables(): string {
-  const cssVars: string[] = [];
-
-  // Colors
-  Object.entries(colors).forEach(([colorName, colorValue]) => {
-    if (typeof colorValue === 'object') {
-      Object.entries(colorValue).forEach(([shade, hex]) => {
-        cssVars.push(`  --color-${colorName}-${shade}: ${hex};`);
-      });
-    } else {
-      cssVars.push(`  --color-${colorName}: ${colorValue};`);
-    }
-  });
-
-  // Spacing
-  Object.entries(spacing).forEach(([name, value]) => {
-    cssVars.push(`  --spacing-${name}: ${value}px;`);
-  });
-
-  // Typography
-  Object.entries(typography.fontSizes).forEach(([name, value]) => {
-    cssVars.push(`  --font-size-${name}: ${value}px;`);
-  });
-
-  Object.entries(typography.fontWeights).forEach(([name, value]) => {
-    cssVars.push(`  --font-weight-${name}: ${value};`);
-  });
-
-  Object.entries(typography.lineHeights).forEach(([name, value]) => {
-    cssVars.push(`  --line-height-${name}: ${value};`);
-  });
-
-  // Border radius
-  Object.entries(borderRadius).forEach(([name, value]) => {
-    cssVars.push(`  --radius-${name}: ${value === 9999 ? '9999px' : `${value}px`};`);
-  });
-
-  // Shadows
-  Object.entries(shadows).forEach(([name, value]) => {
-    cssVars.push(`  --shadow-${name}: ${value};`);
-  });
-
-  // Transitions
-  Object.entries(transitions).forEach(([name, value]) => {
-    cssVars.push(`  --transition-${name}: ${value};`);
-  });
-
-  // Z-index
-  Object.entries(zIndex).forEach(([name, value]) => {
-    cssVars.push(`  --z-${name}: ${value};`);
-  });
-
-  return `:root {\n${cssVars.join('\n')}\n}`;
-}
-
-/**
- * Breakpoint definitions for responsive design
- */
-export const breakpoints = {
-  sm: 640,
-  md: 768,
-  lg: 1024,
-  xl: 1280,
-  '2xl': 1536,
-} as const;
-
-export type Breakpoint = keyof typeof breakpoints;
-
-/**
- * Media query helper strings
- */
-export const mediaQueries = {
-  sm: `@media (min-width: ${breakpoints.sm}px)`,
-  md: `@media (min-width: ${breakpoints.md}px)`,
-  lg: `@media (min-width: ${breakpoints.lg}px)`,
-  xl: `@media (min-width: ${breakpoints.xl}px)`,
-  '2xl': `@media (min-width: ${breakpoints['2xl']}px)`,
-  dark: '@media (prefers-color-scheme: dark)',
-  light: '@media (prefers-color-scheme: light)',
-  reducedMotion: '@media (prefers-reduced-motion: reduce)',
-  highContrast: '@media (prefers-contrast: high)',
-} as const;
-
 /**
  * Animation definitions
  */
-export * from './animations';
+export { easing, duration, animation } from './animations';

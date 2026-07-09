@@ -28,8 +28,13 @@ export default function TransactionsPage(): React.JSX.Element {
       if (filters.type !== 'all') params.append('type', filters.type);
       if (filters.status !== 'all') params.append('status', filters.status);
       if (filters.dateRange !== 'all') params.append('dateRange', filters.dateRange);
-      const result = await apiFetch<Transaction[]>(`/v1/wallet/transactions?${params.toString()}`);
-      if (result.success && result.data) setTransactions(result.data);
+      const result = await apiFetch<Transaction[] | { items: Transaction[] }>(
+        `/v1/wallet/transactions?${params.toString()}`
+      );
+      if (result.success && result.data) {
+        const txList = Array.isArray(result.data) ? result.data : result.data?.items || [];
+        setTransactions(txList);
+      }
     } catch (error) {
       webLogger.error('Failed to load transactions', error);
     } finally {

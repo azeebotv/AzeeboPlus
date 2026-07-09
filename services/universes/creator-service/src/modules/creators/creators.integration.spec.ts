@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { CreatorsService } from './creators.service';
 import { PrismaService } from '../database/prisma.service';
+import { ConfigService } from '@nestjs/config';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 
 jest.mock('../database/prisma.service');
@@ -38,12 +39,25 @@ describe('CreatorsService Integration', () => {
       providers: [
         CreatorsService,
         {
+          provide: ConfigService,
+          useValue: {
+            getOrThrow: jest.fn((key: string) => {
+              if (key === 'WALLET_SERVICE_URL') return 'http://wallet-service';
+              if (key === 'MEDIA_SERVICE_URL') return 'http://media-service';
+              if (key === 'ANALYTICS_SERVICE_URL') return 'http://analytics-service';
+              return '';
+            }),
+            get: jest.fn((key: string, defaultValue?: string) => defaultValue),
+          },
+        },
+        {
           provide: PrismaService,
           useValue: {
             creatorProfile: {
               findUnique: jest.fn(),
               create: jest.fn(),
               update: jest.fn(),
+              findMany: jest.fn(),
             },
             verificationDocument: {
               create: jest.fn(),

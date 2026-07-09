@@ -1,5 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
-import { BiometricAuthService, BiometricType, BiometricResult } from '../utils/biometricAuth';
+import {
+  BiometricAuthService,
+  BiometricType,
+  BiometricResult,
+  BiometricCredentials,
+} from '../utils/biometricAuth';
 
 interface UseBiometricState {
   isAvailable: boolean;
@@ -40,7 +45,7 @@ export function useBiometric() {
           biometricType: 'none',
           isEnabled: false,
           isLoading: false,
-          error: error instanceof Error ? error.message : 'Failed to initialize biometrics',
+          error: error instanceof Error ? (error as Error).message : 'Failed to initialize biometrics',
         });
       }
     };
@@ -62,20 +67,23 @@ export function useBiometric() {
     return result;
   }, []);
 
-  const enableBiometrics = useCallback(async (credentials: string): Promise<boolean> => {
-    setState((prev) => ({ ...prev, isLoading: true, error: null }));
+  const enableBiometrics = useCallback(
+    async (credentials: BiometricCredentials): Promise<boolean> => {
+      setState((prev) => ({ ...prev, isLoading: true, error: null }));
 
-    const success = await BiometricAuthService.enableBiometrics(credentials);
+      const success = await BiometricAuthService.enableBiometrics(credentials);
 
-    setState((prev) => ({
-      ...prev,
-      isLoading: false,
-      isEnabled: success,
-      error: success ? null : 'Failed to enable biometrics',
-    }));
+      setState((prev) => ({
+        ...prev,
+        isLoading: false,
+        isEnabled: success,
+        error: success ? null : 'Failed to enable biometrics',
+      }));
 
-    return success;
-  }, []);
+      return success;
+    },
+    []
+  );
 
   const disableBiometrics = useCallback(async (): Promise<void> => {
     setState((prev) => ({ ...prev, isLoading: true, error: null }));

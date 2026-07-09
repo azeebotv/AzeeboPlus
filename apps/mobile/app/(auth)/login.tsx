@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,17 +7,14 @@ import {
   Platform,
   ScrollView,
   Alert,
+  TouchableOpacity,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../src/contexts/AuthContext';
 import { useBiometric } from '../../src/hooks/useBiometric';
 import { colors, typography, spacing, radius } from '../../src/theme';
 import { GlassCard, BrandButton, BrandInput } from '../../src/components/ui';
-import {
-  PageTransition,
-  ScrollReveal,
-  AmbientGlow,
-} from '../../src/components/motion';
+import { PageTransition, ScrollReveal, AmbientGlow } from '../../src/components/motion';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -56,10 +53,19 @@ export default function LoginScreen() {
       setError('Please fill in all fields');
       return;
     }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setError('Please enter a valid email address');
+      return;
+    }
     setError(null);
     try {
-      await login(email, password);
-      router.replace('/(tabs)/home');
+      const result = await login(email, password);
+      if (result.success) {
+        router.replace('/(tabs)/home');
+      } else {
+        setError(result.message || 'Invalid email or password');
+      }
     } catch {
       setError('Invalid email or password');
     }
@@ -118,6 +124,13 @@ export default function LoginScreen() {
                   <Text style={styles.errorText}>{error}</Text>
                 </View>
               )}
+
+              <TouchableOpacity
+                onPress={() => router.push('/(auth)/forgot-password')}
+                style={styles.forgotPasswordContainer}
+              >
+                <Text style={styles.forgotPasswordText}>Forgot your password?</Text>
+              </TouchableOpacity>
 
               <BrandButton
                 title="Sign In to Azeebo+"
@@ -193,7 +206,7 @@ const styles = StyleSheet.create({
     color: colors.text.primary,
   },
   logoPlus: {
-    color: colors.primary,
+    color: colors.primary[500],
   },
   subtitle: {
     fontSize: typography.fontSize.lg,
@@ -215,6 +228,14 @@ const styles = StyleSheet.create({
     color: colors.error,
     fontSize: typography.fontSize.sm,
     textAlign: 'center',
+  },
+  forgotPasswordContainer: {
+    alignItems: 'center',
+    marginBottom: spacing.lg,
+  },
+  forgotPasswordText: {
+    color: colors.text.tertiary,
+    fontSize: typography.fontSize.xs,
   },
   biometricButton: {
     marginTop: spacing.md,

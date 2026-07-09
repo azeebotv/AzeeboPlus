@@ -1,7 +1,24 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication } from '@nestjs/common';
+import { INestApplication, UnauthorizedException } from '@nestjs/common';
 import request from 'supertest';
 import { ComedyModule } from './comedy.module';
+import { ComedyService } from './comedy.service';
+import { PrismaService } from '../database/prisma.service';
+import { RedisService } from '../../common/services/redis.service';
+import { ConfigService } from '@nestjs/config';
+import { RateLimitGuard } from '@azeebo/security';
+import { AuthGuard } from '@nestjs/passport';
+
+const mockAuthGuard = {
+  canActivate: (context: any) => {
+    const req = context.switchToHttp().getRequest();
+    if (!req.headers.authorization) {
+      throw new UnauthorizedException();
+    }
+    req.user = { sub: 'user-123', role: 'user' };
+    return true;
+  },
+};
 
 describe('Comedy Controller Contract Tests', () => {
   let app: INestApplication;
@@ -22,8 +39,31 @@ describe('Comedy Controller Contract Tests', () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [ComedyModule],
     })
-      .overrideProvider(ComedyModule)
+      .overrideProvider(ComedyService)
       .useValue(mockComedyService)
+      .overrideProvider(PrismaService)
+      .useValue({
+        $connect: jest.fn().mockResolvedValue(undefined),
+        $disconnect: jest.fn().mockResolvedValue(undefined),
+      })
+      .overrideProvider(RedisService)
+      .useValue({
+        get: jest.fn().mockResolvedValue(null),
+        set: jest.fn().mockResolvedValue('OK'),
+        del: jest.fn().mockResolvedValue(1),
+        incr: jest.fn().mockResolvedValue(1),
+        expire: jest.fn().mockResolvedValue(1),
+        exists: jest.fn().mockResolvedValue(0),
+      })
+      .overrideProvider(ConfigService)
+      .useValue({
+        get: jest.fn().mockReturnValue('test-value'),
+        getOrThrow: jest.fn().mockReturnValue('test-value'),
+      })
+      .overrideGuard(AuthGuard('jwt'))
+      .useValue(mockAuthGuard)
+      .overrideGuard(RateLimitGuard)
+      .useValue({ canActivate: jest.fn().mockReturnValue(true) })
       .compile();
 
     app = moduleFixture.createNestApplication();
