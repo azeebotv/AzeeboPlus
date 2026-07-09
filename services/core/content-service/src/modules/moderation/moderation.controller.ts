@@ -120,7 +120,7 @@ export class ModerationController {
     @Param('caseId') caseId: string,
     @Request() req: { user: { userId: string } }
   ): Promise<unknown> {
-    return this.moderationService.assignCase(caseId, req.user.sub);
+    return this.moderationService.assignCase(caseId, req.user.id);
   }
 
   @Patch('cases/:caseId/resolve')
@@ -136,7 +136,7 @@ export class ModerationController {
   ): Promise<unknown> {
     return this.moderationService.resolveCase(caseId, {
       resolution: body.resolution,
-      resolvedBy: req.user.sub,
+      resolvedBy: req.user.id,
       notes: body.notes,
     });
   }
@@ -167,7 +167,7 @@ export class ModerationController {
   ): Promise<unknown> {
     return this.moderationService.executeAction({
       ...data,
-      performedBy: req.user.sub,
+      performedBy: req.user.id,
     });
   }
 
@@ -198,7 +198,7 @@ export class ModerationController {
   ): Promise<unknown> {
     return this.moderationService.submitAppeal({
       caseId: data.caseId,
-      userId: req.user.sub,
+      userId: req.user.id,
       reason: data.reason,
     });
   }
@@ -216,7 +216,7 @@ export class ModerationController {
   ): Promise<unknown> {
     return this.moderationService.reviewAppeal(
       appealId,
-      req.user.sub,
+      req.user.id,
       body.decision as 'successful' | 'rejected',
       body.notes
     );

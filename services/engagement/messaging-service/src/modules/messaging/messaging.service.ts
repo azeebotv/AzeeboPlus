@@ -68,8 +68,8 @@ export class MessagingService {
         })),
       };
     } catch (error) {
-      this.logger.error(`getConversations failed: ${error.message}`, error.stack);
-      return { success: false, error: error.message };
+      this.logger.error(`getConversations failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: (error as Error).message };
     }
   }
 
@@ -115,8 +115,8 @@ export class MessagingService {
         })),
       };
     } catch (error) {
-      this.logger.error(`getMessages failed: ${error.message}`, error.stack);
-      return { success: false, error: error.message };
+      this.logger.error(`getMessages failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: (error as Error).message };
     }
   }
 
@@ -152,8 +152,8 @@ export class MessagingService {
         },
       };
     } catch (error) {
-      this.logger.error(`createConversation failed: ${error.message}`, error.stack);
-      return { success: false, error: error.message };
+      this.logger.error(`createConversation failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: (error as Error).message };
     }
   }
 
@@ -200,8 +200,8 @@ export class MessagingService {
         },
       };
     } catch (error) {
-      this.logger.error(`sendMessage failed: ${error.message}`, error.stack);
-      return { success: false, error: error.message };
+      this.logger.error(`sendMessage failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: (error as Error).message };
     }
   }
 
@@ -252,8 +252,8 @@ export class MessagingService {
         message: 'Message marked as read',
       };
     } catch (error) {
-      this.logger.error(`markAsRead failed: ${error.message}`, error.stack);
-      return { success: false, error: error.message };
+      this.logger.error(`markAsRead failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: (error as Error).message };
     }
   }
 
@@ -287,8 +287,8 @@ export class MessagingService {
         message: 'Conversation deleted',
       };
     } catch (error) {
-      this.logger.error(`deleteConversation failed: ${error.message}`, error.stack);
-      return { success: false, error: error.message };
+      this.logger.error(`deleteConversation failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: (error as Error).message };
     }
   }
 }

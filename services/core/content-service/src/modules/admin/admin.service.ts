@@ -22,7 +22,7 @@ export class AdminService {
         pendingContent,
         draftContent,
       };
-    } catch (error: unknown) {
+    } catch (error) {
       this.logger.error(`Failed to get content stats: ${error}`);
       return { success: false, error: { code: 'GET_CONTENT_STATS_FAILED', message: 'Failed to retrieve content stats' } };
     }
@@ -69,7 +69,7 @@ export class AdminService {
           totalPages: Math.ceil(total / limit),
         },
       };
-    } catch (error: unknown) {
+    } catch (error) {
       this.logger.error(`Failed to get all content: ${error}`);
       return { success: false, error: { code: 'GET_ALL_CONTENT_FAILED', message: 'Failed to retrieve content' } };
     }
@@ -96,7 +96,7 @@ export class AdminService {
       }
 
       return content;
-    } catch (error: unknown) {
+    } catch (error) {
       if (error instanceof NotFoundException) throw error;
       this.logger.error(`Failed to get content by id: ${error}`);
       return { success: false, error: { code: 'GET_CONTENT_FAILED', message: 'Failed to retrieve content' } };
@@ -124,7 +124,7 @@ export class AdminService {
         where: { id: contentId },
         data: updateData,
       });
-    } catch (error: unknown) {
+    } catch (error) {
       if (error instanceof NotFoundException || error instanceof BadRequestException) throw error;
       this.logger.error(`Failed to update content status: ${error}`);
       return { success: false, error: { code: 'UPDATE_STATUS_FAILED', message: 'Failed to update content status' } };
@@ -141,7 +141,7 @@ export class AdminService {
       return this.prisma.contentItem.delete({
         where: { id: contentId },
       });
-    } catch (error: unknown) {
+    } catch (error) {
       if (error instanceof NotFoundException) throw error;
       this.logger.error(`Failed to delete content: ${error}`);
       return { success: false, error: { code: 'DELETE_CONTENT_FAILED', message: 'Failed to delete content' } };
@@ -153,7 +153,7 @@ export class AdminService {
       return this.prisma.universe.findMany({
         orderBy: { sortOrder: 'asc' },
       });
-    } catch (error: unknown) {
+    } catch (error) {
       this.logger.error(`Failed to get universes: ${error}`);
       return { success: false, error: { code: 'GET_UNIVERSES_FAILED', message: 'Failed to retrieve universes' } };
     }
@@ -184,7 +184,7 @@ export class AdminService {
           totalPages: Math.ceil(total / limit),
         },
       };
-    } catch (error: unknown) {
+    } catch (error) {
       this.logger.error(`Failed to get comments by content id: ${error}`);
       return { success: false, error: { code: 'GET_COMMENTS_FAILED', message: 'Failed to retrieve comments' } };
     }

@@ -106,9 +106,9 @@ export class AnalyticsInstrumentationService {
       }
 
       return { id: eventRecord.id };
-    } catch (error) {
-      this.logger.error(`track failed: ${error.message}`, error.stack);
-      return { success: false, error: error.message } as unknown as { id: string };
+    } catch (_err) {
+      this.logger.error(`track failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: (error as Error).message } as unknown as { id: string };
     }
   }
 
@@ -132,9 +132,9 @@ export class AnalyticsInstrumentationService {
         )
       );
       return { ingested: results.length };
-    } catch (error) {
-      this.logger.error(`trackBatch failed: ${error.message}`, error.stack);
-      return { success: false, error: error.message } as unknown as { ingested: number };
+    } catch (_err) {
+      this.logger.error(`trackBatch failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: (error as Error).message } as unknown as { ingested: number };
     }
   }
 

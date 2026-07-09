@@ -158,7 +158,7 @@ export class RefundService {
       this.logger.log(
         `Refund processed: payment ${refund.paymentId}, wallet txn: ${walletData?.id}`
       );
-    } catch (error) {
+    } catch (_err) {
       this.logger.error(`Failed to process refund ${id}: ${(error as Error).message}`);
       throw new BadRequestException('Failed to process refund');
     }
@@ -209,7 +209,7 @@ export class RefundService {
         ...event,
         timestamp: new Date().toISOString(),
       });
-    } catch (error) {
+    } catch (_err) {
       this.logger.error(`Failed to create audit event: ${(error as Error).message}`);
     }
   }
@@ -248,7 +248,7 @@ export class RefundService {
           priority: 'high',
         });
       }
-    } catch (error) {
+    } catch (_err) {
       this.logger.error(`Failed to send refund notification: ${(error as Error).message}`);
     }
   }

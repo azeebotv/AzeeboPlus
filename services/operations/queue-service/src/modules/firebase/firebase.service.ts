@@ -92,7 +92,7 @@ export class FirebaseService implements OnModuleInit, OnModuleDestroy {
       return true;
     } catch (error) {
       if (error instanceof CircuitBreakerOpenError) {
-        this.logger.warn(`Firebase circuit breaker open: ${error.message}`);
+        this.logger.warn(`Firebase circuit breaker open: ${(error as Error).message}`);
         return false;
       }
       this.logger.error(`Error sending push notification: ${(error as Error).message}`);
@@ -129,7 +129,7 @@ export class FirebaseService implements OnModuleInit, OnModuleDestroy {
       return true;
     } catch (error) {
       if (error instanceof CircuitBreakerOpenError) {
-        this.logger.warn(`Firebase circuit breaker open: ${error.message}`);
+        this.logger.warn(`Firebase circuit breaker open: ${(error as Error).message}`);
         return false;
       }
       this.logger.error(`Error sending multicast push notification: ${(error as Error).message}`);
@@ -152,7 +152,7 @@ export class FirebaseService implements OnModuleInit, OnModuleDestroy {
       return true;
     } catch (error) {
       if (error instanceof CircuitBreakerOpenError) {
-        this.logger.warn(`Firebase circuit breaker open: ${error.message}`);
+        this.logger.warn(`Firebase circuit breaker open: ${(error as Error).message}`);
         return false;
       }
       this.logger.error(`Error subscribing to topic: ${(error as Error).message}`);
@@ -175,7 +175,7 @@ export class FirebaseService implements OnModuleInit, OnModuleDestroy {
       return true;
     } catch (error) {
       if (error instanceof CircuitBreakerOpenError) {
-        this.logger.warn(`Firebase circuit breaker open: ${error.message}`);
+        this.logger.warn(`Firebase circuit breaker open: ${(error as Error).message}`);
         return false;
       }
       this.logger.error(`Error unsubscribing from topic: ${(error as Error).message}`);

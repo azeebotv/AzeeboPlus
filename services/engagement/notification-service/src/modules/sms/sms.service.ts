@@ -57,7 +57,7 @@ export class SmsService implements OnModuleInit {
       return true;
     } catch (error) {
       if (error instanceof CircuitBreakerOpenError) {
-        this.logger.warn(`Twilio circuit breaker open: ${error.message}`);
+        this.logger.warn(`Twilio circuit breaker open: ${(error as Error).message}`);
         return false;
       }
       this.logger.error(`Error sending SMS: ${(error as Error).message}`);
@@ -140,7 +140,7 @@ export class SmsService implements OnModuleInit {
       return true;
     } catch (error) {
       if (error instanceof CircuitBreakerOpenError) {
-        this.logger.warn(`Twilio circuit breaker open: ${error.message}`);
+        this.logger.warn(`Twilio circuit breaker open: ${(error as Error).message}`);
         return false;
       }
       this.logger.error(`Error sending bulk SMS: ${(error as Error).message}`);

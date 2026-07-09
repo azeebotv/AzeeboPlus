@@ -42,7 +42,7 @@ export class FilmmakerController {
     },
     @Request() req: { user: { id: string } }
   ): Promise<unknown> {
-    return this.filmmakerService.createProject(req.user.sub, body);
+    return this.filmmakerService.createProject(req.user.id, body);
   }
 
   @Patch('projects/:id')
@@ -62,7 +62,7 @@ export class FilmmakerController {
     },
     @Request() req: { user: { id: string } }
   ): Promise<unknown> {
-    return this.filmmakerService.updateProject(id, req.user.sub, body);
+    return this.filmmakerService.updateProject(id, req.user.id, body);
   }
 
   @Post('projects/:id/updates')
@@ -74,7 +74,7 @@ export class FilmmakerController {
     @Body() body: { title: string; content: string },
     @Request() req: { user: { id: string } }
   ): Promise<unknown> {
-    return this.filmmakerService.addUpdate(projectId, req.user.sub, body);
+    return this.filmmakerService.addUpdate(projectId, req.user.id, body);
   }
 
   @Post('back')
@@ -85,7 +85,7 @@ export class FilmmakerController {
     @Body() body: { projectId: string; amount: number },
     @Request() req: { user: { id: string } }
   ): Promise<unknown> {
-    return this.filmmakerService.backProject(req.user.sub, body.projectId, body.amount);
+    return this.filmmakerService.backProject(req.user.id, body.projectId, body.amount);
   }
 
   @Get('projects/:id/backers')

@@ -13,7 +13,7 @@ export class IntelligenceController {
   @Get('personalization')
   @ApiOperation({ summary: 'Get personalization data for user' })
   async getPersonalization(@Request() req: { user: { sub: string } }): Promise<unknown> {
-    return this.intelligenceService.getPersonalization(req.user.sub);
+    return this.intelligenceService.getPersonalization(req.user.id);
   }
 
   @Get('segments')
@@ -82,7 +82,7 @@ export class IntelligenceController {
     }
   ): Promise<unknown> {
     return this.intelligenceService.detectFraud(
-      req.user.sub,
+      req.user.id,
       body.eventType,
       body.severity,
       body.details

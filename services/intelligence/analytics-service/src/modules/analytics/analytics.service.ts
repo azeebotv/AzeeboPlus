@@ -160,7 +160,7 @@ export class AnalyticsService {
           validationErrors: validationErrors.length > 0 ? validationErrors : undefined,
         },
       };
-    } catch (error) {
+    } catch (_err) {
       this.logger.error(`ingestEvents failed: ${(error as Error).message}`, (error as Error).stack);
       return { success: false, error: { code: 'INTERNAL_ERROR', message: (error as Error).message } };
     }
@@ -191,7 +191,7 @@ export class AnalyticsService {
           recentActivity,
         },
       };
-    } catch (error) {
+    } catch (_err) {
       this.logger.error(`getUserSummary failed: ${(error as Error).message}`, (error as Error).stack);
       return { success: false, error: { code: 'INTERNAL_ERROR', message: (error as Error).message } };
     }
@@ -241,7 +241,7 @@ export class AnalyticsService {
 
       await this.cache.set(cacheK, result, 300);
       return result;
-    } catch (error) {
+    } catch (_err) {
       this.logger.error(`getDashboard failed: ${(error as Error).message}`, (error as Error).stack);
       return { success: false, error: { code: 'INTERNAL_ERROR', message: (error as Error).message } };
     }
@@ -318,7 +318,7 @@ export class AnalyticsService {
         success: true,
         data: { funnels: funnelResults },
       };
-    } catch (error) {
+    } catch (_err) {
       this.logger.error(`getFunnels failed: ${(error as Error).message}`, (error as Error).stack);
       return { success: false, error: { code: 'INTERNAL_ERROR', message: (error as Error).message } };
     }
@@ -365,7 +365,7 @@ export class AnalyticsService {
           period,
         },
       };
-    } catch (error) {
+    } catch (_err) {
       this.logger.error(`getCohorts failed: ${(error as Error).message}`, (error as Error).stack);
       return { success: false, error: { code: 'INTERNAL_ERROR', message: (error as Error).message } };
     }
@@ -392,7 +392,7 @@ export class AnalyticsService {
       await this.cache.invalidate('analytics:*');
 
       return result;
-    } catch (error) {
+    } catch (_err) {
       this.logger.error(`trackEvent failed: ${(error as Error).message}`, (error as Error).stack);
       return { success: false, error: { code: 'INTERNAL_ERROR', message: (error as Error).message } };
     }
@@ -422,7 +422,7 @@ export class AnalyticsService {
       await this.cache.invalidate('analytics:*');
 
       return { success: true };
-    } catch (error) {
+    } catch (_err) {
       this.logger.error(`trackBatch failed: ${(error as Error).message}`, (error as Error).stack);
       return { success: false };
     }
@@ -470,7 +470,7 @@ export class AnalyticsService {
           activeUsers: activeUsers.length,
         },
       };
-    } catch (error) {
+    } catch (_err) {
       this.logger.error(`getDailyStats failed: ${(error as Error).message}`, (error as Error).stack);
       return { success: false, error: { code: 'INTERNAL_ERROR', message: (error as Error).message } };
     }
@@ -547,7 +547,7 @@ export class AnalyticsService {
           period: '30d',
         },
       };
-    } catch (error) {
+    } catch (_err) {
       this.logger.error(`getUniverseKpis failed: ${(error as Error).message}`, (error as Error).stack);
       return { success: false, error: { code: 'INTERNAL_ERROR', message: (error as Error).message } };
     }
@@ -597,7 +597,7 @@ export class AnalyticsService {
           aggregated,
         },
       };
-    } catch (error) {
+    } catch (_err) {
       this.logger.error(`getAllUniverseKpis failed: ${(error as Error).message}`, (error as Error).stack);
       return { success: false, error: { code: 'INTERNAL_ERROR', message: (error as Error).message } };
     }
@@ -637,7 +637,7 @@ export class AnalyticsService {
           retentionRate,
         },
       };
-    } catch (error) {
+    } catch (_err) {
       this.logger.error(`getRetentionMetrics failed: ${(error as Error).message}`, (error as Error).stack);
       return { success: false, error: { code: 'INTERNAL_ERROR', message: (error as Error).message } };
     }
@@ -674,7 +674,7 @@ export class AnalyticsService {
           newSubscriptions: subscriptions,
         },
       };
-    } catch (error) {
+    } catch (_err) {
       this.logger.error(`getRevenueMetrics failed: ${(error as Error).message}`, (error as Error).stack);
       return { success: false, error: { code: 'INTERNAL_ERROR', message: (error as Error).message } };
     }
@@ -737,7 +737,7 @@ export class AnalyticsService {
           engagementRate,
         },
       };
-    } catch (error) {
+    } catch (_err) {
       this.logger.error(`getEngagementMetrics failed: ${(error as Error).message}`, (error as Error).stack);
       return { success: false, error: { code: 'INTERNAL_ERROR', message: (error as Error).message } };
     }
@@ -764,7 +764,7 @@ export class AnalyticsService {
           universes: universeKpis.data,
         },
       };
-    } catch (error) {
+    } catch (_err) {
       this.logger.error(`getDetailedDashboard failed: ${(error as Error).message}`, (error as Error).stack);
       return { success: false, error: { code: 'INTERNAL_ERROR', message: (error as Error).message } };
     }
@@ -825,7 +825,7 @@ export class AnalyticsService {
 
       await this.cache.set(cacheK, result, 300);
       return result;
-    } catch (error) {
+    } catch (_err) {
       this.logger.error(`getKpis failed: ${(error as Error).message}`, (error as Error).stack);
       return { success: false, error: { code: 'INTERNAL_ERROR', message: (error as Error).message } };
     }
@@ -878,7 +878,7 @@ export class AnalyticsService {
           recentEvents,
         },
       };
-    } catch (error) {
+    } catch (_err) {
       this.logger.error(`getRealtime failed: ${(error as Error).message}`, (error as Error).stack);
       return { success: false, error: { code: 'INTERNAL_ERROR', message: (error as Error).message } };
     }

@@ -153,7 +153,7 @@ export class ContentFeedService {
       }
 
       return { success: true, data: content };
-    } catch (error: unknown) {
+    } catch (error) {
       this.logger.error(`getFeatured failed: ${(error as Error).message}`);
       return { success: true, data: [] };
     }
@@ -172,7 +172,7 @@ export class ContentFeedService {
         success: true,
         data: content,
       };
-    } catch (error: unknown) {
+    } catch (error) {
       this.logger.error(`getTrending failed: ${(error as Error).message}`);
       return {
         success: true,
@@ -195,7 +195,7 @@ export class ContentFeedService {
       });
 
       return { success: true, data: content };
-    } catch (error: unknown) {
+    } catch (error) {
       this.logger.error(`getNewReleases failed: ${(error as Error).message}`);
       return { success: true, data: [] };
     }
@@ -225,7 +225,7 @@ export class ContentFeedService {
       }
 
       return { success: true, data: content };
-    } catch (error: unknown) {
+    } catch (error) {
       this.logger.error(`getFeaturedSlides failed: ${(error as Error).message}`);
       return { success: true, data: [] };
     }
@@ -242,7 +242,7 @@ export class ContentFeedService {
       });
 
       return { success: true, data: content };
-    } catch (error: unknown) {
+    } catch (error) {
       this.logger.error(`getPopularInRegion failed: ${(error as Error).message}`);
       return { success: true, data: [] };
     }

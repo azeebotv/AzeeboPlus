@@ -129,7 +129,7 @@ export class MoviesService {
         { timeout: 10000 }
       );
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to process payment';
+      const errorMessage = error instanceof Error ? (error as Error).message : 'Failed to process payment';
       throw new BadRequestException(errorMessage);
     }
 

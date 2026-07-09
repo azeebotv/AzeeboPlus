@@ -126,7 +126,7 @@ export class GatewayAuthGuard implements CanActivate {
         throw new Error('Token expired');
       }
       if (error instanceof jwt.JsonWebTokenError) {
-        throw new Error(`Invalid token: ${error.message}`);
+        throw new Error(`Invalid token: ${(error as Error).message}`);
       }
       throw error;
     }

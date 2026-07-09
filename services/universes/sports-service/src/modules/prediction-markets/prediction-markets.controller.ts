@@ -49,7 +49,7 @@ export class PredictionMarketsController {
     @Query('limit') limit = 20
   ): Promise<unknown> {
     return this.predictionMarketsService.getUserPredictions(
-      req.user.sub,
+      req.user.id,
       Number(page),
       Number(limit)
     );
@@ -85,7 +85,7 @@ export class PredictionMarketsController {
     @Request() req: { user: { id: string } }
   ): Promise<unknown> {
     return this.predictionMarketsService.placePrediction(
-      req.user.sub,
+      req.user.id,
       marketId,
       body.selectedOption,
       body.stake

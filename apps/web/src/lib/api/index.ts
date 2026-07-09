@@ -286,7 +286,7 @@ class ApiClient {
       }
 
       if (
-        this.isRetryableError(undefined, error instanceof Error ? error.message : undefined) &&
+        this.isRetryableError(undefined, error instanceof Error ? (error as Error).message : undefined) &&
         attempt < RETRY_CONFIG.maxRetries
       ) {
         const delay = this.calculateDelay(attempt);
@@ -297,7 +297,7 @@ class ApiClient {
       return {
         success: false,
         message: 'Network error. Please check your connection.',
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: error instanceof Error ? (error as Error).message : 'Unknown error',
       };
     }
   }

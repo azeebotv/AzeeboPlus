@@ -231,7 +231,7 @@ export class SportsService {
           idempotent: false,
         },
       };
-    } catch (error: unknown) {
+    } catch (_err) {
       await axios
         .post(`${this.walletServiceBaseUrl}/wallet/credit`, {
           walletId: wallet.id,
@@ -395,7 +395,7 @@ export class SportsService {
           idempotent: false,
         },
       };
-    } catch (error: unknown) {
+    } catch (_err) {
       await axios
         .post(`${this.walletServiceBaseUrl}/wallet/credit`, {
           walletId: wallet.id,

@@ -28,7 +28,7 @@ export class MfaController {
   @ApiOperation({ summary: 'Setup MFA for user' })
   @ApiResponse({ status: 200, description: 'MFA setup information' })
   async setup(@Request() req: MfaRequest): Promise<unknown> {
-    const result = await this.mfaService.generateMfaSecret(req.user.sub);
+    const result = await this.mfaService.generateMfaSecret(req.user.id);
 
     return ApiResponseWrapper.success({
       secret: result.secret,
@@ -43,7 +43,7 @@ export class MfaController {
   @ApiOperation({ summary: 'Verify MFA code' })
   @ApiResponse({ status: 200, description: 'MFA verification result' })
   async verify(@Request() req: MfaRequest, @Body() dto: EnableMfaDto): Promise<unknown> {
-    const isValid = (await this.mfaService.verifyMfaCode(req.user.sub, dto.code)) as boolean;
+    const isValid = (await this.mfaService.verifyMfaCode(req.user.id, dto.code)) as boolean;
 
     if (isValid) {
       return ApiResponseWrapper.success({ mfaEnabled: true });
@@ -56,7 +56,7 @@ export class MfaController {
   @ApiOperation({ summary: 'Enable MFA for user' })
   @ApiResponse({ status: 200, description: 'MFA enabled' })
   async enable(@Request() req: MfaRequest, @Body() dto: EnableMfaDto): Promise<unknown> {
-    const pendingSecret = await this.mfaService.getPendingMfaSecret(req.user.sub);
+    const pendingSecret = await this.mfaService.getPendingMfaSecret(req.user.id);
     if (!pendingSecret) {
       return ApiResponseWrapper.error('MFA_SETUP_REQUIRED', 'Run /mfa/setup first');
     }
@@ -71,8 +71,8 @@ export class MfaController {
       return ApiResponseWrapper.error('MFA_INVALID_CODE', 'Invalid MFA code');
     }
 
-    await this.mfaService.enableMfa(req.user.sub, pendingSecret);
-    await this.mfaService.clearPendingMfaSecret(req.user.sub);
+    await this.mfaService.enableMfa(req.user.id, pendingSecret);
+    await this.mfaService.clearPendingMfaSecret(req.user.id);
 
     return ApiResponseWrapper.success({ mfaEnabled: true });
   }
@@ -82,7 +82,7 @@ export class MfaController {
   @ApiOperation({ summary: 'Disable MFA for user' })
   @ApiResponse({ status: 200, description: 'MFA disabled' })
   async disable(@Request() req: MfaRequest): Promise<unknown> {
-    await this.mfaService.disableMfa(req.user.sub);
+    await this.mfaService.disableMfa(req.user.id);
 
     return ApiResponseWrapper.success({ mfaEnabled: false });
   }

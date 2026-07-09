@@ -43,9 +43,9 @@ export class TicketService {
       await this.cache.invalidate('support:tickets:list:*');
 
       return result;
-    } catch (error) {
-      this.logger.error(`createTicket failed: ${error.message}`, error.stack);
-      return { success: false, error: error.message };
+    } catch (_err) {
+      this.logger.error(`createTicket failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: (error as Error).message };
     }
   }
 
@@ -72,9 +72,9 @@ export class TicketService {
         await this.cache.set(cacheK, result, 120);
       }
       return result;
-    } catch (error) {
-      this.logger.error(`getTicketById failed: ${error.message}`, error.stack);
-      return { success: false, error: error.message };
+    } catch (_err) {
+      this.logger.error(`getTicketById failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: (error as Error).message };
     }
   }
 
@@ -125,9 +125,9 @@ export class TicketService {
 
       await this.cache.set(cacheK, result, 120);
       return result;
-    } catch (error) {
-      this.logger.error(`getUserTickets failed: ${error.message}`, error.stack);
-      return { success: false, error: error.message };
+    } catch (_err) {
+      this.logger.error(`getUserTickets failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: (error as Error).message };
     }
   }
 
@@ -176,9 +176,9 @@ export class TicketService {
 
       await this.cache.set(cacheK, result, 120);
       return result;
-    } catch (error) {
-      this.logger.error(`getTickets failed: ${error.message}`, error.stack);
-      return { success: false, error: error.message };
+    } catch (_err) {
+      this.logger.error(`getTickets failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: (error as Error).message };
     }
   }
 
@@ -201,12 +201,12 @@ export class TicketService {
       await this.cache.invalidate('support:tickets:list:*');
 
       return result;
-    } catch (error) {
+    } catch (_err) {
       if (error instanceof NotFoundException) {
         throw error;
       }
-      this.logger.error(`updateTicketStatus failed: ${error.message}`, error.stack);
-      return { success: false, error: error.message };
+      this.logger.error(`updateTicketStatus failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: (error as Error).message };
     }
   }
 
@@ -231,9 +231,9 @@ export class TicketService {
       await this.cache.invalidate(`support:tickets:${ticketId}`);
 
       return result;
-    } catch (error) {
-      this.logger.error(`addMessage failed: ${error.message}`, error.stack);
-      return { success: false, error: error.message };
+    } catch (_err) {
+      this.logger.error(`addMessage failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: (error as Error).message };
     }
   }
 
@@ -251,9 +251,9 @@ export class TicketService {
       await this.cache.invalidate('support:tickets:list:*');
 
       return result;
-    } catch (error) {
-      this.logger.error(`assignTicket failed: ${error.message}`, error.stack);
-      return { success: false, error: error.message };
+    } catch (_err) {
+      this.logger.error(`assignTicket failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: (error as Error).message };
     }
   }
 
@@ -271,9 +271,9 @@ export class TicketService {
       await this.cache.invalidate('support:tickets:list:*');
 
       return result;
-    } catch (error) {
-      this.logger.error(`escalateTicket failed: ${error.message}`, error.stack);
-      return { success: false, error: error.message };
+    } catch (_err) {
+      this.logger.error(`escalateTicket failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: (error as Error).message };
     }
   }
 
@@ -291,9 +291,9 @@ export class TicketService {
       await this.cache.invalidate('support:tickets:list:*');
 
       return result;
-    } catch (error) {
-      this.logger.error(`closeTicket failed: ${error.message}`, error.stack);
-      return { success: false, error: error.message };
+    } catch (_err) {
+      this.logger.error(`closeTicket failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: (error as Error).message };
     }
   }
 
@@ -310,9 +310,9 @@ export class TicketService {
 
       await this.cache.set(cacheK, articles, 600);
       return { success: true, data: articles };
-    } catch (error) {
-      this.logger.error(`getFaq failed: ${error.message}`, error.stack);
-      return { success: false, error: error.message };
+    } catch (_err) {
+      this.logger.error(`getFaq failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: (error as Error).message };
     }
   }
 }

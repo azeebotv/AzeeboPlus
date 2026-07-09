@@ -12,7 +12,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
   async onModuleInit(): Promise<void> {
     try {
       await this.$connect();
-    } catch (error) {
+    } catch (_err) {
       this.logger.error(`Failed to connect to database: ${(error as Error).message}`);
       throw error;
     }

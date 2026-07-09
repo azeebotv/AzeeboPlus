@@ -31,8 +31,8 @@ export class AdminService {
         ),
       };
     } catch (error) {
-      this.logger.error(`Failed to get stats: ${error.message}`, error.stack);
-      return { success: false, error: error.message };
+      this.logger.error(`Failed to get stats: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: (error as Error).message };
     }
   }
 
@@ -49,8 +49,8 @@ export class AdminService {
 
       return { games, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
     } catch (error) {
-      this.logger.error(`Failed to get games: ${error.message}`, error.stack);
-      return { success: false, error: error.message };
+      this.logger.error(`Failed to get games: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: (error as Error).message };
     }
   }
 
@@ -67,8 +67,8 @@ export class AdminService {
 
       return { tournaments, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
     } catch (error) {
-      this.logger.error(`Failed to get tournaments: ${error.message}`, error.stack);
-      return { success: false, error: error.message };
+      this.logger.error(`Failed to get tournaments: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: (error as Error).message };
     }
   }
 }

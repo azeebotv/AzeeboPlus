@@ -321,7 +321,7 @@ export class GamesService {
           { timeout: 10000 }
         )
         .catch((error: unknown) => {
-          const errorMessage = error instanceof Error ? error.message : 'Failed to debit wallet';
+          const errorMessage = error instanceof Error ? (error as Error).message : 'Failed to debit wallet';
           throw new BadRequestException(errorMessage);
         });
     }

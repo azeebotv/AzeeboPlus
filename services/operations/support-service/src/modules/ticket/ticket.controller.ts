@@ -24,7 +24,7 @@ export class TicketController {
   @ApiOperation({ summary: 'Create a new support ticket' })
   async createTicket(@Request() req: AuthenticatedRequest, @Body() dto: CreateTicketDto) {
     const ticket = await this.ticketService.createTicket({
-      userId: req.user.sub,
+      userId: req.user.id,
       category: dto.category,
       subject: dto.subject,
       description: dto.description,
@@ -52,7 +52,7 @@ export class TicketController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get my support tickets' })
   async getMyTickets(@Request() req: AuthenticatedRequest, @Query() query: TicketQueryDto) {
-    const result = await this.ticketService.getUserTickets(req.user.sub, query);
+    const result = await this.ticketService.getUserTickets(req.user.id, query);
     return ApiResponseWrapper.paginated(
       result.tickets,
       result.meta.page,
@@ -69,7 +69,7 @@ export class TicketController {
     if (!ticket) {
       return ApiResponseWrapper.error('TICKET_NOT_FOUND', 'Support ticket not found');
     }
-    if (ticket.userId !== req.user.sub && req.user.role?.toLowerCase() !== 'admin') {
+    if (ticket.userId !== req.user.id && req.user.role?.toLowerCase() !== 'admin') {
       return ApiResponseWrapper.error('FORBIDDEN', 'You do not have access to this ticket');
     }
     return ApiResponseWrapper.success({ ticket });
@@ -96,7 +96,7 @@ export class TicketController {
     const isInternal = req.user.role === 'admin' || req.user.role === 'ADMIN' ? dto.isInternal : false;
     const message = await this.ticketService.addMessage(
       id,
-      req.user.sub,
+      req.user.id,
       senderType,
       dto.message,
       isInternal

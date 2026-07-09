@@ -30,7 +30,7 @@ export class ReferralController {
   @ApiResponse({ status: 200, description: 'Referral code' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getReferralCode(@Request() req: { user: { sub: string } }): Promise<ReferralResponse> {
-    return this.referralService.getReferralCode(req.user.sub);
+    return this.referralService.getReferralCode(req.user.id);
   }
 
   @Post('generate')
@@ -44,7 +44,7 @@ export class ReferralController {
     @Request() req: { user: { sub: string } },
     @Body() generateDto: GenerateReferralCodeDto
   ): Promise<ReferralResponse> {
-    return this.referralService.generateReferralCode(req.user.sub, generateDto);
+    return this.referralService.generateReferralCode(req.user.id, generateDto);
   }
 
   @Post('apply')
@@ -60,7 +60,7 @@ export class ReferralController {
     @Request() req: { user: { sub: string } },
     @Body() applyDto: ApplyReferralCodeDto
   ): Promise<ReferralResponse> {
-    return this.referralService.applyReferralCode(req.user.sub, applyDto);
+    return this.referralService.applyReferralCode(req.user.id, applyDto);
   }
 
   @Get()
@@ -73,7 +73,7 @@ export class ReferralController {
     @Query('page') page?: number,
     @Query('limit') limit?: number
   ): Promise<ReferralResponse> {
-    return this.referralService.getReferrals(req.user.sub, Number(page) || 1, Number(limit) || 20);
+    return this.referralService.getReferrals(req.user.id, Number(page) || 1, Number(limit) || 20);
   }
 
   @Get('stats')
@@ -82,7 +82,7 @@ export class ReferralController {
   @ApiResponse({ status: 200, description: 'Referral statistics' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getStats(@Request() req: { user: { sub: string } }): Promise<ReferralResponse> {
-    return this.referralService.getStats(req.user.sub);
+    return this.referralService.getStats(req.user.id);
   }
 
   @Post('complete/:referralId')
@@ -99,6 +99,6 @@ export class ReferralController {
     @Request() req: { user: { sub: string } },
     @Param('referralId') referralId: string
   ): Promise<ReferralResponse> {
-    return this.referralService.completeReferral(referralId, req.user.sub);
+    return this.referralService.completeReferral(referralId, req.user.id);
   }
 }

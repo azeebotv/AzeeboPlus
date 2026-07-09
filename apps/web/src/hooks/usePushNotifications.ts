@@ -66,7 +66,7 @@ export function usePushNotifications() {
 
       return subscription;
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to subscribe';
+      const message = error instanceof Error ? (error as Error).message : 'Failed to subscribe';
       setState((prev) => ({
         ...prev,
         isLoading: false,
@@ -91,7 +91,7 @@ export function usePushNotifications() {
 
       return result;
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to unsubscribe';
+      const message = error instanceof Error ? (error as Error).message : 'Failed to unsubscribe';
       setState((prev) => ({
         ...prev,
         isLoading: false,

@@ -44,7 +44,7 @@ export class ComedyController {
     @Request() req: { user: { sub: string } },
     @Body() body: SubmitChallengeDto
   ): Promise<ComedyResponse> {
-    return this.comedyService.submitChallenge(req.user.sub, body);
+    return this.comedyService.submitChallenge(req.user.id, body);
   }
 
   @Get('challenges')
@@ -63,7 +63,7 @@ export class ComedyController {
     @Request() req: { user: { sub: string } },
     @Param('clipId') clipId: string
   ): Promise<ComedyResponse> {
-    return this.comedyService.shareClip(req.user.sub, clipId);
+    return this.comedyService.shareClip(req.user.id, clipId);
   }
 
   @Get('trending')

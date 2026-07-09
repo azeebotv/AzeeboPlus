@@ -413,7 +413,7 @@ export async function apiFetch<T>(
     return {
       success: false,
       message: 'Network error. Please check your connection.',
-      error: error instanceof Error ? error.message : 'Unknown error',
+      error: error instanceof Error ? (error as Error).message : 'Unknown error',
       statusCode: 0,
     } as ApiError;
   }

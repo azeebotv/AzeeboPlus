@@ -43,7 +43,7 @@ export class ContentIngestionService {
         success: true,
         data: content,
       };
-    } catch (error: unknown) {
+    } catch (error) {
       this.logger.error(`Failed to create content record: ${error}`);
       return { success: false, error: { code: 'CREATE_CONTENT_RECORD_FAILED', message: 'Failed to create content record' } } as never;
     }
@@ -98,7 +98,7 @@ export class ContentIngestionService {
           clipEndTime,
         },
       });
-    } catch (error: unknown) {
+    } catch (error) {
       if (error instanceof NotFoundException) throw error;
       this.logger.error(`Failed to ingest clip content: ${error}`);
       return { success: false, error: { code: 'INGEST_CLIP_FAILED', message: 'Failed to ingest clip content' } } as never;

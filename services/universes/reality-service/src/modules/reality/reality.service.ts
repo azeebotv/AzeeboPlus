@@ -331,7 +331,7 @@ export class RealityService {
         idempotencyKey,
       }, { timeout: 10000 })
       .catch((error: unknown) => {
-        const errorMessage = error instanceof Error ? error.message : 'Failed to debit wallet';
+        const errorMessage = error instanceof Error ? (error as Error).message : 'Failed to debit wallet';
         throw new ConflictException(errorMessage);
       });
 
@@ -363,7 +363,7 @@ export class RealityService {
           message: `Supervote submitted successfully. ${this.supervoteCost} NGN has been deducted from your wallet.`,
         },
       };
-    } catch (error: unknown) {
+    } catch (_err) {
       await axios
         .post(`${this.walletServiceBaseUrl}/wallet/credit`, {
           walletId: wallet.id,
@@ -377,7 +377,7 @@ export class RealityService {
             compensateError
           );
         });
-      const errorMessage = error instanceof Error ? error.message : 'Failed to submit supervote';
+      const errorMessage = error instanceof Error ? (error as Error).message : 'Failed to submit supervote';
       throw new ConflictException(errorMessage);
     }
   }
@@ -492,7 +492,7 @@ export class RealityService {
         idempotencyKey,
       }, { timeout: 10000 })
       .catch((error: unknown) => {
-        const errorMessage = error instanceof Error ? error.message : 'Failed to debit wallet';
+        const errorMessage = error instanceof Error ? (error as Error).message : 'Failed to debit wallet';
         throw new ConflictException(errorMessage);
       });
 
@@ -534,7 +534,7 @@ export class RealityService {
           message: `${quantity} votes submitted successfully`,
         },
       };
-    } catch (error: unknown) {
+    } catch (_err) {
       await axios
         .post(`${this.walletServiceBaseUrl}/wallet/credit`, {
           walletId: wallet.id,
@@ -545,7 +545,7 @@ export class RealityService {
         .catch((compensateError: unknown) => {
           this.logger.error('Failed to compensate wallet after votes failure:', compensateError);
         });
-      const errorMessage = error instanceof Error ? error.message : 'Failed to submit votes';
+      const errorMessage = error instanceof Error ? (error as Error).message : 'Failed to submit votes';
       throw new ConflictException(errorMessage);
     }
   }
@@ -637,9 +637,9 @@ export class RealityService {
           message: `Successfully purchased ${extra.name}`,
         },
       };
-    } catch (error: unknown) {
+    } catch (_err) {
       const errorMessage =
-        error instanceof Error ? error.message : 'Failed to purchase premium extra';
+        error instanceof Error ? (error as Error).message : 'Failed to purchase premium extra';
       throw new ConflictException(errorMessage);
     }
   }

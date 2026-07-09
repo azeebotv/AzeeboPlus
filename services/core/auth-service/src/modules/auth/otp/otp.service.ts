@@ -77,7 +77,7 @@ export class OtpService {
         },
       });
       this.logger.log(`OTP sent to ${phoneNumber}`);
-    } catch (error: unknown) {
+    } catch (error) {
       this.logger.error(`Failed to send OTP via notification-service: ${(error as Error).message}`);
       throw new BadRequestException('Failed to send OTP. Please try again.');
     }

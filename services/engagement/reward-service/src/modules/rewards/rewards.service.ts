@@ -95,8 +95,8 @@ export class RewardsService {
         },
       };
     } catch (error) {
-      this.logger.error(`getRewardAccount failed: ${error.message}`, error.stack);
-      return { success: false, error: error.message };
+      this.logger.error(`getRewardAccount failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: (error as Error).message };
     }
   }
 
@@ -141,8 +141,8 @@ export class RewardsService {
       await this.cacheService.set(cacheK, result, 300);
       return result;
     } catch (error) {
-      this.logger.error(`getMissions failed: ${error.message}`, error.stack);
-      return { success: false, error: error.message };
+      this.logger.error(`getMissions failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: (error as Error).message };
     }
   }
 
@@ -180,8 +180,8 @@ export class RewardsService {
       await this.cacheService.set(cacheK, result, 300);
       return result;
     } catch (error) {
-      this.logger.error(`getBadges failed: ${error.message}`, error.stack);
-      return { success: false, error: error.message };
+      this.logger.error(`getBadges failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: (error as Error).message };
     }
   }
 
@@ -221,8 +221,8 @@ export class RewardsService {
         },
       };
     } catch (error) {
-      this.logger.error(`getStreak failed: ${error.message}`, error.stack);
-      return { success: false, error: error.message };
+      this.logger.error(`getStreak failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: (error as Error).message };
     }
   }
 
@@ -285,8 +285,8 @@ export class RewardsService {
         },
       };
     } catch (error) {
-      this.logger.error(`redeemReward failed: ${error.message}`, error.stack);
-      return { success: false, error: error.message };
+      this.logger.error(`redeemReward failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: (error as Error).message };
     }
   }
 
@@ -333,8 +333,8 @@ export class RewardsService {
         },
       };
     } catch (error) {
-      this.logger.error(`getLevel failed: ${error.message}`, error.stack);
-      return { success: false, error: error.message };
+      this.logger.error(`getLevel failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: (error as Error).message };
     }
   }
 
@@ -389,8 +389,8 @@ export class RewardsService {
         },
       };
     } catch (error) {
-      this.logger.error(`addPoints failed: ${error.message}`, error.stack);
-      return { success: false, error: error.message };
+      this.logger.error(`addPoints failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: (error as Error).message };
     }
   }
 
@@ -459,8 +459,8 @@ export class RewardsService {
         },
       };
     } catch (error) {
-      this.logger.error(`checkIn failed: ${error.message}`, error.stack);
-      return { success: false, error: error.message };
+      this.logger.error(`checkIn failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: (error as Error).message };
     }
   }
 
@@ -513,8 +513,8 @@ export class RewardsService {
         },
       };
     } catch (error) {
-      this.logger.error(`earnPoints failed: ${error.message}`, error.stack);
-      return { success: false, error: error.message };
+      this.logger.error(`earnPoints failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: (error as Error).message };
     }
   }
 
@@ -562,8 +562,8 @@ export class RewardsService {
       await this.cacheService.set(cacheK, result, 120);
       return result;
     } catch (error) {
-      this.logger.error(`getBalance failed: ${error.message}`, error.stack);
-      return { success: false, error: error.message };
+      this.logger.error(`getBalance failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: (error as Error).message };
     }
   }
 
@@ -600,8 +600,8 @@ export class RewardsService {
         },
       };
     } catch (error) {
-      this.logger.error(`getHistory failed: ${error.message}`, error.stack);
-      return { success: false, error: error.message };
+      this.logger.error(`getHistory failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: (error as Error).message };
     }
   }
 }

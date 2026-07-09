@@ -53,9 +53,9 @@ export class IntelligenceService {
           preferences: preferences?.preferences || {},
         },
       };
-    } catch (error) {
-      this.logger.error(`getPersonalization failed: ${error.message}`, error.stack);
-      return { success: false, error: error.message };
+    } catch (_err) {
+      this.logger.error(`getPersonalization failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: (error as Error).message };
     }
   }
 
@@ -63,9 +63,9 @@ export class IntelligenceService {
     try {
       const segments = await this.prisma.audienceSegment.findMany();
       return { success: true, data: segments };
-    } catch (error) {
-      this.logger.error(`getAudienceSegments failed: ${error.message}`, error.stack);
-      return { success: false, error: error.message };
+    } catch (_err) {
+      this.logger.error(`getAudienceSegments failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: (error as Error).message };
     }
   }
 
@@ -125,9 +125,9 @@ export class IntelligenceService {
       });
 
       return { success: true, data: { id: segment.id } };
-    } catch (error) {
-      this.logger.error(`createAudienceSegment failed: ${error.message}`, error.stack);
-      return { success: false, error: error.message };
+    } catch (_err) {
+      this.logger.error(`createAudienceSegment failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: (error as Error).message };
     }
   }
 
@@ -139,9 +139,9 @@ export class IntelligenceService {
       });
 
       return { success: true, data: scores };
-    } catch (error) {
-      this.logger.error(`getCreatorScores failed: ${error.message}`, error.stack);
-      return { success: false, error: error.message };
+    } catch (_err) {
+      this.logger.error(`getCreatorScores failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: (error as Error).message };
     }
   }
 
@@ -180,9 +180,9 @@ export class IntelligenceService {
       });
 
       return { success: true, data: score };
-    } catch (error) {
-      this.logger.error(`calculateCreatorScore failed: ${error.message}`, error.stack);
-      return { success: false, error: error.message };
+    } catch (_err) {
+      this.logger.error(`calculateCreatorScore failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: (error as Error).message };
     }
   }
 
@@ -195,9 +195,9 @@ export class IntelligenceService {
       });
 
       return { success: true, data: risks };
-    } catch (error) {
-      this.logger.error(`getChurnRisks failed: ${error.message}`, error.stack);
-      return { success: false, error: error.message };
+    } catch (_err) {
+      this.logger.error(`getChurnRisks failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: (error as Error).message };
     }
   }
 
@@ -280,9 +280,9 @@ export class IntelligenceService {
       });
 
       return { success: true, data: churnRisk };
-    } catch (error) {
-      this.logger.error(`calculateChurnRisk failed: ${error.message}`, error.stack);
-      return { success: false, error: error.message };
+    } catch (_err) {
+      this.logger.error(`calculateChurnRisk failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: (error as Error).message };
     }
   }
 
@@ -296,9 +296,9 @@ export class IntelligenceService {
       });
 
       return { success: true, data: detections };
-    } catch (error) {
-      this.logger.error(`getFraudDetections failed: ${error.message}`, error.stack);
-      return { success: false, error: error.message };
+    } catch (_err) {
+      this.logger.error(`getFraudDetections failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: (error as Error).message };
     }
   }
 
@@ -319,9 +319,9 @@ export class IntelligenceService {
       });
 
       return { success: true, data: { id: detection.id } };
-    } catch (error) {
-      this.logger.error(`detectFraud failed: ${error.message}`, error.stack);
-      return { success: false, error: error.message };
+    } catch (_err) {
+      this.logger.error(`detectFraud failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: (error as Error).message };
     }
   }
 
@@ -337,9 +337,9 @@ export class IntelligenceService {
       });
 
       return { success: true, data: { message: `Detection ${status}` } };
-    } catch (error) {
-      this.logger.error(`reviewFraudDetection failed: ${error.message}`, error.stack);
-      return { success: false, error: error.message };
+    } catch (_err) {
+      this.logger.error(`reviewFraudDetection failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: (error as Error).message };
     }
   }
 
@@ -377,9 +377,9 @@ export class IntelligenceService {
           retentionByWeek,
         },
       };
-    } catch (error) {
-      this.logger.error(`getRetentionMetrics failed: ${error.message}`, error.stack);
-      return { success: false, error: error.message };
+    } catch (_err) {
+      this.logger.error(`getRetentionMetrics failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: (error as Error).message };
     }
   }
 
@@ -460,9 +460,9 @@ export class IntelligenceService {
           recommendationReason: 'Based on your viewing patterns, you might enjoy these universes',
         },
       };
-    } catch (error) {
-      this.logger.error(`getCrossUniverseRecommendations failed: ${error.message}`, error.stack);
-      return { success: false, error: error.message };
+    } catch (_err) {
+      this.logger.error(`getCrossUniverseRecommendations failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: (error as Error).message };
     }
   }
 
@@ -558,9 +558,9 @@ export class IntelligenceService {
             .length,
         },
       };
-    } catch (error) {
-      this.logger.error(`analyzeFraudPatterns failed: ${error.message}`, error.stack);
-      return { success: false, error: error.message };
+    } catch (_err) {
+      this.logger.error(`analyzeFraudPatterns failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: (error as Error).message };
     }
   }
 
@@ -622,9 +622,9 @@ export class IntelligenceService {
           ],
         },
       };
-    } catch (error) {
-      this.logger.error(`getSegmentationInsights failed: ${error.message}`, error.stack);
-      return { success: false, error: error.message };
+    } catch (_err) {
+      this.logger.error(`getSegmentationInsights failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: (error as Error).message };
     }
   }
 }

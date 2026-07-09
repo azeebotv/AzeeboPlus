@@ -34,8 +34,8 @@ export class AdminService {
         },
       };
     } catch (error) {
-      this.logger.error(`Failed to get all reality shows: ${error.message}`, error.stack);
-      return { success: false, error: error.message };
+      this.logger.error(`Failed to get all reality shows: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: (error as Error).message };
     }
   }
 
@@ -58,9 +58,9 @@ export class AdminService {
 
       return show;
     } catch (error) {
-      this.logger.error(`Failed to get reality show by id: ${error.message}`, error.stack);
+      this.logger.error(`Failed to get reality show by id: ${(error as Error).message}`, (error as Error).stack);
       if (error instanceof NotFoundException) throw error;
-      return { success: false, error: error.message };
+      return { success: false, error: (error as Error).message };
     }
   }
 
@@ -81,9 +81,9 @@ export class AdminService {
 
       return updated;
     } catch (error) {
-      this.logger.error(`Failed to update reality show status: ${error.message}`, error.stack);
+      this.logger.error(`Failed to update reality show status: ${(error as Error).message}`, (error as Error).stack);
       if (error instanceof NotFoundException) throw error;
-      return { success: false, error: error.message };
+      return { success: false, error: (error as Error).message };
     }
   }
 }

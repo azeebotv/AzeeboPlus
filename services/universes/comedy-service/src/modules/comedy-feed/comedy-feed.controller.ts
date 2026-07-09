@@ -55,7 +55,7 @@ export class ComedyFeedController {
     @Param('id') id: string,
     @Request() req: { user: { id: string } }
   ): Promise<unknown> {
-    return this.comedyFeedService.likeSpecial(req.user.sub, id);
+    return this.comedyFeedService.likeSpecial(req.user.id, id);
   }
 
   @Get('clips/:id')
@@ -73,7 +73,7 @@ export class ComedyFeedController {
     @Param('id') id: string,
     @Request() req: { user: { id: string } }
   ): Promise<unknown> {
-    return this.comedyFeedService.likeClip(req.user.sub, id);
+    return this.comedyFeedService.likeClip(req.user.id, id);
   }
 
   @Post('clips/:id/comment')
@@ -85,7 +85,7 @@ export class ComedyFeedController {
     @Body() body: { text: string },
     @Request() req: { user: { id: string } }
   ): Promise<unknown> {
-    return this.comedyFeedService.commentOnClip(req.user.sub, id, body.text);
+    return this.comedyFeedService.commentOnClip(req.user.id, id, body.text);
   }
 
   @Post('trends/record')

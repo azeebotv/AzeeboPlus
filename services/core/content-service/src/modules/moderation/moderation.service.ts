@@ -66,7 +66,7 @@ export class ModerationService {
         flaggedCategories: scan.flaggedLabels,
         provider: scan.provider,
       };
-    } catch (error: unknown) {
+    } catch (_err) {
       if (error instanceof NotFoundException) throw error;
       this.logger.error(`Failed to scan content: ${error}`);
       throw error;
@@ -142,7 +142,7 @@ export class ModerationService {
         contributingFactors,
         recommendations,
       };
-    } catch (error: unknown) {
+    } catch (_err) {
       this.logger.error(`Failed to get risk assessment: ${error}`);
       throw error;
     }
@@ -164,7 +164,7 @@ export class ModerationService {
       });
 
       return updated!;
-    } catch (error: unknown) {
+    } catch (_err) {
       if (error instanceof NotFoundException) throw error;
       this.logger.error(`Failed to resolve case: ${error}`);
       throw error;
@@ -184,7 +184,7 @@ export class ModerationService {
       });
 
       return updated!;
-    } catch (error: unknown) {
+    } catch (_err) {
       if (error instanceof NotFoundException) throw error;
       this.logger.error(`Failed to assign case: ${error}`);
       throw error;
@@ -213,7 +213,7 @@ export class ModerationService {
         description: data.description,
         evidence: data.evidence || {},
       });
-    } catch (error: unknown) {
+    } catch (_err) {
       this.logger.error(`Failed to create case: ${error}`);
       throw error;
     }
@@ -222,7 +222,7 @@ export class ModerationService {
   async getCases(filters?: { status?: string; type?: string }): Promise<ModerationCase[]> {
     try {
       return this.moderationRepository.getCases(filters);
-    } catch (error: unknown) {
+    } catch (_err) {
       this.logger.error(`Failed to get cases: ${error}`);
       throw error;
     }
@@ -235,7 +235,7 @@ export class ModerationService {
         throw new NotFoundException('Moderation case not found');
       }
       return moderationCase;
-    } catch (error: unknown) {
+    } catch (_err) {
       if (error instanceof NotFoundException) throw error;
       this.logger.error(`Failed to get case by id: ${error}`);
       throw error;
@@ -271,7 +271,7 @@ export class ModerationService {
       }
 
       return action;
-    } catch (error: unknown) {
+    } catch (_err) {
       this.logger.error(`Failed to execute action: ${error}`);
       throw error;
     }
@@ -285,7 +285,7 @@ export class ModerationService {
         reason: data.reason,
         status: 'pending',
       });
-    } catch (error: unknown) {
+    } catch (_err) {
       this.logger.error(`Failed to submit appeal: ${error}`);
       throw error;
     }
@@ -311,7 +311,7 @@ export class ModerationService {
       });
 
       return updated!;
-    } catch (error: unknown) {
+    } catch (_err) {
       if (error instanceof NotFoundException) throw error;
       this.logger.error(`Failed to review appeal: ${error}`);
       throw error;
@@ -334,7 +334,7 @@ export class ModerationService {
       }
 
       return this.moderationRepository.updateTrustScore(userId, score, existing?.factors || {});
-    } catch (error: unknown) {
+    } catch (_err) {
       this.logger.error(`Failed to update trust score: ${error}`);
       throw error;
     }
@@ -343,7 +343,7 @@ export class ModerationService {
   async getTrustScore(userId: string): Promise<TrustScore | null> {
     try {
       return this.moderationRepository.getTrustScore(userId);
-    } catch (error: unknown) {
+    } catch (_err) {
       this.logger.error(`Failed to get trust score: ${error}`);
       throw error;
     }
@@ -352,7 +352,7 @@ export class ModerationService {
   async getContentScans(contentId: string): Promise<ModerationScan[]> {
     try {
       return this.moderationRepository.getScansByContentId(contentId);
-    } catch (error: unknown) {
+    } catch (_err) {
       this.logger.error(`Failed to get content scans: ${error}`);
       throw error;
     }
@@ -361,7 +361,7 @@ export class ModerationService {
   async getSafetyActionsByCase(caseId: string): Promise<SafetyAction[]> {
     try {
       return this.moderationRepository.getSafetyActionsByCaseId(caseId);
-    } catch (error: unknown) {
+    } catch (_err) {
       this.logger.error(`Failed to get safety actions by case: ${error}`);
       throw error;
     }
@@ -413,7 +413,7 @@ export class ModerationService {
             : 0,
         topPolicyCategories,
       };
-    } catch (error: unknown) {
+    } catch (_err) {
       this.logger.error(`Failed to get moderation stats: ${error}`);
       throw error;
     }

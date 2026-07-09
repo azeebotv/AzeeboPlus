@@ -44,7 +44,7 @@ export class EngagementController {
   @ApiOperation({ summary: 'Get prediction results for a content' })
   @ApiResponse({ status: 200, description: 'Prediction results' })
   async getPredictionResults(@Request() req: AuthRequest, @Param('contentId') contentId: string) {
-    return this.engagementService.getPredictionResults(req.user.sub, contentId);
+    return this.engagementService.getPredictionResults(req.user.id, contentId);
   }
 
   @Post('predictions')
@@ -56,7 +56,7 @@ export class EngagementController {
     @Body() dto: SubmitPredictionDto
   ) {
     return this.engagementService.submitPrediction(
-      req.user.sub,
+      req.user.id,
       dto.contentId,
       dto.prediction
     );

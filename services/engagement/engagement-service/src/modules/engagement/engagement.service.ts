@@ -87,8 +87,8 @@ export class EngagementService {
       await this.cache.set(cacheK, result, 60);
       return result;
     } catch (error) {
-      this.logger.error(`getLeaderboard failed: ${error.message}`, error.stack);
-      return { success: false, error: error.message };
+      this.logger.error(`getLeaderboard failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: (error as Error).message };
     }
   }
 
@@ -122,8 +122,8 @@ export class EngagementService {
         data: rankings,
       };
     } catch (error) {
-      this.logger.error(`getRankings failed: ${error.message}`, error.stack);
-      return { success: false, error: error.message };
+      this.logger.error(`getRankings failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: (error as Error).message };
     }
   }
 
@@ -165,8 +165,8 @@ export class EngagementService {
         },
       };
     } catch (error) {
-      this.logger.error(`getPredictionResults failed: ${error.message}`, error.stack);
-      return { success: false, error: error.message };
+      this.logger.error(`getPredictionResults failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: (error as Error).message };
     }
   }
 
@@ -204,8 +204,8 @@ export class EngagementService {
         },
       };
     } catch (error) {
-      this.logger.error(`submitPrediction failed: ${error.message}`, error.stack);
-      return { success: false, error: error.message };
+      this.logger.error(`submitPrediction failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: (error as Error).message };
     }
   }
 
@@ -258,8 +258,8 @@ export class EngagementService {
 
       return { success: true, message: 'Leaderboard updated' };
     } catch (error) {
-      this.logger.error(`updateLeaderboard failed: ${error.message}`, error.stack);
-      return { success: false, error: error.message };
+      this.logger.error(`updateLeaderboard failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: (error as Error).message };
     }
   }
 }

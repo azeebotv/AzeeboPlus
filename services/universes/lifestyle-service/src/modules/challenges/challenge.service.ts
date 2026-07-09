@@ -49,8 +49,8 @@ export class ChallengeService {
         },
       };
     } catch (error) {
-      this.logger.error(`Failed to get challenges: ${error.message}`, error.stack);
-      return { success: false, error: error.message };
+      this.logger.error(`Failed to get challenges: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: (error as Error).message };
     }
   }
 

@@ -191,7 +191,7 @@ export class SystemSettingsService {
         results.push({
           key: setting.key,
           success: false,
-          error: error instanceof Error ? error.message : 'Unknown error',
+          error: error instanceof Error ? (error as Error).message : 'Unknown error',
         });
       }
     }
@@ -208,7 +208,7 @@ export class SystemSettingsService {
         results.push({
           key: setting.key,
           success: false,
-          error: error instanceof Error ? error.message : 'Unknown error',
+          error: error instanceof Error ? (error as Error).message : 'Unknown error',
         });
       }
     }
@@ -306,7 +306,7 @@ export class SystemSettingsService {
               key: `${category}.${key}`,
               action: 'error',
               success: false,
-              error: error instanceof Error ? error.message : 'Unknown error',
+              error: error instanceof Error ? (error as Error).message : 'Unknown error',
             });
           }
         }
@@ -449,7 +449,7 @@ export class SystemSettingsService {
           results.push({ key: settingKey, success: true, data: created });
         }
       } catch (error) {
-        results.push({ key: settingKey, success: false, error: error instanceof Error ? error.message : 'Unknown' });
+        results.push({ key: settingKey, success: false, error: error instanceof Error ? (error as Error).message : 'Unknown' });
       }
     }
     return results;
@@ -512,7 +512,7 @@ export class SystemSettingsService {
           results.push({ key: settingKey, success: true, data: created });
         }
       } catch (error) {
-        results.push({ key: settingKey, success: false, error: error instanceof Error ? error.message : 'Unknown' });
+        results.push({ key: settingKey, success: false, error: error instanceof Error ? (error as Error).message : 'Unknown' });
       }
     }
     return results;
@@ -595,7 +595,7 @@ export class SystemSettingsService {
           results.push({ key: settingKey, success: true, data: created });
         }
       } catch (error) {
-        results.push({ key: settingKey, success: false, error: error instanceof Error ? error.message : 'Unknown' });
+        results.push({ key: settingKey, success: false, error: error instanceof Error ? (error as Error).message : 'Unknown' });
       }
     }
     return results;
@@ -625,7 +625,7 @@ export class SystemSettingsService {
           results.push({ key: settingKey, success: true, data: created });
         }
       } catch (error) {
-        results.push({ key: settingKey, success: false, error: error instanceof Error ? error.message : 'Unknown' });
+        results.push({ key: settingKey, success: false, error: error instanceof Error ? (error as Error).message : 'Unknown' });
       }
     }
     return results;
@@ -729,7 +729,7 @@ export class SystemSettingsService {
           results.push({ key: settingKey, success: true, data: created });
         }
       } catch (error) {
-        results.push({ key: settingKey, success: false, error: error instanceof Error ? error.message : 'Unknown' });
+        results.push({ key: settingKey, success: false, error: error instanceof Error ? (error as Error).message : 'Unknown' });
       }
     }
     return results;
@@ -762,7 +762,7 @@ export class SystemSettingsService {
           results.push({ key: settingKey, success: true, data: created });
         }
       } catch (error) {
-        results.push({ key: settingKey, success: false, error: error instanceof Error ? error.message : 'Unknown' });
+        results.push({ key: settingKey, success: false, error: error instanceof Error ? (error as Error).message : 'Unknown' });
       }
     }
     return results;
@@ -792,7 +792,7 @@ export class SystemSettingsService {
           results.push({ key: settingKey, success: true, data: created });
         }
       } catch (error) {
-        results.push({ key: settingKey, success: false, error: error instanceof Error ? error.message : 'Unknown' });
+        results.push({ key: settingKey, success: false, error: error instanceof Error ? (error as Error).message : 'Unknown' });
       }
     }
     return results;
@@ -822,7 +822,7 @@ export class SystemSettingsService {
           results.push({ key: settingKey, success: true, data: created });
         }
       } catch (error) {
-        results.push({ key: settingKey, success: false, error: error instanceof Error ? error.message : 'Unknown' });
+        results.push({ key: settingKey, success: false, error: error instanceof Error ? (error as Error).message : 'Unknown' });
       }
     }
     return results;
@@ -858,7 +858,7 @@ export class SystemSettingsService {
           results.push({ key: settingKey, success: true, data: created });
         }
       } catch (error) {
-        results.push({ key: settingKey, success: false, error: error instanceof Error ? error.message : 'Unknown' });
+        results.push({ key: settingKey, success: false, error: error instanceof Error ? (error as Error).message : 'Unknown' });
       }
     }
     return results;

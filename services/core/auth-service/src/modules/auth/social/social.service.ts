@@ -189,7 +189,7 @@ export class SocialAuthService {
           token,
         },
       };
-    } catch (error: unknown) {
+    } catch (error) {
       if (error instanceof UnauthorizedException || error instanceof BadRequestException) {
         throw error;
       }

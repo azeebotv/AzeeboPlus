@@ -28,7 +28,7 @@ export class OtpController {
   @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   async sendOtp(@Request() req: OtpRequest): Promise<{ message: string }> {
     const { phoneNumber } = req.body;
-    const userId = req.user.sub;
+    const userId = req.user.id;
 
     if (!phoneNumber) {
       throw new BadRequestException('phoneNumber is required');
@@ -46,7 +46,7 @@ export class OtpController {
   @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   async verifyOtp(@Request() req: OtpRequest): Promise<{ success: boolean }> {
     const { code } = req.body;
-    const userId = req.user.sub;
+    const userId = req.user.id;
 
     if (!code) {
       throw new BadRequestException('code is required');

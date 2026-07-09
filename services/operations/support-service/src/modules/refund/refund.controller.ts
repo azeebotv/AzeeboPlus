@@ -40,7 +40,7 @@ export class RefundController {
   @ApiOperation({ summary: 'Request a refund' })
   async requestRefund(@Request() req: AuthenticatedRequest, @Body() dto: RequestRefundDto) {
     const refund = await this.refundService.requestRefund({
-      userId: req.user.sub,
+      userId: req.user.id,
       paymentId: dto.paymentId,
       amount: new Prisma.Decimal(dto.amount),
       currency: dto.currency,
@@ -53,7 +53,7 @@ export class RefundController {
   @Get('my')
   @ApiOperation({ summary: 'Get my refunds' })
   async getMyRefunds(@Request() req: AuthenticatedRequest, @Query() query: RefundQueryDto) {
-    const result = await this.refundService.getUserRefunds(req.user.sub, query);
+    const result = await this.refundService.getUserRefunds(req.user.id, query);
     return ApiResponseWrapper.paginated(
       result.refunds,
       result.meta.page,
@@ -91,7 +91,7 @@ export class RefundController {
     @Request() req: AuthenticatedRequest,
     @Body() dto: ProcessRefundDto
   ) {
-    const refund = await this.refundService.processRefund(id, req.user.sub, dto.refundReference);
+    const refund = await this.refundService.processRefund(id, req.user.id, dto.refundReference);
     return ApiResponseWrapper.success({ refund });
   }
 

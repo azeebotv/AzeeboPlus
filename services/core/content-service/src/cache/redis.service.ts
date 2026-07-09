@@ -40,7 +40,7 @@ export class RedisService implements OnModuleDestroy {
 
     try {
       return await this.client.get(key);
-    } catch (error: unknown) {
+    } catch (error) {
       this.logger.error(`Redis GET error for key ${key}:`, error);
       return null;
     }
@@ -55,7 +55,7 @@ export class RedisService implements OnModuleDestroy {
       } else {
         await this.client.set(key, value);
       }
-    } catch (error: unknown) {
+    } catch (error) {
       this.logger.error(`Redis SET error for key ${key}:`, error);
     }
   }
@@ -65,7 +65,7 @@ export class RedisService implements OnModuleDestroy {
 
     try {
       await this.client.del(key);
-    } catch (error: unknown) {
+    } catch (error) {
       this.logger.error(`Redis DEL error for key ${key}:`, error);
     }
   }
@@ -84,7 +84,7 @@ export class RedisService implements OnModuleDestroy {
       if (keys.length > 0) {
         await this.client.del(...keys);
       }
-    } catch (error: unknown) {
+    } catch (error) {
       this.logger.error(`Redis DEL pattern error for ${pattern}:`, error);
     }
   }

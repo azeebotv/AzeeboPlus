@@ -24,7 +24,7 @@ export class ModerationController {
     @Request() req: { user: { sub: string } },
     @Body() body: CreateReportDto
   ): Promise<ModerationResponse> {
-    return this.moderationService.reportContent(req.user.sub, body);
+    return this.moderationService.reportContent(req.user.id, body);
   }
 
   @Get('report-types')
@@ -45,7 +45,7 @@ export class ModerationController {
     @Request() req: { user: { sub: string } },
     @Body() body: EscalateCaseDto
   ): Promise<ModerationResponse> {
-    return this.moderationService.submitAppeal(req.user.sub, body);
+    return this.moderationService.submitAppeal(req.user.id, body);
   }
 
   @Get('queue')
@@ -55,7 +55,7 @@ export class ModerationController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - admin only' })
   async getQueue(@Request() req: { user: { sub: string } }): Promise<ModerationResponse> {
-    return this.moderationService.getQueue(req.user.sub);
+    return this.moderationService.getQueue(req.user.id);
   }
 
   @Get('trust-score/:userId')
@@ -92,7 +92,7 @@ export class ModerationController {
       duration?: number;
     }
   ): Promise<ModerationResponse> {
-    return this.moderationService.takeSafetyAction(req.user.sub, body);
+    return this.moderationService.takeSafetyAction(req.user.id, body);
   }
 
   @Get('safety-actions')
@@ -108,7 +108,7 @@ export class ModerationController {
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string
   ): Promise<ModerationResponse> {
-    return this.moderationService.getSafetyActions(req.user.sub, {
+    return this.moderationService.getSafetyActions(req.user.id, {
       targetType,
       actionType,
       startDate,

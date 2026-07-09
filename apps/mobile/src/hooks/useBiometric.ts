@@ -45,7 +45,7 @@ export function useBiometric() {
           biometricType: 'none',
           isEnabled: false,
           isLoading: false,
-          error: error instanceof Error ? error.message : 'Failed to initialize biometrics',
+          error: error instanceof Error ? (error as Error).message : 'Failed to initialize biometrics',
         });
       }
     };

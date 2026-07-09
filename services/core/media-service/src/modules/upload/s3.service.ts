@@ -138,7 +138,7 @@ export class S3Service {
           'File upload service temporarily unavailable. Please try again later.'
         );
       }
-      this.logger.error(`Error uploading file to S3: ${(error as Error).message}`);
+      this.logger.error(`Error uploading file to S3: ${error.message}`);
       throw error;
     }
 
@@ -167,7 +167,7 @@ export class S3Service {
       const result = await fileTypeFromBuffer(buffer);
       return result?.mime;
     } catch (error: unknown) {
-      this.logger.warn(`Failed to sniff MIME type: ${(error as Error).message}`);
+      this.logger.warn(`Failed to sniff MIME type: ${error.message}`);
       return undefined;
     }
   }
@@ -205,7 +205,7 @@ export class S3Service {
         return await this.extractAudioDuration(buffer);
       }
     } catch (error: unknown) {
-      this.logger.warn(`Failed to extract duration: ${(error as Error).message}`);
+      this.logger.warn(`Failed to extract duration: ${error.message}`);
     }
     return undefined;
   }
@@ -237,7 +237,7 @@ export class S3Service {
           'File download service temporarily unavailable. Please try again later.'
         );
       }
-      this.logger.error(`Error getting signed download URL: ${(error as Error).message}`);
+      this.logger.error(`Error getting signed download URL: ${error.message}`);
       throw error;
     }
   }
@@ -270,7 +270,7 @@ export class S3Service {
           'File upload service temporarily unavailable. Please try again later.'
         );
       }
-      this.logger.error(`Error getting signed upload URL: ${(error as Error).message}`);
+      this.logger.error(`Error getting signed upload URL: ${error.message}`);
       throw error;
     }
   }
@@ -292,7 +292,7 @@ export class S3Service {
           'File deletion service temporarily unavailable. Please try again later.'
         );
       }
-      this.logger.error(`Error deleting file from S3: ${(error as Error).message}`);
+      this.logger.error(`Error deleting file from S3: ${error.message}`);
       throw error;
     }
   }
@@ -321,7 +321,7 @@ export class S3Service {
           'File metadata service temporarily unavailable. Please try again later.'
         );
       }
-      this.logger.error(`Error getting file metadata from S3: ${(error as Error).message}`);
+      this.logger.error(`Error getting file metadata from S3: ${error.message}`);
       throw error;
     }
   }
@@ -349,7 +349,7 @@ export class S3Service {
             deletedCount++;
           } catch (error: unknown) {
             this.logger.error(
-              `Failed to delete orphaned file ${item.Key}: ${(error as Error).message}`
+              `Failed to delete orphaned file ${item.Key}: ${error.message}`
             );
           }
         }

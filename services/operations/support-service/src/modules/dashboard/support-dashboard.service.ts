@@ -38,9 +38,9 @@ export class SupportDashboardService {
         pendingDisputes,
         activeSuspensions,
       };
-    } catch (error) {
-      this.logger.error(`getStats failed: ${error.message}`, error.stack);
-      return { success: false, error: error.message };
+    } catch (_err) {
+      this.logger.error(`getStats failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: (error as Error).message };
     }
   }
 
@@ -124,9 +124,9 @@ export class SupportDashboardService {
         .slice(0, 20);
 
       return { activities };
-    } catch (error) {
-      this.logger.error(`getRecentActivity failed: ${error.message}`, error.stack);
-      return { success: false, error: error.message };
+    } catch (_err) {
+      this.logger.error(`getRecentActivity failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: (error as Error).message };
     }
   }
 
@@ -163,9 +163,9 @@ export class SupportDashboardService {
         avgResolutionTime: Math.round(totalResolutionMs / count),
         slaCompliance: Math.round((withinSla / count) * 100),
       };
-    } catch (error) {
-      this.logger.error(`getSlaMetrics failed: ${error.message}`, error.stack);
-      return { success: false, error: error.message };
+    } catch (_err) {
+      this.logger.error(`getSlaMetrics failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: (error as Error).message };
     }
   }
 }
