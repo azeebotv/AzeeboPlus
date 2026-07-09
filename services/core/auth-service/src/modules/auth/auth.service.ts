@@ -190,7 +190,7 @@ export class AuthService {
           expiresAt: tokens.expiresAt,
         },
       };
-    } catch (error: unknown) {
+    } catch (error) {
       throw new UnauthorizedException('Invalid refresh token');
     }
   }
@@ -276,7 +276,7 @@ export class AuthService {
           userName: user.displayName,
         },
       });
-    } catch (error: unknown) {
+    } catch (error) {
       this.logger.error(`Failed to send password reset email: ${error.message}`);
     }
 

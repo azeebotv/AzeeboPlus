@@ -50,12 +50,12 @@ export class PublicController {
           })),
         })),
       };
-    } catch (error: unknown) {
+    } catch (error) {
       this.logger.error('Failed to fetch enabled universes', error);
       return {
         success: false,
         message: 'Failed to fetch universes',
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: error instanceof Error ? (error as Error).message : 'Unknown error',
       };
     }
   }
@@ -79,12 +79,12 @@ export class PublicController {
         success: true,
         data: settingsMap,
       };
-    } catch (error: unknown) {
+    } catch (error) {
       this.logger.error('Failed to fetch public settings', error);
       return {
         success: false,
         message: 'Failed to fetch settings',
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: error instanceof Error ? (error as Error).message : 'Unknown error',
       };
     }
   }
@@ -117,12 +117,12 @@ export class PublicController {
           value: setting.value,
         },
       };
-    } catch (error: unknown) {
+    } catch (error) {
       this.logger.error(`Failed to fetch setting ${key}`, error);
       return {
         success: false,
         message: 'Failed to fetch setting',
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: error instanceof Error ? (error as Error).message : 'Unknown error',
       };
     }
   }
@@ -169,12 +169,12 @@ export class PublicController {
           features,
         },
       };
-    } catch (error: unknown) {
+    } catch (error) {
       this.logger.error(`Failed to fetch features for universe ${name}`, error);
       return {
         success: false,
         message: 'Failed to fetch features',
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: error instanceof Error ? (error as Error).message : 'Unknown error',
       };
     }
   }

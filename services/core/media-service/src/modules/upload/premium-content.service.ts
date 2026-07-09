@@ -141,7 +141,7 @@ export class PremiumContentService {
         userId: urlData.userId,
       };
     } catch (error: unknown) {
-      this.logger.error(`Error validating URL token: ${(error as Error).message}`);
+      this.logger.error(`Error validating URL token: ${error.message}`);
       return {
         valid: false,
         error: 'Invalid URL data',
@@ -172,7 +172,7 @@ export class PremiumContentService {
             invalidatedCount++;
           }
         } catch (error: unknown) {
-          this.logger.warn(`Error parsing URL data for key ${key}: ${(error as Error).message}`);
+          this.logger.warn(`Error parsing URL data for key ${key}: ${error.message}`);
         }
       }
     }

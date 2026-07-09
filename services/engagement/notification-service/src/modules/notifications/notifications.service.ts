@@ -60,8 +60,8 @@ export class NotificationsService {
         },
       };
     } catch (error) {
-      this.logger.error(`getNotifications failed: ${error.message}`, error.stack);
-      return { success: false, error: error.message };
+      this.logger.error(`getNotifications failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: (error as Error).message };
     }
   }
 
@@ -101,8 +101,8 @@ export class NotificationsService {
       if (error instanceof NotFoundException) {
         throw error;
       }
-      this.logger.error(`markAsRead failed: ${error.message}`, error.stack);
-      return { success: false, error: error.message };
+      this.logger.error(`markAsRead failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: (error as Error).message };
     }
   }
 
@@ -124,8 +124,8 @@ export class NotificationsService {
         },
       };
     } catch (error) {
-      this.logger.error(`markAllAsRead failed: ${error.message}`, error.stack);
-      return { success: false, error: error.message };
+      this.logger.error(`markAllAsRead failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: (error as Error).message };
     }
   }
 
@@ -162,8 +162,8 @@ export class NotificationsService {
         },
       };
     } catch (error) {
-      this.logger.error(`updatePreferences failed: ${error.message}`, error.stack);
-      return { success: false, error: error.message };
+      this.logger.error(`updatePreferences failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: (error as Error).message };
     }
   }
 
@@ -190,8 +190,8 @@ export class NotificationsService {
       await this.cache.set(cacheK, result, 300);
       return result;
     } catch (error) {
-      this.logger.error(`getPreferences failed: ${error.message}`, error.stack);
-      return { success: false, error: error.message };
+      this.logger.error(`getPreferences failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: (error as Error).message };
     }
   }
 
@@ -217,8 +217,8 @@ export class NotificationsService {
       await this.cache.set(cacheK, result, 60);
       return result;
     } catch (error) {
-      this.logger.error(`getUnreadCount failed: ${error.message}`, error.stack);
-      return { success: false, error: error.message };
+      this.logger.error(`getUnreadCount failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: (error as Error).message };
     }
   }
 
@@ -244,8 +244,8 @@ export class NotificationsService {
 
       return result;
     } catch (error) {
-      this.logger.error(`createNotification failed: ${error.message}`, error.stack);
-      return { success: false, error: error.message };
+      this.logger.error(`createNotification failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: (error as Error).message };
     }
   }
 
@@ -274,8 +274,8 @@ export class NotificationsService {
       if (error instanceof ConflictException) {
         throw error;
       }
-      this.logger.error(`savePushToken failed: ${error.message}`, error.stack);
-      return { success: false, error: error.message };
+      this.logger.error(`savePushToken failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: (error as Error).message };
     }
   }
 
@@ -294,8 +294,8 @@ export class NotificationsService {
         },
       };
     } catch (error) {
-      this.logger.error(`getPushTokens failed: ${error.message}`, error.stack);
-      return { success: false, error: error.message };
+      this.logger.error(`getPushTokens failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: (error as Error).message };
     }
   }
 
@@ -328,8 +328,8 @@ export class NotificationsService {
       if (error instanceof NotFoundException) {
         throw error;
       }
-      this.logger.error(`deletePushTokenById failed: ${error.message}`, error.stack);
-      return { success: false, error: error.message };
+      this.logger.error(`deletePushTokenById failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: (error as Error).message };
     }
   }
 
@@ -355,7 +355,7 @@ export class NotificationsService {
       // Send push notification using Firebase
       return this.firebaseService.sendMulticastNotification(tokenValues, title, body, data);
     } catch (error) {
-      this.logger.error(`sendPushNotification failed: ${error.message}`, error.stack);
+      this.logger.error(`sendPushNotification failed: ${(error as Error).message}`, (error as Error).stack);
       return false;
     }
   }
@@ -377,7 +377,7 @@ export class NotificationsService {
       const sanitizedBody = body.replace(/<[^>]*>/g, '');
       return this.emailService.sendCustomEmail(user.email, subject, sanitizedBody);
     } catch (error) {
-      this.logger.error(`sendEmailNotification failed: ${error.message}`, error.stack);
+      this.logger.error(`sendEmailNotification failed: ${(error as Error).message}`, (error as Error).stack);
       return false;
     }
   }
@@ -397,7 +397,7 @@ export class NotificationsService {
         displayName: user.displayName,
       });
     } catch (error) {
-      this.logger.error(`sendWelcomeEmail failed: ${error.message}`, error.stack);
+      this.logger.error(`sendWelcomeEmail failed: ${(error as Error).message}`, (error as Error).stack);
       return false;
     }
   }
@@ -418,7 +418,7 @@ export class NotificationsService {
         resetLink,
       });
     } catch (error) {
-      this.logger.error(`sendPasswordResetEmail failed: ${error.message}`, error.stack);
+      this.logger.error(`sendPasswordResetEmail failed: ${(error as Error).message}`, (error as Error).stack);
       return false;
     }
   }
@@ -449,7 +449,7 @@ export class NotificationsService {
         date: new Date().toLocaleDateString(),
       });
     } catch (error) {
-      this.logger.error(`sendPaymentConfirmationEmail failed: ${error.message}`, error.stack);
+      this.logger.error(`sendPaymentConfirmationEmail failed: ${(error as Error).message}`, (error as Error).stack);
       return false;
     }
   }
@@ -480,7 +480,7 @@ export class NotificationsService {
         }
       );
     } catch (error) {
-      this.logger.error(`sendContentPublishedEmail failed: ${error.message}`, error.stack);
+      this.logger.error(`sendContentPublishedEmail failed: ${(error as Error).message}`, (error as Error).stack);
       return false;
     }
   }
@@ -511,7 +511,7 @@ export class NotificationsService {
         }
       );
     } catch (error) {
-      this.logger.error(`sendContentFeaturedEmail failed: ${error.message}`, error.stack);
+      this.logger.error(`sendContentFeaturedEmail failed: ${(error as Error).message}`, (error as Error).stack);
       return false;
     }
   }
@@ -536,7 +536,7 @@ export class NotificationsService {
 
       return this.smsService.sendSms(user.phone, message);
     } catch (error) {
-      this.logger.error(`sendSmsNotification failed: ${error.message}`, error.stack);
+      this.logger.error(`sendSmsNotification failed: ${(error as Error).message}`, (error as Error).stack);
       return false;
     }
   }
@@ -556,7 +556,7 @@ export class NotificationsService {
         displayName: user.displayName,
       });
     } catch (error) {
-      this.logger.error(`sendWelcomeSms failed: ${error.message}`, error.stack);
+      this.logger.error(`sendWelcomeSms failed: ${(error as Error).message}`, (error as Error).stack);
       return false;
     }
   }
@@ -576,7 +576,7 @@ export class NotificationsService {
         resetCode,
       });
     } catch (error) {
-      this.logger.error(`sendPasswordResetSms failed: ${error.message}`, error.stack);
+      this.logger.error(`sendPasswordResetSms failed: ${(error as Error).message}`, (error as Error).stack);
       return false;
     }
   }
@@ -603,7 +603,7 @@ export class NotificationsService {
         currency,
       });
     } catch (error) {
-      this.logger.error(`sendPaymentConfirmationSms failed: ${error.message}`, error.stack);
+      this.logger.error(`sendPaymentConfirmationSms failed: ${(error as Error).message}`, (error as Error).stack);
       return false;
     }
   }
@@ -623,7 +623,7 @@ export class NotificationsService {
         contentTitle,
       });
     } catch (error) {
-      this.logger.error(`sendContentPublishedSms failed: ${error.message}`, error.stack);
+      this.logger.error(`sendContentPublishedSms failed: ${(error as Error).message}`, (error as Error).stack);
       return false;
     }
   }
@@ -643,7 +643,7 @@ export class NotificationsService {
         contentTitle,
       });
     } catch (error) {
-      this.logger.error(`sendContentFeaturedSms failed: ${error.message}`, error.stack);
+      this.logger.error(`sendContentFeaturedSms failed: ${(error as Error).message}`, (error as Error).stack);
       return false;
     }
   }
@@ -663,7 +663,7 @@ export class NotificationsService {
         verificationCode,
       });
     } catch (error) {
-      this.logger.error(`sendAccountVerificationSms failed: ${error.message}`, error.stack);
+      this.logger.error(`sendAccountVerificationSms failed: ${(error as Error).message}`, (error as Error).stack);
       return false;
     }
   }

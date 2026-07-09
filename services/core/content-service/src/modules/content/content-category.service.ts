@@ -39,7 +39,7 @@ export class ContentCategoryService {
         success: true,
         data: category,
       };
-    } catch (error: unknown) {
+    } catch (error) {
       this.logger.error(`Failed to create category: ${error}`);
       return { success: false, error: { code: 'CREATE_CATEGORY_FAILED', message: 'Failed to create category' } } as never;
     }
@@ -78,7 +78,7 @@ export class ContentCategoryService {
         success: true,
         data: updatedCategory,
       };
-    } catch (error: unknown) {
+    } catch (error) {
       if (error instanceof NotFoundException) throw error;
       this.logger.error(`Failed to update category: ${error}`);
       return { success: false, error: { code: 'UPDATE_CATEGORY_FAILED', message: 'Failed to update category' } } as never;
@@ -103,7 +103,7 @@ export class ContentCategoryService {
         success: true,
         data: { message: 'Category deleted successfully' },
       };
-    } catch (error: unknown) {
+    } catch (error) {
       if (error instanceof NotFoundException) throw error;
       this.logger.error(`Failed to delete category: ${error}`);
       return { success: false, error: { code: 'DELETE_CATEGORY_FAILED', message: 'Failed to delete category' } };
@@ -118,7 +118,7 @@ export class ContentCategoryService {
         success: true,
         data: categories,
       };
-    } catch (error: unknown) {
+    } catch (error) {
       this.logger.error(`Failed to get categories: ${error}`);
       return { success: false, error: { code: 'GET_CATEGORIES_FAILED', message: 'Failed to retrieve categories' } };
     }
@@ -137,7 +137,7 @@ export class ContentCategoryService {
         success: true,
         data: tag,
       };
-    } catch (error: unknown) {
+    } catch (error) {
       this.logger.error(`Failed to create tag: ${error}`);
       return { success: false, error: { code: 'CREATE_TAG_FAILED', message: 'Failed to create tag' } } as never;
     }
@@ -170,7 +170,7 @@ export class ContentCategoryService {
         success: true,
         data: updatedTag,
       };
-    } catch (error: unknown) {
+    } catch (error) {
       if (error instanceof NotFoundException) throw error;
       this.logger.error(`Failed to update tag: ${error}`);
       return { success: false, error: { code: 'UPDATE_TAG_FAILED', message: 'Failed to update tag' } } as never;
@@ -195,7 +195,7 @@ export class ContentCategoryService {
         success: true,
         data: { message: 'Tag deleted successfully' },
       };
-    } catch (error: unknown) {
+    } catch (error) {
       if (error instanceof NotFoundException) throw error;
       this.logger.error(`Failed to delete tag: ${error}`);
       return { success: false, error: { code: 'DELETE_TAG_FAILED', message: 'Failed to delete tag' } };
@@ -210,7 +210,7 @@ export class ContentCategoryService {
         success: true,
         data: tags,
       };
-    } catch (error: unknown) {
+    } catch (error) {
       this.logger.error(`Failed to get tags: ${error}`);
       return { success: false, error: { code: 'GET_TAGS_FAILED', message: 'Failed to retrieve tags' } };
     }
@@ -256,7 +256,7 @@ export class ContentCategoryService {
         success: true,
         data: { message: 'Category added to content successfully' },
       };
-    } catch (error: unknown) {
+    } catch (error) {
       if (error instanceof NotFoundException || error instanceof ForbiddenException) throw error;
       this.logger.error(`Failed to add category to content: ${error}`);
       return { success: false, error: { code: 'ADD_CATEGORY_TO_CONTENT_FAILED', message: 'Failed to add category to content' } };
@@ -295,7 +295,7 @@ export class ContentCategoryService {
         success: true,
         data: { message: 'Category removed from content successfully' },
       };
-    } catch (error: unknown) {
+    } catch (error) {
       if (error instanceof NotFoundException || error instanceof ForbiddenException) throw error;
       this.logger.error(`Failed to remove category from content: ${error}`);
       return { success: false, error: { code: 'REMOVE_CATEGORY_FROM_CONTENT_FAILED', message: 'Failed to remove category from content' } };
@@ -342,7 +342,7 @@ export class ContentCategoryService {
         success: true,
         data: { message: 'Tag added to content successfully' },
       };
-    } catch (error: unknown) {
+    } catch (error) {
       if (error instanceof NotFoundException || error instanceof ForbiddenException) throw error;
       this.logger.error(`Failed to add tag to content: ${error}`);
       return { success: false, error: { code: 'ADD_TAG_TO_CONTENT_FAILED', message: 'Failed to add tag to content' } };
@@ -381,7 +381,7 @@ export class ContentCategoryService {
         success: true,
         data: { message: 'Tag removed from content successfully' },
       };
-    } catch (error: unknown) {
+    } catch (error) {
       if (error instanceof NotFoundException || error instanceof ForbiddenException) throw error;
       this.logger.error(`Failed to remove tag from content: ${error}`);
       return { success: false, error: { code: 'REMOVE_TAG_FROM_CONTENT_FAILED', message: 'Failed to remove tag from content' } };
@@ -406,7 +406,7 @@ export class ContentCategoryService {
         success: true,
         data: content,
       };
-    } catch (error: unknown) {
+    } catch (error) {
       this.logger.error(`Failed to get content by category: ${error}`);
       return { success: false, error: { code: 'GET_CONTENT_BY_CATEGORY_FAILED', message: 'Failed to retrieve content by category' } };
     }
@@ -430,7 +430,7 @@ export class ContentCategoryService {
         success: true,
         data: content,
       };
-    } catch (error: unknown) {
+    } catch (error) {
       this.logger.error(`Failed to get content by tag: ${error}`);
       return { success: false, error: { code: 'GET_CONTENT_BY_TAG_FAILED', message: 'Failed to retrieve content by tag' } };
     }

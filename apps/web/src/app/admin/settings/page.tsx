@@ -4,7 +4,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/context/AuthContext';
 import { api } from '@/lib/api';
 import AdminLayout from '@/components/layout/AdminLayout';
-import { Skeleton, ErrorState } from '@azeebo/ui/web';
 
 type Tab =
   | 'general'

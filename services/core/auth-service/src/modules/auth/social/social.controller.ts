@@ -191,6 +191,6 @@ export class SocialAuthController {
     @Request() req: UnlinkRequest,
     @Body() dto: { provider: 'google' | 'apple' }
   ): Promise<{ success: boolean }> {
-    return this.socialAuthService.unlinkSocialAccount(req.user.sub, dto.provider);
+    return this.socialAuthService.unlinkSocialAccount(req.user.id, dto.provider);
   }
 }

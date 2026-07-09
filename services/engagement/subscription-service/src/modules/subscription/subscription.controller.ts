@@ -72,7 +72,7 @@ export class SubscriptionController {
     @Request() req: AuthenticatedRequest,
     @Body() dto: SubscribeToPlanDto
   ): Promise<Subscription> {
-    return this.subscriptionService.subscribe(req.user.sub, dto);
+    return this.subscriptionService.subscribe(req.user.id, dto);
   }
 
   @Get('current')
@@ -82,7 +82,7 @@ export class SubscriptionController {
   @ApiResponse({ status: 200, description: 'Current subscription' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getCurrentSubscription(@Request() req: AuthenticatedRequest): Promise<Subscription | null> {
-    return this.subscriptionService.getCurrentSubscription(req.user.sub);
+    return this.subscriptionService.getCurrentSubscription(req.user.id);
   }
 
   @Delete(':id')
@@ -97,7 +97,7 @@ export class SubscriptionController {
     @Request() req: AuthenticatedRequest,
     @Param('id') id: string
   ): Promise<Subscription> {
-    return this.subscriptionService.cancelSubscription(req.user.sub, id);
+    return this.subscriptionService.cancelSubscription(req.user.id, id);
   }
 
   @Get('history')
@@ -118,7 +118,7 @@ export class SubscriptionController {
     const safeLimit = Math.min(100, Math.max(1, Math.floor(Number(limit) || 20)));
 
     return this.subscriptionService.getSubscriptionHistory(
-      req.user.sub,
+      req.user.id,
       safePage,
       safeLimit
     );

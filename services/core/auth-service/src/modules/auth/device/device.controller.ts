@@ -46,7 +46,7 @@ export class DeviceController {
   @ApiResponse({ status: 200, description: 'List of active devices' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getDevices(@Request() req: AuthRequest): Promise<unknown> {
-    const devices = await this.deviceService.getUserDevices(req.user.sub);
+    const devices = await this.deviceService.getUserDevices(req.user.id);
     return ApiResponseWrapper.success(devices);
   }
 
@@ -60,7 +60,7 @@ export class DeviceController {
     @Request() req: AuthRequest,
     @Param('deviceId') deviceId: string
   ): Promise<unknown> {
-    await this.deviceService.revokeDevice(req.user.sub, deviceId);
+    await this.deviceService.revokeDevice(req.user.id, deviceId);
     return ApiResponseWrapper.success({ message: 'Device session revoked' });
   }
 
@@ -75,7 +75,7 @@ export class DeviceController {
     @Param('deviceId') deviceId: string,
     @Body() updateDto: UpdateDeviceInfoDto
   ): Promise<unknown> {
-    const device = await this.deviceService.updateDevice(req.user.sub, deviceId, updateDto);
+    const device = await this.deviceService.updateDevice(req.user.id, deviceId, updateDto);
     return ApiResponseWrapper.success(device);
   }
 
@@ -85,7 +85,7 @@ export class DeviceController {
   @ApiResponse({ status: 200, description: 'All other devices revoked' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async revokeAllOtherDevices(@Request() req: AuthRequest): Promise<unknown> {
-    await this.deviceService.revokeAllOtherDevices(req.user.sub);
+    await this.deviceService.revokeAllOtherDevices(req.user.id);
     return ApiResponseWrapper.success({ message: 'All other device sessions revoked' });
   }
 }

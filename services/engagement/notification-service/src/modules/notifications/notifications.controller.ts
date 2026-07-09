@@ -40,7 +40,7 @@ export class NotificationsController {
   ): Promise<NotificationResponse> {
     const validPage = Math.max(1, Number(page) || 1);
     const validLimit = Math.min(100, Math.max(1, Number(limit) || 20));
-    return this.notificationsService.getNotifications(req.user.sub, validPage, validLimit);
+    return this.notificationsService.getNotifications(req.user.id, validPage, validLimit);
   }
 
   @Patch('read-all')
@@ -50,7 +50,7 @@ export class NotificationsController {
   @ApiResponse({ status: 200, description: 'All notifications marked as read' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async markAllAsRead(@Request() req: { user: { sub: string } }): Promise<NotificationResponse> {
-    return this.notificationsService.markAllAsRead(req.user.sub);
+    return this.notificationsService.markAllAsRead(req.user.id);
   }
 
   @Patch(':id/read')
@@ -64,7 +64,7 @@ export class NotificationsController {
     @Request() req: { user: { sub: string } },
     @Param('id') id: string
   ): Promise<NotificationResponse> {
-    return this.notificationsService.markAsRead(req.user.sub, id);
+    return this.notificationsService.markAsRead(req.user.id, id);
   }
 
   @Put('preferences')
@@ -79,7 +79,7 @@ export class NotificationsController {
     @Body() updatePreferencesDto: UpdatePreferencesDto
   ): Promise<NotificationResponse> {
     return this.notificationsService.updatePreferences(
-      req.user.sub,
+      req.user.id,
       {
         ...(updatePreferencesDto.email !== undefined && { email: updatePreferencesDto.email }),
         ...(updatePreferencesDto.push !== undefined && { push: updatePreferencesDto.push }),
@@ -96,7 +96,7 @@ export class NotificationsController {
   @ApiResponse({ status: 200, description: 'Notification settings' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getSettings(@Request() req: { user: { sub: string } }): Promise<NotificationResponse> {
-    return this.notificationsService.getPreferences(req.user.sub);
+    return this.notificationsService.getPreferences(req.user.id);
   }
 
   @Get('unread-count')
@@ -106,7 +106,7 @@ export class NotificationsController {
   @ApiResponse({ status: 200, description: 'Unread count' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getUnreadCount(@Request() req: { user: { sub: string } }): Promise<NotificationResponse> {
-    return this.notificationsService.getUnreadCount(req.user.sub);
+    return this.notificationsService.getUnreadCount(req.user.id);
   }
 
   // Push token endpoints
@@ -122,7 +122,7 @@ export class NotificationsController {
     @Body() savePushTokenDto: SavePushTokenDto
   ): Promise<NotificationResponse> {
     return this.notificationsService.savePushToken(
-      req.user.sub,
+      req.user.id,
       savePushTokenDto.token,
       savePushTokenDto.deviceType
     );
@@ -135,7 +135,7 @@ export class NotificationsController {
   @ApiResponse({ status: 200, description: 'Push tokens list' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getPushTokens(@Request() req: { user: { sub: string } }): Promise<NotificationResponse> {
-    return this.notificationsService.getPushTokens(req.user.sub);
+    return this.notificationsService.getPushTokens(req.user.id);
   }
 
   @Delete('push-tokens/:tokenId')
@@ -149,6 +149,6 @@ export class NotificationsController {
     @Request() req: { user: { sub: string } },
     @Param('tokenId') tokenId: string
   ): Promise<NotificationResponse> {
-    return this.notificationsService.deletePushTokenById(req.user.sub, tokenId);
+    return this.notificationsService.deletePushTokenById(req.user.id, tokenId);
   }
 }

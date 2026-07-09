@@ -35,7 +35,7 @@ export class AppealController {
   async createAppeal(@Request() req: AuthenticatedRequest, @Body() dto: CreateAppealDto) {
     const appeal = await this.appealService.createAppeal({
       ticketId: dto.ticketId,
-      userId: req.user.sub,
+      userId: req.user.id,
       appealType: dto.appealType,
       resourceId: dto.resourceId,
       resourceType: dto.resourceType,
@@ -62,7 +62,7 @@ export class AppealController {
   @Get('my')
   @ApiOperation({ summary: 'Get my appeals' })
   async getMyAppeals(@Request() req: AuthenticatedRequest, @Query() query: AppealQueryDto) {
-    const result = await this.appealService.getUserAppeals(req.user.sub, query);
+    const result = await this.appealService.getUserAppeals(req.user.id, query);
     return ApiResponseWrapper.paginated(
       result.appeals,
       result.meta.page,
@@ -87,7 +87,7 @@ export class AppealController {
     @Request() req: AuthenticatedRequest,
     @Body() dto: DecideAppealDto
   ) {
-    const appeal = await this.appealService.decideAppeal(id, dto.decision, req.user.sub, dto.notes);
+    const appeal = await this.appealService.decideAppeal(id, dto.decision, req.user.id, dto.notes);
     return ApiResponseWrapper.success({ appeal });
   }
 }

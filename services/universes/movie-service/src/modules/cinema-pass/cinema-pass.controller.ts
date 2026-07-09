@@ -27,7 +27,7 @@ export class CinemaPassController {
   @ApiOperation({ summary: 'Get user subscriptions' })
   @ApiResponse({ status: 200, description: 'Subscriptions list' })
   async getUserSubscriptions(@Request() req: { user: { sub: string } }): Promise<unknown> {
-    return this.cinemaPassService.getUserSubscriptions(req.user.sub);
+    return this.cinemaPassService.getUserSubscriptions(req.user.id);
   }
 
   @Post('subscribe')
@@ -38,7 +38,7 @@ export class CinemaPassController {
     @Body() body: { passId: string; autoRenew?: boolean },
     @Request() req: { user: { sub: string } }
   ): Promise<unknown> {
-    return this.cinemaPassService.subscribe(req.user.sub, body.passId, body.autoRenew);
+    return this.cinemaPassService.subscribe(req.user.id, body.passId, body.autoRenew);
   }
 
   @Delete('cancel')
@@ -49,7 +49,7 @@ export class CinemaPassController {
     @Query('passId') passId: string,
     @Request() req: { user: { sub: string } }
   ): Promise<unknown> {
-    return this.cinemaPassService.cancelSubscription(req.user.sub, passId);
+    return this.cinemaPassService.cancelSubscription(req.user.id, passId);
   }
 
   @Get('access/:movieId')

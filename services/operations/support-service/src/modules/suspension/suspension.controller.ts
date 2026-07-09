@@ -28,7 +28,7 @@ export class SuspensionController {
       ticketId: dto.ticketId,
       userId: dto.userId,
       reason: dto.reason,
-      suspendedBy: req.user.sub,
+      suspendedBy: req.user.id,
       durationDays: dto.durationDays,
     });
     return ApiResponseWrapper.success({ suspension });
@@ -50,7 +50,7 @@ export class SuspensionController {
   @Get('my')
   @ApiOperation({ summary: 'Get my suspensions' })
   async getMySuspensions(@Request() req: AuthenticatedRequest) {
-    const suspensions = await this.suspensionService.getUserSuspensions(req.user.sub);
+    const suspensions = await this.suspensionService.getUserSuspensions(req.user.id);
     return ApiResponseWrapper.success({ suspensions });
   }
 
@@ -82,7 +82,7 @@ export class SuspensionController {
   @ApiOperation({ summary: 'Reinstate user (admin)' })
   @UseGuards(AdminGuard)
   async reinstateUser(@Param('id') id: string, @Request() req: AuthenticatedRequest) {
-    const suspension = await this.suspensionService.reinstateUser(id, req.user.sub);
+    const suspension = await this.suspensionService.reinstateUser(id, req.user.id);
     return ApiResponseWrapper.success({ suspension });
   }
 
@@ -90,7 +90,7 @@ export class SuspensionController {
   @ApiOperation({ summary: 'Lift suspension early (admin)' })
   @UseGuards(AdminGuard)
   async liftSuspension(@Param('id') id: string, @Request() req: AuthenticatedRequest) {
-    const suspension = await this.suspensionService.liftSuspension(id, req.user.sub);
+    const suspension = await this.suspensionService.liftSuspension(id, req.user.id);
     return ApiResponseWrapper.success({ suspension });
   }
 }

@@ -22,8 +22,8 @@ export class AdminService {
         totalClipViews: clipsByViews._sum.viewCount || 0,
       };
     } catch (error) {
-      this.logger.error(`Failed to get stats: ${error.message}`, error.stack);
-      return { success: false, error: error.message };
+      this.logger.error(`Failed to get stats: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: (error as Error).message };
     }
   }
 
@@ -40,8 +40,8 @@ export class AdminService {
 
       return { clips, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
     } catch (error) {
-      this.logger.error(`Failed to get clips: ${error.message}`, error.stack);
-      return { success: false, error: error.message };
+      this.logger.error(`Failed to get clips: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: (error as Error).message };
     }
   }
 
@@ -58,8 +58,8 @@ export class AdminService {
 
       return { comedians, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
     } catch (error) {
-      this.logger.error(`Failed to get comedians: ${error.message}`, error.stack);
-      return { success: false, error: error.message };
+      this.logger.error(`Failed to get comedians: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: (error as Error).message };
     }
   }
 }

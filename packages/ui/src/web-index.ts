@@ -12,3 +12,4 @@ export * from './Form';
 export * from './Icon';
 export * from './Motion';
 export * from './Switch';
+export { ErrorState } from './ErrorState';

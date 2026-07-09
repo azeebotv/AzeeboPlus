@@ -63,9 +63,9 @@ export class WebhookService {
         processed: true,
         eventId: createdEvent.id,
       };
-    } catch (error) {
-      this.logger.error(`processWebhook failed: ${error.message}`, error.stack);
-      return { success: false, error: error.message } as unknown as WebhookResult;
+    } catch (_err) {
+      this.logger.error(`processWebhook failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: (error as Error).message } as unknown as WebhookResult;
     }
   }
 
@@ -88,8 +88,8 @@ export class WebhookService {
       });
 
       return events as WebhookEventRecord[];
-    } catch (error) {
-      this.logger.error(`getWebhookEvents failed: ${error.message}`, error.stack);
+    } catch (_err) {
+      this.logger.error(`getWebhookEvents failed: ${(error as Error).message}`, (error as Error).stack);
       return [];
     }
   }

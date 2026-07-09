@@ -68,7 +68,7 @@ export class ContentRelationshipService {
         success: true,
         data: relationship,
       };
-    } catch (error: unknown) {
+    } catch (error) {
       if (error instanceof NotFoundException || error instanceof ForbiddenException || error instanceof BadRequestException) throw error;
       this.logger.error(`Failed to add content relationship: ${error}`);
       return { success: false, error: { code: 'ADD_RELATIONSHIP_FAILED', message: 'Failed to add content relationship' } } as never;
@@ -110,7 +110,7 @@ export class ContentRelationshipService {
         success: true,
         data: { message: 'Relationship removed successfully' },
       };
-    } catch (error: unknown) {
+    } catch (error) {
       if (error instanceof NotFoundException || error instanceof ForbiddenException) throw error;
       this.logger.error(`Failed to remove content relationship: ${error}`);
       return { success: false, error: { code: 'REMOVE_RELATIONSHIP_FAILED', message: 'Failed to remove content relationship' } };
@@ -139,7 +139,7 @@ export class ContentRelationshipService {
         success: true,
         data: relationships,
       };
-    } catch (error: unknown) {
+    } catch (error) {
       this.logger.error(`Failed to get content relationships: ${error}`);
       return { success: false, error: { code: 'GET_RELATIONSHIPS_FAILED', message: 'Failed to retrieve content relationships' } };
     }
@@ -176,7 +176,7 @@ export class ContentRelationshipService {
         success: true,
         data: relatedContent,
       };
-    } catch (error: unknown) {
+    } catch (error) {
       this.logger.error(`Failed to get content by relationship: ${error}`);
       return { success: false, error: { code: 'GET_CONTENT_BY_RELATIONSHIP_FAILED', message: 'Failed to retrieve content by relationship' } };
     }

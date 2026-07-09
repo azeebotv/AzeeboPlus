@@ -83,7 +83,7 @@ export class DisputeService {
           reference: `dispute-${id}`,
           transactionType: 'dispute_compensation',
         });
-      } catch (error) {
+      } catch (_err) {
         this.logger.error(`Failed to credit wallet for dispute ${id}: ${(error as Error).message}`);
       }
     }

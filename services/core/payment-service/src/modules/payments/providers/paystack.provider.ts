@@ -144,7 +144,7 @@ export class PaystackProvider {
         this.logger.warn(`Paystack circuit breaker open: ${error.message}`);
         throw new Error('Payment service temporarily unavailable. Please try again later.');
       }
-      this.logger.error(`Paystack initialization failed: ${(error as Error).message}`);
+      this.logger.error(`Paystack initialization failed: ${error.message}`);
       throw error;
     }
   }
@@ -185,7 +185,7 @@ export class PaystackProvider {
         this.logger.warn(`Paystack circuit breaker open: ${error.message}`);
         throw new Error('Payment verification temporarily unavailable. Please try again later.');
       }
-      this.logger.error(`Paystack verification failed: ${(error as Error).message}`);
+      this.logger.error(`Paystack verification failed: ${error.message}`);
       throw error;
     }
   }
@@ -228,7 +228,7 @@ export class PaystackProvider {
         this.logger.warn(`Paystack circuit breaker open: ${error.message}`);
         throw new Error('Refund service temporarily unavailable. Please try again later.');
       }
-      this.logger.error(`Paystack refund failed: ${(error as Error).message}`);
+      this.logger.error(`Paystack refund failed: ${error.message}`);
       throw error;
     }
   }

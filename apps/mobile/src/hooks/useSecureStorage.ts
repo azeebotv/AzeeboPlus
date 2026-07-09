@@ -20,7 +20,7 @@ export function useSecureStorage(): {
       return await SecureStore.getItemAsync(key);
     } catch (error) {
       logger.error(
-        `Error reading ${key} from secure storage: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Error reading ${key} from secure storage: ${error instanceof Error ? (error as Error).message : 'Unknown error'}`
       );
       return null;
     }
@@ -33,7 +33,7 @@ export function useSecureStorage(): {
       });
     } catch (error) {
       logger.error(
-        `Error writing ${key} to secure storage: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Error writing ${key} to secure storage: ${error instanceof Error ? (error as Error).message : 'Unknown error'}`
       );
     }
   }, []);
@@ -43,7 +43,7 @@ export function useSecureStorage(): {
       await SecureStore.deleteItemAsync(key);
     } catch (error) {
       logger.error(
-        `Error removing ${key} from secure storage: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Error removing ${key} from secure storage: ${error instanceof Error ? (error as Error).message : 'Unknown error'}`
       );
     }
   }, []);

@@ -34,7 +34,7 @@ export class DeviceService {
         createdAt: session.createdAt.toISOString(),
         isCurrentDevice: false,
       }));
-    } catch (error: unknown) {
+    } catch (error) {
       this.logger.error(`Failed to get user devices: ${error}`);
       return [];
     }
@@ -60,7 +60,7 @@ export class DeviceService {
       });
 
       this.logger.log(`Device session ${deviceId} revoked for user ${userId}`);
-    } catch (error: unknown) {
+    } catch (error) {
       if (error instanceof NotFoundException) throw error;
       this.logger.error(`Failed to revoke device: ${error}`);
       throw error;
@@ -104,7 +104,7 @@ export class DeviceService {
         createdAt: updated.createdAt.toISOString(),
         isCurrentDevice: false,
       };
-    } catch (error: unknown) {
+    } catch (error) {
       if (error instanceof NotFoundException) throw error;
       this.logger.error(`Failed to update device: ${error}`);
       throw error;
@@ -120,7 +120,7 @@ export class DeviceService {
       });
 
       this.logger.log(`Revoked ${result.count} device sessions for user ${userId}`);
-    } catch (error: unknown) {
+    } catch (error) {
       this.logger.error(`Failed to revoke all devices for user ${userId}: ${error}`);
       throw error;
     }

@@ -291,7 +291,7 @@ export class ModerationService {
         reason: body.reason,
       });
       return { success: true, data: appeal };
-    } catch (error) {
+    } catch (_err) {
       const err = error as Error;
       return { success: false, error: { code: 'APPEAL_SUBMISSION_FAILED', message: err.message } };
     }
@@ -416,7 +416,7 @@ export class ModerationService {
       await this.cache.invalidate('moderation:reports:*');
 
       return { success: true, data: report };
-    } catch (error) {
+    } catch (_err) {
       const err = error as Error;
       return { success: false, error: { code: 'REPORT_CREATION_FAILED', message: err.message } };
     }
@@ -481,7 +481,7 @@ export class ModerationService {
         duration: body.duration,
       });
       return { success: true, data: safetyAction };
-    } catch (error) {
+    } catch (_err) {
       const err = error as Error;
       return { success: false, error: { code: 'SAFETY_ACTION_FAILED', message: err.message } };
     }
@@ -770,7 +770,7 @@ export class ModerationService {
       }
 
       return { success: true, data: scan };
-    } catch (error) {
+    } catch (_err) {
       const err = error as Error;
       return { success: false, error: { code: 'SCAN_FETCH_FAILED', message: err.message } };
     }
@@ -808,7 +808,7 @@ export class ModerationService {
           scanCount: scans.length,
         },
       };
-    } catch (error) {
+    } catch (_err) {
       const err = error as Error;
       return { success: false, error: { code: 'SAFETY_CHECK_FAILED', message: err.message } };
     }

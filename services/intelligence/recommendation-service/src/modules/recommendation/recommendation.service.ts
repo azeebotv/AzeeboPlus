@@ -223,10 +223,10 @@ export class RecommendationService {
       const result = { success: true, data: crossUniverseDiversity.slice(0, limit) };
       await this.cache.set(cacheK, result, 1800);
       return result;
-    } catch (error) {
+    } catch (_err) {
       this.logger.error(
         `Failed to get content recommendations for user ${input.userId}`,
-        error instanceof Error ? error.message : String(error)
+        error instanceof Error ? (error as Error).message : String(error)
       );
       return { success: false };
     }
@@ -285,10 +285,10 @@ export class RecommendationService {
             : 0,
         })),
       };
-    } catch (error) {
+    } catch (_err) {
       this.logger.error(
         'Failed to get fallback recommendations',
-        error instanceof Error ? error.message : String(error)
+        error instanceof Error ? (error as Error).message : String(error)
       );
       return { success: false };
     }
@@ -354,10 +354,10 @@ export class RecommendationService {
           },
         })),
       };
-    } catch (error) {
+    } catch (_err) {
       this.logger.error(
         `Failed to get creator recommendations for user ${userId}`,
-        error instanceof Error ? error.message : String(error)
+        error instanceof Error ? (error as Error).message : String(error)
       );
       return { success: false };
     }
@@ -438,10 +438,10 @@ export class RecommendationService {
 
       await this.cache.set(cacheK, result, 1800);
       return result;
-    } catch (error) {
+    } catch (_err) {
       this.logger.error(
         `Failed to get cross-universe recommendations for user ${userId}`,
-        error instanceof Error ? error.message : String(error)
+        error instanceof Error ? (error as Error).message : String(error)
       );
       return { success: false };
     }
@@ -535,10 +535,10 @@ export class RecommendationService {
       }
 
       return { success: true, data: segment };
-    } catch (error) {
+    } catch (_err) {
       this.logger.error(
         `Failed to get user segment for user ${userId}`,
-        error instanceof Error ? error.message : String(error)
+        error instanceof Error ? (error as Error).message : String(error)
       );
       return { success: false };
     }
@@ -591,10 +591,10 @@ export class RecommendationService {
           tier,
         },
       };
-    } catch (error) {
+    } catch (_err) {
       this.logger.error(
         `Failed to get creator score for creator ${creatorId}`,
-        error instanceof Error ? error.message : String(error)
+        error instanceof Error ? (error as Error).message : String(error)
       );
       return { success: false };
     }
@@ -682,10 +682,10 @@ export class RecommendationService {
           recommendations,
         },
       };
-    } catch (error) {
+    } catch (_err) {
       this.logger.error(
         `Failed to get churn risk for user ${userId}`,
-        error instanceof Error ? error.message : String(error)
+        error instanceof Error ? (error as Error).message : String(error)
       );
       return { success: false };
     }
@@ -774,10 +774,10 @@ export class RecommendationService {
           segment,
         },
       };
-    } catch (error) {
+    } catch (_err) {
       this.logger.error(
         `Failed to get monetization insights for user ${userId}`,
-        error instanceof Error ? error.message : String(error)
+        error instanceof Error ? (error as Error).message : String(error)
       );
       return { success: false };
     }
@@ -881,10 +881,10 @@ export class RecommendationService {
           indicators,
         },
       };
-    } catch (error) {
+    } catch (_err) {
       this.logger.error(
         'Failed to assess fraud risk',
-        error instanceof Error ? error.message : String(error)
+        error instanceof Error ? (error as Error).message : String(error)
       );
       return { success: false };
     }
@@ -922,10 +922,10 @@ export class RecommendationService {
       }
 
       return recommendations;
-    } catch (error) {
+    } catch (_err) {
       this.logger.error(
         `Failed to get personalized feed for user ${userId}`,
-        error instanceof Error ? error.message : String(error)
+        error instanceof Error ? (error as Error).message : String(error)
       );
       return { success: false };
     }

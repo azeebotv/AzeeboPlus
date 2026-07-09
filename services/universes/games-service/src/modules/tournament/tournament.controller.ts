@@ -38,7 +38,7 @@ export class TournamentController {
     @Body() body: JoinTournamentDto,
     @Request() req: { user: { id: string } }
   ): Promise<unknown> {
-    return this.tournamentService.enterTournament(req.user.sub, tournamentId, body.initialScore);
+    return this.tournamentService.enterTournament(req.user.id, tournamentId, body.initialScore);
   }
 
   @Post(':id/score')
@@ -49,7 +49,7 @@ export class TournamentController {
     @Body() body: SubmitScoreDto,
     @Request() req: { user: { id: string } }
   ): Promise<unknown> {
-    return this.tournamentService.updateScore(req.user.sub, tournamentId, body.score);
+    return this.tournamentService.updateScore(req.user.id, tournamentId, body.score);
   }
 
   @Get(':id/leaderboard')

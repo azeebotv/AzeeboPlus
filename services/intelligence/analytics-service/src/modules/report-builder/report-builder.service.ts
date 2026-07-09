@@ -75,9 +75,9 @@ export class ReportBuilderService {
         success: true,
         data: report,
       };
-    } catch (error) {
+    } catch (_err) {
       throw new BadRequestException(
-        `Failed to create report: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Failed to create report: ${error instanceof Error ? (error as Error).message : 'Unknown error'}`
       );
     }
   }
@@ -100,12 +100,12 @@ export class ReportBuilderService {
         success: true,
         data: report,
       };
-    } catch (error) {
+    } catch (_err) {
       if (error instanceof NotFoundException) {
         throw error;
       }
       throw new BadRequestException(
-        `Failed to get report: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Failed to get report: ${error instanceof Error ? (error as Error).message : 'Unknown error'}`
       );
     }
   }
@@ -139,9 +139,9 @@ export class ReportBuilderService {
         success: true,
         data: reports,
       };
-    } catch (error) {
+    } catch (_err) {
       throw new BadRequestException(
-        `Failed to list reports: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Failed to list reports: ${error instanceof Error ? (error as Error).message : 'Unknown error'}`
       );
     }
   }
@@ -221,7 +221,7 @@ export class ReportBuilderService {
           generatedAt: new Date(),
         },
       };
-    } catch (error) {
+    } catch (_err) {
       const executionTime = Date.now() - startTime;
 
       if (error instanceof NotFoundException || error instanceof BadRequestException) {
@@ -230,7 +230,7 @@ export class ReportBuilderService {
 
       return {
         success: false,
-        error: `Failed to execute report: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        error: `Failed to execute report: ${error instanceof Error ? (error as Error).message : 'Unknown error'}`,
         metadata: {
           totalRows: 0,
           executionTime,
@@ -285,12 +285,12 @@ export class ReportBuilderService {
         success: true,
         data: updated,
       };
-    } catch (error) {
+    } catch (_err) {
       if (error instanceof NotFoundException) {
         throw error;
       }
       throw new BadRequestException(
-        `Failed to update report: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Failed to update report: ${error instanceof Error ? (error as Error).message : 'Unknown error'}`
       );
     }
   }
@@ -317,12 +317,12 @@ export class ReportBuilderService {
         success: true,
         message: 'Report deleted successfully',
       };
-    } catch (error) {
+    } catch (_err) {
       if (error instanceof NotFoundException) {
         throw error;
       }
       throw new BadRequestException(
-        `Failed to delete report: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Failed to delete report: ${error instanceof Error ? (error as Error).message : 'Unknown error'}`
       );
     }
   }
@@ -355,12 +355,12 @@ export class ReportBuilderService {
         success: true,
         data: executions,
       };
-    } catch (error) {
+    } catch (_err) {
       if (error instanceof NotFoundException) {
         throw error;
       }
       throw new BadRequestException(
-        `Failed to get execution history: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Failed to get execution history: ${error instanceof Error ? (error as Error).message : 'Unknown error'}`
       );
     }
   }
@@ -637,9 +637,9 @@ export class ReportBuilderService {
       });
 
       return results as Record<string, unknown>[];
-    } catch (error) {
+    } catch (_err) {
       throw new BadRequestException(
-        `Query execution failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Query execution failed: ${error instanceof Error ? (error as Error).message : 'Unknown error'}`
       );
     }
   }

@@ -62,7 +62,7 @@ export class EventsController {
   @ApiOperation({ summary: 'Create new event' })
   @ApiResponse({ status: 201, description: 'Event created' })
   async createEvent(@Body() data: CreateEventDto, @Request() req: { user: { id: string } }): Promise<unknown> {
-    return this.eventsService.createEvent({ ...data, creatorId: req.user.sub });
+    return this.eventsService.createEvent({ ...data, creatorId: req.user.id });
   }
 
   @Patch(':id')
@@ -88,7 +88,7 @@ export class EventsController {
   @ApiOperation({ summary: 'RSVP to event' })
   @ApiResponse({ status: 200, description: 'RSVP successful' })
   async rsvpEvent(@Param('id') id: string, @Body() data: RsvpDto, @Request() req: { user: { id: string } }): Promise<unknown> {
-    return this.eventsService.rsvpEvent(id, req.user.sub, data);
+    return this.eventsService.rsvpEvent(id, req.user.id, data);
   }
 
   @Delete(':id/rsvp')
@@ -96,6 +96,6 @@ export class EventsController {
   @ApiOperation({ summary: 'Cancel RSVP' })
   @ApiResponse({ status: 200, description: 'RSVP cancelled' })
   async cancelRsvp(@Param('id') id: string, @Request() req: { user: { id: string } }): Promise<unknown> {
-    return this.eventsService.cancelRsvp(id, req.user.sub);
+    return this.eventsService.cancelRsvp(id, req.user.id);
   }
 }

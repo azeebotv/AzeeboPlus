@@ -135,8 +135,8 @@ export class FlutterwaveProvider {
       this.storeIdempotency(idempotencyKey, result);
 
       return result;
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
+    } catch (_err) {
+      const message = error instanceof Error ? (error as Error).message : 'Unknown error';
       throw new BadRequestException(`Flutterwave initialization failed: ${message}`);
     }
   }
@@ -167,8 +167,8 @@ export class FlutterwaveProvider {
         paidAt: new Date(response.data.data.created_at),
         reference: response.data.data.tx_ref,
       };
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
+    } catch (_err) {
+      const message = error instanceof Error ? (error as Error).message : 'Unknown error';
       throw new BadRequestException(`Flutterwave verification failed: ${message}`);
     }
   }
@@ -201,8 +201,8 @@ export class FlutterwaveProvider {
         amount: response.data.data.amount,
         status: response.data.data.status,
       };
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
+    } catch (_err) {
+      const message = error instanceof Error ? (error as Error).message : 'Unknown error';
       throw new BadRequestException(`Flutterwave refund failed: ${message}`);
     }
   }

@@ -121,7 +121,7 @@ export class SafetyScanningService {
       });
 
       return { scanId: scanRecord.id, result };
-    } catch (error) {
+    } catch (_err) {
       await this.prisma.safetyScan.update({
         where: { id: scanRecord.id },
         data: {
@@ -258,7 +258,7 @@ export class SafetyScanningService {
       }
 
       return { result: 'clean' };
-    } catch (error) {
+    } catch (_err) {
       this.logger.error(`Malware scan failed: ${(error as Error).message}`);
       return this.mockMalwareScan();
     }
@@ -349,7 +349,7 @@ export class SafetyScanningService {
       }
 
       return { result: 'clean' };
-    } catch (error) {
+    } catch (_err) {
       this.logger.error(`Content safety scan failed: ${(error as Error).message}`);
       return this.mockContentSafetyScan();
     }
@@ -403,7 +403,7 @@ export class SafetyScanningService {
       }
 
       return { result: 'clean' };
-    } catch (error) {
+    } catch (_err) {
       this.logger.error(`Copyright scan failed: ${(error as Error).message}`);
       return this.mockCopyrightScan();
     }

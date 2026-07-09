@@ -39,8 +39,8 @@ export class AdminService {
         })),
       };
     } catch (error) {
-      this.logger.error(`getStats failed: ${error.message}`, error.stack);
-      return { success: false, error: error.message };
+      this.logger.error(`getStats failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: (error as Error).message };
     }
   }
 
@@ -90,8 +90,8 @@ export class AdminService {
         },
       };
     } catch (error) {
-      this.logger.error(`getNotifications failed: ${error.message}`, error.stack);
-      return { success: false, error: error.message };
+      this.logger.error(`getNotifications failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: (error as Error).message };
     }
   }
 
@@ -145,8 +145,8 @@ export class AdminService {
       this.logger.log(`Sent system notification to all ${sentCount} users`);
       return { sentCount, broadcast: true };
     } catch (error) {
-      this.logger.error(`sendSystemNotification failed: ${error.message}`, error.stack);
-      return { success: false, error: error.message };
+      this.logger.error(`sendSystemNotification failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: (error as Error).message };
     }
   }
 }

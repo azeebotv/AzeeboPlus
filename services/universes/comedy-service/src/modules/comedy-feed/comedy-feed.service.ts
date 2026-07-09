@@ -88,8 +88,8 @@ export class ComedyFeedService {
       await this.cache.set(cacheK, result, 300);
       return result;
     } catch (error) {
-      this.logger.error(`Failed to get feed: ${error.message}`, error.stack);
-      return { success: false, error: { code: 'FEED_ERROR', message: error.message } };
+      this.logger.error(`Failed to get feed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: { code: 'FEED_ERROR', message: (error as Error).message } };
     }
   }
 
@@ -136,9 +136,9 @@ export class ComedyFeedService {
       await this.cache.set(cacheK, result, 300);
       return result;
     } catch (error) {
-      this.logger.error(`Failed to get clip by id: ${error.message}`, error.stack);
+      this.logger.error(`Failed to get clip by id: ${(error as Error).message}`, (error as Error).stack);
       if (error instanceof NotFoundException) throw error;
-      return { success: false, error: { code: 'CLIP_ERROR', message: error.message } };
+      return { success: false, error: { code: 'CLIP_ERROR', message: (error as Error).message } };
     }
   }
 
@@ -170,8 +170,8 @@ export class ComedyFeedService {
       await this.cache.invalidate('comedy:*');
       return { success: true, data: { message: 'Liked', likeCount: updated.likeCount } };
     } catch (error) {
-      this.logger.error(`Failed to like clip: ${error.message}`, error.stack);
-      return { success: false, error: { code: 'LIKE_ERROR', message: error.message } };
+      this.logger.error(`Failed to like clip: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: { code: 'LIKE_ERROR', message: (error as Error).message } };
     }
   }
 
@@ -197,9 +197,9 @@ export class ComedyFeedService {
         data: { commentId: comment.id, message: 'Comment added' },
       };
     } catch (error) {
-      this.logger.error(`Failed to comment on clip: ${error.message}`, error.stack);
+      this.logger.error(`Failed to comment on clip: ${(error as Error).message}`, (error as Error).stack);
       if (error instanceof NotFoundException) throw error;
-      return { success: false, error: { code: 'COMMENT_ERROR', message: error.message } };
+      return { success: false, error: { code: 'COMMENT_ERROR', message: (error as Error).message } };
     }
   }
 
@@ -230,8 +230,8 @@ export class ComedyFeedService {
         data: { items, total },
       };
     } catch (error) {
-      this.logger.error(`Failed to get specials: ${error.message}`, error.stack);
-      return { success: false, error: { code: 'SPECIALS_ERROR', message: error.message } };
+      this.logger.error(`Failed to get specials: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: { code: 'SPECIALS_ERROR', message: (error as Error).message } };
     }
   }
 
@@ -250,9 +250,9 @@ export class ComedyFeedService {
 
       return { success: true, data: special };
     } catch (error) {
-      this.logger.error(`Failed to get special by id: ${error.message}`, error.stack);
+      this.logger.error(`Failed to get special by id: ${(error as Error).message}`, (error as Error).stack);
       if (error instanceof NotFoundException) throw error;
-      return { success: false, error: { code: 'SPECIAL_ERROR', message: error.message } };
+      return { success: false, error: { code: 'SPECIAL_ERROR', message: (error as Error).message } };
     }
   }
 
@@ -284,8 +284,8 @@ export class ComedyFeedService {
       await this.cache.invalidate('comedy:*');
       return { success: true, data: { message: 'Liked' } };
     } catch (error) {
-      this.logger.error(`Failed to like special: ${error.message}`, error.stack);
-      return { success: false, error: { code: 'LIKE_ERROR', message: error.message } };
+      this.logger.error(`Failed to like special: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: { code: 'LIKE_ERROR', message: (error as Error).message } };
     }
   }
 
@@ -320,8 +320,8 @@ export class ComedyFeedService {
       await this.cache.set(cacheK, result, 300);
       return result;
     } catch (error) {
-      this.logger.error(`Failed to get trending: ${error.message}`, error.stack);
-      return { success: false, error: { code: 'TRENDING_ERROR', message: error.message } };
+      this.logger.error(`Failed to get trending: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: { code: 'TRENDING_ERROR', message: (error as Error).message } };
     }
   }
 
@@ -361,8 +361,8 @@ export class ComedyFeedService {
 
       return { success: true, data: { message: `Recorded ${scored.length} trends for ${period}` } };
     } catch (error) {
-      this.logger.error(`Failed to record trend: ${error.message}`, error.stack);
-      return { success: false, error: { code: 'TREND_RECORD_ERROR', message: error.message } };
+      this.logger.error(`Failed to record trend: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: { code: 'TREND_RECORD_ERROR', message: (error as Error).message } };
     }
   }
 }

@@ -153,7 +153,7 @@ export class ContentController {
   @ApiResponse({ status: 200, description: 'Recommended content' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getRecommended(@Request() req: { user: { sub: string } }): Promise<ContentResponse> {
-    return this.contentService.getRecommended(req.user.sub);
+    return this.contentService.getRecommended(req.user.id);
   }
 
   @Get('accessible')
@@ -168,7 +168,7 @@ export class ContentController {
     @Query('page') page?: number,
     @Query('limit') limit?: number
   ) {
-    const result = await this.accessControlService.getAccessibleContent(req.user.sub, {
+    const result = await this.accessControlService.getAccessibleContent(req.user.id, {
       universeId,
       windowType,
       page,
@@ -186,7 +186,7 @@ export class ContentController {
     @Request() req: { user: { sub: string } },
     @Query('universeId') universeId?: string
   ) {
-    const result = await this.accessControlService.checkPassAccess(req.user.sub, universeId);
+    const result = await this.accessControlService.checkPassAccess(req.user.id, universeId);
     return ApiResponseWrapper.success(result);
   }
 
@@ -199,7 +199,7 @@ export class ContentController {
     @Request() req: { user: { sub: string } },
     @Param('contentId') contentId: string
   ) {
-    const result = await this.accessControlService.checkRentalAccess(req.user.sub, contentId);
+    const result = await this.accessControlService.checkRentalAccess(req.user.id, contentId);
     return ApiResponseWrapper.success(result);
   }
 
@@ -212,7 +212,7 @@ export class ContentController {
     @Request() req: { user: { sub: string } },
     @Param('screeningId') screeningId: string
   ) {
-    const result = await this.accessControlService.checkScreeningAccess(req.user.sub, screeningId);
+    const result = await this.accessControlService.checkScreeningAccess(req.user.id, screeningId);
     return ApiResponseWrapper.success(result);
   }
 
@@ -225,7 +225,7 @@ export class ContentController {
     @Request() req: { user: { sub: string } },
     @Param('extraId') extraId: string
   ) {
-    const result = await this.accessControlService.checkLockedExtraAccess(req.user.sub, extraId);
+    const result = await this.accessControlService.checkLockedExtraAccess(req.user.id, extraId);
     return ApiResponseWrapper.success(result);
   }
 
@@ -302,7 +302,7 @@ export class ContentController {
     @Query('page') page = 1,
     @Query('limit') limit = 20
   ): Promise<ContentResponse> {
-    return this.contentService.listContent({ creatorId: req.user.sub, status }, page, limit);
+    return this.contentService.listContent({ creatorId: req.user.id, status }, page, limit);
   }
 
   @Get('creator/:creatorId')
@@ -385,7 +385,7 @@ export class ContentController {
     @Request() req: { user: { sub: string } },
     @Param('id') id: string
   ) {
-    const result = await this.accessControlService.checkContentAccess(req.user.sub, id);
+    const result = await this.accessControlService.checkContentAccess(req.user.id, id);
     return ApiResponseWrapper.success(result);
   }
 
@@ -400,7 +400,7 @@ export class ContentController {
     @Param('id') id: string,
     @Query('expiresIn') expiresIn: number = 3600
   ) {
-    const result = await this.accessControlService.checkMediaPlaybackAccess(req.user.sub, id);
+    const result = await this.accessControlService.checkMediaPlaybackAccess(req.user.id, id);
     return ApiResponseWrapper.success(result);
   }
 
@@ -443,7 +443,7 @@ export class ContentController {
     @Param('id') id: string,
     @Query('expiresIn') expiresIn: number = 3600
   ): Promise<ContentResponse> {
-    return this.contentService.getSignedMediaUrl(req.user.sub, id, expiresIn);
+    return this.contentService.getSignedMediaUrl(req.user.id, id, expiresIn);
   }
 
   @Get(':id/transcode/:jobId/status')
@@ -491,7 +491,7 @@ export class ContentController {
     @Request() req: { user: { sub: string } },
     @Body() createContentDto: CreateContentDto
   ): Promise<ContentResponse> {
-    return this.contentService.createContent(req.user.sub, createContentDto);
+    return this.contentService.createContent(req.user.id, createContentDto);
   }
 
   @Post('categories')
@@ -539,7 +539,7 @@ export class ContentController {
     @Body() body: { text?: string; content?: string }
   ): Promise<ContentResponse> {
     return this.contentService.addCommentToContent(
-      req.user.sub,
+      req.user.id,
       id,
       body.text || body.content || ''
     );
@@ -556,7 +556,7 @@ export class ContentController {
     @Param('id') id: string,
     @Body() createMediaAssetDto: CreateMediaAssetDto
   ): Promise<ContentResponse> {
-    return this.contentService.createMediaAsset(req.user.sub, id, createMediaAssetDto, req.user.role);
+    return this.contentService.createMediaAsset(req.user.id, id, createMediaAssetDto, req.user.role);
   }
 
   @Post(':id/media/thumbnail')
@@ -583,7 +583,7 @@ export class ContentController {
     @Request() req: { user: { sub: string } },
     @Param('id') id: string
   ): Promise<ContentResponse> {
-    return this.contentService.publishContent(req.user.sub, id);
+    return this.contentService.publishContent(req.user.id, id);
   }
 
   @Post(':id/unpublish')
@@ -596,7 +596,7 @@ export class ContentController {
     @Request() req: { user: { sub: string } },
     @Param('id') id: string
   ): Promise<ContentResponse> {
-    return this.contentService.unpublishContent(req.user.sub, id);
+    return this.contentService.unpublishContent(req.user.id, id);
   }
 
   @Post(':id/report')
@@ -610,7 +610,7 @@ export class ContentController {
     @Param('id') id: string,
     @Body() body: { type: string; reason: string }
   ): Promise<ContentResponse> {
-    return this.contentService.reportContent(req.user.sub, id, body);
+    return this.contentService.reportContent(req.user.id, id, body);
   }
 
   @Post(':id/transcode')
@@ -652,7 +652,7 @@ export class ContentController {
     @Param('id') id: string,
     @Param('categoryId') categoryId: string
   ): Promise<ContentResponse> {
-    return this.contentService.addCategoryToContent(req.user.sub, id, categoryId);
+    return this.contentService.addCategoryToContent(req.user.id, id, categoryId);
   }
 
   @Post(':id/tags/:tagId')
@@ -666,7 +666,7 @@ export class ContentController {
     @Param('id') id: string,
     @Param('tagId') tagId: string
   ): Promise<ContentResponse> {
-    return this.contentService.addTagToContent(req.user.sub, id, tagId);
+    return this.contentService.addTagToContent(req.user.id, id, tagId);
   }
 
   @Post(':id/relationships')
@@ -681,7 +681,7 @@ export class ContentController {
     @Body() body: { relatedContentId: string; type: string }
   ): Promise<ContentResponse> {
     return this.contentService.addContentRelationship(
-      req.user.sub,
+      req.user.id,
       id,
       body.relatedContentId,
       body.type
@@ -703,7 +703,7 @@ export class ContentController {
     @Param('id') id: string,
     @Body() updateContentDto: UpdateContentDto
   ): Promise<ContentResponse> {
-    return this.contentService.updateContent(req.user.sub, id, updateContentDto);
+    return this.contentService.updateContent(req.user.id, id, updateContentDto);
   }
 
   @Patch(':id/media')
@@ -717,7 +717,7 @@ export class ContentController {
     @Param('id') id: string,
     @Body() updateMediaAssetDto: UpdateMediaAssetDto
   ): Promise<ContentResponse> {
-    return this.contentService.updateMediaAsset(req.user.sub, id, updateMediaAssetDto, req.user.role);
+    return this.contentService.updateMediaAsset(req.user.id, id, updateMediaAssetDto, req.user.role);
   }
 
   @Patch('categories/:id')
@@ -770,7 +770,7 @@ export class ContentController {
     @Request() req: { user: { sub: string } },
     @Param('id') id: string
   ): Promise<ContentResponse> {
-    return this.contentService.deleteContent(req.user.sub, id);
+    return this.contentService.deleteContent(req.user.id, id);
   }
 
   @Delete(':id/media')
@@ -783,7 +783,7 @@ export class ContentController {
     @Request() req: { user: { sub: string; role?: string } },
     @Param('id') id: string
   ): Promise<ContentResponse> {
-    return this.contentService.deleteMediaAsset(req.user.sub, id, req.user.role);
+    return this.contentService.deleteMediaAsset(req.user.id, id, req.user.role);
   }
 
   @Delete(':id/categories/:categoryId')
@@ -797,7 +797,7 @@ export class ContentController {
     @Param('id') id: string,
     @Param('categoryId') categoryId: string
   ): Promise<ContentResponse> {
-    return this.contentService.removeCategoryFromContent(req.user.sub, id, categoryId);
+    return this.contentService.removeCategoryFromContent(req.user.id, id, categoryId);
   }
 
   @Delete(':id/tags/:tagId')
@@ -811,7 +811,7 @@ export class ContentController {
     @Param('id') id: string,
     @Param('tagId') tagId: string
   ): Promise<ContentResponse> {
-    return this.contentService.removeTagFromContent(req.user.sub, id, tagId);
+    return this.contentService.removeTagFromContent(req.user.id, id, tagId);
   }
 
   @Delete(':id/relationships/:relatedContentId')
@@ -825,7 +825,7 @@ export class ContentController {
     @Param('id') id: string,
     @Param('relatedContentId') relatedContentId: string
   ): Promise<ContentResponse> {
-    return this.contentService.removeContentRelationship(req.user.sub, id, relatedContentId);
+    return this.contentService.removeContentRelationship(req.user.id, id, relatedContentId);
   }
 
   @Delete('categories/:id')

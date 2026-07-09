@@ -51,7 +51,7 @@ export class PaymentProcessor extends WorkerHost {
       }
 
       this.logger.log(`Payment processed: ${transactionId}`);
-    } catch (error) {
+    } catch (_err) {
       this.logger.error(
         `Failed to process payment (attempt ${job.attemptsMade + 1}/${PaymentProcessor.DEFAULT_MAX_RETRIES}): ${(error as Error).message}`,
         { jobId: job.id, transactionId, userId, type, provider }
@@ -120,11 +120,11 @@ export class PaymentProcessor extends WorkerHost {
   @OnWorkerEvent('failed')
   onFailed(job: Job, error: Error) {
     this.logger.error(
-      `Payment job ${job.id} failed after ${job.attemptsMade + 1} attempts: ${error.message}`,
+      `Payment job ${job.id} failed after ${job.attemptsMade + 1} attempts: ${(error as Error).message}`,
       {
         jobId: job.id,
         transactionId: job.data.transactionId,
-        error: error.message,
+        error: (error as Error).message,
         attemptsMade: job.attemptsMade,
       }
     );
@@ -147,8 +147,8 @@ export class PaymentProcessor extends WorkerHost {
 
   @OnWorkerEvent('error')
   onError(error: Error) {
-    this.logger.error(`Payment worker encountered an error: ${error.message}`, {
-      stack: error.message,
+    this.logger.error(`Payment worker encountered an error: ${(error as Error).message}`, {
+      stack: (error as Error).message,
     });
   }
 }

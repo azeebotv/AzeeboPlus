@@ -23,9 +23,9 @@ export class AdminService {
         totalRequests,
         recommendationsToday,
       });
-    } catch (error) {
-      this.logger.error(`getStats failed: ${error.message}`, error.stack);
-      return ApiResponseWrapper.error(error.message);
+    } catch (_err) {
+      this.logger.error(`getStats failed: ${(error as Error).message}`, (error as Error).stack);
+      return ApiResponseWrapper.error((error as Error).message);
     }
   }
 

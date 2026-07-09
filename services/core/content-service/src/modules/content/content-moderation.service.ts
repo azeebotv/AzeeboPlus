@@ -72,7 +72,7 @@ export class ContentModerationService {
       }
 
       return { isSafe: true, issues: [], scanId: scanResult.scanId };
-    } catch (error: unknown) {
+    } catch (error) {
       this.logger.error(`Safety scan failed for content ${contentId}: ${(error as Error).message}`);
       throw new BadRequestException('Safety scan failed, please try again later');
     }
@@ -103,7 +103,7 @@ export class ContentModerationService {
       }, { timeout: 10000 });
 
       return response.data;
-    } catch (error: unknown) {
+    } catch (error) {
       this.logger.error(`Safety scan failed for content ${contentId}: ${(error as Error).message}`);
       throw new BadRequestException('Safety scan failed, please try again later');
     }
@@ -151,7 +151,7 @@ export class ContentModerationService {
           message: 'Content reported successfully',
         },
       };
-    } catch (error: unknown) {
+    } catch (error) {
       this.logger.error(
         `Failed to report content to moderation service: ${(error as Error).message}`
       );
@@ -191,7 +191,7 @@ export class ContentModerationService {
 
       const result = await response.json();
       return result;
-    } catch (error: unknown) {
+    } catch (error) {
       this.logger.error(`Failed to get moderation status: ${(error as Error).message}`);
       return {
         success: true,

@@ -49,7 +49,7 @@ export class GameCatalogController {
     @Param('gameId') gameId: string,
     @Request() req: { user: { id: string } }
   ): Promise<unknown> {
-    return this.gameCatalogService.startGame(req.user.sub, gameId);
+    return this.gameCatalogService.startGame(req.user.id, gameId);
   }
 
   @Post('answer')
@@ -67,7 +67,7 @@ export class GameCatalogController {
     @Request() req: { user: { id: string } }
   ): Promise<unknown> {
     return this.gameCatalogService.submitAnswer(
-      req.user.sub,
+      req.user.id,
       body.sessionId,
       body.questionId,
       body.answer,
@@ -83,6 +83,6 @@ export class GameCatalogController {
     @Param('sessionId') sessionId: string,
     @Request() req: { user: { id: string } }
   ): Promise<unknown> {
-    return this.gameCatalogService.completeGame(req.user.sub, sessionId);
+    return this.gameCatalogService.completeGame(req.user.id, sessionId);
   }
 }

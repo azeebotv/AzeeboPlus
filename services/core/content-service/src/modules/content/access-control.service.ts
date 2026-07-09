@@ -99,7 +99,7 @@ export class AccessControlService {
         hasAccess: true,
         accessType: 'free',
       };
-    } catch (error: unknown) {
+    } catch (error) {
       if (error instanceof NotFoundException) throw error;
       this.logger.error(`Failed to check content access: ${error}`);
       return { hasAccess: false, reason: 'Failed to check content access' };
@@ -149,7 +149,7 @@ export class AccessControlService {
         accessType: 'rental',
         expiresAt: rental.endTime,
       };
-    } catch (error: unknown) {
+    } catch (error) {
       this.logger.error(`Failed to check rental access: ${error}`);
       return { hasAccess: false, reason: 'Failed to check rental access' };
     }
@@ -158,7 +158,7 @@ export class AccessControlService {
   async checkPassAccess(userId: string, universeId?: string): Promise<AccessCheckResult> {
     try {
       return this.checkUserPass(userId, universeId);
-    } catch (error: unknown) {
+    } catch (error) {
       this.logger.error(`Failed to check pass access: ${error}`);
       return { hasAccess: false, reason: 'Failed to check pass access' };
     }
@@ -278,7 +278,7 @@ export class AccessControlService {
       }
 
       return hasAccess;
-    } catch (error: unknown) {
+    } catch (error) {
       if (error instanceof NotFoundException) throw error;
       this.logger.error(`Failed to check screening access: ${error}`);
       return { hasAccess: false, reason: 'Failed to check screening access' };
@@ -354,7 +354,7 @@ export class AccessControlService {
         reason: 'Extra is locked',
         accessType: 'unlocked',
       };
-    } catch (error: unknown) {
+    } catch (error) {
       if (error instanceof NotFoundException) throw error;
       this.logger.error(`Failed to check locked extra access: ${error}`);
       return { hasAccess: false, reason: 'Failed to check locked extra access' };
@@ -390,7 +390,7 @@ export class AccessControlService {
         canPlay: true,
         expiresIn: 3600,
       };
-    } catch (error: unknown) {
+    } catch (error) {
       this.logger.error(`Failed to check media playback access: ${error}`);
       return { canPlay: false, reason: 'Failed to check media playback access' };
     }
@@ -474,7 +474,7 @@ export class AccessControlService {
         totalFree: freeContent.length,
         totalPremium: premiumContent.length,
       };
-    } catch (error: unknown) {
+    } catch (error) {
       this.logger.error(`Failed to get accessible content: ${error}`);
       return { success: false, error: { code: 'GET_ACCESSIBLE_CONTENT_FAILED', message: 'Failed to retrieve accessible content' } };
     }

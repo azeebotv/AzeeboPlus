@@ -104,7 +104,7 @@ export class WalletClientService {
         } else {
           reject(
             new HttpException(
-              `Wallet Service error: ${error.message}`,
+              `Wallet Service error: ${(error as Error).message}`,
               HttpStatus.SERVICE_UNAVAILABLE
             )
           );

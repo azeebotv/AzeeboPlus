@@ -1443,7 +1443,7 @@ export class ProxyController {
           requestId,
           ...(process.env.NODE_ENV === 'production'
             ? {}
-            : { error: error instanceof Error ? error.message : 'Unknown error' }),
+            : { error: error instanceof Error ? (error as Error).message : 'Unknown error' }),
         });
       }
       return null;

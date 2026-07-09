@@ -369,7 +369,7 @@ export class ContentService {
           },
         },
       };
-    } catch (error: unknown) {
+    } catch (error) {
       this.logger.error(`Failed to list content: ${error}`);
       return { success: false, error: { code: 'LIST_CONTENT_FAILED', message: 'Failed to list content' } } as never;
     }
@@ -392,7 +392,7 @@ export class ContentService {
         success: true,
         data: content,
       };
-    } catch (error: unknown) {
+    } catch (error) {
       if (error instanceof NotFoundException) throw error;
       this.logger.error(`Failed to get content: ${error}`);
       return { success: false, error: { code: 'GET_CONTENT_FAILED', message: 'Failed to retrieve content' } } as never;
@@ -407,7 +407,7 @@ export class ContentService {
         success: true,
         data: result.data as ContentWithUniverse[],
       };
-    } catch (error: unknown) {
+    } catch (error) {
       this.logger.error(`Failed to search content: ${error}`);
       return { success: false, error: { code: 'SEARCH_CONTENT_FAILED', message: 'Failed to search content' } } as never;
     }
@@ -427,7 +427,7 @@ export class ContentService {
         success: true,
         data: content,
       };
-    } catch (error: unknown) {
+    } catch (error) {
       this.logger.error(`Failed to create content: ${error}`);
       return { success: false, error: { code: 'CREATE_CONTENT_FAILED', message: 'Failed to create content' } } as never;
     }
@@ -459,7 +459,7 @@ export class ContentService {
         success: true,
         data: updatedContent,
       };
-    } catch (error: unknown) {
+    } catch (error) {
       if (error instanceof NotFoundException || error instanceof ForbiddenException) throw error;
       this.logger.error(`Failed to update content: ${error}`);
       return { success: false, error: { code: 'UPDATE_CONTENT_FAILED', message: 'Failed to update content' } } as never;
@@ -487,7 +487,7 @@ export class ContentService {
         success: true,
         data: { message: 'Content soft deleted successfully' },
       };
-    } catch (error: unknown) {
+    } catch (error) {
       if (error instanceof NotFoundException || error instanceof ForbiddenException) throw error;
       this.logger.error(`Failed to delete content: ${error}`);
       return { success: false, error: { code: 'DELETE_CONTENT_FAILED', message: 'Failed to delete content' } };
@@ -540,7 +540,7 @@ export class ContentService {
         success: true,
         data: publishedContent,
       };
-    } catch (error: unknown) {
+    } catch (error) {
       if (error instanceof NotFoundException || error instanceof ForbiddenException || error instanceof BadRequestException) throw error;
       this.logger.error(`Failed to publish content: ${error}`);
       return { success: false, error: { code: 'PUBLISH_CONTENT_FAILED', message: 'Failed to publish content' } } as never;
@@ -583,7 +583,7 @@ export class ContentService {
         success: true,
         data: unpublishedContent,
       };
-    } catch (error: unknown) {
+    } catch (error) {
       if (error instanceof NotFoundException || error instanceof ForbiddenException || error instanceof BadRequestException) throw error;
       this.logger.error(`Failed to unpublish content: ${error}`);
       return { success: false, error: { code: 'UNPUBLISH_CONTENT_FAILED', message: 'Failed to unpublish content' } } as never;
@@ -629,7 +629,7 @@ export class ContentService {
         success: true,
         data: mediaAsset,
       };
-    } catch (error: unknown) {
+    } catch (error) {
       if (error instanceof NotFoundException || error instanceof ForbiddenException || error instanceof BadRequestException) throw error;
       this.logger.error(`Failed to create media asset: ${error}`);
       return { success: false, error: { code: 'CREATE_MEDIA_ASSET_FAILED', message: 'Failed to create media asset' } } as never;
@@ -676,7 +676,7 @@ export class ContentService {
         success: true,
         data: updatedMediaAsset,
       };
-    } catch (error: unknown) {
+    } catch (error) {
       if (error instanceof NotFoundException || error instanceof ForbiddenException) throw error;
       this.logger.error(`Failed to update media asset: ${error}`);
       return { success: false, error: { code: 'UPDATE_MEDIA_ASSET_FAILED', message: 'Failed to update media asset' } } as never;
@@ -717,7 +717,7 @@ export class ContentService {
         success: true,
         data: { message: 'Media asset deleted successfully' },
       };
-    } catch (error: unknown) {
+    } catch (error) {
       if (error instanceof NotFoundException || error instanceof ForbiddenException) throw error;
       this.logger.error(`Failed to delete media asset: ${error}`);
       return { success: false, error: { code: 'DELETE_MEDIA_ASSET_FAILED', message: 'Failed to delete media asset' } };
@@ -751,7 +751,7 @@ export class ContentService {
           thumbnailUrl: signedThumbnailUrl,
         },
       };
-    } catch (error: unknown) {
+    } catch (error) {
       if (error instanceof NotFoundException) throw error;
       this.logger.error(`Failed to get media asset: ${error}`);
       return { success: false, error: { code: 'GET_MEDIA_ASSET_FAILED', message: 'Failed to retrieve media asset' } } as never;
@@ -782,7 +782,7 @@ export class ContentService {
           mediaAssetId: mediaAsset.id,
         },
       };
-    } catch (error: unknown) {
+    } catch (error) {
       if (error instanceof NotFoundException) throw error;
       this.logger.error(`Failed to get signed media url: ${error}`);
       return { success: false, error: { code: 'GET_SIGNED_URL_FAILED', message: 'Failed to get signed media URL' } } as never;
@@ -826,7 +826,7 @@ export class ContentService {
           mediaAssetId: mediaAsset.id,
         },
       };
-    } catch (error: unknown) {
+    } catch (error) {
       if (error instanceof NotFoundException) throw error;
       this.logger.error(`Failed to generate thumbnail: ${error}`);
       return { success: false, error: { code: 'GENERATE_THUMBNAIL_FAILED', message: 'Failed to generate thumbnail' } } as never;
@@ -866,7 +866,7 @@ export class ContentService {
         success: true,
         data: items,
       };
-    } catch (error: unknown) {
+    } catch (error) {
       this.logger.error(`Failed to get content comments: ${error}`);
       return { success: false, error: { code: 'GET_COMMENTS_FAILED', message: 'Failed to retrieve content comments' } } as never;
     }
@@ -884,7 +884,7 @@ export class ContentService {
         success: true,
         data: comment,
       };
-    } catch (error: unknown) {
+    } catch (error) {
       this.logger.error(`Failed to add comment to content: ${error}`);
       return { success: false, error: { code: 'ADD_COMMENT_FAILED', message: 'Failed to add comment' } } as never;
     }
@@ -901,7 +901,7 @@ export class ContentService {
         success: true,
         data: analytics,
       };
-    } catch (error: unknown) {
+    } catch (error) {
       this.logger.error(`Failed to get content analytics: ${error}`);
       return { success: false, error: { code: 'GET_ANALYTICS_FAILED', message: 'Failed to retrieve content analytics' } } as never;
     }
@@ -936,7 +936,7 @@ export class ContentService {
         success: true,
         data: job,
       };
-    } catch (error: unknown) {
+    } catch (error) {
       if (error instanceof NotFoundException) throw error;
       this.logger.error(`Failed to start transcoding: ${error}`);
       return { success: false, error: { code: 'START_TRANSCODING_FAILED', message: 'Failed to start transcoding' } } as never;
@@ -962,7 +962,7 @@ export class ContentService {
         success: true,
         data: status,
       };
-    } catch (error: unknown) {
+    } catch (error) {
       if (error instanceof NotFoundException) throw error;
       this.logger.error(`Failed to get transcoding status: ${error}`);
       return { success: false, error: { code: 'GET_TRANSCODING_STATUS_FAILED', message: 'Failed to get transcoding status' } } as never;
@@ -1004,7 +1004,7 @@ export class ContentService {
           resolution,
         },
       };
-    } catch (error: unknown) {
+    } catch (error) {
       if (error instanceof NotFoundException) throw error;
       this.logger.error(`Failed to get transcoded media url: ${error}`);
       return { success: false, error: { code: 'GET_TRANSCODED_URL_FAILED', message: 'Failed to get transcoded media URL' } } as never;
@@ -1065,7 +1065,7 @@ export class ContentService {
 
       availability.isAvailable = true;
       return { success: true, data: availability };
-    } catch (error: unknown) {
+    } catch (error) {
       if (error instanceof NotFoundException) throw error;
       this.logger.error(`Failed to check content availability: ${error}`);
       return { success: false, error: { code: 'CHECK_AVAILABILITY_FAILED', message: 'Failed to check content availability' } } as never;
@@ -1108,7 +1108,7 @@ export class ContentService {
         success: true,
         data: windowType ? windows[windowType] || [] : windows,
       };
-    } catch (error: unknown) {
+    } catch (error) {
       this.logger.error(`Failed to get content by window: ${error}`);
       return { success: false, error: { code: 'GET_CONTENT_BY_WINDOW_FAILED', message: 'Failed to get content by window' } } as never;
     }
@@ -1132,7 +1132,7 @@ export class ContentService {
         success: true,
         data: content,
       };
-    } catch (error: unknown) {
+    } catch (error) {
       this.logger.error(`Failed to get premieres: ${error}`);
       return { success: false, error: { code: 'GET_PREMIERES_FAILED', message: 'Failed to get premieres' } } as never;
     }
@@ -1156,7 +1156,7 @@ export class ContentService {
         success: true,
         data: content,
       };
-    } catch (error: unknown) {
+    } catch (error) {
       this.logger.error(`Failed to get exclusive content: ${error}`);
       return { success: false, error: { code: 'GET_EXCLUSIVE_FAILED', message: 'Failed to get exclusive content' } } as never;
     }
@@ -1202,7 +1202,7 @@ export class ContentService {
         success: true,
         data: updatedContent,
       };
-    } catch (error: unknown) {
+    } catch (error) {
       if (error instanceof NotFoundException || error instanceof ForbiddenException) throw error;
       this.logger.error(`Failed to update content window: ${error}`);
       return { success: false, error: { code: 'UPDATE_WINDOW_FAILED', message: 'Failed to update content window' } } as never;

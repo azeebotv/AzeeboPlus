@@ -49,7 +49,7 @@ export class AnalyticsController {
   @ApiResponse({ status: 200, description: 'User analytics' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getUserSummary(@Request() req: { user: { sub: string } }): Promise<AnalyticsResponse> {
-    return this.analyticsService.getUserSummary(req.user.sub);
+    return this.analyticsService.getUserSummary(req.user.id);
   }
 
   @Get('dashboard')

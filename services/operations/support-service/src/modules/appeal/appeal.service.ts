@@ -115,7 +115,7 @@ export class AppealService {
             restoredBy: decidedBy,
           });
           this.logger.log(`Content ${appeal.resourceId} restored via content-service`);
-        } catch (error) {
+        } catch (_err) {
           this.logger.error(
             `Failed to restore content ${appeal.resourceId}: ${(error as Error).message}`
           );
@@ -126,7 +126,7 @@ export class AppealService {
             unsuspendedBy: decidedBy,
           });
           this.logger.log(`User ${appeal.resourceId} unsuspended via user-service`);
-        } catch (error) {
+        } catch (_err) {
           this.logger.error(
             `Failed to unsuspend user ${appeal.resourceId}: ${(error as Error).message}`
           );
@@ -142,7 +142,7 @@ export class AppealService {
           }
         );
         this.logger.log(`Trust score adjusted for user ${appeal.userId}`);
-      } catch (error) {
+      } catch (_err) {
         this.logger.error(`Failed to adjust trust score: ${(error as Error).message}`);
       }
     }
@@ -187,7 +187,7 @@ export class AppealService {
   }) {
     try {
       await this.moderationServiceClient.post('/api/moderation/audit', event);
-    } catch (error) {
+    } catch (_err) {
       this.logger.error(`Failed to create audit event: ${(error as Error).message}`);
     }
   }

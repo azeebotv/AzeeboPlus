@@ -303,7 +303,7 @@ export class CreatorsService {
           uploadDbId: upload.id,
         },
       };
-    } catch (error: unknown) {
+    } catch (_err) {
       await this.prisma.mediaUpload.update({
         where: { id: upload.id },
         data: { status: 'failed' },
@@ -783,8 +783,8 @@ export class CreatorsService {
           message: 'Tip sent successfully',
         },
       };
-    } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to send tip';
+    } catch (_err) {
+      const errorMessage = error instanceof Error ? (error as Error).message : 'Failed to send tip';
       throw new BadRequestException(errorMessage);
     }
   }
@@ -995,8 +995,8 @@ export class CreatorsService {
           message: 'Premium subscription created successfully',
         },
       };
-    } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to create subscription';
+    } catch (_err) {
+      const errorMessage = error instanceof Error ? (error as Error).message : 'Failed to create subscription';
       throw new BadRequestException(errorMessage);
     }
   }
