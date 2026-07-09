@@ -1,14 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useColorScheme } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { colors } from '../src/theme';
+import { votePackages as defaultVotePackages } from '../src/config/prices';
 import { realityApi } from '../src/api/engagement';
 import { walletApi } from '../src/api/wallet';
 import { apiClient } from '../src/api/client';
 import { logger } from '../src/utils/logger';
 import { LoadingState, ErrorState } from '../src/components/StateContainers';
+import type { Contestant, RealityShow } from '../src/types/api';
 
 const _PLACEHOLDER_IMAGE = '';
 
@@ -20,12 +22,10 @@ interface VotePackage {
   label: string;
 }
 
-const votePackages: VotePackage[] = [
-  { id: '1', votes: 10, price: 100, label: '10 Votes' },
-  { id: '2', votes: 50, price: 450, bonus: 5, label: '50 Votes + 5 Bonus' },
-  { id: '3', votes: 100, price: 850, bonus: 15, label: '100 Votes + 15 Bonus' },
-  { id: '4', votes: 500, price: 4000, bonus: 100, label: '500 Votes + 100 Bonus' },
-];
+const votePackages: VotePackage[] = defaultVotePackages.standard.map((pkg) => ({
+  ...pkg,
+  label: pkg.label || `${pkg.votes} Votes${pkg.bonus ? ` + ${pkg.bonus} Bonus` : ''}`,
+}));
 
 export default function VoteScreen() {
   const colorScheme = useColorScheme();
@@ -33,14 +33,14 @@ export default function VoteScreen() {
   const { showId } = useLocalSearchParams<{ showId: string }>();
   const isDark = colorScheme === 'dark';
 
-  const [selectedContestant, setSelectedContestant] = useState<any | null>(null);
+  const [selectedContestant, setSelectedContestant] = useState<Contestant | null>(null);
   const [selectedPackage, setSelectedPackage] = useState<VotePackage>(votePackages[0]);
   const [quantity, setQuantity] = useState(1);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [voteSuccess, setVoteSuccess] = useState(false);
   const [walletBalance, setWalletBalance] = useState(0);
-  const [contestants, setContestants] = useState<any[]>([]);
-  const [showData, setShowData] = useState<any>(null);
+  const [contestants, setContestants] = useState<Contestant[]>([]);
+  const [showData, setShowData] = useState<RealityShow | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -59,7 +59,7 @@ export default function VoteScreen() {
       const [contestantsRes, walletRes, showRes] = await Promise.all([
         realityApi.getContestants(showId || 'default'),
         walletApi.getBalance(),
-        apiClient.get<any>('/v1/reality/shows/current').catch(() => null),
+        apiClient.get<RealityShow>('/v1/reality/shows/current').catch(() => null),
       ]);
 
       if (contestantsRes.success && contestantsRes.data) {

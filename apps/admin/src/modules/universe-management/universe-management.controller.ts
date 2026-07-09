@@ -11,8 +11,11 @@ import {
   Logger,
   HttpCode,
   HttpStatus,
+  Req,
 } from '@nestjs/common';
+import { Request } from 'express';
 import { UniverseManagementService } from './universe-management.service';
+import { AuditLogService } from '../audit/audit.service';
 import { CreateUniverseDto } from './dto/create-universe.dto';
 import { UpdateUniverseDto } from './dto/update-universe.dto';
 import { UniverseFeatureFlagDto } from './dto/universe-feature-flag.dto';
@@ -24,13 +27,20 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 
+interface AdminRequest extends Request {
+  user?: { id?: string; sub?: string };
+}
+
 @Controller('admin/universes')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('admin')
 export class UniverseManagementController {
   private readonly logger = new Logger(UniverseManagementController.name);
 
-  constructor(private readonly universeManagementService: UniverseManagementService) {}
+  constructor(
+    private readonly universeManagementService: UniverseManagementService,
+    private readonly auditLogService: AuditLogService,
+  ) {}
 
   @Get()
   async getAllUniverses(@Query() query: QueryUniverseDto) {
@@ -85,59 +95,138 @@ export class UniverseManagementController {
   }
 
   @Post()
-  async createUniverse(@Body() data: CreateUniverseDto) {
+  async createUniverse(@Body() data: CreateUniverseDto,     @Req() req: AdminRequest) {
     this.logger.log(`Creating universe: ${data.name}`);
-    return this.universeManagementService.createUniverse(data);
+    const result = await this.universeManagementService.createUniverse(data);
+    await this.auditLogService.log({
+      actorId: req.user?.id || req.user?.sub,
+      action: 'universe.created',
+      targetType: 'universe',
+      targetId: result.id,
+      details: { name: data.name },
+      ipAddress: req.ip,
+    });
+    return result;
   }
 
   @Post('bulk/toggle')
   @HttpCode(HttpStatus.OK)
-  async bulkToggle(@Body() data: BulkToggleUniverseDto) {
+  async bulkToggle(@Body() data: BulkToggleUniverseDto,     @Req() req: AdminRequest) {
     this.logger.log(`Bulk toggling ${data.ids.length} universes to ${data.isEnabled ? 'enabled' : 'disabled'}`);
-    return this.universeManagementService.bulkToggle(data);
+    const result = await this.universeManagementService.bulkToggle(data);
+    await this.auditLogService.log({
+      actorId: req.user?.id || req.user?.sub,
+      action: 'universe.bulk_toggled',
+      targetType: 'universe',
+      targetId: data.ids.join(','),
+      details: { count: data.ids.length, isEnabled: data.isEnabled },
+      ipAddress: req.ip,
+    });
+    return result;
   }
 
   @Post('import')
   @HttpCode(HttpStatus.CREATED)
-  async importUniverses(@Body() data: ImportUniversesBodyDto) {
+  async importUniverses(@Body() data: ImportUniversesBodyDto,     @Req() req: AdminRequest) {
     this.logger.log(`Importing ${data.universes.length} universes`);
-    return this.universeManagementService.importUniverses(data.universes);
+    const result = await this.universeManagementService.importUniverses(data.universes);
+    await this.auditLogService.log({
+      actorId: req.user?.id || req.user?.sub,
+      action: 'universe.imported',
+      targetType: 'universe',
+      details: { count: data.universes.length },
+      ipAddress: req.ip,
+    });
+    return result;
   }
 
   @Post(':id/copy')
   @HttpCode(HttpStatus.CREATED)
-  async cloneUniverse(@Param('id') id: string, @Body() data: CloneUniverseDto) {
+  async cloneUniverse(@Param('id') id: string, @Body() data: CloneUniverseDto,     @Req() req: AdminRequest) {
     this.logger.log(`Cloning universe ${id} to ${data.name}`);
-    return this.universeManagementService.cloneUniverse(id, data);
+    const result = await this.universeManagementService.cloneUniverse(id, data);
+    await this.auditLogService.log({
+      actorId: req.user?.id || req.user?.sub,
+      action: 'universe.cloned',
+      targetType: 'universe',
+      targetId: id,
+      details: { sourceId: id, targetName: data.name },
+      ipAddress: req.ip,
+    });
+    return result;
   }
 
   @Put(':id')
-  async updateUniverse(@Param('id') id: string, @Body() data: UpdateUniverseDto) {
+  async updateUniverse(@Param('id') id: string, @Body() data: UpdateUniverseDto,     @Req() req: AdminRequest) {
     this.logger.log(`Updating universe: ${id}`);
-    return this.universeManagementService.updateUniverse(id, data);
+    const result = await this.universeManagementService.updateUniverse(id, data);
+    await this.auditLogService.log({
+      actorId: req.user?.id || req.user?.sub,
+      action: 'universe.updated',
+      targetType: 'universe',
+      targetId: id,
+      details: data as unknown as Record<string, unknown>,
+      ipAddress: req.ip,
+    });
+    return result;
   }
 
   @Put(':id/toggle')
-  async toggleUniverse(@Param('id') id: string, @Body('isEnabled') isEnabled: boolean) {
+  async toggleUniverse(@Param('id') id: string, @Body('isEnabled') isEnabled: boolean,     @Req() req: AdminRequest) {
     this.logger.log(`Toggling universe ${id} to ${isEnabled ? 'enabled' : 'disabled'}`);
-    return this.universeManagementService.toggleUniverse(id, isEnabled);
+    const result = await this.universeManagementService.toggleUniverse(id, isEnabled);
+    await this.auditLogService.log({
+      actorId: req.user?.id || req.user?.sub,
+      action: 'universe.toggled',
+      targetType: 'universe',
+      targetId: id,
+      details: { isEnabled },
+      ipAddress: req.ip,
+    });
+    return result;
   }
 
   @Put(':id/feature-flags')
-  async updateFeatureFlag(@Param('id') id: string, @Body() data: UniverseFeatureFlagDto) {
+  async updateFeatureFlag(@Param('id') id: string, @Body() data: UniverseFeatureFlagDto,     @Req() req: AdminRequest) {
     this.logger.log(`Updating feature flag ${data.featureKey} for universe ${id}`);
-    return this.universeManagementService.updateFeatureFlag(id, data);
+    const result = await this.universeManagementService.updateFeatureFlag(id, data);
+    await this.auditLogService.log({
+      actorId: req.user?.id || req.user?.sub,
+      action: 'universe.feature_flag.updated',
+      targetType: 'universe',
+      targetId: id,
+      details: { featureKey: data.featureKey },
+      ipAddress: req.ip,
+    });
+    return result;
   }
 
   @Delete(':id')
-  async deleteUniverse(@Param('id') id: string) {
+  async deleteUniverse(@Param('id') id: string,     @Req() req: AdminRequest) {
     this.logger.log(`Deleting universe: ${id}`);
-    return this.universeManagementService.deleteUniverse(id);
+    const result = await this.universeManagementService.deleteUniverse(id);
+    await this.auditLogService.log({
+      actorId: req.user?.id || req.user?.sub,
+      action: 'universe.deleted',
+      targetType: 'universe',
+      targetId: id,
+      ipAddress: req.ip,
+    });
+    return result;
   }
 
   @Delete(':id/feature-flags/:featureKey')
-  async deleteFeatureFlag(@Param('id') id: string, @Param('featureKey') featureKey: string) {
+  async deleteFeatureFlag(@Param('id') id: string, @Param('featureKey') featureKey: string,     @Req() req: AdminRequest) {
     this.logger.log(`Deleting feature flag ${featureKey} for universe ${id}`);
-    return this.universeManagementService.deleteFeatureFlag(id, featureKey);
+    const result = await this.universeManagementService.deleteFeatureFlag(id, featureKey);
+    await this.auditLogService.log({
+      actorId: req.user?.id || req.user?.sub,
+      action: 'universe.feature_flag.deleted',
+      targetType: 'universe',
+      targetId: id,
+      details: { featureKey },
+      ipAddress: req.ip,
+    });
+    return result;
   }
 }

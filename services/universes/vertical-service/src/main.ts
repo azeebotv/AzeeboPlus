@@ -1,13 +1,12 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, Logger } from '@nestjs/common';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import helmet from 'helmet';
 import { GlobalExceptionFilter } from '@azeebo/error-handling';
 import { LoggingInterceptor } from '@azeebo/logger';
-import { validateEnvironment } from '@azeebo/shared-types';
 
 async function bootstrap(): Promise<void> {
-  validateEnvironment(process.env);
 
   const app = await NestFactory.create(AppModule);
 
@@ -49,6 +48,18 @@ async function bootstrap(): Promise<void> {
   });
 
   // Versioning disabled: controllers already prefix routes with 'v1/' manually
+
+  if (process.env.NODE_ENV !== 'production') {
+    const config = new DocumentBuilder()
+      .setTitle('Vertical Service')
+      .setDescription('Azeebo+ Vertical Service API')
+      .setVersion('1.0.0')
+      .addBearerAuth()
+      .build();
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('docs', app, document);
+    Logger.log('Swagger documentation enabled at /docs');
+  }
 
   const port = process.env.PORT || 3017;
   app.enableShutdownHooks();

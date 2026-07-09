@@ -8,12 +8,14 @@ import axios from 'axios';
 export class GamesService {
   private readonly logger = new Logger(GamesService.name);
   private readonly analyticsServiceBaseUrl: string;
+  private readonly walletServiceBaseUrl: string;
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService
   ) {
     this.analyticsServiceBaseUrl = this.configService.getOrThrow<string>('ANALYTICS_SERVICE_URL');
+    this.walletServiceBaseUrl = this.configService.getOrThrow<string>('WALLET_SERVICE_URL');
   }
 
   private async trackAnalyticsEvent(
@@ -190,8 +192,12 @@ export class GamesService {
       throw new BadRequestException('Session is not active');
     }
 
+    if (!session.questionId) {
+      throw new BadRequestException('No question assigned to session');
+    }
+
     const question = await this.prisma.question.findUnique({
-      where: { id: session.questionId! },
+      where: { id: session.questionId },
     });
 
     if (!question) {
@@ -272,6 +278,18 @@ export class GamesService {
   }
 
   async enterTournament(userId: string, tournamentId: string): Promise<GameResponse> {
+    const tournament = await this.prisma.tournament.findUnique({
+      where: { id: tournamentId },
+    });
+
+    if (!tournament) {
+      throw new NotFoundException('Tournament not found');
+    }
+
+    if (tournament.status !== 'active') {
+      throw new BadRequestException('Tournament is not active');
+    }
+
     const existingEntry = await this.prisma.tournamentEntry.findUnique({
       where: {
         userId_tournamentId: { userId, tournamentId },
@@ -280,6 +298,32 @@ export class GamesService {
 
     if (existingEntry) {
       throw new BadRequestException('Already entered tournament');
+    }
+
+    if (tournament.entryFee && Number(tournament.entryFee) > 0) {
+      const wallet = await this.prisma.wallet.findUnique({ where: { userId } });
+      if (!wallet) {
+        throw new NotFoundException('Wallet not found');
+      }
+
+      if (Number(wallet.balance) < Number(tournament.entryFee)) {
+        throw new BadRequestException('Insufficient balance for tournament entry fee');
+      }
+
+      await axios
+        .post(
+          `${this.walletServiceBaseUrl}/v1/wallet/debit`,
+          {
+            walletId: wallet.id,
+            amount: Number(tournament.entryFee),
+            description: `Tournament entry fee: ${tournamentId}`,
+          },
+          { timeout: 10000 }
+        )
+        .catch((error: unknown) => {
+          const errorMessage = error instanceof Error ? (error as Error).message : 'Failed to debit wallet';
+          throw new BadRequestException(errorMessage);
+        });
     }
 
     const entry = await this.prisma.tournamentEntry.create({

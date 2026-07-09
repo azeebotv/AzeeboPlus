@@ -22,7 +22,14 @@ describe('WebhookSecurityService', () => {
       providers: [
         WebhookSecurityService,
         { provide: RedisService, useValue: mockRedisService },
-        { provide: ConfigService, useValue: { get: jest.fn().mockImplementation((_key: string, defaultValue?: unknown) => defaultValue) } },
+        {
+          provide: ConfigService,
+          useValue: {
+            get: jest
+              .fn()
+              .mockImplementation((_key: string, defaultValue?: unknown) => defaultValue),
+          },
+        },
       ],
     }).compile();
 

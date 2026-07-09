@@ -49,7 +49,7 @@ export default function EpisodePlayerPage(): React.JSX.Element {
             seasonNumber: 1,
             episodeNumber: 1,
             duration: 3600,
-            thumbnail: 'https://picsum.photos/seed/ep1/1280/720',
+            thumbnail: '',
             videoUrl: '',
             subtitles: ['English', 'Yoruba', 'Hausa', 'Igbo'],
           });

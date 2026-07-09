@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { colors } from '../theme';
 
@@ -39,6 +39,8 @@ export function PasswordInput({
         <TouchableOpacity
           style={styles.showButton}
           onPress={() => setShowPassword(!showPassword)}
+          accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
+          accessibilityRole="button"
           testID={testID ? `${testID}-toggle` : 'password-toggle'}
         >
           <Text style={styles.showButtonText}>{showPassword ? 'Hide' : 'Show'}</Text>
@@ -55,15 +57,15 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 14,
-    color: '#fff',
+    color: colors.text.primary,
     marginBottom: 8,
   },
   inputContainer: {
     flexDirection: 'row',
-    backgroundColor: '#1a1a1a',
+    backgroundColor: colors.bg.surface,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#333',
+    borderColor: colors.border.default,
   },
   inputError: {
     borderColor: colors.error,
@@ -72,14 +74,14 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
     fontSize: 16,
-    color: '#fff',
+    color: colors.text.primary,
   },
   showButton: {
     justifyContent: 'center',
     paddingHorizontal: 16,
   },
   showButtonText: {
-    color: '#E8420A',
+    color: colors.primary[500],
     fontSize: 14,
   },
   errorText: {

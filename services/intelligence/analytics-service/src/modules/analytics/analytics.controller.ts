@@ -3,6 +3,7 @@ import {
   Post,
   Get,
   Body,
+  Param,
   UseGuards,
   Request,
   Query,
@@ -11,6 +12,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
+import { RateLimitGuard, RateLimit } from '@azeebo/security';
 
 import { AnalyticsService } from './analytics.service';
 import { AnalyticsResponse } from './interfaces/analytics-response.interface';
@@ -19,10 +21,13 @@ import { IngestEventsDto } from './dto/analytics.dto';
 @ApiTags('Analytics')
 @ApiBearerAuth()
 @Controller('v1/analytics')
+@UseGuards(RateLimitGuard)
 export class AnalyticsController {
   constructor(private readonly analyticsService: AnalyticsService) {}
 
   @Post('events')
+  @UseGuards(AuthGuard('jwt'))
+  @RateLimit(100, 60000)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Ingest product events' })
   @ApiResponse({ status: 200, description: 'Events ingested' })
@@ -44,7 +49,7 @@ export class AnalyticsController {
   @ApiResponse({ status: 200, description: 'User analytics' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getUserSummary(@Request() req: { user: { sub: string } }): Promise<AnalyticsResponse> {
-    return this.analyticsService.getUserSummary(req.user.sub);
+    return this.analyticsService.getUserSummary(req.user.id);
   }
 
   @Get('dashboard')
@@ -89,7 +94,9 @@ export class AnalyticsController {
   @ApiResponse({ status: 200, description: 'Universe KPIs' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 400, description: 'Invalid universe name' })
-  async getUniverseKpis(@Query('universeName') universeName: string): Promise<AnalyticsResponse> {
+  async getUniverseKpis(
+    @Param('universeName') universeName: string
+  ): Promise<AnalyticsResponse> {
     return this.analyticsService.getUniverseKpis(universeName);
   }
 
@@ -146,26 +153,35 @@ export class AnalyticsController {
   }
 
   @Post('track')
+  @UseGuards(AuthGuard('jwt'))
+  @RateLimit(100, 60000)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Track single event' })
   @ApiResponse({ status: 200, description: 'Event tracked' })
   async trackEvent(
-    @Body() body: { type: string; userId?: string; metadata?: Record<string, unknown> }
+    @Request() req: { user: { sub: string } },
+    @Body() body: { type: string; metadata?: Record<string, unknown> }
   ): Promise<unknown> {
-    return this.analyticsService.trackEvent(body.type, body.userId, body.metadata);
+    const userId = req.user?.sub;
+    return this.analyticsService.trackEvent(body.type, userId, body.metadata);
   }
 
   @Post('track-batch')
+  @UseGuards(AuthGuard('jwt'))
+  @RateLimit(50, 60000)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Track batch events' })
   @ApiResponse({ status: 200, description: 'Events tracked' })
   async trackBatch(
+    @Request() req: { user: { sub: string } },
     @Body()
     body: {
-      events: Array<{ type: string; userId?: string; metadata?: Record<string, unknown> }>;
+      events: Array<{ type: string; metadata?: Record<string, unknown> }>;
     }
   ): Promise<{ success: boolean }> {
-    return this.analyticsService.trackBatch(body.events);
+    const userId = req.user?.sub;
+    const eventsWithUser = body.events.map((e) => ({ ...e, userId }));
+    return this.analyticsService.trackBatch(eventsWithUser);
   }
 
   @Get('kpis')

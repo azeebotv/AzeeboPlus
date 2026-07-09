@@ -1,5 +1,6 @@
 import Constants from 'expo-constants';
 import { certificatePinningService } from '../utils/certificatePinning';
+import { logger } from '../utils/logger';
 
 // Ensure endpoint routes through the gateway's /api prefix
 export function gatewayPath(endpoint: string): string {
@@ -44,12 +45,19 @@ class ApiClientClass {
   private config: ApiClientConfig = {
     baseURL:
       process.env.EXPO_PUBLIC_API_BASE_URL ||
-      (Constants as any).expoConfig?.extra?.apiBaseURL ||
+      (
+        ((Constants as Record<string, unknown>).expoConfig as Record<string, unknown>)?.extra as
+          | Record<string, string>
+          | undefined
+      )?.apiBaseURL ||
       (__DEV__ ? 'http://localhost:3013' : 'https://api.azeeboplus.com'),
     token: null,
   };
   private refreshToken: string | null = null;
   private refreshPromise: Promise<boolean> | null = null;
+  private onRefreshCallback:
+    | ((tokens: { access_token: string; refresh_token: string }) => void)
+    | null = null;
 
   setToken(token: string | null): void {
     this.config.token = token;
@@ -57,6 +65,12 @@ class ApiClientClass {
 
   setRefreshToken(token: string | null): void {
     this.refreshToken = token;
+  }
+
+  setOnRefreshCallback(
+    callback: (tokens: { access_token: string; refresh_token: string }) => void
+  ): void {
+    this.onRefreshCallback = callback;
   }
 
   getBaseURL(): string {
@@ -86,13 +100,18 @@ class ApiClientClass {
         if (response.ok) {
           const data = await response.json();
           if (data.success && data.data) {
-            this.config.token = data.data.accessToken;
-            this.refreshToken = data.data.refreshToken;
+            this.config.token = data.data.access_token;
+            this.refreshToken = data.data.refresh_token;
+            this.onRefreshCallback?.({
+              access_token: data.data.access_token,
+              refresh_token: data.data.refresh_token,
+            });
             return true;
           }
         }
         return false;
-      } catch {
+      } catch (error) {
+        logger.error('Token refresh failed:', error);
         return false;
       } finally {
         this.refreshPromise = null;
@@ -168,7 +187,7 @@ class ApiClientClass {
       }
 
       return data as T;
-    } catch (error: unknown) {
+    } catch (_err) {
       clearTimeout(timeoutId);
 
       if (error instanceof Error && error.name === 'AbortError') {

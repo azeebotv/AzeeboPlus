@@ -100,7 +100,7 @@ export class AnalyticsClientService {
       req.on('error', (error) => {
         reject(
           new HttpException(
-            `Analytics Service error: ${error.message}`,
+            `Analytics Service error: ${(error as Error).message}`,
             HttpStatus.SERVICE_UNAVAILABLE
           )
         );

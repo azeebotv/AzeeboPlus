@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -17,8 +17,7 @@ import {
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../src/contexts/AuthContext';
-import { authApi } from '../../src/api';
-import { logger } from '../../src/utils/logger';
+import { useUpdateProfile } from '../../src/hooks/useProfileQuery';
 import { PageTransition, ScrollReveal, StaggerGrid, GlowCard } from '../../src/components/motion';
 
 const MENU_ITEMS = [
@@ -36,19 +35,13 @@ export default function ProfileScreen() {
   const colorScheme = useColorScheme();
   const [pushEnabled, setPushEnabled] = useState(true);
   const [emailEnabled, setEmailEnabled] = useState(true);
-  const [isLoading, setIsLoading] = useState(false);
-  const [_isRefreshing, setIsRefreshing] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editForm, setEditForm] = useState({
     name: user?.name || '',
     phone: user?.phone || '',
   });
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      fetchProfile();
-    }
-  }, [isAuthenticated]);
+  const updateProfileMutation = useUpdateProfile();
 
   useEffect(() => {
     if (user) {
@@ -59,44 +52,26 @@ export default function ProfileScreen() {
     }
   }, [user]);
 
-  const fetchProfile = async () => {
-    setIsRefreshing(true);
-    try {
-      const response = await authApi.getProfile();
-      if (response.success && response.data) {
-        logger.log('Profile fetched', undefined, response.data);
-      }
-    } catch (error) {
-      logger.error('Failed to fetch profile', error);
-    } finally {
-      setIsRefreshing(false);
-    }
-  };
-
-  const handleSaveProfile = async () => {
+  const handleSaveProfile = () => {
     if (!editForm.name.trim()) {
       Alert.alert('Error', 'Name is required');
       return;
     }
 
-    setIsLoading(true);
-    try {
-      const response = await authApi.updateProfile({
-        name: editForm.name.trim(),
-        phone: editForm.phone.trim() || undefined,
-      });
-
-      if (response.success) {
-        Alert.alert('Success', 'Profile updated successfully');
-        setShowEditModal(false);
-      } else {
-        Alert.alert('Error', response.message || 'Failed to update profile');
+    updateProfileMutation.mutate(
+      {
+        displayName: editForm.name.trim(),
+      },
+      {
+        onSuccess: () => {
+          Alert.alert('Success', 'Profile updated successfully');
+          setShowEditModal(false);
+        },
+        onError: (error: Error) => {
+          Alert.alert('Error', error.message || 'Failed to update profile');
+        },
       }
-    } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to update profile');
-    } finally {
-      setIsLoading(false);
-    }
+    );
   };
 
   const handleLogout = () => {
@@ -216,7 +191,7 @@ export default function ProfileScreen() {
                 <Text
                   style={[styles.statValue, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}
                 >
-                  {(user as any)?.watchHistoryCount ?? 0}
+                  {(user as Record<string, unknown>)?.watchHistoryCount ?? 0}
                 </Text>
                 <Text style={styles.statLabel}>Watched</Text>
               </View>
@@ -230,7 +205,7 @@ export default function ProfileScreen() {
                 <Text
                   style={[styles.statValue, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}
                 >
-                  {(user as any)?.savedListsCount ?? 0}
+                  {(user as Record<string, unknown>)?.savedListsCount ?? 0}
                 </Text>
                 <Text style={styles.statLabel}>Lists</Text>
               </View>
@@ -244,7 +219,7 @@ export default function ProfileScreen() {
                 <Text
                   style={[styles.statValue, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}
                 >
-                  {(user as any)?.reviewsCount ?? 0}
+                  {(user as Record<string, unknown>)?.reviewsCount ?? 0}
                 </Text>
                 <Text style={styles.statLabel}>Reviews</Text>
               </View>
@@ -433,7 +408,7 @@ export default function ProfileScreen() {
                   { borderColor: colorScheme === 'dark' ? '#333' : '#e0e0e0' },
                 ]}
                 onPress={() => setShowEditModal(false)}
-                disabled={isLoading}
+                disabled={updateProfileMutation.isPending}
               >
                 <Text
                   style={[
@@ -447,9 +422,9 @@ export default function ProfileScreen() {
               <TouchableOpacity
                 style={styles.saveButton}
                 onPress={handleSaveProfile}
-                disabled={isLoading}
+                disabled={updateProfileMutation.isPending}
               >
-                {isLoading ? (
+                {updateProfileMutation.isPending ? (
                   <ActivityIndicator color="#fff" size="small" />
                 ) : (
                   <Text style={styles.saveButtonText}>Save</Text>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -88,8 +88,9 @@ export default function ProfileSetupScreen() {
           onPress: () => router.replace('/(tabs)/home'),
         },
       ]);
-    } catch (error: any) {
-      Alert.alert('Error', error?.message || 'Failed to complete profile setup. Please try again.');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to complete profile setup. Please try again.';
+      Alert.alert('Error', message);
     } finally {
       setIsLoading(false);
     }

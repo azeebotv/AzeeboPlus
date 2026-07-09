@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -12,19 +12,21 @@ import { useColorScheme } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { apiClient } from '../../src/api';
+import { moviePricing } from '../../src/config/prices';
+import type { Movie, CastMember } from '../../src/types/api';
 
 const PRICING_OPTIONS = [
-  { id: '1', type: 'Rent (48h)', price: '₦500', features: ['48 hour access', 'HD quality'] },
+  { id: moviePricing.rent48h.id, type: moviePricing.rent48h.type, price: moviePricing.rent48h.label, features: ['48 hour access', 'HD quality'] },
   {
-    id: '2',
-    type: 'Buy',
-    price: '₦1,500',
+    id: moviePricing.buy.id,
+    type: moviePricing.buy.type,
+    price: moviePricing.buy.label,
     features: ['Permanent access', 'HD quality', 'Download'],
   },
   {
-    id: '3',
-    type: 'Pass',
-    price: '₦4,500/mo',
+    id: moviePricing.pass.id,
+    type: moviePricing.pass.type,
+    price: moviePricing.pass.label,
     features: ['All movies', '4K quality', 'Unlimited'],
   },
 ];
@@ -38,9 +40,9 @@ export default function MovieDetailPage() {
     PRICING_OPTIONS[0]
   );
   const [showPricing, setShowPricing] = useState(false);
-  const [movie, setMovie] = useState<any>(null);
-  const [cast, setCast] = useState<any[]>([]);
-  const [similarMovies, setSimilarMovies] = useState<any[]>([]);
+  const [movie, setMovie] = useState<Movie | null>(null);
+  const [cast, setCast] = useState<CastMember[]>([]);
+  const [similarMovies, setSimilarMovies] = useState<Movie[]>([]);
   const [_isLoading, setIsLoading] = useState(true);
   const [_error, setError] = useState<string | null>(null);
 
@@ -49,15 +51,15 @@ export default function MovieDetailPage() {
     setError(null);
     try {
       const [movieRes, castRes, similarRes] = await Promise.all([
-        apiClient.get<any>(`/movies/${id}`),
-        apiClient.get<any[]>(`/movies/${id}/cast`),
-        apiClient.get<any[]>(`/movies/${id}/similar`),
+        apiClient.get<Movie>(`/movies/${id}`),
+        apiClient.get<CastMember[]>(`/movies/${id}/cast`),
+        apiClient.get<Movie[]>(`/movies/${id}/similar`),
       ]);
       setMovie(movieRes);
       setCast(castRes || []);
       setSimilarMovies(similarRes || []);
-    } catch (err: any) {
-      setError(err.message || 'Failed to load movie data');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to load movie data');
     } finally {
       setIsLoading(false);
     }
@@ -163,7 +165,7 @@ export default function MovieDetailPage() {
               renderItem={({ item }) => (
                 <View style={styles.castCard}>
                   <View style={styles.castAvatar}>
-                    <Text style={styles.castEmoji}>{(item as any).emoji || '🎭'}</Text>
+                    <Text style={styles.castEmoji}>{(item as { emoji?: string }).emoji || '🎭'}</Text>
                   </View>
                   <Text style={[styles.castName, { color: isDark ? '#fff' : '#000' }]}>
                     {item.name}

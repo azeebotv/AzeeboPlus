@@ -1,4 +1,4 @@
-import { ApiResponse, ApiError, PaginationMeta } from './index';
+import type { ApiResponse, ApiError, PaginationMeta } from './api-response-types';
 
 export class ApiResponseWrapper {
   static success<T>(data: T, meta?: PaginationMeta): ApiResponse<T> {

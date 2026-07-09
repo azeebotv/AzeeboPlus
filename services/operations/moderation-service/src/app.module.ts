@@ -5,12 +5,15 @@ import { ModerationModule } from './modules/moderation/moderation.module';
 import { DatabaseModule } from './modules/database/database.module';
 import { HealthModule } from './modules/health/health.module';
 import { ServiceAuthGuard } from '@azeebo/security';
+import { CacheModule } from '@azeebo/shared-services';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      envFilePath: ['.env', '../../.env'],
     }),
+    CacheModule,
     DatabaseModule,
     ModerationModule,
     HealthModule,

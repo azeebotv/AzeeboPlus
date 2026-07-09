@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { StyleSheet, View, type ViewStyle, type StyleProp } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -18,7 +18,7 @@ interface AnimatedProgressProps {
 
 export function AnimatedProgress({
   progress,
-  color = colors.primary,
+  color = colors.primary[500],
   height = 6,
   style,
 }: AnimatedProgressProps) {

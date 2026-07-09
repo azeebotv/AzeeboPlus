@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, NestModule, MiddlewareConsumer, RequestMethod } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from './auth/auth.module';
@@ -6,6 +6,7 @@ import { CreatorModule } from './creator/creator.module';
 import { DatabaseModule } from './database/database.module';
 import { ApiModule } from './api/api.module';
 import { ServiceAuthGuard } from '@azeebo/security';
+import { CsrfMiddleware } from './common/csrf.middleware';
 
 @Module({
   imports: [
@@ -24,4 +25,18 @@ import { ServiceAuthGuard } from '@azeebo/security';
     },
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(CsrfMiddleware)
+      .exclude(
+        { path: 'api/v1/auth/(.*)', method: RequestMethod.ALL },
+        { path: 'api/auth/(.*)', method: RequestMethod.ALL },
+        { path: 'api/health', method: RequestMethod.ALL },
+        { path: '(.*)', method: RequestMethod.GET },
+        { path: '(.*)', method: RequestMethod.HEAD },
+        { path: '(.*)', method: RequestMethod.OPTIONS }
+      )
+      .forRoutes('api');
+  }
+}

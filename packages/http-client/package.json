@@ -1,0 +1,38 @@
+{
+  "name": "@azeebo/http-client",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Unified HTTP client for Azeebo+ with retry, idempotency, and service clients",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:cov": "jest --coverage",
+    "lint": "eslint src --fix"
+  },
+  "dependencies": {
+    "@azeebo/shared-types": "workspace:*",
+    "axios": "^1.18.0"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.0",
+    "@types/node": "^25.9.3",
+    "eslint": "^10.5.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.6",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.0",
+    "typescript": "^5.8.4",
+    "typescript-eslint": "^8.61.1"
+  },
+  "peerDependencies": {}
+}

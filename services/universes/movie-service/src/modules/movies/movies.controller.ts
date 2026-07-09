@@ -15,7 +15,7 @@ import { RateLimitGuard, RateLimit } from '@azeebo/security';
 
 import { MoviesService } from './movies.service';
 import { MovieResponse } from './interfaces/movie-response.interface';
-import { RolesGuard, Roles } from '@azeebo/shared-services';
+import { RolesGuard, Roles, Pagination } from '@azeebo/shared-services';
 import { AddToWatchlistDto } from './dto/watchlist.dto';
 
 @ApiTags('Movies')
@@ -46,7 +46,7 @@ export class MoviesController {
   @ApiResponse({ status: 200, description: 'Watchlist' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getWatchlist(@Request() req: { user: { sub: string } }): Promise<MovieResponse> {
-    return this.moviesService.getWatchlist(req.user.sub);
+    return this.moviesService.getWatchlist(req.user.id);
   }
 
   @Post('watchlist')
@@ -58,7 +58,7 @@ export class MoviesController {
     @Request() req: { user: { sub: string } },
     @Body() body: AddToWatchlistDto
   ): Promise<MovieResponse> {
-    return this.moviesService.addToWatchlist(req.user.sub, body.movieId);
+    return this.moviesService.addToWatchlist(req.user.id, body.movieId);
   }
 
   @Delete('watchlist/:movieId')
@@ -70,7 +70,7 @@ export class MoviesController {
     @Request() req: { user: { sub: string } },
     @Param('movieId') movieId: string
   ): Promise<MovieResponse> {
-    return this.moviesService.removeFromWatchlist(req.user.sub, movieId);
+    return this.moviesService.removeFromWatchlist(req.user.id, movieId);
   }
 
   @Get(':movieId')
@@ -92,7 +92,7 @@ export class MoviesController {
     @Request() req: { user: { sub: string } },
     @Param('movieId') movieId: string
   ): Promise<MovieResponse> {
-    return this.moviesService.rentMovie(req.user.sub, movieId);
+    return this.moviesService.rentMovie(req.user.id, movieId);
   }
 
   @Get('me/library')
@@ -101,7 +101,7 @@ export class MoviesController {
   @ApiResponse({ status: 200, description: 'Library' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getLibrary(@Request() req: { user: { sub: string } }): Promise<MovieResponse> {
-    return this.moviesService.getLibrary(req.user.sub);
+    return this.moviesService.getLibrary(req.user.id);
   }
 
   @Post(':movieId/viewing-windows')

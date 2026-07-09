@@ -11,12 +11,14 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
+import { RateLimitGuard, RateLimit, ServiceAuthGuard } from '@azeebo/security';
 
 import { RewardsService } from './rewards.service';
 import { RedeemRewardDto } from './dto/redeem-reward.dto';
 import { RewardResponse } from './interfaces/reward-response.interface';
 
 @ApiTags('Rewards')
+@UseGuards(RateLimitGuard)
 @Controller('v1/rewards')
 export class RewardsController {
   constructor(private readonly rewardsService: RewardsService) {}
@@ -27,7 +29,7 @@ export class RewardsController {
   @ApiResponse({ status: 200, description: 'Reward account' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getRewardAccount(@Request() req: { user: { sub: string } }): Promise<RewardResponse> {
-    return this.rewardsService.getRewardAccount(req.user.sub);
+    return this.rewardsService.getRewardAccount(req.user.id);
   }
 
   @Get('missions')
@@ -36,7 +38,7 @@ export class RewardsController {
   @ApiResponse({ status: 200, description: 'Active missions' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getMissions(@Request() req: { user: { sub: string } }): Promise<RewardResponse> {
-    return this.rewardsService.getMissions(req.user.sub);
+    return this.rewardsService.getMissions(req.user.id);
   }
 
   @Get('badges')
@@ -45,7 +47,7 @@ export class RewardsController {
   @ApiResponse({ status: 200, description: 'User badges' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getBadges(@Request() req: { user: { sub: string } }): Promise<RewardResponse> {
-    return this.rewardsService.getBadges(req.user.sub);
+    return this.rewardsService.getBadges(req.user.id);
   }
 
   @Get('streak')
@@ -54,10 +56,11 @@ export class RewardsController {
   @ApiResponse({ status: 200, description: 'Streak info' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getStreak(@Request() req: { user: { sub: string } }): Promise<RewardResponse> {
-    return this.rewardsService.getStreak(req.user.sub);
+    return this.rewardsService.getStreak(req.user.id);
   }
 
   @Post('redeem')
+  @RateLimit(30, 60000)
   @UseGuards(AuthGuard('jwt'))
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Redeem reward' })
@@ -68,7 +71,7 @@ export class RewardsController {
     @Request() req: { user: { sub: string } },
     @Body() redeemRewardDto: RedeemRewardDto
   ): Promise<RewardResponse> {
-    return this.rewardsService.redeemReward(req.user.sub, redeemRewardDto.rewardId);
+    return this.rewardsService.redeemReward(req.user.id, redeemRewardDto.rewardId);
   }
 
   @Get('level')
@@ -77,20 +80,21 @@ export class RewardsController {
   @ApiResponse({ status: 200, description: 'User level' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getLevel(@Request() req: { user: { sub: string } }): Promise<RewardResponse> {
-    return this.rewardsService.getLevel(req.user.sub);
+    return this.rewardsService.getLevel(req.user.id);
   }
 
   @Post('earn')
-  @UseGuards(AuthGuard('jwt'))
+  @RateLimit(30, 60000)
+  @UseGuards(AuthGuard('jwt'), ServiceAuthGuard)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Earn points for activity' })
   @ApiResponse({ status: 200, description: 'Points earned' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async earnPoints(
     @Request() req: { user: { sub: string } },
-    @Body() body: { activity: string; amount?: number }
+    @Body() body: { activity: string }
   ): Promise<RewardResponse> {
-    return this.rewardsService.earnPoints(req.user.sub, body.activity, body.amount);
+    return this.rewardsService.earnPoints(req.user.id, body.activity);
   }
 
   @Get('balance')
@@ -99,7 +103,7 @@ export class RewardsController {
   @ApiResponse({ status: 200, description: 'Points balance' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getBalance(@Request() req: { user: { sub: string } }): Promise<RewardResponse> {
-    return this.rewardsService.getBalance(req.user.sub);
+    return this.rewardsService.getBalance(req.user.id);
   }
 
   @Get('history')
@@ -112,6 +116,6 @@ export class RewardsController {
     @Query('page') page?: number,
     @Query('limit') limit?: number
   ): Promise<RewardResponse> {
-    return this.rewardsService.getHistory(req.user.sub, Number(page) || 1, Number(limit) || 20);
+    return this.rewardsService.getHistory(req.user.id, Number(page) || 1, Number(limit) || 20);
   }
 }

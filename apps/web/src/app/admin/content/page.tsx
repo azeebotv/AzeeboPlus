@@ -1,5 +1,6 @@
 'use client';
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/context/AuthContext';
 import { api } from '@/lib/api';
 import AdminLayout from '@/components/layout/AdminLayout';
@@ -53,18 +54,11 @@ function statusColor(s: string) {
 
 export default function AdminContentPage(): React.JSX.Element {
   const { isAuthenticated, user, isLoading: authLoading } = useAuth();
-
-  // ── Data state ──
-  const [content, setContent] = useState<ContentItem[]>([]);
-  const [total, setTotal] = useState(0);
-  const [page, setPage] = useState(1);
-  const [isLoading, setIsLoading] = useState(true);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [tags, setTags] = useState<Tag[]>([]);
-  const [stats, setStats] = useState<ContentStats | null>(null);
-  const [universes, setUniverses] = useState<{ id: string; name: string }[]>([]);
+  const queryClient = useQueryClient();
+  const isEnabled = !authLoading && !!isAuthenticated && !!user && user.role === 'admin';
 
   // ── Filter / sort state ──
+  const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [universeFilter, setUniverseFilter] = useState('');
@@ -108,23 +102,16 @@ export default function AdminContentPage(): React.JSX.Element {
     return () => clearTimeout(t);
   }, [search]);
 
-  // ─── Auth gate ──────────────────────────────────────────────────────────
+  // ─── Data queries ──────────────────────────────────────────────────────
 
-  useEffect(() => {
-    if (authLoading) return;
-    if (!isAuthenticated || !user || user.role !== 'admin') return;
-  }, [authLoading, isAuthenticated, user]);
-
-  // ─── Load content ───────────────────────────────────────────────────────
-
-  const loadContent = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const params: Record<string, unknown> = { page, limit: PAGE_SIZE };
+  const { data: contentData, isLoading: contentLoading, error: contentError } = useQuery({
+    queryKey: ['admin', 'content', page, debouncedSearch, statusFilter, universeFilter, sortField, sortDir],
+    queryFn: async (): Promise<{ items: ContentItem[]; total: number }> => {
+      const params: Record<string, string> = { page: String(page), limit: String(PAGE_SIZE) };
       if (debouncedSearch) params.search = debouncedSearch;
       if (statusFilter !== 'all') params.status = statusFilter;
       if (universeFilter) params.universeId = universeFilter;
-      const res = await api.admin.getContentList(params as any);
+      const res = await api.admin.getContentList(params);
       if (res.success && res.data) {
         const d = res.data as PaginatedResponse<ContentItem>;
         let items = d.items || [];
@@ -136,45 +123,51 @@ export default function AdminContentPage(): React.JSX.Element {
           else cmp = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
           return sortDir === 'asc' ? cmp : -cmp;
         });
-        setContent(items);
-        setTotal(d.total || 0);
+        return { items, total: d.total || 0 };
       }
-    } catch { /* ignore */ } finally { setIsLoading(false); }
-  }, [page, debouncedSearch, statusFilter, universeFilter, sortField, sortDir]);
+      return { items: [], total: 0 };
+    },
+    enabled: isEnabled,
+  });
 
-  useEffect(() => {
-    if (!authLoading && isAuthenticated && user?.role === 'admin') loadContent();
-  }, [authLoading, isAuthenticated, user, loadContent]);
-
-  // ─── Load auxiliary data ────────────────────────────────────────────────
-
-  useEffect(() => {
-    if (!isAuthenticated || user?.role !== 'admin') return;
-    const loadAux = async () => {
+  const { data: auxData } = useQuery({
+    queryKey: ['admin', 'content-aux'],
+    queryFn: async () => {
       const [catRes, tagRes, statsRes, univRes] = await Promise.allSettled([
         api.admin.getContentCategories(),
         api.admin.getContentTags(),
         api.admin.getContentStats(),
         api.admin.getAllUniverses(),
       ]);
+      const result: { categories: Category[]; tags: Tag[]; stats: ContentStats | null; universes: { id: string; name: string }[] } = { categories: [], tags: [], stats: null, universes: [] };
       if (catRes.status === 'fulfilled' && catRes.value.success && catRes.value.data) {
-        const d = catRes.value.data as any;
-        setCategories(Array.isArray(d) ? d : d.items || []);
+        const d = catRes.value.data as Category[] | { items?: Category[] };
+        result.categories = Array.isArray(d) ? d : d.items || [];
       }
       if (tagRes.status === 'fulfilled' && tagRes.value.success && tagRes.value.data) {
-        const d = tagRes.value.data as any;
-        setTags(Array.isArray(d) ? d : d.items || []);
+        const d = tagRes.value.data as Tag[] | { items?: Tag[] };
+        result.tags = Array.isArray(d) ? d : d.items || [];
       }
       if (statsRes.status === 'fulfilled' && statsRes.value.success && statsRes.value.data) {
-        setStats(statsRes.value.data as unknown as ContentStats);
+        result.stats = statsRes.value.data as unknown as ContentStats;
       }
       if (univRes.status === 'fulfilled' && univRes.value.success && univRes.value.data) {
-        const d = univRes.value.data as any;
-        setUniverses(Array.isArray(d) ? d.map((u: any) => ({ id: u.id, name: u.name })) : []);
+        const d = univRes.value.data as Array<{ id: string; name: string }> | { items?: Array<{ id: string; name: string }> };
+        const arr = Array.isArray(d) ? d : d.items || [];
+        result.universes = arr.map((u) => ({ id: u.id, name: u.name }));
       }
-    };
-    loadAux();
-  }, [isAuthenticated, user]);
+      return result;
+    },
+    enabled: isEnabled,
+  });
+
+  const categories = auxData?.categories || [];
+  const tags = auxData?.tags || [];
+  const stats = auxData?.stats || null;
+  const universes = auxData?.universes || [];
+  const content = contentData?.items || [];
+  const total = contentData?.total || 0;
+  const isLoading = contentLoading;
 
   // ─── Selection logic ───────────────────────────────────────────────────
 
@@ -200,7 +193,7 @@ export default function AdminContentPage(): React.JSX.Element {
     if (!ids.length) return;
     try {
       const res = await api.admin.bulkUpdateContentStatus(ids, 'published');
-      if (res.success) { showToast(`${ids.length} item(s) published`); setSelectedIds(new Set()); loadContent(); }
+      if (res.success) { showToast(`${ids.length} item(s) published`); setSelectedIds(new Set()); queryClient.invalidateQueries({ queryKey: ['admin', 'content'] }); }
       else showToast(res.message || 'Failed', false);
     } catch { showToast('Error publishing', false); }
   };
@@ -209,7 +202,7 @@ export default function AdminContentPage(): React.JSX.Element {
     if (!ids.length) return;
     try {
       const res = await api.admin.bulkUpdateContentStatus(ids, 'draft');
-      if (res.success) { showToast(`${ids.length} item(s) unpublished`); setSelectedIds(new Set()); loadContent(); }
+      if (res.success) { showToast(`${ids.length} item(s) unpublished`); setSelectedIds(new Set()); queryClient.invalidateQueries({ queryKey: ['admin', 'content'] }); }
       else showToast(res.message || 'Failed', false);
     } catch { showToast('Error', false); }
   };
@@ -218,7 +211,7 @@ export default function AdminContentPage(): React.JSX.Element {
     if (!ids.length) return;
     try {
       const res = await api.admin.bulkDeleteContent(ids);
-      if (res.success) { showToast(`${ids.length} item(s) deleted`); setSelectedIds(new Set()); loadContent(); }
+      if (res.success) { showToast(`${ids.length} item(s) deleted`); setSelectedIds(new Set()); queryClient.invalidateQueries({ queryKey: ['admin', 'content'] }); }
       else showToast(res.message || 'Failed', false);
     } catch { showToast('Error deleting', false); }
     setConfirmDelete(null);
@@ -255,7 +248,7 @@ export default function AdminContentPage(): React.JSX.Element {
         categoryIds: editForm.categoryIds,
         tags: editForm.tags,
       });
-      if (res.success) { showToast('Content updated'); setShowEditPanel(false); loadContent(); }
+      if (res.success) { showToast('Content updated'); setShowEditPanel(false); queryClient.invalidateQueries({ queryKey: ['admin', 'content'] }); }
       else showToast(res.message || 'Failed to update', false);
     } catch { showToast('Error saving', false); }
     finally { setIsSaving(false); }
@@ -264,18 +257,18 @@ export default function AdminContentPage(): React.JSX.Element {
   const handleDeleteItem = async (id: string) => {
     try {
       const res = await api.admin.deleteContentItem(id);
-      if (res.success) { showToast('Content deleted'); setConfirmDelete(null); loadContent(); }
+      if (res.success) { showToast('Content deleted'); setConfirmDelete(null); queryClient.invalidateQueries({ queryKey: ['admin', 'content'] }); }
       else showToast(res.message || 'Failed', false);
     } catch { showToast('Error deleting', false); }
   };
 
   const handleQuickPublish = async (id: string) => {
     const res = await api.admin.publishContent(id);
-    if (res.success) { showToast('Published'); loadContent(); }
+    if (res.success) { showToast('Published'); queryClient.invalidateQueries({ queryKey: ['admin', 'content'] }); }
   };
   const handleQuickUnpublish = async (id: string) => {
     const res = await api.admin.unpublishContent(id);
-    if (res.success) { showToast('Unpublished'); loadContent(); }
+    if (res.success) { showToast('Unpublished'); queryClient.invalidateQueries({ queryKey: ['admin', 'content'] }); }
   };
 
   // ─── Category CRUD ─────────────────────────────────────────────────────
@@ -290,13 +283,12 @@ export default function AdminContentPage(): React.JSX.Element {
         showToast('Category created');
       }
       setShowCatModal(false); setEditingCat(null); setCatForm({ name: '', slug: '', description: '' });
-      const res = await api.admin.getContentCategories();
-      if (res.success && res.data) { const d = res.data as any; setCategories(Array.isArray(d) ? d : d.items || []); }
+      queryClient.invalidateQueries({ queryKey: ['admin', 'content-aux'] });
     } catch { showToast('Error saving category', false); }
   };
   const handleDeleteCategory = async (id: string) => {
     const res = await api.admin.deleteContentCategory(id);
-    if (res.success) { showToast('Category deleted'); setConfirmDelete(null); const r = await api.admin.getContentCategories(); if (r.success && r.data) { const d = r.data as any; setCategories(Array.isArray(d) ? d : d.items || []); } }
+    if (res.success) { showToast('Category deleted'); setConfirmDelete(null); queryClient.invalidateQueries({ queryKey: ['admin', 'content-aux'] }); }
     else showToast(res.message || 'Failed', false);
   };
 
@@ -307,13 +299,12 @@ export default function AdminContentPage(): React.JSX.Element {
     try {
       await api.admin.createContentTag({ name: tagForm.name.trim() });
       showToast('Tag created'); setShowTagModal(false); setTagForm({ name: '' });
-      const res = await api.admin.getContentTags();
-      if (res.success && res.data) { const d = res.data as any; setTags(Array.isArray(d) ? d : d.items || []); }
+      queryClient.invalidateQueries({ queryKey: ['admin', 'content-aux'] });
     } catch { showToast('Error creating tag', false); }
   };
   const handleDeleteTag = async (id: string) => {
     const res = await api.admin.deleteContentTag(id);
-    if (res.success) { showToast('Tag deleted'); setConfirmDelete(null); const r = await api.admin.getContentTags(); if (r.success && r.data) { const d = r.data as any; setTags(Array.isArray(d) ? d : d.items || []); } }
+    if (res.success) { showToast('Tag deleted'); setConfirmDelete(null); queryClient.invalidateQueries({ queryKey: ['admin', 'content-aux'] }); }
     else showToast(res.message || 'Failed', false);
   };
 
@@ -428,8 +419,20 @@ export default function AdminContentPage(): React.JSX.Element {
 
           {/* ── Content Table ── */}
           {isLoading ? (
-            <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}>
-              <div style={{ width: 40, height: 40, border: '3px solid #2A1A1A', borderTopColor: '#E8420A', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+            <div className="az-glass" style={{ borderRadius: 12, overflow: 'hidden' }}>
+              <div style={{ padding: 16 }}>
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <div key={i} style={{ display: 'flex', gap: 16, padding: '12px 0', borderBottom: '1px solid #1A0A0A' }}>
+                    <Skeleton width="16px" height="16px" />
+                    <Skeleton width="200px" height="14px" />
+                    <Skeleton width="80px" height="14px" />
+                    <Skeleton width="80px" height="14px" />
+                    <Skeleton width="80px" height="14px" />
+                    <Skeleton width="60px" height="14px" />
+                    <Skeleton width="80px" height="14px" />
+                  </div>
+                ))}
+              </div>
             </div>
           ) : (
             <div style={{ overflowX: 'auto', borderRadius: 12, border: '1px solid #2A1A1A' }}>

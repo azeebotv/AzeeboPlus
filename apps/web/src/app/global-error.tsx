@@ -19,9 +19,9 @@ export default function GlobalError({
             <p className="text-white/60 mb-4">
               A critical error occurred. Please refresh the page or try again later.
             </p>
-            {(error.message || error.digest) && (
+            {error.digest && (
               <p className="text-white/40 text-sm mb-8 font-mono">
-                {error.digest || error.message}
+                {error.digest}
               </p>
             )}
             <button

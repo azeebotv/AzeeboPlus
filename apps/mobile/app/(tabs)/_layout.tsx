@@ -1,5 +1,5 @@
 import { Tabs, useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { colors, typography, spacing, radius, shadows, spring } from '../../src/theme';
@@ -163,11 +163,11 @@ export default function TabsLayout() {
             paddingBottom: 24,
             paddingTop: 8,
           },
-          tabBarActiveTintColor: colors.primary,
+          tabBarActiveTintColor: colors.primary[500],
           tabBarInactiveTintColor: colors.text.tertiary,
           tabBarLabelStyle: {
             fontSize: typography.fontSize.xs,
-            fontWeight: typography.fontWeight.semibold as any,
+            fontWeight: typography.fontWeight.semibold as unknown as string,
             marginTop: 4,
           },
         }}
@@ -245,7 +245,7 @@ const styles = StyleSheet.create({
     letterSpacing: -0.5,
   },
   logoPlus: {
-    color: colors.primary,
+    color: colors.primary[500],
   },
   liveIndicator: {
     flexDirection: 'row',
@@ -274,9 +274,9 @@ const styles = StyleSheet.create({
   },
   headerButton: {
     position: 'relative',
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: colors.bg.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
@@ -289,7 +289,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: -4,
     right: -4,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primary[500],
     paddingHorizontal: 4,
     paddingVertical: 1,
     borderRadius: 4,
@@ -320,10 +320,10 @@ const styles = StyleSheet.create({
     marginLeft: spacing.xs,
   },
   avatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: colors.primary,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.primary[500],
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -342,7 +342,7 @@ const styles = StyleSheet.create({
   },
   iconFocused: {
     opacity: 1,
-    color: colors.primary,
+    color: colors.primary[500],
   },
   createButton: {
     alignItems: 'center',

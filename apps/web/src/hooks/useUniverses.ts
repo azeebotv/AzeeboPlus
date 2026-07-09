@@ -72,6 +72,12 @@ export interface UseUniversesReturn {
   select: (id: string) => void;
   /** Manually re-fetch universes from the API */
   refetch: () => void;
+  /** Get a universe by name */
+  getUniverse: (name: string) => UniverseOption | undefined;
+  /** Check if a universe is enabled */
+  isUniverseEnabled: (name: string) => boolean;
+  /** Check if a universe has a specific feature */
+  hasFeature: (universeName: string, featureKey: string) => boolean;
 }
 
 export function useUniverses(): UseUniversesReturn {
@@ -172,7 +178,29 @@ export function useUniverses(): UseUniversesReturn {
 
   const selected = universes.find((u) => u.id === selectedId) ?? null;
 
-  return { universes, selected, isLoading, error, select, refetch };
+  const getUniverse = useCallback(
+    (name: string) => universes.find((u) => u.name === name || u.id === name),
+    [universes]
+  );
+
+  const isUniverseEnabled = useCallback(
+    (name: string) => {
+      const universe = getUniverse(name);
+      return universe !== undefined;
+    },
+    [getUniverse]
+  );
+
+  const hasFeature = useCallback(
+    (_universeName: string, _featureKey: string) => {
+      // Feature flags are not yet available in the new API response.
+      // Default to true for backwards compatibility.
+      return true;
+    },
+    []
+  );
+
+  return { universes, selected, isLoading, error, select, refetch, getUniverse, isUniverseEnabled, hasFeature };
 }
 
 /**

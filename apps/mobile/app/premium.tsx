@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -34,7 +34,7 @@ interface PremiumStatus {
 }
 
 export default function PremiumAccessScreen() {
-  const _router = useRouter();
+  
   const [plans, setPlans] = useState<PremiumPlan[]>([]);
   const [status, setStatus] = useState<PremiumStatus | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -54,7 +54,15 @@ export default function PremiumAccessScreen() {
 
       if (plansResponse.success && plansResponse.data) {
         setPlans(
-          plansResponse.data.map((plan: any) => ({
+          plansResponse.data.map((plan: {
+            id: string;
+            name: string;
+            description: string;
+            price: number;
+            duration: number;
+            features: string[];
+            tier: string;
+          }) => ({
             id: plan.id,
             name: plan.name,
             description: plan.description,
@@ -93,8 +101,9 @@ export default function PremiumAccessScreen() {
           { text: 'OK', onPress: () => loadPremiumData() },
         ]);
       }
-    } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to subscribe');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to subscribe';
+      Alert.alert('Error', message);
     } finally {
       setIsPurchasing(false);
     }

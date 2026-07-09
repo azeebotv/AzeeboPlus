@@ -97,7 +97,7 @@ export class AppleGooglePayService {
       logger.error('Payment processing failed', error);
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Payment failed',
+        error: error instanceof Error ? (error as Error).message : 'Payment failed',
       };
     }
   }
@@ -148,7 +148,7 @@ export class AppleGooglePayService {
       logger.error('Payment confirmation failed', error);
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Payment confirmation failed',
+        error: error instanceof Error ? (error as Error).message : 'Payment confirmation failed',
       };
     }
   }

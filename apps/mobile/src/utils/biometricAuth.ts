@@ -119,7 +119,7 @@ export class BiometricAuthService {
       logger.error('Biometric authentication failed', error);
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Authentication failed',
+        error: error instanceof Error ? (error as Error).message : 'Authentication failed',
       };
     }
   }
@@ -216,7 +216,7 @@ export class BiometricAuthService {
       logger.error('Biometric auth with stored credentials failed', error);
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Authentication failed',
+        error: error instanceof Error ? (error as Error).message : 'Authentication failed',
       };
     }
   }

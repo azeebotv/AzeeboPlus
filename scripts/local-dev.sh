@@ -215,19 +215,22 @@ generate_local_secrets() {
   fi
 
   section "Generating Local Development Secrets"
-  local jwt_access jwt_refresh
+  local jwt_access jwt_refresh gateway_secret
   if command -v openssl &>/dev/null; then
     jwt_access="$(openssl rand -hex 32)"
     jwt_refresh="$(openssl rand -hex 32)"
+    gateway_secret="$(openssl rand -hex 32)"
   else
     jwt_access="$(head -c 64 /dev/urandom | od -An -tx1 | tr -d ' \n')"
     jwt_refresh="$(head -c 64 /dev/urandom | od -An -tx1 | tr -d ' \n')"
+    gateway_secret="$(head -c 64 /dev/urandom | od -An -tx1 | tr -d ' \n')"
   fi
 
   cat > "$env_local" << ENVEOF
 # Auto-generated local development secrets — DO NOT commit
 JWT_ACCESS_SECRET=${jwt_access}
 JWT_REFRESH_SECRET=${jwt_refresh}
+GATEWAY_SECRET=${gateway_secret}
 ENVEOF
   chmod 600 "$env_local"
   log_ok "Secrets saved to .env.local"
@@ -249,7 +252,7 @@ load_env() {
 
   export NODE_ENV="${NODE_ENV:-development}"
   export REDIS_URL="${REDIS_URL:-redis://localhost:6379}"
-  export ALLOWED_ORIGINS="${ALLOWED_ORIGINS:-http://localhost:4000,http://localhost:4000,http://localhost:4014,http://localhost:4016}"
+  export ALLOWED_ORIGINS="${ALLOWED_ORIGINS:-http://localhost:4000,http://localhost:4014,http://localhost:4016}"
   export RATE_LIMIT_TTL="${RATE_LIMIT_TTL:-60}"
   export RATE_LIMIT_MAX="${RATE_LIMIT_MAX:-1000}"
   export LOG_LEVEL="${LOG_LEVEL:-debug}"

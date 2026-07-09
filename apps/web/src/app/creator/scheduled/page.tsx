@@ -1,10 +1,11 @@
 'use client';
-import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/api';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
+import { Skeleton, ErrorState } from '@azeebo/ui/web';
 
 interface ScheduledContent {
   id: string;
@@ -18,52 +19,37 @@ interface ScheduledContent {
 export default function ScheduledPage(): React.JSX.Element {
   const { isAuthenticated, user, isLoading: authLoading } = useAuth();
   const router = useRouter();
-  const [scheduled, setScheduled] = useState<ScheduledContent[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const queryClient = useQueryClient();
+  const isEnabled = !authLoading && !!isAuthenticated && !!user;
 
-  useEffect(() => {
-    if (authLoading) return;
-    if (!isAuthenticated || !user) {
-      router.push('/auth/login');
-      return;
-    }
-    loadScheduled();
-  }, [authLoading, isAuthenticated, user, router]);
-
-  const loadScheduled = async () => {
-    try {
-      const response = await apiFetch<any>('/v1/content/me?status=scheduled');
+  const { data: scheduled = [], isLoading, error } = useQuery({
+    queryKey: ['creator', 'scheduled'],
+    queryFn: async () => {
+      const response = await apiFetch<{ success: boolean; data: ScheduledContent[] | { items?: ScheduledContent[] } }>('/v1/content/me?status=scheduled');
       if (response.success && response.data) {
         const items = Array.isArray(response.data) ? response.data : response.data.items || [];
-        setScheduled(
-          items.map((item: any) => ({
-            id: String(item.id),
-            title: String(item.title || ''),
-            thumbnail: String(item.thumbnail || ''),
-            type: String(item.contentType || item.type || 'video'),
-            scheduledAt: String(item.scheduledAt || ''),
-            status: String(item.status || 'scheduled'),
-          }))
-        );
+        return items.map((item) => ({
+          id: String(item.id),
+          title: String(item.title || ''),
+          thumbnail: String(item.thumbnail || ''),
+          type: String(item.contentType || item.type || 'video'),
+          scheduledAt: String(item.scheduledAt || ''),
+          status: String(item.status || 'scheduled'),
+        }));
       }
-    } catch {
-      /* ignore */
-    } finally {
-      setIsLoading(false);
-    }
-  };
+      return [];
+    },
+    enabled: isEnabled,
+  });
 
-  const handleCancel = async (id: string) => {
-    if (!confirm('Cancel this scheduled content?')) return;
-    try {
+  const cancelMutation = useMutation({
+    mutationFn: (id: string) => {
       const formData = new FormData();
       formData.append('status', 'draft');
-      await apiFetch(`/v1/content/${id}`, { method: 'PATCH', body: formData });
-      setScheduled(scheduled.filter((s) => s.id !== id));
-    } catch {
-      /* ignore */
-    }
-  };
+      return apiFetch(`/v1/content/${id}`, { method: 'PATCH', body: formData });
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['creator', 'scheduled'] }),
+  });
 
   if (authLoading) return <></>;
   if (!isAuthenticated || !user) return <></>;
@@ -102,18 +88,20 @@ export default function ScheduledPage(): React.JSX.Element {
         </div>
 
         {isLoading ? (
-          <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}>
-            <div
-              style={{
-                width: 40,
-                height: 40,
-                border: '3px solid #2A1A1A',
-                borderTopColor: '#E8420A',
-                borderRadius: '50%',
-                animation: 'spin 0.8s linear infinite',
-              }}
-            />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="az-glass" style={{ display: 'flex', alignItems: 'center', gap: 16, padding: 16, borderRadius: 16 }}>
+                <Skeleton width="120px" height="68px" borderRadius="8px" />
+                <div style={{ flex: 1 }}>
+                  <Skeleton width="60%" height="16px" className="mb-2" />
+                  <Skeleton width="40%" height="12px" />
+                </div>
+                <Skeleton width="80px" height="32px" borderRadius="999px" />
+              </div>
+            ))}
           </div>
+        ) : error ? (
+          <ErrorState title="Failed to load scheduled content" description="Please try again later" onButtonPress={() => router.refresh()} />
         ) : scheduled.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '60px 0' }}>
             <div style={{ fontSize: 48, marginBottom: 16 }}>⏰</div>
@@ -137,7 +125,7 @@ export default function ScheduledPage(): React.JSX.Element {
                 {item.thumbnail && (
                   <img
                     src={item.thumbnail}
-                    alt=""
+                    alt={item.title}
                     style={{
                       width: 120,
                       height: 68,
@@ -154,7 +142,7 @@ export default function ScheduledPage(): React.JSX.Element {
                   </p>
                 </div>
                 <button
-                  onClick={() => handleCancel(item.id)}
+                  onClick={() => { if (confirm('Cancel this scheduled content?')) cancelMutation.mutate(item.id); }}
                   style={{
                     padding: '8px 20px',
                     borderRadius: 999,

@@ -38,5 +38,5 @@ export class CreateUniverseDto {
   @ApiProperty({ description: 'Additional metadata', required: false })
   @IsOptional()
   @IsObject()
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }

@@ -1,0 +1,39 @@
+{
+  "name": "@azeebo/opentelemetry",
+  "version": "0.1.0",
+  "private": true,
+  "description": "OpenTelemetry initialization and tracing utilities for Azeebo+ services",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "test": "jest --passWithNoTests",
+    "lint": "eslint src --fix"
+  },
+  "dependencies": {
+    "@opentelemetry/api": "^1.9.0",
+    "@opentelemetry/exporter-trace-otlp-http": "^0.57.0",
+    "@opentelemetry/instrumentation": "^0.57.0",
+    "@opentelemetry/instrumentation-express": "^0.46.0",
+    "@opentelemetry/instrumentation-http": "^0.57.0",
+    "@opentelemetry/resources": "^1.30.0",
+    "@opentelemetry/sdk-node": "^0.57.0",
+    "@opentelemetry/sdk-trace-base": "^1.30.0",
+    "@opentelemetry/semantic-conventions": "^1.30.0",
+    "@prisma/instrumentation": "^6.6.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.4",
+    "@types/node": "^25.9.3"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  }
+}

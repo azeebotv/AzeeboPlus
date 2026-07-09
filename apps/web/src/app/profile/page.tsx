@@ -1,11 +1,13 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
+import { useQuery } from '@tanstack/react-query';
 import { api } from '../../lib/api';
 import AppHeader from '../../components/layout/AppHeader';
 import AppFooter from '../../components/layout/AppFooter';
-import { Skeleton } from '@/components/Skeleton';
+import { Skeleton, ErrorState } from '@azeebo/ui/web';
+import OptimizedImage from '@/components/OptimizedImage';
 
 interface UserProfile {
   id: string;
@@ -25,46 +27,37 @@ interface UserProfileData {
 }
 
 export default function ProfilePage(): React.JSX.Element {
-  const [profile, setProfile] = useState<UserProfileData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const [profileRes, prefsRes] = await Promise.all([
-          api.user.getProfile(),
-          api.user.getPreferences(),
-        ]);
-        setProfile({
-          profile:
-            profileRes.success && profileRes.data
-              ? {
-                  id: profileRes.data.id,
-                  email: profileRes.data.email,
-                  displayName: profileRes.data.displayName ?? '',
-                  avatar: profileRes.data.avatar ?? '',
-                  role: profileRes.data.role,
-                  createdAt: profileRes.data.createdAt ?? '',
-                }
-              : undefined,
-          preferences:
-            prefsRes.success && prefsRes.data
-              ? {
-                  darkMode: (prefsRes.data as any).darkMode as boolean | undefined,
-                  notifications: (prefsRes.data as any).notifications as
-                    | Record<string, boolean>
-                    | undefined,
-                }
-              : undefined,
-        });
-      } catch {
-        // intentionally minimal
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchProfile();
-  }, []);
+  const { data: profile, isLoading, error } = useQuery<UserProfileData | null>({
+    queryKey: ['profile'],
+    queryFn: async () => {
+      const [profileRes, prefsRes] = await Promise.all([
+        api.user.getProfile(),
+        api.user.getPreferences(),
+      ]);
+      return {
+        profile:
+          profileRes.success && profileRes.data
+            ? {
+                id: profileRes.data.id,
+                email: profileRes.data.email,
+                displayName: profileRes.data.displayName ?? '',
+                avatar: profileRes.data.avatar ?? '',
+                role: profileRes.data.role,
+                createdAt: profileRes.data.createdAt ?? '',
+              }
+            : undefined,
+        preferences:
+          prefsRes.success && prefsRes.data
+            ? {
+                darkMode: (prefsRes.data as { darkMode?: boolean }).darkMode,
+                notifications: (prefsRes.data as { notifications?: Record<string, boolean> })
+                  .notifications,
+              }
+            : undefined,
+      };
+    },
+    staleTime: 60000,
+  });
 
   return (
     <div className="min-h-screen az-nollywood-bg">
@@ -92,6 +85,12 @@ export default function ProfilePage(): React.JSX.Element {
             <Skeleton height="24px" width="60%" />
             <Skeleton height="20px" width="40%" />
           </div>
+        ) : error ? (
+          <ErrorState
+            title="Failed to load profile"
+            description="Please try again later."
+            buttonText="Retry"
+          />
         ) : profile ? (
           <motion.div
             className="az-glass p-6 sm:p-8"
@@ -101,7 +100,7 @@ export default function ProfilePage(): React.JSX.Element {
           >
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
               {profile.profile?.avatar ? (
-                <img
+                <OptimizedImage
                   src={profile.profile.avatar}
                   alt={profile.profile.displayName}
                   className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover"
@@ -160,13 +159,10 @@ export default function ProfilePage(): React.JSX.Element {
             </div>
           </motion.div>
         ) : (
-          <div className="az-glass p-12 text-center">
-            <span className="text-5xl mb-4 block">&#x1F464;</span>
-            <h3 className="text-lg font-bold text-white mb-2">Profile unavailable</h3>
-            <p className="text-white/50 text-sm">
-              Unable to load profile data. Please try again later.
-            </p>
-          </div>
+          <ErrorState
+            title="Profile unavailable"
+            description="Unable to load profile data. Please try again later."
+          />
         )}
       </main>
 

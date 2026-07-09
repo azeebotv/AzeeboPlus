@@ -3,10 +3,12 @@ import {
   UnauthorizedException,
   ConflictException,
   BadRequestException,
+  Logger,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
+import axios from 'axios';
 import { randomUUID } from 'crypto';
 
 import { AuthRepository } from './auth.repository';
@@ -29,15 +31,19 @@ import { User } from '@azeebo/shared-types';
 import { createSuccessResponse } from '@azeebo/shared-types';
 import { OtpService } from './otp/otp.service';
 import { RedisService } from '../../common/services/redis.service';
+import { CacheService, cacheKey } from '@azeebo/shared-services';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
   private readonly saltRounds: number;
   private readonly accessTokenExpiry: string;
   private readonly refreshTokenExpiry: string;
   private readonly refreshTokenExpiryDays: number;
   private readonly revokedTokensPrefix = 'revoked:';
   private readonly failedLoginPrefix = 'failed_login:';
+  private readonly userByEmailPrefix = 'auth:user:';
+  private readonly permissionsPrefix = 'auth:permissions:';
   private readonly maxFailedAttempts: number;
   private readonly lockoutDurationSeconds: number;
 
@@ -46,6 +52,7 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly otpService: OtpService,
     private readonly redisService: RedisService,
+    private readonly cacheService: CacheService,
     private readonly configService: ConfigService
   ) {
     this.saltRounds = this.configService.get<number>('SALT_ROUNDS', 10);
@@ -60,7 +67,7 @@ export class AuthService {
   }
 
   async register(registerDto: RegisterDto): Promise<AuthResponse> {
-    const existingUser = await this.authRepository.findByEmail(registerDto.email);
+    const existingUser = await this.findUserByEmailCached(registerDto.email);
     if (existingUser) {
       throw new ConflictException('Email already registered');
     }
@@ -82,7 +89,7 @@ export class AuthService {
   }
 
   async login(loginDto: LoginDto): Promise<AuthResponse> {
-    const user = await this.authRepository.findByEmail(loginDto.email);
+    const user = await this.findUserByEmailCached(loginDto.email);
     if (!user) {
       throw new UnauthorizedException('Invalid email or password');
     }
@@ -103,6 +110,9 @@ export class AuthService {
     }
 
     await this.resetFailedLoginAttempts(loginDto.email);
+
+    // Invalidate cached user data on login
+    await this.invalidateUserCache(loginDto.email, user.id);
 
     const tokens = await this.generateTokens(user);
 
@@ -187,6 +197,11 @@ export class AuthService {
 
   async logout(userId: string, accessToken?: string): Promise<{ success: boolean }> {
     await this.authRepository.deleteSessionByUserId(userId);
+
+    // Invalidate all auth caches on logout
+    await this.cacheService.delete(cacheKey('auth', `permissions:${userId}`));
+    await this.cacheService.delete(cacheKey('auth', `session:${userId}`));
+
     if (accessToken) {
       const decoded = this.jwtService.decode(accessToken) as { jti: string; exp: number };
       if (decoded?.jti) {
@@ -238,7 +253,7 @@ export class AuthService {
   async forgotPassword(
     forgotPasswordDto: ForgotPasswordDto
   ): Promise<{ success: boolean; message: string }> {
-    const user = await this.authRepository.findByEmail(forgotPasswordDto.email);
+    const user = await this.findUserByEmailCached(forgotPasswordDto.email);
     if (!user) {
       return { success: true, message: 'If the email exists, a reset link has been sent' };
     }
@@ -246,6 +261,24 @@ export class AuthService {
     const resetToken = randomUUID();
     const resetTokenKey = `password_reset:${resetToken}`;
     await this.redisService.set(resetTokenKey, user.id, 3600);
+
+    try {
+      const notificationServiceUrl = this.configService.get<string>(
+        'NOTIFICATION_SERVICE_URL',
+        'http://notification-service:3006'
+      );
+      await axios.post(`${notificationServiceUrl}/v1/notifications/email`, {
+        to: user.email,
+        template: 'password-reset',
+        data: {
+          resetToken,
+          resetUrl: `${this.configService.get<string>('FRONTEND_URL', 'http://localhost:4000')}/auth/reset-password?token=${resetToken}`,
+          userName: user.displayName,
+        },
+      });
+    } catch (error) {
+      this.logger.error(`Failed to send password reset email: ${error.message}`);
+    }
 
     return { success: true, message: 'If the email exists, a reset link has been sent' };
   }
@@ -270,6 +303,10 @@ export class AuthService {
 
     await this.redisService.del(resetTokenKey);
     await this.authRepository.deleteSessionByUserId(userId);
+
+    // Invalidate all auth caches on password change
+    await this.cacheService.delete(cacheKey('auth', `permissions:${userId}`));
+    await this.cacheService.delete(cacheKey('auth', `session:${userId}`));
 
     return { success: true, message: 'Password reset successfully' };
   }
@@ -298,7 +335,7 @@ export class AuthService {
   async resendVerification(
     resendVerificationDto: ResendVerificationDto
   ): Promise<{ success: boolean; message: string }> {
-    const user = await this.authRepository.findByEmail(resendVerificationDto.email);
+    const user = await this.findUserByEmailCached(resendVerificationDto.email);
     if (!user) {
       return { success: true, message: 'If the email exists, a verification link has been sent' };
     }
@@ -334,7 +371,7 @@ export class AuthService {
   }
 
   async requestOtp(requestOtpDto: RequestOtpDto): Promise<{ success: boolean; message: string }> {
-    const user = await this.authRepository.findByEmail(requestOtpDto.email);
+    const user = await this.findUserByEmailCached(requestOtpDto.email);
     if (!user) {
       return { success: true, message: 'If the email exists, an OTP has been sent' };
     }
@@ -344,7 +381,7 @@ export class AuthService {
   }
 
   async verifyOtp(verifyOtpDto: VerifyOtpDto): Promise<AuthResponse> {
-    const user = await this.authRepository.findByEmail(verifyOtpDto.email);
+    const user = await this.findUserByEmailCached(verifyOtpDto.email);
     if (!user) {
       throw new BadRequestException('Invalid email or code');
     }
@@ -383,9 +420,9 @@ export class AuthService {
         role: user.role,
         type: 'access',
         iat: now,
-      } as any,
+      } as Record<string, unknown>,
       {
-        expiresIn: this.accessTokenExpiry as any,
+        expiresIn: this.accessTokenExpiry as string | number,
         secret: jwtAccessSecret,
       }
     );
@@ -401,9 +438,9 @@ export class AuthService {
         sub: user.id,
         type: 'refresh',
         iat: now,
-      } as any,
+      } as Record<string, unknown>,
       {
-        expiresIn: this.refreshTokenExpiry as any,
+        expiresIn: this.refreshTokenExpiryDays as string | number,
         secret: jwtRefreshSecret,
       }
     );
@@ -415,6 +452,14 @@ export class AuthService {
       refreshToken: hashedRefreshToken,
       expiresAt,
     });
+
+    // Cache session for faster lookups
+    const sessionCacheK = cacheKey('auth', `session:${user.id}`);
+    await this.cacheService.set(sessionCacheK, {
+      userId: user.id,
+      refreshToken: hashedRefreshToken,
+      expiresAt: expiresAt.toISOString(),
+    }, 1800);
 
     return {
       accessToken,
@@ -433,5 +478,21 @@ export class AuthService {
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
     };
+  }
+
+  private async findUserByEmailCached(email: string): Promise<UserEntity | null> {
+    const cacheK = cacheKey('auth', `user:${email}`);
+    const cached = await this.cacheService.get<UserEntity>(cacheK);
+    if (cached) return cached;
+    const user = await this.authRepository.findByEmail(email);
+    if (user) {
+      await this.cacheService.set(cacheK, user, 300);
+    }
+    return user;
+  }
+
+  private async invalidateUserCache(email: string, userId: string): Promise<void> {
+    await this.cacheService.delete(cacheKey('auth', `user:${email}`));
+    await this.cacheService.delete(cacheKey('auth', `permissions:${userId}`));
   }
 }

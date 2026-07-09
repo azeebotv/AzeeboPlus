@@ -37,9 +37,15 @@ export class CsrfMiddleware implements NestMiddleware {
       return next();
     }
 
-    // Skip CSRF if cookie-parser is not configured (cookies unavailable)
+    // Reject if cookie-parser is not configured (cookies unavailable) — cannot validate CSRF
     if (!req.cookies) {
-      return next();
+      this.logger.warn(`CSRF validation failed: cookies unavailable [${req.method} ${req.path}]`);
+      res.status(403).json({
+        success: false,
+        error: 'CSRF validation unavailable',
+        message: 'Cookies are required for CSRF protection',
+      });
+      return;
     }
 
     // Validate CSRF token on state-changing methods

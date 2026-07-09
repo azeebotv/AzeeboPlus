@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -16,8 +16,27 @@ import { realityApi } from '../../src/api/engagement';
 import { walletApi } from '../../src/api/wallet';
 import { apiClient } from '../../src/api/client';
 import { logger } from '../../src/utils/logger';
+import { ApiResponse, Contestant } from '../../src/types/api';
 
 const PLACEHOLDER_IMAGE = '';
+
+interface ShowData {
+  id: string;
+  name: string;
+  subtitle?: string;
+  heroTitle?: string;
+  heroSubtitle?: string;
+  viewerCount?: number;
+  status?: string;
+}
+
+interface ShowContestant {
+  id: string;
+  name: string;
+  avatar: string;
+  votes: number;
+  status: string;
+}
 
 export default function RealityShowScreen() {
   const colorScheme = useColorScheme();
@@ -29,8 +48,8 @@ export default function RealityShowScreen() {
   const [voteSuccess, setVoteSuccess] = useState(false);
   const [walletBalance, setWalletBalance] = useState(0);
   const [totalVotes, setTotalVotes] = useState(0);
-  const [contestants, setContestants] = useState<any[]>([]);
-  const [showData, setShowData] = useState<any>(null);
+  const [contestants, setContestants] = useState<ShowContestant[]>([]);
+  const [showData, setShowData] = useState<ShowData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -51,12 +70,12 @@ export default function RealityShowScreen() {
       const [contestantsRes, walletRes, showRes] = await Promise.all([
         realityApi.getContestants(showId || 'default'),
         walletApi.getBalance(),
-        apiClient.get<any>('/v1/reality/shows/current').catch(() => null),
+        apiClient.get<ShowData[] | ApiResponse<ShowData[]>>('/v1/reality/shows/current').catch(() => null),
       ]);
 
       if (contestantsRes.success && contestantsRes.data) {
         setContestants(contestantsRes.data);
-        setTotalVotes(contestantsRes.data.reduce((sum: number, c: any) => sum + (c.votes || 0), 0));
+        setTotalVotes(contestantsRes.data.reduce((sum: number, c: ShowContestant) => sum + (c.votes || 0), 0));
       }
 
       if (walletRes.success && walletRes.data) {

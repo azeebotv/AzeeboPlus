@@ -1,15 +1,17 @@
 import { Controller, Get, Post, Put, Param, Body, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AdminService } from './admin.service';
-import { AdminGuard } from '@azeebo/security';
+import { AuthGuard } from '@nestjs/passport';
+import { AdminGuard, RateLimitGuard, RateLimit } from '@azeebo/security';
 
 @ApiTags('Admin - Reward Service')
 @Controller('admin')
-@UseGuards(AdminGuard)
+@UseGuards(AuthGuard('jwt'), AdminGuard, RateLimitGuard)
 export class AdminController {
   constructor(private readonly adminService: AdminService) {}
 
   @Get('stats')
+  @RateLimit(50, 60000)
   @ApiOperation({ summary: 'Get reward service statistics (admin)' })
   @ApiResponse({ status: 200, description: 'Reward service statistics' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
@@ -18,6 +20,7 @@ export class AdminController {
   }
 
   @Get('rewards')
+  @RateLimit(50, 60000)
   @ApiOperation({ summary: 'Get paginated reward accounts (admin)' })
   @ApiResponse({ status: 200, description: 'Paginated reward accounts' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
@@ -31,6 +34,7 @@ export class AdminController {
   }
 
   @Get('rewards/:id/transactions')
+  @RateLimit(50, 60000)
   @ApiOperation({ summary: 'Get reward account transactions (admin)' })
   @ApiResponse({ status: 200, description: 'Transaction history' })
   @ApiResponse({ status: 404, description: 'Reward account not found' })
@@ -44,6 +48,7 @@ export class AdminController {
   }
 
   @Get('missions')
+  @RateLimit(50, 60000)
   @ApiOperation({ summary: 'List active missions (admin)' })
   @ApiResponse({ status: 200, description: 'List of missions' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
@@ -52,6 +57,7 @@ export class AdminController {
   }
 
   @Post('missions')
+  @RateLimit(50, 60000)
   @ApiOperation({ summary: 'Create a mission (admin)' })
   @ApiResponse({ status: 201, description: 'Mission created' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
@@ -69,6 +75,7 @@ export class AdminController {
   }
 
   @Put('missions/:id')
+  @RateLimit(50, 60000)
   @ApiOperation({ summary: 'Update a mission (admin)' })
   @ApiResponse({ status: 200, description: 'Mission updated' })
   @ApiResponse({ status: 404, description: 'Mission not found' })

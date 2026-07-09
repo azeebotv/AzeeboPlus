@@ -1,6 +1,8 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, Query } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { AuthGuard } from '@nestjs/passport';
 import { NightlifeService } from './nightlife.service';
+import { UpdateNightlifeDto } from './dto/update-nightlife.dto';
 
 interface CreateNightlifeData {
   name: string;
@@ -35,6 +37,7 @@ interface UpdateNightlifeData {
 }
 
 @ApiTags('Nightlife')
+@UseGuards(AuthGuard('jwt'))
 @Controller('v1/lifestyle/nightlife')
 export class NightlifeController {
   constructor(private readonly nightlifeService: NightlifeService) {}
@@ -78,7 +81,7 @@ export class NightlifeController {
   @ApiResponse({ status: 200, description: 'Entry updated' })
   async updateEntry(
     @Param('id') id: string,
-    @Body() body: Record<string, unknown>
+    @Body() body: UpdateNightlifeDto
   ): Promise<unknown> {
     return this.nightlifeService.updateEntry(id, body);
   }

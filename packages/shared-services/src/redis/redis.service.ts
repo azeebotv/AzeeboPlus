@@ -5,11 +5,12 @@ import { Redis } from 'ioredis';
 export class RedisService implements OnModuleDestroy {
   private redis: Redis;
 
-  constructor() {
-    if (!process.env.REDIS_URL) {
+  constructor(redisUrl?: string) {
+    const url = redisUrl || process.env.REDIS_URL;
+    if (!url) {
       throw new Error('REDIS_URL environment variable must be set');
     }
-    this.redis = new Redis(process.env.REDIS_URL);
+    this.redis = new Redis(url);
   }
 
   async get(key: string): Promise<string | null> {
@@ -38,6 +39,17 @@ export class RedisService implements OnModuleDestroy {
 
   async del(key: string): Promise<number> {
     return this.redis.del(key);
+  }
+
+  async scanKeys(pattern: string, count = 100): Promise<string[]> {
+    const keys: string[] = [];
+    let cursor = '0';
+    do {
+      const [nextCursor, batch] = await this.redis.scan(cursor, 'MATCH', pattern, 'COUNT', count);
+      cursor = nextCursor;
+      keys.push(...batch);
+    } while (cursor !== '0');
+    return keys;
   }
 
   async getClient(): Promise<Redis> {

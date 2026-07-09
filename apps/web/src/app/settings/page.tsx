@@ -1,46 +1,67 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/context/AuthContext';
 import { api } from '@/lib/api';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
+import { Skeleton, ErrorState, Spinner } from '@azeebo/ui/web';
+
+interface UserSettings {
+  language: string;
+  autoplay: boolean;
+  notifications: boolean;
+  darkMode: boolean;
+  dataSaver: boolean;
+  downloadQuality: string;
+}
+
+const DEFAULT_SETTINGS: UserSettings = {
+  language: 'en',
+  autoplay: true,
+  notifications: true,
+  darkMode: true,
+  dataSaver: false,
+  downloadQuality: 'hd',
+};
 
 export default function SettingsPage(): React.JSX.Element {
   const { isAuthenticated, user, isLoading: authLoading } = useAuth();
   const router = useRouter();
-  const [settings, setSettings] = useState({
-    language: 'en',
-    autoplay: true,
-    notifications: true,
-    darkMode: true,
-    dataSaver: false,
-    downloadQuality: 'hd',
-  });
-  const [saved, setSaved] = useState(false);
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    if (authLoading) return;
-    if (!isAuthenticated || !user) {
-      router.push('/auth/login');
-      return;
-    }
-  }, [authLoading, isAuthenticated, user, router]);
-
-  const handleSave = async () => {
-    try {
-      const result = await api.user.updatePreferences(settings);
-      if (result.success) {
-        setSaved(true);
-        setTimeout(() => setSaved(false), 2000);
+  const preferencesQuery = useQuery({
+    queryKey: ['user', 'preferences'],
+    queryFn: async () => {
+      const result = await api.user.getPreferences();
+      if (result.success && result.data) {
+        const data = result.data as Partial<UserSettings>;
+        return { ...DEFAULT_SETTINGS, ...data };
       }
-    } catch {
-      /* ignore */
-    }
-  };
+      return DEFAULT_SETTINGS;
+    },
+    staleTime: 300000,
+    enabled: isAuthenticated && !authLoading,
+  });
+
+  const [localSettings, setLocalSettings] = useState<UserSettings | null>(null);
+  const settings = localSettings ?? preferencesQuery.data ?? DEFAULT_SETTINGS;
+
+  const saveMutation = useMutation({
+    mutationFn: async (newSettings: UserSettings) => {
+      return api.user.updatePreferences(newSettings);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['user', 'preferences'] });
+    },
+  });
 
   if (authLoading) return <></>;
-  if (!isAuthenticated || !user) return <></>;
+  if (!isAuthenticated || !user) {
+    router.push('/auth/login');
+    return <></>;
+  }
 
   const toggleItems = [
     { key: 'autoplay', label: 'Autoplay', desc: 'Automatically play next video' },
@@ -66,7 +87,26 @@ export default function SettingsPage(): React.JSX.Element {
         <div className="az-glass" style={{ padding: 24, borderRadius: 20, marginBottom: 20 }}>
           <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16 }}>Preferences</h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            {toggleItems.map((item) => (
+            {preferencesQuery.isLoading ? (
+              <div className="space-y-4">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="flex items-center justify-between py-2">
+                    <div className="space-y-1">
+                      <Skeleton width="120px" height="16px" />
+                      <Skeleton width="200px" height="12px" />
+                    </div>
+                    <Skeleton width="48px" height="28px" borderRadius="14px" />
+                  </div>
+                ))}
+              </div>
+            ) : preferencesQuery.error ? (
+              <ErrorState
+                title="Failed to load settings"
+                description="Please try again later."
+                buttonText="Retry"
+                onButtonPress={() => preferencesQuery.refetch()}
+              />
+            ) : toggleItems.map((item) => (
               <div
                 key={item.key}
                 style={{
@@ -82,12 +122,13 @@ export default function SettingsPage(): React.JSX.Element {
                   <p style={{ color: '#9A8A7A', fontSize: 13 }}>{item.desc}</p>
                 </div>
                 <button
-                  onClick={() =>
-                    setSettings({
+                  onClick={() => {
+                    const updated = {
                       ...settings,
                       [item.key]: !settings[item.key as keyof typeof settings],
-                    })
-                  }
+                    };
+                    setLocalSettings(updated);
+                  }}
                   style={{
                     width: 48,
                     height: 28,
@@ -125,7 +166,7 @@ export default function SettingsPage(): React.JSX.Element {
             {['sd', 'hd', 'fullhd'].map((q) => (
               <button
                 key={q}
-                onClick={() => setSettings({ ...settings, downloadQuality: q })}
+                onClick={() => setLocalSettings({ ...settings, downloadQuality: q })}
                 style={{
                   flex: 1,
                   padding: '10px 0',
@@ -177,8 +218,35 @@ export default function SettingsPage(): React.JSX.Element {
           </div>
         </div>
 
+        {saveMutation.isSuccess && (
+          <div
+            className="mb-4 px-4 py-3 rounded-xl text-center text-sm font-medium"
+            style={{
+              backgroundColor: 'rgba(34,197,94,0.15)',
+              border: '1px solid rgba(34,197,94,0.3)',
+              color: '#22C55E',
+            }}
+            role="status"
+          >
+            Settings saved successfully
+          </div>
+        )}
+        {saveMutation.isError && (
+          <div
+            className="mb-4 px-4 py-3 rounded-xl text-center text-sm font-medium"
+            style={{
+              backgroundColor: 'rgba(239,68,68,0.15)',
+              border: '1px solid rgba(239,68,68,0.3)',
+              color: '#EF4444',
+            }}
+            role="alert"
+          >
+            Failed to save settings. Please try again.
+          </div>
+        )}
         <button
-          onClick={handleSave}
+          onClick={() => saveMutation.mutate(settings)}
+          disabled={saveMutation.isPending}
           className="az-btn-primary"
           style={{
             width: '100%',
@@ -189,10 +257,15 @@ export default function SettingsPage(): React.JSX.Element {
             color: '#fff',
             fontWeight: 700,
             fontSize: 16,
-            cursor: 'pointer',
+            cursor: saveMutation.isPending ? 'not-allowed' : 'pointer',
+            opacity: saveMutation.isPending ? 0.7 : 1,
           }}
         >
-          {saved ? '✓ Saved!' : 'Save Settings'}
+          {saveMutation.isPending ? (
+            <span className="flex items-center justify-center gap-2">
+              <Spinner size="sm" color="#fff" /> Saving...
+            </span>
+          ) : 'Save Settings'}
         </button>
       </main>
       <AppFooter />

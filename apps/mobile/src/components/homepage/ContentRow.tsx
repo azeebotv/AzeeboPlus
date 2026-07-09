@@ -1,4 +1,4 @@
-import React, { useRef, useState, useCallback } from 'react';
+import { useRef, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   NativeScrollEvent,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { colors } from '@/theme';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import ContentCard from './ContentCard';
@@ -91,7 +92,7 @@ export default function ContentRow({
             <Ionicons
               name="chevron-back"
               size={16}
-              color={canScrollLeft ? '#fff' : 'rgba(255,255,255,0.3)'}
+              color={canScrollLeft ? colors.text.primary : 'rgba(255,255,255,0.3)'}
             />
           </View>
           <View
@@ -103,7 +104,7 @@ export default function ContentRow({
             <Ionicons
               name="chevron-forward"
               size={16}
-              color={canScrollRight ? '#fff' : 'rgba(255,255,255,0.3)'}
+              color={canScrollRight ? colors.text.primary : 'rgba(255,255,255,0.3)'}
             />
           </View>
         </View>
@@ -170,7 +171,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   title: {
-    color: '#fff',
+    color: colors.text.primary,
     fontSize: 17,
     fontWeight: '700',
   },
@@ -213,6 +214,6 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     borderWidth: 2,
     borderColor: 'rgba(255,255,255,0.3)',
-    borderTopColor: '#E8420A',
+    borderTopColor: colors.primary[500],
   },
 });

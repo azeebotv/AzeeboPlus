@@ -1,10 +1,13 @@
-import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useQuery } from '@tanstack/react-query';
 import { LoadingState, EmptyState, ErrorState } from '../src/components/StateContainers';
 import { apiClient } from '../src/api/client';
+import { ApiResponse } from '../src/types/api';
+
+type ListResponse<T> = T[] | ApiResponse<T[]>;
 
 interface FeaturedItem {
   id: string;
@@ -36,37 +39,50 @@ export default function LifestyleUniverseHome() {
   const colorScheme = useColorScheme();
   const router = useRouter();
   const isDark = colorScheme === 'dark';
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [featuredContent, setFeaturedContent] = useState<FeaturedItem[]>([]);
-  const [trendingNow, setTrendingNow] = useState<TrendingItem[]>([]);
-  const [categories, setCategories] = useState<CategoryItem[]>([]);
-  const [creatorsToFollow, setCreatorsToFollow] = useState<CreatorItem[]>([]);
 
-  const fetchData = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const [featuredRes, trendingRes, catsRes, creatorsRes] = await Promise.all([
-        apiClient.get<any>('/v1/lifestyle/featured'),
-        apiClient.get<any>('/v1/lifestyle/trending'),
-        apiClient.get<any>('/v1/lifestyle/categories'),
-        apiClient.get<any>('/v1/lifestyle/creators'),
-      ]);
-      setFeaturedContent(Array.isArray(featuredRes) ? featuredRes : (featuredRes?.data ?? []));
-      setTrendingNow(Array.isArray(trendingRes) ? trendingRes : (trendingRes?.data ?? []));
-      setCategories(Array.isArray(catsRes) ? catsRes : (catsRes?.data ?? []));
-      setCreatorsToFollow(Array.isArray(creatorsRes) ? creatorsRes : (creatorsRes?.data ?? []));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const featuredQuery = useQuery({
+    queryKey: ['lifestyle', 'featured'],
+    queryFn: async () => {
+      const res = await apiClient.get<ListResponse<FeaturedItem>>('/v1/lifestyle/featured');
+      return Array.isArray(res) ? res : (res?.data ?? []);
+    },
+    staleTime: 60_000,
+  });
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  const trendingQuery = useQuery({
+    queryKey: ['lifestyle', 'trending'],
+    queryFn: async () => {
+      const res = await apiClient.get<ListResponse<TrendingItem>>('/v1/lifestyle/trending');
+      return Array.isArray(res) ? res : (res?.data ?? []);
+    },
+    staleTime: 60_000,
+  });
+
+  const categoriesQuery = useQuery({
+    queryKey: ['lifestyle', 'categories'],
+    queryFn: async () => {
+      const res = await apiClient.get<ListResponse<CategoryItem>>('/v1/lifestyle/categories');
+      return Array.isArray(res) ? res : (res?.data ?? []);
+    },
+    staleTime: 60_000,
+  });
+
+  const creatorsQuery = useQuery({
+    queryKey: ['lifestyle', 'creators'],
+    queryFn: async () => {
+      const res = await apiClient.get<ListResponse<CreatorItem>>('/v1/lifestyle/creators');
+      return Array.isArray(res) ? res : (res?.data ?? []);
+    },
+    staleTime: 60_000,
+  });
+
+  const isLoading = featuredQuery.isLoading || trendingQuery.isLoading || categoriesQuery.isLoading || creatorsQuery.isLoading;
+  const error = featuredQuery.error?.message || trendingQuery.error?.message || categoriesQuery.error?.message || creatorsQuery.error?.message;
+
+  const featuredContent = featuredQuery.data ?? [];
+  const trendingNow = trendingQuery.data ?? [];
+  const categories = categoriesQuery.data ?? [];
+  const creatorsToFollow = creatorsQuery.data ?? [];
 
   if (isLoading)
     return (
@@ -77,7 +93,15 @@ export default function LifestyleUniverseHome() {
   if (error)
     return (
       <SafeAreaView style={styles.container}>
-        <ErrorState description={error} onRetry={fetchData} />
+        <ErrorState
+          description={error}
+          onRetry={() => {
+            featuredQuery.refetch();
+            trendingQuery.refetch();
+            categoriesQuery.refetch();
+            creatorsQuery.refetch();
+          }}
+        />
       </SafeAreaView>
     );
   if (!featuredContent.length && !trendingNow.length) {
@@ -108,7 +132,7 @@ export default function LifestyleUniverseHome() {
           contentContainerStyle={styles.categoriesScroll}
         >
           {categories.map((cat) => (
-            <TouchableOpacity key={cat.id} style={styles.categoryChip}>
+            <TouchableOpacity key={cat.id} style={styles.categoryChip} accessibilityLabel={`Filter by ${cat.name}`} accessibilityRole="button">
               <Text style={styles.categoryEmoji}>{cat.emoji}</Text>
               <Text style={styles.categoryName}>{cat.name}</Text>
               <Text style={styles.categoryCount}>{cat.count}</Text>
@@ -131,6 +155,8 @@ export default function LifestyleUniverseHome() {
             renderItem={({ item }) => (
               <TouchableOpacity
                 style={[styles.featuredCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
+                accessibilityLabel={`Watch ${item.title}`}
+                accessibilityRole="button"
               >
                 <View style={styles.featuredImagePlaceholder}>
                   <Text style={styles.featuredEmoji}>{item.emoji}</Text>
@@ -157,7 +183,7 @@ export default function LifestyleUniverseHome() {
             <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
               Trending Now
             </Text>
-            <TouchableOpacity>
+            <TouchableOpacity accessibilityLabel="See all trending" accessibilityRole="button">
               <Text style={styles.seeAllText}>See All</Text>
             </TouchableOpacity>
           </View>
@@ -166,6 +192,8 @@ export default function LifestyleUniverseHome() {
               <TouchableOpacity
                 key={item.id}
                 style={[styles.trendingItem, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
+                accessibilityLabel={`${item.title}, trending`}
+                accessibilityRole="button"
               >
                 <View style={styles.trendingRank}>
                   <Text style={styles.rankNumber}>{index + 1}</Text>
@@ -202,6 +230,8 @@ export default function LifestyleUniverseHome() {
             renderItem={({ item }) => (
               <TouchableOpacity
                 style={[styles.creatorCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
+                accessibilityLabel={`View creator ${item.name}`}
+                accessibilityRole="button"
               >
                 <View style={styles.creatorAvatar}>
                   <Text style={styles.creatorAvatarEmoji}>{item.avatar}</Text>
@@ -210,7 +240,7 @@ export default function LifestyleUniverseHome() {
                   {item.name}
                 </Text>
                 <Text style={styles.creatorFollowers}>{item.followers}</Text>
-                <TouchableOpacity style={styles.followButton}>
+                <TouchableOpacity style={styles.followButton} accessibilityLabel={`Follow ${item.name}`} accessibilityRole="button">
                   <Text style={styles.followButtonText}>Follow</Text>
                 </TouchableOpacity>
               </TouchableOpacity>
@@ -219,23 +249,23 @@ export default function LifestyleUniverseHome() {
         </View>
 
         <View style={styles.bottomNav}>
-          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/home')}>
+          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/home')} accessibilityLabel="Go to Home" accessibilityRole="button">
             <Text style={styles.navIcon}>🏠</Text>
             <Text style={styles.navLabel}>Home</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/watch')}>
+          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/watch')} accessibilityLabel="Go to Watch" accessibilityRole="button">
             <Text style={styles.navIcon}>📺</Text>
             <Text style={styles.navLabel}>Watch</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/create')}>
+          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/create')} accessibilityLabel="Go to Create" accessibilityRole="button">
             <Text style={styles.navIcon}>✨</Text>
             <Text style={styles.navLabel}>Create</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/rewards')}>
+          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/rewards')} accessibilityLabel="Go to Rewards" accessibilityRole="button">
             <Text style={styles.navIcon}>⭐</Text>
             <Text style={styles.navLabel}>Rewards</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/profile')}>
+          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/profile')} accessibilityLabel="Go to Profile" accessibilityRole="button">
             <Text style={styles.navIcon}>👤</Text>
             <Text style={styles.navLabel}>Profile</Text>
           </TouchableOpacity>

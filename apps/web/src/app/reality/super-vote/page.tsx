@@ -85,7 +85,7 @@ export default function SuperVotePage(): React.JSX.Element {
         if (walletResult.success && walletResult.data) {
           const balance =
             typeof walletResult.data === 'object' && 'balance' in walletResult.data
-              ? (walletResult.data as any).balance
+              ? (walletResult.data as { balance: number }).balance
               : 0;
           setWalletBalance(balance || 0);
         }

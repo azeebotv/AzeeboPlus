@@ -1,16 +1,19 @@
-import { Controller, Get, Post, Body, Param, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Query, UseGuards, Request } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
+import { AuthGuard } from '@nestjs/passport';
+import { AdminGuard } from '@azeebo/security';
 import { IntelligenceService } from './intelligence.service';
 
 @ApiTags('Intelligence Layer')
+@UseGuards(AuthGuard('jwt'))
 @Controller('intelligence')
 export class IntelligenceController {
   constructor(private readonly intelligenceService: IntelligenceService) {}
 
-  @Get('personalization/:userId')
+  @Get('personalization')
   @ApiOperation({ summary: 'Get personalization data for user' })
-  async getPersonalization(@Param('userId') userId: string): Promise<unknown> {
-    return this.intelligenceService.getPersonalization(userId);
+  async getPersonalization(@Request() req: { user: { sub: string } }): Promise<unknown> {
+    return this.intelligenceService.getPersonalization(req.user.id);
   }
 
   @Get('segments')
@@ -67,18 +70,19 @@ export class IntelligenceController {
   }
 
   @Post('fraud-detections')
+  @UseGuards(AdminGuard)
   @ApiOperation({ summary: 'Report fraud detection' })
   async detectFraud(
+    @Request() req: { user: { id: string; sub?: string } },
     @Body()
     body: {
-      userId: string;
       eventType: string;
       severity: 'low' | 'medium' | 'high' | 'critical';
       details: Record<string, unknown>;
     }
   ): Promise<unknown> {
     return this.intelligenceService.detectFraud(
-      body.userId,
+      req.user.id,
       body.eventType,
       body.severity,
       body.details
@@ -89,9 +93,11 @@ export class IntelligenceController {
   @ApiOperation({ summary: 'Review fraud detection' })
   async reviewFraudDetection(
     @Param('id') id: string,
-    @Body() body: { reviewedBy: string; status: 'confirmed' | 'cleared' }
+    @Request() req: { user: { sub?: string; id?: string } },
+    @Body() body: { status: 'confirmed' | 'cleared' }
   ): Promise<unknown> {
-    return this.intelligenceService.reviewFraudDetection(id, body.reviewedBy, body.status);
+    const reviewedBy = req.user?.sub || req.user?.id;
+    return this.intelligenceService.reviewFraudDetection(id, reviewedBy, body.status);
   }
 
   @Get('retention')

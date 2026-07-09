@@ -62,7 +62,7 @@ export class TranscodingService {
         status: 'pending',
         message: 'Transcoding job started',
       };
-    } catch (error) {
+    } catch (_err) {
       this.logger.error('Error starting transcoding job:', error);
       throw new BadRequestException('Failed to start transcoding job');
     }
@@ -96,7 +96,7 @@ export class TranscodingService {
         expiresIn,
       });
       return signedUrl;
-    } catch (error) {
+    } catch (_err) {
       this.logger.error('Error generating signed URL for transcoded media:', error);
       throw new BadRequestException('Failed to generate signed URL');
     }

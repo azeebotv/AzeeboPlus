@@ -84,7 +84,10 @@ export const userApi = {
   async updatePreferences(
     preferences: Partial<UserPreferences>
   ): Promise<ApiResponse<UserPreferences>> {
-    const response = await apiClient.patch<UserPreferences>('/v1/users/me/preferences', preferences);
+    const response = await apiClient.patch<UserPreferences>(
+      '/v1/users/me/preferences',
+      preferences
+    );
     return { success: true, data: response };
   },
 

@@ -24,6 +24,7 @@ model SubscriptionPlan {
   subscriptions     Subscription[]
 
   @@map("subscription_plans")
+  @@index([isActive])
 }
 
 model Subscription {
@@ -41,7 +42,10 @@ model Subscription {
   plan              SubscriptionPlan @relation(fields: [planId], references: [id])
 
   @@index([userId])
+  @@index([planId])
   @@index([status])
+  @@index([userId, status])
+  @@index([endDate])
   @@map("subscriptions")
 }
 
@@ -58,5 +62,6 @@ model SubscriptionTransaction {
 
   @@index([subscriptionId])
   @@index([status])
+  @@index([createdAt])
   @@map("subscription_transactions")
 }

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Query, UseGuards, Request } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard, RateLimit } from '@azeebo/security';
@@ -41,14 +41,15 @@ export class PredictionMarketsController {
   }
 
   @Get('my')
+  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get user predictions' })
   async getUserPredictions(
-    @Body() body: { userId: string },
+    @Request() req: { user: { id: string } },
     @Query('page') page = 1,
     @Query('limit') limit = 20
   ): Promise<unknown> {
     return this.predictionMarketsService.getUserPredictions(
-      body.userId,
+      req.user.id,
       Number(page),
       Number(limit)
     );
@@ -76,13 +77,15 @@ export class PredictionMarketsController {
   }
 
   @Post(':id/predict')
+  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Place prediction' })
   async placePrediction(
     @Param('id') marketId: string,
-    @Body() body: SubmitPredictionDto
+    @Body() body: SubmitPredictionDto,
+    @Request() req: { user: { id: string } }
   ): Promise<unknown> {
     return this.predictionMarketsService.placePrediction(
-      body.userId,
+      req.user.id,
       marketId,
       body.selectedOption,
       body.stake

@@ -1,10 +1,11 @@
-import { Controller, Get, Post, Body, Query, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Post, Body, Query, Param, UseGuards, Request } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 
 import { EngagementService } from './engagement.service';
 import { RateLimitGuard, RateLimit } from '@azeebo/security';
 import { User } from '@azeebo/shared-types';
+import { SubmitPredictionDto } from './dto/submit-prediction.dto';
 
 interface AuthRequest extends Request {
   user: User;
@@ -26,7 +27,8 @@ export class EngagementController {
     @Query('category') category = 'all',
     @Query('limit') limit = 50
   ) {
-    return this.engagementService.getLeaderboard(timePeriod, category, Number(limit));
+    const clampedLimit = Math.min(100, Math.max(1, Number(limit) || 50));
+    return this.engagementService.getLeaderboard(timePeriod, category, clampedLimit);
   }
 
   @Get('rankings')
@@ -41,7 +43,7 @@ export class EngagementController {
   @RateLimit(30, 60000)
   @ApiOperation({ summary: 'Get prediction results for a content' })
   @ApiResponse({ status: 200, description: 'Prediction results' })
-  async getPredictionResults(@Request() req: AuthRequest, @Query('contentId') contentId: string) {
+  async getPredictionResults(@Request() req: AuthRequest, @Param('contentId') contentId: string) {
     return this.engagementService.getPredictionResults(req.user.id, contentId);
   }
 
@@ -51,13 +53,12 @@ export class EngagementController {
   @ApiResponse({ status: 201, description: 'Prediction submitted' })
   async submitPrediction(
     @Request() req: AuthRequest,
-    @Body() body: { contentId: string; prediction: string; points: number }
+    @Body() dto: SubmitPredictionDto
   ) {
     return this.engagementService.submitPrediction(
       req.user.id,
-      body.contentId,
-      body.prediction,
-      body.points
+      dto.contentId,
+      dto.prediction
     );
   }
 }

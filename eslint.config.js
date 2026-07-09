@@ -40,7 +40,7 @@ module.exports = [
 
       // Custom rules
       '@typescript-eslint/explicit-function-return-type': 'off',
-      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-explicit-any': 'error',
       '@typescript-eslint/no-unused-vars': [
         'warn',
         {
@@ -79,10 +79,6 @@ module.exports = [
         },
         {
           selector: 'class',
-          format: ['PascalCase'],
-        },
-        {
-          selector: 'interface',
           format: ['PascalCase'],
         },
         {

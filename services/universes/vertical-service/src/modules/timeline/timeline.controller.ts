@@ -1,9 +1,11 @@
-import { Controller, Get, Post, Body, Param, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { AuthGuard } from '@nestjs/passport';
 import { TimelineService } from './timeline.service';
+import { CreateTimelineEventDto } from './dto/create-timeline-event.dto';
 
 @ApiTags('Timeline')
-@Controller('timeline')
+@Controller('v1/vertical/timeline')
 export class TimelineController {
   constructor(private readonly timelineService: TimelineService) {}
 
@@ -34,21 +36,11 @@ export class TimelineController {
   }
 
   @Post()
+  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Create timeline event' })
   @ApiResponse({ status: 201, description: 'Event created' })
   async createEvent(
-    @Body()
-    data: {
-      title: string;
-      description?: string;
-      date: string;
-      endDate?: string;
-      type: string;
-      importance?: string;
-      universeId: string;
-      characterId?: string;
-      locationId?: string;
-    }
+    @Body() data: CreateTimelineEventDto
   ): Promise<unknown> {
     return this.timelineService.createEvent(data);
   }

@@ -1,50 +1,49 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
-import { useAuth } from '../../context/AuthContext';
 import Link from 'next/link';
 import { api, ContentItem, Category } from '@/lib/api';
-import { webLogger } from '@/lib/logger';
+import { Skeleton, ErrorState } from '@azeebo/ui/web';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
+import { OptimizedImage } from '@/components/OptimizedImage';
 import { AmbientGlow } from '@/components/motion/AmbientGlow';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { StaggerGrid } from '@/components/motion/StaggerGrid';
 import { GlowCard } from '@/components/motion/GlowCard';
 
-export default function MoviesPage(): React.JSX.Element {
-  const { isAuthenticated: _isAuthenticated } = useAuth();
-  const [movies, setMovies] = useState<ContentItem[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+const MOVIES_UNIVERSE_ID = 'u0000001-0000-0000-0000-000000000004';
 
-  useEffect(() => {
-    const fetchMovies = async () => {
-      try {
-        setIsLoading(true);
-        const [moviesRes, categoriesRes] = await Promise.all([
-          api.content.getContentByUniverse('u0000001-0000-0000-0000-000000000004', 1, 20),
-          api.content.getCategories(),
-        ]);
-        if (moviesRes.success && moviesRes.data) {
-          const items = Array.isArray(moviesRes.data) ? moviesRes.data : moviesRes.data.items || [];
-          setMovies(items);
-        } else if (!moviesRes.success) {
-          setError(moviesRes.message || 'Failed to load movies.');
-        }
-        if (categoriesRes.success && categoriesRes.data) {
-          setCategories(Array.isArray(categoriesRes.data) ? categoriesRes.data : []);
-        }
-      } catch (err) {
-        webLogger.error('Failed to fetch movies', err);
-        setError('Failed to load movies. Please try again.');
-      } finally {
-        setIsLoading(false);
+export default function MoviesPage(): React.JSX.Element {
+  const moviesQuery = useQuery({
+    queryKey: ['movies', MOVIES_UNIVERSE_ID],
+    queryFn: async () => {
+      const res = await api.content.getContentByUniverse(MOVIES_UNIVERSE_ID, 1, 20);
+      if (res.success && res.data) {
+        return Array.isArray(res.data) ? res.data : res.data.items || [];
       }
-    };
-    fetchMovies();
-  }, []);
+      throw new Error(res.message || 'Failed to load movies');
+    },
+    staleTime: 60000,
+  });
+
+  const categoriesQuery = useQuery({
+    queryKey: ['movie-categories'],
+    queryFn: async () => {
+      const res = await api.content.getCategories();
+      if (res.success && res.data) {
+        return Array.isArray(res.data) ? res.data : [];
+      }
+      return [];
+    },
+    staleTime: 300000,
+  });
+
+  const movies: ContentItem[] = moviesQuery.data ?? [];
+  const categories: Category[] = categoriesQuery.data ?? [];
+  const isLoading = moviesQuery.isLoading;
+  const error = moviesQuery.error?.message || null;
 
   return (
     <div className="min-h-screen az-nollywood-bg">
@@ -53,40 +52,22 @@ export default function MoviesPage(): React.JSX.Element {
       {/* Hero Section */}
       <section className="relative">
         {isLoading ? (
-          <div
-            className="h-[400px] sm:h-[500px] az-shimmer"
-            style={{ backgroundColor: '#2A2A2A' }}
-          />
+          <Skeleton height="400px" className="sm:h-[500px] rounded-none" />
         ) : error ? (
           <div className="h-[400px] sm:h-[500px] flex items-center justify-center">
-            <motion.div
-              className="text-center"
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.4 }}
-            >
-              <p className="text-base sm:text-lg mb-4 text-white/60">{error}</p>
-              <motion.button
-                type="button"
-                onClick={() => window.location.reload()}
-                className="az-btn-primary"
-                style={{ width: 'auto', paddingInline: '1.5rem' }}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                Retry
-              </motion.button>
-            </motion.div>
+            <ErrorState
+              title="Failed to load movies"
+              description={error}
+              buttonText="Retry"
+              onButtonPress={() => moviesQuery.refetch()}
+            />
           </div>
         ) : movies.length > 0 ? (
           <div className="relative h-[400px] sm:h-[500px]">
-            <motion.img
+            <OptimizedImage
               src={movies[0].thumbnail}
               alt={movies[0].title}
               className="w-full h-full object-cover"
-              initial={{ scale: 1.1, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-[#1A0A0A] via-[#1A0A0A]/50 to-transparent" />
             <AmbientGlow color="rgba(245,158,11,0.25)" size={500} className="bottom-0 right-0" />
@@ -220,16 +201,10 @@ export default function MoviesPage(): React.JSX.Element {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
             {Array.from({ length: 6 }).map((_, i) => (
               <div key={i} className="az-glass overflow-hidden">
-                <div className="h-52 sm:h-60 az-shimmer" style={{ backgroundColor: '#2A2A2A' }} />
+                <Skeleton height="240px" borderRadius="0" className="sm:h-[240px]" />
                 <div className="p-4 space-y-3">
-                  <div
-                    className="h-5 w-3/4 az-shimmer rounded"
-                    style={{ backgroundColor: '#2A2A2A' }}
-                  />
-                  <div
-                    className="h-4 w-1/2 az-shimmer rounded"
-                    style={{ backgroundColor: '#2A2A2A' }}
-                  />
+                  <Skeleton height="20px" width="75%" borderRadius="0.25rem" />
+                  <Skeleton height="16px" width="50%" borderRadius="0.25rem" />
                 </div>
               </div>
             ))}
@@ -240,7 +215,7 @@ export default function MoviesPage(): React.JSX.Element {
               <Link key={movie.id} href={`/watch/${movie.id}`}>
                 <GlowCard universe="movies" className="overflow-hidden">
                   <div className="relative">
-                    <img
+                    <OptimizedImage
                       src={movie.thumbnail}
                       alt={movie.title}
                       className="w-full h-44 sm:h-48 object-cover"

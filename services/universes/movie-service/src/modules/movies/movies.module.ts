@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { RedisModule } from '@azeebo/shared-services';
 
 import { MoviesController } from './movies.controller';
 import { MoviesService } from './movies.service';
@@ -11,12 +12,13 @@ import { DatabaseModule } from '../database/database.module';
   imports: [
     DatabaseModule,
     PassportModule,
+    RedisModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
         secret: configService.getOrThrow<string>('JWT_ACCESS_SECRET'),
         signOptions: {
-          expiresIn: configService.get('JWT_EXPIRES_IN', '30m') as any,
+          expiresIn: configService.get('JWT_EXPIRES_IN', '30m'),
         },
       }),
       inject: [ConfigService],

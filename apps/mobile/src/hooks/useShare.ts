@@ -20,7 +20,7 @@ export function useShare() {
       setState({ isSharing: false, error: null });
       return success;
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Share failed';
+      const message = error instanceof Error ? (error as Error).message : 'Share failed';
       setState({ isSharing: false, error: message });
       return false;
     }

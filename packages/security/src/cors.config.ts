@@ -33,13 +33,7 @@ export function configureCors(app: INestApplication, options: CorsOptions): void
         return;
       }
 
-      const isAllowed = validatedOrigins.some((allowed) => {
-        if (allowed.includes('*')) {
-          const pattern = new RegExp(`^${allowed.replace(/\*/g, '[a-zA-Z0-9-]+')}$`);
-          return pattern.test(origin);
-        }
-        return allowed === origin;
-      });
+      const isAllowed = validatedOrigins.some((allowed) => allowed === origin);
 
       if (isAllowed) {
         callback(null, true);

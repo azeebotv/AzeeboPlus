@@ -161,7 +161,7 @@ export class UploadService {
 
   async retryFailedTranscodingJobs(): Promise<number> {
     let retriedCount = 0;
-    const jobKeys = await this.redisService.keys(`${this.redisKeyPrefix}*`);
+    const jobKeys = await this.redisService.scanKeys(`${this.redisKeyPrefix}*`);
 
     for (const key of jobKeys) {
       const jobData = await this.redisService.get(key);
@@ -265,7 +265,7 @@ export class UploadService {
   async listTranscodingJobs(
     status?: 'pending' | 'processing' | 'completed' | 'failed'
   ): Promise<TranscodingJob[]> {
-    const jobKeys = await this.redisService.keys(`${this.redisKeyPrefix}*`);
+    const jobKeys = await this.redisService.scanKeys(`${this.redisKeyPrefix}*`);
     const jobs: TranscodingJob[] = [];
 
     for (const key of jobKeys) {

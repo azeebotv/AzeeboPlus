@@ -1,5 +1,6 @@
 'use client';
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/context/AuthContext';
 import { api } from '@/lib/api';
 import AdminLayout from '@/components/layout/AdminLayout';
@@ -14,6 +15,41 @@ type Tab =
   | 'compliance'
   | 'localization'
   | 'security';
+
+interface SystemSetting {
+  id?: string;
+  _id?: string;
+  key: string;
+  value: unknown;
+  name?: string;
+  price?: number;
+  currency?: string;
+  duration?: number;
+  features?: string[];
+  tier?: string;
+  isActive?: boolean;
+}
+
+interface AdminUser {
+  id?: string;
+  _id?: string;
+  email?: string;
+  username?: string;
+  role?: string;
+  createdAt?: string;
+}
+
+interface NotificationTemplate {
+  id?: string;
+  _id?: string;
+  name: string;
+  subject?: string;
+  content?: string;
+  body?: string;
+  type: 'email' | 'push' | 'sms' | 'in-app';
+  createdAt?: string;
+  isActive?: boolean;
+}
 
 const TABS: { key: Tab; label: string; icon: string }[] = [
   { key: 'general', label: 'General', icon: '⚙️' },
@@ -218,12 +254,14 @@ function Modal({
 
 export default function AdminSettingsPage(): React.JSX.Element {
   const { isAuthenticated, user, isLoading: authLoading } = useAuth();
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<Tab>('general');
-  const [isLoading, setIsLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const isEnabled = !authLoading && !!isAuthenticated && !!user && user.role === 'admin';
 
   // General
   const [general, setGeneral] = useState({
@@ -250,9 +288,8 @@ export default function AdminSettingsPage(): React.JSX.Element {
   });
 
   // Plans
-  const [plans, setPlans] = useState<any[]>([]);
   const [showPlanModal, setShowPlanModal] = useState(false);
-  const [editingPlan, setEditingPlan] = useState<any>(null);
+  const [editingPlan, setEditingPlan] = useState<SystemSetting | null>(null);
   const [planForm, setPlanForm] = useState({
     name: '',
     price: '',
@@ -264,17 +301,11 @@ export default function AdminSettingsPage(): React.JSX.Element {
   });
 
   // Access
-  const [roles, setRoles] = useState<Record<string, string[]>>({
-    admin: ['*'],
-    creator: ['content.create', 'content.edit', 'wallet.view'],
-    user: ['content.view', 'wallet.view', 'profile.edit'],
-  });
-  const [admins, setAdmins] = useState<any[]>([]);
   const [showAdminModal, setShowAdminModal] = useState(false);
   const [adminForm, setAdminForm] = useState({ email: '', role: 'admin' });
 
   // Performance
-  const [perf, setPerf] = useState({
+  const [perfForm, setPerfForm] = useState({
     cacheTtl: 3600,
     cdnUrl: '',
     imageCompressionQuality: 80,
@@ -282,9 +313,8 @@ export default function AdminSettingsPage(): React.JSX.Element {
   });
 
   // Notifications
-  const [templates, setTemplates] = useState<any[]>([]);
   const [showTemplateModal, setShowTemplateModal] = useState(false);
-  const [editingTemplate, setEditingTemplate] = useState<any>(null);
+  const [editingTemplate, setEditingTemplate] = useState<NotificationTemplate | null>(null);
   const [templateForm, setTemplateForm] = useState({
     name: '',
     subject: '',
@@ -343,142 +373,138 @@ export default function AdminSettingsPage(): React.JSX.Element {
     ipBlacklist: '',
   });
 
-  const loadAllSettings = useCallback(async () => {
-    try {
+  const { data: settingsMap, isLoading: isLoadingSettings } = useQuery({
+    queryKey: ['admin', 'settings'],
+    queryFn: async () => {
       const res = await api.admin.getAllSettings();
       if (res.success && res.data) {
-        const arr = res.data as any[];
+        const arr = res.data as Array<{ key: string; value: unknown }>;
         if (Array.isArray(arr)) {
-          const map: Record<string, any> = {};
-          arr.forEach((s: any) => { map[s.key] = s.value; });
-          setGeneral((prev) => ({ ...prev, ...extractGeneral(map) }));
-          setPerf((prev) => ({ ...prev, ...extractPerf(map) }));
-          setCompliance((prev) => ({ ...prev, ...extractCompliance(map) }));
-          setLocalization((prev) => ({ ...prev, ...extractLocalization(map) }));
-          setSecurity((prev) => ({ ...prev, ...extractSecurity(map) }));
+          const map: Record<string, unknown> = {};
+          arr.forEach((s) => { map[s.key] = s.value; });
+          return map;
         }
       }
-    } catch { /* ignore */ }
-  }, []);
+      return {};
+    },
+    enabled: isEnabled,
+  });
 
-  const loadPlans = useCallback(async () => {
-    try {
+  const { data: plans = [] } = useQuery({
+    queryKey: ['admin', 'plans'],
+    queryFn: async () => {
       const res = await api.admin.getSubscriptionPlans();
       if (res.success && res.data) {
-        const d = res.data as any;
-        setPlans(Array.isArray(d) ? d : d.items || []);
+        const d = res.data as SystemSetting[] | { items?: SystemSetting[] };
+        return Array.isArray(d) ? d : d.items || [];
       }
-    } catch { /* ignore */ }
-  }, []);
+      return [];
+    },
+    enabled: isEnabled,
+  });
 
-  const loadRoles = useCallback(async () => {
-    try {
+  const { data: roles = { admin: ['*'], creator: ['content.create', 'content.edit', 'wallet.view'], user: ['content.view', 'wallet.view', 'profile.edit'] } } = useQuery({
+    queryKey: ['admin', 'roles'],
+    queryFn: async () => {
       const res = await api.admin.getRoles();
       if (res.success && res.data) {
-        const d = res.data as any;
-        if (d && typeof d === 'object') setRoles(d);
+        const d = res.data as Record<string, string[]>;
+        if (d && typeof d === 'object') return d;
       }
-    } catch { /* ignore */ }
-  }, []);
+      return {};
+    },
+    enabled: isEnabled,
+  });
 
-  const loadAdmins = useCallback(async () => {
-    try {
+  const { data: admins = [] } = useQuery({
+    queryKey: ['admin', 'admins'],
+    queryFn: async () => {
       const res = await api.admin.getAdmins();
       if (res.success && res.data) {
-        const d = res.data as any;
-        setAdmins(Array.isArray(d) ? d : d.items || []);
+        const d = res.data as AdminUser[] | { items?: AdminUser[] };
+        return Array.isArray(d) ? d : d.items || [];
       }
-    } catch { /* ignore */ }
-  }, []);
+      return [];
+    },
+    enabled: isEnabled,
+  });
 
-  const loadPerformance = useCallback(async () => {
-    try {
+  const { data: perf } = useQuery({
+    queryKey: ['admin', 'performance'],
+    queryFn: async () => {
       const res = await api.admin.getPerformance();
       if (res.success && res.data) {
-        const d = res.data as any;
-        if (d && typeof d === 'object') setPerf((prev) => ({ ...prev, ...d }));
+        return res.data as { cacheTtl: number; cdnUrl: string; imageCompressionQuality: number; maxUploadSize: number };
       }
-    } catch { /* ignore */ }
-  }, []);
+      return { cacheTtl: 3600, cdnUrl: '', imageCompressionQuality: 80, maxUploadSize: 500 };
+    },
+    enabled: isEnabled,
+  });
 
-  const loadTemplates = useCallback(async () => {
-    try {
+  const { data: templates = [] } = useQuery({
+    queryKey: ['admin', 'templates'],
+    queryFn: async () => {
       const res = await api.admin.getNotificationTemplates();
       if (res.success && res.data) {
-        const d = res.data as any;
-        setTemplates(Array.isArray(d) ? d : d.items || []);
+        const d = res.data as NotificationTemplate[] | { items?: NotificationTemplate[] };
+        return Array.isArray(d) ? d : d.items || [];
       }
-    } catch { /* ignore */ }
-  }, []);
+      return [];
+    },
+    enabled: isEnabled,
+  });
 
-  const loadIntegrations = useCallback(async () => {
-    try {
+  const { data: integrationsData } = useQuery({
+    queryKey: ['admin', 'integrations'],
+    queryFn: async () => {
       const res = await api.admin.getIntegrations();
       if (res.success && res.data) {
-        const d = res.data as any;
-        if (d && typeof d === 'object') setIntegrations((prev) => ({ ...prev, ...d }));
+        return res.data as Partial<typeof integrations>;
       }
-    } catch { /* ignore */ }
-  }, []);
+      return {};
+    },
+    enabled: isEnabled,
+  });
 
-  const loadCompliance = useCallback(async () => {
-    try {
+  const { data: complianceData } = useQuery({
+    queryKey: ['admin', 'compliance'],
+    queryFn: async () => {
       const res = await api.admin.getCompliance();
       if (res.success && res.data) {
-        const d = res.data as any;
-        if (d && typeof d === 'object') setCompliance((prev) => ({ ...prev, ...d }));
+        return res.data as Partial<typeof compliance>;
       }
-    } catch { /* ignore */ }
-  }, []);
+      return {};
+    },
+    enabled: isEnabled,
+  });
 
-  const loadLocalization = useCallback(async () => {
-    try {
+  const { data: localizationData } = useQuery({
+    queryKey: ['admin', 'localization'],
+    queryFn: async () => {
       const res = await api.admin.getLocalization();
       if (res.success && res.data) {
-        const d = res.data as any;
-        if (d && typeof d === 'object') setLocalization((prev) => ({ ...prev, ...d }));
+        return res.data as Partial<typeof localization>;
       }
-    } catch { /* ignore */ }
-  }, []);
+      return {};
+    },
+    enabled: isEnabled,
+  });
 
-  const loadSecurity = useCallback(async () => {
-    try {
+  const { data: securityData } = useQuery({
+    queryKey: ['admin', 'security'],
+    queryFn: async () => {
       const res = await api.admin.getSecurity();
       if (res.success && res.data) {
-        const d = res.data as any;
-        if (d && typeof d === 'object') setSecurity((prev) => ({ ...prev, ...d }));
+        return res.data as Partial<typeof security>;
       }
-    } catch { /* ignore */ }
-  }, []);
+      return {};
+    },
+    enabled: isEnabled,
+  });
 
-  useEffect(() => {
-    if (authLoading) return;
-    if (!isAuthenticated || !user || user.role !== 'admin') return;
-    const load = async () => {
-      setIsLoading(true);
-      await Promise.all([
-        loadAllSettings(),
-        loadPlans(),
-        loadRoles(),
-        loadAdmins(),
-        loadPerformance(),
-        loadTemplates(),
-        loadIntegrations(),
-        loadCompliance(),
-        loadLocalization(),
-        loadSecurity(),
-      ]);
-      setIsLoading(false);
-    };
-    load();
-  }, [
-    authLoading, isAuthenticated, user,
-    loadAllSettings, loadPlans, loadRoles, loadAdmins,
-    loadPerformance, loadTemplates, loadIntegrations,
-    loadCompliance, loadLocalization, loadSecurity,
-  ]);
+  const isLoading = authLoading || isLoadingSettings;
 
-  function extractGeneral(map: Record<string, any>) {
+  function extractGeneral(map: Record<string, unknown>) {
     return {
       siteTitle: map.siteTitle || map.platformName || general.siteTitle,
       siteDescription: map.siteDescription || '',
@@ -503,7 +529,7 @@ export default function AdminSettingsPage(): React.JSX.Element {
     };
   }
 
-  function extractPerf(map: Record<string, any>) {
+  function extractPerf(map: Record<string, unknown>) {
     return {
       cacheTtl: Number(map.cacheTtl) || 3600,
       cdnUrl: map.cdnUrl || '',
@@ -512,7 +538,7 @@ export default function AdminSettingsPage(): React.JSX.Element {
     };
   }
 
-  function extractCompliance(map: Record<string, any>) {
+  function extractCompliance(map: Record<string, unknown>) {
     return {
       gdprEnabled: map.gdprEnabled !== false,
       ccpaEnabled: !!map.ccpaEnabled,
@@ -527,7 +553,7 @@ export default function AdminSettingsPage(): React.JSX.Element {
     };
   }
 
-  function extractLocalization(map: Record<string, any>) {
+  function extractLocalization(map: Record<string, unknown>) {
     return {
       defaultLanguage: map.defaultLanguage || 'en',
       supportedLanguages: Array.isArray(map.supportedLanguages)
@@ -538,7 +564,7 @@ export default function AdminSettingsPage(): React.JSX.Element {
     };
   }
 
-  function extractSecurity(map: Record<string, any>) {
+  function extractSecurity(map: Record<string, unknown>) {
     return {
       twoFactorRequired: !!map.twoFactorRequired,
       passwordMinLength: Number(map.passwordMinLength) || 8,
@@ -572,7 +598,7 @@ export default function AdminSettingsPage(): React.JSX.Element {
           }))
         );
       } else if (tab === 'performance') {
-        await api.admin.updatePerformance(perf);
+        await api.admin.updatePerformance(perfForm);
       } else if (tab === 'notifications') {
         await api.admin.bulkUpdateSettings([
           { key: 'notifTriggers', value: notifTriggers },
@@ -620,7 +646,7 @@ export default function AdminSettingsPage(): React.JSX.Element {
       const text = await file.text();
       const data = JSON.parse(text);
       await api.admin.importSettings(data, 'merge');
-      window.location.reload();
+      queryClient.invalidateQueries({ queryKey: ['admin', 'settings'] });
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : 'Import failed');
     }
@@ -633,7 +659,7 @@ export default function AdminSettingsPage(): React.JSX.Element {
     setEditingPlan(null);
   };
 
-  const openPlanModal = (plan?: any) => {
+  const openPlanModal = (plan?: SystemSetting) => {
     if (plan) {
       setEditingPlan(plan);
       setPlanForm({
@@ -669,7 +695,7 @@ export default function AdminSettingsPage(): React.JSX.Element {
       }
       setShowPlanModal(false);
       resetPlanForm();
-      loadPlans();
+      queryClient.invalidateQueries({ queryKey: ['admin', 'plans'] });
     } catch { /* ignore */ }
   };
 
@@ -677,7 +703,7 @@ export default function AdminSettingsPage(): React.JSX.Element {
     if (!confirm('Delete this plan?')) return;
     try {
       await api.admin.deleteSubscriptionPlan(id);
-      loadPlans();
+      queryClient.invalidateQueries({ queryKey: ['admin', 'plans'] });
     } catch { /* ignore */ }
   };
 
@@ -687,7 +713,7 @@ export default function AdminSettingsPage(): React.JSX.Element {
       await api.admin.createAdmin(adminForm);
       setShowAdminModal(false);
       setAdminForm({ email: '', role: 'admin' });
-      loadAdmins();
+      queryClient.invalidateQueries({ queryKey: ['admin', 'admins'] });
     } catch { /* ignore */ }
   };
 
@@ -695,7 +721,7 @@ export default function AdminSettingsPage(): React.JSX.Element {
     if (!confirm('Remove this admin?')) return;
     try {
       await api.admin.removeAdmin(id);
-      loadAdmins();
+      queryClient.invalidateQueries({ queryKey: ['admin', 'admins'] });
     } catch { /* ignore */ }
   };
 
@@ -705,7 +731,7 @@ export default function AdminSettingsPage(): React.JSX.Element {
     setEditingTemplate(null);
   };
 
-  const openTemplateModal = (t?: any) => {
+  const openTemplateModal = (t?: NotificationTemplate) => {
     if (t) {
       setEditingTemplate(t);
       setTemplateForm({
@@ -732,15 +758,15 @@ export default function AdminSettingsPage(): React.JSX.Element {
       }
       setShowTemplateModal(false);
       resetTemplateForm();
-      loadTemplates();
+      queryClient.invalidateQueries({ queryKey: ['admin', 'templates'] });
     } catch { /* ignore */ }
   };
 
   const deleteTemplate = async (id: string) => {
     if (!confirm('Delete this template?')) return;
     try {
-      await api.admin.updateNotificationTemplate(id, {} as any);
-      loadTemplates();
+      await api.admin.deleteNotificationTemplate(id);
+      queryClient.invalidateQueries({ queryKey: ['admin', 'templates'] });
     } catch { /* ignore */ }
   };
 
@@ -758,17 +784,26 @@ export default function AdminSettingsPage(): React.JSX.Element {
   if (authLoading || isLoading) {
     return (
       <AdminLayout>
-        <div style={{ display: 'flex', justifyContent: 'center', padding: 80 }}>
-          <div
-            style={{
-              width: 40,
-              height: 40,
-              border: '3px solid #2A1A1A',
-              borderTopColor: '#E8420A',
-              borderRadius: '50%',
-              animation: 'spin 0.8s linear infinite',
-            }}
-          />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20, padding: 20 }}>
+          <Skeleton width="200px" height="32px" />
+          <div style={{ display: 'flex', gap: 4 }}>
+            {Array.from({ length: 6 }).map((_, i) => (
+              <Skeleton key={i} width="100px" height="40px" borderRadius="12px" />
+            ))}
+          </div>
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="az-glass" style={{ padding: 24, borderRadius: 20 }}>
+              <Skeleton width="150px" height="20px" className="mb-4" />
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
+                {Array.from({ length: 4 }).map((_, j) => (
+                  <div key={j}>
+                    <Skeleton width="80px" height="14px" className="mb-2" />
+                    <Skeleton width="100%" height="44px" borderRadius="12px" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
       </AdminLayout>
     );
@@ -1407,7 +1442,7 @@ export default function AdminSettingsPage(): React.JSX.Element {
               </button>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {admins.map((a: any) => (
+              {admins.map((a) => (
                 <div
                   key={a.id || a._id || a.email}
                   style={{
@@ -1494,15 +1529,15 @@ export default function AdminSettingsPage(): React.JSX.Element {
             <Field label="Cache TTL (seconds)" hint="How long cached data stays fresh">
               <input
                 type="number"
-                value={perf.cacheTtl}
-                onChange={(e) => setPerf({ ...perf, cacheTtl: Number(e.target.value) })}
+                value={perfForm.cacheTtl}
+                onChange={(e) => setPerfForm({ ...perfForm, cacheTtl: Number(e.target.value) })}
                 style={inputStyle}
               />
             </Field>
             <Field label="CDN URL" hint="Content delivery network base URL">
               <input
-                value={perf.cdnUrl}
-                onChange={(e) => setPerf({ ...perf, cdnUrl: e.target.value })}
+                value={perfForm.cdnUrl}
+                onChange={(e) => setPerfForm({ ...perfForm, cdnUrl: e.target.value })}
                 style={inputStyle}
                 placeholder="https://cdn.azeebo.com"
               />
@@ -1513,22 +1548,22 @@ export default function AdminSettingsPage(): React.JSX.Element {
                   type="range"
                   min={10}
                   max={100}
-                  value={perf.imageCompressionQuality}
+                  value={perfForm.imageCompressionQuality}
                   onChange={(e) =>
-                    setPerf({ ...perf, imageCompressionQuality: Number(e.target.value) })
+                    setPerfForm({ ...perfForm, imageCompressionQuality: Number(e.target.value) })
                   }
                   style={{ flex: 1, accentColor: '#E8420A' }}
                 />
                 <span style={{ fontWeight: 700, fontSize: 16, minWidth: 48, textAlign: 'right' }}>
-                  {perf.imageCompressionQuality}%
+                  {perfForm.imageCompressionQuality}%
                 </span>
               </div>
             </Field>
             <Field label="Max Upload Size (MB)">
               <input
                 type="number"
-                value={perf.maxUploadSize}
-                onChange={(e) => setPerf({ ...perf, maxUploadSize: Number(e.target.value) })}
+                value={perfForm.maxUploadSize}
+                onChange={(e) => setPerfForm({ ...perfForm, maxUploadSize: Number(e.target.value) })}
                 style={inputStyle}
               />
             </Field>
@@ -1669,7 +1704,7 @@ export default function AdminSettingsPage(): React.JSX.Element {
                 <select
                   value={templateForm.type}
                   onChange={(e) =>
-                    setTemplateForm({ ...templateForm, type: e.target.value as any })
+                    setTemplateForm({ ...templateForm, type: e.target.value as 'email' | 'push' | 'sms' | 'in-app' })
                   }
                   style={inputStyle}
                 >
@@ -1715,7 +1750,7 @@ export default function AdminSettingsPage(): React.JSX.Element {
               { key: 'aws', name: 'AWS', desc: 'S3 storage & SES' },
             ] as const
           ).map(({ key, name, desc }) => {
-            const cfg = (integrations as any)[key] || {};
+            const cfg = integrations[key as keyof typeof integrations] || {};
             return (
               <div key={key} className="az-glass" style={cardStyle}>
                 <div

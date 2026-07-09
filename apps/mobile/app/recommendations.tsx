@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { contentApi } from '../src/api';
 import { logger } from '../src/utils/logger';
 import { LoadingState, ErrorState, EmptyState } from '../src/components/StateContainers';
+import { colors } from '../src/theme';
 
 interface Recommendation {
   id: string;
@@ -56,7 +57,7 @@ export default function RecommendationsScreen() {
         if (item.type === 'content') {
           router.push(`/watch/${item.id}`);
         } else if (item.type === 'creator') {
-          router.push(`/(tabs)/profile?userId=${item.id}` as any);
+          router.push(`/(tabs)/profile?userId=${item.id}` as const);
         }
       }}
     >
@@ -121,7 +122,7 @@ export default function RecommendationsScreen() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
         refreshControl={
-          <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} colors={['#E8420A']} />
+          <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} colors={[colors.primary[500]]} />
         }
         ListEmptyComponent={
           <EmptyState
@@ -138,7 +139,7 @@ export default function RecommendationsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1A0A0A',
+    backgroundColor: colors.bg.primary,
   },
   header: {
     padding: 16,
@@ -147,12 +148,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: colors.text.primary,
     marginBottom: 4,
   },
   subtitle: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: colors.light[400],
   },
   filterContainer: {
     flexDirection: 'row',
@@ -164,39 +165,39 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.bg.surface,
   },
   filterButtonActive: {
-    backgroundColor: '#E8420A',
+    backgroundColor: colors.primary[500],
   },
   filterText: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: colors.light[400],
     fontWeight: '500',
   },
   filterTextActive: {
-    color: '#FFFFFF',
+    color: colors.text.primary,
   },
   listContent: {
     padding: 16,
   },
   card: {
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.bg.surface,
     borderRadius: 12,
     marginBottom: 12,
     overflow: 'hidden',
   },
   thumbnailContainer: {
     height: 120,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: colors.border.default,
     justifyContent: 'flex-end',
     padding: 8,
   },
   typeBadge: {
     fontSize: 10,
     fontWeight: 'bold',
-    color: '#FFFFFF',
-    backgroundColor: '#E8420A',
+    color: colors.text.primary,
+    backgroundColor: colors.primary[500],
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 4,
@@ -208,12 +209,12 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: colors.text.primary,
     marginBottom: 4,
   },
   reason: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: colors.light[400],
     marginBottom: 8,
   },
   scoreContainer: {
@@ -224,18 +225,18 @@ const styles = StyleSheet.create({
   scoreBar: {
     flex: 1,
     height: 6,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: colors.border.default,
     borderRadius: 3,
     overflow: 'hidden',
   },
   scoreFill: {
     height: '100%',
-    backgroundColor: '#E8420A',
+    backgroundColor: colors.primary[500],
     borderRadius: 3,
   },
   scoreText: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: colors.light[400],
     fontWeight: '600',
   },
   emptyContainer: {

@@ -1,63 +1,81 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/context/AuthContext';
 import { api } from '@/lib/api';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
+import { Skeleton, ErrorState } from '@azeebo/ui/web';
+
+interface CreatorProfile {
+  displayName: string;
+  bio: string;
+  avatar: string;
+  socialLinks: { youtube: string; twitter: string; instagram: string };
+}
 
 export default function CreatorProfilePage(): React.JSX.Element {
   const { isAuthenticated, user, isLoading: authLoading } = useAuth();
   const router = useRouter();
-  const [profile, setProfile] = useState({
-    displayName: '',
-    bio: '',
-    avatar: '',
-    socialLinks: { youtube: '', twitter: '', instagram: '' },
-  });
-  const [isSaving, setIsSaving] = useState(false);
+  const queryClient = useQueryClient();
   const [saved, setSaved] = useState(false);
+  const isEnabled = !authLoading && !!isAuthenticated && !!user;
 
-  useEffect(() => {
-    if (authLoading) return;
-    if (!isAuthenticated || !user) {
-      router.push('/auth/login');
-      return;
-    }
-    loadProfile();
-  }, [authLoading, isAuthenticated, user, router]);
-
-  const loadProfile = async () => {
-    try {
+  const { data: profile, isLoading } = useQuery({
+    queryKey: ['creator', 'profile'],
+    queryFn: async () => {
       const response = await api.user.getProfile();
       if (response.success && response.data) {
-        const d = response.data as any;
-        setProfile({
+        const d = response.data as { displayName?: string; name?: string; bio?: string; avatar?: string; socialLinks?: { youtube?: string; twitter?: string; instagram?: string } };
+        return {
           displayName: d.displayName || d.name || '',
           bio: d.bio || '',
           avatar: d.avatar || '',
           socialLinks: d.socialLinks || { youtube: '', twitter: '', instagram: '' },
-        });
+        } as CreatorProfile;
       }
-    } catch {
-      /* ignore */
-    }
-  };
+      return { displayName: '', bio: '', avatar: '', socialLinks: { youtube: '', twitter: '', instagram: '' } } as CreatorProfile;
+    },
+    enabled: isEnabled,
+  });
 
-  const handleSave = async () => {
-    setIsSaving(true);
-    try {
-      await api.user.updateProfile(profile);
+  const [editProfile, setEditProfile] = useState<CreatorProfile | null>(null);
+  const form = editProfile || profile || { displayName: '', bio: '', avatar: '', socialLinks: { youtube: '', twitter: '', instagram: '' } };
+
+  const saveMutation = useMutation({
+    mutationFn: (data: CreatorProfile) => api.user.updateProfile(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['creator', 'profile'] });
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
-    } catch {
-      /* ignore */
-    }
-    setIsSaving(false);
-  };
+    },
+  });
 
   if (authLoading) return <></>;
   if (!isAuthenticated || !user) return <></>;
+
+  if (isLoading) {
+    return (
+      <div style={{ backgroundColor: '#1A0A0A', minHeight: '100vh', color: '#F5F0EB' }}>
+        <AppHeader />
+        <main style={{ paddingTop: 100, paddingBottom: 60, maxWidth: 700, margin: '0 auto', padding: '100px 24px 60px' }}>
+          <div style={{ marginBottom: 32 }}>
+            <Skeleton width="120px" height="20px" className="mb-4" />
+            <Skeleton width="200px" height="32px" />
+          </div>
+          <div className="az-glass" style={{ padding: 24, borderRadius: 20 }}>
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} style={{ marginBottom: 20 }}>
+                <Skeleton width="100px" height="14px" className="mb-2" />
+                <Skeleton width="100%" height="44px" borderRadius="12px" />
+              </div>
+            ))}
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div style={{ backgroundColor: '#1A0A0A', minHeight: '100vh', color: '#F5F0EB' }}>
@@ -109,8 +127,8 @@ export default function CreatorProfilePage(): React.JSX.Element {
                 Display Name
               </label>
               <input
-                value={profile.displayName}
-                onChange={(e) => setProfile({ ...profile, displayName: e.target.value })}
+                value={form.displayName}
+                onChange={(e) => setEditProfile({ ...(editProfile || profile!), displayName: e.target.value })}
                 style={{
                   width: '100%',
                   padding: '12px 16px',
@@ -135,8 +153,8 @@ export default function CreatorProfilePage(): React.JSX.Element {
                 Bio
               </label>
               <textarea
-                value={profile.bio}
-                onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
+                value={form.bio}
+                onChange={(e) => setEditProfile({ ...(editProfile || profile!), bio: e.target.value })}
                 rows={4}
                 style={{
                   width: '100%',
@@ -163,11 +181,11 @@ export default function CreatorProfilePage(): React.JSX.Element {
                 YouTube
               </label>
               <input
-                value={profile.socialLinks.youtube}
+                value={form.socialLinks.youtube}
                 onChange={(e) =>
-                  setProfile({
-                    ...profile,
-                    socialLinks: { ...profile.socialLinks, youtube: e.target.value },
+                  setEditProfile({
+                    ...(editProfile || profile!),
+                    socialLinks: { ...(editProfile || profile!).socialLinks, youtube: e.target.value },
                   })
                 }
                 placeholder="https://youtube.com/@..."
@@ -195,11 +213,11 @@ export default function CreatorProfilePage(): React.JSX.Element {
                 Twitter
               </label>
               <input
-                value={profile.socialLinks.twitter}
+                value={form.socialLinks.twitter}
                 onChange={(e) =>
-                  setProfile({
-                    ...profile,
-                    socialLinks: { ...profile.socialLinks, twitter: e.target.value },
+                  setEditProfile({
+                    ...(editProfile || profile!),
+                    socialLinks: { ...(editProfile || profile!).socialLinks, twitter: e.target.value },
                   })
                 }
                 placeholder="https://twitter.com/..."
@@ -227,11 +245,11 @@ export default function CreatorProfilePage(): React.JSX.Element {
                 Instagram
               </label>
               <input
-                value={profile.socialLinks.instagram}
+                value={form.socialLinks.instagram}
                 onChange={(e) =>
-                  setProfile({
-                    ...profile,
-                    socialLinks: { ...profile.socialLinks, instagram: e.target.value },
+                  setEditProfile({
+                    ...(editProfile || profile!),
+                    socialLinks: { ...(editProfile || profile!).socialLinks, instagram: e.target.value },
                   })
                 }
                 placeholder="https://instagram.com/..."
@@ -247,8 +265,8 @@ export default function CreatorProfilePage(): React.JSX.Element {
               />
             </div>
             <button
-              onClick={handleSave}
-              disabled={isSaving}
+              onClick={() => saveMutation.mutate(form)}
+              disabled={saveMutation.isPending}
               className="az-btn-primary"
               style={{
                 width: '100%',
@@ -260,10 +278,10 @@ export default function CreatorProfilePage(): React.JSX.Element {
                 fontWeight: 700,
                 fontSize: 16,
                 cursor: 'pointer',
-                opacity: isSaving ? 0.6 : 1,
+                opacity: saveMutation.isPending ? 0.6 : 1,
               }}
             >
-              {saved ? '✓ Saved!' : isSaving ? 'Saving...' : 'Save Profile'}
+              {saved ? '✓ Saved!' : saveMutation.isPending ? 'Saving...' : 'Save Profile'}
             </button>
           </div>
         </div>

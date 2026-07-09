@@ -106,7 +106,7 @@ model MediaAsset {
   originalUrl   String
   thumbnailUrl  String?
   format        String
-  size          Int
+  size          Int // Max ~2GB; use BigInt if larger files are needed
   duration      Int?
   metadata      Json?
   createdAt     DateTime @default(now())
@@ -145,6 +145,8 @@ model Comment {
   updatedAt    DateTime @updatedAt
 
   content      ContentItem @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  parent       Comment?    @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies      Comment[]   @relation("CommentReplies")
 
   @@map("comments")
   @@index([contentId])
@@ -161,7 +163,7 @@ model Rental {
   status      String   @default("active") // active, expired, cancelled
   price       Decimal  @db.Decimal(18, 2)
   currency    String   @default("NGN")
-  transactionId String?
+  transactionId String?  // No FK — server-side validation against payment-service required
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -208,7 +210,7 @@ model Screening {
   streamUrl     String?
   status        String   @default("scheduled") // scheduled, live, ended, cancelled
   maxViewers    Int?
-  currentViewers Int     @default(0)
+  currentViewers Int     @default(0) // Use Prisma's `increment` for atomic updates (PostgreSQL row-level lock)
   price         Decimal? @db.Decimal(18, 2)
   currency      String   @default("NGN")
   createdAt     DateTime @default(now())
@@ -233,7 +235,7 @@ model LockedExtra {
   price       Decimal? @db.Decimal(18, 2)
   currency    String   @default("NGN")
   unlockType  String   @default("purchase") // purchase, rental, pass, subscription
-  isUnlocked  Boolean  @default(false)
+  isUnlocked  Boolean  @default(false) // Should be computed at query time from UserUnlock, not stored
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

@@ -7,12 +7,16 @@ import {
   HealthIndicatorResult,
 } from '@nestjs/terminus';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { PrismaService } from '../database/prisma.service';
 
 @ApiTags('Health')
 @Public()
 @Controller('health')
 export class HealthController {
-  constructor(private health: HealthCheckService) {}
+  constructor(
+    private health: HealthCheckService,
+    private prisma: PrismaService,
+  ) {}
 
   @Get()
   @HealthCheck()
@@ -21,12 +25,14 @@ export class HealthController {
   @ApiResponse({ status: 503, description: 'Service is unhealthy' })
   async check(): Promise<HealthCheckResult> {
     return this.health.check([
-      async (): Promise<HealthIndicatorResult> => ({
-        authService: {
-          status: 'up',
-          timestamp: new Date().toISOString(),
-        },
-      }),
+      async (): Promise<HealthIndicatorResult> => {
+        try {
+          await this.prisma.$queryRaw`SELECT 1`;
+          return { db: { status: 'up' } };
+        } catch {
+          return { db: { status: 'down' } };
+        }
+      },
     ]);
   }
 
@@ -46,6 +52,15 @@ export class HealthController {
   @ApiResponse({ status: 200, description: 'Service is ready' })
   @ApiResponse({ status: 503, description: 'Service is not ready' })
   async readiness(): Promise<HealthCheckResult> {
-    return this.health.check([]);
+    return this.health.check([
+      async (): Promise<HealthIndicatorResult> => {
+        try {
+          await this.prisma.$queryRaw`SELECT 1`;
+          return { db: { status: 'up' } };
+        } catch {
+          return { db: { status: 'down' } };
+        }
+      },
+    ]);
   }
 }

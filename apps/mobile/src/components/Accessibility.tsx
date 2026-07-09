@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   TouchableOpacity,
   Text,
@@ -9,6 +8,7 @@ import {
   TextStyle,
   AccessibilityProps,
 } from 'react-native';
+import { colors } from '../theme';
 
 interface AccessibleButtonProps extends AccessibilityProps {
   onPress: (event: GestureResponderEvent) => void;
@@ -153,23 +153,23 @@ export const VisuallyHiddenText: React.FC<VisuallyHiddenTextProps> = ({
   </Text>
 );
 
-export const colors = {
-  primary: '#6366F1',
-  secondary: '#E8420A',
-  success: '#10B981',
-  error: '#EF4444',
-  warning: '#F59E0B',
+export const accessibilityColors = {
+  primary: colors.primary[500],
+  secondary: colors.primary[500],
+  success: colors.success[500],
+  error: colors.error[500],
+  warning: colors.warning[500],
   text: {
-    primary: 'rgba(255,255,255,0.2)',
-    secondary: '#6B7280',
-    tertiary: '#9CA3AF',
+    primary: colors.text.primary,
+    secondary: colors.text.secondary,
+    tertiary: colors.text.tertiary,
   },
   bg: {
-    primary: '#FFFFFF',
-    secondary: '#F3F4F6',
-    tertiary: '#E5E7EB',
+    primary: colors.bg.primary,
+    secondary: colors.bg.secondary,
+    tertiary: colors.bg.tertiary,
   },
-  border: '#D1D5DB',
+  border: colors.border.default,
 };
 
 const styles = StyleSheet.create({
@@ -183,7 +183,7 @@ const styles = StyleSheet.create({
     minWidth: 48,
   },
   buttonPrimary: {
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primary[500],
   },
   buttonSecondary: {
     backgroundColor: colors.secondary,
@@ -191,7 +191,7 @@ const styles = StyleSheet.create({
   buttonOutline: {
     backgroundColor: 'transparent',
     borderWidth: 1,
-    borderColor: colors.primary,
+    borderColor: colors.primary[500],
   },
   buttonDisabled: {
     opacity: 0.5,
@@ -201,13 +201,13 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   buttonTextPrimary: {
-    color: '#FFFFFF',
+    color: colors.text.primary,
   },
   buttonTextSecondary: {
-    color: '#FFFFFF',
+    color: colors.text.primary,
   },
   buttonTextOutline: {
-    color: colors.primary,
+    color: colors.primary[500],
   },
   buttonTextDisabled: {
     color: colors.text.tertiary,
@@ -216,7 +216,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.bg.primary,
     borderRadius: 12,
     padding: 16,
-    shadowColor: '#000',
+    shadowColor: colors.bg.primary,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,

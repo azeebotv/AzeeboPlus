@@ -1,9 +1,12 @@
-import { Controller, Get, Param, Post } from '@nestjs/common';
-import { Public } from '@azeebo/security';
+import { Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
+import { AuthGuard } from '@nestjs/passport';
+import { AdminGuard } from '@azeebo/security';
 import { CircuitBreakerProxyService } from '../../common/circuit-breaker-proxy.service';
 
-@Public()
+@ApiTags('Health')
 @Controller('health')
+@UseGuards(AuthGuard('jwt'), AdminGuard)
 export class CircuitBreakerHealthController {
   constructor(private readonly proxyService: CircuitBreakerProxyService) {}
 

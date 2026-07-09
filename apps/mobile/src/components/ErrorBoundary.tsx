@@ -1,5 +1,6 @@
-import React, { Component, ErrorInfo, ReactNode } from 'react';
+import { Component, ErrorInfo, ReactNode } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { colors } from '@azeebo/design-tokens';
 import { logger } from '../utils/logger';
 
 interface Props {
@@ -37,7 +38,12 @@ export class ErrorBoundary extends Component<Props, State> {
           <Text style={styles.message}>
             {this.state.error?.message || 'An unexpected error occurred'}
           </Text>
-          <TouchableOpacity style={styles.button} onPress={this.handleRetry}>
+          <TouchableOpacity
+            style={styles.button}
+            onPress={this.handleRetry}
+            accessibilityRole="button"
+            accessibilityLabel="Try Again"
+          >
             <Text style={styles.buttonText}>Try Again</Text>
           </TouchableOpacity>
         </View>
@@ -54,27 +60,28 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
-    backgroundColor: '#fff',
+    backgroundColor: colors.neutral[50],
   },
   title: {
     fontSize: 20,
     fontWeight: 'bold',
     marginBottom: 10,
+    color: colors.neutral[900],
   },
   message: {
     fontSize: 14,
-    color: '#666',
+    color: colors.neutral[600],
     textAlign: 'center',
     marginBottom: 20,
   },
   button: {
-    backgroundColor: '#007AFF',
+    backgroundColor: colors.primary[600],
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 8,
   },
   buttonText: {
-    color: '#fff',
+    color: colors.neutral[50],
     fontSize: 16,
     fontWeight: '600',
   },

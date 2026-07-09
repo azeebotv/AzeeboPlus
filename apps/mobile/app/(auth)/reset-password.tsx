@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
   View,
   Text,
@@ -68,8 +68,9 @@ export default function ResetPasswordScreen() {
           onPress: () => router.replace('/(auth)/login'),
         },
       ]);
-    } catch (error: any) {
-      Alert.alert('Error', error?.message || 'Failed to reset password. Please try again.');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to reset password. Please try again.';
+      Alert.alert('Error', message);
     } finally {
       setIsLoading(false);
     }

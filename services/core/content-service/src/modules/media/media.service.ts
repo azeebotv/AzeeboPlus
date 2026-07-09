@@ -37,7 +37,7 @@ export class MediaService {
         expiresIn,
       });
       return signedUrl;
-    } catch (error) {
+    } catch (_err) {
       this.logger.error(`Error generating signed URL: ${(error as Error).message}`);
       throw new NotFoundException('Failed to generate signed URL');
     }
@@ -124,7 +124,7 @@ export class MediaService {
 
       // Generate signed URL for the thumbnail
       return this.getSignedUrl(thumbnailKey);
-    } catch (error) {
+    } catch (_err) {
       this.logger.error('Error generating thumbnail:', error);
       throw new Error('Failed to generate thumbnail');
     }

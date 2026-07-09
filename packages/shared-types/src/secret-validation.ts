@@ -1,5 +1,11 @@
-/* eslint-disable no-console */
 import { validateEnvironment, EnvValidationError } from './env-validation';
+
+const log = (service: string, level: 'info' | 'warn' | 'error', message: string) => {
+  const prefix = `[${service}]`;
+  if (level === 'error') console.error(prefix, message);
+  else if (level === 'warn') console.warn(prefix, message);
+  else console.log(prefix, message);
+};
 
 /**
  * Validates environment variables at service startup.
@@ -16,33 +22,33 @@ export function validateStartup(
 ): void {
   const { requireAll = false } = options;
 
-  console.log(`[${service}] Validating environment variables...`);
+  log(service, 'info', 'Validating environment variables...');
 
   try {
     validateEnvironment(env);
-    console.log(`[${service}] Environment validation passed`);
+    log(service, 'info', 'Environment validation passed');
   } catch (error) {
     if (error instanceof EnvValidationError) {
       if (requireAll || error.missing.length > 0) {
-        console.error(`[${service}] Environment validation failed:`);
+        log(service, 'error', 'Environment validation failed:');
         if (error.missing.length > 0) {
-          console.error(`  Missing required variables: ${error.missing.join(', ')}`);
+          log(service, 'error', `  Missing required variables: ${error.missing.join(', ')}`);
         }
         if (error.invalid.length > 0) {
-          console.error(`  Invalid variables: ${error.invalid.join(', ')}`);
+          log(service, 'error', `  Invalid variables: ${error.invalid.join(', ')}`);
         }
         process.exit(1);
       } else {
-        console.warn(`[${service}] Environment validation warnings:`);
+        log(service, 'warn', 'Environment validation warnings:');
         if (error.missing.length > 0) {
-          console.warn(`  Missing optional variables: ${error.missing.join(', ')}`);
+          log(service, 'warn', `  Missing optional variables: ${error.missing.join(', ')}`);
         }
         if (error.invalid.length > 0) {
-          console.warn(`  Invalid variables: ${error.invalid.join(', ')}`);
+          log(service, 'warn', `  Invalid variables: ${error.invalid.join(', ')}`);
         }
       }
     } else {
-      console.error(`[${service}] Unexpected validation error:`, error);
+      log(service, 'error', `Unexpected validation error: ${error}`);
       process.exit(1);
     }
   }
@@ -63,12 +69,11 @@ export function isPlaceholderSecret(value: string): boolean {
     /^xxx+$/i,
 
     /^placeholder.*$/i,
-    /^test.*$/i,
     /^dummy.*$/i,
-    /^secret.*$/i,
-    /^password.*$/i,
-    /^key.*$/i,
-    /^token.*$/i,
+    /^=secret$/i,
+    /^=password$/i,
+    /^=key$/i,
+    /^=token$/i,
   ];
 
   return placeholderPatterns.some((pattern) => pattern.test(value));

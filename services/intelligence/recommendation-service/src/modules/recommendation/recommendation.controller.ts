@@ -1,15 +1,18 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { Public } from '@azeebo/security';
+import { RateLimitGuard, RateLimit } from '@azeebo/security';
+import { AuthGuard } from '@nestjs/passport';
 import { RecommendationService } from './recommendation.service';
 
 @ApiTags('Recommendation')
+@UseGuards(AuthGuard('jwt'), RateLimitGuard)
 @Controller('recommendation')
 export class RecommendationController {
   constructor(private readonly recommendationService: RecommendationService) {}
 
   @Public()
   @Get('content')
+  @RateLimit(60, 60000)
   @ApiOperation({ summary: 'Get content recommendations' })
   @ApiResponse({ status: 200, description: 'Content recommendations with explainability' })
   async getContentRecommendations(
@@ -54,6 +57,7 @@ export class RecommendationController {
 
   @Public()
   @Get('trending')
+  @RateLimit(60, 60000)
   @ApiOperation({ summary: 'Get trending content' })
   @ApiResponse({ status: 200, description: 'Trending content' })
   async getTrending(
@@ -74,8 +78,8 @@ export class RecommendationController {
     return this.recommendationService.getUserSegment(userId);
   }
 
-  @Public()
   @Get('creator-score')
+  @RateLimit(60, 60000)
   @ApiOperation({ summary: 'Get creator score' })
   @ApiResponse({ status: 200, description: 'Creator score and tier' })
   async getCreatorScore(@Query('creatorId') creatorId: string): Promise<unknown> {
@@ -108,7 +112,6 @@ export class RecommendationController {
   }
 
   @Get('personalized-feed')
-  @Get('personalized')
   @ApiOperation({ summary: 'Get personalized feed' })
   @ApiResponse({ status: 200, description: 'Personalized content feed' })
   async getPersonalizedFeed(

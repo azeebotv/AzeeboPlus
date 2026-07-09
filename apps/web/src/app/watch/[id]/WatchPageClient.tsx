@@ -29,6 +29,17 @@ interface Comment {
   likedByCurrentUser: boolean;
 }
 
+interface RawComment {
+  id: string;
+  userId: string;
+  userName: string;
+  content: string;
+  timestamp?: string;
+  createdAt?: string;
+  likes: number;
+  likedByCurrentUser: boolean;
+}
+
 export default function WatchPageClient({ id }: { id: string }): React.JSX.Element {
   const { user } = useAuth();
   const [content, setContent] = useState<Content | null>(null);
@@ -57,6 +68,12 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
   const [showShareModal, setShowShareModal] = useState<boolean>(false);
   const [showReportModal, setShowReportModal] = useState<boolean>(false);
   const [isReporting, setIsReporting] = useState<boolean>(false);
+  const [retryCount, setRetryCount] = useState<number>(0);
+
+  const handleRetry = useCallback(() => {
+    setError(null);
+    setRetryCount((c) => c + 1);
+  }, []);
 
   const videoRef = useRef<HTMLDivElement>(null);
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -74,7 +91,7 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
       try {
         setIsLoading(true);
         setError(null);
-        const response = await apiFetch<any>(`/content/${id}`);
+        const response = await apiFetch<Content & { creatorId?: string; creatorName?: string; creatorAvatar?: string; likeCount?: number; dislikeCount?: number }>(`/content/${id}`);
         if (response.success && response.data) {
           const data = response.data;
           const creatorId = data.creatorId || data.creator?.id || 'unknown';
@@ -100,7 +117,7 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
           setDislikeCount(data.dislikeCount || 0);
           if (creatorId && creatorId !== 'unknown') {
             try {
-              const creatorResponse = await apiFetch<any>(`/creators/${creatorId}`);
+              const creatorResponse = await apiFetch<{ subscriberCount?: number; isSubscribed?: boolean; displayName?: string; name?: string; avatarUrl?: string; avatar?: string }>(`/creators/${creatorId}`);
               if (creatorResponse.success && creatorResponse.data) {
                 const creatorData = creatorResponse.data;
                 setSubscriberCount(creatorData.subscriberCount || 0);
@@ -141,21 +158,21 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
     };
 
     if (id) fetchContent();
-  }, [id]);
+  }, [id, retryCount]);
 
   useEffect(() => {
     const loadComments = async (): Promise<void> => {
       try {
-        const response = await apiFetch<any>(`/content/${id}/comments`);
+        const response = await apiFetch<RawComment[]>(`/content/${id}/comments`);
         if (response.success && response.data) {
           const commentsData = Array.isArray(response.data) ? response.data : [];
           setComments(
-            commentsData.map((c: any) => ({
+            commentsData.map((c: RawComment) => ({
               id: String(c.id),
               userId: String(c.userId),
               userName: String(c.userName || 'Anonymous'),
               content: String(c.content),
-              timestamp: new Date(c.timestamp || c.createdAt),
+              timestamp: new Date(c.timestamp || c.createdAt || ''),
               likes: Number(c.likes || 0),
               likedByCurrentUser: Boolean(c.likedByCurrentUser),
             }))
@@ -266,7 +283,7 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
   const toggleSubscribe = useCallback(async (): Promise<void> => {
     try {
       if (!user || !content?.creator?.id) return;
-      const response = await apiFetch<any>(`/creators/subscribe/${content.creator.id}`, {
+      const response = await apiFetch<{ subscribed: boolean }>(`/creators/subscribe/${content.creator.id}`, {
         method: 'POST',
       });
       if (response.success) {
@@ -282,22 +299,22 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
   const handleAddComment = useCallback(async (): Promise<void> => {
     if (!user || !newComment.trim()) return;
     try {
-      const response = await apiFetch<any>(`/content/${id}/comments`, {
+      const response = await apiFetch<Comment>(`/content/${id}/comments`, {
         method: 'POST',
         body: JSON.stringify({ content: newComment }),
       });
       if (response.success) {
         setNewComment('');
-        const commentsResponse = await apiFetch<any>(`/content/${id}/comments`);
+        const commentsResponse = await apiFetch<RawComment[]>(`/content/${id}/comments`);
         if (commentsResponse.success && commentsResponse.data) {
           const commentsData = Array.isArray(commentsResponse.data) ? commentsResponse.data : [];
           setComments(
-            commentsData.map((c: any) => ({
+            commentsData.map((c: RawComment) => ({
               id: String(c.id),
               userId: String(c.userId),
               userName: String(c.userName || 'Anonymous'),
               content: String(c.content),
-              timestamp: new Date(c.timestamp || c.createdAt),
+              timestamp: new Date(c.timestamp || c.createdAt || ''),
               likes: Number(c.likes || 0),
               likedByCurrentUser: Boolean(c.likedByCurrentUser),
             }))
@@ -341,7 +358,7 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
     async (reason: string, details: string): Promise<void> => {
       try {
         setIsReporting(true);
-        const response = await apiFetch<any>('/moderation/report', {
+        const response = await apiFetch<{ reported: boolean }>('/moderation/report', {
           method: 'POST',
           body: JSON.stringify({ targetId: id, targetType: 'content', reason, details }),
         });
@@ -457,7 +474,7 @@ export default function WatchPageClient({ id }: { id: string }): React.JSX.Eleme
             <h2 className="text-xl font-bold text-white mb-2">Error Loading Content</h2>
             <p className="text-white/50">{error || 'Content not found'}</p>
             <button
-              onClick={() => window.location.reload()}
+              onClick={handleRetry}
               className="az-btn-primary mt-6"
               style={{ width: 'auto', paddingInline: '2rem' }}
             >

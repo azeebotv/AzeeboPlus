@@ -37,7 +37,7 @@ export function useDeepLink() {
           url: null,
           parsedLink: null,
           isLoading: false,
-          error: error instanceof Error ? error.message : 'Failed to get initial URL',
+          error: error instanceof Error ? (error as Error).message : 'Failed to get initial URL',
         });
       }
     };

@@ -1,12 +1,13 @@
 'use client';
 
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
+import { useQuery } from '@tanstack/react-query';
 import { api } from '../../lib/api';
 import { announceToScreenReader } from '../../lib/keyboard';
 import AppHeader from '../../components/layout/AppHeader';
 import AppFooter from '../../components/layout/AppFooter';
-import { Skeleton } from '@/components/Skeleton';
+import { Skeleton, ErrorState } from '@azeebo/ui/web';
 
 interface ContentItem {
   id: string;
@@ -27,12 +28,8 @@ interface ContentResponse {
 }
 
 export default function BrowsePage(): React.JSX.Element {
-  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
-  const [universes, setUniverses] = useState<{ id: string; name: string; icon?: string }[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedUniverseId, setSelectedUniverseId] = useState<string | null>(null);
-  const [content, setContent] = useState<ContentItem[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [sortBy, setSortBy] = useState<string>('Popular');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [minRating, setMinRating] = useState<number>(0);
@@ -40,7 +37,6 @@ export default function BrowsePage(): React.JSX.Element {
   const [selectedLanguage, setSelectedLanguage] = useState<string>('all');
   const [selectedYear, setSelectedYear] = useState<string>('all');
   const [showFilters, setShowFilters] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
   const categoryListRef = useRef<HTMLUListElement>(null);
   const universeListRef = useRef<HTMLUListElement>(null);
   const contentGridRef = useRef<HTMLDivElement>(null);
@@ -109,87 +105,83 @@ export default function BrowsePage(): React.JSX.Element {
     if (title) announceToScreenReader(`Focused: ${title}`);
   }, []);
 
-  useEffect(() => {
-    const fetchCategories = async (): Promise<void> => {
-      try {
-        const response = await api.content.getCategories();
-        if (response.success && response.data) {
-          setCategories(Array.isArray(response.data) ? response.data : []);
-        }
-      } catch {
-        /* intentionally minimal */
+  const categoriesQuery = useQuery({
+    queryKey: ['browse', 'categories'],
+    queryFn: async () => {
+      const response = await api.content.getCategories();
+      if (response.success && response.data) {
+        return Array.isArray(response.data) ? response.data : [];
       }
-    };
-    const fetchUniverses = async (): Promise<void> => {
-      try {
-        const response = await api.universe.getUniverses();
-        if (response.success && response.data) {
-          setUniverses(Array.isArray(response.data) ? response.data : []);
-        }
-      } catch {
-        /* intentionally minimal */
-      }
-    };
-    fetchCategories();
-    fetchUniverses();
-  }, []);
+      return [];
+    },
+    staleTime: 300000,
+  });
 
-  useEffect(() => {
-    const fetchContent = async (): Promise<void> => {
-      try {
-        setIsLoading(true);
-        let response;
-        if (selectedUniverseId)
-          response = await api.content.getContentByUniverse(selectedUniverseId);
-        else if (selectedCategory)
-          response = await api.content.getContentByCategory(selectedCategory);
-        else response = await api.content.getFeaturedContent();
-
-        if (response.success && response.data) {
-          const data = response.data;
-          let items: ContentItem[] = Array.isArray(data)
-            ? data
-            : (data as ContentResponse).items || [];
-          if (searchQuery) {
-            const q = searchQuery.toLowerCase();
-            items = items.filter(
-              (item) =>
-                item.title.toLowerCase().includes(q) ||
-                item.description?.toLowerCase().includes(q) ||
-                item.creator?.name.toLowerCase().includes(q)
-            );
-          }
-          if (minRating > 0) items = items.filter((item) => (item.rating || 0) >= minRating);
-          items = items.filter((item) => (item.duration || 0) <= maxDuration * 60);
-          if (selectedLanguage !== 'all')
-            items = items.filter((item) => item.language === selectedLanguage);
-          if (selectedYear !== 'all')
-            items = items.filter((item) => item.year?.toString() === selectedYear);
-          if (sortBy === 'Rating')
-            items = [...items].sort((a, b) => (b.rating || 0) - (a.rating || 0));
-          else if (sortBy === 'Newest')
-            items = [...items].sort((a, b) => (b.year || 0) - (a.year || 0));
-          else if (sortBy === 'A-Z')
-            items = [...items].sort((a, b) => a.title.localeCompare(b.title));
-          setContent(items);
-        }
-      } catch {
-        setError('Failed to load content. Please try again.');
-      } finally {
-        setIsLoading(false);
+  const universesQuery = useQuery({
+    queryKey: ['browse', 'universes'],
+    queryFn: async () => {
+      const response = await api.universe.getUniverses();
+      if (response.success && response.data) {
+        return Array.isArray(response.data) ? response.data : [];
       }
-    };
-    fetchContent();
-  }, [
-    selectedCategory,
-    selectedUniverseId,
-    searchQuery,
-    minRating,
-    maxDuration,
-    selectedLanguage,
-    selectedYear,
-    sortBy,
-  ]);
+      return [];
+    },
+    staleTime: 300000,
+  });
+
+  const contentQuery = useQuery({
+    queryKey: ['browse', 'content', selectedCategory, selectedUniverseId],
+    queryFn: async () => {
+      let response;
+      if (selectedUniverseId)
+        response = await api.content.getContentByUniverse(selectedUniverseId);
+      else if (selectedCategory)
+        response = await api.content.getContentByCategory(selectedCategory);
+      else response = await api.content.getFeaturedContent();
+
+      if (response.success && response.data) {
+        const data = response.data;
+        let items: ContentItem[] = Array.isArray(data)
+          ? data
+          : (data as ContentResponse).items || [];
+        return items;
+      }
+      return [];
+    },
+    staleTime: 30000,
+  });
+
+  const categories = categoriesQuery.data ?? [];
+  const universes = universesQuery.data ?? [];
+  const rawContent = contentQuery.data ?? [];
+  const isLoading = categoriesQuery.isLoading || universesQuery.isLoading || contentQuery.isLoading;
+  const error = categoriesQuery.error?.message || universesQuery.error?.message || contentQuery.error?.message || null;
+
+  const content = (() => {
+    let items = [...rawContent];
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      items = items.filter(
+        (item) =>
+          item.title.toLowerCase().includes(q) ||
+          item.description?.toLowerCase().includes(q) ||
+          item.creator?.name.toLowerCase().includes(q)
+      );
+    }
+    if (minRating > 0) items = items.filter((item) => (item.rating || 0) >= minRating);
+    items = items.filter((item) => (item.duration || 0) <= maxDuration * 60);
+    if (selectedLanguage !== 'all')
+      items = items.filter((item) => item.language === selectedLanguage);
+    if (selectedYear !== 'all')
+      items = items.filter((item) => item.year?.toString() === selectedYear);
+    if (sortBy === 'Rating')
+      items = [...items].sort((a, b) => (b.rating || 0) - (a.rating || 0));
+    else if (sortBy === 'Newest')
+      items = [...items].sort((a, b) => (b.year || 0) - (a.year || 0));
+    else if (sortBy === 'A-Z')
+      items = [...items].sort((a, b) => a.title.localeCompare(b.title));
+    return items;
+  })();
 
   const clearFilters = () => {
     setSearchQuery('');
@@ -232,29 +224,13 @@ export default function BrowsePage(): React.JSX.Element {
         </motion.div>
 
         {error && (
-          <div
-            className="mb-6 p-4 rounded-xl"
-            style={{ background: 'rgba(204,28,28,0.15)', border: '1px solid rgba(204,28,28,0.3)' }}
-          >
-            <p style={{ color: '#E8420A', marginBottom: 12 }}>{error}</p>
-            <button
-              onClick={() => {
-                setError(null);
-                setIsLoading(true);
-              }}
-              style={{
-                padding: '8px 16px',
-                borderRadius: 8,
-                background: '#E8420A',
-                color: '#fff',
-                border: 'none',
-                cursor: 'pointer',
-                fontSize: 13,
-                fontWeight: 600,
-              }}
-            >
-              Try Again
-            </button>
+          <div className="mb-6">
+            <ErrorState
+              title="Failed to load content"
+              description={error}
+              buttonText="Retry"
+              onButtonPress={() => contentQuery.refetch()}
+            />
           </div>
         )}
 

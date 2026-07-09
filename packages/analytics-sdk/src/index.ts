@@ -1,22 +1,115 @@
+/** Categories of analytics consent. */
+export enum ConsentCategory {
+  ESSENTIAL = 'essential',
+  ANALYTICS = 'analytics',
+  MARKETING = 'marketing',
+  PERSONALIZATION = 'personalization',
+  THIRD_PARTY = 'third_party',
+}
+
+/** Represents a single analytics event to be tracked. */
 export interface AnalyticsEvent {
   name: string;
   properties?: Record<string, unknown>;
   timestamp?: Date;
+  userId?: string;
+  sessionId?: string;
+  category?: ConsentCategory;
 }
 
+/** Configuration options for the Analytics instance. */
 export interface AnalyticsConfig {
   enabled?: boolean;
   debug?: boolean;
   endpoint?: string;
   flushInterval?: number;
   flushBatchSize?: number;
+  defaultConsent?: Partial<Record<ConsentCategory, boolean>>;
 }
 
+/** User context attached to analytics events for identification. */
+export interface UserContext {
+  userId: string;
+  sessionId?: string;
+  plan?: string;
+  platform?: string;
+}
+
+const CONSENT_STORAGE_KEY = 'azeebo_analytics_consent';
+
+const DEFAULT_CONSENT: Record<ConsentCategory, boolean> = {
+  [ConsentCategory.ESSENTIAL]: true,
+  [ConsentCategory.ANALYTICS]: false,
+  [ConsentCategory.MARKETING]: false,
+  [ConsentCategory.PERSONALIZATION]: false,
+  [ConsentCategory.THIRD_PARTY]: false,
+};
+
+/** Manages user consent state per category with localStorage persistence. */
+export class ConsentManager {
+  private consentState: Record<ConsentCategory, boolean>;
+  private onChange?: (category: ConsentCategory, granted: boolean) => void;
+
+  constructor(
+    defaultConsent?: Partial<Record<ConsentCategory, boolean>>,
+    onChange?: (category: ConsentCategory, granted: boolean) => void
+  ) {
+    this.onChange = onChange;
+    this.consentState = { ...DEFAULT_CONSENT, ...defaultConsent };
+    this.loadFromStorage();
+  }
+
+  hasConsent(category: ConsentCategory): boolean {
+    return this.consentState[category] ?? false;
+  }
+
+  setConsent(category: ConsentCategory, granted: boolean): void {
+    this.consentState[category] = granted;
+    this.saveToStorage();
+    this.onChange?.(category, granted);
+  }
+
+  getAllConsent(): Readonly<Record<ConsentCategory, boolean>> {
+    return { ...this.consentState };
+  }
+
+  private loadFromStorage(): void {
+    try {
+      if (typeof localStorage === 'undefined') return;
+      const raw = localStorage.getItem(CONSENT_STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw) as Partial<Record<ConsentCategory, boolean>>;
+        this.consentState = { ...DEFAULT_CONSENT, ...parsed };
+      }
+    } catch {
+      // localStorage unavailable or corrupt — keep defaults
+    }
+  }
+
+  private saveToStorage(): void {
+    try {
+      if (typeof localStorage === 'undefined') return;
+      localStorage.setItem(CONSENT_STORAGE_KEY, JSON.stringify(this.consentState));
+    } catch {
+      // localStorage unavailable — silently ignore
+    }
+  }
+}
+
+/** Analytics SDK for tracking user events, screen views, and conversions with batching and retry. */
 export class Analytics {
-  private config: Required<Omit<AnalyticsConfig, 'endpoint'>> & { endpoint?: string };
-  public queue: AnalyticsEvent[] = [];
+  private config: Required<Omit<AnalyticsConfig, 'endpoint' | 'defaultConsent'>> & {
+    endpoint?: string;
+    defaultConsent?: Partial<Record<ConsentCategory, boolean>>;
+  };
+  private queue: AnalyticsEvent[] = [];
   private flushTimer: ReturnType<typeof setInterval> | null = null;
   private isFlushing = false;
+  private userContext: UserContext | null = null;
+  private retryCount = 0;
+  private maxRetries = 3;
+  private maxQueueSize = 1000;
+  private consentManager: ConsentManager;
 
   constructor(config: AnalyticsConfig = {}) {
     this.config = {
@@ -26,6 +119,8 @@ export class Analytics {
       flushBatchSize: 10,
       ...config,
     };
+
+    this.consentManager = new ConsentManager(config.defaultConsent);
 
     if (this.config.endpoint && this.config.enabled) {
       this.flushTimer = setInterval(() => {
@@ -37,12 +132,26 @@ export class Analytics {
   track(event: AnalyticsEvent): void {
     if (!this.config.enabled) return;
 
+    const category = event.category ?? ConsentCategory.ANALYTICS;
+    if (!this.consentManager.hasConsent(category)) {
+      if (this.config.debug) {
+        // eslint-disable-next-line no-console
+        console.log('[Analytics] Skipping event (no consent):', event.name, 'category:', category);
+      }
+      return;
+    }
+
     const fullEvent: AnalyticsEvent = {
       ...event,
       timestamp: event.timestamp || new Date(),
+      userId: event.userId || this.userContext?.userId,
+      sessionId: event.sessionId || this.userContext?.sessionId,
     };
 
     this.queue.push(fullEvent);
+    if (this.queue.length > this.maxQueueSize) {
+      this.queue.splice(0, this.queue.length - this.maxQueueSize);
+    }
 
     if (this.config.debug) {
       // eslint-disable-next-line no-console
@@ -71,21 +180,71 @@ export class Analytics {
           events: eventsToSend.map((event) => ({
             type: event.name,
             metadata: event.properties,
+            userId: event.userId,
+            sessionId: event.sessionId,
             timestamp: event.timestamp?.toISOString() || new Date().toISOString(),
           })),
         }),
       });
 
       if (!response.ok) {
-        // Re-queue events on failure
-        this.queue = [...eventsToSend, ...this.queue];
+        if (this.retryCount < this.maxRetries) {
+          this.retryCount++;
+          this.queue = [...eventsToSend, ...this.queue];
+          const delay = Math.min(1000 * 2 ** this.retryCount, 30000);
+          setTimeout(() => this.flush(), delay);
+        }
+      } else {
+        this.retryCount = 0;
       }
     } catch {
-      // Re-queue events on network error
-      this.queue = [...eventsToSend, ...this.queue];
+      if (this.retryCount < this.maxRetries) {
+        this.retryCount++;
+        this.queue = [...eventsToSend, ...this.queue];
+        const delay = Math.min(1000 * 2 ** this.retryCount, 30000);
+        setTimeout(() => this.flush(), delay);
+      }
     } finally {
       this.isFlushing = false;
     }
+  }
+
+  setUser(user: UserContext | null): void {
+    this.userContext = user;
+    if (user) {
+      this.track({
+        name: 'user_identified',
+        category: ConsentCategory.ESSENTIAL,
+        properties: {
+          user_id: user.userId,
+          plan: user.plan,
+          platform: user.platform,
+        },
+      });
+    }
+  }
+
+  clearUser(): void {
+    this.userContext = null;
+  }
+
+  /** Grant or revoke consent for a specific category. */
+  setConsent(category: ConsentCategory, granted: boolean): void {
+    this.consentManager.setConsent(category, granted);
+  }
+
+  /** Check whether consent has been granted for a specific category. */
+  hasConsent(category: ConsentCategory): boolean {
+    return this.consentManager.hasConsent(category);
+  }
+
+  /** Return a snapshot of all consent states. */
+  getAllConsent(): Readonly<Record<ConsentCategory, boolean>> {
+    return this.consentManager.getAllConsent();
+  }
+
+  getUser(): UserContext | null {
+    return this.userContext;
   }
 
   destroy(): void {
@@ -99,6 +258,7 @@ export class Analytics {
   screenView(screenName: string, properties?: Record<string, unknown>): void {
     this.track({
       name: 'screen_view',
+      category: ConsentCategory.ESSENTIAL,
       properties: {
         screen_name: screenName,
         ...properties,
@@ -131,6 +291,7 @@ export class Analytics {
   login(success: boolean, platform: string = 'web'): void {
     this.track({
       name: success ? 'login_success' : 'login_failed',
+      category: ConsentCategory.ESSENTIAL,
       properties: { platform },
     });
   }
@@ -138,6 +299,7 @@ export class Analytics {
   signup(success: boolean, platform: string = 'web'): void {
     this.track({
       name: success ? 'signup_completed' : 'signup_failed',
+      category: ConsentCategory.ESSENTIAL,
       properties: { platform },
     });
   }
@@ -145,6 +307,7 @@ export class Analytics {
   voteSubmitted(contestantId: string, amount: number, supervoted: boolean): void {
     this.track({
       name: 'vote_submitted',
+      category: ConsentCategory.ESSENTIAL,
       properties: {
         contestant_id: contestantId,
         amount,
@@ -156,6 +319,7 @@ export class Analytics {
   paymentSuccess(amount: number, currency: string = 'NGN'): void {
     this.track({
       name: 'payment_success',
+      category: ConsentCategory.ESSENTIAL,
       properties: {
         amount,
         currency,
@@ -263,6 +427,7 @@ export class Analytics {
   paymentFailed(amount: number, currency: string = 'NGN', reason?: string): void {
     this.track({
       name: 'payment_failed',
+      category: ConsentCategory.ESSENTIAL,
       properties: {
         amount,
         currency,
@@ -296,6 +461,7 @@ export class Analytics {
   voteInitiated(contestantId: string, amount: number): void {
     this.track({
       name: 'vote_initiated',
+      category: ConsentCategory.ESSENTIAL,
       properties: {
         contestant_id: contestantId,
         amount,
@@ -306,6 +472,7 @@ export class Analytics {
   paymentInitiated(amount: number, currency: string = 'NGN', paymentMethod?: string): void {
     this.track({
       name: 'payment_initiated',
+      category: ConsentCategory.ESSENTIAL,
       properties: {
         amount,
         currency,
@@ -354,7 +521,7 @@ export class Analytics {
   }
 }
 
-// Default instance
+/** Default Analytics instance configured from environment variables. */
 export const analytics = new Analytics({
   enabled: process.env.NODE_ENV !== 'test',
   debug: process.env.NODE_ENV === 'development',

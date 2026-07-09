@@ -1,4 +1,4 @@
-import React, {
+import {
   createContext,
   useContext,
   useState,
@@ -7,6 +7,7 @@ import React, {
   useCallback,
   ReactNode,
 } from 'react';
+import { AppState, AppStateStatus } from 'react-native';
 import { authApi, userApi, apiClient, type User, type ApiResponse } from '../api';
 import { useStorage } from '../hooks/useStorage';
 import { useSecureStorage } from '../hooks/useSecureStorage';
@@ -46,6 +47,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const sessionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Biometric authentication (Face ID / Fingerprint) is planned for sensitive operations
+  // (logout, password changes, payment confirmations) using expo-local-authentication.
+  // Currently handled via session timeout and re-authentication for critical flows.
+
   const resetSessionTimer = useCallback(() => {
     if (sessionTimerRef.current) {
       clearTimeout(sessionTimerRef.current);
@@ -54,7 +59,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       logger.warn('Session timed out due to inactivity');
       await logout();
     }, SESSION_TIMEOUT_MS);
-  }, []);
+  }, [logout]);
 
   const clearSessionTimer = useCallback(() => {
     if (sessionTimerRef.current) {
@@ -64,6 +69,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
+    // Persist refreshed tokens so they survive app restarts
+    apiClient.setOnRefreshCallback(async (tokens) => {
+      await setSecureItem('accessToken', tokens.access_token);
+      await setSecureItem('refreshToken', tokens.refresh_token);
+    });
     checkAuth();
     return () => clearSessionTimer();
   }, []);
@@ -76,13 +86,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return undefined;
   }, [user, resetSessionTimer, clearSessionTimer]);
 
+  // Pause session timeout when app is backgrounded to avoid false logout
+  useEffect(() => {
+    const handleAppStateChange = (nextState: AppStateStatus) => {
+      if (!user) return;
+      if (nextState === 'background') {
+        clearSessionTimer();
+      } else if (nextState === 'active') {
+        resetSessionTimer();
+      }
+    };
+    const subscription = AppState.addEventListener('change', handleAppStateChange);
+    return () => subscription?.remove();
+  }, [user, resetSessionTimer, clearSessionTimer]);
+
   const checkAuth = async () => {
     try {
-      // T-C06: Read tokens from secure storage, user profile from regular storage
+      // SECURITY NOTE: User data is stored in AsyncStorage (not SecureStore) because
+      // SecureStore has a 2KB size limit which is insufficient for the full user profile.
+      // Tokens (accessToken, refreshToken) are stored in SecureStore since they are small.
+      // Mitigation: XSS prevention via CSP headers is critical since AsyncStorage is
+      // accessible to any JS running on the page. Consider encrypting user data if the
+      // profile grows to include sensitive fields.
       const token = await getSecureItem('accessToken');
       const refreshToken = await getSecureItem('refreshToken');
       const userData = await getItem('user');
 
+      // Intentionally skip token validation here for fast startup.
+      // The first API call will trigger a 401 if the token is expired,
+      // which the apiClient interceptor handles by refreshing or logging out.
       if (token && userData) {
         setUser(JSON.parse(userData));
         apiClient.setToken(token);
@@ -120,9 +152,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { success: true };
       }
       return { success: false, message: response.message || 'Login failed' };
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Login error', error);
-      return { success: false, message: error.message || 'An error occurred during login' };
+      const message = error instanceof Error ? error.message : 'An error occurred during login';
+      return { success: false, message };
     }
   };
 
@@ -136,9 +169,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { success: true };
       }
       return { success: false, message: response.message || 'Registration failed' };
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Register error', error);
-      return { success: false, message: error.message || 'An error occurred during registration' };
+      const message =
+        error instanceof Error ? error.message : 'An error occurred during registration';
+      return { success: false, message };
     }
   };
 
@@ -172,11 +207,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { success: true, user: data.user };
       }
       return { success: false, message: response.message || 'OTP verification failed' };
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('OTP verification error', error);
+      const message =
+        error instanceof Error ? error.message : 'An error occurred during OTP verification';
       return {
         success: false,
-        message: error.message || 'An error occurred during OTP verification',
+        message,
       };
     }
   };

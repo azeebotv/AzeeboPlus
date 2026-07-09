@@ -81,6 +81,16 @@ export const walletApi = {
     );
   },
 
+  verifyBankAccount: async (data: {
+    bankCode: string;
+    accountNumber: string;
+  }): Promise<ApiResponse<{ accountName: string; accountNumber: string }>> => {
+    return apiClient.post<ApiResponse<{ accountName: string; accountNumber: string }>>(
+      '/v1/wallet/verify-bank-account',
+      data
+    );
+  },
+
   withdraw: async (data: {
     amount: number;
     bankCode: string;

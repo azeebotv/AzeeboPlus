@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { apiClient } from '../../src/api';
+import type { Game, GameLevel, LeaderboardEntry, Achievement } from '../../src/types/api';
 import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
 
 export default function GameplayPage() {
@@ -12,11 +13,11 @@ export default function GameplayPage() {
   const isDark = colorScheme === 'dark';
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentScore, setCurrentScore] = useState(0);
-  const [game, setGame] = useState<any>(null);
-  const [controls, setControls] = useState<any[]>([]);
-  const [achievements, setAchievements] = useState<any[]>([]);
-  const [leaderboard, setLeaderboard] = useState<any[]>([]);
-  const [levels, setLevels] = useState<any[]>([]);
+  const [game, setGame] = useState<Game | null>(null);
+  const [controls, setControls] = useState<{ id: string; label: string; icon: string }[]>([]);
+  const [achievements, setAchievements] = useState<Achievement[]>([]);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [levels, setLevels] = useState<GameLevel[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -25,10 +26,10 @@ export default function GameplayPage() {
     setError(null);
     try {
       const [gameRes, levelsRes, leaderboardRes, achievementsRes] = await Promise.all([
-        apiClient.get<any>(`/games/${id}`),
-        apiClient.get<any[]>(`/games/${id}/levels`),
-        apiClient.get<any[]>(`/games/${id}/leaderboard`),
-        apiClient.get<any[]>(`/games/${id}/achievements`),
+        apiClient.get<Game>(`/games/${id}`),
+        apiClient.get<GameLevel[]>(`/games/${id}/levels`),
+        apiClient.get<LeaderboardEntry[]>(`/games/${id}/leaderboard`),
+        apiClient.get<Achievement[]>(`/games/${id}/achievements`),
       ]);
       setGame(gameRes);
       setLevels(levelsRes || []);
@@ -40,8 +41,8 @@ export default function GameplayPage() {
         { id: '3', label: 'Attack', icon: '⚔️' },
         { id: '4', label: 'Special', icon: '✨' },
       ]);
-    } catch (err: any) {
-      setError(err.message || 'Failed to load game data');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to load game data');
     } finally {
       setIsLoading(false);
     }

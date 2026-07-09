@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, FlatList, Image, Alert } from 'react-native';
 import { useRouter, type Href } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -63,8 +63,9 @@ export default function DraftsScreen() {
           try {
             await contentApi.deleteDraft(id);
             loadDrafts();
-          } catch (error: any) {
-            Alert.alert('Error', error?.message || 'Failed to delete draft');
+          } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : 'Failed to delete draft';
+            Alert.alert('Error', message);
           }
         },
       },

@@ -1,10 +1,11 @@
 'use client';
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../context/AuthContext';
 import { apiFetch } from '../../lib/api';
 import AppHeader from '../../components/layout/AppHeader';
 import AppFooter from '../../components/layout/AppFooter';
-import { Skeleton } from '@/components/Skeleton';
+import { Skeleton, Spinner, ErrorState } from '@azeebo/ui/web';
 
 interface User {
   id: string;
@@ -30,97 +31,84 @@ interface Conversation {
   unreadCount: number;
 }
 
+interface RawConversation {
+  id: string;
+  user: User;
+  lastMessage: string;
+  timestamp: string;
+  unreadCount: number;
+}
+
+interface RawMessage {
+  id: string;
+  senderId: string;
+  receiverId: string;
+  content: string;
+  timestamp?: string;
+  createdAt?: string;
+  read: boolean;
+}
+
 export default function MessagesPage(): React.JSX.Element {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
-  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const queryClient = useQueryClient();
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
-  const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
-  const [isLoadingConversations, setIsLoadingConversations] = useState(true);
-  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
-  const [_error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [unreadCount, setUnreadCount] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messageInputRef = useRef<HTMLTextAreaElement>(null);
   const conversationsListRef = useRef<HTMLDivElement>(null);
-  const _typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  useEffect(() => {
-    const fetchConversations = async (): Promise<void> => {
-      if (authLoading) return;
-      if (!isAuthenticated) return;
-      try {
-        setIsLoadingConversations(true);
-        setError(null);
-        const response = await apiFetch<any>('/messages/conversations');
-        if (response.success && response.data) {
-          const data = Array.isArray(response.data) ? response.data : [];
-          setConversations(
-            data.map((conv: Record<string, unknown>) => ({
-              id: conv.id as string,
-              user: conv.user as User,
-              lastMessage: conv.lastMessage as string,
-              timestamp: new Date(conv.timestamp as string),
-              unreadCount: conv.unreadCount as number,
-            }))
-          );
-          setUnreadCount(
-            data.reduce(
-              (sum: number, conv: Record<string, unknown>) => sum + (conv.unreadCount as number),
-              0
-            )
-          );
-        }
-      } catch (err) {
-        setError('Failed to load conversations');
-      } finally {
-        setIsLoadingConversations(false);
+  const conversationsQuery = useQuery({
+    queryKey: ['messages', 'conversations'],
+    queryFn: async () => {
+      const response = await apiFetch<RawConversation[]>('/messages/conversations');
+      if (response.success && response.data) {
+        const data = Array.isArray(response.data) ? response.data : [];
+        return data.map((conv: RawConversation) => ({
+          id: conv.id,
+          user: conv.user,
+          lastMessage: conv.lastMessage,
+          timestamp: new Date(conv.timestamp),
+          unreadCount: conv.unreadCount,
+        }));
       }
-    };
-    fetchConversations();
-  }, [isAuthenticated]);
+      return [];
+    },
+    enabled: isAuthenticated && !authLoading,
+    staleTime: 10000,
+  });
 
-  useEffect(() => {
-    if (!selectedConversation) return;
-
-    const controller = new AbortController();
-
-    const fetchMessages = async (): Promise<void> => {
-      try {
-        setIsLoadingMessages(true);
-        const response = await apiFetch<any>(
-          `/messages/conversations/${selectedConversation.id}/messages`,
-          { signal: controller.signal }
-        );
-        if (response.success && response.data) {
-          const data = Array.isArray(response.data) ? response.data : [];
-          setMessages(
-            data.map((msg: any) => ({
-              id: String(msg.id),
-              senderId: String(msg.senderId),
-              receiverId: String(msg.receiverId),
-              content: String(msg.content),
-              timestamp: new Date(msg.timestamp || msg.createdAt),
-              read: Boolean(msg.read),
-            }))
-          );
-        }
-      } catch (err) {
-        if (err instanceof DOMException && err.name === 'AbortError') return;
-        /* intentionally minimal */
-      } finally {
-        if (!controller.signal.aborted) {
-          setIsLoadingMessages(false);
-        }
+  const messagesQuery = useQuery({
+    queryKey: ['messages', 'conversation', selectedConversation?.id],
+    queryFn: async () => {
+      if (!selectedConversation) return [];
+      const response = await apiFetch<RawMessage[]>(
+        `/messages/conversations/${selectedConversation.id}/messages`
+      );
+      if (response.success && response.data) {
+        const data = Array.isArray(response.data) ? response.data : [];
+        return data.map((msg: RawMessage) => ({
+          id: String(msg.id),
+          senderId: String(msg.senderId),
+          receiverId: String(msg.receiverId),
+          content: String(msg.content),
+          timestamp: new Date(msg.timestamp || msg.createdAt || ''),
+          read: Boolean(msg.read),
+        }));
       }
-    };
-    fetchMessages();
+      return [];
+    },
+    enabled: !!selectedConversation,
+    staleTime: 5000,
+  });
 
-    return () => {
-      controller.abort();
-    };
-  }, [selectedConversation]);
+  const conversations = conversationsQuery.data ?? [];
+  const messages = messagesQuery.data ?? [];
+  const unreadCount = conversations.reduce((sum, conv) => sum + conv.unreadCount, 0);
+  const isLoadingConversations = conversationsQuery.isLoading;
+  const isLoadingMessages = messagesQuery.isLoading;
+  const error = conversationsQuery.error?.message || messagesQuery.error?.message || null;
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -132,47 +120,52 @@ export default function MessagesPage(): React.JSX.Element {
 
   const handleSendMessage = useCallback(async () => {
     if (!newMessage.trim() || !selectedConversation || !user) return;
+    const tempId = `temp-${Date.now()}`;
+    const tempMessage: Message = {
+      id: tempId,
+      senderId: user.id,
+      receiverId: selectedConversation.user.id,
+      content: newMessage,
+      timestamp: new Date(),
+      read: false,
+    };
+
+    queryClient.setQueryData<Message[]>(
+      ['messages', 'conversation', selectedConversation.id],
+      (old) => [...(old ?? []), tempMessage]
+    );
+    setNewMessage('');
+
     try {
-      const tempMessage: Message = {
-        id: `temp-${Date.now()}`,
-        senderId: user.id,
-        receiverId: selectedConversation.user.id,
-        content: newMessage,
-        timestamp: new Date(),
-        read: false,
-      };
-      setMessages((prev) => [...prev, tempMessage]);
-      setNewMessage('');
-      const response = await apiFetch<any>(
+      const response = await apiFetch<RawMessage>(
         `/messages/conversations/${selectedConversation.id}/messages`,
         { method: 'POST', body: JSON.stringify({ content: newMessage }) }
       );
       if (response.success && response.data) {
-        setMessages((prev) =>
-          prev.map((msg) =>
-            msg.id === tempMessage.id
-              ? { ...response.data, timestamp: new Date(response.data.timestamp) }
-              : msg
-          )
+        const msgData = response.data;
+        queryClient.setQueryData<Message[]>(
+          ['messages', 'conversation', selectedConversation.id],
+          (old) =>
+            (old ?? []).map((msg) =>
+              msg.id === tempId
+                ? { ...msgData, timestamp: new Date(msgData.timestamp || msgData.createdAt || '') } as Message
+                : msg
+            )
         );
-        setConversations((prev) =>
-          prev.map((conv) =>
-            conv.id === selectedConversation.id
-              ? {
-                  ...conv,
-                  lastMessage: response.data.content,
-                  timestamp: new Date(response.data.timestamp),
-                }
-              : conv
-          )
-        );
+        queryClient.invalidateQueries({ queryKey: ['messages', 'conversations'] });
       } else {
-        setMessages((prev) => prev.filter((msg) => msg.id !== tempMessage.id));
+        queryClient.setQueryData<Message[]>(
+          ['messages', 'conversation', selectedConversation.id],
+          (old) => (old ?? []).filter((msg) => msg.id !== tempId)
+        );
       }
-    } catch (err) {
-      /* intentionally minimal */
+    } catch {
+      queryClient.setQueryData<Message[]>(
+        ['messages', 'conversation', selectedConversation.id],
+        (old) => (old ?? []).filter((msg) => msg.id !== tempId)
+      );
     }
-  }, [newMessage, selectedConversation, user]);
+  }, [newMessage, selectedConversation, user, queryClient]);
 
   const handleKeyPress = useCallback(
     (e: React.KeyboardEvent) => {
@@ -210,11 +203,14 @@ export default function MessagesPage(): React.JSX.Element {
 
   const handleConversationSelect = useCallback((conversation: Conversation) => {
     setSelectedConversation(conversation);
-    setUnreadCount((prev) => Math.max(0, prev - conversation.unreadCount));
-    setConversations((prev) =>
-      prev.map((conv) => (conv.id === conversation.id ? { ...conv, unreadCount: 0 } : conv))
+    queryClient.setQueryData<Conversation[]>(
+      ['messages', 'conversations'],
+      (old) =>
+        (old ?? []).map((conv) =>
+          conv.id === conversation.id ? { ...conv, unreadCount: 0 } : conv
+        )
     );
-  }, []);
+  }, [queryClient]);
 
   const filteredConversations = conversations.filter((conv) =>
     conv.user.name.toLowerCase().includes(searchQuery.toLowerCase())

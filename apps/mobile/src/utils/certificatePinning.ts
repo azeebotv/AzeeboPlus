@@ -18,7 +18,9 @@ export interface PinValidationResult {
 // Load pins from environment configuration
 const loadPinsFromConfig = (): CertificatePin[] => {
   const pins: CertificatePin[] = [];
-  const extras = (Constants as any).expoConfig?.extra || {};
+  const extras =
+    (((Constants as Record<string, unknown>).expoConfig as Record<string, unknown>)
+      ?.extra as Record<string, string>) || {};
 
   // Production pins
   const prodPin = extras.CERT_PIN_PRODUCTION;
@@ -260,8 +262,8 @@ class CertificatePinningService {
 
       return response;
     } catch (error) {
-      if (error instanceof Error && error.message.includes('certificate')) {
-        throw new Error(`Certificate validation failed for ${url}: ${error.message}`);
+      if (error instanceof Error && (error as Error).message.includes('certificate')) {
+        throw new Error(`Certificate validation failed for ${url}: ${(error as Error).message}`);
       }
       throw error;
     }

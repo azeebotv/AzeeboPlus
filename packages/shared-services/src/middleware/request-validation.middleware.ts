@@ -13,8 +13,8 @@ export class RequestValidationMiddleware implements NestMiddleware {
   private validateContentLength(req: Request, res: Response, next: NextFunction) {
     const contentLength = req.headers['content-length'];
     if (contentLength) {
-      const length = parseInt(contentLength);
-      if (length > this.MAX_REQUEST_SIZE) {
+      const length = parseInt(contentLength, 10);
+      if (!isNaN(length) && length > this.MAX_REQUEST_SIZE) {
         this.logger.warn(`Request size exceeds limit: ${length} bytes`);
         res.status(413).json({
           success: false,

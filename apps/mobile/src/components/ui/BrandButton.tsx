@@ -1,4 +1,3 @@
-import React from 'react';
 import { StyleSheet, ActivityIndicator, type ViewStyle, type StyleProp, Text } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { colors, radius, typography, spacing, shadows, spring } from '../../theme';
@@ -69,7 +68,7 @@ export function BrandButton({
     >
       {loading ? (
         <ActivityIndicator
-          color={variant === 'primary' ? '#FFFFFF' : colors.primary}
+          color={variant === 'primary' ? colors.text.primary : colors.primary[500]}
           size="small"
         />
       ) : (
@@ -91,21 +90,21 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   primary: {
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primary[500],
     ...shadows.red,
   },
   primaryText: {
-    color: '#FFFFFF',
+    color: colors.text.primary,
     fontSize: typography.fontSize.md,
     fontWeight: typography.fontWeight.bold,
   },
   secondary: {
     backgroundColor: 'transparent',
     borderWidth: 1.5,
-    borderColor: colors.primary,
+    borderColor: colors.primary[500],
   },
   secondaryText: {
-    color: colors.primary,
+    color: colors.primary[500],
     fontSize: typography.fontSize.md,
     fontWeight: typography.fontWeight.semibold,
   },
@@ -134,17 +133,17 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   glassText: {
-    color: '#FFFFFF',
+    color: colors.text.primary,
     fontSize: typography.fontSize.md,
     fontWeight: typography.fontWeight.semibold,
   },
   dark: {
-    backgroundColor: '#0A0A0A',
+    backgroundColor: colors.bg.secondary,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.2)',
   },
   darkText: {
-    color: '#FFFFFF',
+    color: colors.text.primary,
     fontSize: typography.fontSize.md,
     fontWeight: typography.fontWeight.semibold,
   },

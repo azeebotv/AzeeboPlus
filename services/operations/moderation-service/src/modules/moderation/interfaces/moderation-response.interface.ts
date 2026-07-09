@@ -16,9 +16,7 @@ export function successResponse<T>(
 ): ModerationResponse {
   return {
     success: true,
-    data,
-    ...(meta &&
-      meta.page !== undefined && { data: { ...(meta as Record<string, unknown>), items: data } }),
+    data: meta && meta.page !== undefined ? { items: data, ...meta } : data,
   } as ModerationResponse;
 }
 

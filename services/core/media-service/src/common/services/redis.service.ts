@@ -40,8 +40,15 @@ export class RedisService implements OnModuleDestroy {
     return this.redis.del(key);
   }
 
-  async keys(pattern: string): Promise<string[]> {
-    return this.redis.keys(pattern);
+  async scanKeys(pattern: string, count = 100): Promise<string[]> {
+    const keys: string[] = [];
+    let cursor = '0';
+    do {
+      const [nextCursor, batch] = await this.redis.scan(cursor, 'MATCH', pattern, 'COUNT', count);
+      cursor = nextCursor;
+      keys.push(...batch);
+    } while (cursor !== '0');
+    return keys;
   }
 
   async onModuleDestroy(): Promise<void> {

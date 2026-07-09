@@ -36,9 +36,7 @@ describe('Payments Controller Contract Tests', () => {
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
       controllers: [PaymentsController],
-      providers: [
-        { provide: PaymentsService, useValue: mockPaymentsService },
-      ],
+      providers: [{ provide: PaymentsService, useValue: mockPaymentsService }],
     })
       .overrideGuard(AuthGuard('jwt'))
       .useValue(createMockAuthGuard(true))

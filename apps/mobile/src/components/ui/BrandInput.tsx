@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
   View,
   TextInput,
@@ -144,7 +144,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
   },
   toggleText: {
-    color: colors.primary,
+    color: colors.primary[500],
     fontSize: typography.fontSize.sm,
     fontWeight: typography.fontWeight.semibold,
   },

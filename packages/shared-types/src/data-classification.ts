@@ -79,13 +79,6 @@ export const DEFAULT_RETENTION_POLICIES: RetentionPolicy[] = [
   }, // Infinite
 ];
 
-export interface PrivacyPolicyAcceptance {
-  userId: string;
-  version: string;
-  acceptedAt: Date;
-  consentTypes: ConsentType[];
-}
-
 export enum ConsentType {
   ESSENTIAL = 'ESSENTIAL',
   ANALYTICS = 'ANALYTICS',

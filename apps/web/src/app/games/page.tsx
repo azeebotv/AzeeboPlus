@@ -1,10 +1,10 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
-import { useAuth } from '../../context/AuthContext';
+import { Skeleton, ErrorState } from '@azeebo/ui/web';
 import Link from 'next/link';
 import { api, ContentItem } from '@/lib/api';
-import { webLogger } from '@/lib/logger';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 import { AmbientGlow } from '@/components/motion/AmbientGlow';
@@ -13,35 +13,26 @@ import { StaggerGrid } from '@/components/motion/StaggerGrid';
 import { GlowCard } from '@/components/motion/GlowCard';
 
 export default function GamesPage(): React.JSX.Element {
-  const { isAuthenticated: _isAuthenticated } = useAuth();
-  const [games, setGames] = useState<ContentItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchContent = async () => {
-      try {
-        setIsLoading(true);
-        const result = await api.content.getContentByUniverse(
-          'u0000001-0000-0000-0000-000000000008',
-          1,
-          20
-        );
-        if (result.success && result.data) {
-          const items = Array.isArray(result.data) ? result.data : result.data.items || [];
-          setGames(items);
-        } else if (!result.success) {
-          setError(result.message || 'Failed to load games.');
-        }
-      } catch (err) {
-        webLogger.error('Failed to fetch games content', err);
-        setError('Failed to load games. Please try again.');
-      } finally {
-        setIsLoading(false);
+  const {
+    data: games = [],
+    isLoading,
+    error,
+    refetch,
+  } = useQuery<ContentItem[], Error>({
+    queryKey: ['games-content'],
+    queryFn: async () => {
+      const result = await api.content.getContentByUniverse(
+        'u0000001-0000-0000-0000-000000000008',
+        1,
+        20
+      );
+      if (result.success && result.data) {
+        return Array.isArray(result.data) ? result.data : result.data.items || [];
       }
-    };
-    fetchContent();
-  }, []);
+      throw new Error(result.message || 'Failed to load games.');
+    },
+    staleTime: 60000,
+  });
 
   return (
     <div className="min-h-screen az-nollywood-bg">
@@ -50,10 +41,7 @@ export default function GamesPage(): React.JSX.Element {
       {/* Hero Section */}
       <section className="relative">
         {isLoading ? (
-          <div
-            className="h-[400px] sm:h-[500px] az-shimmer"
-            style={{ backgroundColor: '#2A2A2A' }}
-          />
+          <Skeleton height="400px" className="sm:h-[500px]" borderRadius="0px" />
         ) : error ? (
           <div className="h-[400px] sm:h-[500px] flex items-center justify-center">
             <motion.div
@@ -62,17 +50,11 @@ export default function GamesPage(): React.JSX.Element {
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.4 }}
             >
-              <p className="text-base sm:text-lg mb-4 text-white/60">{error}</p>
-              <motion.button
-                type="button"
-                onClick={() => window.location.reload()}
-                className="az-btn-primary"
-                style={{ width: 'auto', paddingInline: '1.5rem' }}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                Retry
-              </motion.button>
+              <ErrorState
+                title="Failed to load games"
+                description={error.message}
+                onButtonPress={() => refetch()}
+              />
             </motion.div>
           </div>
         ) : games.length > 0 ? (
@@ -178,16 +160,10 @@ export default function GamesPage(): React.JSX.Element {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
             {Array.from({ length: 6 }).map((_, i) => (
               <div key={i} className="az-glass overflow-hidden">
-                <div className="h-52 sm:h-60 az-shimmer" style={{ backgroundColor: '#2A2A2A' }} />
+                <Skeleton height="208px" className="sm:h-[240px]" borderRadius="0px" />
                 <div className="p-4 space-y-3">
-                  <div
-                    className="h-5 w-3/4 az-shimmer rounded"
-                    style={{ backgroundColor: '#2A2A2A' }}
-                  />
-                  <div
-                    className="h-4 w-1/2 az-shimmer rounded"
-                    style={{ backgroundColor: '#2A2A2A' }}
-                  />
+                  <Skeleton height="20px" width="75%" />
+                  <Skeleton height="16px" width="50%" />
                 </div>
               </div>
             ))}

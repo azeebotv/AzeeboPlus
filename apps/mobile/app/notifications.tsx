@@ -1,40 +1,22 @@
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
-import { notificationApi, type Notification } from '../src/api';
-import { logger } from '../src/utils/logger';
+import { useNotifications, useMarkNotificationRead, useMarkAllNotificationsRead } from '../src/hooks/useNotificationQuery';
 import { LoadingState, ErrorState } from '../src/components/StateContainers';
 
 export default function NotificationsScreen() {
   const colorScheme = useColorScheme();
   const router = useRouter();
-  const [notificationsList, setNotificationsList] = useState<Notification[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [pushEnabled, setPushEnabled] = useState(true);
   const [emailEnabled, setEmailEnabled] = useState(true);
 
-  const fetchNotifications = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const response = await notificationApi.getNotifications();
-      if (response.success && response.data) {
-        setNotificationsList(response.data.items);
-      }
-    } catch (err: any) {
-      logger.error('Failed to load notifications:', err);
-      setError(err.message || 'Failed to load notifications');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const { data, isLoading, error, refetch } = useNotifications();
+  const markAsReadMutation = useMarkNotificationRead();
+  const markAllAsReadMutation = useMarkAllNotificationsRead();
 
-  useEffect(() => {
-    fetchNotifications();
-  }, []);
+  const notificationsList = data?.items ?? [];
 
   if (isLoading) {
     return (
@@ -70,39 +52,18 @@ export default function NotificationsScreen() {
             { backgroundColor: colorScheme === 'dark' ? '#1A0A0A' : '#ffffff' },
           ]}
         >
-          <ErrorState description={error} onRetry={fetchNotifications} />
+          <ErrorState description={error instanceof Error ? error.message : 'Failed to load'} onRetry={() => refetch()} />
         </ScrollView>
       </SafeAreaView>
     );
   }
 
   const markAsRead = async (id: string) => {
-    setNotificationsList((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
-    try {
-      await notificationApi.markAsRead(id);
-    } catch (err) {
-      logger.error('Failed to mark as read:', err);
-    }
+    markAsReadMutation.mutate(id);
   };
 
-  const markAllAsRead = async () => {
-    setNotificationsList((prev) => prev.map((n) => ({ ...n, read: true })));
-    try {
-      await notificationApi.markAllAsRead();
-    } catch (err) {
-      logger.error('Failed to mark all as read:', err);
-    }
-  };
-
-  const _getNotificationColor = (type: string) => {
-    const colors: Record<string, string> = {
-      vote: '#EF4444',
-      reward: '#E8420A',
-      content: '#3B82F6',
-      prediction: '#F59E0B',
-      system: '#10B981',
-    };
-    return colors[type] || '#6B7280';
+  const markAllAsRead = () => {
+    markAllAsReadMutation.mutate();
   };
 
   const unreadCount = notificationsList.filter((n) => !n.read).length;

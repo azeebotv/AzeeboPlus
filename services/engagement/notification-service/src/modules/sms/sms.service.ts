@@ -38,6 +38,11 @@ export class SmsService implements OnModuleInit {
       return false;
     }
 
+    if (!this.isValidE164Phone(to)) {
+      this.logger.warn(`Invalid phone number format (must be E.164): ${to}`);
+      return false;
+    }
+
     try {
       const fromNumber = this.configService.get('TWILIO_PHONE_NUMBER');
       await this.circuitBreaker.execute(async () => {
@@ -52,7 +57,7 @@ export class SmsService implements OnModuleInit {
       return true;
     } catch (error) {
       if (error instanceof CircuitBreakerOpenError) {
-        this.logger.warn(`Twilio circuit breaker open: ${error.message}`);
+        this.logger.warn(`Twilio circuit breaker open: ${(error as Error).message}`);
         return false;
       }
       this.logger.error(`Error sending SMS: ${(error as Error).message}`);
@@ -100,25 +105,42 @@ export class SmsService implements OnModuleInit {
       return false;
     }
 
+    const validNumbers = numbers.filter((n) => this.isValidE164Phone(n));
+    if (validNumbers.length === 0) {
+      this.logger.warn('No valid phone numbers provided for bulk SMS');
+      return false;
+    }
+
+    const BATCH_SIZE = 10;
+    const BATCH_DELAY_MS = 1000;
+
     try {
       const fromNumber = this.configService.get('TWILIO_PHONE_NUMBER');
-      await this.circuitBreaker.execute(async () => {
-        await Promise.all(
-          numbers.map((number) =>
-            this.client!.messages.create({
-              body: message,
-              from: fromNumber,
-              to: number,
-            })
-          )
-        );
-      });
 
-      this.logger.log(`Bulk SMS sent to ${numbers.length} numbers`);
+      for (let i = 0; i < validNumbers.length; i += BATCH_SIZE) {
+        const batch = validNumbers.slice(i, i + BATCH_SIZE);
+        await this.circuitBreaker.execute(async () => {
+          await Promise.all(
+            batch.map((number) =>
+              this.client!.messages.create({
+                body: message,
+                from: fromNumber,
+                to: number,
+              })
+            )
+          );
+        });
+
+        if (i + BATCH_SIZE < validNumbers.length) {
+          await new Promise((resolve) => setTimeout(resolve, BATCH_DELAY_MS));
+        }
+      }
+
+      this.logger.log(`Bulk SMS sent to ${validNumbers.length} numbers`);
       return true;
     } catch (error) {
       if (error instanceof CircuitBreakerOpenError) {
-        this.logger.warn(`Twilio circuit breaker open: ${error.message}`);
+        this.logger.warn(`Twilio circuit breaker open: ${(error as Error).message}`);
         return false;
       }
       this.logger.error(`Error sending bulk SMS: ${(error as Error).message}`);
@@ -144,5 +166,9 @@ export class SmsService implements OnModuleInit {
 
   getCircuitBreakerStats(): CircuitBreakerStats {
     return this.circuitBreaker.getStats();
+  }
+
+  private isValidE164Phone(phone: string): boolean {
+    return /^\+[1-9]\d{1,14}$/.test(phone);
   }
 }

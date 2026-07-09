@@ -14,6 +14,16 @@ interface Plan {
   isPopular?: boolean;
 }
 
+interface SubscriptionStatus {
+  planId: string | null;
+  status: string;
+}
+
+interface SubscribeResult {
+  success: boolean;
+  planId: string;
+}
+
 export default function SubscriptionPlansPage(): React.JSX.Element {
   const { isAuthenticated, user, isLoading: authLoading } = useAuth();
   const router = useRouter();
@@ -35,15 +45,15 @@ export default function SubscriptionPlansPage(): React.JSX.Element {
   const loadPlans = async () => {
     try {
       const [plansRes, statusRes] = await Promise.all([
-        apiFetch<any>('/subscription/plans'),
-        apiFetch<any>('/subscription/current'),
+        apiFetch<Plan[]>('/subscription/plans'),
+        apiFetch<SubscriptionStatus>('/subscription/current'),
       ]);
       if (plansRes.success && plansRes.data) {
-        const data = plansRes.data as any;
-        setPlans(Array.isArray(data) ? data : data.plans || []);
+        const data = plansRes.data;
+        setPlans(Array.isArray(data) ? data : []);
       }
       if (statusRes.success && statusRes.data) {
-        const status = statusRes.data as any;
+        const status = statusRes.data;
         setCurrentPlan(status.planId || null);
       }
     } catch {
@@ -56,7 +66,7 @@ export default function SubscriptionPlansPage(): React.JSX.Element {
   const handleSubscribe = async (planId: string) => {
     setSubscribing(planId);
     try {
-      const result = await apiFetch<any>('/subscription/subscribe', {
+      const result = await apiFetch<SubscribeResult>('/subscription/subscribe', {
         method: 'POST',
         body: JSON.stringify({ planId }),
       });

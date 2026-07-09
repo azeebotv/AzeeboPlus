@@ -65,11 +65,28 @@ export const PRIVACY_POLICY: PrivacyPolicy = {
   requiredConsents: [ConsentType.ESSENTIAL],
 };
 
+/**
+ * Checks whether a user has granted all required consent types.
+ *
+ * Looks up the most recent PrivacyPolicyAcceptance for the user and verifies
+ * that every consent type in `requiredConsents` is present in the acceptance
+ * record's consentTypes.  The caller is expected to provide the acceptance
+ * records (e.g. from a database query).
+ *
+ * @param userAcceptances - All acceptance records for the user, newest first.
+ * @param requiredConsents - The consent types that must be granted.
+ * @returns `true` if every required consent has been granted at least once.
+ */
 export function checkConsentCompliance(
-  _userId: string,
-  _requiredConsents: ConsentType[]
-): Promise<boolean> {
-  // This would check the user's consent status against required consents
-  // Implementation would query the privacy policy acceptance records
-  return Promise.resolve(true);
+  userAcceptances: PrivacyPolicyAcceptance[],
+  requiredConsents: ConsentType[]
+): boolean {
+  if (requiredConsents.length === 0) return true;
+  if (!userAcceptances || userAcceptances.length === 0) return false;
+
+  const grantedTypes = new Set<ConsentType>(
+    userAcceptances.flatMap((a) => a.consentTypes)
+  );
+
+  return requiredConsents.every((c) => grantedTypes.has(c));
 }

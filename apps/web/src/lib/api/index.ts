@@ -17,16 +17,41 @@ import { createAdminMethods } from './admin';
 import { createEngagementMethods } from './engagement';
 
 import type { ApiResponse } from './base';
+import type { ApiError } from './base';
 
 const ACCESS_TOKEN_KEY = 'azeebo_access_token';
 const REFRESH_TOKEN_KEY = 'azeebo_refresh_token';
 const USER_KEY = 'azeebo_user';
 
-/** Set the middleware-readable auth cookie so protected routes don't redirect to login. */
-function setAuthCookie(value: string, maxAge: number = 7 * 24 * 60 * 60): void {
-  if (typeof document !== 'undefined') {
-    const secure = window.location.protocol === 'https:' ? '; Secure' : '';
-    document.cookie = `auth=${encodeURIComponent(value)}; path=/; max-age=${maxAge}; SameSite=Lax${secure}`;
+export async function setAuthCookie(value: string, maxAge: number = 30 * 60): Promise<void> {
+  if (typeof window !== 'undefined') {
+    try {
+      await fetch('/api/auth/cookie', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: value, maxAge }),
+        credentials: 'include',
+      });
+    } catch {
+      // Fallback: set non-HttpOnly cookie for middleware compatibility
+      const secure = window.location.protocol === 'https:' ? '; Secure' : '';
+      document.cookie = `auth=${encodeURIComponent(value)}; path=/; max-age=${maxAge}; SameSite=Lax${secure}`;
+    }
+  }
+}
+
+export async function clearAuthCookie(): Promise<void> {
+  if (typeof window !== 'undefined') {
+    try {
+      await fetch('/api/auth/cookie', {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+    } catch {
+      // Fallback
+      const secure = window.location.protocol === 'https:' ? '; Secure' : '';
+      document.cookie = `auth=; path=/; max-age=0; SameSite=Lax${secure}`;
+    }
   }
 }
 
@@ -235,7 +260,7 @@ class ApiClient {
           details: data.details,
           timestamp: data.timestamp,
           path: data.path,
-        } as any;
+        } as ApiError;
       }
 
       return {
@@ -261,7 +286,7 @@ class ApiClient {
       }
 
       if (
-        this.isRetryableError(undefined, error instanceof Error ? error.message : undefined) &&
+        this.isRetryableError(undefined, error instanceof Error ? (error as Error).message : undefined) &&
         attempt < RETRY_CONFIG.maxRetries
       ) {
         const delay = this.calculateDelay(attempt);
@@ -272,7 +297,7 @@ class ApiClient {
       return {
         success: false,
         message: 'Network error. Please check your connection.',
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: error instanceof Error ? (error as Error).message : 'Unknown error',
       };
     }
   }

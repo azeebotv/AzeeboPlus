@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { engagementApi } from '../src/api';
 import { logger } from '../src/utils/logger';
 import { LoadingState, ErrorState } from '../src/components/StateContainers';
+import { colors } from '../src/theme';
 
 interface RankingCategory {
   id: string;
@@ -77,7 +78,7 @@ export default function RankingsScreen() {
         style={{ flex: 1 }}
         contentContainerStyle={styles.content}
         refreshControl={
-          <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} colors={['#E8420A']} />
+          <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} colors={[colors.primary[500]]} />
         }
       >
         <View style={styles.header}>
@@ -144,7 +145,7 @@ export default function RankingsScreen() {
               <TouchableOpacity
                 key={entry.userId}
                 style={styles.listItem}
-                onPress={() => router.push(`/(tabs)/profile?userId=${entry.userId}` as any)}
+                onPress={() => router.push(`/(tabs)/profile?userId=${entry.userId}` as const)}
               >
                 <Text style={styles.rankText}>#{entry.rank}</Text>
                 <Text style={styles.listName}>{entry.displayName}</Text>
@@ -171,7 +172,7 @@ export default function RankingsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1A0A0A',
+    backgroundColor: colors.bg.primary,
   },
   content: {
     padding: 16,
@@ -183,12 +184,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: colors.text.primary,
     marginBottom: 4,
   },
   subtitle: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: colors.light[400],
   },
   categoryScroll: {
     marginBottom: 20,
@@ -199,11 +200,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 12,
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.bg.surface,
     marginRight: 8,
   },
   categoryButtonActive: {
-    backgroundColor: '#E8420A',
+    backgroundColor: colors.primary[500],
   },
   categoryIcon: {
     fontSize: 18,
@@ -211,11 +212,11 @@ const styles = StyleSheet.create({
   },
   categoryText: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: colors.light[400],
     fontWeight: '500',
   },
   categoryTextActive: {
-    color: '#FFFFFF',
+    color: colors.text.primary,
   },
   rankingsContainer: {
     gap: 12,
@@ -231,21 +232,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 16,
     borderRadius: 16,
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.bg.surface,
     flex: 1,
   },
   topCardFirst: {
     borderWidth: 2,
-    borderColor: '#FFD700',
+    borderColor: colors.accent.gold,
     transform: [{ scale: 1.05 }],
   },
   topCardSecond: {
     borderWidth: 2,
-    borderColor: '#C0C0C0',
+    borderColor: colors.accent.silver,
   },
   topCardThird: {
     borderWidth: 2,
-    borderColor: '#CD7F32',
+    borderColor: colors.accent.bronze,
   },
   rankIcon: {
     fontSize: 32,
@@ -254,14 +255,14 @@ const styles = StyleSheet.create({
   topName: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: colors.text.primary,
     textAlign: 'center',
     marginBottom: 4,
   },
   topScore: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#E8420A',
+    color: colors.primary[500],
   },
   changeText: {
     fontSize: 12,
@@ -269,34 +270,34 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   changeUp: {
-    color: '#10B981',
+    color: colors.success[500],
   },
   changeDown: {
-    color: '#EF4444',
+    color: colors.error[500],
   },
   listItem: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 14,
-    backgroundColor: '#2A2A2A',
+    backgroundColor: colors.bg.surface,
     borderRadius: 12,
   },
   rankText: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#9CA3AF',
+    color: colors.light[400],
     width: 40,
   },
   listName: {
     flex: 1,
     fontSize: 14,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: colors.text.primary,
   },
   listScore: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#E8420A',
+    color: colors.primary[500],
     marginRight: 8,
   },
   changeTextSmall: {

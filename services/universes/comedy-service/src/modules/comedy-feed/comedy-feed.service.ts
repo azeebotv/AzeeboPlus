@@ -1,5 +1,6 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
+import { CacheService, cacheKey } from '@azeebo/shared-services';
 
 interface FeedItem {
   id: string;
@@ -27,128 +28,151 @@ interface FeedResponse {
 
 @Injectable()
 export class ComedyFeedService {
-  constructor(private prisma: PrismaService) {}
+  private readonly logger = new Logger(ComedyFeedService.name);
+  constructor(private prisma: PrismaService, private cache: CacheService) {}
 
   async getFeed(page = 1, limit = 20, type?: string): Promise<FeedResponse> {
-    const where: Record<string, unknown> = {};
-    if (type === 'clip') {
-      where.mediaUrl = { not: null };
-    } else if (type === 'series') {
-      where.episodes = { some: {} };
-    }
+    try {
+      const cacheK = cacheKey('comedy', `feed:${type || 'all'}:${page}:${limit}`);
+      const cached = await this.cache.get<FeedResponse>(cacheK);
+      if (cached) return cached;
 
-    const now = new Date();
-    const trendingClips = await this.prisma.comedyClip.findMany({
-      where: {
-        createdAt: { gte: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000) },
-      },
-      include: {
-        creator: { select: { id: true, displayName: true, avatar: true } },
-      },
-      orderBy: { viewCount: 'desc' },
-      take: 20,
-    });
+      const where: Record<string, unknown> = {};
+      if (type === 'clip') {
+        where.mediaUrl = { not: null };
+      } else if (type === 'series') {
+        where.episodes = { some: {} };
+      }
 
-    const _recentClips = await this.prisma.comedyClip.findMany({
-      where,
-      include: {
-        creator: { select: { id: true, displayName: true, avatar: true } },
-      },
-      orderBy: { createdAt: 'desc' },
-      skip: (page - 1) * limit,
-      take: limit,
-    });
-
-    const items: FeedItem[] = [
-      ...trendingClips.map((clip) => ({
-        id: clip.id,
-        type: 'clip',
-        title: clip.title,
-        thumbnail: clip.thumbnail,
-        mediaUrl: clip.mediaUrl,
-        viewCount: clip.viewCount,
-        likeCount: clip.likeCount,
-        shareCount: clip.shareCount,
-        creator: {
-          ...clip.creator,
-          avatar: clip.creator.avatar ?? undefined,
+      const now = new Date();
+      const trendingClips = await this.prisma.comedyClip.findMany({
+        where: {
+          createdAt: { gte: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000) },
         },
-        createdAt: clip.createdAt.toISOString(),
-      })),
-    ];
+        include: {
+          creator: { select: { id: true, displayName: true, avatar: true } },
+        },
+        orderBy: { viewCount: 'desc' },
+        take: 20,
+      });
 
-    const total = items.length;
-    return {
-      success: true,
-      data: {
-        items: items.slice(0, limit),
-        page,
-        limit,
-        total,
-      },
-    };
+      const items: FeedItem[] = [
+        ...trendingClips.map((clip) => ({
+          id: clip.id,
+          type: 'clip',
+          title: clip.title,
+          thumbnail: clip.thumbnail,
+          mediaUrl: clip.mediaUrl,
+          viewCount: clip.viewCount,
+          likeCount: clip.likeCount,
+          shareCount: clip.shareCount,
+          creator: {
+            ...clip.creator,
+            avatar: clip.creator.avatar ?? undefined,
+          },
+          createdAt: clip.createdAt.toISOString(),
+        })),
+      ];
+
+      const total = items.length;
+      const result: FeedResponse = {
+        success: true,
+        data: {
+          items: items.slice(0, limit),
+          page,
+          limit,
+          total,
+        },
+      };
+
+      await this.cache.set(cacheK, result, 300);
+      return result;
+    } catch (error) {
+      this.logger.error(`Failed to get feed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: { code: 'FEED_ERROR', message: (error as Error).message } };
+    }
   }
 
   async getClipById(
     clipId: string,
     userId?: string
   ): Promise<{ success: boolean; data?: unknown; error?: { code: string; message: string } }> {
-    const clip = await this.prisma.comedyClip.findUnique({
-      where: { id: clipId },
-      include: {
-        creator: { select: { id: true, displayName: true, avatar: true } },
-        comedian: true,
-        likes: userId ? { where: { userId } } : false,
-        comments: {
-          include: { user: { select: { id: true, displayName: true, avatar: true } } },
-          orderBy: { createdAt: 'desc' },
-          take: 20,
+    try {
+      const cacheK = cacheKey('comedy', `clip:${clipId}`);
+      const cached = await this.cache.get<{ success: boolean; data?: unknown; error?: { code: string; message: string } }>(cacheK);
+      if (cached) return cached;
+
+      const clip = await this.prisma.comedyClip.findUnique({
+        where: { id: clipId },
+        include: {
+          creator: { select: { id: true, displayName: true, avatar: true } },
+          comedian: true,
+          likes: userId ? { where: { userId } } : false,
+          comments: {
+            include: { user: { select: { id: true, displayName: true, avatar: true } } },
+            orderBy: { createdAt: 'desc' },
+            take: 20,
+          },
         },
-      },
-    });
+      });
 
-    if (!clip) {
-      throw new NotFoundException('Clip not found');
+      if (!clip) {
+        throw new NotFoundException('Clip not found');
+      }
+
+      await this.prisma.comedyClip.update({
+        where: { id: clipId },
+        data: { viewCount: { increment: 1 } },
+      });
+
+      const result = {
+        success: true,
+        data: {
+          ...clip,
+          isLiked: userId ? clip.likes.length > 0 : false,
+        },
+      };
+
+      await this.cache.set(cacheK, result, 300);
+      return result;
+    } catch (error) {
+      this.logger.error(`Failed to get clip by id: ${(error as Error).message}`, (error as Error).stack);
+      if (error instanceof NotFoundException) throw error;
+      return { success: false, error: { code: 'CLIP_ERROR', message: (error as Error).message } };
     }
-
-    await this.prisma.comedyClip.update({
-      where: { id: clipId },
-      data: { viewCount: { increment: 1 } },
-    });
-
-    return {
-      success: true,
-      data: {
-        ...clip,
-        isLiked: userId ? clip.likes.length > 0 : false,
-      },
-    };
   }
 
   async likeClip(
     userId: string,
     clipId: string
   ): Promise<{ success: boolean; data?: { message: string; likeCount: number } }> {
-    const existing = await this.prisma.clipLike.findUnique({
-      where: { userId_clipId: { userId, clipId } },
-    });
-
-    if (existing) {
-      await this.prisma.clipLike.delete({ where: { id: existing.id } });
-      await this.prisma.comedyClip.update({
-        where: { id: clipId },
-        data: { likeCount: { decrement: 1 } },
+    try {
+      const existing = await this.prisma.clipLike.findUnique({
+        where: { userId_clipId: { userId, clipId } },
       });
-      return { success: true, data: { message: 'Unliked', likeCount: 0 } };
+
+      if (existing) {
+        await this.prisma.clipLike.delete({ where: { id: existing.id } });
+        await this.prisma.comedyClip.update({
+          where: { id: clipId },
+          data: { likeCount: { decrement: 1 } },
+        });
+        await this.cache.invalidate('comedy:*');
+        return { success: true, data: { message: 'Unliked', likeCount: 0 } };
+      }
+
+      await this.prisma.clipLike.create({ data: { userId, clipId } });
+      const updated = await this.prisma.comedyClip.update({
+        where: { id: clipId },
+        data: { likeCount: { increment: 1 } },
+      });
+
+      await this.cache.invalidate('comedy:*');
+      return { success: true, data: { message: 'Liked', likeCount: updated.likeCount } };
+    } catch (error) {
+      this.logger.error(`Failed to like clip: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: { code: 'LIKE_ERROR', message: (error as Error).message } };
     }
-
-    await this.prisma.clipLike.create({ data: { userId, clipId } });
-    const updated = await this.prisma.comedyClip.update({
-      where: { id: clipId },
-      data: { likeCount: { increment: 1 } },
-    });
-
-    return { success: true, data: { message: 'Liked', likeCount: updated.likeCount } };
   }
 
   async commentOnClip(
@@ -156,19 +180,27 @@ export class ComedyFeedService {
     clipId: string,
     text: string
   ): Promise<{ success: boolean; data?: { commentId: string; message: string } }> {
-    const clip = await this.prisma.comedyClip.findUnique({ where: { id: clipId } });
-    if (!clip) {
-      throw new NotFoundException('Clip not found');
+    try {
+      const clip = await this.prisma.comedyClip.findUnique({ where: { id: clipId } });
+      if (!clip) {
+        throw new NotFoundException('Clip not found');
+      }
+
+      const comment = await this.prisma.clipComment.create({
+        data: { userId, clipId, text },
+      });
+
+      await this.cache.invalidate(`comedy:clip:${clipId}`);
+
+      return {
+        success: true,
+        data: { commentId: comment.id, message: 'Comment added' },
+      };
+    } catch (error) {
+      this.logger.error(`Failed to comment on clip: ${(error as Error).message}`, (error as Error).stack);
+      if (error instanceof NotFoundException) throw error;
+      return { success: false, error: { code: 'COMMENT_ERROR', message: (error as Error).message } };
     }
-
-    const comment = await this.prisma.clipComment.create({
-      data: { userId, clipId, text },
-    });
-
-    return {
-      success: true,
-      data: { commentId: comment.id, message: 'Comment added' },
-    };
   }
 
   async getSpecials(
@@ -176,126 +208,161 @@ export class ComedyFeedService {
     limit = 20,
     comedianId?: string
   ): Promise<{ success: boolean; data?: { items: unknown[]; total: number } }> {
-    const where: Record<string, unknown> = {};
-    if (comedianId) where.comedianId = comedianId;
+    try {
+      const where: Record<string, unknown> = {};
+      if (comedianId) where.comedianId = comedianId;
 
-    const [items, total] = await Promise.all([
-      this.prisma.comedySpecial.findMany({
-        where,
-        include: {
-          comedian: { include: { user: { select: { displayName: true, avatar: true } } } },
-        },
-        skip: (page - 1) * limit,
-        take: limit,
-        orderBy: { releaseDate: 'desc' },
-      }),
-      this.prisma.comedySpecial.count({ where }),
-    ]);
+      const [items, total] = await Promise.all([
+        this.prisma.comedySpecial.findMany({
+          where,
+          include: {
+            comedian: { include: { user: { select: { displayName: true, avatar: true } } } },
+          },
+          skip: (page - 1) * limit,
+          take: limit,
+          orderBy: { releaseDate: 'desc' },
+        }),
+        this.prisma.comedySpecial.count({ where }),
+      ]);
 
-    return {
-      success: true,
-      data: { items, total },
-    };
+      return {
+        success: true,
+        data: { items, total },
+      };
+    } catch (error) {
+      this.logger.error(`Failed to get specials: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: { code: 'SPECIALS_ERROR', message: (error as Error).message } };
+    }
   }
 
   async getSpecialById(specialId: string): Promise<{ success: boolean; data?: unknown }> {
-    const special = await this.prisma.comedySpecial.findUnique({
-      where: { id: specialId },
-      include: {
-        comedian: { include: { user: { select: { displayName: true, avatar: true } } } },
-      },
-    });
+    try {
+      const special = await this.prisma.comedySpecial.findUnique({
+        where: { id: specialId },
+        include: {
+          comedian: { include: { user: { select: { displayName: true, avatar: true } } } },
+        },
+      });
 
-    if (!special) {
-      throw new NotFoundException('Special not found');
+      if (!special) {
+        throw new NotFoundException('Special not found');
+      }
+
+      return { success: true, data: special };
+    } catch (error) {
+      this.logger.error(`Failed to get special by id: ${(error as Error).message}`, (error as Error).stack);
+      if (error instanceof NotFoundException) throw error;
+      return { success: false, error: { code: 'SPECIAL_ERROR', message: (error as Error).message } };
     }
-
-    return { success: true, data: special };
   }
 
   async likeSpecial(
     userId: string,
     specialId: string
   ): Promise<{ success: boolean; data?: { message: string } }> {
-    const existing = await this.prisma.specialLike.findUnique({
-      where: { userId_specialId: { userId, specialId } },
-    });
+    try {
+      const existing = await this.prisma.specialLike.findUnique({
+        where: { userId_specialId: { userId, specialId } },
+      });
 
-    if (existing) {
-      await this.prisma.specialLike.delete({ where: { id: existing.id } });
+      if (existing) {
+        await this.prisma.specialLike.delete({ where: { id: existing.id } });
+        await this.prisma.comedySpecial.update({
+          where: { id: specialId },
+          data: { likeCount: { decrement: 1 } },
+        });
+        await this.cache.invalidate('comedy:*');
+        return { success: true, data: { message: 'Unliked' } };
+      }
+
+      await this.prisma.specialLike.create({ data: { userId, specialId } });
       await this.prisma.comedySpecial.update({
         where: { id: specialId },
-        data: { likeCount: { decrement: 1 } },
+        data: { likeCount: { increment: 1 } },
       });
-      return { success: true, data: { message: 'Unliked' } };
+
+      await this.cache.invalidate('comedy:*');
+      return { success: true, data: { message: 'Liked' } };
+    } catch (error) {
+      this.logger.error(`Failed to like special: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: { code: 'LIKE_ERROR', message: (error as Error).message } };
     }
-
-    await this.prisma.specialLike.create({ data: { userId, specialId } });
-    await this.prisma.comedySpecial.update({
-      where: { id: specialId },
-      data: { likeCount: { increment: 1 } },
-    });
-
-    return { success: true, data: { message: 'Liked' } };
   }
 
   async getTrending(
     _period = 'daily',
     limit = 20
   ): Promise<{ success: boolean; data?: { items: unknown[] } }> {
-    const clips = await this.prisma.comedyClip.findMany({
-      include: {
-        creator: { select: { id: true, displayName: true, avatar: true } },
-      },
-      orderBy: { viewCount: 'desc' },
-      take: limit,
-    });
+    try {
+      const cacheK = cacheKey('comedy', `trending:${_period}:${limit}`);
+      const cached = await this.cache.get<{ success: boolean; data?: { items: unknown[] } }>(cacheK);
+      if (cached) return cached;
 
-    return {
-      success: true,
-      data: {
-        items: clips.map((clip, index) => ({
-          ...clip,
-          trendRank: index + 1,
-          trendScore: clip.viewCount + clip.likeCount * 2 + clip.shareCount * 3,
-        })),
-      },
-    };
+      const clips = await this.prisma.comedyClip.findMany({
+        include: {
+          creator: { select: { id: true, displayName: true, avatar: true } },
+        },
+        orderBy: { viewCount: 'desc' },
+        take: limit,
+      });
+
+      const result = {
+        success: true,
+        data: {
+          items: clips.map((clip, index) => ({
+            ...clip,
+            trendRank: index + 1,
+            trendScore: clip.viewCount + clip.likeCount * 2 + clip.shareCount * 3,
+          })),
+        },
+      };
+
+      await this.cache.set(cacheK, result, 300);
+      return result;
+    } catch (error) {
+      this.logger.error(`Failed to get trending: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: { code: 'TRENDING_ERROR', message: (error as Error).message } };
+    }
   }
 
   async recordTrend(period: string): Promise<{ success: boolean; data?: { message: string } }> {
-    const now = new Date();
-    const startDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    try {
+      const now = new Date();
+      const startDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
-    const clips = await this.prisma.comedyClip.findMany({
-      where: { createdAt: { gte: startDate } },
-      select: { id: true, viewCount: true, likeCount: true, shareCount: true },
-    });
-
-    const scored = clips
-      .map((clip) => ({
-        clipId: clip.id,
-        score: clip.viewCount + clip.likeCount * 2 + clip.shareCount * 3,
-      }))
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 100);
-
-    for (let i = 0; i < scored.length; i++) {
-      await this.prisma.comedyTrend.upsert({
-        where: { clipId_period: { clipId: scored[i].clipId, period } },
-        create: {
-          clipId: scored[i].clipId,
-          score: scored[i].score,
-          rank: i + 1,
-          period,
-        },
-        update: {
-          score: scored[i].score,
-          rank: i + 1,
-        },
+      const clips = await this.prisma.comedyClip.findMany({
+        where: { createdAt: { gte: startDate } },
+        select: { id: true, viewCount: true, likeCount: true, shareCount: true },
       });
-    }
 
-    return { success: true, data: { message: `Recorded ${scored.length} trends for ${period}` } };
+      const scored = clips
+        .map((clip) => ({
+          clipId: clip.id,
+          score: clip.viewCount + clip.likeCount * 2 + clip.shareCount * 3,
+        }))
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 100);
+
+      for (let i = 0; i < scored.length; i++) {
+        await this.prisma.comedyTrend.upsert({
+          where: { clipId_period: { clipId: scored[i].clipId, period } },
+          create: {
+            clipId: scored[i].clipId,
+            score: scored[i].score,
+            rank: i + 1,
+            period,
+          },
+          update: {
+            score: scored[i].score,
+            rank: i + 1,
+          },
+        });
+      }
+
+      return { success: true, data: { message: `Recorded ${scored.length} trends for ${period}` } };
+    } catch (error) {
+      this.logger.error(`Failed to record trend: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: { code: 'TREND_RECORD_ERROR', message: (error as Error).message } };
+    }
   }
 }

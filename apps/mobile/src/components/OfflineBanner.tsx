@@ -1,5 +1,5 @@
-import React from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
+import { colors } from '../theme';
 
 interface OfflineBannerProps {
   isOffline: boolean;
@@ -40,7 +40,7 @@ export function OfflineBanner({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#FF9500',
+    backgroundColor: colors.warning[500],
     paddingVertical: 8,
     paddingHorizontal: 16,
   },
@@ -56,12 +56,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   title: {
-    color: '#ffffff',
+    color: colors.text.primary,
     fontSize: 14,
     fontWeight: '600',
   },
   subtitle: {
-    color: '#ffffff',
+    color: colors.text.primary,
     fontSize: 12,
     opacity: 0.9,
     marginTop: 2,

@@ -1,10 +1,11 @@
 'use client';
-import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch, api } from '@/lib/api';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
+import { Skeleton, ErrorState } from '@azeebo/ui/web';
 
 interface DraftContent {
   id: string;
@@ -21,56 +22,38 @@ interface DraftContent {
 export default function DraftsPage(): React.JSX.Element {
   const { isAuthenticated, user, isLoading: authLoading } = useAuth();
   const router = useRouter();
-  const [drafts, setDrafts] = useState<DraftContent[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const queryClient = useQueryClient();
+  const isEnabled = !authLoading && !!isAuthenticated && !!user;
 
-  useEffect(() => {
-    if (authLoading) return;
-    if (!isAuthenticated || !user) {
-      router.push('/auth/login');
-      return;
-    }
-    loadDrafts();
-  }, [authLoading, isAuthenticated, user, router]);
-
-  const loadDrafts = async () => {
-    try {
-      const response = await apiFetch<any>('/v1/content/me?status=draft');
+  const { data: drafts = [], isLoading } = useQuery({
+    queryKey: ['creator', 'drafts'],
+    queryFn: async () => {
+      const response = await apiFetch<{ success: boolean; data: DraftContent[] | { items?: DraftContent[] } }>('/v1/content/me?status=draft');
       if (response.success && response.data) {
         const items = Array.isArray(response.data) ? response.data : response.data.items || [];
-        setDrafts(
-          items.map((item: any) => ({
-            id: String(item.id),
-            title: String(item.title || ''),
-            description: String(item.description || ''),
-            thumbnail: String(item.thumbnail || ''),
-            type: String(item.contentType || item.type || 'video'),
-            duration: Number(item.duration || 0),
-            lastEdited: String(item.updatedAt || item.lastEdited || ''),
-            updatedAt: String(item.updatedAt || ''),
-            status: String(item.status || 'draft'),
-          }))
-        );
+        return items.map((item) => ({
+          id: String(item.id),
+          title: String(item.title || ''),
+          description: String(item.description || ''),
+          thumbnail: String(item.thumbnail || ''),
+          type: String(item.contentType || item.type || 'video'),
+          duration: Number(item.duration || 0),
+          lastEdited: String(item.updatedAt || item.lastEdited || ''),
+          updatedAt: String(item.updatedAt || ''),
+          status: String(item.status || 'draft'),
+        }));
       }
-    } catch {
-      /* ignore */
-    } finally {
-      setIsLoading(false);
-    }
-  };
+      return [];
+    },
+    enabled: isEnabled,
+  });
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Delete this draft?')) return;
-    try {
-      await api.content.deleteContent(id);
-      setDrafts(drafts.filter((d) => d.id !== id));
-    } catch {
-      /* ignore */
-    }
-  };
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => api.content.deleteContent(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['creator', 'drafts'] }),
+  });
 
   if (authLoading || (!isAuthenticated && !user)) return <></>;
-
   if (!isAuthenticated || !user) return <></>;
 
   return (
@@ -109,17 +92,17 @@ export default function DraftsPage(): React.JSX.Element {
         </div>
 
         {isLoading ? (
-          <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}>
-            <div
-              style={{
-                width: 40,
-                height: 40,
-                border: '3px solid #2A1A1A',
-                borderTopColor: '#E8420A',
-                borderRadius: '50%',
-                animation: 'spin 0.8s linear infinite',
-              }}
-            />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="az-glass" style={{ display: 'flex', alignItems: 'center', gap: 16, padding: 16, borderRadius: 16 }}>
+                <Skeleton width="120px" height="68px" borderRadius="8px" />
+                <div style={{ flex: 1 }}>
+                  <Skeleton width="60%" height="16px" className="mb-2" />
+                  <Skeleton width="40%" height="12px" />
+                </div>
+                <Skeleton width="80px" height="32px" borderRadius="999px" />
+              </div>
+            ))}
           </div>
         ) : drafts.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '60px 0' }}>
@@ -193,7 +176,7 @@ export default function DraftsPage(): React.JSX.Element {
                     Edit
                   </a>
                   <button
-                    onClick={() => handleDelete(draft.id)}
+                    onClick={() => { if (confirm('Delete this draft?')) deleteMutation.mutate(draft.id); }}
                     style={{
                       padding: '8px 16px',
                       borderRadius: 999,

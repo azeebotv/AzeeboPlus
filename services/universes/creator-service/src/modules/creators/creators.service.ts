@@ -5,6 +5,7 @@ import { Prisma } from '@prisma/client';
 import { CreatorResponse } from './interfaces/creator-response.interface';
 import axios from 'axios';
 import { randomUUID } from 'crypto';
+import { CacheService, cacheKey } from '@azeebo/shared-services';
 
 interface UpdateProfileData {
   displayName?: string;
@@ -51,7 +52,8 @@ export class CreatorsService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly configService: ConfigService
+    private readonly configService: ConfigService,
+    private readonly cache: CacheService
   ) {
     this.walletServiceBaseUrl = this.configService.getOrThrow<string>('WALLET_SERVICE_URL');
     this.mediaServiceBaseUrl = this.configService.getOrThrow<string>('MEDIA_SERVICE_URL');
@@ -111,6 +113,8 @@ export class CreatorsService {
     });
 
     await this.trackAnalyticsEvent('creator_onboarded', userId, {});
+
+    await this.cache.invalidate(`creator:profile:${userId}*`);
 
     return {
       success: true,
@@ -228,6 +232,8 @@ export class CreatorsService {
       approvedBy: adminId,
     });
 
+    await this.cache.invalidate(`creator:profile:${creatorId}*`);
+
     return {
       success: true,
       data: {
@@ -271,7 +277,7 @@ export class CreatorsService {
           uploadId,
           userId,
         })
-        .catch(() => null);
+        .catch((err) => this.logger.warn('Operation failed', err));
 
       if (response?.data) {
         await this.prisma.mediaUpload.update({
@@ -297,7 +303,7 @@ export class CreatorsService {
           uploadDbId: upload.id,
         },
       };
-    } catch (error: unknown) {
+    } catch (_err) {
       await this.prisma.mediaUpload.update({
         where: { id: upload.id },
         data: { status: 'failed' },
@@ -344,6 +350,8 @@ export class CreatorsService {
       contentId: contentItem.id,
     });
 
+    await this.cache.invalidate(`creator:content:${userId}*`);
+
     return {
       success: true,
       data: {
@@ -373,6 +381,10 @@ export class CreatorsService {
   }
 
   async getMyProfile(userId: string): Promise<CreatorResponse> {
+    const cacheK = cacheKey('creator', `profile:${userId}`);
+    const cached = await this.cache.get<CreatorResponse>(cacheK);
+    if (cached) return cached;
+
     const profile = await this.prisma.creatorProfile.findUnique({
       where: { userId },
       include: {
@@ -384,13 +396,20 @@ export class CreatorsService {
       throw new NotFoundException(`Creator profile not found`);
     }
 
-    return {
+    const result: CreatorResponse = {
       success: true,
       data: profile as unknown as Record<string, unknown>,
     };
+
+    await this.cache.set(cacheK, result, 600);
+    return result;
   }
 
   async getProfile(creatorId: string): Promise<CreatorResponse> {
+    const cacheK = cacheKey('creator', `profile:${creatorId}`);
+    const cached = await this.cache.get<CreatorResponse>(cacheK);
+    if (cached) return cached;
+
     const profile = await this.prisma.creatorProfile.findUnique({
       where: { userId: creatorId },
       include: {
@@ -404,14 +423,17 @@ export class CreatorsService {
       throw new NotFoundException(`Creator profile not found`);
     }
 
-    return {
+    const result: CreatorResponse = {
       success: true,
       data: {
         ...profile,
-        subscriberCount: (profile as any).subscriptions?.length || 0,
+        subscriberCount: (profile as { subscriptions?: unknown[] }).subscriptions?.length || 0,
         isSubscribed: false,
       } as unknown as Record<string, unknown>,
     };
+
+    await this.cache.set(cacheK, result, 600);
+    return result;
   }
 
   async updateProfile(userId: string, profileData: UpdateProfileData): Promise<CreatorResponse> {
@@ -430,6 +452,8 @@ export class CreatorsService {
         socialLinks: profileData.socialLinks as unknown as Prisma.InputJsonValue | undefined,
       },
     });
+
+    await this.cache.invalidate(`creator:profile:${userId}*`);
 
     return {
       success: true,
@@ -525,6 +549,8 @@ export class CreatorsService {
       },
     });
 
+    await this.cache.invalidate(`creator:content:${userId}*`);
+
     return {
       success: true,
       data: contentItem as unknown as Record<string, unknown>,
@@ -556,6 +582,8 @@ export class CreatorsService {
         metadata: { channelId } as Prisma.InputJsonValue,
       },
     });
+
+    await this.cache.invalidate(`creator:content:${userId}*`);
 
     return {
       success: true,
@@ -618,7 +646,7 @@ export class CreatorsService {
       throw new NotFoundException(`Creator wallet not found`);
     }
 
-    const idempotencyKey = `tip:${userId}:${creatorId}:${amount}:${Date.now()}`;
+    const idempotencyKey = `tip:${userId}:${creatorId}:${amount}`;
 
     const existingTip = await this.prisma.tip.findFirst({
       where: {
@@ -654,7 +682,7 @@ export class CreatorsService {
           amount,
           description: `Tip to creator ${creatorId}`,
           idempotencyKey,
-        })
+        }, { timeout: 10000 })
         .catch((err) => {
           if (err.response?.data?.idempotent === true) {
             return { data: { existing: true } };
@@ -692,7 +720,7 @@ export class CreatorsService {
           amount,
           description: `Tip from user ${userId}`,
           idempotencyKey: `${idempotencyKey}:credit`,
-        });
+        }, { timeout: 10000 });
       } catch (creditError: unknown) {
         await axios
           .post(`${this.walletServiceBaseUrl}/wallet/credit`, {
@@ -700,7 +728,7 @@ export class CreatorsService {
             amount,
             description: `Compensation for failed tip credit: ${idempotencyKey}`,
             reference: `compensate:${idempotencyKey}`,
-          })
+          }, { timeout: 10000 })
           .catch((compensateError: unknown) => {
             this.logger.error('Failed to compensate sender after credit failure:', compensateError);
           });
@@ -744,6 +772,8 @@ export class CreatorsService {
         tipId: newTip.id,
       });
 
+      await this.cache.invalidate(`creator:earnings:${creatorId}*`);
+
       return {
         success: true,
         data: {
@@ -753,8 +783,8 @@ export class CreatorsService {
           message: 'Tip sent successfully',
         },
       };
-    } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to send tip';
+    } catch (_err) {
+      const errorMessage = error instanceof Error ? (error as Error).message : 'Failed to send tip';
       throw new BadRequestException(errorMessage);
     }
   }
@@ -809,6 +839,8 @@ export class CreatorsService {
       tier,
       subscriptionId: subscription.id,
     });
+
+    await this.cache.invalidate(`creator:profile:${creatorId}*`);
 
     return {
       success: true,
@@ -865,7 +897,7 @@ export class CreatorsService {
       throw new NotFoundException('Creator wallet not found');
     }
 
-    const idempotencyKey = `subscribe:${userId}:${creatorId}:${tier}:${Date.now()}`;
+    const idempotencyKey = `subscribe:${userId}:${creatorId}:${tier}`;
 
     try {
       const debitResult = await axios
@@ -874,7 +906,7 @@ export class CreatorsService {
           amount,
           description: `Subscription to creator ${creatorId} - ${tier}`,
           idempotencyKey,
-        })
+        }, { timeout: 10000 })
         .catch((err) => {
           if (err.response?.data?.idempotent === true) {
             return { data: { existing: true } };
@@ -903,7 +935,7 @@ export class CreatorsService {
           amount,
           description: `Subscription from user ${userId} - ${tier}`,
           idempotencyKey: `${idempotencyKey}:credit`,
-        });
+        }, { timeout: 10000 });
       } catch (creditError: unknown) {
         await axios
           .post(`${this.walletServiceBaseUrl}/wallet/credit`, {
@@ -911,7 +943,7 @@ export class CreatorsService {
             amount,
             description: `Compensation for failed subscription credit: ${idempotencyKey}`,
             reference: `compensate:${idempotencyKey}`,
-          })
+          }, { timeout: 10000 })
           .catch((compensateError: unknown) => {
             this.logger.error(
               'Failed to compensate sender after subscription credit failure:',
@@ -953,6 +985,8 @@ export class CreatorsService {
         subscriptionId: newSubscription.id,
       });
 
+      await this.cache.invalidate(`creator:earnings:${creatorId}*`);
+
       return {
         success: true,
         data: {
@@ -961,8 +995,8 @@ export class CreatorsService {
           message: 'Premium subscription created successfully',
         },
       };
-    } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to create subscription';
+    } catch (_err) {
+      const errorMessage = error instanceof Error ? (error as Error).message : 'Failed to create subscription';
       throw new BadRequestException(errorMessage);
     }
   }
@@ -987,6 +1021,8 @@ export class CreatorsService {
       creatorId,
       tier: subscription.tier,
     });
+
+    await this.cache.invalidate(`creator:profile:${creatorId}*`);
 
     return {
       success: true,
@@ -1026,6 +1062,10 @@ export class CreatorsService {
   }
 
   async getEarnings(userId: string): Promise<CreatorResponse> {
+    const cacheK = cacheKey('creator', `earnings:${userId}`);
+    const cached = await this.cache.get<CreatorResponse>(cacheK);
+    if (cached) return cached;
+
     const profile = await this.prisma.creatorProfile.findUnique({
       where: { userId },
     });
@@ -1080,7 +1120,7 @@ export class CreatorsService {
       _sum: { amount: true },
     });
 
-    return {
+    const result: CreatorResponse = {
       success: true,
       data: {
         totalEarnings: totalEarnings._sum.amount?.toNumber() || 0,
@@ -1093,6 +1133,9 @@ export class CreatorsService {
         recentEarnings,
       },
     };
+
+    await this.cache.set(cacheK, result, 300);
+    return result;
   }
 
   async requestPayout(userId: string, payoutData: PayoutRequestData): Promise<CreatorResponse> {
@@ -1143,6 +1186,8 @@ export class CreatorsService {
       amount: payoutData.amount,
       method: payoutData.method,
     });
+
+    await this.cache.invalidate(`creator:earnings:${userId}*`);
 
     return {
       success: true,
@@ -1560,6 +1605,10 @@ export class CreatorsService {
   }
 
   async getCreatorContent(creatorId: string, page = 1, limit = 20): Promise<CreatorResponse> {
+    const cacheK = cacheKey('creator', `content:${creatorId}:${page}:${limit}`);
+    const cached = await this.cache.get<CreatorResponse>(cacheK);
+    if (cached) return cached;
+
     const skip = (page - 1) * limit;
     const [items, total] = await Promise.all([
       this.prisma.contentItem.findMany({
@@ -1571,7 +1620,7 @@ export class CreatorsService {
       this.prisma.contentItem.count({ where: { creatorId } }),
     ]);
 
-    return {
+    const result: CreatorResponse = {
       success: true,
       data: {
         items,
@@ -1581,5 +1630,8 @@ export class CreatorsService {
         hasMore: skip + limit < total,
       } as unknown as Record<string, unknown>,
     };
+
+    await this.cache.set(cacheK, result, 300);
+    return result;
   }
 }

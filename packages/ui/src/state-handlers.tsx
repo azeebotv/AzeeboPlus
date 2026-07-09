@@ -16,7 +16,8 @@ export const useThemeStore = create<ThemeState>()(
       setMode: (mode) => set({ mode }),
       toggleMode: () => {
         const current = get().mode;
-        set({ mode: current === 'dark' ? 'light' : 'dark' });
+        const next = current === 'dark' ? 'light' : current === 'light' ? 'system' : 'dark';
+        set({ mode: next });
       },
     }),
     {

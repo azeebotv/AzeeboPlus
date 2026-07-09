@@ -14,12 +14,15 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { AuthGuard } from '@nestjs/passport';
-import { AdminGuard } from '@azeebo/security';
+import { RateLimitGuard, RateLimit, AdminGuard } from '@azeebo/security';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { UploadService } from './upload.service';
 import { PremiumContentService } from './premium-content.service';
 import { ApiResponseWrapper } from '@azeebo/shared-types';
 
+@ApiTags('Media Upload')
 @Controller('media')
+@UseGuards(RateLimitGuard)
 export class UploadController {
   constructor(
     private readonly uploadService: UploadService,
@@ -28,7 +31,13 @@ export class UploadController {
 
   @Post('upload/image')
   @UseGuards(AuthGuard('jwt'))
+  @ApiBearerAuth()
+  @RateLimit(10, 60000)
   @UseInterceptors(FileInterceptor('file'))
+  @ApiOperation({ summary: 'Upload an image file' })
+  @ApiResponse({ status: 201, description: 'Image uploaded successfully' })
+  @ApiResponse({ status: 400, description: 'No file provided' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async uploadImage(@UploadedFile() file: Express.Multer.File): Promise<unknown> {
     if (!file) {
       throw new BadRequestException('No file provided');
@@ -38,7 +47,13 @@ export class UploadController {
 
   @Post('upload/video')
   @UseGuards(AuthGuard('jwt'))
+  @ApiBearerAuth()
+  @RateLimit(5, 60000)
   @UseInterceptors(FileInterceptor('file'))
+  @ApiOperation({ summary: 'Upload a video file' })
+  @ApiResponse({ status: 201, description: 'Video uploaded successfully' })
+  @ApiResponse({ status: 400, description: 'No file provided' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async uploadVideo(@UploadedFile() file: Express.Multer.File): Promise<unknown> {
     if (!file) {
       throw new BadRequestException('No file provided');
@@ -48,7 +63,13 @@ export class UploadController {
 
   @Post('upload/audio')
   @UseGuards(AuthGuard('jwt'))
+  @ApiBearerAuth()
+  @RateLimit(10, 60000)
   @UseInterceptors(FileInterceptor('file'))
+  @ApiOperation({ summary: 'Upload an audio file' })
+  @ApiResponse({ status: 201, description: 'Audio uploaded successfully' })
+  @ApiResponse({ status: 400, description: 'No file provided' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async uploadAudio(@UploadedFile() file: Express.Multer.File): Promise<unknown> {
     if (!file) {
       throw new BadRequestException('No file provided');
@@ -58,7 +79,13 @@ export class UploadController {
 
   @Post('upload/document')
   @UseGuards(AuthGuard('jwt'))
+  @ApiBearerAuth()
+  @RateLimit(10, 60000)
   @UseInterceptors(FileInterceptor('file'))
+  @ApiOperation({ summary: 'Upload a document file' })
+  @ApiResponse({ status: 201, description: 'Document uploaded successfully' })
+  @ApiResponse({ status: 400, description: 'No file provided' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async uploadDocument(@UploadedFile() file: Express.Multer.File): Promise<unknown> {
     if (!file) {
       throw new BadRequestException('No file provided');
@@ -68,7 +95,13 @@ export class UploadController {
 
   @Post('upload/thumbnail')
   @UseGuards(AuthGuard('jwt'))
+  @ApiBearerAuth()
+  @RateLimit(10, 60000)
   @UseInterceptors(FileInterceptor('file'))
+  @ApiOperation({ summary: 'Upload a thumbnail image' })
+  @ApiResponse({ status: 201, description: 'Thumbnail uploaded successfully' })
+  @ApiResponse({ status: 400, description: 'No file provided' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async uploadThumbnail(@UploadedFile() file: Express.Multer.File): Promise<unknown> {
     if (!file) {
       throw new BadRequestException('No file provided');
@@ -78,7 +111,13 @@ export class UploadController {
 
   @Post('upload/avatar')
   @UseGuards(AuthGuard('jwt'))
+  @ApiBearerAuth()
+  @RateLimit(5, 60000)
   @UseInterceptors(FileInterceptor('file'))
+  @ApiOperation({ summary: 'Upload a user avatar' })
+  @ApiResponse({ status: 201, description: 'Avatar uploaded successfully' })
+  @ApiResponse({ status: 400, description: 'No file provided' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async uploadAvatar(@UploadedFile() file: Express.Multer.File): Promise<unknown> {
     if (!file) {
       throw new BadRequestException('No file provided');
@@ -88,7 +127,13 @@ export class UploadController {
 
   @Post('upload/banner')
   @UseGuards(AuthGuard('jwt'))
+  @ApiBearerAuth()
+  @RateLimit(5, 60000)
   @UseInterceptors(FileInterceptor('file'))
+  @ApiOperation({ summary: 'Upload a user banner image' })
+  @ApiResponse({ status: 201, description: 'Banner uploaded successfully' })
+  @ApiResponse({ status: 400, description: 'No file provided' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async uploadBanner(@UploadedFile() file: Express.Multer.File): Promise<unknown> {
     if (!file) {
       throw new BadRequestException('No file provided');
@@ -98,6 +143,11 @@ export class UploadController {
 
   @Get('presigned/upload')
   @UseGuards(AuthGuard('jwt'))
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get a presigned upload URL' })
+  @ApiResponse({ status: 200, description: 'Presigned URL generated' })
+  @ApiResponse({ status: 400, description: 'Missing required parameters' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getPresignedUploadUrl(
     @Query('type') type: 'image' | 'video' | 'audio' | 'document',
     @Query('fileId') fileId: string,
@@ -121,6 +171,11 @@ export class UploadController {
 
   @Get('presigned/download')
   @UseGuards(AuthGuard('jwt'))
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get a presigned download URL' })
+  @ApiResponse({ status: 200, description: 'Presigned URL generated' })
+  @ApiResponse({ status: 400, description: 'Missing or invalid key' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getPresignedDownloadUrl(
     @Query('key') key: string,
     @Query('expiresIn') expiresIn = 3600
@@ -128,12 +183,32 @@ export class UploadController {
     if (!key) {
       throw new BadRequestException('Missing required parameter: key');
     }
+
+    if (key.includes('..') || key.startsWith('/')) {
+      throw new BadRequestException('Invalid key format');
+    }
+
+    const allowedPrefixes = ['uploads/', 'images/', 'videos/', 'audio/', 'documents/', 'thumbnails/', 'avatars/', 'banners/'];
+    if (!allowedPrefixes.some((prefix) => key.startsWith(prefix))) {
+      throw new BadRequestException('Invalid key prefix');
+    }
+
+    const metadata = await this.uploadService.getFileMetadata(key);
+    if (!metadata.contentType) {
+      throw new BadRequestException('File not found');
+    }
+
     const url = await this.uploadService.getPresignedDownloadUrl(key, Number(expiresIn));
     return ApiResponseWrapper.success({ url, expiresIn: Number(expiresIn) });
   }
 
   @Get('metadata')
   @UseGuards(AuthGuard('jwt'))
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get file metadata by key' })
+  @ApiResponse({ status: 200, description: 'File metadata retrieved' })
+  @ApiResponse({ status: 400, description: 'Missing required parameter: key' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getFileMetadata(@Query('key') key: string): Promise<unknown> {
     if (!key) {
       throw new BadRequestException('Missing required parameter: key');
@@ -143,12 +218,21 @@ export class UploadController {
 
   @Delete(':key')
   @UseGuards(AuthGuard('jwt'))
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Delete a file by key' })
+  @ApiResponse({ status: 200, description: 'File deleted successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async deleteFile(@Param('key') key: string): Promise<unknown> {
     await this.uploadService.deleteFile(decodeURIComponent(key));
     return ApiResponseWrapper.success({ message: 'File deleted successfully' });
   }
 
   @Get('transcoding/:jobId/status')
+  @UseGuards(AuthGuard('jwt'))
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get transcoding job status' })
+  @ApiResponse({ status: 200, description: 'Job status retrieved' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getTranscodingJobStatus(@Param('jobId') jobId: string): Promise<unknown> {
     const job = await this.uploadService.getTranscodingJobStatus(jobId);
     if (!job) {
@@ -158,6 +242,11 @@ export class UploadController {
   }
 
   @Get('transcoding/jobs')
+  @UseGuards(AuthGuard('jwt'))
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'List transcoding jobs' })
+  @ApiResponse({ status: 200, description: 'Jobs retrieved successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async listTranscodingJobs(@Query('status') status?: string): Promise<unknown> {
     const jobs = await this.uploadService.listTranscodingJobs(
       status as 'pending' | 'processing' | 'completed' | 'failed'
@@ -167,6 +256,11 @@ export class UploadController {
 
   @Post('transcoding/retry-failed')
   @UseGuards(AuthGuard('jwt'), AdminGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Retry failed transcoding jobs' })
+  @ApiResponse({ status: 200, description: 'Failed jobs retried' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Admin access required' })
   async retryFailedTranscodingJobs(): Promise<unknown> {
     const retriedCount = await this.uploadService.retryFailedTranscodingJobs();
     return ApiResponseWrapper.success({ retriedCount });
@@ -174,6 +268,11 @@ export class UploadController {
 
   @Post('cleanup/orphaned')
   @UseGuards(AuthGuard('jwt'), AdminGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Cleanup orphaned files' })
+  @ApiResponse({ status: 200, description: 'Orphaned files cleaned up' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Admin access required' })
   async cleanupOrphanedFiles(
     @Query('prefix') prefix?: string,
     @Query('olderThanDays') olderThanDays = 30
@@ -192,6 +291,11 @@ export class UploadController {
 
   @Post('premium/url')
   @UseGuards(AuthGuard('jwt'))
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Generate a premium content URL' })
+  @ApiResponse({ status: 201, description: 'Premium URL generated' })
+  @ApiResponse({ status: 400, description: 'contentId is required' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async generatePremiumUrl(
     @Request() req: { user: { sub: string } },
     @Body() body: { contentId: string; expiresInSeconds?: number }
@@ -203,7 +307,7 @@ export class UploadController {
 
     const result = await this.premiumContentService.generatePremiumUrl(
       contentId,
-      req.user.sub,
+      req.user.id,
       expiresInSeconds
     );
 
@@ -212,6 +316,11 @@ export class UploadController {
 
   @Post('premium/url/cdn')
   @UseGuards(AuthGuard('jwt'))
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Generate a CDN premium content URL' })
+  @ApiResponse({ status: 201, description: 'CDN premium URL generated' })
+  @ApiResponse({ status: 400, description: 'contentId is required' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async generateCdnPremiumUrl(
     @Request() req: { user: { sub: string } },
     @Body() body: { contentId: string; expiresInSeconds?: number }
@@ -223,7 +332,7 @@ export class UploadController {
 
     const result = await this.premiumContentService.generateCdnPremiumUrl(
       contentId,
-      req.user.sub,
+      req.user.id,
       expiresInSeconds
     );
 
@@ -231,6 +340,9 @@ export class UploadController {
   }
 
   @Post('premium/url/validate')
+  @ApiOperation({ summary: 'Validate a premium content URL token' })
+  @ApiResponse({ status: 200, description: 'Token validation result' })
+  @ApiResponse({ status: 400, description: 'token is required' })
   async validatePremiumUrl(@Body() body: { token: string }): Promise<unknown> {
     const { token } = body;
     if (!token) {
@@ -246,6 +358,10 @@ export class UploadController {
 
   @Delete('premium/url/:token')
   @UseGuards(AuthGuard('jwt'))
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Invalidate a premium content URL' })
+  @ApiResponse({ status: 200, description: 'URL invalidated successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async invalidatePremiumUrl(@Param('token') token: string): Promise<unknown> {
     await this.premiumContentService.invalidatePremiumUrl(token);
     return ApiResponseWrapper.success({ message: 'URL invalidated successfully' });
@@ -253,13 +369,21 @@ export class UploadController {
 
   @Delete('premium/urls/user')
   @UseGuards(AuthGuard('jwt'))
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Invalidate all premium URLs for a user' })
+  @ApiResponse({ status: 200, description: 'All user URLs invalidated' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async invalidateAllUserUrls(@Request() req: { user: { sub: string } }): Promise<unknown> {
-    const count = await this.premiumContentService.invalidateAllUserUrls(req.user.sub);
+    const count = await this.premiumContentService.invalidateAllUserUrls(req.user.id);
     return ApiResponseWrapper.success({ invalidatedCount: count });
   }
 
   @Get('premium/url/:token/analytics')
   @UseGuards(AuthGuard('jwt'))
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get analytics for a premium content URL' })
+  @ApiResponse({ status: 200, description: 'Analytics retrieved' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getUrlAnalytics(@Param('token') token: string): Promise<unknown> {
     const result = await this.premiumContentService.getUrlAnalytics(token);
     return ApiResponseWrapper.success(result);

@@ -15,7 +15,7 @@ The Analytics Service is responsible for collecting, processing, and analyzing u
 
 ## Technology Stack
 
-- **Framework**: NestJS 10.x
+- **Framework**: NestJS 11.x
 - **Language**: TypeScript
 - **Database**: PostgreSQL with Prisma ORM
 - **Metrics**: Prometheus
@@ -25,7 +25,7 @@ The Analytics Service is responsible for collecting, processing, and analyzing u
 
 ### Prerequisites
 
-- Node.js 20+
+- Node.js 22+
 - PostgreSQL 15+
 - Redis (optional, for caching)
 
@@ -33,24 +33,24 @@ The Analytics Service is responsible for collecting, processing, and analyzing u
 
 ```bash
 # Install dependencies
-npm install
+pnpm install
 
 # Generate Prisma client
-npm run prisma:generate
+pnpm run prisma:generate
 
 # Run migrations
-npm run prisma:migrate
+pnpm run prisma:migrate
 ```
 
 ### Running the Service
 
 ```bash
 # Development mode
-npm run start:dev
+pnpm run start:dev
 
 # Production mode
-npm run build
-npm start
+pnpm run build
+pnpm start
 ```
 
 ## API Endpoints
@@ -91,7 +91,7 @@ npm start
 
 ```bash
 # Server
-PORT=3012
+PORT=3008
 
 # Database
 DATABASE_URL="postgresql://user:password@localhost:5432/analytics"
@@ -125,13 +125,13 @@ The service tracks the following event types:
 
 ```bash
 # Run all tests
-npm test
+pnpm test
 
 # Run tests with coverage
-npm test:cov
+ppnpm test:cov
 
 # Run tests in watch mode
-npm test:watch
+pnpm test:watch
 ```
 
 ## Deployment
@@ -143,7 +143,7 @@ npm test:watch
 docker build -t azeebo/analytics-service .
 
 # Run Docker container
-docker run -p 3012:3012 azeebo/analytics-service
+docker run -p 3008:3008 azeebo/analytics-service
 ```
 
 ### Kubernetes

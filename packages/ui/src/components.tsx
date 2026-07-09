@@ -6,6 +6,7 @@ import {
   ActivityIndicator,
   AccessibilityInfo,
 } from 'react-native';
+import { colors } from '@azeebo/design-tokens';
 
 interface StateComponentProps {
   title?: string;
@@ -16,6 +17,7 @@ interface StateComponentProps {
   accessibilityLabel?: string;
 }
 
+/** Displays a loading spinner with an optional title. */
 export function LoadingState({ title = 'Loading...', accessibilityLabel }: StateComponentProps) {
   return (
     <View
@@ -23,12 +25,13 @@ export function LoadingState({ title = 'Loading...', accessibilityLabel }: State
       accessible={true}
       accessibilityLabel={accessibilityLabel || 'Loading'}
     >
-      <ActivityIndicator size="large" color="#8B5CF6" />
+      <ActivityIndicator size="large" color={colors.primary[500]} />
       <Text style={styles.title}>{title}</Text>
     </View>
   );
 }
 
+/** Displays an empty state with an icon, title, and description when no data is available. */
 export function EmptyState({
   title = 'No content found',
   description = "There's nothing to show here yet",
@@ -48,6 +51,7 @@ export function EmptyState({
   );
 }
 
+/** Displays an error message with a retry button. */
 export function ErrorState({
   title = 'Something went wrong',
   description = 'Please try again later',
@@ -79,6 +83,7 @@ export function ErrorState({
   );
 }
 
+/** Displays a success confirmation with a continue button. */
 export function SuccessState({
   title = 'Success!',
   description = 'Your action was completed successfully',
@@ -99,6 +104,7 @@ export function SuccessState({
   );
 }
 
+/** Displays a network unavailable state with a retry button. */
 export function NoInternetState({
   title = 'No Internet Connection',
   description = 'Please check your network and try again',
@@ -119,6 +125,7 @@ export function NoInternetState({
   );
 }
 
+/** Displays a payment failure state with a retry button. */
 export function PaymentFailureState({
   title = 'Payment Failed',
   description = 'Your payment could not be processed',
@@ -139,6 +146,7 @@ export function PaymentFailureState({
   );
 }
 
+/** Displays a content unavailable state for removed or locked content. */
 export function ContentUnavailableState({
   title = 'Content Unavailable',
   description = 'This content is no longer available',
@@ -159,6 +167,7 @@ export function ContentUnavailableState({
   );
 }
 
+/** Displays a moderation-removed notice when content violates guidelines. */
 export function ModerationRemovedState({
   title = 'Content Removed',
   description = 'This content has been removed due to community guidelines',
@@ -172,6 +181,7 @@ export function ModerationRemovedState({
   );
 }
 
+/** Displays a premium content lock screen with an upgrade button. */
 export function LockedPremiumState({
   title = 'Premium Content',
   description = 'Upgrade to premium to access this content',
@@ -192,6 +202,7 @@ export function LockedPremiumState({
   );
 }
 
+/** Displays a welcome/onboarding state for first-time users. */
 export function FirstTimeState({
   title = 'Welcome!',
   description = 'Get started by exploring our content',
@@ -226,36 +237,36 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#1a1a1a',
+    color: colors.dark[700],
     marginBottom: 8,
     textAlign: 'center',
   },
   description: {
     fontSize: 14,
-    color: '#666',
+    color: colors.dark[200],
     textAlign: 'center',
     lineHeight: 1.5,
     marginBottom: 24,
   },
   button: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: colors.primary[500],
     paddingHorizontal: 32,
     paddingVertical: 14,
     borderRadius: 30,
   },
   buttonText: {
-    color: '#ffffff',
+    color: colors.light[50],
     fontSize: 16,
     fontWeight: '600',
   },
   premiumButton: {
-    backgroundColor: '#FFD700',
+    backgroundColor: colors.accent.gold,
     paddingHorizontal: 32,
     paddingVertical: 14,
     borderRadius: 30,
   },
   premiumButtonText: {
-    color: '#1a1a1a',
+    color: colors.dark[700],
     fontSize: 16,
     fontWeight: '700',
   },

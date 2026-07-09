@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -31,9 +31,10 @@ export default function MovieDetailScreen() {
       } else {
         setError('No movie content available');
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       logger.error('Failed to load movie:', err);
-      setError(err.message || 'Failed to load movie');
+      const message = err instanceof Error ? err.message : 'Failed to load movie';
+      setError(message);
     } finally {
       setIsLoading(false);
     }

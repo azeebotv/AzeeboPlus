@@ -1,6 +1,8 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, Query } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { AuthGuard } from '@nestjs/passport';
 import { CelebrityService } from './celebrity.service';
+import { UpdateCelebrityDto } from './dto/update-celebrity.dto';
 
 interface CreateCelebrityData {
   name: string;
@@ -85,6 +87,7 @@ export class CelebrityController {
   }
 
   @Post()
+  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Create celebrity entry' })
   @ApiResponse({ status: 201, description: 'Entry created' })
   async createEntry(@Body() body: CreateCelebrityData): Promise<unknown> {
@@ -92,6 +95,7 @@ export class CelebrityController {
   }
 
   @Post('news')
+  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Create celebrity news' })
   @ApiResponse({ status: 201, description: 'News created' })
   async createNews(@Body() body: CreateNewsData): Promise<unknown> {
@@ -99,16 +103,18 @@ export class CelebrityController {
   }
 
   @Patch(':id')
+  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Update celebrity entry' })
   @ApiResponse({ status: 200, description: 'Entry updated' })
   async updateEntry(
     @Param('id') id: string,
-    @Body() body: Record<string, unknown>
+    @Body() body: UpdateCelebrityDto
   ): Promise<unknown> {
     return this.celebrityService.updateEntry(id, body);
   }
 
   @Delete(':id')
+  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Delete celebrity entry' })
   @ApiResponse({ status: 200, description: 'Entry deleted' })
   async deleteEntry(@Param('id') id: string): Promise<unknown> {

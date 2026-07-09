@@ -18,10 +18,12 @@ import { SupportModule } from './modules/support/support.module';
 import { AuthGuard } from './common/guards/auth.guard';
 import { RateLimiterModule, AdminGuard } from '@azeebo/security';
 import { ServiceAuthGuard } from '@azeebo/security';
+import { CacheModule } from '@azeebo/shared-services';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
+    ConfigModule.forRoot({ isGlobal: true, envFilePath: ['.env', '../../.env'] }),
+    CacheModule,
     RateLimiterModule.forRoot(),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({

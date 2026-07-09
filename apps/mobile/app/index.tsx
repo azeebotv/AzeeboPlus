@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -115,7 +115,7 @@ export default function SplashScreen() {
         { backgroundColor: colorScheme === 'dark' ? colors.bg.primary : '#ffffff' },
       ]}
     >
-      <AmbientGlow color={colors.primary} size={250} intensity={0.08} />
+      <AmbientGlow color={colors.primary[500]} size={250} intensity={0.08} />
 
       <Animated.View style={logoAnimatedStyle}>
         <View style={styles.logoContainer}>
@@ -155,7 +155,7 @@ export default function SplashScreen() {
 
         <View style={styles.progressContainer}>
           <View style={styles.progressBar}>
-            <View style={[styles.progressFill, { width: `${progress}%` as any }]} />
+            <View style={[styles.progressFill, { width: `${progress}%` as unknown as number }]} />
           </View>
         </View>
 
@@ -214,7 +214,7 @@ const styles = StyleSheet.create({
   logoPlus: {
     fontSize: 28,
     fontWeight: '700',
-    color: colors.primary,
+    color: colors.primary[500],
     marginTop: -16,
   },
   appName: {
@@ -224,7 +224,7 @@ const styles = StyleSheet.create({
     color: colors.text.primary,
   },
   appNamePlus: {
-    color: colors.primary,
+    color: colors.primary[500],
   },
   appTagline: {
     fontSize: typography.fontSize.base,
@@ -262,7 +262,7 @@ const styles = StyleSheet.create({
   },
   progressFill: {
     height: '100%',
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primary[500],
     borderRadius: 2,
   },
   bottomLinks: {
