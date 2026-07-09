@@ -1,7 +1,9 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, Query } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { AuthGuard } from '@nestjs/passport';
 import { TitlesService } from './titles.service';
 import { CreateTitleData, CreateChapterData } from './titles.service';
+import { UpdateTitleDto } from './dto/update-title.dto';
 
 @ApiTags('Titles')
 @Controller('v1/vertical/titles')
@@ -36,6 +38,7 @@ export class TitlesController {
   }
 
   @Post()
+  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Create title' })
   @ApiResponse({ status: 201, description: 'Title created' })
   async createTitle(@Body() body: CreateTitleData): Promise<unknown> {
@@ -43,16 +46,18 @@ export class TitlesController {
   }
 
   @Patch(':id')
+  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Update title' })
   @ApiResponse({ status: 200, description: 'Title updated' })
   async updateTitle(
     @Param('id') id: string,
-    @Body() body: Record<string, unknown>
+    @Body() body: UpdateTitleDto
   ): Promise<unknown> {
     return this.titlesService.updateTitle(id, body);
   }
 
   @Delete(':id')
+  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Delete title' })
   @ApiResponse({ status: 200, description: 'Title deleted' })
   async deleteTitle(@Param('id') id: string): Promise<unknown> {
@@ -60,6 +65,7 @@ export class TitlesController {
   }
 
   @Post(':titleId/chapters')
+  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Create chapter' })
   @ApiResponse({ status: 201, description: 'Chapter created' })
   async createChapter(

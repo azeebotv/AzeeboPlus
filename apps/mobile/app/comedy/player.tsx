@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,13 +8,14 @@ import {
   Dimensions,
   Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useColorScheme } from 'react-native';
-import { useRouter, useLocalSearchParams } from 'expo-router';
-import { contentApi, type ContentItem, type Recommendation } from '../../src/api';
+import { useRouter } from 'expo-router';
+import { contentApi, type ContentItem } from '../../src/api';
 import { logger } from '../../src/utils/logger';
 import { LoadingState, ErrorState, EmptyState } from '../../src/components/StateContainers';
 
-const { width } = Dimensions.get('window');
+const { width: _width } = Dimensions.get('window');
 
 export default function ComedyClipPlayer() {
   const colorScheme = useColorScheme();
@@ -43,9 +44,10 @@ export default function ComedyClipPlayer() {
       } else {
         setError('No comedy clip available');
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       logger.error('Failed to load clip:', err);
-      setError(err.message || 'Failed to load clip');
+      const message = err instanceof Error ? err.message : 'Failed to load clip';
+      setError(message);
     } finally {
       setIsLoading(false);
     }
@@ -57,25 +59,25 @@ export default function ComedyClipPlayer() {
 
   if (isLoading) {
     return (
-      <View style={[styles.container, { backgroundColor: isDark ? '#0a0a0a' : '#ffffff' }]}>
+      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
         <LoadingState text="Loading clip..." />
-      </View>
+      </SafeAreaView>
     );
   }
 
   if (error) {
     return (
-      <View style={[styles.container, { backgroundColor: isDark ? '#0a0a0a' : '#ffffff' }]}>
+      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
         <ErrorState description={error} onRetry={fetchClip} />
-      </View>
+      </SafeAreaView>
     );
   }
 
   if (!clip) {
     return (
-      <View style={[styles.container, { backgroundColor: isDark ? '#0a0a0a' : '#ffffff' }]}>
+      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
         <EmptyState icon="😂" title="No Clip" description="No comedy clips available right now." />
-      </View>
+      </SafeAreaView>
     );
   }
 
@@ -97,182 +99,173 @@ export default function ComedyClipPlayer() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: isDark ? '#0a0a0a' : '#ffffff' }]}>
-      <View style={styles.videoContainer}>
-        <View style={styles.videoPlaceholder}>
-          <Text style={styles.videoEmoji}>😂</Text>
-          <View style={styles.videoControls}>
-            <TouchableOpacity style={styles.playButton}>
-              <Text style={styles.playIcon}>▶️</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={styles.durationBadge}>
-            <Text style={styles.durationText}>
-              {clip.duration
-                ? `${Math.floor(clip.duration / 60)}:${String(clip.duration % 60).padStart(2, '0')}`
-                : '00:00'}
-            </Text>
-          </View>
-        </View>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Text style={styles.backIcon}>←</Text>
-        </TouchableOpacity>
-      </View>
-
-      <ScrollView style={styles.contentContainer} showsVerticalScrollIndicator={false}>
-        <View style={styles.content}>
-          <Text style={[styles.title, { color: isDark ? '#ffffff' : '#000000' }]}>
-            {clip.title}
-          </Text>
-
-          <View style={styles.statsRow}>
-            <Text style={styles.statText}>📅 {new Date(clip.createdAt).toLocaleDateString()}</Text>
-            <Text style={styles.statText}>❤️ 0</Text>
-          </View>
-
-          <View style={styles.creatorRow}>
-            <View style={styles.creatorInfo}>
-              <View style={styles.creatorAvatar}>
-                <Text style={styles.creatorAvatarEmoji}>{CLIP_DATA.creatorAvatar}</Text>
-              </View>
-              <View>
-                <Text style={[styles.creatorName, { color: isDark ? '#fff' : '#000' }]}>
-                  {clip.creator?.name || 'Unknown'}
-                </Text>
-                <Text style={styles.creatorMeta}>
-                  {new Date(clip.createdAt).toLocaleDateString()}
-                </Text>
-              </View>
+    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+      <View style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+        <View style={styles.videoContainer}>
+          <View style={styles.videoPlaceholder}>
+            <Text style={styles.videoEmoji}>😂</Text>
+            <View style={styles.videoControls}>
+              <TouchableOpacity style={styles.playButton}>
+                <Text style={styles.playIcon}>▶️</Text>
+              </TouchableOpacity>
             </View>
-            <TouchableOpacity
-              style={[styles.followButton, isFollowing && styles.followButtonActive]}
-              onPress={handleFollow}
-            >
-              <Text style={[styles.followButtonText, isFollowing && styles.followButtonTextActive]}>
-                {isFollowing ? 'Following' : 'Follow'}
+            <View style={styles.durationBadge}>
+              <Text style={styles.durationText}>
+                {clip.duration
+                  ? `${Math.floor(clip.duration / 60)}:${String(clip.duration % 60).padStart(2, '0')}`
+                  : '00:00'}
               </Text>
-            </TouchableOpacity>
+            </View>
           </View>
+          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+            <Text style={styles.backIcon}>←</Text>
+          </TouchableOpacity>
+        </View>
 
-          <Text style={[styles.description, { color: isDark ? '#ccc' : '#666' }]}>
-            {clip.description}
-          </Text>
+        <ScrollView style={styles.contentContainer} showsVerticalScrollIndicator={false}>
+          <View style={styles.content}>
+            <Text style={[styles.title, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
+              {clip.title}
+            </Text>
 
-          {clip.categories && clip.categories.length > 0 && (
-            <View style={styles.tagsRow}>
-              {clip.categories.map((cat) => (
-                <View key={cat.id} style={styles.tag}>
-                  <Text style={styles.tagText}>#{cat.name}</Text>
+            <View style={styles.statsRow}>
+              <Text style={styles.statText}>
+                📅 {new Date(clip.createdAt).toLocaleDateString()}
+              </Text>
+              <Text style={styles.statText}>❤️ 0</Text>
+            </View>
+
+            <View style={styles.creatorRow}>
+              <View style={styles.creatorInfo}>
+                <View style={styles.creatorAvatar}>
+                  <Text style={styles.creatorAvatarEmoji}>{clip.creator?.avatar || '🎤'}</Text>
                 </View>
-              ))}
-            </View>
-          )}
-
-          <View style={styles.actionsRow}>
-            <TouchableOpacity style={styles.actionButton} onPress={handleLike}>
-              <Text style={styles.actionIcon}>{isLiked ? '❤️' : '🤍'}</Text>
-              <Text style={[styles.actionText, { color: isDark ? '#fff' : '#000' }]}>
-                {isLiked ? 'Liked' : 'Like'}
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.actionButton} onPress={handleComment}>
-              <Text style={styles.actionIcon}>💬</Text>
-              <Text style={[styles.actionText, { color: isDark ? '#fff' : '#000' }]}>Comment</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.actionButton} onPress={handleShare}>
-              <Text style={styles.actionIcon}>↗️</Text>
-              <Text style={[styles.actionText, { color: isDark ? '#fff' : '#000' }]}>Share</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.actionButton}>
-              <Text style={styles.actionIcon}>🔖</Text>
-              <Text style={[styles.actionText, { color: isDark ? '#fff' : '#000' }]}>Save</Text>
-            </TouchableOpacity>
-          </View>
-
-          {showComments && (
-            <View style={styles.commentsSection}>
-              <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
-                Comments
-              </Text>
-              <View
-                style={[styles.addCommentBar, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
-              >
-                <TextInput
-                  style={[styles.commentInput, { color: isDark ? '#fff' : '#000' }]}
-                  placeholder="Add a comment..."
-                  placeholderTextColor="#888"
-                />
-                <TouchableOpacity style={styles.postButton}>
-                  <Text style={styles.postButtonText}>Post</Text>
-                </TouchableOpacity>
-              </View>
-              <Text style={[styles.commentEmpty, { color: isDark ? '#888' : '#999' }]}>
-                No comments yet
-              </Text>
-            </View>
-          )}
-
-          <View style={styles.relatedSection}>
-            <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
-              Related Clips
-            </Text>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.relatedList}
-            >
-              {related.map((item) => (
-                <TouchableOpacity
-                  key={item.id}
-                  style={[styles.relatedCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
-                >
-                  <View style={styles.relatedThumbnail}>
-                    <Text style={styles.relatedEmoji}>😂</Text>
-                    {item.duration && (
-                      <View style={styles.relatedDuration}>
-                        <Text style={styles.relatedDurationText}>
-                          {Math.floor(item.duration / 60)}:
-                          {String(item.duration % 60).padStart(2, '0')}
-                        </Text>
-                      </View>
-                    )}
-                  </View>
-                  <Text
-                    style={[styles.relatedTitle, { color: isDark ? '#fff' : '#000' }]}
-                    numberOfLines={2}
-                  >
-                    {item.title}
+                <View>
+                  <Text style={[styles.creatorName, { color: isDark ? '#fff' : '#000' }]}>
+                    {clip.creator?.name || 'Unknown'}
                   </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </View>
-        </View>
-      </ScrollView>
+                  <Text style={styles.creatorMeta}>
+                    {new Date(clip.createdAt).toLocaleDateString()}
+                  </Text>
+                </View>
+              </View>
+              <TouchableOpacity
+                style={[styles.followButton, isFollowing && styles.followButtonActive]}
+                onPress={handleFollow}
+              >
+                <Text
+                  style={[styles.followButtonText, isFollowing && styles.followButtonTextActive]}
+                >
+                  {isFollowing ? 'Following' : 'Follow'}
+                </Text>
+              </TouchableOpacity>
+            </View>
 
-      <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/home')}>
-          <Text style={styles.navIcon}>🏠</Text>
-          <Text style={styles.navLabel}>Home</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/watch')}>
-          <Text style={styles.navIcon}>📺</Text>
-          <Text style={[styles.navLabel, { color: '#F39C12' }]}>Watch</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/create')}>
-          <Text style={styles.navIcon}>✨</Text>
-          <Text style={styles.navLabel}>Create</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/rewards')}>
-          <Text style={styles.navIcon}>⭐</Text>
-          <Text style={styles.navLabel}>Rewards</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/profile')}>
-          <Text style={styles.navIcon}>👤</Text>
-          <Text style={styles.navLabel}>Profile</Text>
-        </TouchableOpacity>
+            <Text style={[styles.description, { color: isDark ? '#ccc' : '#666' }]}>
+              {clip.description}
+            </Text>
+
+            {clip.categories && clip.categories.length > 0 && (
+              <View style={styles.tagsRow}>
+                {clip.categories.map((cat) => (
+                  <View key={cat.id} style={styles.tag}>
+                    <Text style={styles.tagText}>#{cat.name}</Text>
+                  </View>
+                ))}
+              </View>
+            )}
+
+            <View style={styles.actionsRow}>
+              <TouchableOpacity style={styles.actionButton} onPress={handleLike}>
+                <Text style={styles.actionIcon}>{isLiked ? '❤️' : '🤍'}</Text>
+                <Text style={[styles.actionText, { color: isDark ? '#fff' : '#000' }]}>
+                  {isLiked ? 'Liked' : 'Like'}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.actionButton} onPress={handleComment}>
+                <Text style={styles.actionIcon}>💬</Text>
+                <Text style={[styles.actionText, { color: isDark ? '#fff' : '#000' }]}>
+                  Comment
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.actionButton} onPress={handleShare}>
+                <Text style={styles.actionIcon}>↗️</Text>
+                <Text style={[styles.actionText, { color: isDark ? '#fff' : '#000' }]}>Share</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.actionButton}>
+                <Text style={styles.actionIcon}>🔖</Text>
+                <Text style={[styles.actionText, { color: isDark ? '#fff' : '#000' }]}>Save</Text>
+              </TouchableOpacity>
+            </View>
+
+            {showComments && (
+              <View style={styles.commentsSection}>
+                <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
+                  Comments
+                </Text>
+                <View
+                  style={[
+                    styles.addCommentBar,
+                    { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' },
+                  ]}
+                >
+                  <TextInput
+                    style={[styles.commentInput, { color: isDark ? '#fff' : '#000' }]}
+                    placeholder="Add a comment..."
+                    placeholderTextColor="#888"
+                  />
+                  <TouchableOpacity style={styles.postButton}>
+                    <Text style={styles.postButtonText}>Post</Text>
+                  </TouchableOpacity>
+                </View>
+                <Text style={[styles.commentEmpty, { color: isDark ? '#888' : '#999' }]}>
+                  No comments yet
+                </Text>
+              </View>
+            )}
+
+            <View style={styles.relatedSection}>
+              <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
+                Related Clips
+              </Text>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.relatedList}
+              >
+                {related.map((item) => (
+                  <TouchableOpacity
+                    key={item.id}
+                    style={[
+                      styles.relatedCard,
+                      { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' },
+                    ]}
+                  >
+                    <View style={styles.relatedThumbnail}>
+                      <Text style={styles.relatedEmoji}>😂</Text>
+                      {item.duration && (
+                        <View style={styles.relatedDuration}>
+                          <Text style={styles.relatedDurationText}>
+                            {Math.floor(item.duration / 60)}:
+                            {String(item.duration % 60).padStart(2, '0')}
+                          </Text>
+                        </View>
+                      )}
+                    </View>
+                    <Text
+                      style={[styles.relatedTitle, { color: isDark ? '#fff' : '#000' }]}
+                      numberOfLines={2}
+                    >
+                      {item.title}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+          </View>
+        </ScrollView>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -377,24 +370,205 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     padding: 10,
   },
-  bottomNav: {
+
+  videoEmoji: {
+    fontSize: 64,
+    marginBottom: 12,
+  },
+  videoControls: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+  },
+  playButton: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: [{ translateX: -30 }, { translateY: -30 }],
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  playIcon: {
+    fontSize: 28,
+  },
+  durationBadge: {
+    position: 'absolute',
+    bottom: 12,
+    right: 12,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+  },
+  durationText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  backButton: {
+    position: 'absolute',
+    top: 12,
+    left: 12,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  backIcon: {
+    fontSize: 20,
+  },
+  contentContainer: {
+    padding: 16,
+  },
+  content: {
+    flex: 1,
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: '700',
+    marginBottom: 8,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 12,
+  },
+  statText: {
+    color: '#888',
+    fontSize: 13,
+  },
+  creatorRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  creatorInfo: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  creatorAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#2a2a2a',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  creatorAvatarEmoji: {
+    fontSize: 20,
+  },
+  creatorName: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  creatorMeta: {
+    color: '#888',
+    fontSize: 12,
+    marginTop: 2,
+  },
+  followButton: {
+    backgroundColor: '#E8420A',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  followButtonActive: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: '#888',
+  },
+  followButtonText: {
+    color: '#fff',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  followButtonTextActive: {
+    color: '#888',
+  },
+  description: {
+    fontSize: 14,
+    lineHeight: 20,
+    marginBottom: 16,
+  },
+  tagsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 16,
+  },
+  tag: {
+    backgroundColor: '#2a2a2a',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  tagText: {
+    color: '#888',
+    fontSize: 12,
+  },
+  actionsRow: {
     flexDirection: 'row',
     justifyContent: 'space-around',
+    marginBottom: 24,
     paddingVertical: 12,
-    paddingBottom: 30,
-    backgroundColor: '#1a1a1a',
     borderTopWidth: 1,
-    borderTopColor: '#2a2a2a',
+    borderBottomWidth: 1,
+    borderColor: '#2a2a2a',
   },
-  navItem: {
+  actionButton: {
     alignItems: 'center',
+    gap: 4,
   },
-  navIcon: {
+  actionIcon: {
     fontSize: 24,
-    marginBottom: 4,
   },
-  navLabel: {
-    fontSize: 11,
+  actionText: {
     color: '#888',
+    fontSize: 11,
+  },
+  commentsSection: {
+    marginBottom: 24,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 12,
+  },
+  addCommentBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 16,
+  },
+  commentInput: {
+    flex: 1,
+    backgroundColor: '#2a2a2a',
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    color: '#fff',
+    fontSize: 14,
+  },
+  postButton: {
+    backgroundColor: '#E8420A',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
+  },
+  postButtonText: {
+    color: '#fff',
+    fontSize: 13,
+    fontWeight: '600',
   },
 });

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { AccessibilityInfo, type ViewStyle, type StyleProp } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -48,9 +48,5 @@ export function PageTransition({
     transform: [{ translateY: translateY.value }],
   }));
 
-  return (
-    <Animated.View style={[style, animatedStyle]}>
-      {children}
-    </Animated.View>
-  );
+  return <Animated.View style={[style, animatedStyle]}>{children}</Animated.View>;
 }

@@ -178,11 +178,11 @@ export default function RegisterPage(): React.JSX.Element {
           />
           <span className="text-white/60 text-xs leading-relaxed">
             I agree to the{' '}
-            <a href="#" className="text-white hover:text-[#E8420A] underline">
+            <a href="/terms" className="text-white hover:text-[#E8420A] underline">
               terms of services
             </a>{' '}
             and{' '}
-            <a href="#" className="text-white hover:text-[#E8420A] underline">
+            <a href="/privacy" className="text-white hover:text-[#E8420A] underline">
               privacy policy
             </a>
           </span>

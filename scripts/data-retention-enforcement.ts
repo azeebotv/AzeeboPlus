@@ -1,4 +1,4 @@
-#!/usr/bin/env ts-node
+#!/usr/bin/env node
 
 /**
  * Data Retention Policy Enforcement Job
@@ -81,7 +81,9 @@ function calculateCutoffDate(duration: string): Date {
 // Run the retention job
 enforceDataRetention()
   .then((results) => {
-    console.log(`Data retention enforcement complete: ${results.deletedCount} records deleted, ${results.archivedCount} archived`);
+    console.log(
+      `Data retention enforcement complete: ${results.deletedCount} records deleted, ${results.archivedCount} archived`
+    );
     if (results.errors.length > 0) {
       console.error('Errors:', results.errors);
     }

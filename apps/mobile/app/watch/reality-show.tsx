@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  Alert,
   Image,
   Modal,
   ActivityIndicator,
@@ -13,9 +14,29 @@ import { useColorScheme } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { realityApi } from '../../src/api/engagement';
 import { walletApi } from '../../src/api/wallet';
+import { apiClient } from '../../src/api/client';
 import { logger } from '../../src/utils/logger';
+import { ApiResponse, Contestant } from '../../src/types/api';
 
 const PLACEHOLDER_IMAGE = '';
+
+interface ShowData {
+  id: string;
+  name: string;
+  subtitle?: string;
+  heroTitle?: string;
+  heroSubtitle?: string;
+  viewerCount?: number;
+  status?: string;
+}
+
+interface ShowContestant {
+  id: string;
+  name: string;
+  avatar: string;
+  votes: number;
+  status: string;
+}
 
 export default function RealityShowScreen() {
   const colorScheme = useColorScheme();
@@ -27,7 +48,8 @@ export default function RealityShowScreen() {
   const [voteSuccess, setVoteSuccess] = useState(false);
   const [walletBalance, setWalletBalance] = useState(0);
   const [totalVotes, setTotalVotes] = useState(0);
-  const [contestants, setContestants] = useState<any[]>([]);
+  const [contestants, setContestants] = useState<ShowContestant[]>([]);
+  const [showData, setShowData] = useState<ShowData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -35,23 +57,33 @@ export default function RealityShowScreen() {
     loadData();
   }, [showId]);
 
+  const showName = showData?.name || 'Reality Show';
+  const heroTitle = showData?.heroTitle || showData?.subtitle || '';
+  const heroSubtitle = showData?.heroSubtitle || '';
+  const viewerCount = showData?.viewerCount ? `${showData.viewerCount} watching` : '';
+
   const loadData = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      const [contestantsRes, walletRes] = await Promise.all([
+      const [contestantsRes, walletRes, showRes] = await Promise.all([
         realityApi.getContestants(showId || 'default'),
         walletApi.getBalance(),
+        apiClient.get<ShowData[] | ApiResponse<ShowData[]>>('/v1/reality/shows/current').catch(() => null),
       ]);
 
       if (contestantsRes.success && contestantsRes.data) {
         setContestants(contestantsRes.data);
-        setTotalVotes(contestantsRes.data.reduce((sum: number, c: any) => sum + (c.votes || 0), 0));
+        setTotalVotes(contestantsRes.data.reduce((sum: number, c: ShowContestant) => sum + (c.votes || 0), 0));
       }
 
       if (walletRes.success && walletRes.data) {
         setWalletBalance(walletRes.data.balance);
+      }
+
+      if (showRes) {
+        setShowData(Array.isArray(showRes) ? showRes[0] : (showRes?.data?.[0] ?? showRes));
       }
     } catch (err) {
       logger.error('Failed to load reality show data:', err);
@@ -76,7 +108,7 @@ export default function RealityShowScreen() {
         votes: voteAmount,
       });
       if (!response.success) {
-        throw new Error(response.error?.message || 'Vote submission failed');
+        throw new Error(response.error || 'Vote submission failed');
       }
       setWalletBalance((prev) => prev - voteCost);
       const contestant = contestants.find((c) => c.id === selectedContestant);
@@ -103,12 +135,12 @@ export default function RealityShowScreen() {
         style={[
           styles.container,
           styles.centerContent,
-          { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' },
+          { backgroundColor: colorScheme === 'dark' ? '#1A0A0A' : '#ffffff' },
         ]}
       >
-        <ActivityIndicator size="large" color="#8B5CF6" />
+        <ActivityIndicator size="large" color="#E8420A" />
         <Text
-          style={[styles.loadingText, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}
+          style={[styles.loadingText, { color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A' }]}
         >
           Loading...
         </Text>
@@ -122,7 +154,7 @@ export default function RealityShowScreen() {
         style={[
           styles.container,
           styles.centerContent,
-          { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' },
+          { backgroundColor: colorScheme === 'dark' ? '#1A0A0A' : '#ffffff' },
         ]}
       >
         <Text style={[styles.errorText, { color: '#ef4444' }]}>{error}</Text>
@@ -137,7 +169,7 @@ export default function RealityShowScreen() {
     <ScrollView
       style={[
         styles.container,
-        { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' },
+        { backgroundColor: colorScheme === 'dark' ? '#1A0A0A' : '#ffffff' },
       ]}
     >
       <View style={styles.header}>
@@ -145,9 +177,9 @@ export default function RealityShowScreen() {
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
         <Text
-          style={[styles.headerTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}
+          style={[styles.headerTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A' }]}
         >
-          Big Brother Naija
+          {showName}
         </Text>
         <View style={styles.liveBadge}>
           <View style={styles.liveDot} />
@@ -158,13 +190,15 @@ export default function RealityShowScreen() {
       <View style={styles.heroSection}>
         <Image source={{ uri: PLACEHOLDER_IMAGE }} style={styles.heroImage} />
         <View style={styles.heroOverlay}>
-          <Text style={styles.heroTitle}>Live Eviction Night</Text>
-          <Text style={styles.heroSubtitle}>Season 9 | Day 42</Text>
+          {heroTitle ? <Text style={styles.heroTitle}>{heroTitle}</Text> : null}
+          {heroSubtitle ? <Text style={styles.heroSubtitle}>{heroSubtitle}</Text> : null}
         </View>
-        <View style={styles.viewerCount}>
-          <Text style={styles.viewerIcon}>👥</Text>
-          <Text style={styles.viewerText}>2.5M watching</Text>
-        </View>
+        {viewerCount ? (
+          <View style={styles.viewerCount}>
+            <Text style={styles.viewerIcon}>👥</Text>
+            <Text style={styles.viewerText}>{viewerCount}</Text>
+          </View>
+        ) : null}
       </View>
 
       <View style={styles.walletBar}>
@@ -179,14 +213,14 @@ export default function RealityShowScreen() {
 
       <View style={styles.voteSection}>
         <Text
-          style={[styles.sectionTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}
+          style={[styles.sectionTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A' }]}
         >
           Vote to Save
         </Text>
 
         <View style={styles.voteAmountSelector}>
           <TouchableOpacity
-            style={[styles.voteButton, voteAmount > 1 && { backgroundColor: '#8B5CF6' }]}
+            style={[styles.voteButton, voteAmount > 1 && { backgroundColor: '#E8420A' }]}
             onPress={() => setVoteAmount(Math.max(1, voteAmount - 1))}
           >
             <Text style={[styles.voteButtonText, voteAmount > 1 && { color: '#ffffff' }]}>-</Text>
@@ -194,13 +228,13 @@ export default function RealityShowScreen() {
           <Text
             style={[
               styles.voteAmountText,
-              { color: colorScheme === 'dark' ? '#ffffff' : '#000000' },
+              { color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A' },
             ]}
           >
             {voteAmount} Vote{voteAmount > 1 ? 's' : ''}
           </Text>
           <TouchableOpacity
-            style={[styles.voteButton, { backgroundColor: '#8B5CF6' }]}
+            style={[styles.voteButton, { backgroundColor: '#E8420A' }]}
             onPress={() => setVoteAmount(voteAmount + 1)}
           >
             <Text style={styles.voteButtonText}>+</Text>
@@ -224,13 +258,13 @@ export default function RealityShowScreen() {
               style={[
                 styles.contestantCard,
                 contestant.status === 'evicted' && { opacity: 0.5 },
-                selectedContestant === contestant.id && { borderColor: '#8B5CF6', borderWidth: 2 },
+                selectedContestant === contestant.id && { borderColor: '#E8420A', borderWidth: 2 },
               ]}
             >
               <View
                 style={[
                   styles.contestantAvatar,
-                  contestant.status !== 'evicted' && { backgroundColor: '#8B5CF6' },
+                  contestant.status !== 'evicted' && { backgroundColor: '#E8420A' },
                 ]}
               >
                 <Text style={styles.avatarText}>{contestant.avatar}</Text>
@@ -238,7 +272,7 @@ export default function RealityShowScreen() {
               <Text
                 style={[
                   styles.contestantName,
-                  { color: colorScheme === 'dark' ? '#ffffff' : '#000000' },
+                  { color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A' },
                 ]}
               >
                 {contestant.name}
@@ -263,7 +297,7 @@ export default function RealityShowScreen() {
 
       <View style={styles.leaderboardSection}>
         <Text
-          style={[styles.sectionTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}
+          style={[styles.sectionTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A' }]}
         >
           Vote Leaderboard
         </Text>
@@ -281,7 +315,7 @@ export default function RealityShowScreen() {
                   <Text
                     style={[
                       styles.leaderboardName,
-                      { color: colorScheme === 'dark' ? '#ffffff' : '#000000' },
+                      { color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A' },
                     ]}
                   >
                     {contestant.name}
@@ -303,7 +337,7 @@ export default function RealityShowScreen() {
 
       <View style={styles.predictionSection}>
         <Text
-          style={[styles.sectionTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}
+          style={[styles.sectionTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A' }]}
         >
           Predictions
         </Text>
@@ -311,7 +345,7 @@ export default function RealityShowScreen() {
           <Text
             style={[
               styles.predictionTitle,
-              { color: colorScheme === 'dark' ? '#ffffff' : '#000000' },
+              { color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A' },
             ]}
           >
             Who will be evicted tonight?
@@ -326,7 +360,7 @@ export default function RealityShowScreen() {
                   <Text
                     style={[
                       styles.predictionName,
-                      { color: colorScheme === 'dark' ? '#ffffff' : '#000000' },
+                      { color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A' },
                     ]}
                   >
                     {contestant.name}
@@ -507,12 +541,12 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   walletAmount: {
-    color: '#8B5CF6',
+    color: '#E8420A',
     fontSize: 20,
     fontWeight: '700',
   },
   fundButton: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 8,
@@ -565,7 +599,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   priceAmount: {
-    color: '#8B5CF6',
+    color: '#E8420A',
     fontWeight: '700',
   },
   insufficientFunds: {
@@ -612,11 +646,11 @@ const styles = StyleSheet.create({
   },
   voteCount: {
     fontSize: 12,
-    color: '#8B5CF6',
+    color: '#E8420A',
     fontWeight: '600',
   },
   submitVoteButton: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     padding: 16,
     borderRadius: 12,
     alignItems: 'center',
@@ -654,7 +688,7 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   topRank: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     color: '#fff',
   },
   leaderboardAvatar: {
@@ -677,13 +711,13 @@ const styles = StyleSheet.create({
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     borderRadius: 2,
   },
   leaderboardVotes: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#8B5CF6',
+    color: '#E8420A',
   },
   predictionSection: {
     padding: 16,
@@ -723,7 +757,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   predictionHint: {
-    color: '#8B5CF6',
+    color: '#E8420A',
     fontSize: 13,
     fontWeight: '500',
     textAlign: 'right',
@@ -759,7 +793,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   modalHighlight: {
-    color: '#8B5CF6',
+    color: '#E8420A',
     fontWeight: '600',
   },
   modalButtons: {
@@ -780,7 +814,7 @@ const styles = StyleSheet.create({
   },
   modalConfirm: {
     flex: 2,
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     padding: 12,
     borderRadius: 10,
     alignItems: 'center',
@@ -823,7 +857,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   retryButton: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,

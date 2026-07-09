@@ -1,28 +1,34 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { randomInt } from 'crypto';
+import * as bcrypt from 'bcrypt';
+import axios from 'axios';
 
 import { AuthRepository } from '../auth.repository';
 
 @Injectable()
 export class OtpService {
   private readonly otpExpiry: number;
+  private readonly saltRounds: number;
+  private readonly logger = new Logger(OtpService.name);
 
   constructor(
     private readonly authRepository: AuthRepository,
     private readonly configService: ConfigService
   ) {
     this.otpExpiry = this.configService.get<number>('OTP_EXPIRY', 300);
+    this.saltRounds = this.configService.get<number>('SALT_ROUNDS', 10);
   }
 
-  async generateOtp(userId: string): Promise<{ otp: string; expiresAt: Date }> {
+  async generateOtp(userId: string): Promise<{ code: string; expiresAt: Date }> {
     const otp = randomInt(100000, 999999).toString();
+    const hashedOtp = await bcrypt.hash(otp, this.saltRounds);
     const expiresAt = new Date();
     expiresAt.setSeconds(expiresAt.getSeconds() + this.otpExpiry);
 
-    await this.authRepository.setOtp(userId, otp, expiresAt);
+    await this.authRepository.setOtp(userId, hashedOtp, expiresAt);
 
-    return { otp, expiresAt };
+    return { code: otp, expiresAt };
   }
 
   async verifyOtp(userId: string, code: string): Promise<boolean> {
@@ -31,11 +37,14 @@ export class OtpService {
       throw new BadRequestException('OTP expired or invalid');
     }
 
-    if ((storedOtp as { code: string }).code !== code) {
+    const storedCode = (storedOtp as { code: string }).code;
+    const isCodeValid = await bcrypt.compare(code, storedCode);
+    if (!isCodeValid) {
       throw new BadRequestException('Invalid OTP code');
     }
 
-    if (new Date() > new Date((storedOtp as { expiresAt: Date }).expiresAt)) {
+    const expiresAt = (storedOtp as { expiresAt: Date }).expiresAt;
+    if (new Date() > new Date(expiresAt)) {
       await this.authRepository.deleteOtp(userId);
       throw new BadRequestException('OTP has expired');
     }
@@ -46,10 +55,32 @@ export class OtpService {
 
   async sendOtpToUser(
     userId: string,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     phoneNumber: string
   ): Promise<{ message: string }> {
-    await this.generateOtp(userId);
+    if (!phoneNumber) {
+      throw new BadRequestException('Phone number is required for OTP delivery');
+    }
+
+    const { code, expiresAt } = await this.generateOtp(userId);
+
+    try {
+      const notificationServiceUrl = this.configService.get<string>(
+        'NOTIFICATION_SERVICE_URL',
+        'http://notification-service:3006'
+      );
+      await axios.post(`${notificationServiceUrl}/v1/notifications/sms`, {
+        to: phoneNumber,
+        template: 'otp',
+        data: {
+          code,
+          expiresIn: Math.floor((expiresAt.getTime() - Date.now()) / 1000),
+        },
+      });
+      this.logger.log(`OTP sent to ${phoneNumber}`);
+    } catch (error) {
+      this.logger.error(`Failed to send OTP via notification-service: ${(error as Error).message}`);
+      throw new BadRequestException('Failed to send OTP. Please try again.');
+    }
 
     return { message: 'OTP sent successfully' };
   }

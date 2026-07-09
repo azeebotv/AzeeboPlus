@@ -8,6 +8,7 @@ import { IntelligenceModule } from './modules/intelligence/intelligence.module';
 import { HealthModule } from './modules/health/health.module';
 import { MetricsModule } from './modules/metrics/metrics.module';
 import { ServiceAuthGuard } from '@azeebo/security';
+import { CacheModule } from '@azeebo/shared-services';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { ServiceAuthGuard } from '@azeebo/security';
       isGlobal: true,
       envFilePath: ['.env', '../../.env'],
     }),
+    CacheModule,
     AnalyticsModule,
     AnalyticsInstrumentationModule,
     AdminModule,
@@ -30,4 +32,3 @@ import { ServiceAuthGuard } from '@azeebo/security';
   ],
 })
 export class AppModule {}
-

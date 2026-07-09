@@ -1,36 +1,43 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/api';
 import AdminLayout from '@/components/layout/AdminLayout';
+import { Skeleton, ErrorState } from '@azeebo/ui/web';
+
+interface AuditLog {
+  id?: string;
+  timestamp?: string;
+  createdAt?: string;
+  userId?: string;
+  username?: string;
+  action?: string;
+  details?: string;
+  ipAddress?: string;
+}
 
 export default function AdminAuditLogsPage(): React.JSX.Element {
-  const { isAuthenticated, user } = useAuth();
-  const [logs, setLogs] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
+  const { isAuthenticated, user, isLoading: authLoading } = useAuth();
   const [filter, setFilter] = useState('all');
+  const isEnabled = !authLoading && !!isAuthenticated && !!user && user.role === 'admin';
 
-  useEffect(() => {
-    if (!isAuthenticated || !user || user.role !== 'admin') return;
-    loadLogs();
-  }, [isAuthenticated, user, filter]);
-
-  const loadLogs = async () => {
-    setIsLoading(true);
-    try {
+  const { data: logs = [], isLoading, error } = useQuery({
+    queryKey: ['admin', 'audit-logs', filter],
+    queryFn: async () => {
       const params = new URLSearchParams();
       if (filter !== 'all') params.set('category', filter);
-      const response = await apiFetch<any>(`/admin/audit-logs?${params.toString()}`);
+      const response = await apiFetch<{ success: boolean; data: AuditLog[] | { items?: AuditLog[] } }>(`/admin/audit-logs?${params.toString()}`);
       if (response.success && response.data) {
-        const data = response.data as any;
-        setLogs(Array.isArray(data) ? data : data.items || []);
+        const data = response.data as AuditLog[] | { items?: AuditLog[] };
+        return Array.isArray(data) ? data : data.items || [];
       }
-    } catch {
-      /* ignore */
-    } finally {
-      setIsLoading(false);
-    }
-  };
+      return [];
+    },
+    enabled: isEnabled,
+  });
 
   return (
     <AdminLayout>
@@ -42,6 +49,9 @@ export default function AdminAuditLogsPage(): React.JSX.Element {
           <button
             key={f}
             onClick={() => setFilter(f)}
+            role="radio"
+            aria-checked={filter === f}
+            aria-label={`Filter by ${f} category`}
             style={{
               padding: '8px 16px',
               borderRadius: 999,
@@ -61,18 +71,21 @@ export default function AdminAuditLogsPage(): React.JSX.Element {
       </div>
 
       {isLoading ? (
-        <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}>
-          <div
-            style={{
-              width: 40,
-              height: 40,
-              border: '3px solid #2A1A1A',
-              borderTopColor: '#E8420A',
-              borderRadius: '50%',
-              animation: 'spin 0.8s linear infinite',
-            }}
-          />
+        <div className="az-glass" style={{ borderRadius: 16, overflow: 'hidden' }}>
+          <div style={{ padding: 16 }}>
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} style={{ display: 'flex', gap: 16, padding: '12px 0', borderBottom: '1px solid #1A0A0A' }}>
+                <Skeleton width="120px" height="14px" />
+                <Skeleton width="80px" height="14px" />
+                <Skeleton width="100px" height="14px" />
+                <Skeleton width="140px" height="14px" />
+                <Skeleton width="80px" height="14px" />
+              </div>
+            ))}
+          </div>
         </div>
+      ) : error ? (
+        <ErrorState title="Failed to load audit logs" description="Please try again later" onButtonPress={() => router.refresh()} />
       ) : (
         <div className="az-glass" style={{ borderRadius: 16, overflow: 'hidden' }}>
           <div style={{ overflowX: 'auto' }}>
@@ -97,8 +110,11 @@ export default function AdminAuditLogsPage(): React.JSX.Element {
                 </tr>
               </thead>
               <tbody>
-                {logs.map((log: any, i: number) => (
-                  <tr key={i} style={{ borderBottom: '1px solid #1A0A0A' }}>
+                {logs.map((log) => (
+                  <tr
+                    key={log.id || `${log.timestamp}-${log.userId}-${log.action}`}
+                    style={{ borderBottom: '1px solid #1A0A0A' }}
+                  >
                     <td style={{ padding: '10px 16px', color: '#6B5A4A', whiteSpace: 'nowrap' }}>
                       {new Date(log.timestamp || log.createdAt).toLocaleString()}
                     </td>

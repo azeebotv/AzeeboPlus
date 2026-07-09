@@ -6,43 +6,64 @@
 // ── Brand Colors ──────────────────────────────────────────────
 export const colors = {
   // Primary brand
-  primary: '#E8420A',       // Azeebo Orange — CTAs, logo accent, highlights
-  primaryDark: '#C83A08',   // Darker orange for pressed states
-  red: '#CC1C1C',           // Deep Red — buttons, active states, glow
-  redDark: '#B91818',       // Darker red for pressed states
+  primaryColor: '#E8420A', // Azeebo Orange — CTAs, logo accent, highlights
+  primaryDark: '#C83A08', // Darker orange for pressed states
+  red: '#CC1C1C', // Deep Red — buttons, active states, glow
+  redDark: '#B91818', // Darker red for pressed states
 
   // Backgrounds
   bg: {
-    primary: '#0A0A0A',     // Near-black — main background
-    secondary: '#1A0A0A',   // Slightly warmer black — cards, surfaces
-    tertiary: '#2A1A1A',    // Elevated surface
-    surface: '#2A2A2A',     // Card backgrounds, input fields
+    primary: '#1A0A0A', // Warm near-black — main background
+    secondary: '#0A0A0A', // Cool near-black
+    tertiary: '#2A1A1A', // Elevated surface
+    surface: '#2A2A2A', // Card backgrounds, input fields
     surfaceInput: '#1E1E1E', // Input field backgrounds
     glass: 'rgba(255,255,255,0.08)', // Frosted glass panels
-    glassBorder: 'rgba(255,255,255,0.12)', // Glass panel borders
-    green: '#0D3B2E',       // Forest green — marketing/hero backgrounds
+    glassBorder: 'rgba(255,255,255,0.2)', // Glass panel borders
+    green: '#0D3B2E', // Forest green — marketing/hero backgrounds
   },
 
   // Text
   text: {
-    primary: '#FFFFFF',     // White — primary text
-    secondary: '#9A8A7A',   // Warm grey — secondary text
-    tertiary: '#6B5B4B',    // Muted grey — hints, captions
-    inverse: '#0A0A0A',     // Dark text on light backgrounds
-    accent: '#E8420A',      // Orange accent text
-    link: '#E8420A',        // Link color
+    primary: '#FFFFFF', // White — primary text
+    secondary: '#9A8A7A', // Warm grey — secondary text
+    tertiary: '#6B5B4B', // Muted grey — hints, captions
+    inverse: '#0A0A0A', // Dark text on light backgrounds
+    accent: '#E8420A', // Orange accent text
+    link: '#E8420A', // Link color
   },
 
   // Semantic
-  success: '#22C55E',
-  warning: '#F59E0B',
-  error: '#CC1C1C',
-  info: '#3B82F6',
+  primary: {
+    50: '#FEF3EC', 100: '#FDE2D1', 200: '#FBC5A3', 300: '#F89E6B',
+    400: '#F46E2E', 500: '#E8420A', 600: '#C83A08', 700: '#A33007',
+    800: '#7E2505', 900: '#5A1A03',
+  },
+  success: {
+    50: '#F0FDF4', 100: '#DCFCE7', 200: '#BBF7D0', 300: '#86EFAC',
+    400: '#4ADE80', 500: '#22C55E', 600: '#16A34A', 700: '#15803D',
+    800: '#166534', 900: '#14532D',
+  },
+  warning: {
+    50: '#FFFBEB', 100: '#FEF3C7', 200: '#FDE68A', 300: '#FCD34D',
+    400: '#FBBF24', 500: '#F59E0B', 600: '#D97706', 700: '#B45309',
+    800: '#92400E', 900: '#78350F',
+  },
+  error: {
+    50: '#FEF2F2', 100: '#FEE2E2', 200: '#FECACA', 300: '#FCA5A5',
+    400: '#F87171', 500: '#CC1C1C', 600: '#B91818', 700: '#991B1B',
+    800: '#7F1D1D', 900: '#611111',
+  },
+  info: {
+    50: '#EFF6FF', 100: '#DBEAFE', 200: '#BFDBFE', 300: '#93C5FD',
+    400: '#60A5FA', 500: '#3B82F6', 600: '#2563EB', 700: '#1D4ED8',
+    800: '#1E40AF', 900: '#1E3A8A',
+  },
 
   // Borders
   border: {
-    default: 'rgba(255,255,255,0.08)',
-    focus: '#CC1C1C',
+    default: 'rgba(255,255,255,0.2)',
+    focus: '#E8420A',
     subtle: 'rgba(255,255,255,0.04)',
   },
 
@@ -51,26 +72,73 @@ export const colors = {
     dark: 'rgba(10,10,10,0.85)',
     light: 'rgba(255,255,255,0.05)',
   },
+
+  // Dark shade scale (Tailwind gray)
+  dark: {
+    50: '#f8fafc',
+    100: '#f1f5f9',
+    200: '#e2e8f0',
+    300: '#cbd5e1',
+    400: '#94a3b8',
+    500: '#64748b',
+    600: '#475569',
+    700: '#334155',
+    800: '#1e293b',
+    900: '#030712',
+    950: '#0A0A0A',
+  },
+
+  // Light shade scale (Tailwind gray)
+  light: {
+    50: '#f9fafb',
+    100: '#f3f4f6',
+    200: '#e5e7eb',
+    300: '#d1d5db',
+    400: '#9ca3af',
+    500: '#6b7280',
+    600: '#4b5563',
+    700: '#374151',
+    800: '#1f2937',
+    900: '#111827',
+    950: '#030712',
+  },
+
+  // Accent metallics
+  accent: {
+    gold: '#F59E0B',
+    silver: '#9CA3AF',
+    bronze: '#CD7F32',
+  },
+} as const;
+
+// ── Agbala Path Colors ────────────────────────────────────────
+export const pathColors = {
+  warrior: '#C41E3A',
+  sage: '#1E90FF',
+  trickster: '#FFD700',
+  healer: '#32CD32',
 } as const;
 
 // ── Universe Colors ───────────────────────────────────────────
 export const universeColors: Record<string, string> = {
-  reality: '#CC1C1C',
+  reality: '#8b5cf6',
   creators: '#E8420A',
-  lifestyle: '#0D3B2E',
-  vertical: '#8B5CF6',
-  movies: '#F59E0B',
-  games: '#3B82F6',
-  comedy: '#22C55E',
-  sports: '#EF4444',
-  music: '#EC4899',
+  creator: '#E8420A',
+  lifestyle: '#ec4899',
+  vertical: '#3b82f6',
+  movies: '#E8420A',
+  movie: '#E8420A',
+  games: '#06b6d4',
+  comedy: '#fbbf24',
+  sports: '#22c55e',
+  cinemaxis: '#0A1A3B',
 };
 
 // ── Typography ────────────────────────────────────────────────
 export const typography = {
   fontFamily: {
-    display: 'System',   // Montserrat equivalent via system bold
-    body: 'System',       // Inter equivalent via system
+    display: 'System', // Montserrat equivalent via system bold
+    body: 'System', // Inter equivalent via system
   },
   fontSize: {
     xs: 11,

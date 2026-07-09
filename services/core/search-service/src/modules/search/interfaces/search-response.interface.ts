@@ -2,10 +2,8 @@ export interface SearchResult {
   id: string;
   title: string;
   description: string | null;
-  contentType: string;
   status: string;
   viewCount: number;
-  averageRating: number;
   createdAt: Date;
   updatedAt: Date;
 }

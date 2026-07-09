@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { creatorApi, CreatorDashboard, CreatorAnalytics } from '../../src/api/creator';
 import { LoadingState, ErrorState } from '../../src/components/StateContainers';
 
@@ -30,8 +31,8 @@ export default function CreatorDashboard() {
         creatorApi.getDashboard(),
         creatorApi.getAnalytics(),
       ]);
-      if (dashboardRes.success) setDashboardData(dashboardRes.data);
-      if (analyticsRes.success) setAnalyticsData(analyticsRes.data);
+      if (dashboardRes.success) setDashboardData(dashboardRes.data ?? null);
+      if (analyticsRes.success) setAnalyticsData(analyticsRes.data ?? null);
     } catch (err) {
       setError('Failed to load dashboard data. Please try again.');
     } finally {
@@ -44,11 +45,19 @@ export default function CreatorDashboard() {
   }, [fetchData]);
 
   if (isLoading) {
-    return <LoadingState text="Loading dashboard..." />;
+    return (
+      <SafeAreaView style={styles.container}>
+        <LoadingState text="Loading dashboard..." />
+      </SafeAreaView>
+    );
   }
 
   if (error) {
-    return <ErrorState description={error} onRetry={fetchData} />;
+    return (
+      <SafeAreaView style={styles.container}>
+        <ErrorState description={error} onRetry={fetchData} />
+      </SafeAreaView>
+    );
   }
 
   const stats = [
@@ -110,198 +119,202 @@ export default function CreatorDashboard() {
   const maxViews = Math.max(...weeklyViews.map((w) => w.views), 1);
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: isDark ? '#0a0a0a' : '#ffffff' }]}>
-      <View style={styles.header}>
-        <View style={styles.headerTop}>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-            <Text style={styles.backIcon}>←</Text>
-          </TouchableOpacity>
-          <Text style={[styles.headerTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
-            Creator Dashboard
-          </Text>
-          <TouchableOpacity style={styles.settingsButton}>
-            <Text style={styles.settingsIcon}>⚙️</Text>
-          </TouchableOpacity>
-        </View>
-        <View style={styles.creatorInfo}>
-          <View style={styles.avatarPlaceholder}>
-            <Text style={styles.avatarEmoji}>👤</Text>
-          </View>
-          <View style={styles.creatorDetails}>
-            <Text style={[styles.creatorName, { color: isDark ? '#fff' : '#000' }]}>
-              Your Channel
+    <SafeAreaView style={styles.container}>
+      <ScrollView style={[{ flex: 1 }, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+        <View style={styles.header}>
+          <View style={styles.headerTop}>
+            <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+              <Text style={styles.backIcon}>←</Text>
+            </TouchableOpacity>
+            <Text style={[styles.headerTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
+              Creator Dashboard
             </Text>
-            <Text style={styles.creatorCategory}>Creator</Text>
+            <TouchableOpacity style={styles.settingsButton}>
+              <Text style={styles.settingsIcon}>⚙️</Text>
+            </TouchableOpacity>
           </View>
-          <TouchableOpacity style={styles.editButton}>
-            <Text style={styles.editIcon}>✏️</Text>
-          </TouchableOpacity>
+          <View style={styles.creatorInfo}>
+            <View style={styles.avatarPlaceholder}>
+              <Text style={styles.avatarEmoji}>👤</Text>
+            </View>
+            <View style={styles.creatorDetails}>
+              <Text style={[styles.creatorName, { color: isDark ? '#fff' : '#000' }]}>
+                Your Channel
+              </Text>
+              <Text style={styles.creatorCategory}>Creator</Text>
+            </View>
+            <TouchableOpacity style={styles.editButton}>
+              <Text style={styles.editIcon}>✏️</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
 
-      <View style={styles.statsGrid}>
-        {stats.map((stat) => (
-          <View
-            key={stat.id}
-            style={[styles.statCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
-          >
-            <Text style={styles.statEmoji}>{stat.emoji}</Text>
-            <Text style={[styles.statValue, { color: isDark ? '#fff' : '#000' }]}>
-              {stat.value}
+        <View style={styles.statsGrid}>
+          {stats.map((stat) => (
+            <View
+              key={stat.id}
+              style={[styles.statCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
+            >
+              <Text style={styles.statEmoji}>{stat.emoji}</Text>
+              <Text style={[styles.statValue, { color: isDark ? '#fff' : '#000' }]}>
+                {stat.value}
+              </Text>
+              <Text style={styles.statLabel}>{stat.label}</Text>
+              <View style={styles.statChange}>
+                <Text style={styles.changeText}>{stat.change || '-'}</Text>
+              </View>
+            </View>
+          ))}
+        </View>
+
+        <View style={styles.analyticsSection}>
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
+              Weekly Views
             </Text>
-            <Text style={styles.statLabel}>{stat.label}</Text>
-            <View style={styles.statChange}>
-              <Text style={styles.changeText}>{stat.change || '-'}</Text>
+            <TouchableOpacity>
+              <Text style={styles.seeAllText}>See Details</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.chartContainer}>
+            <View style={styles.chartPlaceholder}>
+              {weeklyViews.length > 0 ? (
+                weeklyViews.map((item, index) => (
+                  <View key={index} style={styles.chartBar}>
+                    <View style={[styles.bar, { height: (item.views / maxViews) * 100 }]} />
+                    <Text style={styles.chartLabel}>{item.day}</Text>
+                  </View>
+                ))
+              ) : (
+                <Text style={{ color: '#888', textAlign: 'center', width: '100%' }}>
+                  No data available
+                </Text>
+              )}
             </View>
           </View>
-        ))}
-      </View>
-
-      <View style={styles.analyticsSection}>
-        <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
-            Weekly Views
-          </Text>
-          <TouchableOpacity>
-            <Text style={styles.seeAllText}>See Details</Text>
-          </TouchableOpacity>
         </View>
-        <View style={styles.chartContainer}>
-          <View style={styles.chartPlaceholder}>
-            {weeklyViews.length > 0 ? (
-              weeklyViews.map((item, index) => (
-                <View key={index} style={styles.chartBar}>
-                  <View style={[styles.bar, { height: (item.views / maxViews) * 100 }]} />
-                  <Text style={styles.chartLabel}>{item.day}</Text>
-                </View>
+
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
+              Recent Content
+            </Text>
+            <TouchableOpacity>
+              <Text style={styles.seeAllText}>See All</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.contentList}>
+            {recentContent.length > 0 ? (
+              recentContent.map((item) => (
+                <TouchableOpacity
+                  key={item.id}
+                  style={[styles.contentItem, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
+                >
+                  <View style={styles.contentThumbnail}>
+                    <Text style={styles.contentEmoji}>{item.emoji}</Text>
+                  </View>
+                  <View style={styles.contentInfo}>
+                    <Text
+                      style={[styles.contentTitle, { color: isDark ? '#fff' : '#000' }]}
+                      numberOfLines={1}
+                    >
+                      {item.title}
+                    </Text>
+                    <View style={styles.contentMeta}>
+                      <Text style={styles.metaText}>👁️ {item.views}</Text>
+                      <Text style={styles.metaText}>❤️ {item.likes}</Text>
+                      <Text style={styles.metaText}>💬 {item.comments}</Text>
+                    </View>
+                    <Text style={styles.timeText}>{item.time}</Text>
+                  </View>
+                  <TouchableOpacity style={styles.moreButton}>
+                    <Text style={styles.moreIcon}>⋮</Text>
+                  </TouchableOpacity>
+                </TouchableOpacity>
               ))
             ) : (
-              <Text style={{ color: '#888', textAlign: 'center', width: '100%' }}>
-                No data available
+              <Text style={{ color: '#888', textAlign: 'center', padding: 20 }}>
+                No content yet
               </Text>
             )}
           </View>
         </View>
-      </View>
 
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
-            Recent Content
-          </Text>
-          <TouchableOpacity>
-            <Text style={styles.seeAllText}>See All</Text>
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
+              Recent Activity
+            </Text>
+          </View>
+          <View style={styles.notificationsList}>
+            {recentActivity.length > 0 ? (
+              recentActivity.map((notification) => (
+                <View
+                  key={notification.id}
+                  style={[
+                    styles.notificationItem,
+                    { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' },
+                  ]}
+                >
+                  <View
+                    style={[
+                      styles.notificationDot,
+                      notification.type === 'earning' && styles.earningDot,
+                      notification.type === 'comment' && styles.commentDot,
+                      notification.type === 'trending' && styles.trendingDot,
+                    ]}
+                  />
+                  <View style={styles.notificationContent}>
+                    <Text style={[styles.notificationMessage, { color: isDark ? '#fff' : '#000' }]}>
+                      {notification.message}
+                    </Text>
+                    <Text style={styles.notificationTime}>{notification.time}</Text>
+                  </View>
+                </View>
+              ))
+            ) : (
+              <Text style={{ color: '#888', textAlign: 'center', padding: 20 }}>
+                No recent activity
+              </Text>
+            )}
+          </View>
+        </View>
+
+        <View style={styles.actionsSection}>
+          <TouchableOpacity style={styles.actionButton}>
+            <Text style={styles.actionIcon}>📤</Text>
+            <Text style={styles.actionText}>Upload New Content</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.actionButton, styles.secondaryAction]}>
+            <Text style={styles.actionIcon}>📊</Text>
+            <Text style={styles.actionText}>View Full Analytics</Text>
           </TouchableOpacity>
         </View>
-        <View style={styles.contentList}>
-          {recentContent.length > 0 ? (
-            recentContent.map((item) => (
-              <TouchableOpacity
-                key={item.id}
-                style={[styles.contentItem, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
-              >
-                <View style={styles.contentThumbnail}>
-                  <Text style={styles.contentEmoji}>{item.emoji}</Text>
-                </View>
-                <View style={styles.contentInfo}>
-                  <Text
-                    style={[styles.contentTitle, { color: isDark ? '#fff' : '#000' }]}
-                    numberOfLines={1}
-                  >
-                    {item.title}
-                  </Text>
-                  <View style={styles.contentMeta}>
-                    <Text style={styles.metaText}>👁️ {item.views}</Text>
-                    <Text style={styles.metaText}>❤️ {item.likes}</Text>
-                    <Text style={styles.metaText}>💬 {item.comments}</Text>
-                  </View>
-                  <Text style={styles.timeText}>{item.time}</Text>
-                </View>
-                <TouchableOpacity style={styles.moreButton}>
-                  <Text style={styles.moreIcon}>⋮</Text>
-                </TouchableOpacity>
-              </TouchableOpacity>
-            ))
-          ) : (
-            <Text style={{ color: '#888', textAlign: 'center', padding: 20 }}>No content yet</Text>
-          )}
-        </View>
-      </View>
 
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
-            Recent Activity
-          </Text>
+        <View style={styles.bottomNav}>
+          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/home')}>
+            <Text style={styles.navIcon}>🏠</Text>
+            <Text style={styles.navLabel}>Home</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/watch')}>
+            <Text style={styles.navIcon}>📺</Text>
+            <Text style={styles.navLabel}>Watch</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/create')}>
+            <Text style={styles.navIcon}>✨</Text>
+            <Text style={[styles.navLabel, { color: '#4ECDC4' }]}>Create</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/rewards')}>
+            <Text style={styles.navIcon}>⭐</Text>
+            <Text style={styles.navLabel}>Rewards</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/profile')}>
+            <Text style={styles.navIcon}>👤</Text>
+            <Text style={styles.navLabel}>Profile</Text>
+          </TouchableOpacity>
         </View>
-        <View style={styles.notificationsList}>
-          {recentActivity.length > 0 ? (
-            recentActivity.map((notification) => (
-              <View
-                key={notification.id}
-                style={[
-                  styles.notificationItem,
-                  { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' },
-                ]}
-              >
-                <View
-                  style={[
-                    styles.notificationDot,
-                    notification.type === 'earning' && styles.earningDot,
-                    notification.type === 'comment' && styles.commentDot,
-                    notification.type === 'trending' && styles.trendingDot,
-                  ]}
-                />
-                <View style={styles.notificationContent}>
-                  <Text style={[styles.notificationMessage, { color: isDark ? '#fff' : '#000' }]}>
-                    {notification.message}
-                  </Text>
-                  <Text style={styles.notificationTime}>{notification.time}</Text>
-                </View>
-              </View>
-            ))
-          ) : (
-            <Text style={{ color: '#888', textAlign: 'center', padding: 20 }}>
-              No recent activity
-            </Text>
-          )}
-        </View>
-      </View>
-
-      <View style={styles.actionsSection}>
-        <TouchableOpacity style={styles.actionButton}>
-          <Text style={styles.actionIcon}>📤</Text>
-          <Text style={styles.actionText}>Upload New Content</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={[styles.actionButton, styles.secondaryAction]}>
-          <Text style={styles.actionIcon}>📊</Text>
-          <Text style={styles.actionText}>View Full Analytics</Text>
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/home')}>
-          <Text style={styles.navIcon}>🏠</Text>
-          <Text style={styles.navLabel}>Home</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/watch')}>
-          <Text style={styles.navIcon}>📺</Text>
-          <Text style={styles.navLabel}>Watch</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/create')}>
-          <Text style={styles.navIcon}>✨</Text>
-          <Text style={[styles.navLabel, { color: '#4ECDC4' }]}>Create</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/rewards')}>
-          <Text style={styles.navIcon}>⭐</Text>
-          <Text style={styles.navLabel}>Rewards</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/profile')}>
-          <Text style={styles.navIcon}>👤</Text>
-          <Text style={styles.navLabel}>Profile</Text>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 

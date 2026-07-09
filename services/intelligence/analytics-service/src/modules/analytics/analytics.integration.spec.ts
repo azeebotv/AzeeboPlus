@@ -37,10 +37,17 @@ describe('AnalyticsService Integration', () => {
               aggregate: jest.fn(),
               groupBy: jest.fn(),
             },
+            analyticsEvent: {
+              count: jest.fn(),
+              groupBy: jest.fn(),
+            },
             user: { count: jest.fn() },
             contentItem: { count: jest.fn() },
-            universe: { findUnique: jest.fn() },
+            universe: { findUnique: jest.fn(), findMany: jest.fn() },
+            paymentIntent: { count: jest.fn(), aggregate: jest.fn() },
+            subscription: { count: jest.fn() },
             $transaction: jest.fn(),
+            $queryRaw: jest.fn(),
           },
         },
       ],
@@ -171,7 +178,7 @@ describe('AnalyticsService Integration', () => {
       const mockCohorts = [
         { cohort_date: new Date(), total_users: 100, avg_events: 5.5, avg_recency_days: 86400 },
       ];
-      (prisma.$transaction as jest.Mock).mockResolvedValue(mockCohorts);
+      (prisma.$queryRaw as jest.Mock).mockResolvedValue(mockCohorts);
 
       const result = await service.getCohorts('week');
 

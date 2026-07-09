@@ -8,6 +8,7 @@ import {
   Query,
   HttpCode,
   HttpStatus,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
@@ -15,9 +16,11 @@ import { RateLimitGuard, RateLimit } from '@azeebo/security';
 
 import { SearchService } from './search.service';
 import { SearchResponse } from './interfaces/search-response.interface';
+import { LogSearchDto } from './dto/log-search.dto';
 
 @ApiTags('Search')
 @Controller('v1/search')
+@UseGuards(AuthGuard('jwt'))
 export class SearchController {
   constructor(private readonly searchService: SearchService) {}
 
@@ -109,8 +112,12 @@ export class SearchController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async logSearch(
     @Request() req: { user: { id: string; sub: string } },
-    @Body() body: { query: string; resultsCount?: number }
+    @Body() body: LogSearchDto
   ): Promise<{ success: boolean }> {
-    return this.searchService.logSearch(req.user.id, body.query, body.resultsCount ?? 0);
+    const userId = req.user?.id;
+    if (!userId) {
+      throw new UnauthorizedException();
+    }
+    return this.searchService.logSearch(userId, body.query, body.resultsCount ?? 0);
   }
 }

@@ -1,5 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, Logger } from '@nestjs/common';
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import helmet from 'helmet';
 import { GlobalExceptionFilter } from '@azeebo/error-handling';
@@ -50,6 +51,20 @@ async function bootstrap(): Promise<void> {
   });
 
   // Versioning disabled: controllers already prefix routes with 'v1/' manually
+
+  if (process.env.NODE_ENV !== 'production') {
+    const swaggerConfig = new DocumentBuilder()
+      .setTitle('Azeebo+ Search Service')
+      .setDescription('Search API for Azeebo+ platform')
+      .setVersion('1.0')
+      .addTag('search', 'Search operations')
+      .addBearerAuth()
+      .build();
+
+    const document = SwaggerModule.createDocument(app, swaggerConfig);
+    SwaggerModule.setup('docs', app, document);
+    Logger.log('Swagger documentation enabled at /docs');
+  }
 
   const port = process.env.PORT || 3005;
   app.enableShutdownHooks();

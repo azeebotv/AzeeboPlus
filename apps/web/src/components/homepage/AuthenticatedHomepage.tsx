@@ -4,11 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/context/AuthContext';
 import { api } from '@/lib/api';
-import type {
-  ContentItem,
-  EngagementHistoryItem,
-  RecommendationGroup,
-} from '@/lib/api';
+import type { ContentItem, EngagementHistoryItem, RecommendationGroup } from '@/lib/api';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import analytics from '@/lib/analytics';
 import AppHeader from '../layout/AppHeader';
@@ -85,7 +81,7 @@ export default function AuthenticatedHomepage({
         setRecentlyWatched((prev) =>
           recentlyWatchedOffset === 0 ? newItems : [...prev, ...newItems]
         );
-        setHasMoreHistory(response.data.hasMore);
+        setHasMoreHistory(!!response.data.hasMore);
       }
     } catch {
       // Graceful degradation
@@ -96,7 +92,7 @@ export default function AuthenticatedHomepage({
 
   useEffect(() => {
     loadRecentlyWatched();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   const loadMoreHistory = useCallback(async () => {
     const nextOffset = recentlyWatchedOffset + HISTORY_PAGE_SIZE;
@@ -105,7 +101,7 @@ export default function AuthenticatedHomepage({
       const response = await api.engagement.getRecentlyWatched(HISTORY_PAGE_SIZE, nextOffset);
       if (response.success && response.data) {
         setRecentlyWatched((prev) => [...prev, ...(response.data?.items || [])]);
-        setHasMoreHistory(response.data.hasMore);
+        setHasMoreHistory(!!response.data.hasMore);
       }
     } catch {
       // Graceful degradation
@@ -128,8 +124,9 @@ export default function AuthenticatedHomepage({
           return;
         }
 
-        const universeEngagement = engagementResponse.data
-          .sort((a, b) => b.engagementCount - a.engagementCount);
+        const universeEngagement = Array.isArray(engagementResponse.data)
+          ? engagementResponse.data.sort((a, b) => b.engagementCount - a.engagementCount)
+          : [];
 
         const contentPromises = universeEngagement.map(async (ue) => {
           try {
@@ -138,7 +135,11 @@ export default function AuthenticatedHomepage({
               universeId: ue.universeId,
               universeName: ue.universeName,
               universeIcon: ue.universeIcon,
-              items: contentResponse.success ? contentResponse.data || [] : [],
+              items: contentResponse.success
+                ? Array.isArray(contentResponse.data)
+                  ? contentResponse.data
+                  : []
+                : [],
             };
           } catch {
             return {
@@ -179,17 +180,23 @@ export default function AuthenticatedHomepage({
 
           const fallbackGroups: RecommendationGroup[] = [];
           if (forYou.status === 'fulfilled' && forYou.value.success && forYou.value.data) {
+            const items = Array.isArray(forYou.value.data)
+              ? forYou.value.data.map((r: ContentItem & { content?: ContentItem }) => r.content || r)
+              : [];
             fallbackGroups.push({
               title: 'Top picks for you',
               reason: 'Based on your viewing history',
-              items: forYou.value.data.map((r) => r.content),
+              items,
             });
           }
           if (trending.status === 'fulfilled' && trending.value.success && trending.value.data) {
+            const items = Array.isArray(trending.value.data)
+              ? trending.value.data.map((r: ContentItem & { content?: ContentItem }) => r.content || r)
+              : [];
             fallbackGroups.push({
               title: 'Popular right now',
               reason: 'Trending across the platform',
-              items: trending.value.data.map((r) => r.content),
+              items,
             });
           }
           setRecommendationGroups(fallbackGroups);
@@ -214,16 +221,32 @@ export default function AuthenticatedHomepage({
           api.engagement.getPopularInRegion(12),
         ]);
 
-        if (trendingRes.status === 'fulfilled' && trendingRes.value.success && Array.isArray(trendingRes.value.data)) {
+        if (
+          trendingRes.status === 'fulfilled' &&
+          trendingRes.value.success &&
+          Array.isArray(trendingRes.value.data)
+        ) {
           setTrendingContent(trendingRes.value.data);
         }
-        if (continueRes.status === 'fulfilled' && continueRes.value.success && Array.isArray(continueRes.value.data)) {
+        if (
+          continueRes.status === 'fulfilled' &&
+          continueRes.value.success &&
+          Array.isArray(continueRes.value.data)
+        ) {
           setContinueWatching(continueRes.value.data);
         }
-        if (newRes.status === 'fulfilled' && newRes.value.success && Array.isArray(newRes.value.data)) {
+        if (
+          newRes.status === 'fulfilled' &&
+          newRes.value.success &&
+          Array.isArray(newRes.value.data)
+        ) {
           setNewReleases(newRes.value.data);
         }
-        if (popularRes.status === 'fulfilled' && popularRes.value.success && Array.isArray(popularRes.value.data)) {
+        if (
+          popularRes.status === 'fulfilled' &&
+          popularRes.value.success &&
+          Array.isArray(popularRes.value.data)
+        ) {
           setPopularInRegion(popularRes.value.data);
         }
       } catch {
@@ -279,7 +302,11 @@ export default function AuthenticatedHomepage({
             {universeSections.map((section) => (
               <ContentRow
                 key={section.universeId}
-                title={section.universeIcon ? `${section.universeIcon} ${section.universeName}` : section.universeName}
+                title={
+                  section.universeIcon
+                    ? `${section.universeIcon} ${section.universeName}`
+                    : section.universeName
+                }
                 sectionId={`universe-${section.universeId}`}
                 items={section.items}
                 isLoading={isLoadingUniverses}
@@ -315,9 +342,7 @@ export default function AuthenticatedHomepage({
           items={continueWatching}
           isLoading={isLoadingSupplementary}
           showProgress
-          progressMap={
-            Object.fromEntries(continueWatching.map((c) => [c.id, 0.5]))
-          }
+          progressMap={Object.fromEntries(continueWatching.map((c) => [c.id, 0.5]))}
         />
 
         {/* Trending Now */}

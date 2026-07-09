@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -10,13 +10,14 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../src/contexts/AuthContext';
-import { LoadingState, ErrorState } from '../../src/components/StateContainers';
+import { colors } from '../../src/theme';
 
 export default function OTPVerificationScreen() {
   const router = useRouter();
-  const { verifyOTP, resendOTP, isLoading } = useAuth();
+  const { user, verifyOTP, resendOTP, isLoading } = useAuth();
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [timer, setTimer] = useState(60);
   const [error, setError] = useState<string | null>(null);
@@ -69,8 +70,18 @@ export default function OTPVerificationScreen() {
     }
 
     try {
-      await verifyOTP(code);
-      router.replace('/(tabs)/home');
+      const result = await verifyOTP(code);
+      if (result.success) {
+        // After OTP verification, check if user needs to select a role
+        const verifiedUser = result.user;
+        if (!verifiedUser?.role) {
+          router.replace('/(auth)/role-selection');
+        } else {
+          router.replace('/(tabs)/home');
+        }
+      } else {
+        setError(result.message || 'Invalid or expired code');
+      }
     } catch (error) {
       setError('Invalid or expired code');
     }
@@ -95,68 +106,70 @@ export default function OTPVerificationScreen() {
   }, []);
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
-      <View style={styles.content}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Verify Your Phone</Text>
-          <Text style={styles.subtitle}>Enter the 6-digit code sent to your phone number</Text>
-        </View>
-
-        <View style={styles.otpContainer}>
-          {otp.map((digit, index) => (
-            <TextInput
-              key={index}
-              ref={setInputRef(index)}
-              style={[styles.otpInput, digit && styles.otpInputFilled]}
-              value={digit}
-              onChangeText={(value) => handleOTPChange(value, index)}
-              onKeyPress={(e) => handleKeyPress(e, index)}
-              keyboardType="number-pad"
-              maxLength={1}
-              selectTextOnFocus
-            />
-          ))}
-        </View>
-
-        {error && (
-          <View style={styles.errorContainer}>
-            <Text style={styles.errorText}>{error}</Text>
+    <SafeAreaView style={styles.container}>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <View style={styles.content}>
+          <View style={styles.header}>
+            <Text style={styles.title}>Verify Your Phone</Text>
+            <Text style={styles.subtitle}>Enter the 6-digit code sent to your phone number</Text>
           </View>
-        )}
 
-        <TouchableOpacity
-          style={[styles.verifyButton, isLoading && styles.verifyButtonDisabled]}
-          onPress={() => handleVerify()}
-          disabled={isLoading}
-        >
-          {isLoading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.verifyButtonText}>Verify</Text>
+          <View style={styles.otpContainer}>
+            {otp.map((digit, index) => (
+              <TextInput
+                key={index}
+                ref={setInputRef(index)}
+                style={[styles.otpInput, digit && styles.otpInputFilled]}
+                value={digit}
+                onChangeText={(value) => handleOTPChange(value, index)}
+                onKeyPress={(e) => handleKeyPress(e, index)}
+                keyboardType="number-pad"
+                maxLength={1}
+                selectTextOnFocus
+              />
+            ))}
+          </View>
+
+          {error && (
+            <View style={styles.errorContainer}>
+              <Text style={styles.errorText}>{error}</Text>
+            </View>
           )}
-        </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[styles.resendButton, timer > 0 && styles.resendButtonDisabled]}
-          onPress={handleResend}
-          disabled={timer > 0}
-        >
-          <Text style={styles.resendButtonText}>
-            {timer > 0 ? `Resend code in ${timer}s` : 'Resend code'}
-          </Text>
-        </TouchableOpacity>
-      </View>
-    </KeyboardAvoidingView>
+          <TouchableOpacity
+            style={[styles.verifyButton, isLoading && styles.verifyButtonDisabled]}
+            onPress={() => handleVerify()}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <ActivityIndicator color={colors.text.primary} />
+            ) : (
+              <Text style={styles.verifyButtonText}>Verify</Text>
+            )}
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.resendButton, timer > 0 && styles.resendButtonDisabled]}
+            onPress={handleResend}
+            disabled={timer > 0}
+          >
+            <Text style={styles.resendButtonText}>
+              {timer > 0 ? `Resend code in ${timer}s` : 'Resend code'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: colors.text.primary,
   },
   content: {
     flex: 1,
@@ -170,12 +183,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#333',
+    color: colors.dark[700],
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: '#666',
+    color: colors.text.tertiary,
     textAlign: 'center',
   },
   otpContainer: {
@@ -187,30 +200,30 @@ const styles = StyleSheet.create({
     width: 48,
     height: 56,
     borderWidth: 2,
-    borderColor: '#ddd',
+    borderColor: colors.light[300],
     borderRadius: 12,
     textAlign: 'center',
     fontSize: 24,
     fontWeight: '600',
     marginHorizontal: 4,
-    backgroundColor: '#f9f9f9',
+    backgroundColor: colors.light[50],
   },
   otpInputFilled: {
-    borderColor: '#007AFF',
-    backgroundColor: '#fff',
+    borderColor: colors.primary[500],
+    backgroundColor: colors.text.primary,
   },
   verifyButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: colors.primary[500],
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',
     marginBottom: 16,
   },
   verifyButtonDisabled: {
-    backgroundColor: '#ccc',
+    backgroundColor: colors.light[300],
   },
   verifyButtonText: {
-    color: '#fff',
+    color: colors.text.primary,
     fontSize: 18,
     fontWeight: '600',
   },
@@ -222,17 +235,17 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   resendButtonText: {
-    color: '#007AFF',
+    color: colors.primary[500],
     fontSize: 16,
   },
   errorContainer: {
-    backgroundColor: '#FEE2E2',
+    backgroundColor: colors.error[100],
     borderRadius: 12,
     padding: 12,
     marginBottom: 16,
   },
   errorText: {
-    color: '#DC2626',
+    color: colors.error[500],
     fontSize: 14,
     textAlign: 'center',
   },

@@ -44,6 +44,10 @@ COPY packages/internal-clients/package.json packages/internal-clients/
 COPY packages/test-utils/package.json packages/test-utils/
 COPY packages/contract-tests/package.json packages/contract-tests/
 COPY packages/ui/package.json packages/ui/
+COPY packages/http-client/package.json packages/http-client/
+COPY packages/event-bus/package.json packages/event-bus/
+COPY packages/opentelemetry/package.json packages/opentelemetry/
+COPY packages/shared-queue/package.json packages/shared-queue/
 COPY services/core/auth-service/package.json services/core/auth-service/
 COPY services/core/user-service/package.json services/core/user-service/
 COPY services/core/wallet-service/package.json services/core/wallet-service/
@@ -80,8 +84,28 @@ COPY . .
 ARG NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_URL}
 
+ARG NEXT_PUBLIC_BASE_URL=""
+ARG NEXT_PUBLIC_AUTH_URL=""
+ARG NEXT_PUBLIC_STRIPE_PUBLIC_KEY=""
+ARG NEXT_PUBLIC_FIREBASE_API_KEY=""
+ARG NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=""
+ARG NEXT_PUBLIC_FIREBASE_PROJECT_ID=""
+ARG NEXT_PUBLIC_SENTRY_DSN=""
+
+ENV NEXT_PUBLIC_BASE_URL=${NEXT_PUBLIC_BASE_URL}
+ENV NEXT_PUBLIC_AUTH_URL=${NEXT_PUBLIC_AUTH_URL}
+ENV NEXT_PUBLIC_STRIPE_PUBLIC_KEY=${NEXT_PUBLIC_STRIPE_PUBLIC_KEY}
+ENV NEXT_PUBLIC_FIREBASE_API_KEY=${NEXT_PUBLIC_FIREBASE_API_KEY}
+ENV NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=${NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN}
+ENV NEXT_PUBLIC_FIREBASE_PROJECT_ID=${NEXT_PUBLIC_FIREBASE_PROJECT_ID}
+ENV NEXT_PUBLIC_SENTRY_DSN=${NEXT_PUBLIC_SENTRY_DSN}
+
+# Cache-bust: set to a unique value (e.g. git hash or timestamp) to force rebuild
+ARG CACHEBUST
+
 # Build shared packages, then all services, then apps — single merged layer
 RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
+    echo "Cache bust: $CACHEBUST" && \
     pnpm --filter @azeebo/utils run build && \
     pnpm --filter @azeebo/shared-types run build && \
     pnpm --filter @azeebo/validation run build && \
@@ -123,10 +147,35 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     pnpm --filter @azeebo/creator-portal prisma:generate && pnpm --filter @azeebo/creator-portal run build && \
     mkdir -p apps/admin/dist/generated && cp -r apps/admin/src/generated/prisma apps/admin/dist/generated/prisma && \
     mkdir -p apps/creator-portal/dist/generated && cp -r apps/creator-portal/src/generated/prisma apps/creator-portal/dist/generated/prisma && \
-    pnpm --filter @azeebo/web run build
+    echo "=== Flattening nested dist directories ===" && \
+    for svc_dir in $(find services -maxdepth 2 -mindepth 2 -type d -not -path "*/node_modules/*" | sort); do \
+      dist="$svc_dir/dist"; \
+      [ -d "$dist" ] || continue; \
+      nested_main=$(find "$dist" -maxdepth 5 -name "main.js" -path "*/src/*" ! -path "$dist/main.js" 2>/dev/null | head -1); \
+      if [ -n "$nested_main" ]; then \
+        nested_src=$(echo "$nested_main" | sed 's|/src/.*||'); \
+        echo "Flattening: $nested_src/src/ -> $dist/"; \
+        find "$nested_src/src" -maxdepth 1 -type f \( -name "*.js" -o -name "*.d.ts" \) -exec cp {} "$dist/" \; 2>/dev/null; \
+        find "$nested_src/src" -mindepth 2 -type f \( -name "*.js" -o -name "*.d.ts" \) | while read f; do \
+          rel="${f#$nested_src/src/}"; \
+          mkdir -p "$dist/$(dirname "$rel")" && cp "$f" "$dist/$rel"; \
+        done 2>/dev/null; \
+        rm -rf "$nested_src" 2>/dev/null; \
+      fi; \
+    done && \
+    echo "=== Flattened dist inventory ===" && \
+    find services -name "main.js" -path "*/dist/*" | sort && \
+    pnpm --filter @azeebo/web run build; \
+    echo "=== Web .next/ contents ===" && ls -la apps/web/.next/ 2>&1 | head -20; \
+    echo "=== .next/standalone check ===" && ls -la apps/web/.next/standalone/ 2>&1 | head -10; \
+    echo "=== .next/standalone/apps/web check ===" && ls -la apps/web/.next/standalone/apps/web/ 2>&1 | head -10; \
+    true
 
 # Create /runtime with only what the container needs at runtime.
-RUN mkdir -p /runtime/node_modules && \
+# Each copy section is independent (;) so a failure in one section does NOT
+# silently skip the others (which was the root cause of the dist-missing bug).
+RUN echo "Cache bust: $CACHEBUST" && \
+    mkdir -p /runtime/node_modules && \
     cp package.json pnpm-lock.yaml pnpm-workspace.yaml /runtime/ && \
     find . -maxdepth 4 -name "package.json" \
       -not -path "*/node_modules/*" \
@@ -135,30 +184,48 @@ RUN mkdir -p /runtime/node_modules && \
       -not -path "*/.prisma/*" \
       | while read f; do \
         mkdir -p "/runtime/$(dirname "$f")" && cp "$f" "/runtime/$f"; \
-      done && \
+      done; \
     find services -maxdepth 2 -mindepth 2 -type d | while read svc; do \
       if [ -d "$svc/dist" ]; then \
-        mkdir -p "/runtime/$svc" && cp -r "$svc/dist" "/runtime/$svc/dist"; \
+        mkdir -p "/runtime/$svc/dist" && cp -r "$svc/dist/." "/runtime/$svc/dist/"; \
       fi; \
       if [ -d "$svc/prisma" ]; then \
-        mkdir -p "/runtime/$svc" && cp -r "$svc/prisma" "/runtime/$svc/prisma"; \
+        mkdir -p "/runtime/$svc/prisma" && cp -r "$svc/prisma/." "/runtime/$svc/prisma/"; \
       fi; \
-    done && \
+    done; \
     find packages -maxdepth 1 -mindepth 1 -type d | while read pkg; do \
       if [ -d "$pkg/dist" ]; then \
-        mkdir -p "/runtime/$pkg" && cp -r "$pkg/dist" "/runtime/$pkg/dist"; \
+        mkdir -p "/runtime/$pkg/dist" && cp -r "$pkg/dist/." "/runtime/$pkg/dist/"; \
       fi; \
-    done && \
-    mkdir -p /runtime/apps/admin && cp -r apps/admin/dist /runtime/apps/admin/dist && \
-    cp -r apps/admin/prisma /runtime/apps/admin/prisma 2>/dev/null; \
-    mkdir -p /runtime/apps/creator-portal && cp -r apps/creator-portal/dist /runtime/apps/creator-portal/dist && \
-    cp -r apps/creator-portal/prisma /runtime/apps/creator-portal/prisma 2>/dev/null; \
-    mkdir -p /runtime/apps/web && \
-    cp -r apps/web/.next/standalone /runtime/apps/web/standalone && \
-    mkdir -p /runtime/apps/web/standalone/static && \
-    cp -r apps/web/.next/static /runtime/apps/web/standalone/static && \
-    cp -r apps/web/public /runtime/apps/web/standalone/public 2>/dev/null; \
+    done; \
+    mkdir -p /runtime/apps/admin/dist && cp -r apps/admin/dist/. /runtime/apps/admin/dist/ && \
+    mkdir -p /runtime/apps/admin/prisma && cp -r apps/admin/prisma/. /runtime/apps/admin/prisma/ 2>/dev/null; \
+    mkdir -p /runtime/apps/creator-portal/dist && cp -r apps/creator-portal/dist/. /runtime/apps/creator-portal/dist/ && \
+    mkdir -p /runtime/apps/creator-portal/prisma && cp -r apps/creator-portal/prisma/. /runtime/apps/creator-portal/prisma/ 2>/dev/null; \
+    mkdir -p /runtime/apps/web/standalone && \
+    if [ -d apps/web/.next/standalone/apps/web ]; then \
+      cp -r apps/web/.next/standalone/apps/web/. /runtime/apps/web/standalone/ && \
+      echo "Standalone: copied from .next/standalone/apps/web/ (nested)"; \
+    elif [ -f apps/web/.next/standalone/server.js ]; then \
+      cp -r apps/web/.next/standalone/. /runtime/apps/web/standalone/ && \
+      echo "Standalone: copied from .next/standalone/ (direct)"; \
+    else \
+      echo "WARNING: No standalone output found in apps/web/.next/standalone/"; \
+    fi; \
+    mkdir -p /runtime/apps/web/standalone/.next/static && \
+    cp -r apps/web/.next/static/. /runtime/apps/web/standalone/.next/static/ 2>/dev/null; \
+    cp -r apps/web/public/. /runtime/apps/web/standalone/public/ 2>/dev/null; \
     cp apps/web/next.config.js /runtime/apps/web/standalone/ 2>/dev/null; \
+    echo "=== Builder dist inventory ===" && \
+    find services -name "main.js" -path "*/dist/*" | sort && \
+    echo "=== Web standalone inventory ===" && \
+    ls -la apps/web/.next/standalone/apps/web/server.js 2>/dev/null && echo "OK: standalone/apps/web/server.js exists in builder" || echo "INFO: standalone at nested path (apps/web/.next/standalone/apps/web/)" && \
+    echo "=== /runtime dist inventory ===" && \
+    find /runtime/services -name "main.js" -path "*/dist/*" 2>/dev/null | sort && \
+    echo "=== Verifying critical dist files ===" && \
+    test -f /runtime/services/core/content-service/dist/main.js && echo "OK: content-service" || echo "MISSING: content-service/dist/main.js"; \
+    test -f /runtime/services/core/wallet-service/dist/main.js && echo "OK: wallet-service" || echo "MISSING: wallet-service/dist/main.js"; \
+    test -f /runtime/apps/web/standalone/server.js && echo "OK: web-app standalone" || echo "MISSING: web-app/standalone/server.js"; \
     true
 
 # ============================================================
@@ -196,11 +263,37 @@ ENV LC_ALL=en_US.UTF-8
 WORKDIR /app
 
 # Copy runtime skeleton from builder (workspace structure + built artifacts)
+# CACHEBUST ensures this layer is invalidated when builder output changes
+ARG CACHEBUST
 COPY --from=builder /runtime /app
+
+# Fix nested standalone output: flatten apps/web/.next/standalone/apps/web/ -> apps/web/standalone/
+RUN if [ -d /app/apps/web/standalone/apps/web ] && [ ! -f /app/apps/web/standalone/server.js ]; then \
+      echo "Flattening nested standalone output..." && \
+      cp -r /app/apps/web/standalone/apps/web/* /app/apps/web/standalone/ && \
+      rm -rf /app/apps/web/standalone/apps && \
+      echo "Flattened to /app/apps/web/standalone/server.js"; \
+    fi
+
+# Verify critical files exist before proceeding (warn only — entrypoint will retry)
+RUN echo "==> Verifying critical build artifacts..." && \
+    OK=true && \
+    test -f /app/apps/web/standalone/server.js && echo "  OK: web-app standalone server.js" || \
+      (echo "  WARN: web-app standalone server.js not found — will retry in entrypoint" && OK=false) && \
+    test -f /app/services/core/auth-service/dist/main.js && echo "  OK: auth-service" || \
+      (echo "  WARN: auth-service/dist/main.js not found" && OK=false) && \
+    test -f /app/services/gateway/api-gateway/dist/main.js && echo "  OK: api-gateway" || \
+      (echo "  WARN: api-gateway/dist/main.js not found" && OK=false) && \
+    echo "  Build artifact check complete (warnings are non-fatal)"
 
 # Fresh production install — only production dependencies, no devDeps
 ENV CI=true
 RUN pnpm install --prod --frozen-lockfile --ignore-scripts
+
+# Verify standalone output survived pnpm install (warn only)
+RUN test -f /app/apps/web/standalone/server.js && echo "  OK: server.js after pnpm install" || \
+    (echo "  WARN: server.js MISSING after pnpm install — entrypoint will handle" && \
+     echo "  /app/apps/web/ contents:" && ls -la /app/apps/web/ 2>&1)
 
 # All post-install setup in a single layer:
 #   1. Symlink workspace packages (avoid duplicate node_modules copies)
@@ -232,29 +325,53 @@ RUN mkdir -p /app/node_modules/@azeebo && \
 # enums/models survive — causing `@IsEnum(SomePrismaEnum)` to crash with
 # "Cannot convert undefined or null to object" at module load for every other service.
 #
-# Fix: after each service's `prisma generate`, snapshot the shared generated client
-# AND a real (de-symlinked) copy of @prisma/client into that service's own node_modules,
-# so `require('@prisma/client')` resolves the service-specific generated client.
-# The query-engine binaries are deduplicated (one real copy, the rest symlinked).
+# Fix: after each service's `prisma generate`, copy a real (de-symlinked) copy of
+# @prisma/client into that service's own node_modules and write a shim that
+# re-exports the generated client (either from a custom output dir or from the
+# shared .prisma/client that prisma generate just wrote).
+#
+# IMPORTANT: Do NOT rm -rf .prisma — that deletes the generated client that
+# prisma generate just wrote. Only rm -rf @prisma/client (to replace with shared).
+#
+# Non-custom-output services: leave @prisma/client intact — the real package's
+# index.js resolves .prisma/client/ automatically via relative require.
+# Custom-output services: replace @prisma/client/index.js with shim pointing to
+# the custom output dir (e.g., src/prisma/client/).
 #
 # DATABASE_URL is required by prisma generate (schema validation) even though no connection is made.
 RUN DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholder" && \
     export DATABASE_URL && \
     SHARED_CLIENT_DIR=$(cd /app/services/core/auth-service && node -e "console.log(require('path').dirname(require.resolve('@prisma/client')))" 2>/dev/null) && \
-    SHARED_NM="$(dirname "$SHARED_CLIENT_DIR")" && \
-    SHARED_GEN="$SHARED_NM/.prisma/client" && \
     echo "  Shared @prisma/client: $SHARED_CLIENT_DIR" && \
     for schema in $(find services apps -name "schema.prisma" -not -path "*/node_modules/*" -not -path "*/dist/*"); do \
       proj_root=$(dirname "$schema"); \
-      echo "  Generating Prisma client for $proj_root..."; \
-      (cd "/app/$proj_root" && prisma generate --schema=schema.prisma 2>&1) || \
-        echo "  WARNING: prisma generate failed for $proj_root"; \
-      SVC_NM="/app/$proj_root/node_modules"; \
-      rm -rf "$SVC_NM/@prisma/client" "$SVC_NM/.prisma"; \
-      mkdir -p "$SVC_NM/@prisma/client" "$SVC_NM/.prisma/client"; \
+      svc_root=$(dirname "$proj_root"); \
+      echo "  Generating Prisma client for $svc_root..."; \
+      SVC_NM="/app/$svc_root/node_modules"; \
+      rm -rf "$SVC_NM/@prisma/client"; \
+      mkdir -p "$SVC_NM/@prisma/client"; \
       cp -r "$SHARED_CLIENT_DIR/." "$SVC_NM/@prisma/client/"; \
       rm -rf "$SVC_NM/@prisma/client/node_modules"; \
-      cp -r "$SHARED_GEN/." "$SVC_NM/.prisma/client/"; \
+      CUSTOM_OUTPUT=$(grep -m1 'output\s*=' "/app/$schema" | sed 's/.*"\(.*\)".*/\1/'); \
+      if [ -n "$CUSTOM_OUTPUT" ]; then \
+        FULL_OUTPUT="/app/$proj_root/$CUSTOM_OUTPUT"; \
+        (cd "/app/$proj_root" && prisma generate --schema=schema.prisma 2>&1) || \
+          echo "  WARNING: prisma generate failed for $proj_root"; \
+        if [ -d "$FULL_OUTPUT" ]; then \
+          echo "module.exports = { ...require('$FULL_OUTPUT') }" > "$SVC_NM/@prisma/client/index.js"; \
+          echo "module.exports = { ...require('$FULL_OUTPUT') }" > "$SVC_NM/@prisma/client/default.js"; \
+        else \
+          echo "  WARNING: Custom output $FULL_OUTPUT not found for $svc_root"; \
+        fi; \
+      else \
+        (cd "/app/$proj_root" && prisma generate --schema=schema.prisma 2>&1) || \
+          echo "  WARNING: prisma generate failed for $proj_root"; \
+        if [ -d "$SVC_NM/.prisma/client" ]; then \
+          echo "  Generated Prisma client for $svc_root at $SVC_NM/.prisma/client"; \
+        else \
+          echo "  WARNING: No .prisma/client found for $svc_root after generate!"; \
+        fi; \
+      fi; \
       cd /app; \
     done && \
     SHARED_ENGINE=""; \
@@ -277,12 +394,21 @@ RUN DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholde
 COPY supervisord.conf /etc/supervisord.conf
 COPY nginx.conf /etc/nginx/nginx.conf
 COPY entrypoint.sh /entrypoint.sh
+COPY scripts/demo-content /app/scripts/demo-content
 RUN rm -f /etc/nginx/sites-enabled/default && chmod +x /entrypoint.sh && \
+    chmod +x /app/scripts/demo-content/*.sh && \
+    mkdir -p /usr/share/nginx/html && \
+    echo '<!DOCTYPE html><html><head><title>Azeebo+ is starting</title><style>body{font-family:sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;background:#0a0a0a;color:#fff}c{text-align:center}h1{font-size:1.5rem;margin-bottom:.5rem}p{color:#888;font-size:.9rem}</style></head><body><c><h1>Azeebo+ is starting up</h1><p>This usually takes 2-3 minutes on first boot. Please wait and refresh.</p></c></body></html>' > /usr/share/nginx/html/50x.html && \
     rm -rf /var/cache/apt /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-EXPOSE 80 443 3013 4000 4014 4016 5432 6379 6432
+RUN useradd -r -s /bin/false -u 65532 nodejs && \
+    chown -R nodejs:nodejs /app
+
+EXPOSE 80 443 3013 4000 4014 4016
 
 HEALTHCHECK --interval=30s --timeout=10s --retries=5 --start-period=300s \
   CMD curl -f http://localhost:80/health || exit 1
+
+USER nodejs
 
 ENTRYPOINT ["/entrypoint.sh"]

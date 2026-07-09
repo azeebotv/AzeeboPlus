@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,10 +9,12 @@ import {
   useColorScheme,
   Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { supportApi } from '../src/api/support';
 import { apiClient } from '../src/api';
 import { logger } from '../src/utils/logger';
 import { LoadingState, ErrorState } from '../src/components/StateContainers';
+import { colors } from '../src/theme';
 
 const categories = ['Account', 'Payment', 'Content', 'Technical', 'Creator'];
 
@@ -30,7 +32,7 @@ export default function SupportScreen() {
     message: '',
   });
   const [formSubmitted, setFormSubmitted] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [_isSubmitting, setIsSubmitting] = useState(false);
 
   const fetchFAQ = async () => {
     setIsLoading(true);
@@ -41,9 +43,10 @@ export default function SupportScreen() {
           '/support/faq'
         );
       setFaqData(Array.isArray(data) ? data : []);
-    } catch (err: any) {
+    } catch (err: unknown) {
       logger.error('Failed to load FAQ:', err);
-      setError(err.message || 'Failed to load FAQ');
+      const message = err instanceof Error ? err.message : 'Failed to load FAQ';
+      setError(message);
     } finally {
       setIsLoading(false);
     }
@@ -55,27 +58,27 @@ export default function SupportScreen() {
 
   if (isLoading) {
     return (
-      <View
+      <SafeAreaView
         style={[
           styles.container,
-          { backgroundColor: colorScheme === 'dark' ? '#000000' : '#ffffff' },
+          { backgroundColor: colorScheme === 'dark' ? colors.bg.primary : colors.text.primary },
         ]}
       >
         <LoadingState text="Loading support..." />
-      </View>
+      </SafeAreaView>
     );
   }
 
   if (error) {
     return (
-      <View
+      <SafeAreaView
         style={[
           styles.container,
-          { backgroundColor: colorScheme === 'dark' ? '#000000' : '#ffffff' },
+          { backgroundColor: colorScheme === 'dark' ? colors.bg.primary : colors.text.primary },
         ]}
       >
         <ErrorState description={error} onRetry={fetchFAQ} />
-      </View>
+      </SafeAreaView>
     );
   }
 
@@ -120,195 +123,227 @@ export default function SupportScreen() {
   };
 
   return (
-    <View
+    <SafeAreaView
       style={[
         styles.container,
-        { backgroundColor: colorScheme === 'dark' ? '#000000' : '#ffffff' },
+        { backgroundColor: colorScheme === 'dark' ? colors.bg.primary : colors.text.primary },
       ]}
     >
-      <ScrollView style={styles.scrollView}>
-        <View style={styles.header}>
-          <Text style={[styles.title, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
-            How can we help you? 👋
-          </Text>
-          <Text style={styles.subtitle}>
-            Find answers to common questions or contact our support team.
-          </Text>
-        </View>
+      <View
+        style={[
+          styles.container,
+          { backgroundColor: colorScheme === 'dark' ? colors.bg.primary : colors.text.primary },
+        ]}
+      >
+        <ScrollView style={styles.scrollView}>
+          <View style={styles.header}>
+            <Text style={[styles.title, { color: colorScheme === 'dark' ? colors.text.primary : colors.bg.primary }]}>
+              How can we help you? 👋
+            </Text>
+            <Text style={styles.subtitle}>
+              Find answers to common questions or contact our support team.
+            </Text>
+          </View>
 
-        <View style={styles.quickLinks}>
-          {[
-            { icon: '📚', label: 'Help Center' },
-            { icon: '📞', label: 'Contact Us' },
-            { icon: '📋', label: 'Submit Ticket' },
-            { icon: '💬', label: 'Live Chat' },
-          ].map((item, index) => (
-            <TouchableOpacity
-              key={index}
-              style={[
-                styles.quickLinkCard,
-                { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' },
-              ]}
-            >
-              <Text style={styles.quickLinkIcon}>{item.icon}</Text>
-              <Text
-                style={[
-                  styles.quickLinkLabel,
-                  { color: colorScheme === 'dark' ? '#ffffff' : '#000000' },
-                ]}
-              >
-                {item.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        <View style={styles.section}>
-          <Text
-            style={[styles.sectionTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}
-          >
-            Frequently Asked Questions
-          </Text>
-          {faqData.map((faq) => (
-            <TouchableOpacity
-              key={faq.id}
-              style={[
-                styles.faqCard,
-                { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' },
-              ]}
-              onPress={() => toggleFAQ(faq.id)}
-            >
-              <View style={styles.faqHeader}>
-                <Text
-                  style={[
-                    styles.faqQuestion,
-                    { color: colorScheme === 'dark' ? '#ffffff' : '#000000' },
-                  ]}
-                >
-                  {faq.question}
-                </Text>
-                <Text style={styles.faqToggle}>{expandedFAQ === faq.id ? '−' : '+'}</Text>
-              </View>
-              {expandedFAQ === faq.id && <Text style={styles.faqAnswer}>{faq.answer}</Text>}
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        <View style={styles.section}>
-          <Text
-            style={[styles.sectionTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}
-          >
-            Contact Support
-          </Text>
-
-          {formSubmitted ? (
-            <View
-              style={[
-                styles.successCard,
-                { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5' },
-              ]}
-            >
-              <Text style={styles.successIcon}>✅</Text>
-              <Text
-                style={[
-                  styles.successTitle,
-                  { color: colorScheme === 'dark' ? '#ffffff' : '#000000' },
-                ]}
-              >
-                Ticket Submitted!
-              </Text>
-              <Text style={styles.successSubtitle}>We'll get back to you within 24 hours.</Text>
+          <View style={styles.quickLinks}>
+            {[
+              { icon: '📚', label: 'Help Center' },
+              { icon: '📞', label: 'Contact Us' },
+              { icon: '📋', label: 'Submit Ticket' },
+              { icon: '💬', label: 'Live Chat' },
+            ].map((item, index) => (
               <TouchableOpacity
-                onPress={() => setFormSubmitted(false)}
-                style={styles.resubmitButton}
+                key={index}
+                style={[
+                  styles.quickLinkCard,
+                  { backgroundColor: colorScheme === 'dark' ? colors.bg.secondary : colors.light[50] },
+                ]}
+                accessibilityLabel={item.label}
+                accessibilityRole="button"
               >
-                <Text style={styles.resubmitButtonText}>Submit Another Ticket</Text>
-              </TouchableOpacity>
-            </View>
-          ) : (
-            <View style={styles.form}>
-              <View style={styles.formGroup}>
+                <Text style={styles.quickLinkIcon}>{item.icon}</Text>
                 <Text
-                  style={[styles.label, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}
-                >
-                  Subject
-                </Text>
-                <TextInput
                   style={[
-                    styles.input,
-                    {
-                      backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5',
-                      color: colorScheme === 'dark' ? '#ffffff' : '#000000',
-                    },
+                    styles.quickLinkLabel,
+                    { color: colorScheme === 'dark' ? colors.text.primary : colors.bg.primary },
                   ]}
-                  value={formData.subject}
-                  onChangeText={(value) => handleInputChange('subject', value)}
-                  placeholder="Brief description of your issue"
-                  placeholderTextColor="#888"
-                />
-              </View>
-
-              <View style={styles.formGroup}>
-                <Text
-                  style={[styles.label, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}
                 >
-                  Category
+                  {item.label}
                 </Text>
-                <View style={styles.categoryGrid}>
-                  {categories.map((cat) => (
-                    <TouchableOpacity
-                      key={cat}
-                      onPress={() => handleInputChange('category', cat)}
-                      style={[
-                        styles.categoryButton,
-                        formData.category === cat && styles.categoryButtonSelected,
-                      ]}
-                    >
-                      <Text
-                        style={[
-                          styles.categoryButtonText,
-                          formData.category === cat && styles.categoryButtonTextSelected,
-                        ]}
-                      >
-                        {cat}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          <View style={styles.section}>
+            <Text
+              style={[
+                styles.sectionTitle,
+                { color: colorScheme === 'dark' ? colors.text.primary : colors.bg.primary },
+              ]}
+            >
+              Frequently Asked Questions
+            </Text>
+            {faqData.map((faq) => (
+              <TouchableOpacity
+                key={faq.id}
+                style={[
+                  styles.faqCard,
+                  { backgroundColor: colorScheme === 'dark' ? colors.bg.secondary : colors.light[50] },
+                ]}
+                onPress={() => toggleFAQ(faq.id)}
+                accessibilityLabel={`Frequently asked question: ${faq.question}`}
+                accessibilityRole="button"
+                accessibilityState={{ expanded: expandedFAQ === faq.id }}
+              >
+                <View style={styles.faqHeader}>
+                  <Text
+                    style={[
+                      styles.faqQuestion,
+                      { color: colorScheme === 'dark' ? colors.text.primary : colors.bg.primary },
+                    ]}
+                  >
+                    {faq.question}
+                  </Text>
+                  <Text style={styles.faqToggle}>{expandedFAQ === faq.id ? '−' : '+'}</Text>
                 </View>
-              </View>
-
-              <View style={styles.formGroup}>
-                <Text
-                  style={[styles.label, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}
-                >
-                  Message
-                </Text>
-                <TextInput
-                  style={[
-                    styles.textArea,
-                    {
-                      backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5',
-                      color: colorScheme === 'dark' ? '#ffffff' : '#000000',
-                    },
-                  ]}
-                  value={formData.message}
-                  onChangeText={(value) => handleInputChange('message', value)}
-                  placeholder="Tell us more about your issue..."
-                  placeholderTextColor="#888"
-                  multiline
-                  numberOfLines={6}
-                  textAlignVertical="top"
-                />
-              </View>
-
-              <TouchableOpacity onPress={handleSubmit} style={styles.submitButton}>
-                <Text style={styles.submitButtonText}>📤 Submit Ticket</Text>
+                {expandedFAQ === faq.id && <Text style={styles.faqAnswer}>{faq.answer}</Text>}
               </TouchableOpacity>
-            </View>
-          )}
-        </View>
-      </ScrollView>
-    </View>
+            ))}
+          </View>
+
+          <View style={styles.section}>
+            <Text
+              style={[
+                styles.sectionTitle,
+                { color: colorScheme === 'dark' ? colors.text.primary : colors.bg.primary },
+              ]}
+            >
+              Contact Support
+            </Text>
+
+            {formSubmitted ? (
+              <View
+                style={[
+                  styles.successCard,
+                  { backgroundColor: colorScheme === 'dark' ? colors.bg.secondary : colors.light[50] },
+                ]}
+              >
+                <Text style={styles.successIcon}>✅</Text>
+                <Text
+                  style={[
+                    styles.successTitle,
+                    { color: colorScheme === 'dark' ? colors.text.primary : colors.bg.primary },
+                  ]}
+                >
+                  Ticket Submitted!
+                </Text>
+                <Text style={styles.successSubtitle}>We'll get back to you within 24 hours.</Text>
+                <TouchableOpacity
+                  onPress={() => setFormSubmitted(false)}
+                  style={styles.resubmitButton}
+                  accessibilityLabel="Submit another ticket"
+                  accessibilityRole="button"
+                >
+                  <Text style={styles.resubmitButtonText}>Submit Another Ticket</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <View style={styles.form}>
+                <View style={styles.formGroup}>
+                  <Text
+                    style={[
+                      styles.label,
+                      { color: colorScheme === 'dark' ? colors.text.primary : colors.bg.primary },
+                    ]}
+                  >
+                    Subject
+                  </Text>
+                  <TextInput
+                    style={[
+                      styles.input,
+                      {
+                        backgroundColor: colorScheme === 'dark' ? colors.bg.secondary : colors.light[50],
+                        color: colorScheme === 'dark' ? colors.text.primary : colors.bg.primary,
+                      },
+                    ]}
+                    value={formData.subject}
+                    onChangeText={(value) => handleInputChange('subject', value)}
+                    placeholder="Brief description of your issue"
+                    placeholderTextColor={colors.text.secondary}
+                  />
+                </View>
+
+                <View style={styles.formGroup}>
+                  <Text
+                    style={[
+                      styles.label,
+                      { color: colorScheme === 'dark' ? colors.text.primary : colors.bg.primary },
+                    ]}
+                  >
+                    Category
+                  </Text>
+                  <View style={styles.categoryGrid}>
+                    {categories.map((cat) => (
+                      <TouchableOpacity
+                        key={cat}
+                        onPress={() => handleInputChange('category', cat)}
+                        style={[
+                          styles.categoryButton,
+                          formData.category === cat && styles.categoryButtonSelected,
+                        ]}
+                        accessibilityLabel={`Select ${cat} category`}
+                        accessibilityRole="button"
+                        accessibilityState={{ selected: formData.category === cat }}
+                      >
+                        <Text
+                          style={[
+                            styles.categoryButtonText,
+                            formData.category === cat && styles.categoryButtonTextSelected,
+                          ]}
+                        >
+                          {cat}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+
+                <View style={styles.formGroup}>
+                  <Text
+                    style={[
+                      styles.label,
+                      { color: colorScheme === 'dark' ? colors.text.primary : colors.bg.primary },
+                    ]}
+                  >
+                    Message
+                  </Text>
+                  <TextInput
+                    style={[
+                      styles.textArea,
+                      {
+                        backgroundColor: colorScheme === 'dark' ? colors.bg.secondary : colors.light[50],
+                        color: colorScheme === 'dark' ? colors.text.primary : colors.bg.primary,
+                      },
+                    ]}
+                    value={formData.message}
+                    onChangeText={(value) => handleInputChange('message', value)}
+                    placeholder="Tell us more about your issue..."
+                    placeholderTextColor={colors.text.secondary}
+                    multiline
+                    numberOfLines={6}
+                    textAlignVertical="top"
+                  />
+                </View>
+
+                <TouchableOpacity onPress={handleSubmit} style={styles.submitButton} accessibilityLabel="Submit support ticket" accessibilityRole="button">
+                  <Text style={styles.submitButtonText}>📤 Submit Ticket</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+        </ScrollView>
+      </View>
+    </SafeAreaView>
   );
 }
 
@@ -331,7 +366,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 16,
-    color: '#888',
+    color: colors.text.secondary,
     textAlign: 'center',
   },
   quickLinks: {
@@ -381,15 +416,15 @@ const styles = StyleSheet.create({
   },
   faqToggle: {
     fontSize: 20,
-    color: '#888',
+    color: colors.text.secondary,
   },
   faqAnswer: {
     marginTop: 12,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: '#e5e5e5',
+    borderTopColor: colors.light[200],
     fontSize: 14,
-    color: '#666',
+    color: colors.text.tertiary,
     lineHeight: 1.6,
   },
   form: {
@@ -422,28 +457,28 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 20,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: colors.light[100],
   },
   categoryButtonSelected: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: colors.primary[500],
   },
   categoryButtonText: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#333',
+    color: colors.dark[700],
   },
   categoryButtonTextSelected: {
-    color: '#ffffff',
+    color: colors.text.primary,
   },
   submitButton: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: colors.primary[500],
     padding: 16,
     borderRadius: 12,
     alignItems: 'center',
     marginTop: 8,
   },
   submitButtonText: {
-    color: '#ffffff',
+    color: colors.text.primary,
     fontSize: 16,
     fontWeight: '600',
   },
@@ -463,18 +498,18 @@ const styles = StyleSheet.create({
   },
   successSubtitle: {
     fontSize: 16,
-    color: '#888',
+    color: colors.text.secondary,
     marginBottom: 24,
     textAlign: 'center',
   },
   resubmitButton: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: colors.primary[500],
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 8,
   },
   resubmitButtonText: {
-    color: '#ffffff',
+    color: colors.text.primary,
     fontSize: 16,
     fontWeight: '600',
   },

@@ -1,4 +1,10 @@
-import { IsString, IsOptional, IsUUID } from 'class-validator';
+import { IsString, IsOptional, IsUUID, IsEnum } from 'class-validator';
+
+export enum ContentStatus {
+  DRAFT = 'draft',
+  PUBLISHED = 'published',
+  ARCHIVED = 'archived',
+}
 
 export class CreateContentDto {
   @IsString()
@@ -18,9 +24,9 @@ export class CreateContentDto {
   @IsUUID()
   universeId!: string;
 
-  @IsString()
+  @IsEnum(ContentStatus)
   @IsOptional()
-  status?: string;
+  status?: ContentStatus;
   @IsOptional()
   metadata?: Record<string, unknown>;
 }

@@ -79,14 +79,14 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       }
     } else if (exception instanceof Error) {
       status = HttpStatus.INTERNAL_SERVER_ERROR;
-      message = this.isProduction ? 'Internal server error' : exception.message;
+      message = 'Internal server error';
       error = 'Internal Server Error';
       code = 'INTERNAL_SERVER_ERROR';
 
       this.logger.error(`Unhandled exception: ${exception.message}`, exception.stack);
     } else {
       status = HttpStatus.INTERNAL_SERVER_ERROR;
-      message = this.isProduction ? 'Internal server error' : 'An unknown error occurred';
+      message = 'An unknown error occurred';
       error = 'Internal Server Error';
       code = 'INTERNAL_SERVER_ERROR';
 

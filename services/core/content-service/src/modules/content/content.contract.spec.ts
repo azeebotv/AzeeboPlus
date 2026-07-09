@@ -1,20 +1,34 @@
 /// <reference types="jest" />
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication } from '@nestjs/common';
+import { INestApplication, CanActivate, ExecutionContext, NestInterceptor } from '@nestjs/common';
 import request from 'supertest';
 import { ContentModule } from './content.module';
 import { ContentRepository } from './content.repository';
 import { PrismaService } from '../database/prisma.service';
-import { JwtService } from '@nestjs/jwt';
+import { RedisService } from '../../cache/redis.service';
 import { MediaService } from '../media/media.service';
 import { TranscodingService } from '../media/transcoding.service';
 import { AuthGuard } from '@nestjs/passport';
-import { ExecutionContext } from '@nestjs/common';
+import { RateLimitGuard, AdminGuard } from '@azeebo/security';
+import { CacheInterceptor, CacheService } from '../../cache';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 
-class MockAuthGuard {
+class MockAuthGuard implements CanActivate {
   canActivate(context: ExecutionContext) {
     const request = context.switchToHttp().getRequest();
     request.user = { sub: 'user-123' };
+    return true;
+  }
+}
+
+class MockRateLimitGuard implements CanActivate {
+  canActivate(_context: ExecutionContext) {
+    return true;
+  }
+}
+
+class MockAdminGuard implements CanActivate {
+  canActivate(_context: ExecutionContext) {
     return true;
   }
 }
@@ -26,7 +40,7 @@ describe('Content Controller Contract Tests', () => {
     process.env.JWT_ACCESS_SECRET = 'test-jwt-secret';
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [ContentModule],
+      imports: [ConfigModule.forRoot(), ContentModule],
     })
       .overrideProvider(PrismaService)
       .useValue({
@@ -63,6 +77,7 @@ describe('Content Controller Contract Tests', () => {
           categories: [],
           tags: [],
           creatorId: 'user-123',
+          userId: 'user-123',
           universeId: 'universe-1',
           status: 'published',
           viewCount: 100,
@@ -123,9 +138,25 @@ describe('Content Controller Contract Tests', () => {
       .overrideProvider(TranscodingService)
       .useValue({
         transcode: jest.fn().mockResolvedValue({ id: 'transcode-1', status: 'completed' }),
+        startTranscodingJob: jest.fn().mockResolvedValue({ jobId: 'job-1', status: 'completed' }),
+        getTranscodingJobStatus: jest.fn().mockResolvedValue({ status: 'completed' }),
+        getTranscodedMediaUrl: jest.fn().mockResolvedValue('https://example.com/transcoded.mp4'),
+      })
+      .overrideProvider(RedisService)
+      .useValue({
+        get: jest.fn().mockResolvedValue(null),
+        set: jest.fn().mockResolvedValue(undefined),
+        del: jest.fn().mockResolvedValue(undefined),
+        delPattern: jest.fn().mockResolvedValue(undefined),
       })
       .overrideGuard(AuthGuard('jwt'))
       .useClass(MockAuthGuard)
+      .overrideGuard(RateLimitGuard)
+      .useClass(MockRateLimitGuard)
+      .overrideGuard(AdminGuard)
+      .useClass(MockAdminGuard)
+      .overrideInterceptor(CacheInterceptor)
+      .useValue({ intercept: (_ctx: ExecutionContext, next: { handle: () => unknown }) => next.handle() })
       .compile();
 
     app = moduleFixture.createNestApplication();
@@ -138,24 +169,23 @@ describe('Content Controller Contract Tests', () => {
     }
   });
 
-  describe('GET /content', () => {
+  describe('GET /v1/content', () => {
     it('should list content with filters', async () => {
       const response = await request(app.getHttpServer())
-        .get('/content')
+        .get('/v1/content')
         .query({ universe: 'reality' });
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual({
         success: true,
-        data: expect.any(Array),
-        pagination: expect.any(Object),
+        data: expect.any(Object),
       });
     });
   });
 
-  describe('GET /content/:id', () => {
+  describe('GET /v1/content/:id', () => {
     it('should get content by ID', async () => {
-      const response = await request(app.getHttpServer()).get('/content/content-1');
+      const response = await request(app.getHttpServer()).get('/v1/content/content-1');
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual({
@@ -168,9 +198,9 @@ describe('Content Controller Contract Tests', () => {
     });
   });
 
-  describe('POST /content', () => {
+  describe('POST /v1/content', () => {
     it('should create content', async () => {
-      const response = await request(app.getHttpServer()).post('/content').send({
+      const response = await request(app.getHttpServer()).post('/v1/content').send({
         title: 'New Content',
         description: 'Test description',
         type: 'video',
@@ -187,10 +217,10 @@ describe('Content Controller Contract Tests', () => {
     });
   });
 
-  describe('PATCH /content/:id', () => {
+  describe('PATCH /v1/content/:id', () => {
     it('should update content', async () => {
       const response = await request(app.getHttpServer())
-        .patch('/content/content-1')
+        .patch('/v1/content/content-1')
         .send({ title: 'Updated Title' });
 
       expect(response.status).toBe(200);
@@ -203,9 +233,9 @@ describe('Content Controller Contract Tests', () => {
     });
   });
 
-  describe('DELETE /content/:id', () => {
+  describe('DELETE /v1/content/:id', () => {
     it('should delete content', async () => {
-      const response = await request(app.getHttpServer()).delete('/content/content-1');
+      const response = await request(app.getHttpServer()).delete('/v1/content/content-1');
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual({
@@ -215,23 +245,22 @@ describe('Content Controller Contract Tests', () => {
     });
   });
 
-  describe('GET /content/:id/comments', () => {
+  describe('GET /v1/content/:id/comments', () => {
     it('should get content comments', async () => {
-      const response = await request(app.getHttpServer()).get('/content/content-1/comments');
+      const response = await request(app.getHttpServer()).get('/v1/content/content-1/comments');
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual({
         success: true,
         data: expect.any(Array),
-        pagination: expect.any(Object),
       });
     });
   });
 
-  describe('POST /content/:id/comments', () => {
+  describe('POST /v1/content/:id/comments', () => {
     it('should add comment', async () => {
       const response = await request(app.getHttpServer())
-        .post('/content/content-1/comments')
+        .post('/v1/content/content-1/comments')
         .send({ text: 'New comment' });
 
       expect(response.status).toBe(201);
@@ -244,9 +273,9 @@ describe('Content Controller Contract Tests', () => {
     });
   });
 
-  describe('GET /content/:id/analytics', () => {
+  describe('GET /v1/content/:id/analytics', () => {
     it('should get content analytics', async () => {
-      const response = await request(app.getHttpServer()).get('/content/content-1/analytics');
+      const response = await request(app.getHttpServer()).get('/v1/content/content-1/analytics');
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual({

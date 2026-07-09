@@ -63,15 +63,14 @@ export function createHelmetConfig(
     crossOriginEmbedderPolicy: config.crossOriginEmbedderPolicy,
     crossOriginOpenerPolicy: config.crossOriginOpenerPolicy ? 'same-origin' : false,
     crossOriginResourcePolicy: config.crossOriginResourcePolicy ? { policy: 'same-origin' } : false,
-    originAgentCluster: String(config.originAgentCluster),
+    originAgentCluster: !!config.originAgentCluster,
     referrerPolicy: { policy: config.referrerPolicy || 'strict-origin-when-cross-origin' },
     xssFilter: config.xssProtection,
     noSniff: config.xContentTypeOptions,
     xDnsPrefetchControl: { allow: !!config.xDnsPrefetchControl },
-    xDownloadOptions: { action: config.xDownloadOptions ? 'allow' : 'deny' },
     frameguard: config.xFrameOptions ? { action: 'deny' } : { action: 'allow' },
     xPermittedCrossDomainPolicies: {
-      permittedPolicies: config.xPermittedCrossDomainPolicies ? 'none' : 'none',
+      permittedPolicies: config.xPermittedCrossDomainPolicies ? 'all' : 'none',
     },
     hidePoweredBy: !config.xPoweredBy,
   };

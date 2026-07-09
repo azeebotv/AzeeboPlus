@@ -7,6 +7,9 @@
     "jsx": "react-native",
     "moduleResolution": "bundler",
     "paths": {
+      "@/*": ["./src/*"],
+      "@azeebo/ui": ["../../packages/ui/src/mobile-index"],
+      "@azeebo/ui/*": ["../../packages/ui/src/*"],
       "@azeebo/*": ["../../packages/*/dist"],
       "@azeebo/design-tokens": ["../../packages/design-tokens/src"]
     }

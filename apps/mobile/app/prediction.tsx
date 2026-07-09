@@ -1,25 +1,25 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Image,
   Modal,
   SafeAreaView,
-  ActivityIndicator,
   Alert,
 } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { colors, universeColors } from '../src/theme';
+import { colors } from '../src/theme';
 import { engagementApi, PredictionResult } from '../src/api/engagement';
+import type { RealityShow } from '../src/types/api';
 import { walletApi } from '../src/api/wallet';
+import { apiClient } from '../src/api/client';
 import { logger } from '../src/utils/logger';
-import { LoadingState, EmptyState, ErrorState } from '../src/components/StateContainers';
+import { LoadingState, ErrorState } from '../src/components/StateContainers';
 
-const PLACEHOLDER_IMAGE = '';
+const _PLACEHOLDER_IMAGE = '';
 
 const leaderboardData = [
   { rank: 1, avatar: '👑', name: 'PredatorKing', points: 15000 },
@@ -39,6 +39,7 @@ export default function PredictionScreen() {
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [betSuccess, setBetSuccess] = useState(false);
   const [prediction, setPrediction] = useState<PredictionResult | null>(null);
+  const [showData, setShowData] = useState<RealityShow | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -46,14 +47,17 @@ export default function PredictionScreen() {
     loadData();
   }, [predictionId]);
 
+  const showName = showData?.name || '';
+
   const loadData = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      const [predictionRes, walletRes] = await Promise.all([
+      const [predictionRes, walletRes, showRes] = await Promise.all([
         engagementApi.getPredictionResults(predictionId || 'default'),
         walletApi.getBalance(),
+        apiClient.get<RealityShow>('/v1/reality/shows/current').catch(() => null),
       ]);
 
       if (predictionRes.success && predictionRes.data) {
@@ -62,6 +66,10 @@ export default function PredictionScreen() {
 
       if (walletRes.success && walletRes.data) {
         setUserPoints(walletRes.data.balance);
+      }
+
+      if (showRes) {
+        setShowData(Array.isArray(showRes) ? showRes[0] : (showRes?.data?.[0] ?? showRes));
       }
     } catch (err) {
       logger.error('Failed to load prediction data:', err);
@@ -88,11 +96,11 @@ export default function PredictionScreen() {
     try {
       const response = await engagementApi.placeBet({
         predictionId: predictionId || 'default',
-        optionId: selectedOption,
+        optionId: selectedOption!,
         amount: betAmount,
       });
       if (!response.success) {
-        throw new Error(response.error?.message || 'Bet placement failed');
+        throw new Error(response.error || 'Bet placement failed');
       }
       setUserPoints((prev) => prev - betAmount);
       setBetSuccess(true);
@@ -176,7 +184,9 @@ export default function PredictionScreen() {
               >
                 Who will be evicted tonight?
               </Text>
-              <Text style={styles.predictionMeta}>Ends in 2h 30m • Big Brother Naija</Text>
+              <Text style={styles.predictionMeta}>
+                Ends in 2h 30m{showName ? ` • ${showName}` : ''}
+              </Text>
             </View>
           </View>
 
@@ -909,7 +919,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   retryButton: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,

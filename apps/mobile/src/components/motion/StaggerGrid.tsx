@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { AccessibilityInfo, type ViewStyle, type StyleProp } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -26,12 +26,7 @@ export function StaggerGrid({
   return (
     <Animated.View style={style}>
       {React.Children.map(children, (child, index) => (
-        <StaggerItem
-          key={index}
-          index={index}
-          delay={staggerDelay}
-          duration={duration}
-        >
+        <StaggerItem key={index} index={index} delay={staggerDelay} duration={duration}>
           {child}
         </StaggerItem>
       ))}
@@ -79,9 +74,5 @@ function StaggerItem({
     transform: [{ translateY: translateY.value }],
   }));
 
-  return (
-    <Animated.View style={animatedStyle}>
-      {children}
-    </Animated.View>
-  );
+  return <Animated.View style={animatedStyle}>{children}</Animated.View>;
 }

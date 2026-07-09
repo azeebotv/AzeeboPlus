@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import Redis from 'ioredis-mock';
 import { randomUUID } from 'crypto';
+import { PrismaClient } from '@prisma/client';
 
 export interface IntegrationTestConfig {
   postgresUrl: string;
@@ -10,8 +11,8 @@ export interface IntegrationTestConfig {
 }
 
 export const DEFAULT_TEST_CONFIG: IntegrationTestConfig = {
-  postgresUrl: 'postgresql://azeebo_test:azeebo_test_password@localhost:5433/azeebo_test_db',
-  redisUrl: 'redis://redis_test_password@localhost:6380',
+  postgresUrl: process.env.TEST_POSTGRES_URL || 'postgresql://azeebo_test:azeebo_test_password@localhost:5433/azeebo_test_db',
+  redisUrl: process.env.TEST_REDIS_URL || 'redis://redis_test_password@localhost:6380',
   service: 'test-service',
 };
 
@@ -23,8 +24,8 @@ export interface TestContainer {
 
 export class IntegrationTestEnvironment {
   private app: INestApplication | null = null;
-  private prisma: any | null = null;
-  private redis: any | null = null;
+  private prisma: PrismaClient | null = null;
+  private redis: InstanceType<typeof Redis> | null = null;
   private containers: TestContainer[] = [];
 
   async startPostgres(): Promise<void> {
@@ -49,11 +50,11 @@ export class IntegrationTestEnvironment {
     this.containers = [];
   }
 
-  getRedis(): any | null {
+  getRedis(): InstanceType<typeof Redis> | null {
     return this.redis;
   }
 
-  getPrisma(): any | null {
+  getPrisma(): PrismaClient | null {
     return this.prisma;
   }
 

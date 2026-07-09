@@ -14,10 +14,7 @@ import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 
 import { SocialAuthService } from './social.service';
 import { RateLimitGuard, RateLimit } from '../../../common/guards/rate-limit.guard';
-import {
-  SocialAuthCallbackDto,
-  SocialAuthAuthorizeResponseDto,
-} from '../dto/social-auth.dto';
+import { SocialAuthCallbackDto, SocialAuthAuthorizeResponseDto } from '../dto/social-auth.dto';
 
 interface SocialLoginResponse {
   success: boolean;
@@ -61,7 +58,7 @@ export class SocialAuthController {
   async googleAuthorize(
     @Query('redirectUri') redirectUri?: string
   ): Promise<SocialAuthAuthorizeResponseDto> {
-    const state = this.socialAuthService.generateState('google');
+    const state = await this.socialAuthService.generateState('google');
     const authorizeUrl = this.socialAuthService.buildAuthorizeUrl('google', state, redirectUri);
 
     this.logger.log(`Google OAuth authorize initiated: state=${state.substring(0, 8)}...`);
@@ -78,7 +75,7 @@ export class SocialAuthController {
   async appleAuthorize(
     @Query('redirectUri') redirectUri?: string
   ): Promise<SocialAuthAuthorizeResponseDto> {
-    const state = this.socialAuthService.generateState('apple');
+    const state = await this.socialAuthService.generateState('apple');
     const authorizeUrl = this.socialAuthService.buildAuthorizeUrl('apple', state, redirectUri);
 
     this.logger.log(`Apple OAuth authorize initiated: state=${state.substring(0, 8)}...`);
@@ -96,9 +93,7 @@ export class SocialAuthController {
   @ApiResponse({ status: 400, description: 'Invalid state or missing parameters' })
   @ApiResponse({ status: 401, description: 'Invalid credentials' })
   @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
-  async socialCallback(
-    @Body() dto: SocialAuthCallbackDto
-  ): Promise<SocialLoginResponse> {
+  async socialCallback(@Body() dto: SocialAuthCallbackDto): Promise<SocialLoginResponse> {
     // Check for OAuth provider error
     if (dto.error) {
       this.logger.warn(`Social callback error from provider: ${dto.error}`);
@@ -106,19 +101,22 @@ export class SocialAuthController {
     }
 
     // Validate the state parameter (CSRF protection)
-    const provider = this.socialAuthService.validateState(dto.state);
+    const provider = await this.socialAuthService.validateState(dto.state);
 
     this.logger.log(
       `Social callback: state validated, provider=${provider}, code=${dto.code.substring(0, 8)}...`
     );
 
-    // Build a minimal social user from the callback data.
     // In production, the code would be exchanged for tokens via the provider's API
-    // and the id_token would be verified. For now, we use the code as the socialId
-    // to maintain compatibility with the existing flow.
+    // and the id_token would be verified to extract the email. For now, the caller
+    // must supply email via the callback DTO. Reject social logins without a verified email.
+    if (!dto.email) {
+      throw new BadRequestException('Email is required from social provider');
+    }
+
     const socialUser = {
-      email: `user@${provider}.com`, // Will be extracted from verified token in production
-      displayName: `${provider.charAt(0).toUpperCase() + provider.slice(1)} User`,
+      email: dto.email,
+      displayName: dto.displayName || `${provider.charAt(0).toUpperCase() + provider.slice(1)} User`,
       socialId: dto.code,
       provider: provider as 'google' | 'apple',
       accessToken: '',
@@ -137,13 +135,17 @@ export class SocialAuthController {
   @ApiResponse({ status: 200, description: 'Login successful' })
   @ApiResponse({ status: 401, description: 'Invalid credentials' })
   async googleLogin(
-    @Body() dto: { idToken: string; accessToken?: string; refreshToken?: string }
+    @Body() dto: { idToken: string; email: string; displayName?: string; accessToken?: string; refreshToken?: string }
   ): Promise<SocialLoginResponse> {
     this.logger.warn('Legacy Google login endpoint used - migrate to /authorize + /callback flow');
 
+    if (!dto.email) {
+      throw new BadRequestException('Email is required for social login');
+    }
+
     const socialUser = {
-      email: 'user@gmail.com',
-      displayName: 'Google User',
+      email: dto.email,
+      displayName: dto.displayName || 'Google User',
       socialId: dto.idToken,
       provider: 'google' as const,
       accessToken: dto.accessToken ?? '',
@@ -160,13 +162,17 @@ export class SocialAuthController {
   @ApiResponse({ status: 200, description: 'Login successful' })
   @ApiResponse({ status: 401, description: 'Invalid credentials' })
   async appleLogin(
-    @Body() dto: { identityToken: string; accessToken?: string; refreshToken?: string }
+    @Body() dto: { identityToken: string; email: string; displayName?: string; accessToken?: string; refreshToken?: string }
   ): Promise<SocialLoginResponse> {
     this.logger.warn('Legacy Apple login endpoint used - migrate to /authorize + /callback flow');
 
+    if (!dto.email) {
+      throw new BadRequestException('Email is required for social login');
+    }
+
     const socialUser = {
-      email: 'user@apple.com',
-      displayName: 'Apple User',
+      email: dto.email,
+      displayName: dto.displayName || 'Apple User',
       socialId: dto.identityToken,
       provider: 'apple' as const,
       accessToken: dto.accessToken ?? '',

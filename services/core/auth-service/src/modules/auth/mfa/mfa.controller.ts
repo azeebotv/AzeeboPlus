@@ -2,6 +2,8 @@ import { Controller, Get, Post, Body, UseGuards, Request } from '@nestjs/common'
 import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
+import * as speakeasy from 'speakeasy';
+
 import { MfaService } from './mfa.service';
 import { EnableMfaDto } from '../dto/enable-mfa.dto';
 import { ApiResponseWrapper } from '@azeebo/shared-types';
@@ -54,13 +56,23 @@ export class MfaController {
   @ApiOperation({ summary: 'Enable MFA for user' })
   @ApiResponse({ status: 200, description: 'MFA enabled' })
   async enable(@Request() req: MfaRequest, @Body() dto: EnableMfaDto): Promise<unknown> {
-    const isValid = await this.mfaService.verifyMfaCode(req.user.id, dto.code);
+    const pendingSecret = await this.mfaService.getPendingMfaSecret(req.user.id);
+    if (!pendingSecret) {
+      return ApiResponseWrapper.error('MFA_SETUP_REQUIRED', 'Run /mfa/setup first');
+    }
+
+    const isValid = speakeasy.totp.verify({
+      secret: pendingSecret,
+      encoding: 'base32',
+      token: dto.code,
+    });
+
     if (!isValid) {
       return ApiResponseWrapper.error('MFA_INVALID_CODE', 'Invalid MFA code');
     }
 
-    const setupResult = await this.mfaService.generateMfaSecret(req.user.id);
-    await this.mfaService.enableMfa(req.user.id, setupResult.secret, setupResult.backupCodes);
+    await this.mfaService.enableMfa(req.user.id, pendingSecret);
+    await this.mfaService.clearPendingMfaSecret(req.user.id);
 
     return ApiResponseWrapper.success({ mfaEnabled: true });
   }

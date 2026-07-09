@@ -1,11 +1,7 @@
-import { IsString, IsObject, IsNumber } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+import { IsObject, IsNumber, IsOptional } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class JoinContestDto {
-  @ApiProperty()
-  @IsString()
-  userId!: string;
-
   @ApiProperty()
   @IsObject()
   entryData!: Record<string, unknown>;
@@ -13,10 +9,11 @@ export class JoinContestDto {
 
 export class SubmitContestScoreDto {
   @ApiProperty()
-  @IsString()
-  userId!: string;
-
-  @ApiProperty()
   @IsNumber()
   score!: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsNumber()
+  timeTaken?: number;
 }

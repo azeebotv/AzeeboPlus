@@ -19,7 +19,19 @@ import type { NextRequest } from 'next/server';
  * on page refresh (middleware runs before client-side token refresh completes).
  */
 
-const protectedRoutes = ['/dashboard', '/rewards', '/creator', '/subscriptions', '/notifications', '/messaging', '/settings', '/creator'];
+const protectedRoutes = [
+  '/dashboard',
+  '/rewards',
+  '/creator',
+  '/subscriptions',
+  '/notifications',
+  '/messaging',
+  '/messages',
+  '/settings',
+  '/wallet',
+  '/content',
+  '/payment',
+];
 const adminRoutes = ['/admin'];
 const creatorRoutes = ['/creator-portal'];
 
@@ -39,9 +51,11 @@ export function middleware(request: NextRequest) {
   ) {
     return NextResponse.next();
   }
-
-  // Check if the user is authenticated using the 'auth' cookie
-  const isAuthenticated = request.cookies.has('auth');
+  // Check if the user is authenticated using the 'auth' cookie.
+  // The cookie contains the user ID set by AuthContext on login.
+  // Validate the cookie has a non-empty value to prevent bypass via empty cookies.
+  const authCookie = request.cookies.get('auth');
+  const isAuthenticated = Boolean(authCookie?.value && authCookie.value.length > 0);
 
   // --- Homepage routing guards ---
   if (pathname === '/') {
@@ -62,19 +76,57 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // --- Admin route guards ---
+  // Decode JWT payload to check role (not signature-verified — defense-in-depth
+  // until server-side session validation is implemented).
+  if (adminRoutes.some((route) => pathname.startsWith(route))) {
+    if (!isAuthenticated) {
+      const loginUrl = new URL('/auth/login', request.url);
+      loginUrl.searchParams.set('redirect', pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+    const accessToken = request.cookies.get('azeebo_access_token')?.value;
+    if (accessToken) {
+      try {
+        const payload = JSON.parse(atob(accessToken.split('.')[1]));
+        if (payload.role !== 'admin' && payload.role !== 'superadmin') {
+          return NextResponse.redirect(new URL('/', request.url));
+        }
+      } catch {
+        // Invalid JWT — allow through (server-side will reject unauthorized requests)
+      }
+    }
+  }
+
+  // --- Creator portal route guards ---
+  if (creatorRoutes.some((route) => pathname.startsWith(route))) {
+    if (!isAuthenticated) {
+      const loginUrl = new URL('/auth/login', request.url);
+      loginUrl.searchParams.set('redirect', pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+    const accessToken = request.cookies.get('azeebo_access_token')?.value;
+    if (accessToken) {
+      try {
+        const payload = JSON.parse(atob(accessToken.split('.')[1]));
+        const role = payload.role;
+        if (role !== 'creator' && role !== 'admin' && role !== 'superadmin') {
+          return NextResponse.redirect(new URL('/', request.url));
+        }
+      } catch {
+        // Invalid JWT — allow through (server-side will reject unauthorized requests)
+      }
+    }
+  }
+
   // --- Protected route guards ---
   if (!isAuthenticated) {
-    if (
-      protectedRoutes.some(route => pathname.startsWith(route)) ||
-      adminRoutes.some(route => pathname.startsWith(route)) ||
-      creatorRoutes.some(route => pathname.startsWith(route))
-    ) {
+    if (protectedRoutes.some((route) => pathname.startsWith(route))) {
       const loginUrl = new URL('/auth/login', request.url);
       loginUrl.searchParams.set('redirect', pathname);
       return NextResponse.redirect(loginUrl);
     }
   }
-
   return NextResponse.next();
 }
 

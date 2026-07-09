@@ -1,0 +1,42 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../base
+  - pdb.yaml
+  - network-policy.yaml
+  - resource-limits.yaml
+namePrefix: prod-
+patches:
+  # Critical services - highest resources
+  - path: patches/auth-service.yaml
+  - path: patches/wallet-service.yaml
+  - path: patches/payment-service.yaml
+  - path: patches/api-gateway.yaml
+  # Core services
+  - path: patches/user-service.yaml
+  - path: patches/content-service.yaml
+  - path: patches/search-service.yaml
+  - path: patches/media-service.yaml
+  # Universe services
+  - path: patches/reality-service.yaml
+  - path: patches/movie-service.yaml
+  - path: patches/comedy-service.yaml
+  - path: patches/games-service.yaml
+  - path: patches/lifestyle-service.yaml
+  - path: patches/vertical-service.yaml
+  - path: patches/creator-service.yaml
+  - path: patches/sports-service.yaml
+  # Engagement services
+  - path: patches/notification-service.yaml
+  - path: patches/reward-service.yaml
+  - path: patches/engagement-service.yaml
+  - path: patches/messaging-service.yaml
+  - path: patches/referral-service.yaml
+  - path: patches/subscription-service.yaml
+  # Operations services
+  - path: patches/queue-service.yaml
+  - path: patches/support-service.yaml
+  - path: patches/moderation-service.yaml
+  # Intelligence services
+  - path: patches/analytics-service.yaml
+  - path: patches/recommendation-service.yaml

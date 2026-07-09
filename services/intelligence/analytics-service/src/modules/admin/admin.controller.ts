@@ -3,10 +3,11 @@ import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { AdminService } from './admin.service';
 import { AdminGuard } from '@azeebo/security';
 import { ApiResponseWrapper } from '@azeebo/shared-types';
+import { AuthGuard } from '@nestjs/passport';
 
 @ApiTags('Admin - Analytics Service')
 @Controller('admin')
-@UseGuards(AdminGuard)
+@UseGuards(AuthGuard('jwt'), AdminGuard)
 export class AdminController {
   constructor(private readonly adminService: AdminService) {}
 

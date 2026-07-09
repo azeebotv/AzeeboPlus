@@ -66,7 +66,6 @@ export class LoggingInterceptor implements NestInterceptor {
               error: {
                 name: error.name,
                 message: error.message,
-                stack: error.stack,
               },
             })
           );

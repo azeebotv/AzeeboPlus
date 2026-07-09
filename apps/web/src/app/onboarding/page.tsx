@@ -45,12 +45,16 @@ export default function OnboardingPage(): React.JSX.Element {
 
   const handleComplete = async (): Promise<void> => {
     try {
-      await apiFetch('/user/preferences', {
-        method: 'PUT',
+      const result = await apiFetch('/users/me/preferences', {
+        method: 'PATCH',
         body: JSON.stringify({ interests: selectedInterests, onboardingCompleted: true }),
       });
-      localStorage.setItem('onboardingCompleted', 'true');
-      router.push('/home');
+      if (result.success) {
+        localStorage.setItem('onboardingCompleted', 'true');
+        router.push('/home');
+      } else {
+        router.push('/home');
+      }
     } catch (error) {
       webLogger.error('Failed to save preferences', error);
       router.push('/home');

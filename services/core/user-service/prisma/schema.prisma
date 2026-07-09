@@ -9,23 +9,44 @@ datasource db {
 }
 
 model User {
-  id              String   @id @default(uuid())
-  email           String   @unique
-  password        String   @default("")
-  displayName     String
-  avatar          String?
-  role            String   @default("user")
-  preferences     Json?    @default("{}")
-  isVerified      Boolean  @default(false)
-  mfaEnabled      Boolean  @default(false)
-  mfaSecret       String?
-  mfaBackupCodes  String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id          String   @id @default(uuid())
+  email       String   @unique
+  displayName String
+  avatar      String?
+  role        String   @default("user")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   @@map("users")
   @@index([role])
   @@index([createdAt])
+}
+
+model UserProfile {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  displayName String?
+  avatar      String?
+  bio         String?
+  location    String?
+  isPublic    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("user_profiles")
+  @@index([userId])
+}
+
+model UserRole {
+  id        String   @id @default(uuid())
+  userId    String
+  role      String
+  grantedBy String
+  createdAt DateTime @default(now())
+
+  @@map("user_roles")
+  @@unique([userId, role])
+  @@index([userId])
 }
 
 model UserPreferences {

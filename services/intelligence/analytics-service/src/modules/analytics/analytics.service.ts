@@ -1,6 +1,7 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { AnalyticsResponse } from './interfaces/analytics-response.interface';
+import { CacheService, cacheKey } from '@azeebo/shared-services';
 
 interface Event {
   type: string;
@@ -72,7 +73,11 @@ const REQUIRED_METADATA_FIELDS = ['session_id', 'platform', 'timestamp'];
 
 @Injectable()
 export class AnalyticsService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly logger = new Logger(AnalyticsService.name);
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly cache: CacheService
+  ) {}
 
   private validateEventEnvelope(event: Event): { valid: boolean; error?: string } {
     if (!event.type || typeof event.type !== 'string') {
@@ -134,93 +139,112 @@ export class AnalyticsService {
       throw new BadRequestException(`All events failed validation: ${validationErrors.join('; ')}`);
     }
 
-    const insertedEvents = await this.prisma.$transaction(
-      validEvents.map((event) =>
-        this.prisma.productEvent.create({
-          data: {
-            eventName: event.type,
-            userId: event.userId,
-            sessionId: event.sessionId,
-            metadata: event.metadata ? JSON.stringify(event.metadata) : undefined,
-            timestamp: event.timestamp ? new Date(event.timestamp) : new Date(),
-          },
-        })
-      )
-    );
+    try {
+      await this.prisma.productEvent.createMany({
+        data: validEvents.map((event) => ({
+          eventName: event.type,
+          userId: event.userId,
+          sessionId: event.sessionId,
+          metadata: event.metadata || undefined,
+          timestamp: event.timestamp ? new Date(event.timestamp) : new Date(),
+        })),
+      });
 
-    return {
-      success: true,
-      data: {
-        ingested: insertedEvents.length,
-        rejected: validationErrors.length,
-        validationErrors: validationErrors.length > 0 ? validationErrors : undefined,
-        events: insertedEvents,
-      },
-    };
+      await this.cache.invalidate('analytics:*');
+
+      return {
+        success: true,
+        data: {
+          ingested: validEvents.length,
+          rejected: validationErrors.length,
+          validationErrors: validationErrors.length > 0 ? validationErrors : undefined,
+        },
+      };
+    } catch (_err) {
+      this.logger.error(`ingestEvents failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: { code: 'INTERNAL_ERROR', message: (error as Error).message } };
+    }
   }
 
   async getUserSummary(userId: string): Promise<AnalyticsResponse> {
-    const totalViews = await this.prisma.productEvent.count({
-      where: { userId, eventName: 'content_view' },
-    });
+    try {
+      const totalViews = await this.prisma.productEvent.count({
+        where: { userId, eventName: 'content_view' },
+      });
 
-    const totalWatchTime = await this.prisma.productEvent.count({
-      where: { userId, eventName: 'play_complete' },
-    });
+      const totalWatchTime = await this.prisma.productEvent.count({
+        where: { userId, eventName: 'play_complete' },
+      });
 
-    const recentActivity = await this.prisma.productEvent.findMany({
-      where: { userId },
-      orderBy: { timestamp: 'desc' },
-      take: 20,
-    });
+      const recentActivity = await this.prisma.productEvent.findMany({
+        where: { userId },
+        orderBy: { timestamp: 'desc' },
+        take: 20,
+      });
 
-    return {
-      success: true,
-      data: {
-        userId,
-        totalViews,
-        totalWatchTime,
-        recentActivity,
-      },
-    };
+      return {
+        success: true,
+        data: {
+          userId,
+          totalViews,
+          totalWatchTime,
+          recentActivity,
+        },
+      };
+    } catch (_err) {
+      this.logger.error(`getUserSummary failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: { code: 'INTERNAL_ERROR', message: (error as Error).message } };
+    }
   }
 
   async getDashboard(): Promise<AnalyticsResponse> {
-    const totalUsers = await this.prisma.user.count();
-    const totalContent = await this.prisma.contentItem.count();
-    const totalViews = await this.prisma.productEvent.count({
-      where: { eventName: 'content_view' },
-    });
+    try {
+      const cacheK = cacheKey('analytics', 'reports:dashboard');
+      const cached = await this.cache.get<AnalyticsResponse>(cacheK);
+      if (cached) return cached;
 
-    const today = new Date();
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
+      const totalUsers = await this.prisma.user.count();
+      const totalContent = await this.prisma.contentItem.count();
+      const totalViews = await this.prisma.productEvent.count({
+        where: { eventName: 'content_view' },
+      });
 
-    const dailyActiveUsers = await this.prisma.productEvent.groupBy({
-      by: ['userId'],
-      where: {
-        timestamp: { gte: yesterday },
-      },
-      _count: true,
-    });
+      const today = new Date();
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
 
-    const dailyViews = await this.prisma.productEvent.count({
-      where: {
-        eventName: 'content_view',
-        timestamp: { gte: yesterday },
-      },
-    });
+      const dailyActiveUsers = await this.prisma.productEvent.groupBy({
+        by: ['userId'],
+        where: {
+          timestamp: { gte: yesterday },
+        },
+        _count: true,
+      });
 
-    return {
-      success: true,
-      data: {
-        totalUsers,
-        totalContent,
-        totalViews,
-        dailyActiveUsers: dailyActiveUsers.length,
-        dailyViews,
-      },
-    };
+      const dailyViews = await this.prisma.productEvent.count({
+        where: {
+          eventName: 'content_view',
+          timestamp: { gte: yesterday },
+        },
+      });
+
+      const result: AnalyticsResponse = {
+        success: true,
+        data: {
+          totalUsers,
+          totalContent,
+          totalViews,
+          dailyActiveUsers: dailyActiveUsers.length,
+          dailyViews,
+        },
+      };
+
+      await this.cache.set(cacheK, result, 300);
+      return result;
+    } catch (_err) {
+      this.logger.error(`getDashboard failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: { code: 'INTERNAL_ERROR', message: (error as Error).message } };
+    }
   }
 
   async getFunnels(name?: string): Promise<AnalyticsResponse> {
@@ -255,86 +279,96 @@ export class AnalyticsService {
       ? { [name]: funnelDefinitions[name as keyof typeof funnelDefinitions] }
       : funnelDefinitions;
 
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    try {
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    const funnelResults: Record<string, { step: string; users: number; conversionRate: number }[]> =
-      {};
+      const funnelResults: Record<string, { step: string; users: number; conversionRate: number }[]> =
+        {};
 
-    for (const [funnelName, config] of Object.entries(selectedFunnels)) {
-      const steps = config.steps;
-      const stepMetrics: { step: string; users: number; conversionRate: number }[] = [];
+      for (const [funnelName, config] of Object.entries(selectedFunnels)) {
+        const steps = config.steps;
+        const stepMetrics: { step: string; users: number; conversionRate: number }[] = [];
 
-      for (let i = 0; i < steps.length; i++) {
-        const stepEvents = await this.prisma.productEvent.groupBy({
-          by: ['userId'],
-          where: {
-            eventName: steps[i],
-            timestamp: { gte: thirtyDaysAgo },
-          },
-          _count: true,
-        });
+        for (let i = 0; i < steps.length; i++) {
+          const stepEvents = await this.prisma.productEvent.groupBy({
+            by: ['userId'],
+            where: {
+              eventName: steps[i],
+              timestamp: { gte: thirtyDaysAgo },
+            },
+            _count: true,
+          });
 
-        const usersAtStep = stepEvents.length;
-        const prevUsers = i === 0 ? usersAtStep : stepMetrics[i - 1].users;
-        const conversionRate = prevUsers > 0 ? (usersAtStep / prevUsers) * 100 : 0;
+          const usersAtStep = stepEvents.length;
+          const prevUsers = i === 0 ? usersAtStep : stepMetrics[i - 1].users;
+          const conversionRate = prevUsers > 0 ? (usersAtStep / prevUsers) * 100 : 0;
 
-        stepMetrics.push({
-          step: steps[i],
-          users: usersAtStep,
-          conversionRate: Math.round(conversionRate * 100) / 100,
-        });
+          stepMetrics.push({
+            step: steps[i],
+            users: usersAtStep,
+            conversionRate: Math.round(conversionRate * 100) / 100,
+          });
+        }
+
+        funnelResults[funnelName] = stepMetrics;
       }
 
-      funnelResults[funnelName] = stepMetrics;
+      return {
+        success: true,
+        data: { funnels: funnelResults },
+      };
+    } catch (_err) {
+      this.logger.error(`getFunnels failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: { code: 'INTERNAL_ERROR', message: (error as Error).message } };
     }
-
-    return {
-      success: true,
-      data: { funnels: funnelResults },
-    };
   }
 
   async getCohorts(period: 'day' | 'week' | 'month' = 'week'): Promise<AnalyticsResponse> {
     const truncUnit = period === 'day' ? 'day' : period === 'week' ? 'week' : 'month';
     const periodsBack = period === 'day' ? 30 : period === 'week' ? 12 : 6;
 
-    const cohorts = await this.prisma.$queryRaw`
-      WITH cohort_data AS (
+    try {
+      const cohorts = await this.prisma.$queryRaw`
+        WITH cohort_data AS (
+          SELECT 
+            u.id as user_id,
+            DATE_TRUNC(${truncUnit}::text, u."createdAt") as cohort_date,
+            COUNT(pe.id) as event_count,
+            MAX(EXTRACT(EPOCH FROM (NOW() - pe.timestamp))) as recency_seconds
+          FROM "users" u
+          LEFT JOIN "product_events" pe ON pe."userId" = u.id
+          GROUP BY u.id, DATE_TRUNC(${truncUnit}::text, u."createdAt")
+        )
         SELECT 
-          u.id as user_id,
-          DATE_TRUNC(${truncUnit}, u."createdAt") as cohort_date,
-          COUNT(pe.id) as event_count,
-          MAX(EXTRACT(EPOCH FROM (NOW() - pe.timestamp))) as recency_seconds
-        FROM "users" u
-        LEFT JOIN "product_events" pe ON pe."userId" = u.id
-        GROUP BY u.id, DATE_TRUNC(${truncUnit}, u."createdAt")
-      )
-      SELECT 
-        cohort_date,
-        COUNT(*) as total_users,
-        AVG(event_count) as avg_events,
-        AVG(recency_seconds) as avg_recency_days
-      FROM cohort_data
-      GROUP BY cohort_date
-      ORDER BY cohort_date DESC
-      LIMIT ${periodsBack}
-    `;
+          cohort_date,
+          COUNT(*) as total_users,
+          AVG(event_count) as avg_events,
+          AVG(recency_seconds) as avg_recency_days
+        FROM cohort_data
+        GROUP BY cohort_date
+        ORDER BY cohort_date DESC
+        LIMIT ${periodsBack}
+      `;
 
-    return {
-      success: true,
-      data: {
-        cohorts: (cohorts as Record<string, unknown>[]).map((c: Record<string, unknown>) => ({
-          cohort_date: c.cohort_date,
-          total_users: c.total_users,
-          avg_events: c.avg_events,
-          avg_recency_days: c.avg_recency_days
-            ? Math.round(Number(c.avg_recency_days) / 86400)
-            : null,
-        })),
-        period,
-      },
-    };
+      return {
+        success: true,
+        data: {
+          cohorts: (cohorts as Record<string, unknown>[]).map((c: Record<string, unknown>) => ({
+            cohort_date: c.cohort_date,
+            total_users: c.total_users,
+            avg_events: c.avg_events,
+            avg_recency_days: c.avg_recency_days
+              ? Math.round(Number(c.avg_recency_days) / 86400)
+              : null,
+          })),
+          period,
+        },
+      };
+    } catch (_err) {
+      this.logger.error(`getCohorts failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: { code: 'INTERNAL_ERROR', message: (error as Error).message } };
+    }
   }
 
   async trackEvent(
@@ -342,33 +376,56 @@ export class AnalyticsService {
     userId?: string,
     metadata?: Record<string, unknown>
   ): Promise<unknown> {
-    return this.prisma.productEvent.create({
-      data: {
-        eventName: type,
-        userId,
-        metadata: metadata ? JSON.stringify(metadata) : undefined,
-        timestamp: new Date(),
-      },
-    });
+    if (!ALLOWED_EVENT_NAMES.includes(type) && !type.startsWith('custom_')) {
+      throw new BadRequestException(`Invalid event name: ${type}`);
+    }
+    try {
+      const result = await this.prisma.productEvent.create({
+        data: {
+          eventName: type,
+          userId,
+          metadata: metadata || undefined,
+          timestamp: new Date(),
+        },
+      });
+
+      await this.cache.invalidate('analytics:*');
+
+      return result;
+    } catch (_err) {
+      this.logger.error(`trackEvent failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: { code: 'INTERNAL_ERROR', message: (error as Error).message } };
+    }
   }
 
   async trackBatch(
     events: Array<{ type: string; userId?: string; metadata?: Record<string, unknown> }>
   ): Promise<{ success: boolean }> {
-    await this.prisma.$transaction(
-      events.map((event) =>
-        this.prisma.productEvent.create({
-          data: {
-            eventName: event.type,
-            userId: event.userId,
-            metadata: event.metadata ? JSON.stringify(event.metadata) : undefined,
-            timestamp: new Date(),
-          },
-        })
-      )
+    const invalidEvents = events.filter(
+      (e) => !ALLOWED_EVENT_NAMES.includes(e.type) && !e.type.startsWith('custom_')
     );
+    if (invalidEvents.length > 0) {
+      throw new BadRequestException(
+        `Invalid event names: ${invalidEvents.map((e) => e.type).join(', ')}`
+      );
+    }
+    try {
+      await this.prisma.productEvent.createMany({
+        data: events.map((event) => ({
+          eventName: event.type,
+          userId: event.userId,
+          metadata: event.metadata || undefined,
+          timestamp: new Date(),
+        })),
+      });
 
-    return { success: true };
+      await this.cache.invalidate('analytics:*');
+
+      return { success: true };
+    } catch (_err) {
+      this.logger.error(`trackBatch failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false };
+    }
   }
 
   async getDailyStats(date?: Date): Promise<AnalyticsResponse> {
@@ -378,157 +435,172 @@ export class AnalyticsService {
     const endOfDay = new Date(startOfDay);
     endOfDay.setDate(endOfDay.getDate() + 1);
 
-    const totalUsers = await this.prisma.user.count();
+    try {
+      const totalUsers = await this.prisma.user.count();
 
-    const dailyViews = await this.prisma.productEvent.count({
-      where: {
-        eventName: 'content_view',
-        timestamp: { gte: startOfDay, lt: endOfDay },
-      },
-    });
+      const dailyViews = await this.prisma.productEvent.count({
+        where: {
+          eventName: 'content_view',
+          timestamp: { gte: startOfDay, lt: endOfDay },
+        },
+      });
 
-    const dailyWatchTime = await this.prisma.productEvent.count({
-      where: {
-        eventName: 'play_complete',
-        timestamp: { gte: startOfDay, lt: endOfDay },
-      },
-    });
+      const dailyWatchTime = await this.prisma.productEvent.count({
+        where: {
+          eventName: 'play_complete',
+          timestamp: { gte: startOfDay, lt: endOfDay },
+        },
+      });
 
-    const activeUsers = await this.prisma.productEvent.groupBy({
-      by: ['userId'],
-      where: {
-        timestamp: { gte: startOfDay, lt: endOfDay },
-      },
-      _count: true,
-    });
+      const activeUsers = await this.prisma.productEvent.groupBy({
+        by: ['userId'],
+        where: {
+          timestamp: { gte: startOfDay, lt: endOfDay },
+        },
+        _count: true,
+      });
 
-    return {
-      success: true,
-      data: {
-        date: targetDate,
-        totalUsers,
-        totalViews: dailyViews,
-        totalWatchTime: dailyWatchTime,
-        activeUsers: activeUsers.length,
-      },
-    };
+      return {
+        success: true,
+        data: {
+          date: targetDate,
+          totalUsers,
+          totalViews: dailyViews,
+          totalWatchTime: dailyWatchTime,
+          activeUsers: activeUsers.length,
+        },
+      };
+    } catch (_err) {
+      this.logger.error(`getDailyStats failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: { code: 'INTERNAL_ERROR', message: (error as Error).message } };
+    }
   }
 
   async getUniverseKpis(universeName: string): Promise<AnalyticsResponse> {
-    const universe = await this.prisma.universe.findUnique({
-      where: { name: universeName },
-    });
+    try {
+      const universe = await this.prisma.universe.findUnique({
+        where: { name: universeName },
+      });
 
-    if (!universe) {
-      throw new BadRequestException(`Unknown universe: ${universeName}`);
+      if (!universe) {
+        throw new BadRequestException(`Unknown universe: ${universeName}`);
+      }
+
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+      const contentCount = await this.prisma.contentItem.count({
+        where: { universeId: universe.id },
+      });
+
+      const newContent = await this.prisma.contentItem.count({
+        where: { universeId: universe.id, createdAt: { gte: thirtyDaysAgo } },
+      });
+
+      const views = await this.prisma.productEvent.count({
+        where: {
+          eventName: 'content_view',
+          metadata: { path: ['universe'], equals: universeName },
+          timestamp: { gte: thirtyDaysAgo },
+        },
+      });
+
+      const plays = await this.prisma.productEvent.count({
+        where: {
+          eventName: 'play_start',
+          metadata: { path: ['universe'], equals: universeName },
+          timestamp: { gte: thirtyDaysAgo },
+        },
+      });
+
+      const completions = await this.prisma.productEvent.count({
+        where: {
+          eventName: 'play_complete',
+          metadata: { path: ['universe'], equals: universeName },
+          timestamp: { gte: thirtyDaysAgo },
+        },
+      });
+
+      const uniqueUsers = await this.prisma.productEvent.groupBy({
+        by: ['userId'],
+        where: {
+          metadata: { path: ['universe'], equals: universeName },
+          timestamp: { gte: thirtyDaysAgo },
+        },
+        _count: true,
+      });
+
+      const engagementRate = plays > 0 ? Math.round((completions / plays) * 10000) / 100 : 0;
+
+      return {
+        success: true,
+        data: {
+          universe: universe.displayName,
+          universeId: universe.id,
+          contentCount,
+          newContent,
+          totalViews: views,
+          totalPlays: plays,
+          completions,
+          engagementRate,
+          uniqueUsers: uniqueUsers.length,
+          period: '30d',
+        },
+      };
+    } catch (_err) {
+      this.logger.error(`getUniverseKpis failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: { code: 'INTERNAL_ERROR', message: (error as Error).message } };
     }
-
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-    const contentCount = await this.prisma.contentItem.count({
-      where: { universeId: universe.id },
-    });
-
-    const newContent = await this.prisma.contentItem.count({
-      where: { universeId: universe.id, createdAt: { gte: thirtyDaysAgo } },
-    });
-
-    const views = await this.prisma.productEvent.count({
-      where: {
-        eventName: 'content_view',
-        metadata: { path: ['universe'], equals: universeName },
-        timestamp: { gte: thirtyDaysAgo },
-      },
-    });
-
-    const plays = await this.prisma.productEvent.count({
-      where: {
-        eventName: 'play_start',
-        metadata: { path: ['universe'], equals: universeName },
-        timestamp: { gte: thirtyDaysAgo },
-      },
-    });
-
-    const completions = await this.prisma.productEvent.count({
-      where: {
-        eventName: 'play_complete',
-        metadata: { path: ['universe'], equals: universeName },
-        timestamp: { gte: thirtyDaysAgo },
-      },
-    });
-
-    const uniqueUsers = await this.prisma.productEvent.groupBy({
-      by: ['userId'],
-      where: {
-        metadata: { path: ['universe'], equals: universeName },
-        timestamp: { gte: thirtyDaysAgo },
-      },
-      _count: true,
-    });
-
-    const engagementRate = plays > 0 ? Math.round((completions / plays) * 10000) / 100 : 0;
-
-    return {
-      success: true,
-      data: {
-        universe: universe.displayName,
-        universeId: universe.id,
-        contentCount,
-        newContent,
-        totalViews: views,
-        totalPlays: plays,
-        completions,
-        engagementRate,
-        uniqueUsers: uniqueUsers.length,
-        period: '30d',
-      },
-    };
   }
 
   async getAllUniverseKpis(): Promise<AnalyticsResponse> {
-    const universes = await this.prisma.universe.findMany();
-    const results = await Promise.all(universes.map((u) => this.getUniverseKpis(u.name)));
+    try {
+      const universes = await this.prisma.universe.findMany();
+      const results = await Promise.all(universes.map((u) => this.getUniverseKpis(u.name)));
 
-    const aggregated = results.reduce(
-      (
-        acc: {
-          totalContent: number;
-          totalViews: number;
-          totalPlays: number;
-          totalCompletions: number;
-          totalUniqueUsers: number;
+      const aggregated = results.reduce(
+        (
+          acc: {
+            totalContent: number;
+            totalViews: number;
+            totalPlays: number;
+            totalCompletions: number;
+            totalUniqueUsers: number;
+          },
+          result: AnalyticsResponse
+        ) => {
+          if (result?.data) {
+            acc.totalContent +=
+              ((result.data as Record<string, unknown>).contentCount as number) || 0;
+            acc.totalViews += ((result.data as Record<string, unknown>).totalViews as number) || 0;
+            acc.totalPlays += ((result.data as Record<string, unknown>).totalPlays as number) || 0;
+            acc.totalCompletions +=
+              ((result.data as Record<string, unknown>).completions as number) || 0;
+            acc.totalUniqueUsers +=
+              ((result.data as Record<string, unknown>).uniqueUsers as number) || 0;
+          }
+          return acc;
         },
-        result: AnalyticsResponse
-      ) => {
-        if (result?.data) {
-          acc.totalContent +=
-            ((result.data as Record<string, unknown>).contentCount as number) || 0;
-          acc.totalViews += ((result.data as Record<string, unknown>).totalViews as number) || 0;
-          acc.totalPlays += ((result.data as Record<string, unknown>).totalPlays as number) || 0;
-          acc.totalCompletions +=
-            ((result.data as Record<string, unknown>).completions as number) || 0;
-          acc.totalUniqueUsers +=
-            ((result.data as Record<string, unknown>).uniqueUsers as number) || 0;
+        {
+          totalContent: 0,
+          totalViews: 0,
+          totalPlays: 0,
+          totalCompletions: 0,
+          totalUniqueUsers: 0,
         }
-        return acc;
-      },
-      {
-        totalContent: 0,
-        totalViews: 0,
-        totalPlays: 0,
-        totalCompletions: 0,
-        totalUniqueUsers: 0,
-      }
-    );
+      );
 
-    return {
-      success: true,
-      data: {
-        universes: results.map((r: AnalyticsResponse) => r.data).filter(Boolean),
-        aggregated,
-      },
-    };
+      return {
+        success: true,
+        data: {
+          universes: results.map((r: AnalyticsResponse) => r.data).filter(Boolean),
+          aggregated,
+        },
+      };
+    } catch (_err) {
+      this.logger.error(`getAllUniverseKpis failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: { code: 'INTERNAL_ERROR', message: (error as Error).message } };
+    }
   }
 
   async getRetentionMetrics(period: '7d' | '30d' | '90d' = '30d'): Promise<AnalyticsResponse> {
@@ -536,34 +608,39 @@ export class AnalyticsService {
     const periodAgo = new Date();
     periodAgo.setDate(periodAgo.getDate() - days);
 
-    const newUsers = await this.prisma.user.count({
-      where: { createdAt: { gte: periodAgo } },
-    });
+    try {
+      const newUsers = await this.prisma.user.count({
+        where: { createdAt: { gte: periodAgo } },
+      });
 
-    const returningUsers = await this.prisma.$queryRaw`
-      SELECT COUNT(DISTINCT pe."userId") as count
-      FROM "product_events" pe
-      JOIN "users" u ON pe."userId" = u.id
-      WHERE u."createdAt" >= ${periodAgo}
-        AND pe."timestamp" >= ${periodAgo}
-        AND pe."timestamp" < NOW()
-    `;
+      const returningUsers = await this.prisma.$queryRaw`
+        SELECT COUNT(DISTINCT pe."userId") as count
+        FROM "product_events" pe
+        JOIN "users" u ON pe."userId" = u.id
+        WHERE u."createdAt" >= ${periodAgo}
+          AND pe."timestamp" >= ${periodAgo}
+          AND pe."timestamp" < NOW()
+      `;
 
-    const returnCount =
-      Array.isArray(returningUsers) && returningUsers.length > 0
-        ? Number((returningUsers[0] as Record<string, unknown>).count || 0)
-        : 0;
-    const retentionRate = newUsers > 0 ? Math.round((returnCount / newUsers) * 10000) / 100 : 0;
+      const returnCount =
+        Array.isArray(returningUsers) && returningUsers.length > 0
+          ? Number((returningUsers[0] as Record<string, unknown>).count || 0)
+          : 0;
+      const retentionRate = newUsers > 0 ? Math.round((returnCount / newUsers) * 10000) / 100 : 0;
 
-    return {
-      success: true,
-      data: {
-        period,
-        newUsers,
-        returningUsers: returnCount,
-        retentionRate,
-      },
-    };
+      return {
+        success: true,
+        data: {
+          period,
+          newUsers,
+          returningUsers: returnCount,
+          retentionRate,
+        },
+      };
+    } catch (_err) {
+      this.logger.error(`getRetentionMetrics failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: { code: 'INTERNAL_ERROR', message: (error as Error).message } };
+    }
   }
 
   async getRevenueMetrics(period: '7d' | '30d' | '90d' = '30d'): Promise<AnalyticsResponse> {
@@ -571,31 +648,36 @@ export class AnalyticsService {
     const periodAgo = new Date();
     periodAgo.setDate(periodAgo.getDate() - days);
 
-    const payments = await this.prisma.paymentIntent.count({
-      where: { status: 'completed', createdAt: { gte: periodAgo } },
-    });
+    try {
+      const payments = await this.prisma.paymentIntent.count({
+        where: { status: 'completed', createdAt: { gte: periodAgo } },
+      });
 
-    const totalRevenue = await this.prisma.paymentIntent.aggregate({
-      _sum: { amount: true },
-      where: { status: 'completed', createdAt: { gte: periodAgo } },
-    });
+      const totalRevenue = await this.prisma.paymentIntent.aggregate({
+        _sum: { amount: true },
+        where: { status: 'completed', createdAt: { gte: periodAgo } },
+      });
 
-    const avgOrderValue =
-      payments > 0 ? Math.round(Number(totalRevenue._sum.amount || 0) / payments) : 0;
+      const avgOrderValue =
+        payments > 0 ? Math.round(Number(totalRevenue._sum.amount || 0) / payments) : 0;
 
-    // Subscription model not available in analytics-service schema
-    const subscriptions = 0;
+      // Subscription model not available in analytics-service schema
+      const subscriptions = 0;
 
-    return {
-      success: true,
-      data: {
-        period,
-        totalPayments: payments,
-        totalRevenue: Number(totalRevenue._sum.amount || 0),
-        avgOrderValue,
-        newSubscriptions: subscriptions,
-      },
-    };
+      return {
+        success: true,
+        data: {
+          period,
+          totalPayments: payments,
+          totalRevenue: Number(totalRevenue._sum.amount || 0),
+          avgOrderValue,
+          newSubscriptions: subscriptions,
+        },
+      };
+    } catch (_err) {
+      this.logger.error(`getRevenueMetrics failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: { code: 'INTERNAL_ERROR', message: (error as Error).message } };
+    }
   }
 
   async getEngagementMetrics(period: '7d' | '30d' | '90d' = '30d'): Promise<AnalyticsResponse> {
@@ -603,79 +685,89 @@ export class AnalyticsService {
     const periodAgo = new Date();
     periodAgo.setDate(periodAgo.getDate() - days);
 
-    const totalViews = await this.prisma.productEvent.count({
-      where: { eventName: 'content_view', timestamp: { gte: periodAgo } },
-    });
+    try {
+      const totalViews = await this.prisma.productEvent.count({
+        where: { eventName: 'content_view', timestamp: { gte: periodAgo } },
+      });
 
-    const totalPlays = await this.prisma.productEvent.count({
-      where: { eventName: 'play_start', timestamp: { gte: periodAgo } },
-    });
+      const totalPlays = await this.prisma.productEvent.count({
+        where: { eventName: 'play_start', timestamp: { gte: periodAgo } },
+      });
 
-    const totalCompletions = await this.prisma.productEvent.count({
-      where: { eventName: 'play_complete', timestamp: { gte: periodAgo } },
-    });
+      const totalCompletions = await this.prisma.productEvent.count({
+        where: { eventName: 'play_complete', timestamp: { gte: periodAgo } },
+      });
 
-    const activeUsers = await this.prisma.productEvent.groupBy({
-      by: ['userId'],
-      where: { timestamp: { gte: periodAgo } },
-      _count: true,
-    });
+      const activeUsers = await this.prisma.productEvent.groupBy({
+        by: ['userId'],
+        where: { timestamp: { gte: periodAgo } },
+        _count: true,
+      });
 
-    const avgSessionDuration = await this.prisma.$queryRaw`
-      SELECT AVG(session_duration) as avg_duration
-      FROM (
-        SELECT "sessionId", EXTRACT(EPOCH FROM (MAX("timestamp") - MIN("timestamp"))) as session_duration
-        FROM "product_events"
-        WHERE "timestamp" >= ${periodAgo}
-          AND "sessionId" IS NOT NULL
-        GROUP BY "sessionId"
-      ) as sessions
-    `;
+      const avgSessionDuration = await this.prisma.$queryRaw`
+        SELECT AVG(session_duration) as avg_duration
+        FROM (
+          SELECT "sessionId", EXTRACT(EPOCH FROM (MAX("timestamp") - MIN("timestamp"))) as session_duration
+          FROM "product_events"
+          WHERE "timestamp" >= ${periodAgo}
+            AND "sessionId" IS NOT NULL
+          GROUP BY "sessionId"
+        ) as sessions
+      `;
 
-    const avgDuration =
-      Array.isArray(avgSessionDuration) && avgSessionDuration.length > 0
-        ? Math.round(
-            Number((avgSessionDuration[0] as Record<string, unknown>).avg_duration || 0) / 60
-          )
-        : 0;
+      const avgDuration =
+        Array.isArray(avgSessionDuration) && avgSessionDuration.length > 0
+          ? Math.round(
+              Number((avgSessionDuration[0] as Record<string, unknown>).avg_duration || 0) / 60
+            )
+          : 0;
 
-    const engagementRate =
-      totalPlays > 0 ? Math.round((totalCompletions / totalPlays) * 10000) / 100 : 0;
+      const engagementRate =
+        totalPlays > 0 ? Math.round((totalCompletions / totalPlays) * 10000) / 100 : 0;
 
-    return {
-      success: true,
-      data: {
-        period,
-        totalViews,
-        totalPlays,
-        totalCompletions,
-        activeUsers: activeUsers.length,
-        avgSessionDurationMinutes: avgDuration,
-        engagementRate,
-      },
-    };
+      return {
+        success: true,
+        data: {
+          period,
+          totalViews,
+          totalPlays,
+          totalCompletions,
+          activeUsers: activeUsers.length,
+          avgSessionDurationMinutes: avgDuration,
+          engagementRate,
+        },
+      };
+    } catch (_err) {
+      this.logger.error(`getEngagementMetrics failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: { code: 'INTERNAL_ERROR', message: (error as Error).message } };
+    }
   }
 
   async getDetailedDashboard(): Promise<AnalyticsResponse> {
-    const [dailyStats, weeklyRetention, monthlyRevenue, engagement, universeKpis] =
-      await Promise.all([
-        this.getDailyStats(),
-        this.getRetentionMetrics('7d'),
-        this.getRevenueMetrics('30d'),
-        this.getEngagementMetrics('30d'),
-        this.getAllUniverseKpis(),
-      ]);
+    try {
+      const [dailyStats, weeklyRetention, monthlyRevenue, engagement, universeKpis] =
+        await Promise.all([
+          this.getDailyStats(),
+          this.getRetentionMetrics('7d'),
+          this.getRevenueMetrics('30d'),
+          this.getEngagementMetrics('30d'),
+          this.getAllUniverseKpis(),
+        ]);
 
-    return {
-      success: true,
-      data: {
-        today: dailyStats.data,
-        retention: weeklyRetention.data,
-        revenue: monthlyRevenue.data,
-        engagement: engagement.data,
-        universes: universeKpis.data,
-      },
-    };
+      return {
+        success: true,
+        data: {
+          today: dailyStats.data,
+          retention: weeklyRetention.data,
+          revenue: monthlyRevenue.data,
+          engagement: engagement.data,
+          universes: universeKpis.data,
+        },
+      };
+    } catch (_err) {
+      this.logger.error(`getDetailedDashboard failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: { code: 'INTERNAL_ERROR', message: (error as Error).message } };
+    }
   }
 
   async getKpis(period?: '7d' | '30d' | '90d'): Promise<AnalyticsResponse> {
@@ -683,48 +775,60 @@ export class AnalyticsService {
     const days = period === '7d' ? 7 : period === '90d' ? 90 : 30;
     const startDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
 
-    const [totalEvents, uniqueUsers, totalSessions, avgEventsPerUser] = await Promise.all([
-      this.prisma.productEvent.count({ where: { createdAt: { gte: startDate } } }),
-      this.prisma.productEvent.groupBy({
-        by: ['userId'],
-        where: { createdAt: { gte: startDate }, userId: { not: null } },
-        _count: { id: true },
-      }),
-      this.prisma.productEvent.groupBy({
-        by: ['sessionId'],
-        where: { createdAt: { gte: startDate }, sessionId: { not: null } },
-        _count: { id: true },
-      }),
-      this.prisma.productEvent.groupBy({
-        by: ['userId'],
-        where: { createdAt: { gte: startDate }, userId: { not: null } },
-        _count: { id: true },
-      }),
-    ]);
+    try {
+      const cacheK = cacheKey('analytics', `metrics:kpis:${period || '30d'}`);
+      const cached = await this.cache.get<AnalyticsResponse>(cacheK);
+      if (cached) return cached;
 
-    const topEvents = await this.prisma.productEvent.groupBy({
-      by: ['eventName'],
-      where: { createdAt: { gte: startDate } },
-      _count: { id: true },
-      orderBy: { _count: { id: 'desc' } },
-      take: 10,
-    });
+      const [totalEvents, uniqueUsers, totalSessions, avgEventsPerUser] = await Promise.all([
+        this.prisma.productEvent.count({ where: { timestamp: { gte: startDate } } }),
+        this.prisma.productEvent.groupBy({
+          by: ['userId'],
+          where: { timestamp: { gte: startDate }, userId: { not: null } },
+          _count: { id: true },
+        }),
+        this.prisma.productEvent.groupBy({
+          by: ['sessionId'],
+          where: { timestamp: { gte: startDate }, sessionId: { not: null } },
+          _count: { id: true },
+        }),
+        this.prisma.productEvent.groupBy({
+          by: ['userId'],
+          where: { timestamp: { gte: startDate }, userId: { not: null } },
+          _count: { id: true },
+        }),
+      ]);
 
-    return {
-      success: true,
-      data: {
-        period,
-        totalEvents,
-        uniqueUsers: uniqueUsers.length,
-        totalSessions: totalSessions.length,
-        avgEventsPerUser:
-          uniqueUsers.length > 0 ? Math.round((totalEvents / uniqueUsers.length) * 100) / 100 : 0,
-        topEvents: topEvents.map((e: { eventName: string; _count: { id: number } }) => ({
-          event: e.eventName,
-          count: e._count.id,
-        })),
-      },
-    };
+      const topEvents = await this.prisma.productEvent.groupBy({
+        by: ['eventName'],
+        where: { timestamp: { gte: startDate } },
+        _count: { id: true },
+        orderBy: { _count: { id: 'desc' } },
+        take: 10,
+      });
+
+      const result: AnalyticsResponse = {
+        success: true,
+        data: {
+          period,
+          totalEvents,
+          uniqueUsers: uniqueUsers.length,
+          totalSessions: totalSessions.length,
+          avgEventsPerUser:
+            uniqueUsers.length > 0 ? Math.round((totalEvents / uniqueUsers.length) * 100) / 100 : 0,
+          topEvents: topEvents.map((e: { eventName: string; _count: { id: number } }) => ({
+            event: e.eventName,
+            count: e._count.id,
+          })),
+        },
+      };
+
+      await this.cache.set(cacheK, result, 300);
+      return result;
+    } catch (_err) {
+      this.logger.error(`getKpis failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: { code: 'INTERNAL_ERROR', message: (error as Error).message } };
+    }
   }
 
   async getRealtime(): Promise<AnalyticsResponse> {
@@ -732,46 +836,51 @@ export class AnalyticsService {
     const fiveMinutesAgo = new Date(now.getTime() - 5 * 60 * 1000);
     const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
 
-    // Use ProductEvent instead of analyticsEvent (model doesn't exist in schema)
-    const [eventsLast5Min, eventsLastHour, activeUsersLast5Min, eventsByTypeLastHour] =
-      await Promise.all([
-        this.prisma.productEvent.count({ where: { createdAt: { gte: fiveMinutesAgo } } }),
-        this.prisma.productEvent.count({ where: { createdAt: { gte: oneHourAgo } } }),
-        this.prisma.productEvent.groupBy({
-          by: ['userId'],
-          where: { createdAt: { gte: fiveMinutesAgo }, userId: { not: null } },
-          _count: { id: true },
-        }),
-        this.prisma.productEvent.groupBy({
-          by: ['eventName'],
-          where: { createdAt: { gte: oneHourAgo } },
-          _count: { id: true },
-          orderBy: { _count: { id: 'desc' } },
-          take: 5,
-        }),
-      ]);
+    try {
+      // Use ProductEvent instead of analyticsEvent (model doesn't exist in schema)
+      const [eventsLast5Min, eventsLastHour, activeUsersLast5Min, eventsByTypeLastHour] =
+        await Promise.all([
+          this.prisma.productEvent.count({ where: { timestamp: { gte: fiveMinutesAgo } } }),
+          this.prisma.productEvent.count({ where: { timestamp: { gte: oneHourAgo } } }),
+          this.prisma.productEvent.groupBy({
+            by: ['userId'],
+            where: { timestamp: { gte: fiveMinutesAgo }, userId: { not: null } },
+            _count: { id: true },
+          }),
+          this.prisma.productEvent.groupBy({
+            by: ['eventName'],
+            where: { timestamp: { gte: oneHourAgo } },
+            _count: { id: true },
+            orderBy: { _count: { id: 'desc' } },
+            take: 5,
+          }),
+        ]);
 
-    const recentEvents = await this.prisma.productEvent.findMany({
-      where: { createdAt: { gte: fiveMinutesAgo } },
-      orderBy: { createdAt: 'desc' },
-      take: 20,
-      select: { eventName: true, userId: true, createdAt: true },
-    });
+      const recentEvents = await this.prisma.productEvent.findMany({
+        where: { timestamp: { gte: fiveMinutesAgo } },
+        orderBy: { timestamp: 'desc' },
+        take: 20,
+        select: { eventName: true, userId: true, createdAt: true },
+      });
 
-    return {
-      success: true,
-      data: {
-        eventsLast5Minutes: eventsLast5Min,
-        eventsLastHour: eventsLastHour,
-        activeUsersLast5Minutes: activeUsersLast5Min.length,
-        topEventsLastHour: eventsByTypeLastHour.map(
-          (e: { eventName: string; _count: { id: number } }) => ({
-            event: e.eventName,
-            count: e._count.id,
-          })
-        ),
-        recentEvents,
-      },
-    };
+      return {
+        success: true,
+        data: {
+          eventsLast5Minutes: eventsLast5Min,
+          eventsLastHour: eventsLastHour,
+          activeUsersLast5Minutes: activeUsersLast5Min.length,
+          topEventsLastHour: eventsByTypeLastHour.map(
+            (e: { eventName: string; _count: { id: number } }) => ({
+              event: e.eventName,
+              count: e._count.id,
+            })
+          ),
+          recentEvents,
+        },
+      };
+    } catch (_err) {
+      this.logger.error(`getRealtime failed: ${(error as Error).message}`, (error as Error).stack);
+      return { success: false, error: { code: 'INTERNAL_ERROR', message: (error as Error).message } };
+    }
   }
 }

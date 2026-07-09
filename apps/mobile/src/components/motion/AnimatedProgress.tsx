@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { StyleSheet, View, type ViewStyle, type StyleProp } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -7,7 +7,7 @@ import Animated, {
   interpolate,
   Extrapolation,
 } from 'react-native-reanimated';
-import { colors, radius } from '../../theme';
+import { colors } from '../../theme';
 
 interface AnimatedProgressProps {
   progress: number;
@@ -18,7 +18,7 @@ interface AnimatedProgressProps {
 
 export function AnimatedProgress({
   progress,
-  color = colors.primary,
+  color = colors.primary[500],
   height = 6,
   style,
 }: AnimatedProgressProps) {
@@ -37,11 +37,7 @@ export function AnimatedProgress({
   return (
     <View style={[styles.track, { height, borderRadius: height / 2 }, style]}>
       <Animated.View
-        style={[
-          styles.fill,
-          { backgroundColor: color, borderRadius: height / 2 },
-          fillStyle,
-        ]}
+        style={[styles.fill, { backgroundColor: color, borderRadius: height / 2 }, fillStyle]}
       />
     </View>
   );

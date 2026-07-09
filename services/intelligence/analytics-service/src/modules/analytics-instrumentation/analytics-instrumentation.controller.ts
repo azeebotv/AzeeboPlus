@@ -1,28 +1,43 @@
-import { Controller, Post, Body, Get } from '@nestjs/common';
-import { ApiTags, ApiOperation } from '@nestjs/swagger';
-import { Public } from '@azeebo/security';
+import { Controller, Post, Body, Get, UseGuards, Req } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import { AuthGuard } from '@nestjs/passport';
+import { RateLimitGuard, RateLimit } from '@azeebo/security';
 import {
   AnalyticsInstrumentationService,
   AnalyticsEvent,
   EVENT_NAMES,
 } from './analytics-instrumentation.service';
 
+interface AuthenticatedRequest extends Request {
+  user: { sub: string };
+}
+
 @ApiTags('Analytics Instrumentation')
-@Public()
+@ApiBearerAuth()
+@UseGuards(AuthGuard('jwt'), RateLimitGuard)
 @Controller('instrumentation')
 export class AnalyticsInstrumentationController {
   constructor(private readonly analyticsInstrumentationService: AnalyticsInstrumentationService) {}
 
   @Post('track')
   @ApiOperation({ summary: 'Track a single event' })
-  async track(@Body() event: AnalyticsEvent): Promise<{ id: string }> {
-    return this.analyticsInstrumentationService.track(event);
+  @RateLimit(100, 60000)
+  async track(@Body() event: AnalyticsEvent, @Req() req: AuthenticatedRequest): Promise<{ id: string }> {
+    return this.analyticsInstrumentationService.track({
+      ...event,
+      userId: req.user?.sub ?? event.userId,
+    });
   }
 
   @Post('track-batch')
   @ApiOperation({ summary: 'Track multiple events' })
-  async trackBatch(@Body() events: AnalyticsEvent[]): Promise<{ ingested: number }> {
-    return this.analyticsInstrumentationService.trackBatch(events);
+  @RateLimit(100, 60000)
+  async trackBatch(@Body() events: AnalyticsEvent[], @Req() req: AuthenticatedRequest): Promise<{ ingested: number }> {
+    const userId = req.user?.sub;
+    const sanitized = userId
+      ? events.map((e) => ({ ...e, userId }))
+      : events;
+    return this.analyticsInstrumentationService.trackBatch(sanitized);
   }
 
   @Post('screen-view')
@@ -30,15 +45,15 @@ export class AnalyticsInstrumentationController {
   async trackScreenView(
     @Body()
     body: {
-      userId: string;
       sessionId: string;
       screenName: string;
       platform: 'web' | 'mobile' | 'tablet';
       metadata?: Record<string, unknown>;
-    }
+    },
+    @Req() req: AuthenticatedRequest
   ): Promise<{ id: string }> {
     return this.analyticsInstrumentationService.trackScreenView(
-      body.userId,
+      req.user?.sub,
       body.sessionId,
       body.screenName,
       body.platform,
@@ -51,16 +66,16 @@ export class AnalyticsInstrumentationController {
   async trackContentImpression(
     @Body()
     body: {
-      userId: string;
       sessionId: string;
       contentId: string;
       contentType: string;
       universe: string;
       platform: 'web' | 'mobile' | 'tablet';
-    }
+    },
+    @Req() req: AuthenticatedRequest
   ): Promise<{ id: string }> {
     return this.analyticsInstrumentationService.trackContentImpression(
-      body.userId,
+      req.user?.sub,
       body.sessionId,
       body.contentId,
       body.contentType,
@@ -74,17 +89,17 @@ export class AnalyticsInstrumentationController {
   async trackPayment(
     @Body()
     body: {
-      userId: string;
       sessionId: string;
       eventType: 'viewed' | 'initiated' | 'success' | 'failed';
       amount: number;
       currency: string;
       paymentMethod?: string;
       errorMessage?: string;
-    }
+    },
+    @Req() req: AuthenticatedRequest
   ): Promise<{ id: string }> {
     return this.analyticsInstrumentationService.trackPayment(
-      body.userId,
+      req.user?.sub,
       body.sessionId,
       body.eventType,
       body.amount,
@@ -99,15 +114,15 @@ export class AnalyticsInstrumentationController {
   async trackReward(
     @Body()
     body: {
-      userId: string;
       eventType: 'earned' | 'redeemed';
       rewardType: string;
       amount: number;
       universe?: string;
-    }
+    },
+    @Req() req: AuthenticatedRequest
   ): Promise<{ id: string }> {
     return this.analyticsInstrumentationService.trackReward(
-      body.userId,
+      req.user?.sub,
       body.eventType,
       body.rewardType,
       body.amount,
@@ -120,15 +135,15 @@ export class AnalyticsInstrumentationController {
   async trackGameEvent(
     @Body()
     body: {
-      userId: string;
       sessionId: string;
       eventType: 'started' | 'completed' | 'answered';
       gameId: string;
       metadata?: Record<string, unknown>;
-    }
+    },
+    @Req() req: AuthenticatedRequest
   ): Promise<{ id: string }> {
     return this.analyticsInstrumentationService.trackGameEvent(
-      body.userId,
+      req.user?.sub,
       body.sessionId,
       body.eventType,
       body.gameId,
@@ -141,15 +156,15 @@ export class AnalyticsInstrumentationController {
   async trackPrediction(
     @Body()
     body: {
-      userId: string;
       eventType: 'placed' | 'won' | 'lost';
       marketId: string;
       stake?: number;
       payout?: number;
-    }
+    },
+    @Req() req: AuthenticatedRequest
   ): Promise<{ id: string }> {
     return this.analyticsInstrumentationService.trackPrediction(
-      body.userId,
+      req.user?.sub,
       body.eventType,
       body.marketId,
       body.stake,
@@ -162,15 +177,15 @@ export class AnalyticsInstrumentationController {
   async trackShare(
     @Body()
     body: {
-      userId: string;
       contentId: string;
       contentType: string;
       platform: string;
       shareMethod: string;
-    }
+    },
+    @Req() req: AuthenticatedRequest
   ): Promise<{ id: string }> {
     return this.analyticsInstrumentationService.trackShare(
-      body.userId,
+      req.user?.sub,
       body.contentId,
       body.contentType,
       body.platform,

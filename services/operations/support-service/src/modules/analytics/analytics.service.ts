@@ -9,6 +9,9 @@ import {
 @Injectable()
 export class AnalyticsService {
   private readonly logger = new Logger(AnalyticsService.name);
+  // SECURITY: This in-memory array is a temporary solution and should be replaced
+  // with database persistence. It is capped at MAX_EVENTS to prevent OOM attacks.
+  private static readonly MAX_EVENTS = 10000;
   private events: Array<{ event: string; data: Record<string, unknown>; timestamp: Date }> = [];
 
   async trackTicketCreated(data: SupportTicketCreatedEvent): Promise<void> {
@@ -45,6 +48,9 @@ export class AnalyticsService {
 
   private async track(event: string, data: Record<string, unknown>): Promise<void> {
     const eventRecord = { event, data, timestamp: new Date() };
+    if (this.events.length >= AnalyticsService.MAX_EVENTS) {
+      this.events.shift();
+    }
     this.events.push(eventRecord);
     this.logger.log(JSON.stringify(eventRecord), 'AnalyticsEvent');
   }

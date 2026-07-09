@@ -17,15 +17,41 @@ import { createAdminMethods } from './admin';
 import { createEngagementMethods } from './engagement';
 
 import type { ApiResponse } from './base';
+import type { ApiError } from './base';
 
 const ACCESS_TOKEN_KEY = 'azeebo_access_token';
 const REFRESH_TOKEN_KEY = 'azeebo_refresh_token';
 const USER_KEY = 'azeebo_user';
 
-/** Set the middleware-readable auth cookie so protected routes don't redirect to login. */
-function setAuthCookie(value: string, maxAge: number = 7 * 24 * 60 * 60): void {
-  if (typeof document !== 'undefined') {
-    document.cookie = `auth=${encodeURIComponent(value)}; path=/; max-age=${maxAge}; SameSite=Lax`;
+export async function setAuthCookie(value: string, maxAge: number = 30 * 60): Promise<void> {
+  if (typeof window !== 'undefined') {
+    try {
+      await fetch('/api/auth/cookie', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: value, maxAge }),
+        credentials: 'include',
+      });
+    } catch {
+      // Fallback: set non-HttpOnly cookie for middleware compatibility
+      const secure = window.location.protocol === 'https:' ? '; Secure' : '';
+      document.cookie = `auth=${encodeURIComponent(value)}; path=/; max-age=${maxAge}; SameSite=Lax${secure}`;
+    }
+  }
+}
+
+export async function clearAuthCookie(): Promise<void> {
+  if (typeof window !== 'undefined') {
+    try {
+      await fetch('/api/auth/cookie', {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+    } catch {
+      // Fallback
+      const secure = window.location.protocol === 'https:' ? '; Secure' : '';
+      document.cookie = `auth=; path=/; max-age=0; SameSite=Lax${secure}`;
+    }
   }
 }
 
@@ -107,11 +133,8 @@ class ApiClient {
           localStorage.setItem(ACCESS_TOKEN_KEY, response.data.access_token);
           localStorage.setItem(REFRESH_TOKEN_KEY, response.data.refresh_token);
 
-          // Update the middleware auth cookie
-          const storedUser = localStorage.getItem(USER_KEY);
-          if (storedUser) {
-            setAuthCookie(JSON.parse(storedUser).id);
-          }
+          // Update the middleware auth cookie with the new access token
+          setAuthCookie(response.data.access_token);
           return response.data;
         }
         return null;
@@ -184,19 +207,29 @@ class ApiClient {
 
       if (!response.ok) {
         // T-CORE: On 401, attempt automatic token refresh and retry the request
-        if (response.status === 401 && !retryOptions?.skipAuthRetry && !endpoint.includes('/auth/refresh') && !endpoint.includes('/auth/login')) {
+        if (
+          response.status === 401 &&
+          !retryOptions?.skipAuthRetry &&
+          !endpoint.includes('/auth/refresh') &&
+          !endpoint.includes('/auth/login')
+        ) {
           const refreshed = await this.attemptRefresh();
           if (refreshed) {
             // Retry the original request with the new token
             return this.request<T>(endpoint, options, retryOptions, attempt);
           }
-          // Refresh failed — do NOT clear session here; let AuthContext handle cleanup
+          // Refresh failed — redirect to login page
+          if (typeof window !== 'undefined') {
+            const loginUrl = new URL('/auth/login', window.location.origin);
+            loginUrl.searchParams.set('redirect', window.location.pathname);
+            window.location.href = loginUrl.toString();
+          }
         }
 
         // T-M15: retry on standard retryable codes, but skip retry for auth/refresh
         // to prevent generating multiple refresh requests that hit rate limits
-        const retryable = this.isRetryableError(response.status)
-          && !endpoint.includes('/auth/refresh');
+        const retryable =
+          this.isRetryableError(response.status) && !endpoint.includes('/auth/refresh');
 
         if (retryable && attempt < RETRY_CONFIG.maxRetries) {
           const retryAfter = response.headers.get('Retry-After');
@@ -215,16 +248,19 @@ class ApiClient {
           instance: data.instance,
           // Application-level fields
           code: data.code,
-          message: data.message
-            || (Array.isArray(data.error?.message) ? data.error.message.join(', ') : data.error?.message)
-            || data.detail
-            || 'An error occurred',
+          message:
+            data.message ||
+            (Array.isArray(data.error?.message)
+              ? data.error.message.join(', ')
+              : data.error?.message) ||
+            data.detail ||
+            'An error occurred',
           error: data.error,
           statusCode: response.status,
           details: data.details,
           timestamp: data.timestamp,
           path: data.path,
-        } as any;
+        } as ApiError;
       }
 
       return {
@@ -250,7 +286,7 @@ class ApiClient {
       }
 
       if (
-        this.isRetryableError(undefined, error instanceof Error ? error.message : undefined) &&
+        this.isRetryableError(undefined, error instanceof Error ? (error as Error).message : undefined) &&
         attempt < RETRY_CONFIG.maxRetries
       ) {
         const delay = this.calculateDelay(attempt);
@@ -261,7 +297,7 @@ class ApiClient {
       return {
         success: false,
         message: 'Network error. Please check your connection.',
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: error instanceof Error ? (error as Error).message : 'Unknown error',
       };
     }
   }

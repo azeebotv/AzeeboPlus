@@ -13,7 +13,9 @@ import {
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 
-import { PollService, CreatePollInput } from './poll.service';
+import { PollService } from './poll.service';
+import { CreatePollDto } from './dto/create-poll.dto';
+import { VotePollDto } from './dto/vote-poll.dto';
 
 @ApiTags('Polls')
 @Controller('polls')
@@ -45,8 +47,8 @@ export class PollController {
   @ApiOperation({ summary: 'Create a poll' })
   @ApiResponse({ status: 201, description: 'Poll created' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async createPoll(@Request() req: { user: { sub: string } }, @Body() data: CreatePollInput) {
-    return this.pollService.createPoll(req.user.sub, data);
+  async createPoll(@Request() req: { user: { sub: string } }, @Body() data: CreatePollDto) {
+    return this.pollService.createPoll(req.user.id, data);
   }
 
   @Post(':id/vote')
@@ -59,8 +61,8 @@ export class PollController {
   async votePoll(
     @Request() req: { user: { sub: string } },
     @Param('id') pollId: string,
-    @Body() body: { optionId: string }
+    @Body() body: VotePollDto
   ) {
-    return this.pollService.votePoll(pollId, req.user.sub, body.optionId);
+    return this.pollService.votePoll(pollId, req.user.id, body.optionId);
   }
 }

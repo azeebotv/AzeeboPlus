@@ -1,0 +1,39 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  # Infrastructure
+  - namespace.yaml
+  - configmap.yaml
+  # Gateway
+  - api-gateway.yaml
+  # Core services
+  - auth-service.yaml
+  - user-service.yaml
+  - wallet-service.yaml
+  - payment-service.yaml
+  - content-service.yaml
+  - search-service.yaml
+  - media-service.yaml
+  # Universe services
+  - reality-service.yaml
+  - movie-service.yaml
+  - comedy-service.yaml
+  - games-service.yaml
+  - lifestyle-service.yaml
+  - vertical-service.yaml
+  - creator-service.yaml
+  - sports-service.yaml
+  # Engagement services
+  - notification-service.yaml
+  - reward-service.yaml
+  - engagement-service.yaml
+  - messaging-service.yaml
+  - referral-service.yaml
+  - subscription-service.yaml
+  # Operations services
+  - queue-service.yaml
+  - support-service.yaml
+  - moderation-service.yaml
+  # Intelligence services
+  - analytics-service.yaml
+  - recommendation-service.yaml

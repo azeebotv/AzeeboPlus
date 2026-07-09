@@ -1,8 +1,6 @@
 import { useCallback } from 'react';
 import * as SecureStore from 'expo-secure-store';
-import { Logger } from '@azeebo/shared-types';
-
-const logger = new Logger('useSecureStorage');
+import { logger } from '../utils/logger';
 
 /**
  * Secure storage hook for sensitive data (JWT tokens, credentials).
@@ -22,7 +20,7 @@ export function useSecureStorage(): {
       return await SecureStore.getItemAsync(key);
     } catch (error) {
       logger.error(
-        `Error reading ${key} from secure storage: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Error reading ${key} from secure storage: ${error instanceof Error ? (error as Error).message : 'Unknown error'}`
       );
       return null;
     }
@@ -35,7 +33,7 @@ export function useSecureStorage(): {
       });
     } catch (error) {
       logger.error(
-        `Error writing ${key} to secure storage: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Error writing ${key} to secure storage: ${error instanceof Error ? (error as Error).message : 'Unknown error'}`
       );
     }
   }, []);
@@ -45,7 +43,7 @@ export function useSecureStorage(): {
       await SecureStore.deleteItemAsync(key);
     } catch (error) {
       logger.error(
-        `Error removing ${key} from secure storage: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Error removing ${key} from secure storage: ${error instanceof Error ? (error as Error).message : 'Unknown error'}`
       );
     }
   }, []);

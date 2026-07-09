@@ -16,6 +16,10 @@ import { IsString, IsOptional, IsObject } from 'class-validator';
 import { AdminService } from './admin.service';
 import { AdminGuard } from '@azeebo/security';
 import { Request } from 'express';
+import { SuspendUserDto } from './dto/suspend-user.dto';
+import { ModerateContentDto } from './dto/moderate-content.dto';
+import { ResolveReportDto } from './dto/resolve-report.dto';
+import { VerifyCreatorDto } from './dto/verify-creator.dto';
 
 class UpdateSubscriptionDto {
   @IsString()
@@ -39,7 +43,7 @@ class UpdatePreferencesDto {
 
 interface AuthenticatedRequest extends Request {
   user?: {
-    id: string;
+    sub: string;
     role: string;
     email?: string;
   };
@@ -68,7 +72,8 @@ export class AdminController {
     @Query('limit') limit?: number,
     @Query('status') status?: string
   ) {
-    return this.adminService.getAllSubscriptions({ page, limit, status });
+    const clampedLimit = Math.min(100, Math.max(1, Number(limit) || 20));
+    return this.adminService.getAllSubscriptions({ page, limit: clampedLimit, status });
   }
 
   @Get('subscriptions/:subscriptionId')
@@ -90,9 +95,14 @@ export class AdminController {
     @Body() updateData: UpdateSubscriptionDto,
     @Req() req: AuthenticatedRequest
   ) {
-    const actorId = req.user?.id || 'admin';
+    const actorId = req.user?.sub || 'admin';
     const actorRole = req.user?.role || 'admin';
-    return this.adminService.updateSubscription(subscriptionId, updateData as Record<string, unknown>, actorId, actorRole);
+    return this.adminService.updateSubscription(
+      subscriptionId,
+      updateData as Record<string, unknown>,
+      actorId,
+      actorRole
+    );
   }
 
   @Delete('subscriptions/:subscriptionId')
@@ -104,7 +114,7 @@ export class AdminController {
     @Param('subscriptionId') subscriptionId: string,
     @Req() req: AuthenticatedRequest
   ) {
-    const actorId = req.user?.id || 'admin';
+    const actorId = req.user?.sub || 'admin';
     const actorRole = req.user?.role || 'admin';
     return this.adminService.deleteSubscription(subscriptionId, actorId, actorRole);
   }
@@ -128,9 +138,14 @@ export class AdminController {
     @Body() preferences: UpdatePreferencesDto,
     @Req() req: AuthenticatedRequest
   ) {
-    const actorId = req.user?.id || 'admin';
+    const actorId = req.user?.sub || 'admin';
     const actorRole = req.user?.role || 'admin';
-    return this.adminService.updateUserPreferences(userId, preferences as Record<string, unknown>, actorId, actorRole);
+    return this.adminService.updateUserPreferences(
+      userId,
+      preferences as Record<string, unknown>,
+      actorId,
+      actorRole
+    );
   }
 
   @Delete('watch-history/:userId')
@@ -143,7 +158,7 @@ export class AdminController {
     @Query('contentId') contentId: string | undefined,
     @Req() req: AuthenticatedRequest
   ) {
-    const actorId = req.user?.id || 'admin';
+    const actorId = req.user?.sub || 'admin';
     const actorRole = req.user?.role || 'admin';
     return this.adminService.deleteWatchHistory(userId, contentId, actorId, actorRole);
   }
@@ -158,7 +173,7 @@ export class AdminController {
     @Query('contentId') contentId: string | undefined,
     @Req() req: AuthenticatedRequest
   ) {
-    const actorId = req.user?.id || 'admin';
+    const actorId = req.user?.sub || 'admin';
     const actorRole = req.user?.role || 'admin';
     return this.adminService.deleteSavedItems(userId, contentId, actorId, actorRole);
   }
@@ -182,7 +197,7 @@ export class AdminController {
     @Body() updateData: Record<string, unknown>,
     @Req() req: AuthenticatedRequest
   ) {
-    const actorId = req.user?.id || 'admin';
+    const actorId = req.user?.sub || 'admin';
     const actorRole = req.user?.role || 'admin';
     return this.adminService.updateUser(id, updateData, actorId, actorRole);
   }
@@ -194,10 +209,10 @@ export class AdminController {
   @ApiResponse({ status: 403, description: 'Forbidden' })
   async suspendUser(
     @Param('id') id: string,
-    @Body() body: { reason: string },
+    @Body() body: SuspendUserDto,
     @Req() req: AuthenticatedRequest
   ) {
-    const actorId = req.user?.id || 'admin';
+    const actorId = req.user?.sub || 'admin';
     const actorRole = req.user?.role || 'admin';
     return this.adminService.suspendUser(id, body.reason, actorId, actorRole);
   }
@@ -209,10 +224,10 @@ export class AdminController {
   @ApiResponse({ status: 403, description: 'Forbidden' })
   async moderateContent(
     @Param('id') id: string,
-    @Body() body: { action: string; reason: string },
+    @Body() body: ModerateContentDto,
     @Req() req: AuthenticatedRequest
   ) {
-    const actorId = req.user?.id || 'admin';
+    const actorId = req.user?.sub || 'admin';
     const actorRole = req.user?.role || 'admin';
     return this.adminService.moderateContent(id, body.action, body.reason, actorId, actorRole);
   }
@@ -226,7 +241,7 @@ export class AdminController {
     @Query('limit') limit?: number,
     @Query('status') status?: string
   ) {
-    return this.adminService.getModerationReports(Number(page) || 1, Number(limit) || 20, status);
+    return this.adminService.getModerationReports(Number(page) || 1, Math.min(100, Math.max(1, Number(limit) || 20)), status);
   }
 
   @Patch('moderation/reports/:id')
@@ -236,10 +251,10 @@ export class AdminController {
   @ApiResponse({ status: 403, description: 'Forbidden' })
   async resolveReport(
     @Param('id') id: string,
-    @Body() body: { resolution: string },
+    @Body() body: ResolveReportDto,
     @Req() req: AuthenticatedRequest
   ) {
-    const actorId = req.user?.id || 'admin';
+    const actorId = req.user?.sub || 'admin';
     const actorRole = req.user?.role || 'admin';
     return this.adminService.resolveReport(id, body.resolution, actorId, actorRole);
   }
@@ -261,7 +276,7 @@ export class AdminController {
     @Query('limit') limit?: number,
     @Query('userId') userId?: string
   ) {
-    return this.adminService.getAuditLogs(Number(page) || 1, Number(limit) || 20, userId);
+    return this.adminService.getAuditLogs(Number(page) || 1, Math.min(100, Math.max(1, Number(limit) || 20)), userId);
   }
 
   @Get('creators/verification')
@@ -275,7 +290,7 @@ export class AdminController {
   ) {
     return this.adminService.getVerificationRequests(
       Number(page) || 1,
-      Number(limit) || 20,
+      Math.min(100, Math.max(1, Number(limit) || 20)),
       status
     );
   }
@@ -287,10 +302,10 @@ export class AdminController {
   @ApiResponse({ status: 403, description: 'Forbidden' })
   async verifyCreator(
     @Param('id') id: string,
-    @Body() body: { status: string; notes?: string },
+    @Body() body: VerifyCreatorDto,
     @Req() req: AuthenticatedRequest
   ) {
-    const actorId = req.user?.id || 'admin';
+    const actorId = req.user?.sub || 'admin';
     const actorRole = req.user?.role || 'admin';
     return this.adminService.verifyCreator(id, body.status, body.notes, actorId, actorRole);
   }

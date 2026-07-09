@@ -10,7 +10,13 @@ describe('shared-types constants', () => {
   describe('ROLE_PERMISSIONS', () => {
     it('should define permissions for all roles', () => {
       const expectedRoles = [
-        'user', 'creator', 'moderator', 'admin', 'super_admin', 'partner', 'sponsor_manager',
+        'user',
+        'creator',
+        'moderator',
+        'admin',
+        'super_admin',
+        'partner',
+        'sponsor_manager',
       ];
       for (const role of expectedRoles) {
         expect(ROLE_PERMISSIONS).toHaveProperty(role);

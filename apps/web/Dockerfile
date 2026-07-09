@@ -1,5 +1,5 @@
 # Build stage
-FROM node:22-alpine AS builder
+FROM node:22.16.0-alpine AS builder
 WORKDIR /app
 
 # Install pnpm
@@ -29,7 +29,7 @@ ENV NEXT_PUBLIC_API_BASE_URL=$NEXT_PUBLIC_API_URL
 RUN pnpm --filter @azeebo/web run build
 
 # Production stage
-FROM node:22-alpine AS runner
+FROM node:22.16.0-alpine AS runner
 WORKDIR /app
 
 LABEL org.opencontainers.image.source="https://github.com/azeebotv/AzeeboPlus"
@@ -37,7 +37,8 @@ LABEL org.opencontainers.image.description="Azeebo+ Web App"
 LABEL org.opencontainers.image.licenses="Proprietary"
 
 # Create non-root user
-RUN addgroup -g 65532 -S nodejs && \
+RUN apk add --no-cache tini && \
+    addgroup -g 65532 -S nodejs && \
     adduser -S nodejs -u 65532
 
 COPY --from=builder /app/apps/web/.next ./apps/web/.next
@@ -60,4 +61,5 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
     CMD node -e "fetch('http://localhost:4000').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 
 # Start application
+ENTRYPOINT ["/sbin/tini", "--"]
 CMD ["node", "node_modules/next/dist/bin/next", "start"]

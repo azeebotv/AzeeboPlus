@@ -1,6 +1,8 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, Query } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { AuthGuard } from '@nestjs/passport';
 import { CityGuideService } from './city-guide.service';
+import { UpdateCityGuideDto } from './dto/update-city-guide.dto';
 
 interface CreateCityGuideData {
   name: string;
@@ -39,6 +41,7 @@ interface UpdateCityGuideData {
 }
 
 @ApiTags('City Guide')
+@UseGuards(AuthGuard('jwt'))
 @Controller('v1/lifestyle/city-guide')
 export class CityGuideController {
   constructor(private readonly cityGuideService: CityGuideService) {}
@@ -100,7 +103,7 @@ export class CityGuideController {
   @ApiResponse({ status: 200, description: 'Entry updated' })
   async updateEntry(
     @Param('id') id: string,
-    @Body() body: Record<string, unknown>
+    @Body() body: UpdateCityGuideDto
   ): Promise<unknown> {
     return this.cityGuideService.updateEntry(id, body);
   }

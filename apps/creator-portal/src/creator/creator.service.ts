@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { Prisma } from '../generated/prisma';
 import { PrismaService } from '../database/prisma.service';
+import { WalletClientService } from '../api/clients/wallet-client.service';
 
 export interface ContentItem {
   id: string;
@@ -52,7 +53,10 @@ export interface EarningsData {
 
 @Injectable()
 export class CreatorService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly walletClient: WalletClientService
+  ) {}
 
   async getDashboardStats(userId: string): Promise<DashboardStats> {
     const contentCount = await this.prisma.contentItem.count({
@@ -72,15 +76,29 @@ export class CreatorService {
       _sum: { amount: true },
     });
 
-    const previousPeriodViews = await this.prisma.contentItem.aggregate({
-      where: {
-        creatorId: userId,
-        createdAt: { gte: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000) },
-      },
-      _sum: { viewCount: true },
-    });
+    const now = Date.now();
+    const periodMs = 30 * 24 * 60 * 60 * 1000;
+    const currentPeriodStart = new Date(now - periodMs);
+    const previousPeriodStart = new Date(now - 2 * periodMs);
 
-    const currentViews = totalViews._sum.viewCount || 0;
+    const [currentPeriodViews, previousPeriodViews] = await Promise.all([
+      this.prisma.contentItem.aggregate({
+        where: {
+          creatorId: userId,
+          createdAt: { gte: currentPeriodStart },
+        },
+        _sum: { viewCount: true },
+      }),
+      this.prisma.contentItem.aggregate({
+        where: {
+          creatorId: userId,
+          createdAt: { gte: previousPeriodStart, lt: currentPeriodStart },
+        },
+        _sum: { viewCount: true },
+      }),
+    ]);
+
+    const currentViews = currentPeriodViews._sum.viewCount || 0;
     const prevViews = previousPeriodViews._sum.viewCount || 0;
     const viewsChangePercent =
       prevViews > 0 ? (((currentViews - prevViews) / prevViews) * 100).toFixed(1) : '0';
@@ -103,6 +121,11 @@ export class CreatorService {
     limit = 20,
     status?: string
   ): Promise<{ items: ContentItem[]; total: number }> {
+    const allowedStatuses = ['all', 'draft', 'published', 'archived'];
+    if (status && !allowedStatuses.includes(status)) {
+      status = 'all';
+    }
+
     const where: Prisma.ContentItemWhereInput = { creatorId: userId };
 
     if (status && status !== 'all') {
@@ -145,10 +168,13 @@ export class CreatorService {
       });
     }
 
+    const title = data.title.replace(/<[^>]*>/g, '');
+    const description = data.description?.replace(/<[^>]*>/g, '');
+
     const content = await this.prisma.contentItem.create({
       data: {
-        title: data.title,
-        description: data.description,
+        title,
+        description,
         type: data.type || 'video',
         thumbnail: '', // Will be filled in via media service
         status: 'draft',
@@ -179,8 +205,8 @@ export class CreatorService {
     const updated = await this.prisma.contentItem.update({
       where: { id },
       data: {
-        title: data.title,
-        description: data.description,
+        title: data.title?.replace(/<[^>]*>/g, ''),
+        description: data.description?.replace(/<[^>]*>/g, ''),
         status: data.status,
       },
     });
@@ -303,20 +329,60 @@ export class CreatorService {
     userId: string,
     amount?: number
   ): Promise<{ success: boolean; message: string }> {
-    const wallet = await this.prisma.wallet.findUnique({
+    const existing = await this.prisma.payoutRequest.findFirst({
+      where: { userId, status: 'pending' },
+    });
+    if (existing) {
+      throw new BadRequestException('Pending payout already exists');
+    }
+
+    const creatorProfile = await this.prisma.creatorProfile.findUnique({
       where: { userId },
     });
 
-    if (!wallet) {
+    if (!creatorProfile) {
+      throw new BadRequestException('Creator profile not found');
+    }
+
+    // Get wallet balance through wallet-service API
+    const walletResponse = await this.walletClient.getWallet(userId);
+    if (!walletResponse.success || !walletResponse.data) {
       throw new BadRequestException('Wallet not found');
     }
 
-    const payoutAmount = amount || Number(wallet.balance);
+    const wallet = walletResponse.data;
+    const payoutAmount = amount ? Number(amount) : wallet.balance;
 
-    if (payoutAmount > Number(wallet.balance)) {
+    if (payoutAmount <= 0) {
+      throw new BadRequestException('Amount must be greater than 0');
+    }
+
+    if (payoutAmount < Number(creatorProfile.minimumPayout)) {
+      throw new BadRequestException(
+        `Payout amount must be at least ${creatorProfile.minimumPayout}`
+      );
+    }
+
+    if (payoutAmount > wallet.balance) {
       throw new BadRequestException('Insufficient balance');
     }
 
+    // Debit wallet through wallet-service API
+    const debitResult = await this.walletClient.request('/v1/wallet/debit', {
+      method: 'POST',
+      body: {
+        walletId: wallet.id,
+        amount: payoutAmount,
+        description: 'Payout request',
+        idempotencyKey: `payout-${userId}-${Date.now()}`,
+      },
+    });
+
+    if (!debitResult.success) {
+      throw new BadRequestException('Failed to debit wallet for payout');
+    }
+
+    // Create payout request locally
     await this.prisma.payoutRequest.create({
       data: {
         userId,
@@ -336,6 +402,13 @@ export class CreatorService {
     userId: string,
     data: { method?: string; minimum?: number }
   ): Promise<{ success: boolean }> {
+    if (data.method) {
+      const allowedMethods = ['bank_transfer', 'paypal', 'crypto'];
+      if (!allowedMethods.includes(data.method)) {
+        throw new BadRequestException('Invalid payout method');
+      }
+    }
+
     await this.prisma.creatorProfile.upsert({
       where: { userId },
       update: {

@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   useColorScheme,
   ActivityIndicator,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { contentApi } from '../../src/api';
 import type { ContentItem } from '../../src/api/content';
@@ -60,14 +61,16 @@ export default function SearchScreen() {
         </View>
       </View>
       <View style={styles.contentInfo}>
-        <Text style={styles.contentTitle} numberOfLines={1}>{item.title}</Text>
+        <Text style={styles.contentTitle} numberOfLines={1}>
+          {item.title}
+        </Text>
         <Text style={styles.contentCreator}>{item.creator.name}</Text>
       </View>
     </TouchableOpacity>
   );
 
   return (
-    <View
+    <SafeAreaView
       style={[
         styles.container,
         { backgroundColor: colorScheme === 'dark' ? colors.bg.primary : '#ffffff' },
@@ -109,10 +112,7 @@ export default function SearchScreen() {
         {filters.map((filter) => (
           <TouchableOpacity
             key={filter.key}
-            style={[
-              styles.filterChip,
-              activeFilter === filter.key && styles.filterChipActive,
-            ]}
+            style={[styles.filterChip, activeFilter === filter.key && styles.filterChipActive]}
             onPress={() => setActiveFilter(filter.key)}
             accessibilityLabel={`Filter by ${filter.label}`}
             accessibilityRole="radio"
@@ -132,7 +132,7 @@ export default function SearchScreen() {
 
       {isSearching ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.primary} />
+          <ActivityIndicator size="large" color={colors.primary[500]} />
           <Text style={styles.loadingText}>Searching...</Text>
         </View>
       ) : !hasSearched ? (
@@ -157,7 +157,7 @@ export default function SearchScreen() {
           showsVerticalScrollIndicator={false}
         />
       )}
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -212,7 +212,7 @@ const styles = StyleSheet.create({
   },
   filterChipActive: {
     backgroundColor: 'rgba(232,66,10,0.15)',
-    borderColor: colors.primary,
+    borderColor: colors.primary[500],
   },
   filterChipText: {
     fontSize: typography.fontSize.sm,
@@ -220,7 +220,7 @@ const styles = StyleSheet.create({
     fontWeight: typography.fontWeight.medium,
   },
   filterChipTextActive: {
-    color: colors.primary,
+    color: colors.primary[500],
     fontWeight: typography.fontWeight.semibold,
   },
   loadingContainer: {

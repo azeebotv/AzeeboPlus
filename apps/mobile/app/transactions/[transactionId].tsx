@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { walletApi } from '../../src/api';
 import { logger } from '../../src/utils/logger';
 
@@ -17,11 +18,11 @@ interface TransactionDetail {
   amount: number;
   currency: string;
   status: string;
-  description: string;
+  description?: string;
   createdAt: string;
-  updatedAt: string;
+  updatedAt?: string;
   reference: string;
-  metadata: {
+  metadata?: {
     source?: string;
     method?: string;
     fee?: number;
@@ -86,111 +87,113 @@ export default function TransactionDetailScreen() {
 
   if (isLoading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#8B5CF6" />
+      <SafeAreaView style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#E8420A" />
         <Text style={styles.loadingText}>Loading transaction...</Text>
-      </View>
+      </SafeAreaView>
     );
   }
 
   if (!transaction) {
     return (
-      <View style={styles.errorContainer}>
+      <SafeAreaView style={styles.errorContainer}>
         <Text style={styles.errorIcon}>⚠️</Text>
         <Text style={styles.errorText}>Transaction not found</Text>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backButtonText}>Go Back</Text>
         </TouchableOpacity>
-      </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backNav}>
-          <Text style={styles.backNavText}>←</Text>
-        </TouchableOpacity>
-        <Text style={styles.title}>Transaction Details</Text>
-      </View>
+    <SafeAreaView style={styles.container}>
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.content}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backNav}>
+            <Text style={styles.backNavText}>←</Text>
+          </TouchableOpacity>
+          <Text style={styles.title}>Transaction Details</Text>
+        </View>
 
-      <View style={styles.card}>
-        <View style={styles.statusRow}>
-          <Text style={styles.typeIcon}>{getTypeIcon(transaction.type)}</Text>
-          <View style={styles.statusInfo}>
-            <Text style={styles.typeText}>{transaction.type.toUpperCase()}</Text>
-            <Text style={[styles.statusText, { color: getStatusColor(transaction.status) }]}>
-              {transaction.status.charAt(0).toUpperCase() + transaction.status.slice(1)}
-            </Text>
-          </View>
-          <Text style={styles.amountText}>
-            {transaction.type === 'debit' ? '-' : '+'}
-            {transaction.currency} {transaction.amount.toLocaleString()}
-          </Text>
-        </View>
-      </View>
-
-      <View style={styles.card}>
-        <Text style={styles.sectionTitle}>Transaction Info</Text>
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>Reference</Text>
-          <Text style={styles.value}>{transaction.reference}</Text>
-        </View>
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>Description</Text>
-          <Text style={styles.value}>{transaction.description}</Text>
-        </View>
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>Date</Text>
-          <Text style={styles.value}>{new Date(transaction.createdAt).toLocaleString()}</Text>
-        </View>
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>Balance Before</Text>
-          <Text style={styles.value}>
-            {transaction.currency} {transaction.balanceBefore.toLocaleString()}
-          </Text>
-        </View>
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>Balance After</Text>
-          <Text style={styles.value}>
-            {transaction.currency} {transaction.balanceAfter.toLocaleString()}
-          </Text>
-        </View>
-      </View>
-
-      {transaction.metadata && (
         <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Additional Details</Text>
-          {transaction.metadata.source && (
-            <View style={styles.infoRow}>
-              <Text style={styles.label}>Source</Text>
-              <Text style={styles.value}>{transaction.metadata.source}</Text>
-            </View>
-          )}
-          {transaction.metadata.method && (
-            <View style={styles.infoRow}>
-              <Text style={styles.label}>Method</Text>
-              <Text style={styles.value}>{transaction.metadata.method}</Text>
-            </View>
-          )}
-          {transaction.metadata.fee !== undefined && (
-            <View style={styles.infoRow}>
-              <Text style={styles.label}>Fee</Text>
-              <Text style={styles.value}>
-                {transaction.currency} {transaction.metadata.fee}
+          <View style={styles.statusRow}>
+            <Text style={styles.typeIcon}>{getTypeIcon(transaction.type)}</Text>
+            <View style={styles.statusInfo}>
+              <Text style={styles.typeText}>{transaction.type.toUpperCase()}</Text>
+              <Text style={[styles.statusText, { color: getStatusColor(transaction.status) }]}>
+                {transaction.status.charAt(0).toUpperCase() + transaction.status.slice(1)}
               </Text>
             </View>
-          )}
+            <Text style={styles.amountText}>
+              {transaction.type === 'debit' ? '-' : '+'}
+              {transaction.currency} {transaction.amount.toLocaleString()}
+            </Text>
+          </View>
         </View>
-      )}
-    </ScrollView>
+
+        <View style={styles.card}>
+          <Text style={styles.sectionTitle}>Transaction Info</Text>
+          <View style={styles.infoRow}>
+            <Text style={styles.label}>Reference</Text>
+            <Text style={styles.value}>{transaction.reference}</Text>
+          </View>
+          <View style={styles.infoRow}>
+            <Text style={styles.label}>Description</Text>
+            <Text style={styles.value}>{transaction.description}</Text>
+          </View>
+          <View style={styles.infoRow}>
+            <Text style={styles.label}>Date</Text>
+            <Text style={styles.value}>{new Date(transaction.createdAt).toLocaleString()}</Text>
+          </View>
+          <View style={styles.infoRow}>
+            <Text style={styles.label}>Balance Before</Text>
+            <Text style={styles.value}>
+              {transaction.currency} {transaction.balanceBefore.toLocaleString()}
+            </Text>
+          </View>
+          <View style={styles.infoRow}>
+            <Text style={styles.label}>Balance After</Text>
+            <Text style={styles.value}>
+              {transaction.currency} {transaction.balanceAfter.toLocaleString()}
+            </Text>
+          </View>
+        </View>
+
+        {transaction.metadata && (
+          <View style={styles.card}>
+            <Text style={styles.sectionTitle}>Additional Details</Text>
+            {transaction.metadata.source && (
+              <View style={styles.infoRow}>
+                <Text style={styles.label}>Source</Text>
+                <Text style={styles.value}>{transaction.metadata.source}</Text>
+              </View>
+            )}
+            {transaction.metadata.method && (
+              <View style={styles.infoRow}>
+                <Text style={styles.label}>Method</Text>
+                <Text style={styles.value}>{transaction.metadata.method}</Text>
+              </View>
+            )}
+            {transaction.metadata.fee !== undefined && (
+              <View style={styles.infoRow}>
+                <Text style={styles.label}>Fee</Text>
+                <Text style={styles.value}>
+                  {transaction.currency} {transaction.metadata.fee}
+                </Text>
+              </View>
+            )}
+          </View>
+        )}
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#111827',
+    backgroundColor: '#1A0A0A',
   },
   content: {
     padding: 16,
@@ -198,7 +201,7 @@ const styles = StyleSheet.create({
   },
   loadingContainer: {
     flex: 1,
-    backgroundColor: '#111827',
+    backgroundColor: '#1A0A0A',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -208,7 +211,7 @@ const styles = StyleSheet.create({
   },
   errorContainer: {
     flex: 1,
-    backgroundColor: '#111827',
+    backgroundColor: '#1A0A0A',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -222,7 +225,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   backButton: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,
@@ -241,7 +244,7 @@ const styles = StyleSheet.create({
   },
   backNavText: {
     fontSize: 24,
-    color: '#8B5CF6',
+    color: '#E8420A',
   },
   title: {
     fontSize: 20,
@@ -249,7 +252,7 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   card: {
-    backgroundColor: '#1F2937',
+    backgroundColor: '#2A2A2A',
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
@@ -290,7 +293,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#374151',
+    borderBottomColor: 'rgba(255,255,255,0.2)',
   },
   label: {
     fontSize: 14,

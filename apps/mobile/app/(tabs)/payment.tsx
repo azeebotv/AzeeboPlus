@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -16,23 +16,21 @@ import { useRouter } from 'expo-router';
 import { paymentApi } from '../../src/api/payment';
 import { useAuth } from '../../src/contexts/AuthContext';
 import { LoadingState, ErrorState } from '../../src/components/StateContainers';
+import { paymentPresetAmounts } from '../../src/config/prices';
 
-const PAYMENT_AMOUNTS = [
-  { value: 5, label: '$5' },
-  { value: 10, label: '$10' },
-  { value: 25, label: '$25' },
-  { value: 50, label: '$50' },
-  { value: 100, label: '$100' },
-];
+const PAYMENT_AMOUNTS = paymentPresetAmounts.map((value) => ({
+  value,
+  label: `₦${value.toLocaleString()}`,
+}));
 
 const PROVIDER_META: Record<string, { description: string }> = {
   paystack: { description: 'Secure card payments' },
   flutterwave: { description: 'Multiple payment options' },
 };
 
-export default function PaymentScreen(): JSX.Element {
+export default function PaymentScreen() {
   const router = useRouter();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const colorScheme = useColorScheme();
 
   const [selectedAmount, setSelectedAmount] = useState<number>(10);
@@ -55,7 +53,7 @@ export default function PaymentScreen(): JSX.Element {
           setSelectedProvider(res.data[0].provider);
         }
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       setProvidersError(err.message || 'Failed to load payment providers');
     } finally {
       setIsLoadingProviders(false);
@@ -109,7 +107,7 @@ export default function PaymentScreen(): JSX.Element {
         if (response.data.authorizationUrl) {
           Alert.alert(
             'Redirect to Payment',
-            `You will be redirected to Paystack to complete your payment of $${amount}.`,
+            `You will be redirected to Paystack to complete your payment of ₦${amount.toLocaleString()}.`,
             [
               {
                 text: 'Cancel',
@@ -129,17 +127,30 @@ export default function PaymentScreen(): JSX.Element {
             ]
           );
         } else {
-          Alert.alert('Success', `Payment of $${amount} processed successfully`);
+          Alert.alert('Success', `Payment of ₦${amount.toLocaleString()} processed successfully`);
         }
       } else {
         Alert.alert('Error', response.message || 'Failed to initialize payment');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       Alert.alert('Error', error.message || 'Failed to initialize payment');
     } finally {
       setIsLoading(false);
     }
   };
+
+  if (authLoading) {
+    return (
+      <SafeAreaView
+        style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#000' : '#fff' }]}
+        edges={['top']}
+      >
+        <View style={styles.unauthenticatedContainer}>
+          <ActivityIndicator size="large" color="#E8420A" />
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   if (!isAuthenticated) {
     return (
@@ -204,7 +215,7 @@ export default function PaymentScreen(): JSX.Element {
                   {
                     backgroundColor:
                       !showCustomAmount && selectedAmount === item.value
-                        ? '#8B5CF6'
+                        ? '#E8420A'
                         : colorScheme === 'dark'
                           ? '#1a1a1a'
                           : '#f5f5f5',
@@ -244,7 +255,7 @@ export default function PaymentScreen(): JSX.Element {
               <Text
                 style={[styles.currencySymbol, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}
               >
-                $
+                ₦
               </Text>
               <TextInput
                 style={[styles.customInput, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}
@@ -274,7 +285,7 @@ export default function PaymentScreen(): JSX.Element {
                   styles.providerOption,
                   {
                     backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#f5f5f5',
-                    borderColor: isSelected ? '#8B5CF6' : 'transparent',
+                    borderColor: isSelected ? '#E8420A' : 'transparent',
                   },
                 ]}
               >
@@ -289,7 +300,7 @@ export default function PaymentScreen(): JSX.Element {
                   </Text>
                   <Text style={styles.providerDescription}>{meta.description || ''}</Text>
                 </View>
-                <View style={[styles.radioOuter, { borderColor: isSelected ? '#8B5CF6' : '#666' }]}>
+                <View style={[styles.radioOuter, { borderColor: isSelected ? '#E8420A' : '#666' }]}>
                   {isSelected && <View style={styles.radioInner} />}
                 </View>
               </TouchableOpacity>
@@ -316,7 +327,7 @@ export default function PaymentScreen(): JSX.Element {
               <Text
                 style={[styles.summaryValue, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}
               >
-                ${displayAmount}
+                ₦{displayAmount}
               </Text>
             </View>
             <View style={styles.summaryRow}>
@@ -342,9 +353,9 @@ export default function PaymentScreen(): JSX.Element {
                 Total
               </Text>
               <Text
-                style={[styles.summaryValue, { color: '#8B5CF6', fontWeight: '700', fontSize: 18 }]}
+                style={[styles.summaryValue, { color: '#E8420A', fontWeight: '700', fontSize: 18 }]}
               >
-                ${displayAmount}
+                ₦{displayAmount}
               </Text>
             </View>
           </View>
@@ -358,7 +369,7 @@ export default function PaymentScreen(): JSX.Element {
           {isLoading ? (
             <ActivityIndicator color="#fff" size="small" />
           ) : (
-            <Text style={styles.payButtonText}>Pay ${displayAmount}</Text>
+            <Text style={styles.payButtonText}>Pay ₦{displayAmount}</Text>
           )}
         </TouchableOpacity>
 
@@ -392,7 +403,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   loginButton: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     paddingHorizontal: 32,
     paddingVertical: 12,
     borderRadius: 24,
@@ -495,7 +506,7 @@ const styles = StyleSheet.create({
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
   },
   summarySection: {
     paddingHorizontal: 16,
@@ -523,7 +534,7 @@ const styles = StyleSheet.create({
     marginVertical: 8,
   },
   payButton: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     marginHorizontal: 16,
     padding: 16,
     borderRadius: 12,

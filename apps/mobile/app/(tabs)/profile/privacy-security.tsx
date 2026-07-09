@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Switch, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { LoadingState, EmptyState, ErrorState } from '../../../src/components/StateContainers';
+import { apiClient } from '../../../src/api/client';
+import { logger } from '../../../src/utils/logger';
 
 interface SecurityOption {
   id: string;
@@ -74,6 +75,14 @@ export default function PrivacySecurityScreen() {
   const [activityStatusEnabled, setActivityStatusEnabled] = useState(true);
   const [dataSharingEnabled, setDataSharingEnabled] = useState(false);
 
+  const savePrivacySettings = async (settings: Record<string, unknown>) => {
+    try {
+      await apiClient.put('/v1/users/me/privacy-settings', settings);
+    } catch (error) {
+      logger.error('Failed to save privacy settings:', error);
+    }
+  };
+
   const handleSecurityOption = (option: SecurityOption) => {
     switch (option.id) {
       case 'two-factor':
@@ -87,7 +96,15 @@ export default function PrivacySecurityScreen() {
             { text: 'Cancel', style: 'cancel' },
             {
               text: twoFactorEnabled ? 'Disable' : 'Enable',
-              onPress: () => {},
+              onPress: async () => {
+                try {
+                  await apiClient.put('/v1/users/me/privacy-settings', {
+                    twoFactorEnabled: !twoFactorEnabled,
+                  });
+                } catch (error) {
+                  logger.error('Failed to save 2FA setting:', error);
+                }
+              },
             },
           ]
         );
@@ -100,6 +117,7 @@ export default function PrivacySecurityScreen() {
         break;
       case 'login-alerts':
         setLoginAlertsEnabled(!loginAlertsEnabled);
+        savePrivacySettings({ loginAlertsEnabled: !loginAlertsEnabled });
         break;
       default:
         break;
@@ -110,12 +128,17 @@ export default function PrivacySecurityScreen() {
     switch (option.id) {
       case 'profile-visibility':
         setProfileVisibility(profileVisibility === 'public' ? 'private' : 'public');
+        savePrivacySettings({
+          profileVisibility: profileVisibility === 'public' ? 'private' : 'public',
+        });
         break;
       case 'activity-status':
         setActivityStatusEnabled(!activityStatusEnabled);
+        savePrivacySettings({ activityStatusEnabled: !activityStatusEnabled });
         break;
       case 'data-sharing':
         setDataSharingEnabled(!dataSharingEnabled);
+        savePrivacySettings({ dataSharingEnabled: !dataSharingEnabled });
         break;
       case 'blocked-users':
         Alert.alert('Blocked Users', 'No blocked users');
@@ -156,7 +179,7 @@ export default function PrivacySecurityScreen() {
                   <Switch
                     value={twoFactorEnabled}
                     onValueChange={() => handleSecurityOption(option)}
-                    trackColor={{ false: '#333', true: '#8B5CF6' }}
+                    trackColor={{ false: '#333', true: '#E8420A' }}
                     thumbColor={twoFactorEnabled ? '#fff' : '#666'}
                   />
                 )}
@@ -164,7 +187,7 @@ export default function PrivacySecurityScreen() {
                   <Switch
                     value={loginAlertsEnabled}
                     onValueChange={() => handleSecurityOption(option)}
-                    trackColor={{ false: '#333', true: '#8B5CF6' }}
+                    trackColor={{ false: '#333', true: '#E8420A' }}
                     thumbColor={loginAlertsEnabled ? '#fff' : '#666'}
                   />
                 )}
@@ -202,7 +225,7 @@ export default function PrivacySecurityScreen() {
                   <Switch
                     value={activityStatusEnabled}
                     onValueChange={() => handlePrivacyOption(option)}
-                    trackColor={{ false: '#333', true: '#8B5CF6' }}
+                    trackColor={{ false: '#333', true: '#E8420A' }}
                     thumbColor={activityStatusEnabled ? '#fff' : '#666'}
                   />
                 )}
@@ -210,7 +233,7 @@ export default function PrivacySecurityScreen() {
                   <Switch
                     value={dataSharingEnabled}
                     onValueChange={() => handlePrivacyOption(option)}
-                    trackColor={{ false: '#333', true: '#8B5CF6' }}
+                    trackColor={{ false: '#333', true: '#E8420A' }}
                     thumbColor={dataSharingEnabled ? '#fff' : '#666'}
                   />
                 )}
@@ -268,7 +291,7 @@ export default function PrivacySecurityScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#111827',
+    backgroundColor: '#1A0A0A',
   },
   scrollContent: {
     paddingHorizontal: 24,

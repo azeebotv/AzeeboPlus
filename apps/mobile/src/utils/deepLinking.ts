@@ -26,7 +26,7 @@ export class DeepLinkService {
     return PREFIX;
   }
 
-  static createContentLink(contentId: string, title?: string): string {
+  static createContentLink(contentId: string, _title?: string): string {
     const url = Linking.createURL(`/content/${contentId}`);
     return url;
   }
@@ -67,7 +67,7 @@ export class DeepLinkService {
 
       const rawType = pathParts[0];
       if (!VALID_DEEP_LINK_TYPES.has(rawType)) {
-        logger.warn('Unknown deep link type rejected', { type: rawType });
+        logger.warn('Unknown deep link type rejected', undefined, { type: rawType });
         return null;
       }
       const type = rawType as DeepLinkType;

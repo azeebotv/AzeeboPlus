@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { GamesService } from './games.service';
 import { PrismaService } from '../database/prisma.service';
+import { ConfigService } from '@nestjs/config';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 
 jest.mock('../database/prisma.service');
@@ -68,6 +69,13 @@ describe('GamesService Integration', () => {
             user: {
               findUnique: jest.fn(),
             },
+          },
+        },
+        {
+          provide: ConfigService,
+          useValue: {
+            get: jest.fn().mockReturnValue('test-value'),
+            getOrThrow: jest.fn().mockReturnValue('test-value'),
           },
         },
       ],

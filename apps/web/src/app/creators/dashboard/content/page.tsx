@@ -3,23 +3,25 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { api } from '@/lib/api';
+import type { ContentItem } from '@/lib/api/base';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 
 export default function DashboardContentPage(): React.JSX.Element {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, isLoading: authLoading } = useAuth();
   const router = useRouter();
-  const [content, setContent] = useState<any[]>([]);
+  const [content, setContent] = useState<ContentItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'published' | 'draft' | 'scheduled'>('all');
 
   useEffect(() => {
+    if (authLoading) return;
     if (!isAuthenticated || !user) {
       router.push('/auth/login');
       return;
     }
     loadContent();
-  }, [isAuthenticated, user, router]);
+  }, [authLoading, isAuthenticated, user, router]);
 
   const loadContent = async () => {
     try {
@@ -27,7 +29,7 @@ export default function DashboardContentPage(): React.JSX.Element {
       if (response.success && response.data) {
         const items = Array.isArray(response.data)
           ? response.data
-          : (response.data as any).items || [];
+          : (response.data as { items: ContentItem[] }).items || [];
         setContent(items);
       }
     } catch {
@@ -38,6 +40,8 @@ export default function DashboardContentPage(): React.JSX.Element {
   };
 
   const filtered = filter === 'all' ? content : content.filter((c) => c.status === filter);
+
+  if (authLoading || (!isAuthenticated && !user)) return <></>;
 
   if (!isAuthenticated || !user) return <></>;
 

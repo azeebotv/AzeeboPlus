@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useColorScheme } from 'react-native';
+import { useRouter } from 'expo-router';
+import { useAuth } from '../../src/contexts/AuthContext';
 import { apiClient } from '../../src/api';
 import { logger } from '../../src/utils/logger';
-import { colors, typography, spacing, radius } from '../../src/theme';
-import { LoadingState, ErrorState, EmptyState } from '../../src/components/StateContainers';
+import { LoadingState, ErrorState } from '../../src/components/StateContainers';
 import {
   PageTransition,
   ScrollReveal,
@@ -41,6 +43,8 @@ interface RedeemOption {
 
 export default function RewardsScreen() {
   const colorScheme = useColorScheme();
+  const router = useRouter();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [rewards, setRewards] = useState<RewardItem[]>([]);
   const [history, setHistory] = useState<RewardHistoryItem[]>([]);
   const [redeemOptions, setRedeemOptions] = useState<RedeemOption[]>([]);
@@ -49,6 +53,13 @@ export default function RewardsScreen() {
   const [error, setError] = useState<string | null>(null);
 
   const isDark = colorScheme === 'dark';
+
+  useEffect(() => {
+    if (authLoading) return;
+    if (!isAuthenticated) {
+      router.replace('/(auth)/login');
+    }
+  }, [authLoading, isAuthenticated, router]);
 
   const fetchRewards = async () => {
     setIsLoading(true);
@@ -64,191 +75,205 @@ export default function RewardsScreen() {
       setRewards(Array.isArray(rewardsRes) ? rewardsRes : []);
       setHistory(Array.isArray(historyRes) ? historyRes : []);
       setRedeemOptions(Array.isArray(redeemRes) ? redeemRes : []);
-    } catch (err: any) {
+    } catch (err: unknown) {
       logger.error('Failed to load rewards:', err);
-      setError(err.message || 'Failed to load rewards');
+      setError(err instanceof Error ? err.message : 'Failed to load rewards');
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
+    if (authLoading || !isAuthenticated) return;
     fetchRewards();
-  }, []);
+  }, [authLoading, isAuthenticated]);
 
   if (isLoading) {
     return (
-      <ScrollView
-        style={[styles.container, { backgroundColor: isDark ? '#0a0a0a' : '#ffffff' }]}
-      >
-        <LoadingState text="Loading rewards..." />
-      </ScrollView>
+      <SafeAreaView style={[styles.safeArea, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+        <ScrollView style={styles.container}>
+          <LoadingState text="Loading rewards..." />
+        </ScrollView>
+      </SafeAreaView>
     );
   }
 
   if (error) {
     return (
-      <ScrollView
-        style={[styles.container, { backgroundColor: isDark ? '#0a0a0a' : '#ffffff' }]}
-      >
-        <ErrorState description={error} onRetry={fetchRewards} />
-      </ScrollView>
+      <SafeAreaView style={[styles.safeArea, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+        <ScrollView style={styles.container}>
+          <ErrorState description={error} onRetry={fetchRewards} />
+        </ScrollView>
+      </SafeAreaView>
     );
   }
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: isDark ? '#0a0a0a' : '#ffffff' }]}>
-      <PageTransition>
-        <ScrollReveal direction="up">
-          <View style={styles.header}>
-            <Text style={[styles.headerTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
-              Rewards
-            </Text>
-            <TouchableOpacity style={[styles.historyButton, { backgroundColor: isDark ? '#1a1a1a' : '#f0f0f0' }]}>
-              <Text style={styles.historyIcon}>📜</Text>
-            </TouchableOpacity>
-          </View>
-        </ScrollReveal>
-
-        <ScrollReveal direction="up" delay={60}>
-          <FadeIn>
-            <View style={styles.pointsCard}>
-              <View style={styles.pointsContent}>
-                <Text style={styles.pointsLabel}>Total Points</Text>
-                <View style={styles.pointsAmount}>
-                  <Text style={styles.pointsValue}>{currentPoints.toLocaleString()}</Text>
-                  <Text style={styles.pointsSuffix}>pts</Text>
-                </View>
-                <Text style={styles.pointsEquivalent}>≈ {Math.floor(currentPoints / 10)} NGN</Text>
-              </View>
-              <View style={styles.pointsDecoration}>
-                <Text style={styles.decorationIcon}>🎁</Text>
-              </View>
-            </View>
-          </FadeIn>
-        </ScrollReveal>
-
-        <ScrollReveal direction="up" delay={120}>
-          <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
-              Earn Points
-            </Text>
-            <StaggerGrid staggerDelay={60}>
-              {rewards.map((reward) => (
-                <View
-                  key={reward.id}
-                  style={[styles.rewardItem, { backgroundColor: isDark ? '#1a1a1a' : '#f8f9fa' }]}
-                >
-                  <View style={[styles.rewardIcon, { backgroundColor: `${reward.color}20` }]}>
-                    <Text style={styles.rewardIconText}>{reward.icon}</Text>
-                  </View>
-                  <View style={styles.rewardInfo}>
-                    <Text style={[styles.rewardTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
-                      {reward.title}
-                    </Text>
-                    <Text style={styles.rewardDescription}>{reward.description}</Text>
-                    <AnimatedProgress
-                      progress={(reward.progress / reward.total) * 100}
-                      color={reward.color}
-                    />
-                    <Text style={styles.rewardProgressText}>
-                      {reward.progress}/{reward.total} completed
-                    </Text>
-                  </View>
-                </View>
-              ))}
-            </StaggerGrid>
-          </View>
-        </ScrollReveal>
-
-        <ScrollReveal direction="up" delay={180}>
-          <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
-              Redeem Rewards
-            </Text>
-            <View style={styles.redeemGrid}>
-              {redeemOptions.map((option) => (
-                <GlowCard
-                  key={option.id}
-                  variant="subtle"
-                  padding={16}
-                  onPress={() => {}}
-                  style={[
-                    styles.redeemCard,
-                    currentPoints < option.points && { opacity: 0.5 },
-                  ]}
-                >
-                  <Text style={styles.redeemIcon}>{option.icon}</Text>
-                  <Text style={[styles.redeemName, { color: isDark ? '#ffffff' : '#000000' }]}>
-                    {option.name}
-                  </Text>
-                  <View
-                    style={[
-                      styles.redeemPoints,
-                      currentPoints < option.points && { backgroundColor: '#ccc' },
-                    ]}
-                  >
-                    <Text style={styles.redeemPointsText}>{option.points} pts</Text>
-                  </View>
-                </GlowCard>
-              ))}
-            </View>
-          </View>
-        </ScrollReveal>
-
-        <ScrollReveal direction="up" delay={240}>
-          <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
-              Recent Activity
-            </Text>
-            <View style={styles.historyList}>
-              {history.length === 0 ? (
-                <Text style={{ color: '#888', textAlign: 'center', padding: 20 }}>
-                  No recent activity
-                </Text>
-              ) : (
-                history.map((item) => (
-                  <View
-                    key={item.id}
-                    style={[styles.historyItem, { backgroundColor: isDark ? '#1a1a1a' : '#f8f9fa' }]}
-                  >
-                    <View style={styles.historyIconView}>
-                      <Text style={styles.historyIconText}>{item.icon}</Text>
-                    </View>
-                    <View style={styles.historyInfo}>
-                      <Text style={[styles.historyTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
-                        {item.title}
-                      </Text>
-                      <Text style={styles.historyDate}>{item.date}</Text>
-                    </View>
-                    <Text style={styles.historyPoints}>+{item.points}</Text>
-                  </View>
-                ))
-              )}
-            </View>
-          </View>
-        </ScrollReveal>
-
-        <ScrollReveal direction="up" delay={300}>
-          <GlowCard variant="subtle" padding={16} style={styles.bonusSection}>
-            <Text style={styles.bonusIcon}>🎉</Text>
-            <View style={styles.bonusContent}>
-              <Text style={[styles.bonusTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
-                Bonus Points Weekend!
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+      <ScrollView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+        <PageTransition>
+          <ScrollReveal direction="up">
+            <View style={styles.header}>
+              <Text style={[styles.headerTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
+                Rewards
               </Text>
-              <Text style={styles.bonusDescription}>Earn 2x points on all activities this weekend</Text>
+              <TouchableOpacity
+                style={[styles.historyButton, { backgroundColor: isDark ? '#1a1a1a' : '#f0f0f0' }]}
+              >
+                <Text style={styles.historyIcon}>📜</Text>
+              </TouchableOpacity>
             </View>
-            <TouchableOpacity style={styles.bonusButton}>
-              <Text style={styles.bonusButtonText}>Learn More</Text>
-            </TouchableOpacity>
-          </GlowCard>
-        </ScrollReveal>
-      </PageTransition>
-    </ScrollView>
+          </ScrollReveal>
+
+          <ScrollReveal direction="up" delay={60}>
+            <FadeIn>
+              <View style={styles.pointsCard}>
+                <View style={styles.pointsContent}>
+                  <Text style={styles.pointsLabel}>Total Points</Text>
+                  <View style={styles.pointsAmount}>
+                    <Text style={styles.pointsValue}>{currentPoints.toLocaleString()}</Text>
+                    <Text style={styles.pointsSuffix}>pts</Text>
+                  </View>
+                  <Text style={styles.pointsEquivalent}>
+                    ≈ {Math.floor(currentPoints / 10)} NGN
+                  </Text>
+                </View>
+                <View style={styles.pointsDecoration}>
+                  <Text style={styles.decorationIcon}>🎁</Text>
+                </View>
+              </View>
+            </FadeIn>
+          </ScrollReveal>
+
+          <ScrollReveal direction="up" delay={120}>
+            <View style={styles.section}>
+              <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
+                Earn Points
+              </Text>
+              <StaggerGrid staggerDelay={60}>
+                {rewards.map((reward) => (
+                  <View
+                    key={reward.id}
+                    style={[styles.rewardItem, { backgroundColor: isDark ? '#1a1a1a' : '#f8f9fa' }]}
+                  >
+                    <View style={[styles.rewardIcon, { backgroundColor: `${reward.color}20` }]}>
+                      <Text style={styles.rewardIconText}>{reward.icon}</Text>
+                    </View>
+                    <View style={styles.rewardInfo}>
+                      <Text style={[styles.rewardTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
+                        {reward.title}
+                      </Text>
+                      <Text style={styles.rewardDescription}>{reward.description}</Text>
+                      <AnimatedProgress
+                        progress={(reward.progress / reward.total) * 100}
+                        color={reward.color}
+                      />
+                      <Text style={styles.rewardProgressText}>
+                        {reward.progress}/{reward.total} completed
+                      </Text>
+                    </View>
+                  </View>
+                ))}
+              </StaggerGrid>
+            </View>
+          </ScrollReveal>
+
+          <ScrollReveal direction="up" delay={180}>
+            <View style={styles.section}>
+              <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
+                Redeem Rewards
+              </Text>
+              <View style={styles.redeemGrid}>
+                {redeemOptions.map((option) => (
+                  <GlowCard
+                    key={option.id}
+                    variant="subtle"
+                    padding={16}
+                    onPress={() => {}}
+                    style={[styles.redeemCard, currentPoints < option.points && { opacity: 0.5 }]}
+                  >
+                    <Text style={styles.redeemIcon}>{option.icon}</Text>
+                    <Text style={[styles.redeemName, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
+                      {option.name}
+                    </Text>
+                    <View
+                      style={[
+                        styles.redeemPoints,
+                        currentPoints < option.points && { backgroundColor: '#ccc' },
+                      ]}
+                    >
+                      <Text style={styles.redeemPointsText}>{option.points} pts</Text>
+                    </View>
+                  </GlowCard>
+                ))}
+              </View>
+            </View>
+          </ScrollReveal>
+
+          <ScrollReveal direction="up" delay={240}>
+            <View style={styles.section}>
+              <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
+                Recent Activity
+              </Text>
+              <View style={styles.historyList}>
+                {history.length === 0 ? (
+                  <Text style={{ color: '#888', textAlign: 'center', padding: 20 }}>
+                    No recent activity
+                  </Text>
+                ) : (
+                  history.map((item) => (
+                    <View
+                      key={item.id}
+                      style={[
+                        styles.historyItem,
+                        { backgroundColor: isDark ? '#1a1a1a' : '#f8f9fa' },
+                      ]}
+                    >
+                      <View style={styles.historyIconView}>
+                        <Text style={styles.historyIconText}>{item.icon}</Text>
+                      </View>
+                      <View style={styles.historyInfo}>
+                        <Text
+                          style={[styles.historyTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}
+                        >
+                          {item.title}
+                        </Text>
+                        <Text style={styles.historyDate}>{item.date}</Text>
+                      </View>
+                      <Text style={styles.historyPoints}>+{item.points}</Text>
+                    </View>
+                  ))
+                )}
+              </View>
+            </View>
+          </ScrollReveal>
+
+          <ScrollReveal direction="up" delay={300}>
+            <GlowCard variant="subtle" padding={16} style={styles.bonusSection}>
+              <Text style={styles.bonusIcon}>🎉</Text>
+              <View style={styles.bonusContent}>
+                <Text style={[styles.bonusTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
+                  Bonus Points Weekend!
+                </Text>
+                <Text style={styles.bonusDescription}>
+                  Earn 2x points on all activities this weekend
+                </Text>
+              </View>
+              <TouchableOpacity style={styles.bonusButton}>
+                <Text style={styles.bonusButtonText}>Learn More</Text>
+              </TouchableOpacity>
+            </GlowCard>
+          </ScrollReveal>
+        </PageTransition>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+  },
   container: {
     flex: 1,
     paddingHorizontal: 16,
@@ -275,14 +300,14 @@ const styles = StyleSheet.create({
     fontSize: 18,
   },
   pointsCard: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     borderRadius: 20,
     padding: 24,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 24,
-    shadowColor: '#8B5CF6',
+    shadowColor: '#E8420A',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.3,
     shadowRadius: 12,
@@ -391,7 +416,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   redeemPoints: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     paddingHorizontal: 16,
     paddingVertical: 6,
     borderRadius: 20,

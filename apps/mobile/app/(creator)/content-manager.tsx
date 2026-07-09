@@ -1,11 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
   FlatList,
-  ActivityIndicator,
   Image,
   Alert,
   ScrollView,
@@ -84,8 +83,9 @@ export default function ContentManagerScreen() {
               await contentApi.deleteContent(id);
               loadContent();
               Alert.alert('Success', 'Content deleted successfully');
-            } catch (error: any) {
-              Alert.alert('Error', error?.message || 'Failed to delete content');
+            } catch (error: unknown) {
+              const message = error instanceof Error ? error.message : 'Failed to delete content';
+              Alert.alert('Error', message);
             }
           },
         },
@@ -98,8 +98,9 @@ export default function ContentManagerScreen() {
       await contentApi.publishContent(id);
       loadContent();
       Alert.alert('Success', 'Content published successfully');
-    } catch (error: any) {
-      Alert.alert('Error', error?.message || 'Failed to publish content');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to publish content';
+      Alert.alert('Error', message);
     }
   };
 
@@ -145,7 +146,7 @@ export default function ContentManagerScreen() {
   const renderGridItem = ({ item }: { item: ContentItem }) => (
     <TouchableOpacity
       style={styles.gridItem}
-      onPress={() => router.push(`/(creator)/content-detail?id=${item.id}` as Href)}
+      onPress={() => router.push(`/(creator)/upload?id=${item.id}` as Href)}
     >
       <Image source={{ uri: item.thumbnail }} style={styles.gridThumbnail} />
       <View style={styles.gridOverlay}>
@@ -168,7 +169,7 @@ export default function ContentManagerScreen() {
   const renderListItem = ({ item }: { item: ContentItem }) => (
     <TouchableOpacity
       style={styles.listItem}
-      onPress={() => router.push(`/(creator)/content-detail?id=${item.id}` as Href)}
+      onPress={() => router.push(`/(creator)/upload?id=${item.id}` as Href)}
     >
       <Image source={{ uri: item.thumbnail }} style={styles.listThumbnail} />
       <View style={styles.listContent}>
@@ -299,7 +300,7 @@ export default function ContentManagerScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#111827',
+    backgroundColor: '#1A0A0A',
   },
   loadingContainer: {
     flex: 1,
@@ -317,7 +318,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#1f2937',
+    borderBottomColor: 'rgba(255,255,255,0.08)',
   },
   backButton: {
     marginRight: 16,
@@ -336,7 +337,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -352,17 +353,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#1f2937',
+    borderBottomColor: 'rgba(255,255,255,0.08)',
   },
   filterButton: {
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: '#1f2937',
+    backgroundColor: '#2A2A2A',
     marginRight: 8,
   },
   filterButtonActive: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
   },
   filterButtonText: {
     color: '#F3F4F6',
@@ -374,7 +375,7 @@ const styles = StyleSheet.create({
   },
   viewModeToggle: {
     flexDirection: 'row',
-    backgroundColor: '#1f2937',
+    backgroundColor: '#2A2A2A',
     borderRadius: 8,
     padding: 2,
   },
@@ -384,7 +385,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   viewModeButtonActive: {
-    backgroundColor: '#374151',
+    backgroundColor: 'rgba(255,255,255,0.2)',
   },
   viewModeText: {
     fontSize: 18,
@@ -413,7 +414,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   createButton: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,
@@ -429,7 +430,7 @@ const styles = StyleSheet.create({
   gridItem: {
     flex: 1,
     margin: 8,
-    backgroundColor: '#1f2937',
+    backgroundColor: '#2A2A2A',
     borderRadius: 12,
     overflow: 'hidden',
   },
@@ -478,7 +479,7 @@ const styles = StyleSheet.create({
   },
   listItem: {
     flexDirection: 'row',
-    backgroundColor: '#1f2937',
+    backgroundColor: '#2A2A2A',
     borderRadius: 12,
     marginBottom: 12,
     overflow: 'hidden',

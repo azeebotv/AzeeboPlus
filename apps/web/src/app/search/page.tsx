@@ -1,10 +1,10 @@
 'use client';
-import React from 'react';
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useAuth } from '../../context/AuthContext';
+import { useQuery } from '@tanstack/react-query';
+import { Skeleton } from '@azeebo/ui/web';
+import { apiFetch } from '../../lib/api';
 import AppHeader from '../../components/layout/AppHeader';
 import AppFooter from '../../components/layout/AppFooter';
-import { Skeleton } from '@/components/Skeleton';
 
 interface SearchResult {
   id: string;
@@ -30,11 +30,17 @@ interface HistoryItem {
   timestamp: Date;
 }
 
+interface SearchResponse {
+  results?: SearchResult[];
+}
+
+interface SuggestionsResponse {
+  suggestions?: string[];
+}
+
 export default function SearchPage(): React.JSX.Element {
-  const { user } = useAuth();
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState<SearchResult[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [activeQuery, setActiveQuery] = useState('');
   const [hasSearched, setHasSearched] = useState(false);
   const [filters, setFilters] = useState<SearchFilters>({
     type: 'all',
@@ -75,61 +81,82 @@ export default function SearchPage(): React.JSX.Element {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const fetchSuggestions = useCallback(async (searchQuery: string) => {
-    if (searchQuery.length < 2) {
-      setSuggestions([]);
-      return;
-    }
-    try {
-      const response = await fetch(`/api/suggestions?q=${encodeURIComponent(searchQuery)}`);
-      if (response.ok) {
-        const data = await response.json();
-        setSuggestions(data.suggestions || []);
+  const {
+    data: results = [],
+    isLoading,
+  } = useQuery<SearchResult[], Error>({
+    queryKey: ['search', activeQuery, filters],
+    queryFn: async () => {
+      if (!activeQuery.trim()) return [];
+      const params = new URLSearchParams({
+        q: activeQuery,
+        type: filters.type,
+        category: filters.category,
+        duration: filters.duration,
+        sortBy: filters.sortBy,
+      });
+      const response = await apiFetch<SearchResponse | SearchResult[]>(
+        `/content/search?${params.toString()}`
+      );
+      if (response.success && response.data) {
+        const data = response.data;
+        return Array.isArray(data) ? data : (data as SearchResponse).results || [];
       }
-    } catch {
-      /* intentionally minimal */
+      return [];
+    },
+    enabled: !!activeQuery.trim(),
+    staleTime: 60000,
+  });
+
+  const { data: suggestionsData } = useQuery<string[], Error>({
+    queryKey: ['suggestions', query],
+    queryFn: async () => {
+      if (query.length < 2) return [];
+      const response = await apiFetch<SuggestionsResponse | string[]>(
+        `/content/suggestions?q=${encodeURIComponent(query)}`
+      );
+      if (response.success && response.data) {
+        return Array.isArray(response.data)
+          ? response.data
+          : (response.data as SuggestionsResponse).suggestions || [];
+      }
+      return [];
+    },
+    enabled: query.length >= 2,
+    staleTime: 120000,
+  });
+
+  useEffect(() => {
+    if (suggestionsData) {
+      setSuggestions(suggestionsData);
     }
-  }, []);
+  }, [suggestionsData]);
 
   const handleQueryChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const value = e.target.value;
       setQuery(value);
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-      debounceRef.current = setTimeout(() => fetchSuggestions(value), 300);
     },
-    [fetchSuggestions]
+    []
   );
 
   const handleSearch = useCallback(
-    async (searchQuery: string) => {
+    (searchQuery: string) => {
       if (!searchQuery.trim()) return;
-      setIsLoading(true);
+      setActiveQuery(searchQuery);
       setHasSearched(true);
       setShowSuggestions(false);
-      try {
-        const params = new URLSearchParams({
-          q: searchQuery,
-          type: filters.type,
-          category: filters.category,
-          duration: filters.duration,
-          sortBy: filters.sortBy,
-        });
-        const response = await fetch(`/api/search?${params.toString()}`);
-        const data = await response.json();
-        setResults(data.results || []);
-        const newHistoryItem = { query: searchQuery, timestamp: new Date() };
-        setSearchHistory((prev) =>
-          [newHistoryItem, ...prev.filter((item) => item.query !== searchQuery)].slice(0, 10)
-        );
-        localStorage.setItem('searchHistory', JSON.stringify(searchHistory));
-      } catch {
-        // search failed silently
-      } finally {
-        setIsLoading(false);
-      }
+      const newHistoryItem = { query: searchQuery, timestamp: new Date() };
+      setSearchHistory((prev) => {
+        const updated = [
+          newHistoryItem,
+          ...prev.filter((item) => item.query !== searchQuery),
+        ].slice(0, 10);
+        localStorage.setItem('searchHistory', JSON.stringify(updated));
+        return updated;
+      });
     },
-    [filters, searchHistory]
+    []
   );
 
   const handleSubmit = (e: React.FormEvent) => {

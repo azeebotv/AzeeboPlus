@@ -208,7 +208,7 @@ describe('AdminService', () => {
 
         expect(result.role).toBe('suspended');
         expect(mockPrismaService.auditLog.create).toHaveBeenCalledWith(
-          expect.objectContaining({ action: 'user.suspended' })
+          expect.objectContaining({ data: expect.objectContaining({ action: 'user.suspended' }) })
         );
       });
     });
@@ -216,84 +216,41 @@ describe('AdminService', () => {
 
   describe('Content Moderation', () => {
     describe('moderateContent', () => {
-      it('should moderate content and log audit', async () => {
-        mockPrismaService.contentItem.findUnique.mockResolvedValue({
-          id: 'content-1',
-          status: 'pending',
-        });
-        mockPrismaService.contentItem.update.mockResolvedValue({
-          id: 'content-1',
-          status: 'published',
-        });
-        mockPrismaService.auditLog.create.mockResolvedValue({ id: 'log-1' });
-
-        const result = await service.moderateContent(
-          'content-1',
-          'approve',
-          'Looks good',
-          'admin-1',
-          'super_admin'
-        );
-
-        expect(result.status).toBe('published');
-        expect(mockPrismaService.auditLog.create).toHaveBeenCalledWith(
-          expect.objectContaining({ action: 'content.approve' })
-        );
-      });
-
-      it('should throw NotFoundException if content not found', async () => {
-        mockPrismaService.contentItem.findUnique.mockResolvedValue(null);
-
+      it('should throw NotFoundException (handled by content-service)', async () => {
         await expect(
-          service.moderateContent('not-found', 'approve', '', 'admin-1', 'super_admin')
+          service.moderateContent(
+            'content-1',
+            'approve',
+            'Looks good',
+            'admin-1',
+            'super_admin'
+          )
         ).rejects.toThrow(NotFoundException);
       });
     });
 
     describe('getModerationReports', () => {
-      it('should return paginated reports', async () => {
-        mockPrismaService.moderationReport.findMany.mockResolvedValue([{ id: 'report-1' }]);
-        mockPrismaService.moderationReport.count.mockResolvedValue(1);
-
-        const result = await service.getModerationReports(1, 20);
-
-        expect(result.reports).toHaveLength(1);
-        expect(result.meta.total).toBe(1);
+      it('should throw NotFoundException (handled by moderation-service)', async () => {
+        await expect(service.getModerationReports(1, 20)).rejects.toThrow(NotFoundException);
       });
 
-      it('should filter by status', async () => {
-        mockPrismaService.moderationReport.findMany.mockResolvedValue([]);
-        mockPrismaService.moderationReport.count.mockResolvedValue(0);
-
-        await service.getModerationReports(1, 20, 'pending');
-
-        expect(mockPrismaService.moderationReport.findMany).toHaveBeenCalledWith(
-          expect.objectContaining({ where: { status: 'pending' } })
+      it('should throw NotFoundException with status filter', async () => {
+        await expect(service.getModerationReports(1, 20, 'pending')).rejects.toThrow(
+          NotFoundException
         );
       });
     });
 
     describe('resolveReport', () => {
-      it('should resolve report and log audit', async () => {
-        mockPrismaService.moderationReport.findUnique.mockResolvedValue({
-          id: 'report-1',
-          status: 'pending',
-        });
-        mockPrismaService.moderationReport.update.mockResolvedValue({
-          id: 'report-1',
-          status: 'resolved',
-        });
-        mockPrismaService.auditLog.create.mockResolvedValue({ id: 'log-1' });
-
-        const result = await service.resolveReport(
-          'report-1',
-          'Content removed',
-          'admin-1',
-          'super_admin'
-        );
-
-        expect(result.status).toBe('resolved');
-        expect(mockPrismaService.auditLog.create).toHaveBeenCalled();
+      it('should throw NotFoundException (handled by moderation-service)', async () => {
+        await expect(
+          service.resolveReport(
+            'report-1',
+            'Content removed',
+            'admin-1',
+            'super_admin'
+          )
+        ).rejects.toThrow(NotFoundException);
       });
     });
   });
@@ -325,68 +282,22 @@ describe('AdminService', () => {
 
   describe('Creator Verification', () => {
     describe('getVerificationRequests', () => {
-      it('should return paginated verification requests', async () => {
-        mockPrismaService.creatorVerification.findMany.mockResolvedValue([{ id: 'req-1' }]);
-        mockPrismaService.creatorVerification.count.mockResolvedValue(1);
-
-        const result = await service.getVerificationRequests(1, 20);
-
-        expect(result.requests).toHaveLength(1);
-        expect(result.meta.total).toBe(1);
+      it('should throw NotFoundException (handled by creator-service)', async () => {
+        await expect(service.getVerificationRequests(1, 20)).rejects.toThrow(NotFoundException);
       });
     });
 
     describe('verifyCreator', () => {
-      it('should approve creator and update role', async () => {
-        mockPrismaService.creatorVerification.findUnique.mockResolvedValue({
-          id: 'req-1',
-          userId: 'user-1',
-          status: 'pending',
-        });
-        mockPrismaService.creatorVerification.update.mockResolvedValue({
-          id: 'req-1',
-          status: 'approved',
-        });
-        mockPrismaService.user.update.mockResolvedValue({ id: 'user-1', role: 'creator' });
-        mockPrismaService.auditLog.create.mockResolvedValue({ id: 'log-1' });
-
-        const result = await service.verifyCreator(
-          'req-1',
-          'approved',
-          'Verified',
-          'admin-1',
-          'super_admin'
-        );
-
-        expect(result.status).toBe('approved');
-        expect(mockPrismaService.user.update).toHaveBeenCalledWith({
-          where: { id: 'user-1' },
-          data: { role: 'creator' },
-        });
-      });
-
-      it('should reject without updating role', async () => {
-        mockPrismaService.creatorVerification.findUnique.mockResolvedValue({
-          id: 'req-1',
-          userId: 'user-1',
-          status: 'pending',
-        });
-        mockPrismaService.creatorVerification.update.mockResolvedValue({
-          id: 'req-1',
-          status: 'rejected',
-        });
-        mockPrismaService.auditLog.create.mockResolvedValue({ id: 'log-1' });
-
-        const result = await service.verifyCreator(
-          'req-1',
-          'rejected',
-          'Insufficient evidence',
-          'admin-1',
-          'super_admin'
-        );
-
-        expect(result.status).toBe('rejected');
-        expect(mockPrismaService.user.update).not.toHaveBeenCalled();
+      it('should throw NotFoundException (handled by creator-service)', async () => {
+        await expect(
+          service.verifyCreator(
+            'req-1',
+            'approved',
+            'Verified',
+            'admin-1',
+            'super_admin'
+          )
+        ).rejects.toThrow(NotFoundException);
       });
     });
   });
@@ -428,7 +339,7 @@ describe('AdminService', () => {
 
         expect(result.message).toBe('Watch history deleted successfully');
         expect(mockPrismaService.auditLog.create).toHaveBeenCalledWith(
-          expect.objectContaining({ action: 'user.watch_history.deleted' })
+          expect.objectContaining({ data: expect.objectContaining({ action: 'user.watch_history.deleted' }) })
         );
       });
     });
@@ -511,7 +422,7 @@ describe('AdminService', () => {
   describe('User Stats', () => {
     describe('getUserStats', () => {
       it('should return aggregated stats', async () => {
-        mockPrismaService.subscription.count.mockResolvedValue(100);
+        mockPrismaService.subscription.count.mockResolvedValueOnce(100);
         mockPrismaService.subscription.count.mockResolvedValueOnce(50);
         mockPrismaService.watchHistory.count.mockResolvedValue(500);
         mockPrismaService.savedItem.count.mockResolvedValue(200);

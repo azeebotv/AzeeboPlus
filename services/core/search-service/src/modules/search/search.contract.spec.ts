@@ -3,6 +3,7 @@ import { INestApplication, BadRequestException } from '@nestjs/common';
 import request from 'supertest';
 import { SearchController } from './search.controller';
 import { SearchService } from './search.service';
+import { RateLimitGuard } from '@azeebo/security';
 
 describe('Search Controller Contract Tests', () => {
   let app: INestApplication;
@@ -26,7 +27,10 @@ describe('Search Controller Contract Tests', () => {
           useValue: searchService,
         },
       ],
-    }).compile();
+    })
+      .overrideGuard(RateLimitGuard)
+      .useValue({ canActivate: jest.fn().mockReturnValue(true) })
+      .compile();
 
     app = moduleFixture.createNestApplication();
     await app.init();
@@ -63,7 +67,7 @@ describe('Search Controller Contract Tests', () => {
         },
       });
 
-      const response = await request(app.getHttpServer()).get('/search?q=test');
+      const response = await request(app.getHttpServer()).get('/v1/search?q=test');
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -77,7 +81,7 @@ describe('Search Controller Contract Tests', () => {
         new BadRequestException('Search query must be at least 2 characters')
       );
 
-      const response = await request(app.getHttpServer()).get('/search');
+      const response = await request(app.getHttpServer()).get('/v1/search');
 
       expect(response.status).toBe(400);
     });
@@ -92,7 +96,7 @@ describe('Search Controller Contract Tests', () => {
         },
       });
 
-      const response = await request(app.getHttpServer()).get('/search/suggestions?q=test');
+      const response = await request(app.getHttpServer()).get('/v1/search/suggestions?q=test');
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -112,7 +116,7 @@ describe('Search Controller Contract Tests', () => {
         },
       });
 
-      const response = await request(app.getHttpServer()).get('/search/trending');
+      const response = await request(app.getHttpServer()).get('/v1/search/trending');
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -135,7 +139,7 @@ describe('Search Controller Contract Tests', () => {
         },
       });
 
-      const response = await request(app.getHttpServer()).get('/search/facets');
+      const response = await request(app.getHttpServer()).get('/v1/search/facets');
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);

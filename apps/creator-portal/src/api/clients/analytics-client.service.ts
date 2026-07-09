@@ -55,7 +55,8 @@ export class AnalyticsClientService {
   private readonly analyticsServiceUrl: string;
 
   constructor(private readonly configService: ConfigService) {
-    this.analyticsServiceUrl = this.configService.get<string>('API_GATEWAY_URL') || 'http://localhost:3013';
+    this.analyticsServiceUrl =
+      this.configService.get<string>('API_GATEWAY_URL') || 'http://localhost:3013';
   }
 
   private async request<T>(
@@ -99,7 +100,7 @@ export class AnalyticsClientService {
       req.on('error', (error) => {
         reject(
           new HttpException(
-            `Analytics Service error: ${error.message}`,
+            `Analytics Service error: ${(error as Error).message}`,
             HttpStatus.SERVICE_UNAVAILABLE
           )
         );

@@ -1,4 +1,11 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  ReactNode,
+} from 'react';
 import { notificationApi, type Notification } from '../api';
 import { useAuth } from './AuthContext';
 import * as Notifications from 'expo-notifications';
@@ -24,24 +31,9 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { user, isAuthenticated } = useAuth();
+  const { user: _user, isAuthenticated } = useAuth();
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      getNotifications();
-      registerForPushNotifications();
-    }
-  }, [isAuthenticated]);
-
-  useEffect(() => {
-    const subscription = Notifications.addNotificationReceivedListener(() => {
-      getNotifications();
-    });
-
-    return () => subscription.remove();
-  }, []);
-
-  const getNotifications = async () => {
+  const getNotifications = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
@@ -49,64 +41,15 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       if (response.success && response.data) {
         setNotifications(response.data.items);
       }
-    } catch (error: any) {
-      setError(error.message || 'Failed to get notifications');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      setError(message || 'Failed to get notifications');
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  const markAsRead = async (notificationId: string) => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const response = await notificationApi.markAsRead(notificationId);
-      if (response.success) {
-        setNotifications((prev) =>
-          prev.map((n) => (n.id === notificationId ? { ...n, read: true } : n))
-        );
-      }
-    } catch (error: any) {
-      setError(error.message || 'Failed to mark notification as read');
-      throw error;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const markAllAsRead = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const response = await notificationApi.markAllAsRead();
-      if (response.success) {
-        setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-      }
-    } catch (error: any) {
-      setError(error.message || 'Failed to mark all notifications as read');
-      throw error;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const deleteNotification = async (notificationId: string) => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const response = await notificationApi.deleteNotification(notificationId);
-      if (response.success) {
-        setNotifications((prev) => prev.filter((n) => n.id !== notificationId));
-      }
-    } catch (error: any) {
-      setError(error.message || 'Failed to delete notification');
-      throw error;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const registerForPushNotifications = async () => {
+  const registerForPushNotifications = useCallback(async () => {
     if (!Device.isDevice) {
       logger.warn('Must use physical device for Push Notifications');
       return;
@@ -124,8 +67,12 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      const projectId =
-        Constants.expoConfig?.extra?.eas?.projectId ?? Constants.easConfig?.projectId;
+      interface ExpoConstants {
+        expoConfig?: { extra?: { eas?: { projectId?: string } } };
+        easConfig?: { projectId?: string };
+      }
+      const c = Constants as unknown as ExpoConstants;
+      const projectId = c.expoConfig?.extra?.eas?.projectId ?? c.easConfig?.projectId;
       if (!projectId) {
         logger.warn('Project ID not found, skipping push token registration');
         return;
@@ -136,8 +83,76 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       if (!response.success) {
         logger.warn('Failed to register push token with backend');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error registering for push notifications', error);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      getNotifications();
+      registerForPushNotifications();
+    }
+  }, [isAuthenticated, getNotifications, registerForPushNotifications]);
+
+  useEffect(() => {
+    const subscription = Notifications.addNotificationReceivedListener(() => {
+      getNotifications();
+    });
+
+    return () => subscription.remove();
+  }, [getNotifications]);
+
+  const markAsRead = async (notificationId: string) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await notificationApi.markAsRead(notificationId);
+      if (response.success) {
+        setNotifications((prev) =>
+          prev.map((n) => (n.id === notificationId ? { ...n, read: true } : n))
+        );
+      }
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      setError(message || 'Failed to mark notification as read');
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const markAllAsRead = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await notificationApi.markAllAsRead();
+      if (response.success) {
+        setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+      }
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      setError(message || 'Failed to mark all notifications as read');
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const deleteNotification = async (notificationId: string) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await notificationApi.deleteNotification(notificationId);
+      if (response.success) {
+        setNotifications((prev) => prev.filter((n) => n.id !== notificationId));
+      }
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      setError(message || 'Failed to delete notification');
+      throw error;
+    } finally {
+      setIsLoading(false);
     }
   };
 

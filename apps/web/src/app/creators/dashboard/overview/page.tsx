@@ -3,11 +3,12 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { api } from '@/lib/api';
+import type { ContentItem } from '@/lib/api/base';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 
 export default function DashboardOverviewPage(): React.JSX.Element {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, isLoading: authLoading } = useAuth();
   const router = useRouter();
   const [stats, setStats] = useState({
     totalViews: 0,
@@ -15,16 +16,17 @@ export default function DashboardOverviewPage(): React.JSX.Element {
     totalEarnings: 0,
     contentCount: 0,
   });
-  const [recentContent, setRecentContent] = useState<any[]>([]);
+  const [recentContent, setRecentContent] = useState<ContentItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    if (authLoading) return;
     if (!isAuthenticated || !user) {
       router.push('/auth/login');
       return;
     }
     loadDashboard();
-  }, [isAuthenticated, user, router]);
+  }, [authLoading, isAuthenticated, user, router]);
 
   const loadDashboard = async () => {
     try {
@@ -33,18 +35,17 @@ export default function DashboardOverviewPage(): React.JSX.Element {
         api.content.getMyContent(),
       ]);
       if (statsRes.success && statsRes.data) {
-        const d = statsRes.data as any;
         setStats({
-          totalViews: d.totalViews || 0,
-          totalSubscribers: d.followerCount || 0,
-          totalEarnings: d.totalEarnings || 0,
-          contentCount: d.contentCount || 0,
+          totalViews: statsRes.data.totalViews || 0,
+          totalSubscribers: statsRes.data.followerCount || 0,
+          totalEarnings: statsRes.data.totalEarnings || 0,
+          contentCount: statsRes.data.contentCount || 0,
         });
       }
       if (contentRes.success && contentRes.data) {
         const items = Array.isArray(contentRes.data)
           ? contentRes.data
-          : (contentRes.data as any).items || [];
+          : contentRes.data.items || [];
         setRecentContent(items.slice(0, 5));
       }
     } catch {
@@ -53,6 +54,8 @@ export default function DashboardOverviewPage(): React.JSX.Element {
       setIsLoading(false);
     }
   };
+
+  if (authLoading || (!isAuthenticated && !user)) return <></>;
 
   if (!isAuthenticated || !user) return <></>;
 
@@ -167,7 +170,7 @@ export default function DashboardOverviewPage(): React.JSX.Element {
                 </p>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {recentContent.map((item: any) => (
+                  {recentContent.map((item) => (
                     <div
                       key={item.id}
                       style={{

@@ -32,14 +32,24 @@ export class ContentRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async findAll(
-    filters?: { universe?: string },
+    filters?: { universe?: string; creatorId?: string; status?: string },
     page: number = 1,
     limit: number = 20
   ): Promise<PaginatedResult<unknown>> {
-    const where: Record<string, unknown> = { status: 'published' };
+    const where: Record<string, unknown> = {};
+
+    if (filters?.status) {
+      where.status = filters.status;
+    } else {
+      where.status = 'published';
+    }
 
     if (filters?.universe) {
       where.universeId = filters.universe;
+    }
+
+    if (filters?.creatorId) {
+      where.creatorId = filters.creatorId;
     }
 
     const [data, total] = await Promise.all([
@@ -69,11 +79,21 @@ export class ContentRepository {
   }
 
   async create(data: CreateContentDto & { creatorId: string }): Promise<Record<string, unknown>> {
+    const createData = {
+      title: data.title,
+      description: data.description,
+      type: data.type,
+      universeId: data.universeId,
+      creatorId: data.creatorId,
+      status: 'draft' as const,
+      ...(data.thumbnail && { thumbnail: data.thumbnail }),
+      ...(data.mediaUrl && { mediaUrl: data.mediaUrl }),
+      ...(data.isPremium !== undefined && { isPremium: data.isPremium }),
+      ...(data.tags && { tags: data.tags }),
+    };
+
     return this.prisma.contentItem.create({
-      data: {
-        ...data,
-        status: 'draft',
-      } as any,
+      data: createData,
       include: { universe: true },
     });
   }

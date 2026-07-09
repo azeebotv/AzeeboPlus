@@ -50,10 +50,13 @@ export class RateLimitService {
         limit,
       };
     } catch (error) {
-      this.logger.error(`Rate limit check failed for key ${key}: ${error}`);
+      this.logger.error(
+        `CRITICAL: Rate limit check failed for key ${key} — Redis unreachable. ` +
+        `Failing closed to protect service. Error: ${error}`
+      );
       return {
-        allowed: true,
-        remaining: limit,
+        allowed: false,
+        remaining: 0,
         resetAt: now + windowMs,
         limit,
       };
@@ -87,10 +90,13 @@ export class RateLimitService {
         limit,
       };
     } catch (error) {
-      this.logger.error(`Failed to get rate limit status for key ${key}: ${error}`);
+      this.logger.error(
+        `CRITICAL: Rate limit status check failed for key ${key} — Redis unreachable. ` +
+        `Failing closed. Error: ${error}`
+      );
       return {
-        allowed: true,
-        remaining: limit,
+        allowed: false,
+        remaining: 0,
         resetAt: now + windowMs,
         limit,
       };
@@ -98,13 +104,17 @@ export class RateLimitService {
   }
 
   // IP Blocking functionality
+  private maskIp(ip: string): string {
+    return ip.replace(/\d+$/, 'xxx');
+  }
+
   async isBlocked(ip: string): Promise<boolean> {
     try {
       const key = `${this.blockListPrefix}${ip}`;
       const exists = await this.redis.get(key);
       return !!exists;
     } catch (error) {
-      this.logger.error(`Failed to check block status for IP ${ip}: ${error}`);
+      this.logger.error(`Failed to check block status for IP ${this.maskIp(ip)}: ${error}`);
       return false;
     }
   }
@@ -113,9 +123,9 @@ export class RateLimitService {
     try {
       const key = `${this.blockListPrefix}${ip}`;
       await this.redis.set(key, 'blocked', 'EX', duration);
-      this.logger.warn(`IP ${ip} has been blocked for ${duration} seconds`);
+      this.logger.warn(`IP ${this.maskIp(ip)} has been blocked for ${duration} seconds`);
     } catch (error) {
-      this.logger.error(`Failed to block IP ${ip}: ${error}`);
+      this.logger.error(`Failed to block IP ${this.maskIp(ip)}: ${error}`);
     }
   }
 
@@ -123,9 +133,9 @@ export class RateLimitService {
     try {
       const key = `${this.blockListPrefix}${ip}`;
       await this.redis.del(key);
-      this.logger.log(`IP ${ip} has been unblocked`);
+      this.logger.log(`IP ${this.maskIp(ip)} has been unblocked`);
     } catch (error) {
-      this.logger.error(`Failed to unblock IP ${ip}: ${error}`);
+      this.logger.error(`Failed to unblock IP ${this.maskIp(ip)}: ${error}`);
     }
   }
 
@@ -137,12 +147,12 @@ export class RateLimitService {
 
       if (count >= threshold) {
         await this.block(ip);
-        this.logger.warn(`IP ${ip} blocked after ${count} violations`);
+        this.logger.warn(`IP ${this.maskIp(ip)} blocked after ${count} violations`);
         return true;
       }
       return false;
     } catch (error) {
-      this.logger.error(`Failed to record violation for IP ${ip}: ${error}`);
+      this.logger.error(`Failed to record violation for IP ${this.maskIp(ip)}: ${error}`);
       return false;
     }
   }
@@ -153,7 +163,7 @@ export class RateLimitService {
       const count = await this.redis.get(key);
       return count ? parseInt(count, 10) : 0;
     } catch (error) {
-      this.logger.error(`Failed to get violation count for IP ${ip}: ${error}`);
+      this.logger.error(`Failed to get violation count for IP ${this.maskIp(ip)}: ${error}`);
       return 0;
     }
   }
@@ -163,7 +173,7 @@ export class RateLimitService {
       const key = `${this.violationPrefix}${ip}`;
       await this.redis.del(key);
     } catch (error) {
-      this.logger.error(`Failed to reset violations for IP ${ip}: ${error}`);
+      this.logger.error(`Failed to reset violations for IP ${this.maskIp(ip)}: ${error}`);
     }
   }
 }

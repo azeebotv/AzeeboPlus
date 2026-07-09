@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -7,7 +7,7 @@ import Animated, {
   interpolate,
   Extrapolation,
 } from 'react-native-reanimated';
-import { AccessibilityInfo } from 'react-native';
+import { AccessibilityInfo, type StyleProp, type ViewStyle } from 'react-native';
 import { animation } from '../../theme';
 
 interface ScrollRevealProps {
@@ -16,7 +16,7 @@ interface ScrollRevealProps {
   delay?: number;
   duration?: number;
   distance?: number;
-  style?: any;
+  style?: StyleProp<ViewStyle>;
 }
 
 export function ScrollReveal({
@@ -66,10 +66,7 @@ export function ScrollReveal({
 
   const animatedStyle = useAnimatedStyle(() => ({
     opacity: interpolate(opacity.value, [0, 1], [0, 1], Extrapolation.CLAMP),
-    transform: [
-      { translateX: getTranslate().x },
-      { translateY: getTranslate().y },
-    ],
+    transform: [{ translateX: getTranslate().x }, { translateY: getTranslate().y }],
   }));
 
   return (

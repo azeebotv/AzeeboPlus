@@ -36,7 +36,15 @@ describe('SubscriptionService', () => {
     plan: mockPlan,
   };
 
-  const mockPrismaService = {
+  const mockTxSubscription = {
+    findFirst: jest.fn(),
+    create: jest.fn(),
+    update: jest.fn(),
+  };
+  const mockTxSubscriptionTransaction = {
+    create: jest.fn(),
+  };
+  const mockPrismaService: any = {
     subscriptionPlan: {
       findMany: jest.fn(),
       findUnique: jest.fn(),
@@ -52,6 +60,10 @@ describe('SubscriptionService', () => {
     subscriptionTransaction: {
       create: jest.fn(),
     },
+    $transaction: jest.fn(async (cb: any) => cb({
+      subscription: mockTxSubscription,
+      subscriptionTransaction: mockTxSubscriptionTransaction,
+    })),
   };
 
   beforeEach(async () => {
@@ -142,41 +154,41 @@ describe('SubscriptionService', () => {
 
   describe('subscribe', () => {
     it('should create a new subscription when no active subscription exists', async () => {
-      const dto = { planId: 'plan-1', autoRenew: true, paymentMethod: 'card' };
+      const dto = { planId: 'plan-1', autoRenew: true, paymentMethod: 'card', paymentReference: 'pay-ref-1' };
 
       mockPrismaService.subscriptionPlan.findUnique.mockResolvedValue(mockPlan);
-      mockPrismaService.subscription.findFirst.mockResolvedValue(null);
-      mockPrismaService.subscription.create.mockResolvedValue(mockSubscription);
-      mockPrismaService.subscriptionTransaction.create.mockResolvedValue({});
+      mockTxSubscription.findFirst.mockResolvedValue(null);
+      mockTxSubscription.create.mockResolvedValue(mockSubscription);
+      mockTxSubscriptionTransaction.create.mockResolvedValue({});
 
       const result = await service.subscribe('user-1', dto);
 
       expect(result).toEqual(mockSubscription);
-      expect(mockPrismaService.subscription.create).toHaveBeenCalled();
-      expect(mockPrismaService.subscriptionTransaction.create).toHaveBeenCalled();
+      expect(mockTxSubscription.create).toHaveBeenCalled();
+      expect(mockTxSubscriptionTransaction.create).toHaveBeenCalled();
     });
 
     it('should cancel existing active subscription before creating new one', async () => {
-      const dto = { planId: 'plan-1' };
+      const dto = { planId: 'plan-1', paymentReference: 'pay-ref-2' };
       const existingSub = { id: 'existing-sub', userId: 'user-1', status: 'active' };
 
       mockPrismaService.subscriptionPlan.findUnique.mockResolvedValue(mockPlan);
-      mockPrismaService.subscription.findFirst.mockResolvedValue(existingSub);
-      mockPrismaService.subscription.update.mockResolvedValue({});
-      mockPrismaService.subscription.create.mockResolvedValue(mockSubscription);
-      mockPrismaService.subscriptionTransaction.create.mockResolvedValue({});
+      mockTxSubscription.findFirst.mockResolvedValue(existingSub);
+      mockTxSubscription.update.mockResolvedValue({});
+      mockTxSubscription.create.mockResolvedValue(mockSubscription);
+      mockTxSubscriptionTransaction.create.mockResolvedValue({});
 
       const result = await service.subscribe('user-1', dto);
 
       expect(result).toEqual(mockSubscription);
-      expect(mockPrismaService.subscription.update).toHaveBeenCalledWith({
+      expect(mockTxSubscription.update).toHaveBeenCalledWith({
         where: { id: 'existing-sub' },
         data: { status: 'cancelled' },
       });
     });
 
     it('should throw NotFoundException when plan does not exist', async () => {
-      const dto = { planId: 'nonexistent' };
+      const dto = { planId: 'nonexistent', paymentReference: 'pay-ref-3' };
 
       mockPrismaService.subscriptionPlan.findUnique.mockResolvedValue(null);
 
@@ -184,16 +196,16 @@ describe('SubscriptionService', () => {
     });
 
     it('should calculate end date based on plan duration', async () => {
-      const dto = { planId: 'plan-1' };
+      const dto = { planId: 'plan-1', paymentReference: 'pay-ref-4' };
 
       mockPrismaService.subscriptionPlan.findUnique.mockResolvedValue(mockPlan);
-      mockPrismaService.subscription.findFirst.mockResolvedValue(null);
-      mockPrismaService.subscription.create.mockResolvedValue(mockSubscription);
-      mockPrismaService.subscriptionTransaction.create.mockResolvedValue({});
+      mockTxSubscription.findFirst.mockResolvedValue(null);
+      mockTxSubscription.create.mockResolvedValue(mockSubscription);
+      mockTxSubscriptionTransaction.create.mockResolvedValue({});
 
       await service.subscribe('user-1', dto);
 
-      const createCall = mockPrismaService.subscription.create.mock.calls[0][0];
+      const createCall = mockTxSubscription.create.mock.calls[0][0];
       const endDate = createCall.data.endDate as Date;
       const expectedDays = mockPlan.duration;
 

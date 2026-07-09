@@ -69,9 +69,13 @@ describe('ServiceClient', () => {
     it('should use provided idempotency key', async () => {
       mockAxiosInstance.post.mockResolvedValue({ data: { id: 1 } });
 
-      await client.post('/users', { name: 'Test' }, {
-        headers: { 'Idempotency-Key': 'custom-key' },
-      });
+      await client.post(
+        '/users',
+        { name: 'Test' },
+        {
+          headers: { 'Idempotency-Key': 'custom-key' },
+        }
+      );
 
       expect(mockAxiosInstance.post).toHaveBeenCalledWith(
         '/users',

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import {
   ModerationRepository,
   ModerationScan,
@@ -29,40 +29,48 @@ export interface RiskAssessment {
 
 @Injectable()
 export class ModerationService {
+  private readonly logger = new Logger(ModerationService.name);
+
   constructor(
     private readonly moderationRepository: ModerationRepository,
     private readonly prisma: PrismaService
   ) {}
 
   async scanContent(contentId: string, type: string = 'malware'): Promise<ScanResult> {
-    const content = await this.prisma.contentItem.findUnique({ where: { id: contentId } });
-    if (!content) {
-      throw new NotFoundException('Content not found');
+    try {
+      const content = await this.prisma.contentItem.findUnique({ where: { id: contentId } });
+      if (!content) {
+        throw new NotFoundException('Content not found');
+      }
+
+      const scanData = await this.performScan(content, type);
+      const riskLevel = this.calculateRiskLevel(scanData.riskScore);
+
+      const scan = await this.moderationRepository.createScan({
+        contentId,
+        type,
+        status: riskLevel === 'critical' ? 'blocked' : riskLevel === 'high' ? 'flagged' : 'clean',
+        riskScore: scanData.riskScore,
+        riskLevel,
+        provider: scanData.provider,
+        providerResponse: scanData.providerResponse,
+        flaggedLabels: scanData.flaggedLabels,
+      });
+
+      return {
+        scanId: scan.id,
+        contentId: scan.contentId,
+        status: scan.status as 'clean' | 'flagged' | 'blocked',
+        riskScore: scan.riskScore,
+        riskLevel: scan.riskLevel as 'low' | 'medium' | 'high' | 'critical',
+        flaggedCategories: scan.flaggedLabels,
+        provider: scan.provider,
+      };
+    } catch (_err) {
+      if (error instanceof NotFoundException) throw error;
+      this.logger.error(`Failed to scan content: ${error}`);
+      throw error;
     }
-
-    const scanData = await this.performScan(content, type);
-    const riskLevel = this.calculateRiskLevel(scanData.riskScore);
-
-    const scan = await this.moderationRepository.createScan({
-      contentId,
-      type,
-      status: riskLevel === 'critical' ? 'blocked' : riskLevel === 'high' ? 'flagged' : 'clean',
-      riskScore: scanData.riskScore,
-      riskLevel,
-      provider: scanData.provider,
-      providerResponse: scanData.providerResponse,
-      flaggedLabels: scanData.flaggedLabels,
-    });
-
-    return {
-      scanId: scan.id,
-      contentId: scan.contentId,
-      status: scan.status as 'clean' | 'flagged' | 'blocked',
-      riskScore: scan.riskScore,
-      riskLevel: scan.riskLevel as 'low' | 'medium' | 'high' | 'critical',
-      flaggedCategories: scan.flaggedLabels,
-      provider: scan.provider,
-    };
   }
 
   private async performScan(
@@ -111,59 +119,76 @@ export class ModerationService {
   }
 
   async getRiskAssessment(contentId: string): Promise<RiskAssessment> {
-    const scans = await this.moderationRepository.getScansByContentId(contentId);
+    try {
+      const scans = await this.moderationRepository.getScansByContentId(contentId);
 
-    const contributingFactors = scans.map((scan) => ({
-      factor: scan.type,
-      weight: scan.riskScore,
-      score: scan.riskScore,
-    }));
+      const contributingFactors = scans.map((scan) => ({
+        factor: scan.type,
+        weight: scan.riskScore,
+        score: scan.riskScore,
+      }));
 
-    const avgRiskScore =
-      scans.length > 0 ? scans.reduce((sum, scan) => sum + scan.riskScore, 0) / scans.length : 0;
+      const avgRiskScore =
+        scans.length > 0 ? scans.reduce((sum, scan) => sum + scan.riskScore, 0) / scans.length : 0;
 
-    const recommendations: string[] = [];
-    if (avgRiskScore > 50) recommendations.push('Manual review recommended');
-    if (avgRiskScore > 80) recommendations.push('Content should be blocked');
+      const recommendations: string[] = [];
+      if (avgRiskScore > 50) recommendations.push('Manual review recommended');
+      if (avgRiskScore > 80) recommendations.push('Content should be blocked');
 
-    return {
-      contentId,
-      riskScore: Math.round(avgRiskScore),
-      riskLevel: this.calculateRiskLevel(avgRiskScore),
-      contributingFactors,
-      recommendations,
-    };
+      return {
+        contentId,
+        riskScore: Math.round(avgRiskScore),
+        riskLevel: this.calculateRiskLevel(avgRiskScore),
+        contributingFactors,
+        recommendations,
+      };
+    } catch (_err) {
+      this.logger.error(`Failed to get risk assessment: ${error}`);
+      throw error;
+    }
   }
 
   async resolveCase(
     caseId: string,
     data: { resolution: string; resolvedBy: string; notes?: string }
   ): Promise<ModerationCase> {
-    const moderationCase = await this.moderationRepository.getCase(caseId);
-    if (!moderationCase) {
-      throw new NotFoundException('Moderation case not found');
+    try {
+      const moderationCase = await this.moderationRepository.getCase(caseId);
+      if (!moderationCase) {
+        throw new NotFoundException('Moderation case not found');
+      }
+
+      const updated = await this.moderationRepository.updateCase(caseId, {
+        status: 'resolved',
+        resolvedAt: new Date(),
+      });
+
+      return updated!;
+    } catch (_err) {
+      if (error instanceof NotFoundException) throw error;
+      this.logger.error(`Failed to resolve case: ${error}`);
+      throw error;
     }
-
-    const updated = await this.moderationRepository.updateCase(caseId, {
-      status: 'resolved',
-      resolvedAt: new Date(),
-    });
-
-    return updated!;
   }
 
   async assignCase(caseId: string, userId: string): Promise<ModerationCase> {
-    const moderationCase = await this.moderationRepository.getCase(caseId);
-    if (!moderationCase) {
-      throw new NotFoundException('Moderation case not found');
+    try {
+      const moderationCase = await this.moderationRepository.getCase(caseId);
+      if (!moderationCase) {
+        throw new NotFoundException('Moderation case not found');
+      }
+
+      const updated = await this.moderationRepository.updateCase(caseId, {
+        assignedTo: userId,
+        status: 'under_review',
+      });
+
+      return updated!;
+    } catch (_err) {
+      if (error instanceof NotFoundException) throw error;
+      this.logger.error(`Failed to assign case: ${error}`);
+      throw error;
     }
-
-    const updated = await this.moderationRepository.updateCase(caseId, {
-      assignedTo: userId,
-      status: 'under_review',
-    });
-
-    return updated!;
   }
 
   async createCase(data: {
@@ -176,29 +201,45 @@ export class ModerationService {
     evidence?: Record<string, unknown>;
     assignedTo?: string;
   }): Promise<ModerationCase> {
-    return this.moderationRepository.createCase({
-      contentId: data.contentId,
-      type: data.type as 'content' | 'user' | 'comment' | 'message',
-      severity: data.severity as 'low' | 'medium' | 'high' | 'critical',
-      status: 'open',
-      assignedTo: data.assignedTo,
-      priority: data.priority as 'low' | 'medium' | 'high',
-      policyCategory: data.policyCategory,
-      description: data.description,
-      evidence: data.evidence || {},
-    });
+    try {
+      return this.moderationRepository.createCase({
+        contentId: data.contentId,
+        type: data.type as 'content' | 'user' | 'comment' | 'message',
+        severity: data.severity as 'low' | 'medium' | 'high' | 'critical',
+        status: 'open',
+        assignedTo: data.assignedTo,
+        priority: data.priority as 'low' | 'medium' | 'high',
+        policyCategory: data.policyCategory,
+        description: data.description,
+        evidence: data.evidence || {},
+      });
+    } catch (_err) {
+      this.logger.error(`Failed to create case: ${error}`);
+      throw error;
+    }
   }
 
   async getCases(filters?: { status?: string; type?: string }): Promise<ModerationCase[]> {
-    return this.moderationRepository.getCases(filters);
+    try {
+      return this.moderationRepository.getCases(filters);
+    } catch (_err) {
+      this.logger.error(`Failed to get cases: ${error}`);
+      throw error;
+    }
   }
 
   async getCaseById(caseId: string): Promise<ModerationCase> {
-    const moderationCase = await this.moderationRepository.getCase(caseId);
-    if (!moderationCase) {
-      throw new NotFoundException('Moderation case not found');
+    try {
+      const moderationCase = await this.moderationRepository.getCase(caseId);
+      if (!moderationCase) {
+        throw new NotFoundException('Moderation case not found');
+      }
+      return moderationCase;
+    } catch (_err) {
+      if (error instanceof NotFoundException) throw error;
+      this.logger.error(`Failed to get case by id: ${error}`);
+      throw error;
     }
-    return moderationCase;
   }
 
   async executeAction(data: {
@@ -210,34 +251,44 @@ export class ModerationService {
     performedBy: string;
     expiresAt?: Date;
   }): Promise<SafetyAction> {
-    const action = await this.moderationRepository.createSafetyAction({
-      caseId: data.caseId,
-      type: data.type,
-      targetId: data.targetId,
-      targetType: data.targetType,
-      reason: data.reason,
-      performedBy: data.performedBy,
-      status: 'executed',
-      expiresAt: data.expiresAt,
-    });
-
-    if (data.type === 'content_removal') {
-      await this.prisma.contentItem.update({
-        where: { id: data.targetId },
-        data: { status: 'removed' },
+    try {
+      const action = await this.moderationRepository.createSafetyAction({
+        caseId: data.caseId,
+        type: data.type,
+        targetId: data.targetId,
+        targetType: data.targetType,
+        reason: data.reason,
+        performedBy: data.performedBy,
+        status: 'executed',
+        expiresAt: data.expiresAt,
       });
-    }
 
-    return action;
+      if (data.type === 'content_removal') {
+        await this.prisma.contentItem.update({
+          where: { id: data.targetId },
+          data: { status: 'removed' },
+        });
+      }
+
+      return action;
+    } catch (_err) {
+      this.logger.error(`Failed to execute action: ${error}`);
+      throw error;
+    }
   }
 
   async submitAppeal(data: { caseId: string; userId: string; reason: string }): Promise<Appeal> {
-    return this.moderationRepository.createAppeal({
-      caseId: data.caseId,
-      userId: data.userId,
-      reason: data.reason,
-      status: 'pending',
-    });
+    try {
+      return this.moderationRepository.createAppeal({
+        caseId: data.caseId,
+        userId: data.userId,
+        reason: data.reason,
+        status: 'pending',
+      });
+    } catch (_err) {
+      this.logger.error(`Failed to submit appeal: ${error}`);
+      throw error;
+    }
   }
 
   async reviewAppeal(
@@ -246,48 +297,74 @@ export class ModerationService {
     decision: 'successful' | 'rejected',
     notes?: string
   ): Promise<Appeal> {
-    const appeal = await this.moderationRepository.getAppeal(appealId);
-    if (!appeal) {
-      throw new NotFoundException('Appeal not found');
+    try {
+      const appeal = await this.moderationRepository.getAppeal(appealId);
+      if (!appeal) {
+        throw new NotFoundException('Appeal not found');
+      }
+
+      const updated = await this.moderationRepository.updateAppeal(appealId, {
+        status: decision,
+        resolvedBy: reviewerId,
+        resolutionReason: notes,
+        resolvedAt: new Date(),
+      });
+
+      return updated!;
+    } catch (_err) {
+      if (error instanceof NotFoundException) throw error;
+      this.logger.error(`Failed to review appeal: ${error}`);
+      throw error;
     }
-
-    const updated = await this.moderationRepository.updateAppeal(appealId, {
-      status: decision,
-      resolvedBy: reviewerId,
-      resolutionReason: notes,
-      resolvedAt: new Date(),
-    });
-
-    return updated!;
   }
 
   async updateTrustScore(
     userId: string,
     data: { violation?: boolean; positiveAction?: boolean }
   ): Promise<TrustScore> {
-    const existing = await this.moderationRepository.getTrustScore(userId);
-    let score = existing?.score || 100;
+    try {
+      const existing = await this.moderationRepository.getTrustScore(userId);
+      let score = existing?.score || 100;
 
-    if (data.violation) {
-      score = Math.max(0, score - 10);
-    }
-    if (data.positiveAction) {
-      score = Math.min(100, score + 2);
-    }
+      if (data.violation) {
+        score = Math.max(0, score - 10);
+      }
+      if (data.positiveAction) {
+        score = Math.min(100, score + 2);
+      }
 
-    return this.moderationRepository.updateTrustScore(userId, score, existing?.factors || {});
+      return this.moderationRepository.updateTrustScore(userId, score, existing?.factors || {});
+    } catch (_err) {
+      this.logger.error(`Failed to update trust score: ${error}`);
+      throw error;
+    }
   }
 
   async getTrustScore(userId: string): Promise<TrustScore | null> {
-    return this.moderationRepository.getTrustScore(userId);
+    try {
+      return this.moderationRepository.getTrustScore(userId);
+    } catch (_err) {
+      this.logger.error(`Failed to get trust score: ${error}`);
+      throw error;
+    }
   }
 
   async getContentScans(contentId: string): Promise<ModerationScan[]> {
-    return this.moderationRepository.getScansByContentId(contentId);
+    try {
+      return this.moderationRepository.getScansByContentId(contentId);
+    } catch (_err) {
+      this.logger.error(`Failed to get content scans: ${error}`);
+      throw error;
+    }
   }
 
   async getSafetyActionsByCase(caseId: string): Promise<SafetyAction[]> {
-    return this.moderationRepository.getSafetyActionsByCaseId(caseId);
+    try {
+      return this.moderationRepository.getSafetyActionsByCaseId(caseId);
+    } catch (_err) {
+      this.logger.error(`Failed to get safety actions by case: ${error}`);
+      throw error;
+    }
   }
 
   async getModerationStats(): Promise<{
@@ -297,43 +374,48 @@ export class ModerationService {
     averageResolutionTime: number;
     topPolicyCategories: { category: string; count: number }[];
   }> {
-    const cases = await this.moderationRepository.getCases();
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    try {
+      const cases = await this.moderationRepository.getCases();
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
 
-    const openCases = cases.filter((c) => c.status === 'open').length;
-    const underReviewCases = cases.filter((c) => c.status === 'under_review').length;
-    const resolvedToday = cases.filter(
-      (c) => c.status === 'resolved' && c.resolvedAt && c.resolvedAt >= today
-    ).length;
+      const openCases = cases.filter((c) => c.status === 'open').length;
+      const underReviewCases = cases.filter((c) => c.status === 'under_review').length;
+      const resolvedToday = cases.filter(
+        (c) => c.status === 'resolved' && c.resolvedAt && c.resolvedAt >= today
+      ).length;
 
-    const resolvedCases = cases.filter((c) => c.resolvedAt);
-    const totalResolutionTime = resolvedCases.reduce((sum, c) => {
-      if (c.resolvedAt) {
-        return sum + (c.resolvedAt.getTime() - c.createdAt.getTime());
-      }
-      return sum;
-    }, 0);
+      const resolvedCases = cases.filter((c) => c.resolvedAt);
+      const totalResolutionTime = resolvedCases.reduce((sum, c) => {
+        if (c.resolvedAt) {
+          return sum + (c.resolvedAt.getTime() - c.createdAt.getTime());
+        }
+        return sum;
+      }, 0);
 
-    const categoryCounts: Record<string, number> = {};
-    cases.forEach((c) => {
-      categoryCounts[c.policyCategory] = (categoryCounts[c.policyCategory] || 0) + 1;
-    });
+      const categoryCounts: Record<string, number> = {};
+      cases.forEach((c) => {
+        categoryCounts[c.policyCategory] = (categoryCounts[c.policyCategory] || 0) + 1;
+      });
 
-    const topPolicyCategories = Object.entries(categoryCounts)
-      .sort(([, a], [, b]) => b - a)
-      .slice(0, 5)
-      .map(([category, count]) => ({ category, count }));
+      const topPolicyCategories = Object.entries(categoryCounts)
+        .sort(([, a], [, b]) => b - a)
+        .slice(0, 5)
+        .map(([category, count]) => ({ category, count }));
 
-    return {
-      openCases,
-      underReviewCases,
-      resolvedToday,
-      averageResolutionTime:
-        resolvedCases.length > 0
-          ? totalResolutionTime / resolvedCases.length / (1000 * 60 * 60)
-          : 0,
-      topPolicyCategories,
-    };
+      return {
+        openCases,
+        underReviewCases,
+        resolvedToday,
+        averageResolutionTime:
+          resolvedCases.length > 0
+            ? totalResolutionTime / resolvedCases.length / (1000 * 60 * 60)
+            : 0,
+        topPolicyCategories,
+      };
+    } catch (_err) {
+      this.logger.error(`Failed to get moderation stats: ${error}`);
+      throw error;
+    }
   }
 }

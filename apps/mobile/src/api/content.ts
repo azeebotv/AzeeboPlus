@@ -11,6 +11,10 @@ export interface ContentItem {
   contentType?: string;
   status: 'draft' | 'processing' | 'published' | 'archived';
   isPremium?: boolean;
+  mediaAsset?: {
+    thumbnailUrl?: string;
+    mediaUrl?: string;
+  };
   creator: {
     id: string;
     name: string;
@@ -183,6 +187,10 @@ export const contentApi = {
     return apiClient.get<ApiResponse<ContentItem>>(`/api/v1/content/${contentId}`);
   },
 
+  getContent: async (contentId: string): Promise<ApiResponse<ContentItem>> => {
+    return apiClient.get<ApiResponse<ContentItem>>(`/api/v1/content/${contentId}`);
+  },
+
   getContentByCategory: async (
     categoryId: string,
     page = 1,
@@ -213,7 +221,9 @@ export const contentApi = {
   },
 
   addToWatchHistory: async (contentId: string): Promise<ApiResponse<{ message: string }>> => {
-    return apiClient.post<ApiResponse<{ message: string }>>('/api/v1/users/me/history', { contentId });
+    return apiClient.post<ApiResponse<{ message: string }>>('/api/v1/users/me/history', {
+      contentId,
+    });
   },
 
   getSavedContent: async (
@@ -226,11 +236,15 @@ export const contentApi = {
   },
 
   saveContent: async (contentId: string): Promise<ApiResponse<{ message: string }>> => {
-    return apiClient.post<ApiResponse<{ message: string }>>('/api/v1/users/me/saved', { contentId });
+    return apiClient.post<ApiResponse<{ message: string }>>('/api/v1/users/me/saved', {
+      contentId,
+    });
   },
 
   removeSavedContent: async (contentId: string): Promise<ApiResponse<{ message: string }>> => {
-    return apiClient.delete<ApiResponse<{ message: string }>>(`/api/v1/users/me/saved/${contentId}`);
+    return apiClient.delete<ApiResponse<{ message: string }>>(
+      `/api/v1/users/me/saved/${contentId}`
+    );
   },
 
   getEpisode: async (episodeId: string): Promise<ApiResponse<Episode>> => {
@@ -254,7 +268,9 @@ export const contentApi = {
   },
 
   getContestants: async (episodeId: string): Promise<ApiResponse<Contestant[]>> => {
-    return apiClient.get<ApiResponse<Contestant[]>>(`/api/v1/content/episodes/${episodeId}/contestants`);
+    return apiClient.get<ApiResponse<Contestant[]>>(
+      `/api/v1/content/episodes/${episodeId}/contestants`
+    );
   },
 
   superVote: async (data: {
@@ -274,7 +290,9 @@ export const contentApi = {
   },
 
   deleteContent: async (contentId: string): Promise<ApiResponse<{ message: string }>> => {
-    return apiClient.delete<ApiResponse<{ message: string }>>(`/api/v1/creator/content/${contentId}`);
+    return apiClient.delete<ApiResponse<{ message: string }>>(
+      `/api/v1/creator/content/${contentId}`
+    );
   },
 
   publishContent: async (contentId: string): Promise<ApiResponse<{ message: string }>> => {
@@ -322,7 +340,9 @@ export const contentApi = {
   },
 
   getRecommendations: async (type?: string): Promise<ApiResponse<Recommendation[]>> => {
-    const url = type ? `/api/v1/content/recommendations?type=${type}` : '/api/v1/content/recommendations';
+    const url = type
+      ? `/api/v1/content/recommendations?type=${type}`
+      : '/api/v1/content/recommendations';
     return apiClient.get<ApiResponse<Recommendation[]>>(url);
   },
 

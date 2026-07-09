@@ -1,4 +1,5 @@
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 import { createHmac, timingSafeEqual } from 'crypto';
 import { CircuitBreaker, CircuitBreakerOpenError } from '@azeebo/shared-types';
@@ -37,13 +38,16 @@ interface PaystackVerifyResponse {
 export class PaystackProvider {
   private readonly logger = new Logger(PaystackProvider.name);
   private readonly apiKey: string;
-  private readonly baseUrl = 'https://api.paystack.co';
+  private readonly baseUrl: string;
   private readonly circuitBreaker: CircuitBreaker;
 
-  constructor() {
-    this.apiKey = process.env.PAYSTACK_SECRET_KEY || '';
+  constructor(private readonly configService: ConfigService) {
+    this.apiKey = this.configService.get<string>('PAYSTACK_SECRET_KEY') || '';
+    this.baseUrl = this.configService.get<string>('PAYSTACK_API_URL', 'https://api.paystack.co');
     if (!this.apiKey) {
-      this.logger.warn('PAYSTACK_SECRET_KEY is not configured — Paystack payments will be unavailable');
+      this.logger.warn(
+        'PAYSTACK_SECRET_KEY is not configured — Paystack payments will be unavailable'
+      );
     } else {
       this.logger.log('PaystackProvider initialized with circuit breaker');
     }
@@ -55,7 +59,10 @@ export class PaystackProvider {
   }
 
   // PAY-003: In-memory idempotency store (production should use Redis/DB)
-  private readonly idempotencyStore = new Map<string, { result: Record<string, unknown>; timestamp: number }>();
+  private readonly idempotencyStore = new Map<
+    string,
+    { result: Record<string, unknown>; timestamp: number }
+  >();
   private readonly IDEMPOTENCY_TTL = 3600_000; // 1 hour
 
   private checkIdempotency(key: string | undefined): Record<string, unknown> | null {
@@ -79,7 +86,12 @@ export class PaystackProvider {
     this.idempotencyStore.set(key, { result, timestamp: Date.now() });
   }
 
-  async initializePayment(amount: number, currency: string, userId: string, idempotencyKey?: string) {
+  async initializePayment(
+    amount: number,
+    currency: string,
+    userId: string,
+    idempotencyKey?: string
+  ) {
     if (!this.apiKey) {
       throw new BadRequestException('Paystack payments are not configured');
     }
@@ -111,7 +123,7 @@ export class PaystackProvider {
               app: 'azeebo-plus',
             },
             callback_url:
-              process.env.PAYSTACK_CALLBACK_URL || 'https://api.azeebo.plus/payments/webhook',
+              process.env.PAYSTACK_CALLBACK_URL || 'http://localhost:3003/webhooks/paystack',
           },
           {
             headers: {
@@ -138,7 +150,7 @@ export class PaystackProvider {
       return result;
     } catch (error) {
       if (error instanceof CircuitBreakerOpenError) {
-        this.logger.warn(`Paystack circuit breaker open: ${error.message}`);
+        this.logger.warn(`Paystack circuit breaker open: ${(error as Error).message}`);
         throw new Error('Payment service temporarily unavailable. Please try again later.');
       }
       this.logger.error(`Paystack initialization failed: ${(error as Error).message}`);
@@ -179,7 +191,7 @@ export class PaystackProvider {
       return result;
     } catch (error) {
       if (error instanceof CircuitBreakerOpenError) {
-        this.logger.warn(`Paystack circuit breaker open: ${error.message}`);
+        this.logger.warn(`Paystack circuit breaker open: ${(error as Error).message}`);
         throw new Error('Payment verification temporarily unavailable. Please try again later.');
       }
       this.logger.error(`Paystack verification failed: ${(error as Error).message}`);
@@ -221,7 +233,7 @@ export class PaystackProvider {
       return result;
     } catch (error) {
       if (error instanceof CircuitBreakerOpenError) {
-        this.logger.warn(`Paystack circuit breaker open: ${error.message}`);
+        this.logger.warn(`Paystack circuit breaker open: ${(error as Error).message}`);
         throw new Error('Refund service temporarily unavailable. Please try again later.');
       }
       this.logger.error(`Paystack refund failed: ${(error as Error).message}`);
@@ -250,9 +262,7 @@ export class PaystackProvider {
       .digest('hex');
 
     // Timing-safe comparison to prevent timing attacks
-    if (hash.length !== signature.length) {
-      return false;
-    }
+    if (hash.length !== signature.length) return false;
     return timingSafeEqual(Buffer.from(hash), Buffer.from(signature));
   }
 

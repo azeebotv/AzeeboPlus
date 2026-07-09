@@ -5,6 +5,12 @@
   "description": "Shared TypeScript types for Azeebo+",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "lint": "eslint src --fix",
@@ -25,8 +31,10 @@
     "typescript": "^5.8.4"
   },
   "dependencies": {
-    "@nestjs/common": "^11.1.27",
-    "rxjs": "^7.8.2",
     "zod": "^4.4.3"
+  },
+  "peerDependencies": {
+    "@nestjs/common": "^11.1.27",
+    "rxjs": "^7.8.2"
   }
 }

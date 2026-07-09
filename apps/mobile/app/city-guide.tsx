@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,11 +6,13 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
-  SafeAreaView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
-import { colors, universeColors } from '../src/theme';
+import { colors } from '../src/theme';
+import { apiClient } from '../src/api/client';
+import { LoadingState, ErrorState } from '../src/components/StateContainers';
 
 const PLACEHOLDER_IMAGE = '';
 
@@ -35,63 +37,53 @@ interface Event {
   interested: number;
 }
 
-const cities: City[] = [
-  { id: '1', name: 'Lagos', country: 'Nigeria', icon: '🌍', events: 24, color: '#FF6B6B' },
-  { id: '2', name: 'Nairobi', country: 'Kenya', icon: '🌍', events: 18, color: '#4ECDC4' },
-  { id: '3', name: 'Accra', country: 'Ghana', icon: '🌍', events: 12, color: '#45B7D1' },
-  {
-    id: '4',
-    name: 'Johannesburg',
-    country: 'South Africa',
-    icon: '🌍',
-    events: 21,
-    color: '#96CEB4',
-  },
-];
-
-const events: Event[] = [
-  {
-    id: '1',
-    title: 'Afrobeats Festival 2024',
-    subtitle: 'Live concert with top artists',
-    date: 'Dec 25',
-    time: '8:00 PM',
-    location: 'Eko Convention Center',
-    price: '₦5,000',
-    category: 'Music',
-    interested: 1250,
-  },
-  {
-    id: '2',
-    title: 'Tech Summit Lagos',
-    subtitle: 'Innovation and networking',
-    date: 'Jan 15',
-    time: '10:00 AM',
-    location: 'Landmark Center',
-    price: 'Free',
-    category: 'Tech',
-    interested: 890,
-  },
-  {
-    id: '3',
-    title: 'Food & Wine Festival',
-    subtitle: 'Culinary experience',
-    date: 'Jan 20',
-    time: '12:00 PM',
-    location: 'Lekki Conservation',
-    price: '₦3,000',
-    category: 'Food',
-    interested: 670,
-  },
-];
 
 export default function CityGuideScreen() {
   const colorScheme = useColorScheme();
   const router = useRouter();
   const [selectedCity, setSelectedCity] = useState('1');
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [events, setEvents] = useState<Event[]>([]);
+  const [cities, setCities] = useState<City[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const categories = ['All', 'Music', 'Tech', 'Food', 'Sports', 'Arts'];
+
+  useEffect(() => {
+    loadCities();
+  }, []);
+
+  useEffect(() => {
+    loadEvents();
+  }, [selectedCity]);
+
+  const loadCities = async () => {
+    try {
+      const response = await apiClient.get<City[]>('/v1/lifestyle/cities');
+      setCities(response || []);
+      if (response && response.length > 0) {
+        setSelectedCity(response[0].id);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load cities');
+    }
+  };
+
+  const loadEvents = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await apiClient.get<Event[]>('/v1/lifestyle/events', {
+        params: { cityId: selectedCity, limit: 20 },
+      });
+      setEvents(response || []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load events');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -105,19 +97,17 @@ export default function CityGuideScreen() {
           <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
             <Text style={styles.backIcon}>←</Text>
           </TouchableOpacity>
-          <Text
-            style={[
-              styles.headerTitle,
-              { color: colors.text.primary },
-            ]}
-          >
-            City Guide
-          </Text>
+          <Text style={[styles.headerTitle, { color: colors.text.primary }]}>City Guide</Text>
           <TouchableOpacity style={styles.searchButton}>
             <Text style={styles.searchIcon}>🔍</Text>
           </TouchableOpacity>
         </View>
 
+        {isLoading && <LoadingState text="Loading events..." />}
+        {error && <ErrorState title="Failed to load" description={error} onRetry={loadEvents} />}
+
+        {!isLoading && !error && (
+        <>
         <View style={styles.citySelector}>
           <ScrollView
             horizontal
@@ -175,12 +165,7 @@ export default function CityGuideScreen() {
 
         <View style={styles.featuredSection}>
           <View style={styles.sectionHeader}>
-            <Text
-              style={[
-                styles.sectionTitle,
-                { color: colors.text.primary },
-              ]}
-            >
+            <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>
               Featured Events
             </Text>
             <TouchableOpacity>
@@ -201,12 +186,7 @@ export default function CityGuideScreen() {
                   </View>
                 </View>
                 <View style={styles.featuredInfo}>
-                  <Text
-                    style={[
-                      styles.featuredTitle,
-                      { color: colors.text.primary },
-                    ]}
-                  >
+                  <Text style={[styles.featuredTitle, { color: colors.text.primary }]}>
                     {event.title}
                   </Text>
                   <Text style={styles.featuredSubtitle}>{event.subtitle}</Text>
@@ -234,26 +214,14 @@ export default function CityGuideScreen() {
         </View>
 
         <View style={styles.upcomingSection}>
-          <Text
-            style={[
-              styles.sectionTitle,
-              { color: colors.text.primary },
-            ]}
-          >
-            Upcoming Events
-          </Text>
+          <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>Upcoming Events</Text>
           <View style={styles.eventsList}>
             {events.map((event) => (
               <TouchableOpacity key={event.id} style={styles.eventCard}>
                 <Image source={{ uri: PLACEHOLDER_IMAGE }} style={styles.eventImage} />
                 <View style={styles.eventInfo}>
                   <View style={styles.eventHeader}>
-                    <Text
-                      style={[
-                        styles.eventTitle,
-                        { color: colors.text.primary },
-                      ]}
-                    >
+                    <Text style={[styles.eventTitle, { color: colors.text.primary }]}>
                       {event.title}
                     </Text>
                     <View style={styles.eventCategory}>
@@ -284,6 +252,8 @@ export default function CityGuideScreen() {
             ))}
           </View>
         </View>
+        </>
+        )}
       </ScrollView>
     </SafeAreaView>
   );

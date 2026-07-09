@@ -29,8 +29,7 @@ export function Form<T extends FieldValues>({
 }: FormProps<T>) {
   const form = useForm<T>({
     ...props,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    resolver: schema ? zodResolver(schema as any) : undefined,
+    resolver: schema ? zodResolver(schema as z.ZodType<unknown>) : undefined,
   });
 
   const { register, control, handleSubmit, formState } = form;
@@ -38,7 +37,13 @@ export function Form<T extends FieldValues>({
 
   return (
     <form onSubmit={handleSubmit(onSubmit as never)} noValidate>
-      {children({ register, control: control as never, handleSubmit: handleSubmit as never, formState, errors })}
+      {children({
+        register,
+        control: control as never,
+        handleSubmit: handleSubmit as never,
+        formState,
+        errors,
+      })}
     </form>
   );
 }
@@ -73,10 +78,13 @@ export function Field<T extends FieldValues>({
         };
 
         if (children) {
-          return React.cloneElement(children as React.ReactElement<Record<string, unknown>>, {
-            ...inputProps,
-            className,
-          } as Record<string, unknown>);
+          return React.cloneElement(
+            children as React.ReactElement<Record<string, unknown>>,
+            {
+              ...inputProps,
+              className,
+            } as Record<string, unknown>
+          );
         }
 
         return <Input {...inputProps} label={label} className={className} />;
@@ -166,8 +174,7 @@ export function FormErrorMessageList({ errors, className = '' }: FormErrorMessag
 
 export function useFormValidation<T extends FieldValues>(schema: FormSchema<T>) {
   const form = useForm<T>({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    resolver: zodResolver(schema as any),
+    resolver: zodResolver(schema as z.ZodType<unknown>),
   });
 
   return form;

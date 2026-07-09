@@ -1,5 +1,5 @@
-import React from 'react';
 import { View, Text, StyleSheet, ScrollView, useColorScheme } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 
 const legalContent: Record<
@@ -70,43 +70,50 @@ const legalContent: Record<
 
 export default function LegalPage() {
   const colorScheme = useColorScheme();
-  const router = useRouter();
+  
   const { type } = useLocalSearchParams<{ type: 'privacy' | 'terms' }>();
 
   const content = legalContent[type || 'privacy'];
 
   return (
-    <View
+    <SafeAreaView
       style={[
         styles.container,
-        { backgroundColor: colorScheme === 'dark' ? '#000000' : '#ffffff' },
+        { backgroundColor: colorScheme === 'dark' ? '#1A0A0A' : '#ffffff' },
       ]}
     >
-      <View style={styles.header}>
-        <Text style={[styles.title, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}>
-          {content.title}
-        </Text>
-      </View>
-
-      <ScrollView style={styles.content}>
-        {content.sections.map((section, index) => (
-          <View key={index} style={styles.section}>
-            <Text
-              style={[
-                styles.sectionTitle,
-                { color: colorScheme === 'dark' ? '#ffffff' : '#000000' },
-              ]}
-            >
-              {section.heading}
-            </Text>
-            <Text style={styles.sectionContent}>{section.content}</Text>
-          </View>
-        ))}
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>Last updated: June 1, 2026</Text>
+      <View
+        style={[
+          styles.container,
+          { backgroundColor: colorScheme === 'dark' ? '#1A0A0A' : '#ffffff' },
+        ]}
+      >
+        <View style={styles.header}>
+          <Text style={[styles.title, { color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A' }]}>
+            {content.title}
+          </Text>
         </View>
-      </ScrollView>
-    </View>
+
+        <ScrollView style={styles.content}>
+          {content.sections.map((section, index) => (
+            <View key={index} style={styles.section}>
+              <Text
+                style={[
+                  styles.sectionTitle,
+                  { color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A' },
+                ]}
+              >
+                {section.heading}
+              </Text>
+              <Text style={styles.sectionContent}>{section.content}</Text>
+            </View>
+          ))}
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>Last updated: June 1, 2026</Text>
+          </View>
+        </ScrollView>
+      </View>
+    </SafeAreaView>
   );
 }
 

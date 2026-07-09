@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Query, UseGuards, Request } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { TournamentService } from './tournament.service';
@@ -7,6 +7,7 @@ import { JoinTournamentDto, SubmitScoreDto } from './dto/tournament.dto';
 
 @ApiTags('Tournament')
 @ApiBearerAuth()
+@UseGuards(AuthGuard('jwt'))
 @Controller('v1/games/tournaments')
 export class TournamentController {
   constructor(private readonly tournamentService: TournamentService) {}
@@ -34,9 +35,10 @@ export class TournamentController {
   @ApiResponse({ status: 201, description: 'Entered' })
   async enterTournament(
     @Param('id') tournamentId: string,
-    @Body() body: JoinTournamentDto
+    @Body() body: JoinTournamentDto,
+    @Request() req: { user: { id: string } }
   ): Promise<unknown> {
-    return this.tournamentService.enterTournament(body.userId, tournamentId, body.initialScore);
+    return this.tournamentService.enterTournament(req.user.id, tournamentId, body.initialScore);
   }
 
   @Post(':id/score')
@@ -44,9 +46,10 @@ export class TournamentController {
   @ApiResponse({ status: 200, description: 'Score updated' })
   async updateScore(
     @Param('id') tournamentId: string,
-    @Body() body: SubmitScoreDto
+    @Body() body: SubmitScoreDto,
+    @Request() req: { user: { id: string } }
   ): Promise<unknown> {
-    return this.tournamentService.updateScore(body.userId, tournamentId, body.score);
+    return this.tournamentService.updateScore(req.user.id, tournamentId, body.score);
   }
 
   @Get(':id/leaderboard')
@@ -71,7 +74,7 @@ export class TournamentController {
   }
 
   @Post(':id/end')
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles('ADMIN', 'MODERATOR')
   @ApiOperation({ summary: 'End tournament (admin)' })
   @ApiResponse({ status: 200, description: 'Tournament ended' })

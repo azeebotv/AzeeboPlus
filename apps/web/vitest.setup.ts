@@ -1,4 +1,5 @@
 import { vi } from 'vitest';
+import '@testing-library/jest-dom/vitest';
 
 // Ensure localStorage is available (Node.js 22+ disabled it by default)
 if (typeof window !== 'undefined') {
@@ -10,7 +11,9 @@ if (typeof window !== 'undefined') {
       setItem: (key: string, value: string) => store.set(key, String(value)),
       removeItem: (key: string) => store.delete(key),
       clear: () => store.clear(),
-      get length() { return store.size; },
+      get length() {
+        return store.size;
+      },
       key: (index: number) => [...store.keys()][index] ?? null,
     };
     Object.defineProperty(window, 'localStorage', { value: mockStorage });

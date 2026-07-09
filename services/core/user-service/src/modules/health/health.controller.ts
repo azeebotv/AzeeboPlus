@@ -1,16 +1,22 @@
-import { Controller, Get, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Get, HttpCode, HttpStatus, HttpException } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { Public } from '@azeebo/security';
+import { PrismaService } from '../database/prisma.service';
 
 @Public()
+@ApiTags('Health')
 @Controller('health')
 export class HealthController {
+  constructor(private prisma: PrismaService) {}
+
   @Get()
-  @HttpCode(HttpStatus.OK)
-  check(): { status: string; timestamp: string } {
-    return {
-      status: 'ok',
-      timestamp: new Date().toISOString(),
-    };
+  async check(): Promise<{ status: string; db: string }> {
+    try {
+      await this.prisma.$queryRaw`SELECT 1`;
+      return { status: 'ok', db: 'connected' };
+    } catch {
+      throw new HttpException({ status: 'error', db: 'disconnected' }, HttpStatus.SERVICE_UNAVAILABLE);
+    }
   }
 
   @Get('live')
@@ -23,11 +29,12 @@ export class HealthController {
   }
 
   @Get('ready')
-  @HttpCode(HttpStatus.OK)
-  readiness(): { status: string; timestamp: string } {
-    return {
-      status: 'ok',
-      timestamp: new Date().toISOString(),
-    };
+  async readiness(): Promise<{ status: string; db: string }> {
+    try {
+      await this.prisma.$queryRaw`SELECT 1`;
+      return { status: 'ok', db: 'connected' };
+    } catch {
+      throw new HttpException({ status: 'error', db: 'disconnected' }, HttpStatus.SERVICE_UNAVAILABLE);
+    }
   }
 }

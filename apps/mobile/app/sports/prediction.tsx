@@ -1,10 +1,20 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Alert,
+  TextInput,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
-import { apiClient } from '../../../src/api';
-import { logger } from '../../../src/utils/logger';
-import { LoadingState, ErrorState, EmptyState } from '../../../src/components/StateContainers';
+import { apiClient } from '../../src/api';
+import { engagementApi } from '../../src/api/engagement';
+import { logger } from '../../src/utils/logger';
+import { LoadingState, ErrorState, EmptyState } from '../../src/components/StateContainers';
 
 interface MatchInfo {
   home: string;
@@ -54,9 +64,10 @@ export default function SportsPredictionPage() {
       setMatchInfo(matchRes);
       setPredictionOptions(Array.isArray(optsRes) ? optsRes : []);
       setScoreOptions(Array.isArray(scoresRes) ? scoresRes : []);
-    } catch (err: any) {
+    } catch (err: unknown) {
       logger.error('Failed to load prediction data:', err);
-      setError(err.message || 'Failed to load prediction data');
+      const message = err instanceof Error ? err.message : 'Failed to load prediction data';
+      setError(message);
     } finally {
       setIsLoading(false);
     }
@@ -68,29 +79,29 @@ export default function SportsPredictionPage() {
 
   if (isLoading) {
     return (
-      <View style={[styles.container, { backgroundColor: isDark ? '#0a0a0a' : '#ffffff' }]}>
+      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
         <LoadingState text="Loading predictions..." />
-      </View>
+      </SafeAreaView>
     );
   }
 
   if (error) {
     return (
-      <View style={[styles.container, { backgroundColor: isDark ? '#0a0a0a' : '#ffffff' }]}>
+      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
         <ErrorState description={error} onRetry={fetchData} />
-      </View>
+      </SafeAreaView>
     );
   }
 
   if (!matchInfo) {
     return (
-      <View style={[styles.container, { backgroundColor: isDark ? '#0a0a0a' : '#ffffff' }]}>
+      <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
         <EmptyState
           icon="⚽"
           title="No Match"
           description="No match currently available for predictions."
         />
-      </View>
+      </SafeAreaView>
     );
   }
 
@@ -108,7 +119,7 @@ export default function SportsPredictionPage() {
       odds *= score.odds / 5;
     }
 
-    const extraOdds = Object.values(extraSelections).reduce((acc, val) => acc * 1.1, 1);
+    const extraOdds = Object.values(extraSelections).reduce((acc, _val) => acc * 1.1, 1);
     odds *= extraOdds;
 
     setPotentialWin(stakeNum * odds);
@@ -142,7 +153,7 @@ export default function SportsPredictionPage() {
     setTimeout(() => calculateWin(selectedPrediction, selectedScore), 0);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!selectedPrediction) {
       Alert.alert('Error', 'Please select a prediction');
       return;
@@ -155,10 +166,21 @@ export default function SportsPredictionPage() {
         { text: 'Cancel', style: 'cancel' },
         {
           text: 'Confirm',
-          onPress: () => {
-            Alert.alert('Success', 'Your prediction has been placed!', [
-              { text: 'OK', onPress: () => router.back() },
-            ]);
+          onPress: async () => {
+            try {
+              await engagementApi.placeBet({
+                predictionId: selectedPrediction,
+                optionId: selectedScore || selectedPrediction,
+                amount: parseFloat(stake) || 0,
+              });
+              Alert.alert('Success', 'Your prediction has been placed!', [
+                { text: 'OK', onPress: () => router.back() },
+              ]);
+            } catch (error: unknown) {
+              logger.error('Failed to place prediction:', error);
+              const message = error instanceof Error ? error.message : 'Failed to place prediction';
+              Alert.alert('Error', message);
+            }
           },
         },
       ]
@@ -166,230 +188,211 @@ export default function SportsPredictionPage() {
   };
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: isDark ? '#0a0a0a' : '#ffffff' }]}>
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Text style={styles.backIcon}>←</Text>
-        </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
-          Make Prediction
-        </Text>
-      </View>
-
-      <View style={[styles.matchHeader, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}>
-        <View style={styles.matchLeague}>
-          <Text style={styles.leagueText}>{matchInfo.league}</Text>
-          <Text style={styles.matchTime}>{matchInfo.time}</Text>
+    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+      <ScrollView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+            <Text style={styles.backIcon}>←</Text>
+          </TouchableOpacity>
+          <Text style={[styles.headerTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
+            Make Prediction
+          </Text>
         </View>
-        <View style={styles.matchTeamsRow}>
-          <View style={styles.teamColumn}>
-            <Text style={styles.teamEmojiLarge}>{matchInfo.emojiHome}</Text>
-            <Text style={[styles.teamNameLarge, { color: isDark ? '#fff' : '#000' }]}>
-              {matchInfo.home}
-            </Text>
-          </View>
-          <View style={styles.vsContainer}>
-            <Text style={styles.vsText}>VS</Text>
-          </View>
-          <View style={[styles.teamColumn, styles.teamColumnRight]}>
-            <Text style={styles.teamEmojiLarge}>{matchInfo.emojiAway}</Text>
-            <Text style={[styles.teamNameLarge, { color: isDark ? '#fff' : '#000' }]}>
-              {matchInfo.away}
-            </Text>
-          </View>
-        </View>
-      </View>
 
-      <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
-          Match Result
-        </Text>
-        <View style={styles.predictionRow}>
-          {predictionOptions.map((option) => (
-            <TouchableOpacity
-              key={option.id}
-              style={[
-                styles.predictionCard,
-                { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' },
-                selectedPrediction === option.id && styles.predictionCardSelected,
-              ]}
-              onPress={() => handlePredictionSelect(option.id)}
-            >
-              <Text style={[styles.predictionLabel, { color: isDark ? '#fff' : '#000' }]}>
-                {option.label}
+        <View style={[styles.matchHeader, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}>
+          <View style={styles.matchLeague}>
+            <Text style={styles.leagueText}>{matchInfo.league}</Text>
+            <Text style={styles.matchTime}>{matchInfo.time}</Text>
+          </View>
+          <View style={styles.matchTeamsRow}>
+            <View style={styles.teamColumn}>
+              <Text style={styles.teamEmojiLarge}>{matchInfo.emojiHome}</Text>
+              <Text style={[styles.teamNameLarge, { color: isDark ? '#fff' : '#000' }]}>
+                {matchInfo.home}
               </Text>
-              <Text style={styles.predictionOdds}>{option.odds.toFixed(2)}</Text>
-              {selectedPrediction === option.id && (
-                <View style={styles.selectedCheck}>
-                  <Text style={styles.checkMark}>✓</Text>
-                </View>
-              )}
-            </TouchableOpacity>
-          ))}
-        </View>
-      </View>
-
-      <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
-          Correct Score (Optional)
-        </Text>
-        <View style={styles.scoreGrid}>
-          {scoreOptions.map((option) => (
-            <TouchableOpacity
-              key={option.id}
-              style={[
-                styles.scoreCard,
-                { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' },
-                selectedScore === option.id && styles.scoreCardSelected,
-              ]}
-              onPress={() => handleScoreSelect(option.id)}
-            >
-              <Text style={[styles.scoreLabel, { color: isDark ? '#fff' : '#000' }]}>
-                {option.label}
+            </View>
+            <View style={styles.vsContainer}>
+              <Text style={styles.vsText}>VS</Text>
+            </View>
+            <View style={[styles.teamColumn, styles.teamColumnRight]}>
+              <Text style={styles.teamEmojiLarge}>{matchInfo.emojiAway}</Text>
+              <Text style={[styles.teamNameLarge, { color: isDark ? '#fff' : '#000' }]}>
+                {matchInfo.away}
               </Text>
-              <Text style={styles.scoreOdds}>@{option.odds.toFixed(1)}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      </View>
-
-      <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
-          Extra Predictions
-        </Text>
-        {[
-          {
-            id: 'btts_yes',
-            label: 'Both Teams to Score',
-            options: ['Yes', 'No'],
-            odds: { yes: 1.8, no: 1.9 } as Record<string, number>,
-          },
-          {
-            id: 'over_25',
-            label: 'Over 2.5 Goals',
-            options: ['Over', 'Under'],
-            odds: { over: 2.0, under: 1.8 } as Record<string, number>,
-          },
-        ].map((extra) => (
-          <View
-            key={extra.id}
-            style={[styles.extraCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
-          >
-            <Text style={[styles.extraTitle, { color: isDark ? '#fff' : '#000' }]}>
-              {extra.label}
-            </Text>
-            <View style={styles.extraOptions}>
-              <TouchableOpacity
-                style={[
-                  styles.extraOption,
-                  extraSelections[extra.id] === extra.options[0] && styles.extraOptionSelected,
-                ]}
-                onPress={() => handleExtraSelect(extra.id, extra.options[0])}
-              >
-                <Text style={styles.extraOptionText}>{extra.options[0]}</Text>
-                <Text style={styles.extraOdds}>
-                  @
-                  {(extra.odds as Record<string, number>)[
-                    extra.options[0].toLowerCase() as string
-                  ] || 1.8}
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.extraOption,
-                  extraSelections[extra.id] === extra.options[1] && styles.extraOptionSelected,
-                ]}
-                onPress={() => handleExtraSelect(extra.id, extra.options[1])}
-              >
-                <Text style={styles.extraOptionText}>{extra.options[1]}</Text>
-                <Text style={styles.extraOdds}>
-                  @
-                  {(extra.odds as Record<string, number>)[
-                    extra.options[1].toLowerCase() as string
-                  ] || 1.9}
-                </Text>
-              </TouchableOpacity>
             </View>
           </View>
-        ))}
-      </View>
+        </View>
 
-      <View style={styles.stakeSection}>
-        <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
-          Your Stake
-        </Text>
-        <View style={styles.stakeInputRow}>
-          <View style={[styles.stakeInput, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}>
-            <Text style={styles.currencySymbol}>₦</Text>
-            <Text
-              style={[styles.stakeInputText, { color: isDark ? '#fff' : '#000' }]}
-              contentEditable
-              suppressContentEditableWarning
-              onChangeText={handleStakeChange}
-            >
-              {stake}
-            </Text>
-          </View>
-          <View style={styles.quickStakes}>
-            {['500', '1000', '2500', '5000'].map((amount) => (
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
+            Match Result
+          </Text>
+          <View style={styles.predictionRow}>
+            {predictionOptions.map((option) => (
               <TouchableOpacity
-                key={amount}
+                key={option.id}
                 style={[
-                  styles.quickStakeButton,
+                  styles.predictionCard,
                   { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' },
+                  selectedPrediction === option.id && styles.predictionCardSelected,
                 ]}
-                onPress={() => handleStakeChange(amount)}
+                onPress={() => handlePredictionSelect(option.id)}
               >
-                <Text style={[styles.quickStakeText, { color: isDark ? '#fff' : '#000' }]}>
-                  ₦{amount}
+                <Text style={[styles.predictionLabel, { color: isDark ? '#fff' : '#000' }]}>
+                  {option.label}
                 </Text>
+                <Text style={styles.predictionOdds}>{option.odds.toFixed(2)}</Text>
+                {selectedPrediction === option.id && (
+                  <View style={styles.selectedCheck}>
+                    <Text style={styles.checkMark}>✓</Text>
+                  </View>
+                )}
               </TouchableOpacity>
             ))}
           </View>
         </View>
-      </View>
 
-      <View style={[styles.potentialWinCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}>
-        <Text style={styles.potentialWinLabel}>Potential Win</Text>
-        <Text style={styles.potentialWinAmount}>₦{potentialWin.toFixed(0)}</Text>
-      </View>
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
+            Correct Score (Optional)
+          </Text>
+          <View style={styles.scoreGrid}>
+            {scoreOptions.map((option) => (
+              <TouchableOpacity
+                key={option.id}
+                style={[
+                  styles.scoreCard,
+                  { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' },
+                  selectedScore === option.id && styles.scoreCardSelected,
+                ]}
+                onPress={() => handleScoreSelect(option.id)}
+              >
+                <Text style={[styles.scoreLabel, { color: isDark ? '#fff' : '#000' }]}>
+                  {option.label}
+                </Text>
+                <Text style={styles.scoreOdds}>@{option.odds.toFixed(1)}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
 
-      <View style={styles.submitSection}>
-        <TouchableOpacity
-          style={[styles.submitButton, !selectedPrediction && styles.submitButtonDisabled]}
-          onPress={handleSubmit}
-          disabled={!selectedPrediction}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
+            Extra Predictions
+          </Text>
+          {[
+            {
+              id: 'btts_yes',
+              label: 'Both Teams to Score',
+              options: ['Yes', 'No'],
+              odds: { yes: 1.8, no: 1.9 } as Record<string, number>,
+            },
+            {
+              id: 'over_25',
+              label: 'Over 2.5 Goals',
+              options: ['Over', 'Under'],
+              odds: { over: 2.0, under: 1.8 } as Record<string, number>,
+            },
+          ].map((extra) => (
+            <View
+              key={extra.id}
+              style={[styles.extraCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
+            >
+              <Text style={[styles.extraTitle, { color: isDark ? '#fff' : '#000' }]}>
+                {extra.label}
+              </Text>
+              <View style={styles.extraOptions}>
+                <TouchableOpacity
+                  style={[
+                    styles.extraOption,
+                    extraSelections[extra.id] === extra.options[0] && styles.extraOptionSelected,
+                  ]}
+                  onPress={() => handleExtraSelect(extra.id, extra.options[0])}
+                >
+                  <Text style={styles.extraOptionText}>{extra.options[0]}</Text>
+                  <Text style={styles.extraOdds}>
+                    @
+                    {(extra.odds as Record<string, number>)[
+                      extra.options[0].toLowerCase() as string
+                    ] || 1.8}
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.extraOption,
+                    extraSelections[extra.id] === extra.options[1] && styles.extraOptionSelected,
+                  ]}
+                  onPress={() => handleExtraSelect(extra.id, extra.options[1])}
+                >
+                  <Text style={styles.extraOptionText}>{extra.options[1]}</Text>
+                  <Text style={styles.extraOdds}>
+                    @
+                    {(extra.odds as Record<string, number>)[
+                      extra.options[1].toLowerCase() as string
+                    ] || 1.9}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          ))}
+        </View>
+
+        <View style={styles.stakeSection}>
+          <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
+            Your Stake
+          </Text>
+          <View style={styles.stakeInputRow}>
+            <View style={[styles.stakeInput, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}>
+              <Text style={styles.currencySymbol}>₦</Text>
+              <TextInput
+                style={[styles.stakeInputText, { color: isDark ? '#fff' : '#000' }]}
+                value={stake}
+                onChangeText={handleStakeChange}
+                keyboardType="numeric"
+                placeholder="0"
+                placeholderTextColor="#666"
+              />
+            </View>
+            <View style={styles.quickStakes}>
+              {['500', '1000', '2500', '5000'].map((amount) => (
+                <TouchableOpacity
+                  key={amount}
+                  style={[
+                    styles.quickStakeButton,
+                    { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' },
+                  ]}
+                  onPress={() => handleStakeChange(amount)}
+                >
+                  <Text style={[styles.quickStakeText, { color: isDark ? '#fff' : '#000' }]}>
+                    ₦{amount}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        </View>
+
+        <View
+          style={[styles.potentialWinCard, { backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5' }]}
         >
-          <Text style={styles.submitButtonText}>Place Prediction</Text>
-        </TouchableOpacity>
-        <Text style={styles.termsText}>
-          By placing this prediction, you agree to our Terms & Conditions
-        </Text>
-      </View>
+          <Text style={styles.potentialWinLabel}>Potential Win</Text>
+          <Text style={styles.potentialWinAmount}>₦{potentialWin.toFixed(0)}</Text>
+        </View>
 
-      <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/home')}>
-          <Text style={styles.navIcon}>🏠</Text>
-          <Text style={styles.navLabel}>Home</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/watch')}>
-          <Text style={styles.navIcon}>📺</Text>
-          <Text style={styles.navLabel}>Watch</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/create')}>
-          <Text style={styles.navIcon}>✨</Text>
-          <Text style={styles.navLabel}>Create</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/rewards')}>
-          <Text style={styles.navIcon}>⭐</Text>
-          <Text style={styles.navLabel}>Rewards</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(tabs)/profile')}>
-          <Text style={styles.navIcon}>👤</Text>
-          <Text style={styles.navLabel}>Profile</Text>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
+        <View style={styles.submitSection}>
+          <TouchableOpacity
+            style={[styles.submitButton, !selectedPrediction && styles.submitButtonDisabled]}
+            onPress={handleSubmit}
+            disabled={!selectedPrediction}
+          >
+            <Text style={styles.submitButtonText}>Place Prediction</Text>
+          </TouchableOpacity>
+          <Text style={styles.termsText}>
+            By placing this prediction, you agree to our Terms & Conditions
+          </Text>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
@@ -657,25 +660,5 @@ const styles = StyleSheet.create({
     color: '#888',
     fontSize: 11,
     textAlign: 'center',
-  },
-  bottomNav: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingVertical: 12,
-    paddingBottom: 30,
-    backgroundColor: '#1a1a1a',
-    borderTopWidth: 1,
-    borderTopColor: '#2a2a2a',
-  },
-  navItem: {
-    alignItems: 'center',
-  },
-  navIcon: {
-    fontSize: 24,
-    marginBottom: 4,
-  },
-  navLabel: {
-    fontSize: 11,
-    color: '#888',
   },
 });

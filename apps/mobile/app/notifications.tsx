@@ -1,201 +1,186 @@
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
-import { notificationApi, type Notification } from '../../src/api';
-import { logger } from '../../src/utils/logger';
-import { LoadingState, ErrorState, EmptyState } from '../../src/components/StateContainers';
+import { useNotifications, useMarkNotificationRead, useMarkAllNotificationsRead } from '../src/hooks/useNotificationQuery';
+import { LoadingState, ErrorState } from '../src/components/StateContainers';
 
 export default function NotificationsScreen() {
   const colorScheme = useColorScheme();
   const router = useRouter();
-  const [notificationsList, setNotificationsList] = useState<Notification[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [pushEnabled, setPushEnabled] = useState(true);
   const [emailEnabled, setEmailEnabled] = useState(true);
 
-  const fetchNotifications = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const response = await notificationApi.getNotifications();
-      if (response.success && response.data) {
-        setNotificationsList(response.data.items);
-      }
-    } catch (err: any) {
-      logger.error('Failed to load notifications:', err);
-      setError(err.message || 'Failed to load notifications');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const { data, isLoading, error, refetch } = useNotifications();
+  const markAsReadMutation = useMarkNotificationRead();
+  const markAllAsReadMutation = useMarkAllNotificationsRead();
 
-  useEffect(() => {
-    fetchNotifications();
-  }, []);
+  const notificationsList = data?.items ?? [];
 
   if (isLoading) {
     return (
-      <ScrollView
+      <SafeAreaView
         style={[
           styles.container,
-          { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' },
+          { backgroundColor: colorScheme === 'dark' ? '#1A0A0A' : '#ffffff' },
         ]}
       >
-        <LoadingState text="Loading notifications..." />
-      </ScrollView>
+        <ScrollView
+          style={[
+            styles.container,
+            { backgroundColor: colorScheme === 'dark' ? '#1A0A0A' : '#ffffff' },
+          ]}
+        >
+          <LoadingState text="Loading notifications..." />
+        </ScrollView>
+      </SafeAreaView>
     );
   }
 
   if (error) {
     return (
-      <ScrollView
+      <SafeAreaView
         style={[
           styles.container,
-          { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' },
+          { backgroundColor: colorScheme === 'dark' ? '#1A0A0A' : '#ffffff' },
         ]}
       >
-        <ErrorState description={error} onRetry={fetchNotifications} />
-      </ScrollView>
+        <ScrollView
+          style={[
+            styles.container,
+            { backgroundColor: colorScheme === 'dark' ? '#1A0A0A' : '#ffffff' },
+          ]}
+        >
+          <ErrorState description={error instanceof Error ? error.message : 'Failed to load'} onRetry={() => refetch()} />
+        </ScrollView>
+      </SafeAreaView>
     );
   }
 
   const markAsRead = async (id: string) => {
-    setNotificationsList((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
-    try {
-      await notificationApi.markAsRead(id);
-    } catch (err) {
-      logger.error('Failed to mark as read:', err);
-    }
+    markAsReadMutation.mutate(id);
   };
 
-  const markAllAsRead = async () => {
-    setNotificationsList((prev) => prev.map((n) => ({ ...n, read: true })));
-    try {
-      await notificationApi.markAllAsRead();
-    } catch (err) {
-      logger.error('Failed to mark all as read:', err);
-    }
-  };
-
-  const getNotificationColor = (type: string) => {
-    const colors: Record<string, string> = {
-      vote: '#EF4444',
-      reward: '#8B5CF6',
-      content: '#3B82F6',
-      prediction: '#F59E0B',
-      system: '#10B981',
-    };
-    return colors[type] || '#6B7280';
+  const markAllAsRead = () => {
+    markAllAsReadMutation.mutate();
   };
 
   const unreadCount = notificationsList.filter((n) => !n.read).length;
 
   return (
-    <ScrollView
+    <SafeAreaView
       style={[
         styles.container,
-        { backgroundColor: colorScheme === 'dark' ? '#0a0a0a' : '#ffffff' },
+        { backgroundColor: colorScheme === 'dark' ? '#1A0A0A' : '#ffffff' },
       ]}
     >
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Text style={styles.backIcon}>←</Text>
-        </TouchableOpacity>
-        <Text
-          style={[styles.headerTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}
-        >
-          Notifications
-        </Text>
-        {unreadCount > 0 && (
-          <TouchableOpacity style={styles.markAllButton} onPress={markAllAsRead}>
-            <Text style={styles.markAllText}>Mark All Read</Text>
+      <ScrollView
+        style={[
+          styles.container,
+          { backgroundColor: colorScheme === 'dark' ? '#1A0A0A' : '#ffffff' },
+        ]}
+      >
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+            <Text style={styles.backIcon}>←</Text>
           </TouchableOpacity>
-        )}
-      </View>
-
-      <View style={styles.notificationList}>
-        {notificationsList.length === 0 ? (
-          <View style={{ padding: 40, alignItems: 'center' }}>
-            <Text style={{ fontSize: 48, marginBottom: 12 }}>🔔</Text>
-            <Text style={[{ fontSize: 16, color: '#888' }]}>No notifications yet</Text>
-          </View>
-        ) : (
-          notificationsList.map((notification) => (
-            <TouchableOpacity
-              key={notification.id}
-              style={[styles.notificationCard, notification.read && { opacity: 0.6 }]}
-              onPress={() => markAsRead(notification.id)}
-            >
-              <View style={styles.notificationContent}>
-                <Text
-                  style={[
-                    styles.notificationTitle,
-                    { color: colorScheme === 'dark' ? '#ffffff' : '#000000' },
-                  ]}
-                >
-                  {notification.title}
-                </Text>
-                <Text style={styles.notificationMessage}>{notification.body || ''}</Text>
-                <View style={styles.notificationFooter}>
-                  <Text style={styles.notificationTime}>
-                    {new Date(notification.createdAt).toLocaleDateString()}
-                  </Text>
-                </View>
-              </View>
-              {!notification.read && <View style={styles.unreadDot} />}
+          <Text
+            style={[styles.headerTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A' }]}
+          >
+            Notifications
+          </Text>
+          {unreadCount > 0 && (
+            <TouchableOpacity style={styles.markAllButton} onPress={markAllAsRead}>
+              <Text style={styles.markAllText}>Mark All Read</Text>
             </TouchableOpacity>
-          ))
-        )}
-      </View>
+          )}
+        </View>
 
-      <View style={styles.settingsSection}>
-        <Text
-          style={[styles.sectionTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#000000' }]}
-        >
-          Notification Settings
-        </Text>
-        <View style={styles.settingItem}>
-          <View style={styles.settingInfo}>
-            <Text
-              style={[
-                styles.settingTitle,
-                { color: colorScheme === 'dark' ? '#ffffff' : '#000000' },
-              ]}
-            >
-              Push Notifications
-            </Text>
-            <Text style={styles.settingDescription}>Receive important updates</Text>
-          </View>
-          <Switch
-            value={pushEnabled}
-            onValueChange={setPushEnabled}
-            trackColor={{ false: '#374151', true: '#8B5CF6' }}
-            thumbColor={pushEnabled ? '#ffffff' : '#f4f3f4'}
-          />
+        <View style={styles.notificationList}>
+          {notificationsList.length === 0 ? (
+            <View style={{ padding: 40, alignItems: 'center' }}>
+              <Text style={{ fontSize: 48, marginBottom: 12 }}>🔔</Text>
+              <Text style={[{ fontSize: 16, color: '#888' }]}>No notifications yet</Text>
+            </View>
+          ) : (
+            notificationsList.map((notification) => (
+              <TouchableOpacity
+                key={notification.id}
+                style={[styles.notificationCard, notification.read && { opacity: 0.6 }]}
+                onPress={() => markAsRead(notification.id)}
+              >
+                <View style={styles.notificationContent}>
+                  <Text
+                    style={[
+                      styles.notificationTitle,
+                      { color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A' },
+                    ]}
+                  >
+                    {notification.title}
+                  </Text>
+                  <Text style={styles.notificationMessage}>{notification.body || ''}</Text>
+                  <View style={styles.notificationFooter}>
+                    <Text style={styles.notificationTime}>
+                      {new Date(notification.createdAt).toLocaleDateString()}
+                    </Text>
+                  </View>
+                </View>
+                {!notification.read && <View style={styles.unreadDot} />}
+              </TouchableOpacity>
+            ))
+          )}
         </View>
-        <View style={styles.settingItem}>
-          <View style={styles.settingInfo}>
-            <Text
-              style={[
-                styles.settingTitle,
-                { color: colorScheme === 'dark' ? '#ffffff' : '#000000' },
-              ]}
-            >
-              Email Notifications
-            </Text>
-            <Text style={styles.settingDescription}>Receive newsletters and updates via email</Text>
+
+        <View style={styles.settingsSection}>
+          <Text
+            style={[styles.sectionTitle, { color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A' }]}
+          >
+            Notification Settings
+          </Text>
+          <View style={styles.settingItem}>
+            <View style={styles.settingInfo}>
+              <Text
+                style={[
+                  styles.settingTitle,
+                  { color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A' },
+                ]}
+              >
+                Push Notifications
+              </Text>
+              <Text style={styles.settingDescription}>Receive important updates</Text>
+            </View>
+            <Switch
+              value={pushEnabled}
+              onValueChange={setPushEnabled}
+              trackColor={{ false: 'rgba(255,255,255,0.2)', true: '#E8420A' }}
+              thumbColor={pushEnabled ? '#ffffff' : '#f4f3f4'}
+            />
           </View>
-          <Switch
-            value={emailEnabled}
-            onValueChange={setEmailEnabled}
-            trackColor={{ false: '#374151', true: '#8B5CF6' }}
-            thumbColor={emailEnabled ? '#ffffff' : '#f4f3f4'}
-          />
+          <View style={styles.settingItem}>
+            <View style={styles.settingInfo}>
+              <Text
+                style={[
+                  styles.settingTitle,
+                  { color: colorScheme === 'dark' ? '#ffffff' : '#1A0A0A' },
+                ]}
+              >
+                Email Notifications
+              </Text>
+              <Text style={styles.settingDescription}>
+                Receive newsletters and updates via email
+              </Text>
+            </View>
+            <Switch
+              value={emailEnabled}
+              onValueChange={setEmailEnabled}
+              trackColor={{ false: 'rgba(255,255,255,0.2)', true: '#E8420A' }}
+              thumbColor={emailEnabled ? '#ffffff' : '#f4f3f4'}
+            />
+          </View>
         </View>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
@@ -230,7 +215,7 @@ const styles = StyleSheet.create({
   markAllButton: {
     paddingHorizontal: 12,
     paddingVertical: 6,
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     borderRadius: 8,
   },
   markAllText: {
@@ -284,7 +269,7 @@ const styles = StyleSheet.create({
   },
   notificationAction: {
     fontSize: 12,
-    color: '#8B5CF6',
+    color: '#E8420A',
     fontWeight: '600',
   },
   unreadDot: {

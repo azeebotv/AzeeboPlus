@@ -1,10 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication } from '@nestjs/common';
+import { INestApplication, ExecutionContext, NestInterceptor, UnauthorizedException } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import request from 'supertest';
-import { AuthGuard } from '@nestjs/passport';
+import { RateLimitGuard, AdminGuard, ServiceAuthGuard } from '@azeebo/security';
 import { WalletController } from './wallet.controller';
 import { WalletService } from './wallet.service';
 import { PrismaService } from '../database/prisma.service';
+import { CacheInterceptor, CacheService } from '../../cache';
 
 describe('Wallet Service Authorization Tests', () => {
   const mockWalletService = {
@@ -94,7 +96,22 @@ describe('Wallet Service Authorization Tests', () => {
   };
 
   const createMockAuthGuard = (canActivate: boolean) => ({
-    canActivate: jest.fn().mockReturnValue(canActivate),
+    canActivate: jest.fn().mockImplementation((context: ExecutionContext) => {
+      if (!canActivate) {
+        throw new UnauthorizedException();
+      }
+      const request = context.switchToHttp().getRequest();
+      request.user = { id: 'user-123', sub: 'user-123' };
+      return true;
+    }),
+  });
+
+  const createMockRateLimitGuard = () => ({
+    canActivate: jest.fn().mockReturnValue(true),
+  });
+
+  const createMockAdminGuard = () => ({
+    canActivate: jest.fn().mockReturnValue(true),
   });
 
   const createTestApp = async (authGuardReturnValue: boolean) => {
@@ -105,13 +122,22 @@ describe('Wallet Service Authorization Tests', () => {
       providers: [
         { provide: WalletService, useValue: mockWalletService },
         { provide: PrismaService, useValue: {} },
+        { provide: APP_GUARD, useClass: ServiceAuthGuard },
       ],
     })
-      .overrideGuard(AuthGuard('jwt'))
+      .overrideGuard(ServiceAuthGuard)
       .useValue(mockAuthGuard)
+      .overrideGuard(RateLimitGuard)
+      .useValue(createMockRateLimitGuard())
+      .overrideGuard(AdminGuard)
+      .useValue(createMockAdminGuard())
+      .overrideInterceptor(CacheInterceptor)
+      .useValue({ intercept: (_ctx: ExecutionContext, next: { handle: () => unknown }) => next.handle() })
       .compile();
 
-    return moduleFixture.createNestApplication();
+    const testApp = moduleFixture.createNestApplication();
+    testApp.useGlobalInterceptors({ intercept: (_ctx: ExecutionContext, next: { handle: () => unknown }) => next.handle() } as NestInterceptor);
+    return testApp;
   };
 
   afterEach(async () => {
@@ -218,7 +244,7 @@ describe('Wallet Service Authorization Tests', () => {
         .set('Authorization', 'Bearer valid-token')
         .send({ amount: 500, bankAccountId: 'bank-123' });
 
-      expect(response.status).toBe(200);
+      expect(response.status).toBe(201);
       expect(response.body.success).toBe(true);
       expect(mockWalletService.withdraw).toHaveBeenCalled();
 
@@ -250,7 +276,7 @@ describe('Wallet Service Authorization Tests', () => {
         .set('Authorization', 'Bearer valid-token')
         .send({ recipientId: 'user-456', amount: 200 });
 
-      expect(response.status).toBe(200);
+      expect(response.status).toBe(201);
       expect(response.body.success).toBe(true);
       expect(mockWalletService.transfer).toHaveBeenCalled();
 
@@ -273,55 +299,69 @@ describe('Wallet Service Authorization Tests', () => {
   });
 
   describe('Authorization - Service-to-service endpoints', () => {
-    it('should allow debit requests without authentication', async () => {
-      const mockAuthGuard = createMockAuthGuard(false);
+    it('should allow debit requests with service authentication', async () => {
+      const mockAuthGuard = createMockAuthGuard(true);
 
       const moduleFixture: TestingModule = await Test.createTestingModule({
         controllers: [WalletController],
         providers: [
           { provide: WalletService, useValue: mockWalletService },
           { provide: PrismaService, useValue: {} },
+          { provide: APP_GUARD, useValue: mockAuthGuard },
         ],
       })
-        .overrideGuard(AuthGuard('jwt'))
-        .useValue(mockAuthGuard)
+        .overrideGuard(RateLimitGuard)
+        .useValue(createMockRateLimitGuard())
+        .overrideGuard(AdminGuard)
+        .useValue(createMockAdminGuard())
+        .overrideInterceptor(CacheInterceptor)
+        .useValue({ intercept: (_ctx: ExecutionContext, next: { handle: () => unknown }) => next.handle() })
         .compile();
 
       const testApp = moduleFixture.createNestApplication();
+      testApp.useGlobalInterceptors({ intercept: (_ctx: ExecutionContext, next: { handle: () => unknown }) => next.handle() } as NestInterceptor);
       await testApp.init();
 
       const response = await request(testApp.getHttpServer())
         .post('/wallet/debit')
         .send({ walletId: 'wallet-123', amount: 100, description: 'Test debit' });
 
-      expect(response.status).toBe(200);
+      expect(response.status).toBe(201);
       expect(mockWalletService.debitBalance).toHaveBeenCalled();
 
       await testApp.close();
     });
 
-    it('should allow credit requests without authentication', async () => {
-      const mockAuthGuard = createMockAuthGuard(false);
+    it('should allow credit requests with service authentication', async () => {
+      const mockAuthGuard = createMockAuthGuard(true);
 
       const moduleFixture: TestingModule = await Test.createTestingModule({
         controllers: [WalletController],
         providers: [
           { provide: WalletService, useValue: mockWalletService },
           { provide: PrismaService, useValue: {} },
+          { provide: APP_GUARD, useValue: mockAuthGuard },
         ],
       })
-        .overrideGuard(AuthGuard('jwt'))
-        .useValue(mockAuthGuard)
+        .overrideGuard(RateLimitGuard)
+        .useValue(createMockRateLimitGuard())
+        .overrideGuard(AdminGuard)
+        .useValue(createMockAdminGuard())
+        .overrideInterceptor(CacheInterceptor)
+        .useValue({ intercept: (_ctx: ExecutionContext, next: { handle: () => unknown }) => next.handle() })
         .compile();
 
       const testApp = moduleFixture.createNestApplication();
+      testApp.useGlobalInterceptors({
+        intercept: (_ctx: ExecutionContext, next: { handle: () => unknown }) => next.handle(),
+      } as NestInterceptor);
       await testApp.init();
 
       const response = await request(testApp.getHttpServer())
         .post('/wallet/credit')
         .send({ walletId: 'wallet-123', amount: 100, description: 'Test credit' });
 
-      expect(response.status).toBe(200);
+      expect(response.status).toBe(201);
       expect(mockWalletService.creditBalance).toHaveBeenCalled();
 
       await testApp.close();

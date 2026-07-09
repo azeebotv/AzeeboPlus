@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -14,7 +14,7 @@ import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { contentApi } from '../../src/api';
 import { logger } from '../../src/utils/logger';
-import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
+import { LoadingState, ErrorState } from '../../src/components/StateContainers';
 
 interface MonetizationSettings {
   isMonetizationEnabled: boolean;
@@ -46,7 +46,8 @@ export default function MonetizationSettingsScreen() {
       if (response.success && response.data) {
         // Cast API response to UI interface
         setSettings({
-          isMonetizationEnabled: response.data.isMonetizationEnabled ?? response.data.isMonetized ?? false,
+          isMonetizationEnabled:
+            response.data.isMonetizationEnabled ?? response.data.isMonetized ?? false,
           isSubscriptionEnabled: response.data.isSubscriptionEnabled ?? false,
           subscriptionPrice: 0,
           isTipEnabled: response.data.isTipEnabled ?? false,
@@ -73,8 +74,9 @@ export default function MonetizationSettingsScreen() {
     try {
       await contentApi.updateMonetizationSettings(settings);
       Alert.alert('Success', 'Monetization settings updated successfully');
-    } catch (error: any) {
-      Alert.alert('Error', error?.message || 'Failed to update settings');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to update settings';
+      Alert.alert('Error', message);
     } finally {
       setIsSaving(false);
     }
@@ -123,7 +125,7 @@ export default function MonetizationSettingsScreen() {
                 onValueChange={(value) =>
                   setSettings({ ...settings, isMonetizationEnabled: value })
                 }
-                trackColor={{ false: '#374151', true: '#8B5CF6' }}
+                trackColor={{ false: 'rgba(255,255,255,0.2)', true: '#E8420A' }}
                 thumbColor="#fff"
               />
             </View>
@@ -145,7 +147,7 @@ export default function MonetizationSettingsScreen() {
                 onValueChange={(value) =>
                   setSettings({ ...settings, isSubscriptionEnabled: value })
                 }
-                trackColor={{ false: '#374151', true: '#8B5CF6' }}
+                trackColor={{ false: 'rgba(255,255,255,0.2)', true: '#E8420A' }}
                 thumbColor="#fff"
               />
             </View>
@@ -178,7 +180,7 @@ export default function MonetizationSettingsScreen() {
               <Switch
                 value={settings.isTipEnabled}
                 onValueChange={(value) => setSettings({ ...settings, isTipEnabled: value })}
-                trackColor={{ false: '#374151', true: '#8B5CF6' }}
+                trackColor={{ false: 'rgba(255,255,255,0.2)', true: '#E8420A' }}
                 thumbColor="#fff"
               />
             </View>
@@ -211,7 +213,7 @@ export default function MonetizationSettingsScreen() {
               <Switch
                 value={settings.isAdEnabled}
                 onValueChange={(value) => setSettings({ ...settings, isAdEnabled: value })}
-                trackColor={{ false: '#374151', true: '#8B5CF6' }}
+                trackColor={{ false: 'rgba(255,255,255,0.2)', true: '#E8420A' }}
                 thumbColor="#fff"
               />
             </View>
@@ -289,7 +291,7 @@ export default function MonetizationSettingsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#111827',
+    backgroundColor: '#1A0A0A',
   },
   loadingContainer: {
     flex: 1,
@@ -312,7 +314,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   retryButton: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,
@@ -328,7 +330,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#1f2937',
+    borderBottomColor: 'rgba(255,255,255,0.08)',
   },
   backButton: {
     marginRight: 16,
@@ -357,7 +359,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   card: {
-    backgroundColor: '#1f2937',
+    backgroundColor: '#2A2A2A',
     borderRadius: 12,
     padding: 16,
   },
@@ -391,14 +393,14 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   input: {
-    backgroundColor: '#374151',
+    backgroundColor: 'rgba(255,255,255,0.2)',
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
     color: '#F3F4F6',
   },
   saveButton: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',

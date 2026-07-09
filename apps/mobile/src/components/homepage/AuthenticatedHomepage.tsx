@@ -1,9 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, ScrollView, StyleSheet, Pressable } from 'react-native';
+import { useState, useEffect, useCallback } from 'react';
+import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { api } from '@/api';
 import type { ContentItem } from '@/api';
@@ -12,9 +11,10 @@ import type {
   UserUniverseEngagement,
   HomepageRecommendationGroup,
 } from '@/api';
-import { Typography, Spacing } from '@/theme';
+import { colors } from '@/theme';
 import { BrandButton } from '@/components/ui/BrandButton';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
+import { logger } from '@/utils/logger';
 import HeroCarousel from './HeroCarousel';
 import ContentRow from './ContentRow';
 
@@ -30,7 +30,7 @@ interface UniverseSection {
 }
 
 export default function AuthenticatedHomepage({
-  siteName = 'Azeebo+',
+  siteName: _siteName = 'Azeebo+',
 }: AuthenticatedHomepageProps) {
   const router = useRouter();
   const { t } = useTranslation();
@@ -49,7 +49,9 @@ export default function AuthenticatedHomepage({
   const [isLoadingUniverses, setIsLoadingUniverses] = useState(true);
 
   // Section 4: Personalized Recommendations
-  const [recommendationGroups, setRecommendationGroups] = useState<HomepageRecommendationGroup[]>([]);
+  const [recommendationGroups, setRecommendationGroups] = useState<HomepageRecommendationGroup[]>(
+    []
+  );
   const [isLoadingRecommendations, setIsLoadingRecommendations] = useState(true);
 
   // Section 5: Supplementary
@@ -61,52 +63,65 @@ export default function AuthenticatedHomepage({
 
   // --- Section 1: Hero Slides ---
   useEffect(() => {
+    let cancelled = false;
     const loadSlides = async () => {
       try {
         const response = await api.homepageEngagement.getFeaturedSlides(5);
-        if (response.success && response.data) {
+        if (!cancelled && response.success && response.data) {
           setFeaturedSlides(response.data);
         }
-      } catch {}
+      } catch (error) {
+        if (!cancelled) logger.error('Failed to load featured slides:', error);
+      }
     };
     loadSlides();
+    return () => { cancelled = true; };
   }, []);
 
   // --- Section 2: Recently Watched (with infinite scroll) ---
   const HISTORY_PAGE_SIZE = 10;
 
-  const loadRecentlyWatched = useCallback(async () => {
+  const loadRecentlyWatched = useCallback(async (cancelled?: boolean) => {
     try {
       const response = await api.homepageEngagement.getRecentlyWatched(
         HISTORY_PAGE_SIZE,
         recentlyWatchedOffset
       );
-      if (response.success && response.data) {
+      if (!cancelled && response.success && response.data) {
         const newItems = response.data.items || [];
         setRecentlyWatched((prev) =>
           recentlyWatchedOffset === 0 ? newItems : [...prev, ...newItems]
         );
         setHasMoreHistory(response.data.hasMore);
       }
-    } catch {} finally {
-      setIsLoadingHistory(false);
+    } catch (error) {
+      if (!cancelled) logger.error('Failed to load recently watched:', error);
+    } finally {
+      if (!cancelled) setIsLoadingHistory(false);
     }
   }, [recentlyWatchedOffset]);
 
   useEffect(() => {
-    loadRecentlyWatched();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    let cancelled = false;
+    loadRecentlyWatched(cancelled);
+    return () => { cancelled = true; };
+  }, []);
 
   const loadMoreHistory = useCallback(async () => {
     const nextOffset = recentlyWatchedOffset + HISTORY_PAGE_SIZE;
     setRecentlyWatchedOffset(nextOffset);
     try {
-      const response = await api.homepageEngagement.getRecentlyWatched(HISTORY_PAGE_SIZE, nextOffset);
+      const response = await api.homepageEngagement.getRecentlyWatched(
+        HISTORY_PAGE_SIZE,
+        nextOffset
+      );
       if (response.success && response.data) {
         setRecentlyWatched((prev) => [...prev, ...(response.data?.items || [])]);
         setHasMoreHistory(response.data.hasMore);
       }
-    } catch {}
+    } catch (error) {
+      logger.error('Failed to load more history:', error);
+    }
   }, [recentlyWatchedOffset]);
 
   const recentlyWatchedProgressMap: Record<string, number> = {};
@@ -116,27 +131,35 @@ export default function AuthenticatedHomepage({
 
   // --- Section 3: Universe-Specific Content ---
   useEffect(() => {
+    let cancelled = false;
     const loadUniverseContent = async () => {
       try {
         const engagementResponse = await api.homepageEngagement.getUniverseEngagement();
+        if (cancelled) return;
         if (!engagementResponse.success || !engagementResponse.data) {
           setIsLoadingUniverses(false);
           return;
         }
 
-        const universeEngagement = engagementResponse.data
-          .sort((a: UserUniverseEngagement, b: UserUniverseEngagement) => b.engagementCount - a.engagementCount);
+        const universeEngagement = engagementResponse.data.sort(
+          (a: UserUniverseEngagement, b: UserUniverseEngagement) =>
+            b.engagementCount - a.engagementCount
+        );
 
         const contentPromises = universeEngagement.map(async (ue: UserUniverseEngagement) => {
           try {
-            const contentResponse = await api.homepageEngagement.getContentByUniverse(ue.universeId, 12);
+            const contentResponse = await api.homepageEngagement.getContentByUniverse(
+              ue.universeId,
+              12
+            );
             return {
               universeId: ue.universeId,
               universeName: ue.universeName,
               universeIcon: ue.universeIcon,
               items: contentResponse.success ? contentResponse.data || [] : [],
             };
-          } catch {
+          } catch (error) {
+            if (!cancelled) logger.error(`Failed to load content for universe ${ue.universeName}:`, error);
             return {
               universeId: ue.universeId,
               universeName: ue.universeName,
@@ -147,23 +170,30 @@ export default function AuthenticatedHomepage({
         });
 
         const sections = await Promise.all(contentPromises);
-        setUniverseSections(sections.filter((s: UniverseSection) => s.items.length > 0));
-      } catch {} finally {
-        setIsLoadingUniverses(false);
+        if (!cancelled) {
+          setUniverseSections(sections.filter((s: UniverseSection) => s.items.length > 0));
+        }
+      } catch (error) {
+        if (!cancelled) logger.error('Failed to load universe content:', error);
+      } finally {
+        if (!cancelled) setIsLoadingUniverses(false);
       }
     };
     loadUniverseContent();
+    return () => { cancelled = true; };
   }, []);
 
   // --- Section 4: Personalized Recommendations ---
   useEffect(() => {
+    let cancelled = false;
     const loadRecommendations = async () => {
       try {
         const response = await api.homepageEngagement.getPersonalizedRecommendations();
-        if (response.success && response.data) {
+        if (!cancelled && response.success && response.data) {
           setRecommendationGroups(response.data);
         }
       } catch {
+        if (cancelled) return;
         // Fallback to generic recommendations
         try {
           const [forYou, trending] = await Promise.allSettled([
@@ -171,32 +201,37 @@ export default function AuthenticatedHomepage({
             api.recommendation.getTrending(12),
           ]);
 
+          if (cancelled) return;
           const fallbackGroups: HomepageRecommendationGroup[] = [];
           if (forYou.status === 'fulfilled' && forYou.value.success && forYou.value.data) {
             fallbackGroups.push({
               title: t('home.topPicksForYou'),
               reason: t('home.basedOnHistory'),
-              items: forYou.value.data.map((r: any) => r.content),
+              items: forYou.value.data,
             });
           }
           if (trending.status === 'fulfilled' && trending.value.success && trending.value.data) {
             fallbackGroups.push({
               title: t('home.popularRightNow'),
               reason: t('home.trendingAcrossPlatform'),
-              items: trending.value.data.map((r: any) => r.content),
+              items: trending.value.data,
             });
           }
           setRecommendationGroups(fallbackGroups);
-        } catch {}
+        } catch (error) {
+          if (!cancelled) logger.error('Failed to load fallback recommendations:', error);
+        }
       } finally {
-        setIsLoadingRecommendations(false);
+        if (!cancelled) setIsLoadingRecommendations(false);
       }
     };
     loadRecommendations();
+    return () => { cancelled = true; };
   }, []);
 
   // --- Section 5: Supplementary ---
   useEffect(() => {
+    let cancelled = false;
     const loadSupplementary = async () => {
       try {
         const [trendingRes, continueRes, newRes, popularRes] = await Promise.allSettled([
@@ -206,23 +241,39 @@ export default function AuthenticatedHomepage({
           api.homepageEngagement.getPopularInRegion(12),
         ]);
 
-        if (trendingRes.status === 'fulfilled' && trendingRes.value.success && trendingRes.value.data) {
+        if (cancelled) return;
+        if (
+          trendingRes.status === 'fulfilled' &&
+          trendingRes.value.success &&
+          trendingRes.value.data
+        ) {
           setTrendingContent(trendingRes.value.data);
         }
-        if (continueRes.status === 'fulfilled' && continueRes.value.success && continueRes.value.data) {
+        if (
+          continueRes.status === 'fulfilled' &&
+          continueRes.value.success &&
+          continueRes.value.data
+        ) {
           setContinueWatching(continueRes.value.data);
         }
         if (newRes.status === 'fulfilled' && newRes.value.success && newRes.value.data) {
           setNewReleases(newRes.value.data);
         }
-        if (popularRes.status === 'fulfilled' && popularRes.value.success && popularRes.value.data) {
+        if (
+          popularRes.status === 'fulfilled' &&
+          popularRes.value.success &&
+          popularRes.value.data
+        ) {
           setPopularInRegion(popularRes.value.data);
         }
-      } catch {} finally {
-        setIsLoadingSupplementary(false);
+      } catch (error) {
+        if (!cancelled) logger.error('Failed to load supplementary content:', error);
+      } finally {
+        if (!cancelled) setIsLoadingSupplementary(false);
       }
     };
     loadSupplementary();
+    return () => { cancelled = true; };
   }, []);
 
   return (
@@ -254,7 +305,11 @@ export default function AuthenticatedHomepage({
           {universeSections.map((section) => (
             <ContentRow
               key={section.universeId}
-              title={section.universeIcon ? `${section.universeIcon} ${section.universeName}` : section.universeName}
+              title={
+                section.universeIcon
+                  ? `${section.universeIcon} ${section.universeName}`
+                  : section.universeName
+              }
               sectionId={`universe-${section.universeId}`}
               items={section.items}
               isLoading={isLoadingUniverses}
@@ -328,7 +383,7 @@ export default function AuthenticatedHomepage({
       {/* Referral CTA */}
       <ScrollReveal>
         <LinearGradient
-          colors={['#CC1C1C', '#E8420A']}
+          colors={[colors.red, colors.primary[500]]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.referralCard}
@@ -337,8 +392,8 @@ export default function AuthenticatedHomepage({
             <Text style={styles.referralTitle}>{t('home.inviteFriends')}</Text>
             <Text style={styles.referralDescription}>{t('home.inviteFriendsDescription')}</Text>
             <BrandButton
-              label={t('home.shareYourLink')}
-              onPress={() => router.push('/referral')}
+              title={t('home.shareYourLink')}
+              onPress={() => router.push('/(tabs)/referral')}
               variant="dark"
             />
           </View>
@@ -359,7 +414,7 @@ const styles = StyleSheet.create({
     paddingBottom: 4,
   },
   greeting: {
-    color: '#fff',
+    color: colors.text.primary,
     fontSize: 24,
     fontWeight: '800',
   },
@@ -375,7 +430,7 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   referralTitle: {
-    color: '#fff',
+    color: colors.text.primary,
     fontSize: 22,
     fontWeight: '800',
     marginBottom: 8,

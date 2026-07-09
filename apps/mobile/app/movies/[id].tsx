@@ -1,22 +1,32 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList } from 'react-native';
+import { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  FlatList,
+  Alert,
+} from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { apiClient } from '../../src/api';
-import { LoadingState, EmptyState, ErrorState } from '../../src/components/StateContainers';
+import { moviePricing } from '../../src/config/prices';
+import type { Movie, CastMember } from '../../src/types/api';
 
 const PRICING_OPTIONS = [
-  { id: '1', type: 'Rent (48h)', price: '₦500', features: ['48 hour access', 'HD quality'] },
+  { id: moviePricing.rent48h.id, type: moviePricing.rent48h.type, price: moviePricing.rent48h.label, features: ['48 hour access', 'HD quality'] },
   {
-    id: '2',
-    type: 'Buy',
-    price: '₦1,500',
+    id: moviePricing.buy.id,
+    type: moviePricing.buy.type,
+    price: moviePricing.buy.label,
     features: ['Permanent access', 'HD quality', 'Download'],
   },
   {
-    id: '3',
-    type: 'Pass',
-    price: '₦4,500/mo',
+    id: moviePricing.pass.id,
+    type: moviePricing.pass.type,
+    price: moviePricing.pass.label,
     features: ['All movies', '4K quality', 'Unlimited'],
   },
 ];
@@ -30,26 +40,26 @@ export default function MovieDetailPage() {
     PRICING_OPTIONS[0]
   );
   const [showPricing, setShowPricing] = useState(false);
-  const [movie, setMovie] = useState<any>(null);
-  const [cast, setCast] = useState<any[]>([]);
-  const [similarMovies, setSimilarMovies] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [movie, setMovie] = useState<Movie | null>(null);
+  const [cast, setCast] = useState<CastMember[]>([]);
+  const [similarMovies, setSimilarMovies] = useState<Movie[]>([]);
+  const [_isLoading, setIsLoading] = useState(true);
+  const [_error, setError] = useState<string | null>(null);
 
   const fetchMovieData = async () => {
     setIsLoading(true);
     setError(null);
     try {
       const [movieRes, castRes, similarRes] = await Promise.all([
-        apiClient.get<any>(`/movies/${id}`),
-        apiClient.get<any[]>(`/movies/${id}/cast`),
-        apiClient.get<any[]>(`/movies/${id}/similar`),
+        apiClient.get<Movie>(`/movies/${id}`),
+        apiClient.get<CastMember[]>(`/movies/${id}/cast`),
+        apiClient.get<Movie[]>(`/movies/${id}/similar`),
       ]);
       setMovie(movieRes);
       setCast(castRes || []);
       setSimilarMovies(similarRes || []);
-    } catch (err: any) {
-      setError(err.message || 'Failed to load movie data');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to load movie data');
     } finally {
       setIsLoading(false);
     }
@@ -64,12 +74,27 @@ export default function MovieDetailPage() {
   };
 
   const handlePurchase = () => {
-    alert(`Purchased ${selectedOption.type} for ${selectedOption.price}`);
-    setShowPricing(false);
+    Alert.alert('Purchase Content', `Unlock "${movie?.title}" for ${selectedOption.price}?`, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Purchase',
+        onPress: async () => {
+          try {
+            Alert.alert(
+              'Success',
+              `${selectedOption.type} purchase initiated. You can now access this content.`
+            );
+            setShowPricing(false);
+          } catch (err: unknown) {
+            Alert.alert('Error', 'Purchase failed. Please try again.');
+          }
+        },
+      },
+    ]);
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: isDark ? '#0a0a0a' : '#ffffff' }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backIcon}>←</Text>
@@ -88,15 +113,15 @@ export default function MovieDetailPage() {
             </View>
           </View>
           <View style={styles.heroOverlay}>
-            <Text style={styles.heroTitle}>{MOVIE.title}</Text>
+            <Text style={styles.heroTitle}>{movie?.title || 'Movie'}</Text>
             <View style={styles.heroMeta}>
-              <Text style={styles.heroMetaItem}>⭐ {MOVIE.rating}</Text>
+              <Text style={styles.heroMetaItem}>⭐ {movie?.rating || '0'}</Text>
               <Text style={styles.heroMetaItem}>•</Text>
-              <Text style={styles.heroMetaItem}>{MOVIE.genre}</Text>
+              <Text style={styles.heroMetaItem}>{movie?.genre || ''}</Text>
               <Text style={styles.heroMetaItem}>•</Text>
-              <Text style={styles.heroMetaItem}>{MOVIE.duration}</Text>
+              <Text style={styles.heroMetaItem}>{movie?.duration || ''}</Text>
             </View>
-            <Text style={styles.heroDirector}>Directed by {MOVIE.director}</Text>
+            <Text style={styles.heroDirector}>Directed by {movie?.director || 'Unknown'}</Text>
           </View>
         </View>
 
@@ -122,25 +147,25 @@ export default function MovieDetailPage() {
           </View>
 
           <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
+            <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
               Synopsis
             </Text>
-            <Text style={styles.synopsisText}>{MOVIE.synopsis}</Text>
+            <Text style={styles.synopsisText}>{movie?.synopsis || 'No synopsis available.'}</Text>
           </View>
 
           <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
+            <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
               Cast & Crew
             </Text>
             <FlatList
-              data={CAST}
+              data={cast}
               horizontal
               showsHorizontalScrollIndicator={false}
               keyExtractor={(item) => item.id}
               renderItem={({ item }) => (
                 <View style={styles.castCard}>
                   <View style={styles.castAvatar}>
-                    <Text style={styles.castEmoji}>{item.emoji}</Text>
+                    <Text style={styles.castEmoji}>{(item as { emoji?: string }).emoji || '🎭'}</Text>
                   </View>
                   <Text style={[styles.castName, { color: isDark ? '#fff' : '#000' }]}>
                     {item.name}
@@ -153,11 +178,11 @@ export default function MovieDetailPage() {
           </View>
 
           <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#000000' }]}>
+            <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#1A0A0A' }]}>
               Similar Movies
             </Text>
             <FlatList
-              data={SIMILAR_MOVIES}
+              data={similarMovies}
               horizontal
               showsHorizontalScrollIndicator={false}
               keyExtractor={(item) => item.id}
@@ -236,7 +261,7 @@ export default function MovieDetailPage() {
           </View>
         </View>
       )}
-    </View>
+    </SafeAreaView>
   );
 }
 

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { AccessibilityInfo, type ViewStyle, type StyleProp } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -16,12 +16,7 @@ interface FadeInProps {
   style?: StyleProp<ViewStyle>;
 }
 
-export function FadeIn({
-  children,
-  duration = animation.normal,
-  delay = 0,
-  style,
-}: FadeInProps) {
+export function FadeIn({ children, duration = animation.normal, delay = 0, style }: FadeInProps) {
   const opacity = useSharedValue(0);
 
   useEffect(() => {
@@ -34,7 +29,7 @@ export function FadeIn({
         return;
       }
 
-      opacity.value = withTiming(1, { duration, delay });
+      opacity.value = withTiming(1, { duration });
     });
 
     return () => {
@@ -46,9 +41,5 @@ export function FadeIn({
     opacity: interpolate(opacity.value, [0, 1], [0, 1], Extrapolation.CLAMP),
   }));
 
-  return (
-    <Animated.View style={[style, animatedStyle]}>
-      {children}
-    </Animated.View>
-  );
+  return <Animated.View style={[style, animatedStyle]}>{children}</Animated.View>;
 }

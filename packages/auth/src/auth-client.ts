@@ -6,14 +6,7 @@
  * a single source of truth for authentication flows.
  */
 
-/** Token storage adapter interface — implemented per-platform */
-export interface TokenStorage {
-  getAccessToken(): Promise<string | null>;
-  getRefreshToken(): Promise<string | null>;
-  setAccessToken(token: string): Promise<void>;
-  setRefreshToken(token: string): Promise<void>;
-  clearTokens(): Promise<void>;
-}
+import type { TokenStorage } from '@azeebo/shared-types';
 
 /** Auth configuration */
 export interface AuthClientConfig {
@@ -63,7 +56,7 @@ export interface AuthTokens {
   refreshToken: string;
 }
 
-/** User profile from auth service */
+/** User profile returned by the auth service. */
 export interface AuthUser {
   id: string;
   email: string;
@@ -72,7 +65,7 @@ export interface AuthUser {
   isVerified?: boolean;
 }
 
-/** Auth state */
+/** Current authentication state for the user session. */
 export interface AuthState {
   user: AuthUser | null;
   isAuthenticated: boolean;
@@ -139,7 +132,7 @@ export class AuthClient {
    * Stores tokens automatically on success.
    */
   async login(
-    request: LoginRequest,
+    request: LoginRequest
   ): Promise<AuthApiResponse<{ accessToken: string; refreshToken: string; user: AuthUser }>> {
     const response = await this.request<{
       accessToken: string;
@@ -164,7 +157,7 @@ export class AuthClient {
    * Stores tokens automatically on success.
    */
   async register(
-    request: RegisterRequest,
+    request: RegisterRequest
   ): Promise<AuthApiResponse<{ accessToken: string; refreshToken: string; user: AuthUser }>> {
     const response = await this.request<{
       accessToken: string;
@@ -228,10 +221,7 @@ export class AuthClient {
    * Make an authenticated API request.
    * Automatically attaches the access token.
    */
-  async request<T>(
-    endpoint: string,
-    options: RequestInit = {},
-  ): Promise<AuthApiResponse<T>> {
+  async request<T>(endpoint: string, options: RequestInit = {}): Promise<AuthApiResponse<T>> {
     const accessToken = await this.config.storage.getAccessToken();
 
     const headers: Record<string, string> = {
@@ -284,7 +274,7 @@ export class AuthClient {
    */
   private async requestWithAutoRefresh<T>(
     endpoint: string,
-    options: RequestInit = {},
+    options: RequestInit = {}
   ): Promise<AuthApiResponse<T>> {
     const response = await this.request<T>(endpoint, options);
 
@@ -295,8 +285,12 @@ export class AuthClient {
       const refreshResult = await this.refreshToken();
       if (refreshResult.success) {
         this.logEvent('refresh');
-        // Retry the original request with new token
-        return this.request<T>(endpoint, options);
+        // Re-create options to avoid consumed body on retry
+        const retryOptions: RequestInit = { ...options };
+        if (options.body instanceof ReadableStream) {
+          retryOptions.body = options.body.tee()[1];
+        }
+        return this.request<T>(endpoint, retryOptions);
       }
 
       // Refresh failed — user must re-authenticate
@@ -382,11 +376,7 @@ export class AuthClient {
   /**
    * Log auth events for audit trail.
    */
-  private logEvent(
-    type: AuthEventType,
-    userId?: string,
-    metadata?: Record<string, unknown>,
-  ): void {
+  private logEvent(type: AuthEventType, userId?: string, metadata?: Record<string, unknown>): void {
     const event: AuthEvent = {
       type,
       timestamp: new Date(),
@@ -394,18 +384,24 @@ export class AuthClient {
       metadata,
     };
 
-    // Emit to console in development; in production this should
-    // send to an analytics/audit endpoint
-    if (process.env.NODE_ENV !== 'production') {
+    if (process.env.NODE_ENV === 'production') {
+      const analyticsUrl = process.env.AUTH_ANALYTICS_ENDPOINT;
+      if (analyticsUrl) {
+        fetch(analyticsUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(event),
+        }).catch(() => {
+          console.error('[Auth] Failed to emit event to analytics', event);
+        });
+      }
+    } else {
       console.debug('[Auth]', event);
     }
   }
 }
 
-/**
- * Factory function for creating an AuthClient with a simple in-memory storage.
- * Useful for testing or server-side rendering.
- */
+/** Creates an AuthClient backed by in-memory token storage for testing or SSR. */
 export function createMemoryAuthClient(config: Omit<AuthClientConfig, 'storage'>): AuthClient {
   let accessToken: string | null = null;
   let refreshToken: string | null = null;

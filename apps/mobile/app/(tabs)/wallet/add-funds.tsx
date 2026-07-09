@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,7 +7,6 @@ import {
   ScrollView,
   Alert,
   ActivityIndicator,
-  TextInput,
   Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -16,8 +15,10 @@ import { AmountInput } from '../../../src/components/AmountInput';
 import { walletApi, paymentApi } from '../../../src/api';
 import { useAppleGooglePay } from '../../../src/hooks/useAppleGooglePay';
 import { LoadingState, ErrorState } from '../../../src/components/StateContainers';
+import { useAuth } from '../../../src/contexts/AuthContext';
+import { addFundsPresetAmounts, walletLimits } from '../../../src/config/prices';
 
-const PRESET_AMOUNTS = [500, 1000, 2000, 5000, 10000, 20000];
+const PRESET_AMOUNTS = addFundsPresetAmounts;
 
 const PAYMENT_METHOD_META: Record<string, { name: string; icon: string; description: string }> = {
   paystack: { name: 'Debit Card', icon: '💳', description: 'Visa, Mastercard' },
@@ -29,11 +30,12 @@ const PAYMENT_METHOD_META: Record<string, { name: string; icon: string; descript
 
 export default function AddFundsScreen() {
   const router = useRouter();
+  const { user } = useAuth();
   const {
     isAvailable: isAppleGooglePayAvailable,
     paymentMethodLabel,
     processPayment,
-    isLoading: isAppleGooglePayLoading,
+    isLoading: _isAppleGooglePayLoading,
   } = useAppleGooglePay();
 
   const [amount, setAmount] = useState<string>('');
@@ -52,7 +54,7 @@ export default function AddFundsScreen() {
       if (res.success && res.data) {
         setProviders(res.data);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       setProvidersError(err.message || 'Failed to load payment methods');
     } finally {
       setIsLoadingProviders(false);
@@ -91,10 +93,10 @@ export default function AddFundsScreen() {
 
     if (!amount || isNaN(numAmount)) {
       newErrors.amount = 'Please enter a valid amount';
-    } else if (numAmount < 100) {
-      newErrors.amount = 'Minimum amount is ₦100';
-    } else if (numAmount > 1000000) {
-      newErrors.amount = 'Maximum amount is ₦1,000,000';
+    } else if (numAmount < walletLimits.minimumDeposit) {
+      newErrors.amount = `Minimum amount is ₦${walletLimits.minimumDeposit.toLocaleString()}`;
+    } else if (numAmount > walletLimits.maximumDeposit) {
+      newErrors.amount = `Maximum amount is ₦${walletLimits.maximumDeposit.toLocaleString()}`;
     }
 
     setErrors(newErrors);
@@ -116,7 +118,7 @@ export default function AddFundsScreen() {
       const response = await walletApi.fundWallet({
         amount: parseFloat(amount),
         provider: selectedMethod as 'paystack' | 'flutterwave',
-        email: 'user@example.com',
+        email: user?.email || '',
       });
 
       if (response.success && response.data) {
@@ -135,7 +137,7 @@ export default function AddFundsScreen() {
           ]);
         }
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       Alert.alert('Error', error?.message || 'Failed to add funds. Please try again.');
     } finally {
       setIsLoading(false);
@@ -274,7 +276,7 @@ export default function AddFundsScreen() {
           <View style={styles.infoCard}>
             <Text style={styles.infoTitle}>ℹ️ Information</Text>
             <Text style={styles.infoText}>
-              • Minimum deposit: ₦100{'\n'}• Maximum deposit: ₦1,000,000{'\n'}• Funds are added
+              • Minimum deposit: ₦{walletLimits.minimumDeposit.toLocaleString()}{'\n'}• Maximum deposit: ₦{walletLimits.maximumDeposit.toLocaleString()}{'\n'}• Funds are added
               instantly{'\n'}• Transaction fees may apply
             </Text>
           </View>
@@ -287,7 +289,7 @@ export default function AddFundsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#111827',
+    backgroundColor: '#1A0A0A',
   },
   scrollContent: {
     paddingHorizontal: 24,
@@ -339,8 +341,8 @@ const styles = StyleSheet.create({
     borderColor: '#333',
   },
   presetButtonSelected: {
-    backgroundColor: '#8B5CF6',
-    borderColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
+    borderColor: '#E8420A',
   },
   presetText: {
     color: '#F3F4F6',
@@ -361,7 +363,7 @@ const styles = StyleSheet.create({
     borderColor: '#333',
   },
   methodCardSelected: {
-    borderColor: '#8B5CF6',
+    borderColor: '#E8420A',
     backgroundColor: '#1f1f2e',
   },
   methodIcon: {
@@ -399,16 +401,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   methodRadioSelected: {
-    borderColor: '#8B5CF6',
+    borderColor: '#E8420A',
   },
   methodRadioInner: {
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
   },
   addButton: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',

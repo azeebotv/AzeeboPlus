@@ -15,7 +15,7 @@ The Wallet Service manages user wallets, transactions, and fund transfers for th
 
 ## Technology Stack
 
-- **Framework**: NestJS 10.x
+- **Framework**: NestJS 11.x
 - **Language**: TypeScript
 - **Database**: PostgreSQL with Prisma ORM
 - **Cache**: Redis
@@ -25,22 +25,22 @@ The Wallet Service manages user wallets, transactions, and fund transfers for th
 
 ### Prerequisites
 
-- Node.js 20+
+- Node.js 22+
 - PostgreSQL 15+
 - Redis
 
 ### Installation
 
 ```bash
-npm install
-npm run prisma:generate
-npm run prisma:migrate
+pnpm install
+pnpm run prisma:generate
+pnpm run prisma:migrate
 ```
 
 ### Running the Service
 
 ```bash
-npm run start:dev
+pnpm run start:dev
 ```
 
 ## API Endpoints
@@ -72,10 +72,10 @@ npm run start:dev
 ## Configuration
 
 ```bash
-PORT=3011
+PORT=3002
 DATABASE_URL="postgresql://user:password@localhost:5432/wallet"
 REDIS_URL="redis://localhost:6379"
-JWT_SECRET="your-secret"
+JWT_ACCESS_SECRET="your-secret"
 ```
 
 ## Security
@@ -89,7 +89,7 @@ JWT_SECRET="your-secret"
 ## Testing
 
 ```bash
-npm test
+pnpm test
 ```
 
 **Last Updated:** 2026-05-19

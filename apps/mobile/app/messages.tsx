@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,9 +9,12 @@ import {
   ActivityIndicator,
   RefreshControl,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { messagingApi } from '../src/api';
+import { useAuth } from '../src/contexts/AuthContext';
 import { logger } from '../src/utils/logger';
+import { colors } from '../src/theme';
 
 interface Conversation {
   id: string;
@@ -33,7 +36,8 @@ interface Message {
 }
 
 export default function MessagesScreen() {
-  const router = useRouter();
+  
+  const { user } = useAuth();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -116,7 +120,7 @@ export default function MessagesScreen() {
   };
 
   const renderConversation = ({ item }: { item: Conversation }) => (
-    <TouchableOpacity style={styles.conversationItem} onPress={() => openConversation(item)}>
+    <TouchableOpacity style={styles.conversationItem} onPress={() => openConversation(item)} accessibilityLabel={`Open conversation with ${item.participantName}`} accessibilityRole="button">
       <View style={styles.avatarContainer}>
         <View style={styles.avatar}>
           <Text style={styles.avatarText}>{item.participantName.charAt(0)}</Text>
@@ -144,93 +148,106 @@ export default function MessagesScreen() {
 
   if (selectedConversation) {
     return (
-      <View style={styles.container}>
-        <View style={styles.chatHeader}>
-          <TouchableOpacity onPress={() => setSelectedConversation(null)} style={styles.backButton}>
-            <Text style={styles.backText}>←</Text>
-          </TouchableOpacity>
-          <View style={styles.chatHeaderInfo}>
-            <Text style={styles.chatHeaderName}>{selectedConversation.participantName}</Text>
-            <Text style={styles.chatHeaderStatus}>
-              {selectedConversation.isOnline ? 'Online' : 'Offline'}
-            </Text>
-          </View>
-        </View>
-
-        <FlatList
-          data={messages}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.messagesList}
-          renderItem={({ item }) => (
-            <View
-              style={[
-                styles.messageBubble,
-                item.senderId === 'me' ? styles.messageBubbleSent : styles.messageBubbleReceived,
-              ]}
+      <SafeAreaView style={styles.container}>
+        <View style={styles.container}>
+          <View style={styles.chatHeader}>
+            <TouchableOpacity
+              onPress={() => setSelectedConversation(null)}
+              style={styles.backButton}
+              accessibilityLabel="Go back"
+              accessibilityRole="button"
             >
-              <Text
-                style={[
-                  styles.messageText,
-                  item.senderId === 'me' ? styles.messageTextSent : styles.messageTextReceived,
-                ]}
-              >
-                {item.content}
-              </Text>
-              <Text style={styles.messageTime}>
-                {new Date(item.timestamp).toLocaleTimeString([], {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                })}
+              <Text style={styles.backText}>←</Text>
+            </TouchableOpacity>
+            <View style={styles.chatHeaderInfo}>
+              <Text style={styles.chatHeaderName}>{selectedConversation.participantName}</Text>
+              <Text style={styles.chatHeaderStatus}>
+                {selectedConversation.isOnline ? 'Online' : 'Offline'}
               </Text>
             </View>
-          )}
-        />
+          </View>
 
-        <View style={styles.inputContainer}>
-          <TextInput
-            style={styles.input}
-            value={newMessage}
-            onChangeText={setNewMessage}
-            placeholder="Type a message..."
-            placeholderTextColor="#6B7280"
+          <FlatList
+            data={messages}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={styles.messagesList}
+            renderItem={({ item }) => (
+              <View
+                style={[
+                  styles.messageBubble,
+                  item.senderId === user?.id
+                    ? styles.messageBubbleSent
+                    : styles.messageBubbleReceived,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.messageText,
+                    item.senderId === user?.id
+                      ? styles.messageTextSent
+                      : styles.messageTextReceived,
+                  ]}
+                >
+                  {item.content}
+                </Text>
+                <Text style={styles.messageTime}>
+                  {new Date(item.timestamp).toLocaleTimeString([], {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                </Text>
+              </View>
+            )}
           />
-          <TouchableOpacity
-            style={[
-              styles.sendButton,
-              (!newMessage.trim() || isSending) && styles.sendButtonDisabled,
-            ]}
-            onPress={sendMessage}
-            disabled={!newMessage.trim() || isSending}
-          >
-            <Text style={styles.sendButtonText}>Send</Text>
-          </TouchableOpacity>
+
+          <View style={styles.inputContainer}>
+            <TextInput
+              style={styles.input}
+              value={newMessage}
+              onChangeText={setNewMessage}
+              placeholder="Type a message..."
+              placeholderTextColor={colors.light[500]}
+            />
+            <TouchableOpacity
+              style={[
+                styles.sendButton,
+                (!newMessage.trim() || isSending) && styles.sendButtonDisabled,
+              ]}
+              onPress={sendMessage}
+              disabled={!newMessage.trim() || isSending}
+              accessibilityLabel="Send message"
+              accessibilityRole="button"
+            >
+              <Text style={styles.sendButtonText}>Send</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
+      </SafeAreaView>
     );
   }
 
   if (isLoading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#8B5CF6" />
+      <SafeAreaView style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={colors.primary[500]} />
         <Text style={styles.loadingText}>Loading messages...</Text>
-      </View>
+      </SafeAreaView>
     );
   }
 
   if (error) {
     return (
-      <View style={styles.errorContainer}>
+      <SafeAreaView style={styles.errorContainer}>
         <Text style={styles.errorText}>{error}</Text>
-        <TouchableOpacity style={styles.retryButton} onPress={loadConversations}>
+        <TouchableOpacity style={styles.retryButton} onPress={loadConversations} accessibilityLabel="Retry loading conversations" accessibilityRole="button">
           <Text style={styles.retryButtonText}>Retry</Text>
         </TouchableOpacity>
-      </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Messages</Text>
       </View>
@@ -241,7 +258,7 @@ export default function MessagesScreen() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
         refreshControl={
-          <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} colors={['#8B5CF6']} />
+          <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} colors={[colors.primary[500]]} />
         }
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
@@ -251,23 +268,23 @@ export default function MessagesScreen() {
           </View>
         }
       />
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#111827',
+    backgroundColor: colors.bg.primary,
   },
   loadingContainer: {
     flex: 1,
-    backgroundColor: '#111827',
+    backgroundColor: colors.bg.primary,
     justifyContent: 'center',
     alignItems: 'center',
   },
   loadingText: {
-    color: '#9CA3AF',
+    color: colors.light[400],
     marginTop: 12,
   },
   header: {
@@ -277,7 +294,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: colors.text.primary,
   },
   listContent: {
     padding: 16,
@@ -287,7 +304,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#374151',
+    borderBottomColor: colors.border.default,
   },
   avatarContainer: {
     position: 'relative',
@@ -297,14 +314,14 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#8B5CF6',
+    backgroundColor: colors.primary[500],
     justifyContent: 'center',
     alignItems: 'center',
   },
   avatarText: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: colors.text.primary,
   },
   onlineIndicator: {
     position: 'absolute',
@@ -313,9 +330,9 @@ const styles = StyleSheet.create({
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: '#10B981',
+    backgroundColor: colors.success[500],
     borderWidth: 2,
-    borderColor: '#111827',
+    borderColor: colors.border.default,
   },
   conversationInfo: {
     flex: 1,
@@ -329,11 +346,11 @@ const styles = StyleSheet.create({
   participantName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: colors.text.primary,
   },
   timeText: {
     fontSize: 12,
-    color: '#6B7280',
+    color: colors.light[500],
   },
   conversationFooter: {
     flexDirection: 'row',
@@ -343,10 +360,10 @@ const styles = StyleSheet.create({
   lastMessage: {
     flex: 1,
     fontSize: 14,
-    color: '#9CA3AF',
+    color: colors.light[400],
   },
   unreadBadge: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: colors.primary[500],
     borderRadius: 10,
     minWidth: 20,
     height: 20,
@@ -358,7 +375,7 @@ const styles = StyleSheet.create({
   unreadText: {
     fontSize: 12,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: colors.text.primary,
   },
   chatHeader: {
     flexDirection: 'row',
@@ -366,14 +383,14 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingTop: 60,
     borderBottomWidth: 1,
-    borderBottomColor: '#374151',
+    borderBottomColor: colors.border.default,
   },
   backButton: {
     marginRight: 12,
   },
   backText: {
     fontSize: 24,
-    color: '#8B5CF6',
+    color: colors.primary[500],
   },
   chatHeaderInfo: {
     flex: 1,
@@ -381,11 +398,11 @@ const styles = StyleSheet.create({
   chatHeaderName: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: colors.text.primary,
   },
   chatHeaderStatus: {
     fontSize: 12,
-    color: '#10B981',
+    color: colors.success[500],
   },
   messagesList: {
     padding: 16,
@@ -397,12 +414,12 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   messageBubbleSent: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: colors.primary[500],
     alignSelf: 'flex-end',
     borderBottomRightRadius: 4,
   },
   messageBubbleReceived: {
-    backgroundColor: '#1F2937',
+    backgroundColor: colors.bg.surface,
     alignSelf: 'flex-start',
     borderBottomLeftRadius: 4,
   },
@@ -411,14 +428,14 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   messageTextSent: {
-    color: '#FFFFFF',
+    color: colors.text.primary,
   },
   messageTextReceived: {
-    color: '#E5E7EB',
+    color: colors.light[200],
   },
   messageTime: {
     fontSize: 10,
-    color: '#6B7280',
+    color: colors.light[500],
     marginTop: 4,
     alignSelf: 'flex-end',
   },
@@ -427,20 +444,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 12,
     borderTopWidth: 1,
-    borderTopColor: '#374151',
-    backgroundColor: '#1F2937',
+    borderTopColor: colors.border.default,
+    backgroundColor: colors.bg.surface,
   },
   input: {
     flex: 1,
-    backgroundColor: '#374151',
+    backgroundColor: colors.border.default,
     borderRadius: 20,
     paddingHorizontal: 16,
     paddingVertical: 10,
-    color: '#FFFFFF',
+    color: colors.text.primary,
     fontSize: 14,
   },
   sendButton: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: colors.primary[500],
     borderRadius: 20,
     paddingHorizontal: 16,
     paddingVertical: 10,
@@ -450,7 +467,7 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   sendButtonText: {
-    color: '#FFFFFF',
+    color: colors.text.primary,
     fontWeight: '600',
     fontSize: 14,
   },
@@ -464,12 +481,12 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
-    color: '#9CA3AF',
+    color: colors.light[400],
     marginBottom: 4,
   },
   emptySubtext: {
     fontSize: 14,
-    color: '#6B7280',
+    color: colors.light[500],
   },
   errorContainer: {
     flex: 1,
@@ -479,18 +496,18 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 16,
-    color: '#EF4444',
+    color: colors.error[500],
     textAlign: 'center',
     marginBottom: 16,
   },
   retryButton: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: colors.primary[500],
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,
   },
   retryButtonText: {
-    color: '#fff',
+    color: colors.text.primary,
     fontSize: 16,
     fontWeight: '600',
   },

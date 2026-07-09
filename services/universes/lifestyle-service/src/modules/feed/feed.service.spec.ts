@@ -1,6 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { LifestyleFeedService } from './feed.service';
 import { PrismaService } from '../database/prisma.service';
+import { RedisService } from '../../common/services/redis.service';
+import { ConfigService } from '@nestjs/config';
 
 describe('LifestyleFeedService', () => {
   let service: LifestyleFeedService;
@@ -20,6 +22,21 @@ describe('LifestyleFeedService', () => {
             celebrityEntry: { findMany: jest.fn() },
             nightlifeEntry: { findMany: jest.fn() },
             influencerEntry: { findMany: jest.fn() },
+          },
+        },
+        {
+          provide: RedisService,
+          useValue: {
+            get: jest.fn().mockResolvedValue(null),
+            set: jest.fn().mockResolvedValue('OK'),
+            del: jest.fn().mockResolvedValue(1),
+          },
+        },
+        {
+          provide: ConfigService,
+          useValue: {
+            get: jest.fn().mockReturnValue(300),
+            getOrThrow: jest.fn().mockReturnValue('test-value'),
           },
         },
       ],

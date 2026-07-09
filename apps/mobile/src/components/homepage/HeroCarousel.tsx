@@ -1,14 +1,12 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { View, Text, StyleSheet, Dimensions, Image, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import Animated, {
-  FadeIn,
-  FadeOut,
-} from 'react-native-reanimated';
+import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import type { ContentItem } from '@/api';
+import { colors } from '@/theme';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -17,10 +15,7 @@ interface HeroCarouselProps {
   autoRotateIntervalMs?: number;
 }
 
-export default function HeroCarousel({
-  slides,
-  autoRotateIntervalMs = 6000,
-}: HeroCarouselProps) {
+export default function HeroCarousel({ slides, autoRotateIntervalMs = 6000 }: HeroCarouselProps) {
   const router = useRouter();
   const { t } = useTranslation();
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -57,7 +52,7 @@ export default function HeroCarousel({
   const currentSlide = slides[currentIndex];
 
   const handleSlidePress = () => {
-    router.push(`/content/${currentSlide.id}`);
+    router.push(`/watch/${currentSlide.id}`);
   };
 
   return (
@@ -68,7 +63,12 @@ export default function HeroCarousel({
       onPointerEnter={() => setIsPaused(true)}
       onPointerLeave={() => setIsPaused(false)}
     >
-      <Animated.View key={currentSlide.id} entering={FadeIn.duration(500)} exiting={FadeOut.duration(500)} style={StyleSheet.absoluteFill}>
+      <Animated.View
+        key={currentSlide.id}
+        entering={FadeIn.duration(500)}
+        exiting={FadeOut.duration(500)}
+        style={StyleSheet.absoluteFill}
+      >
         <Image
           source={{
             uri:
@@ -97,7 +97,12 @@ export default function HeroCarousel({
       />
 
       {/* Content */}
-      <Pressable style={styles.content} onPress={handleSlidePress}>
+      <Pressable
+        style={styles.content}
+        onPress={handleSlidePress}
+        accessibilityLabel={`${t('home.watch')} ${currentSlide.title}`}
+        accessibilityRole="button"
+      >
         {/* Universe badge */}
         {currentSlide.universe?.name ? (
           <View style={styles.universeBadge}>
@@ -153,10 +158,7 @@ export default function HeroCarousel({
         {slides.map((slide, index) => (
           <View
             key={slide.id}
-            style={[
-              styles.indicator,
-              index === currentIndex && styles.indicatorActive,
-            ]}
+            style={[styles.indicator, index === currentIndex && styles.indicatorActive]}
             accessibilityLabel={`${t('home.slide')} ${index + 1}: ${slide.title}`}
           />
         ))}
@@ -170,7 +172,7 @@ const styles = StyleSheet.create({
     width: SCREEN_WIDTH,
     height: Math.min(Dimensions.get('window').height * 0.55, 420),
     overflow: 'hidden',
-    backgroundColor: '#0D3B2E',
+    backgroundColor: colors.bg.green,
   },
   backgroundImage: {
     width: '100%',
@@ -191,14 +193,14 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   universeBadgeText: {
-    color: '#E8420A',
+    color: colors.primary[500],
     fontSize: 11,
     fontWeight: '700',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   title: {
-    color: '#fff',
+    color: colors.text.primary,
     fontSize: 26,
     fontWeight: '800',
     lineHeight: 32,
@@ -218,14 +220,14 @@ const styles = StyleSheet.create({
   watchButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#E8420A',
+    backgroundColor: colors.primary[500],
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 24,
     gap: 6,
   },
   watchButtonText: {
-    color: '#fff',
+    color: colors.text.primary,
     fontSize: 14,
     fontWeight: '700',
   },
@@ -262,7 +264,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.4)',
   },
   indicatorActive: {
-    backgroundColor: '#E8420A',
+    backgroundColor: colors.primary[500],
     width: 12,
     height: 8,
     borderRadius: 4,

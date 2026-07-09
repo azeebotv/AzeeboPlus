@@ -20,9 +20,10 @@ export function createPaymentMethods(client: RequestClient) {
     },
 
     verify: async (reference: string): Promise<ApiResponse<PaymentVerifyResponse>> => {
-      return client.request<PaymentVerifyResponse>(
-        `/api/v1/payments/verify?reference=${reference}`
-      );
+      return client.request<PaymentVerifyResponse>('/api/v1/payments/verify', {
+        method: 'POST',
+        body: JSON.stringify({ reference }),
+      });
     },
 
     getTransactions: async (

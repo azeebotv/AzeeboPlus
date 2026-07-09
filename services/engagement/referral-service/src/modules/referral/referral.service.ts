@@ -6,6 +6,8 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
+import { CacheService, cacheKey } from '@azeebo/shared-services';
+import { Prisma } from '@prisma/client';
 import {
   ReferralResponse,
   ReferralStats,
@@ -21,6 +23,7 @@ export class ReferralService {
 
   constructor(
     private readonly prisma: PrismaService,
+    private readonly cache: CacheService,
     private readonly configService: ConfigService
   ) {
     this.defaultPaginationLimit = this.configService.get<number>('DEFAULT_PAGINATION_LIMIT', 20);
@@ -53,32 +56,48 @@ export class ReferralService {
       };
     }
 
-    const code = this.generateCode();
+    const maxRetries = 3;
+    let lastError: unknown;
 
-    const referralCode = await this.prisma.referralCode.create({
-      data: {
-        userId,
-        code,
-        maxUses: dto.maxUses || null,
-        expiresAt: dto.expiresAt ? new Date(dto.expiresAt) : null,
-      },
-    });
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      const code = this.generateCode();
+      try {
+        const referralCode = await this.prisma.referralCode.create({
+          data: {
+            userId,
+            code,
+            maxUses: dto.maxUses || null,
+            expiresAt: dto.expiresAt ? new Date(dto.expiresAt) : null,
+          },
+        });
 
-    return {
-      success: true,
-      data: {
-        referralCode: {
-          id: referralCode.id,
-          code: referralCode.code,
-          isActive: referralCode.isActive,
-          maxUses: referralCode.maxUses,
-          currentUses: referralCode.currentUses,
-          expiresAt: referralCode.expiresAt,
-          createdAt: referralCode.createdAt,
-          updatedAt: referralCode.updatedAt,
-        },
-      },
-    };
+        await this.cache.invalidate(`referral:code:${userId}`);
+
+        return {
+          success: true,
+          data: {
+            referralCode: {
+              id: referralCode.id,
+              code: referralCode.code,
+              isActive: referralCode.isActive,
+              maxUses: referralCode.maxUses,
+              currentUses: referralCode.currentUses,
+              expiresAt: referralCode.expiresAt,
+              createdAt: referralCode.createdAt,
+              updatedAt: referralCode.updatedAt,
+            },
+          },
+        };
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+          lastError = error;
+          continue;
+        }
+        throw error;
+      }
+    }
+
+    throw new BadRequestException('Failed to generate unique referral code after multiple attempts');
   }
 
   async applyReferralCode(
@@ -117,21 +136,30 @@ export class ReferralService {
       throw new ConflictException('You have already used a referral code');
     }
 
-    const referral = await this.prisma.referral.create({
-      data: {
-        referrerId: referralCode.userId,
-        referredId,
-        referralCodeId: referralCode.id,
-        status: 'pending',
-      },
+    const referral = await this.prisma.$transaction(async (tx) => {
+      const newReferral = await tx.referral.create({
+        data: {
+          referrerId: referralCode.userId,
+          referredId,
+          referralCodeId: referralCode.id,
+          status: 'pending',
+        },
+      });
+
+      const affectedRows = await tx.$executeRaw`
+        UPDATE "referral_codes" SET "currentUses" = "currentUses" + 1
+        WHERE "id" = ${referralCode.id} AND "currentUses" < ${referralCode.maxUses ?? 2147483647}
+      `;
+
+      if (affectedRows === 0) {
+        throw new BadRequestException('Referral code has reached maximum uses');
+      }
+
+      return newReferral;
     });
 
-    await this.prisma.referralCode.update({
-      where: { id: referralCode.id },
-      data: {
-        currentUses: { increment: 1 },
-      },
-    });
+    await this.cache.invalidate(`referral:code:${referredId}`);
+    await this.cache.invalidate(`referral:stats:${referralCode.userId}`);
 
     return {
       success: true,
@@ -190,6 +218,10 @@ export class ReferralService {
   }
 
   async getStats(userId: string): Promise<ReferralResponse> {
+    const cacheK = cacheKey('referral', `stats:${userId}`);
+    const cached = await this.cache.get<ReferralResponse>(cacheK);
+    if (cached) return cached;
+
     const [totalReferrals, completedReferrals, pendingReferrals, totalRewards] = await Promise.all([
       this.prisma.referral.count({ where: { referrerId: userId } }),
       this.prisma.referral.count({ where: { referrerId: userId, status: 'completed' } }),
@@ -213,19 +245,31 @@ export class ReferralService {
       referralCode: referralCode?.code || '',
     };
 
-    return {
+    const result: ReferralResponse = {
       success: true,
       data: { stats },
     };
+
+    await this.cache.set(cacheK, result, 300);
+    return result;
   }
 
-  async completeReferral(referralId: string): Promise<ReferralResponse> {
+  async completeReferral(referralId: string, userId: string): Promise<ReferralResponse> {
     const referral = await this.prisma.referral.findUnique({
       where: { id: referralId },
     });
 
     if (!referral) {
       throw new NotFoundException('Referral not found');
+    }
+
+    // Only the referrer can complete a referral
+    if (referral.referrerId !== userId) {
+      throw new NotFoundException('Referral not found');
+    }
+
+    if (referral.referrerId === referral.referredId) {
+      throw new BadRequestException('Self-referral not allowed');
     }
 
     if (referral.status === 'completed') {
@@ -256,6 +300,8 @@ export class ReferralService {
       });
     });
 
+    await this.cache.invalidate(`referral:stats:${referral.referrerId}`);
+
     return {
       success: true,
       data: {
@@ -267,37 +313,42 @@ export class ReferralService {
   }
 
   async getReferralCode(userId: string): Promise<ReferralResponse> {
+    const cacheK = cacheKey('referral', `code:${userId}`);
+    const cached = await this.cache.get<ReferralResponse>(cacheK);
+    if (cached) return cached;
+
     const referralCode = await this.prisma.referralCode.findFirst({
       where: { userId, isActive: true },
     });
 
-    if (!referralCode) {
-      return {
-        success: true,
-        data: { referralCode: null },
-      };
-    }
+    const result: ReferralResponse = !referralCode
+      ? {
+          success: true,
+          data: { referralCode: null },
+        }
+      : {
+          success: true,
+          data: {
+            referralCode: {
+              id: referralCode.id,
+              code: referralCode.code,
+              isActive: referralCode.isActive,
+              maxUses: referralCode.maxUses,
+              currentUses: referralCode.currentUses,
+              expiresAt: referralCode.expiresAt,
+              createdAt: referralCode.createdAt,
+              updatedAt: referralCode.updatedAt,
+            },
+          },
+        };
 
-    return {
-      success: true,
-      data: {
-        referralCode: {
-          id: referralCode.id,
-          code: referralCode.code,
-          isActive: referralCode.isActive,
-          maxUses: referralCode.maxUses,
-          currentUses: referralCode.currentUses,
-          expiresAt: referralCode.expiresAt,
-          createdAt: referralCode.createdAt,
-          updatedAt: referralCode.updatedAt,
-        },
-      },
-    };
+    await this.cache.set(cacheK, result, 300);
+    return result;
   }
 
   private generateCode(): string {
     const prefix = 'AZB';
-    const random = randomBytes(4).toString('hex').toUpperCase();
+    const random = randomBytes(8).toString('hex').toUpperCase();
     return `${prefix}-${random}`;
   }
 

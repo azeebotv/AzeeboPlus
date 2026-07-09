@@ -35,5 +35,5 @@ export class UpdateUniverseDto {
   @ApiProperty({ description: 'Additional metadata', required: false })
   @IsOptional()
   @IsObject()
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }

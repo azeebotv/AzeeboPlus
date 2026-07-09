@@ -9,6 +9,18 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useUniverses } from '../useUniverses';
 
+// Mock Next.js navigation
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: vi.fn(),
+    replace: vi.fn(),
+    refresh: vi.fn(),
+    back: vi.fn(),
+    forward: vi.fn(),
+    prefetch: vi.fn(),
+  }),
+}));
+
 // Mock the API module
 vi.mock('../../lib/api', () => ({
   api: {
@@ -94,7 +106,7 @@ describe('useUniverses', () => {
 
   describe('caching', () => {
     it('uses cached data on subsequent calls', async () => {
-      const { result } = renderHook(() => useUniverses());
+      const { result: _result } = renderHook(() => useUniverses());
 
       await act(async () => {
         await new Promise((r) => setTimeout(r, 0));

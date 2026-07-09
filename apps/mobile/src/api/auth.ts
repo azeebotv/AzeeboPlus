@@ -26,6 +26,18 @@ export interface ApiResponse<T> {
   error?: string;
 }
 
+export interface Device {
+  id: string;
+  name: string;
+  type: string;
+  lastActive: string;
+  isCurrent: boolean;
+  location?: string;
+  os?: string;
+  browser?: string;
+  ip?: string;
+}
+
 export const authApi = {
   login: async (email: string, password: string): Promise<ApiResponse<AuthResponse>> => {
     return apiClient.post<ApiResponse<AuthResponse>>('/auth/login', { email, password });
@@ -65,7 +77,7 @@ export const authApi = {
   },
 
   updateProfile: async (data: Partial<User>): Promise<ApiResponse<User>> => {
-    return apiClient.patch<ApiResponse<User>>('/auth/me', data);
+    return apiClient.patch<ApiResponse<User>>('/users/me', data);
   },
 
   resetPassword: async (
@@ -86,16 +98,8 @@ export const authApi = {
     return apiClient.post<ApiResponse<{ message: string }>>('/auth/resend-verification', { email });
   },
 
-  getDevices: async (): Promise<
-    ApiResponse<
-      Array<{ id: string; name: string; type: string; lastActive: string; isCurrent: boolean }>
-    >
-  > => {
-    return apiClient.get<
-      ApiResponse<
-        Array<{ id: string; name: string; type: string; lastActive: string; isCurrent: boolean }>
-      >
-    >('/auth/devices');
+  getDevices: async (): Promise<ApiResponse<Device[]>> => {
+    return apiClient.get<ApiResponse<Device[]>>('/auth/devices');
   },
 
   revokeDevice: async (deviceId: string): Promise<ApiResponse<{ message: string }>> => {
@@ -103,6 +107,6 @@ export const authApi = {
   },
 
   selectRole: async (role: 'user' | 'creator' | 'both'): Promise<ApiResponse<{ role: string }>> => {
-    return apiClient.post<ApiResponse<{ role: string }>>('/auth/role', { role });
+    return apiClient.post<ApiResponse<{ role: string }>>('/auth/select-role', { role });
   },
 };

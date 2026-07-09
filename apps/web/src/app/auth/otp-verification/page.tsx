@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import BrandLogo from '@/components/auth/BrandLogo';
 import { Alert, Spinner } from '@/components/auth/FormBits';
+import { apiFetch } from '@/lib/api';
 
 const OTP_LENGTH = 6;
 const RESEND_SECONDS = 60;
@@ -67,11 +68,16 @@ export default function OTPVerificationPage(): React.JSX.Element {
     }
     setIsLoading(true);
     try {
-      // Verification handled by auth flow; proceed to role selection.
-      await new Promise((r) => setTimeout(r, 600));
+      const result = await apiFetch('/v1/auth/verify-otp', {
+        method: 'POST',
+        body: JSON.stringify({ code }),
+      });
+      if (!result.success) {
+        throw new Error(result.message || 'Invalid verification code');
+      }
       router.push('/auth/role-selection');
-    } catch {
-      setError('Verification failed. Please try again.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Verification failed. Please try again.');
     } finally {
       setIsLoading(false);
     }

@@ -1,5 +1,6 @@
 import { format, parseISO, differenceInDays } from 'date-fns';
 
+/** Formats a numeric amount as a currency string with the appropriate symbol. */
 export function formatCurrency(amount: number, currency: string = 'NGN'): string {
   const symbols: Record<string, string> = {
     NGN: '₦',
@@ -12,11 +13,13 @@ export function formatCurrency(amount: number, currency: string = 'NGN'): string
   return `${symbol}${amount.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
+/** Formats a Date or ISO string using the given date-fns format pattern. */
 export function formatDate(date: Date | string, formatStr: string = 'PPP'): string {
   const dateObj = typeof date === 'string' ? parseISO(date) : date;
   return format(dateObj, formatStr);
 }
 
+/** Converts a duration in seconds to a human-readable mm:ss or h:mm:ss string. */
 export function formatDuration(seconds: number): string {
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
@@ -29,60 +32,33 @@ export function formatDuration(seconds: number): string {
   return `${minutes}:${secs.toString().padStart(2, '0')}`;
 }
 
+/** Truncates a string to the given length and appends an ellipsis. */
 export function truncate(text: string, length: number): string {
   if (text.length <= length) return text;
   return text.slice(0, length) + '...';
 }
 
+/** Generates a cryptographically random UUID v4. */
 export function generateId(): string {
   return crypto.randomUUID();
 }
 
+/** Decodes the payload of a JWT without verifying the signature. */
 export function parseJwt(token: string): Record<string, unknown> | null {
   try {
-    const base64Url = token.split('.')[1];
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const jsonPayload = decodeURIComponent(
-      atob(base64)
-        .split('')
-        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-        .join('')
-    );
-
-    return JSON.parse(jsonPayload);
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+    const payload = parts[1];
+    const decoded = typeof Buffer !== 'undefined'
+      ? Buffer.from(payload, 'base64url').toString('utf-8')
+      : new TextDecoder().decode(Uint8Array.from(atob(payload.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0)));
+    return JSON.parse(decoded) as Record<string, unknown>;
   } catch {
     return null;
   }
 }
 
-export function isValidEmail(email: string): boolean {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
-}
-
-export function isValidPhone(phone: string): boolean {
-  const phoneRegex = /^\+?[\d\s-]{10,}$/;
-  return phoneRegex.test(phone);
-}
-
-export function isValidPassword(password: string): boolean {
-  return password.length >= 8;
-}
-
-export function sanitizeHtml(dirty: string): string {
-  if (!dirty) return '';
-
-  return dirty
-    .replace(/javascript:/gi, '')
-    .replace(/on\w+\s*=/gi, '')
-    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-    .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, '')
-    .replace(/<object\b[^<]*(?:(?!<\/object>)<[^<]*)*<\/object>/gi, '')
-    .replace(/<embed\b[^>]*>/gi, '')
-    .replace(/onerror\s*=/gi, '')
-    .trim();
-}
-
+/** Escapes HTML special characters to prevent XSS injection. */
 export function sanitizeText(dirty: string): string {
   if (!dirty) return '';
 
@@ -95,6 +71,7 @@ export function sanitizeText(dirty: string): string {
     .trim();
 }
 
+/** Removes all HTML tags and unescapes HTML entities from a string. */
 export function stripAllHtml(dirty: string): string {
   if (!dirty) return '';
 
@@ -108,6 +85,7 @@ export function stripAllHtml(dirty: string): string {
     .trim();
 }
 
+/** Debounces a function so it only executes after the specified delay. */
 export function debounce<T extends (...args: unknown[]) => void>(
   fn: T,
   delay: number
@@ -120,6 +98,7 @@ export function debounce<T extends (...args: unknown[]) => void>(
   };
 }
 
+/** Throttles a function so it executes at most once per interval. */
 export function throttle<T extends (...args: unknown[]) => void>(
   fn: T,
   limit: number
@@ -144,18 +123,22 @@ export function throttle<T extends (...args: unknown[]) => void>(
   };
 }
 
+/** Returns the number of days elapsed since the given date. */
 export function daysSince(date: Date | string): number {
   const dateObj = typeof date === 'string' ? parseISO(date) : date;
   return differenceInDays(new Date(), dateObj);
 }
 
+/** Safely converts a value to a number, returning 0 for invalid inputs. */
 export function toNumber(value: string | number | undefined): number {
   if (value === undefined || value === null) return 0;
   return typeof value === 'number' ? value : parseFloat(value) || 0;
 }
 
+/** Formats a number to a fixed number of decimal places. */
 export function addDecimals(value: number, decimals: number = 2): string {
   return value.toFixed(decimals);
 }
 
+export * from './type-utils';
 export { withRetry, RetryOptions } from './retry';

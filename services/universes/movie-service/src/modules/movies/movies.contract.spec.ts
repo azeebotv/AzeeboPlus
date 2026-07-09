@@ -1,21 +1,43 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication } from '@nestjs/common';
+import { INestApplication, UnauthorizedException } from '@nestjs/common';
 import request from 'supertest';
 import { MoviesModule } from './movies.module';
+import { MoviesService } from './movies.service';
+import { PrismaService } from '../database/prisma.service';
+import { ConfigService } from '@nestjs/config';
+import { RateLimitGuard } from '@azeebo/security';
+import { AuthGuard } from '@nestjs/passport';
+
+const mockAuthGuard = {
+  canActivate: (context: any) => {
+    const req = context.switchToHttp().getRequest();
+    if (!req.headers.authorization) {
+      throw new UnauthorizedException();
+    }
+    req.user = { sub: 'user-123', role: 'user' };
+    return true;
+  },
+};
 
 describe('Movies Controller Contract Tests', () => {
   let app: INestApplication;
 
   const mockMoviesService = {
-    listMovies: jest.fn(),
-    getMovie: jest.fn(),
-    rentMovie: jest.fn(),
-    listPremieres: jest.fn(),
-    getWatchlist: jest.fn(),
-    addToWatchlist: jest.fn(),
-    removeFromWatchlist: jest.fn(),
-    rateMovie: jest.fn(),
-    getRecommendations: jest.fn(),
+    listMovies: jest.fn().mockResolvedValue({ success: true, data: [] }),
+    getMovie: jest.fn().mockResolvedValue({ success: true, data: {} }),
+    rentMovie: jest.fn().mockResolvedValue({ success: true, data: {} }),
+    listPremieres: jest.fn().mockResolvedValue({ success: true, data: [] }),
+    getWatchlist: jest.fn().mockResolvedValue({ success: true, data: [] }),
+    addToWatchlist: jest.fn().mockResolvedValue({ success: true, data: {} }),
+    removeFromWatchlist: jest.fn().mockResolvedValue({ success: true, data: {} }),
+    rateMovie: jest.fn().mockResolvedValue({ success: true, data: {} }),
+    getRecommendations: jest.fn().mockResolvedValue({ success: true, data: [] }),
+    getLibrary: jest.fn().mockResolvedValue({ success: true, data: [] }),
+    getViewingWindows: jest.fn().mockResolvedValue({ success: true, data: [] }),
+    getActiveViewingWindows: jest.fn().mockResolvedValue({ success: true, data: [] }),
+    checkMovieAvailability: jest.fn().mockResolvedValue({ success: true, data: {} }),
+    createViewingWindow: jest.fn().mockResolvedValue({ success: true, data: {} }),
+    updateViewingWindow: jest.fn().mockResolvedValue({ success: true, data: {} }),
   };
 
   beforeAll(async () => {
@@ -24,8 +46,22 @@ describe('Movies Controller Contract Tests', () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [MoviesModule],
     })
-      .overrideProvider(MoviesModule)
+      .overrideProvider(MoviesService)
       .useValue(mockMoviesService)
+      .overrideProvider(PrismaService)
+      .useValue({
+        $connect: jest.fn().mockResolvedValue(undefined),
+        $disconnect: jest.fn().mockResolvedValue(undefined),
+      })
+      .overrideProvider(ConfigService)
+      .useValue({
+        get: jest.fn().mockReturnValue('test-value'),
+        getOrThrow: jest.fn().mockReturnValue('test-value'),
+      })
+      .overrideGuard(AuthGuard('jwt'))
+      .useValue(mockAuthGuard)
+      .overrideGuard(RateLimitGuard)
+      .useValue({ canActivate: jest.fn().mockReturnValue(true) })
       .compile();
 
     app = moduleFixture.createNestApplication();

@@ -1,8 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AppealService } from './appeal.service';
 import { PrismaService } from '../database/prisma.service';
+import { ConfigService } from '@nestjs/config';
 import { BadRequestException } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
 
 jest.mock('@azeebo/api-client', () => ({
   createApiClient: jest.fn().mockReturnValue({
@@ -11,6 +11,7 @@ jest.mock('@azeebo/api-client', () => ({
     put: jest.fn(),
     delete: jest.fn(),
   }),
+  noopTokenStorage: {},
 }));
 
 describe('AppealService', () => {
@@ -27,10 +28,17 @@ describe('AppealService', () => {
     },
   };
 
+  const mockConfigService = {
+    getOrThrow: jest.fn().mockReturnValue('http://mock-url'),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      imports: [ConfigModule.forRoot()],
-      providers: [AppealService, { provide: PrismaService, useValue: mockPrisma }],
+      providers: [
+        AppealService,
+        { provide: PrismaService, useValue: mockPrisma },
+        { provide: ConfigService, useValue: mockConfigService },
+      ],
     }).compile();
 
     service = module.get<AppealService>(AppealService);

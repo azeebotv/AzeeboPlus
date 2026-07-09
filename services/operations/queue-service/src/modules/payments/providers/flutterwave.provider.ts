@@ -1,4 +1,5 @@
 import { Injectable, BadRequestException, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 import { createHmac, timingSafeEqual } from 'crypto';
 
@@ -28,19 +29,25 @@ interface FlutterwaveVerifyResponse {
 export class FlutterwaveProvider {
   private readonly logger = new Logger(FlutterwaveProvider.name);
   private readonly apiKey: string;
-  private readonly baseUrl = 'https://api.flutterwave.com/v3';
+  private readonly baseUrl: string;
 
-  constructor() {
-    this.apiKey = process.env.FLUTTERWAVE_SECRET_KEY || '';
+  constructor(private readonly configService: ConfigService) {
+    this.apiKey = this.configService.get<string>('FLUTTERWAVE_SECRET_KEY') || '';
+    this.baseUrl = this.configService.get<string>('FLUTTERWAVE_API_URL', 'https://api.flutterwave.com/v3');
     if (!this.apiKey) {
-      this.logger.warn('FLUTTERWAVE_SECRET_KEY is not configured — Flutterwave payments will be unavailable');
+      this.logger.warn(
+        'FLUTTERWAVE_SECRET_KEY is not configured — Flutterwave payments will be unavailable'
+      );
     } else {
       this.logger.log('FlutterwaveProvider initialized');
     }
   }
 
   // PAY-003: In-memory idempotency store (production should use Redis/DB)
-  private readonly idempotencyStore = new Map<string, { result: Record<string, unknown>; timestamp: number }>();
+  private readonly idempotencyStore = new Map<
+    string,
+    { result: Record<string, unknown>; timestamp: number }
+  >();
   private readonly IDEMPOTENCY_TTL = 3600_000; // 1 hour
 
   private checkIdempotency(key: string | undefined): Record<string, unknown> | null {
@@ -65,7 +72,12 @@ export class FlutterwaveProvider {
     this.idempotencyStore.set(key, { result, timestamp: Date.now() });
   }
 
-  async initializePayment(amount: number, currency: string, userId: string, idempotencyKey?: string) {
+  async initializePayment(
+    amount: number,
+    currency: string,
+    userId: string,
+    idempotencyKey?: string
+  ) {
     if (!this.apiKey) {
       throw new BadRequestException('Flutterwave payments are not configured');
     }
@@ -92,7 +104,7 @@ export class FlutterwaveProvider {
           amount,
           currency: currency || 'NGN',
           redirect_url:
-            process.env.FLUTTERWAVE_CALLBACK_URL || 'https://api.azeebo.plus/payments/webhook',
+            process.env.FLUTTERWAVE_CALLBACK_URL || 'http://localhost:3003/webhooks/flutterwave',
           customer: {
             email: `user-${userId}@azeebo.plus`,
             name: `User ${userId}`,
@@ -123,8 +135,8 @@ export class FlutterwaveProvider {
       this.storeIdempotency(idempotencyKey, result);
 
       return result;
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
+    } catch (_err) {
+      const message = error instanceof Error ? (error as Error).message : 'Unknown error';
       throw new BadRequestException(`Flutterwave initialization failed: ${message}`);
     }
   }
@@ -155,8 +167,8 @@ export class FlutterwaveProvider {
         paidAt: new Date(response.data.data.created_at),
         reference: response.data.data.tx_ref,
       };
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
+    } catch (_err) {
+      const message = error instanceof Error ? (error as Error).message : 'Unknown error';
       throw new BadRequestException(`Flutterwave verification failed: ${message}`);
     }
   }
@@ -189,8 +201,8 @@ export class FlutterwaveProvider {
         amount: response.data.data.amount,
         status: response.data.data.status,
       };
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
+    } catch (_err) {
+      const message = error instanceof Error ? (error as Error).message : 'Unknown error';
       throw new BadRequestException(`Flutterwave refund failed: ${message}`);
     }
   }
@@ -214,9 +226,6 @@ export class FlutterwaveProvider {
     const hash = createHmac('sha256', this.apiKey).update(JSON.stringify(payload)).digest('hex');
 
     // Timing-safe comparison to prevent timing attacks
-    if (hash.length !== signature.length) {
-      return false;
-    }
     return timingSafeEqual(Buffer.from(hash), Buffer.from(signature));
   }
 }

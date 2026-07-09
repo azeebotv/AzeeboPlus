@@ -39,11 +39,13 @@ describe('Auth Controller Contract Tests', () => {
 
   beforeAll(async () => {
     process.env.JWT_ACCESS_SECRET = 'test-jwt-secret';
-    process.env.REFRESH_TOKEN_SECRET = 'test-refresh-token-secret';
+    process.env.JWT_REFRESH_SECRET = 'test-refresh-token-secret';
     process.env.JWT_EXPIRES_IN = '60s';
     process.env.REFRESH_TOKEN_EXPIRES_IN = '7d';
     process.env.JWT_AUDIENCE = 'test-audience';
     process.env.JWT_ISSUER = 'test-issuer';
+    process.env.NODE_ENV = 'test';
+    process.env.DATABASE_URL = 'postgresql://test:test@localhost:5432/test';
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [ConfigModule.forRoot(), AuthModule],
@@ -154,6 +156,7 @@ describe('Auth Controller Contract Tests', () => {
     it('should return success response with user and tokens', async () => {
       const authRepository = app.get(AuthRepository);
       const jwtService = app.get(JwtService);
+      const bcrypt = require('bcrypt');
 
       jest.spyOn(authRepository, 'findByEmail').mockResolvedValue({
         id: 'user-123',
@@ -180,6 +183,7 @@ describe('Auth Controller Contract Tests', () => {
       jest.spyOn(jwtService, 'sign').mockImplementation((payload) => {
         return `token-${(payload as any).sub}`;
       });
+      const compareSpy = jest.spyOn(bcrypt, 'compare').mockResolvedValue(true as never);
 
       const response = await request(app.getHttpServer()).post('/auth/login').send({
         email: 'test@example.com',
@@ -191,6 +195,8 @@ describe('Auth Controller Contract Tests', () => {
       expect(response.body.data).toHaveProperty('user');
       expect(response.body.data).toHaveProperty('access_token');
       expect(response.body.data).toHaveProperty('refresh_token');
+
+      compareSpy.mockRestore();
     });
   });
 
@@ -254,17 +260,17 @@ describe('Auth Controller Contract Tests', () => {
     });
   });
 
-  describe('DELETE /auth/logout', () => {
+  describe('POST /auth/logout', () => {
     it('should return success response', async () => {
       const authRepository = app.get(AuthRepository);
 
       jest.spyOn(authRepository, 'deleteSessionByUserId').mockResolvedValue(1);
 
       const response = await request(app.getHttpServer())
-        .delete('/auth/logout')
+        .post('/auth/logout')
         .set('Authorization', 'Bearer valid-token');
 
-      expect(response.status).toBe(200);
+      expect(response.status).toBe(201);
       expect(response.body).toEqual({
         success: true,
         data: expect.any(Object),

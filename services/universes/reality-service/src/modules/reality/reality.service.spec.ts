@@ -2,6 +2,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
 import { RealityService } from './reality.service';
 import { PrismaService } from '../database/prisma.service';
+import { ConfigService } from '@nestjs/config';
+import { RedisService } from '../../common/services/redis.service';
 
 describe('RealityService', () => {
   let service: RealityService;
@@ -21,6 +23,7 @@ describe('RealityService', () => {
     },
     vote: {
       findMany: jest.fn(),
+      findUnique: jest.fn(),
       create: jest.fn(),
     },
     prediction: {
@@ -29,6 +32,9 @@ describe('RealityService', () => {
     },
     season: {
       findMany: jest.fn(),
+      findUnique: jest.fn(),
+    },
+    wallet: {
       findUnique: jest.fn(),
     },
   };
@@ -40,6 +46,21 @@ describe('RealityService', () => {
         {
           provide: PrismaService,
           useValue: mockPrismaService,
+        },
+        {
+          provide: ConfigService,
+          useValue: {
+            get: jest.fn().mockReturnValue('test-value'),
+            getOrThrow: jest.fn().mockReturnValue('test-value'),
+          },
+        },
+        {
+          provide: RedisService,
+          useValue: {
+            get: jest.fn().mockResolvedValue(null),
+            set: jest.fn().mockResolvedValue('OK'),
+            del: jest.fn().mockResolvedValue(1),
+          },
         },
       ],
     }).compile();

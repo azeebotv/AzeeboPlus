@@ -45,9 +45,9 @@ PGCONF
 
 # Configure pg_hba.conf for local connections
 cat > "$POSTGRES_DATA/pg_hba.conf" << PGHBA
-local   all   all                 trust
-host    all   all  127.0.0.1/32   trust
-host    all   all  ::1/128        trust
+local   all   all                 md5
+host    all   all  127.0.0.1/32   md5
+host    all   all  ::1/128        md5
 PGHBA
 
 # ============================================================
@@ -70,11 +70,12 @@ done
 # 3. Create superuser and default database
 # ============================================================
 echo "==> Configuring PostgreSQL user and database..."
-su - postgres -c "psql -c \"ALTER USER postgres WITH PASSWORD '$POSTGRES_PASSWORD';\"" || true
-su - postgres -c "psql -c \"SELECT 1 FROM pg_roles WHERE rolname='$POSTGRES_USER'\" | grep -q 1" || \
-  su - postgres -c "psql -c \"CREATE USER $POSTGRES_USER WITH SUPERUSER PASSWORD '$POSTGRES_PASSWORD';\""
-su - postgres -c "psql -c \"SELECT 1 FROM pg_database WHERE datname='$POSTGRES_DB'\" | grep -q 1" || \
-  su - postgres -c "psql -c \"CREATE DATABASE $POSTGRES_DB OWNER $POSTGRES_USER;\""
+export PGPASSWORD="$POSTGRES_PASSWORD"
+su - postgres -c "psql -v ON_ERROR_STOP=0 -c \"ALTER USER postgres WITH PASSWORD '${POSTGRES_PASSWORD}'\"" || true
+su - postgres -c "psql -v ON_ERROR_STOP=0 -t -A -c \"SELECT 1 FROM pg_roles WHERE rolname='${POSTGRES_USER}'\" | grep -q 1" || \
+  su - postgres -c "psql -c \"CREATE USER ${POSTGRES_USER} WITH SUPERUSER PASSWORD '${POSTGRES_PASSWORD}'\""
+su - postgres -c "psql -v ON_ERROR_STOP=0 -t -A -c \"SELECT 1 FROM pg_database WHERE datname='${POSTGRES_DB}'\" | grep -q 1" || \
+  su - postgres -c "psql -c \"CREATE DATABASE ${POSTGRES_DB} OWNER ${POSTGRES_USER}\""
 
 # ============================================================
 # 4. Create all service databases
@@ -141,7 +142,7 @@ no-appendfsync-on-rewrite yes
 auto-aof-rewrite-percentage 100
 auto-aof-rewrite-min-size 64mb
 maxmemory 512mb
-maxmemory-policy allkeys-lru
+maxmemory-policy noeviction
 save 900 1
 save 300 10
 save 60 10000
@@ -192,7 +193,7 @@ azeebo_creator_portal = host=127.0.0.1 port=5432 dbname=azeebo_creator_portal
 [pgbouncer]
 listen_addr = 0.0.0.0
 listen_port = 6432
-auth_type = trust
+auth_type = scram-sha-256
 pool_mode = transaction
 max_client_conn = 500
 default_pool_size = 20
@@ -206,6 +207,15 @@ unix_socket_dir = /var/run/pgbouncer
 PGBOUNCERINI
 chown -R pgbouncer:pgbouncer /var/run/pgbouncer
 
+# Generate PgBouncer userlist from PostgreSQL password hashes
+echo "    Generating PgBouncer userlist..."
+su - postgres -c "psql -d postgres -t -A -c \"SELECT '\" || rolname || '\" \"' || password || '\"' FROM pg_authid WHERE rolname != 'postgres' AND rolname != '$POSTGRES_USER' AND password IS NOT NULL;\"" > /etc/pgbouncer/userlist.txt 2>/dev/null || true
+# Also add the superuser
+su - postgres -c "psql -d postgres -t -A -c \"SELECT '\" || rolname || '\" \"' || password || '\"' FROM pg_authid WHERE rolname = '$POSTGRES_USER' AND password IS NOT NULL;\"" >> /etc/pgbouncer/userlist.txt 2>/dev/null || true
+chown pgbouncer:pgbouncer /etc/pgbouncer/userlist.txt
+chmod 600 /etc/pgbouncer/userlist.txt
+echo "    PgBouncer userlist generated."
+
 # ============================================================
 # 7. Run Prisma migrations
 # ============================================================
@@ -218,7 +228,6 @@ MIGRATE_SERVICES=(
   "services/core/payment-service:payment-service:azeebo_payment:azeebo:${PAYMENT_DB_PASSWORD:-$POSTGRES_PASSWORD}"
   "services/core/content-service:content-service:azeebo_content:azeebo:${CONTENT_DB_PASSWORD:-$POSTGRES_PASSWORD}"
   "services/core/search-service:search-service:azeebo_search:azeebo:${SEARCH_DB_PASSWORD:-$POSTGRES_PASSWORD}"
-  "services/core/media-service:media-service:azeebo_media:azeebo:${MEDIA_DB_PASSWORD:-$POSTGRES_PASSWORD}"
   "services/engagement/notification-service:notification-service:azeebo_notification:azeebo:${NOTIFICATION_DB_PASSWORD:-$POSTGRES_PASSWORD}"
   "services/engagement/reward-service:reward-service:azeebo_reward:azeebo:${REWARD_DB_PASSWORD:-$POSTGRES_PASSWORD}"
   "services/intelligence/analytics-service:analytics-service:azeebo_analytics:azeebo:${ANALYTICS_DB_PASSWORD:-$POSTGRES_PASSWORD}"
@@ -238,7 +247,30 @@ MIGRATE_SERVICES=(
   "services/engagement/messaging-service:messaging-service:azeebo_messaging:azeebo:${MESSAGING_DB_PASSWORD:-$POSTGRES_PASSWORD}"
   "services/engagement/referral-service:referral-service:azeebo_referral:azeebo:${REFERRAL_DB_PASSWORD:-$POSTGRES_PASSWORD}"
   "services/engagement/subscription-service:subscription-service:azeebo_subscription:azeebo:${SUBSCRIPTION_DB_PASSWORD:-$POSTGRES_PASSWORD}"
+  "apps/admin:admin-app:azeebo_admin:azeebo:${ADMIN_DB_PASSWORD:-$POSTGRES_PASSWORD}"
+  "apps/creator-portal:creator-portal-app:azeebo_creator_portal:azeebo:${CREATOR_PORTAL_DB_PASSWORD:-$POSTGRES_PASSWORD}"
 )
+
+# First: resolve any stuck/failed Prisma migrations (P3009) before deploying
+for entry in "${MIGRATE_SERVICES[@]}"; do
+  IFS=':' read -r svc_dir svc_name db_name db_user db_pass <<< "$entry"
+
+  # Check if prisma_migrations table exists and has stuck failures
+  # Find migrations that are not cleanly applied (started but not finished, or finished but still rolling back)
+  failed_migrations=$(PGPASSWORD="$db_pass" psql -h 127.0.0.1 -U "$db_user" -d "$db_name" -t -A -c \
+    "SELECT migration_name FROM prisma_migrations WHERE (finished_at IS NULL AND started_at IS NOT NULL) OR (rolling_back_at IS NOT NULL AND rolled_back_at IS NULL) LIMIT 50" 2>/dev/null || echo "")
+
+  if [ -n "$failed_migrations" ]; then
+    echo "    Resolving stuck migrations for $svc_name..."
+    while IFS= read -r migration_name; do
+      [ -z "$migration_name" ] && continue
+      echo "      Resolving: $migration_name"
+      DATABASE_URL="postgresql://$db_user:$db_pass@127.0.0.1:5432/$db_name?schema=public" \
+        prisma migrate resolve --rolled-back "$migration_name" --schema="$svc_dir/prisma/schema.prisma" 2>&1 || \
+        echo "      WARNING: Could not resolve $migration_name (may already be resolved)"
+    done <<< "$failed_migrations"
+  fi
+done
 
 for entry in "${MIGRATE_SERVICES[@]}"; do
   IFS=':' read -r svc_dir svc_name db_name db_user db_pass <<< "$entry"
@@ -248,6 +280,38 @@ for entry in "${MIGRATE_SERVICES[@]}"; do
     prisma migrate deploy --schema="$svc_dir/prisma/schema.prisma" 2>&1 || \
     echo "    WARNING: Migration failed for $svc_name (may not have migrations yet)"
 done
+
+# ============================================================
+# 7b. Clear databases if CLEAR_DB=1 and DEMO_MODE=1
+# ============================================================
+if [ "${DEMO_MODE:-false}" = "true" ] && [ "${CLEAR_DB:-0}" = "1" ]; then
+  echo "==> CLEAR_DB=1 — Dropping and recreating all service databases..."
+  for entry in "${MIGRATE_SERVICES[@]}"; do
+    IFS=':' read -r svc_dir svc_name db_name db_user db_pass <<< "$entry"
+    echo "    Clearing $db_name..."
+    PGPASSWORD="$db_pass" psql -h 127.0.0.1 -U "$db_user" -d postgres -t -A -c \
+      "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname='$db_name' AND pid <> pg_backend_pid();" >/dev/null 2>&1 || true
+    PGPASSWORD="$db_pass" psql -h 127.0.0.1 -U "$db_user" -d postgres -t -A -c \
+      "DROP DATABASE IF EXISTS \"$db_name\";" >/dev/null 2>&1 || true
+    PGPASSWORD="$db_pass" psql -h 127.0.0.1 -U "$db_user" -d postgres -t -A -c \
+      "CREATE DATABASE \"$db_name\";" >/dev/null 2>&1 || true
+    echo "    $db_name cleared."
+  done
+  echo "==> All databases cleared."
+fi
+
+# ============================================================
+# 7c. Load demo content if DEMO_MODE is enabled
+# ============================================================
+if [ "${DEMO_MODE:-false}" = "true" ]; then
+  echo "==> DEMO_MODE enabled — loading demo content into all databases..."
+  if [ -x /app/scripts/demo-content/deploy-all-in-one.sh ]; then
+    DB_PASSWORD="$POSTGRES_PASSWORD" /app/scripts/demo-content/deploy-all-in-one.sh || \
+      echo "    WARNING: Demo content deployment had errors (non-fatal)"
+  else
+    echo "    WARNING: /app/scripts/demo-content/deploy-all-in-one.sh not found or not executable"
+  fi
+fi
 
 # ============================================================
 # 8. Stop temporary PostgreSQL (supervisord will restart it)
@@ -490,10 +554,30 @@ export TWILIO_ACCOUNT_SID="${TWILIO_ACCOUNT_SID:-}"
 export TWILIO_AUTH_TOKEN="${TWILIO_AUTH_TOKEN:-}"
 export TWILIO_PHONE_NUMBER="${TWILIO_PHONE_NUMBER:-}"
 export NODE_OPTIONS="--max-old-space-size=512"
+if [ "$svc_name" = "auth-service" ]; then
+  /app/service-wrappers/auth-service-flush.sh || true
+fi
 exec node /app/${main_js}
 WRAPPER
   chmod +x "/app/service-wrappers/${svc_name}.sh"
 done
+
+# Flush stale rate limit keys on auth-service startup
+cat > /app/service-wrappers/auth-service-flush.sh << 'FLUSH'
+#!/bin/bash
+# Wait for Redis to be ready, then flush rate limit keys
+for i in $(seq 1 30); do
+  if redis-cli -a "$REDIS_PASSWORD" ping >/dev/null 2>&1; then
+    redis-cli -a "$REDIS_PASSWORD" --no-auth-warning keys "rate_limit:*" | xargs -r redis-cli -a "$REDIS_PASSWORD" --no-auth-warning del >/dev/null 2>&1
+    redis-cli -a "$REDIS_PASSWORD" --no-auth-warning keys "ratelimit:*" | xargs -r redis-cli -a "$REDIS_PASSWORD" --no-auth-warning del >/dev/null 2>&1
+    echo "    Flushed stale rate limit keys from Redis"
+    exit 0
+  fi
+  sleep 1
+done
+echo "    WARNING: Could not flush rate limit keys (Redis not ready)"
+FLUSH
+chmod +x /app/service-wrappers/auth-service-flush.sh
 
 # API gateway wrapper (routes to services)
 cat > /app/service-wrappers/api-gateway.sh << WRAPPER
@@ -613,6 +697,7 @@ export DATABASE_USER="azeebo"
 export DATABASE_NAME="azeebo_creator_portal"
 export PORT="4014"
 export NODE_ENV="production"
+export JWT_ACCESS_SECRET="${JWT_ACCESS_SECRET}"
 export CREATOR_ALLOWED_ORIGINS="${ALLOWED_ORIGINS}"
 export API_GATEWAY_URL="${API_GATEWAY_URL}"
 export ALLOWED_ORIGINS="${ALLOWED_ORIGINS}"
@@ -700,6 +785,17 @@ export SENDGRID_API_KEY="${SENDGRID_API_KEY:-}"
 export TWILIO_ACCOUNT_SID="${TWILIO_ACCOUNT_SID:-}"
 export TWILIO_AUTH_TOKEN="${TWILIO_AUTH_TOKEN:-}"
 export TWILIO_PHONE_NUMBER="${TWILIO_PHONE_NUMBER:-}"
+# Verify standalone server exists before trying to start
+if [ ! -f /app/apps/web/standalone/server.js ]; then
+  echo "ERROR: /app/apps/web/standalone/server.js not found!"
+  echo "  Listing /app/apps/web/ directory:"
+  ls -la /app/apps/web/ 2>&1 || echo "  /app/apps/web/ does not exist"
+  echo "  Listing /app/apps/ directory:"
+  ls -la /app/apps/ 2>&1 || echo "  /app/apps/ does not exist"
+  echo "  The web app will not start until this file is present."
+  echo "  This usually means the Docker image was built without the Next.js standalone output."
+  sleep infinity
+fi
 cd /app/apps/web/standalone
 exec node server.js
 WRAPPER

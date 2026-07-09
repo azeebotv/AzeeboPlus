@@ -1,16 +1,5 @@
-import React from 'react';
-import {
-  StyleSheet,
-  ActivityIndicator,
-  type ViewStyle,
-  type StyleProp,
-  Text,
-} from 'react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-} from 'react-native-reanimated';
+import { StyleSheet, ActivityIndicator, type ViewStyle, type StyleProp, Text } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { colors, radius, typography, spacing, shadows, spring } from '../../theme';
 
 const AnimatedTouchable = Animated.createAnimatedComponent(
@@ -20,7 +9,7 @@ const AnimatedTouchable = Animated.createAnimatedComponent(
 interface BrandButtonProps {
   title: string;
   onPress: () => void;
-  variant?: 'primary' | 'secondary' | 'ghost' | 'social';
+  variant?: 'primary' | 'secondary' | 'ghost' | 'social' | 'glass' | 'dark';
   socialProvider?: 'google' | 'apple';
   loading?: boolean;
   disabled?: boolean;
@@ -79,7 +68,7 @@ export function BrandButton({
     >
       {loading ? (
         <ActivityIndicator
-          color={variant === 'primary' ? '#FFFFFF' : colors.primary}
+          color={variant === 'primary' ? colors.text.primary : colors.primary[500]}
           size="small"
         />
       ) : (
@@ -101,21 +90,21 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   primary: {
-    backgroundColor: colors.red,
+    backgroundColor: colors.primary[500],
     ...shadows.red,
   },
   primaryText: {
-    color: '#FFFFFF',
+    color: colors.text.primary,
     fontSize: typography.fontSize.md,
     fontWeight: typography.fontWeight.bold,
   },
   secondary: {
     backgroundColor: 'transparent',
     borderWidth: 1.5,
-    borderColor: colors.red,
+    borderColor: colors.primary[500],
   },
   secondaryText: {
-    color: colors.primary,
+    color: colors.primary[500],
     fontSize: typography.fontSize.md,
     fontWeight: typography.fontWeight.semibold,
   },
@@ -136,6 +125,26 @@ const styles = StyleSheet.create({
   socialText: {
     color: colors.text.primary,
     fontSize: typography.fontSize.base,
+    fontWeight: typography.fontWeight.semibold,
+  },
+  glass: {
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  glassText: {
+    color: colors.text.primary,
+    fontSize: typography.fontSize.md,
+    fontWeight: typography.fontWeight.semibold,
+  },
+  dark: {
+    backgroundColor: colors.bg.secondary,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  darkText: {
+    color: colors.text.primary,
+    fontSize: typography.fontSize.md,
     fontWeight: typography.fontWeight.semibold,
   },
   disabled: {

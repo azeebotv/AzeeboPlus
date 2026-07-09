@@ -5,6 +5,7 @@ import * as bcrypt from 'bcrypt';
 import { randomUUID } from 'crypto';
 
 import { AuthRepository } from '../auth.repository';
+import { RedisService } from '../../common/services/redis.service';
 
 interface SocialUser {
   email: string;
@@ -34,28 +35,8 @@ interface SocialLoginResponse {
   };
 }
 
-interface PendingState {
-  provider: 'google' | 'apple';
-  createdAt: number;
-}
-
-/**
- * State store for OAuth CSRF protection.
- * In-memory Map with 10-minute TTL. In production, replace with Redis-backed store
- * for multi-instance deployments.
- */
-const STATE_TTL_MS = 10 * 60 * 1000; // 10 minutes
-const stateStore = new Map<string, PendingState>();
-
-// Periodic cleanup of expired states
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, value] of stateStore.entries()) {
-    if (now - value.createdAt > STATE_TTL_MS) {
-      stateStore.delete(key);
-    }
-  }
-}, 60_000);
+const STATE_TTL_SECONDS = 600; // 10 minutes
+const STATE_PREFIX = 'social_state:';
 
 @Injectable()
 export class SocialAuthService {
@@ -65,47 +46,34 @@ export class SocialAuthService {
   constructor(
     private readonly authRepository: AuthRepository,
     private readonly jwtService: JwtService,
-    private readonly configService: ConfigService
+    private readonly configService: ConfigService,
+    private readonly redisService: RedisService
   ) {
     this.saltRounds = this.configService.get<number>('SALT_ROUNDS', 10);
   }
 
   // ─── State management for CSRF protection ──────────────────────────
 
-  /**
-   * Generate a random state parameter, store it with provider info and TTL,
-   * and return it to the client.
-   */
-  generateState(provider: 'google' | 'apple'): string {
+  async generateState(provider: 'google' | 'apple'): Promise<string> {
     const state = randomUUID();
-    stateStore.set(state, { provider, createdAt: Date.now() });
+    await this.redisService.set(
+      `${STATE_PREFIX}${state}`,
+      provider,
+      STATE_TTL_SECONDS
+    );
     return state;
   }
 
-  /**
-   * Validate that the state parameter matches a pending state and hasn't expired.
-   * Returns the provider if valid, throws if invalid.
-   * Consumes (deletes) the state to prevent replay.
-   */
-  validateState(state: string): 'google' | 'apple' {
-    const pending = stateStore.get(state);
+  async validateState(state: string): Promise<'google' | 'apple'> {
+    const provider = await this.redisService.get(`${STATE_PREFIX}${state}`) as 'google' | 'apple' | null;
 
-    if (!pending) {
-      this.logger.warn(`Social auth state validation failed: state not found or expired`);
+    if (!provider) {
+      this.logger.warn('Social auth state validation failed: state not found or expired');
       throw new BadRequestException('Invalid or expired state parameter');
     }
 
-    // Check TTL
-    if (Date.now() - pending.createdAt > STATE_TTL_MS) {
-      stateStore.delete(state);
-      this.logger.warn(`Social auth state validation failed: state expired`);
-      throw new BadRequestException('Invalid or expired state parameter');
-    }
-
-    // Consume the state to prevent replay attacks
-    stateStore.delete(state);
-
-    return pending.provider;
+    await this.redisService.del(`${STATE_PREFIX}${state}`);
+    return provider;
   }
 
   /**
@@ -153,7 +121,9 @@ export class SocialAuthService {
   // ─── Social login flow ─────────────────────────────────────────────
 
   async socialLogin(socialUser: SocialUser): Promise<SocialLoginResponse> {
-    this.logger.log(`Social login attempt: provider=${socialUser.provider}, email=${socialUser.email}`);
+    this.logger.log(
+      `Social login attempt: provider=${socialUser.provider}, email=${socialUser.email}`
+    );
 
     try {
       let user = await this.authRepository.findByEmail(socialUser.email);

@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ChargebackService } from './chargeback.service';
 import { PrismaService } from '../database/prisma.service';
+import { ConfigService } from '@nestjs/config';
 import { BadRequestException } from '@nestjs/common';
 import { Decimal } from '@prisma/client/runtime/library';
 
@@ -11,6 +12,7 @@ jest.mock('@azeebo/api-client', () => ({
     put: jest.fn().mockResolvedValue({ data: {} }),
     delete: jest.fn().mockResolvedValue({ data: {} }),
   }),
+  noopTokenStorage: {},
 }));
 
 describe('ChargebackService', () => {
@@ -27,9 +29,17 @@ describe('ChargebackService', () => {
     },
   };
 
+  const mockConfigService = {
+    getOrThrow: jest.fn().mockReturnValue('http://mock-url'),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [ChargebackService, { provide: PrismaService, useValue: mockPrisma }],
+      providers: [
+        ChargebackService,
+        { provide: PrismaService, useValue: mockPrisma },
+        { provide: ConfigService, useValue: mockConfigService },
+      ],
     }).compile();
 
     service = module.get<ChargebackService>(ChargebackService);

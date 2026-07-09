@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { UploadController } from './upload.controller';
 import { UploadService } from './upload.service';
@@ -8,7 +8,17 @@ import { PremiumContentService } from './premium-content.service';
 import { CommonModule } from '../../common/common.module';
 
 @Module({
-  imports: [ConfigModule, CommonModule, JwtModule.register({})],
+  imports: [
+    ConfigModule,
+    CommonModule,
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService) => ({
+        secret: configService.getOrThrow<string>('JWT_ACCESS_SECRET'),
+      }),
+      inject: [ConfigService],
+    }),
+  ],
   controllers: [UploadController],
   providers: [UploadService, S3Service, PremiumContentService],
   exports: [UploadService, S3Service, PremiumContentService],

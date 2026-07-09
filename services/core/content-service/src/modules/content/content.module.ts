@@ -5,6 +5,11 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 
 import { ContentController } from './content.controller';
 import { ContentService } from './content.service';
+import { ContentFeedService } from './content-feed.service';
+import { ContentModerationService } from './content-moderation.service';
+import { ContentRelationshipService } from './content-relationship.service';
+import { ContentCategoryService } from './content-category.service';
+import { ContentIngestionService } from './content-ingestion.service';
 import { ContentRepository } from './content.repository';
 import { AccessControlService } from './access-control.service';
 import { DatabaseModule } from '../database/database.module';
@@ -23,14 +28,33 @@ import { CacheModule } from '../../cache/cache.module';
       useFactory: async (configService: ConfigService) => ({
         secret: configService.getOrThrow<string>('JWT_ACCESS_SECRET'),
         signOptions: {
-          expiresIn: configService.get('JWT_EXPIRES_IN', '30m') as any,
+          expiresIn: configService.get('JWT_EXPIRES_IN', '30m') as string | number,
         },
       }),
       inject: [ConfigService],
     }),
   ],
   controllers: [ContentController],
-  providers: [ContentService, ContentRepository, AccessControlService],
-  exports: [ContentService, ContentRepository, AccessControlService, DatabaseModule],
+  providers: [
+    ContentService,
+    ContentFeedService,
+    ContentModerationService,
+    ContentRelationshipService,
+    ContentCategoryService,
+    ContentIngestionService,
+    ContentRepository,
+    AccessControlService,
+  ],
+  exports: [
+    ContentService,
+    ContentFeedService,
+    ContentModerationService,
+    ContentRelationshipService,
+    ContentCategoryService,
+    ContentIngestionService,
+    ContentRepository,
+    AccessControlService,
+    DatabaseModule,
+  ],
 })
 export class ContentModule {}

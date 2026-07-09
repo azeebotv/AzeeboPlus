@@ -215,7 +215,9 @@ model Notification {
   @@index([type])
 }
 
-model Wallet {
+// Reference-only: canonical Wallet/WalletTransaction owned by wallet-service.
+// Use wallet-service API for wallet operations; these are denormalized snapshots.
+model WalletSnapshot {
   id        String   @id @default(uuid())
   userId    String   @unique
   balance   Decimal  @default(0) @db.Decimal(18, 2)
@@ -223,11 +225,11 @@ model Wallet {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@map("wallets")
+  @@map("wallet_snapshots")
   @@index([userId])
 }
 
-model WalletTransaction {
+model WalletTransactionSnapshot {
   id          String   @id @default(uuid())
   walletId    String
   type        String   // credit, debit
@@ -236,7 +238,7 @@ model WalletTransaction {
   reference   String?
   createdAt   DateTime @default(now())
 
-  @@map("wallet_transactions")
+  @@map("wallet_transaction_snapshots")
   @@index([walletId])
   @@index([type])
 }

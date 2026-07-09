@@ -1,8 +1,6 @@
 import { useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Logger } from '@azeebo/shared-types';
-
-const logger = new Logger('useStorage');
+import { logger } from '../utils/logger';
 
 export function useStorage(): {
   getItem: (key: string) => Promise<string | null>;
@@ -15,7 +13,7 @@ export function useStorage(): {
       return await AsyncStorage.getItem(key);
     } catch (error) {
       logger.error(
-        `Error reading ${key} from storage: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Error reading ${key} from storage: ${error instanceof Error ? (error as Error).message : 'Unknown error'}`
       );
       return null;
     }
@@ -26,7 +24,7 @@ export function useStorage(): {
       await AsyncStorage.setItem(key, value);
     } catch (error) {
       logger.error(
-        `Error writing ${key} to storage: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Error writing ${key} to storage: ${error instanceof Error ? (error as Error).message : 'Unknown error'}`
       );
     }
   }, []);
@@ -36,7 +34,7 @@ export function useStorage(): {
       await AsyncStorage.removeItem(key);
     } catch (error) {
       logger.error(
-        `Error removing ${key} from storage: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Error removing ${key} from storage: ${error instanceof Error ? (error as Error).message : 'Unknown error'}`
       );
     }
   }, []);
@@ -46,7 +44,7 @@ export function useStorage(): {
       await AsyncStorage.clear();
     } catch (error) {
       logger.error(
-        `Error clearing storage: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Error clearing storage: ${error instanceof Error ? (error as Error).message : 'Unknown error'}`
       );
     }
   }, []);

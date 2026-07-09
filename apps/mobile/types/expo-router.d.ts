@@ -2,8 +2,6 @@
 // This fixes type mismatches for router.replace/navigation in expo-router
 
 declare module 'expo-router' {
-  import { ComponentType } from 'react';
-
   interface LinkProps {
     href: string;
   }

@@ -1,13 +1,14 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { RateLimitService } from './rate-limit.service';
-import { Redis } from 'ioredis';
+
+const REDIS_CONNECTION_TOKEN = 'default_IORedisModuleConnectionToken';
 
 describe('RateLimitService', () => {
   let service: RateLimitService;
-  let redis: jest.Mocked<Redis>;
+  let redis: Record<string, jest.Mock>;
 
   beforeEach(async () => {
-    const mockRedis = {
+    redis = {
       incr: jest.fn(),
       expire: jest.fn(),
       del: jest.fn(),
@@ -20,14 +21,13 @@ describe('RateLimitService', () => {
       providers: [
         RateLimitService,
         {
-          provide: Redis,
-          useValue: mockRedis,
+          provide: REDIS_CONNECTION_TOKEN,
+          useValue: redis,
         },
       ],
     }).compile();
 
     service = module.get<RateLimitService>(RateLimitService);
-    redis = module.get(Redis) as jest.Mocked<Redis>;
   });
 
   afterEach(() => {

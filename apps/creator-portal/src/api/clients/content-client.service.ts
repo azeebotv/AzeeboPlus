@@ -95,7 +95,7 @@ export class ContentClientService {
       req.on('error', (error) => {
         reject(
           new HttpException(
-            `Content Service error: ${error.message}`,
+            `Content Service error: ${(error as Error).message}`,
             HttpStatus.SERVICE_UNAVAILABLE
           )
         );

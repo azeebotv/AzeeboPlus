@@ -89,7 +89,9 @@ const SOCIAL_LINKS = [
 
 export default function AppFooter({ siteName = 'Azeebo+' }: AppFooterProps): React.JSX.Element {
   const [email, setEmail] = useState('');
-  const [newsletterStatus, setNewsletterStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [newsletterStatus, setNewsletterStatus] = useState<
+    'idle' | 'loading' | 'success' | 'error'
+  >('idle');
   const [emailError, setEmailError] = useState('');
   const [showBackToTop, setShowBackToTop] = useState(false);
   const emailInputRef = useRef<HTMLInputElement>(null);
@@ -134,11 +136,7 @@ export default function AppFooter({ siteName = 'Azeebo+' }: AppFooterProps): Rea
   };
 
   return (
-    <footer
-      className="relative"
-      style={{ backgroundColor: '#0a0303' }}
-      role="contentinfo"
-    >
+    <footer className="relative" style={{ backgroundColor: '#0a0303' }} role="contentinfo">
       {/* Ambient glow */}
       <div
         className="absolute inset-0 pointer-events-none"
@@ -160,7 +158,8 @@ export default function AppFooter({ siteName = 'Azeebo+' }: AppFooterProps): Rea
               <BrandLogo variant="orange" />
             </Link>
             <p className="text-white/40 text-sm mt-4 max-w-xs leading-relaxed">
-              The home of Nigerian entertainment. Stream, vote, earn, and celebrate culture — all in one platform.
+              The home of Nigerian entertainment. Stream, vote, earn, and celebrate culture — all in
+              one platform.
             </p>
 
             {/* Newsletter Signup */}
@@ -171,10 +170,20 @@ export default function AppFooter({ siteName = 'Azeebo+' }: AppFooterProps): Rea
               {newsletterStatus === 'success' ? (
                 <div
                   className="flex items-center gap-2 px-4 py-3 rounded-xl text-sm"
-                  style={{ background: 'rgba(34,197,94,0.1)', color: '#4ade80', border: '1px solid rgba(34,197,94,0.2)' }}
+                  style={{
+                    background: 'rgba(34,197,94,0.1)',
+                    color: '#4ade80',
+                    border: '1px solid rgba(34,197,94,0.2)',
+                  }}
                   role="status"
                 >
-                  <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <svg
+                    className="w-5 h-5 flex-shrink-0"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                   </svg>
                   You&apos;re subscribed! Check your inbox.
@@ -216,9 +225,25 @@ export default function AppFooter({ siteName = 'Azeebo+' }: AppFooterProps): Rea
                       }}
                     >
                       {newsletterStatus === 'loading' ? (
-                        <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                        <svg
+                          className="w-5 h-5 animate-spin"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          aria-hidden="true"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          />
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          />
                         </svg>
                       ) : (
                         'Subscribe'
@@ -262,7 +287,9 @@ export default function AppFooter({ siteName = 'Azeebo+' }: AppFooterProps): Rea
           {/* Link Columns */}
           {Object.values(FOOTER_LINKS).map((column) => (
             <div key={column.heading} className="lg:col-span-2">
-              <h3 className="text-xs font-bold uppercase tracking-widest text-white/30 mb-4">{column.heading}</h3>
+              <h3 className="text-xs font-bold uppercase tracking-widest text-white/30 mb-4">
+                {column.heading}
+              </h3>
               <ul className="space-y-3" role="list">
                 {column.links.map((link) => (
                   <li key={link.href}>
@@ -280,18 +307,27 @@ export default function AppFooter({ siteName = 'Azeebo+' }: AppFooterProps): Rea
 
           {/* App Download */}
           <div className="lg:col-span-2">
-            <h3 className="text-xs font-bold uppercase tracking-widest text-white/30 mb-4">Get the App</h3>
+            <h3 className="text-xs font-bold uppercase tracking-widest text-white/30 mb-4">
+              Get the App
+            </h3>
             <div className="flex flex-row gap-3">
               <a
                 href="#"
                 className="flex items-center gap-3 px-5 py-3 min-w-[180px] rounded-xl text-white/50 hover:text-white hover:bg-white/5 transition-all duration-200 border border-white/8 whitespace-nowrap"
                 aria-label="Download on the App Store"
               >
-                <svg className="w-7 h-7 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <svg
+                  className="w-7 h-7 flex-shrink-0"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
                   <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" />
                 </svg>
                 <div>
-                  <p className="text-[10px] uppercase tracking-wider text-white/30">Download on the</p>
+                  <p className="text-[10px] uppercase tracking-wider text-white/30">
+                    Download on the
+                  </p>
                   <p className="text-sm font-semibold text-white -mt-0.5">App Store</p>
                 </div>
               </a>
@@ -300,7 +336,12 @@ export default function AppFooter({ siteName = 'Azeebo+' }: AppFooterProps): Rea
                 className="flex items-center gap-3 px-5 py-3 min-w-[180px] rounded-xl text-white/50 hover:text-white hover:bg-white/5 transition-all duration-200 border border-white/8 whitespace-nowrap"
                 aria-label="Get it on Google Play"
               >
-                <svg className="w-7 h-7 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <svg
+                  className="w-7 h-7 flex-shrink-0"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
                   <path d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 01-.61-.92V2.734a1 1 0 01.609-.92zm10.89 10.893l2.302 2.302-10.937 6.333 8.635-8.635zm3.199-3.198l2.807 1.626a1 1 0 010 1.73l-2.808 1.626L15.206 12l2.492-2.491zM5.864 2.658L16.8 8.99l-2.3 2.302-8.636-8.634z" />
                 </svg>
                 <div>
@@ -318,21 +359,35 @@ export default function AppFooter({ siteName = 'Azeebo+' }: AppFooterProps): Rea
           style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}
         >
           <div className="flex items-center gap-2 text-sm text-white/30">
-            <span>&copy; {new Date().getFullYear()} {siteName}</span>
+            <span>
+              &copy; {new Date().getFullYear()} {siteName}
+            </span>
             <span className="text-white/15">|</span>
             <span>Copyright Virtual Media Network Limited</span>
           </div>
           <div className="flex items-center gap-5">
-            <Link href="/terms" className="text-xs text-white/25 hover:text-white/50 transition-colors">
+            <Link
+              href="/terms"
+              className="text-xs text-white/25 hover:text-white/50 transition-colors"
+            >
               Terms
             </Link>
-            <Link href="/privacy" className="text-xs text-white/25 hover:text-white/50 transition-colors">
+            <Link
+              href="/privacy"
+              className="text-xs text-white/25 hover:text-white/50 transition-colors"
+            >
               Privacy
             </Link>
-            <Link href="/support" className="text-xs text-white/25 hover:text-white/50 transition-colors">
+            <Link
+              href="/support"
+              className="text-xs text-white/25 hover:text-white/50 transition-colors"
+            >
               Support
             </Link>
-            <Link href="/guidelines" className="text-xs text-white/25 hover:text-white/50 transition-colors">
+            <Link
+              href="/guidelines"
+              className="text-xs text-white/25 hover:text-white/50 transition-colors"
+            >
               Guidelines
             </Link>
           </div>
@@ -346,9 +401,10 @@ export default function AppFooter({ siteName = 'Azeebo+' }: AppFooterProps): Rea
           fixed bottom-6 right-6 z-50 p-3 rounded-full shadow-2xl
           transition-all duration-300 ease-out
           focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E8420A] focus-visible:ring-offset-2
-          ${showBackToTop
-            ? 'opacity-100 translate-y-0 pointer-events-auto'
-            : 'opacity-0 translate-y-4 pointer-events-none'
+          ${
+            showBackToTop
+              ? 'opacity-100 translate-y-0 pointer-events-auto'
+              : 'opacity-0 translate-y-4 pointer-events-none'
           }
         `}
         style={{
@@ -357,7 +413,14 @@ export default function AppFooter({ siteName = 'Azeebo+' }: AppFooterProps): Rea
         }}
         aria-label="Back to top"
       >
-        <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
+        <svg
+          className="w-5 h-5 text-white"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2.5}
+          aria-hidden="true"
+        >
           <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
         </svg>
       </button>

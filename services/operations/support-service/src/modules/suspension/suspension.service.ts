@@ -236,7 +236,7 @@ export class SuspensionService {
         metadata: { suspensionId: suspension.id },
         priority: 'high',
       });
-    } catch (error) {
+    } catch (_err) {
       this.logger.error(`Failed to send suspension notification: ${(error as Error).message}`);
     }
   }
@@ -259,7 +259,7 @@ export class SuspensionService {
         metadata: { suspensionId: suspension.id, status: suspension.status },
         priority: 'high',
       });
-    } catch (error) {
+    } catch (_err) {
       this.logger.error(`Failed to send reinstatement notification: ${(error as Error).message}`);
     }
   }
@@ -279,7 +279,7 @@ export class SuspensionService {
         ...event,
         timestamp: new Date().toISOString(),
       });
-    } catch (error) {
+    } catch (_err) {
       this.logger.error(`Failed to create audit event: ${(error as Error).message}`);
     }
   }

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
   View,
   Text,
@@ -10,9 +10,10 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../src/contexts/AuthContext';
-import { LoadingState, ErrorState } from '../../src/components/StateContainers';
+import { colors } from '../../src/theme';
 
 export default function ForgotPasswordScreen() {
   const router = useRouter();
@@ -41,66 +42,68 @@ export default function ForgotPasswordScreen() {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
-      <View style={styles.content}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Reset Password</Text>
-          <Text style={styles.subtitle}>
-            Enter your email address and we'll send you instructions to reset your password
-          </Text>
-        </View>
-
-        <View style={styles.form}>
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>Email</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter your email"
-              placeholderTextColor="#666"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
+    <SafeAreaView style={styles.container}>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <View style={styles.content}>
+          <View style={styles.header}>
+            <Text style={styles.title}>Reset Password</Text>
+            <Text style={styles.subtitle}>
+              Enter your email address and we'll send you instructions to reset your password
+            </Text>
           </View>
 
-          {error && (
-            <View style={styles.errorContainer}>
-              <Text style={styles.errorText}>{error}</Text>
+          <View style={styles.form}>
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Email</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Enter your email"
+                placeholderTextColor={colors.text.tertiary}
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
             </View>
-          )}
 
-          <TouchableOpacity
-            style={[styles.resetButton, isLoading && styles.resetButtonDisabled]}
-            onPress={handleResetPassword}
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={styles.resetButtonText}>Send Reset Link</Text>
+            {error && (
+              <View style={styles.errorContainer}>
+                <Text style={styles.errorText}>{error}</Text>
+              </View>
             )}
-          </TouchableOpacity>
-        </View>
 
-        <View style={styles.footer}>
-          <TouchableOpacity onPress={() => router.push('/(auth)/login')}>
-            <Text style={styles.backToLogin}>← Back to Sign In</Text>
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.resetButton, isLoading && styles.resetButtonDisabled]}
+              onPress={handleResetPassword}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.resetButtonText}>Send Recovery Link</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.footer}>
+            <TouchableOpacity onPress={() => router.push('/(auth)/login')}>
+              <Text style={styles.backToLogin}>← Back to Sign In</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: '#1A0A0A',
   },
   content: {
     flex: 1,
@@ -139,10 +142,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#fff',
     borderWidth: 1,
-    borderColor: '#333',
+    borderColor: 'rgba(255,255,255,0.2)',
   },
   resetButton: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#E8420A',
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
@@ -151,13 +154,15 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   errorContainer: {
-    backgroundColor: '#FEE2E2',
+    backgroundColor: 'rgba(204,28,28,0.15)',
     borderRadius: 12,
     padding: 12,
     marginBottom: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(204,28,28,0.4)',
   },
   errorText: {
-    color: '#DC2626',
+    color: '#E8420A',
     fontSize: 14,
     textAlign: 'center',
   },
@@ -170,7 +175,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   backToLogin: {
-    color: '#8B5CF6',
+    color: '#E8420A',
     fontSize: 16,
   },
 });

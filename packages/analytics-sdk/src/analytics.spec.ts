@@ -9,6 +9,7 @@ describe('Analytics SDK', () => {
     analytics = new Analytics({ enabled: true, debug: true, flushBatchSize: 1 });
 
     // Override flush to capture events without sending them
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (analytics as any).flush = async function (this: Analytics) {
       if (this.queue.length === 0) return;
       trackedEvents.push(...this.queue);

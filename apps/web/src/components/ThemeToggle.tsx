@@ -4,7 +4,7 @@ import React from 'react';
 import { useTheme } from '../context/ThemeContext';
 
 export function ThemeToggle(): React.JSX.Element {
-  const { theme, resolvedTheme, toggleTheme } = useTheme();
+  const { theme: _theme, resolvedTheme, toggleTheme } = useTheme();
 
   return (
     <button

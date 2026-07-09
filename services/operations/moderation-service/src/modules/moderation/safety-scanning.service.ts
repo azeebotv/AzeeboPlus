@@ -121,7 +121,7 @@ export class SafetyScanningService {
       });
 
       return { scanId: scanRecord.id, result };
-    } catch (error) {
+    } catch (_err) {
       await this.prisma.safetyScan.update({
         where: { id: scanRecord.id },
         data: {
@@ -258,7 +258,7 @@ export class SafetyScanningService {
       }
 
       return { result: 'clean' };
-    } catch (error) {
+    } catch (_err) {
       this.logger.error(`Malware scan failed: ${(error as Error).message}`);
       return this.mockMalwareScan();
     }
@@ -274,7 +274,7 @@ export class SafetyScanningService {
 
     try {
       const response = await axios.post(
-        `${this.contentSafetyApiConfig.endpoint}?key=${this.contentSafetyApiConfig.apiKey}`,
+        this.contentSafetyApiConfig.endpoint,
         {
           requests: [
             {
@@ -283,7 +283,10 @@ export class SafetyScanningService {
             },
           ],
         },
-        { timeout: this.contentSafetyApiConfig.timeout }
+        {
+          headers: { key: this.contentSafetyApiConfig.apiKey },
+          timeout: this.contentSafetyApiConfig.timeout,
+        }
       );
 
       const annotations = response.data.responses[0].safeSearchAnnotation;
@@ -346,7 +349,7 @@ export class SafetyScanningService {
       }
 
       return { result: 'clean' };
-    } catch (error) {
+    } catch (_err) {
       this.logger.error(`Content safety scan failed: ${(error as Error).message}`);
       return this.mockContentSafetyScan();
     }
@@ -400,7 +403,7 @@ export class SafetyScanningService {
       }
 
       return { result: 'clean' };
-    } catch (error) {
+    } catch (_err) {
       this.logger.error(`Copyright scan failed: ${(error as Error).message}`);
       return this.mockCopyrightScan();
     }

@@ -1,6 +1,13 @@
 // User domain methods
 
-import type { ApiResponse, ContentItem, PaginatedResponse, RequestClient, RetryOptions, User } from './base';
+import type {
+  ApiResponse,
+  ContentItem,
+  PaginatedResponse,
+  RequestClient,
+  RetryOptions,
+  User,
+} from './base';
 
 export function createUserMethods(client: RequestClient) {
   return {
