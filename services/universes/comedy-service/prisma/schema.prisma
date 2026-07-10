@@ -23,6 +23,10 @@ model ComedyClip {
   updatedAt   DateTime @updatedAt
 
   comedian ComedianProfile? @relation(fields: [comedianId], references: [id], onDelete: Cascade)
+  shares   ClipShare[]
+  likes    ClipLike[]
+  comments ClipComment[]
+  trends   ComedyTrend[]
 
   @@index([comedianId])
   @@index([creatorId])
@@ -38,6 +42,9 @@ model ComedianProfile {
   verified    Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  clips    ComedyClip[]
+  specials ComedySpecial[]
 
   @@map("comedian_profiles")
 }
@@ -95,6 +102,8 @@ model ComedySeries {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  episodes ComedyEpisode[]
+
   @@index([creatorId])
   @@index([status])
   @@map("comedy_series")
@@ -129,6 +138,9 @@ model ComedyChallenge {
   metadata    Json?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+
+  prizes  ChallengePrize[]
+  entries ComedyChallengeEntry[]
 
   @@index([status])
   @@map("comedy_challenges")
@@ -181,6 +193,7 @@ model ComedySpecial {
   updatedAt   DateTime @updatedAt
 
   comedian ComedianProfile? @relation(fields: [comedianId], references: [id], onDelete: Cascade)
+  likes    SpecialLike[]
 
   @@index([comedianId])
   @@index([isPremium])

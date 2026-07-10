@@ -74,6 +74,8 @@ model DeliveryAttempt {
   deliveredAt     DateTime?
   createdAt       DateTime @default(now())
 
+  notification Notification? @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+
   @@map("delivery_attempts")
   @@index([notificationId])
   @@index([channel])
@@ -134,6 +136,8 @@ model CampaignTrigger {
   sentAt       DateTime?
   error        String?
   createdAt    DateTime @default(now())
+
+  campaign Campaign? @relation(fields: [campaignId], references: [id], onDelete: Cascade)
 
   @@map("campaign_triggers")
   @@index([campaignId])

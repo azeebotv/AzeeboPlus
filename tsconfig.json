@@ -20,7 +20,6 @@
     "jsx": "react-jsx",
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-    "types": ["multer"],
     "paths": {
       "@/*": ["./apps/web/src/*"],
       "@azeebo/ui": ["./packages/ui/src"],
