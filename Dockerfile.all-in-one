@@ -106,8 +106,9 @@ ARG CACHEBUST
 # Build shared packages, then all services, then apps — single merged layer
 RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     echo "Cache bust: $CACHEBUST" && \
-    pnpm --filter @azeebo/utils run build && \
     pnpm --filter @azeebo/shared-types run build && \
+    pnpm --filter @azeebo/http-client run build && \
+    pnpm --filter @azeebo/utils run build && \
     pnpm --filter @azeebo/validation run build && \
     pnpm --filter @azeebo/error-handling run build && \
     pnpm --filter @azeebo/logger run build && \

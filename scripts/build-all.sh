@@ -9,13 +9,16 @@ set -euo pipefail
 
 echo "==> Building libraries..."
 
-pnpm --filter @azeebo/utils run build
 pnpm --filter @azeebo/shared-types run build
+pnpm --filter @azeebo/http-client run build
+pnpm --filter @azeebo/utils run build
 pnpm --filter @azeebo/validation run build
 pnpm --filter @azeebo/error-handling run build
 pnpm --filter @azeebo/logger run build
 pnpm --filter @azeebo/api-client run build
 pnpm --filter @azeebo/design-tokens run build
+pnpm --filter @azeebo/shared-services prisma:generate
+pnpm --filter @azeebo/security run build
 pnpm --filter @azeebo/ui run build
 
 echo "==> Generating Prisma clients and building services..."
