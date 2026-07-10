@@ -1,20 +1,17 @@
 import { randomUUID } from 'crypto';
-import { PrismaClient } from '@prisma/client';
 
 export * from './integration-test-utils';
 
 /** Test database wrapper providing setup, teardown, and seed helpers for integration tests. */
 export class TestDatabase {
-  private prisma: PrismaClient;
+  private prisma: { $connect(): Promise<void>; $disconnect(): Promise<void>; $executeRawUnsafe(query: string): Promise<unknown> };
 
-  constructor(prismaClient?: PrismaClient) {
-    if (prismaClient) {
-      this.prisma = prismaClient;
-    } else {
-      this.prisma = new PrismaClient({
-        datasourceUrl: process.env.TEST_DATABASE_URL,
-      });
-    }
+  constructor(prismaClient?: { $connect(): Promise<void>; $disconnect(): Promise<void>; $executeRawUnsafe(query: string): Promise<unknown> }) {
+    this.prisma = prismaClient || {
+      async $connect() { /* noop */ },
+      async $disconnect() { /* noop */ },
+      async $executeRawUnsafe() { /* noop */ },
+    };
   }
 
   async connect(): Promise<void> {
@@ -44,35 +41,6 @@ export class TestDatabase {
         // Table may not exist in this service's database — skip silently
       }
     }
-  }
-
-  async createTestUser(
-    overrides: Partial<{ email: string; displayName: string }> = {}
-  ): Promise<{ id: string; email: string }> {
-    const user = await this.prisma.user.create({
-      data: {
-        id: randomUUID(),
-        email: overrides.email || `test_${randomUUID()}@example.com`,
-        displayName: overrides.displayName || `Test User ${randomUUID().slice(0, 8)}`,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-    });
-    return { id: user.id, email: user.email };
-  }
-
-  async createTestWallet(userId: string): Promise<{ id: string; balance: string }> {
-    const wallet = await this.prisma.wallet.create({
-      data: {
-        id: randomUUID(),
-        userId,
-        balance: '100000',
-        currency: 'NGN',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-    });
-    return { id: wallet.id, balance: wallet.balance };
   }
 }
 

@@ -45,6 +45,7 @@ describe('Subscription Controller Contract Tests', () => {
   const mockTxSubscriptionTransaction = {
     create: jest.fn(),
   };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const mockPrismaService: any = {
     subscriptionPlan: {
       findMany: jest.fn(),
@@ -61,12 +62,16 @@ describe('Subscription Controller Contract Tests', () => {
     subscriptionTransaction: {
       create: jest.fn(),
     },
-    $transaction: jest.fn(async (cb: any) => cb({
-      subscription: mockTxSubscription,
-      subscriptionTransaction: mockTxSubscriptionTransaction,
-    })),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    $transaction: jest.fn(async (cb: any) =>
+      cb({
+        subscription: mockTxSubscription,
+        subscriptionTransaction: mockTxSubscriptionTransaction,
+      })
+    ),
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const buildApp = async (authGuard: any = MockAuthGuard) => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [SubscriptionModule],

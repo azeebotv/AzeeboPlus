@@ -102,7 +102,11 @@ export class TracingService {
       }
     }
     this.activeSpans.set(span.spanId, span);
-    this.asyncLocalStorage.enterWith({ traceId: span.traceId, spanId: span.spanId, parentId: span.parentId });
+    this.asyncLocalStorage.enterWith({
+      traceId: span.traceId,
+      spanId: span.spanId,
+      parentId: span.parentId,
+    });
     return span;
   }
 

@@ -377,11 +377,11 @@ export class AdminService {
   }
 
   async moderateContent(
-    contentId: string,
-    action: string,
-    reason: string,
-    actorId: string,
-    actorRole: string
+    _contentId: string,
+    _action: string,
+    _reason: string,
+    _actorId: string,
+    _actorRole: string
   ) {
     // Content moderation is handled by content-service and moderation-service
     throw new NotFoundException(
@@ -389,14 +389,19 @@ export class AdminService {
     );
   }
 
-  async getModerationReports(page = 1, limit = 20, status?: string) {
+  async getModerationReports(_page = 1, _limit = 20, _status?: string) {
     // Moderation reports are handled by moderation-service
     throw new NotFoundException(
       'Moderation reports are handled by moderation-service. Use the moderation-service admin API instead.'
     );
   }
 
-  async resolveReport(reportId: string, resolution: string, actorId: string, actorRole: string) {
+  async resolveReport(
+    _reportId: string,
+    _resolution: string,
+    _actorId: string,
+    _actorRole: string
+  ) {
     // Report resolution is handled by moderation-service
     throw new NotFoundException(
       'Report resolution is handled by moderation-service. Use the moderation-service admin API instead.'
@@ -428,7 +433,7 @@ export class AdminService {
     };
   }
 
-  async getVerificationRequests(page = 1, limit = 20, status?: string) {
+  async getVerificationRequests(_page = 1, _limit = 20, _status?: string) {
     // Creator verification is handled by creator-service
     throw new NotFoundException(
       'Creator verification is handled by creator-service. Use the creator-service admin API instead.'
@@ -436,11 +441,11 @@ export class AdminService {
   }
 
   async verifyCreator(
-    creatorId: string,
-    status: string,
-    notes: string | undefined,
-    actorId: string,
-    actorRole: string
+    _creatorId: string,
+    _status: string,
+    _notes: string | undefined,
+    _actorId: string,
+    _actorRole: string
   ) {
     // Creator verification is handled by creator-service
     throw new NotFoundException(

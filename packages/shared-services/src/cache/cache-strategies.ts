@@ -37,7 +37,12 @@ export const CACHE_STRATEGIES: Record<string, CacheStrategy> = {
   content: {
     defaultTtl: 300, // 5 minutes
     keyPrefix: 'content:',
-    invalidationPatterns: ['content:list:*', 'content:home:*', 'content:featured:*', 'content:trending:*'],
+    invalidationPatterns: [
+      'content:list:*',
+      'content:home:*',
+      'content:featured:*',
+      'content:trending:*',
+    ],
   },
   search: {
     defaultTtl: 600, // 10 minutes - search results change less frequently
@@ -54,7 +59,12 @@ export const CACHE_STRATEGIES: Record<string, CacheStrategy> = {
   reality: {
     defaultTtl: 30, // 30 seconds - live data needs fresh reads
     keyPrefix: 'reality:',
-    invalidationPatterns: ['reality:shows:*', 'reality:episodes:*', 'reality:contestants:*', 'reality:votes:*'],
+    invalidationPatterns: [
+      'reality:shows:*',
+      'reality:episodes:*',
+      'reality:contestants:*',
+      'reality:votes:*',
+    ],
   },
   lifestyle: {
     defaultTtl: 300, // 5 minutes
@@ -168,11 +178,13 @@ export const CACHE_STRATEGIES: Record<string, CacheStrategy> = {
  * @returns The cache strategy, or default if not found
  */
 export function getCacheStrategy(serviceName: string): CacheStrategy {
-  return CACHE_STRATEGIES[serviceName] || {
-    defaultTtl: 300,
-    keyPrefix: `${serviceName}:`,
-    invalidationPatterns: [`${serviceName}:*`],
-  };
+  return (
+    CACHE_STRATEGIES[serviceName] || {
+      defaultTtl: 300,
+      keyPrefix: `${serviceName}:`,
+      invalidationPatterns: [`${serviceName}:*`],
+    }
+  );
 }
 
 /**

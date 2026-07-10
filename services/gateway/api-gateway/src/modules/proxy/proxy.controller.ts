@@ -15,7 +15,6 @@ import {
   Logger,
   UseGuards,
 } from '@nestjs/common';
-import { Throttle } from '@nestjs/throttler';
 import { ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { AdminGuard } from '@azeebo/security';
@@ -962,7 +961,7 @@ export class ProxyController {
     @Req() req: Request,
     @Res() res: Response
   ): Promise<void> {
-    return this.proxyRequest('GET', version, service, req.params['path'] || '', req, res);
+    return this.proxyRequest('GET', version, service, (req.params['path'] as string) || '', req, res);
   }
 
   @Post(':version/:service/*path')
@@ -973,7 +972,7 @@ export class ProxyController {
     @Req() req: Request,
     @Res() res: Response
   ): Promise<void> {
-    return this.proxyRequest('POST', version, service, req.params['path'] || '', req, res);
+    return this.proxyRequest('POST', version, service, (req.params['path'] as string) || '', req, res);
   }
 
   @Put(':version/:service/*path')
@@ -984,7 +983,7 @@ export class ProxyController {
     @Req() req: Request,
     @Res() res: Response
   ): Promise<void> {
-    return this.proxyRequest('PUT', version, service, req.params['path'] || '', req, res);
+    return this.proxyRequest('PUT', version, service, (req.params['path'] as string) || '', req, res);
   }
 
   @Patch(':version/:service/*path')
@@ -995,7 +994,7 @@ export class ProxyController {
     @Req() req: Request,
     @Res() res: Response
   ): Promise<void> {
-    return this.proxyRequest('PATCH', version, service, req.params['path'] || '', req, res);
+    return this.proxyRequest('PATCH', version, service, (req.params['path'] as string) || '', req, res);
   }
 
   @Delete(':version/:service/*path')
@@ -1006,7 +1005,7 @@ export class ProxyController {
     @Req() req: Request,
     @Res() res: Response
   ): Promise<void> {
-    return this.proxyRequest('DELETE', version, service, req.params['path'] || '', req, res);
+    return this.proxyRequest('DELETE', version, service, (req.params['path'] as string) || '', req, res);
   }
 
   @Get(':version/:service')
@@ -1075,8 +1074,9 @@ export class ProxyController {
       req.headers[API_VERSION_HEADER.toLowerCase()] as string
     );
     const route = this.findRoute(service);
-    const validatedVersion = route && this.validateVersion(version, route) ? version : route?.defaultVersion || version;
-    return this.proxyRequest('GET', validatedVersion, service, req.params['path'] || '', req, res);
+    const validatedVersion =
+      route && this.validateVersion(version, route) ? version : route?.defaultVersion || version;
+    return this.proxyRequest('GET', validatedVersion, service, (req.params['path'] as string) || '', req, res);
   }
 
   @Post(':service/*path')
@@ -1090,8 +1090,9 @@ export class ProxyController {
       req.headers[API_VERSION_HEADER.toLowerCase()] as string
     );
     const route = this.findRoute(service);
-    const validatedVersion = route && this.validateVersion(version, route) ? version : route?.defaultVersion || version;
-    return this.proxyRequest('POST', validatedVersion, service, req.params['path'] || '', req, res);
+    const validatedVersion =
+      route && this.validateVersion(version, route) ? version : route?.defaultVersion || version;
+    return this.proxyRequest('POST', validatedVersion, service, (req.params['path'] as string) || '', req, res);
   }
 
   @Put(':service/*path')
@@ -1105,8 +1106,9 @@ export class ProxyController {
       req.headers[API_VERSION_HEADER.toLowerCase()] as string
     );
     const route = this.findRoute(service);
-    const validatedVersion = route && this.validateVersion(version, route) ? version : route?.defaultVersion || version;
-    return this.proxyRequest('PUT', validatedVersion, service, req.params['path'] || '', req, res);
+    const validatedVersion =
+      route && this.validateVersion(version, route) ? version : route?.defaultVersion || version;
+    return this.proxyRequest('PUT', validatedVersion, service, (req.params['path'] as string) || '', req, res);
   }
 
   @Patch(':service/*path')
@@ -1120,8 +1122,16 @@ export class ProxyController {
       req.headers[API_VERSION_HEADER.toLowerCase()] as string
     );
     const route = this.findRoute(service);
-    const validatedVersion = route && this.validateVersion(version, route) ? version : route?.defaultVersion || version;
-    return this.proxyRequest('PATCH', validatedVersion, service, req.params['path'] || '', req, res);
+    const validatedVersion =
+      route && this.validateVersion(version, route) ? version : route?.defaultVersion || version;
+    return this.proxyRequest(
+      'PATCH',
+      validatedVersion,
+      service,
+      (req.params['path'] as string) || '',
+      req,
+      res
+    );
   }
 
   @Delete(':service/*path')
@@ -1135,8 +1145,16 @@ export class ProxyController {
       req.headers[API_VERSION_HEADER.toLowerCase()] as string
     );
     const route = this.findRoute(service);
-    const validatedVersion = route && this.validateVersion(version, route) ? version : route?.defaultVersion || version;
-    return this.proxyRequest('DELETE', validatedVersion, service, req.params['path'] || '', req, res);
+    const validatedVersion =
+      route && this.validateVersion(version, route) ? version : route?.defaultVersion || version;
+    return this.proxyRequest(
+      'DELETE',
+      validatedVersion,
+      service,
+      (req.params['path'] as string) || '',
+      req,
+      res
+    );
   }
 
   @Get('routes')
@@ -1247,7 +1265,7 @@ export class ProxyController {
     method: string,
     version: string,
     service: string,
-    path: string,
+    _path: string,
     req: Request,
     res: Response
   ): Promise<void> {
@@ -1284,7 +1302,14 @@ export class ProxyController {
 
     res.setHeader(API_VERSION_HEADER, version);
     res.setHeader(this.REQUEST_ID_HEADER, requestId);
-    const response = await this.forwardRequest(req, res, route.targetUrl, version, requestId, route);
+    const response = await this.forwardRequest(
+      req,
+      res,
+      route.targetUrl,
+      version,
+      requestId,
+      route
+    );
     if (method === 'GET' && response && typeof response === 'object' && !res.headersSent) {
       await this.cacheManager.set(cacheKey, response, CACHE_TTL_MS);
     }

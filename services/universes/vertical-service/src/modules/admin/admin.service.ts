@@ -50,7 +50,10 @@ export class AdminService {
 
       return { titles, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
     } catch (error) {
-      this.logger.error(`Failed to get titles: ${(error as Error).message}`, (error as Error).stack);
+      this.logger.error(
+        `Failed to get titles: ${(error as Error).message}`,
+        (error as Error).stack
+      );
       throw error;
     }
   }
@@ -68,7 +71,10 @@ export class AdminService {
 
       return { characters, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
     } catch (error) {
-      this.logger.error(`Failed to get characters: ${(error as Error).message}`, (error as Error).stack);
+      this.logger.error(
+        `Failed to get characters: ${(error as Error).message}`,
+        (error as Error).stack
+      );
       throw error;
     }
   }

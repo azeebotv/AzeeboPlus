@@ -1,4 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
+import { useVideoPlayer, type VideoPlayer } from 'expo-video';
+import { useEvent } from 'expo';
+import { contentApi } from '../api';
 
 interface UseVideoPlayerOptions {
   contentId: string;
@@ -15,6 +18,8 @@ interface UseVideoPlayerReturn {
   duration: number;
   showControls: boolean;
   error: string | null;
+  videoSource: string | null;
+  player: VideoPlayer;
   play: () => void;
   pause: () => void;
   togglePlay: () => void;
@@ -23,71 +28,117 @@ interface UseVideoPlayerReturn {
   seekBackward: (seconds?: number) => void;
   toggleFullscreen: () => void;
   setShowControls: (show: boolean) => void;
-  setDuration: (duration: number) => void;
   formatTime: (seconds: number) => string;
 }
 
-export function useVideoPlayer({
-  contentId: _contentId,
+export function useAzeeboVideoPlayer({
+  contentId,
   initialProgress = 0,
   onProgressUpdate,
   onComplete,
 }: UseVideoPlayerOptions): UseVideoPlayerReturn {
-  const progressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const hideControlsTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const progressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const [isPlaying, setIsPlaying] = useState(false);
   const [isBuffering, setIsBuffering] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [currentTime, setCurrentTime] = useState(initialProgress);
-  const [duration, setDuration] = useState(0);
   const [showControls, setShowControls] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [videoSource, setVideoSource] = useState<string | null>(null);
+
+  const player = useVideoPlayer(null, (p) => {
+    p.timeUpdateEventInterval = 1;
+  });
+
+  const { isPlaying } = useEvent(player, 'playingChange', {
+    isPlaying: player.playing,
+  });
+
+  const { status } = useEvent(player, 'statusChange', {
+    status: player.status,
+  });
+
+  const timeUpdate = useEvent(player, 'timeUpdate', {
+    currentTime: player.currentTime,
+    currentLiveTimestamp: null,
+    currentOffsetFromLive: null,
+    targetOffsetFromLive: 0,
+    bufferedPosition: 0,
+  });
+
+  const currentTime = timeUpdate?.currentTime ?? player.currentTime;
+
+  const [duration, setDuration] = useState(0);
 
   useEffect(() => {
-    setCurrentTime(initialProgress);
-  }, [initialProgress]);
+    if (status === 'readyToPlay') {
+      setDuration(player.duration);
+    }
+  }, [status, player]);
 
   useEffect(() => {
-    const cleanup = (): void => {
+    if (!contentId) return;
+
+    let cancelled = false;
+
+    const fetchSignedUrl = async () => {
+      try {
+        setIsBuffering(true);
+        setError(null);
+        const response = await contentApi.getSignedUrl(contentId);
+        if (cancelled) return;
+
+        if (response.success && response.data) {
+          setVideoSource(response.data.signedUrl);
+        } else {
+          setError(response.message || 'Failed to load video');
+        }
+      } catch {
+        if (!cancelled) setError('Failed to load video');
+      } finally {
+        if (!cancelled) setIsBuffering(false);
+      }
+    };
+
+    fetchSignedUrl();
+    return () => { cancelled = true; };
+  }, [contentId]);
+
+  useEffect(() => {
+    if (!videoSource) return;
+
+    player.replaceAsync(videoSource).then(() => {
+      if (initialProgress > 0) {
+        player.currentTime = initialProgress;
+      }
+    });
+  }, [videoSource, player, initialProgress]);
+
+  useEffect(() => {
+    if (status === 'error') {
+      setError('Playback error occurred');
+    }
+  }, [status]);
+
+  useEffect(() => {
+    if (onProgressUpdate && isPlaying) {
+      progressIntervalRef.current = setInterval(() => {
+        onProgressUpdate(player.currentTime);
+      }, 10000);
+    }
+    return () => {
       if (progressIntervalRef.current) {
         clearInterval(progressIntervalRef.current);
       }
-      if (hideControlsTimeoutRef.current) {
-        clearTimeout(hideControlsTimeoutRef.current);
-      }
     };
-    return cleanup;
-  }, []);
+  }, [isPlaying, onProgressUpdate, player]);
 
-  const startProgressTracking = useCallback(() => {
-    if (progressIntervalRef.current) {
-      clearInterval(progressIntervalRef.current);
-    }
-    progressIntervalRef.current = setInterval(() => {
-      setCurrentTime((prev) => {
-        const newTime = prev + 1;
-        if (newTime >= duration && duration > 0) {
-          onComplete?.();
-          setIsPlaying(false);
-          if (progressIntervalRef.current) {
-            clearInterval(progressIntervalRef.current);
-          }
-        }
-        if (onProgressUpdate) {
-          onProgressUpdate(newTime);
-        }
-        return newTime;
-      });
-    }, 1000);
-  }, [duration, onProgressUpdate, onComplete]);
-
-  const stopProgressTracking = useCallback(() => {
-    if (progressIntervalRef.current) {
-      clearInterval(progressIntervalRef.current);
-      progressIntervalRef.current = null;
-    }
-  }, []);
+  useEffect(() => {
+    const sub = player.addListener('playToEnd', () => {
+      onComplete?.();
+    });
+    return () => sub.remove();
+  }, [player, onComplete]);
 
   const scheduleHideControls = useCallback(() => {
     if (hideControlsTimeoutRef.current) {
@@ -100,22 +151,28 @@ export function useVideoPlayer({
     }, 3000);
   }, [isPlaying]);
 
+  useEffect(() => {
+    return () => {
+      if (hideControlsTimeoutRef.current) {
+        clearTimeout(hideControlsTimeoutRef.current);
+      }
+    };
+  }, []);
+
   const play = useCallback(() => {
-    setIsPlaying(true);
+    player.play();
     setIsBuffering(false);
     setError(null);
-    startProgressTracking();
     scheduleHideControls();
-  }, [startProgressTracking, scheduleHideControls]);
+  }, [player, scheduleHideControls]);
 
   const pause = useCallback(() => {
-    setIsPlaying(false);
-    stopProgressTracking();
+    player.pause();
     setShowControls(true);
     if (hideControlsTimeoutRef.current) {
       clearTimeout(hideControlsTimeoutRef.current);
     }
-  }, [stopProgressTracking]);
+  }, [player]);
 
   const togglePlay = useCallback(() => {
     if (isPlaying) {
@@ -128,12 +185,10 @@ export function useVideoPlayer({
   const seek = useCallback(
     (time: number) => {
       const clampedTime = Math.max(0, Math.min(time, duration));
-      setCurrentTime(clampedTime);
-      if (onProgressUpdate) {
-        onProgressUpdate(clampedTime);
-      }
+      player.currentTime = clampedTime;
+      onProgressUpdate?.(clampedTime);
     },
-    [duration, onProgressUpdate]
+    [player, duration, onProgressUpdate]
   );
 
   const seekForward = useCallback(
@@ -172,6 +227,8 @@ export function useVideoPlayer({
     duration,
     showControls,
     error,
+    videoSource,
+    player,
     play,
     pause,
     togglePlay,
@@ -180,7 +237,6 @@ export function useVideoPlayer({
     seekBackward,
     toggleFullscreen,
     setShowControls,
-    setDuration,
     formatTime,
   };
 }

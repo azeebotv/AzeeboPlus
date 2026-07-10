@@ -2,8 +2,8 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { createCreatorMethods } from '../creator';
 import type { RequestClient } from '../base';
 
-function createMockClient(): RequestClient & { request: ReturnType<typeof vi.fn> } {
-  return { request: vi.fn() };
+function createMockClient() {
+  return { request: vi.fn() } as unknown as RequestClient & { request: ReturnType<typeof vi.fn> };
 }
 
 describe('Creator API Methods', () => {
@@ -16,7 +16,10 @@ describe('Creator API Methods', () => {
   });
 
   it('getCreators should GET /api/v1/creators with pagination', async () => {
-    client.request.mockResolvedValue({ success: true, data: { items: [], total: 0, page: 1, limit: 20, hasMore: false } });
+    client.request.mockResolvedValue({
+      success: true,
+      data: { items: [], total: 0, page: 1, limit: 20, hasMore: false },
+    });
 
     await creator.getCreators(1, 20);
 
@@ -24,7 +27,14 @@ describe('Creator API Methods', () => {
   });
 
   it('getCreator should GET /api/v1/creators/:id', async () => {
-    const mockCreator = { id: 'c1', name: 'Creator', email: 'c@b.com', role: 'creator' as const, contentCount: 10, subscriberCount: 100 };
+    const mockCreator = {
+      id: 'c1',
+      name: 'Creator',
+      email: 'c@b.com',
+      role: 'creator' as const,
+      contentCount: 10,
+      subscriberCount: 100,
+    };
     client.request.mockResolvedValue({ success: true, data: mockCreator });
 
     const result = await creator.getCreator('c1');
@@ -34,7 +44,10 @@ describe('Creator API Methods', () => {
   });
 
   it('getCreatorContent should GET /api/v1/creators/:id/content', async () => {
-    client.request.mockResolvedValue({ success: true, data: { items: [], total: 0, page: 1, limit: 20, hasMore: false } });
+    client.request.mockResolvedValue({
+      success: true,
+      data: { items: [], total: 0, page: 1, limit: 20, hasMore: false },
+    });
 
     await creator.getCreatorContent('c1', 1, 20);
 

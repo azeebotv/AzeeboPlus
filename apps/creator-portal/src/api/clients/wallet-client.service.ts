@@ -192,4 +192,17 @@ export class WalletClientService {
       method: 'POST',
     });
   }
+
+  async debit(
+    walletId: string,
+    amount: number,
+    description: string,
+    idempotencyKey: string
+  ): Promise<WalletServiceResponse<{ success: boolean }>> {
+    const endpoint = '/v1/wallet/debit';
+    return this.request<{ success: boolean }>(endpoint, {
+      method: 'POST',
+      body: { walletId, amount, description, idempotencyKey },
+    });
+  }
 }

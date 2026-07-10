@@ -36,10 +36,16 @@ export default function CreatorAnalyticsPage(): React.JSX.Element {
   const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d' | 'all'>('30d');
   const isEnabled = !authLoading && !!isAuthenticated && !!user;
 
-  const { data: analytics, isLoading, error } = useQuery({
+  const {
+    data: analytics,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ['creator', 'analytics', timeRange],
     queryFn: async () => {
-      const result = await apiFetch<{ success: boolean; data: Record<string, unknown> }>(`/v1/creators/analytics?range=${timeRange}`);
+      const result = await apiFetch<Record<string, unknown>>(
+        `/v1/creators/analytics?range=${timeRange}`
+      );
       if (result.success && result.data) {
         const d = result.data;
         return {
@@ -51,20 +57,25 @@ export default function CreatorAnalyticsPage(): React.JSX.Element {
           followersGrowth: Number(d.followersGrowth ?? 0),
           earningsGrowth: Number(d.earningsGrowth ?? 0),
           topContent: Array.isArray(d.topContent)
-            ? d.topContent.map((c: Record<string, unknown>) => ({
+            ? (d.topContent as Array<Record<string, unknown>>).map((c) => ({
                 id: String(c.id),
                 title: String(c.title || ''),
                 views: Number(c.views ?? c.viewCount ?? 0),
                 thumbnail: String(c.thumbnail || ''),
               }))
             : [],
-          demographics: d.demographics || {
+          demographics: (d.demographics as AnalyticsData['demographics']) || {
             ageGroups: [],
             topCountries: [],
             genderSplit: { male: 0, female: 0, other: 0 },
           },
-          engagementMetrics: d.engagementMetrics ||
-            d.analytics || { avgWatchTime: 0, completionRate: 0, shareRate: 0, commentRate: 0 },
+          engagementMetrics: ((d.engagementMetrics ||
+            d.analytics) as AnalyticsData['engagementMetrics']) || {
+            avgWatchTime: 0,
+            completionRate: 0,
+            shareRate: 0,
+            commentRate: 0,
+          },
         } as AnalyticsData;
       }
       return null;
@@ -105,7 +116,11 @@ export default function CreatorAnalyticsPage(): React.JSX.Element {
       <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
         <AppHeader />
         <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-          <ErrorState title="Failed to load analytics" description="Please try again later" onButtonPress={() => router.refresh()} />
+          <ErrorState
+            title="Failed to load analytics"
+            description="Please try again later"
+            onButtonPress={() => router.refresh()}
+          />
         </div>
       </div>
     );

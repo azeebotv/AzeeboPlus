@@ -1,13 +1,12 @@
 'use client';
 
-import React from 'react';
 import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../../lib/api';
 import AppHeader from '../../components/layout/AppHeader';
 import AppFooter from '../../components/layout/AppFooter';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
-import OptimizedImage from '@/components/OptimizedImage';
+import { OptimizedImage } from '@/components/OptimizedImage';
 
 interface UserProfile {
   id: string;
@@ -27,7 +26,11 @@ interface UserProfileData {
 }
 
 export default function ProfilePage(): React.JSX.Element {
-  const { data: profile, isLoading, error } = useQuery<UserProfileData | null>({
+  const {
+    data: profile,
+    isLoading,
+    error,
+  } = useQuery<UserProfileData | null>({
     queryKey: ['profile'],
     queryFn: async () => {
       const [profileRes, prefsRes] = await Promise.all([

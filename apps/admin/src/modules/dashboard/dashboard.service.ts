@@ -196,11 +196,11 @@ export class DashboardService {
       .sort((a, b) => b.totalViews - a.totalViews);
   }
 
-  async getRecentActivity(_limit = 20): Promise<RecentActivityData> {
+  async getRecentActivity(limit = 20): Promise<RecentActivityData> {
     const [recentUsers, recentContent, recentReports] = await Promise.all([
       this.prisma.user.findMany({
         orderBy: { createdAt: 'desc' },
-        take: 5,
+        take: limit,
         select: {
           id: true,
           displayName: true,
@@ -211,7 +211,7 @@ export class DashboardService {
       }),
       this.prisma.contentItem.findMany({
         orderBy: { createdAt: 'desc' },
-        take: 5,
+        take: limit,
         select: {
           id: true,
           title: true,
@@ -223,7 +223,7 @@ export class DashboardService {
       this.prisma.report.findMany({
         where: { status: 'pending' },
         orderBy: { createdAt: 'desc' },
-        take: 5,
+        take: limit,
         select: {
           id: true,
           type: true,

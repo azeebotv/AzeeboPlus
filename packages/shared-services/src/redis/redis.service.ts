@@ -5,8 +5,8 @@ import { Redis } from 'ioredis';
 export class RedisService implements OnModuleDestroy {
   private redis: Redis;
 
-  constructor(redisUrl?: string) {
-    const url = redisUrl || process.env.REDIS_URL;
+  constructor() {
+    const url = process.env.REDIS_URL;
     if (!url) {
       throw new Error('REDIS_URL environment variable must be set');
     }

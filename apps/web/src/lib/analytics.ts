@@ -24,6 +24,7 @@ class Analytics {
       name: eventName,
       properties: {
         ...properties,
+        userId: this.userId ?? undefined,
         environment: process.env.NODE_ENV,
         url: typeof window !== 'undefined' ? window.location.pathname : undefined,
       },
@@ -155,7 +156,7 @@ class Analytics {
 
   contentSearched(
     query: string,
-    filters?: Record<string, unknown>,
+    _filters?: Record<string, unknown>,
     properties?: EventProperties
   ): void {
     this.track('content_search_viewed', {

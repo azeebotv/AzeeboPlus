@@ -68,7 +68,10 @@ interface FraudRisk {
 export class RecommendationService {
   private readonly logger = new Logger(RecommendationService.name);
 
-  constructor(private prisma: PrismaService, private readonly cache: CacheService) {}
+  constructor(
+    private prisma: PrismaService,
+    private readonly cache: CacheService
+  ) {}
 
   async getContentRecommendations(
     input: RecommendationInput
@@ -78,7 +81,9 @@ export class RecommendationService {
 
       if (!userId) {
         const cacheK = cacheKey('recommendation', `popular:${universe || 'all'}`);
-        const cached = await this.cache.get<{ success: boolean; data?: RecommendationOutput[] }>(cacheK);
+        const cached = await this.cache.get<{ success: boolean; data?: RecommendationOutput[] }>(
+          cacheK
+        );
         if (cached) return cached;
 
         const result = await this.getFallbackRecommendations(limit, universe, freshnessDays);
@@ -88,8 +93,13 @@ export class RecommendationService {
         return result;
       }
 
-      const cacheK = cacheKey('recommendation', `user:${userId}:${limit}:${universe || 'all'}:${freshnessDays}`);
-      const cached = await this.cache.get<{ success: boolean; data?: RecommendationOutput[] }>(cacheK);
+      const cacheK = cacheKey(
+        'recommendation',
+        `user:${userId}:${limit}:${universe || 'all'}:${freshnessDays}`
+      );
+      const cached = await this.cache.get<{ success: boolean; data?: RecommendationOutput[] }>(
+        cacheK
+      );
       if (cached) return cached;
 
       const [watchHistory, rewardAccount] = await Promise.all([
@@ -223,7 +233,7 @@ export class RecommendationService {
       const result = { success: true, data: crossUniverseDiversity.slice(0, limit) };
       await this.cache.set(cacheK, result, 1800);
       return result;
-    } catch (_err) {
+    } catch (error) {
       this.logger.error(
         `Failed to get content recommendations for user ${input.userId}`,
         error instanceof Error ? (error as Error).message : String(error)
@@ -280,12 +290,13 @@ export class RecommendationService {
             ? Math.max(
                 0,
                 100 -
-                  Math.floor((Date.now() - content.publishedAt.getTime()) / (1000 * 60 * 60 * 24)) * 5
+                  Math.floor((Date.now() - content.publishedAt.getTime()) / (1000 * 60 * 60 * 24)) *
+                    5
               )
             : 0,
         })),
       };
-    } catch (_err) {
+    } catch (error) {
       this.logger.error(
         'Failed to get fallback recommendations',
         error instanceof Error ? (error as Error).message : String(error)
@@ -354,7 +365,7 @@ export class RecommendationService {
           },
         })),
       };
-    } catch (_err) {
+    } catch (error) {
       this.logger.error(
         `Failed to get creator recommendations for user ${userId}`,
         error instanceof Error ? (error as Error).message : String(error)
@@ -369,7 +380,9 @@ export class RecommendationService {
   ): Promise<{ success: boolean; data?: RecommendationOutput[] }> {
     try {
       const cacheK = cacheKey('recommendation', `cross:${userId}:${limit}`);
-      const cached = await this.cache.get<{ success: boolean; data?: RecommendationOutput[] }>(cacheK);
+      const cached = await this.cache.get<{ success: boolean; data?: RecommendationOutput[] }>(
+        cacheK
+      );
       if (cached) return cached;
 
       const watchHistory = await this.prisma.watchHistory.findMany({
@@ -430,7 +443,8 @@ export class RecommendationService {
             ? Math.max(
                 0,
                 100 -
-                  Math.floor((Date.now() - content.publishedAt.getTime()) / (1000 * 60 * 60 * 24)) * 5
+                  Math.floor((Date.now() - content.publishedAt.getTime()) / (1000 * 60 * 60 * 24)) *
+                    5
               )
             : 0,
         })),
@@ -438,7 +452,7 @@ export class RecommendationService {
 
       await this.cache.set(cacheK, result, 1800);
       return result;
-    } catch (_err) {
+    } catch (error) {
       this.logger.error(
         `Failed to get cross-universe recommendations for user ${userId}`,
         error instanceof Error ? (error as Error).message : String(error)
@@ -535,7 +549,7 @@ export class RecommendationService {
       }
 
       return { success: true, data: segment };
-    } catch (_err) {
+    } catch (error) {
       this.logger.error(
         `Failed to get user segment for user ${userId}`,
         error instanceof Error ? (error as Error).message : String(error)
@@ -591,7 +605,7 @@ export class RecommendationService {
           tier,
         },
       };
-    } catch (_err) {
+    } catch (error) {
       this.logger.error(
         `Failed to get creator score for creator ${creatorId}`,
         error instanceof Error ? (error as Error).message : String(error)
@@ -667,7 +681,8 @@ export class RecommendationService {
       else riskLevel = 'low';
 
       const recommendations: string[] = [];
-      if (daysSinceLastActivity > 7) recommendations.push('Send personalized content recommendation');
+      if (daysSinceLastActivity > 7)
+        recommendations.push('Send personalized content recommendation');
       if (payments === 0) recommendations.push('Offer a welcome discount');
       if (subscriptions === 0) recommendations.push('Promote subscription benefits');
       if (rewards === 0) recommendations.push('Highlight rewards program');
@@ -682,7 +697,7 @@ export class RecommendationService {
           recommendations,
         },
       };
-    } catch (_err) {
+    } catch (error) {
       this.logger.error(
         `Failed to get churn risk for user ${userId}`,
         error instanceof Error ? (error as Error).message : String(error)
@@ -774,7 +789,7 @@ export class RecommendationService {
           segment,
         },
       };
-    } catch (_err) {
+    } catch (error) {
       this.logger.error(
         `Failed to get monetization insights for user ${userId}`,
         error instanceof Error ? (error as Error).message : String(error)
@@ -881,7 +896,7 @@ export class RecommendationService {
           indicators,
         },
       };
-    } catch (_err) {
+    } catch (error) {
       this.logger.error(
         'Failed to assess fraud risk',
         error instanceof Error ? (error as Error).message : String(error)
@@ -922,7 +937,7 @@ export class RecommendationService {
       }
 
       return recommendations;
-    } catch (_err) {
+    } catch (error) {
       this.logger.error(
         `Failed to get personalized feed for user ${userId}`,
         error instanceof Error ? (error as Error).message : String(error)

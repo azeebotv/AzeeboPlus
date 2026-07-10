@@ -34,7 +34,17 @@ export class EmailService implements OnModuleInit {
   }
 
   private registerTemplates() {
-    this.templates['welcome'] = Handlebars.compile(`
+    // Templates can be overridden via environment variables
+    // Format: EMAIL_TEMPLATE_<NAME>_HTML=<html template with Handlebars syntax>
+    const templateOverrides: Record<string, string | undefined> = {
+      welcome: this.configService.get('EMAIL_TEMPLATE_WELCOME_HTML'),
+      'password-reset': this.configService.get('EMAIL_TEMPLATE_PASSWORD_RESET_HTML'),
+      'payment-confirmation': this.configService.get('EMAIL_TEMPLATE_PAYMENT_CONFIRMATION_HTML'),
+      'content-published': this.configService.get('EMAIL_TEMPLATE_CONTENT_PUBLISHED_HTML'),
+      'content-featured': this.configService.get('EMAIL_TEMPLATE_CONTENT_FEATURED_HTML'),
+    };
+
+    this.templates['welcome'] = Handlebars.compile(templateOverrides.welcome || `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h1 style="color: #333;">Welcome to Azeebo+!</h1>
         <p>Hello {{displayName}},</p>
@@ -44,7 +54,7 @@ export class EmailService implements OnModuleInit {
       </div>
     `);
 
-    this.templates['password-reset'] = Handlebars.compile(`
+    this.templates['password-reset'] = Handlebars.compile(templateOverrides['password-reset'] || `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h1 style="color: #333;">Password Reset Request</h1>
         <p>Hello {{displayName}},</p>
@@ -56,7 +66,7 @@ export class EmailService implements OnModuleInit {
       </div>
     `);
 
-    this.templates['payment-confirmation'] = Handlebars.compile(`
+    this.templates['payment-confirmation'] = Handlebars.compile(templateOverrides['payment-confirmation'] || `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h1 style="color: #333;">Payment Confirmation</h1>
         <p>Hello {{displayName}},</p>
@@ -72,7 +82,7 @@ export class EmailService implements OnModuleInit {
       </div>
     `);
 
-    this.templates['content-published'] = Handlebars.compile(`
+    this.templates['content-published'] = Handlebars.compile(templateOverrides['content-published'] || `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h1 style="color: #333;">Your Content Has Been Published</h1>
         <p>Hello {{displayName}},</p>
@@ -82,7 +92,7 @@ export class EmailService implements OnModuleInit {
       </div>
     `);
 
-    this.templates['content-featured'] = Handlebars.compile(`
+    this.templates['content-featured'] = Handlebars.compile(templateOverrides['content-featured'] || `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h1 style="color: #333;">Your Content Has Been Featured!</h1>
         <p>Hello {{displayName}},</p>

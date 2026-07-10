@@ -111,7 +111,10 @@ export class EventsService {
     status = 'published'
   ): Promise<EventResponse> {
     try {
-      const cacheK = cacheKey('lifestyle', `events:${page}:${limit}:${category || 'all'}:${status}`);
+      const cacheK = cacheKey(
+        'lifestyle',
+        `events:${page}:${limit}:${category || 'all'}:${status}`
+      );
       const cached = await this.cache.get<EventResponse['data']>(cacheK);
       if (cached) {
         return { success: true, data: cached };

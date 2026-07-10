@@ -31,6 +31,7 @@ describe('RefundService', () => {
 
   beforeEach(async () => {
     const mockConfigService = {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       get: jest.fn((key: string, defaultValue?: any) => {
         const config: Record<string, string> = {
           PAYMENT_SERVICE_URL: 'http://localhost:3003',

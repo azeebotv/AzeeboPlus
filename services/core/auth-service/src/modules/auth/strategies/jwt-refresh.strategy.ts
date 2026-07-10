@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
-import { ExtractJwt, Strategy } from 'passport-jwt';
+import { ExtractJwt, Strategy, StrategyOptionsWithRequest } from 'passport-jwt';
 import { Request } from 'express';
 
 import { ConfigService } from '@nestjs/config';
@@ -18,7 +18,7 @@ interface RefreshTokenPayload {
 
 @Injectable()
 export class JwtRefreshStrategy extends PassportStrategy(Strategy, 'jwt-refresh') {
-  constructor(private readonly configService: ConfigService) {
+  constructor(configService: ConfigService) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
@@ -26,7 +26,7 @@ export class JwtRefreshStrategy extends PassportStrategy(Strategy, 'jwt-refresh'
       audience: configService.get<string>('JWT_AUDIENCE') || 'azeebo-api',
       issuer: configService.get<string>('JWT_ISSUER') || 'azeebo-auth',
       passReqToCallback: true,
-    } as Record<string, unknown>);
+    } as StrategyOptionsWithRequest);
   }
 
   async validate(req: Request, payload: JwtPayload): Promise<RefreshTokenPayload> {

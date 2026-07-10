@@ -5,7 +5,7 @@ import * as bcrypt from 'bcrypt';
 import { randomUUID } from 'crypto';
 
 import { AuthRepository } from '../auth.repository';
-import { RedisService } from '../../common/services/redis.service';
+import { RedisService } from '../../../common/services/redis.service';
 
 interface SocialUser {
   email: string;
@@ -56,16 +56,15 @@ export class SocialAuthService {
 
   async generateState(provider: 'google' | 'apple'): Promise<string> {
     const state = randomUUID();
-    await this.redisService.set(
-      `${STATE_PREFIX}${state}`,
-      provider,
-      STATE_TTL_SECONDS
-    );
+    await this.redisService.set(`${STATE_PREFIX}${state}`, provider, STATE_TTL_SECONDS);
     return state;
   }
 
   async validateState(state: string): Promise<'google' | 'apple'> {
-    const provider = await this.redisService.get(`${STATE_PREFIX}${state}`) as 'google' | 'apple' | null;
+    const provider = (await this.redisService.get(`${STATE_PREFIX}${state}`)) as
+      | 'google'
+      | 'apple'
+      | null;
 
     if (!provider) {
       this.logger.warn('Social auth state validation failed: state not found or expired');
@@ -81,10 +80,9 @@ export class SocialAuthService {
    * The state parameter is embedded in the URL and will be returned
    * to the client's callback endpoint.
    */
-  buildAuthorizeUrl(provider: 'google' | 'apple', state: string, redirectUri?: string): string {
+  buildAuthorizeUrl(provider: 'google' | 'apple', state: string, _redirectUri?: string): string {
     const googleClientId = this.configService.get<string>('GOOGLE_CLIENT_ID', '');
     const appleClientId = this.configService.get<string>('APPLE_CLIENT_ID', '');
-    const frontendUrl = this.configService.get<string>('FRONTEND_URL', 'http://localhost:3000');
 
     const callbackBase = `${this.configService.get<string>('BASE_URL', 'http://localhost:3000')}/auth/social/callback`;
     const callbackUrl = `${callbackBase}?provider=${provider}`;

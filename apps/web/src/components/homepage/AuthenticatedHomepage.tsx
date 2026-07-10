@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/context/AuthContext';
 import { api } from '@/lib/api';
@@ -21,6 +21,11 @@ interface UniverseSection {
   universeName: string;
   universeIcon?: string;
   items: ContentItem[];
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- recommendation API responses may have nested content structure
+function extractContentItem(r: any): ContentItem {
+  return r.content || r;
 }
 
 export default function AuthenticatedHomepage({
@@ -181,7 +186,7 @@ export default function AuthenticatedHomepage({
           const fallbackGroups: RecommendationGroup[] = [];
           if (forYou.status === 'fulfilled' && forYou.value.success && forYou.value.data) {
             const items = Array.isArray(forYou.value.data)
-              ? forYou.value.data.map((r: ContentItem & { content?: ContentItem }) => r.content || r)
+              ? forYou.value.data.map(extractContentItem)
               : [];
             fallbackGroups.push({
               title: 'Top picks for you',
@@ -191,7 +196,7 @@ export default function AuthenticatedHomepage({
           }
           if (trending.status === 'fulfilled' && trending.value.success && trending.value.data) {
             const items = Array.isArray(trending.value.data)
-              ? trending.value.data.map((r: ContentItem & { content?: ContentItem }) => r.content || r)
+              ? trending.value.data.map(extractContentItem)
               : [];
             fallbackGroups.push({
               title: 'Popular right now',
@@ -342,7 +347,7 @@ export default function AuthenticatedHomepage({
           items={continueWatching}
           isLoading={isLoadingSupplementary}
           showProgress
-          progressMap={Object.fromEntries(continueWatching.map((c) => [c.id, 0.5]))}
+          progressMap={Object.fromEntries(continueWatching.map((c) => [c.id, (c as ContentItem & { progress?: number }).progress ?? 0.5])) as Record<string, number>}
         />
 
         {/* Trending Now */}

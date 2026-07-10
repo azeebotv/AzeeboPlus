@@ -141,10 +141,11 @@ export class PaystackProvider {
       return result;
     } catch (error: unknown) {
       if (error instanceof CircuitBreakerOpenError) {
-        this.logger.warn(`Paystack circuit breaker open: ${error.message}`);
+        const err = error as CircuitBreakerOpenError;
+        this.logger.warn(`Paystack circuit breaker open: ${err.message}`);
         throw new Error('Payment service temporarily unavailable. Please try again later.');
       }
-      this.logger.error(`Paystack initialization failed: ${error.message}`);
+      this.logger.error(`Paystack initialization failed: ${error instanceof Error ? error.message : String(error)}`);
       throw error;
     }
   }
@@ -182,10 +183,11 @@ export class PaystackProvider {
       return result;
     } catch (error: unknown) {
       if (error instanceof CircuitBreakerOpenError) {
-        this.logger.warn(`Paystack circuit breaker open: ${error.message}`);
+        const err = error as CircuitBreakerOpenError;
+        this.logger.warn(`Paystack circuit breaker open: ${err.message}`);
         throw new Error('Payment verification temporarily unavailable. Please try again later.');
       }
-      this.logger.error(`Paystack verification failed: ${error.message}`);
+      this.logger.error(`Paystack verification failed: ${error instanceof Error ? error.message : String(error)}`);
       throw error;
     }
   }
@@ -225,10 +227,11 @@ export class PaystackProvider {
       return result;
     } catch (error: unknown) {
       if (error instanceof CircuitBreakerOpenError) {
-        this.logger.warn(`Paystack circuit breaker open: ${error.message}`);
+        const err = error as CircuitBreakerOpenError;
+        this.logger.warn(`Paystack circuit breaker open: ${err.message}`);
         throw new Error('Refund service temporarily unavailable. Please try again later.');
       }
-      this.logger.error(`Paystack refund failed: ${error.message}`);
+      this.logger.error(`Paystack refund failed: ${error instanceof Error ? error.message : String(error)}`);
       throw error;
     }
   }

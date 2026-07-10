@@ -1,6 +1,5 @@
 'use client';
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/api';
@@ -41,7 +40,6 @@ interface ReferralsList {
 
 export default function ReferralPage(): React.JSX.Element {
   const { isAuthenticated, user, isLoading: authLoading } = useAuth();
-  const router = useRouter();
   const [copied, setCopied] = useState(false);
 
   const codeQuery = useQuery({
@@ -83,17 +81,17 @@ export default function ReferralPage(): React.JSX.Element {
   const referralData = {
     code: String(codeData.code ?? codeData.referralCode ?? ''),
     link: String(codeData.link ?? codeData.referralLink ?? ''),
-    totalReferrals: Number(
-      statsData.totalReferrals ?? statsData.total ?? referrals.length ?? 0
-    ),
+    totalReferrals: Number(statsData.totalReferrals ?? statsData.total ?? referrals.length ?? 0),
     successfulReferrals: Number(statsData.successfulReferrals ?? statsData.successful ?? 0),
     pendingReferrals: Number(statsData.pendingReferrals ?? statsData.pending ?? 0),
     totalEarned: Number(statsData.totalEarned ?? statsData.earned ?? 0),
     referrals,
   };
 
-  const isLoading = authLoading || codeQuery.isLoading || statsQuery.isLoading || referralsQuery.isLoading;
-  const error = codeQuery.error?.message || statsQuery.error?.message || referralsQuery.error?.message || null;
+  const isLoading =
+    authLoading || codeQuery.isLoading || statsQuery.isLoading || referralsQuery.isLoading;
+  const error =
+    codeQuery.error?.message || statsQuery.error?.message || referralsQuery.error?.message || null;
 
   const copyToClipboard = async () => {
     try {

@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { apiFetch } from '@/lib/api';
 import { webLogger } from '@/lib/logger';
@@ -18,8 +18,17 @@ interface PaymentMethod {
 interface Pricing {
   minAmount: number;
   maxAmount: number;
-  currency: string;
   processingFee: string;
+}
+
+interface WalletPricing {
+  presetAmounts: number[];
+  limits: {
+    minDeposit: number;
+    maxDeposit: number;
+    minWithdrawal: number;
+  };
+  withdrawalQuickAmounts: number[];
 }
 
 export default function AddFundsPage(): React.JSX.Element {
@@ -27,21 +36,26 @@ export default function AddFundsPage(): React.JSX.Element {
   const [amount, setAmount] = useState<string>('');
   const [selectedMethod, setSelectedMethod] = useState<string>('');
   const [pricing, setPricing] = useState<Pricing | null>(null);
+  const [walletPricing, setWalletPricing] = useState<WalletPricing | null>(null);
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
+  const quickAmounts = walletPricing?.presetAmounts || [500, 1000, 2000, 5000];
+
   useEffect(() => {
     const loadData = async (): Promise<void> => {
       try {
-        const [pricingResult, methodsResult] = await Promise.all([
+        const [pricingResult, methodsResult, walletPricingResult] = await Promise.all([
           apiFetch<Pricing>('/v1/wallet/pricing'),
           apiFetch<PaymentMethod[]>('/v1/wallet/payment-methods'),
+          apiFetch<WalletPricing>('/v1/pricing/wallet'),
         ]);
         if (pricingResult.success && pricingResult.data) setPricing(pricingResult.data);
         if (methodsResult.success && methodsResult.data) {
           setPaymentMethods(Array.isArray(methodsResult.data) ? methodsResult.data : []);
         }
+        if (walletPricingResult.success && walletPricingResult.data) setWalletPricing(walletPricingResult.data);
       } catch (error) {
         webLogger.error('Failed to load data', error);
       } finally {
@@ -50,8 +64,6 @@ export default function AddFundsPage(): React.JSX.Element {
     };
     loadData();
   }, []);
-
-  const quickAmounts = [500, 1000, 2000, 5000];
 
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();

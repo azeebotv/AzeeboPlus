@@ -120,7 +120,9 @@ describe('CelebrityService', () => {
       const result = await service.getEntryBySlug('test-celebrity');
 
       expect(result.success).toBe(true);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((result.data as any).name).toBe('Test Celebrity');
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((result.data as any).news).toHaveLength(1);
     });
 
@@ -152,6 +154,7 @@ describe('CelebrityService', () => {
       });
 
       expect(result.success).toBe(true);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((result.data as any).slug).toBe('test-celebrity');
     });
   });
@@ -168,6 +171,7 @@ describe('CelebrityService', () => {
       const result = await service.updateEntry('celebrity-1', { name: 'Updated Name' });
 
       expect(result.success).toBe(true);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((result.data as any).name).toBe('Updated Name');
     });
 
@@ -188,6 +192,7 @@ describe('CelebrityService', () => {
       const result = await service.deleteEntry('celebrity-1');
 
       expect(result.success).toBe(true);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((result.data as any).message).toBe('Entry deleted successfully');
     });
 
@@ -206,6 +211,7 @@ describe('CelebrityService', () => {
       const result = await service.getNews('celebrity-1');
 
       expect(result.success).toBe(true);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((result.data as any).items).toHaveLength(1);
     });
   });
@@ -221,6 +227,7 @@ describe('CelebrityService', () => {
       });
 
       expect(result.success).toBe(true);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((result.data as any).slug).toBe('test-news');
     });
   });

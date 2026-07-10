@@ -2,29 +2,22 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { UsersService } from './users.service';
 import { PrismaService } from '../database/prisma.service';
 import { NotFoundException } from '@nestjs/common';
-import { User, WatchHistory, SavedItem } from '@prisma/client';
 
 jest.mock('../database/prisma.service');
+
+interface WatchHistory {
+  id: string;
+  userId: string;
+  contentId: string;
+  contentType: string;
+  universe: string;
+  watchedAt: Date;
+  createdAt: Date;
+}
 
 describe('UsersService Integration', () => {
   let service: UsersService;
   let prisma: PrismaService;
-
-  const mockUser: User = {
-    id: 'user-123',
-    email: 'test@example.com',
-    password: '',
-    displayName: 'Test User',
-    avatar: null,
-    role: 'user',
-    preferences: { interests: ['reality', 'sports'] },
-    isVerified: false,
-    mfaEnabled: false,
-    mfaSecret: null,
-    mfaBackupCodes: null,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({

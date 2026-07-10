@@ -37,7 +37,10 @@ interface GameResponse {
 @Injectable()
 export class GameCatalogService {
   private readonly logger = new Logger(GameCatalogService.name);
-  constructor(private prisma: PrismaService, private cache: CacheService) {}
+  constructor(
+    private prisma: PrismaService,
+    private cache: CacheService
+  ) {}
 
   private formatGame(game: Record<string, unknown>): Game {
     return {
@@ -60,7 +63,10 @@ export class GameCatalogService {
     difficulty?: string
   ): Promise<GameResponse> {
     try {
-      const cacheK = cacheKey('games', `list:${page}:${limit}:${category || 'all'}:${difficulty || 'all'}`);
+      const cacheK = cacheKey(
+        'games',
+        `list:${page}:${limit}:${category || 'all'}:${difficulty || 'all'}`
+      );
       const cached = await this.cache.get<GameResponse>(cacheK);
       if (cached) return cached;
 
@@ -125,7 +131,10 @@ export class GameCatalogService {
       await this.cache.set(cacheK, result, 60);
       return result;
     } catch (error) {
-      this.logger.error(`Failed to get game by slug: ${(error as Error).message}`, (error as Error).stack);
+      this.logger.error(
+        `Failed to get game by slug: ${(error as Error).message}`,
+        (error as Error).stack
+      );
       if (error instanceof NotFoundException) throw error;
       return { success: false, error: { code: 'GAME_ERROR', message: (error as Error).message } };
     }
@@ -141,7 +150,10 @@ export class GameCatalogService {
 
       return { success: true, data: games.map((g) => g.category) };
     } catch (error) {
-      this.logger.error(`Failed to get categories: ${(error as Error).message}`, (error as Error).stack);
+      this.logger.error(
+        `Failed to get categories: ${(error as Error).message}`,
+        (error as Error).stack
+      );
       return { success: false, data: [] };
     }
   }
@@ -186,9 +198,15 @@ export class GameCatalogService {
         data: { sessionId: session.id, questions, message: 'Game started' },
       };
     } catch (error) {
-      this.logger.error(`Failed to start game: ${(error as Error).message}`, (error as Error).stack);
+      this.logger.error(
+        `Failed to start game: ${(error as Error).message}`,
+        (error as Error).stack
+      );
       if (error instanceof NotFoundException) throw error;
-      return { success: false, error: { code: 'GAME_START_ERROR', message: (error as Error).message } };
+      return {
+        success: false,
+        error: { code: 'GAME_START_ERROR', message: (error as Error).message },
+      };
     }
   }
 
@@ -255,7 +273,10 @@ export class GameCatalogService {
         },
       };
     } catch (error) {
-      this.logger.error(`Failed to submit answer: ${(error as Error).message}`, (error as Error).stack);
+      this.logger.error(
+        `Failed to submit answer: ${(error as Error).message}`,
+        (error as Error).stack
+      );
       if (error instanceof NotFoundException) throw error;
       return { success: false, error: { code: 'SUBMIT_ERROR', message: (error as Error).message } };
     }
@@ -305,9 +326,15 @@ export class GameCatalogService {
         },
       };
     } catch (error) {
-      this.logger.error(`Failed to complete game: ${(error as Error).message}`, (error as Error).stack);
+      this.logger.error(
+        `Failed to complete game: ${(error as Error).message}`,
+        (error as Error).stack
+      );
       if (error instanceof NotFoundException) throw error;
-      return { success: false, error: { code: 'COMPLETE_ERROR', message: (error as Error).message } };
+      return {
+        success: false,
+        error: { code: 'COMPLETE_ERROR', message: (error as Error).message },
+      };
     }
   }
 
@@ -339,8 +366,14 @@ export class GameCatalogService {
         },
       };
     } catch (error) {
-      this.logger.error(`Failed to get user stats: ${(error as Error).message}`, (error as Error).stack);
-      return { success: false, error: { code: 'USER_STATS_ERROR', message: (error as Error).message } };
+      this.logger.error(
+        `Failed to get user stats: ${(error as Error).message}`,
+        (error as Error).stack
+      );
+      return {
+        success: false,
+        error: { code: 'USER_STATS_ERROR', message: (error as Error).message },
+      };
     }
   }
 }

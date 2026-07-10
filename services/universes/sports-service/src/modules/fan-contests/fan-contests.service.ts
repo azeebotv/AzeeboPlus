@@ -50,7 +50,6 @@ export class FanContestsService {
           event: true,
           prizes: { orderBy: { rank: 'asc' } },
           entries: {
-            include: { user: { select: { id: true, displayName: true, avatar: true } } },
             orderBy: { score: 'desc' },
             take: 50,
           },
@@ -144,7 +143,9 @@ export class FanContestsService {
       return { success: true, data: { message: 'Score updated', score: updated.score } };
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
-      this.logger.error(`Failed to update entry score for user ${userId} in contest ${contestId}: ${error}`);
+      this.logger.error(
+        `Failed to update entry score for user ${userId} in contest ${contestId}: ${error}`
+      );
       throw error;
     }
   }
@@ -158,7 +159,6 @@ export class FanContestsService {
       const [entries, total] = await Promise.all([
         this.prisma.contestEntry.findMany({
           where: { contestId },
-          include: { user: { select: { id: true, displayName: true, avatar: true } } },
           skip: (page - 1) * limit,
           take: limit,
           orderBy: { score: 'desc' },
@@ -169,8 +169,6 @@ export class FanContestsService {
       const leaderboard = entries.map((e, i) => ({
         rank: (page - 1) * limit + i + 1,
         userId: e.userId,
-        displayName: e.user.displayName,
-        avatar: e.user.avatar,
         score: e.score,
         enteredAt: e.createdAt.toISOString(),
       }));
@@ -229,7 +227,9 @@ export class FanContestsService {
       };
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
-      this.logger.error(`Failed to get user rank for user ${userId} in contest ${contestId}: ${error}`);
+      this.logger.error(
+        `Failed to get user rank for user ${userId} in contest ${contestId}: ${error}`
+      );
       throw error;
     }
   }

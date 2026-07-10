@@ -3,7 +3,12 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
 import axios from 'axios';
 
-type ModerationStatusResult = { reports: number; openReports: number; moderationCases: number; currentStatus: string };
+type ModerationStatusResult = {
+  reports: number;
+  openReports: number;
+  moderationCases: number;
+  currentStatus: string;
+};
 
 @Injectable()
 export class ContentModerationService {
@@ -27,7 +32,7 @@ export class ContentModerationService {
   ): Promise<{ isSafe: boolean; issues: string[]; scanId?: string }> {
     if (!this.safetyScanEnabled) {
       this.logger.warn('Safety scanning is disabled, skipping safety check');
-      return { isSafe: true, issues: [] };
+      return { isSafe: true, issues: ['safety_scan_disabled'] };
     }
 
     try {
@@ -38,14 +43,18 @@ export class ContentModerationService {
 
       if (!content?.mediaAsset?.originalUrl) {
         this.logger.warn(`No media asset found for content ${contentId}, skipping scan`);
-        return { isSafe: true, issues: [] };
+        return { isSafe: true, issues: ['no_media_asset'] };
       }
 
-      const response = await axios.post(`${this.moderationServiceUrl}/api/moderation/scan`, {
-        contentId,
-        mediaUrl: content.mediaAsset.originalUrl,
-        scanTypes: ['malware', 'content_safety'],
-      }, { timeout: 10000 });
+      const response = await axios.post(
+        `${this.moderationServiceUrl}/api/moderation/scan`,
+        {
+          contentId,
+          mediaUrl: content.mediaAsset.originalUrl,
+          scanTypes: ['malware', 'content_safety'],
+        },
+        { timeout: 10000 }
+      );
 
       const result = response.data;
 
@@ -96,11 +105,15 @@ export class ContentModerationService {
     }
 
     try {
-      const response = await axios.post(`${this.moderationServiceUrl}/api/moderation/scan`, {
-        contentId,
-        mediaUrl: content.mediaAsset.originalUrl,
-        scanTypes: ['malware', 'content_safety'],
-      }, { timeout: 10000 });
+      const response = await axios.post(
+        `${this.moderationServiceUrl}/api/moderation/scan`,
+        {
+          contentId,
+          mediaUrl: content.mediaAsset.originalUrl,
+          scanTypes: ['malware', 'content_safety'],
+        },
+        { timeout: 10000 }
+      );
 
       return response.data;
     } catch (error) {

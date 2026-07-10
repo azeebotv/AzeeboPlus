@@ -245,7 +245,9 @@ export interface Universe {
 export interface Category {
   id: string;
   name: string;
+  slug: string;
   description?: string;
+  icon?: string;
   contentCount?: number;
 }
 

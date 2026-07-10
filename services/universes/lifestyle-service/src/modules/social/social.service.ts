@@ -10,15 +10,6 @@ interface SavedItem {
   createdAt: string;
 }
 
-interface _ShareRecord {
-  id: string;
-  userId: string;
-  itemType: string;
-  itemId: string;
-  platform: string;
-  createdAt: string;
-}
-
 interface SavedItemsResponse {
   success: boolean;
   data?: {

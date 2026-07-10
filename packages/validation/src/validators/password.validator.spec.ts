@@ -57,6 +57,7 @@ describe('IsStrongPassword', () => {
 
   it('should reject non-string values', async () => {
     const dto = new TestDto();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     dto.password = 12345 as any;
 
     const errors = await validate(dto);

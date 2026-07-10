@@ -11,7 +11,7 @@ async function bootstrap(): Promise<void> {
   try {
     validateEnvironment(process.env);
     Logger.log('Environment variables validated successfully');
-  } catch (_err) {
+  } catch (error) {
     const errorMessage = error instanceof Error ? (error as Error).message : 'Unknown error';
     Logger.error('Environment validation failed:', errorMessage);
     process.exit(1);

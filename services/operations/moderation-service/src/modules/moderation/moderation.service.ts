@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { SafetyScanningService, ScanRequest, ScanResult } from './safety-scanning.service';
 import { CacheService, cacheKey } from '@azeebo/shared-services';
@@ -10,7 +10,7 @@ import type {
   AuditEvent,
   ReviewerAssignment,
   Report,
-} from '@prisma/client';
+} from '../../prisma/client';
 import { ModerationResponse } from './interfaces/moderation-response.interface';
 
 export interface CreateCaseRequest {
@@ -77,7 +77,13 @@ export interface AssignReviewerRequest {
   assignedBy?: string;
 }
 
-const REPORT_TYPES = [
+interface ReportType {
+  id: string;
+  label: string;
+}
+
+// Default report types — can be overridden via MODERATION_REPORT_TYPES env var (JSON array)
+const DEFAULT_REPORT_TYPES: ReportType[] = [
   { id: 'harassment', label: 'Harassment or Bullying' },
   { id: 'hate_speech', label: 'Hate Speech' },
   { id: 'violence', label: 'Violence or Threatening Content' },
@@ -98,8 +104,6 @@ const SAFETY_ACTION_TYPES = [
 
 @Injectable()
 export class ModerationService {
-  private readonly logger = new Logger(ModerationService.name);
-
   constructor(
     private readonly prisma: PrismaService,
     private readonly safetyScanningService: SafetyScanningService,
@@ -168,7 +172,10 @@ export class ModerationService {
     return this.prisma.moderationCase.findMany({
       where,
       orderBy: { createdAt: 'desc' },
-      include: { report: true, user: { select: { id: true, displayName: true, avatar: true, email: true } } },
+      include: {
+        report: true,
+        user: { select: { id: true, displayName: true, avatar: true, email: true } },
+      },
     });
   }
 
@@ -291,7 +298,7 @@ export class ModerationService {
         reason: body.reason,
       });
       return { success: true, data: appeal };
-    } catch (_err) {
+    } catch (error) {
       const err = error as Error;
       return { success: false, error: { code: 'APPEAL_SUBMISSION_FAILED', message: err.message } };
     }
@@ -387,7 +394,8 @@ export class ModerationService {
         success: true,
         data: {
           reportId: existingReport.id,
-          message: 'You have already reported this content recently. The existing report is being reviewed.',
+          message:
+            'You have already reported this content recently. The existing report is being reviewed.',
         },
       } as ModerationResponse;
     }
@@ -416,20 +424,37 @@ export class ModerationService {
       await this.cache.invalidate('moderation:reports:*');
 
       return { success: true, data: report };
-    } catch (_err) {
+    } catch (error) {
       const err = error as Error;
       return { success: false, error: { code: 'REPORT_CREATION_FAILED', message: err.message } };
     }
   }
 
   async getReportTypes(): Promise<ModerationResponse> {
-    return { success: true, data: REPORT_TYPES };
+    // Check for environment variable override
+    const envTypes = process.env.MODERATION_REPORT_TYPES;
+    if (envTypes) {
+      try {
+        const parsed = JSON.parse(envTypes) as ReportType[];
+        return { success: true, data: parsed };
+      } catch {
+        // Fall back to defaults if JSON is invalid
+      }
+    }
+    return { success: true, data: DEFAULT_REPORT_TYPES };
   }
 
   async getQueue(moderatorId: string): Promise<ModerationResponse> {
     const assignments = await this.prisma.reviewerAssignment.findMany({
       where: { reviewerId: moderatorId, status: 'active' },
-      include: { case: { include: { report: true, user: { select: { id: true, displayName: true, avatar: true, email: true } } } } },
+      include: {
+        case: {
+          include: {
+            report: true,
+            user: { select: { id: true, displayName: true, avatar: true, email: true } },
+          },
+        },
+      },
     });
 
     const cases = assignments.map((a) => a.case);
@@ -481,7 +506,7 @@ export class ModerationService {
         duration: body.duration,
       });
       return { success: true, data: safetyAction };
-    } catch (_err) {
+    } catch (error) {
       const err = error as Error;
       return { success: false, error: { code: 'SAFETY_ACTION_FAILED', message: err.message } };
     }
@@ -504,7 +529,7 @@ export class ModerationService {
   }
 
   async getSafetyActions(
-    moderatorId: string,
+    _moderatorId: string,
     filters: { targetType?: string; actionType?: string; startDate?: string; endDate?: string }
   ): Promise<ModerationResponse> {
     const where: Record<string, unknown> = {};
@@ -711,7 +736,10 @@ export class ModerationService {
     const result = await this.prisma.report.findMany({
       where,
       orderBy: { createdAt: 'desc' },
-      include: { reportingUser: { select: { id: true, displayName: true, avatar: true, email: true } }, content: true },
+      include: {
+        reportingUser: { select: { id: true, displayName: true, avatar: true, email: true } },
+        content: true,
+      },
     });
 
     await this.cache.set(cacheK, result, 120);
@@ -770,7 +798,7 @@ export class ModerationService {
       }
 
       return { success: true, data: scan };
-    } catch (_err) {
+    } catch (error) {
       const err = error as Error;
       return { success: false, error: { code: 'SCAN_FETCH_FAILED', message: err.message } };
     }
@@ -808,7 +836,7 @@ export class ModerationService {
           scanCount: scans.length,
         },
       };
-    } catch (_err) {
+    } catch (error) {
       const err = error as Error;
       return { success: false, error: { code: 'SAFETY_CHECK_FAILED', message: err.message } };
     }

@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { render } from '@testing-library/react';
 import { Skeleton, CardSkeleton, ContentGridSkeleton } from '@/components/Skeleton';
 
 describe('Skeleton', () => {

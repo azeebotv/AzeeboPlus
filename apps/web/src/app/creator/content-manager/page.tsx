@@ -14,9 +14,11 @@ interface ContentItem {
   thumbnail: string;
   status: 'draft' | 'processing' | 'published' | 'archived';
   views: number;
+  viewCount?: number;
   earnings: number;
   createdAt: string;
   type: 'video' | 'image' | 'audio';
+  contentType?: string;
 }
 
 export default function ContentManagerPage(): React.JSX.Element {
@@ -25,13 +27,19 @@ export default function ContentManagerPage(): React.JSX.Element {
   const [filter, setFilter] = useState<'all' | 'draft' | 'published' | 'archived'>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
 
-  const { data: content = [], isLoading, error } = useQuery({
+  const {
+    data: content = [],
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ['creator', 'content'],
     queryFn: async () => {
-      const result = await apiFetch<{ success: boolean; data: ContentItem[] | { items?: ContentItem[] } }>('/v1/content/me');
+      const result = await apiFetch<ContentItem[] | { items?: ContentItem[] }>('/v1/content/me');
       if (result.success && result.data) {
-        const items = Array.isArray(result.data) ? result.data : result.data.items || [];
-        return items.map((item) => ({
+        const items: ContentItem[] = Array.isArray(result.data)
+          ? result.data
+          : (result.data as { items?: ContentItem[] }).items || [];
+        return items.map((item: ContentItem) => ({
           id: String(item.id),
           title: String(item.title || ''),
           description: String(item.description || ''),
@@ -92,7 +100,7 @@ export default function ContentManagerPage(): React.JSX.Element {
       year: 'numeric',
     });
   const filteredContent =
-    filter === 'all' ? content : content.filter((item) => item.status === filter);
+    filter === 'all' ? content : content.filter((item: ContentItem) => item.status === filter);
 
   if (isLoading) {
     return (
@@ -127,7 +135,11 @@ export default function ContentManagerPage(): React.JSX.Element {
       <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
         <AppHeader />
         <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-          <ErrorState title="Failed to load content" description="Please try again later" onButtonPress={() => router.refresh()} />
+          <ErrorState
+            title="Failed to load content"
+            description="Please try again later"
+            onButtonPress={() => router.refresh()}
+          />
         </div>
       </div>
     );
@@ -220,7 +232,7 @@ export default function ContentManagerPage(): React.JSX.Element {
           </div>
         ) : viewMode === 'grid' ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredContent.map((item) => (
+            {filteredContent.map((item: ContentItem) => (
               <div
                 key={item.id}
                 onClick={() => router.push('/creator/content-manager')}
@@ -251,7 +263,7 @@ export default function ContentManagerPage(): React.JSX.Element {
           </div>
         ) : (
           <div className="space-y-4">
-            {filteredContent.map((item) => (
+            {filteredContent.map((item: ContentItem) => (
               <div key={item.id} className="az-glass overflow-hidden flex">
                 <img src={item.thumbnail} alt={item.title} className="w-40 h-40 object-cover" />
                 <div className="flex-1 p-4">
@@ -294,7 +306,10 @@ export default function ContentManagerPage(): React.JSX.Element {
                         Edit
                       </button>
                       <button
-                        onClick={() => { if (confirm('Are you sure you want to delete this content?')) deleteMutation.mutate(item.id); }}
+                        onClick={() => {
+                          if (confirm('Are you sure you want to delete this content?'))
+                            deleteMutation.mutate(item.id);
+                        }}
                         className="px-3 py-2 rounded-full text-sm transition-colors"
                         style={{ backgroundColor: 'rgba(239,68,68,0.2)', color: '#EF4444' }}
                       >

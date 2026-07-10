@@ -59,7 +59,7 @@ export class SportsController {
     @Request() req: { user: { sub: string } },
     @Body() body: CreatePredictionDto
   ): Promise<SportsResponse> {
-    return this.sportsService.submitPrediction(req.user.id, body);
+    return this.sportsService.submitPrediction(req.user.sub, body);
   }
 
   @Get('leaderboard')
@@ -93,6 +93,6 @@ export class SportsController {
     @Request() req: { user: { sub: string } },
     @Body() body: EnterContestDto
   ): Promise<SportsResponse> {
-    return this.sportsService.enterFanContest(req.user.id, body);
+    return this.sportsService.enterFanContest(req.user.sub, body);
   }
 }

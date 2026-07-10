@@ -1,11 +1,11 @@
 'use client';
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../context/AuthContext';
 import { apiFetch } from '../../lib/api';
 import AppHeader from '../../components/layout/AppHeader';
 import AppFooter from '../../components/layout/AppFooter';
-import { Skeleton, Spinner, ErrorState } from '@azeebo/ui/web';
+import { Skeleton } from '@azeebo/ui/web';
 
 interface User {
   id: string;
@@ -108,7 +108,6 @@ export default function MessagesPage(): React.JSX.Element {
   const unreadCount = conversations.reduce((sum, conv) => sum + conv.unreadCount, 0);
   const isLoadingConversations = conversationsQuery.isLoading;
   const isLoadingMessages = messagesQuery.isLoading;
-  const error = conversationsQuery.error?.message || messagesQuery.error?.message || null;
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -148,7 +147,10 @@ export default function MessagesPage(): React.JSX.Element {
           (old) =>
             (old ?? []).map((msg) =>
               msg.id === tempId
-                ? { ...msgData, timestamp: new Date(msgData.timestamp || msgData.createdAt || '') } as Message
+                ? ({
+                    ...msgData,
+                    timestamp: new Date(msgData.timestamp || msgData.createdAt || ''),
+                  } as Message)
                 : msg
             )
         );
@@ -201,16 +203,17 @@ export default function MessagesPage(): React.JSX.Element {
     (items[nextIndex] as HTMLElement).focus();
   }, []);
 
-  const handleConversationSelect = useCallback((conversation: Conversation) => {
-    setSelectedConversation(conversation);
-    queryClient.setQueryData<Conversation[]>(
-      ['messages', 'conversations'],
-      (old) =>
+  const handleConversationSelect = useCallback(
+    (conversation: Conversation) => {
+      setSelectedConversation(conversation);
+      queryClient.setQueryData<Conversation[]>(['messages', 'conversations'], (old) =>
         (old ?? []).map((conv) =>
           conv.id === conversation.id ? { ...conv, unreadCount: 0 } : conv
         )
-    );
-  }, [queryClient]);
+      );
+    },
+    [queryClient]
+  );
 
   const filteredConversations = conversations.filter((conv) =>
     conv.user.name.toLowerCase().includes(searchQuery.toLowerCase())

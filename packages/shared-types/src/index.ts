@@ -1,7 +1,9 @@
 // Standard API Response Type (BE-005)
-// NOTE: ApiResponse<T> and ApiError are defined at the end of this file.
+// NOTE: ApiResponse<T> and ApiError are defined in api-response-types.ts and re-exported below.
 // ApiResponse<T>: { success, data?, error?: ApiError, meta?: PaginationMeta }
 // ApiError: { code, message, details? }
+
+import type { ApiError } from './api-response-types';
 
 // Permission types
 /** Union of all granular permission strings used across the platform. */
@@ -541,7 +543,7 @@ export type { ApiResponse, ApiError, PaginationMeta } from './api-response-types
 /** Wrapper factory and helpers for building consistent API responses. */
 export {
   ApiResponseWrapper,
-/** Creates a successful API response with data. */
+  /** Creates a successful API response with data. */
   createSuccessResponse,
   /** Creates an error API response with an ApiError. */
   createErrorResponse,
@@ -586,12 +588,7 @@ export type { PricingPlan, WalletPricing, ContentPricing } from './pricing';
 export { validateStartup, isPlaceholderSecret, validateNoPlaceholders } from './secret-validation';
 
 // Data Classification types
-export {
-  DataClassification,
-  PiiCategory,
-  ConsentType,
-  AuditLogEntry,
-} from './data-classification';
+export { DataClassification, PiiCategory, ConsentType, AuditLogEntry } from './data-classification';
 export type {
   DataClassificationMetadata,
   UserDataExport,
@@ -736,4 +733,13 @@ export interface TokenStorage {
   setAccessToken(token: string): Promise<void>;
   setRefreshToken(token: string): Promise<void>;
   clearTokens(): Promise<void>;
+}
+
+// Logger interface (canonical definition)
+/** Structured logger interface for services and apps. */
+export interface Logger {
+  log: (message: string, context?: Record<string, unknown>) => void;
+  error: (message: string, trace?: string, context?: Record<string, unknown>) => void;
+  warn: (message: string, context?: Record<string, unknown>) => void;
+  debug: (message: string, context?: Record<string, unknown>) => void;
 }

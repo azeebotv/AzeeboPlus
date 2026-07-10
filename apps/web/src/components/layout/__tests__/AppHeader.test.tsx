@@ -30,6 +30,7 @@ vi.mock('next/navigation', () => ({
 }));
 
 vi.mock('next/link', () => ({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   default: ({ href, children, ...props }: any) => (
     <a href={href} {...props}>
       {children}
@@ -60,6 +61,7 @@ import AppHeader from '../AppHeader';
 
 /* ─── Helpers ─── */
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function makeUser(overrides: Record<string, any> = {}) {
   return {
     id: 'user-1',
@@ -71,6 +73,7 @@ function makeUser(overrides: Record<string, any> = {}) {
   };
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function renderHeader(authOverrides: Record<string, any> = {}) {
   const defaults = {
     user: makeUser(),
@@ -351,30 +354,98 @@ describe('AppHeader', () => {
 
   describe('wallet balance', () => {
     it('formats large amounts with M suffix', () => {
-      mockUseAuth.mockReturnValue({ user: makeUser(), token: 'tok', refreshToken: 'ref', isLoading: false, isAuthenticated: true, login: vi.fn(), register: vi.fn(), logout: vi.fn().mockResolvedValue(undefined), updateUser: vi.fn(), refreshUser: vi.fn() });
-      mockUseWallet.mockReturnValue({ balance: { balance: 1500000, available: 1500000, pending: 0, currency: 'NGN' }, transactions: [], isLoading: false, error: null, refreshBalance: vi.fn() });
+      mockUseAuth.mockReturnValue({
+        user: makeUser(),
+        token: 'tok',
+        refreshToken: 'ref',
+        isLoading: false,
+        isAuthenticated: true,
+        login: vi.fn(),
+        register: vi.fn(),
+        logout: vi.fn().mockResolvedValue(undefined),
+        updateUser: vi.fn(),
+        refreshUser: vi.fn(),
+      });
+      mockUseWallet.mockReturnValue({
+        balance: { balance: 1500000, available: 1500000, pending: 0, currency: 'NGN' },
+        transactions: [],
+        isLoading: false,
+        error: null,
+        refreshBalance: vi.fn(),
+      });
       render(<AppHeader />);
       // Balance appears in desktop chip and mobile drawer
       expect(screen.getAllByText('₦1.5M').length).toBeGreaterThanOrEqual(1);
     });
 
     it('formats thousands with k suffix', () => {
-      mockUseAuth.mockReturnValue({ user: makeUser(), token: 'tok', refreshToken: 'ref', isLoading: false, isAuthenticated: true, login: vi.fn(), register: vi.fn(), logout: vi.fn().mockResolvedValue(undefined), updateUser: vi.fn(), refreshUser: vi.fn() });
-      mockUseWallet.mockReturnValue({ balance: { balance: 4200, available: 4200, pending: 0, currency: 'NGN' }, transactions: [], isLoading: false, error: null, refreshBalance: vi.fn() });
+      mockUseAuth.mockReturnValue({
+        user: makeUser(),
+        token: 'tok',
+        refreshToken: 'ref',
+        isLoading: false,
+        isAuthenticated: true,
+        login: vi.fn(),
+        register: vi.fn(),
+        logout: vi.fn().mockResolvedValue(undefined),
+        updateUser: vi.fn(),
+        refreshUser: vi.fn(),
+      });
+      mockUseWallet.mockReturnValue({
+        balance: { balance: 4200, available: 4200, pending: 0, currency: 'NGN' },
+        transactions: [],
+        isLoading: false,
+        error: null,
+        refreshBalance: vi.fn(),
+      });
       render(<AppHeader />);
       expect(screen.getAllByText('₦4.2k').length).toBeGreaterThanOrEqual(1);
     });
 
     it('formats exact thousands without decimal', () => {
-      mockUseAuth.mockReturnValue({ user: makeUser(), token: 'tok', refreshToken: 'ref', isLoading: false, isAuthenticated: true, login: vi.fn(), register: vi.fn(), logout: vi.fn().mockResolvedValue(undefined), updateUser: vi.fn(), refreshUser: vi.fn() });
-      mockUseWallet.mockReturnValue({ balance: { balance: 10000, available: 10000, pending: 0, currency: 'NGN' }, transactions: [], isLoading: false, error: null, refreshBalance: vi.fn() });
+      mockUseAuth.mockReturnValue({
+        user: makeUser(),
+        token: 'tok',
+        refreshToken: 'ref',
+        isLoading: false,
+        isAuthenticated: true,
+        login: vi.fn(),
+        register: vi.fn(),
+        logout: vi.fn().mockResolvedValue(undefined),
+        updateUser: vi.fn(),
+        refreshUser: vi.fn(),
+      });
+      mockUseWallet.mockReturnValue({
+        balance: { balance: 10000, available: 10000, pending: 0, currency: 'NGN' },
+        transactions: [],
+        isLoading: false,
+        error: null,
+        refreshBalance: vi.fn(),
+      });
       render(<AppHeader />);
       expect(screen.getAllByText('₦10k').length).toBeGreaterThanOrEqual(1);
     });
 
     it('formats small amounts normally', () => {
-      mockUseAuth.mockReturnValue({ user: makeUser(), token: 'tok', refreshToken: 'ref', isLoading: false, isAuthenticated: true, login: vi.fn(), register: vi.fn(), logout: vi.fn().mockResolvedValue(undefined), updateUser: vi.fn(), refreshUser: vi.fn() });
-      mockUseWallet.mockReturnValue({ balance: { balance: 500, available: 500, pending: 0, currency: 'NGN' }, transactions: [], isLoading: false, error: null, refreshBalance: vi.fn() });
+      mockUseAuth.mockReturnValue({
+        user: makeUser(),
+        token: 'tok',
+        refreshToken: 'ref',
+        isLoading: false,
+        isAuthenticated: true,
+        login: vi.fn(),
+        register: vi.fn(),
+        logout: vi.fn().mockResolvedValue(undefined),
+        updateUser: vi.fn(),
+        refreshUser: vi.fn(),
+      });
+      mockUseWallet.mockReturnValue({
+        balance: { balance: 500, available: 500, pending: 0, currency: 'NGN' },
+        transactions: [],
+        isLoading: false,
+        error: null,
+        refreshBalance: vi.fn(),
+      });
       render(<AppHeader />);
       expect(screen.getAllByText('₦500').length).toBeGreaterThanOrEqual(1);
     });

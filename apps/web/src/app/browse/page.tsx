@@ -133,8 +133,7 @@ export default function BrowsePage(): React.JSX.Element {
     queryKey: ['browse', 'content', selectedCategory, selectedUniverseId],
     queryFn: async () => {
       let response;
-      if (selectedUniverseId)
-        response = await api.content.getContentByUniverse(selectedUniverseId);
+      if (selectedUniverseId) response = await api.content.getContentByUniverse(selectedUniverseId);
       else if (selectedCategory)
         response = await api.content.getContentByCategory(selectedCategory);
       else response = await api.content.getFeaturedContent();
@@ -155,7 +154,11 @@ export default function BrowsePage(): React.JSX.Element {
   const universes = universesQuery.data ?? [];
   const rawContent = contentQuery.data ?? [];
   const isLoading = categoriesQuery.isLoading || universesQuery.isLoading || contentQuery.isLoading;
-  const error = categoriesQuery.error?.message || universesQuery.error?.message || contentQuery.error?.message || null;
+  const error =
+    categoriesQuery.error?.message ||
+    universesQuery.error?.message ||
+    contentQuery.error?.message ||
+    null;
 
   const content = (() => {
     let items = [...rawContent];
@@ -174,12 +177,9 @@ export default function BrowsePage(): React.JSX.Element {
       items = items.filter((item) => item.language === selectedLanguage);
     if (selectedYear !== 'all')
       items = items.filter((item) => item.year?.toString() === selectedYear);
-    if (sortBy === 'Rating')
-      items = [...items].sort((a, b) => (b.rating || 0) - (a.rating || 0));
-    else if (sortBy === 'Newest')
-      items = [...items].sort((a, b) => (b.year || 0) - (a.year || 0));
-    else if (sortBy === 'A-Z')
-      items = [...items].sort((a, b) => a.title.localeCompare(b.title));
+    if (sortBy === 'Rating') items = [...items].sort((a, b) => (b.rating || 0) - (a.rating || 0));
+    else if (sortBy === 'Newest') items = [...items].sort((a, b) => (b.year || 0) - (a.year || 0));
+    else if (sortBy === 'A-Z') items = [...items].sort((a, b) => a.title.localeCompare(b.title));
     return items;
   })();
 

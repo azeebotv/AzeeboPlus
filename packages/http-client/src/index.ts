@@ -253,7 +253,11 @@ export class ApiClient {
     return this.requestWithRetry<T>('put', url, { data, ...config });
   }
 
-  async patch<T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
+  async patch<T>(
+    url: string,
+    data?: unknown,
+    config?: AxiosRequestConfig
+  ): Promise<ApiResponse<T>> {
     return this.requestWithRetry<T>('patch', url, { data, ...config });
   }
 
@@ -287,13 +291,18 @@ export class ApiClient {
       }
     }
 
-    const axiosError = lastError as AxiosError<{ message?: string; code?: string; details?: unknown }>;
+    const axiosError = lastError as AxiosError<{
+      message?: string;
+      code?: string;
+      details?: unknown;
+    }>;
     return {
       success: false,
       error: {
-        code: axiosError.response?.data?.code || axiosError.response?.status?.toString() || 'UNKNOWN',
+        code:
+          axiosError.response?.data?.code || axiosError.response?.status?.toString() || 'UNKNOWN',
         message: axiosError.response?.data?.message || lastError?.message || 'An error occurred',
-        details: axiosError.response?.data?.details,
+        details: axiosError.response?.data?.details as Record<string, unknown> | undefined,
       },
     };
   }
@@ -413,7 +422,11 @@ export class ServiceClient {
 
   async get<T = unknown>(url: string, config?: AxiosRequestConfig): Promise<T> {
     const request = () => this.axiosInstance.get<T>(url, config);
-    const response = await this.retryRequest(request, this.retryConfig.maxRetries, this.retryConfig.delay);
+    const response = await this.retryRequest(
+      request,
+      this.retryConfig.maxRetries,
+      this.retryConfig.delay
+    );
     return response.data;
   }
 
@@ -426,7 +439,11 @@ export class ServiceClient {
           ...config?.headers,
         },
       });
-    const response = await this.retryRequest(request, this.retryConfig.maxRetries, this.retryConfig.delay);
+    const response = await this.retryRequest(
+      request,
+      this.retryConfig.maxRetries,
+      this.retryConfig.delay
+    );
     return response.data;
   }
 
@@ -439,7 +456,11 @@ export class ServiceClient {
           ...config?.headers,
         },
       });
-    const response = await this.retryRequest(request, this.retryConfig.maxRetries, this.retryConfig.delay);
+    const response = await this.retryRequest(
+      request,
+      this.retryConfig.maxRetries,
+      this.retryConfig.delay
+    );
     return response.data;
   }
 
@@ -452,13 +473,21 @@ export class ServiceClient {
           ...config?.headers,
         },
       });
-    const response = await this.retryRequest(request, this.retryConfig.maxRetries, this.retryConfig.delay);
+    const response = await this.retryRequest(
+      request,
+      this.retryConfig.maxRetries,
+      this.retryConfig.delay
+    );
     return response.data;
   }
 
   async delete<T = unknown>(url: string, config?: AxiosRequestConfig): Promise<T> {
     const request = () => this.axiosInstance.delete<T>(url, config);
-    const response = await this.retryRequest(request, this.retryConfig.maxRetries, this.retryConfig.delay);
+    const response = await this.retryRequest(
+      request,
+      this.retryConfig.maxRetries,
+      this.retryConfig.delay
+    );
     return response.data;
   }
 }
@@ -488,15 +517,27 @@ export class WalletServiceClient extends ServiceClient {
     super({ baseURL: process.env.WALLET_SERVICE_URL || 'http://wallet-service:3002' });
   }
 
-  async debitWallet(walletId: string, amount: number, description: string, idempotencyKey: string): Promise<{ balance: string }> {
+  async debitWallet(
+    walletId: string,
+    amount: number,
+    description: string,
+    idempotencyKey: string
+  ): Promise<{ balance: string }> {
     return this.post('/v1/wallet/debit', { walletId, amount, description, idempotencyKey });
   }
 
-  async creditWallet(walletId: string, amount: number, description: string, reference?: string): Promise<{ balance: string }> {
+  async creditWallet(
+    walletId: string,
+    amount: number,
+    description: string,
+    reference?: string
+  ): Promise<{ balance: string }> {
     return this.post('/v1/wallet/credit', { walletId, amount, description, reference });
   }
 
-  async getWallet(userId: string): Promise<{ id: string; userId: string; balance: string; currency: string }> {
+  async getWallet(
+    userId: string
+  ): Promise<{ id: string; userId: string; balance: string; currency: string }> {
     return this.get(`/v1/wallet/user/${userId}`);
   }
 }
@@ -507,15 +548,24 @@ export class PaymentServiceClient extends ServiceClient {
     super({ baseURL: process.env.PAYMENT_SERVICE_URL || 'http://payment-service:3003' });
   }
 
-  async createTransaction(userId: string, amount: number, provider: string): Promise<{ id: string; status: string; checkoutUrl?: string }> {
+  async createTransaction(
+    userId: string,
+    amount: number,
+    provider: string
+  ): Promise<{ id: string; status: string; checkoutUrl?: string }> {
     return this.post('/v1/payments/initiate', { userId, amount, provider });
   }
 
-  async verifyTransaction(transactionId: string): Promise<{ id: string; status: string; amount: number }> {
+  async verifyTransaction(
+    transactionId: string
+  ): Promise<{ id: string; status: string; amount: number }> {
     return this.get(`/v1/payments/verify/${transactionId}`);
   }
 
-  async createRefund(transactionId: string, amount: number): Promise<{ id: string; status: string }> {
+  async createRefund(
+    transactionId: string,
+    amount: number
+  ): Promise<{ id: string; status: string }> {
     return this.post('/v1/payments/refund', { transactionId, amount });
   }
 }
@@ -526,11 +576,29 @@ export class AnalyticsServiceClient extends ServiceClient {
     super({ baseURL: process.env.ANALYTICS_SERVICE_URL || 'http://analytics-service:3008' });
   }
 
-  async trackEvent(eventName: string, userId: string, universe: string, metadata: Record<string, unknown>): Promise<void> {
-    await this.post('/analytics/track', { eventName, userId, universe, metadata, timestamp: new Date().toISOString() });
+  async trackEvent(
+    eventName: string,
+    userId: string,
+    universe: string,
+    metadata: Record<string, unknown>
+  ): Promise<void> {
+    await this.post('/analytics/track', {
+      eventName,
+      userId,
+      universe,
+      metadata,
+      timestamp: new Date().toISOString(),
+    });
   }
 
-  async trackBatch(events: Array<{ eventName: string; userId: string; universe: string; metadata: Record<string, unknown> }>): Promise<void> {
+  async trackBatch(
+    events: Array<{
+      eventName: string;
+      userId: string;
+      universe: string;
+      metadata: Record<string, unknown>;
+    }>
+  ): Promise<void> {
     await this.post('/analytics/track-batch', { events });
   }
 }
@@ -541,11 +609,19 @@ export class NotificationServiceClient extends ServiceClient {
     super({ baseURL: process.env.NOTIFICATION_SERVICE_URL || 'http://notification-service:3006' });
   }
 
-  async sendNotification(userId: string, type: string, payload: Record<string, unknown>): Promise<{ id: string }> {
+  async sendNotification(
+    userId: string,
+    type: string,
+    payload: Record<string, unknown>
+  ): Promise<{ id: string }> {
     return this.post('/v1/notifications/send', { userId, type, payload });
   }
 
-  async sendBulkNotification(userIds: string[], type: string, payload: Record<string, unknown>): Promise<void> {
+  async sendBulkNotification(
+    userIds: string[],
+    type: string,
+    payload: Record<string, unknown>
+  ): Promise<void> {
     await this.post('/v1/notifications/bulk', { userIds, type, payload });
   }
 }
@@ -556,11 +632,16 @@ export class ContentServiceClient extends ServiceClient {
     super({ baseURL: process.env.CONTENT_SERVICE_URL || 'http://content-service:3004' });
   }
 
-  async checkAccess(userId: string, contentId: string): Promise<{ access: boolean; reason?: string }> {
+  async checkAccess(
+    userId: string,
+    contentId: string
+  ): Promise<{ access: boolean; reason?: string }> {
     return this.get(`/v1/content/access/${contentId}`, { headers: { 'X-User-Id': userId } });
   }
 
-  async getContent(contentId: string): Promise<{ id: string; title: string; type: string; accessType: string }> {
+  async getContent(
+    contentId: string
+  ): Promise<{ id: string; title: string; type: string; accessType: string }> {
     return this.get(`/v1/content/${contentId}`);
   }
 }
@@ -571,11 +652,16 @@ export class UserServiceClient extends ServiceClient {
     super({ baseURL: process.env.USER_SERVICE_URL || 'http://user-service:3001' });
   }
 
-  async getUser(userId: string): Promise<{ id: string; displayName: string; email: string; roles: string[] }> {
+  async getUser(
+    userId: string
+  ): Promise<{ id: string; displayName: string; email: string; roles: string[] }> {
     return this.get(`/v1/users/${userId}`);
   }
 
-  async updateUser(userId: string, data: Partial<{ displayName: string; avatar: string }>): Promise<{ id: string }> {
+  async updateUser(
+    userId: string,
+    data: Partial<{ displayName: string; avatar: string }>
+  ): Promise<{ id: string }> {
     return this.put(`/v1/users/${userId}`, data);
   }
 }

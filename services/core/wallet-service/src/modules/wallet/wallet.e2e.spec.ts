@@ -66,6 +66,7 @@ describe('WalletService E2E Tests', () => {
               findFirst: jest.fn(),
               update: jest.fn(),
             },
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             $transaction: jest.fn(async (callbackOrArray: any) => {
               if (Array.isArray(callbackOrArray)) {
                 const results = [];
@@ -155,8 +156,11 @@ describe('WalletService E2E Tests', () => {
       const result = await service.creditBalance('wallet-123', 500, 'Test credit', idempotencyKey);
 
       expect(result.success).toBe(true);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((result.data as any).balance).toBe(1000);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((result.data as any).bonusBalance).toBe(200);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((result.data as any).promoBalance).toBe(100);
       expect(prisma.walletTransaction.create).not.toHaveBeenCalled();
     });
@@ -185,6 +189,7 @@ describe('WalletService E2E Tests', () => {
       );
 
       expect(result.success).toBe(true);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((result.data as any).balance).toBe(800);
       expect(prisma.walletTransaction.create).not.toHaveBeenCalled();
     });
@@ -203,6 +208,7 @@ describe('WalletService E2E Tests', () => {
       const result = await service.creditBalance('wallet-123', 500, 'Test credit', idempotencyKey);
 
       expect(result.success).toBe(true);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((result.data as any).balance).toBe(1500);
       expect(prisma.walletTransaction.create).toHaveBeenCalled();
     });
@@ -254,8 +260,11 @@ describe('WalletService E2E Tests', () => {
 
       const result = await service.creditBalance('wallet-123', 500, 'Test credit', idempotencyKey);
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((result.data as any).balance).toBe(1500);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((result.data as any).bonusBalance).toBe(200);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((result.data as any).promoBalance).toBe(100);
     });
 
@@ -281,8 +290,11 @@ describe('WalletService E2E Tests', () => {
         idempotencyKey
       );
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((result.data as any).balance).toBe(800);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((result.data as any).bonusBalance).toBe(200);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((result.data as any).promoBalance).toBe(100);
     });
 

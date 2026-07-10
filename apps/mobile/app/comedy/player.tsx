@@ -1,16 +1,19 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
+  TextInput,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
   Dimensions,
   Alert,
 } from 'react-native';
+import { VideoView } from 'expo-video';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useAzeeboVideoPlayer } from '../../src/hooks/useVideoPlayer';
 import { contentApi, type ContentItem } from '../../src/api';
 import { logger } from '../../src/utils/logger';
 import { LoadingState, ErrorState, EmptyState } from '../../src/components/StateContainers';
@@ -29,7 +32,19 @@ export default function ComedyClipPlayer() {
   const [isFollowing, setIsFollowing] = useState(false);
   const [showComments, setShowComments] = useState(false);
 
-  const fetchClip = async () => {
+  const {
+    isPlaying,
+    isBuffering,
+    currentTime,
+    duration,
+    player,
+    togglePlay,
+    formatTime,
+  } = useAzeeboVideoPlayer({
+    contentId: clip?.id || '',
+  });
+
+  const fetchClip = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
@@ -51,10 +66,29 @@ export default function ComedyClipPlayer() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchClip();
+  }, [fetchClip]);
+
+  const handleLike = useCallback(() => {
+    setIsLiked((prev) => !prev);
+  }, []);
+
+  const handleFollow = useCallback(() => {
+    setIsFollowing((prev) => {
+      Alert.alert('Success', prev ? 'Unfollowed' : 'Now following!');
+      return !prev;
+    });
+  }, []);
+
+  const handleShare = useCallback(() => {
+    Alert.alert('Share', 'Share this clip with friends!');
+  }, []);
+
+  const handleComment = useCallback(() => {
+    setShowComments((prev) => !prev);
   }, []);
 
   if (isLoading) {
@@ -81,42 +115,46 @@ export default function ComedyClipPlayer() {
     );
   }
 
-  const handleLike = () => {
-    setIsLiked(!isLiked);
-  };
-
-  const handleFollow = () => {
-    setIsFollowing(!isFollowing);
-    Alert.alert('Success', isFollowing ? 'Unfollowed' : 'Now following Bovi!');
-  };
-
-  const handleShare = () => {
-    Alert.alert('Share', 'Share this clip with friends!');
-  };
-
-  const handleComment = () => {
-    setShowComments(!showComments);
-  };
-
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
       <View style={[styles.container, { backgroundColor: isDark ? '#1A0A0A' : '#ffffff' }]}>
         <View style={styles.videoContainer}>
-          <View style={styles.videoPlaceholder}>
-            <Text style={styles.videoEmoji}>😂</Text>
-            <View style={styles.videoControls}>
-              <TouchableOpacity style={styles.playButton}>
-                <Text style={styles.playIcon}>▶️</Text>
-              </TouchableOpacity>
-            </View>
+          <TouchableOpacity
+            style={styles.videoPlaceholder}
+            onPress={togglePlay}
+            activeOpacity={0.9}
+          >
+            <VideoView
+              style={StyleSheet.absoluteFill}
+              player={player}
+              contentFit="contain"
+              nativeControls={false}
+            />
+
+            {!isPlaying && !isBuffering && (
+              <View style={styles.playOverlay}>
+                <TouchableOpacity style={styles.playButton} onPress={togglePlay}>
+                  <Text style={styles.playIcon}>▶️</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {isBuffering && (
+              <View style={styles.playOverlay}>
+                <View style={styles.bufferingIndicator} />
+              </View>
+            )}
+
             <View style={styles.durationBadge}>
               <Text style={styles.durationText}>
-                {clip.duration
-                  ? `${Math.floor(clip.duration / 60)}:${String(clip.duration % 60).padStart(2, '0')}`
-                  : '00:00'}
+                {duration > 0
+                  ? `${Math.floor(duration / 60)}:${String(Math.floor(duration % 60)).padStart(2, '0')}`
+                  : clip.duration
+                    ? `${Math.floor(clip.duration / 60)}:${String(clip.duration % 60).padStart(2, '0')}`
+                    : '00:00'}
               </Text>
             </View>
-          </View>
+          </TouchableOpacity>
           <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
             <Text style={styles.backIcon}>←</Text>
           </TouchableOpacity>
@@ -132,7 +170,11 @@ export default function ComedyClipPlayer() {
               <Text style={styles.statText}>
                 📅 {new Date(clip.createdAt).toLocaleDateString()}
               </Text>
-              <Text style={styles.statText}>❤️ 0</Text>
+              {duration > 0 && (
+                <Text style={styles.statText}>
+                  ⏱️ {formatTime(currentTime)} / {formatTime(duration)}
+                </Text>
+              )}
             </View>
 
             <View style={styles.creatorRow}>
@@ -269,8 +311,6 @@ export default function ComedyClipPlayer() {
   );
 }
 
-import { TextInput } from 'react-native';
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -281,54 +321,37 @@ const styles = StyleSheet.create({
   },
   videoPlaceholder: {
     flex: 1,
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#000',
     justifyContent: 'center',
+  },
+  playOverlay: {
+    ...StyleSheet.absoluteFill,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  playButton: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  playIcon: {
+    fontSize: 28,
+  },
+  bufferingIndicator: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 3,
+    borderColor: 'rgba(255,255,255,0.2)',
+    borderTopColor: '#E8420A',
   },
   commentEmpty: {
     textAlign: 'center',
     paddingVertical: 20,
     fontSize: 14,
-  },
-  commentAvatarEmoji: {
-    fontSize: 18,
-  },
-  commentInfo: {
-    flex: 1,
-  },
-  commentMeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 4,
-  },
-  commentUser: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  commentTime: {
-    color: '#888',
-    fontSize: 11,
-  },
-  commentText: {
-    fontSize: 13,
-    lineHeight: 18,
-    marginBottom: 8,
-  },
-  commentActions: {
-    flexDirection: 'row',
-    gap: 16,
-  },
-  commentAction: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  commentActionIcon: {
-    fontSize: 14,
-  },
-  commentActionText: {
-    color: '#888',
-    fontSize: 12,
   },
   relatedSection: {
     marginBottom: 30,
@@ -370,11 +393,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     padding: 10,
   },
-
-  videoEmoji: {
-    fontSize: 64,
-    marginBottom: 12,
-  },
   videoControls: {
     position: 'absolute',
     bottom: 0,
@@ -383,21 +401,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 12,
-  },
-  playButton: {
-    position: 'absolute',
-    top: '50%',
-    left: '50%',
-    transform: [{ translateX: -30 }, { translateY: -30 }],
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  playIcon: {
-    fontSize: 28,
   },
   durationBadge: {
     position: 'absolute',
@@ -423,9 +426,11 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.5)',
     alignItems: 'center',
     justifyContent: 'center',
+    zIndex: 10,
   },
   backIcon: {
     fontSize: 20,
+    color: '#fff',
   },
   contentContainer: {
     padding: 16,

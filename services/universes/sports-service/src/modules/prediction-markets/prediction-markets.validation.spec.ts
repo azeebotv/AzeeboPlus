@@ -54,7 +54,6 @@ describe('Prediction Markets Validation Tests', () => {
   describe('SubmitPredictionDto', () => {
     it('should validate valid prediction submission', async () => {
       const dto = new SubmitPredictionDto();
-      dto.userId = 'user-123';
       dto.predictionId = 'prediction-456';
       dto.selectedOption = 'Team A';
       dto.stake = 100;
@@ -65,7 +64,6 @@ describe('Prediction Markets Validation Tests', () => {
 
     it('should fail validation when stake is negative', async () => {
       const dto = new SubmitPredictionDto();
-      dto.userId = 'user-123';
       dto.predictionId = 'prediction-456';
       dto.selectedOption = 'Team A';
       dto.stake = -10;
@@ -75,21 +73,8 @@ describe('Prediction Markets Validation Tests', () => {
       expect(errors[0].property).toBe('stake');
     });
 
-    it('should fail validation when userId is not a string', async () => {
-      const dto = new SubmitPredictionDto();
-      // @ts-expect-error Testing invalid type
-      dto.userId = 123;
-      dto.predictionId = 'prediction-456';
-      dto.selectedOption = 'Team A';
-
-      const errors = await validate(dto);
-      expect(errors.length).toBeGreaterThan(0);
-      expect(errors[0].property).toBe('userId');
-    });
-
     it('should allow optional stake to be undefined', async () => {
       const dto = new SubmitPredictionDto();
-      dto.userId = 'user-123';
       dto.predictionId = 'prediction-456';
       dto.selectedOption = 'Team A';
 

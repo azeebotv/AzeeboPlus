@@ -26,15 +26,23 @@ export default function AgbalaQuizResultScreen({ route }: { route: RouteProps })
 
   const loadPathDescriptions = async () => {
     try {
-      const response = await apiClient.get<Record<string, PathDescription>>('/v1/vertical/storyworlds/agbala/paths');
+      const response = await apiClient.get<Record<string, PathDescription>>(
+        '/v1/vertical/storyworlds/agbala/paths'
+      );
       setPathDescriptions(response || {});
     } catch (err) {
       // Fallback to default descriptions if API fails
       setPathDescriptions({
         warrior: { title: 'Warrior', description: 'You possess the spirit of a warrior.' },
         sage: { title: 'Sage', description: 'The wisdom of the ages flows through you.' },
-        trickster: { title: 'Trickster', description: 'Your cunning and adaptability are your greatest assets.' },
-        healer: { title: 'Healer', description: 'Your compassion and restorative power are rare gifts.' },
+        trickster: {
+          title: 'Trickster',
+          description: 'Your cunning and adaptability are your greatest assets.',
+        },
+        healer: {
+          title: 'Healer',
+          description: 'Your compassion and restorative power are rare gifts.',
+        },
       });
     } finally {
       setIsLoading(false);
@@ -53,7 +61,8 @@ export default function AgbalaQuizResultScreen({ route }: { route: RouteProps })
   )[0] as string;
 
   if (isLoading) return <LoadingState text="Loading results..." />;
-  if (error) return <ErrorState title="Failed to load" description={error} onRetry={loadPathDescriptions} />;
+  if (error)
+    return <ErrorState title="Failed to load" description={error} onRetry={loadPathDescriptions} />;
 
   return (
     <ScrollView style={styles.container}>

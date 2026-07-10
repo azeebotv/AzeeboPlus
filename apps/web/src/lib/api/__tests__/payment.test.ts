@@ -2,8 +2,8 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { createPaymentMethods } from '../payment';
 import type { RequestClient } from '../base';
 
-function createMockClient(): RequestClient & { request: ReturnType<typeof vi.fn> } {
-  return { request: vi.fn() };
+function createMockClient() {
+  return { request: vi.fn() } as unknown as RequestClient & { request: ReturnType<typeof vi.fn> };
 }
 
 describe('Payment API Methods', () => {
@@ -16,7 +16,10 @@ describe('Payment API Methods', () => {
   });
 
   it('initialize should POST to /api/v1/payments/initialize', async () => {
-    client.request.mockResolvedValue({ success: true, data: { reference: 'ref-123', authorizationUrl: 'https://pay.com' } });
+    client.request.mockResolvedValue({
+      success: true,
+      data: { reference: 'ref-123', authorizationUrl: 'https://pay.com' },
+    });
 
     await payment.initialize({ amount: 5000, currency: 'NGN', email: 'a@b.com' });
 
@@ -27,7 +30,10 @@ describe('Payment API Methods', () => {
   });
 
   it('verify should GET /api/v1/payments/verify', async () => {
-    client.request.mockResolvedValue({ success: true, data: { status: 'success', amount: 5000, currency: 'NGN', reference: 'ref-123' } });
+    client.request.mockResolvedValue({
+      success: true,
+      data: { status: 'success', amount: 5000, currency: 'NGN', reference: 'ref-123' },
+    });
 
     await payment.verify('ref-123');
 

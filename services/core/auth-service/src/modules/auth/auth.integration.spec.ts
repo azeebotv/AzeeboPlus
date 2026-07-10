@@ -101,7 +101,7 @@ describe('AuthService - Refresh Token Rotation (Integration)', () => {
     process.env.JWT_REFRESH_SECRET = 'test-refresh-token-secret-for-integration';
     process.env.JWT_ISSUER = 'test-issuer';
     process.env.JWT_AUDIENCE = 'test-audience';
-    process.env.NODE_ENV = 'test';
+    (process.env as Record<string, string>).NODE_ENV = 'test';
     process.env.DATABASE_URL = 'postgresql://test:test@localhost:5432/test';
 
     const moduleFixture: TestingModule = await Test.createTestingModule({

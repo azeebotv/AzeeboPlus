@@ -21,7 +21,10 @@ export class HealthController {
         service: 'referral-service',
       };
     } catch {
-      throw new HttpException({ status: 'error', database: 'disconnected' }, HttpStatus.SERVICE_UNAVAILABLE);
+      throw new HttpException(
+        { status: 'error', database: 'disconnected' },
+        HttpStatus.SERVICE_UNAVAILABLE
+      );
     }
   }
 

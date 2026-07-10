@@ -1,5 +1,4 @@
 'use client';
-import React from 'react';
 
 interface SkeletonProps {
   width?: string;
@@ -25,12 +24,25 @@ export function Skeleton({
   if (height) skeletonStyle.height = height;
   if (borderRadius) skeletonStyle.borderRadius = borderRadius;
 
-  return <div className={className} style={skeletonStyle} role="status" aria-busy="true" aria-label="Loading content" />;
+  return (
+    <div
+      className={className}
+      style={skeletonStyle}
+      role="status"
+      aria-busy="true"
+      aria-label="Loading content"
+    />
+  );
 }
 
 export function CardSkeleton(): React.ReactElement {
   return (
-    <div style={{ backgroundColor: '#1A1A1A', borderRadius: 12, overflow: 'hidden' }} role="status" aria-busy="true" aria-label="Loading content">
+    <div
+      style={{ backgroundColor: '#1A1A1A', borderRadius: 12, overflow: 'hidden' }}
+      role="status"
+      aria-busy="true"
+      aria-label="Loading content"
+    >
       <Skeleton width="100%" height="192px" borderRadius="0" />
       <div style={{ padding: 16 }}>
         <Skeleton width="75%" height="16px" borderRadius="4px" />
@@ -62,7 +74,12 @@ export function ContentGridSkeleton({ count = 6 }: { count?: number }): React.Re
 
 export function ProfileSkeleton(): React.ReactElement {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 16 }} role="status" aria-busy="true" aria-label="Loading content">
+    <div
+      style={{ display: 'flex', alignItems: 'center', gap: 16 }}
+      role="status"
+      aria-busy="true"
+      aria-label="Loading content"
+    >
       <Skeleton width="48px" height="48px" borderRadius="50%" />
       <div>
         <Skeleton width="128px" height="16px" borderRadius="4px" />
@@ -75,7 +92,13 @@ export function ProfileSkeleton(): React.ReactElement {
 
 export function StatCardSkeleton(): React.ReactElement {
   return (
-    <div className="az-glass" style={{ padding: 24, borderRadius: 16 }} role="status" aria-busy="true" aria-label="Loading content">
+    <div
+      className="az-glass"
+      style={{ padding: 24, borderRadius: 16 }}
+      role="status"
+      aria-busy="true"
+      aria-label="Loading content"
+    >
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
         <Skeleton width="96px" height="16px" borderRadius="4px" />
         <Skeleton width="40px" height="40px" borderRadius="50%" />
@@ -89,7 +112,12 @@ export function StatCardSkeleton(): React.ReactElement {
 
 export function ListItemSkeleton(): React.ReactElement {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 16, padding: 16 }} role="status" aria-busy="true" aria-label="Loading content">
+    <div
+      style={{ display: 'flex', alignItems: 'center', gap: 16, padding: 16 }}
+      role="status"
+      aria-busy="true"
+      aria-label="Loading content"
+    >
       <Skeleton width="40px" height="40px" borderRadius="50%" />
       <div style={{ flex: 1 }}>
         <Skeleton width="75%" height="16px" borderRadius="4px" />

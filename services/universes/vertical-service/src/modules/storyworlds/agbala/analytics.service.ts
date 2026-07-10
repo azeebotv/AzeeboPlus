@@ -23,7 +23,7 @@ export class AgbalaAnalyticsService {
   constructor(private readonly configService: ConfigService) {
     this.analyticsServiceUrl = this.configService.get<string>(
       'ANALYTICS_SERVICE_URL',
-      'http://analytics-service:3008',
+      'http://analytics-service:3008'
     );
   }
 

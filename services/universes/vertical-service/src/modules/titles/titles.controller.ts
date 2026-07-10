@@ -1,4 +1,14 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { TitlesService } from './titles.service';
@@ -49,10 +59,7 @@ export class TitlesController {
   @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Update title' })
   @ApiResponse({ status: 200, description: 'Title updated' })
-  async updateTitle(
-    @Param('id') id: string,
-    @Body() body: UpdateTitleDto
-  ): Promise<unknown> {
+  async updateTitle(@Param('id') id: string, @Body() body: UpdateTitleDto): Promise<unknown> {
     return this.titlesService.updateTitle(id, body);
   }
 

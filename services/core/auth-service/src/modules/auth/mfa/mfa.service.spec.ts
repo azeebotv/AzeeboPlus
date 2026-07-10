@@ -1,11 +1,14 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { MfaService } from './mfa.service';
 import { AuthRepository } from '../auth.repository';
-import * as speakeasy from 'speakeasy';
 import * as QRCode from 'qrcode';
 
-jest.mock('speakeasy');
 jest.mock('qrcode');
+jest.mock('speakeasy', () => ({
+  generateSecret: jest.fn(),
+  totp: { verify: jest.fn() },
+}));
+const speakeasy = require('speakeasy');
 
 describe('MfaService', () => {
   let service: MfaService;
@@ -110,7 +113,7 @@ describe('MfaService', () => {
         mfaSecret: 'JBSWY3DPEHPK3PXP',
       });
 
-      const result = await service.enableMfa('user-123', 'JBSWY3DPEHPK3PXP', ['CODE1', 'CODE2']);
+      const result = await service.enableMfa('user-123', 'JBSWY3DPEHPK3PXP');
 
       expect(result.success).toBe(true);
       expect(result.mfaEnabled).toBe(true);

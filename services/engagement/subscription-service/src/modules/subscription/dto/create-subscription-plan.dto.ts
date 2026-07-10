@@ -1,4 +1,4 @@
-import { IsString, IsNumber, IsArray, IsOptional, IsBoolean, Min } from 'class-validator';
+import { IsString, IsNumber, IsArray, IsOptional, Min } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateSubscriptionPlanDto {

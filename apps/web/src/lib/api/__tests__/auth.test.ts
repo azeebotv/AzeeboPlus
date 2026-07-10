@@ -2,8 +2,8 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { createAuthMethods } from '../auth';
 import type { RequestClient } from '../base';
 
-function createMockClient(): RequestClient & { request: ReturnType<typeof vi.fn> } {
-  return { request: vi.fn() };
+function createMockClient() {
+  return { request: vi.fn() } as unknown as RequestClient & { request: ReturnType<typeof vi.fn> };
 }
 
 describe('Auth API Methods', () => {
@@ -19,7 +19,11 @@ describe('Auth API Methods', () => {
     it('should POST to /api/v1/auth/login with credentials', async () => {
       const mockResponse = {
         success: true,
-        data: { access_token: 'tok', refresh_token: 'ref', user: { id: '1', email: 'a@b.com', name: 'A', role: 'user' } },
+        data: {
+          access_token: 'tok',
+          refresh_token: 'ref',
+          user: { id: '1', email: 'a@b.com', name: 'A', role: 'user' },
+        },
       };
       client.request.mockResolvedValue(mockResponse);
 
@@ -46,11 +50,19 @@ describe('Auth API Methods', () => {
     it('should POST to /api/v1/auth/signup with registration data', async () => {
       const mockResponse = {
         success: true,
-        data: { access_token: 'tok', refresh_token: 'ref', user: { id: '1', email: 'a@b.com', name: 'A', role: 'user' } },
+        data: {
+          access_token: 'tok',
+          refresh_token: 'ref',
+          user: { id: '1', email: 'a@b.com', name: 'A', role: 'user' },
+        },
       };
       client.request.mockResolvedValue(mockResponse);
 
-      const result = await auth.register({ displayName: 'Test', email: 'a@b.com', password: 'pass' });
+      const result = await auth.register({
+        displayName: 'Test',
+        email: 'a@b.com',
+        password: 'pass',
+      });
 
       expect(client.request).toHaveBeenCalledWith('/api/v1/auth/signup', {
         method: 'POST',
@@ -72,7 +84,10 @@ describe('Auth API Methods', () => {
 
   describe('refreshToken', () => {
     it('should POST to /api/v1/auth/refresh with refresh token', async () => {
-      const mockResponse = { success: true, data: { access_token: 'new-tok', refresh_token: 'new-ref' } };
+      const mockResponse = {
+        success: true,
+        data: { access_token: 'new-tok', refresh_token: 'new-ref' },
+      };
       client.request.mockResolvedValue(mockResponse);
 
       const result = await auth.refreshToken('old-ref');
@@ -129,7 +144,11 @@ describe('Auth API Methods', () => {
     it('should POST to /api/v1/auth/mfa/verify', async () => {
       const mockResponse = {
         success: true,
-        data: { access_token: 'tok', refresh_token: 'ref', user: { id: '1', email: 'a@b.com', name: 'A', role: 'user' } },
+        data: {
+          access_token: 'tok',
+          refresh_token: 'ref',
+          user: { id: '1', email: 'a@b.com', name: 'A', role: 'user' },
+        },
       };
       client.request.mockResolvedValue(mockResponse);
 

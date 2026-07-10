@@ -199,7 +199,7 @@ export class PaystackProvider {
     }
   }
 
-  async processRefund(transactionReference: string, reason: string) {
+  async processRefund(transactionReference: string, _reason: string) {
     if (!this.apiKey) {
       throw new BadRequestException('Paystack payments are not configured');
     }

@@ -162,6 +162,17 @@ export const spacing = {
   '4xl': 64,
 };
 
+export const spacingNative = {
+  xs: 4,
+  sm: 8,
+  md: 12,
+  lg: 16,
+  xl: 24,
+  '2xl': 32,
+  '3xl': 48,
+  '4xl': 64,
+};
+
 export const typography = {
   fontSizes: {
     xs: 10,
@@ -189,6 +200,29 @@ export const typography = {
     normal: 1.5,
     relaxed: 1.75,
   },
+};
+
+export const fontSizeNative = {
+  xs: 10,
+  sm: 12,
+  base: 14,
+  md: 16,
+  lg: 18,
+  xl: 20,
+  '2xl': 24,
+  '3xl': 28,
+  '4xl': 32,
+  '5xl': 40,
+  '6xl': 48,
+};
+
+export const fontWeightNative = {
+  thin: '300' as const,
+  normal: '400' as const,
+  medium: '500' as const,
+  semibold: '600' as const,
+  bold: '700' as const,
+  extrabold: '800' as const,
 };
 
 export const borderRadius = {

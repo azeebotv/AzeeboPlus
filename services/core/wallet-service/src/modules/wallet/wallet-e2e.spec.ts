@@ -1,5 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ValidationPipe, ExecutionContext, NestInterceptor } from '@nestjs/common';
+import {
+  INestApplication,
+  ValidationPipe,
+  ExecutionContext,
+  NestInterceptor,
+} from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { WalletModule } from './wallet.module';
 import { PrismaService } from '../database/prisma.service';
@@ -77,6 +82,7 @@ describe('Wallet E2E Tests - Webhooks, Retries, and Failures', () => {
       })
       .overrideProvider(ConfigService)
       .useValue({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         get: jest.fn((key: string, defaultValue?: any) => {
           if (key === 'POINTS_TO_NAIRA_RATE') return defaultValue ?? 100;
           return defaultValue;
@@ -94,7 +100,9 @@ describe('Wallet E2E Tests - Webhooks, Retries, and Failures', () => {
         delete: jest.fn().mockResolvedValue(undefined),
       })
       .overrideInterceptor(CacheInterceptor)
-      .useValue({ intercept: (_ctx: ExecutionContext, next: { handle: () => unknown }) => next.handle() })
+      .useValue({
+        intercept: (_ctx: ExecutionContext, next: { handle: () => unknown }) => next.handle(),
+      })
       .overrideGuard(RateLimitGuard)
       .useClass(MockRateLimitGuard)
       .overrideGuard(AdminGuard)
@@ -768,7 +776,11 @@ describe('Wallet E2E Tests - Webhooks, Retries, and Failures', () => {
 
       const result = await walletService.processWebhook(webhookId, {
         event: 'charge.success',
-        data: { id: randomUUID(), amount: 50000, metadata: { walletId: testWalletId, userId: testUserId } },
+        data: {
+          id: randomUUID(),
+          amount: 50000,
+          metadata: { walletId: testWalletId, userId: testUserId },
+        },
       });
 
       expect(result).toBeDefined();

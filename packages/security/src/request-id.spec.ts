@@ -2,7 +2,9 @@ import { RequestIdMiddleware } from './request-id.middleware';
 
 describe('RequestIdMiddleware', () => {
   let middleware: RequestIdMiddleware;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let mockReq: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let mockRes: any;
   let mockNext: jest.Mock;
 

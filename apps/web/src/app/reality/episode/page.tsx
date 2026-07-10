@@ -1,5 +1,5 @@
 'use client';
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { apiFetch } from '../../../lib/api';
 import { webLogger } from '../../../lib/logger';
@@ -21,15 +21,15 @@ export default function EpisodePlayerPage(): React.JSX.Element {
   const router = useRouter();
   const searchParams = useSearchParams();
   const episodeId = searchParams.get('id') || '';
-  const _contentId = searchParams.get('contentId') || '';
   const [episode, setEpisode] = useState<EpisodeDetail | null>(null);
+  const [_error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [showSubtitles, setShowSubtitles] = useState(false);
   const [selectedSubtitle, setSelectedSubtitle] = useState<string | null>(null);
   const [showVoteModal, setShowVoteModal] = useState(false);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     const fetchEpisode = async () => {
@@ -42,20 +42,11 @@ export default function EpisodePlayerPage(): React.JSX.Element {
         if (result.success && result.data) {
           setEpisode(result.data);
         } else {
-          setEpisode({
-            id: episodeId,
-            title: 'Episode 1',
-            description: 'The first episode of this amazing show.',
-            seasonNumber: 1,
-            episodeNumber: 1,
-            duration: 3600,
-            thumbnail: '',
-            videoUrl: '',
-            subtitles: ['English', 'Yoruba', 'Hausa', 'Igbo'],
-          });
+          setError(result.message || 'Episode not found');
         }
       } catch (error) {
         webLogger.error('Failed to load episode', error);
+        setError('Failed to load episode');
       } finally {
         setIsLoading(false);
       }

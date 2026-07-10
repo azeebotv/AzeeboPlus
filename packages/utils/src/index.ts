@@ -49,9 +49,14 @@ export function parseJwt(token: string): Record<string, unknown> | null {
     const parts = token.split('.');
     if (parts.length !== 3) return null;
     const payload = parts[1];
-    const decoded = typeof Buffer !== 'undefined'
-      ? Buffer.from(payload, 'base64url').toString('utf-8')
-      : new TextDecoder().decode(Uint8Array.from(atob(payload.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0)));
+    const decoded =
+      typeof Buffer !== 'undefined'
+        ? Buffer.from(payload, 'base64url').toString('utf-8')
+        : new TextDecoder().decode(
+            Uint8Array.from(atob(payload.replace(/-/g, '+').replace(/_/g, '/')), (c) =>
+              c.charCodeAt(0)
+            )
+          );
     return JSON.parse(decoded) as Record<string, unknown>;
   } catch {
     return null;
@@ -69,6 +74,37 @@ export function sanitizeText(dirty: string): string {
     .replace(/'/g, '&#x27;')
     .replace(/\//g, '&#x2F;')
     .trim();
+}
+
+/** Strips dangerous HTML tags and javascript: protocols to prevent XSS. */
+export function sanitizeHtml(input: string): string {
+  if (!input) return '';
+  return input
+    .replace(/<script[\s\S]*?<\/script>/gi, '')
+    .replace(/<iframe[\s\S]*?<\/iframe>/gi, '')
+    .replace(/<object[\s\S]*?<\/object>/gi, '')
+    .replace(/<embed[\s\S]*?>/gi, '')
+    .replace(/javascript:/gi, '')
+    .replace(/\bon\w+\s*=/gi, '')
+    .trim();
+}
+
+/** Validates an email address format. */
+export function isValidEmail(email: string): boolean {
+  if (!email) return false;
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+/** Validates a phone number format. */
+export function isValidPhone(phone: string): boolean {
+  if (!phone) return false;
+  return /^\+?[\d\s\-()]{7,}$/.test(phone);
+}
+
+/** Validates a password meets minimum length requirements. */
+export function isValidPassword(password: string): boolean {
+  if (!password) return false;
+  return password.length >= 8;
 }
 
 /** Removes all HTML tags and unescapes HTML entities from a string. */
@@ -90,7 +126,7 @@ export function debounce<T extends (...args: unknown[]) => void>(
   fn: T,
   delay: number
 ): (...args: Parameters<T>) => void {
-  let timeoutId: NodeJS.Timeout | null = null;
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
   return (...args: Parameters<T>) => {
     if (timeoutId) clearTimeout(timeoutId);

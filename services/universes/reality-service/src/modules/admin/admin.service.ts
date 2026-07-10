@@ -34,7 +34,10 @@ export class AdminService {
         },
       };
     } catch (error) {
-      this.logger.error(`Failed to get all reality shows: ${(error as Error).message}`, (error as Error).stack);
+      this.logger.error(
+        `Failed to get all reality shows: ${(error as Error).message}`,
+        (error as Error).stack
+      );
       return { success: false, error: (error as Error).message };
     }
   }
@@ -58,13 +61,16 @@ export class AdminService {
 
       return show;
     } catch (error) {
-      this.logger.error(`Failed to get reality show by id: ${(error as Error).message}`, (error as Error).stack);
+      this.logger.error(
+        `Failed to get reality show by id: ${(error as Error).message}`,
+        (error as Error).stack
+      );
       if (error instanceof NotFoundException) throw error;
       return { success: false, error: (error as Error).message };
     }
   }
 
-  async updateRealityShowStatus(showId: string, status: string, reason?: string) {
+  async updateRealityShowStatus(showId: string, status: string, _reason?: string) {
     try {
       const show = await this.prisma.realityShow.findUnique({ where: { id: showId } });
       if (!show) {
@@ -81,7 +87,10 @@ export class AdminService {
 
       return updated;
     } catch (error) {
-      this.logger.error(`Failed to update reality show status: ${(error as Error).message}`, (error as Error).stack);
+      this.logger.error(
+        `Failed to update reality show status: ${(error as Error).message}`,
+        (error as Error).stack
+      );
       if (error instanceof NotFoundException) throw error;
       return { success: false, error: (error as Error).message };
     }

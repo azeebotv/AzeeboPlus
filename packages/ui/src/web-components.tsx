@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import { colors } from '@azeebo/design-tokens';
 import { Icon, IconName } from './Icon';
 
 // Button Component

@@ -1,4 +1,14 @@
-import { Controller, Get, Post, Patch, Body, Param, Query, Request, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Body,
+  Param,
+  Query,
+  Request,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
 import { RateLimitGuard, RateLimit, AdminGuard } from '@azeebo/security';
 import { TicketService } from './ticket.service';
@@ -40,12 +50,15 @@ export class TicketController {
   @ApiOperation({ summary: 'Get all tickets (admin)' })
   async getTickets(@Query() query: TicketQueryDto) {
     const result = await this.ticketService.getTickets(query);
-    return ApiResponseWrapper.paginated(
-      result.tickets,
-      result.meta.page,
-      result.meta.limit,
-      result.meta.total
-    );
+    if ('tickets' in result) {
+      return ApiResponseWrapper.paginated(
+        result.tickets,
+        result.meta.page,
+        result.meta.limit,
+        result.meta.total
+      );
+    }
+    return ApiResponseWrapper.error('TICKETS_ERROR', 'Failed to fetch tickets');
   }
 
   @Get('/my')
@@ -53,22 +66,26 @@ export class TicketController {
   @ApiOperation({ summary: 'Get my support tickets' })
   async getMyTickets(@Request() req: AuthenticatedRequest, @Query() query: TicketQueryDto) {
     const result = await this.ticketService.getUserTickets(req.user.id, query);
-    return ApiResponseWrapper.paginated(
-      result.tickets,
-      result.meta.page,
-      result.meta.limit,
-      result.meta.total
-    );
+    if ('tickets' in result) {
+      return ApiResponseWrapper.paginated(
+        result.tickets,
+        result.meta.page,
+        result.meta.limit,
+        result.meta.total
+      );
+    }
+    return ApiResponseWrapper.error('TICKETS_ERROR', 'Failed to fetch tickets');
   }
 
   @Get('/:id')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get ticket by ID' })
   async getTicket(@Request() req: AuthenticatedRequest, @Param('id') id: string) {
-    const ticket = await this.ticketService.getTicketById(id);
-    if (!ticket) {
+    const result = await this.ticketService.getTicketById(id);
+    if (!result || typeof result !== 'object' || !('userId' in result)) {
       return ApiResponseWrapper.error('TICKET_NOT_FOUND', 'Support ticket not found');
     }
+    const ticket = result as { userId: string; [key: string]: unknown };
     if (ticket.userId !== req.user.id && req.user.role?.toLowerCase() !== 'admin') {
       return ApiResponseWrapper.error('FORBIDDEN', 'You do not have access to this ticket');
     }
@@ -93,7 +110,8 @@ export class TicketController {
     @Body() dto: AddMessageDto
   ) {
     const senderType = req.user.role === 'admin' || req.user.role === 'ADMIN' ? 'ADMIN' : 'USER';
-    const isInternal = req.user.role === 'admin' || req.user.role === 'ADMIN' ? dto.isInternal : false;
+    const isInternal =
+      req.user.role === 'admin' || req.user.role === 'ADMIN' ? dto.isInternal : false;
     const message = await this.ticketService.addMessage(
       id,
       req.user.id,

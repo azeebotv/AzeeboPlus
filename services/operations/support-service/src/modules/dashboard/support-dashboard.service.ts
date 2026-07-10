@@ -38,7 +38,7 @@ export class SupportDashboardService {
         pendingDisputes,
         activeSuspensions,
       };
-    } catch (_err) {
+    } catch (error) {
       this.logger.error(`getStats failed: ${(error as Error).message}`, (error as Error).stack);
       return { success: false, error: (error as Error).message };
     }
@@ -120,12 +120,16 @@ export class SupportDashboardService {
           userId: a.userId,
           createdAt: a.createdAt,
         })),
-      ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      ]
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
         .slice(0, 20);
 
       return { activities };
-    } catch (_err) {
-      this.logger.error(`getRecentActivity failed: ${(error as Error).message}`, (error as Error).stack);
+    } catch (error) {
+      this.logger.error(
+        `getRecentActivity failed: ${(error as Error).message}`,
+        (error as Error).stack
+      );
       return { success: false, error: (error as Error).message };
     }
   }
@@ -163,8 +167,11 @@ export class SupportDashboardService {
         avgResolutionTime: Math.round(totalResolutionMs / count),
         slaCompliance: Math.round((withinSla / count) * 100),
       };
-    } catch (_err) {
-      this.logger.error(`getSlaMetrics failed: ${(error as Error).message}`, (error as Error).stack);
+    } catch (error) {
+      this.logger.error(
+        `getSlaMetrics failed: ${(error as Error).message}`,
+        (error as Error).stack
+      );
       return { success: false, error: (error as Error).message };
     }
   }

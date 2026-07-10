@@ -53,9 +53,12 @@ export class IntelligenceService {
           preferences: preferences?.preferences || {},
         },
       };
-    } catch (_err) {
-      this.logger.error(`getPersonalization failed: ${(error as Error).message}`, (error as Error).stack);
-      return { success: false, error: (error as Error).message };
+    } catch (error) {
+      this.logger.error(
+        `getPersonalization failed: ${(error as Error).message}`,
+        (error as Error).stack
+      );
+      return { success: false, error: (error as Error).message } as never;
     }
   }
 
@@ -63,9 +66,12 @@ export class IntelligenceService {
     try {
       const segments = await this.prisma.audienceSegment.findMany();
       return { success: true, data: segments };
-    } catch (_err) {
-      this.logger.error(`getAudienceSegments failed: ${(error as Error).message}`, (error as Error).stack);
-      return { success: false, error: (error as Error).message };
+    } catch (error) {
+      this.logger.error(
+        `getAudienceSegments failed: ${(error as Error).message}`,
+        (error as Error).stack
+      );
+      return { success: false, error: (error as Error).message } as never;
     }
   }
 
@@ -104,8 +110,14 @@ export class IntelligenceService {
       const where: Record<string, unknown> = {};
       if (criteria.signupDateFrom || criteria.signupDateTo) {
         where.createdAt = {};
-        if (criteria.signupDateFrom) (where.createdAt as Record<string, unknown>).gte = new Date(criteria.signupDateFrom as string);
-        if (criteria.signupDateTo) (where.createdAt as Record<string, unknown>).lte = new Date(criteria.signupDateTo as string);
+        if (criteria.signupDateFrom)
+          (where.createdAt as Record<string, unknown>).gte = new Date(
+            criteria.signupDateFrom as string
+          );
+        if (criteria.signupDateTo)
+          (where.createdAt as Record<string, unknown>).lte = new Date(
+            criteria.signupDateTo as string
+          );
       }
       // Behavioral criteria (minViewCount, maxViewCount, minWatchTime, maxWatchTime, engagementLevel)
       // require joins on engagement tables and cannot be directly mapped to User model fields.
@@ -125,13 +137,16 @@ export class IntelligenceService {
       });
 
       return { success: true, data: { id: segment.id } };
-    } catch (_err) {
-      this.logger.error(`createAudienceSegment failed: ${(error as Error).message}`, (error as Error).stack);
-      return { success: false, error: (error as Error).message };
+    } catch (error) {
+      this.logger.error(
+        `createAudienceSegment failed: ${(error as Error).message}`,
+        (error as Error).stack
+      );
+      return { success: false, error: (error as Error).message } as never;
     }
   }
 
-  async getCreatorScores(universe?: string): Promise<{ success: boolean; data?: unknown }> {
+  async getCreatorScores(_universe?: string): Promise<{ success: boolean; data?: unknown }> {
     try {
       const scores = await this.prisma.creatorScore.findMany({
         orderBy: { overallScore: 'desc' },
@@ -139,9 +154,12 @@ export class IntelligenceService {
       });
 
       return { success: true, data: scores };
-    } catch (_err) {
-      this.logger.error(`getCreatorScores failed: ${(error as Error).message}`, (error as Error).stack);
-      return { success: false, error: (error as Error).message };
+    } catch (error) {
+      this.logger.error(
+        `getCreatorScores failed: ${(error as Error).message}`,
+        (error as Error).stack
+      );
+      return { success: false, error: (error as Error).message } as never;
     }
   }
 
@@ -180,9 +198,12 @@ export class IntelligenceService {
       });
 
       return { success: true, data: score };
-    } catch (_err) {
-      this.logger.error(`calculateCreatorScore failed: ${(error as Error).message}`, (error as Error).stack);
-      return { success: false, error: (error as Error).message };
+    } catch (error) {
+      this.logger.error(
+        `calculateCreatorScore failed: ${(error as Error).message}`,
+        (error as Error).stack
+      );
+      return { success: false, error: (error as Error).message } as never;
     }
   }
 
@@ -195,9 +216,12 @@ export class IntelligenceService {
       });
 
       return { success: true, data: risks };
-    } catch (_err) {
-      this.logger.error(`getChurnRisks failed: ${(error as Error).message}`, (error as Error).stack);
-      return { success: false, error: (error as Error).message };
+    } catch (error) {
+      this.logger.error(
+        `getChurnRisks failed: ${(error as Error).message}`,
+        (error as Error).stack
+      );
+      return { success: false, error: (error as Error).message } as never;
     }
   }
 
@@ -280,9 +304,12 @@ export class IntelligenceService {
       });
 
       return { success: true, data: churnRisk };
-    } catch (_err) {
-      this.logger.error(`calculateChurnRisk failed: ${(error as Error).message}`, (error as Error).stack);
-      return { success: false, error: (error as Error).message };
+    } catch (error) {
+      this.logger.error(
+        `calculateChurnRisk failed: ${(error as Error).message}`,
+        (error as Error).stack
+      );
+      return { success: false, error: (error as Error).message } as never;
     }
   }
 
@@ -296,9 +323,12 @@ export class IntelligenceService {
       });
 
       return { success: true, data: detections };
-    } catch (_err) {
-      this.logger.error(`getFraudDetections failed: ${(error as Error).message}`, (error as Error).stack);
-      return { success: false, error: (error as Error).message };
+    } catch (error) {
+      this.logger.error(
+        `getFraudDetections failed: ${(error as Error).message}`,
+        (error as Error).stack
+      );
+      return { success: false, error: (error as Error).message } as never;
     }
   }
 
@@ -319,9 +349,9 @@ export class IntelligenceService {
       });
 
       return { success: true, data: { id: detection.id } };
-    } catch (_err) {
+    } catch (error) {
       this.logger.error(`detectFraud failed: ${(error as Error).message}`, (error as Error).stack);
-      return { success: false, error: (error as Error).message };
+      return { success: false, error: (error as Error).message } as never;
     }
   }
 
@@ -337,9 +367,12 @@ export class IntelligenceService {
       });
 
       return { success: true, data: { message: `Detection ${status}` } };
-    } catch (_err) {
-      this.logger.error(`reviewFraudDetection failed: ${(error as Error).message}`, (error as Error).stack);
-      return { success: false, error: (error as Error).message };
+    } catch (error) {
+      this.logger.error(
+        `reviewFraudDetection failed: ${(error as Error).message}`,
+        (error as Error).stack
+      );
+      return { success: false, error: (error as Error).message } as never;
     }
   }
 
@@ -377,9 +410,12 @@ export class IntelligenceService {
           retentionByWeek,
         },
       };
-    } catch (_err) {
-      this.logger.error(`getRetentionMetrics failed: ${(error as Error).message}`, (error as Error).stack);
-      return { success: false, error: (error as Error).message };
+    } catch (error) {
+      this.logger.error(
+        `getRetentionMetrics failed: ${(error as Error).message}`,
+        (error as Error).stack
+      );
+      return { success: false, error: (error as Error).message } as never;
     }
   }
 
@@ -419,16 +455,20 @@ export class IntelligenceService {
         .slice(0, 3)
         .map(([name]) => name);
 
-      const allUniverses = [
-        'reality',
-        'creator',
-        'lifestyle',
-        'games',
-        'comedy',
-        'sports',
-        'movie',
-        'vertical',
-      ];
+      // Get all universes from database instead of hardcoding
+      let allUniverses: string[];
+      try {
+        const universes = await this.prisma.universe.findMany({
+          select: { name: true },
+        });
+        allUniverses = universes.map((u) => u.name);
+      } catch {
+        // Fall back to hardcoded list if universe table doesn't exist
+        allUniverses = [
+          'reality', 'creator', 'lifestyle', 'games',
+          'comedy', 'sports', 'movie', 'vertical',
+        ];
+      }
       const unexploredUniverses = allUniverses.filter((u) => !topUniverses.includes(u));
 
       const recommendedContent: Record<string, unknown[]> = {};
@@ -460,9 +500,12 @@ export class IntelligenceService {
           recommendationReason: 'Based on your viewing patterns, you might enjoy these universes',
         },
       };
-    } catch (_err) {
-      this.logger.error(`getCrossUniverseRecommendations failed: ${(error as Error).message}`, (error as Error).stack);
-      return { success: false, error: (error as Error).message };
+    } catch (error) {
+      this.logger.error(
+        `getCrossUniverseRecommendations failed: ${(error as Error).message}`,
+        (error as Error).stack
+      );
+      return { success: false, error: (error as Error).message } as never;
     }
   }
 
@@ -486,7 +529,9 @@ export class IntelligenceService {
           voteByUserSession.set(key, (voteByUserSession.get(key) || 0) + 1);
         }
       }
-      const rapidVotes = Array.from(voteByUserSession.values()).filter((count) => count > 20).length;
+      const rapidVotes = Array.from(voteByUserSession.values()).filter(
+        (count) => count > 20
+      ).length;
 
       const rapidPredictionEvents = await this.prisma.productEvent.count({
         where: {
@@ -558,9 +603,12 @@ export class IntelligenceService {
             .length,
         },
       };
-    } catch (_err) {
-      this.logger.error(`analyzeFraudPatterns failed: ${(error as Error).message}`, (error as Error).stack);
-      return { success: false, error: (error as Error).message };
+    } catch (error) {
+      this.logger.error(
+        `analyzeFraudPatterns failed: ${(error as Error).message}`,
+        (error as Error).stack
+      );
+      return { success: false, error: (error as Error).message } as never;
     }
   }
 
@@ -622,9 +670,12 @@ export class IntelligenceService {
           ],
         },
       };
-    } catch (_err) {
-      this.logger.error(`getSegmentationInsights failed: ${(error as Error).message}`, (error as Error).stack);
-      return { success: false, error: (error as Error).message };
+    } catch (error) {
+      this.logger.error(
+        `getSegmentationInsights failed: ${(error as Error).message}`,
+        (error as Error).stack
+      );
+      return { success: false, error: (error as Error).message } as never;
     }
   }
 }

@@ -1,5 +1,4 @@
 'use client';
-import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
@@ -13,19 +12,31 @@ import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { StaggerGrid } from '@/components/motion/StaggerGrid';
 import { GlowCard } from '@/components/motion/GlowCard';
 
-const MOVIES_UNIVERSE_ID = 'u0000001-0000-0000-0000-000000000004';
-
 export default function MoviesPage(): React.JSX.Element {
-  const moviesQuery = useQuery({
-    queryKey: ['movies', MOVIES_UNIVERSE_ID],
+  const universesQuery = useQuery({
+    queryKey: ['universes'],
     queryFn: async () => {
-      const res = await api.content.getContentByUniverse(MOVIES_UNIVERSE_ID, 1, 20);
+      const res = await api.universe.getUniverses();
+      if (!res.success || !res.data) throw new Error(res.message || 'Failed to load universes');
+      return res.data;
+    },
+    staleTime: 300000,
+  });
+
+  const moviesUniverse = universesQuery.data?.find((u) => u.name?.toLowerCase() === 'movie');
+
+  const moviesQuery = useQuery({
+    queryKey: ['movies', moviesUniverse?.id],
+    queryFn: async () => {
+      if (!moviesUniverse?.id) throw new Error('Movies universe not found');
+      const res = await api.content.getContentByUniverse(moviesUniverse.id, 1, 20);
       if (res.success && res.data) {
         return Array.isArray(res.data) ? res.data : res.data.items || [];
       }
       throw new Error(res.message || 'Failed to load movies');
     },
     staleTime: 60000,
+    enabled: !!moviesUniverse?.id,
   });
 
   const categoriesQuery = useQuery({

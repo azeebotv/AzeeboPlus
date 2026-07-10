@@ -5,6 +5,7 @@ import {
   HttpException,
   HttpStatus,
   SetMetadata,
+  Logger,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
@@ -21,6 +22,7 @@ export interface RateLimitOptions {
 
 @Injectable()
 export class RateLimitGuard implements CanActivate {
+  private readonly logger = new Logger(RateLimitGuard.name);
   private readonly blockListPrefix = 'rate_limit:blocked:';
   private readonly violationPrefix = 'rate_limit:violations:';
   private readonly blockDuration: number;
@@ -126,7 +128,8 @@ export class RateLimitGuard implements CanActivate {
       const key = `${this.blockListPrefix}${ip}`;
       const exists = await this.redisService.get(key);
       return !!exists;
-    } catch {
+    } catch (error) {
+      this.logger.warn(`Failed to check block status for ${ip}: ${error instanceof Error ? error.message : 'unknown'}`);
       return false;
     }
   }
@@ -135,8 +138,8 @@ export class RateLimitGuard implements CanActivate {
     try {
       const key = `${this.blockListPrefix}${ip}`;
       await this.redisService.set(key, 'blocked', duration);
-    } catch {
-      // Silently fail
+    } catch (error) {
+      this.logger.warn(`Failed to block IP ${ip}: ${error instanceof Error ? error.message : 'unknown'}`);
     }
   }
 
@@ -149,8 +152,8 @@ export class RateLimitGuard implements CanActivate {
       if (count >= threshold) {
         await this.block(ip);
       }
-    } catch {
-      // Silently fail
+    } catch (error) {
+      this.logger.warn(`Failed to record violation for ${ip}: ${error instanceof Error ? error.message : 'unknown'}`);
     }
   }
 }

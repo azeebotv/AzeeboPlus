@@ -1,7 +1,7 @@
 'use client';
-import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/context/AuthContext';
 import { api } from '@/lib/api';
 import AdminLayout from '@/components/layout/AdminLayout';
@@ -59,7 +59,11 @@ export default function AdminUniversesPage(): React.JSX.Element {
 
   const isEnabled = !authLoading && !!isAuthenticated && !!user && user.role === 'admin';
 
-  const { data: universes = [], isLoading, error } = useQuery({
+  const {
+    data: universes = [],
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ['admin', 'universes'],
     queryFn: async () => {
       const response = await api.admin.getAllUniverses();
@@ -104,8 +108,7 @@ export default function AdminUniversesPage(): React.JSX.Element {
     items.sort((a, b) => {
       let cmp = 0;
       if (sortKey === 'name') cmp = a.displayName.localeCompare(b.displayName);
-      else if (sortKey === 'contentCount')
-        cmp = (a.contentCount || 0) - (b.contentCount || 0);
+      else if (sortKey === 'contentCount') cmp = (a.contentCount || 0) - (b.contentCount || 0);
       else if (sortKey === 'status') cmp = (a.isEnabled ? 1 : 0) - (b.isEnabled ? 1 : 0);
       else if (sortKey === 'sortOrder') cmp = a.sortOrder - b.sortOrder;
       return sortDir === 'asc' ? cmp : -cmp;
@@ -113,12 +116,9 @@ export default function AdminUniversesPage(): React.JSX.Element {
     return items;
   }, [universes, search, sortKey, sortDir]);
 
-  const toggleToast = useCallback(
-    (type: 'success' | 'error', text: string) => {
-      setToast({ type, text });
-    },
-    []
-  );
+  const toggleToast = useCallback((type: 'success' | 'error', text: string) => {
+    setToast({ type, text });
+  }, []);
 
   const handleToggleUniverse = async (id: string, currentEnabled: boolean) => {
     try {
@@ -264,9 +264,7 @@ export default function AdminUniversesPage(): React.JSX.Element {
     if (ids.length === 0) return;
     try {
       const results = await Promise.all(ids.map((id) => api.admin.exportUniverse(id)));
-      const exportData = results
-        .filter((r) => r.success && r.data)
-        .map((r) => r.data);
+      const exportData = results.filter((r) => r.success && r.data).map((r) => r.data);
       const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -556,25 +554,53 @@ export default function AdminUniversesPage(): React.JSX.Element {
             }}
           >
             <div>
-              <p style={{ fontSize: 12, color: '#9A8A7A', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+              <p
+                style={{
+                  fontSize: 12,
+                  color: '#9A8A7A',
+                  textTransform: 'uppercase',
+                  letterSpacing: 0.5,
+                }}
+              >
                 Total
               </p>
               <p style={{ fontSize: 28, fontWeight: 700, color: '#F5F0EB' }}>{universes.length}</p>
             </div>
             <div>
-              <p style={{ fontSize: 12, color: '#9A8A7A', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+              <p
+                style={{
+                  fontSize: 12,
+                  color: '#9A8A7A',
+                  textTransform: 'uppercase',
+                  letterSpacing: 0.5,
+                }}
+              >
                 Enabled
               </p>
               <p style={{ fontSize: 28, fontWeight: 700, color: '#4ADE80' }}>{enabledCount}</p>
             </div>
             <div>
-              <p style={{ fontSize: 12, color: '#9A8A7A', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+              <p
+                style={{
+                  fontSize: 12,
+                  color: '#9A8A7A',
+                  textTransform: 'uppercase',
+                  letterSpacing: 0.5,
+                }}
+              >
                 Disabled
               </p>
               <p style={{ fontSize: 28, fontWeight: 700, color: '#F87171' }}>{disabledCount}</p>
             </div>
             <div>
-              <p style={{ fontSize: 12, color: '#9A8A7A', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+              <p
+                style={{
+                  fontSize: 12,
+                  color: '#9A8A7A',
+                  textTransform: 'uppercase',
+                  letterSpacing: 0.5,
+                }}
+              >
                 Feature Flags
               </p>
               <p style={{ fontSize: 28, fontWeight: 700, color: '#F59E0B' }}>{totalFlags}</p>
@@ -582,7 +608,10 @@ export default function AdminUniversesPage(): React.JSX.Element {
             {stats &&
               typeof stats === 'object' &&
               Object.entries(stats).map(([key, val]) =>
-                key !== 'total' && key !== 'enabled' && key !== 'disabled' && key !== 'featureFlags' ? (
+                key !== 'total' &&
+                key !== 'enabled' &&
+                key !== 'disabled' &&
+                key !== 'featureFlags' ? (
                   <div key={key}>
                     <p
                       style={{
@@ -594,9 +623,7 @@ export default function AdminUniversesPage(): React.JSX.Element {
                     >
                       {key.replace(/([A-Z])/g, ' $1').trim()}
                     </p>
-                    <p style={{ fontSize: 28, fontWeight: 700, color: '#F5F0EB' }}>
-                      {String(val)}
-                    </p>
+                    <p style={{ fontSize: 28, fontWeight: 700, color: '#F5F0EB' }}>{String(val)}</p>
                   </div>
                 ) : null
               )}
@@ -637,12 +664,14 @@ export default function AdminUniversesPage(): React.JSX.Element {
             />
           </div>
           <div style={{ display: 'flex', gap: 6 }}>
-            {([
-              ['name', 'Name'],
-              ['contentCount', 'Content'],
-              ['status', 'Status'],
-              ['sortOrder', 'Order'],
-            ] as const).map(([key, label]) => (
+            {(
+              [
+                ['name', 'Name'],
+                ['contentCount', 'Content'],
+                ['status', 'Status'],
+                ['sortOrder', 'Order'],
+              ] as const
+            ).map(([key, label]) => (
               <button
                 key={key}
                 onClick={() => {
@@ -742,7 +771,13 @@ export default function AdminUniversesPage(): React.JSX.Element {
         )}
 
         {isLoading ? (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+              gap: 16,
+            }}
+          >
             {Array.from({ length: 6 }).map((_, i) => (
               <div key={i} className="az-glass" style={{ padding: 20, borderRadius: 16 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
@@ -758,7 +793,11 @@ export default function AdminUniversesPage(): React.JSX.Element {
             ))}
           </div>
         ) : error ? (
-          <ErrorState title="Failed to load universes" description="Please try again later" onButtonPress={() => router.refresh()} />
+          <ErrorState
+            title="Failed to load universes"
+            description="Please try again later"
+            onButtonPress={() => router.refresh()}
+          />
         ) : (
           <>
             <div style={{ marginBottom: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -833,15 +872,22 @@ export default function AdminUniversesPage(): React.JSX.Element {
                       marginBottom: 12,
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 }}>
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 10,
+                        flex: 1,
+                        minWidth: 0,
+                      }}
+                    >
                       <button
                         onClick={() => toggleSelect(u.id)}
                         style={{
                           width: 20,
                           height: 20,
                           borderRadius: 5,
-                          border:
-                            selectedIds.has(u.id) ? 'none' : '1px solid #5A4A3A',
+                          border: selectedIds.has(u.id) ? 'none' : '1px solid #5A4A3A',
                           backgroundColor: selectedIds.has(u.id) ? '#E8420A' : 'transparent',
                           display: 'flex',
                           alignItems: 'center',
@@ -1348,7 +1394,9 @@ export default function AdminUniversesPage(): React.JSX.Element {
                     fontWeight: 700,
                     fontSize: 14,
                     cursor:
-                      isSaving || !modalForm.name || !modalForm.displayName ? 'not-allowed' : 'pointer',
+                      isSaving || !modalForm.name || !modalForm.displayName
+                        ? 'not-allowed'
+                        : 'pointer',
                     opacity: isSaving || !modalForm.name || !modalForm.displayName ? 0.5 : 1,
                   }}
                 >
@@ -1388,7 +1436,8 @@ export default function AdminUniversesPage(): React.JSX.Element {
               <div style={{ fontSize: 40, marginBottom: 16 }}>⚠️</div>
               <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>Delete Universe?</h3>
               <p style={{ color: '#9A8A7A', fontSize: 14, marginBottom: 24 }}>
-                This action cannot be undone. All data associated with this universe will be removed.
+                This action cannot be undone. All data associated with this universe will be
+                removed.
               </p>
               <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
                 <button

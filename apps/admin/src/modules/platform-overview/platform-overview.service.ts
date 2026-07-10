@@ -1,8 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 
 @Injectable()
 export class PlatformOverviewService {
+  private readonly logger = new Logger(PlatformOverviewService.name);
+  private readonly subscriptionServiceUrl = process.env.SUBSCRIPTION_SERVICE_URL || 'http://localhost:3026';
+
   constructor(private readonly prisma: PrismaService) {}
 
   async getOverview() {
@@ -27,7 +30,7 @@ export class PlatformOverviewService {
       this.prisma.contentItem.count({ where: { status: 'published' } }),
       this.prisma.wallet.count(),
       this.prisma.wallet.aggregate({ _sum: { balance: true } }),
-      this.prisma.contentItem.count({ where: { status: 'published' } }),
+      this.getActiveSubscriptions(),
       this.prisma.report.count({ where: { status: 'pending' } }),
     ]);
 
@@ -51,5 +54,22 @@ export class PlatformOverviewService {
         pendingReports,
       },
     };
+  }
+
+  private async getActiveSubscriptions(): Promise<number> {
+    try {
+      const response = await fetch(`${this.subscriptionServiceUrl}/v1/subscriptions/stats/active`, {
+        headers: { 'Content-Type': 'application/json' },
+        signal: AbortSignal.timeout(5000),
+      });
+      if (response.ok) {
+        const data = await response.json() as { data?: { count?: number } };
+        return data.data?.count ?? 0;
+      }
+      return 0;
+    } catch (error) {
+      this.logger.warn(`Failed to fetch active subscriptions: ${(error as Error).message}`);
+      return 0;
+    }
   }
 }

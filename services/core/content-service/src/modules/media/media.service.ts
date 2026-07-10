@@ -12,7 +12,7 @@ export class MediaService {
   private bucketName: string;
 
   constructor(private configService: ConfigService) {
-    this.bucketName = this.configService.get('S3_BUCKET_NAME') || '';
+    this.bucketName = this.configService.get('AWS_S3_BUCKET') || '';
     this.s3Client = new S3Client({
       region: this.configService.get('AWS_REGION') || 'us-east-1',
       credentials: {
@@ -37,25 +37,45 @@ export class MediaService {
         expiresIn,
       });
       return signedUrl;
-    } catch (_err) {
+    } catch (error) {
       this.logger.error(`Error generating signed URL: ${(error as Error).message}`);
       throw new NotFoundException('Failed to generate signed URL');
     }
   }
 
   async getMediaUrl(originalUrl: string, expiresIn: number = 3600): Promise<string> {
+    if (!originalUrl) {
+      throw new NotFoundException('Media URL not provided');
+    }
+
     // If the URL is already a signed URL or not from S3, return it as is
-    if (!originalUrl.includes(this.bucketName)) {
+    if (originalUrl.includes('X-Amz-Signature')) {
       return originalUrl;
     }
 
-    // Extract the key from the URL
-    const key = originalUrl.split(this.bucketName + '.s3.amazonaws.com/')[1];
-    if (!key) {
-      return originalUrl;
+    // Handle full S3 URLs: https://bucket.s3.amazonaws.com/key
+    if (originalUrl.includes('.s3.amazonaws.com/')) {
+      const key = originalUrl.split('.s3.amazonaws.com/')[1];
+      if (key) {
+        return this.getSignedUrl(key, expiresIn);
+      }
     }
 
-    return this.getSignedUrl(key, expiresIn);
+    // Handle S3 URLs with region: https://bucket.s3.region.amazonaws.com/key
+    if (originalUrl.includes('.s3.') && originalUrl.includes('.amazonaws.com/')) {
+      const key = originalUrl.split('.amazonaws.com/')[1];
+      if (key) {
+        return this.getSignedUrl(key, expiresIn);
+      }
+    }
+
+    // Treat as raw S3 key (e.g., "uploads/video.mp4")
+    if (!originalUrl.startsWith('http')) {
+      return this.getSignedUrl(originalUrl, expiresIn);
+    }
+
+    // Unknown format, return as-is
+    return originalUrl;
   }
 
   async generateThumbnail(
@@ -124,7 +144,7 @@ export class MediaService {
 
       // Generate signed URL for the thumbnail
       return this.getSignedUrl(thumbnailKey);
-    } catch (_err) {
+    } catch (error) {
       this.logger.error('Error generating thumbnail:', error);
       throw new Error('Failed to generate thumbnail');
     }

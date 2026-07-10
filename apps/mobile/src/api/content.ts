@@ -339,6 +339,12 @@ export const contentApi = {
     return apiClient.get<ApiResponse<CreatorProfile>>(`/api/v1/creator/profile/${creatorId}`);
   },
 
+  getSignedUrl: async (contentId: string): Promise<ApiResponse<{ signedUrl: string; expiresIn: number; mediaAssetId: string }>> => {
+    return apiClient.get<ApiResponse<{ signedUrl: string; expiresIn: number; mediaAssetId: string }>>(
+      `/api/v1/content/${contentId}/media/signed-url`
+    );
+  },
+
   getRecommendations: async (type?: string): Promise<ApiResponse<Recommendation[]>> => {
     const url = type
       ? `/api/v1/content/recommendations?type=${type}`

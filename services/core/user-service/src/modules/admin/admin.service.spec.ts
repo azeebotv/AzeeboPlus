@@ -218,13 +218,7 @@ describe('AdminService', () => {
     describe('moderateContent', () => {
       it('should throw NotFoundException (handled by content-service)', async () => {
         await expect(
-          service.moderateContent(
-            'content-1',
-            'approve',
-            'Looks good',
-            'admin-1',
-            'super_admin'
-          )
+          service.moderateContent('content-1', 'approve', 'Looks good', 'admin-1', 'super_admin')
         ).rejects.toThrow(NotFoundException);
       });
     });
@@ -244,12 +238,7 @@ describe('AdminService', () => {
     describe('resolveReport', () => {
       it('should throw NotFoundException (handled by moderation-service)', async () => {
         await expect(
-          service.resolveReport(
-            'report-1',
-            'Content removed',
-            'admin-1',
-            'super_admin'
-          )
+          service.resolveReport('report-1', 'Content removed', 'admin-1', 'super_admin')
         ).rejects.toThrow(NotFoundException);
       });
     });
@@ -290,13 +279,7 @@ describe('AdminService', () => {
     describe('verifyCreator', () => {
       it('should throw NotFoundException (handled by creator-service)', async () => {
         await expect(
-          service.verifyCreator(
-            'req-1',
-            'approved',
-            'Verified',
-            'admin-1',
-            'super_admin'
-          )
+          service.verifyCreator('req-1', 'approved', 'Verified', 'admin-1', 'super_admin')
         ).rejects.toThrow(NotFoundException);
       });
     });
@@ -339,7 +322,9 @@ describe('AdminService', () => {
 
         expect(result.message).toBe('Watch history deleted successfully');
         expect(mockPrismaService.auditLog.create).toHaveBeenCalledWith(
-          expect.objectContaining({ data: expect.objectContaining({ action: 'user.watch_history.deleted' }) })
+          expect.objectContaining({
+            data: expect.objectContaining({ action: 'user.watch_history.deleted' }),
+          })
         );
       });
     });

@@ -12,7 +12,7 @@ describe('ContentManagementController', () => {
         {
           provide: ContentManagementService,
           useValue: {
-            getContent: jest.fn().mockResolvedValue({ items: [], total: 0 }),
+            listContent: jest.fn().mockResolvedValue({ items: [], total: 0 }),
             updateContentStatus: jest.fn().mockResolvedValue(null),
             deleteContent: jest.fn().mockResolvedValue(null),
           },
@@ -28,7 +28,7 @@ describe('ContentManagementController', () => {
   });
 
   it('should return content list', async () => {
-    const result = await controller.getContent(1, 20);
+    const result = await controller.listContent('1', '20');
     expect(result).toBeDefined();
   });
 });

@@ -8,13 +8,9 @@ export class TranscodingService {
   private readonly logger = new Logger(TranscodingService.name);
   private s3Client: S3Client;
   private bucketName: string;
-  private transcodedBaseUrl: string;
 
   constructor(private configService: ConfigService) {
     this.bucketName = this.configService.get('S3_BUCKET_NAME') || '';
-    this.transcodedBaseUrl =
-      this.configService.get('S3_TRANSCODED_BASE_URL') ||
-      `https://${this.bucketName}.s3.amazonaws.com/transcoded`;
     this.s3Client = new S3Client({
       region: this.configService.get('AWS_REGION') || 'us-east-1',
       credentials: {
@@ -62,7 +58,7 @@ export class TranscodingService {
         status: 'pending',
         message: 'Transcoding job started',
       };
-    } catch (_err) {
+    } catch (error) {
       this.logger.error('Error starting transcoding job:', error);
       throw new BadRequestException('Failed to start transcoding job');
     }
@@ -96,7 +92,7 @@ export class TranscodingService {
         expiresIn,
       });
       return signedUrl;
-    } catch (_err) {
+    } catch (error) {
       this.logger.error('Error generating signed URL for transcoded media:', error);
       throw new BadRequestException('Failed to generate signed URL');
     }

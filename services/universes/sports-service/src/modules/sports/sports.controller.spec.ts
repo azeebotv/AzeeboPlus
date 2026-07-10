@@ -6,7 +6,6 @@ import { RateLimitService } from '@azeebo/security';
 
 describe('SportsController', () => {
   let controller: SportsController;
-  let service: SportsService;
 
   const mockSportsService = {
     getHome: jest.fn(),
@@ -22,7 +21,9 @@ describe('SportsController', () => {
   };
 
   const mockRateLimitService = {
-    checkRateLimit: jest.fn().mockResolvedValue({ allowed: true, remaining: 10, resetAt: Date.now() + 60000, limit: 10 }),
+    checkRateLimit: jest
+      .fn()
+      .mockResolvedValue({ allowed: true, remaining: 10, resetAt: Date.now() + 60000, limit: 10 }),
     resetRateLimit: jest.fn(),
     getRateLimitStatus: jest.fn(),
   };
@@ -44,7 +45,7 @@ describe('SportsController', () => {
     }).compile();
 
     controller = module.get<SportsController>(SportsController);
-    service = module.get<SportsService>(SportsService);
+    module.get<SportsService>(SportsService);
   });
 
   afterEach(() => {
@@ -117,7 +118,10 @@ describe('SportsController', () => {
     it('should submit a prediction', async () => {
       const req = { user: { sub: 'user-123' } };
       const body = { eventId: 'event-1', prediction: { winner: 'team-a' } };
-      const result = { success: true, data: { predictionId: 'pred-1', fee: 10, message: 'Prediction submitted' } };
+      const result = {
+        success: true,
+        data: { predictionId: 'pred-1', fee: 10, message: 'Prediction submitted' },
+      };
       mockSportsService.submitPrediction.mockResolvedValue(result);
 
       expect(await controller.submitPrediction(req, body)).toEqual(result);
@@ -138,20 +142,28 @@ describe('SportsController', () => {
       const req = { user: { sub: 'user-123' } };
       const body = { eventId: 'event-1', prediction: {} };
       mockSportsService.submitPrediction.mockRejectedValue(
-        new (require('@nestjs/common').BadRequestException)('Predictions are only allowed for upcoming events')
+        new (require('@nestjs/common').BadRequestException)(
+          'Predictions are only allowed for upcoming events'
+        )
       );
 
-      await expect(controller.submitPrediction(req, body)).rejects.toThrow('Predictions are only allowed for upcoming events');
+      await expect(controller.submitPrediction(req, body)).rejects.toThrow(
+        'Predictions are only allowed for upcoming events'
+      );
     });
 
     it('should throw BadRequestException when insufficient balance', async () => {
       const req = { user: { sub: 'user-123' } };
       const body = { eventId: 'event-1', prediction: {} };
       mockSportsService.submitPrediction.mockRejectedValue(
-        new (require('@nestjs/common').BadRequestException)('Insufficient balance for prediction fee')
+        new (require('@nestjs/common').BadRequestException)(
+          'Insufficient balance for prediction fee'
+        )
       );
 
-      await expect(controller.submitPrediction(req, body)).rejects.toThrow('Insufficient balance for prediction fee');
+      await expect(controller.submitPrediction(req, body)).rejects.toThrow(
+        'Insufficient balance for prediction fee'
+      );
     });
   });
 
@@ -189,7 +201,10 @@ describe('SportsController', () => {
     it('should enter a fan contest', async () => {
       const req = { user: { sub: 'user-123' } };
       const body = { contestId: 'contest-1' };
-      const result = { success: true, data: { entryId: 'entry-1', fee: 50, message: 'Entered contest successfully' } };
+      const result = {
+        success: true,
+        data: { entryId: 'entry-1', fee: 50, message: 'Entered contest successfully' },
+      };
       mockSportsService.enterFanContest.mockResolvedValue(result);
 
       expect(await controller.enterFanContest(req, body)).toEqual(result);
@@ -220,10 +235,14 @@ describe('SportsController', () => {
       const req = { user: { sub: 'user-123' } };
       const body = { contestId: 'contest-1' };
       mockSportsService.enterFanContest.mockRejectedValue(
-        new (require('@nestjs/common').BadRequestException)('Insufficient balance for contest entry fee')
+        new (require('@nestjs/common').BadRequestException)(
+          'Insufficient balance for contest entry fee'
+        )
       );
 
-      await expect(controller.enterFanContest(req, body)).rejects.toThrow('Insufficient balance for contest entry fee');
+      await expect(controller.enterFanContest(req, body)).rejects.toThrow(
+        'Insufficient balance for contest entry fee'
+      );
     });
   });
 });

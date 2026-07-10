@@ -137,6 +137,7 @@ describe('CacheService', () => {
         keys: jest.fn().mockResolvedValue(['key1', 'key2', 'key3']),
         del: jest.fn().mockResolvedValue(3),
       };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       redisService.getClient.mockResolvedValue(mockClient as any);
 
       await service.deleteByPattern('prefix:*');
@@ -150,6 +151,7 @@ describe('CacheService', () => {
         keys: jest.fn().mockResolvedValue([]),
         del: jest.fn(),
       };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       redisService.getClient.mockResolvedValue(mockClient as any);
 
       await service.deleteByPattern('prefix:*');
@@ -161,6 +163,7 @@ describe('CacheService', () => {
 
   describe('invalidate', () => {
     it('should call deleteByPattern', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const deleteByPatternSpy = jest.spyOn(service as any, 'deleteByPattern');
 
       await service.invalidate('prefix:*');

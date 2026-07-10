@@ -100,22 +100,25 @@ describe('Wallet Controller Contract Tests', () => {
       controllers: [WalletController],
       providers: [
         { provide: WalletService, useValue: mockWalletService },
-        { provide: PrismaService, useValue: {
-          wallet: {
-            findUnique: jest.fn().mockResolvedValue({
-              id: 'wallet-123',
-              userId: 'user-123',
-              balance: '100000',
-              bonusBalance: '5000',
-              promoBalance: '0',
-              currency: 'NGN',
-              createdAt: new Date(),
-              updatedAt: new Date(),
-            }),
+        {
+          provide: PrismaService,
+          useValue: {
+            wallet: {
+              findUnique: jest.fn().mockResolvedValue({
+                id: 'wallet-123',
+                userId: 'user-123',
+                balance: '100000',
+                bonusBalance: '5000',
+                promoBalance: '0',
+                currency: 'NGN',
+                createdAt: new Date(),
+                updatedAt: new Date(),
+              }),
+            },
           },
-        }},
+        },
         { provide: CacheService, useValue: { get: jest.fn(), set: jest.fn(), del: jest.fn() } },
-        { provide: ConfigService, useValue: { get: jest.fn((k: string, d?: unknown) => d) } },
+        { provide: ConfigService, useValue: { get: jest.fn((_k: string, d?: unknown) => d) } },
         { provide: APP_GUARD, useClass: ServiceAuthGuard },
       ],
     })
@@ -126,11 +129,15 @@ describe('Wallet Controller Contract Tests', () => {
       .overrideGuard(AdminGuard)
       .useClass(MockAdminGuard)
       .overrideInterceptor(CacheInterceptor)
-      .useValue({ intercept: (_ctx: ExecutionContext, next: { handle: () => unknown }) => next.handle() })
+      .useValue({
+        intercept: (_ctx: ExecutionContext, next: { handle: () => unknown }) => next.handle(),
+      })
       .compile();
 
     app = moduleFixture.createNestApplication();
-    app.useGlobalInterceptors({ intercept: (_ctx: ExecutionContext, next: { handle: () => unknown }) => next.handle() } as NestInterceptor);
+    app.useGlobalInterceptors({
+      intercept: (_ctx: ExecutionContext, next: { handle: () => unknown }) => next.handle(),
+    } as NestInterceptor);
     app.setGlobalPrefix('v1');
     await app.init();
   });

@@ -139,6 +139,7 @@ describe('Prediction Markets Controller Contract Tests', () => {
           code: 'MARKET_NOT_FOUND',
           message: 'Market not found',
         },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any);
 
       const response = await request(app.getHttpServer()).get('/v1/sports/predictions/nonexistent');
@@ -165,6 +166,7 @@ describe('Prediction Markets Controller Contract Tests', () => {
           stake: 100,
           timestamp: new Date(),
         },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any);
 
       const response = await request(app.getHttpServer())
@@ -230,6 +232,7 @@ describe('Prediction Markets Controller Contract Tests', () => {
           status: 'active',
           createdAt: new Date(),
         },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any);
 
       const response = await request(app.getHttpServer())

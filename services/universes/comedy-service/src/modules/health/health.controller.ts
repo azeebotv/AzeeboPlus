@@ -15,7 +15,7 @@ import { PrismaService } from '../database/prisma.service';
 export class HealthController {
   constructor(
     private health: HealthCheckService,
-    private prisma: PrismaService,
+    private prisma: PrismaService
   ) {}
 
   @Get('health')

@@ -9,6 +9,7 @@ import { DatabaseModule } from './modules/database/database.module';
 import { HealthModule } from './modules/health/health.module';
 import { WebhookModule } from './modules/webhooks/webhook.module';
 import { ScheduledTasksModule } from './modules/scheduled-tasks/scheduled-tasks.module';
+import { PricingModule } from './modules/pricing/pricing.module';
 import { ResponseWrapperInterceptor, ResponseSanitizationInterceptor } from '@azeebo/logger';
 import { MetricsModule } from './modules/metrics/metrics.module';
 import { RateLimiterModule } from '@azeebo/security';
@@ -33,6 +34,7 @@ import { RedisModule } from './common/redis.module';
     HealthModule,
     WebhookModule,
     ScheduledTasksModule,
+    PricingModule,
     MetricsModule,
   ],
   controllers: [PaymentsController],

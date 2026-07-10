@@ -8,6 +8,7 @@ describe('configureCors', () => {
   });
 
   it('should call enableCors with correct configuration', () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     configureCors(mockApp as any, {
       allowedOrigins: ['https://azeeboplus.com'],
     });
@@ -22,6 +23,7 @@ describe('configureCors', () => {
 
   it('should throw for wildcard origin', () => {
     expect(() => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       configureCors(mockApp as any, {
         allowedOrigins: ['*'],
       });
@@ -30,6 +32,7 @@ describe('configureCors', () => {
 
   it('should throw for invalid origin URL', () => {
     expect(() => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       configureCors(mockApp as any, {
         allowedOrigins: ['not-a-url'],
       });
@@ -37,6 +40,7 @@ describe('configureCors', () => {
   });
 
   it('should accept custom maxAge and credentials', () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     configureCors(mockApp as any, {
       allowedOrigins: ['https://azeeboplus.com'],
       credentials: false,
@@ -49,6 +53,7 @@ describe('configureCors', () => {
   });
 
   it('should configure allowed headers', () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     configureCors(mockApp as any, {
       allowedOrigins: ['https://azeeboplus.com'],
     });
@@ -60,6 +65,7 @@ describe('configureCors', () => {
   });
 
   it('should configure exposed headers', () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     configureCors(mockApp as any, {
       allowedOrigins: ['https://azeeboplus.com'],
     });
@@ -71,6 +77,7 @@ describe('configureCors', () => {
 
   describe('origin validation callback', () => {
     it('should allow matching origins', () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       configureCors(mockApp as any, {
         allowedOrigins: ['https://azeeboplus.com'],
       });
@@ -82,6 +89,7 @@ describe('configureCors', () => {
     });
 
     it('should reject non-matching origins', () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       configureCors(mockApp as any, {
         allowedOrigins: ['https://azeeboplus.com'],
       });
@@ -96,6 +104,7 @@ describe('configureCors', () => {
     });
 
     it('should allow missing origin for server-to-server requests', () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       configureCors(mockApp as any, {
         allowedOrigins: ['https://azeeboplus.com'],
       });

@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { randomUUID, createHmac, timingSafeEqual } from 'crypto';
-import { Prisma, WalletTransaction } from '@prisma/client';
+import { Prisma, WalletTransaction } from '../../prisma/client';
 import { PrismaService } from '../database/prisma.service';
 import { FundWalletDto } from './dto/fund-wallet.dto';
 import { WithdrawWalletDto, TransferWalletDto } from './dto/withdraw-transfer.dto';
@@ -42,7 +42,10 @@ export class WalletService {
   }
 
   private async invalidateWalletCacheByWalletId(walletId: string): Promise<void> {
-    const wallet = await this.prisma.wallet.findUnique({ where: { id: walletId }, select: { userId: true } });
+    const wallet = await this.prisma.wallet.findUnique({
+      where: { id: walletId },
+      select: { userId: true },
+    });
     if (wallet) await this.invalidateWalletCache(wallet.userId);
   }
 
@@ -106,7 +109,10 @@ export class WalletService {
       return result;
     } catch (error: unknown) {
       this.logger.error(`Failed to get balance for user ${userId}: ${error}`);
-      return { success: false, error: { code: 'GET_BALANCE_FAILED', message: 'Failed to retrieve wallet balance' } };
+      return {
+        success: false,
+        error: { code: 'GET_BALANCE_FAILED', message: 'Failed to retrieve wallet balance' },
+      };
     }
   }
 
@@ -193,7 +199,10 @@ export class WalletService {
     } catch (error: unknown) {
       if (error instanceof NotFoundException) throw error;
       this.logger.error(`Failed to get transactions for user ${userId}: ${error}`);
-      return { success: false, error: { code: 'GET_TRANSACTIONS_FAILED', message: 'Failed to retrieve transactions' } };
+      return {
+        success: false,
+        error: { code: 'GET_TRANSACTIONS_FAILED', message: 'Failed to retrieve transactions' },
+      };
     }
   }
 
@@ -256,7 +265,10 @@ export class WalletService {
     } catch (error: unknown) {
       if (error instanceof NotFoundException) throw error;
       this.logger.error(`Failed to get summary for user ${userId}: ${error}`);
-      return { success: false, error: { code: 'GET_SUMMARY_FAILED', message: 'Failed to retrieve wallet summary' } };
+      return {
+        success: false,
+        error: { code: 'GET_SUMMARY_FAILED', message: 'Failed to retrieve wallet summary' },
+      };
     }
   }
 
@@ -336,7 +348,10 @@ export class WalletService {
     } catch (error: unknown) {
       if (error instanceof NotFoundException || error instanceof BadRequestException) throw error;
       this.logger.error(`Failed to initialize funding for user ${userId}: ${error}`);
-      return { success: false, error: { code: 'INIT_FUNDING_FAILED', message: 'Failed to initialize wallet funding' } };
+      return {
+        success: false,
+        error: { code: 'INIT_FUNDING_FAILED', message: 'Failed to initialize wallet funding' },
+      };
     }
   }
 
@@ -409,7 +424,10 @@ export class WalletService {
     } catch (error: unknown) {
       if (error instanceof NotFoundException || error instanceof BadRequestException) throw error;
       this.logger.error(`Failed to withdraw for user ${userId}: ${error}`);
-      return { success: false, error: { code: 'WITHDRAW_FAILED', message: 'Failed to process withdrawal' } };
+      return {
+        success: false,
+        error: { code: 'WITHDRAW_FAILED', message: 'Failed to process withdrawal' },
+      };
     }
   }
 
@@ -433,70 +451,72 @@ export class WalletService {
       const recipientReference = `TRF-IN-${randomUUID()}`;
       const idempotencyKey = `transfer-${senderId}-${transferDto.recipientId}-${transferDto.amount}-${Date.now()}`;
 
-      const updatedSenderWallet = await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-        // Lock sender wallet and check balance atomically
-        const [senderWallet] = await tx.$queryRaw<WalletRow[]>`
+      const updatedSenderWallet = await this.prisma.$transaction(
+        async (tx: Prisma.TransactionClient) => {
+          // Lock sender wallet and check balance atomically
+          const [senderWallet] = await tx.$queryRaw<WalletRow[]>`
           SELECT * FROM "wallets" WHERE "userId" = ${senderId} FOR UPDATE
         `;
 
-        if (!senderWallet) {
-          throw new NotFoundException(`Wallet not found for user ${senderId}`);
-        }
+          if (!senderWallet) {
+            throw new NotFoundException(`Wallet not found for user ${senderId}`);
+          }
 
-        if (toNumber(senderWallet.balance.toString()) < transferDto.amount) {
-          throw new BadRequestException('Insufficient balance');
-        }
+          if (toNumber(senderWallet.balance.toString()) < transferDto.amount) {
+            throw new BadRequestException('Insufficient balance');
+          }
 
-        // Lock recipient wallet
-        const [recipientWallet] = await tx.$queryRaw<WalletRow[]>`
+          // Lock recipient wallet
+          const [recipientWallet] = await tx.$queryRaw<WalletRow[]>`
           SELECT * FROM "wallets" WHERE "userId" = ${transferDto.recipientId} FOR UPDATE
         `;
 
-        if (!recipientWallet) {
-          throw new NotFoundException(`Wallet not found for user ${transferDto.recipientId}`);
+          if (!recipientWallet) {
+            throw new NotFoundException(`Wallet not found for user ${transferDto.recipientId}`);
+          }
+
+          await tx.wallet.update({
+            where: { id: senderWallet.id },
+            data: { balance: { decrement: transferDto.amount } },
+          });
+
+          await tx.walletTransaction.create({
+            data: {
+              walletId: senderWallet.id,
+              type: 'transfer_out',
+              amount: transferDto.amount,
+              status: 'completed',
+              description: transferDto.description || `Transfer to user ${transferDto.recipientId}`,
+              reference: senderReference,
+              idempotencyKey,
+              metadata: {
+                recipientId: transferDto.recipientId,
+              },
+            },
+          });
+
+          await tx.wallet.update({
+            where: { id: recipientWallet.id },
+            data: { balance: { increment: transferDto.amount } },
+          });
+
+          await tx.walletTransaction.create({
+            data: {
+              walletId: recipientWallet.id,
+              type: 'transfer_in',
+              amount: transferDto.amount,
+              status: 'completed',
+              description: transferDto.description || `Transfer from user ${senderId}`,
+              reference: recipientReference,
+              metadata: {
+                senderId,
+              },
+            },
+          });
+
+          return tx.wallet.findUnique({ where: { id: senderWallet.id } });
         }
-
-        await tx.wallet.update({
-          where: { id: senderWallet.id },
-          data: { balance: { decrement: transferDto.amount } },
-        });
-
-        await tx.walletTransaction.create({
-          data: {
-            walletId: senderWallet.id,
-            type: 'transfer_out',
-            amount: transferDto.amount,
-            status: 'completed',
-            description: transferDto.description || `Transfer to user ${transferDto.recipientId}`,
-            reference: senderReference,
-            idempotencyKey,
-            metadata: {
-              recipientId: transferDto.recipientId,
-            },
-          },
-        });
-
-        await tx.wallet.update({
-          where: { id: recipientWallet.id },
-          data: { balance: { increment: transferDto.amount } },
-        });
-
-        await tx.walletTransaction.create({
-          data: {
-            walletId: recipientWallet.id,
-            type: 'transfer_in',
-            amount: transferDto.amount,
-            status: 'completed',
-            description: transferDto.description || `Transfer from user ${senderId}`,
-            reference: recipientReference,
-            metadata: {
-              senderId,
-            },
-          },
-        });
-
-        return tx.wallet.findUnique({ where: { id: senderWallet.id } });
-      });
+      );
 
       await this.invalidateWalletCache(senderId);
       await this.invalidateWalletCache(transferDto.recipientId);
@@ -517,7 +537,10 @@ export class WalletService {
     } catch (error: unknown) {
       if (error instanceof NotFoundException || error instanceof BadRequestException) throw error;
       this.logger.error(`Failed to transfer from user ${senderId}: ${error}`);
-      return { success: false, error: { code: 'TRANSFER_FAILED', message: 'Failed to process transfer' } };
+      return {
+        success: false,
+        error: { code: 'TRANSFER_FAILED', message: 'Failed to process transfer' },
+      };
     }
   }
 
@@ -568,7 +591,10 @@ export class WalletService {
     } catch (error: unknown) {
       if (error instanceof NotFoundException) throw error;
       this.logger.error(`Failed to get transaction ${transactionId} for user ${userId}: ${error}`);
-      return { success: false, error: { code: 'GET_TRANSACTION_FAILED', message: 'Failed to retrieve transaction' } };
+      return {
+        success: false,
+        error: { code: 'GET_TRANSACTION_FAILED', message: 'Failed to retrieve transaction' },
+      };
     }
   }
 
@@ -657,7 +683,10 @@ export class WalletService {
     } catch (error: unknown) {
       if (error instanceof NotFoundException || error instanceof BadRequestException) throw error;
       this.logger.error(`Failed to redeem reward for user ${userId}: ${error}`);
-      return { success: false, error: { code: 'REDEEM_REWARD_FAILED', message: 'Failed to redeem reward' } };
+      return {
+        success: false,
+        error: { code: 'REDEEM_REWARD_FAILED', message: 'Failed to redeem reward' },
+      };
     }
   }
 
@@ -750,7 +779,10 @@ export class WalletService {
     } catch (error: unknown) {
       if (error instanceof NotFoundException) throw error;
       this.logger.error(`Failed to credit balance for wallet ${walletId}: ${error}`);
-      return { success: false, error: { code: 'CREDIT_BALANCE_FAILED', message: 'Failed to credit wallet balance' } };
+      return {
+        success: false,
+        error: { code: 'CREDIT_BALANCE_FAILED', message: 'Failed to credit wallet balance' },
+      };
     }
   }
 
@@ -861,7 +893,10 @@ export class WalletService {
     } catch (error: unknown) {
       if (error instanceof NotFoundException || error instanceof BadRequestException) throw error;
       this.logger.error(`Failed to debit balance for wallet ${walletId}: ${error}`);
-      return { success: false, error: { code: 'DEBIT_BALANCE_FAILED', message: 'Failed to debit wallet balance' } };
+      return {
+        success: false,
+        error: { code: 'DEBIT_BALANCE_FAILED', message: 'Failed to debit wallet balance' },
+      };
     }
   }
 
@@ -949,7 +984,10 @@ export class WalletService {
     } catch (error: unknown) {
       if (error instanceof NotFoundException) throw error;
       this.logger.error(`Failed to add bonus credit for wallet ${walletId}: ${error}`);
-      return { success: false, error: { code: 'ADD_BONUS_FAILED', message: 'Failed to add bonus credit' } };
+      return {
+        success: false,
+        error: { code: 'ADD_BONUS_FAILED', message: 'Failed to add bonus credit' },
+      };
     }
   }
 
@@ -1043,7 +1081,10 @@ export class WalletService {
     } catch (error: unknown) {
       if (error instanceof NotFoundException) throw error;
       this.logger.error(`Failed to add promo credit for wallet ${walletId}: ${error}`);
-      return { success: false, error: { code: 'ADD_PROMO_FAILED', message: 'Failed to add promo credit' } };
+      return {
+        success: false,
+        error: { code: 'ADD_PROMO_FAILED', message: 'Failed to add promo credit' },
+      };
     }
   }
 
@@ -1095,7 +1136,13 @@ export class WalletService {
       };
     } catch (error: unknown) {
       this.logger.error(`Failed to get transaction audit trail for wallet ${walletId}: ${error}`);
-      return { success: false, error: { code: 'GET_AUDIT_TRAIL_FAILED', message: 'Failed to retrieve transaction audit trail' } };
+      return {
+        success: false,
+        error: {
+          code: 'GET_AUDIT_TRAIL_FAILED',
+          message: 'Failed to retrieve transaction audit trail',
+        },
+      };
     }
   }
 

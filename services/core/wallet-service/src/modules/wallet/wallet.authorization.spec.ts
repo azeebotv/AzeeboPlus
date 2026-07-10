@@ -1,12 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ExecutionContext, NestInterceptor, UnauthorizedException } from '@nestjs/common';
+import { ExecutionContext, NestInterceptor, UnauthorizedException } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import request from 'supertest';
 import { RateLimitGuard, AdminGuard, ServiceAuthGuard } from '@azeebo/security';
 import { WalletController } from './wallet.controller';
 import { WalletService } from './wallet.service';
 import { PrismaService } from '../database/prisma.service';
-import { CacheInterceptor, CacheService } from '../../cache';
+import { CacheInterceptor } from '../../cache';
 
 describe('Wallet Service Authorization Tests', () => {
   const mockWalletService = {
@@ -132,11 +132,15 @@ describe('Wallet Service Authorization Tests', () => {
       .overrideGuard(AdminGuard)
       .useValue(createMockAdminGuard())
       .overrideInterceptor(CacheInterceptor)
-      .useValue({ intercept: (_ctx: ExecutionContext, next: { handle: () => unknown }) => next.handle() })
+      .useValue({
+        intercept: (_ctx: ExecutionContext, next: { handle: () => unknown }) => next.handle(),
+      })
       .compile();
 
     const testApp = moduleFixture.createNestApplication();
-    testApp.useGlobalInterceptors({ intercept: (_ctx: ExecutionContext, next: { handle: () => unknown }) => next.handle() } as NestInterceptor);
+    testApp.useGlobalInterceptors({
+      intercept: (_ctx: ExecutionContext, next: { handle: () => unknown }) => next.handle(),
+    } as NestInterceptor);
     return testApp;
   };
 
@@ -315,11 +319,15 @@ describe('Wallet Service Authorization Tests', () => {
         .overrideGuard(AdminGuard)
         .useValue(createMockAdminGuard())
         .overrideInterceptor(CacheInterceptor)
-        .useValue({ intercept: (_ctx: ExecutionContext, next: { handle: () => unknown }) => next.handle() })
+        .useValue({
+          intercept: (_ctx: ExecutionContext, next: { handle: () => unknown }) => next.handle(),
+        })
         .compile();
 
       const testApp = moduleFixture.createNestApplication();
-      testApp.useGlobalInterceptors({ intercept: (_ctx: ExecutionContext, next: { handle: () => unknown }) => next.handle() } as NestInterceptor);
+      testApp.useGlobalInterceptors({
+        intercept: (_ctx: ExecutionContext, next: { handle: () => unknown }) => next.handle(),
+      } as NestInterceptor);
       await testApp.init();
 
       const response = await request(testApp.getHttpServer())
@@ -348,7 +356,9 @@ describe('Wallet Service Authorization Tests', () => {
         .overrideGuard(AdminGuard)
         .useValue(createMockAdminGuard())
         .overrideInterceptor(CacheInterceptor)
-        .useValue({ intercept: (_ctx: ExecutionContext, next: { handle: () => unknown }) => next.handle() })
+        .useValue({
+          intercept: (_ctx: ExecutionContext, next: { handle: () => unknown }) => next.handle(),
+        })
         .compile();
 
       const testApp = moduleFixture.createNestApplication();

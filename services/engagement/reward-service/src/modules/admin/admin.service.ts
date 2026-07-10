@@ -27,7 +27,7 @@ export class AdminService {
       });
     } catch (error) {
       this.logger.error(`getStats failed: ${(error as Error).message}`, (error as Error).stack);
-      return ApiResponseWrapper.error((error as Error).message);
+      return ApiResponseWrapper.error('UNKNOWN_ERROR', (error as Error).message);
     }
   }
 
@@ -66,7 +66,7 @@ export class AdminService {
       return ApiResponseWrapper.paginated(accounts, page, limit, total);
     } catch (error) {
       this.logger.error(`getRewards failed: ${(error as Error).message}`, (error as Error).stack);
-      return ApiResponseWrapper.error((error as Error).message);
+      return ApiResponseWrapper.error('UNKNOWN_ERROR', (error as Error).message);
     }
   }
 
@@ -98,8 +98,11 @@ export class AdminService {
 
       return ApiResponseWrapper.paginated(transactions, page, limit, total);
     } catch (error) {
-      this.logger.error(`getRewardTransactions failed: ${(error as Error).message}`, (error as Error).stack);
-      return ApiResponseWrapper.error((error as Error).message);
+      this.logger.error(
+        `getRewardTransactions failed: ${(error as Error).message}`,
+        (error as Error).stack
+      );
+      return ApiResponseWrapper.error('UNKNOWN_ERROR', (error as Error).message);
     }
   }
 
@@ -118,7 +121,7 @@ export class AdminService {
       return ApiResponseWrapper.success(missions);
     } catch (error) {
       this.logger.error(`getMissions failed: ${(error as Error).message}`, (error as Error).stack);
-      return ApiResponseWrapper.error((error as Error).message);
+      return ApiResponseWrapper.error('UNKNOWN_ERROR', (error as Error).message);
     }
   }
 
@@ -142,8 +145,11 @@ export class AdminService {
 
       return ApiResponseWrapper.created(mission);
     } catch (error) {
-      this.logger.error(`createMission failed: ${(error as Error).message}`, (error as Error).stack);
-      return ApiResponseWrapper.error((error as Error).message);
+      this.logger.error(
+        `createMission failed: ${(error as Error).message}`,
+        (error as Error).stack
+      );
+      return ApiResponseWrapper.error('UNKNOWN_ERROR', (error as Error).message);
     }
   }
 
@@ -178,8 +184,11 @@ export class AdminService {
 
       return ApiResponseWrapper.success(updated);
     } catch (error) {
-      this.logger.error(`updateMission failed: ${(error as Error).message}`, (error as Error).stack);
-      return ApiResponseWrapper.error((error as Error).message);
+      this.logger.error(
+        `updateMission failed: ${(error as Error).message}`,
+        (error as Error).stack
+      );
+      return ApiResponseWrapper.error('UNKNOWN_ERROR', (error as Error).message);
     }
   }
 }

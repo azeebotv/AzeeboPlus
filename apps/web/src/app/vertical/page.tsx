@@ -1,5 +1,4 @@
 'use client';
-import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
 import Link from 'next/link';
@@ -8,16 +7,29 @@ import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 
 export default function VerticalPage(): React.JSX.Element {
+  const universesQuery = useQuery({
+    queryKey: ['universes'],
+    queryFn: async () => {
+      const res = await api.universe.getUniverses();
+      if (!res.success || !res.data) throw new Error(res.message || 'Failed to load universes');
+      return res.data;
+    },
+    staleTime: 300000,
+  });
+
+  const verticalUniverse = universesQuery.data?.find((u) => u.name?.toLowerCase() === 'vertical');
+
   const {
     data: series = [],
     isLoading,
     error,
     refetch,
   } = useQuery<ContentItem[], Error>({
-    queryKey: ['vertical-content'],
+    queryKey: ['vertical-content', verticalUniverse?.id],
     queryFn: async () => {
+      if (!verticalUniverse?.id) throw new Error('Vertical universe not found');
       const result = await api.content.getContentByUniverse(
-        'u0000001-0000-0000-0000-000000000009',
+        verticalUniverse.id,
         1,
         20
       );
@@ -27,6 +39,7 @@ export default function VerticalPage(): React.JSX.Element {
       throw new Error(result.message || 'Failed to load content.');
     },
     staleTime: 60000,
+    enabled: !!verticalUniverse?.id,
   });
 
   return (

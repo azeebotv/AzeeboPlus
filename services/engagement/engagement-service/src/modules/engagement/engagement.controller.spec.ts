@@ -87,6 +87,7 @@ describe('EngagementController', () => {
 
   describe('getPredictionResults', () => {
     it('should call engagementService.getPredictionResults with userId and contentId', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const mockReq = { user: { id: 'user-1' } } as any;
       const mockResult = {
         success: true,
@@ -103,6 +104,7 @@ describe('EngagementController', () => {
 
   describe('submitPrediction', () => {
     it('should call engagementService.submitPrediction with correct params', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const mockReq = { user: { id: 'user-1' } } as any;
       const body = { contentId: 'content-1', prediction: 'yes', points: 100 };
       const mockResult = {

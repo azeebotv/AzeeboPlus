@@ -1,7 +1,7 @@
 'use client';
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import { LoadingState } from '@azeebo/ui';
+import { LoadingState } from '@azeebo/ui/components';
 
 // Auth context interface for ProtectedRoute
 export interface AuthState {

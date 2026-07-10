@@ -92,6 +92,7 @@ describe('TitlesService', () => {
       const result = await service.getTitleBySlug('test-title');
 
       expect(result.success).toBe(true);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((result.data as any).name).toBe('Test Title');
     });
 
@@ -113,6 +114,7 @@ describe('TitlesService', () => {
       });
 
       expect(result.success).toBe(true);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((result.data as any).slug).toBe('test-title');
     });
   });
@@ -129,6 +131,7 @@ describe('TitlesService', () => {
       const result = await service.updateTitle('title-1', { name: 'Updated Title' });
 
       expect(result.success).toBe(true);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((result.data as any).name).toBe('Updated Title');
     });
 

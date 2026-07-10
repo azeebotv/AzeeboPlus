@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api';
 
@@ -24,13 +24,6 @@ interface RankingCategory {
   description: string;
 }
 
-interface RankingData {
-  category: string;
-  entries: RankingEntry[];
-  totalParticipants: number;
-  lastUpdated: string;
-}
-
 export default function RankingsPage(): React.JSX.Element {
   const [selectedCategory, setSelectedCategory] = useState<string>('overall');
 
@@ -49,7 +42,10 @@ export default function RankingsPage(): React.JSX.Element {
   const rankingsQuery = useQuery({
     queryKey: ['rankings', selectedCategory],
     queryFn: async () => {
-      const res = await apiFetch<{ success: boolean; data: RankingEntry[] | { items?: RankingEntry[]; totalParticipants?: number; lastUpdated?: string } }>(`/engagement/leaderboard?timePeriod=weekly&category=${selectedCategory}`);
+      const res = await apiFetch<
+        | RankingEntry[]
+        | { items?: RankingEntry[]; totalParticipants?: number; lastUpdated?: string }
+      >(`/engagement/leaderboard?timePeriod=weekly&category=${selectedCategory}`);
       if (res.success && res.data) {
         const data = res.data;
         const entries = Array.isArray(data) ? data : data.items || [];
@@ -57,15 +53,23 @@ export default function RankingsPage(): React.JSX.Element {
           category: selectedCategory,
           entries: entries.map((e) => ({
             userId: String(e.userId),
-            displayName: String(e.displayName || (e as unknown as { user?: { displayName?: string } }).user?.displayName || 'Unknown'),
+            displayName: String(
+              e.displayName ||
+                (e as unknown as { user?: { displayName?: string } }).user?.displayName ||
+                'Unknown'
+            ),
             avatar: String(e.avatar || ''),
             score: Number(e.score || 0),
             rank: Number(e.rank || 0),
             change: Number(e.change || 0),
             level: Number(e.level || 0),
           })),
-          totalParticipants: Number(data.totalParticipants || entries.length),
-          lastUpdated: String(data.lastUpdated || new Date().toISOString()),
+          totalParticipants: Number(
+            ('totalParticipants' in data ? data.totalParticipants : undefined) || entries.length
+          ),
+          lastUpdated: String(
+            ('lastUpdated' in data ? data.lastUpdated : undefined) || new Date().toISOString()
+          ),
         };
       }
       return null;

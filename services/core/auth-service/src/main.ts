@@ -5,7 +5,6 @@ import { Logger, ValidationPipe, VersioningType } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { LoggingInterceptor } from '@azeebo/logger';
 import { GlobalExceptionFilter } from '@azeebo/error-handling';
-import { SanitizeOutputInterceptor } from '@azeebo/validation';
 import helmet from 'helmet';
 import { validateEnvironment } from '@azeebo/shared-types';
 import { configureCors } from '@azeebo/security';

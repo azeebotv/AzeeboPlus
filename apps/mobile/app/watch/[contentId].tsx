@@ -9,9 +9,10 @@ import {
   useColorScheme,
   Alert,
 } from 'react-native';
+import { VideoView } from 'expo-video';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useVideoPlayer } from '../../src/hooks/useVideoPlayer';
+import { useAzeeboVideoPlayer } from '../../src/hooks/useVideoPlayer';
 import { contentApi, type ContentItem } from '../../src/api';
 import { logger } from '../../src/utils/logger';
 import { LoadingState, ErrorState, EmptyState } from '../../src/components/StateContainers';
@@ -47,10 +48,13 @@ export default function WatchScreen() {
 
   const {
     isPlaying,
+    isBuffering,
     isFullscreen,
     currentTime,
     duration,
     showControls,
+    error: playerError,
+    player,
     togglePlay,
     seek,
     seekForward,
@@ -58,7 +62,7 @@ export default function WatchScreen() {
     toggleFullscreen,
     setShowControls,
     formatTime,
-  } = useVideoPlayer({
+  } = useAzeeboVideoPlayer({
     contentId: contentId || '',
     onProgressUpdate: handleProgressUpdate,
     onComplete: handleComplete,
@@ -113,12 +117,12 @@ export default function WatchScreen() {
     );
   }
 
-  if (error) {
+  if (error || playerError) {
     return (
       <SafeAreaView
         style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#000' : '#fff' }]}
       >
-        <ErrorState description={error} onRetry={fetchContent} />
+        <ErrorState description={error || playerError || 'Failed to load video'} onRetry={fetchContent} />
       </SafeAreaView>
     );
   }
@@ -137,8 +141,8 @@ export default function WatchScreen() {
     );
   }
 
-  const displayDuration = content.duration || 3600;
-  const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
+  const displayDuration = duration || content.duration || 3600;
+  const progressPercent = displayDuration > 0 ? (currentTime / displayDuration) * 100 : 0;
 
   return (
     <SafeAreaView
@@ -153,17 +157,30 @@ export default function WatchScreen() {
 
       <View style={[styles.videoContainer, isFullscreen && styles.videoContainerFullscreen]}>
         <TouchableOpacity
-          style={[styles.videoPlaceholder, { backgroundColor: '#1a1a1a' }]}
+          style={[styles.videoPlaceholder, { backgroundColor: '#000' }]}
           onPress={handleVideoPress}
           activeOpacity={0.9}
         >
-          <View style={styles.playOverlay}>
-            {!isPlaying && (
+          <VideoView
+            style={StyleSheet.absoluteFill}
+            player={player}
+            contentFit="contain"
+            nativeControls={false}
+          />
+
+          {!isPlaying && !isBuffering && (
+            <View style={styles.playOverlay}>
               <TouchableOpacity style={styles.playButton} onPress={togglePlay}>
                 <Text style={styles.playIcon}>▶️</Text>
               </TouchableOpacity>
-            )}
-          </View>
+            </View>
+          )}
+
+          {isBuffering && (
+            <View style={styles.playOverlay}>
+              <View style={styles.bufferingIndicator} />
+            </View>
+          )}
 
           {showControls && (
             <View style={styles.controlsOverlay}>
@@ -355,6 +372,14 @@ const styles = StyleSheet.create({
   },
   playIcon: {
     fontSize: 32,
+  },
+  bufferingIndicator: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    borderWidth: 4,
+    borderColor: 'rgba(255,255,255,0.2)',
+    borderTopColor: '#E8420A',
   },
   controlsOverlay: {
     ...StyleSheet.absoluteFill,

@@ -49,7 +49,10 @@ export class ChallengeService {
         },
       };
     } catch (error) {
-      this.logger.error(`Failed to get challenges: ${(error as Error).message}`, (error as Error).stack);
+      this.logger.error(
+        `Failed to get challenges: ${(error as Error).message}`,
+        (error as Error).stack
+      );
       return { success: false, error: (error as Error).message };
     }
   }
@@ -137,7 +140,7 @@ export class ChallengeService {
     return { success: true, data: { submission } };
   }
 
-  async voteSubmission(submissionId: string, userId: string) {
+  async voteSubmission(submissionId: string, _userId: string) {
     const submission = await this.prisma.challengeSubmission.findUnique({
       where: { id: submissionId },
     });

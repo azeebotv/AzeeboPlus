@@ -7,12 +7,38 @@ import axios from 'axios';
 export class PredictionMarketsService {
   private readonly logger = new Logger(PredictionMarketsService.name);
   private readonly walletServiceBaseUrl: string;
+  private readonly userServiceBaseUrl: string;
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService
   ) {
     this.walletServiceBaseUrl = this.configService.getOrThrow<string>('WALLET_SERVICE_URL');
+    this.userServiceBaseUrl = this.configService.getOrThrow<string>('USER_SERVICE_URL');
+  }
+
+  private async getWalletByUserId(userId: string): Promise<{ id: string; balance: number } | null> {
+    try {
+      const response = await axios.get(`${this.walletServiceBaseUrl}/wallet/user/${userId}`, {
+        timeout: 10000,
+      });
+      return response.data;
+    } catch {
+      return null;
+    }
+  }
+
+  private async getUserById(
+    userId: string
+  ): Promise<{ id: string; displayName: string; avatar: string } | null> {
+    try {
+      const response = await axios.get(`${this.userServiceBaseUrl}/users/${userId}`, {
+        timeout: 10000,
+      });
+      return response.data;
+    } catch {
+      return null;
+    }
   }
 
   async getPredictionMarkets(
@@ -75,7 +101,6 @@ export class PredictionMarketsService {
             },
           },
           entries: {
-            include: { user: { select: { id: true, displayName: true, avatar: true } } },
             orderBy: { createdAt: 'desc' },
             take: 50,
           },
@@ -163,7 +188,7 @@ export class PredictionMarketsService {
         throw new BadRequestException('Already placed a prediction in this market');
       }
 
-      const wallet = await this.prisma.wallet.findUnique({ where: { userId } });
+      const wallet = await this.getWalletByUserId(userId);
       if (!wallet) {
         throw new NotFoundException('Wallet not found');
       }
@@ -187,7 +212,8 @@ export class PredictionMarketsService {
           { timeout: 10000 }
         )
         .catch((error: unknown) => {
-          const errorMessage = error instanceof Error ? (error as Error).message : 'Failed to debit wallet';
+          const errorMessage =
+            error instanceof Error ? (error as Error).message : 'Failed to debit wallet';
           throw new BadRequestException(errorMessage);
         });
 
@@ -214,7 +240,9 @@ export class PredictionMarketsService {
       };
     } catch (error) {
       if (error instanceof NotFoundException || error instanceof BadRequestException) throw error;
-      this.logger.error(`Failed to place prediction for user ${userId} in market ${marketId}: ${error}`);
+      this.logger.error(
+        `Failed to place prediction for user ${userId} in market ${marketId}: ${error}`
+      );
       throw error;
     }
   }
@@ -250,29 +278,29 @@ export class PredictionMarketsService {
             where: { id: winner.id },
             data: { points: 100 },
           });
-
-          const wallet = await tx.wallet.findUnique({
-            where: { userId: winner.userId },
-          });
-          if (wallet) {
-            await axios
-              .post(
-                `${this.walletServiceBaseUrl}/wallet/credit`,
-                {
-                  walletId: wallet.id,
-                  amount: 100,
-                  description: `Prediction market winning: ${marketId}`,
-                },
-                { timeout: 10000 }
-              )
-              .catch((error: unknown) => {
-                this.logger.error(`Failed to credit wallet for user ${winner.userId}:`, error);
-              });
-          }
-
-          totalDistributed += 100;
         }
       });
+
+      for (const winner of winners) {
+        const wallet = await this.getWalletByUserId(winner.userId);
+        if (wallet) {
+          await axios
+            .post(
+              `${this.walletServiceBaseUrl}/wallet/credit`,
+              {
+                walletId: wallet.id,
+                amount: 100,
+                description: `Prediction market winning: ${marketId}`,
+              },
+              { timeout: 10000 }
+            )
+            .catch((error: unknown) => {
+              this.logger.error(`Failed to credit wallet for user ${winner.userId}:`, error);
+            });
+        }
+
+        totalDistributed += 100;
+      }
 
       return {
         success: true,
@@ -327,10 +355,7 @@ export class PredictionMarketsService {
 
       const leaderboard = await Promise.all(
         entries.map(async (entry, index) => {
-          const user = await this.prisma.user.findUnique({
-            where: { id: entry.userId },
-            select: { id: true, displayName: true, avatar: true },
-          });
+          const user = await this.getUserById(entry.userId);
           return {
             rank: index + 1,
             userId: entry.userId,

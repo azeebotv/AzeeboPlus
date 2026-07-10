@@ -3,6 +3,7 @@ import { CircuitBreaker, CircuitState, CircuitBreakerStats } from '@azeebo/share
 // OpenTelemetry tracing - optional dependency
 let trace: unknown;
 try {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports -- @opentelemetry/api is an optional peer dependency; require() needed for synchronous optional loading
   trace = require('@opentelemetry/api').trace;
 } catch {
   // OpenTelemetry not available
@@ -99,7 +100,7 @@ export class CircuitBreakerProxyService {
       queryString,
       timeout = 30000,
       requestId,
-      traceId,
+      traceId: _traceId,
     } = options;
 
     const target = `${targetUrl}${path}${queryString ? `?${queryString}` : ''}`;
@@ -193,7 +194,7 @@ export class CircuitBreakerProxyService {
     headers: Record<string, string>,
     body: unknown,
     timeout: number,
-    requestId: string | undefined,
+    _requestId: string | undefined,
     span?: Span
   ): Promise<Omit<ProxyResponse, 'circuitState'>> {
     let lastError: Error | undefined;

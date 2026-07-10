@@ -1,4 +1,14 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { MusicService } from './music.service';
@@ -16,20 +26,6 @@ interface CreateMusicData {
   trackUrl?: string;
   isPremium?: boolean;
   createdById: string;
-}
-
-interface UpdateMusicData {
-  title?: string;
-  type?: string;
-  description?: string;
-  coverImage?: string;
-  artistName?: string;
-  albumName?: string;
-  duration?: number;
-  genre?: string;
-  trackUrl?: string;
-  isPremium?: boolean;
-  status?: string;
 }
 
 @ApiTags('Music')
@@ -83,10 +79,7 @@ export class MusicController {
   @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Update music entry' })
   @ApiResponse({ status: 200, description: 'Entry updated' })
-  async updateEntry(
-    @Param('id') id: string,
-    @Body() body: UpdateMusicDto
-  ): Promise<unknown> {
+  async updateEntry(@Param('id') id: string, @Body() body: UpdateMusicDto): Promise<unknown> {
     return this.musicService.updateEntry(id, body);
   }
 

@@ -11,7 +11,6 @@ const mockedAxios = axios as jest.Mocked<typeof axios>;
 
 describe('RealityService Integration - Cross-Service Communication', () => {
   let service: RealityService;
-  let prisma: PrismaService;
 
   const mockPrismaService = {
     realityShow: {
@@ -87,7 +86,6 @@ describe('RealityService Integration - Cross-Service Communication', () => {
     }).compile();
 
     service = module.get<RealityService>(RealityService);
-    prisma = module.get<PrismaService>(PrismaService);
 
     jest.clearAllMocks();
     mockPrismaService.$transaction.mockReset();

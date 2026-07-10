@@ -1,11 +1,38 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { WalletService } from './wallet.service';
 import { PrismaService } from '../database/prisma.service';
-import { NotFoundException, BadRequestException } from '@nestjs/common';
-import { Wallet, WalletTransaction, Prisma } from '@prisma/client';
+import { BadRequestException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { ConfigModule } from '@nestjs/config';
 
 jest.mock('../database/prisma.service');
+
+interface Wallet {
+  id: string;
+  userId: string;
+  balance: Prisma.Decimal;
+  bonusBalance: Prisma.Decimal;
+  promoBalance: Prisma.Decimal;
+  currency: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+interface WalletTransaction {
+  id: string;
+  walletId: string;
+  type: string;
+  amount: Prisma.Decimal;
+  status: string;
+  description: string;
+  reference: string | null;
+  metadata: unknown;
+  idempotencyKey: string | null;
+  provider: string | null;
+  providerRef: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
 
 describe('WalletService Integration', () => {
   let service: WalletService;

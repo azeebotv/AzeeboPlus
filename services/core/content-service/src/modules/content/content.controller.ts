@@ -24,8 +24,6 @@ import { CreateContentDto } from './dto/create-content.dto';
 import { UpdateContentDto } from './dto/update-content.dto';
 import { CreateMediaAssetDto } from './dto/create-media-asset.dto';
 import { UpdateMediaAssetDto } from './dto/update-media-asset.dto';
-import { VoteDto } from './dto/vote.dto';
-import { SuperVoteDto } from './dto/super-vote.dto';
 import { ContentResponse } from './interfaces/content-response.interface';
 import { ApiResponseWrapper } from '@azeebo/shared-types';
 
@@ -65,7 +63,9 @@ export class ContentController {
   @RateLimit(100, 60000)
   @ApiOperation({ summary: 'Get home feed content' })
   @ApiResponse({ status: 200, description: 'Home feed' })
-  async getHomeFeed(@Request() req: { user?: { sub: string } | null }): Promise<ContentResponse> {
+  async getHomeFeed(
+    @Request() req: { user?: { sub: string } | null }
+  ): Promise<ContentResponse> {
     return this.contentService.getHomeFeed(req?.user?.sub);
   }
 
@@ -76,7 +76,9 @@ export class ContentController {
   @RateLimit(100, 60000)
   @ApiOperation({ summary: 'Get watch hub feed' })
   @ApiResponse({ status: 200, description: 'Watch hub feed' })
-  async getWatchFeed(@Request() req: { user?: { sub: string } | null }): Promise<ContentResponse> {
+  async getWatchFeed(
+    @Request() req: { user?: { sub: string } | null }
+  ): Promise<ContentResponse> {
     return this.contentService.getWatchFeed(req?.user?.sub);
   }
 
@@ -152,8 +154,10 @@ export class ContentController {
   @ApiOperation({ summary: 'Get recommended content' })
   @ApiResponse({ status: 200, description: 'Recommended content' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getRecommended(@Request() req: { user: { sub: string } }): Promise<ContentResponse> {
-    return this.contentService.getRecommended(req.user.id);
+  async getRecommended(
+    @Request() req: { user: { sub: string } }
+  ): Promise<ContentResponse> {
+    return this.contentService.getRecommended(req.user.sub);
   }
 
   @Get('accessible')
@@ -168,7 +172,7 @@ export class ContentController {
     @Query('page') page?: number,
     @Query('limit') limit?: number
   ) {
-    const result = await this.accessControlService.getAccessibleContent(req.user.id, {
+    const result = await this.accessControlService.getAccessibleContent(req.user.sub, {
       universeId,
       windowType,
       page,
@@ -186,7 +190,7 @@ export class ContentController {
     @Request() req: { user: { sub: string } },
     @Query('universeId') universeId?: string
   ) {
-    const result = await this.accessControlService.checkPassAccess(req.user.id, universeId);
+    const result = await this.accessControlService.checkPassAccess(req.user.sub, universeId);
     return ApiResponseWrapper.success(result);
   }
 
@@ -199,7 +203,7 @@ export class ContentController {
     @Request() req: { user: { sub: string } },
     @Param('contentId') contentId: string
   ) {
-    const result = await this.accessControlService.checkRentalAccess(req.user.id, contentId);
+    const result = await this.accessControlService.checkRentalAccess(req.user.sub, contentId);
     return ApiResponseWrapper.success(result);
   }
 
@@ -212,7 +216,7 @@ export class ContentController {
     @Request() req: { user: { sub: string } },
     @Param('screeningId') screeningId: string
   ) {
-    const result = await this.accessControlService.checkScreeningAccess(req.user.id, screeningId);
+    const result = await this.accessControlService.checkScreeningAccess(req.user.sub, screeningId);
     return ApiResponseWrapper.success(result);
   }
 
@@ -225,7 +229,7 @@ export class ContentController {
     @Request() req: { user: { sub: string } },
     @Param('extraId') extraId: string
   ) {
-    const result = await this.accessControlService.checkLockedExtraAccess(req.user.id, extraId);
+    const result = await this.accessControlService.checkLockedExtraAccess(req.user.sub, extraId);
     return ApiResponseWrapper.success(result);
   }
 
@@ -287,8 +291,8 @@ export class ContentController {
   @ApiResponse({ status: 200, description: 'Content list for category' })
   async getContentByCategoryParam(
     @Param('categoryId') categoryId: string,
-    @Query('page') page?: number,
-    @Query('limit') limit?: number
+    @Query('page') _page?: number,
+    @Query('limit') _limit?: number
   ): Promise<ContentResponse> {
     return this.contentService.getContentByCategory(categoryId);
   }
@@ -302,7 +306,7 @@ export class ContentController {
     @Query('page') page = 1,
     @Query('limit') limit = 20
   ): Promise<ContentResponse> {
-    return this.contentService.listContent({ creatorId: req.user.id, status }, page, limit);
+    return this.contentService.listContent({ creatorId: req.user.sub, status }, page, limit);
   }
 
   @Get('creator/:creatorId')
@@ -350,9 +354,9 @@ export class ContentController {
   @ApiResponse({ status: 403, description: 'Forbidden - not content owner' })
   async getContentAnalytics(
     @Param('id') id: string,
-    @Request() req: { user?: { sub?: string; id?: string } }
+    @Request() req: { user?: { sub: string } }
   ): Promise<ContentResponse> {
-    const userId = req.user?.sub || req.user?.id;
+    const userId = req.user?.sub;
     if (!userId) {
       throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
     }
@@ -385,7 +389,7 @@ export class ContentController {
     @Request() req: { user: { sub: string } },
     @Param('id') id: string
   ) {
-    const result = await this.accessControlService.checkContentAccess(req.user.id, id);
+    const result = await this.accessControlService.checkContentAccess(req.user.sub, id);
     return ApiResponseWrapper.success(result);
   }
 
@@ -398,9 +402,9 @@ export class ContentController {
   async getMediaPlaybackUrl(
     @Request() req: { user: { sub: string } },
     @Param('id') id: string,
-    @Query('expiresIn') expiresIn: number = 3600
+    @Query('expiresIn') _expiresIn: number = 3600
   ) {
-    const result = await this.accessControlService.checkMediaPlaybackAccess(req.user.id, id);
+    const result = await this.accessControlService.checkMediaPlaybackAccess(req.user.sub, id);
     return ApiResponseWrapper.success(result);
   }
 
@@ -417,13 +421,13 @@ export class ContentController {
   @ApiResponse({ status: 200, description: 'Related content list' })
   async getContentByRelationship(
     @Param('id') id: string,
-    @Query('type') type?: string
+    @Query('type') _type?: string
   ): Promise<ContentResponse> {
-    return this.contentService.getContentByRelationship(id, type);
+    return this.contentService.getContentByRelationship(id, _type);
   }
 
-  @Public()
   @Get(':id/media')
+  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get media asset for content' })
   @ApiResponse({ status: 200, description: 'Media asset details' })
   @ApiResponse({ status: 404, description: 'Content or media asset not found' })
@@ -443,7 +447,7 @@ export class ContentController {
     @Param('id') id: string,
     @Query('expiresIn') expiresIn: number = 3600
   ): Promise<ContentResponse> {
-    return this.contentService.getSignedMediaUrl(req.user.id, id, expiresIn);
+    return this.contentService.getSignedMediaUrl(req.user.sub, id, expiresIn);
   }
 
   @Get(':id/transcode/:jobId/status')
@@ -453,7 +457,7 @@ export class ContentController {
   @ApiResponse({ status: 404, description: 'Content or media asset not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getTranscodingStatus(
-    @Request() req: { user: { sub: string } },
+    @Request() _req: { user: { sub: string; id: string } },
     @Param('id') id: string,
     @Param('jobId') jobId: string
   ): Promise<ContentResponse> {
@@ -467,7 +471,7 @@ export class ContentController {
   @ApiResponse({ status: 404, description: 'Content or media asset not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getTranscodedMediaUrl(
-    @Request() req: { user: { sub: string } },
+    @Request() _req: { user: { sub: string; id: string } },
     @Param('id') id: string,
     @Param('jobId') jobId: string,
     @Query('format') format: string,
@@ -491,7 +495,7 @@ export class ContentController {
     @Request() req: { user: { sub: string } },
     @Body() createContentDto: CreateContentDto
   ): Promise<ContentResponse> {
-    return this.contentService.createContent(req.user.id, createContentDto);
+    return this.contentService.createContent(req.user.sub, createContentDto);
   }
 
   @Post('categories')
@@ -501,7 +505,7 @@ export class ContentController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - admin only' })
   async createCategory(
-    @Request() req: { user: { sub: string } },
+    @Request() _req: { user: { sub: string } },
     @Body()
     body: { name: string; slug: string; description?: string; icon?: string; color?: string }
   ): Promise<ContentResponse> {
@@ -521,7 +525,7 @@ export class ContentController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - admin only' })
   async createTag(
-    @Request() req: { user: { sub: string } },
+    @Request() _req: { user: { sub: string } },
     @Body() body: { name: string; description?: string }
   ): Promise<ContentResponse> {
     return this.contentService.createTag(body.name, body.description);
@@ -539,7 +543,7 @@ export class ContentController {
     @Body() body: { text?: string; content?: string }
   ): Promise<ContentResponse> {
     return this.contentService.addCommentToContent(
-      req.user.id,
+      req.user.sub,
       id,
       body.text || body.content || ''
     );
@@ -556,7 +560,12 @@ export class ContentController {
     @Param('id') id: string,
     @Body() createMediaAssetDto: CreateMediaAssetDto
   ): Promise<ContentResponse> {
-    return this.contentService.createMediaAsset(req.user.id, id, createMediaAssetDto, req.user.role);
+    return this.contentService.createMediaAsset(
+      req.user.sub,
+      id,
+      createMediaAssetDto,
+      req.user.role
+    );
   }
 
   @Post(':id/media/thumbnail')
@@ -566,7 +575,7 @@ export class ContentController {
   @ApiResponse({ status: 404, description: 'Content or media asset not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async generateThumbnail(
-    @Request() req: { user: { sub: string } },
+    @Request() _req: { user: { sub: string; id: string } },
     @Param('id') id: string,
     @Body() body: { width?: number; height?: number; quality?: number }
   ): Promise<ContentResponse> {
@@ -583,7 +592,7 @@ export class ContentController {
     @Request() req: { user: { sub: string } },
     @Param('id') id: string
   ): Promise<ContentResponse> {
-    return this.contentService.publishContent(req.user.id, id);
+    return this.contentService.publishContent(req.user.sub, id);
   }
 
   @Post(':id/unpublish')
@@ -596,7 +605,7 @@ export class ContentController {
     @Request() req: { user: { sub: string } },
     @Param('id') id: string
   ): Promise<ContentResponse> {
-    return this.contentService.unpublishContent(req.user.id, id);
+    return this.contentService.unpublishContent(req.user.sub, id);
   }
 
   @Post(':id/report')
@@ -610,7 +619,7 @@ export class ContentController {
     @Param('id') id: string,
     @Body() body: { type: string; reason: string }
   ): Promise<ContentResponse> {
-    return this.contentService.reportContent(req.user.id, id, body);
+    return this.contentService.reportContent(req.user.sub, id, body);
   }
 
   @Post(':id/transcode')
@@ -620,7 +629,7 @@ export class ContentController {
   @ApiResponse({ status: 404, description: 'Content or media asset not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async startTranscoding(
-    @Request() req: { user: { sub: string } },
+    @Request() _req: { user: { sub: string } },
     @Param('id') id: string,
     @Body() body: { formats?: string[]; resolutions?: string[]; bitrates?: number[] }
   ): Promise<ContentResponse> {
@@ -634,7 +643,7 @@ export class ContentController {
   @ApiResponse({ status: 404, description: 'Content not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async scanContentForSafety(
-    @Request() req: { user: { sub: string } },
+    @Request() _req: { user: { sub: string } },
     @Param('id') id: string
   ) {
     const result = await this.contentService.scanContentForSafety(id);
@@ -652,7 +661,7 @@ export class ContentController {
     @Param('id') id: string,
     @Param('categoryId') categoryId: string
   ): Promise<ContentResponse> {
-    return this.contentService.addCategoryToContent(req.user.id, id, categoryId);
+    return this.contentService.addCategoryToContent(req.user.sub, id, categoryId);
   }
 
   @Post(':id/tags/:tagId')
@@ -666,7 +675,7 @@ export class ContentController {
     @Param('id') id: string,
     @Param('tagId') tagId: string
   ): Promise<ContentResponse> {
-    return this.contentService.addTagToContent(req.user.id, id, tagId);
+    return this.contentService.addTagToContent(req.user.sub, id, tagId);
   }
 
   @Post(':id/relationships')
@@ -681,7 +690,7 @@ export class ContentController {
     @Body() body: { relatedContentId: string; type: string }
   ): Promise<ContentResponse> {
     return this.contentService.addContentRelationship(
-      req.user.id,
+      req.user.sub,
       id,
       body.relatedContentId,
       body.type
@@ -703,7 +712,7 @@ export class ContentController {
     @Param('id') id: string,
     @Body() updateContentDto: UpdateContentDto
   ): Promise<ContentResponse> {
-    return this.contentService.updateContent(req.user.id, id, updateContentDto);
+    return this.contentService.updateContent(req.user.sub, id, updateContentDto);
   }
 
   @Patch(':id/media')
@@ -717,7 +726,12 @@ export class ContentController {
     @Param('id') id: string,
     @Body() updateMediaAssetDto: UpdateMediaAssetDto
   ): Promise<ContentResponse> {
-    return this.contentService.updateMediaAsset(req.user.id, id, updateMediaAssetDto, req.user.role);
+    return this.contentService.updateMediaAsset(
+      req.user.sub,
+      id,
+      updateMediaAssetDto,
+      req.user.role
+    );
   }
 
   @Patch('categories/:id')
@@ -727,7 +741,7 @@ export class ContentController {
   @ApiResponse({ status: 404, description: 'Category not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async updateCategory(
-    @Request() req: { user: { sub: string } },
+    @Request() _req: { user: { sub: string } },
     @Param('id') id: string,
     @Body()
     body: { name?: string; slug?: string; description?: string; icon?: string; color?: string }
@@ -749,7 +763,7 @@ export class ContentController {
   @ApiResponse({ status: 404, description: 'Tag not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async updateTag(
-    @Request() req: { user: { sub: string } },
+    @Request() _req: { user: { sub: string } },
     @Param('id') id: string,
     @Body() body: { name?: string; description?: string }
   ): Promise<ContentResponse> {
@@ -770,7 +784,7 @@ export class ContentController {
     @Request() req: { user: { sub: string } },
     @Param('id') id: string
   ): Promise<ContentResponse> {
-    return this.contentService.deleteContent(req.user.id, id);
+    return this.contentService.deleteContent(req.user.sub, id);
   }
 
   @Delete(':id/media')
@@ -783,7 +797,7 @@ export class ContentController {
     @Request() req: { user: { sub: string; role?: string } },
     @Param('id') id: string
   ): Promise<ContentResponse> {
-    return this.contentService.deleteMediaAsset(req.user.id, id, req.user.role);
+    return this.contentService.deleteMediaAsset(req.user.sub, id, req.user.role);
   }
 
   @Delete(':id/categories/:categoryId')
@@ -797,7 +811,7 @@ export class ContentController {
     @Param('id') id: string,
     @Param('categoryId') categoryId: string
   ): Promise<ContentResponse> {
-    return this.contentService.removeCategoryFromContent(req.user.id, id, categoryId);
+    return this.contentService.removeCategoryFromContent(req.user.sub, id, categoryId);
   }
 
   @Delete(':id/tags/:tagId')
@@ -811,7 +825,7 @@ export class ContentController {
     @Param('id') id: string,
     @Param('tagId') tagId: string
   ): Promise<ContentResponse> {
-    return this.contentService.removeTagFromContent(req.user.id, id, tagId);
+    return this.contentService.removeTagFromContent(req.user.sub, id, tagId);
   }
 
   @Delete(':id/relationships/:relatedContentId')
@@ -825,7 +839,7 @@ export class ContentController {
     @Param('id') id: string,
     @Param('relatedContentId') relatedContentId: string
   ): Promise<ContentResponse> {
-    return this.contentService.removeContentRelationship(req.user.id, id, relatedContentId);
+    return this.contentService.removeContentRelationship(req.user.sub, id, relatedContentId);
   }
 
   @Delete('categories/:id')
@@ -836,7 +850,7 @@ export class ContentController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - admin only' })
   async deleteCategory(
-    @Request() req: { user: { sub: string } },
+    @Request() _req: { user: { sub: string } },
     @Param('id') id: string
   ): Promise<ContentResponse> {
     return this.contentService.deleteCategory(id);
@@ -850,7 +864,7 @@ export class ContentController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - admin only' })
   async deleteTag(
-    @Request() req: { user: { sub: string } },
+    @Request() _req: { user: { sub: string } },
     @Param('id') id: string
   ): Promise<ContentResponse> {
     return this.contentService.deleteTag(id);

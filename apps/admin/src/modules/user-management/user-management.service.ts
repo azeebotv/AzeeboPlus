@@ -102,7 +102,13 @@ export class UserManagementService {
     };
   }
 
-  async updateUserRole(userId: string, newRole: string, actorId?: string, ipAddress?: string, userAgent?: string): Promise<unknown> {
+  async updateUserRole(
+    userId: string,
+    newRole: string,
+    actorId?: string,
+    ipAddress?: string,
+    userAgent?: string
+  ): Promise<unknown> {
     const allowedRoles = ['user', 'creator', 'admin', 'superadmin'];
     if (!allowedRoles.includes(newRole)) {
       throw new BadRequestException('Invalid role');
@@ -212,7 +218,13 @@ export class UserManagementService {
     };
   }
 
-  async revokeSuspension(userId: string, revokedBy: string, reason: string, ipAddress?: string, userAgent?: string): Promise<unknown> {
+  async revokeSuspension(
+    userId: string,
+    revokedBy: string,
+    reason: string,
+    ipAddress?: string,
+    userAgent?: string
+  ): Promise<unknown> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
     });
@@ -310,7 +322,12 @@ export class UserManagementService {
     };
   }
 
-  async deleteUser(userId: string, actorId?: string, ipAddress?: string, userAgent?: string): Promise<unknown> {
+  async deleteUser(
+    userId: string,
+    actorId?: string,
+    ipAddress?: string,
+    userAgent?: string
+  ): Promise<unknown> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
     });
@@ -319,9 +336,8 @@ export class UserManagementService {
       throw new NotFoundException('User not found');
     }
 
-    await this.prisma.user.update({
+    await this.prisma.user.delete({
       where: { id: userId },
-      data: { isDeleted: true, deletedAt: new Date() },
     });
 
     await this.auditService.log({

@@ -27,8 +27,6 @@ export interface NotificationJobData {
 export class NotificationProcessor extends WorkerHost {
   private readonly logger = new Logger(NotificationProcessor.name);
   private static readonly DEFAULT_MAX_RETRIES = 3;
-  private static readonly DEFAULT_RETRY_DELAY = 5000; // 5 seconds
-  private static readonly BACKOFF_MULTIPLIER = 2;
 
   constructor(
     private readonly emailService: EmailService,
@@ -41,7 +39,7 @@ export class NotificationProcessor extends WorkerHost {
   async process(job: Job<NotificationJobData>): Promise<void> {
     this.logger.log(`Processing notification job ${job.id} (attempt ${job.attemptsMade + 1})`);
 
-    const { userId, type, title, message, data } = job.data;
+    const { userId, type, title } = job.data;
 
     try {
       switch (type) {
@@ -138,6 +136,8 @@ export class NotificationProcessor extends WorkerHost {
 
   @OnWorkerEvent('error')
   onError(error: Error) {
-    this.logger.error(`Worker encountered an error: ${(error as Error).message}`, { stack: (error as Error).message });
+    this.logger.error(`Worker encountered an error: ${(error as Error).message}`, {
+      stack: (error as Error).message,
+    });
   }
 }

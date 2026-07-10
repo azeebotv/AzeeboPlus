@@ -14,6 +14,7 @@ import { BulkToggleUniverseDto } from './dto/bulk-toggle-universe.dto';
 import { CloneUniverseDto } from './dto/clone-universe.dto';
 import { ImportUniverseDto } from './dto/import-universe.dto';
 import { Prisma } from '../../generated/prisma';
+import { InputJsonValue } from '@prisma/client/runtime/library';
 
 @Injectable()
 export class UniverseManagementService {
@@ -23,7 +24,14 @@ export class UniverseManagementService {
 
   async getAllUniverses(query: QueryUniverseDto) {
     try {
-      const { page = 1, limit = 20, search, isEnabled, sortBy = 'sortOrder', sortOrder = 'asc' } = query;
+      const {
+        page = 1,
+        limit = 20,
+        search,
+        isEnabled,
+        sortBy = 'sortOrder',
+        sortOrder = 'asc',
+      } = query;
       const skip = (page - 1) * limit;
 
       const where: Prisma.UniverseWhereInput = {};
@@ -163,7 +171,7 @@ export class UniverseManagementService {
           color: data.color,
           isEnabled: data.isEnabled ?? true,
           sortOrder: data.sortOrder ?? 0,
-          metadata: data.metadata,
+          metadata: data.metadata as InputJsonValue,
         },
         include: {
           featureFlags: true,
@@ -197,7 +205,7 @@ export class UniverseManagementService {
           color: data.color,
           isEnabled: data.isEnabled,
           sortOrder: data.sortOrder,
-          metadata: data.metadata,
+          metadata: data.metadata as InputJsonValue,
         },
         include: {
           featureFlags: true,
@@ -382,7 +390,7 @@ export class UniverseManagementService {
             color: sourceUniverse.color,
             isEnabled: data.isEnabled ?? false,
             sortOrder: sourceUniverse.sortOrder,
-            metadata: metadata === null ? undefined : metadata,
+            metadata: metadata === null ? undefined : (metadata as InputJsonValue),
           },
         });
 
@@ -392,7 +400,8 @@ export class UniverseManagementService {
               universeId: newUniverse.id,
               featureKey: flag.featureKey,
               isEnabled: flag.isEnabled,
-              metadata: flag.metadata === null ? undefined : (flag.metadata as Prisma.InputJsonValue),
+              metadata:
+                flag.metadata === null ? undefined : (flag.metadata as Prisma.InputJsonValue),
             })),
           });
         }
@@ -403,9 +412,7 @@ export class UniverseManagementService {
         });
       });
 
-      this.logger.log(
-        `Cloned universe ${sourceUniverse.name} to ${clonedUniverse!.name}`
-      );
+      this.logger.log(`Cloned universe ${sourceUniverse.name} to ${clonedUniverse!.name}`);
       return clonedUniverse;
     } catch (error) {
       this.logger.error(`Failed to clone universe ${id}`, error);
@@ -425,10 +432,7 @@ export class UniverseManagementService {
             },
           },
         },
-        orderBy: [
-          { universe: { sortOrder: 'asc' } },
-          { featureKey: 'asc' },
-        ],
+        orderBy: [{ universe: { sortOrder: 'asc' } }, { featureKey: 'asc' }],
       });
 
       return featureFlags;
@@ -524,7 +528,7 @@ export class UniverseManagementService {
                 color: importData.color,
                 isEnabled: importData.isEnabled ?? true,
                 sortOrder: importData.sortOrder ?? 0,
-                metadata: importData.metadata,
+                metadata: importData.metadata as InputJsonValue,
               },
             });
 
@@ -534,7 +538,7 @@ export class UniverseManagementService {
                   universeId: newUniverse.id,
                   featureKey: flag.featureKey,
                   isEnabled: flag.isEnabled,
-                  metadata: flag.metadata,
+                  metadata: flag.metadata as InputJsonValue,
                 })),
               });
             }
@@ -627,13 +631,13 @@ export class UniverseManagementService {
         },
         update: {
           isEnabled: data.isEnabled,
-          metadata: data.metadata,
+          metadata: data.metadata as InputJsonValue,
         },
         create: {
           universeId,
           featureKey: data.featureKey,
           isEnabled: data.isEnabled,
-          metadata: data.metadata,
+          metadata: data.metadata as InputJsonValue,
         },
       });
 

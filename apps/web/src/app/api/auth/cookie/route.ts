@@ -13,7 +13,9 @@ export async function POST(request: NextRequest) {
     'SameSite=Lax',
     isProduction ? 'Secure' : '',
     isProduction ? 'HttpOnly' : '',
-  ].filter(Boolean).join('; ');
+  ]
+    .filter(Boolean)
+    .join('; ');
 
   response.headers.append('Set-Cookie', cookieOptions);
 

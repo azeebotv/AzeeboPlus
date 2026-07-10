@@ -98,6 +98,7 @@ describe('MusicService', () => {
       const result = await service.getEntryBySlug('test-song');
 
       expect(result.success).toBe(true);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((result.data as any).title).toBe('Test Song');
     });
 
@@ -131,6 +132,7 @@ describe('MusicService', () => {
       });
 
       expect(result.success).toBe(true);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((result.data as any).slug).toBe('test-song');
     });
   });
@@ -147,6 +149,7 @@ describe('MusicService', () => {
       const result = await service.updateEntry('music-1', { title: 'Updated Song' });
 
       expect(result.success).toBe(true);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((result.data as any).title).toBe('Updated Song');
     });
 
@@ -167,6 +170,7 @@ describe('MusicService', () => {
       const result = await service.deleteEntry('music-1');
 
       expect(result.success).toBe(true);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((result.data as any).message).toBe('Entry deleted successfully');
     });
 

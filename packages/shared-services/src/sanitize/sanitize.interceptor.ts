@@ -22,7 +22,7 @@ export const SENSITIVE_FIELDS = [
 
 @Injectable()
 export class SanitizeInterceptor implements NestInterceptor {
-  intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
+  intercept(_context: ExecutionContext, next: CallHandler): Observable<unknown> {
     return next.handle().pipe(map((data) => this.sanitizeResponse(data)));
   }
 

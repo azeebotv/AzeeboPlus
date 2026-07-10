@@ -19,12 +19,20 @@ export default function MonetizationPage(): React.JSX.Element {
   const queryClient = useQueryClient();
   const isEnabled = !authLoading && !!isAuthenticated && !!user;
 
-  const { data: monetization, isLoading, error } = useQuery({
+  const {
+    data: monetization,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ['creator', 'monetization'],
     queryFn: async () => {
       const response = await api.creator.getStats();
       if (response.success && response.data) {
-        const d = response.data as { totalEarnings?: number; totalViews?: number; pendingEarnings?: number };
+        const d = response.data as {
+          totalEarnings?: number;
+          totalViews?: number;
+          pendingEarnings?: number;
+        };
         return {
           eligibility: {
             isEligible: (d.totalEarnings || 0) > 0,
@@ -38,7 +46,11 @@ export default function MonetizationPage(): React.JSX.Element {
           settings: { enableSuperTips: true, enableSponsoredContent: false, minPayoutAmount: 5000 },
         } as MonetizationData;
       }
-      return { eligibility: { isEligible: false, requirements: [] }, earnings: { totalEarned: 0, pendingPayout: 0, paidOut: 0 }, settings: { enableSuperTips: false, enableSponsoredContent: false, minPayoutAmount: 5000 } } as MonetizationData;
+      return {
+        eligibility: { isEligible: false, requirements: [] },
+        earnings: { totalEarned: 0, pendingPayout: 0, paidOut: 0 },
+        settings: { enableSuperTips: false, enableSponsoredContent: false, minPayoutAmount: 5000 },
+      } as MonetizationData;
     },
     enabled: isEnabled,
   });
@@ -77,7 +89,15 @@ export default function MonetizationPage(): React.JSX.Element {
     return (
       <div style={{ backgroundColor: '#1A0A0A', minHeight: '100vh', color: '#F5F0EB' }}>
         <AppHeader />
-        <main style={{ paddingTop: 100, paddingBottom: 60, maxWidth: 800, margin: '0 auto', padding: '100px 24px 60px' }}>
+        <main
+          style={{
+            paddingTop: 100,
+            paddingBottom: 60,
+            maxWidth: 800,
+            margin: '0 auto',
+            padding: '100px 24px 60px',
+          }}
+        >
           <div style={{ marginBottom: 32 }}>
             <Skeleton width="120px" height="20px" className="mb-4" />
             <Skeleton width="200px" height="32px" />
@@ -86,7 +106,14 @@ export default function MonetizationPage(): React.JSX.Element {
             <Skeleton width="180px" height="20px" className="mb-4" />
             <Skeleton width="100%" height="60px" borderRadius="12px" />
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 20 }}>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(3, 1fr)',
+              gap: 16,
+              marginBottom: 20,
+            }}
+          >
             {Array.from({ length: 3 }).map((_, i) => (
               <div key={i} className="az-glass" style={{ padding: 20, borderRadius: 16 }}>
                 <Skeleton width="80px" height="14px" className="mb-2" />
@@ -103,8 +130,20 @@ export default function MonetizationPage(): React.JSX.Element {
     return (
       <div style={{ backgroundColor: '#1A0A0A', minHeight: '100vh', color: '#F5F0EB' }}>
         <AppHeader />
-        <main style={{ paddingTop: 100, paddingBottom: 60, maxWidth: 800, margin: '0 auto', padding: '100px 24px 60px' }}>
-          <ErrorState title="Failed to load monetization" description="Please try again later" onButtonPress={() => router.refresh()} />
+        <main
+          style={{
+            paddingTop: 100,
+            paddingBottom: 60,
+            maxWidth: 800,
+            margin: '0 auto',
+            padding: '100px 24px 60px',
+          }}
+        >
+          <ErrorState
+            title="Failed to load monetization"
+            description="Please try again later"
+            onButtonPress={() => router.refresh()}
+          />
         </main>
       </div>
     );
@@ -264,7 +303,8 @@ export default function MonetizationPage(): React.JSX.Element {
                 </div>
                 <button
                   onClick={() => {
-                    const newValue = !monetization.settings[setting.key as keyof typeof monetization.settings];
+                    const newValue =
+                      !monetization.settings[setting.key as keyof typeof monetization.settings];
                     toggleSetting.mutate({ key: setting.key, value: newValue });
                   }}
                   style={{

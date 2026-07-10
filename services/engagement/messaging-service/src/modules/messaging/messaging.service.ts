@@ -44,9 +44,7 @@ export class MessagingService {
         _count: { id: true },
       });
 
-      const unreadMap = new Map(
-        unreadCounts.map((uc) => [uc.conversationId, uc._count.id])
-      );
+      const unreadMap = new Map(unreadCounts.map((uc) => [uc.conversationId, uc._count.id]));
 
       return {
         success: true,
@@ -68,7 +66,10 @@ export class MessagingService {
         })),
       };
     } catch (error) {
-      this.logger.error(`getConversations failed: ${(error as Error).message}`, (error as Error).stack);
+      this.logger.error(
+        `getConversations failed: ${(error as Error).message}`,
+        (error as Error).stack
+      );
       return { success: false, error: (error as Error).message };
     }
   }
@@ -152,7 +153,10 @@ export class MessagingService {
         },
       };
     } catch (error) {
-      this.logger.error(`createConversation failed: ${(error as Error).message}`, (error as Error).stack);
+      this.logger.error(
+        `createConversation failed: ${(error as Error).message}`,
+        (error as Error).stack
+      );
       return { success: false, error: (error as Error).message };
     }
   }
@@ -287,7 +291,10 @@ export class MessagingService {
         message: 'Conversation deleted',
       };
     } catch (error) {
-      this.logger.error(`deleteConversation failed: ${(error as Error).message}`, (error as Error).stack);
+      this.logger.error(
+        `deleteConversation failed: ${(error as Error).message}`,
+        (error as Error).stack
+      );
       return { success: false, error: (error as Error).message };
     }
   }

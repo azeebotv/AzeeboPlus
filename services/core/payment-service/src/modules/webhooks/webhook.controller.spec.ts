@@ -7,8 +7,6 @@ import { BadRequestException } from '@nestjs/common';
 
 describe('WebhookController', () => {
   let controller: WebhookController;
-  let webhookSecurity: WebhookSecurityService;
-  let webhookService: WebhookService;
 
   const mockWebhookSecurity = {
     isDuplicate: jest.fn(),
@@ -35,8 +33,6 @@ describe('WebhookController', () => {
     }).compile();
 
     controller = module.get<WebhookController>(WebhookController);
-    webhookSecurity = module.get<WebhookSecurityService>(WebhookSecurityService);
-    webhookService = module.get<WebhookService>(WebhookService);
   });
 
   afterEach(() => {

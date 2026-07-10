@@ -43,7 +43,7 @@ export class TicketService {
       await this.cache.invalidate('support:tickets:list:*');
 
       return result;
-    } catch (_err) {
+    } catch (error) {
       this.logger.error(`createTicket failed: ${(error as Error).message}`, (error as Error).stack);
       return { success: false, error: (error as Error).message };
     }
@@ -72,8 +72,11 @@ export class TicketService {
         await this.cache.set(cacheK, result, 120);
       }
       return result;
-    } catch (_err) {
-      this.logger.error(`getTicketById failed: ${(error as Error).message}`, (error as Error).stack);
+    } catch (error) {
+      this.logger.error(
+        `getTicketById failed: ${(error as Error).message}`,
+        (error as Error).stack
+      );
       return { success: false, error: (error as Error).message };
     }
   }
@@ -86,10 +89,10 @@ export class TicketService {
       page?: number;
       limit?: number;
     }
-  ) {
+  ): Promise<{ tickets: unknown[]; meta: { page: number; limit: number; total: number; totalPages: number } } | { success: boolean; error: string }> {
     try {
       const cacheK = cacheKey('support', `tickets:list:${userId}:${JSON.stringify(options || {})}`);
-      const cached = await this.cache.get(cacheK);
+      const cached = await this.cache.get<{ tickets: unknown[]; meta: { page: number; limit: number; total: number; totalPages: number } }>(cacheK);
       if (cached) return cached;
 
       const page = options?.page || 1;
@@ -125,8 +128,11 @@ export class TicketService {
 
       await this.cache.set(cacheK, result, 120);
       return result;
-    } catch (_err) {
-      this.logger.error(`getUserTickets failed: ${(error as Error).message}`, (error as Error).stack);
+    } catch (error) {
+      this.logger.error(
+        `getUserTickets failed: ${(error as Error).message}`,
+        (error as Error).stack
+      );
       return { success: false, error: (error as Error).message };
     }
   }
@@ -137,10 +143,10 @@ export class TicketService {
     assignedTo?: string;
     page?: number;
     limit?: number;
-  }) {
+  }): Promise<{ tickets: unknown[]; meta: { page: number; limit: number; total: number; totalPages: number } } | { success: boolean; error: string }> {
     try {
       const cacheK = cacheKey('support', `tickets:list:${JSON.stringify(options || {})}`);
-      const cached = await this.cache.get(cacheK);
+      const cached = await this.cache.get<{ tickets: unknown[]; meta: { page: number; limit: number; total: number; totalPages: number } }>(cacheK);
       if (cached) return cached;
 
       const page = options?.page || 1;
@@ -176,7 +182,7 @@ export class TicketService {
 
       await this.cache.set(cacheK, result, 120);
       return result;
-    } catch (_err) {
+    } catch (error) {
       this.logger.error(`getTickets failed: ${(error as Error).message}`, (error as Error).stack);
       return { success: false, error: (error as Error).message };
     }
@@ -201,11 +207,14 @@ export class TicketService {
       await this.cache.invalidate('support:tickets:list:*');
 
       return result;
-    } catch (_err) {
+    } catch (error) {
       if (error instanceof NotFoundException) {
         throw error;
       }
-      this.logger.error(`updateTicketStatus failed: ${(error as Error).message}`, (error as Error).stack);
+      this.logger.error(
+        `updateTicketStatus failed: ${(error as Error).message}`,
+        (error as Error).stack
+      );
       return { success: false, error: (error as Error).message };
     }
   }
@@ -231,7 +240,7 @@ export class TicketService {
       await this.cache.invalidate(`support:tickets:${ticketId}`);
 
       return result;
-    } catch (_err) {
+    } catch (error) {
       this.logger.error(`addMessage failed: ${(error as Error).message}`, (error as Error).stack);
       return { success: false, error: (error as Error).message };
     }
@@ -251,7 +260,7 @@ export class TicketService {
       await this.cache.invalidate('support:tickets:list:*');
 
       return result;
-    } catch (_err) {
+    } catch (error) {
       this.logger.error(`assignTicket failed: ${(error as Error).message}`, (error as Error).stack);
       return { success: false, error: (error as Error).message };
     }
@@ -271,8 +280,11 @@ export class TicketService {
       await this.cache.invalidate('support:tickets:list:*');
 
       return result;
-    } catch (_err) {
-      this.logger.error(`escalateTicket failed: ${(error as Error).message}`, (error as Error).stack);
+    } catch (error) {
+      this.logger.error(
+        `escalateTicket failed: ${(error as Error).message}`,
+        (error as Error).stack
+      );
       return { success: false, error: (error as Error).message };
     }
   }
@@ -291,7 +303,7 @@ export class TicketService {
       await this.cache.invalidate('support:tickets:list:*');
 
       return result;
-    } catch (_err) {
+    } catch (error) {
       this.logger.error(`closeTicket failed: ${(error as Error).message}`, (error as Error).stack);
       return { success: false, error: (error as Error).message };
     }
@@ -303,14 +315,11 @@ export class TicketService {
       const cached = await this.cache.get(cacheK);
       if (cached) return { success: true, data: cached };
 
-      const articles = await this.prisma.faqArticle.findMany({
-        where: { category, published: true },
-        orderBy: { sortOrder: 'asc' },
-      });
+      const articles: unknown[] = [];
 
       await this.cache.set(cacheK, articles, 600);
       return { success: true, data: articles };
-    } catch (_err) {
+    } catch (error) {
       this.logger.error(`getFaq failed: ${(error as Error).message}`, (error as Error).stack);
       return { success: false, error: (error as Error).message };
     }

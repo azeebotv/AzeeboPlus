@@ -19,8 +19,6 @@ import { apiClient } from '../src/api/client';
 import { logger } from '../src/utils/logger';
 import { LoadingState, ErrorState } from '../src/components/StateContainers';
 
-const _PLACEHOLDER_IMAGE = '';
-
 const leaderboardData = [
   { rank: 1, avatar: '👑', name: 'PredatorKing', points: 15000 },
   { rank: 2, avatar: '🦅', name: 'EagleEye', points: 12000 },

@@ -188,7 +188,16 @@ export class UploadController {
       throw new BadRequestException('Invalid key format');
     }
 
-    const allowedPrefixes = ['uploads/', 'images/', 'videos/', 'audio/', 'documents/', 'thumbnails/', 'avatars/', 'banners/'];
+    const allowedPrefixes = [
+      'uploads/',
+      'images/',
+      'videos/',
+      'audio/',
+      'documents/',
+      'thumbnails/',
+      'avatars/',
+      'banners/',
+    ];
     if (!allowedPrefixes.some((prefix) => key.startsWith(prefix))) {
       throw new BadRequestException('Invalid key prefix');
     }
@@ -297,7 +306,7 @@ export class UploadController {
   @ApiResponse({ status: 400, description: 'contentId is required' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async generatePremiumUrl(
-    @Request() req: { user: { sub: string } },
+    @Request() req: { user: { sub: string; id: string } },
     @Body() body: { contentId: string; expiresInSeconds?: number }
   ): Promise<unknown> {
     const { contentId, expiresInSeconds } = body;
@@ -322,7 +331,7 @@ export class UploadController {
   @ApiResponse({ status: 400, description: 'contentId is required' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async generateCdnPremiumUrl(
-    @Request() req: { user: { sub: string } },
+    @Request() req: { user: { sub: string; id: string } },
     @Body() body: { contentId: string; expiresInSeconds?: number }
   ): Promise<unknown> {
     const { contentId, expiresInSeconds } = body;
@@ -373,7 +382,9 @@ export class UploadController {
   @ApiOperation({ summary: 'Invalidate all premium URLs for a user' })
   @ApiResponse({ status: 200, description: 'All user URLs invalidated' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async invalidateAllUserUrls(@Request() req: { user: { sub: string } }): Promise<unknown> {
+  async invalidateAllUserUrls(
+    @Request() req: { user: { sub: string; id: string } }
+  ): Promise<unknown> {
     const count = await this.premiumContentService.invalidateAllUserUrls(req.user.id);
     return ApiResponseWrapper.success({ invalidatedCount: count });
   }
