@@ -31,7 +31,7 @@ export class ModerationController {
   async scanContent(
     @Param('contentId') contentId: string,
     @Body('type')
-    type:
+    _type:
       | 'malware'
       | 'nsfw'
       | 'hate_speech'
@@ -40,7 +40,7 @@ export class ModerationController {
       | 'spam'
       | 'misinformation' = 'malware'
   ): Promise<unknown> {
-    return this.moderationService.scanContent(contentId, type);
+    return this.moderationService.scanContent(contentId, _type);
   }
 
   @Get('risk/:contentId')
@@ -90,10 +90,10 @@ export class ModerationController {
   @ApiResponse({ status: 200, description: 'Cases list' })
   async getCases(
     @Query('status') status?: 'open' | 'under_review' | 'resolved' | 'escalated' | 'dismissed',
-    @Query('assignedTo') assignedTo?: string,
-    @Query('priority') priority?: 'low' | 'medium' | 'high',
-    @Query('page') page?: string,
-    @Query('limit') limit?: string
+    @Query('assignedTo') _assignedTo?: string,
+    @Query('priority') _priority?: 'low' | 'medium' | 'high',
+    @Query('page') _page?: string,
+    @Query('limit') _limit?: string
   ): Promise<unknown> {
     return this.moderationService.getCases({
       status,
@@ -118,9 +118,9 @@ export class ModerationController {
   @ApiResponse({ status: 200, description: 'Case assigned' })
   async assignCase(
     @Param('caseId') caseId: string,
-    @Request() req: { user: { userId: string } }
+    @Request() req: { user: { sub: string } }
   ): Promise<unknown> {
-    return this.moderationService.assignCase(caseId, req.user.id);
+    return this.moderationService.assignCase(caseId, req.user.sub);
   }
 
   @Patch('cases/:caseId/resolve')
@@ -132,11 +132,11 @@ export class ModerationController {
   async resolveCase(
     @Param('caseId') caseId: string,
     @Body() body: ResolveModerationDto,
-    @Request() req: { user: { userId: string } }
+    @Request() req: { user: { sub: string } }
   ): Promise<unknown> {
     return this.moderationService.resolveCase(caseId, {
       resolution: body.resolution,
-      resolvedBy: req.user.id,
+      resolvedBy: req.user.sub,
       notes: body.notes,
     });
   }
@@ -163,11 +163,11 @@ export class ModerationController {
       reason: string;
       durationDays?: number;
     },
-    @Request() req: { user: { userId: string } }
+    @Request() req: { user: { sub: string } }
   ): Promise<unknown> {
     return this.moderationService.executeAction({
       ...data,
-      performedBy: req.user.id,
+      performedBy: req.user.sub,
     });
   }
 
@@ -194,11 +194,11 @@ export class ModerationController {
       reason: string;
       evidence?: Record<string, unknown>;
     },
-    @Request() req: { user: { userId: string } }
+    @Request() req: { user: { sub: string } }
   ): Promise<unknown> {
     return this.moderationService.submitAppeal({
       caseId: data.caseId,
-      userId: req.user.id,
+      userId: req.user.sub,
       reason: data.reason,
     });
   }
@@ -212,11 +212,11 @@ export class ModerationController {
   async reviewAppeal(
     @Param('appealId') appealId: string,
     @Body() body: ModerationDecisionDto,
-    @Request() req: { user: { userId: string } }
+    @Request() req: { user: { sub: string } }
   ): Promise<unknown> {
     return this.moderationService.reviewAppeal(
       appealId,
-      req.user.id,
+      req.user.sub,
       body.decision as 'successful' | 'rejected',
       body.notes
     );

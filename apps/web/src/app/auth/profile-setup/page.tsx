@@ -1,25 +1,18 @@
 'use client';
-import React, { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/api';
 import BrandLogo from '@/components/auth/BrandLogo';
 import { Alert, Spinner } from '@/components/auth/FormBits';
 
-const INTERESTS = [
-  'Comedy',
-  'Movies',
-  'Sports',
-  'Music',
-  'Gaming',
-  'Reality Shows',
-  'Lifestyle',
-  'Education',
-  'News',
-  'Technology',
+// Default interests - can be overridden via user-service API
+const DEFAULT_INTERESTS = [
+  'Comedy', 'Movies', 'Sports', 'Music', 'Gaming',
+  'Reality Shows', 'Lifestyle', 'Education', 'News', 'Technology',
 ];
 
-const GENDERS = ['Male', 'Female', 'Non-binary', 'Prefer not to say'];
+const DEFAULT_GENDERS = ['Male', 'Female', 'Non-binary', 'Prefer not to say'];
 
 export default function ProfileSetupPage(): React.JSX.Element {
   const router = useRouter();
@@ -41,6 +34,28 @@ export default function ProfileSetupPage(): React.JSX.Element {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [interests, setInterests] = useState<string[]>(DEFAULT_INTERESTS);
+  const [genders, setGenders] = useState<string[]>(DEFAULT_GENDERS);
+
+  useEffect(() => {
+    const fetchOptions = async () => {
+      try {
+        const [interestsRes, gendersRes] = await Promise.allSettled([
+          apiFetch<string[]>('/v1/users/profile-options/interests'),
+          apiFetch<string[]>('/v1/users/profile-options/genders'),
+        ]);
+        if (interestsRes.status === 'fulfilled' && interestsRes.value.success && interestsRes.value.data) {
+          setInterests(interestsRes.value.data);
+        }
+        if (gendersRes.status === 'fulfilled' && gendersRes.value.success && gendersRes.value.data) {
+          setGenders(gendersRes.value.data);
+        }
+      } catch {
+        // Use defaults
+      }
+    };
+    fetchOptions();
+  }, []);
 
   const handleFileSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -335,7 +350,7 @@ export default function ProfileSetupPage(): React.JSX.Element {
                   style={{ color: gender ? '#fff' : 'rgba(255,255,255,0.4)' }}
                 >
                   <option value="">Select gender</option>
-                  {GENDERS.map((g) => (
+                  {genders.map((g) => (
                     <option key={g} value={g} style={{ color: '#000' }}>
                       {g}
                     </option>
@@ -364,7 +379,7 @@ export default function ProfileSetupPage(): React.JSX.Element {
             <div>
               <span className="az-label">Select Your Interests</span>
               <div className="flex flex-wrap gap-2">
-                {INTERESTS.map((interest) => {
+                {interests.map((interest) => {
                   const selected = selectedInterests.includes(interest);
                   return (
                     <button

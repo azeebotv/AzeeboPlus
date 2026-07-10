@@ -37,7 +37,7 @@ export class ReportBuilderController {
   @ApiOperation({ summary: 'Create a custom report' })
   @ApiResponse({ status: 201, description: 'Report created successfully' })
   async createReport(@Request() req: AuthenticatedRequest, @Body() dto: CreateReportDto) {
-    return this.reportBuilderService.createReport(req.user.id, dto);
+    return this.reportBuilderService.createReport(req.user.sub, dto);
   }
 
   @Get()
@@ -48,7 +48,7 @@ export class ReportBuilderController {
     @Query('category') category?: string,
     @Query('isPublic') isPublic?: string
   ) {
-    return this.reportBuilderService.listReports(req.user.id, req.user.role, {
+    return this.reportBuilderService.listReports(req.user.sub, req.user.role, {
       category,
       isPublic: isPublic === 'true' ? true : isPublic === 'false' ? false : undefined,
     });
@@ -58,7 +58,7 @@ export class ReportBuilderController {
   @ApiOperation({ summary: 'Get a report by ID' })
   @ApiResponse({ status: 200, description: 'Report retrieved successfully' })
   async getReport(@Request() req: AuthenticatedRequest, @Param('id') id: string) {
-    return this.reportBuilderService.getReport(id, req.user.id);
+    return this.reportBuilderService.getReport(id, req.user.sub);
   }
 
   @Put(':id')
@@ -69,14 +69,14 @@ export class ReportBuilderController {
     @Param('id') id: string,
     @Body() dto: Partial<CreateReportDto>
   ) {
-    return this.reportBuilderService.updateReport(id, req.user.id, dto);
+    return this.reportBuilderService.updateReport(id, req.user.sub, dto);
   }
 
   @Delete(':id')
   @ApiOperation({ summary: 'Delete a report' })
   @ApiResponse({ status: 200, description: 'Report deleted successfully' })
   async deleteReport(@Request() req: AuthenticatedRequest, @Param('id') id: string) {
-    return this.reportBuilderService.deleteReport(id, req.user.id);
+    return this.reportBuilderService.deleteReport(id, req.user.sub);
   }
 
   @Post('execute')
@@ -84,7 +84,7 @@ export class ReportBuilderController {
   @ApiOperation({ summary: 'Execute a report' })
   @ApiResponse({ status: 200, description: 'Report executed successfully' })
   async executeReport(@Request() req: AuthenticatedRequest, @Body() dto: ExecuteReportDto) {
-    return this.reportBuilderService.executeReport(req.user.id, dto);
+    return this.reportBuilderService.executeReport(req.user.sub, dto);
   }
 
   @Get(':id/executions')
@@ -97,7 +97,7 @@ export class ReportBuilderController {
   ) {
     return this.reportBuilderService.getExecutionHistory(
       id,
-      req.user.id,
+      req.user.sub,
       limit ? parseInt(limit) : 20
     );
   }

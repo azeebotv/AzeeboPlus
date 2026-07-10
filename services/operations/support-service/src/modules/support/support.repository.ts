@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { PrismaService } from '../database/prisma.service';
 import {
-  SupportTicketCategory,
   SupportTicketPriority,
   SupportTicketStatus,
 } from '../ticket/dto/ticket.dto';

@@ -47,7 +47,9 @@ describe('SanitizationService', () => {
 
     it('should handle empty input', () => {
       expect(service.sanitizeContent('')).toBe('');
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect(service.sanitizeContent(null as any)).toBe('');
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect(service.sanitizeContent(undefined as any)).toBe('');
     });
 
@@ -80,6 +82,7 @@ describe('SanitizationService', () => {
 
     it('should reject empty or invalid input', () => {
       expect(service.validateUnlockCode('')).toBe(false);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect(service.validateUnlockCode(null as any)).toBe(false);
     });
   });

@@ -165,6 +165,7 @@ describe('ComedyService', () => {
       const result = await service.getTrending();
 
       expect(result.success).toBe(true);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((result.data as any).clips.length).toBe(2);
     });
   });

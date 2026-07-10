@@ -6,7 +6,7 @@ export function AuditLog(action: string, resourceType?: string): ReturnType<type
   return SetMetadata(AUDIT_LOG_METADATA, { action, resourceType });
 }
 
-export const CurrentUser = createParamDecorator((data: unknown, ctx: ExecutionContext) => {
+export const CurrentUser = createParamDecorator((_data: unknown, ctx: ExecutionContext) => {
   const request = ctx.switchToHttp().getRequest();
   return request.user;
 });

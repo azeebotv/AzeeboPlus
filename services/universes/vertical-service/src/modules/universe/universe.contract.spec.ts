@@ -32,7 +32,12 @@ describe('Universe Controller Contract Tests', () => {
         $connect: jest.fn().mockResolvedValue(undefined),
         $disconnect: jest.fn().mockResolvedValue(undefined),
         universeMap: { findMany: jest.fn(), findUnique: jest.fn(), count: jest.fn() },
-        location: { findMany: jest.fn(), findUnique: jest.fn(), create: jest.fn(), update: jest.fn() },
+        location: {
+          findMany: jest.fn(),
+          findUnique: jest.fn(),
+          create: jest.fn(),
+          update: jest.fn(),
+        },
       })
       .overrideGuard(RateLimitGuard)
       .useValue({ canActivate: jest.fn().mockReturnValue(true) })

@@ -5,8 +5,9 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { apiClient } from '../src/api/client';
 import { LoadingState, ErrorState } from '../src/components/StateContainers';
+import { defaultImages } from '../src/theme';
 
-const PLACEHOLDER_IMAGE = '';
+const PLACEHOLDER_IMAGE = defaultImages.thumbnail;
 
 interface TitleData {
   id: string;

@@ -1,4 +1,10 @@
-import { CanActivate, ExecutionContext, Injectable, ConflictException, Logger } from '@nestjs/common';
+import {
+  CanActivate,
+  ExecutionContext,
+  Injectable,
+  ConflictException,
+  Logger,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { InjectRedis } from '@nestjs-modules/ioredis';
 import { Redis } from 'ioredis';
@@ -70,7 +76,13 @@ export class IdempotencyGuard implements CanActivate {
       }
 
       // Reserve the key atomically; NX prevents race conditions between concurrent requests
-      const reserved = await this.redis.set(redisKey, 'processing', 'EX', IDEMPOTENCY_TTL_SECONDS, 'NX');
+      const reserved = await this.redis.set(
+        redisKey,
+        'processing',
+        'EX',
+        IDEMPOTENCY_TTL_SECONDS,
+        'NX'
+      );
       if (!reserved) {
         throw new ConflictException(
           'Request with this Idempotency-Key has already been processed.'

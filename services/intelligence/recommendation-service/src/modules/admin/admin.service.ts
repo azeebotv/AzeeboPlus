@@ -23,13 +23,24 @@ export class AdminService {
         totalRequests,
         recommendationsToday,
       });
-    } catch (_err) {
+    } catch (error) {
       this.logger.error(`getStats failed: ${(error as Error).message}`, (error as Error).stack);
-      return ApiResponseWrapper.error((error as Error).message);
+      return ApiResponseWrapper.error('UNKNOWN_ERROR', (error as Error).message);
     }
   }
 
   async getModels() {
+    // Models can be configured via RECOMMENDATION_MODELS env var (JSON array)
+    const envModels = process.env.RECOMMENDATION_MODELS;
+    if (envModels) {
+      try {
+        const parsed = JSON.parse(envModels) as Array<{ id: string; name: string; description: string; active: boolean }>;
+        return ApiResponseWrapper.success(parsed);
+      } catch {
+        // Fall back to defaults if JSON is invalid
+      }
+    }
+
     const models = [
       {
         id: 'content-based',

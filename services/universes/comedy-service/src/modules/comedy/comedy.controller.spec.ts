@@ -6,7 +6,6 @@ import { RateLimitService } from '@azeebo/security';
 
 describe('ComedyController', () => {
   let controller: ComedyController;
-  let service: ComedyService;
 
   const mockComedyService = {
     getClips: jest.fn(),
@@ -19,7 +18,9 @@ describe('ComedyController', () => {
   };
 
   const mockRateLimitService = {
-    checkRateLimit: jest.fn().mockResolvedValue({ allowed: true, remaining: 10, resetAt: Date.now() + 60000, limit: 10 }),
+    checkRateLimit: jest
+      .fn()
+      .mockResolvedValue({ allowed: true, remaining: 10, resetAt: Date.now() + 60000, limit: 10 }),
     resetRateLimit: jest.fn(),
     getRateLimitStatus: jest.fn(),
   };
@@ -41,7 +42,6 @@ describe('ComedyController', () => {
     }).compile();
 
     controller = module.get<ComedyController>(ComedyController);
-    service = module.get<ComedyService>(ComedyService);
   });
 
   afterEach(() => {
@@ -92,7 +92,10 @@ describe('ComedyController', () => {
     it('should submit a challenge entry', async () => {
       const req = { user: { sub: 'user-123' } };
       const body = { challengeId: 'challenge-1', clipUrl: 'https://example.com/clip.mp4' };
-      const result = { success: true, data: { entryId: 'entry-1', message: 'Challenge entry submitted' } };
+      const result = {
+        success: true,
+        data: { entryId: 'entry-1', message: 'Challenge entry submitted' },
+      };
       mockComedyService.submitChallenge.mockResolvedValue(result);
 
       expect(await controller.submitChallenge(req, body)).toEqual(result);
@@ -102,7 +105,9 @@ describe('ComedyController', () => {
     it('should throw NotFoundException when challenge not found', async () => {
       const req = { user: { sub: 'user-123' } };
       const body = { challengeId: 'nonexistent', clipUrl: 'https://example.com/clip.mp4' };
-      mockComedyService.submitChallenge.mockRejectedValue(new (require('@nestjs/common').NotFoundException)('Challenge not found'));
+      mockComedyService.submitChallenge.mockRejectedValue(
+        new (require('@nestjs/common').NotFoundException)('Challenge not found')
+      );
 
       await expect(controller.submitChallenge(req, body)).rejects.toThrow('Challenge not found');
     });
@@ -110,9 +115,13 @@ describe('ComedyController', () => {
     it('should throw BadRequestException when challenge is not active', async () => {
       const req = { user: { sub: 'user-123' } };
       const body = { challengeId: 'challenge-1', clipUrl: 'https://example.com/clip.mp4' };
-      mockComedyService.submitChallenge.mockRejectedValue(new (require('@nestjs/common').BadRequestException)('Challenge is not active'));
+      mockComedyService.submitChallenge.mockRejectedValue(
+        new (require('@nestjs/common').BadRequestException)('Challenge is not active')
+      );
 
-      await expect(controller.submitChallenge(req, body)).rejects.toThrow('Challenge is not active');
+      await expect(controller.submitChallenge(req, body)).rejects.toThrow(
+        'Challenge is not active'
+      );
     });
   });
 
@@ -139,7 +148,9 @@ describe('ComedyController', () => {
 
     it('should throw NotFoundException when clip not found', async () => {
       const req = { user: { sub: 'user-123' } };
-      mockComedyService.shareClip.mockRejectedValue(new (require('@nestjs/common').NotFoundException)('Clip not found'));
+      mockComedyService.shareClip.mockRejectedValue(
+        new (require('@nestjs/common').NotFoundException)('Clip not found')
+      );
 
       await expect(controller.shareClip(req, 'nonexistent')).rejects.toThrow('Clip not found');
     });

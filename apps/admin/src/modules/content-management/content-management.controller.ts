@@ -45,7 +45,7 @@ export class ContentManagementController {
     @Query('creatorId') creatorId?: string,
     @Query('search') search?: string,
     @Query('startDate') startDate?: string,
-    @Query('endDate') endDate?: string,
+    @Query('endDate') endDate?: string
   ) {
     return this.contentService.listContent({
       page: Number(page) || 1,
@@ -81,7 +81,7 @@ export class ContentManagementController {
     @Query('action') action?: string,
     @Query('targetId') targetId?: string,
     @Query('startDate') startDate?: string,
-    @Query('endDate') endDate?: string,
+    @Query('endDate') endDate?: string
   ) {
     return this.contentService.getAuditLogs({
       page: Number(page) || 1,
@@ -120,7 +120,11 @@ export class ContentManagementController {
   }
 
   @Patch(':id')
-  async updateContent(@Param('id') id: string, @Req() req: AuthRequest, @Body() body: Record<string, unknown>) {
+  async updateContent(
+    @Param('id') id: string,
+    @Req() req: AuthRequest,
+    @Body() body: Record<string, unknown>
+  ) {
     this.logger.log(`Updating content: ${id}`);
     const result = await this.contentService.updateContent(id, body);
     await this.auditLogService.log({
@@ -222,7 +226,11 @@ export class ContentManagementController {
   }
 
   @Put('categories/:id')
-  async updateCategory(@Param('id') id: string, @Req() req: AuthRequest, @Body() body: Record<string, unknown>) {
+  async updateCategory(
+    @Param('id') id: string,
+    @Req() req: AuthRequest,
+    @Body() body: Record<string, unknown>
+  ) {
     this.logger.log(`Updating category: ${id}`);
     const result = await this.contentService.updateCategory(id, body);
     await this.auditLogService.log({

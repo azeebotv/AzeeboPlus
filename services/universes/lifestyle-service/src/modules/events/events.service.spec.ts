@@ -127,6 +127,7 @@ describe('EventsService', () => {
       const result = await service.getEventBySlug('test-event');
 
       expect(result.success).toBe(true);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((result.data as any).title).toBe('Test Event');
     });
 
@@ -160,6 +161,7 @@ describe('EventsService', () => {
       });
 
       expect(result.success).toBe(true);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((result.data as any).slug).toBe('test-event');
     });
   });
@@ -176,6 +178,7 @@ describe('EventsService', () => {
       const result = await service.updateEvent('event-1', { title: 'Updated Event' });
 
       expect(result.success).toBe(true);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((result.data as any).title).toBe('Updated Event');
     });
 
@@ -196,6 +199,7 @@ describe('EventsService', () => {
       const result = await service.deleteEvent('event-1');
 
       expect(result.success).toBe(true);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((result.data as any).message).toBe('Event deleted successfully');
     });
 

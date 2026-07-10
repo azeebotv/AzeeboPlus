@@ -30,6 +30,7 @@ describe('Games Service Authorization Tests', () => {
   };
 
   const createMockAuthGuard = (canActivate: boolean) => ({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     canActivate: jest.fn().mockImplementation((context: any) => {
       if (!canActivate) {
         throw new UnauthorizedException();

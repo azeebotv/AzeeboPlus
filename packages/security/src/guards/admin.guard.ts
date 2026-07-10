@@ -43,7 +43,10 @@ export class AdminGuard implements CanActivate {
       });
       request.user = payload;
 
-      if (!payload.role || !this.allowedRoles.some(role => role.toLowerCase() === payload.role!.toLowerCase())) {
+      if (
+        !payload.role ||
+        !this.allowedRoles.some((role) => role.toLowerCase() === payload.role!.toLowerCase())
+      ) {
         throw new ForbiddenException('Insufficient permissions');
       }
 

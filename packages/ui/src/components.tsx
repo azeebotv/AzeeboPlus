@@ -4,7 +4,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   ActivityIndicator,
-  AccessibilityInfo,
 } from 'react-native';
 import { colors } from '@azeebo/design-tokens';
 

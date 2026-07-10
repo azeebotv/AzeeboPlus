@@ -36,7 +36,10 @@ export class AdminService {
       });
     } catch (error: unknown) {
       this.logger.error(`Failed to get search stats: ${error}`);
-      return { success: false, error: { code: 'GET_STATS_FAILED', message: 'Failed to retrieve search stats' } };
+      return {
+        success: false,
+        error: { code: 'GET_STATS_FAILED', message: 'Failed to retrieve search stats' },
+      };
     }
   }
 
@@ -72,7 +75,10 @@ export class AdminService {
       return ApiResponseWrapper.paginated(queries, page, limit, total);
     } catch (error: unknown) {
       this.logger.error(`Failed to get search queries: ${error}`);
-      return { success: false, error: { code: 'GET_QUERIES_FAILED', message: 'Failed to retrieve search queries' } };
+      return {
+        success: false,
+        error: { code: 'GET_QUERIES_FAILED', message: 'Failed to retrieve search queries' },
+      };
     }
   }
 }

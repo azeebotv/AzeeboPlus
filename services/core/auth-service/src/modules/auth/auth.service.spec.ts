@@ -297,7 +297,11 @@ describe('AuthService', () => {
 
   describe('validateToken', () => {
     it('should return user for valid token', async () => {
-      (jwtService.verify as jest.Mock).mockReturnValue({ jti: 'token-123', sub: 'user-123', type: 'access' });
+      (jwtService.verify as jest.Mock).mockReturnValue({
+        jti: 'token-123',
+        sub: 'user-123',
+        type: 'access',
+      });
       (redisService.get as jest.Mock).mockResolvedValue(null);
       (authRepository.findById as jest.Mock).mockResolvedValue(mockUser);
 
@@ -308,7 +312,11 @@ describe('AuthService', () => {
     });
 
     it('should return null for revoked token', async () => {
-      (jwtService.verify as jest.Mock).mockReturnValue({ jti: 'token-123', sub: 'user-123', type: 'access' });
+      (jwtService.verify as jest.Mock).mockReturnValue({
+        jti: 'token-123',
+        sub: 'user-123',
+        type: 'access',
+      });
       (redisService.get as jest.Mock).mockResolvedValue('1');
 
       const result = await service.validateToken('revoked-token');

@@ -27,6 +27,7 @@ describe('Mobile Auth API', () => {
           user: { id: '1', email: 'a@b.com', name: 'A', role: 'user' },
         },
       };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       mockedClient.post.mockResolvedValue(mockResponse as any);
 
       const result = await authApi.login({ email: 'a@b.com', password: 'pass' });
@@ -39,6 +40,7 @@ describe('Mobile Auth API', () => {
     });
 
     it('should propagate login failure', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       mockedClient.post.mockResolvedValue({ success: false, message: 'Invalid' } as any);
 
       const result = await authApi.login({ email: 'a@b.com', password: 'wrong' });
@@ -49,6 +51,7 @@ describe('Mobile Auth API', () => {
 
   describe('register', () => {
     it('should POST to /v1/auth/register', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       mockedClient.post.mockResolvedValue({ success: true, data: { accessToken: 'tok' } } as any);
 
       await authApi.register({ name: 'Test', email: 'a@b.com', password: 'pass' });
@@ -63,6 +66,7 @@ describe('Mobile Auth API', () => {
 
   describe('logout', () => {
     it('should POST to /v1/auth/logout', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       mockedClient.post.mockResolvedValue({ success: true } as any);
 
       await authApi.logout();
@@ -73,6 +77,7 @@ describe('Mobile Auth API', () => {
 
   describe('forgotPassword', () => {
     it('should POST to /v1/auth/forgot-password', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       mockedClient.post.mockResolvedValue({ success: true } as any);
 
       await authApi.forgotPassword('a@b.com');
@@ -85,6 +90,7 @@ describe('Mobile Auth API', () => {
 
   describe('resetPassword', () => {
     it('should POST to /v1/auth/reset-password', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       mockedClient.post.mockResolvedValue({ success: true } as any);
 
       await authApi.resetPassword('token123', 'newPass');
@@ -98,6 +104,7 @@ describe('Mobile Auth API', () => {
 
   describe('verifyEmail', () => {
     it('should POST to /v1/auth/verify-email', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       mockedClient.post.mockResolvedValue({ success: true } as any);
 
       await authApi.verifyEmail('verify-token');
@@ -110,6 +117,7 @@ describe('Mobile Auth API', () => {
 
   describe('getProfile', () => {
     it('should GET /v1/users/me', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       mockedClient.get.mockResolvedValue({ success: true, data: { id: '1' } } as any);
 
       await authApi.getProfile();
@@ -123,6 +131,7 @@ describe('Mobile Auth API', () => {
       mockedClient.put.mockResolvedValue({
         success: true,
         data: { id: '1', name: 'Updated' },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any);
 
       await authApi.updateProfile({ name: 'Updated' });
@@ -133,6 +142,7 @@ describe('Mobile Auth API', () => {
 
   describe('changePassword', () => {
     it('should PUT to /v1/users/me/password', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       mockedClient.put.mockResolvedValue({ success: true } as any);
 
       await authApi.changePassword('oldPass', 'newPass');
@@ -149,6 +159,7 @@ describe('Mobile Auth API', () => {
       mockedClient.post.mockResolvedValue({
         success: true,
         data: { accessToken: 'new-tok' },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any);
 
       await authApi.refreshToken('old-ref');

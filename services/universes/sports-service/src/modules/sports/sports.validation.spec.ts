@@ -6,6 +6,7 @@ import { SportsController } from './sports.controller';
 import { SportsService } from './sports.service';
 
 const mockAuthGuard = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   canActivate: jest.fn().mockImplementation((context: any) => {
     const req = context.switchToHttp().getRequest();
     if (!req.headers.authorization) {
@@ -65,6 +66,7 @@ describe('Sports Service Validation Tests', () => {
 
   beforeEach(() => {
     mockAuthGuard.canActivate.mockClear();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockAuthGuard.canActivate.mockImplementation((context: any) => {
       const req = context.switchToHttp().getRequest();
       if (!req.headers.authorization) {

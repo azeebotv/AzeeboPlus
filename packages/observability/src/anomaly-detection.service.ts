@@ -141,17 +141,20 @@ export class AnomalyDetectionService implements OnModuleDestroy {
   }
 
   private startPeriodicCleanup(): void {
-    this.cleanupInterval = setInterval(() => {
-      const cutoff = Date.now() - this.STALE_RETENTION_MS;
-      for (const [metric, samples] of this.metricHistory) {
-        const filtered = samples.filter((s) => s.timestamp.getTime() > cutoff);
-        if (filtered.length === 0) {
-          this.metricHistory.delete(metric);
-        } else {
-          this.metricHistory.set(metric, filtered);
+    this.cleanupInterval = setInterval(
+      () => {
+        const cutoff = Date.now() - this.STALE_RETENTION_MS;
+        for (const [metric, samples] of this.metricHistory) {
+          const filtered = samples.filter((s) => s.timestamp.getTime() > cutoff);
+          if (filtered.length === 0) {
+            this.metricHistory.delete(metric);
+          } else {
+            this.metricHistory.set(metric, filtered);
+          }
         }
-      }
-    }, 6 * 60 * 60 * 1000); // Run every 6 hours
+      },
+      6 * 60 * 60 * 1000
+    ); // Run every 6 hours
   }
 
   onModuleDestroy(): void {

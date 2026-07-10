@@ -5,17 +5,17 @@ export class CreateEventDto {
   @ApiProperty({ example: 'Summer Music Festival' })
   @IsString()
   @IsNotEmpty()
-  title: string;
+  title!: string;
 
   @ApiProperty({ example: 'A weekend of live music and performances' })
   @IsString()
   @IsNotEmpty()
-  description: string;
+  description!: string;
 
   @ApiProperty({ example: '2026-08-15T18:00:00Z' })
   @IsString()
   @IsNotEmpty()
-  startDate: string;
+  startDate!: string;
 
   @ApiPropertyOptional({ example: '2026-08-16T23:00:00Z' })
   @IsString()

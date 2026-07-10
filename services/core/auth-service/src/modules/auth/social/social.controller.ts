@@ -116,7 +116,8 @@ export class SocialAuthController {
 
     const socialUser = {
       email: dto.email,
-      displayName: dto.displayName || `${provider.charAt(0).toUpperCase() + provider.slice(1)} User`,
+      displayName:
+        dto.displayName || `${provider.charAt(0).toUpperCase() + provider.slice(1)} User`,
       socialId: dto.code,
       provider: provider as 'google' | 'apple',
       accessToken: '',
@@ -135,7 +136,14 @@ export class SocialAuthController {
   @ApiResponse({ status: 200, description: 'Login successful' })
   @ApiResponse({ status: 401, description: 'Invalid credentials' })
   async googleLogin(
-    @Body() dto: { idToken: string; email: string; displayName?: string; accessToken?: string; refreshToken?: string }
+    @Body()
+    dto: {
+      idToken: string;
+      email: string;
+      displayName?: string;
+      accessToken?: string;
+      refreshToken?: string;
+    }
   ): Promise<SocialLoginResponse> {
     this.logger.warn('Legacy Google login endpoint used - migrate to /authorize + /callback flow');
 
@@ -162,7 +170,14 @@ export class SocialAuthController {
   @ApiResponse({ status: 200, description: 'Login successful' })
   @ApiResponse({ status: 401, description: 'Invalid credentials' })
   async appleLogin(
-    @Body() dto: { identityToken: string; email: string; displayName?: string; accessToken?: string; refreshToken?: string }
+    @Body()
+    dto: {
+      identityToken: string;
+      email: string;
+      displayName?: string;
+      accessToken?: string;
+      refreshToken?: string;
+    }
   ): Promise<SocialLoginResponse> {
     this.logger.warn('Legacy Apple login endpoint used - migrate to /authorize + /callback flow');
 

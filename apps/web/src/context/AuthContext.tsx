@@ -267,7 +267,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         handleAuthResponse(response.data);
         return { success: true };
       } else {
-        const r = response as { message?: string; code?: string; details?: { fieldErrors?: Record<string, string[]> } };
+        const r = response as {
+          message?: string;
+          code?: string;
+          details?: { fieldErrors?: Record<string, string[]> };
+        };
         return {
           success: false,
           message: r.message ?? response.message,
@@ -300,7 +304,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         handleAuthResponse(response.data);
         return { success: true };
       } else {
-        const r = response as { message?: string; code?: string; details?: { fieldErrors?: Record<string, string[]> } };
+        const r = response as {
+          message?: string;
+          code?: string;
+          details?: { fieldErrors?: Record<string, string[]> };
+        };
         return {
           success: false,
           message: r.message ?? response.message,

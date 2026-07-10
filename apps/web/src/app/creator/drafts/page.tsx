@@ -5,7 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import { apiFetch, api } from '@/lib/api';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
-import { Skeleton, ErrorState } from '@azeebo/ui/web';
+import { Skeleton } from '@azeebo/ui/web';
 
 interface DraftContent {
   id: string;
@@ -13,6 +13,7 @@ interface DraftContent {
   description?: string;
   thumbnail: string;
   type: string;
+  contentType?: string;
   duration?: number;
   lastEdited: string;
   status: string;
@@ -28,10 +29,14 @@ export default function DraftsPage(): React.JSX.Element {
   const { data: drafts = [], isLoading } = useQuery({
     queryKey: ['creator', 'drafts'],
     queryFn: async () => {
-      const response = await apiFetch<{ success: boolean; data: DraftContent[] | { items?: DraftContent[] } }>('/v1/content/me?status=draft');
+      const response = await apiFetch<DraftContent[] | { items?: DraftContent[] }>(
+        '/v1/content/me?status=draft'
+      );
       if (response.success && response.data) {
-        const items = Array.isArray(response.data) ? response.data : response.data.items || [];
-        return items.map((item) => ({
+        const items: DraftContent[] = Array.isArray(response.data)
+          ? response.data
+          : (response.data as { items?: DraftContent[] }).items || [];
+        return items.map((item: DraftContent) => ({
           id: String(item.id),
           title: String(item.title || ''),
           description: String(item.description || ''),
@@ -94,7 +99,17 @@ export default function DraftsPage(): React.JSX.Element {
         {isLoading ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="az-glass" style={{ display: 'flex', alignItems: 'center', gap: 16, padding: 16, borderRadius: 16 }}>
+              <div
+                key={i}
+                className="az-glass"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 16,
+                  padding: 16,
+                  borderRadius: 16,
+                }}
+              >
                 <Skeleton width="120px" height="68px" borderRadius="8px" />
                 <div style={{ flex: 1 }}>
                   <Skeleton width="60%" height="16px" className="mb-2" />
@@ -128,7 +143,7 @@ export default function DraftsPage(): React.JSX.Element {
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {drafts.map((draft) => (
+            {drafts.map((draft: DraftContent) => (
               <div
                 key={draft.id}
                 className="az-glass"
@@ -176,7 +191,9 @@ export default function DraftsPage(): React.JSX.Element {
                     Edit
                   </a>
                   <button
-                    onClick={() => { if (confirm('Delete this draft?')) deleteMutation.mutate(draft.id); }}
+                    onClick={() => {
+                      if (confirm('Delete this draft?')) deleteMutation.mutate(draft.id);
+                    }}
                     style={{
                       padding: '8px 16px',
                       borderRadius: 999,

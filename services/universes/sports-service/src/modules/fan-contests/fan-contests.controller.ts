@@ -35,7 +35,7 @@ export class FanContestsController {
   async enterContest(
     @Param('id') contestId: string,
     @Body() body: JoinContestDto,
-    @Request() req: { user: { id: string } }
+    @Request() req: { user: { sub: string } }
   ): Promise<unknown> {
     return this.fanContestsService.enterContest(req.user.sub, contestId, body.entryData);
   }
@@ -45,7 +45,7 @@ export class FanContestsController {
   async updateScore(
     @Param('id') contestId: string,
     @Body() body: SubmitContestScoreDto,
-    @Request() req: { user: { id: string } }
+    @Request() req: { user: { sub: string } }
   ): Promise<unknown> {
     return this.fanContestsService.updateEntryScore(req.user.sub, contestId, body.score);
   }

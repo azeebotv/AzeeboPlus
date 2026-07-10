@@ -1,11 +1,4 @@
-import {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  useCallback,
-  ReactNode,
-} from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { notificationApi, type Notification } from '../api';
 import { useAuth } from './AuthContext';
 import * as Notifications from 'expo-notifications';

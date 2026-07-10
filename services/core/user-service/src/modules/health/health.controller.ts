@@ -15,7 +15,10 @@ export class HealthController {
       await this.prisma.$queryRaw`SELECT 1`;
       return { status: 'ok', db: 'connected' };
     } catch {
-      throw new HttpException({ status: 'error', db: 'disconnected' }, HttpStatus.SERVICE_UNAVAILABLE);
+      throw new HttpException(
+        { status: 'error', db: 'disconnected' },
+        HttpStatus.SERVICE_UNAVAILABLE
+      );
     }
   }
 
@@ -34,7 +37,10 @@ export class HealthController {
       await this.prisma.$queryRaw`SELECT 1`;
       return { status: 'ok', db: 'connected' };
     } catch {
-      throw new HttpException({ status: 'error', db: 'disconnected' }, HttpStatus.SERVICE_UNAVAILABLE);
+      throw new HttpException(
+        { status: 'error', db: 'disconnected' },
+        HttpStatus.SERVICE_UNAVAILABLE
+      );
     }
   }
 }

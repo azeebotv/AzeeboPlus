@@ -52,7 +52,7 @@ export class RateLimitService {
     } catch (error) {
       this.logger.error(
         `CRITICAL: Rate limit check failed for key ${key} — Redis unreachable. ` +
-        `Failing closed to protect service. Error: ${error}`
+          `Failing closed to protect service. Error: ${error}`
       );
       return {
         allowed: false,
@@ -92,7 +92,7 @@ export class RateLimitService {
     } catch (error) {
       this.logger.error(
         `CRITICAL: Rate limit status check failed for key ${key} — Redis unreachable. ` +
-        `Failing closed. Error: ${error}`
+          `Failing closed. Error: ${error}`
       );
       return {
         allowed: false,

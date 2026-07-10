@@ -18,14 +18,34 @@ import HeroCarousel from './HeroCarousel';
 import ContentRow from './ContentRow';
 
 const CATEGORY_CARDS = [
-  { category: 'Reality', sub: 'The real you wants to play', emoji: '\u{1F4FA}', color: colors.primary[500] },
+  {
+    category: 'Reality',
+    sub: 'The real you wants to play',
+    emoji: '\u{1F4FA}',
+    color: colors.primary[500],
+  },
   { category: 'Vertical', sub: "Dive into what's trending", emoji: '\u{1F4F1}', color: colors.red },
   { category: 'Movie', sub: 'Nollywood & Beyond', emoji: '\u{1F3AC}', color: colors.primary[500] },
-  { category: 'Creator', sub: 'Watch. Follow. Repeat.', emoji: '\u{1F4E1}', color: colors.bg.tertiary },
-  { category: 'Cinemaxis', sub: 'Explore Cinemaxis', emoji: '\u{1F3A5}', color: colors.bg.secondary },
+  {
+    category: 'Creator',
+    sub: 'Watch. Follow. Repeat.',
+    emoji: '\u{1F4E1}',
+    color: colors.bg.tertiary,
+  },
+  {
+    category: 'Cinemaxis',
+    sub: 'Explore Cinemaxis',
+    emoji: '\u{1F3A5}',
+    color: colors.bg.secondary,
+  },
   { category: 'Comedy', sub: 'Laugh Out Loud', emoji: '\u{1F602}', color: colors.bg.tertiary },
   { category: 'Sports', sub: 'Live & Loud', emoji: '\u26BD', color: colors.bg.secondary },
-  { category: 'Lifestyle', sub: 'Elevate your lifestyle', emoji: '\u{1F3A8}', color: universeColors.lifestyle },
+  {
+    category: 'Lifestyle',
+    sub: 'Elevate your lifestyle',
+    emoji: '\u{1F3A8}',
+    color: universeColors.lifestyle,
+  },
   { category: 'Games', sub: 'Play & Win', emoji: '\u{1F3AE}', color: universeColors.games },
 ];
 
@@ -69,7 +89,9 @@ export default function GuestHomepage() {
 
     checkForOTAUpdate();
     loadGuestContent();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   return (
@@ -183,14 +205,44 @@ export default function GuestHomepage() {
             <View style={styles.universeGrid}>
               {[
                 { name: 'Movie', icon: '\u{1F3AC}', href: '/movies', color: colors.primary[500] },
-                { name: 'Comedy', icon: '\u{1F602}', href: '/comedy', color: universeColors.comedy },
+                {
+                  name: 'Comedy',
+                  icon: '\u{1F602}',
+                  href: '/comedy',
+                  color: universeColors.comedy,
+                },
                 { name: 'Sports', icon: '\u26BD', href: '/sports', color: universeColors.sports },
-                { name: 'Reality', icon: '\u{1F4FA}', href: '/reality', color: universeColors.reality },
-                { name: 'Lifestyle', icon: '\u{1F3A8}', href: '/lifestyle', color: universeColors.lifestyle },
-                { name: 'Vertical', icon: '\u{1F4F1}', href: '/vertical', color: universeColors.vertical },
+                {
+                  name: 'Reality',
+                  icon: '\u{1F4FA}',
+                  href: '/reality',
+                  color: universeColors.reality,
+                },
+                {
+                  name: 'Lifestyle',
+                  icon: '\u{1F3A8}',
+                  href: '/lifestyle',
+                  color: universeColors.lifestyle,
+                },
+                {
+                  name: 'Vertical',
+                  icon: '\u{1F4F1}',
+                  href: '/vertical',
+                  color: universeColors.vertical,
+                },
                 { name: 'Games', icon: '\u{1F3AE}', href: '/games', color: universeColors.games },
-                { name: 'Creator', icon: '\u{1F4E1}', href: '/creators', color: universeColors.creators },
-                { name: 'Cinemaxis', icon: '\u{1F3A6}', href: '/cinemaxis', color: universeColors.comedy },
+                {
+                  name: 'Creator',
+                  icon: '\u{1F4E1}',
+                  href: '/creators',
+                  color: universeColors.creators,
+                },
+                {
+                  name: 'Cinemaxis',
+                  icon: '\u{1F3A6}',
+                  href: '/cinemaxis',
+                  color: universeColors.comedy,
+                },
               ].map((u) => (
                 <Pressable
                   key={u.name}

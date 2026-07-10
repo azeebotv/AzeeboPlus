@@ -66,6 +66,15 @@ export class SmsService implements OnModuleInit {
   }
 
   private getTemplateMessage(templateName: string, data: Record<string, unknown>): string {
+    // Templates can be overridden via environment variables
+    // Format: SMS_TEMPLATE_<NAME>=<message template with {{variable}} syntax>
+    const envKey = `SMS_TEMPLATE_${templateName.toUpperCase().replace(/-/g, '_')}`;
+    const envTemplate = this.configService.get<string>(envKey);
+
+    if (envTemplate) {
+      return envTemplate.replace(/\{\{(\w+)\}\}/g, (_, key) => String(data[key] || ''));
+    }
+
     switch (templateName) {
       case 'welcome':
         return `Welcome to Azeebo+, ${data.displayName}! Thanks for joining our platform. Start exploring amazing content today!`;

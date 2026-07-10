@@ -20,7 +20,6 @@ import {
   ApiCreatedResponse,
   ApiBadRequestResponse,
   ApiUnauthorizedResponse,
-  ApiInternalServerErrorResponse,
 } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 
@@ -119,7 +118,7 @@ export class PaymentsController {
     },
   })
   async initializePayment(
-    @Request() req: { user: { sub: string } },
+    @Request() req: { user: { sub: string; id: string } },
     @Body() initializePaymentDto: InitializePaymentDto
   ): Promise<InitializePaymentResponse> {
     return this.paymentsService.initializePayment(req.user.id, initializePaymentDto);
@@ -181,7 +180,7 @@ export class PaymentsController {
     },
   })
   async verifyPayment(
-    @Request() req: { user: { sub: string } },
+    @Request() req: { user: { sub: string; id: string } },
     @Body() verifyPaymentDto: VerifyPaymentDto
   ): Promise<VerifyPaymentResponse> {
     return this.paymentsService.verifyPayment(req.user.id, verifyPaymentDto.transactionId);
@@ -234,7 +233,7 @@ export class PaymentsController {
     },
   })
   async getPaymentHistory(
-    @Request() req: { user: { sub: string } }
+    @Request() req: { user: { sub: string; id: string } }
   ): Promise<TransactionHistoryResponse> {
     return this.paymentsService.getPaymentHistory(req.user.id);
   }
@@ -273,7 +272,7 @@ export class PaymentsController {
     },
   })
   async getPayment(
-    @Request() req: { user: { sub: string } },
+    @Request() req: { user: { sub: string; id: string } },
     @Param('id') id: string
   ): Promise<PaymentResponse> {
     return this.paymentsService.getPayment(req.user.id, id);
@@ -308,7 +307,7 @@ export class PaymentsController {
   @ApiResponse({ status: 201, description: 'Refund requested' })
   @ApiResponse({ status: 400, description: 'Invalid request' })
   async requestRefund(
-    @Request() req: { user: { sub: string } },
+    @Request() req: { user: { sub: string; id: string } },
     @Body() requestRefundDto: RequestRefundDto
   ): Promise<PaymentResponse> {
     return this.paymentsService.requestRefund(

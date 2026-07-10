@@ -7,11 +7,13 @@ import { CircuitBreakerOpenError } from '@azeebo/shared-types';
 jest.mock('@sendgrid/mail');
 const mockedSgMail = sgMail as jest.Mocked<typeof sgMail>;
 
-const mockSgMailResponse: [sgMail.ClientResponse, {}] = [{ statusCode: 202, body: {}, headers: {} }, {}];
+const mockSgMailResponse: [sgMail.ClientResponse, {}] = [
+  { statusCode: 202, body: {}, headers: {} },
+  {},
+];
 
 describe('EmailService', () => {
   let service: EmailService;
-  let configService: ConfigService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -31,7 +33,7 @@ describe('EmailService', () => {
     }).compile();
 
     service = module.get<EmailService>(EmailService);
-    configService = module.get<ConfigService>(ConfigService);
+    module.get<ConfigService>(ConfigService);
     await service.onModuleInit();
     jest.clearAllMocks();
   });

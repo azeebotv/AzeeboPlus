@@ -9,7 +9,6 @@ const mockedAxios = axios as jest.Mocked<typeof axios>;
 
 describe('ModerationService Integration - Cross-Service Communication', () => {
   let service: ModerationService;
-  let prisma: PrismaService;
   let safetyScanningService: SafetyScanningService;
 
   const mockPrismaService = {
@@ -69,7 +68,7 @@ describe('ModerationService Integration - Cross-Service Communication', () => {
     }).compile();
 
     service = module.get<ModerationService>(ModerationService);
-    prisma = module.get<PrismaService>(PrismaService);
+    module.get<PrismaService>(PrismaService);
     safetyScanningService = module.get<SafetyScanningService>(SafetyScanningService);
 
     jest.clearAllMocks();

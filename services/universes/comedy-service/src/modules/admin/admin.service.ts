@@ -58,7 +58,10 @@ export class AdminService {
 
       return { comedians, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
     } catch (error) {
-      this.logger.error(`Failed to get comedians: ${(error as Error).message}`, (error as Error).stack);
+      this.logger.error(
+        `Failed to get comedians: ${(error as Error).message}`,
+        (error as Error).stack
+      );
       return { success: false, error: (error as Error).message };
     }
   }

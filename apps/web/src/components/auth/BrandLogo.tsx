@@ -1,5 +1,3 @@
-import React from 'react';
-
 type BrandLogoProps = {
   /** Color of the "azeebo" wordmark. Use white on dark/near-black, orange on green. */
   variant?: 'light' | 'orange';

@@ -1,5 +1,5 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
-import { Prisma, PrismaClient, ProductEvent } from '@prisma/client';
+import { Prisma } from '../../prisma/client';
 import { PrismaService } from '../database/prisma.service';
 import {
   CreateReportDto,
@@ -75,7 +75,7 @@ export class ReportBuilderService {
         success: true,
         data: report,
       };
-    } catch (_err) {
+    } catch (error) {
       throw new BadRequestException(
         `Failed to create report: ${error instanceof Error ? (error as Error).message : 'Unknown error'}`
       );
@@ -100,7 +100,7 @@ export class ReportBuilderService {
         success: true,
         data: report,
       };
-    } catch (_err) {
+    } catch (error) {
       if (error instanceof NotFoundException) {
         throw error;
       }
@@ -139,7 +139,7 @@ export class ReportBuilderService {
         success: true,
         data: reports,
       };
-    } catch (_err) {
+    } catch (error) {
       throw new BadRequestException(
         `Failed to list reports: ${error instanceof Error ? (error as Error).message : 'Unknown error'}`
       );
@@ -221,7 +221,7 @@ export class ReportBuilderService {
           generatedAt: new Date(),
         },
       };
-    } catch (_err) {
+    } catch (error) {
       const executionTime = Date.now() - startTime;
 
       if (error instanceof NotFoundException || error instanceof BadRequestException) {
@@ -285,7 +285,7 @@ export class ReportBuilderService {
         success: true,
         data: updated,
       };
-    } catch (_err) {
+    } catch (error) {
       if (error instanceof NotFoundException) {
         throw error;
       }
@@ -317,7 +317,7 @@ export class ReportBuilderService {
         success: true,
         message: 'Report deleted successfully',
       };
-    } catch (_err) {
+    } catch (error) {
       if (error instanceof NotFoundException) {
         throw error;
       }
@@ -355,7 +355,7 @@ export class ReportBuilderService {
         success: true,
         data: executions,
       };
-    } catch (_err) {
+    } catch (error) {
       if (error instanceof NotFoundException) {
         throw error;
       }
@@ -458,15 +458,23 @@ export class ReportBuilderService {
   }
 
   // Prisma groupBy with dynamic fields requires type assertions due to Prisma's typing limitations
-  private async dynamicGroupBy(
-    options: { by: string[]; _count?: Record<string, boolean>; _sum?: Record<string, boolean>; _avg?: Record<string, boolean>; _min?: Record<string, boolean>; _max?: Record<string, boolean>; where?: Record<string, unknown>; orderBy?: Record<string, unknown>; take?: number; skip?: number }
-  ): Promise<Record<string, unknown>[]> {
+  private async dynamicGroupBy(options: {
+    by: string[];
+    _count?: Record<string, boolean>;
+    _sum?: Record<string, boolean>;
+    _avg?: Record<string, boolean>;
+    _min?: Record<string, boolean>;
+    _max?: Record<string, boolean>;
+    where?: Record<string, unknown>;
+    orderBy?: Record<string, unknown>;
+    take?: number;
+    skip?: number;
+  }): Promise<Record<string, unknown>[]> {
     // Using unknown cast because Prisma's groupBy typing doesn't support dynamic field arrays
-    const result = await this.prisma.productEvent.groupBy({
-      ...options,
-      by: options.by as [string, ...string[]],
-    });
-    return result as Record<string, unknown>[];
+    const result = await this.prisma.productEvent.groupBy(
+      options as unknown as Parameters<typeof this.prisma.productEvent.groupBy>[0],
+    );
+    return result as unknown as Record<string, unknown>[];
   }
 
   // Field name mapping from snake_case (used in queries) to camelCase (Prisma model)
@@ -525,7 +533,9 @@ export class ReportBuilderService {
               .forEach((f) => {
                 transformed[f] = row[this.mapFieldName(f) as keyof typeof row];
               });
-            transformed[`${countKeys[0]}_count`] = row._count[countField];
+            transformed[`${countKeys[0]}_count`] = (row as Record<string, unknown>)._count
+              ? ((row as Record<string, unknown>)._count as Record<string, unknown>)[countField]
+              : undefined;
             return transformed;
           });
         }
@@ -549,7 +559,9 @@ export class ReportBuilderService {
               .forEach((f) => {
                 transformed[f] = row[this.mapFieldName(f) as keyof typeof row];
               });
-            transformed[`${sumKeys[0]}_sum`] = row._sum[sumField];
+            transformed[`${sumKeys[0]}_sum`] = (row as Record<string, unknown>)._sum
+              ? ((row as Record<string, unknown>)._sum as Record<string, unknown>)[sumField]
+              : undefined;
             return transformed;
           });
         }
@@ -573,7 +585,9 @@ export class ReportBuilderService {
               .forEach((f) => {
                 transformed[f] = row[this.mapFieldName(f) as keyof typeof row];
               });
-            transformed[`${avgKeys[0]}_avg`] = row._avg[avgField];
+            transformed[`${avgKeys[0]}_avg`] = (row as Record<string, unknown>)._avg
+              ? ((row as Record<string, unknown>)._avg as Record<string, unknown>)[avgField]
+              : undefined;
             return transformed;
           });
         }
@@ -597,7 +611,9 @@ export class ReportBuilderService {
               .forEach((f) => {
                 transformed[f] = row[this.mapFieldName(f) as keyof typeof row];
               });
-            transformed[`${minKeys[0]}_min`] = row._min[minField];
+            transformed[`${minKeys[0]}_min`] = (row as Record<string, unknown>)._min
+              ? ((row as Record<string, unknown>)._min as Record<string, unknown>)[minField]
+              : undefined;
             return transformed;
           });
         }
@@ -621,7 +637,9 @@ export class ReportBuilderService {
               .forEach((f) => {
                 transformed[f] = row[this.mapFieldName(f) as keyof typeof row];
               });
-            transformed[`${maxKeys[0]}_max`] = row._max[maxField];
+            transformed[`${maxKeys[0]}_max`] = (row as Record<string, unknown>)._max
+              ? ((row as Record<string, unknown>)._max as Record<string, unknown>)[maxField]
+              : undefined;
             return transformed;
           });
         }
@@ -637,7 +655,7 @@ export class ReportBuilderService {
       });
 
       return results as Record<string, unknown>[];
-    } catch (_err) {
+    } catch (error) {
       throw new BadRequestException(
         `Query execution failed: ${error instanceof Error ? (error as Error).message : 'Unknown error'}`
       );

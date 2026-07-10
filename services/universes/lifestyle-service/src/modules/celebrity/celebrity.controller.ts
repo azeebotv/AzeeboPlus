@@ -1,4 +1,14 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { CelebrityService } from './celebrity.service';
@@ -22,18 +32,6 @@ interface CreateNewsData {
   excerpt?: string;
   coverImage?: string;
   celebrityId: string;
-}
-
-interface UpdateCelebrityData {
-  name?: string;
-  bio?: string;
-  coverImage?: string;
-  profession?: string;
-  nationality?: string;
-  birthDate?: string;
-  socialLinks?: string;
-  isFeatured?: boolean;
-  status?: string;
 }
 
 @ApiTags('Celebrity')
@@ -106,10 +104,7 @@ export class CelebrityController {
   @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Update celebrity entry' })
   @ApiResponse({ status: 200, description: 'Entry updated' })
-  async updateEntry(
-    @Param('id') id: string,
-    @Body() body: UpdateCelebrityDto
-  ): Promise<unknown> {
+  async updateEntry(@Param('id') id: string, @Body() body: UpdateCelebrityDto): Promise<unknown> {
     return this.celebrityService.updateEntry(id, body);
   }
 

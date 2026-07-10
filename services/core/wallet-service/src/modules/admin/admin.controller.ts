@@ -60,6 +60,10 @@ export class AdminController {
     @Query('type') type?: string
   ) {
     const clampedLimit = Math.min(100, Math.max(1, Number(limit) || 20));
-    return this.adminService.getTransactionsByWalletId(walletId, { page, limit: clampedLimit, type });
+    return this.adminService.getTransactionsByWalletId(walletId, {
+      page,
+      limit: clampedLimit,
+      type,
+    });
   }
 }

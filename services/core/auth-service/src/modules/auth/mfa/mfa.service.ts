@@ -4,7 +4,7 @@ import * as OTPAuth from 'otpauth';
 import { toDataURL } from 'qrcode';
 
 import { AuthRepository } from '../auth.repository';
-import { RedisService } from '../../common/services/redis.service';
+import { RedisService } from '../../../common/services/redis.service';
 
 const MFA_PENDING_PREFIX = 'mfa_pending:';
 const MFA_PENDING_TTL = 600; // 10 minutes
@@ -19,7 +19,7 @@ export class MfaService {
   async generateMfaSecret(
     userId: string
   ): Promise<{ secret: string; qrCode: string; backupCodes: string[] }> {
-    const totp = new OTPAuth.Totp({
+    const totp = new OTPAuth.TOTP({
       issuer: 'Azeebo+',
       label: userId,
       algorithm: 'SHA1',
@@ -56,7 +56,7 @@ export class MfaService {
       return false;
     }
 
-    const totp = new OTPAuth.Totp({
+    const totp = new OTPAuth.TOTP({
       issuer: 'Azeebo+',
       label: userId,
       algorithm: 'SHA1',

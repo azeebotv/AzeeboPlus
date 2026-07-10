@@ -6,14 +6,6 @@
 
 type LogLevel = 'log' | 'warn' | 'error' | 'debug';
 
-interface _LogEntry {
-  timestamp: string;
-  level: LogLevel;
-  message: string;
-  service: string;
-  data?: unknown;
-}
-
 class WebLogger {
   private serviceName: string;
 

@@ -8,10 +8,6 @@ import { NotFoundException } from '@nestjs/common';
 
 describe('NotificationsService', () => {
   let service: NotificationsService;
-  let prisma: PrismaService;
-  let firebaseService: FirebaseService;
-  let emailService: EmailService;
-  let smsService: SmsService;
 
   const mockPrismaService = {
     notification: {
@@ -61,10 +57,6 @@ describe('NotificationsService', () => {
     }).compile();
 
     service = module.get<NotificationsService>(NotificationsService);
-    prisma = module.get<PrismaService>(PrismaService);
-    firebaseService = module.get<FirebaseService>(FirebaseService);
-    emailService = module.get<EmailService>(EmailService);
-    smsService = module.get<SmsService>(SmsService);
 
     jest.clearAllMocks();
   });
@@ -292,12 +284,12 @@ describe('NotificationsService', () => {
       });
     });
 
-    describe('deletePushToken', () => {
+    describe('deletePushTokenById', () => {
       it('should delete push token', async () => {
         mockPrismaService.pushToken.findUnique.mockResolvedValue(mockTokens[0]);
         mockPrismaService.pushToken.delete.mockResolvedValue(mockTokens[0]);
 
-        const result = await service.deletePushToken('user-1', 'token-abc');
+        const result = await service.deletePushTokenById('user-1', 'token-abc');
 
         expect(result.success).toBe(true);
         expect(mockPrismaService.pushToken.delete).toHaveBeenCalledWith({
@@ -308,7 +300,7 @@ describe('NotificationsService', () => {
       it('should throw NotFoundException if token not found', async () => {
         mockPrismaService.pushToken.findUnique.mockResolvedValue(null);
 
-        await expect(service.deletePushToken('user-1', 'invalid')).rejects.toThrow(
+        await expect(service.deletePushTokenById('user-1', 'invalid')).rejects.toThrow(
           NotFoundException
         );
       });
@@ -319,7 +311,7 @@ describe('NotificationsService', () => {
           userId: 'other-user',
         });
 
-        await expect(service.deletePushToken('user-1', 'token-abc')).rejects.toThrow(
+        await expect(service.deletePushTokenById('user-1', 'token-abc')).rejects.toThrow(
           NotFoundException
         );
       });

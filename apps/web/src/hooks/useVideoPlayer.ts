@@ -36,6 +36,7 @@ interface UseVideoPlayerReturn {
   state: VideoState;
   signedUrl: string | null;
   qualities: VideoQuality[];
+  videoRef: React.RefObject<HTMLVideoElement | null>;
   play: () => void;
   pause: () => void;
   seek: (time: number) => void;
@@ -71,7 +72,7 @@ export function useVideoPlayer({
   });
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const progressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const refreshSignedUrl = useCallback(async (): Promise<void> => {
     if (!isAuthenticated || !contentId) {
@@ -84,7 +85,7 @@ export function useVideoPlayer({
       const response = await api.content.getSignedUrl(contentId);
 
       if (response.success && response.data) {
-        setSignedUrl(response.data.url);
+        setSignedUrl(response.data.signedUrl);
         setState((prev) => ({ ...prev, isLoading: false }));
       } else {
         const errorMsg = response.message || 'Failed to load video';
@@ -228,6 +229,7 @@ export function useVideoPlayer({
     state,
     signedUrl,
     qualities,
+    videoRef,
     play,
     pause,
     seek,

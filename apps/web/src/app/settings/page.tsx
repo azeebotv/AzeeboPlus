@@ -50,7 +50,7 @@ export default function SettingsPage(): React.JSX.Element {
 
   const saveMutation = useMutation({
     mutationFn: async (newSettings: UserSettings) => {
-      return api.user.updatePreferences(newSettings);
+      return api.user.updatePreferences(newSettings as unknown as Record<string, unknown>);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user', 'preferences'] });
@@ -106,57 +106,59 @@ export default function SettingsPage(): React.JSX.Element {
                 buttonText="Retry"
                 onButtonPress={() => preferencesQuery.refetch()}
               />
-            ) : toggleItems.map((item) => (
-              <div
-                key={item.key}
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  padding: '8px 0',
-                  borderBottom: '1px solid #2A1A1A',
-                }}
-              >
-                <div>
-                  <p style={{ fontWeight: 600, fontSize: 15 }}>{item.label}</p>
-                  <p style={{ color: '#9A8A7A', fontSize: 13 }}>{item.desc}</p>
-                </div>
-                <button
-                  onClick={() => {
-                    const updated = {
-                      ...settings,
-                      [item.key]: !settings[item.key as keyof typeof settings],
-                    };
-                    setLocalSettings(updated);
-                  }}
+            ) : (
+              toggleItems.map((item) => (
+                <div
+                  key={item.key}
                   style={{
-                    width: 48,
-                    height: 28,
-                    borderRadius: 14,
-                    border: 'none',
-                    cursor: 'pointer',
-                    position: 'relative',
-                    backgroundColor: settings[item.key as keyof typeof settings]
-                      ? '#E8420A'
-                      : '#2A1A1A',
-                    transition: 'background-color 0.2s',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    padding: '8px 0',
+                    borderBottom: '1px solid #2A1A1A',
                   }}
                 >
-                  <span
-                    style={{
-                      position: 'absolute',
-                      top: 3,
-                      left: settings[item.key as keyof typeof settings] ? 23 : 3,
-                      width: 22,
-                      height: 22,
-                      borderRadius: '50%',
-                      backgroundColor: '#fff',
-                      transition: 'left 0.2s',
+                  <div>
+                    <p style={{ fontWeight: 600, fontSize: 15 }}>{item.label}</p>
+                    <p style={{ color: '#9A8A7A', fontSize: 13 }}>{item.desc}</p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      const updated = {
+                        ...settings,
+                        [item.key]: !settings[item.key as keyof typeof settings],
+                      };
+                      setLocalSettings(updated);
                     }}
-                  />
-                </button>
-              </div>
-            ))}
+                    style={{
+                      width: 48,
+                      height: 28,
+                      borderRadius: 14,
+                      border: 'none',
+                      cursor: 'pointer',
+                      position: 'relative',
+                      backgroundColor: settings[item.key as keyof typeof settings]
+                        ? '#E8420A'
+                        : '#2A1A1A',
+                      transition: 'background-color 0.2s',
+                    }}
+                  >
+                    <span
+                      style={{
+                        position: 'absolute',
+                        top: 3,
+                        left: settings[item.key as keyof typeof settings] ? 23 : 3,
+                        width: 22,
+                        height: 22,
+                        borderRadius: '50%',
+                        backgroundColor: '#fff',
+                        transition: 'left 0.2s',
+                      }}
+                    />
+                  </button>
+                </div>
+              ))
+            )}
           </div>
         </div>
 
@@ -265,7 +267,9 @@ export default function SettingsPage(): React.JSX.Element {
             <span className="flex items-center justify-center gap-2">
               <Spinner size="sm" color="#fff" /> Saving...
             </span>
-          ) : 'Save Settings'}
+          ) : (
+            'Save Settings'
+          )}
         </button>
       </main>
       <AppFooter />

@@ -1,7 +1,5 @@
 'use client';
 
-import React from 'react';
-
 export default function GlobalError({
   error,
   reset,
@@ -19,11 +17,7 @@ export default function GlobalError({
             <p className="text-white/60 mb-4">
               A critical error occurred. Please refresh the page or try again later.
             </p>
-            {error.digest && (
-              <p className="text-white/40 text-sm mb-8 font-mono">
-                {error.digest}
-              </p>
-            )}
+            {error.digest && <p className="text-white/40 text-sm mb-8 font-mono">{error.digest}</p>}
             <button
               onClick={reset}
               className="px-6 py-3 bg-[#E8420A] text-white rounded-lg font-semibold hover:bg-[#D03A08] transition-colors"

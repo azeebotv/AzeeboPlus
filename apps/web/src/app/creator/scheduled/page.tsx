@@ -12,6 +12,7 @@ interface ScheduledContent {
   title: string;
   thumbnail: string;
   type: string;
+  contentType?: string;
   scheduledAt: string;
   status: string;
 }
@@ -22,13 +23,21 @@ export default function ScheduledPage(): React.JSX.Element {
   const queryClient = useQueryClient();
   const isEnabled = !authLoading && !!isAuthenticated && !!user;
 
-  const { data: scheduled = [], isLoading, error } = useQuery({
+  const {
+    data: scheduled = [],
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ['creator', 'scheduled'],
     queryFn: async () => {
-      const response = await apiFetch<{ success: boolean; data: ScheduledContent[] | { items?: ScheduledContent[] } }>('/v1/content/me?status=scheduled');
+      const response = await apiFetch<ScheduledContent[] | { items?: ScheduledContent[] }>(
+        '/v1/content/me?status=scheduled'
+      );
       if (response.success && response.data) {
-        const items = Array.isArray(response.data) ? response.data : response.data.items || [];
-        return items.map((item) => ({
+        const items: ScheduledContent[] = Array.isArray(response.data)
+          ? response.data
+          : (response.data as { items?: ScheduledContent[] }).items || [];
+        return items.map((item: ScheduledContent) => ({
           id: String(item.id),
           title: String(item.title || ''),
           thumbnail: String(item.thumbnail || ''),
@@ -90,7 +99,17 @@ export default function ScheduledPage(): React.JSX.Element {
         {isLoading ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="az-glass" style={{ display: 'flex', alignItems: 'center', gap: 16, padding: 16, borderRadius: 16 }}>
+              <div
+                key={i}
+                className="az-glass"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 16,
+                  padding: 16,
+                  borderRadius: 16,
+                }}
+              >
                 <Skeleton width="120px" height="68px" borderRadius="8px" />
                 <div style={{ flex: 1 }}>
                   <Skeleton width="60%" height="16px" className="mb-2" />
@@ -101,7 +120,11 @@ export default function ScheduledPage(): React.JSX.Element {
             ))}
           </div>
         ) : error ? (
-          <ErrorState title="Failed to load scheduled content" description="Please try again later" onButtonPress={() => router.refresh()} />
+          <ErrorState
+            title="Failed to load scheduled content"
+            description="Please try again later"
+            onButtonPress={() => router.refresh()}
+          />
         ) : scheduled.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '60px 0' }}>
             <div style={{ fontSize: 48, marginBottom: 16 }}>⏰</div>
@@ -110,7 +133,7 @@ export default function ScheduledPage(): React.JSX.Element {
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {scheduled.map((item) => (
+            {scheduled.map((item: ScheduledContent) => (
               <div
                 key={item.id}
                 className="az-glass"
@@ -142,7 +165,9 @@ export default function ScheduledPage(): React.JSX.Element {
                   </p>
                 </div>
                 <button
-                  onClick={() => { if (confirm('Cancel this scheduled content?')) cancelMutation.mutate(item.id); }}
+                  onClick={() => {
+                    if (confirm('Cancel this scheduled content?')) cancelMutation.mutate(item.id);
+                  }}
                   style={{
                     padding: '8px 20px',
                     borderRadius: 999,

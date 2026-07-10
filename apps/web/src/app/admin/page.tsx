@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { api } from '@/lib/api';
 import AdminLayout from '@/components/layout/AdminLayout';
@@ -81,7 +81,14 @@ export default function AdminPage(): React.JSX.Element {
           />
         </div>
       ) : error ? (
-        <div style={{ padding: 24, borderRadius: 16, border: '1px solid #CC1C1C', backgroundColor: 'rgba(204,28,28,0.1)' }}>
+        <div
+          style={{
+            padding: 24,
+            borderRadius: 16,
+            border: '1px solid #CC1C1C',
+            backgroundColor: 'rgba(204,28,28,0.1)',
+          }}
+        >
           <p style={{ color: '#CC1C1C', fontWeight: 600 }}>Failed to load dashboard</p>
           <p style={{ color: '#9A8A7A', fontSize: 14, marginTop: 8 }}>{error}</p>
         </div>

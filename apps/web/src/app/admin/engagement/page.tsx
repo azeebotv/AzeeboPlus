@@ -1,5 +1,4 @@
 'use client';
-import React from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/context/AuthContext';
@@ -12,17 +11,40 @@ export default function AdminEngagementPage(): React.JSX.Element {
   const { isAuthenticated, user, isLoading: authLoading } = useAuth();
   const isEnabled = !authLoading && !!isAuthenticated && !!user && user.role === 'admin';
 
-  const { data: engagement, isLoading, error } = useQuery({
+  const {
+    data: engagement,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ['admin', 'engagement'],
     queryFn: async () => {
       const response = await api.admin.getEngagementMetrics();
-      if (response.success && response.data) return response.data as { dailyActiveUsers: number; monthlyActiveUsers: number; averageSessionDuration: number; retentionRate: number; bounceRate: number };
-      return { dailyActiveUsers: 0, monthlyActiveUsers: 0, averageSessionDuration: 0, retentionRate: 0, bounceRate: 0 };
+      if (response.success && response.data)
+        return response.data as {
+          dailyActiveUsers: number;
+          monthlyActiveUsers: number;
+          averageSessionDuration: number;
+          retentionRate: number;
+          bounceRate: number;
+        };
+      return {
+        dailyActiveUsers: 0,
+        monthlyActiveUsers: 0,
+        averageSessionDuration: 0,
+        retentionRate: 0,
+        bounceRate: 0,
+      };
     },
     enabled: isEnabled,
   });
 
-  const eng = engagement || { dailyActiveUsers: 0, monthlyActiveUsers: 0, averageSessionDuration: 0, retentionRate: 0, bounceRate: 0 };
+  const eng = engagement || {
+    dailyActiveUsers: 0,
+    monthlyActiveUsers: 0,
+    averageSessionDuration: 0,
+    retentionRate: 0,
+    bounceRate: 0,
+  };
 
   return (
     <AdminLayout>
@@ -30,7 +52,14 @@ export default function AdminEngagementPage(): React.JSX.Element {
       <p style={{ color: '#9A8A7A', marginBottom: 32 }}>User engagement metrics and activity</p>
 
       {isLoading ? (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 16, marginBottom: 32 }}>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+            gap: 16,
+            marginBottom: 32,
+          }}
+        >
           {Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className="az-glass" style={{ padding: 20, borderRadius: 16 }}>
               <Skeleton width="60%" height="12px" className="mb-2" />
@@ -39,13 +68,36 @@ export default function AdminEngagementPage(): React.JSX.Element {
           ))}
         </div>
       ) : error ? (
-        <ErrorState title="Failed to load engagement data" description="Please try again later" onButtonPress={() => router.refresh()} />
+        <ErrorState
+          title="Failed to load engagement data"
+          description="Please try again later"
+          onButtonPress={() => router.refresh()}
+        />
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 16, marginBottom: 32 }}>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+            gap: 16,
+            marginBottom: 32,
+          }}
+        >
           {[
-            { label: 'Daily Active Users', value: eng.dailyActiveUsers.toLocaleString(), color: '#E8420A' },
-            { label: 'Monthly Active Users', value: eng.monthlyActiveUsers.toLocaleString(), color: '#0D3B2E' },
-            { label: 'Avg Session', value: `${Math.floor(eng.averageSessionDuration / 60)}m`, color: '#F59E0B' },
+            {
+              label: 'Daily Active Users',
+              value: eng.dailyActiveUsers.toLocaleString(),
+              color: '#E8420A',
+            },
+            {
+              label: 'Monthly Active Users',
+              value: eng.monthlyActiveUsers.toLocaleString(),
+              color: '#0D3B2E',
+            },
+            {
+              label: 'Avg Session',
+              value: `${Math.floor(eng.averageSessionDuration / 60)}m`,
+              color: '#F59E0B',
+            },
             { label: 'Retention Rate', value: `${eng.retentionRate}%`, color: '#CC1C1C' },
           ].map((stat, i) => (
             <div key={i} className="az-glass" style={{ padding: 20, borderRadius: 16 }}>

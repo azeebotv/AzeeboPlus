@@ -6,7 +6,10 @@ import { CacheService, cacheKey } from '@azeebo/shared-services';
 export class FixturesService {
   private readonly logger = new Logger(FixturesService.name);
 
-  constructor(private prisma: PrismaService, private cache: CacheService) {}
+  constructor(
+    private prisma: PrismaService,
+    private cache: CacheService
+  ) {}
 
   async getFixtures(
     page = 1,
@@ -15,10 +18,13 @@ export class FixturesService {
     status?: string,
     fromDate?: string,
     toDate?: string
-  ): Promise<{ success: boolean; data?: unknown }> {
+  ): Promise<{ success: boolean; data?: unknown; error?: { code: string; message: string } }> {
     try {
       const dateKey = fromDate || toDate || 'all';
-      const cacheK = cacheKey('sports', `fixtures:${dateKey}:${page}:${limit}:${sport || 'all'}:${status || 'all'}`);
+      const cacheK = cacheKey(
+        'sports',
+        `fixtures:${dateKey}:${page}:${limit}:${sport || 'all'}:${status || 'all'}`
+      );
       const cached = await this.cache.get<{ success: boolean; data?: unknown }>(cacheK);
       if (cached) return cached;
 
@@ -63,7 +69,9 @@ export class FixturesService {
     }
   }
 
-  async getFixtureById(eventId: string): Promise<{ success: boolean; data?: unknown }> {
+  async getFixtureById(
+    eventId: string
+  ): Promise<{ success: boolean; data?: unknown; error?: { code: string; message: string } }> {
     try {
       const cacheK = cacheKey('sports', `predictions:${eventId}`);
       const cached = await this.cache.get<{ success: boolean; data?: unknown }>(cacheK);
@@ -105,7 +113,11 @@ export class FixturesService {
       broadcast?: string[];
       stats?: unknown;
     }
-  ): Promise<{ success: boolean; data?: { metadataId: string } }> {
+  ): Promise<{
+    success: boolean;
+    data?: { metadataId: string };
+    error?: { code: string; message: string };
+  }> {
     try {
       const event = await this.prisma.sportsEvent.findUnique({ where: { id: eventId } });
       if (!event) {
@@ -156,7 +168,11 @@ export class FixturesService {
   async updateEventResult(
     eventId: string,
     teams: { teamId: string; score: number }[]
-  ): Promise<{ success: boolean; data?: { message: string } }> {
+  ): Promise<{
+    success: boolean;
+    data?: { message: string };
+    error?: { code: string; message: string };
+  }> {
     try {
       for (const team of teams) {
         await this.prisma.eventTeam.update({
@@ -182,7 +198,11 @@ export class FixturesService {
     }
   }
 
-  async getSports(): Promise<{ success: boolean; data?: string[] }> {
+  async getSports(): Promise<{
+    success: boolean;
+    data?: string[];
+    error?: { code: string; message: string };
+  }> {
     try {
       const events = await this.prisma.sportsEvent.findMany({
         select: { sport: true },

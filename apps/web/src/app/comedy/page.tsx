@@ -1,23 +1,45 @@
 'use client';
-import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Skeleton, ErrorState } from '@azeebo/ui/web';
 import Link from 'next/link';
-import { api, ContentItem } from '@/lib/api';
+import { api, ContentItem, Category } from '@/lib/api';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
 
 export default function ComedyPage(): React.JSX.Element {
+  const universesQuery = useQuery({
+    queryKey: ['universes'],
+    queryFn: async () => {
+      const res = await api.universe.getUniverses();
+      if (!res.success || !res.data) throw new Error(res.message || 'Failed to load universes');
+      return res.data;
+    },
+    staleTime: 300000,
+  });
+
+  const comedyUniverse = universesQuery.data?.find((u) => u.name?.toLowerCase() === 'comedy');
+
+  const categoriesQuery = useQuery<Category[]>({
+    queryKey: ['categories', comedyUniverse?.id],
+    queryFn: async () => {
+      const res = await api.content.getCategories();
+      if (!res.success || !res.data) throw new Error(res.message || 'Failed to load categories');
+      return res.data;
+    },
+    staleTime: 300000,
+  });
+
   const {
     data: clips = [],
     isLoading,
     error,
     refetch,
   } = useQuery<ContentItem[], Error>({
-    queryKey: ['comedy-content'],
+    queryKey: ['comedy-content', comedyUniverse?.id],
     queryFn: async () => {
+      if (!comedyUniverse?.id) throw new Error('Comedy universe not found');
       const result = await api.content.getContentByUniverse(
-        'u0000001-0000-0000-0000-000000000005',
+        comedyUniverse.id,
         1,
         20
       );
@@ -27,6 +49,7 @@ export default function ComedyPage(): React.JSX.Element {
       throw new Error(result.message || 'Failed to load comedy content.');
     },
     staleTime: 60000,
+    enabled: !!comedyUniverse?.id,
   });
 
   return (
@@ -156,22 +179,15 @@ export default function ComedyPage(): React.JSX.Element {
           role="listbox"
           aria-label="Comedy categories"
         >
-          {[
-            { name: 'Skits', icon: '🎭' },
-            { name: 'Stand-up', icon: '🎤' },
-            { name: 'Improv', icon: '🎨' },
-            { name: 'Parodies', icon: '🎬' },
-            { name: 'Roasts', icon: '🔥' },
-            { name: 'Comedy Series', icon: '📺' },
-          ].map((category) => (
+          {(categoriesQuery.data || []).slice(0, 6).map((category) => (
             <button
-              key={category.name}
+              key={category.id}
               type="button"
               role="option"
               className="az-glass text-center cursor-pointer transition-all hover:scale-[1.02]"
             >
               <div className="p-4">
-                <span className="text-3xl mb-2 block">{category.icon}</span>
+                <span className="text-3xl mb-2 block">{category.icon || '🎭'}</span>
                 <h4 className="font-medium text-sm text-white">{category.name}</h4>
               </div>
             </button>

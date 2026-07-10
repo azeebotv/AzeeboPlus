@@ -13,9 +13,12 @@ interface PublishedContent {
   description?: string;
   thumbnail: string;
   type: string;
+  contentType?: string;
   duration?: number;
   views: number;
+  viewCount?: number;
   likes: number;
+  likeCount?: number;
   publishedAt: string;
   createdAt: string;
   status: string;
@@ -26,13 +29,21 @@ export default function PublishedPage(): React.JSX.Element {
   const router = useRouter();
   const isEnabled = !authLoading && !!isAuthenticated && !!user;
 
-  const { data: content = [], isLoading, error } = useQuery({
+  const {
+    data: content = [],
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ['creator', 'published'],
     queryFn: async () => {
-      const response = await apiFetch<{ success: boolean; data: PublishedContent[] | { items?: PublishedContent[] } }>('/v1/content/me?status=published');
+      const response = await apiFetch<PublishedContent[] | { items?: PublishedContent[] }>(
+        '/v1/content/me?status=published'
+      );
       if (response.success && response.data) {
-        const items = Array.isArray(response.data) ? response.data : response.data.items || [];
-        return items.map((item) => ({
+        const items: PublishedContent[] = Array.isArray(response.data)
+          ? response.data
+          : (response.data as { items?: PublishedContent[] }).items || [];
+        return items.map((item: PublishedContent) => ({
           id: String(item.id),
           title: String(item.title || ''),
           description: String(item.description || ''),
@@ -88,7 +99,13 @@ export default function PublishedPage(): React.JSX.Element {
         </div>
 
         {isLoading ? (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16 }}>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+              gap: 16,
+            }}
+          >
             {Array.from({ length: 6 }).map((_, i) => (
               <div key={i} className="az-glass" style={{ borderRadius: 16, overflow: 'hidden' }}>
                 <Skeleton width="100%" height="160px" />
@@ -100,7 +117,11 @@ export default function PublishedPage(): React.JSX.Element {
             ))}
           </div>
         ) : error ? (
-          <ErrorState title="Failed to load published content" description="Please try again later" onButtonPress={() => router.refresh()} />
+          <ErrorState
+            title="Failed to load published content"
+            description="Please try again later"
+            onButtonPress={() => router.refresh()}
+          />
         ) : content.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '60px 0' }}>
             <div style={{ fontSize: 48, marginBottom: 16 }}>🎬</div>
@@ -115,7 +136,7 @@ export default function PublishedPage(): React.JSX.Element {
               gap: 16,
             }}
           >
-            {content.map((item) => (
+            {content.map((item: PublishedContent) => (
               <div
                 key={item.id}
                 className="az-glass"

@@ -84,9 +84,7 @@ export function checkConsentCompliance(
   if (requiredConsents.length === 0) return true;
   if (!userAcceptances || userAcceptances.length === 0) return false;
 
-  const grantedTypes = new Set<ConsentType>(
-    userAcceptances.flatMap((a) => a.consentTypes)
-  );
+  const grantedTypes = new Set<ConsentType>(userAcceptances.flatMap((a) => a.consentTypes));
 
   return requiredConsents.every((c) => grantedTypes.has(c));
 }

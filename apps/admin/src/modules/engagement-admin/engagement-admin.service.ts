@@ -66,7 +66,9 @@ export class EngagementAdminService {
       {} as Record<string, { published: number; drafts: number }>
     );
 
-    const allDates = [...new Set([...Object.keys(userByDate), ...Object.keys(contentByDate)])].sort();
+    const allDates = [
+      ...new Set([...Object.keys(userByDate), ...Object.keys(contentByDate)]),
+    ].sort();
 
     return allDates.map((date) => ({
       date,

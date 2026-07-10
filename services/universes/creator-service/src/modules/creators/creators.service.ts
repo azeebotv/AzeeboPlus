@@ -303,7 +303,7 @@ export class CreatorsService {
           uploadDbId: upload.id,
         },
       };
-    } catch (_err) {
+    } catch (error) {
       await this.prisma.mediaUpload.update({
         where: { id: upload.id },
         data: { status: 'failed' },
@@ -677,12 +677,16 @@ export class CreatorsService {
 
     try {
       const debitResult = await axios
-        .post(`${this.walletServiceBaseUrl}/wallet/debit`, {
-          walletId: senderWallet.id,
-          amount,
-          description: `Tip to creator ${creatorId}`,
-          idempotencyKey,
-        }, { timeout: 10000 })
+        .post(
+          `${this.walletServiceBaseUrl}/wallet/debit`,
+          {
+            walletId: senderWallet.id,
+            amount,
+            description: `Tip to creator ${creatorId}`,
+            idempotencyKey,
+          },
+          { timeout: 10000 }
+        )
         .catch((err) => {
           if (err.response?.data?.idempotent === true) {
             return { data: { existing: true } };
@@ -715,20 +719,28 @@ export class CreatorsService {
       }
 
       try {
-        await axios.post(`${this.walletServiceBaseUrl}/wallet/credit`, {
-          walletId: creatorWallet.id,
-          amount,
-          description: `Tip from user ${userId}`,
-          idempotencyKey: `${idempotencyKey}:credit`,
-        }, { timeout: 10000 });
+        await axios.post(
+          `${this.walletServiceBaseUrl}/wallet/credit`,
+          {
+            walletId: creatorWallet.id,
+            amount,
+            description: `Tip from user ${userId}`,
+            idempotencyKey: `${idempotencyKey}:credit`,
+          },
+          { timeout: 10000 }
+        );
       } catch (creditError: unknown) {
         await axios
-          .post(`${this.walletServiceBaseUrl}/wallet/credit`, {
-            walletId: senderWallet.id,
-            amount,
-            description: `Compensation for failed tip credit: ${idempotencyKey}`,
-            reference: `compensate:${idempotencyKey}`,
-          }, { timeout: 10000 })
+          .post(
+            `${this.walletServiceBaseUrl}/wallet/credit`,
+            {
+              walletId: senderWallet.id,
+              amount,
+              description: `Compensation for failed tip credit: ${idempotencyKey}`,
+              reference: `compensate:${idempotencyKey}`,
+            },
+            { timeout: 10000 }
+          )
           .catch((compensateError: unknown) => {
             this.logger.error('Failed to compensate sender after credit failure:', compensateError);
           });
@@ -783,7 +795,7 @@ export class CreatorsService {
           message: 'Tip sent successfully',
         },
       };
-    } catch (_err) {
+    } catch (error) {
       const errorMessage = error instanceof Error ? (error as Error).message : 'Failed to send tip';
       throw new BadRequestException(errorMessage);
     }
@@ -901,12 +913,16 @@ export class CreatorsService {
 
     try {
       const debitResult = await axios
-        .post(`${this.walletServiceBaseUrl}/wallet/debit`, {
-          walletId: senderWallet.id,
-          amount,
-          description: `Subscription to creator ${creatorId} - ${tier}`,
-          idempotencyKey,
-        }, { timeout: 10000 })
+        .post(
+          `${this.walletServiceBaseUrl}/wallet/debit`,
+          {
+            walletId: senderWallet.id,
+            amount,
+            description: `Subscription to creator ${creatorId} - ${tier}`,
+            idempotencyKey,
+          },
+          { timeout: 10000 }
+        )
         .catch((err) => {
           if (err.response?.data?.idempotent === true) {
             return { data: { existing: true } };
@@ -930,20 +946,28 @@ export class CreatorsService {
       }
 
       try {
-        await axios.post(`${this.walletServiceBaseUrl}/wallet/credit`, {
-          walletId: creatorWallet.id,
-          amount,
-          description: `Subscription from user ${userId} - ${tier}`,
-          idempotencyKey: `${idempotencyKey}:credit`,
-        }, { timeout: 10000 });
+        await axios.post(
+          `${this.walletServiceBaseUrl}/wallet/credit`,
+          {
+            walletId: creatorWallet.id,
+            amount,
+            description: `Subscription from user ${userId} - ${tier}`,
+            idempotencyKey: `${idempotencyKey}:credit`,
+          },
+          { timeout: 10000 }
+        );
       } catch (creditError: unknown) {
         await axios
-          .post(`${this.walletServiceBaseUrl}/wallet/credit`, {
-            walletId: senderWallet.id,
-            amount,
-            description: `Compensation for failed subscription credit: ${idempotencyKey}`,
-            reference: `compensate:${idempotencyKey}`,
-          }, { timeout: 10000 })
+          .post(
+            `${this.walletServiceBaseUrl}/wallet/credit`,
+            {
+              walletId: senderWallet.id,
+              amount,
+              description: `Compensation for failed subscription credit: ${idempotencyKey}`,
+              reference: `compensate:${idempotencyKey}`,
+            },
+            { timeout: 10000 }
+          )
           .catch((compensateError: unknown) => {
             this.logger.error(
               'Failed to compensate sender after subscription credit failure:',
@@ -995,8 +1019,9 @@ export class CreatorsService {
           message: 'Premium subscription created successfully',
         },
       };
-    } catch (_err) {
-      const errorMessage = error instanceof Error ? (error as Error).message : 'Failed to create subscription';
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? (error as Error).message : 'Failed to create subscription';
       throw new BadRequestException(errorMessage);
     }
   }
@@ -1237,7 +1262,7 @@ export class CreatorsService {
       where: { creatorId: userId, status: 'active' },
     });
 
-    const totalTips = await this.prisma.tip.aggregate({
+    await this.prisma.tip.aggregate({
       where: { toUserId: userId },
       _sum: { amount: true },
     });
@@ -1557,7 +1582,10 @@ export class CreatorsService {
 
     const [contentCount, earnings, subscribers] = await Promise.all([
       this.prisma.contentItem.count({ where: { creatorId: userId } }),
-      this.prisma.creatorEarning.aggregate({ where: { creatorId: profile.id }, _sum: { amount: true } }),
+      this.prisma.creatorEarning.aggregate({
+        where: { creatorId: profile.id },
+        _sum: { amount: true },
+      }),
       this.prisma.subscription.count({ where: { creatorId: profile.id, status: 'active' } }),
     ]);
 
@@ -1582,7 +1610,7 @@ export class CreatorsService {
     };
   }
 
-  async getSettings(userId: string): Promise<CreatorResponse> {
+  async getSettings(_userId: string): Promise<CreatorResponse> {
     return {
       success: true,
       data: {
@@ -1597,7 +1625,7 @@ export class CreatorsService {
     };
   }
 
-  async updateSettings(userId: string, data: Record<string, unknown>): Promise<CreatorResponse> {
+  async updateSettings(_userId: string, data: Record<string, unknown>): Promise<CreatorResponse> {
     return {
       success: true,
       data: { message: 'Settings updated', ...data } as unknown as Record<string, unknown>,

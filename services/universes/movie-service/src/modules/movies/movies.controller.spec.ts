@@ -6,7 +6,6 @@ import { RateLimitService } from '@azeebo/security';
 
 describe('MoviesController', () => {
   let controller: MoviesController;
-  let service: MoviesService;
 
   const mockMoviesService = {
     listMovies: jest.fn(),
@@ -25,7 +24,9 @@ describe('MoviesController', () => {
   };
 
   const mockRateLimitService = {
-    checkRateLimit: jest.fn().mockResolvedValue({ allowed: true, remaining: 10, resetAt: Date.now() + 60000, limit: 10 }),
+    checkRateLimit: jest
+      .fn()
+      .mockResolvedValue({ allowed: true, remaining: 10, resetAt: Date.now() + 60000, limit: 10 }),
     resetRateLimit: jest.fn(),
     getRateLimitStatus: jest.fn(),
   };
@@ -47,7 +48,7 @@ describe('MoviesController', () => {
     }).compile();
 
     controller = module.get<MoviesController>(MoviesController);
-    service = module.get<MoviesService>(MoviesService);
+    module.get<MoviesService>(MoviesService);
   });
 
   afterEach(() => {
@@ -93,7 +94,10 @@ describe('MoviesController', () => {
     it('should add movie to watchlist', async () => {
       const req = { user: { sub: 'user-123' } };
       const body = { movieId: 'movie-1' };
-      const result = { success: true, data: { watchlistItemId: 'item-1', message: 'Added to watchlist' } };
+      const result = {
+        success: true,
+        data: { watchlistItemId: 'item-1', message: 'Added to watchlist' },
+      };
       mockMoviesService.addToWatchlist.mockResolvedValue(result);
 
       expect(await controller.addToWatchlist(req, body)).toEqual(result);
@@ -107,7 +111,9 @@ describe('MoviesController', () => {
         new (require('@nestjs/common').BadRequestException)('Movie already in watchlist')
       );
 
-      await expect(controller.addToWatchlist(req, body)).rejects.toThrow('Movie already in watchlist');
+      await expect(controller.addToWatchlist(req, body)).rejects.toThrow(
+        'Movie already in watchlist'
+      );
     });
   });
 
@@ -127,7 +133,9 @@ describe('MoviesController', () => {
         new (require('@nestjs/common').NotFoundException)('Item not in watchlist')
       );
 
-      await expect(controller.removeFromWatchlist(req, 'nonexistent')).rejects.toThrow('Item not in watchlist');
+      await expect(controller.removeFromWatchlist(req, 'nonexistent')).rejects.toThrow(
+        'Item not in watchlist'
+      );
     });
   });
 
@@ -152,7 +160,10 @@ describe('MoviesController', () => {
   describe('rentMovie', () => {
     it('should rent a movie', async () => {
       const req = { user: { sub: 'user-123' } };
-      const result = { success: true, data: { rentalId: 'rental-1', fee: 500, message: 'Movie rented successfully' } };
+      const result = {
+        success: true,
+        data: { rentalId: 'rental-1', fee: 500, message: 'Movie rented successfully' },
+      };
       mockMoviesService.rentMovie.mockResolvedValue(result);
 
       expect(await controller.rentMovie(req, 'movie-1')).toEqual(result);
@@ -205,7 +216,9 @@ describe('MoviesController', () => {
         new (require('@nestjs/common').NotFoundException)('Movie not found')
       );
 
-      await expect(controller.createViewingWindow('nonexistent', body)).rejects.toThrow('Movie not found');
+      await expect(controller.createViewingWindow('nonexistent', body)).rejects.toThrow(
+        'Movie not found'
+      );
     });
   });
 
@@ -224,7 +237,9 @@ describe('MoviesController', () => {
         new (require('@nestjs/common').NotFoundException)('Viewing window not found')
       );
 
-      await expect(controller.updateViewingWindow('nonexistent', {})).rejects.toThrow('Viewing window not found');
+      await expect(controller.updateViewingWindow('nonexistent', {})).rejects.toThrow(
+        'Viewing window not found'
+      );
     });
   });
 

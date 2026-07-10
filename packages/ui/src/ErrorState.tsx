@@ -1,13 +1,12 @@
-import React from 'react';
-
 interface ErrorStateProps {
   title?: string;
   description?: string;
+  buttonText?: string;
   onRetry?: () => void;
   onButtonPress?: () => void;
 }
 
-export function ErrorState({ title = 'Error', description, onRetry, onButtonPress }: ErrorStateProps) {
+export function ErrorState({ title = 'Error', description, buttonText = 'Try Again', onRetry, onButtonPress }: ErrorStateProps) {
   const handlePress = onRetry || onButtonPress;
   return (
     <div className="flex flex-col items-center justify-center p-8 text-center">
@@ -19,7 +18,7 @@ export function ErrorState({ title = 'Error', description, onRetry, onButtonPres
           onClick={handlePress}
           className="px-4 py-2 bg-[#E8420A] text-white rounded-lg hover:bg-[#C83A08] transition-colors"
         >
-          Try Again
+          {buttonText}
         </button>
       )}
     </div>

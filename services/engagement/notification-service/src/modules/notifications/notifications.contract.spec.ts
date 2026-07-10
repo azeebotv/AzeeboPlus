@@ -71,7 +71,14 @@ describe('Notifications Controller Contract Tests', () => {
             },
           ],
           unreadCount: 1,
-          pagination: { page: 1, limit: 20, total: 1, totalPages: 1, hasNextPage: false, hasPreviousPage: false },
+          pagination: {
+            page: 1,
+            limit: 20,
+            total: 1,
+            totalPages: 1,
+            hasNextPage: false,
+            hasPreviousPage: false,
+          },
         },
       });
 

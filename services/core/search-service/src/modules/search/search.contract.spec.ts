@@ -17,7 +17,7 @@ describe('Search Controller Contract Tests', () => {
       getTrending: jest.fn(),
       getFacets: jest.fn(),
       logSearch: jest.fn(),
-    } as any;
+    } as any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
       controllers: [SearchController],
@@ -52,10 +52,8 @@ describe('Search Controller Contract Tests', () => {
                 id: 'content-1',
                 title: 'Test Content',
                 description: 'Test description',
-                contentType: 'video',
                 status: 'published',
                 viewCount: 100,
-                averageRating: 4.5,
                 createdAt: new Date(),
                 updatedAt: new Date(),
               },

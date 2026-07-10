@@ -43,7 +43,7 @@ export * from './auth';
 export { AuditService } from './audit/audit.service';
 export { AuditModule } from './audit/audit.module';
 export { AuditInterceptor } from './audit/audit.interceptor';
-export { Audit } from './audit/audit.decorator';
+export { AuditLog } from './audit/audit.decorator';
 
 // Prisma
 /** Prisma ORM service and module for database access. */

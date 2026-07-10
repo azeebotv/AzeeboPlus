@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
+import type { StringValue } from 'ms';
 
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
@@ -31,7 +32,7 @@ import { RedisService } from '../../common/services/redis.service';
       useFactory: async (configService: ConfigService) => ({
         secret: configService.getOrThrow<string>('JWT_ACCESS_SECRET'),
         signOptions: {
-          expiresIn: configService.get<string>('JWT_EXPIRES_IN', '30m') as string | number,
+          expiresIn: configService.get<string>('JWT_EXPIRES_IN', '30m') as StringValue,
         },
       }),
       inject: [ConfigService],

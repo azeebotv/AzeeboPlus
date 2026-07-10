@@ -1,10 +1,8 @@
-import { StyleSheet, ActivityIndicator, type ViewStyle, type StyleProp, Text } from 'react-native';
+import { StyleSheet, ActivityIndicator, TouchableOpacity, type ViewStyle, type StyleProp, Text } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { colors, radius, typography, spacing, shadows, spring } from '../../theme';
 
-const AnimatedTouchable = Animated.createAnimatedComponent(
-  require('react-native').TouchableOpacity
-);
+const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 
 interface BrandButtonProps {
   title: string;

@@ -114,6 +114,7 @@ describe('CityGuideService', () => {
       const result = await service.getEntryBySlug('test-restaurant');
 
       expect(result.success).toBe(true);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((result.data as any).name).toBe('Test Restaurant');
     });
 
@@ -149,6 +150,7 @@ describe('CityGuideService', () => {
       });
 
       expect(result.success).toBe(true);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((result.data as any).slug).toBe('test-restaurant');
     });
   });
@@ -165,6 +167,7 @@ describe('CityGuideService', () => {
       const result = await service.updateEntry('city-guide-1', { name: 'Updated Restaurant' });
 
       expect(result.success).toBe(true);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((result.data as any).name).toBe('Updated Restaurant');
     });
 
@@ -185,6 +188,7 @@ describe('CityGuideService', () => {
       const result = await service.deleteEntry('city-guide-1');
 
       expect(result.success).toBe(true);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((result.data as any).message).toBe('Entry deleted successfully');
     });
 

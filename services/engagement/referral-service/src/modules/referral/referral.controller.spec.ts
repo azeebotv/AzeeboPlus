@@ -38,6 +38,7 @@ describe('ReferralController', () => {
 
   describe('getReferralCode', () => {
     it('should call referralService.getReferralCode with userId', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const mockReq = { user: { sub: 'user-1' } } as any;
       const mockResult = { success: true, data: { referralCode: null } };
       mockReferralService.getReferralCode.mockResolvedValue(mockResult);
@@ -51,6 +52,7 @@ describe('ReferralController', () => {
 
   describe('generateReferralCode', () => {
     it('should call referralService.generateReferralCode with userId and dto', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const mockReq = { user: { sub: 'user-1' } } as any;
       const dto = { maxUses: 10, expiresAt: '2026-12-31T23:59:59.000Z' };
       const mockResult = {
@@ -77,6 +79,7 @@ describe('ReferralController', () => {
     });
 
     it('should call referralService.generateReferralCode with empty dto', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const mockReq = { user: { sub: 'user-1' } } as any;
       const dto = {};
       const mockResult = {
@@ -94,6 +97,7 @@ describe('ReferralController', () => {
 
   describe('applyReferralCode', () => {
     it('should call referralService.applyReferralCode with userId and dto', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const mockReq = { user: { sub: 'user-2' } } as any;
       const dto = { code: 'AZB-ABC12345' };
       const mockResult = {
@@ -120,6 +124,7 @@ describe('ReferralController', () => {
 
   describe('getReferrals', () => {
     it('should call referralService.getReferrals with default page and limit', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const mockReq = { user: { sub: 'user-1' } } as any;
       const mockResult = {
         success: true,
@@ -134,6 +139,7 @@ describe('ReferralController', () => {
     });
 
     it('should call referralService.getReferrals with custom page and limit', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const mockReq = { user: { sub: 'user-1' } } as any;
       const mockResult = {
         success: true,
@@ -150,6 +156,7 @@ describe('ReferralController', () => {
 
   describe('getStats', () => {
     it('should call referralService.getStats with userId', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const mockReq = { user: { sub: 'user-1' } } as any;
       const mockResult = {
         success: true,
@@ -174,6 +181,7 @@ describe('ReferralController', () => {
 
   describe('completeReferral', () => {
     it('should call referralService.completeReferral with referralId', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const mockReq = { user: { sub: 'user-1' } } as any;
       const mockResult = {
         success: true,

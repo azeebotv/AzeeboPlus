@@ -12,7 +12,9 @@ export class IntelligenceController {
 
   @Get('personalization')
   @ApiOperation({ summary: 'Get personalization data for user' })
-  async getPersonalization(@Request() req: { user: { sub: string } }): Promise<unknown> {
+  async getPersonalization(
+    @Request() req: { user: { sub: string; id: string } }
+  ): Promise<unknown> {
     return this.intelligenceService.getPersonalization(req.user.id);
   }
 
@@ -96,7 +98,7 @@ export class IntelligenceController {
     @Request() req: { user: { sub?: string; id?: string } },
     @Body() body: { status: 'confirmed' | 'cleared' }
   ): Promise<unknown> {
-    const reviewedBy = req.user?.sub || req.user?.id;
+    const reviewedBy = req.user?.sub || req.user?.id || 'unknown';
     return this.intelligenceService.reviewFraudDetection(id, reviewedBy, body.status);
   }
 

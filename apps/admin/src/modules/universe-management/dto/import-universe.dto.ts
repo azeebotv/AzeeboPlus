@@ -1,4 +1,12 @@
-import { IsString, IsOptional, IsBoolean, IsInt, IsObject, ValidateNested, IsArray } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsBoolean,
+  IsInt,
+  IsObject,
+  ValidateNested,
+  IsArray,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -56,7 +64,11 @@ export class ImportUniverseDto {
   @IsObject()
   metadata?: Record<string, unknown>;
 
-  @ApiProperty({ description: 'Feature flags to import', required: false, type: [ImportUniverseFeatureFlagDto] })
+  @ApiProperty({
+    description: 'Feature flags to import',
+    required: false,
+    type: [ImportUniverseFeatureFlagDto],
+  })
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })

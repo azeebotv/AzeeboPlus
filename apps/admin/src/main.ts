@@ -69,7 +69,13 @@ async function bootstrap() {
     },
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     credentials: true,
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-Request-ID', 'X-CSRF-Token'],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'X-Requested-With',
+      'X-Request-ID',
+      'X-CSRF-Token',
+    ],
     exposedHeaders: ['X-Total-Count', 'X-Page-Count', 'X-Request-ID'],
     maxAge: 86400,
   });

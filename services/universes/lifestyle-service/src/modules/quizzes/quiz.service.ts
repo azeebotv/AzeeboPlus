@@ -234,7 +234,10 @@ export class QuizService {
       };
     } catch (error) {
       this.logger.error(`Failed to fetch leaderboard for quiz ${quizId}: ${error}`);
-      return { success: false, error: { code: 'LEADERBOARD_ERROR', message: 'Failed to fetch leaderboard' } };
+      return {
+        success: false,
+        error: { code: 'LEADERBOARD_ERROR', message: 'Failed to fetch leaderboard' },
+      };
     }
   }
 }

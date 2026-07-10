@@ -67,7 +67,10 @@ export class AdminService {
 
       return { tournaments, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
     } catch (error) {
-      this.logger.error(`Failed to get tournaments: ${(error as Error).message}`, (error as Error).stack);
+      this.logger.error(
+        `Failed to get tournaments: ${(error as Error).message}`,
+        (error as Error).stack
+      );
       return { success: false, error: (error as Error).message };
     }
   }

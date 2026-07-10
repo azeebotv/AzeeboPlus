@@ -61,7 +61,10 @@ export class EventsController {
   @Roles('ADMIN', 'MODERATOR')
   @ApiOperation({ summary: 'Create new event' })
   @ApiResponse({ status: 201, description: 'Event created' })
-  async createEvent(@Body() data: CreateEventDto, @Request() req: { user: { id: string } }): Promise<unknown> {
+  async createEvent(
+    @Body() data: CreateEventDto,
+    @Request() req: { user: { id: string } }
+  ): Promise<unknown> {
     return this.eventsService.createEvent({ ...data, creatorId: req.user.id });
   }
 
@@ -87,7 +90,11 @@ export class EventsController {
   @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'RSVP to event' })
   @ApiResponse({ status: 200, description: 'RSVP successful' })
-  async rsvpEvent(@Param('id') id: string, @Body() data: RsvpDto, @Request() req: { user: { id: string } }): Promise<unknown> {
+  async rsvpEvent(
+    @Param('id') id: string,
+    @Body() data: RsvpDto,
+    @Request() req: { user: { id: string } }
+  ): Promise<unknown> {
     return this.eventsService.rsvpEvent(id, req.user.id, data);
   }
 
@@ -95,7 +102,10 @@ export class EventsController {
   @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Cancel RSVP' })
   @ApiResponse({ status: 200, description: 'RSVP cancelled' })
-  async cancelRsvp(@Param('id') id: string, @Request() req: { user: { id: string } }): Promise<unknown> {
+  async cancelRsvp(
+    @Param('id') id: string,
+    @Request() req: { user: { id: string } }
+  ): Promise<unknown> {
     return this.eventsService.cancelRsvp(id, req.user.id);
   }
 }

@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, CanActivate, ExecutionContext } from '@nestjs/common';
+import { INestApplication, ExecutionContext } from '@nestjs/common';
 import request from 'supertest';
 import { AuthGuard } from '@nestjs/passport';
 import { ModerationController } from './moderation.controller';
@@ -18,9 +18,7 @@ describe('Moderation Authorization Tests', () => {
         .mockResolvedValue({ success: true, data: { contentId: 'content-1', status: 'scanning' } }),
       getRiskAssessment: jest.fn().mockResolvedValue({ success: true, data: { riskScore: 0.2 } }),
       getContentScans: jest.fn().mockResolvedValue({ success: true, data: [] }),
-      createCase: jest
-        .fn()
-        .mockResolvedValue({ success: true, data: { caseId: 'case-1' } }),
+      createCase: jest.fn().mockResolvedValue({ success: true, data: { caseId: 'case-1' } }),
       getCases: jest.fn().mockResolvedValue({ success: true, data: [], pagination: {} }),
       getCaseById: jest.fn().mockResolvedValue({ success: true, data: { id: 'case-1' } }),
       resolveCase: jest

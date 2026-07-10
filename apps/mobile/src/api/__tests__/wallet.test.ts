@@ -21,6 +21,7 @@ describe('Mobile Wallet API', () => {
     mockedClient.get.mockResolvedValue({
       success: true,
       data: { balance: 5000, currency: 'NGN' },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
 
     const result = await walletApi.getBalance();
@@ -30,6 +31,7 @@ describe('Mobile Wallet API', () => {
   });
 
   it('getTransactions should GET /v1/wallet/transactions with pagination', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockedClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } } as any);
 
     await walletApi.getTransactions(1, 20);
@@ -41,6 +43,7 @@ describe('Mobile Wallet API', () => {
     mockedClient.get.mockResolvedValue({
       success: true,
       data: { id: 'tx1', type: 'credit' },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
 
     await walletApi.getTransaction('tx1');
@@ -52,6 +55,7 @@ describe('Mobile Wallet API', () => {
     mockedClient.post.mockResolvedValue({
       success: true,
       data: { authorizationUrl: 'https://pay.com', reference: 'ref-123' },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
 
     await walletApi.fundWallet({ amount: 1000, provider: 'paystack', email: 'a@b.com' });
@@ -67,6 +71,7 @@ describe('Mobile Wallet API', () => {
     mockedClient.post.mockResolvedValue({
       success: true,
       data: { message: 'Withdrawal initiated' },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
 
     await walletApi.withdraw({ amount: 500, bankCode: '001', accountNumber: '1234567890' });
@@ -82,6 +87,7 @@ describe('Mobile Wallet API', () => {
     mockedClient.get.mockResolvedValue({
       success: true,
       data: { balance: 5000, totalFunded: 10000 },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
 
     await walletApi.getSummary();
@@ -93,6 +99,7 @@ describe('Mobile Wallet API', () => {
     mockedClient.post.mockResolvedValue({
       success: true,
       data: { message: 'Redeemed', creditedAmount: 500 },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
 
     await walletApi.redeemReward({ points: 1000 });

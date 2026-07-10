@@ -1,11 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ExecutionContext, ValidationPipe } from '@nestjs/common';
+import { INestApplication, ValidationPipe, ExecutionContext } from '@nestjs/common';
 import request from 'supertest';
 import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard } from '@azeebo/security';
 import { TicketController } from './ticket.controller';
 import { TicketService } from './ticket.service';
-import { SupportTicketStatus, SupportTicketCategory } from './dto/ticket.dto';
+// Ticket DTO types used implicitly by mock data in tests
 
 describe('Support Service Pagination Tests', () => {
   let app: INestApplication;
@@ -36,14 +36,6 @@ describe('Support Service Pagination Tests', () => {
     },
   };
 
-  const mockAdminAuthGuard = {
-    canActivate: (context: ExecutionContext) => {
-      const request = context.switchToHttp().getRequest();
-      request.user = { id: 'admin-user-123', role: 'admin' };
-      return true;
-    },
-  };
-
   const mockRateLimitGuard = {
     canActivate: jest.fn().mockReturnValue(true),
   };
@@ -66,6 +58,7 @@ describe('Support Service Pagination Tests', () => {
 
     app = moduleFixture.createNestApplication();
     app.useGlobalPipes(new ValidationPipe({ transform: true }));
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     app.use((req: any, _res: any, next: Function) => {
       if (!req.user) {
         req.user = { id: 'test-user-123', role: 'user' };

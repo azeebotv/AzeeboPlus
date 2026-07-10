@@ -23,10 +23,16 @@ interface EarningsData {
 export default function EarningsDashboardPage(): React.JSX.Element {
   const router = useRouter();
 
-  const { data: earnings, isLoading, error } = useQuery({
+  const {
+    data: earnings,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ['creator', 'earnings'],
     queryFn: async () => {
-      const result = await apiFetch<{ success: boolean; data: Record<string, unknown> }>('/v1/creators/earnings');
+      const result = await apiFetch<{ success: boolean; data: Record<string, unknown> }>(
+        '/v1/creators/earnings'
+      );
       if (result.success && result.data) {
         const d = result.data as Record<string, unknown>;
         return {
@@ -96,17 +102,15 @@ export default function EarningsDashboardPage(): React.JSX.Element {
       <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>
         <AppHeader />
         <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-          <ErrorState title="Failed to load earnings" description="Please try again later" onButtonPress={() => router.refresh()} />
+          <ErrorState
+            title="Failed to load earnings"
+            description="Please try again later"
+            onButtonPress={() => router.refresh()}
+          />
         </div>
       </div>
     );
   }
-
-  const _totalBreakdown =
-    earnings.revenueBreakdown.subscriptions +
-      earnings.revenueBreakdown.tips +
-      earnings.revenueBreakdown.ads +
-      earnings.revenueBreakdown.superVotes || 1;
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#1A0A0A' }}>

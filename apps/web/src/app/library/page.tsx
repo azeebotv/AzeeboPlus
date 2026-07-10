@@ -34,12 +34,7 @@ export default function LibraryPage(): React.JSX.Element {
     'watchlist'
   );
 
-  const {
-    data,
-    isLoading,
-    error,
-    refetch,
-  } = useQuery<LibraryData, Error>({
+  const { data, isLoading, error, refetch } = useQuery<LibraryData, Error>({
     queryKey: ['library'],
     queryFn: async () => {
       const [watchlistRes, historyRes, favoritesRes] = await Promise.all([
@@ -82,35 +77,47 @@ export default function LibraryPage(): React.JSX.Element {
     { id: 'favorites', name: 'Favorites', items: favorites },
   ];
 
-  const removeFromWatchlist = useCallback(async (contentId: string) => {
-    try {
-      const response = await apiFetch<{ removed: boolean }>(`/interactions/watchlist/${contentId}`, {
-        method: 'DELETE',
-      });
-      if (response.success) {
-        queryClient.setQueryData<LibraryData>(['library'], (old) =>
-          old ? { ...old, watchlist: old.watchlist.filter((item) => item.id !== contentId) } : old
+  const removeFromWatchlist = useCallback(
+    async (contentId: string) => {
+      try {
+        const response = await apiFetch<{ removed: boolean }>(
+          `/interactions/watchlist/${contentId}`,
+          {
+            method: 'DELETE',
+          }
         );
+        if (response.success) {
+          queryClient.setQueryData<LibraryData>(['library'], (old) =>
+            old ? { ...old, watchlist: old.watchlist.filter((item) => item.id !== contentId) } : old
+          );
+        }
+      } catch (err) {
+        /* intentionally minimal */
       }
-    } catch (err) {
-      /* intentionally minimal */
-    }
-  }, [queryClient]);
+    },
+    [queryClient]
+  );
 
-  const removeFromHistory = useCallback(async (contentId: string) => {
-    try {
-      const response = await apiFetch<{ removed: boolean }>(`/interactions/history/${contentId}`, {
-        method: 'DELETE',
-      });
-      if (response.success) {
-        queryClient.setQueryData<LibraryData>(['library'], (old) =>
-          old ? { ...old, history: old.history.filter((item) => item.id !== contentId) } : old
+  const removeFromHistory = useCallback(
+    async (contentId: string) => {
+      try {
+        const response = await apiFetch<{ removed: boolean }>(
+          `/interactions/history/${contentId}`,
+          {
+            method: 'DELETE',
+          }
         );
+        if (response.success) {
+          queryClient.setQueryData<LibraryData>(['library'], (old) =>
+            old ? { ...old, history: old.history.filter((item) => item.id !== contentId) } : old
+          );
+        }
+      } catch (err) {
+        /* intentionally minimal */
       }
-    } catch (err) {
-      /* intentionally minimal */
-    }
-  }, [queryClient]);
+    },
+    [queryClient]
+  );
 
   const toggleFavorite = useCallback(
     async (contentId: string) => {
@@ -132,9 +139,7 @@ export default function LibraryPage(): React.JSX.Element {
             const item =
               old.watchlist.find((i) => i.id === contentId) ||
               old.history.find((i) => i.id === contentId);
-            return item
-              ? { ...old, favorites: [...old.favorites, item] }
-              : old;
+            return item ? { ...old, favorites: [...old.favorites, item] } : old;
           });
         }
       } catch (err) {

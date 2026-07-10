@@ -11,6 +11,7 @@ const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 export interface UniverseOption {
   id: string;
   name: string;
+  displayName?: string;
   description?: string;
   icon?: string;
   contentCount?: number;
@@ -191,16 +192,23 @@ export function useUniverses(): UseUniversesReturn {
     [getUniverse]
   );
 
-  const hasFeature = useCallback(
-    (_universeName: string, _featureKey: string) => {
-      // Feature flags are not yet available in the new API response.
-      // Default to true for backwards compatibility.
-      return true;
-    },
-    []
-  );
+  const hasFeature = useCallback((_universeName: string, _featureKey: string) => {
+    // Feature flags are not yet available in the new API response.
+    // Default to true for backwards compatibility.
+    return true;
+  }, []);
 
-  return { universes, selected, isLoading, error, select, refetch, getUniverse, isUniverseEnabled, hasFeature };
+  return {
+    universes,
+    selected,
+    isLoading,
+    error,
+    select,
+    refetch,
+    getUniverse,
+    isUniverseEnabled,
+    hasFeature,
+  };
 }
 
 /**

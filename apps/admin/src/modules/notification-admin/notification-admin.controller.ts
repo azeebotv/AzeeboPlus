@@ -26,6 +26,6 @@ export class NotificationAdminController {
 
   @Get('notification-templates')
   async getTemplates() {
-    return [];
+    return this.notificationService.getTemplates();
   }
 }

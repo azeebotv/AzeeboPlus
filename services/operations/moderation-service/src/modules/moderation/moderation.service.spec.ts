@@ -304,7 +304,10 @@ describe('ModerationService', () => {
 
       mockPrismaService.moderationCase.findUnique.mockResolvedValue(mockCase);
       mockPrismaService.appeal.create.mockResolvedValue(mockAppeal);
-      mockPrismaService.moderationCase.update.mockResolvedValue({ id: 'case-1', status: 'appealed' });
+      mockPrismaService.moderationCase.update.mockResolvedValue({
+        id: 'case-1',
+        status: 'appealed',
+      });
       mockPrismaService.auditEvent.create.mockResolvedValue({ id: 'audit-1' });
 
       const result = await service.createAppeal({
@@ -343,7 +346,10 @@ describe('ModerationService', () => {
 
       mockPrismaService.appeal.findUnique.mockResolvedValue(mockAppeal);
       mockPrismaService.appeal.update.mockResolvedValue(resolvedAppeal);
-      mockPrismaService.moderationCase.update.mockResolvedValue({ id: 'case-1', status: 'resolved' });
+      mockPrismaService.moderationCase.update.mockResolvedValue({
+        id: 'case-1',
+        status: 'resolved',
+      });
       mockPrismaService.user.findUnique.mockResolvedValue({ id: 'user-1', trustScore: 75 });
       mockPrismaService.user.update.mockResolvedValue({ id: 'user-1', trustScore: 100 });
       mockPrismaService.trustScoreHistory.create.mockResolvedValue({ id: 'trust-1' });
@@ -444,7 +450,10 @@ describe('ModerationService', () => {
 
       mockPrismaService.reviewerAssignment.findFirst.mockResolvedValue(null);
       mockPrismaService.reviewerAssignment.create.mockResolvedValue(mockAssignment);
-      mockPrismaService.moderationCase.update.mockResolvedValue({ id: 'case-1', status: 'in_review' });
+      mockPrismaService.moderationCase.update.mockResolvedValue({
+        id: 'case-1',
+        status: 'in_review',
+      });
       mockPrismaService.auditEvent.create.mockResolvedValue({ id: 'audit-1' });
 
       const result = await service.assignReviewer({

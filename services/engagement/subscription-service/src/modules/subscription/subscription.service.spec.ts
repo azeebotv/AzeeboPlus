@@ -5,7 +5,6 @@ import { NotFoundException } from '@nestjs/common';
 
 describe('SubscriptionService', () => {
   let service: SubscriptionService;
-  let prisma: PrismaService;
 
   const mockPlan = {
     id: 'plan-1',
@@ -44,6 +43,7 @@ describe('SubscriptionService', () => {
   const mockTxSubscriptionTransaction = {
     create: jest.fn(),
   };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const mockPrismaService: any = {
     subscriptionPlan: {
       findMany: jest.fn(),
@@ -60,10 +60,13 @@ describe('SubscriptionService', () => {
     subscriptionTransaction: {
       create: jest.fn(),
     },
-    $transaction: jest.fn(async (cb: any) => cb({
-      subscription: mockTxSubscription,
-      subscriptionTransaction: mockTxSubscriptionTransaction,
-    })),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    $transaction: jest.fn(async (cb: any) =>
+      cb({
+        subscription: mockTxSubscription,
+        subscriptionTransaction: mockTxSubscriptionTransaction,
+      })
+    ),
   };
 
   beforeEach(async () => {
@@ -72,7 +75,7 @@ describe('SubscriptionService', () => {
     }).compile();
 
     service = module.get<SubscriptionService>(SubscriptionService);
-    prisma = module.get<PrismaService>(PrismaService);
+    module.get<PrismaService>(PrismaService);
 
     jest.clearAllMocks();
   });
@@ -154,7 +157,12 @@ describe('SubscriptionService', () => {
 
   describe('subscribe', () => {
     it('should create a new subscription when no active subscription exists', async () => {
-      const dto = { planId: 'plan-1', autoRenew: true, paymentMethod: 'card', paymentReference: 'pay-ref-1' };
+      const dto = {
+        planId: 'plan-1',
+        autoRenew: true,
+        paymentMethod: 'card',
+        paymentReference: 'pay-ref-1',
+      };
 
       mockPrismaService.subscriptionPlan.findUnique.mockResolvedValue(mockPlan);
       mockTxSubscription.findFirst.mockResolvedValue(null);

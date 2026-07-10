@@ -21,7 +21,6 @@ import type { ApiError } from './base';
 
 const ACCESS_TOKEN_KEY = 'azeebo_access_token';
 const REFRESH_TOKEN_KEY = 'azeebo_refresh_token';
-const USER_KEY = 'azeebo_user';
 
 export async function setAuthCookie(value: string, maxAge: number = 30 * 60): Promise<void> {
   if (typeof window !== 'undefined') {
@@ -79,6 +78,9 @@ class ApiClient {
     // Restore token from localStorage immediately so requests work
     // before AuthContext's useEffect runs (children effects fire first)
     if (typeof window !== 'undefined') {
+      if (process.env.NODE_ENV === 'production') {
+        console.warn('ApiClient: localStorage token storage is not recommended for production. Use httpOnly cookies instead.');
+      }
       const storedToken = localStorage.getItem(ACCESS_TOKEN_KEY);
       if (storedToken) {
         this.token = storedToken;
@@ -286,7 +288,10 @@ class ApiClient {
       }
 
       if (
-        this.isRetryableError(undefined, error instanceof Error ? (error as Error).message : undefined) &&
+        this.isRetryableError(
+          undefined,
+          error instanceof Error ? (error as Error).message : undefined
+        ) &&
         attempt < RETRY_CONFIG.maxRetries
       ) {
         const delay = this.calculateDelay(attempt);

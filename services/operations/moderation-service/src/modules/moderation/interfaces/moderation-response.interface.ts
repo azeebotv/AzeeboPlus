@@ -1,5 +1,3 @@
-import { ApiResponseWrapper } from '@azeebo/shared-types';
-
 export interface ModerationResponse {
   success: boolean;
   data?: unknown;

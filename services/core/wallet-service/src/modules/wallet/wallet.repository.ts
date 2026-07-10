@@ -37,7 +37,7 @@ export class WalletRepository {
     });
   }
 
-  async withdraw(userId: string, amount: number, bankAccount: string) {
+  async withdraw(userId: string, amount: number, _bankAccount: string) {
     const wallet = await this.prisma.wallet.findUnique({ where: { userId } });
     if (!wallet) {
       throw new Error('Wallet not found');

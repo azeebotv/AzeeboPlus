@@ -1,5 +1,5 @@
 import { NodeSDK } from '@opentelemetry/sdk-node';
-import { ParentBased, TraceIdRatioBased } from '@opentelemetry/sdk-trace-base';
+import { ParentBasedSampler, TraceIdRatioBasedSampler } from '@opentelemetry/sdk-trace-base';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 import { Resource } from '@opentelemetry/resources';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
@@ -43,7 +43,7 @@ export function initializeOpenTelemetry(config: Partial<OpenTelemetryConfig> = {
       [SemanticResourceAttributes.DEPLOYMENT_ENVIRONMENT]: finalConfig.environment,
     }),
     traceExporter,
-    sampler: ParentBased({ root: TraceIdRatioBased(finalConfig.samplingRatio!) }),
+    sampler: new ParentBasedSampler({ root: new TraceIdRatioBasedSampler(finalConfig.samplingRatio!) }),
   });
 
   registerInstrumentations({
@@ -53,13 +53,13 @@ export function initializeOpenTelemetry(config: Partial<OpenTelemetryConfig> = {
           const pathOnly = request.path.split('?')[0];
           span.setAttribute('http.request.path', pathOnly);
         },
-      }),
+      } as never),
       new ExpressInstrumentation({
         requestHook: (span: Span, request: { path: string; method: string }) => {
           span.setAttribute('http.route', request.path);
           span.setAttribute('http.method', request.method);
         },
-      }),
+      } as never),
       new PrismaInstrumentation(),
     ],
   });

@@ -35,7 +35,9 @@ export class LegacyRedirectMiddleware implements NestMiddleware {
         originalUrl.startsWith(`${pattern}?`)
       ) {
         const redirected = originalUrl.replace(`/api/${prefix}`, `/api/v1/${prefix}`);
-        this.logger.warn(`Legacy path redirect: ${originalUrl.split('?')[0]} → ${redirected.split('?')[0]} (308)`);
+        this.logger.warn(
+          `Legacy path redirect: ${originalUrl.split('?')[0]} → ${redirected.split('?')[0]} (308)`
+        );
         res.redirect(308, redirected);
         return;
       }

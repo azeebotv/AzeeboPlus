@@ -1,5 +1,4 @@
 'use client';
-import React from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/context/AuthContext';
@@ -12,11 +11,16 @@ export default function AdminOverviewPage(): React.JSX.Element {
   const { isAuthenticated, user, isLoading: authLoading } = useAuth();
   const isEnabled = !authLoading && !!isAuthenticated && !!user && user.role === 'admin';
 
-  const { data: stats = {}, isLoading, error } = useQuery({
+  const {
+    data: stats = {},
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ['admin', 'platform-overview'],
     queryFn: async () => {
       const response = await api.admin.getPlatformOverview();
-      if (response.success && response.data) return response.data as Record<string, number | string>;
+      if (response.success && response.data)
+        return response.data as unknown as Record<string, number | string>;
       return {};
     },
     enabled: isEnabled,
@@ -28,7 +32,13 @@ export default function AdminOverviewPage(): React.JSX.Element {
       <p style={{ color: '#9A8A7A', marginBottom: 32 }}>Detailed platform statistics and metrics</p>
 
       {isLoading ? (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 16 }}>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
+            gap: 16,
+          }}
+        >
           {Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className="az-glass" style={{ padding: 20, borderRadius: 16 }}>
               <Skeleton width="60%" height="12px" className="mb-2" />
@@ -37,7 +47,11 @@ export default function AdminOverviewPage(): React.JSX.Element {
           ))}
         </div>
       ) : error ? (
-        <ErrorState title="Failed to load overview" description="Please try again later" onButtonPress={() => router.refresh()} />
+        <ErrorState
+          title="Failed to load overview"
+          description="Please try again later"
+          onButtonPress={() => router.refresh()}
+        />
       ) : (
         <div
           style={{

@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, UnauthorizedException } from '@nestjs/common';
+import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { AuthModule } from './auth.module';
 import { AuthRepository } from './auth.repository';
@@ -44,7 +44,7 @@ describe('Auth Controller Contract Tests', () => {
     process.env.REFRESH_TOKEN_EXPIRES_IN = '7d';
     process.env.JWT_AUDIENCE = 'test-audience';
     process.env.JWT_ISSUER = 'test-issuer';
-    process.env.NODE_ENV = 'test';
+    (process.env as Record<string, string>).NODE_ENV = 'test';
     process.env.DATABASE_URL = 'postgresql://test:test@localhost:5432/test';
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -135,6 +135,7 @@ describe('Auth Controller Contract Tests', () => {
         updatedAt: new Date(),
       });
       jest.spyOn(jwtService, 'sign').mockImplementation((payload) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return `token-${(payload as any).sub}`;
       });
 
@@ -156,7 +157,6 @@ describe('Auth Controller Contract Tests', () => {
     it('should return success response with user and tokens', async () => {
       const authRepository = app.get(AuthRepository);
       const jwtService = app.get(JwtService);
-      const bcrypt = require('bcrypt');
 
       jest.spyOn(authRepository, 'findByEmail').mockResolvedValue({
         id: 'user-123',
@@ -181,9 +181,9 @@ describe('Auth Controller Contract Tests', () => {
         updatedAt: new Date(),
       });
       jest.spyOn(jwtService, 'sign').mockImplementation((payload) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return `token-${(payload as any).sub}`;
       });
-      const compareSpy = jest.spyOn(bcrypt, 'compare').mockResolvedValue(true as never);
 
       const response = await request(app.getHttpServer()).post('/auth/login').send({
         email: 'test@example.com',
@@ -195,8 +195,6 @@ describe('Auth Controller Contract Tests', () => {
       expect(response.body.data).toHaveProperty('user');
       expect(response.body.data).toHaveProperty('access_token');
       expect(response.body.data).toHaveProperty('refresh_token');
-
-      compareSpy.mockRestore();
     });
   });
 
@@ -204,9 +202,9 @@ describe('Auth Controller Contract Tests', () => {
     it('should return new access token', async () => {
       const authRepository = app.get(AuthRepository);
       const jwtService = app.get(JwtService);
-      const bcrypt = require('bcrypt');
 
-      jest.spyOn(jwtService, 'verify').mockImplementation((token: string, options?: any) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      jest.spyOn(jwtService, 'verify').mockImplementation((_token: string, _options?: any) => {
         return { sub: 'user-123' };
       });
       jest.spyOn(authRepository, 'findById').mockResolvedValue({
@@ -232,7 +230,6 @@ describe('Auth Controller Contract Tests', () => {
         updatedAt: new Date(),
       });
       jest.spyOn(jwtService, 'sign').mockReturnValue('new-access-token');
-      jest.spyOn(bcrypt, 'compare').mockResolvedValue(true);
 
       const response = await request(app.getHttpServer())
         .post('/auth/refresh')

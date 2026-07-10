@@ -51,14 +51,7 @@ export class EngagementController {
   @RateLimit(10, 60000)
   @ApiOperation({ summary: 'Submit a prediction' })
   @ApiResponse({ status: 201, description: 'Prediction submitted' })
-  async submitPrediction(
-    @Request() req: AuthRequest,
-    @Body() dto: SubmitPredictionDto
-  ) {
-    return this.engagementService.submitPrediction(
-      req.user.id,
-      dto.contentId,
-      dto.prediction
-    );
+  async submitPrediction(@Request() req: AuthRequest, @Body() dto: SubmitPredictionDto) {
+    return this.engagementService.submitPrediction(req.user.id, dto.contentId, dto.prediction);
   }
 }

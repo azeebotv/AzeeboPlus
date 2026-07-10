@@ -63,11 +63,6 @@ export class CreatorService {
       where: { creatorId: userId, status: { not: 'archived' } },
     });
 
-    const totalViews = await this.prisma.contentItem.aggregate({
-      where: { creatorId: userId },
-      _sum: { viewCount: true },
-    });
-
     const earnings = await this.prisma.walletTransaction.aggregate({
       where: {
         wallet: { userId },
@@ -103,15 +98,64 @@ export class CreatorService {
     const viewsChangePercent =
       prevViews > 0 ? (((currentViews - prevViews) / prevViews) * 100).toFixed(1) : '0';
 
+    const [currentPeriodEarnings, previousPeriodEarnings] = await Promise.all([
+      this.prisma.walletTransaction.aggregate({
+        where: {
+          wallet: { userId },
+          type: { in: ['earning', 'payout'] },
+          createdAt: { gte: currentPeriodStart },
+        },
+        _sum: { amount: true },
+      }),
+      this.prisma.walletTransaction.aggregate({
+        where: {
+          wallet: { userId },
+          type: { in: ['earning', 'payout'] },
+          createdAt: { gte: previousPeriodStart, lt: currentPeriodStart },
+        },
+        _sum: { amount: true },
+      }),
+    ]);
+
+    const currentEarnings = Number(currentPeriodEarnings._sum.amount) || 0;
+    const prevEarnings = Number(previousPeriodEarnings._sum.amount) || 0;
+    const earningsChangePercent =
+      prevEarnings > 0 ? (((currentEarnings - prevEarnings) / prevEarnings) * 100).toFixed(1) : '0';
+
+    const currentPeriodContentCount = await this.prisma.contentItem.count({
+      where: {
+        creatorId: userId,
+        createdAt: { gte: currentPeriodStart },
+      },
+    });
+    const previousPeriodContentCount = await this.prisma.contentItem.count({
+      where: {
+        creatorId: userId,
+        createdAt: { gte: previousPeriodStart, lt: currentPeriodStart },
+      },
+    });
+    const contentChange = currentPeriodContentCount - previousPeriodContentCount;
+
+    // Get real subscriber count from following table
+    let subscriberCount = 0;
+    try {
+      subscriberCount = await this.prisma.$queryRawUnsafe<{ count: bigint }[]>(
+        'SELECT COUNT(*) as count FROM "following" WHERE "followingId" = $1',
+        userId
+      ).then((rows) => Number(rows[0]?.count ?? 0));
+    } catch {
+      // following table may not exist in this database
+    }
+
     return {
       totalViews: currentViews,
-      subscribers: 0,
+      subscribers: subscriberCount,
       totalEarnings: Number(earnings._sum.amount) || 0,
       contentCount,
       viewsChange: `${Number(viewsChangePercent) >= 0 ? '+' : ''}${viewsChangePercent}%`,
-      subscribersChange: '+0%',
-      earningsChange: '+0%',
-      contentChange: '+0',
+      subscribersChange: `${subscriberCount >= 0 ? '+' : ''}0`,
+      earningsChange: `${Number(earningsChangePercent) >= 0 ? '+' : ''}${earningsChangePercent}%`,
+      contentChange: `${contentChange >= 0 ? '+' : ''}${contentChange}`,
     };
   }
 
@@ -156,7 +200,18 @@ export class CreatorService {
     userId: string,
     data: { title: string; description?: string; type: string; universeId?: string }
   ): Promise<ContentItem> {
-    const universeId = data.universeId || '00000000-0000-0000-0000-000000000001'; // Default 'videos' universe
+    // Look up default universe if not provided
+    let universeId = data.universeId;
+    if (!universeId) {
+      const defaultUniverse = await this.prisma.universe.findFirst({
+        where: { name: 'vertical' },
+        select: { id: true },
+      });
+      universeId = defaultUniverse?.id;
+      if (!universeId) {
+        throw new Error('No universe specified and no default universe found');
+      }
+    }
 
     const creatorProfile = await this.prisma.creatorProfile.findUnique({
       where: { userId },
@@ -252,10 +307,6 @@ export class CreatorService {
     const recentViews = recentContent.reduce((sum, c) => sum + (c.viewCount || 0), 0);
     const engagementRate =
       recentViews > 0 && days > 0 ? Math.round((recentViews / days) * 10) / 10 : 0;
-
-    const _recentContentCount = await this.prisma.contentItem.count({
-      where: { creatorId: userId, createdAt: { gte: startDate } },
-    });
 
     const viewsOverTime = await this.prisma.$queryRaw<{ date: string; views: number }[]>`
       SELECT 
@@ -368,15 +419,12 @@ export class CreatorService {
     }
 
     // Debit wallet through wallet-service API
-    const debitResult = await this.walletClient.request('/v1/wallet/debit', {
-      method: 'POST',
-      body: {
-        walletId: wallet.id,
-        amount: payoutAmount,
-        description: 'Payout request',
-        idempotencyKey: `payout-${userId}-${Date.now()}`,
-      },
-    });
+    const debitResult = await this.walletClient.debit(
+      wallet.id,
+      payoutAmount,
+      'Payout request',
+      `payout-${userId}-${Date.now()}`
+    );
 
     if (!debitResult.success) {
       throw new BadRequestException('Failed to debit wallet for payout');

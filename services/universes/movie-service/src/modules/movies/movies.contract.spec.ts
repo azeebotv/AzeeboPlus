@@ -9,6 +9,7 @@ import { RateLimitGuard } from '@azeebo/security';
 import { AuthGuard } from '@nestjs/passport';
 
 const mockAuthGuard = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   canActivate: (context: any) => {
     const req = context.switchToHttp().getRequest();
     if (!req.headers.authorization) {

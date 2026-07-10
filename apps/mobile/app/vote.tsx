@@ -12,8 +12,6 @@ import { logger } from '../src/utils/logger';
 import { LoadingState, ErrorState } from '../src/components/StateContainers';
 import type { Contestant, RealityShow } from '../src/types/api';
 
-const _PLACEHOLDER_IMAGE = '';
-
 interface VotePackage {
   id: string;
   votes: number;

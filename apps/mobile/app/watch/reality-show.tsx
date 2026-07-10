@@ -17,8 +17,9 @@ import { walletApi } from '../../src/api/wallet';
 import { apiClient } from '../../src/api/client';
 import { logger } from '../../src/utils/logger';
 import { ApiResponse, Contestant } from '../../src/types/api';
+import { defaultImages } from '../../src/theme';
 
-const PLACEHOLDER_IMAGE = '';
+const PLACEHOLDER_IMAGE = defaultImages.thumbnail;
 
 interface ShowData {
   id: string;

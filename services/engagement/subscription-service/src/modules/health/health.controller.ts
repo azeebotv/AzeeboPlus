@@ -17,7 +17,10 @@ export class HealthController {
       await this.prisma.$queryRaw`SELECT 1`;
       return { status: 'ok', timestamp: new Date().toISOString() };
     } catch {
-      throw new HttpException({ status: 'error', database: 'disconnected' }, HttpStatus.SERVICE_UNAVAILABLE);
+      throw new HttpException(
+        { status: 'error', database: 'disconnected' },
+        HttpStatus.SERVICE_UNAVAILABLE
+      );
     }
   }
 

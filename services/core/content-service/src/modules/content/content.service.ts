@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '../../prisma/client';
 import { CreateContentDto } from './dto/create-content.dto';
 import { UpdateContentDto } from './dto/update-content.dto';
 import { CreateMediaAssetDto } from './dto/create-media-asset.dto';
@@ -23,21 +23,35 @@ import { ContentCategoryService } from './content-category.service';
 import { ContentIngestionService } from './content-ingestion.service';
 
 type ContentWithUniverse = Prisma.ContentItemGetPayload<{ include: { universe: true } }>;
-type ContentWithUniverseCategories = Prisma.ContentItemGetPayload<{ include: { universe: true; categories: true } }>;
-type ContentWithUniverseTags = Prisma.ContentItemGetPayload<{ include: { universe: true; tags: true } }>;
-type ContentWithAll = Prisma.ContentItemGetPayload<{ include: { universe: true; mediaAsset: true; categories: true; tags: true } }>;
-type ContentWithUniverseMediaAsset = Prisma.ContentItemGetPayload<{ include: { universe: true; mediaAsset: true } }>;
+type ContentWithUniverseCategories = Prisma.ContentItemGetPayload<{
+  include: { universe: true; categories: true };
+}>;
+type ContentWithUniverseTags = Prisma.ContentItemGetPayload<{
+  include: { universe: true; tags: true };
+}>;
+type ContentWithAll = Prisma.ContentItemGetPayload<{
+  include: { universe: true; mediaAsset: true; categories: true; tags: true };
+}>;
+type ContentWithUniverseMediaAsset = Prisma.ContentItemGetPayload<{
+  include: { universe: true; mediaAsset: true };
+}>;
 type MediaAssetWithContentItem = Prisma.MediaAssetGetPayload<{ include: { contentItem: true } }>;
-type ContentRelationshipWithContent = Prisma.ContentRelationshipGetPayload<{ include: { content: true; relatedContent: true } }>;
-type ContentRelationshipWithRelatedUniverse = Prisma.ContentRelationshipGetPayload<{ include: { relatedContent: { include: { universe: true } } } }>;
-type ContentItemModel = Prisma.ContentItemGetPayload<{}>;
+type ContentRelationshipWithContent = Prisma.ContentRelationshipGetPayload<{
+  include: { content: true; relatedContent: true };
+}>;
+type ContentRelationshipWithRelatedUniverse = Prisma.ContentRelationshipGetPayload<{
+  include: { relatedContent: { include: { universe: true } } };
+}>;
 type CategoryModel = Prisma.CategoryGetPayload<{}>;
 type TagModel = Prisma.TagGetPayload<{}>;
-type CommentModel = Prisma.CommentGetPayload<{}>;
-type MediaAssetModel = Prisma.MediaAssetGetPayload<{}>;
 type TranscodingJobResult = { jobId: string; status: string; message: string };
 type TranscodingStatusResult = { jobId: string; status: string; progress: number };
-type ModerationStatusResult = { reports: number; openReports: number; moderationCases: number; currentStatus: string };
+type ModerationStatusResult = {
+  reports: number;
+  openReports: number;
+  moderationCases: number;
+  currentStatus: string;
+};
 type ContentAvailabilityResult = {
   isAvailable: boolean;
   reason: string;
@@ -58,8 +72,8 @@ export class ContentService {
     private readonly contentRepository: ContentRepository,
     private readonly mediaService: MediaService,
     private readonly transcodingService: TranscodingService,
-    private readonly configService: ConfigService,
-    private readonly redisService: RedisService,
+    _configService: ConfigService,
+    _redisService: RedisService,
     private readonly contentFeedService: ContentFeedService,
     private readonly contentModerationService: ContentModerationService,
     private readonly contentRelationshipService: ContentRelationshipService,
@@ -67,7 +81,11 @@ export class ContentService {
     private readonly contentIngestionService: ContentIngestionService
   ) {}
 
-  private canModifyContent(userId: string, userRole: string | undefined, creatorId: string): boolean {
+  private canModifyContent(
+    userId: string,
+    userRole: string | undefined,
+    creatorId: string
+  ): boolean {
     return creatorId === userId || userRole === 'admin' || userRole === 'moderator';
   }
 
@@ -100,11 +118,15 @@ export class ContentService {
     return this.contentFeedService.getNewReleases(limit);
   }
 
-  async getFeaturedSlides(limit?: number): Promise<{ success: boolean; data: ContentWithUniverse[] }> {
+  async getFeaturedSlides(
+    limit?: number
+  ): Promise<{ success: boolean; data: ContentWithUniverse[] }> {
     return this.contentFeedService.getFeaturedSlides(limit);
   }
 
-  async getPopularInRegion(limit?: number): Promise<{ success: boolean; data: ContentWithUniverse[] }> {
+  async getPopularInRegion(
+    limit?: number
+  ): Promise<{ success: boolean; data: ContentWithUniverse[] }> {
     return this.contentFeedService.getPopularInRegion(limit);
   }
 
@@ -154,7 +176,13 @@ export class ContentService {
     relationshipType: string,
     userRole?: string
   ): Promise<{ success: boolean; data: ContentRelationshipWithContent }> {
-    return this.contentRelationshipService.addContentRelationship(userId, contentId, relatedContentId, relationshipType, userRole);
+    return this.contentRelationshipService.addContentRelationship(
+      userId,
+      contentId,
+      relatedContentId,
+      relationshipType,
+      userRole
+    );
   }
 
   async removeContentRelationship(
@@ -163,7 +191,12 @@ export class ContentService {
     relatedContentId: string,
     userRole?: string
   ): Promise<{ success: boolean; data: { message: string } }> {
-    return this.contentRelationshipService.removeContentRelationship(userId, contentId, relatedContentId, userRole);
+    return this.contentRelationshipService.removeContentRelationship(
+      userId,
+      contentId,
+      relatedContentId,
+      userRole
+    );
   }
 
   async getContentRelationships(contentId: string): Promise<{
@@ -211,7 +244,10 @@ export class ContentService {
     return this.contentCategoryService.getCategories();
   }
 
-  async createTag(name: string, description?: string): Promise<{ success: boolean; data: TagModel }> {
+  async createTag(
+    name: string,
+    description?: string
+  ): Promise<{ success: boolean; data: TagModel }> {
     return this.contentCategoryService.createTag(name, description);
   }
 
@@ -237,7 +273,12 @@ export class ContentService {
     categoryId: string,
     userRole?: string
   ): Promise<{ success: boolean; data: { message: string } }> {
-    return this.contentCategoryService.addCategoryToContent(userId, contentId, categoryId, userRole);
+    return this.contentCategoryService.addCategoryToContent(
+      userId,
+      contentId,
+      categoryId,
+      userRole
+    );
   }
 
   async removeCategoryFromContent(
@@ -246,7 +287,12 @@ export class ContentService {
     categoryId: string,
     userRole?: string
   ): Promise<{ success: boolean; data: { message: string } }> {
-    return this.contentCategoryService.removeCategoryFromContent(userId, contentId, categoryId, userRole);
+    return this.contentCategoryService.removeCategoryFromContent(
+      userId,
+      contentId,
+      categoryId,
+      userRole
+    );
   }
 
   async addTagToContent(
@@ -267,11 +313,15 @@ export class ContentService {
     return this.contentCategoryService.removeTagFromContent(userId, contentId, tagId, userRole);
   }
 
-  async getContentByCategory(categoryId: string): Promise<{ success: boolean; data: ContentWithUniverseCategories[] }> {
+  async getContentByCategory(
+    categoryId: string
+  ): Promise<{ success: boolean; data: ContentWithUniverseCategories[] }> {
     return this.contentCategoryService.getContentByCategory(categoryId);
   }
 
-  async getContentByTag(tagId: string): Promise<{ success: boolean; data: ContentWithUniverseTags[] }> {
+  async getContentByTag(
+    tagId: string
+  ): Promise<{ success: boolean; data: ContentWithUniverseTags[] }> {
     return this.contentCategoryService.getContentByTag(tagId);
   }
 
@@ -300,7 +350,13 @@ export class ContentService {
     clipStartTime: number,
     clipEndTime: number
   ): Promise<{ success: boolean; data: ContentWithUniverse }> {
-    return this.contentIngestionService.ingestClipContent(userId, createContentDto, parentContentId, clipStartTime, clipEndTime);
+    return this.contentIngestionService.ingestClipContent(
+      userId,
+      createContentDto,
+      parentContentId,
+      clipStartTime,
+      clipEndTime
+    );
   }
 
   async ingestEpisodeContent(
@@ -310,7 +366,13 @@ export class ContentService {
     episodeNumber: number,
     seriesId?: string
   ): Promise<{ success: boolean; data: ContentWithUniverse }> {
-    return this.contentIngestionService.ingestEpisodeContent(userId, createContentDto, seasonNumber, episodeNumber, seriesId);
+    return this.contentIngestionService.ingestEpisodeContent(
+      userId,
+      createContentDto,
+      seasonNumber,
+      episodeNumber,
+      seriesId
+    );
   }
 
   async ingestMovieContent(
@@ -336,7 +398,13 @@ export class ContentService {
     teams: string[],
     highlightType: string
   ): Promise<{ success: boolean; data: ContentWithUniverse }> {
-    return this.contentIngestionService.ingestSportsHighlightContent(userId, createContentDto, gameDate, teams, highlightType);
+    return this.contentIngestionService.ingestSportsHighlightContent(
+      userId,
+      createContentDto,
+      gameDate,
+      teams,
+      highlightType
+    );
   }
 
   async ingestCreatorUpload(
@@ -353,7 +421,13 @@ export class ContentService {
     filters?: { universe?: string; creatorId?: string; status?: string },
     page?: number,
     limit?: number
-  ): Promise<{ success: boolean; data: { items: ContentWithUniverse[]; pagination: { page: number; limit: number; total: number; totalPages: number } } }> {
+  ): Promise<{
+    success: boolean;
+    data: {
+      items: ContentWithUniverse[];
+      pagination: { page: number; limit: number; total: number; totalPages: number };
+    };
+  }> {
     try {
       const result = await this.contentRepository.findAll(filters, page || 1, limit || 20);
 
@@ -371,13 +445,16 @@ export class ContentService {
       };
     } catch (error) {
       this.logger.error(`Failed to list content: ${error}`);
-      return { success: false, error: { code: 'LIST_CONTENT_FAILED', message: 'Failed to list content' } } as never;
+      return {
+        success: false,
+        error: { code: 'LIST_CONTENT_FAILED', message: 'Failed to list content' },
+      } as never;
     }
   }
 
   async getContent(id: string): Promise<{ success: boolean; data: ContentWithAll }> {
     try {
-      const content = await this.contentRepository.findById(id) as ContentWithAll | null;
+      const content = (await this.contentRepository.findById(id)) as ContentWithAll | null;
 
       if (!content) {
         throw new NotFoundException(`Content not found`);
@@ -395,7 +472,10 @@ export class ContentService {
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
       this.logger.error(`Failed to get content: ${error}`);
-      return { success: false, error: { code: 'GET_CONTENT_FAILED', message: 'Failed to retrieve content' } } as never;
+      return {
+        success: false,
+        error: { code: 'GET_CONTENT_FAILED', message: 'Failed to retrieve content' },
+      } as never;
     }
   }
 
@@ -409,7 +489,10 @@ export class ContentService {
       };
     } catch (error) {
       this.logger.error(`Failed to search content: ${error}`);
-      return { success: false, error: { code: 'SEARCH_CONTENT_FAILED', message: 'Failed to search content' } } as never;
+      return {
+        success: false,
+        error: { code: 'SEARCH_CONTENT_FAILED', message: 'Failed to search content' },
+      } as never;
     }
   }
 
@@ -418,10 +501,10 @@ export class ContentService {
     createContentDto: CreateContentDto
   ): Promise<{ success: boolean; data: ContentWithUniverse }> {
     try {
-      const content = await this.contentRepository.create({
+      const content = (await this.contentRepository.create({
         ...createContentDto,
         creatorId: userId,
-      }) as ContentWithUniverse;
+      })) as ContentWithUniverse;
 
       return {
         success: true,
@@ -429,7 +512,10 @@ export class ContentService {
       };
     } catch (error) {
       this.logger.error(`Failed to create content: ${error}`);
-      return { success: false, error: { code: 'CREATE_CONTENT_FAILED', message: 'Failed to create content' } } as never;
+      return {
+        success: false,
+        error: { code: 'CREATE_CONTENT_FAILED', message: 'Failed to create content' },
+      } as never;
     }
   }
 
@@ -446,14 +532,14 @@ export class ContentService {
         throw new NotFoundException(`Content not found`);
       }
 
-      if (!this.canModifyContent(userId, userRole, content.creatorId)) {
+      if (!this.canModifyContent(userId, userRole, content.creatorId as string)) {
         throw new ForbiddenException('Not authorized to update this content');
       }
 
-      const updatedContent = await this.contentRepository.update(
+      const updatedContent = (await this.contentRepository.update(
         id,
         updateContentDto as Partial<Record<string, unknown>>
-      ) as ContentWithUniverse;
+      )) as ContentWithUniverse;
 
       return {
         success: true,
@@ -462,7 +548,10 @@ export class ContentService {
     } catch (error) {
       if (error instanceof NotFoundException || error instanceof ForbiddenException) throw error;
       this.logger.error(`Failed to update content: ${error}`);
-      return { success: false, error: { code: 'UPDATE_CONTENT_FAILED', message: 'Failed to update content' } } as never;
+      return {
+        success: false,
+        error: { code: 'UPDATE_CONTENT_FAILED', message: 'Failed to update content' },
+      } as never;
     }
   }
 
@@ -470,7 +559,7 @@ export class ContentService {
     userId: string,
     id: string,
     userRole?: string
-  ): Promise<{ success: boolean; data: { message: string } }> {
+  ): Promise<{ success: boolean; data?: { message: string }; error?: { code: string; message: string } }> {
     try {
       const content = await this.contentRepository.findById(id);
 
@@ -478,7 +567,7 @@ export class ContentService {
         throw new NotFoundException(`Content not found`);
       }
 
-      if (!this.canModifyContent(userId, userRole, content.creatorId)) {
+      if (!this.canModifyContent(userId, userRole, content.creatorId as string)) {
         throw new ForbiddenException('Not authorized to delete this content');
       }
 
@@ -490,7 +579,10 @@ export class ContentService {
     } catch (error) {
       if (error instanceof NotFoundException || error instanceof ForbiddenException) throw error;
       this.logger.error(`Failed to delete content: ${error}`);
-      return { success: false, error: { code: 'DELETE_CONTENT_FAILED', message: 'Failed to delete content' } };
+      return {
+        success: false,
+        error: { code: 'DELETE_CONTENT_FAILED', message: 'Failed to delete content' },
+      };
     }
   }
 
@@ -541,9 +633,17 @@ export class ContentService {
         data: publishedContent,
       };
     } catch (error) {
-      if (error instanceof NotFoundException || error instanceof ForbiddenException || error instanceof BadRequestException) throw error;
+      if (
+        error instanceof NotFoundException ||
+        error instanceof ForbiddenException ||
+        error instanceof BadRequestException
+      )
+        throw error;
       this.logger.error(`Failed to publish content: ${error}`);
-      return { success: false, error: { code: 'PUBLISH_CONTENT_FAILED', message: 'Failed to publish content' } } as never;
+      return {
+        success: false,
+        error: { code: 'PUBLISH_CONTENT_FAILED', message: 'Failed to publish content' },
+      } as never;
     }
   }
 
@@ -584,9 +684,17 @@ export class ContentService {
         data: unpublishedContent,
       };
     } catch (error) {
-      if (error instanceof NotFoundException || error instanceof ForbiddenException || error instanceof BadRequestException) throw error;
+      if (
+        error instanceof NotFoundException ||
+        error instanceof ForbiddenException ||
+        error instanceof BadRequestException
+      )
+        throw error;
       this.logger.error(`Failed to unpublish content: ${error}`);
-      return { success: false, error: { code: 'UNPUBLISH_CONTENT_FAILED', message: 'Failed to unpublish content' } } as never;
+      return {
+        success: false,
+        error: { code: 'UNPUBLISH_CONTENT_FAILED', message: 'Failed to unpublish content' },
+      } as never;
     }
   }
 
@@ -621,18 +729,26 @@ export class ContentService {
         data: {
           ...createMediaAssetDto,
           contentItemId: contentId,
-        } as Prisma.MediaAssetUncheckedCreateInput,
+        } as unknown as Prisma.MediaAssetCreateInput,
         include: { contentItem: true },
       });
 
       return {
         success: true,
-        data: mediaAsset,
+        data: mediaAsset as MediaAssetWithContentItem,
       };
     } catch (error) {
-      if (error instanceof NotFoundException || error instanceof ForbiddenException || error instanceof BadRequestException) throw error;
+      if (
+        error instanceof NotFoundException ||
+        error instanceof ForbiddenException ||
+        error instanceof BadRequestException
+      )
+        throw error;
       this.logger.error(`Failed to create media asset: ${error}`);
-      return { success: false, error: { code: 'CREATE_MEDIA_ASSET_FAILED', message: 'Failed to create media asset' } } as never;
+      return {
+        success: false,
+        error: { code: 'CREATE_MEDIA_ASSET_FAILED', message: 'Failed to create media asset' },
+      } as never;
     }
   }
 
@@ -668,7 +784,7 @@ export class ContentService {
         data: {
           ...updateMediaAssetDto,
           updatedAt: new Date(),
-        } as Prisma.MediaAssetUpdateInput,
+        } as Record<string, unknown>,
         include: { contentItem: true },
       });
 
@@ -679,7 +795,10 @@ export class ContentService {
     } catch (error) {
       if (error instanceof NotFoundException || error instanceof ForbiddenException) throw error;
       this.logger.error(`Failed to update media asset: ${error}`);
-      return { success: false, error: { code: 'UPDATE_MEDIA_ASSET_FAILED', message: 'Failed to update media asset' } } as never;
+      return {
+        success: false,
+        error: { code: 'UPDATE_MEDIA_ASSET_FAILED', message: 'Failed to update media asset' },
+      } as never;
     }
   }
 
@@ -720,7 +839,10 @@ export class ContentService {
     } catch (error) {
       if (error instanceof NotFoundException || error instanceof ForbiddenException) throw error;
       this.logger.error(`Failed to delete media asset: ${error}`);
-      return { success: false, error: { code: 'DELETE_MEDIA_ASSET_FAILED', message: 'Failed to delete media asset' } };
+      return {
+        success: false,
+        error: { code: 'DELETE_MEDIA_ASSET_FAILED', message: 'Failed to delete media asset' },
+      } as never;
     }
   }
 
@@ -754,22 +876,46 @@ export class ContentService {
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
       this.logger.error(`Failed to get media asset: ${error}`);
-      return { success: false, error: { code: 'GET_MEDIA_ASSET_FAILED', message: 'Failed to retrieve media asset' } } as never;
+      return {
+        success: false,
+        error: { code: 'GET_MEDIA_ASSET_FAILED', message: 'Failed to retrieve media asset' },
+      } as never;
     }
   }
 
   async getSignedMediaUrl(
-    userId: string,
+    _userId: string,
     contentId: string,
     expiresIn: number = 3600
-  ): Promise<{ success: boolean; data: { signedUrl: string; expiresIn: number; mediaAssetId: string } }> {
+  ): Promise<{
+    success: boolean;
+    data: { signedUrl: string; expiresIn: number; mediaAssetId: string };
+  }> {
     try {
       const mediaAsset = await this.prisma.mediaAsset.findUnique({
         where: { contentItemId: contentId },
       });
 
+      // Fallback to ContentItem.mediaUrl if no MediaAsset exists
       if (!mediaAsset) {
-        throw new NotFoundException(`Media asset not found`);
+        const content = await this.prisma.contentItem.findUnique({
+          where: { id: contentId },
+          select: { mediaUrl: true },
+        });
+
+        if (!content?.mediaUrl) {
+          throw new NotFoundException(`Media asset not found`);
+        }
+
+        const signedUrl = await this.mediaService.getMediaUrl(content.mediaUrl, expiresIn);
+        return {
+          success: true,
+          data: {
+            signedUrl,
+            expiresIn,
+            mediaAssetId: '',
+          },
+        };
       }
 
       const signedUrl = await this.mediaService.getMediaUrl(mediaAsset.originalUrl, expiresIn);
@@ -785,7 +931,10 @@ export class ContentService {
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
       this.logger.error(`Failed to get signed media url: ${error}`);
-      return { success: false, error: { code: 'GET_SIGNED_URL_FAILED', message: 'Failed to get signed media URL' } } as never;
+      return {
+        success: false,
+        error: { code: 'GET_SIGNED_URL_FAILED', message: 'Failed to get signed media URL' },
+      } as never;
     }
   }
 
@@ -829,7 +978,10 @@ export class ContentService {
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
       this.logger.error(`Failed to generate thumbnail: ${error}`);
-      return { success: false, error: { code: 'GENERATE_THUMBNAIL_FAILED', message: 'Failed to generate thumbnail' } } as never;
+      return {
+        success: false,
+        error: { code: 'GENERATE_THUMBNAIL_FAILED', message: 'Failed to generate thumbnail' },
+      } as never;
     }
   }
 
@@ -852,15 +1004,25 @@ export class ContentService {
     try {
       const result = await this.contentRepository.getComments(contentId, page || 1, limit || 20);
 
-      const items = result.data.map((c: { id: string; userId: string; text: string; createdAt: Date; userName?: string; content?: string; likes?: number }) => ({
-        id: c.id,
-        userId: c.userId,
-        userName: c.userName || 'Anonymous',
-        content: c.text || c.content || '',
-        timestamp: c.createdAt,
-        likes: c.likes || 0,
-        likedByCurrentUser: false,
-      }));
+      const items = result.data.map(
+        (c: {
+          id: string;
+          userId: string;
+          text: string;
+          createdAt: Date;
+          userName?: string;
+          content?: string;
+          likes?: number;
+        }) => ({
+          id: c.id,
+          userId: c.userId,
+          userName: c.userName || 'Anonymous',
+          content: c.text || c.content || '',
+          timestamp: c.createdAt,
+          likes: c.likes || 0,
+          likedByCurrentUser: false,
+        })
+      );
 
       return {
         success: true,
@@ -868,7 +1030,10 @@ export class ContentService {
       };
     } catch (error) {
       this.logger.error(`Failed to get content comments: ${error}`);
-      return { success: false, error: { code: 'GET_COMMENTS_FAILED', message: 'Failed to retrieve content comments' } } as never;
+      return {
+        success: false,
+        error: { code: 'GET_COMMENTS_FAILED', message: 'Failed to retrieve content comments' },
+      } as never;
     }
   }
 
@@ -876,7 +1041,10 @@ export class ContentService {
     userId: string,
     contentId: string,
     text: string
-  ): Promise<{ success: boolean; data: { id: string; contentId: string; userId: string; text: string; createdAt: Date } }> {
+  ): Promise<{
+    success: boolean;
+    data: { id: string; contentId: string; userId: string; text: string; createdAt: Date };
+  }> {
     try {
       const comment = await this.contentRepository.addComment(contentId, userId, text);
 
@@ -886,13 +1054,22 @@ export class ContentService {
       };
     } catch (error) {
       this.logger.error(`Failed to add comment to content: ${error}`);
-      return { success: false, error: { code: 'ADD_COMMENT_FAILED', message: 'Failed to add comment' } } as never;
+      return {
+        success: false,
+        error: { code: 'ADD_COMMENT_FAILED', message: 'Failed to add comment' },
+      } as never;
     }
   }
 
   async getContentAnalytics(contentId: string): Promise<{
     success: boolean;
-    data: { contentId: string; viewCount: number; likeCount: number; commentCount: number; watchTime: number };
+    data: {
+      contentId: string;
+      viewCount: number;
+      likeCount: number;
+      commentCount: number;
+      watchTime: number;
+    };
   }> {
     try {
       const analytics = await this.contentRepository.getAnalytics(contentId);
@@ -903,7 +1080,10 @@ export class ContentService {
       };
     } catch (error) {
       this.logger.error(`Failed to get content analytics: ${error}`);
-      return { success: false, error: { code: 'GET_ANALYTICS_FAILED', message: 'Failed to retrieve content analytics' } } as never;
+      return {
+        success: false,
+        error: { code: 'GET_ANALYTICS_FAILED', message: 'Failed to retrieve content analytics' },
+      } as never;
     }
   }
 
@@ -939,7 +1119,10 @@ export class ContentService {
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
       this.logger.error(`Failed to start transcoding: ${error}`);
-      return { success: false, error: { code: 'START_TRANSCODING_FAILED', message: 'Failed to start transcoding' } } as never;
+      return {
+        success: false,
+        error: { code: 'START_TRANSCODING_FAILED', message: 'Failed to start transcoding' },
+      } as never;
     }
   }
 
@@ -956,7 +1139,9 @@ export class ContentService {
         throw new NotFoundException(`Media asset not found`);
       }
 
-      const status = await this.transcodingService.getTranscodingJobStatus(jobId) as TranscodingStatusResult;
+      const status = (await this.transcodingService.getTranscodingJobStatus(
+        jobId
+      )) as TranscodingStatusResult;
 
       return {
         success: true,
@@ -965,7 +1150,13 @@ export class ContentService {
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
       this.logger.error(`Failed to get transcoding status: ${error}`);
-      return { success: false, error: { code: 'GET_TRANSCODING_STATUS_FAILED', message: 'Failed to get transcoding status' } } as never;
+      return {
+        success: false,
+        error: {
+          code: 'GET_TRANSCODING_STATUS_FAILED',
+          message: 'Failed to get transcoding status',
+        },
+      } as never;
     }
   }
 
@@ -1007,7 +1198,10 @@ export class ContentService {
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
       this.logger.error(`Failed to get transcoded media url: ${error}`);
-      return { success: false, error: { code: 'GET_TRANSCODED_URL_FAILED', message: 'Failed to get transcoded media URL' } } as never;
+      return {
+        success: false,
+        error: { code: 'GET_TRANSCODED_URL_FAILED', message: 'Failed to get transcoded media URL' },
+      } as never;
     }
   }
 
@@ -1068,18 +1262,27 @@ export class ContentService {
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
       this.logger.error(`Failed to check content availability: ${error}`);
-      return { success: false, error: { code: 'CHECK_AVAILABILITY_FAILED', message: 'Failed to check content availability' } } as never;
+      return {
+        success: false,
+        error: {
+          code: 'CHECK_AVAILABILITY_FAILED',
+          message: 'Failed to check content availability',
+        },
+      } as never;
     }
   }
 
   async getContentByWindow(
     windowType?: string,
     includeExpired = false
-  ): Promise<{ success: boolean; data: ContentWithUniverse[] | Record<string, ContentWithUniverse[]> }> {
+  ): Promise<{
+    success: boolean;
+    data: ContentWithUniverse[] | Record<string, ContentWithUniverse[]>;
+  }> {
     try {
       const now = new Date();
 
-      const where: Prisma.ContentItemWhereInput = {
+      const where: Record<string, unknown> = {
         status: 'published',
       };
 
@@ -1110,7 +1313,10 @@ export class ContentService {
       };
     } catch (error) {
       this.logger.error(`Failed to get content by window: ${error}`);
-      return { success: false, error: { code: 'GET_CONTENT_BY_WINDOW_FAILED', message: 'Failed to get content by window' } } as never;
+      return {
+        success: false,
+        error: { code: 'GET_CONTENT_BY_WINDOW_FAILED', message: 'Failed to get content by window' },
+      } as never;
     }
   }
 
@@ -1134,7 +1340,10 @@ export class ContentService {
       };
     } catch (error) {
       this.logger.error(`Failed to get premieres: ${error}`);
-      return { success: false, error: { code: 'GET_PREMIERES_FAILED', message: 'Failed to get premieres' } } as never;
+      return {
+        success: false,
+        error: { code: 'GET_PREMIERES_FAILED', message: 'Failed to get premieres' },
+      } as never;
     }
   }
 
@@ -1158,7 +1367,10 @@ export class ContentService {
       };
     } catch (error) {
       this.logger.error(`Failed to get exclusive content: ${error}`);
-      return { success: false, error: { code: 'GET_EXCLUSIVE_FAILED', message: 'Failed to get exclusive content' } } as never;
+      return {
+        success: false,
+        error: { code: 'GET_EXCLUSIVE_FAILED', message: 'Failed to get exclusive content' },
+      } as never;
     }
   }
 
@@ -1205,7 +1417,10 @@ export class ContentService {
     } catch (error) {
       if (error instanceof NotFoundException || error instanceof ForbiddenException) throw error;
       this.logger.error(`Failed to update content window: ${error}`);
-      return { success: false, error: { code: 'UPDATE_WINDOW_FAILED', message: 'Failed to update content window' } } as never;
+      return {
+        success: false,
+        error: { code: 'UPDATE_WINDOW_FAILED', message: 'Failed to update content window' },
+      } as never;
     }
   }
 }

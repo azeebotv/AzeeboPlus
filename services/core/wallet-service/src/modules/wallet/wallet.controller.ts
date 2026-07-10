@@ -64,7 +64,12 @@ export class WalletController {
     @Query('limit') limit = 20,
     @Query('cursor') cursor?: string
   ) {
-    const result = await this.walletService.getTransactions(req.user.id, Number(page), Number(limit), cursor);
+    const result = await this.walletService.getTransactions(
+      req.user.id,
+      Number(page),
+      Number(limit),
+      cursor
+    );
     const data = (result as { data: unknown }).data;
     if (Array.isArray(data)) {
       return ApiResponseWrapper.paginated(data, Number(page), Number(limit), data.length);
@@ -89,10 +94,7 @@ export class WalletController {
   @ApiResponse({ status: 201, description: 'Payment intent created' })
   @ApiResponse({ status: 400, description: 'Invalid input' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async fundWallet(
-    @Request() req: AuthenticatedRequest,
-    @Body() fundWalletDto: FundWalletDto
-  ) {
+  async fundWallet(@Request() req: AuthenticatedRequest, @Body() fundWalletDto: FundWalletDto) {
     const result = await this.walletService.initializeFunding(req.user.id, fundWalletDto);
     return ApiResponseWrapper.created((result as { data: unknown }).data);
   }
@@ -231,10 +233,7 @@ export class WalletController {
   @ApiResponse({ status: 200, description: 'Withdrawal initiated' })
   @ApiResponse({ status: 400, description: 'Invalid input or insufficient balance' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async withdraw(
-    @Request() req: AuthenticatedRequest,
-    @Body() withdrawDto: WithdrawWalletDto
-  ) {
+  async withdraw(@Request() req: AuthenticatedRequest, @Body() withdrawDto: WithdrawWalletDto) {
     const result = await this.walletService.withdraw(req.user.id, withdrawDto);
     return ApiResponseWrapper.success((result as { data: unknown }).data);
   }
@@ -246,10 +245,7 @@ export class WalletController {
   @ApiResponse({ status: 200, description: 'Transfer completed' })
   @ApiResponse({ status: 400, description: 'Invalid input or insufficient balance' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async transfer(
-    @Request() req: AuthenticatedRequest,
-    @Body() transferDto: TransferWalletDto
-  ) {
+  async transfer(@Request() req: AuthenticatedRequest, @Body() transferDto: TransferWalletDto) {
     const result = await this.walletService.transfer(req.user.id, transferDto);
     return ApiResponseWrapper.success((result as { data: unknown }).data);
   }
@@ -260,10 +256,7 @@ export class WalletController {
   @ApiResponse({ status: 200, description: 'Transaction details' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'Transaction not found' })
-  async getTransaction(
-    @Request() req: AuthenticatedRequest,
-    @Param('id') id: string
-  ) {
+  async getTransaction(@Request() req: AuthenticatedRequest, @Param('id') id: string) {
     const result = await this.walletService.getTransaction(req.user.id, id);
     return ApiResponseWrapper.success((result as { data: unknown }).data);
   }

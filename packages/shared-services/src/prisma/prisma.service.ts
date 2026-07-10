@@ -7,9 +7,10 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
 
   constructor() {
     super({
-      log: process.env.NODE_ENV === 'production'
-        ? ['error', 'warn']
-        : ['query', 'error', 'info', 'warn'],
+      log:
+        process.env.NODE_ENV === 'production'
+          ? ['error', 'warn']
+          : ['query', 'error', 'info', 'warn'],
     });
   }
 

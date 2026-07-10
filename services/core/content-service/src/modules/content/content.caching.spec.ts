@@ -1,12 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, CanActivate, ExecutionContext, NestInterceptor } from '@nestjs/common';
+import { INestApplication, CanActivate, ExecutionContext } from '@nestjs/common';
 import request from 'supertest';
 import { ContentController } from './content.controller';
 import { ContentService } from './content.service';
 import { AccessControlService } from './access-control.service';
 import { AuthGuard } from '@nestjs/passport';
 import { RateLimitGuard, AdminGuard } from '@azeebo/security';
-import { CacheInterceptor, CacheService } from '../../cache';
+import { CacheInterceptor } from '../../cache';
 
 class MockAuthGuard implements CanActivate {
   canActivate(context: ExecutionContext) {
@@ -109,7 +109,9 @@ describe('Content Service Caching Tests', () => {
       .overrideGuard(AdminGuard)
       .useClass(MockAdminGuard)
       .overrideInterceptor(CacheInterceptor)
-      .useValue({ intercept: (_ctx: ExecutionContext, next: { handle: () => unknown }) => next.handle() })
+      .useValue({
+        intercept: (_ctx: ExecutionContext, next: { handle: () => unknown }) => next.handle(),
+      })
       .compile();
 
     app = moduleFixture.createNestApplication();

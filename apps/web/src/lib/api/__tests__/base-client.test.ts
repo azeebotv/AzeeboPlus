@@ -6,25 +6,25 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 describe('gatewayPath()', () => {
   it('should return /api/ paths unchanged', async () => {
     vi.stubEnv('NEXT_PUBLIC_API_BASE_URL', 'http://test.api');
-    const { gatewayPath } = await import('../base');
+    const { gatewayPath } = await import('../base.js');
     expect(gatewayPath('/api/v1/content')).toBe('/api/v1/content');
   });
 
   it('should prepend /api to /v1/ paths', async () => {
     vi.stubEnv('NEXT_PUBLIC_API_BASE_URL', 'http://test.api');
-    const { gatewayPath } = await import('../base');
+    const { gatewayPath } = await import('../base.js');
     expect(gatewayPath('/v1/auth/login')).toBe('/api/v1/auth/login');
   });
 
   it('should prepend /api/v1 to bare paths', async () => {
     vi.stubEnv('NEXT_PUBLIC_API_BASE_URL', 'http://test.api');
-    const { gatewayPath } = await import('../base');
+    const { gatewayPath } = await import('../base.js');
     expect(gatewayPath('/content')).toBe('/api/v1/content');
   });
 
   it('should handle empty path', async () => {
     vi.stubEnv('NEXT_PUBLIC_API_BASE_URL', 'http://test.api');
-    const { gatewayPath } = await import('../base');
+    const { gatewayPath } = await import('../base.js');
     expect(gatewayPath('')).toBe('/api/v1');
   });
 });
@@ -44,16 +44,14 @@ describe('apiFetch — standalone fetch helper', () => {
       removeItem: vi.fn(),
     });
     // Re-import to pick up env
-    const mod = await import('../base');
+    const mod = await import('../base.js');
     apiFetch = mod.apiFetch;
   });
 
   describe('Authentication Headers', () => {
     it('should include Authorization header when token is in localStorage', async () => {
       vi.stubGlobal('localStorage', {
-        getItem: vi.fn((key: string) =>
-          key === 'azeebo_access_token' ? 'stored-token' : null
-        ),
+        getItem: vi.fn((key: string) => (key === 'azeebo_access_token' ? 'stored-token' : null)),
         setItem: vi.fn(),
         removeItem: vi.fn(),
       });
@@ -65,7 +63,7 @@ describe('apiFetch — standalone fetch helper', () => {
         json: async () => ({ success: true, data: { id: '1' } }),
       });
 
-      const { apiFetch: freshApiFetch } = await import('../base');
+      const { apiFetch: freshApiFetch } = await import('../base.js');
       await freshApiFetch('/api/v1/users/me');
 
       const headers = fetchMock.mock.calls[0][1].headers;
@@ -191,7 +189,11 @@ describe('apiFetch — standalone fetch helper', () => {
         ok: false,
         status: 409,
         headers: new Headers({ 'content-type': 'application/json' }),
-        json: async () => ({ success: false, message: 'Email already exists', code: 'EMAIL_EXISTS' }),
+        json: async () => ({
+          success: false,
+          message: 'Email already exists',
+          code: 'EMAIL_EXISTS',
+        }),
       });
 
       const result = await apiFetch('/api/v1/auth/signup', { method: 'POST', body: '{}' });
@@ -307,12 +309,14 @@ describe('apiFetch — standalone fetch helper', () => {
       const result = await apiFetch('/api/v1/auth/signup', { method: 'POST', body: '{}' });
 
       expect(result.success).toBe(false);
-      expect(result.status).toBe(400);
-      expect(result.type).toBe('https://api.azeebo.com/errors/validation');
-      expect(result.title).toBe('Validation Error');
-      expect(result.detail).toBe('The request body is invalid');
-      expect(result.instance).toBe('/api/v1/auth/signup');
-      expect(result.code).toBe('VALIDATION_ERROR');
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const r = result as any;
+      expect(r.status).toBe(400);
+      expect(r.type).toBe('https://api.azeebo.com/errors/validation');
+      expect(r.title).toBe('Validation Error');
+      expect(r.detail).toBe('The request body is invalid');
+      expect(r.instance).toBe('/api/v1/auth/signup');
+      expect(r.code).toBe('VALIDATION_ERROR');
     });
   });
 

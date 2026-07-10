@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { webLogger } from '@/lib/logger';
 import { apiFetch } from '@/lib/api';

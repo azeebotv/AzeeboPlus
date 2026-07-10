@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { createAdminMethods } from '../admin';
-import type { RequestClient, ApiResponse } from '../base';
+import type { RequestClient } from '../base';
 
 function createMockClient() {
   return {
@@ -31,7 +31,9 @@ describe('Admin API Methods', () => {
         newUsers: 120,
         newContent: 35,
         topCreators: [{ id: 'c1', name: 'Creator One', contentCount: 50, views: 100000 }],
-        recentActivity: [{ id: 'a1', action: 'content.published', user: 'User1', time: '2026-07-01' }],
+        recentActivity: [
+          { id: 'a1', action: 'content.published', user: 'User1', time: '2026-07-01' },
+        ],
       };
       client.request.mockResolvedValue({ success: true, data: dashboard });
 
@@ -47,7 +49,13 @@ describe('Admin API Methods', () => {
   // ── Users ──────────────────────────────────────────────────────────────
   describe('getUsers', () => {
     it('should fetch paginated users with defaults', async () => {
-      const paginated = { items: [{ id: 'u1', email: 'u1@test.com', name: 'User1', role: 'user' }], total: 100, page: 1, limit: 20, hasMore: true };
+      const paginated = {
+        items: [{ id: 'u1', email: 'u1@test.com', name: 'User1', role: 'user' }],
+        total: 100,
+        page: 1,
+        limit: 20,
+        hasMore: true,
+      };
       client.request.mockResolvedValue({ success: true, data: paginated });
 
       const result = await admin.getUsers();
@@ -58,7 +66,10 @@ describe('Admin API Methods', () => {
     });
 
     it('should fetch paginated users with custom page/limit', async () => {
-      client.request.mockResolvedValue({ success: true, data: { items: [], total: 0, page: 3, limit: 50, hasMore: false } });
+      client.request.mockResolvedValue({
+        success: true,
+        data: { items: [], total: 0, page: 3, limit: 50, hasMore: false },
+      });
 
       await admin.getUsers(3, 50);
 
@@ -69,7 +80,16 @@ describe('Admin API Methods', () => {
   // ── Content ────────────────────────────────────────────────────────────
   describe('getContent', () => {
     it('should fetch paginated content', async () => {
-      client.request.mockResolvedValue({ success: true, data: { items: [{ id: 'c1', title: 'Video 1' }], total: 50, page: 1, limit: 20, hasMore: true } });
+      client.request.mockResolvedValue({
+        success: true,
+        data: {
+          items: [{ id: 'c1', title: 'Video 1' }],
+          total: 50,
+          page: 1,
+          limit: 20,
+          hasMore: true,
+        },
+      });
 
       const result = await admin.getContent();
 
@@ -81,7 +101,10 @@ describe('Admin API Methods', () => {
   // ── Analytics ──────────────────────────────────────────────────────────
   describe('getAnalytics', () => {
     it('should fetch analytics without date filters', async () => {
-      client.request.mockResolvedValue({ success: true, data: { users: [], content: [], revenue: [] } });
+      client.request.mockResolvedValue({
+        success: true,
+        data: { users: [], content: [], revenue: [] },
+      });
 
       await admin.getAnalytics();
 
@@ -89,7 +112,10 @@ describe('Admin API Methods', () => {
     });
 
     it('should fetch analytics with start and end dates', async () => {
-      client.request.mockResolvedValue({ success: true, data: { users: [], content: [], revenue: [] } });
+      client.request.mockResolvedValue({
+        success: true,
+        data: { users: [], content: [], revenue: [] },
+      });
 
       await admin.getAnalytics('2026-01-01', '2026-06-30');
 
@@ -99,7 +125,10 @@ describe('Admin API Methods', () => {
     });
 
     it('should fetch analytics with only startDate', async () => {
-      client.request.mockResolvedValue({ success: true, data: { users: [], content: [], revenue: [] } });
+      client.request.mockResolvedValue({
+        success: true,
+        data: { users: [], content: [], revenue: [] },
+      });
 
       await admin.getAnalytics('2026-01-01');
 
@@ -123,7 +152,10 @@ describe('Admin API Methods', () => {
   // ── Wallet Management ─────────────────────────────────────────────────
   describe('getWallets', () => {
     it('should fetch paginated wallets', async () => {
-      client.request.mockResolvedValue({ success: true, data: { items: [], total: 0, page: 1, limit: 20, hasMore: false } });
+      client.request.mockResolvedValue({
+        success: true,
+        data: { items: [], total: 0, page: 1, limit: 20, hasMore: false },
+      });
 
       await admin.getWallets();
 
@@ -148,7 +180,10 @@ describe('Admin API Methods', () => {
   // ── Creator Management ────────────────────────────────────────────────
   describe('getCreators', () => {
     it('should fetch paginated creators', async () => {
-      client.request.mockResolvedValue({ success: true, data: { items: [], total: 0, page: 1, limit: 20, hasMore: false } });
+      client.request.mockResolvedValue({
+        success: true,
+        data: { items: [], total: 0, page: 1, limit: 20, hasMore: false },
+      });
 
       await admin.getCreators();
 
@@ -232,7 +267,10 @@ describe('Admin API Methods', () => {
   // ── Reality Shows ─────────────────────────────────────────────────────
   describe('getRealityShows', () => {
     it('should fetch paginated reality shows', async () => {
-      client.request.mockResolvedValue({ success: true, data: { items: [], total: 0, page: 1, limit: 20, hasMore: false } });
+      client.request.mockResolvedValue({
+        success: true,
+        data: { items: [], total: 0, page: 1, limit: 20, hasMore: false },
+      });
 
       await admin.getRealityShows();
 
@@ -256,7 +294,10 @@ describe('Admin API Methods', () => {
   // ── Content Review ────────────────────────────────────────────────────
   describe('getContentReviewQueue', () => {
     it('should fetch content review queue', async () => {
-      client.request.mockResolvedValue({ success: true, data: { items: [], total: 0, page: 1, limit: 20, hasMore: false } });
+      client.request.mockResolvedValue({
+        success: true,
+        data: { items: [], total: 0, page: 1, limit: 20, hasMore: false },
+      });
 
       await admin.getContentReviewQueue();
 
@@ -329,7 +370,10 @@ describe('Admin API Methods', () => {
   // ── Notification Management ───────────────────────────────────────────
   describe('getNotificationTemplates', () => {
     it('should fetch notification templates', async () => {
-      client.request.mockResolvedValue({ success: true, data: [{ id: 't1', name: 'Welcome Email' }] });
+      client.request.mockResolvedValue({
+        success: true,
+        data: [{ id: 't1', name: 'Welcome Email' }],
+      });
 
       await admin.getNotificationTemplates();
 
@@ -406,8 +450,11 @@ describe('Admin API Methods', () => {
       const report = {
         name: 'Monthly Revenue',
         category: 'financial',
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         metrics: [] as any[],
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         dimensions: [] as any[],
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         filters: [] as any[],
         dateField: 'createdAt',
         dateRange: '30d',
@@ -478,7 +525,11 @@ describe('Admin API Methods', () => {
 
   describe('createUniverse', () => {
     it('should create a new universe', async () => {
-      const universe = { name: 'afrobeats', displayName: 'Afrobeats', description: 'Music universe' };
+      const universe = {
+        name: 'afrobeats',
+        displayName: 'Afrobeats',
+        description: 'Music universe',
+      };
       client.request.mockResolvedValue({ success: true, data: { id: 'u2', ...universe } });
 
       await admin.createUniverse(universe);
@@ -492,7 +543,10 @@ describe('Admin API Methods', () => {
 
   describe('updateUniverse', () => {
     it('should update an existing universe', async () => {
-      client.request.mockResolvedValue({ success: true, data: { id: 'u1', displayName: 'Updated' } });
+      client.request.mockResolvedValue({
+        success: true,
+        data: { id: 'u1', displayName: 'Updated' },
+      });
 
       await admin.updateUniverse('u1', { displayName: 'Updated' });
 
@@ -549,9 +603,12 @@ describe('Admin API Methods', () => {
 
       await admin.deleteFeatureFlag('u1', 'live_streaming');
 
-      expect(client.request).toHaveBeenCalledWith('/api/v1/admin/universes/u1/feature-flags/live_streaming', {
-        method: 'DELETE',
-      });
+      expect(client.request).toHaveBeenCalledWith(
+        '/api/v1/admin/universes/u1/feature-flags/live_streaming',
+        {
+          method: 'DELETE',
+        }
+      );
     });
   });
 
@@ -564,7 +621,9 @@ describe('Admin API Methods', () => {
 
       const result = await admin.checkFeatureFlag('nollywood', 'live_streaming');
 
-      expect(client.request).toHaveBeenCalledWith('/api/v1/admin/universes/check/nollywood/live_streaming');
+      expect(client.request).toHaveBeenCalledWith(
+        '/api/v1/admin/universes/check/nollywood/live_streaming'
+      );
       expect(result.data!.isEnabled).toBe(true);
     });
   });
@@ -572,7 +631,10 @@ describe('Admin API Methods', () => {
   // ── System Settings ───────────────────────────────────────────────────
   describe('getAllSettings', () => {
     it('should fetch all system settings', async () => {
-      client.request.mockResolvedValue({ success: true, data: [{ key: 'max_upload_size', value: 100 }] });
+      client.request.mockResolvedValue({
+        success: true,
+        data: [{ key: 'max_upload_size', value: 100 }],
+      });
 
       await admin.getAllSettings();
 
@@ -612,7 +674,10 @@ describe('Admin API Methods', () => {
 
   describe('getSettingByKey', () => {
     it('should fetch a single setting by key', async () => {
-      client.request.mockResolvedValue({ success: true, data: { key: 'max_upload_size', value: 100 } });
+      client.request.mockResolvedValue({
+        success: true,
+        data: { key: 'max_upload_size', value: 100 },
+      });
 
       await admin.getSettingByKey('max_upload_size');
 
@@ -622,7 +687,10 @@ describe('Admin API Methods', () => {
 
   describe('getSettingValue', () => {
     it('should fetch a setting value', async () => {
-      client.request.mockResolvedValue({ success: true, data: { key: 'max_upload_size', value: 100 } });
+      client.request.mockResolvedValue({
+        success: true,
+        data: { key: 'max_upload_size', value: 100 },
+      });
 
       await admin.getSettingValue('max_upload_size');
 
@@ -646,7 +714,10 @@ describe('Admin API Methods', () => {
 
   describe('updateSetting', () => {
     it('should update an existing setting', async () => {
-      client.request.mockResolvedValue({ success: true, data: { key: 'max_upload_size', value: 200 } });
+      client.request.mockResolvedValue({
+        success: true,
+        data: { key: 'max_upload_size', value: 200 },
+      });
 
       await admin.updateSetting('max_upload_size', { value: 200 });
 
@@ -671,7 +742,10 @@ describe('Admin API Methods', () => {
 
   describe('bulkCreateSettings', () => {
     it('should bulk create settings', async () => {
-      const settings = [{ key: 'a', value: 1 }, { key: 'b', value: 2 }];
+      const settings = [
+        { key: 'a', value: 1 },
+        { key: 'b', value: 2 },
+      ];
       client.request.mockResolvedValue({ success: true, data: settings });
 
       await admin.bulkCreateSettings(settings);
@@ -685,7 +759,10 @@ describe('Admin API Methods', () => {
 
   describe('bulkUpdateSettings', () => {
     it('should bulk update settings', async () => {
-      const settings = [{ key: 'a', value: 10 }, { key: 'b', value: 20 }];
+      const settings = [
+        { key: 'a', value: 10 },
+        { key: 'b', value: 20 },
+      ];
       client.request.mockResolvedValue({ success: true, data: settings });
 
       await admin.bulkUpdateSettings(settings);
@@ -709,7 +786,10 @@ describe('Admin API Methods', () => {
     });
 
     it('should handle network errors gracefully', async () => {
-      client.request.mockResolvedValue({ success: false, message: 'Network error. Please check your connection.' });
+      client.request.mockResolvedValue({
+        success: false,
+        message: 'Network error. Please check your connection.',
+      });
 
       const result = await admin.getUsers();
 

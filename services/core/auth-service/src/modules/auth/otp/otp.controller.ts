@@ -6,7 +6,7 @@ import { OtpService } from './otp.service';
 import { RateLimitGuard } from '../../../common/guards/rate-limit.guard';
 
 interface OtpRequest {
-  user: { sub: string };
+  user: { sub: string; id: string };
   body: {
     userId?: string;
     phoneNumber?: string;

@@ -1,6 +1,6 @@
 import { Module, NestModule, MiddlewareConsumer, RequestMethod } from '@nestjs/common';
-import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
+import { APP_GUARD } from '@nestjs/core';
 import { DatabaseModule } from './database/database.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { UserManagementModule } from './modules/user-management/user-management.module';
@@ -55,7 +55,7 @@ export class AppModule implements NestModule {
         { path: 'api/health', method: RequestMethod.ALL },
         { path: '(.*)', method: RequestMethod.GET },
         { path: '(.*)', method: RequestMethod.HEAD },
-        { path: '(.*)', method: RequestMethod.OPTIONS },
+        { path: '(.*)', method: RequestMethod.OPTIONS }
       )
       .forRoutes('api');
   }

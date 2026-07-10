@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/context/AuthContext';
@@ -24,12 +24,19 @@ export default function AdminAuditLogsPage(): React.JSX.Element {
   const [filter, setFilter] = useState('all');
   const isEnabled = !authLoading && !!isAuthenticated && !!user && user.role === 'admin';
 
-  const { data: logs = [], isLoading, error } = useQuery({
+  const {
+    data: logs = [],
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ['admin', 'audit-logs', filter],
     queryFn: async () => {
       const params = new URLSearchParams();
       if (filter !== 'all') params.set('category', filter);
-      const response = await apiFetch<{ success: boolean; data: AuditLog[] | { items?: AuditLog[] } }>(`/admin/audit-logs?${params.toString()}`);
+      const response = await apiFetch<{
+        success: boolean;
+        data: AuditLog[] | { items?: AuditLog[] };
+      }>(`/admin/audit-logs?${params.toString()}`);
       if (response.success && response.data) {
         const data = response.data as AuditLog[] | { items?: AuditLog[] };
         return Array.isArray(data) ? data : data.items || [];
@@ -74,7 +81,15 @@ export default function AdminAuditLogsPage(): React.JSX.Element {
         <div className="az-glass" style={{ borderRadius: 16, overflow: 'hidden' }}>
           <div style={{ padding: 16 }}>
             {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} style={{ display: 'flex', gap: 16, padding: '12px 0', borderBottom: '1px solid #1A0A0A' }}>
+              <div
+                key={i}
+                style={{
+                  display: 'flex',
+                  gap: 16,
+                  padding: '12px 0',
+                  borderBottom: '1px solid #1A0A0A',
+                }}
+              >
                 <Skeleton width="120px" height="14px" />
                 <Skeleton width="80px" height="14px" />
                 <Skeleton width="100px" height="14px" />
@@ -85,7 +100,11 @@ export default function AdminAuditLogsPage(): React.JSX.Element {
           </div>
         </div>
       ) : error ? (
-        <ErrorState title="Failed to load audit logs" description="Please try again later" onButtonPress={() => router.refresh()} />
+        <ErrorState
+          title="Failed to load audit logs"
+          description="Please try again later"
+          onButtonPress={() => router.refresh()}
+        />
       ) : (
         <div className="az-glass" style={{ borderRadius: 16, overflow: 'hidden' }}>
           <div style={{ overflowX: 'auto' }}>
@@ -116,7 +135,7 @@ export default function AdminAuditLogsPage(): React.JSX.Element {
                     style={{ borderBottom: '1px solid #1A0A0A' }}
                   >
                     <td style={{ padding: '10px 16px', color: '#6B5A4A', whiteSpace: 'nowrap' }}>
-                      {new Date(log.timestamp || log.createdAt).toLocaleString()}
+                      {new Date(log.timestamp || log.createdAt || '').toLocaleString()}
                     </td>
                     <td style={{ padding: '10px 16px', fontWeight: 500 }}>
                       {log.username || log.userId}

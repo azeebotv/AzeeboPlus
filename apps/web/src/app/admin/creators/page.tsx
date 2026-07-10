@@ -1,5 +1,4 @@
 'use client';
-import React from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/context/AuthContext';
@@ -22,7 +21,11 @@ export default function AdminCreatorsPage(): React.JSX.Element {
   const { isAuthenticated, user, isLoading: authLoading } = useAuth();
   const isEnabled = !authLoading && !!isAuthenticated && !!user && user.role === 'admin';
 
-  const { data: creators = [], isLoading, error } = useQuery({
+  const {
+    data: creators = [],
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ['admin', 'creators'],
     queryFn: async () => {
       const response = await api.admin.getCreators();
@@ -41,7 +44,13 @@ export default function AdminCreatorsPage(): React.JSX.Element {
       <p style={{ color: '#9A8A7A', marginBottom: 24 }}>{creators.length} registered creators</p>
 
       {isLoading ? (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16 }}>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+            gap: 16,
+          }}
+        >
           {Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className="az-glass" style={{ padding: 20, borderRadius: 16 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
@@ -57,17 +66,51 @@ export default function AdminCreatorsPage(): React.JSX.Element {
           ))}
         </div>
       ) : error ? (
-        <ErrorState title="Failed to load creators" description="Please try again later" onButtonPress={() => router.refresh()} />
+        <ErrorState
+          title="Failed to load creators"
+          description="Please try again later"
+          onButtonPress={() => router.refresh()}
+        />
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16 }}>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+            gap: 16,
+          }}
+        >
           {creators.map((creator) => (
             <div key={creator.id} className="az-glass" style={{ padding: 20, borderRadius: 16 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
-                <div style={{ width: 48, height: 48, borderRadius: '50%', overflow: 'hidden', border: '2px solid #E8420A' }}>
+                <div
+                  style={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: '50%',
+                    overflow: 'hidden',
+                    border: '2px solid #E8420A',
+                  }}
+                >
                   {creator.avatar ? (
-                    <img src={creator.avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <img
+                      src={creator.avatar}
+                      alt=""
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
                   ) : (
-                    <div style={{ width: '100%', height: '100%', backgroundColor: '#2A1A1A', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 700, color: '#E8420A' }}>
+                    <div
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        backgroundColor: '#2A1A1A',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: 18,
+                        fontWeight: 700,
+                        color: '#E8420A',
+                      }}
+                    >
                       {creator.username?.charAt(0).toUpperCase()}
                     </div>
                   )}
@@ -82,14 +125,27 @@ export default function AdminCreatorsPage(): React.JSX.Element {
                 <span>{creator.subscriberCount || 0} subs</span>
               </div>
               <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-                <span style={{ padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 600, backgroundColor: creator.isApproved ? 'rgba(13,59,46,0.2)' : 'rgba(245,158,11,0.2)', color: creator.isApproved ? '#0D3B2E' : '#F59E0B' }}>
+                <span
+                  style={{
+                    padding: '3px 10px',
+                    borderRadius: 999,
+                    fontSize: 11,
+                    fontWeight: 600,
+                    backgroundColor: creator.isApproved
+                      ? 'rgba(13,59,46,0.2)'
+                      : 'rgba(245,158,11,0.2)',
+                    color: creator.isApproved ? '#0D3B2E' : '#F59E0B',
+                  }}
+                >
                   {creator.isApproved ? 'Approved' : 'Pending'}
                 </span>
               </div>
             </div>
           ))}
           {creators.length === 0 && (
-            <p style={{ textAlign: 'center', padding: 40, color: '#9A8A7A', gridColumn: '1/-1' }}>No creators found</p>
+            <p style={{ textAlign: 'center', padding: 40, color: '#9A8A7A', gridColumn: '1/-1' }}>
+              No creators found
+            </p>
           )}
         </div>
       )}

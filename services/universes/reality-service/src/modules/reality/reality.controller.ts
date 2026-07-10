@@ -16,7 +16,7 @@ import { RateLimitGuard, RateLimit, AdminGuard } from '@azeebo/security';
 
 import { RealityService } from './reality.service';
 import { RealityResponse } from './interfaces/reality-response.interface';
-import { RolesGuard, Roles, Pagination } from '@azeebo/shared-services';
+import { RolesGuard, Roles } from '@azeebo/shared-services';
 import { CastVoteDto, BuyVoteDto, MakePredictionDto } from './dto/vote.dto';
 import {
   CreateShowDto,
@@ -202,7 +202,7 @@ export class RealityController {
     @Param('showId') showId: string,
     @Body() body: { contestantId: string }
   ): Promise<RealityResponse> {
-    return this.realityService.submitVote(req.user.id, {
+    return this.realityService.submitVote(req.user.sub, {
       contestantId: body.contestantId,
       showId,
     });
@@ -218,7 +218,7 @@ export class RealityController {
     @Request() req: { user: { sub: string } },
     @Body() body: CastVoteDto
   ): Promise<RealityResponse> {
-    return this.realityService.submitVote(req.user.id, body);
+    return this.realityService.submitVote(req.user.sub, body);
   }
 
   @Post('votes/quantity')
@@ -230,7 +230,7 @@ export class RealityController {
     @Request() req: { user: { sub: string } },
     @Body() body: BuyVoteDto
   ): Promise<RealityResponse> {
-    return this.realityService.submitVotesWithQuantity(req.user.id, body);
+    return this.realityService.submitVotesWithQuantity(req.user.sub, body);
   }
 
   @Post('supervotes')
@@ -243,7 +243,7 @@ export class RealityController {
     @Request() req: { user: { sub: string } },
     @Body() body: CastVoteDto
   ): Promise<RealityResponse> {
-    return this.realityService.submitSupervote(req.user.id, body);
+    return this.realityService.submitSupervote(req.user.sub, body);
   }
 
   @Post('predictions')
@@ -256,7 +256,7 @@ export class RealityController {
     @Request() req: { user: { sub: string } },
     @Body() body: MakePredictionDto
   ): Promise<RealityResponse> {
-    return this.realityService.submitPrediction(req.user.id, body);
+    return this.realityService.submitPrediction(req.user.sub, body);
   }
 
   @Get('predictions/:showId')
@@ -268,13 +268,13 @@ export class RealityController {
     @Request() req: { user: { sub: string } },
     @Param('showId') showId: string
   ): Promise<RealityResponse> {
-    return this.realityService.getPredictionDashboard(req.user.id, showId);
+    return this.realityService.getPredictionDashboard(req.user.sub, showId);
   }
 
   @Get('clips')
   @ApiOperation({ summary: 'Get reality clips feed' })
   @ApiResponse({ status: 200, description: 'Clips feed' })
-  async getClips(@Query('showId') showId?: string, @Pagination() pagination?: { page: number; limit: number }): Promise<RealityResponse> {
+  async getClips(@Query('showId') showId?: string): Promise<RealityResponse> {
     return this.realityService.getClips(showId);
   }
 
@@ -283,7 +283,7 @@ export class RealityController {
   @ApiOperation({ summary: 'Get wallet balance for voting' })
   @ApiResponse({ status: 200, description: 'Wallet balance' })
   async getWalletBalance(@Request() req: { user: { sub: string } }): Promise<RealityResponse> {
-    return this.realityService.getWalletBalance(req.user.id);
+    return this.realityService.getWalletBalance(req.user.sub);
   }
 
   @Get('pricing')
@@ -308,7 +308,7 @@ export class RealityController {
     @Request() req: { user: { sub: string } },
     @Param('extraId') extraId: string
   ): Promise<RealityResponse> {
-    return this.realityService.purchasePremiumExtra(req.user.id, extraId);
+    return this.realityService.purchasePremiumExtra(req.user.sub, extraId);
   }
 
   @Post('rewards/:showId/confirm')
@@ -319,7 +319,7 @@ export class RealityController {
     @Request() req: { user: { sub: string } },
     @Param('showId') showId: string
   ): Promise<RealityResponse> {
-    return this.realityService.confirmReward(req.user.id, showId);
+    return this.realityService.confirmReward(req.user.sub, showId);
   }
 
   @Get('admin/dashboard')

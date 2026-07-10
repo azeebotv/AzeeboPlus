@@ -48,7 +48,9 @@ export class AnalyticsController {
   @ApiOperation({ summary: 'Get user analytics summary' })
   @ApiResponse({ status: 200, description: 'User analytics' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getUserSummary(@Request() req: { user: { sub: string } }): Promise<AnalyticsResponse> {
+  async getUserSummary(
+    @Request() req: { user: { sub: string; id: string } }
+  ): Promise<AnalyticsResponse> {
     return this.analyticsService.getUserSummary(req.user.id);
   }
 
@@ -94,9 +96,7 @@ export class AnalyticsController {
   @ApiResponse({ status: 200, description: 'Universe KPIs' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 400, description: 'Invalid universe name' })
-  async getUniverseKpis(
-    @Param('universeName') universeName: string
-  ): Promise<AnalyticsResponse> {
+  async getUniverseKpis(@Param('universeName') universeName: string): Promise<AnalyticsResponse> {
     return this.analyticsService.getUniverseKpis(universeName);
   }
 
@@ -159,7 +159,7 @@ export class AnalyticsController {
   @ApiOperation({ summary: 'Track single event' })
   @ApiResponse({ status: 200, description: 'Event tracked' })
   async trackEvent(
-    @Request() req: { user: { sub: string } },
+    @Request() req: { user: { sub: string; id: string } },
     @Body() body: { type: string; metadata?: Record<string, unknown> }
   ): Promise<unknown> {
     const userId = req.user?.sub;
@@ -173,7 +173,7 @@ export class AnalyticsController {
   @ApiOperation({ summary: 'Track batch events' })
   @ApiResponse({ status: 200, description: 'Events tracked' })
   async trackBatch(
-    @Request() req: { user: { sub: string } },
+    @Request() req: { user: { sub: string; id: string } },
     @Body()
     body: {
       events: Array<{ type: string; metadata?: Record<string, unknown> }>;

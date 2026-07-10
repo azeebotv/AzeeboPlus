@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useState, useEffect, useCallback } from 'react';
+import { useRef, useState, useEffect, useCallback } from 'react';
 import ContentCard from './ContentCard';
 import type { ContentItem } from '@/lib/api';
 import analytics from '@/lib/analytics';

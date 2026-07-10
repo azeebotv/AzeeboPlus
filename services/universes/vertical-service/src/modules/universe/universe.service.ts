@@ -380,6 +380,7 @@ export class UniverseService {
   async getCategories(): Promise<
     ListResponse<{ id: string; name: string; slug: string; description: string; icon?: string }>
   > {
+    // Categories are not stored in this service's database; return default categories
     const categories = [
       {
         id: 'sports',

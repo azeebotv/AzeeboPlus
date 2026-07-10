@@ -2,8 +2,8 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { createWalletMethods } from '../wallet';
 import type { RequestClient } from '../base';
 
-function createMockClient(): RequestClient & { request: ReturnType<typeof vi.fn> } {
-  return { request: vi.fn() };
+function createMockClient() {
+  return { request: vi.fn() } as unknown as RequestClient & { request: ReturnType<typeof vi.fn> };
 }
 
 describe('Wallet API Methods', () => {
@@ -29,7 +29,10 @@ describe('Wallet API Methods', () => {
 
   describe('getTransactions', () => {
     it('should GET /api/v1/wallet/transactions with default pagination', async () => {
-      client.request.mockResolvedValue({ success: true, data: { items: [], total: 0, page: 1, limit: 20, hasMore: false } });
+      client.request.mockResolvedValue({
+        success: true,
+        data: { items: [], total: 0, page: 1, limit: 20, hasMore: false },
+      });
 
       await wallet.getTransactions();
 
@@ -37,7 +40,10 @@ describe('Wallet API Methods', () => {
     });
 
     it('should support custom pagination', async () => {
-      client.request.mockResolvedValue({ success: true, data: { items: [], total: 0, page: 2, limit: 10, hasMore: false } });
+      client.request.mockResolvedValue({
+        success: true,
+        data: { items: [], total: 0, page: 2, limit: 10, hasMore: false },
+      });
 
       await wallet.getTransactions(2, 10);
 
@@ -60,13 +66,19 @@ describe('Wallet API Methods', () => {
 
   describe('withdraw', () => {
     it('should POST to /api/v1/wallet/withdraw', async () => {
-      client.request.mockResolvedValue({ success: true, data: { message: 'Withdrawal initiated' } });
+      client.request.mockResolvedValue({
+        success: true,
+        data: { message: 'Withdrawal initiated' },
+      });
 
       await wallet.withdraw(500, { bankCode: '001', accountNumber: '1234567890' });
 
       expect(client.request).toHaveBeenCalledWith('/api/v1/wallet/withdraw', {
         method: 'POST',
-        body: JSON.stringify({ amount: 500, bankDetails: { bankCode: '001', accountNumber: '1234567890' } }),
+        body: JSON.stringify({
+          amount: 500,
+          bankDetails: { bankCode: '001', accountNumber: '1234567890' },
+        }),
       });
     });
   });
@@ -86,7 +98,14 @@ describe('Wallet API Methods', () => {
 
   describe('getTransaction', () => {
     it('should GET /api/v1/wallet/transactions/:id', async () => {
-      const mockTx = { id: 'tx-1', type: 'credit' as const, amount: 100, currency: 'NGN', status: 'completed' as const, createdAt: '2024-01-01' };
+      const mockTx = {
+        id: 'tx-1',
+        type: 'credit' as const,
+        amount: 100,
+        currency: 'NGN',
+        status: 'completed' as const,
+        createdAt: '2024-01-01',
+      };
       client.request.mockResolvedValue({ success: true, data: mockTx });
 
       const result = await wallet.getTransaction('tx-1');
@@ -98,7 +117,11 @@ describe('Wallet API Methods', () => {
 
   describe('getEarnings', () => {
     it('should GET /api/v1/wallet/earnings with range param', async () => {
-      const mockEarnings = { totalEarnings: 10000, pendingEarnings: 2000, withdrawableBalance: 8000 };
+      const mockEarnings = {
+        totalEarnings: 10000,
+        pendingEarnings: 2000,
+        withdrawableBalance: 8000,
+      };
       client.request.mockResolvedValue({ success: true, data: mockEarnings });
 
       await wallet.getEarnings({ range: '30d' });

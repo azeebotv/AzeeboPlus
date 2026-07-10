@@ -6,7 +6,7 @@ import { useAuth } from '@/context/AuthContext';
 import { api } from '@/lib/api';
 import AppHeader from '@/components/layout/AppHeader';
 import AppFooter from '@/components/layout/AppFooter';
-import { Skeleton, ErrorState } from '@azeebo/ui/web';
+import { Skeleton } from '@azeebo/ui/web';
 
 interface CreatorProfile {
   displayName: string;
@@ -27,7 +27,13 @@ export default function CreatorProfilePage(): React.JSX.Element {
     queryFn: async () => {
       const response = await api.user.getProfile();
       if (response.success && response.data) {
-        const d = response.data as { displayName?: string; name?: string; bio?: string; avatar?: string; socialLinks?: { youtube?: string; twitter?: string; instagram?: string } };
+        const d = response.data as {
+          displayName?: string;
+          name?: string;
+          bio?: string;
+          avatar?: string;
+          socialLinks?: { youtube?: string; twitter?: string; instagram?: string };
+        };
         return {
           displayName: d.displayName || d.name || '',
           bio: d.bio || '',
@@ -35,13 +41,24 @@ export default function CreatorProfilePage(): React.JSX.Element {
           socialLinks: d.socialLinks || { youtube: '', twitter: '', instagram: '' },
         } as CreatorProfile;
       }
-      return { displayName: '', bio: '', avatar: '', socialLinks: { youtube: '', twitter: '', instagram: '' } } as CreatorProfile;
+      return {
+        displayName: '',
+        bio: '',
+        avatar: '',
+        socialLinks: { youtube: '', twitter: '', instagram: '' },
+      } as CreatorProfile;
     },
     enabled: isEnabled,
   });
 
   const [editProfile, setEditProfile] = useState<CreatorProfile | null>(null);
-  const form = editProfile || profile || { displayName: '', bio: '', avatar: '', socialLinks: { youtube: '', twitter: '', instagram: '' } };
+  const form = editProfile ||
+    profile || {
+      displayName: '',
+      bio: '',
+      avatar: '',
+      socialLinks: { youtube: '', twitter: '', instagram: '' },
+    };
 
   const saveMutation = useMutation({
     mutationFn: (data: CreatorProfile) => api.user.updateProfile(data),
@@ -59,7 +76,15 @@ export default function CreatorProfilePage(): React.JSX.Element {
     return (
       <div style={{ backgroundColor: '#1A0A0A', minHeight: '100vh', color: '#F5F0EB' }}>
         <AppHeader />
-        <main style={{ paddingTop: 100, paddingBottom: 60, maxWidth: 700, margin: '0 auto', padding: '100px 24px 60px' }}>
+        <main
+          style={{
+            paddingTop: 100,
+            paddingBottom: 60,
+            maxWidth: 700,
+            margin: '0 auto',
+            padding: '100px 24px 60px',
+          }}
+        >
           <div style={{ marginBottom: 32 }}>
             <Skeleton width="120px" height="20px" className="mb-4" />
             <Skeleton width="200px" height="32px" />
@@ -128,7 +153,9 @@ export default function CreatorProfilePage(): React.JSX.Element {
               </label>
               <input
                 value={form.displayName}
-                onChange={(e) => setEditProfile({ ...(editProfile || profile!), displayName: e.target.value })}
+                onChange={(e) =>
+                  setEditProfile({ ...(editProfile || profile!), displayName: e.target.value })
+                }
                 style={{
                   width: '100%',
                   padding: '12px 16px',
@@ -154,7 +181,9 @@ export default function CreatorProfilePage(): React.JSX.Element {
               </label>
               <textarea
                 value={form.bio}
-                onChange={(e) => setEditProfile({ ...(editProfile || profile!), bio: e.target.value })}
+                onChange={(e) =>
+                  setEditProfile({ ...(editProfile || profile!), bio: e.target.value })
+                }
                 rows={4}
                 style={{
                   width: '100%',
@@ -185,7 +214,10 @@ export default function CreatorProfilePage(): React.JSX.Element {
                 onChange={(e) =>
                   setEditProfile({
                     ...(editProfile || profile!),
-                    socialLinks: { ...(editProfile || profile!).socialLinks, youtube: e.target.value },
+                    socialLinks: {
+                      ...(editProfile || profile!).socialLinks,
+                      youtube: e.target.value,
+                    },
                   })
                 }
                 placeholder="https://youtube.com/@..."
@@ -217,7 +249,10 @@ export default function CreatorProfilePage(): React.JSX.Element {
                 onChange={(e) =>
                   setEditProfile({
                     ...(editProfile || profile!),
-                    socialLinks: { ...(editProfile || profile!).socialLinks, twitter: e.target.value },
+                    socialLinks: {
+                      ...(editProfile || profile!).socialLinks,
+                      twitter: e.target.value,
+                    },
                   })
                 }
                 placeholder="https://twitter.com/..."
@@ -249,7 +284,10 @@ export default function CreatorProfilePage(): React.JSX.Element {
                 onChange={(e) =>
                   setEditProfile({
                     ...(editProfile || profile!),
-                    socialLinks: { ...(editProfile || profile!).socialLinks, instagram: e.target.value },
+                    socialLinks: {
+                      ...(editProfile || profile!).socialLinks,
+                      instagram: e.target.value,
+                    },
                   })
                 }
                 placeholder="https://instagram.com/..."

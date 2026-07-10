@@ -17,10 +17,10 @@ import { UserDeletionController } from '../user/user-deletion.controller';
     CacheModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_ACCESS_SECRET'),
+      useFactory: (configService: ConfigService) => ({
+        secret: configService.get<string>('JWT_ACCESS_SECRET') || '',
         signOptions: {
-          expiresIn: configService.get('JWT_EXPIRES_IN', '30m') as string | number,
+          expiresIn: configService.get('JWT_EXPIRES_IN', '30m') as any,
         },
       }),
       inject: [ConfigService],

@@ -57,7 +57,6 @@ export class ReferralService {
     }
 
     const maxRetries = 3;
-    let lastError: unknown;
 
     for (let attempt = 0; attempt < maxRetries; attempt++) {
       const code = this.generateCode();
@@ -90,14 +89,15 @@ export class ReferralService {
         };
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-          lastError = error;
           continue;
         }
         throw error;
       }
     }
 
-    throw new BadRequestException('Failed to generate unique referral code after multiple attempts');
+    throw new BadRequestException(
+      'Failed to generate unique referral code after multiple attempts'
+    );
   }
 
   async applyReferralCode(

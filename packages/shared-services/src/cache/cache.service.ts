@@ -163,7 +163,9 @@ export class CacheService {
       }
       return value;
     } catch (error) {
-      this.logger.error(`Cache GET_OR_SET fetcher error for key ${key}: ${(error as Error).message}`);
+      this.logger.error(
+        `Cache GET_OR_SET fetcher error for key ${key}: ${(error as Error).message}`
+      );
       return null;
     }
   }

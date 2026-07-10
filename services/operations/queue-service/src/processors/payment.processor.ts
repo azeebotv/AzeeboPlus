@@ -19,8 +19,6 @@ export interface PaymentJobData {
 export class PaymentProcessor extends WorkerHost {
   private readonly logger = new Logger(PaymentProcessor.name);
   private static readonly DEFAULT_MAX_RETRIES = 5;
-  private static readonly DEFAULT_RETRY_DELAY = 10000; // 10 seconds
-  private static readonly BACKOFF_MULTIPLIER = 2;
 
   constructor(
     private readonly paystackProvider: PaystackProvider,
@@ -51,7 +49,7 @@ export class PaymentProcessor extends WorkerHost {
       }
 
       this.logger.log(`Payment processed: ${transactionId}`);
-    } catch (_err) {
+    } catch (error) {
       this.logger.error(
         `Failed to process payment (attempt ${job.attemptsMade + 1}/${PaymentProcessor.DEFAULT_MAX_RETRIES}): ${(error as Error).message}`,
         { jobId: job.id, transactionId, userId, type, provider }
@@ -66,7 +64,7 @@ export class PaymentProcessor extends WorkerHost {
     amount: number,
     currency: string,
     provider: string,
-    metadata?: Record<string, string>
+    _metadata?: Record<string, string>
   ): Promise<void> {
     this.logger.debug(`Processing charge ${transactionId} for ${userId}: ${amount} ${currency}`);
     const paymentProvider =

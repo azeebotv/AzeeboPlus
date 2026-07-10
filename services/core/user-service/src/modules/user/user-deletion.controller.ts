@@ -36,12 +36,12 @@ export class UserDeletionController {
     @Req() req: Request & { user: { sub: string; role: string; email: string } }
   ) {
     this.logger.log('Data deletion requested', {
-      userId: req.user.id,
+      userId: req.user.sub,
       reason: body.reason,
       ipAddress: req.ip,
     });
 
-    const result = await this.userService.scheduleDataDeletion(req.user.id, body.reason);
+    const result = await this.userService.scheduleDataDeletion(req.user.sub, body.reason);
 
     return {
       success: true,
@@ -60,7 +60,7 @@ export class UserDeletionController {
     @Param('userId') userId: string,
     @Req() req: Request & { user: { sub: string; role: string; email: string } }
   ) {
-    if (req.user.id !== userId && req.user.role !== 'admin') {
+    if (req.user.sub !== userId && req.user.role !== 'admin') {
       throw new ForbiddenException('You can only delete your own data');
     }
     this.logger.log('User data deletion confirmed', {
@@ -87,7 +87,7 @@ export class UserDeletionController {
     @Param('userId') userId: string,
     @Req() req: Request & { user: { sub: string; role: string; email: string } }
   ) {
-    if (req.user.id !== userId && req.user.role !== 'admin') {
+    if (req.user.sub !== userId && req.user.role !== 'admin') {
       throw new ForbiddenException('You can only export your own data');
     }
     this.logger.log('User data export requested', {
@@ -114,7 +114,7 @@ export class UserDeletionController {
     @Param('userId') userId: string,
     @Req() req: Request & { user: { sub: string; role: string; email: string } }
   ) {
-    if (req.user.id !== userId && req.user.role !== 'admin') {
+    if (req.user.sub !== userId && req.user.role !== 'admin') {
       throw new ForbiddenException('You can only check your own deletion status');
     }
     const status = await this.userService.getDeletionStatus(userId);

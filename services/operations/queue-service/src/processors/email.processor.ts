@@ -16,8 +16,6 @@ export interface EmailJobData {
 export class EmailProcessor extends WorkerHost {
   private readonly logger = new Logger(EmailProcessor.name);
   private static readonly DEFAULT_MAX_RETRIES = 3;
-  private static readonly DEFAULT_RETRY_DELAY = 60000; // 1 minute
-  private static readonly BACKOFF_MULTIPLIER = 2;
 
   constructor(private readonly emailService: EmailService) {
     super();
@@ -66,7 +64,12 @@ export class EmailProcessor extends WorkerHost {
   onFailed(job: Job, error: Error) {
     this.logger.error(
       `Email job ${job.id} failed after ${job.attemptsMade + 1} attempts: ${(error as Error).message}`,
-      { jobId: job.id, to: job.data.to, error: (error as Error).message, attemptsMade: job.attemptsMade }
+      {
+        jobId: job.id,
+        to: job.data.to,
+        error: (error as Error).message,
+        attemptsMade: job.attemptsMade,
+      }
     );
   }
 

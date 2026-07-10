@@ -2,8 +2,8 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { createContentMethods } from '../content';
 import type { RequestClient } from '../base';
 
-function createMockClient(): RequestClient & { request: ReturnType<typeof vi.fn> } {
-  return { request: vi.fn() };
+function createMockClient() {
+  return { request: vi.fn() } as unknown as RequestClient & { request: ReturnType<typeof vi.fn> };
 }
 
 describe('Content API Methods', () => {
@@ -17,7 +17,18 @@ describe('Content API Methods', () => {
 
   describe('getContent', () => {
     it('should GET /api/v1/content/:id', async () => {
-      const mockContent = { id: 'c1', title: 'Test', description: 'Desc', thumbnail: 'thumb.jpg', universeId: 'u1', status: 'published' as const, createdAt: '2024-01-01', updatedAt: '2024-01-01', creator: { id: 'u1', name: 'Creator' }, universe: { id: 'u1', name: 'Movies' } };
+      const mockContent = {
+        id: 'c1',
+        title: 'Test',
+        description: 'Desc',
+        thumbnail: 'thumb.jpg',
+        universeId: 'u1',
+        status: 'published' as const,
+        createdAt: '2024-01-01',
+        updatedAt: '2024-01-01',
+        creator: { id: 'u1', name: 'Creator' },
+        universe: { id: 'u1', name: 'Movies' },
+      };
       client.request.mockResolvedValue({ success: true, data: mockContent });
 
       const result = await content.getContent('c1');
@@ -57,7 +68,10 @@ describe('Content API Methods', () => {
 
   describe('getContentByUniverse', () => {
     it('should GET /api/v1/content/universe/:id with pagination', async () => {
-      client.request.mockResolvedValue({ success: true, data: { items: [], total: 0, page: 1, limit: 20, hasMore: false } });
+      client.request.mockResolvedValue({
+        success: true,
+        data: { items: [], total: 0, page: 1, limit: 20, hasMore: false },
+      });
 
       await content.getContentByUniverse('movie', 1, 20);
 
@@ -67,7 +81,10 @@ describe('Content API Methods', () => {
 
   describe('getContentByCategory', () => {
     it('should GET /api/v1/content/category/:id with pagination', async () => {
-      client.request.mockResolvedValue({ success: true, data: { items: [], total: 0, page: 1, limit: 20, hasMore: false } });
+      client.request.mockResolvedValue({
+        success: true,
+        data: { items: [], total: 0, page: 1, limit: 20, hasMore: false },
+      });
 
       await content.getContentByCategory('cat1', 2, 10);
 
@@ -77,9 +94,18 @@ describe('Content API Methods', () => {
 
   describe('searchContent', () => {
     it('should build search params from filters', async () => {
-      client.request.mockResolvedValue({ success: true, data: { items: [], total: 0, page: 1, limit: 20, hasMore: false } });
+      client.request.mockResolvedValue({
+        success: true,
+        data: { items: [], total: 0, page: 1, limit: 20, hasMore: false },
+      });
 
-      await content.searchContent({ query: 'nollywood', universeId: 'movie', sortBy: 'popular', page: 1, limit: 10 });
+      await content.searchContent({
+        query: 'nollywood',
+        universeId: 'movie',
+        sortBy: 'popular',
+        page: 1,
+        limit: 10,
+      });
 
       expect(client.request).toHaveBeenCalledWith(
         expect.stringContaining('/api/v1/content/search?')
@@ -91,7 +117,10 @@ describe('Content API Methods', () => {
     });
 
     it('should handle empty filters', async () => {
-      client.request.mockResolvedValue({ success: true, data: { items: [], total: 0, page: 1, limit: 20, hasMore: false } });
+      client.request.mockResolvedValue({
+        success: true,
+        data: { items: [], total: 0, page: 1, limit: 20, hasMore: false },
+      });
 
       await content.searchContent({});
 
@@ -99,7 +128,10 @@ describe('Content API Methods', () => {
     });
 
     it('should include tags as comma-separated', async () => {
-      client.request.mockResolvedValue({ success: true, data: { items: [], total: 0, page: 1, limit: 20, hasMore: false } });
+      client.request.mockResolvedValue({
+        success: true,
+        data: { items: [], total: 0, page: 1, limit: 20, hasMore: false },
+      });
 
       await content.searchContent({ tags: ['action', 'drama'] });
 
@@ -110,7 +142,10 @@ describe('Content API Methods', () => {
 
   describe('getSignedUrl', () => {
     it('should GET /api/v1/content/:id/media/signed-url', async () => {
-      client.request.mockResolvedValue({ success: true, data: { url: 'https://signed.example.com', expiresIn: 3600 } });
+      client.request.mockResolvedValue({
+        success: true,
+        data: { url: 'https://signed.example.com', expiresIn: 3600 },
+      });
 
       await content.getSignedUrl('c1');
 
@@ -196,7 +231,13 @@ describe('Content API Methods', () => {
     it('should include all params when provided', async () => {
       client.request.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
 
-      await content.getMyContent({ limit: 10, offset: 5, contentType: 'video', status: 'published', sort: 'newest' });
+      await content.getMyContent({
+        limit: 10,
+        offset: 5,
+        contentType: 'video',
+        status: 'published',
+        sort: 'newest',
+      });
 
       const callUrl = client.request.mock.calls[0][0] as string;
       expect(callUrl).toContain('limit=10');

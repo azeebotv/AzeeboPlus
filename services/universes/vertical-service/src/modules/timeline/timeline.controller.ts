@@ -39,9 +39,7 @@ export class TimelineController {
   @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Create timeline event' })
   @ApiResponse({ status: 201, description: 'Event created' })
-  async createEvent(
-    @Body() data: CreateTimelineEventDto
-  ): Promise<unknown> {
+  async createEvent(@Body() data: CreateTimelineEventDto): Promise<unknown> {
     return this.timelineService.createEvent(data);
   }
 }

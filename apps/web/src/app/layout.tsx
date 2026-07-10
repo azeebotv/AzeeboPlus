@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import React from 'react';
 import './globals.css';
 import { AuthProvider } from '../context/AuthContext';
 import { WalletProvider } from '../context/WalletContext';

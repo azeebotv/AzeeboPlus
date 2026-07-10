@@ -7,7 +7,7 @@ import { RedisService } from '../../common/services/redis.service';
 export class AdminService {
   constructor(
     private readonly uploadService: UploadService,
-    private readonly s3Service: S3Service,
+    _s3Service: S3Service,
     private readonly redisService: RedisService
   ) {}
 

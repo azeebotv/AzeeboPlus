@@ -21,7 +21,7 @@ export class ModerationController {
   @ApiResponse({ status: 400, description: 'Invalid input' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async reportContent(
-    @Request() req: { user: { sub: string } },
+    @Request() req: { user: { sub: string; id: string } },
     @Body() body: CreateReportDto
   ): Promise<ModerationResponse> {
     return this.moderationService.reportContent(req.user.id, body);
@@ -42,7 +42,7 @@ export class ModerationController {
   @ApiResponse({ status: 400, description: 'Invalid input' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async submitAppeal(
-    @Request() req: { user: { sub: string } },
+    @Request() req: { user: { sub: string; id: string } },
     @Body() body: EscalateCaseDto
   ): Promise<ModerationResponse> {
     return this.moderationService.submitAppeal(req.user.id, body);
@@ -54,7 +54,9 @@ export class ModerationController {
   @ApiResponse({ status: 200, description: 'Moderation queue' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - admin only' })
-  async getQueue(@Request() req: { user: { sub: string } }): Promise<ModerationResponse> {
+  async getQueue(
+    @Request() req: { user: { sub: string; id: string } }
+  ): Promise<ModerationResponse> {
     return this.moderationService.getQueue(req.user.id);
   }
 
@@ -82,7 +84,7 @@ export class ModerationController {
   @ApiResponse({ status: 403, description: 'Forbidden - admin only' })
   @ApiResponse({ status: 404, description: 'Target not found' })
   async takeSafetyAction(
-    @Request() req: { user: { sub: string } },
+    @Request() req: { user: { sub: string; id: string } },
     @Body()
     body: {
       type: string;
@@ -102,7 +104,7 @@ export class ModerationController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - admin only' })
   async getSafetyActions(
-    @Request() req: { user: { sub: string } },
+    @Request() req: { user: { sub: string; id: string } },
     @Query('targetType') targetType?: 'content' | 'user',
     @Query('actionType') actionType?: string,
     @Query('startDate') startDate?: string,

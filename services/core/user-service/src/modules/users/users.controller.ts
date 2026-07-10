@@ -10,8 +10,6 @@ import {
   Delete,
   Param,
   Query,
-  HttpException,
-  HttpStatus,
   UnauthorizedException,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
@@ -20,10 +18,8 @@ import { UsersService } from './users.service';
 import { UpdateUniverseAffinityDto } from './dto/update-universe-affinity.dto';
 import { UpdateUserProfileDto } from './dto/update-user-profile.dto';
 import { CompleteProfileSetupDto } from './dto/complete-profile-setup.dto';
-import { UpdatePreferencesDto } from './dto/update-preferences.dto';
 import { ContentIdDto } from './dto/content-id.dto';
 import { RateLimitGuard, RateLimit, Public } from '@azeebo/security';
-import { AuthGuard } from '@nestjs/passport';
 import { ApiResponseWrapper } from '@azeebo/shared-types';
 
 interface AuthenticatedRequest {
@@ -222,7 +218,11 @@ export class UsersController {
     @Request() req: AuthenticatedRequest,
     @Body() dto: CompleteProfileSetupDto
   ) {
-    const result = await this.usersService.completeProfileSetup(this.getUserId(req), dto, req.user.email);
+    const result = await this.usersService.completeProfileSetup(
+      this.getUserId(req),
+      dto,
+      req.user.email
+    );
     return ApiResponseWrapper.success((result as { data: unknown }).data ?? result);
   }
 
@@ -240,10 +240,7 @@ export class UsersController {
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiResponse({ status: 200, description: 'Continue watching items' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getContinueWatching(
-    @Request() req: AuthenticatedRequest,
-    @Query('limit') limit = 10
-  ) {
+  async getContinueWatching(@Request() req: AuthenticatedRequest, @Query('limit') limit = 10) {
     const result = await this.usersService.getContinueWatching(this.getUserId(req), Number(limit));
     return ApiResponseWrapper.success((result as { data: unknown }).data ?? result);
   }

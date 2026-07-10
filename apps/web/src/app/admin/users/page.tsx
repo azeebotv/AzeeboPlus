@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/context/AuthContext';
@@ -23,7 +23,11 @@ export default function AdminUsersPage(): React.JSX.Element {
   const [roleFilter, setRoleFilter] = useState('all');
   const isEnabled = !authLoading && !!isAuthenticated && !!user && user.role === 'admin';
 
-  const { data: users = [], isLoading, error } = useQuery({
+  const {
+    data: users = [],
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ['admin', 'users'],
     queryFn: async () => {
       const response = await api.admin.getUsers();
@@ -36,14 +40,18 @@ export default function AdminUsersPage(): React.JSX.Element {
     enabled: isEnabled,
   });
 
-  const filtered = useMemo(() => users.filter((u) => {
-    const matchSearch =
-      !search ||
-      u.username?.toLowerCase().includes(search.toLowerCase()) ||
-      u.email?.toLowerCase().includes(search.toLowerCase());
-    const matchRole = roleFilter === 'all' || u.role === roleFilter;
-    return matchSearch && matchRole;
-  }), [users, search, roleFilter]);
+  const filtered = useMemo(
+    () =>
+      users.filter((u) => {
+        const matchSearch =
+          !search ||
+          u.username?.toLowerCase().includes(search.toLowerCase()) ||
+          u.email?.toLowerCase().includes(search.toLowerCase());
+        const matchRole = roleFilter === 'all' || u.role === roleFilter;
+        return matchSearch && matchRole;
+      }),
+    [users, search, roleFilter]
+  );
 
   return (
     <AdminLayout>
@@ -112,7 +120,15 @@ export default function AdminUsersPage(): React.JSX.Element {
         <div className="az-glass" style={{ borderRadius: 16, overflow: 'hidden' }}>
           <div style={{ padding: 16 }}>
             {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} style={{ display: 'flex', gap: 16, padding: '12px 0', borderBottom: '1px solid #1A0A0A' }}>
+              <div
+                key={i}
+                style={{
+                  display: 'flex',
+                  gap: 16,
+                  padding: '12px 0',
+                  borderBottom: '1px solid #1A0A0A',
+                }}
+              >
                 <Skeleton width="120px" height="14px" />
                 <Skeleton width="60px" height="14px" />
                 <Skeleton width="80px" height="14px" />
@@ -122,7 +138,11 @@ export default function AdminUsersPage(): React.JSX.Element {
           </div>
         </div>
       ) : error ? (
-        <ErrorState title="Failed to load users" description="Please try again later" onButtonPress={() => router.refresh()} />
+        <ErrorState
+          title="Failed to load users"
+          description="Please try again later"
+          onButtonPress={() => router.refresh()}
+        />
       ) : (
         <div className="az-glass" style={{ borderRadius: 16, overflow: 'hidden' }}>
           <div style={{ overflowX: 'auto' }}>

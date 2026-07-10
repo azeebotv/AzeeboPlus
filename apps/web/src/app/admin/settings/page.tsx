@@ -1,9 +1,10 @@
 'use client';
-import React, { useState, useRef, useCallback } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useState, useRef } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/context/AuthContext';
 import { api } from '@/lib/api';
 import AdminLayout from '@/components/layout/AdminLayout';
+import { Skeleton } from '@azeebo/ui/web';
 
 type Tab =
   | 'general'
@@ -179,9 +180,7 @@ function Field({
     <div>
       <label style={labelStyle}>{label}</label>
       {children}
-      {hint && (
-        <p style={{ color: '#6B5A4A', fontSize: 12, marginTop: 4 }}>{hint}</p>
-      )}
+      {hint && <p style={{ color: '#6B5A4A', fontSize: 12, marginTop: 4 }}>{hint}</p>}
     </div>
   );
 }
@@ -373,15 +372,17 @@ export default function AdminSettingsPage(): React.JSX.Element {
     ipBlacklist: '',
   });
 
-  const { data: settingsMap, isLoading: isLoadingSettings } = useQuery({
+  const { isLoading: isLoadingSettings } = useQuery({
     queryKey: ['admin', 'settings'],
     queryFn: async () => {
       const res = await api.admin.getAllSettings();
       if (res.success && res.data) {
-        const arr = res.data as Array<{ key: string; value: unknown }>;
+        const arr = res.data as unknown as Array<{ key: string; value: unknown }>;
         if (Array.isArray(arr)) {
           const map: Record<string, unknown> = {};
-          arr.forEach((s) => { map[s.key] = s.value; });
+          arr.forEach((s) => {
+            map[s.key] = s.value;
+          });
           return map;
         }
       }
@@ -403,12 +404,14 @@ export default function AdminSettingsPage(): React.JSX.Element {
     enabled: isEnabled,
   });
 
-  const { data: roles = { admin: ['*'], creator: ['content.create', 'content.edit', 'wallet.view'], user: ['content.view', 'wallet.view', 'profile.edit'] } } = useQuery({
+  const {
+    data: roles = {},
+  } = useQuery({
     queryKey: ['admin', 'roles'],
     queryFn: async () => {
       const res = await api.admin.getRoles();
       if (res.success && res.data) {
-        const d = res.data as Record<string, string[]>;
+        const d = res.data as unknown as Record<string, string[]>;
         if (d && typeof d === 'object') return d;
       }
       return {};
@@ -429,18 +432,6 @@ export default function AdminSettingsPage(): React.JSX.Element {
     enabled: isEnabled,
   });
 
-  const { data: perf } = useQuery({
-    queryKey: ['admin', 'performance'],
-    queryFn: async () => {
-      const res = await api.admin.getPerformance();
-      if (res.success && res.data) {
-        return res.data as { cacheTtl: number; cdnUrl: string; imageCompressionQuality: number; maxUploadSize: number };
-      }
-      return { cacheTtl: 3600, cdnUrl: '', imageCompressionQuality: 80, maxUploadSize: 500 };
-    },
-    enabled: isEnabled,
-  });
-
   const { data: templates = [] } = useQuery({
     queryKey: ['admin', 'templates'],
     queryFn: async () => {
@@ -454,132 +445,7 @@ export default function AdminSettingsPage(): React.JSX.Element {
     enabled: isEnabled,
   });
 
-  const { data: integrationsData } = useQuery({
-    queryKey: ['admin', 'integrations'],
-    queryFn: async () => {
-      const res = await api.admin.getIntegrations();
-      if (res.success && res.data) {
-        return res.data as Partial<typeof integrations>;
-      }
-      return {};
-    },
-    enabled: isEnabled,
-  });
-
-  const { data: complianceData } = useQuery({
-    queryKey: ['admin', 'compliance'],
-    queryFn: async () => {
-      const res = await api.admin.getCompliance();
-      if (res.success && res.data) {
-        return res.data as Partial<typeof compliance>;
-      }
-      return {};
-    },
-    enabled: isEnabled,
-  });
-
-  const { data: localizationData } = useQuery({
-    queryKey: ['admin', 'localization'],
-    queryFn: async () => {
-      const res = await api.admin.getLocalization();
-      if (res.success && res.data) {
-        return res.data as Partial<typeof localization>;
-      }
-      return {};
-    },
-    enabled: isEnabled,
-  });
-
-  const { data: securityData } = useQuery({
-    queryKey: ['admin', 'security'],
-    queryFn: async () => {
-      const res = await api.admin.getSecurity();
-      if (res.success && res.data) {
-        return res.data as Partial<typeof security>;
-      }
-      return {};
-    },
-    enabled: isEnabled,
-  });
-
   const isLoading = authLoading || isLoadingSettings;
-
-  function extractGeneral(map: Record<string, unknown>) {
-    return {
-      siteTitle: map.siteTitle || map.platformName || general.siteTitle,
-      siteDescription: map.siteDescription || '',
-      metaDescription: map.metaDescription || '',
-      twitterUrl: map.twitterUrl || '',
-      instagramUrl: map.instagramUrl || '',
-      youtubeUrl: map.youtubeUrl || '',
-      tiktokUrl: map.tiktokUrl || '',
-      contactEmail: map.contactEmail || '',
-      contactPhone: map.contactPhone || '',
-      contactAddress: map.contactAddress || '',
-      primaryColor: map.primaryColor || '#E8420A',
-      secondaryColor: map.secondaryColor || '#CC1C1C',
-      accentColor: map.accentColor || '#F5F0EB',
-      logoUrl: map.logoUrl || '',
-      faviconUrl: map.faviconUrl || '',
-      maintenanceMode: !!map.maintenanceMode,
-      registrationEnabled: map.registrationEnabled !== false,
-      subscriptionEnabled: map.subscriptionEnabled !== false,
-      superVoteEnabled: map.superVoteEnabled !== false,
-      referralEnabled: map.referralEnabled !== false,
-    };
-  }
-
-  function extractPerf(map: Record<string, unknown>) {
-    return {
-      cacheTtl: Number(map.cacheTtl) || 3600,
-      cdnUrl: map.cdnUrl || '',
-      imageCompressionQuality: Number(map.imageCompressionQuality) || 80,
-      maxUploadSize: Number(map.maxUploadSize) || 500,
-    };
-  }
-
-  function extractCompliance(map: Record<string, unknown>) {
-    return {
-      gdprEnabled: map.gdprEnabled !== false,
-      ccpaEnabled: !!map.ccpaEnabled,
-      termsUrl: map.termsUrl || '',
-      termsText: map.termsText || '',
-      privacyUrl: map.privacyUrl || '',
-      privacyText: map.privacyText || '',
-      retentionUsers: Number(map.retentionUsers) || 365,
-      retentionContent: Number(map.retentionContent) || 730,
-      retentionAnalytics: Number(map.retentionAnalytics) || 90,
-      retentionLogs: Number(map.retentionLogs) || 30,
-    };
-  }
-
-  function extractLocalization(map: Record<string, unknown>) {
-    return {
-      defaultLanguage: map.defaultLanguage || 'en',
-      supportedLanguages: Array.isArray(map.supportedLanguages)
-        ? map.supportedLanguages
-        : ['en'],
-      timezone: map.timezone || 'Africa/Lagos',
-      currency: map.currency || 'NGN',
-    };
-  }
-
-  function extractSecurity(map: Record<string, unknown>) {
-    return {
-      twoFactorRequired: !!map.twoFactorRequired,
-      passwordMinLength: Number(map.passwordMinLength) || 8,
-      passwordRequireUppercase: map.passwordRequireUppercase !== false,
-      passwordRequireNumbers: map.passwordRequireNumbers !== false,
-      passwordRequireSpecial: map.passwordRequireSpecial !== false,
-      sessionTimeout: Number(map.sessionTimeout) || 60,
-      ipWhitelist: Array.isArray(map.ipWhitelist)
-        ? map.ipWhitelist.join('\n')
-        : map.ipWhitelist || '',
-      ipBlacklist: Array.isArray(map.ipBlacklist)
-        ? map.ipBlacklist.join('\n')
-        : map.ipBlacklist || '',
-    };
-  }
 
   const saveTab = async (tab: Tab) => {
     setSaving(true);
@@ -600,13 +466,9 @@ export default function AdminSettingsPage(): React.JSX.Element {
       } else if (tab === 'performance') {
         await api.admin.updatePerformance(perfForm);
       } else if (tab === 'notifications') {
-        await api.admin.bulkUpdateSettings([
-          { key: 'notifTriggers', value: notifTriggers },
-        ]);
+        await api.admin.bulkUpdateSettings([{ key: 'notifTriggers', value: notifTriggers }]);
       } else if (tab === 'integrations') {
-        await api.admin.bulkUpdateSettings([
-          { key: 'integrations', value: integrations },
-        ]);
+        await api.admin.bulkUpdateSettings([{ key: 'integrations', value: integrations }]);
       } else if (tab === 'compliance') {
         await api.admin.updateCompliance(compliance);
       } else if (tab === 'localization') {
@@ -636,7 +498,9 @@ export default function AdminSettingsPage(): React.JSX.Element {
         a.click();
         URL.revokeObjectURL(url);
       }
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   };
 
   const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -655,7 +519,15 @@ export default function AdminSettingsPage(): React.JSX.Element {
 
   // Plan CRUD
   const resetPlanForm = () => {
-    setPlanForm({ name: '', price: '', currency: 'NGN', duration: '', features: '', tier: 'basic', isActive: true });
+    setPlanForm({
+      name: '',
+      price: '',
+      currency: 'NGN',
+      duration: '',
+      features: '',
+      tier: 'basic',
+      isActive: true,
+    });
     setEditingPlan(null);
   };
 
@@ -689,14 +561,16 @@ export default function AdminSettingsPage(): React.JSX.Element {
           .filter(Boolean),
       };
       if (editingPlan) {
-        await api.admin.updateSubscriptionPlan(editingPlan.id || editingPlan._id, payload);
+        await api.admin.updateSubscriptionPlan(editingPlan.id || editingPlan._id!, payload);
       } else {
         await api.admin.createSubscriptionPlan(payload);
       }
       setShowPlanModal(false);
       resetPlanForm();
       queryClient.invalidateQueries({ queryKey: ['admin', 'plans'] });
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   };
 
   const deletePlan = async (id: string) => {
@@ -704,7 +578,9 @@ export default function AdminSettingsPage(): React.JSX.Element {
     try {
       await api.admin.deleteSubscriptionPlan(id);
       queryClient.invalidateQueries({ queryKey: ['admin', 'plans'] });
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   };
 
   // Admin CRUD
@@ -714,7 +590,9 @@ export default function AdminSettingsPage(): React.JSX.Element {
       setShowAdminModal(false);
       setAdminForm({ email: '', role: 'admin' });
       queryClient.invalidateQueries({ queryKey: ['admin', 'admins'] });
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   };
 
   const removeAdmin = async (id: string) => {
@@ -722,7 +600,9 @@ export default function AdminSettingsPage(): React.JSX.Element {
     try {
       await api.admin.removeAdmin(id);
       queryClient.invalidateQueries({ queryKey: ['admin', 'admins'] });
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   };
 
   // Template CRUD
@@ -750,7 +630,7 @@ export default function AdminSettingsPage(): React.JSX.Element {
     try {
       if (editingTemplate) {
         await api.admin.updateNotificationTemplate(
-          editingTemplate.id || editingTemplate._id,
+          editingTemplate.id || editingTemplate._id!,
           templateForm
         );
       } else {
@@ -759,22 +639,18 @@ export default function AdminSettingsPage(): React.JSX.Element {
       setShowTemplateModal(false);
       resetTemplateForm();
       queryClient.invalidateQueries({ queryKey: ['admin', 'templates'] });
-    } catch { /* ignore */ }
-  };
-
-  const deleteTemplate = async (id: string) => {
-    if (!confirm('Delete this template?')) return;
-    try {
-      await api.admin.deleteNotificationTemplate(id);
-      queryClient.invalidateQueries({ queryKey: ['admin', 'templates'] });
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   };
 
   const testConnection = async (provider: string) => {
     setTestingProvider(provider);
     try {
       const res = await api.admin.testIntegration(provider);
-      alert(res.success ? `Connection successful: ${res.data?.message || 'OK'}` : 'Connection failed');
+      alert(
+        res.success ? `Connection successful: ${res.data?.message || 'OK'}` : 'Connection failed'
+      );
     } catch {
       alert('Connection test failed');
     }
@@ -794,7 +670,13 @@ export default function AdminSettingsPage(): React.JSX.Element {
           {Array.from({ length: 3 }).map((_, i) => (
             <div key={i} className="az-glass" style={{ padding: 24, borderRadius: 20 }}>
               <Skeleton width="150px" height="20px" className="mb-4" />
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                  gap: 16,
+                }}
+              >
                 {Array.from({ length: 4 }).map((_, j) => (
                   <div key={j}>
                     <Skeleton width="80px" height="14px" className="mb-2" />
@@ -821,9 +703,17 @@ export default function AdminSettingsPage(): React.JSX.Element {
   ];
 
   const timezones = [
-    'Africa/Lagos', 'Africa/Accra', 'Africa/Nairobi', 'Africa/Johannesburg',
-    'Europe/London', 'Europe/Paris', 'America/New_York', 'America/Chicago',
-    'America/Los_Angeles', 'Asia/Dubai', 'Asia/Tokyo',
+    'Africa/Lagos',
+    'Africa/Accra',
+    'Africa/Nairobi',
+    'Africa/Johannesburg',
+    'Europe/London',
+    'Europe/Paris',
+    'America/New_York',
+    'America/Chicago',
+    'America/Los_Angeles',
+    'Asia/Dubai',
+    'Asia/Tokyo',
   ];
 
   const currencies = ['NGN', 'USD', 'GBP', 'EUR', 'GHS', 'KES', 'ZAR'];
@@ -853,19 +743,14 @@ export default function AdminSettingsPage(): React.JSX.Element {
             onChange={handleImport}
             style={{ display: 'none' }}
           />
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            style={btnSecondary}
-          >
+          <button onClick={() => fileInputRef.current?.click()} style={btnSecondary}>
             Import JSON
           </button>
           <button onClick={handleExport} style={btnSecondary}>
             Export JSON
           </button>
           {saved && (
-            <span style={{ color: '#0D3B2E', fontWeight: 600, fontSize: 14 }}>
-              ✓ Saved
-            </span>
+            <span style={{ color: '#0D3B2E', fontWeight: 600, fontSize: 14 }}>✓ Saved</span>
           )}
           <button
             onClick={() => saveTab(activeTab)}
@@ -1074,11 +959,13 @@ export default function AdminSettingsPage(): React.JSX.Element {
                 gap: 20,
               }}
             >
-              {([
-                { key: 'primaryColor', label: 'Primary' },
-                { key: 'secondaryColor', label: 'Secondary' },
-                { key: 'accentColor', label: 'Accent' },
-              ] as const).map(({ key, label }) => (
+              {(
+                [
+                  { key: 'primaryColor', label: 'Primary' },
+                  { key: 'secondaryColor', label: 'Secondary' },
+                  { key: 'accentColor', label: 'Accent' },
+                ] as const
+              ).map(({ key, label }) => (
                 <div key={key}>
                   <label style={labelStyle}>{label} Color</label>
                   <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
@@ -1167,7 +1054,11 @@ export default function AdminSettingsPage(): React.JSX.Element {
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {plans.map((plan) => (
-              <div key={plan.id || plan._id} className="az-glass" style={{ padding: 20, borderRadius: 16 }}>
+              <div
+                key={plan.id || plan._id}
+                className="az-glass"
+                style={{ padding: 20, borderRadius: 16 }}
+              >
                 <div
                   style={{
                     display: 'flex',
@@ -1178,7 +1069,9 @@ export default function AdminSettingsPage(): React.JSX.Element {
                   }}
                 >
                   <div style={{ flex: 1, minWidth: 200 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+                    <div
+                      style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}
+                    >
                       <h3 style={{ fontWeight: 700, fontSize: 16 }}>{plan.name}</h3>
                       <span
                         style={{
@@ -1205,7 +1098,8 @@ export default function AdminSettingsPage(): React.JSX.Element {
                       </span>
                     </div>
                     <p style={{ color: '#9A8A7A', fontSize: 14, marginBottom: 8 }}>
-                      {plan.currency || 'NGN'} {(plan.price || 0).toLocaleString()} / {plan.duration || 0} days
+                      {plan.currency || 'NGN'} {(plan.price || 0).toLocaleString()} /{' '}
+                      {plan.duration || 0} days
                     </p>
                     {Array.isArray(plan.features) && plan.features.length > 0 && (
                       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
@@ -1250,7 +1144,7 @@ export default function AdminSettingsPage(): React.JSX.Element {
                       Edit
                     </button>
                     <button
-                      onClick={() => deletePlan(plan.id || plan._id)}
+                      onClick={() => deletePlan(plan.id || plan._id!)}
                       style={{
                         padding: '6px 14px',
                         borderRadius: 999,
@@ -1268,7 +1162,10 @@ export default function AdminSettingsPage(): React.JSX.Element {
               </div>
             ))}
             {plans.length === 0 && (
-              <div className="az-glass" style={{ padding: 40, borderRadius: 16, textAlign: 'center' }}>
+              <div
+                className="az-glass"
+                style={{ padding: 40, borderRadius: 16, textAlign: 'center' }}
+              >
                 <p style={{ color: '#9A8A7A' }}>No subscription plans configured</p>
               </div>
             )}
@@ -1276,7 +1173,10 @@ export default function AdminSettingsPage(): React.JSX.Element {
 
           <Modal
             open={showPlanModal}
-            onClose={() => { setShowPlanModal(false); resetPlanForm(); }}
+            onClose={() => {
+              setShowPlanModal(false);
+              resetPlanForm();
+            }}
             title={editingPlan ? 'Edit Plan' : 'Add Plan'}
           >
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -1305,7 +1205,9 @@ export default function AdminSettingsPage(): React.JSX.Element {
                     style={inputStyle}
                   >
                     {currencies.map((c) => (
-                      <option key={c} value={c}>{c}</option>
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
                     ))}
                   </select>
                 </Field>
@@ -1394,9 +1296,7 @@ export default function AdminSettingsPage(): React.JSX.Element {
                         fontWeight: 700,
                         textTransform: 'capitalize',
                         backgroundColor:
-                          role === 'admin'
-                            ? 'rgba(232,66,10,0.2)'
-                            : 'rgba(154,138,122,0.15)',
+                          role === 'admin' ? 'rgba(232,66,10,0.2)' : 'rgba(154,138,122,0.15)',
                         color: role === 'admin' ? '#E8420A' : '#F5F0EB',
                       }}
                     >
@@ -1457,11 +1357,12 @@ export default function AdminSettingsPage(): React.JSX.Element {
                   <div>
                     <p style={{ fontWeight: 600, fontSize: 14 }}>{a.email || a.username}</p>
                     <p style={{ color: '#9A8A7A', fontSize: 12 }}>
-                      {a.role || 'admin'} • Added {a.createdAt ? new Date(a.createdAt).toLocaleDateString() : 'N/A'}
+                      {a.role || 'admin'} • Added{' '}
+                      {a.createdAt ? new Date(a.createdAt).toLocaleDateString() : 'N/A'}
                     </p>
                   </div>
                   <button
-                    onClick={() => removeAdmin(a.id || a._id)}
+                    onClick={() => removeAdmin(a.id || a._id!)}
                     style={{
                       padding: '6px 14px',
                       borderRadius: 999,
@@ -1486,7 +1387,10 @@ export default function AdminSettingsPage(): React.JSX.Element {
 
           <Modal
             open={showAdminModal}
-            onClose={() => { setShowAdminModal(false); setAdminForm({ email: '', role: 'admin' }); }}
+            onClose={() => {
+              setShowAdminModal(false);
+              setAdminForm({ email: '', role: 'admin' });
+            }}
             title="Add Admin User"
           >
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -1542,7 +1446,10 @@ export default function AdminSettingsPage(): React.JSX.Element {
                 placeholder="https://cdn.azeebo.com"
               />
             </Field>
-            <Field label="Image Compression Quality" hint="1-100, higher = better quality, larger files">
+            <Field
+              label="Image Compression Quality"
+              hint="1-100, higher = better quality, larger files"
+            >
               <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                 <input
                   type="range"
@@ -1563,7 +1470,9 @@ export default function AdminSettingsPage(): React.JSX.Element {
               <input
                 type="number"
                 value={perfForm.maxUploadSize}
-                onChange={(e) => setPerfForm({ ...perfForm, maxUploadSize: Number(e.target.value) })}
+                onChange={(e) =>
+                  setPerfForm({ ...perfForm, maxUploadSize: Number(e.target.value) })
+                }
                 style={inputStyle}
               />
             </Field>
@@ -1575,7 +1484,9 @@ export default function AdminSettingsPage(): React.JSX.Element {
       {activeTab === 'notifications' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
           <div className="az-glass" style={cardStyle}>
-            <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16 }}>Notification Triggers</h2>
+            <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16 }}>
+              Notification Triggers
+            </h2>
             <Toggle
               checked={notifTriggers.onUserRegister}
               onChange={(v) => setNotifTriggers({ ...notifTriggers, onUserRegister: v })}
@@ -1624,7 +1535,11 @@ export default function AdminSettingsPage(): React.JSX.Element {
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {templates.map((t) => (
-                <div key={t.id || t._id} className="az-glass" style={{ padding: 16, borderRadius: 16 }}>
+                <div
+                  key={t.id || t._id}
+                  className="az-glass"
+                  style={{ padding: 16, borderRadius: 16 }}
+                >
                   <div
                     style={{
                       display: 'flex',
@@ -1634,9 +1549,11 @@ export default function AdminSettingsPage(): React.JSX.Element {
                   >
                     <div>
                       <h3 style={{ fontWeight: 600, fontSize: 15, marginBottom: 4 }}>
-                        {t.name || t.title}
+                        {t.name || (t as unknown as { title?: string }).title}
                       </h3>
-                      <p style={{ color: '#9A8A7A', fontSize: 13 }}>{t.subject || t.description}</p>
+                      <p style={{ color: '#9A8A7A', fontSize: 13 }}>
+                        {t.subject || (t as unknown as { description?: string }).description}
+                      </p>
                     </div>
                     <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
                       <span
@@ -1671,7 +1588,10 @@ export default function AdminSettingsPage(): React.JSX.Element {
                 </div>
               ))}
               {templates.length === 0 && (
-                <div className="az-glass" style={{ padding: 40, borderRadius: 16, textAlign: 'center' }}>
+                <div
+                  className="az-glass"
+                  style={{ padding: 40, borderRadius: 16, textAlign: 'center' }}
+                >
                   <p style={{ color: '#9A8A7A' }}>No templates configured</p>
                 </div>
               )}
@@ -1680,7 +1600,10 @@ export default function AdminSettingsPage(): React.JSX.Element {
 
           <Modal
             open={showTemplateModal}
-            onClose={() => { setShowTemplateModal(false); resetTemplateForm(); }}
+            onClose={() => {
+              setShowTemplateModal(false);
+              resetTemplateForm();
+            }}
             title={editingTemplate ? 'Edit Template' : 'Add Template'}
           >
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -1704,7 +1627,10 @@ export default function AdminSettingsPage(): React.JSX.Element {
                 <select
                   value={templateForm.type}
                   onChange={(e) =>
-                    setTemplateForm({ ...templateForm, type: e.target.value as 'email' | 'push' | 'sms' | 'in-app' })
+                    setTemplateForm({
+                      ...templateForm,
+                      type: e.target.value as 'email' | 'push' | 'sms' | 'in-app',
+                    })
                   }
                   style={inputStyle}
                 >
@@ -1800,9 +1726,20 @@ export default function AdminSettingsPage(): React.JSX.Element {
                   {Object.entries(cfg)
                     .filter(([k]) => k !== 'enabled')
                     .map(([field, val]) => (
-                      <Field key={field} label={field.replace(/([A-Z])/g, ' $1').replace(/^./, (s) => s.toUpperCase())}>
+                      <Field
+                        key={field}
+                        label={field
+                          .replace(/([A-Z])/g, ' $1')
+                          .replace(/^./, (s) => s.toUpperCase())}
+                      >
                         <input
-                          type={field.toLowerCase().includes('key') || field.toLowerCase().includes('secret') || field.toLowerCase().includes('auth') ? 'password' : 'text'}
+                          type={
+                            field.toLowerCase().includes('key') ||
+                            field.toLowerCase().includes('secret') ||
+                            field.toLowerCase().includes('auth')
+                              ? 'password'
+                              : 'text'
+                          }
                           value={String(val || '')}
                           onChange={(e) =>
                             setIntegrations({
@@ -1826,7 +1763,9 @@ export default function AdminSettingsPage(): React.JSX.Element {
       {activeTab === 'compliance' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
           <div className="az-glass" style={cardStyle}>
-            <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16 }}>Regulatory Compliance</h2>
+            <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16 }}>
+              Regulatory Compliance
+            </h2>
             <Toggle
               checked={compliance.gdprEnabled}
               onChange={(v) => setCompliance({ ...compliance, gdprEnabled: v })}
@@ -2075,16 +2014,28 @@ export default function AdminSettingsPage(): React.JSX.Element {
                 <textarea
                   value={security.ipWhitelist}
                   onChange={(e) => setSecurity({ ...security, ipWhitelist: e.target.value })}
-                  style={{ ...inputStyle, minHeight: 100, fontFamily: 'monospace', fontSize: 13, resize: 'vertical' }}
-                  placeholder={"192.168.1.1\n10.0.0.0/8"}
+                  style={{
+                    ...inputStyle,
+                    minHeight: 100,
+                    fontFamily: 'monospace',
+                    fontSize: 13,
+                    resize: 'vertical',
+                  }}
+                  placeholder={'192.168.1.1\n10.0.0.0/8'}
                 />
               </Field>
               <Field label="IP Blacklist" hint="One IP per line. Leave empty to disable.">
                 <textarea
                   value={security.ipBlacklist}
                   onChange={(e) => setSecurity({ ...security, ipBlacklist: e.target.value })}
-                  style={{ ...inputStyle, minHeight: 100, fontFamily: 'monospace', fontSize: 13, resize: 'vertical' }}
-                  placeholder={"203.0.113.50\n198.51.100.0/24"}
+                  style={{
+                    ...inputStyle,
+                    minHeight: 100,
+                    fontFamily: 'monospace',
+                    fontSize: 13,
+                    resize: 'vertical',
+                  }}
+                  placeholder={'203.0.113.50\n198.51.100.0/24'}
                 />
               </Field>
             </div>

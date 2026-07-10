@@ -124,7 +124,6 @@ export class AnalyticsClientService {
   }
 
   async getContentAnalytics(
-    creatorId: string,
     contentId: string,
     startDate: string,
     endDate: string
